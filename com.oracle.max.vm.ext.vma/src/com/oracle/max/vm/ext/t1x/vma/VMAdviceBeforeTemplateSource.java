@@ -1078,7 +1078,13 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(118, value, zero);
         }
-        return zero - value;
+        float res;
+        if (Float.floatToRawIntBits(value) == Float.floatToRawIntBits(zero)) {
+            res = -0.0f;
+        } else {
+            res = zero - value;
+        }
+        return res;
     }
 
     @T1X_TEMPLATE(FRETURN)
@@ -1592,7 +1598,13 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(119, value, zero);
         }
-        return zero - value;
+        double res;
+        if (Double.doubleToRawLongBits(value) == Double.doubleToRawLongBits(zero)) {
+            res = -0.0d;
+        } else {
+            res = zero - value;
+        }
+        return res;
     }
 
     @T1X_TEMPLATE(DRETURN)

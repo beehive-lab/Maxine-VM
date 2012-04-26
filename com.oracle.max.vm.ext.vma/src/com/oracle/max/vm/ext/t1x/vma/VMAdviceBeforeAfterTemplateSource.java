@@ -1080,7 +1080,13 @@ public class VMAdviceBeforeAfterTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(118, value, zero);
         }
-        return zero - value;
+        float res;
+        if (Float.floatToRawIntBits(value) == Float.floatToRawIntBits(zero)) {
+            res = -0.0f;
+        } else {
+            res = zero - value;
+        }
+        return res;
     }
 
     @T1X_TEMPLATE(FRETURN)
@@ -1810,7 +1816,13 @@ public class VMAdviceBeforeAfterTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(119, value, zero);
         }
-        return zero - value;
+        double res;
+        if (Double.doubleToRawLongBits(value) == Double.doubleToRawLongBits(zero)) {
+            res = -0.0d;
+        } else {
+            res = zero - value;
+        }
+        return res;
     }
 
     @T1X_TEMPLATE(DRETURN)
@@ -3160,22 +3172,30 @@ public class VMAdviceBeforeAfterTemplateSource {
 
     @T1X_TEMPLATE(INVOKEVIRTUAL$adviseafter)
     public static void adviseAfterInvokeVirtual() {
-        VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+        }
     }
 
     @T1X_TEMPLATE(INVOKEINTERFACE$adviseafter)
     public static void adviseAfterInvokeInterface() {
-        VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+        }
     }
 
     @T1X_TEMPLATE(INVOKESPECIAL$adviseafter)
     public static void adviseAfterInvokeSpecial() {
-        VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+        }
     }
 
     @T1X_TEMPLATE(INVOKESTATIC$adviseafter)
     public static void adviseAfterInvokeStatic() {
-        VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+        }
     }
 
 // END GENERATED CODE
