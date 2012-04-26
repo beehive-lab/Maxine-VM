@@ -27,10 +27,12 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.util.*;
 
+import com.oracle.max.vm.ext.c1x.vma.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.cri.ci.CiStatistics;
 import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.compiler.*;
@@ -84,6 +86,8 @@ public class VMAT1X extends T1X {
             beforeTemplates = createTemplates(compiler, templateSource, altT1X, true, null);
             templateSource = AfterTemplateSourceClass;
             afterTemplates = createTemplates(compiler, templateSource, altT1X, true, null);
+            VMAC1X vmaC1X = (VMAC1X) MaxineVM.vm().compilationBroker.optimizingCompiler;
+            vmaC1X.setVMAT1X(this);
         } else {
             super.initialize(phase);
         }

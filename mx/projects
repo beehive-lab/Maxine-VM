@@ -185,7 +185,7 @@ project@com.oracle.max.vm.ext.bctrans@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.bctrans@javaCompliance=1.6
 
 project@com.oracle.max.vm.ext.vma@sourceDirs=src,test
-project@com.oracle.max.vm.ext.vma@dependencies=com.oracle.max.tele.vm
+project@com.oracle.max.vm.ext.vma@dependencies=com.oracle.max.vm.ext.t1x,com.oracle.max.vm.ext.c1x,com.oracle.max.tele.vm
 project@com.oracle.max.vm.ext.vma@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.vma@javaCompliance=1.6
 
