@@ -42,10 +42,6 @@ import com.sun.max.vm.thread.*;
  * Checks/Generates the boilerplate of a {@link VMLogger} implementation from
  * an interface specified by the developer.
  *
- * TODO
- * <ol>
- * <li>Handle subclasses in standard argument types, e.g, ClassMethodActor.
- * </ol>
  */
 @HOSTED_ONLY
 public class VMLoggerGenerator {
