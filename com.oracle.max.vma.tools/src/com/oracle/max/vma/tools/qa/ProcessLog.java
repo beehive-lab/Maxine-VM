@@ -726,6 +726,7 @@ public class ProcessLog {
             }
 
             case ADVISE_BEFORE_ARRAY_LENGTH: {
+                objectRecord = getTraceRecord(objIdArg);
                 ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(ArrayLength, AdviceMode.BEFORE);
                 objectAdviceRecord.value = objectRecord;
                 objectAdviceRecord.setPackedValue(Integer.parseInt(arg4));
@@ -813,10 +814,13 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_INSTANCE_OF:
             case ADVISE_BEFORE_CHECK_CAST:  {
+                objectRecord = getTraceRecord(objIdArg);
                 ObjectObjectAdviceRecord objectObjectAdviceRecord = (ObjectObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
                 objectObjectAdviceRecord.value = objectRecord;
                 objectObjectAdviceRecord.value = classRecord;
-                objectRecord.addTraceElement(objectObjectAdviceRecord);
+                if (objectRecord != null) {
+                    objectRecord.addTraceElement(objectObjectAdviceRecord);
+                }
                 adviceRecord = objectObjectAdviceRecord;
                 break;
             }
@@ -910,6 +914,11 @@ public class ProcessLog {
                 assert false : key + " unexpected";
                 break;
 
+            case ADVISE_BEFORE_BYTECODE:
+                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+                adviceRecord.setPackedValue(Integer.parseInt(arg3));
+                break;
+
             default:
                 throw new TraceException("unimplemented key: " + key);
         }
@@ -928,7 +937,7 @@ public class ProcessLog {
         AdviceRecord adviceRecord = createAdviceRecordAndSetTimeAndThread(rt, adviceMode);
         switch (valueKey.charAt(0)) {
             case OBJ_VALUE: {
-                ObjectRecord or = value.equals("0") ? null : getTraceRecord(value);
+                ObjectRecord or = getTraceRecord(value);
                 switch (rt) {
                     case PutFieldObject:
                     case PutStaticObject:
@@ -1141,6 +1150,9 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_RETURN:
                 return Return;
+
+            case ADVISE_BEFORE_BYTECODE:
+                return Bytecode;
 
             case ADVISE_AFTER_MULTI_NEW_ARRAY:
                 // These are all value based so do not have a simple static mapping
