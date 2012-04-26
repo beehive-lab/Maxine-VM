@@ -25,7 +25,7 @@ package com.oracle.max.vm.ext.vma.run.java;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.oracle.max.vm.ext.vma.runtime.*;
-import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.*;
 import com.sun.max.memory.VirtualMemory;
 import com.sun.max.program.ProgramError;
 import com.sun.max.unsafe.*;
@@ -80,20 +80,30 @@ public class VMAJavaRunScheme extends JavaRunScheme {
     private static boolean advising;
 
     /**
-     * The runtime specified {@link VMAdviceHandler}.
+     * The build time specified {@link VMAdviceHandler}.
      */
+    @CONSTANT_WHEN_NOT_ZERO
     private static VMAdviceHandler adviceHandler;
+
+    /**
+     * This property must be specified at boot image time.
+     */
+    private static final String VMA_HANDLER_CLASS_PROPERTY = "max.vma.handler";
+    private static final String DEFAULT_HANDLER_CLASS = "com.oracle.max.vm.ext.vma.runtime.SyncLogVMAdviceHandler";
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
             try {
-                adviceHandler = (VMAdviceHandler) Class.forName(VMAOptions.getHandlerClassName()).newInstance();
+                String handlerClassName = System.getProperty(VMA_HANDLER_CLASS_PROPERTY);
+                if (handlerClassName == null) {
+                    handlerClassName = DEFAULT_HANDLER_CLASS;
+                }
+                adviceHandler = (VMAdviceHandler) Class.forName(handlerClassName).newInstance();
             } catch (Throwable ex) {
-                ProgramError.unexpected("VMA initialization failed", ex);
+                ProgramError.unexpected("failed to instantiate VMA advice handler class: ", ex);
             }
-
         }
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
