@@ -42,6 +42,11 @@ public final class TeleCardTableRSet extends TeleTupleObject {
      */
     final CardTable cardTable = new CardTable();
 
+    /**
+     * VM memory region backing the card table remembered set.
+     */
+    final TeleMemoryRegion rsetMemory;
+
     private final Object localStatsPrinter = new Object() {
 
         @Override
@@ -52,17 +57,20 @@ public final class TeleCardTableRSet extends TeleTupleObject {
 
     public TeleCardTableRSet(TeleVM vm, Reference cardTableRSetReference) {
         super(vm, cardTableRSetReference);
+        rsetMemory = (TeleMemoryRegion) objects().makeTeleObject(fields().CardTableRSet_cardTableMemory.readReference(getReference()));
     }
 
     public int cardIndex(Address address) {
         return cardTable.tableEntryIndex(address);
     }
 
+
     private boolean updateCardTableCache() {
         try {
             Reference cardTableReference = fields().CardTableRSet_cardTable.readReference(getReference());
             Address tableAddress  = fields().Log2RegionToByteMapTable_tableAddress.readWord(cardTableReference).asAddress();
-            if (tableAddress.equals(cardTable.tableAddress())) {
+            final Address oldTableAddress = cardTable.tableAddress();
+            if (tableAddress.equals(oldTableAddress)) {
                 return true;
             }
             Address coveredAreaStart = fields().Log2RegionToByteMapTable_coveredAreaStart.readWord(cardTableReference).asAddress();
@@ -84,5 +92,9 @@ public final class TeleCardTableRSet extends TeleTupleObject {
         }
         statsPrinter.addStat(localStatsPrinter);
         return updateCardTableCache();
+    }
+
+    public TeleMemoryRegion getTeleMemoryRegion() {
+        return rsetMemory;
     }
 }

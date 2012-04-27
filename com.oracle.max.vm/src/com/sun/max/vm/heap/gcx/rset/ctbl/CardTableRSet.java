@@ -91,6 +91,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
      * Contiguous regions of virtual memory holding the card table data.
      * Mostly used to feed the inspector.
      */
+    @INSPECTED
     final MemoryRegion cardTableMemory;
 
     /**

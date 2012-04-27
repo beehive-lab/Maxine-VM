@@ -48,7 +48,14 @@ import com.sun.max.vm.reference.*;
 */
 public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
     private static final int TRACE_VALUE = 1;
-    private static final int MAX_VM_HEAP_REGIONS = 3;
+    /**
+     * Number of contiguous VM regions for dynamic heap space.
+     */
+    private static final int NUM_DYN_HEAP_REGIONS = 3;
+    /**
+     * Total number of VM regions for the heap. This adds to the regions of the dynamic heap the region for the remembered set (card table and FOT).
+     */
+    private static final int MAX_VM_HEAP_REGIONS = NUM_DYN_HEAP_REGIONS + 1;
     private TeleGenSSHeapScheme scheme;
     private final List<VmHeapRegion> heapRegions = new ArrayList<VmHeapRegion>(MAX_VM_HEAP_REGIONS);
     private final TimedTrace heapUpdateTracer;
@@ -150,9 +157,9 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
 
     }
 
-    private void addHeapRegion(TeleContiguousHeapSpace contiguousHeapSpace) {
-        if (contiguousHeapSpace != null) {
-            final VmHeapRegion vmHeapRegion = new VmHeapRegion(vm(), contiguousHeapSpace, this);
+    private void addHeapRegion(TeleMemoryRegion memoryRegion) {
+        if (memoryRegion != null) {
+            final VmHeapRegion vmHeapRegion = new VmHeapRegion(vm(), memoryRegion, this);
             heapRegions.add(vmHeapRegion);
             vm().addressSpace().add(vmHeapRegion.memoryRegion());
         }
@@ -172,6 +179,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             oldTo = scheme.readTeleOldFromSpace();
             addHeapRegion(oldTo);
         }
+
         if (cardTableRSet == null) {
             cardTableRSet = scheme.readTeleCardTableRSet();
         }
@@ -281,7 +289,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         if (scheme == null) {
             return;
         }
-        // FIXME: will need to take region(s) of the card table RSet into account
         if (heapRegions.size() < MAX_VM_HEAP_REGIONS) {
             initializeHeapRegions();
             if (heapRegions.size() < MAX_VM_HEAP_REGIONS) {

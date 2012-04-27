@@ -119,11 +119,19 @@ public class Log2RegionToByteMapTable {
 
     /**
      * Inspector support.
-     * @return address of the card table addres
+     * @return address of the card table address
      */
     @HOSTED_ONLY
     public Address tableAddress() {
         return tableAddress;
+    }
+    /**
+     * Inspector support.
+     * @return total size of the backing storage for the byte map.
+     */
+    @HOSTED_ONLY
+    public long size() {
+        return tableSize(coveredAreaEnd.minus(coveredAreaStart).asSize()).toLong();
     }
 
     void initialize(Address coveredAreaStart, Size coveredAreaSize, Address storageArea) {
