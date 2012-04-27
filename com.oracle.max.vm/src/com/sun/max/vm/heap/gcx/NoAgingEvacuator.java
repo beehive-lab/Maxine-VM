@@ -104,6 +104,7 @@ public final class NoAgingEvacuator extends Evacuator {
     /**
      * Mark to keep track of survivor ranges.
      */
+    @INSPECTED
     private Address allocatedRangeStart;
 
     /**

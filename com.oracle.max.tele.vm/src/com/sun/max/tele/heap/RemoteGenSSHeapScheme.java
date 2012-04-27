@@ -81,6 +81,11 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     private TeleBaseAtomicBumpPointerAllocator oldAllocator;
 
     /**
+     * Allocation mark in the to space of the old generation at last {@link #ANALYZING} phase.
+     */
+    Address firstEvacuatedMark = Address.zero();
+
+    /**
      * Map VM addresses in the nursery to {@link GenSSRemoteReference} that refer to the object whose origin is at that location.
      */
     private WeakRemoteReferenceMap<GenSSRemoteReference> nurseryRefMap = new WeakRemoteReferenceMap<GenSSRemoteReference>();
@@ -140,7 +145,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                 } catch (MaxVMBusyException e) {
                     TeleError.unexpected(tracePrefix() + "Unable to add GC Phase Listener");
                 }
-
             }
         });
 
@@ -299,6 +303,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             oldFrom.updateCache(epoch);
             nurseryAllocator.updateCache(epoch);
             oldAllocator.updateCache(epoch);
+            cardTableRSet.updateCache(epoch);
 
             /*
              * For this collector, we only need an overall review of reference state when we're actually collecting.
@@ -312,6 +317,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                     assert lastAnalyzingPhaseCount == gcStartedCount() - 1;
                     assert oldFromSpaceRefMap.isEmpty();
                     assert promotedRefMap.isEmpty();
+                    firstEvacuatedMark = scheme.firstEvacuatedMark();
                     if (isFullGC()) {
                         final WeakRemoteReferenceMap<GenSSRemoteReference> tempRefMap = oldToSpaceRefMap;
                         oldFromSpaceRefMap = oldToSpaceRefMap;
@@ -414,29 +420,133 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         GenSSRemoteReference ref = null;
         switch(phase()) {
             case MUTATING:
-                ref = nurseryRefMap.get(origin);
-                if (ref == null) {
-                    ref = oldToSpaceRefMap.get(origin);
-                }
-                if (ref != null) {
-                    // A reference to the object is already in one of the live map.
-                    TeleError.check(ref.status().isLive());
+                if (nurseryAllocator.containsInAllocated(origin)) {
+                    ref = nurseryRefMap.get(origin);
+                    if (ref != null) {
+                        // A reference to the object is already in one of the live map.
+                        TeleError.check(ref.status().isLive());
+                    } else {
+                        ref = GenSSRemoteReference.createLive(this, origin, true);
+                        nurseryRefMap.put(origin, ref);
+                    }
                     return ref;
                 }
-                if (nurseryAllocator.containsInAllocated(origin)) {
-                }
+                // Fall-off and check live old objects. Same logic as for the reclaiming phase for old objects.
+            case RECLAIMING:
+                // There are no young object while in the reclaiming phase.
                 if (oldAllocator.containsInAllocated(origin)) {
-
+                    ref = oldToSpaceRefMap.get(origin);
+                    if (ref != null) {
+                        // A reference to the object is already in one of the live map.
+                        TeleError.check(ref.status().isLive());
+                    } else {
+                        ref = GenSSRemoteReference.createLive(this, origin, false);
+                        oldToSpaceRefMap.put(origin, ref);
+                    }
+                    return ref;
                 }
                 break;
             case ANALYZING:
-            case RECLAIMING:
-
+                if (oldAllocator.containsInAllocated(origin)) {
+                    ref = oldToSpaceRefMap.get(origin);
+                    if (ref != null) {
+                        // A reference to the object is already in one of the live map.
+                        TeleError.check(ref.status().isLive());
+                        TeleError.check(ref.isForwarded() || (origin.lessThan(firstEvacuatedMark) && !isFullGC()));
+                    } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                        /*
+                         * A newly discovered object in the old To-Space. If this is the analyzing phase of a full GC, the object must be a
+                         * copy of a forwarded object. However, if the analyzing phase is for a minor collection, the object may be a live old object.
+                         * There is no need to look in either the old From-space or the nursery maps; if the origin of
+                         * the original copy had been discovered, then it would already have been added to both the To-space
+                         * old From-Space and old To-Space maps.  Add a new reference to the To-Space map.
+                         */
+                        if (isFullGC()) {
+                            ref = GenSSRemoteReference.createOldTo(this, origin, false);
+                            oldToSpaceRefMap.put(origin, ref);
+                        } else if  (origin.greaterEqual(firstEvacuatedMark)) {
+                            ref = GenSSRemoteReference.createOldTo(this, origin, true);
+                            promotedRefMap.put(origin, ref);
+                        } else {
+                            ref = GenSSRemoteReference.createLive(this, origin, false);
+                            oldToSpaceRefMap.put(origin, ref);
+                        }
+                    }
+                } else if (isFullGC()) {
+                    if (oldFrom.containsInAllocated(origin)) {
+                        ref = makeForwardedReference(origin, oldFromSpaceRefMap, oldToSpaceRefMap, false);
+                    }
+                } else if (nursery.containsInAllocated(origin)) {
+                    ref = makeForwardedReference(origin, nurseryRefMap, promotedRefMap, true);
+                }
                 break;
             default:
                 TeleError.unknownCase();
         }
-        return ref == null ? vm().referenceManager().zeroReference() : ref;
+        return  ref == null ? vm().referenceManager().zeroReference() : ref;
+    }
+
+    /**
+     * Implement the logic for making a forwarding reference. The logic is the same for minor and full collection and is parameterized with
+     * just the from and to space reference maps used, the heap space used to
+     * @param origin
+     * @param fromRefMap
+     * @param toRefMap
+     * @param isMinorCollection
+     * @return
+     */
+    private GenSSRemoteReference makeForwardedReference(
+                    Address origin,
+                    WeakRemoteReferenceMap<GenSSRemoteReference> fromRefMap,
+                    WeakRemoteReferenceMap<GenSSRemoteReference> toRefMap,
+                    boolean isMinorCollection) {
+        final boolean isForwarder = objects().hasForwardingAddressUnsafe(origin);
+        GenSSRemoteReference ref = null;
+        ref = fromRefMap.get(origin);
+        if (ref != null) {
+            // A reference to the object is already in the nursery map. Check if it was forwarded and if so, update the ref and maps accordingly.
+            if (!ref.isForwarded() && isForwarder) {
+                final Address toOrigin = objects().getForwardingAddressUnsafe(origin);
+                ref.addToOrigin(toOrigin, isMinorCollection);
+                toRefMap.put(toOrigin, ref);
+            }
+        } else {
+            if (isForwarder) {
+                /*
+                 * A newly discovered object in the old From-Space that is forwarded.
+                 * Check to see if we already know about the copy in To-Space.
+                 */
+                final Address toOrigin = objects().getForwardingAddressUnsafe(origin);
+                ref = toRefMap.get(toOrigin);
+                if (ref != null) {
+                    /*
+                     * We already have a reference to the new copy of the forwarded object in the old To-Space:
+                     * transition state and add it to the From-Space map (indexed by what is now its
+                     * "fowardedFrom" address).
+                     */
+                    ref.addFromOrigin(origin, isMinorCollection);
+                    fromRefMap.put(toOrigin, ref);
+                } else if (objects().isPlausibleOriginUnsafe(toOrigin)) {
+                    /*
+                     * A newly discovered object that is forwarded, but whose new copy in To-Space we
+                     * haven't seen yet; add the reference to both the From-Space map, indexed by
+                     * "forwardedFrom" origin, and to the To-Space map, where it is indexed by its new
+                     * origin.
+                     */
+                    ref = GenSSRemoteReference.createFromTo(this, origin, toOrigin, isMinorCollection);
+                    fromRefMap.put(origin, ref);
+                    toRefMap.put(toOrigin, ref);
+                }
+            } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                /*
+                 * A newly discovered object in the old From-Space that is not forwarded; add
+                 * a new reference to the old From-Space map, where it is indexed by its origin in From-Space.
+                 */
+                ref = GenSSRemoteReference.createFromOnly(this, origin, isMinorCollection);
+                toRefMap.put(origin, ref);
+            }
+        }
+        return ref;
     }
 
     @Override
@@ -451,7 +561,11 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         }
 
         public TeleCardTableRSet readTeleCardTableRSet() {
-            return null;
+            final Reference cardTableRSetReference = fields().GenSSHeapScheme_cardTableRSet.readReference(getReference());
+            if (cardTableRSetReference.isZero()) {
+                return null;
+            }
+            return  (TeleCardTableRSet) objects().makeTeleObject(cardTableRSetReference);
         }
 
         public TeleContiguousHeapSpace readTeleYoungSpace() {
@@ -496,6 +610,14 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
 
         public int fullCollectionCount() {
             return fields().GenSSHeapScheme_fullCollectionCount.readInt(getReference());
+        }
+
+        /**
+         * Return the address of the first evacuated object of most recent collection.
+         * @return an address in the To-space of the old generation.
+         */
+        public Address firstEvacuatedMark() {
+            return  fields().NoAgingEvacuator_allocatedRangeStart.readWord(fields().GenSSHeapScheme_youngSpaceEvacuator.readReference(getReference())).asAddress();
         }
     }
 }

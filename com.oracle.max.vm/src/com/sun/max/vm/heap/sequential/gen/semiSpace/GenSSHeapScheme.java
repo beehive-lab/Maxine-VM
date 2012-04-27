@@ -199,6 +199,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     /**
      * Implementation of young space evacuation. Used by minor collection operations.
      */
+    @INSPECTED
     private final NoAgingEvacuator youngSpaceEvacuator;
 
     @INSPECTED
@@ -223,8 +224,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         CardSpaceAllocator<OldSpaceRefiller> tenuredAllocator =
             new CardSpaceAllocator<GenSSHeapScheme.OldSpaceRefiller>(new OldSpaceRefiller(), cardTableRSet);
 
-        youngSpace = new ContiguousAllocatingSpace<AtomicBumpPointerAllocator<YoungSpaceRefiller>>(nurseryAllocator);
-        oldSpace = new ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>>(tenuredAllocator);
+        youngSpace = new ContiguousAllocatingSpace<AtomicBumpPointerAllocator<YoungSpaceRefiller>>(nurseryAllocator, "Young Generation");
+        oldSpace = new ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>>(tenuredAllocator, "Old Generation");
         youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet);
         noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);

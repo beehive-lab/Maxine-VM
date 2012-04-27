@@ -23,6 +23,8 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.data.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.reference.*;
@@ -38,20 +40,49 @@ public final class TeleCardTableRSet extends TeleTupleObject {
      * Allow to re-use card table code for various card computations (e.g., card index to card table or heap address, heap address to card index,etc.)
      * These can then be used to fetch data off the real card table in the inspected VM.
      */
-    final CardTable cardTable;
+    final CardTable cardTable = new CardTable();
+
+    private final Object localStatsPrinter = new Object() {
+
+        @Override
+        public String toString() {
+            return "card table @" + cardTable.tableAddress() + "= [" + cardTable.coveredAreaStart().to0xHexString() + ", " + cardTable.coveredAreaEnd().to0xHexString() + "]";
+        }
+    };
 
     public TeleCardTableRSet(TeleVM vm, Reference cardTableRSetReference) {
         super(vm, cardTableRSetReference);
-        Reference cardTableReference = vm().fields().CardTableRSet_cardTable.readReference(cardTableRSetReference);
-        Address coveredAreaStart = vm().fields().Log2RegionToByteMapTable_coveredAreaStart.readWord(cardTableReference).asAddress();
-        Address coveredAreaEnd = vm().fields().Log2RegionToByteMapTable_coveredAreaEnd.readWord(cardTableReference).asAddress();
-        Address tableAddress  = vm().fields().Log2RegionToByteMapTable_tableAddress.readWord(cardTableReference).asAddress();
-        cardTable = new CardTable();
-        cardTable.initialize(coveredAreaStart, coveredAreaEnd, tableAddress);
     }
 
     public int cardIndex(Address address) {
         return cardTable.tableEntryIndex(address);
     }
 
+    private boolean updateCardTableCache() {
+        try {
+            Reference cardTableReference = fields().CardTableRSet_cardTable.readReference(getReference());
+            Address tableAddress  = fields().Log2RegionToByteMapTable_tableAddress.readWord(cardTableReference).asAddress();
+            if (tableAddress.equals(cardTable.tableAddress())) {
+                return true;
+            }
+            Address coveredAreaStart = fields().Log2RegionToByteMapTable_coveredAreaStart.readWord(cardTableReference).asAddress();
+            Address coveredAreaEnd = fields().Log2RegionToByteMapTable_coveredAreaEnd.readWord(cardTableReference).asAddress();
+            cardTable.initialize(coveredAreaStart, coveredAreaEnd, tableAddress);
+        } catch (DataIOError dataIOError) {
+            // No update; data read failed for some reason other than VM availability
+            TeleWarning.message("TeleContiguousHeapSpace: ", dataIOError);
+            dataIOError.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        if (!super.updateObjectCache(epoch, statsPrinter)) {
+            return false;
+        }
+        statsPrinter.addStat(localStatsPrinter);
+        return updateCardTableCache();
+    }
 }

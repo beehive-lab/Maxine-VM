@@ -22,8 +22,11 @@
  */
 package com.sun.max.tele.heap;
 
+import java.io.*;
+import java.text.*;
 import java.util.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
@@ -56,6 +59,26 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
 
     protected AbstractRemoteHeapScheme(TeleVM vm) {
         super(vm);
+    }
+
+    protected void printObjectSessionStatsHeader(PrintStream printStream, int indent, boolean verbose, int totalObjectRefsMapped) {
+        final NumberFormat formatter = NumberFormat.getInstance();
+        // Line 0
+        String indentation = Strings.times(' ', indent);
+        final StringBuilder sb0 = new StringBuilder();
+        sb0.append("Dynamic Heap:");
+        if (verbose) {
+            sb0.append("  VMScheme=").append(vm().heapScheme().name());
+        }
+        printStream.println(indentation + sb0.toString());
+        // increase indentation
+        indentation += Strings.times(' ', 4);
+        // Line 1
+        final StringBuilder sb1 = new StringBuilder();
+        sb1.append("phase=").append(phase().label());
+        sb1.append(", collections completed=").append(formatter.format(gcCompletedCount));
+        sb1.append(", total object refs mapped=").append(formatter.format(totalObjectRefsMapped));
+        printStream.println(indentation + sb1.toString());
     }
 
     public Class schemeClass() {

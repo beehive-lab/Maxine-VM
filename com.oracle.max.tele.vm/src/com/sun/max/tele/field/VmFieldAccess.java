@@ -163,6 +163,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceIntFieldAccess GenSSHeapScheme_fullCollectionCount = new TeleInstanceIntFieldAccess(GenSSHeapScheme.class, "fullCollectionCount");
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "oldSpace", ContiguousSemiSpace.class);
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "youngSpace", ContiguousAllocatingSpace.class);
+    public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_youngSpaceEvacuator = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "youngSpaceEvacuator", NoAgingEvacuator.class);
     public final TeleStaticReferenceFieldAccess Heap_HEAP_BOOT_NAME = new TeleStaticReferenceFieldAccess(Heap.class, "HEAP_BOOT_NAME", String.class);
     public final TeleStaticReferenceFieldAccess Heap_bootHeapRegion = new TeleStaticReferenceFieldAccess(Heap.class, "bootHeapRegion", BootHeapRegion.class);
     public final TeleInstanceReferenceFieldAccess HeapFreeChunk_next = new TeleInstanceReferenceFieldAccess(HeapFreeChunk.class, "next", HeapFreeChunk.class);
@@ -211,6 +212,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess MemoryRegion_start = new TeleInstanceWordFieldAccess(MemoryRegion.class, "start");
     public final TeleInstanceWordFieldAccess JVMTIRawMonitor$Monitor_name = new TeleInstanceWordFieldAccess(JVMTIRawMonitor.Monitor.class, "name");
     public final TeleInstanceReferenceFieldAccess JVMTIRawMonitor$Monitor_owner = new TeleInstanceReferenceFieldAccess(JVMTIRawMonitor.Monitor.class, "owner", VmThread.class);
+    public final TeleInstanceWordFieldAccess NoAgingEvacuator_allocatedRangeStart = new TeleInstanceWordFieldAccess(NoAgingEvacuator.class, "allocatedRangeStart");
     public final TeleInstanceReferenceFieldAccess NoAgingNursery_allocator = new TeleInstanceReferenceFieldAccess(NoAgingNursery.class, "allocator", AtomicBumpPointerAllocator.class);
     public final TeleInstanceReferenceFieldAccess ObjectReferenceValue_value = new TeleInstanceReferenceFieldAccess(ObjectReferenceValue.class, "value", Object.class);
     public final TeleInstanceIntFieldAccess VMLogArray$Record0_header = new TeleInstanceIntFieldAccess(VMLogArray.Record0.class, "header");
