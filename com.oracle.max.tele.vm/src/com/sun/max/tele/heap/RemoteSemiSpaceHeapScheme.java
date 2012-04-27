@@ -704,28 +704,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         if (!heapRegions.isEmpty()) {
             int toSpaceRefs = toSpaceRefMap.values().size();
             int fromSpaceRefs = fromSpaceRefMap.values().size();
-
-            final NumberFormat formatter = NumberFormat.getInstance();
-
-            // Line 0
-            String indentation = Strings.times(' ', indent);
-            final StringBuilder sb0 = new StringBuilder();
-            sb0.append("Dynamic Heap:");
-            if (verbose) {
-                sb0.append("  VMScheme=").append(vm().heapScheme().name());
-            }
-            printStream.println(indentation + sb0.toString());
-
-            // increase indentation
-            indentation += Strings.times(' ', 4);
-
-            // Line 1
-            final StringBuilder sb1 = new StringBuilder();
-            sb1.append("phase=").append(phase().label());
-            sb1.append(", collections completed=").append(formatter.format(gcCompletedCount));
-            sb1.append(", total object refs mapped=").append(formatter.format(toSpaceRefs + fromSpaceRefs));
-            printStream.println(indentation + sb1.toString());
-
+            printObjectSessionStatsHeader(printStream, indent, verbose, toSpaceRefs + fromSpaceRefs);
             printRegionObjectStats(printStream, indent + 4, verbose, toSpaceMemoryRegion, toSpaceRefMap);
             printRegionObjectStats(printStream, indent + 4, verbose, fromSpaceMemoryRegion, fromSpaceRefMap);
         }

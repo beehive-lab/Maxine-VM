@@ -55,13 +55,13 @@ public class Log2RegionToByteMapTable {
      * This address must be aligned to size of the region covered by a single byte.
      */
     @INSPECTED
-    private Address coveredAreaStart;
+    private Address coveredAreaStart = Pointer.zero();
     /**
      * End of the contiguous range of virtual memory covered by this byte map table.
      * This address must be aligned to size of the region covered by a single byte.
     */
     @INSPECTED
-    private Address coveredAreaEnd;
+    private Address coveredAreaEnd = Pointer.zero();
 
     /**
      * Table containing a single byte of information per region.
@@ -72,11 +72,11 @@ public class Log2RegionToByteMapTable {
      * Address of the first element of the table.
      */
     @INSPECTED
-    Pointer tableAddress;
+    Pointer tableAddress = Pointer.zero();
     /**
      * Address of the first element of the table biased by the covered area start.
      */
-    Pointer biasedTableAddress;
+    Pointer biasedTableAddress = Pointer.zero();
 
     Log2RegionToByteMapTable(int log2RangeSize) {
         assert log2RangeSize < 32 : "size of contiguous range too large";
@@ -109,12 +109,21 @@ public class Log2RegionToByteMapTable {
         initialize(coveredAreaStart, coveredAreaSize, new byte[tableLength(coveredAreaSize)], noWriteBarrier);
     }
 
-    Address coveredAreaStart() {
+    public Address coveredAreaStart() {
         return coveredAreaStart;
     }
 
-    Address coveredAreaEnd() {
+    public Address coveredAreaEnd() {
         return coveredAreaEnd;
+    }
+
+    /**
+     * Inspector support.
+     * @return address of the card table addres
+     */
+    @HOSTED_ONLY
+    public Address tableAddress() {
+        return tableAddress;
     }
 
     void initialize(Address coveredAreaStart, Size coveredAreaSize, Address storageArea) {

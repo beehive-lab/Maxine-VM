@@ -40,8 +40,9 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     @INSPECTED
     protected T allocator;
 
-    ContiguousAllocatingSpace(T allocator) {
+    ContiguousAllocatingSpace(T allocator, String name) {
         this.allocator = allocator;
+        this.space = new ContiguousHeapSpace(name);
     }
 
     public T allocator() {
