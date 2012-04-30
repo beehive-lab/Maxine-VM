@@ -32,8 +32,10 @@ import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.tele.*;
 
@@ -43,6 +45,16 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
     protected HeapPhase phase = HeapPhase.MUTATING;
     protected long gcStartedCount = 0;
     protected long gcCompletedCount = 0;
+
+    /**
+     * The absolute address of the dynamic hub for the class {@link HeapFreeChunk}, stored
+     * on the assumption that it is in the boot heap and never changes.  This gets used for
+     * quick testing on possible free space chunk origins.
+     * Remote heap scheme making use of HeapFreeChunk should use {@link #updateHeapFreeChunkHubOrigin()} to
+     * initialize this field.
+     */
+    protected Address heapFreeChunkHubOrigin = Address.zero();
+
     /**
      * A printer for statistics at the end of each update.
      */
@@ -133,6 +145,25 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
     protected long gcStartedCount() {
         return gcStartedCount;
     }
+
+    protected void updateHeapFreeChunkHubOrigin() {
+        if (heapFreeChunkHubOrigin.isZero()) {
+            // Assume this never changes, once located.
+            final TeleClassActor hfcClassActor = classes().findTeleClassActor(HeapFreeChunk.class);
+            if (hfcClassActor != null) {
+                final TeleDynamicHub teleDynamicHub = hfcClassActor.getTeleDynamicHub();
+                if (teleDynamicHub != null) {
+                    heapFreeChunkHubOrigin = teleDynamicHub.origin();
+                }
+            }
+        }
+    }
+
+    protected boolean isHeapFreeChunkOrigin(Address origin) throws TeleError {
+        final Address hubOrigin = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(origin)).asAddress();
+        return heapFreeChunkHubOrigin.isNotZero() && hubOrigin.equals(heapFreeChunkHubOrigin);
+    }
+
 
     // TODO (mlvdv)  Update; won't work now; important for attach mode
 

@@ -28,6 +28,7 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * A manager for remote references to objects allocated in one or more
