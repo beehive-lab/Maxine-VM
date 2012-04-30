@@ -473,6 +473,15 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     }
 
     /**
+     * Return the address where a forwarding pointer is stored within the specified tele object.
+     * @param teleObject
+     * @return Address of a forwarding pointer.
+     */
+    public Address getForwardingPointerAddress(TeleObject teleObject) {
+        return teleObject.origin().plus(gcForwardingAddressOffset);
+    }
+
+    /**
      * Assumes the address is a valid object origin; returns whether the object holds a forwarding pointer.
      * <p>
      * <strong>Does not</strong> check whether the origin is a plausible object origin or even whether it is a
