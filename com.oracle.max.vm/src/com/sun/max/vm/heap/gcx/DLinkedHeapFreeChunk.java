@@ -100,7 +100,7 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
         return format(DLINKED_HEAP_FREE_CHUNK_HUB, deadSpace, numBytes, nextChunk, prevChunk);
     }
 
-    static DLinkedHeapFreeChunk format(Address deadSpace, Size numBytes) {
+    public static DLinkedHeapFreeChunk format(Address deadSpace, Size numBytes) {
         return format(deadSpace, numBytes, Address.zero(), Address.zero());
     }
 
