@@ -92,7 +92,8 @@ public class ContiguousHeapSpace extends MemoryRegion {
             FatalError.check(newCommittedEnd.lessEqual(end()), "Cannot grow beyond reserved space");
             FatalError.check(growth.isAligned(platform().pageSize), "Heap Growth must be page-aligned");
         }
-        if (VirtualMemory.commitMemory(committedEnd, growth, VirtualMemory.Type.HEAP)) {
+        final boolean committed = Heap.AvoidsAnonOperations || VirtualMemory.commitMemory(committedEnd, growth, VirtualMemory.Type.HEAP);
+        if (committed) {
             committedEnd = newCommittedEnd;
             return true;
         }

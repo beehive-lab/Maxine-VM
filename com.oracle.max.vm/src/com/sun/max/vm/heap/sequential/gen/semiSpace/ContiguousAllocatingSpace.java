@@ -50,8 +50,9 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     }
 
     public void initialize(Address start, Size maxSize, Size initialSize) {
-        space.reserve(start, maxSize);
+        space.setReserved(start, maxSize);
         space.growCommittedSpace(initialSize);
+        allocator.refill(start, initialSize);
     }
 
     @Override
@@ -82,9 +83,11 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     }
     @Override
     public Pointer allocateTLAB(Size size) {
-        // FIXME: the interface really want a HeapFreeChunk, but that shouldn't be necessary here. See how this can be changed
+        // FIXME: the interface wants a HeapFreeChunk, but that shouldn't be necessary here. See how this can be changed
         // based on the code for TLAB overflow handling.
-        return allocator.allocateCleared(size);
+        final Pointer tlab = allocator.allocateCleared(size);
+        HeapFreeChunk.format(tlab, size);
+        return tlab;
     }
 
     @Override

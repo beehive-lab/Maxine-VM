@@ -175,12 +175,12 @@ public class HeapFreeChunk {
     }
 
     @INLINE
-    static HeapFreeChunk format(Address deadSpace, Size numBytes) {
+    public static HeapFreeChunk format(Address deadSpace, Size numBytes) {
         return format(deadSpace, numBytes, Address.zero());
     }
 
     @INLINE
-    static HeapFreeChunk format(Address deadSpace, int numBytes) {
+    public static HeapFreeChunk format(Address deadSpace, int numBytes) {
         return format(deadSpace, Size.fromInt(numBytes), Address.zero());
     }
 

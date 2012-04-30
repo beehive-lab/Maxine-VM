@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
 import com.sun.max.annotate.*;
@@ -39,8 +41,6 @@ import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-
-import static com.sun.max.vm.VMConfiguration.*;
 /**
  * A heap scheme implementing a two-generations heap, where each generation implements a semi-space collector.
  *
@@ -189,6 +189,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      */
     private GenHeapSizingPolicy heapResizingPolicy;
 
+    /**
+     * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
+     */
+    private final GenCollection genCollection;
 
     /**
      * Card-table based remembered set for the nursery.
@@ -229,6 +233,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet);
         noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
+        genCollection = new GenCollection();
     }
 
     @Override
@@ -244,8 +249,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     @Override
     public boolean collectGarbage(Size requestedFreeSpace) {
-        // TODO Auto-generated method stub
-        return false;
+        genCollection.submit();
+        return true;
     }
 
     @Override
@@ -291,7 +296,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeOptCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
         final Address  firstUnusedByteAddress = endOfCodeRegion.alignUp(pageSize);
-
         try {
             // Use immortal memory for now.
             Heap.enableImmortalMemoryAllocation();
@@ -319,7 +323,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             }
             // Make the heap inspectable
             HeapScheme.Inspect.init(true);
-            HeapScheme.Inspect.notifyHeapRegions(youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
+            // HeapScheme.Inspect.notifyHeapRegions(youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
         } finally {
             Heap.disableImmortalMemoryAllocation();
         }

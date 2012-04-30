@@ -60,10 +60,11 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
     public void initialize(Address start, Size maxSize, Size initialSize) {
         Size semiSpaceMaxSize = maxSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
         Size semiSpaceInitSize = maxSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
-        space.reserve(start, semiSpaceMaxSize);
-        fromSpace.reserve(start.plus(semiSpaceMaxSize), semiSpaceMaxSize);
+        space.setReserved(start, semiSpaceMaxSize);
+        fromSpace.setReserved(start.plus(semiSpaceMaxSize), semiSpaceMaxSize);
         space.growCommittedSpace(semiSpaceInitSize);
         fromSpace.growCommittedSpace(semiSpaceInitSize);
+        allocator.refill(space.start(), space.committedSize());
     }
 
     void flipSpaces() {
