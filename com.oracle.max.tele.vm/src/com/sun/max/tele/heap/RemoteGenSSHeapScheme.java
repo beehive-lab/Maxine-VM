@@ -176,7 +176,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             addHeapRegion(oldFrom);
         }
         if (oldTo == null) {
-            oldTo = scheme.readTeleOldFromSpace();
+            oldTo = scheme.readTeleOldToSpace();
             addHeapRegion(oldTo);
         }
         if (cardTableRSet == null) {
