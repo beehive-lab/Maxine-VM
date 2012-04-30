@@ -154,7 +154,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                 }
             }
         });
-
     }
 
     private void addHeapRegion(TeleMemoryRegion memoryRegion) {
@@ -291,6 +290,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             return;
         }
         if (heapRegions.size() < MAX_VM_HEAP_REGIONS) {
+            updateHeapFreeChunkHubOrigin();
             initializeHeapRegions();
             if (heapRegions.size() < MAX_VM_HEAP_REGIONS) {
                 return;
@@ -380,8 +380,17 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     }
 
     @Override
+    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
+        TeleError.check(contains(origin), "Location is outside GenSS heap region");
+        return super.isHeapFreeChunkOrigin(origin);
+    }
+
+    @Override
     public boolean isObjectOrigin(Address origin) throws TeleError {
         TeleError.check(contains(origin), "Location is outside GenSSHeapScheme regions");
+        if (isHeapFreeChunkOrigin(origin)) {
+            return false;
+        }
         switch(phase()) {
             case MUTATING:
                 return  (oldAllocator.containsInAllocated(origin) || nurseryAllocator.containsInAllocated(origin)) && objects().isPlausibleOriginUnsafe(origin);
@@ -413,11 +422,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             default:
                 TeleError.unknownCase();
         }
-        return false;
-    }
-
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
-        // FIXME: do we use HeapFreeChunk for anything ?
         return false;
     }
 
@@ -456,6 +460,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                 break;
             case ANALYZING:
                 if (oldAllocator.containsInAllocated(origin)) {
+                    // FIXME: NEED TO FILTER PROMOTED REF TOO HERE !
                     ref = oldToSpaceRefMap.get(origin);
                     if (ref != null) {
                         // A reference to the object is already in one of the live map.
