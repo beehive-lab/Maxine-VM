@@ -24,6 +24,7 @@ package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.heap.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
@@ -45,7 +46,7 @@ public final class TeleCardTableRSet extends TeleTupleObject {
     /**
      * VM memory region backing the card table remembered set.
      */
-    final TeleMemoryRegion rsetMemory;
+    public final VmHeapRegion vmHeapRegion;
 
     private final Object localStatsPrinter = new Object() {
 
@@ -57,7 +58,8 @@ public final class TeleCardTableRSet extends TeleTupleObject {
 
     public TeleCardTableRSet(TeleVM vm, Reference cardTableRSetReference) {
         super(vm, cardTableRSetReference);
-        rsetMemory = (TeleMemoryRegion) objects().makeTeleObject(fields().CardTableRSet_cardTableMemory.readReference(getReference()));
+        final TeleMemoryRegion rsetMemory = (TeleMemoryRegion) objects().makeTeleObject(fields().CardTableRSet_cardTableMemory.readReference(getReference()));
+        vmHeapRegion = new VmHeapRegion(vm, rsetMemory);
     }
 
     public int cardIndex(Address address) {
@@ -95,6 +97,6 @@ public final class TeleCardTableRSet extends TeleTupleObject {
     }
 
     public TeleMemoryRegion getTeleMemoryRegion() {
-        return rsetMemory;
+        return (TeleMemoryRegion) vmHeapRegion.representation();
     }
 }

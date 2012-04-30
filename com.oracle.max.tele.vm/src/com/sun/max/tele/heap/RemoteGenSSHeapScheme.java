@@ -179,9 +179,10 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             oldTo = scheme.readTeleOldFromSpace();
             addHeapRegion(oldTo);
         }
-
         if (cardTableRSet == null) {
             cardTableRSet = scheme.readTeleCardTableRSet();
+            heapRegions.add(cardTableRSet.vmHeapRegion);
+            vm().addressSpace().add(cardTableRSet.vmHeapRegion.memoryRegion());
         }
         Trace.end(TRACE_VALUE, tracePrefix() + "looking for heap regions, " + heapRegions.size() + " found");
     }
