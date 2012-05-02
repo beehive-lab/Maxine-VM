@@ -27,6 +27,7 @@ import java.io.*;
 import com.sun.max.tele.*;
 
 
+// TODO (mlvdv) decide whether to expose this as MaxObjectHoldingRegion
 /**
  * A allocatable area in the VM that can contain objects.
  */
