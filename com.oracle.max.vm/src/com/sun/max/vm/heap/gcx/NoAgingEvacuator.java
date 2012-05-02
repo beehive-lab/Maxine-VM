@@ -187,6 +187,10 @@ public final class NoAgingEvacuator extends Evacuator {
         return evacuatedBytes;
     }
 
+    public Size freeSpace() {
+        return pend.minus(ptop).asSize();
+    }
+
     /**
      * Retire promotion buffer before a GC on the promotion space is performed.
      */
