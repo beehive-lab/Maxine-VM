@@ -159,7 +159,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess FreeHeapSpaceManager_committedHeapSpace = new TeleInstanceReferenceFieldAccess(FreeHeapSpaceManager.class, "committedHeapSpace", ContiguousHeapSpace.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_cardTableRSet = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "cardTableRSet", CardTableRSet.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "oldSpace", FirstFitMarkSweepSpace.class);
-    public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "youngSpace", NoAgingNursery.class);
+    public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "youngSpace", NoAgingRegionalizedNursery.class);
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_cardTableRSet = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "cardTableRSet", CardTableRSet.class);
     public final TeleInstanceIntFieldAccess GenSSHeapScheme_fullCollectionCount = new TeleInstanceIntFieldAccess(GenSSHeapScheme.class, "fullCollectionCount");
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "oldSpace", ContiguousSemiSpace.class);
@@ -214,7 +214,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess JVMTIRawMonitor$Monitor_name = new TeleInstanceWordFieldAccess(JVMTIRawMonitor.Monitor.class, "name");
     public final TeleInstanceReferenceFieldAccess JVMTIRawMonitor$Monitor_owner = new TeleInstanceReferenceFieldAccess(JVMTIRawMonitor.Monitor.class, "owner", VmThread.class);
     public final TeleInstanceWordFieldAccess NoAgingEvacuator_allocatedRangeStart = new TeleInstanceWordFieldAccess(NoAgingEvacuator.class, "allocatedRangeStart");
-    public final TeleInstanceReferenceFieldAccess NoAgingNursery_allocator = new TeleInstanceReferenceFieldAccess(NoAgingNursery.class, "allocator", AtomicBumpPointerAllocator.class);
+    public final TeleInstanceReferenceFieldAccess NoAgingNursery_allocator = new TeleInstanceReferenceFieldAccess(NoAgingRegionalizedNursery.class, "allocator", AtomicBumpPointerAllocator.class);
     public final TeleInstanceReferenceFieldAccess ObjectReferenceValue_value = new TeleInstanceReferenceFieldAccess(ObjectReferenceValue.class, "value", Object.class);
     public final TeleInstanceIntFieldAccess VMLogArray$Record0_header = new TeleInstanceIntFieldAccess(VMLogArray.Record0.class, "header");
     public final TeleInstanceWordFieldAccess VMLogArray$Record1_arg1 = new TeleInstanceWordFieldAccess(VMLogArray.Record1.class, "arg1");

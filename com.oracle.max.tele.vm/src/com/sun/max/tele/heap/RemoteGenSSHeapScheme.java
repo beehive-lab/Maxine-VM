@@ -459,38 +459,52 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                 }
                 break;
             case ANALYZING:
-                if (oldAllocator.containsInAllocated(origin)) {
-                    // FIXME: NEED TO FILTER PROMOTED REF TOO HERE !
-                    ref = oldToSpaceRefMap.get(origin);
-                    if (ref != null) {
-                        // A reference to the object is already in one of the live map.
-                        TeleError.check(ref.status().isLive());
-                        TeleError.check(ref.isForwarded() || (origin.lessThan(firstEvacuatedMark) && !isFullGC()));
-                    } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                if (isFullGC()) {
+                    if (oldAllocator.containsInAllocated(origin)) {
                         /*
-                         * A newly discovered object in the old To-Space. If this is the analyzing phase of a full GC, the object must be a
-                         * copy of a forwarded object. However, if the analyzing phase is for a minor collection, the object may be a live old object.
-                         * There is no need to look in either the old From-space or the nursery maps; if the origin of
-                         * the original copy had been discovered, then it would already have been added to both the To-space
-                         * old From-Space and old To-Space maps.  Add a new reference to the To-Space map.
+                         * Full GC. Nursery is empty, all objects in ToSpace are forwarded.
                          */
-                        if (isFullGC()) {
+                        ref = oldToSpaceRefMap.get(origin);
+                        if (ref != null) {
+                            // A reference to the object is already in one of the live map.
+                            TeleError.check(ref.status().isLive() && ref.isForwarded());
+                        } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                            /*
+                             * A newly discovered object in the old To-Space.  In the analyzing phase of a full GC, the object must be a
+                             * copy of a forwarded object.
+                             */
                             ref = GenSSRemoteReference.createOldTo(this, origin, false);
                             oldToSpaceRefMap.put(origin, ref);
-                        } else if  (origin.greaterEqual(firstEvacuatedMark)) {
-                            ref = GenSSRemoteReference.createOldTo(this, origin, true);
-                            promotedRefMap.put(origin, ref);
-                        } else {
-                            ref = GenSSRemoteReference.createLive(this, origin, false);
-                            oldToSpaceRefMap.put(origin, ref);
                         }
-                    }
-                } else if (isFullGC()) {
-                    if (oldFrom.containsInAllocated(origin)) {
+                    } else if (oldFrom.containsInAllocated(origin)) {
                         ref = makeForwardedReference(origin, oldFromSpaceRefMap, oldToSpaceRefMap, false);
                     }
-                } else if (nursery.containsInAllocated(origin)) {
-                    ref = makeForwardedReference(origin, nurseryRefMap, promotedRefMap, true);
+                } else {
+                    if (oldAllocator.containsInAllocated(origin)) {
+                        /*
+                         *  Minor collection: the object may be a live object, or a freshly promoted one. Check both maps depending of where the origin is.
+                         */
+                        if (origin.lessThan(firstEvacuatedMark)) {
+                            ref = promotedRefMap.get(origin);
+                            if (ref != null) {
+                                TeleError.check(ref.status().isLive() && ref.isForwarded());
+                            } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                                ref = GenSSRemoteReference.createOldTo(this, origin, true);
+                                promotedRefMap.put(origin, ref);
+                            }
+                        } else {
+                            ref = oldToSpaceRefMap.get(origin);
+                            if (ref != null) {
+                                // A reference to the object is already in one of the live map.
+                                TeleError.check(ref.status().isLive() && !ref.isForwarded());
+                            } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                                ref = GenSSRemoteReference.createLive(this, origin, false);
+                                oldToSpaceRefMap.put(origin, ref);
+                            }
+                        }
+                    } else if (nursery.containsInAllocated(origin)) {
+                        ref = makeForwardedReference(origin, nurseryRefMap, promotedRefMap, true);
+                    }
                 }
                 break;
             default:
