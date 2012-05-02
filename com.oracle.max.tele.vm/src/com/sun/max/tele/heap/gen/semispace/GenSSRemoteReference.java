@@ -481,7 +481,7 @@ public class GenSSRemoteReference extends RemoteReference {
     }
 
     public void analysisEnds(boolean minorCollection) {
-        refState.analysisBegins(this, minorCollection);
+        refState.analysisEnds(this, minorCollection);
     }
 
     public void addFromOrigin(Address fromOrigin, boolean minorCollection) {
