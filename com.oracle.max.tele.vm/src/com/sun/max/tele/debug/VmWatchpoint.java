@@ -536,7 +536,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             TeleError.check(teleObject.status().isNotDead(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
             this.teleObject = teleObject;
             this.offset = offset;
-            setRelocationWatchpoint(teleObject.origin());
+            setRelocationWatchpoint(teleObject);
         }
 
         /**
@@ -544,20 +544,21 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          * triggered, the watchpoint relocates this watchpoint as well as itself to the new location
          * identified by the forwarding pointer.
          *
-         * @param origin the object origin for this watchpoint
+         * @param teleObject the object origin for this watchpoint
          * @throws MaxWatchpointManager.MaxTooManyWatchpointsException
          */
-        private void setRelocationWatchpoint(final Pointer origin) throws MaxWatchpointManager.MaxTooManyWatchpointsException {
+        private void setRelocationWatchpoint(final TeleObject teleObject) throws MaxWatchpointManager.MaxTooManyWatchpointsException {
             final MaxVM vm = watchpointManager.vm();
-            final Pointer forwardPointerLocation = origin.plus(objects().gcForwardingPointerOffset());
-            final TeleFixedMemoryRegion forwardPointerRegion = new TeleFixedMemoryRegion(vm(), "Forwarding pointer for object relocation watchpoint", forwardPointerLocation, vm.platform().nBytesInWord());
+            final Address forwardingPointerAddress = objects().getForwardingPointerAddress(teleObject);
+            final TeleFixedMemoryRegion forwardPointerRegion = new TeleFixedMemoryRegion(vm(), "Forwarding pointer for object relocation watchpoint", forwardingPointerAddress, vm.platform().nBytesInWord());
             relocationWatchpoint = watchpointManager.createSystemWatchpoint("Object relocation watchpoint", forwardPointerRegion, relocationWatchpointSettings);
             relocationWatchpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
 
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
                     final TeleObjectWatchpoint thisWatchpoint = TeleObjectWatchpoint.this;
-                    if (objects().isObjectForwarded(origin)) {
-                        final TeleObject newTeleObject = objects().getForwardedObject(origin);
+                    final Address origin = teleObject.origin();
+                    if (objects().hasForwardingAddressUnsafe(origin)) {
+                        final TeleObject newTeleObject =  objects().findObjectAt(objects().getForwardingAddressUnsafe(origin));
                         if (newTeleObject == null) {
                             TeleWarning.message("Unlable to find relocated teleObject" + this);
                         } else {
@@ -568,7 +569,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
                             // Now replace this relocation watchpoint for the next time the objects gets moved.
                             thisWatchpoint.clearRelocationWatchpoint();
                             try {
-                                thisWatchpoint.setRelocationWatchpoint(newTeleObject.origin());
+                                thisWatchpoint.setRelocationWatchpoint(newTeleObject);
                             } catch (MaxWatchpointManager.MaxTooManyWatchpointsException maxTooManyWatchpointsException) {
                                 TeleError.unexpected(thisWatchpoint.tracePrefix() + " failed to relocate the relocation watchpoint for " + thisWatchpoint);
                             }

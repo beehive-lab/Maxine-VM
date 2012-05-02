@@ -193,13 +193,6 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     private TeleMSHeapScheme scheme;
 
     /**
-     * The absolute address of the dynamic hub for the class {@link HeapFreeChunk}, stored
-     * on the assumption that it is in the boot heap and never changes.  This gets used for
-     * quick testing on possible free space chunk origins.
-     */
-    private Address heapFreeChunkHubOrigin = Address.zero();
-
-    /**
      * The VM object that describes the location of the collector's Object-Space.
      */
     private TeleContiguousHeapSpace objectSpaceMemoryRegion = null;
@@ -288,18 +281,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     public void updateMemoryStatus(long epoch) {
 
         super.updateMemoryStatus(epoch);
-
-        if (heapFreeChunkHubOrigin.isZero()) {
-            // Assume this never changes, once located.
-            final TeleClassActor hfcClassActor = classes().findTeleClassActor(HeapFreeChunk.class);
-            if (hfcClassActor != null) {
-                final TeleDynamicHub teleDynamicHub = hfcClassActor.getTeleDynamicHub();
-                if (teleDynamicHub != null) {
-                    heapFreeChunkHubOrigin = teleDynamicHub.origin();
-                }
-            }
-        }
-
+        updateHeapFreeChunkHubOrigin();
         if (scheme == null) {
             // Can't do anything until we have the VM object that represents the scheme implementation
             return;
@@ -488,12 +470,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         return false;
     }
 
+    @Override
     public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
         TeleError.check(contains(origin), "Location is outside MS heap region");
-        final Address hubOrigin = Layout.readHubReferenceAsWord(origin.asPointer()).asAddress();
-        return heapFreeChunkHubOrigin.isNotZero() && hubOrigin.equals(heapFreeChunkHubOrigin);
+        return super.isHeapFreeChunkOrigin(origin);
     }
-
 
     // TODO (mlvdv) refine; only handles live object now, doesn't support collection.
     public RemoteReference makeReference(Address origin) throws TeleError {
@@ -546,7 +527,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
      * @param ref a reference, presumably once known to be the origin of a {@link HeapFreeChunk}
      * @return whether the reference points at a {@link HeapFreeChunk}
      */
-    private boolean isFreeSpace(MSRemoteReference ref) {
+    protected boolean isFreeSpace(RemoteReference ref) {
         final Address hubOrigin = Layout.readHubReferenceAsWord(ref).asAddress();
         return heapFreeChunkHubOrigin.isNotZero() && hubOrigin.equals(heapFreeChunkHubOrigin);
     }

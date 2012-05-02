@@ -62,13 +62,12 @@ public interface RemoteHeapScheme extends RemoteScheme {
     /**.
      * Reports on the currently known dynamic heap regions.
      * <p>
-     * These are assume to have already been reported as top level
+     * These are assumed to have already been reported as top level
      * allocations in the {@linkplain VmAddressSpace address space}.
      *
      * @return the list of dynamic heap regions currently known....
      */
     List<VmHeapRegion> heapRegions();
-
 
     // TODO (mlvdv) what to do if address not in heap?
     /**

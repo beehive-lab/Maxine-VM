@@ -73,4 +73,19 @@ public class TeleBaseAtomicBumpPointerAllocator extends TeleTupleObject {
         return top;
     }
 
+    /**
+     * Determines whether an address is in the allocated portion of the memory region served by the sub-class of {@link BaseAtomicBumpPointerAllocator}
+     * described by this {@link TeleBaseAtomicBumpPointerAllocator}.
+     */
+    public boolean containsInAllocated(Address address) {
+        return start.lessEqual(address) && top.greaterThan(address);
+    }
+
+    /**
+     * Determines whether an address is in the memory region the sub-class of {@link BaseAtomicBumpPointerAllocator}
+     * described by this {@link TeleBaseAtomicBumpPointerAllocator} allocates memory from.
+     */
+    public boolean contains(Address address) {
+        return start.lessEqual(address) && end.greaterThan(address);
+    }
 }

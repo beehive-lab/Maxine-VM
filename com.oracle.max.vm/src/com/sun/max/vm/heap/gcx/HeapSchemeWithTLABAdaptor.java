@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
@@ -108,13 +109,19 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
     abstract protected void allocateHeapAndGCStorage();
     abstract protected void reportTotalGCTimes();
 
+    private static final TimerMetric heapStartupTime = new TimerMetric(new SingleUseTimer(Clock.SYSTEM_MILLISECONDS));
+
+
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
+            heapStartupTime.start();
             allocateHeapAndGCStorage();
+            heapStartupTime.stop();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (Heap.logGCTime()) {
+                heapStartupTime.report("allocateHeapAndGCStorage", Log.out);
                 reportTotalGCTimes();
                 VirtualMemory.reportMetrics();
             }
