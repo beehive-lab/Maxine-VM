@@ -35,9 +35,9 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
      */
     private int semiSpaceAlignment;
 
-    ContiguousSemiSpace(T allocator) {
-        super(allocator);
-        fromSpace = new ContiguousHeapSpace();
+    ContiguousSemiSpace(T allocator, String name) {
+        super(allocator, name + "'s To Space");
+        fromSpace = new ContiguousHeapSpace(name + "'s From Space");
     }
 
     public void initializeAlignment(int semiSpaceAlignment) {
@@ -59,10 +59,12 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
     @Override
     public void initialize(Address start, Size maxSize, Size initialSize) {
         Size semiSpaceMaxSize = maxSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
-        space.reserve(start, semiSpaceMaxSize);
-        fromSpace.reserve(start.plus(semiSpaceMaxSize), semiSpaceMaxSize);
-        space.growCommittedSpace(initialSize);
-        fromSpace.growCommittedSpace(initialSize);
+        Size semiSpaceInitSize = maxSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
+        space.setReserved(start, semiSpaceMaxSize);
+        fromSpace.setReserved(start.plus(semiSpaceMaxSize), semiSpaceMaxSize);
+        space.growCommittedSpace(semiSpaceInitSize);
+        fromSpace.growCommittedSpace(semiSpaceInitSize);
+        allocator.refill(space.start(), space.committedSize());
     }
 
     void flipSpaces() {

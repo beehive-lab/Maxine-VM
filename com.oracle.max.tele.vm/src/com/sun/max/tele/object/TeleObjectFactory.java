@@ -133,6 +133,9 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      */
     private  final Map<Reference, WeakReference<TeleObject>> referenceToTeleObject = new HashMap<Reference, WeakReference<TeleObject>>();
 
+    private  final Map<Reference, WeakReference<TeleObject>> referenceToTeleHeapFreeChunk = new HashMap<Reference, WeakReference<TeleObject>>();
+    private int heapFreeChunksCount = 0;
+
     /**
      * Map: OID --> {@link TeleObject}.
      * <br>
@@ -469,15 +472,23 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             return null;
         }
         final WeakReference<TeleObject> teleObjectWeakReference = new WeakReference<TeleObject>(teleObject);
-        oidToTeleObject.put(teleObject.getOID(), teleObjectWeakReference);
-        //Log.println("OID: " + teleObject.getOID() + " ref: " + teleObject.getCurrentOrigin());
-        //assert oidToTeleObject.containsKey(teleObject.getOID());
+        if (remoteRef.status().isDead()) {
+            if (teleObject.classActorForObjectType().toJava() == HeapFreeChunk.class) {
+                referenceToTeleHeapFreeChunk.put(remoteRef, teleObjectWeakReference);
+                heapFreeChunksCount++;
+                teleObject.updateCache(vm().teleProcess().epoch());
+            }
+        } else {
+            oidToTeleObject.put(teleObject.getOID(), teleObjectWeakReference);
+            //Log.println("OID: " + teleObject.getOID() + " ref: " + teleObject.getCurrentOrigin());
+            //assert oidToTeleObject.containsKey(teleObject.getOID());
 
-        referenceToTeleObject.put(remoteRef,  teleObjectWeakReference);
-        teleObject.updateCache(vm().teleProcess().epoch());
+            referenceToTeleObject.put(remoteRef,  teleObjectWeakReference);
+            teleObject.updateCache(vm().teleProcess().epoch());
 
-        objectsCreatedCount++;
-        objectsCreatedPerType.get(teleObject.getClass()).value++;
+            objectsCreatedCount++;
+            objectsCreatedPerType.get(teleObject.getClass()).value++;
+        }
 
         return teleObject;
     }
