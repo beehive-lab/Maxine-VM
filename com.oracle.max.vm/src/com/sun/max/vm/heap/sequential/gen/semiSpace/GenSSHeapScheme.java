@@ -148,7 +148,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 verifyAfterEvacuation();
             }
             Size estimatedEvac = estimatedNextEvac();
-            Size freeSpace = oldSpace.freeSpace();
+            Size freeSpace = youngSpaceEvacuator.freeSpace().plus(oldSpace.freeSpace());
             if (estimatedEvac.greaterThan(freeSpace)) {
                 if (Heap.verbose()) {
                     Log.println("--Begin old geneneration collection");
