@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.runtime.*;
 
@@ -69,7 +70,7 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
 
     @Override
     public Size totalSpace() {
-        return space.committedSize();
+        return allocator.size();
     }
 
     @Override
@@ -92,7 +93,7 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
 
     @Override
     public boolean contains(Address address) {
-        return space.inCommittedSpace(address);
+        return allocator.inCurrentContiguousChunk(address);
     }
 
     @Override
@@ -102,6 +103,10 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
 
     @Override
     public void doAfterGC() {
+        if (MaxineVM.isDebug()) {
+            allocator.zap();
+        }
+        allocator.reset();
     }
 
     @Override
@@ -114,8 +119,6 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     }
     @Override
     public void visit(HeapSpaceRangeVisitor visitor) {
-        FatalError.unimplemented();
+        visitor.visitCells(allocator.start(), allocator.unsafeTop());
     }
-
-
 }

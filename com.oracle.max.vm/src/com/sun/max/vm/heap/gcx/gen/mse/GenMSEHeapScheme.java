@@ -85,7 +85,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
      * Young generation.
      */
     @INSPECTED
-    private final NoAgingNursery youngSpace;
+    private final NoAgingRegionalizedNursery youngSpace;
     /**
      * Tenured generation.
      */
@@ -129,7 +129,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         heapAccount = new HeapAccount<GenMSEHeapScheme>(this);
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(this));
         cardTableRSet = new CardTableRSet();
-        youngSpace = new NoAgingNursery(heapAccount, YOUNG.tag());
+        youngSpace = new NoAgingRegionalizedNursery(heapAccount, YOUNG.tag());
 
         final ChunkListAllocator<RegionChunkListRefillManager> tlabAllocator =
             new ChunkListAllocator<RegionChunkListRefillManager>(new RegionChunkListRefillManager(cardTableRSet));

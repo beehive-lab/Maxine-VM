@@ -84,6 +84,11 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     }
 
     @INLINE
+    public final Address unsafeTop() {
+        return top;
+    }
+
+    @INLINE
     public boolean inCurrentContiguousChunk(Address address) {
         return address.greaterEqual(start) && address.lessThan(end);
     }
@@ -108,11 +113,11 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         }
     }
 
-    final public void zap() {
+    public final void zap() {
         zap(hardLimit());
     }
 
-    final public void zapToTop() {
+    public final  void zapToTop() {
         zap(top);
     }
 
@@ -124,7 +129,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         }
     }
 
-    protected final void reset() {
+    public final void reset() {
         top = start;
     }
 
