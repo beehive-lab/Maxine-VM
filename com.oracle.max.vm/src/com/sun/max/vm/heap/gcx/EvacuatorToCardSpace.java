@@ -28,38 +28,31 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 /**
- * A heap space evacuator that evacuate objects from one space to another, without aging.
+ * A heap space evacuator that evacuate objects from one space to a card-table covered space.
  * Locations of references to evacuatees from other heap spaces are provided by a card table.
  *
  * TODO: replace direct cfotable updates with proper use of the DeadSpaceListener interface implemented by the card table.
  * (see all fixme comments below). This would make allocation in survivor space independent of details of the card table RSet.
  */
-public final class NoAgingEvacuator extends Evacuator {
-    public static boolean TraceDirtyCardWalk = false;
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceDirtyCardWalk", NoAgingEvacuator.class, "Trace Dirty Card Walk", Phase.PRISTINE);
-    }
-
+public class EvacuatorToCardSpace extends Evacuator {
     @FOLD
-    private static Size labHeadroom() {
+    private static Size evacuationBufferHeadroom() {
         return minObjectSize();
     }
 
     /**
      * Heap Space that is being evacuated.
      */
-    final HeapSpace fromSpace;
+    final EvacuatingSpace fromSpace;
 
     /**
      * Heap Space where the evacuated cells will relocate.
      */
-    final HeapSpace toSpace;
+    protected final HeapSpace toSpace;
 
     /**
      * Threshold below which refills of the thread local promotion space is automatic.
@@ -79,12 +72,12 @@ public final class NoAgingEvacuator extends Evacuator {
     /**
      * Remembered set of the from space.
      */
-    private final CardTableRSet rset;
+    protected final CardTableRSet rset;
 
     /**
      * Cached card first object table for fast access.
      */
-    private final CardFirstObjectTable cfoTable;
+    protected final CardFirstObjectTable cfoTable;
 
     /**
      * Amount of evacuated bytes.
@@ -94,12 +87,12 @@ public final class NoAgingEvacuator extends Evacuator {
    /**
      * Allocation hand to the evacuator's private promotion space.
      */
-    private Pointer ptop;
+    protected Pointer ptop;
 
     /***
      * End of the evacuator's private promotion space.
      */
-    private Pointer pend;
+    protected Pointer pend;
 
     /**
      * Next free space chunk in the evacuator's private promotion space.
@@ -128,58 +121,11 @@ public final class NoAgingEvacuator extends Evacuator {
      */
     private SurvivorRangesQueue survivorRanges;
 
-    /**
-     * Closure for evacuating cells in dirty card. A dirty card may overlap with an area currently used for allocation.
-     * Allocation is made via the evacuator's promotion lab, which may during iteration over dirty cards.
-     * To avoid maintaining parsability of the promotion lab at every allocation,
-     * we check if the visited cell boundary coincide with the first free bytes of the allocator, and skip it if it does.
-     *
-     * Note that the allocator that feed the promotion lab is kept in an iterable state.
-     */
-    final class DirtyCardEvacuationClosure implements CellVisitor, OverlappingCellVisitor,  HeapSpaceRangeVisitor {
-        private final CardTableRSet cachedRSet;
-
-        DirtyCardEvacuationClosure() {
-            cachedRSet = rset;
-        }
-        @Override
-        public Pointer visitCell(Pointer cell, Address start, Address end) {
-            if (cell.equals(ptop)) {
-                // Skip allocating area.
-                return pend;
-            }
-            return scanCellForEvacuatees(cell, start, end);
-        }
-
-        @Override
-        public Pointer visitCell(Pointer cell) {
-            if (cell.equals(ptop)) {
-                // Skip allocating area
-                return pend;
-            }
-            return scanCellForEvacuatees(cell);
-        }
-
-        public void visitCells(Address start, Address end) {
-            if (MaxineVM.isDebug() && dumper != null && HeapRangeDumper.DumpOnError) {
-                dumper.setRange(start, end);
-                FatalError.setOnVMOpError(dumper);
-            }
-            cachedRSet.cleanAndVisitCards(start, end, this);
-            if (MaxineVM.isDebug()) {
-                FatalError.setOnVMOpError(null);
-            }
-        }
-    }
-
-    private final DirtyCardEvacuationClosure heapSpaceDirtyCardClosure;
-
-    public NoAgingEvacuator(HeapSpace fromSpace, HeapSpace toSpace, CardTableRSet rset) {
+    public EvacuatorToCardSpace(EvacuatingSpace fromSpace, HeapSpace toSpace, CardTableRSet rset) {
         this.fromSpace = fromSpace;
         this.toSpace = toSpace;
         this.rset = rset;
         this.cfoTable = rset.cfoTable;
-        this.heapSpaceDirtyCardClosure = new DirtyCardEvacuationClosure();
     }
 
     /**
@@ -211,7 +157,7 @@ public final class NoAgingEvacuator extends Evacuator {
     @Override
     public void doBeforeGC() {
         if (MaxineVM.isDebug() && !ptop.isZero()) {
-            FatalError.check(HeapFreeChunk.isTailFreeChunk(ptop, pend.plus(labHeadroom())), "Evacuator's allocation buffer must be parseable");
+            FatalError.check(HeapFreeChunk.isTailFreeChunk(ptop, pend.plus(evacuationBufferHeadroom())), "Evacuator's allocation buffer must be parseable");
         }
         ptop = Pointer.zero();
         pend = Pointer.zero();
@@ -230,7 +176,7 @@ public final class NoAgingEvacuator extends Evacuator {
             pnextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
             rset.notifyRefill(chunk, chunkSize);
             ptop = chunk.asPointer();
-            pend = chunk.plus(chunkSize.minus(labHeadroom())).asPointer();
+            pend = chunk.plus(chunkSize.minus(evacuationBufferHeadroom())).asPointer();
         }
         allocatedRangeStart = ptop;
     }
@@ -239,7 +185,7 @@ public final class NoAgingEvacuator extends Evacuator {
     protected void doAfterEvacuation() {
         survivorRanges.clear();
         fromSpace.doAfterGC();
-        Pointer limit = pend.plus(labHeadroom());
+        Pointer limit = pend.plus(evacuationBufferHeadroom());
         Size spaceLeft = limit.minus(ptop).asSize();
         if (spaceLeft.lessThan(minRefillThreshold)) {
             // Will trigger refill in doBeforeEvacution on next GC
@@ -279,10 +225,10 @@ public final class NoAgingEvacuator extends Evacuator {
         }
     }
 
-    private Pointer refillOrAllocate(Size size) {
+    protected Pointer refillOrAllocate(Size size) {
         if (size.lessThan(minRefillThreshold)) {
             // check if request can fit in the remaining space when taking the headroom into account.
-            Pointer limit = pend.plus(labHeadroom());
+            Pointer limit = pend.plus(evacuationBufferHeadroom());
             if (ptop.plus(size).equals(limit)) {
                 // Does fit.
                 return ptop;
@@ -315,7 +261,7 @@ public final class NoAgingEvacuator extends Evacuator {
             Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
             rset.notifyRefill(chunk, chunkSize);
             ptop = chunk.asPointer();
-            pend = chunk.plus(chunkSize.minus(labHeadroom())).asPointer();
+            pend = chunk.plus(chunkSize.minus(evacuationBufferHeadroom())).asPointer();
             // Return zero to force loop back.
             return Pointer.zero();
         }
@@ -333,7 +279,7 @@ public final class NoAgingEvacuator extends Evacuator {
     }
 
     @Override
-    boolean inEvacuatedArea(Pointer origin) {
+    final boolean inEvacuatedArea(Pointer origin) {
         return fromSpace.contains(origin);
     }
 
@@ -367,7 +313,7 @@ public final class NoAgingEvacuator extends Evacuator {
      * @param cell a pointer to a cell
      * @return pointer to the end of the cell
      */
-    public Pointer visitCell(Pointer cell) {
+    public final Pointer visitCell(Pointer cell) {
         return scanCellForEvacuatees(cell);
     }
 
@@ -377,30 +323,17 @@ public final class NoAgingEvacuator extends Evacuator {
      * @param cell a pointer to a cell
      * @return pointer to the end of the cell
      */
-    public Pointer visitCell(Pointer cell, Address start, Address end) {
+    public final Pointer visitCell(Pointer cell, Address start, Address end) {
         return scanCellForEvacuatees(cell, start, end);
     }
 
     @Override
-    Pointer evacuate(Pointer fromOrigin) {
+    final Pointer evacuate(Pointer fromOrigin) {
         final Pointer fromCell = Layout.originToCell(fromOrigin);
         final Size size = Layout.size(fromOrigin);
         final Pointer toCell = allocate(size);
         Memory.copyBytes(fromCell, toCell, size);
         return toCell;
-    }
-
-    @Override
-    protected void evacuateFromRSets() {
-        // Visit the dirty cards of the old gen (i.e., the toSpace).
-        final boolean traceRSet = CardTableRSet.traceCardTableRSet();
-        if (MaxineVM.isDebug() && TraceDirtyCardWalk) {
-            CardTableRSet.setTraceCardTableRSet(true);
-        }
-        toSpace.visit(heapSpaceDirtyCardClosure);
-        if (MaxineVM.isDebug() && TraceDirtyCardWalk) {
-            CardTableRSet.setTraceCardTableRSet(traceRSet);
-        }
     }
 
     @Override

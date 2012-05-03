@@ -68,16 +68,21 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
     }
 
     void flipSpaces() {
+        String fromSpaceName = fromSpace.regionName();
+        String toSpaceName = space.regionName();
+        // Make allocator parsable before flipping semi-space.
+        allocator.doBeforeGC();
         ContiguousHeapSpace toSpace = fromSpace;
         fromSpace = space;
+        fromSpace.setRegionName(fromSpaceName);
         space = toSpace;
-        // FIXME
-        // allocator.refill(space.start(), space.committedSize());
+        space.setRegionName(toSpaceName);
+        // Now, refill the allocator with the new to Space.
+        allocator.refill(space.start(), space.committedSize());
     }
 
     @Override
     public void doBeforeGC() {
-        allocator.doBeforeGC();
     }
 
     @Override

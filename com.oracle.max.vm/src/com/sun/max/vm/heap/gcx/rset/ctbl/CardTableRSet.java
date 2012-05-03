@@ -342,6 +342,23 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
         Log.println(")");
     }
 
+
+    public void checkNoCardInState(Address start, Address end, CardState cardState) {
+        final int endOfRange = cardTable.tableEntryIndex(end);
+        int cardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, cardState);
+        if (cardIndex < endOfRange) {
+            Log.print("Unexpected state for card #");
+            Log.print(cardIndex);
+            Log.print(" [");
+            Log.print(cardTable.rangeStart(cardIndex));
+            Log.print(", ");
+            Log.print(cardTable.rangeStart(cardIndex + 1));
+            Log.println(" ]");
+            FatalError.breakpoint();
+            FatalError.crash("invariant violation");
+        }
+    }
+
     /**
      * Iterate over cells that overlap the specified region and comprises recorded reference locations.
      * @param start

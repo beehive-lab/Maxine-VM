@@ -105,7 +105,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Implementation of young space evacuation. Used by minor collection operations.
      */
-    private final NoAgingEvacuator youngSpaceEvacuator;
+    private final NoAgingNurseryEvacuator youngSpaceEvacuator;
 
     /**
      * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
@@ -120,7 +120,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Support for heap verification.
      */
-    private final NoYoungReferenceVerifier noYoungReferencesVerifier;
+    private final NoEvacuatedSpaceReferenceVerifier noYoungReferencesVerifier;
     private final FOTVerifier fotVerifier;
 
 
@@ -137,8 +137,8 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             new CardSpaceAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller(cardTableRSet), cardTableRSet);
 
         oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, tlabAllocator, overflowAllocator, true, cardTableRSet, OLD.tag());
-        youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet);
-        noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
+        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, cardTableRSet);
+        noYoungReferencesVerifier = new NoEvacuatedSpaceReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
     }
