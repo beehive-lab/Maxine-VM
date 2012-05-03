@@ -39,10 +39,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.VMFunctions.LatestUserDefinedLoaderVisitor;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -343,7 +343,7 @@ public class VMFunctionsSource {
 
     @VM_ENTRY_POINT
     private static void SetJVMTIEnv(Pointer env, Pointer jvmtiEnv) {
-        JVMTI.setJVMTIEnv(jvmtiEnv);
+        VMTI.handler().registerAgent(jvmtiEnv);
     }
 
     // Checkstyle: resume method name check

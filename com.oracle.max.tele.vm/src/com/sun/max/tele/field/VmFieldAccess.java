@@ -54,7 +54,7 @@ import com.sun.max.vm.heap.gcx.gen.mse.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jni.DynamicLinker.LibInfo;
-import com.sun.max.vm.jvmti.*;
+import com.sun.max.vm.ext.jvmti.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.java.*;

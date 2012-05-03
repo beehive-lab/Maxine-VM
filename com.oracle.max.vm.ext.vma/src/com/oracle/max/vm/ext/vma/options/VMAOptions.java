@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,6 +106,7 @@ public class VMAOptions {
     private static final BM[] METHOD_ENTRY_EXIT_BM = compose(METHOD_ENTRY_BM, METHOD_EXIT_BM);
 
     enum StdConfig {
+        NULL("null", new BM[0]),
         LIFETIME("lifetime", LIFETIME_BM),
         READ("read", READ_BM),
         WRITE("write", WRITE_BM),
@@ -348,7 +349,7 @@ public class VMAOptions {
     }
 
     @VMLoggerInterface
-    private static interface VMALoggerInterface {
+    private interface VMALoggerInterface {
         void bytecodeSetting(@VMLogParam(name = "bytecode") VMABytecodes bytecode,
                              @VMLogParam(name = "before") boolean before, @VMLogParam(name = "after") boolean after);
         void instrument(@VMLogParam(name = "methodActor") ClassMethodActor methodActor, @VMLogParam(name = "include") boolean include);
