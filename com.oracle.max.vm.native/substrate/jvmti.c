@@ -49,37 +49,37 @@ typedef void (JNICALL *ThreadObjectCall) (jvmtiEnv *jvmti_env, JNIEnv* jni_env, 
 
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeAgentOnLoad(JNIEnv *env, jclass c, Agent_OnLoad_t Agent_OnLoad, char *options) {
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeAgentOnLoad(JNIEnv *env, jclass c, Agent_OnLoad_t Agent_OnLoad, char *options) {
     return (*Agent_OnLoad)((JavaVM *) &main_vm, options, NULL);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeAgentOnUnLoad(JNIEnv *env, jclass c, Agent_OnUnLoad_t Agent_OnUnLoad) {
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeAgentOnUnLoad(JNIEnv *env, jclass c, Agent_OnUnLoad_t Agent_OnUnLoad) {
     return (*Agent_OnUnLoad)((JavaVM *) &main_vm);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeStartFunction(JNIEnv *env, jclass c, jvmtiStartFunction callback, jvmtiEnv *jvmti_env, void *arg) {
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeStartFunction(JNIEnv *env, jclass c, jvmtiStartFunction callback, jvmtiEnv *jvmti_env, void *arg) {
     (*callback)(jvmti_env, env, arg);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeStartFunctionNoArg(JNIEnv *env, jclass c, jvmtiStartFunctionNoArg callback, jvmtiEnv *jvmti_env) {
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeStartFunctionNoArg(JNIEnv *env, jclass c, jvmtiStartFunctionNoArg callback, jvmtiEnv *jvmti_env) {
     (*callback)(jvmti_env, env);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeGarbageCollectionCallback(JNIEnv *env, jclass c, GarbageCollectionCallback callback, jvmtiEnv *jvmti_env) {
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeGarbageCollectionCallback(JNIEnv *env, jclass c, GarbageCollectionCallback callback, jvmtiEnv *jvmti_env) {
     (*callback)(jvmti_env);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeThreadObjectCallback(JNIEnv *env, jclass c, ThreadObjectCall callback, jvmtiEnv *jvmti_env, jthread thread, jobject object) {
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeThreadObjectCallback(JNIEnv *env, jclass c, ThreadObjectCall callback, jvmtiEnv *jvmti_env, jthread thread, jobject object) {
     (*callback)(jvmti_env, env, thread, object);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeClassfileLoadHookCallback(JNIEnv *env, jclass c, jvmtiEventClassFileLoadHook callback, jvmtiEnv *jvmti_env,
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeClassfileLoadHookCallback(JNIEnv *env, jclass c, jvmtiEventClassFileLoadHook callback, jvmtiEnv *jvmti_env,
                 jclass klass, jobject loader, char *name, jobject protection_domain,
                 jint class_data_len,
                 const unsigned char* class_data,
@@ -89,7 +89,7 @@ Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeClassfileLoadHookCallback(JNIEnv 
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeFieldWatchCallback(JNIEnv *env, jclass c, void *callback,
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeFieldWatchCallback(JNIEnv *env, jclass c, void *callback,
                 jvmtiEnv *jvmti_env,
                 jthread thread, jmethodID method, jlocation location, jclass field_class,
                 jobject object, jfieldID field,
@@ -105,27 +105,27 @@ Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeFieldWatchCallback(JNIEnv *env, j
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeHeapIterationCallback(JNIEnv *env, jclass c, jvmtiHeapIterationCallback callback,
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeHeapIterationCallback(JNIEnv *env, jclass c, jvmtiHeapIterationCallback callback,
                 long class_tag, jlong size, jlong* tag_ptr, jint length, void* user_data) {
     return (*callback)(class_tag, size, tag_ptr, length, user_data);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeBreakpointCallback(JNIEnv *env, jclass c, jvmtiEventBreakpoint callback,
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeBreakpointCallback(JNIEnv *env, jclass c, jvmtiEventBreakpoint callback,
                 jvmtiEnv *jvmti_env, jthread thread,
                 jmethodID method, jint location) {
     (*callback)(jvmti_env, env, thread, method, location);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeFramePopCallback(JNIEnv *env, jclass c, jvmtiEventFramePop callback,
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeFramePopCallback(JNIEnv *env, jclass c, jvmtiEventFramePop callback,
                 jvmtiEnv *jvmti_env, jthread thread,
                 jmethodID method, jboolean wasPoppedByException) {
     (*callback)(jvmti_env, env, thread, method, wasPoppedByException);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeExceptionCallback(JNIEnv *env, jclass c, void *callbackX,
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeExceptionCallback(JNIEnv *env, jclass c, void *callbackX,
                 jvmtiEnv *jvmti_env, jboolean is_catch, jthread thread,
                 jmethodID method, jint location,
                 jobject throwable,

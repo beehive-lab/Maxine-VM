@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,12 +29,13 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.VirtualMemory;
 import com.sun.max.program.ProgramError;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.java.JavaRunScheme;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.thread.VmThreadLocal;
+import com.sun.max.vm.ti.*;
 
 /**
  * Variant of {@link JavaRunScheme} that supports the VMA framework.
@@ -42,6 +43,48 @@ import com.sun.max.vm.thread.VmThreadLocal;
  */
 
 public class VMAJavaRunScheme extends JavaRunScheme {
+    private static class VMTIHandler extends NullVMTIHandler {
+        @Override
+        public void threadStart(VmThread vmThread) {
+            threadStarting();
+        }
+
+        @Override
+        public void threadEnd(VmThread vmThread) {
+            threadTerminating();
+        }
+
+        @Override
+        public void beginGC() {
+            if (VMAJavaRunScheme.isAdvising()) {
+                VMAJavaRunScheme.disableAdvising();
+                VMAJavaRunScheme.adviceHandler().adviseBeforeGC();
+                VMAJavaRunScheme.enableAdvising();
+            }
+        }
+
+        @Override
+        public void endGC() {
+            if (VMAJavaRunScheme.isAdvising()) {
+                VMAJavaRunScheme.disableAdvising();
+                VMAJavaRunScheme.adviceHandler().adviseAfterGC();
+                VMAJavaRunScheme.enableAdvising();
+            }
+        }
+
+        @Override
+        public void objectSurviving(Pointer cell) {
+            /*
+             * This method is called in the VMOperation thread (which does not have
+             * tracking enabled). So there is no need or requirement to enable/disable.
+             */
+            if (VMAJavaRunScheme.isVMAdvising()) {
+                VMAJavaRunScheme.adviceHandler().gcSurvivor(cell);
+            }
+
+        }
+    }
+
     /**
      * A thread local variable that is used to support VM advising, in
      * particular to indicate whether tracking is currently enabled.
@@ -95,6 +138,7 @@ public class VMAJavaRunScheme extends JavaRunScheme {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+            VMTI.registerEventHandler(new VMTIHandler());
             try {
                 String handlerClassName = System.getProperty(VMA_HANDLER_CLASS_PROPERTY);
                 if (handlerClassName == null) {

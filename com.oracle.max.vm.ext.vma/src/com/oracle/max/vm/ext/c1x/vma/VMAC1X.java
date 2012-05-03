@@ -28,11 +28,8 @@ import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.cri.ci.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.type.*;
 
 /**
  * VMA variant that conditionally chooses {@link VMAT1X} during boot image builds.

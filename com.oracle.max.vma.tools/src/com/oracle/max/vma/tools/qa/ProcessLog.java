@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -831,8 +831,13 @@ public class ProcessLog {
                 break;
             }
 
-            case ADVISE_AFTER_GC: {
+            case ADVISE_BEFORE_GC: {
                 allocationEpoch.setEndTime(lastTime);
+                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+                break;
+            }
+
+            case ADVISE_AFTER_GC: {
                 prevAllocationEpoch = allocationEpoch;
                 allocationEpoch = new AllocationEpoch(lastTime);
                 allocationEpochs.add(allocationEpoch);
@@ -904,7 +909,6 @@ public class ProcessLog {
                 break;
             }
 
-            case ADVISE_BEFORE_GC:
             case ADVISE_BEFORE_THREAD_TERMINATING:
             case ADVISE_BEFORE_THREAD_STARTING:
                 // nothing else

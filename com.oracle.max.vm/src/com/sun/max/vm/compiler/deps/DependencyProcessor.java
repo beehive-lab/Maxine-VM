@@ -28,7 +28,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.deps.Dependencies.ClassDeps;
 import com.sun.max.vm.compiler.deps.Dependencies.DependencyVisitor;
 
-
 /**
  * A {@linkplain DependencyProcessor} handles the dependency-specific aspects of dependency processing,
  * specifically the conversion between the abstract, object-based, view of {@link CiAssumptions.Assumption}
@@ -93,16 +92,18 @@ public abstract class DependencyProcessor {
         protected ToStringDependencyProcessorVisitor() {
         }
 
-        public void setStringBuilder(StringBuilder sb) {
+        public ToStringDependencyProcessorVisitor setStringBuilder(StringBuilder sb) {
             this.sb = sb;
+            return this;
         }
     }
 
     /**
      * Return the {@linkplain ToStringDependencyProcessorVisitor} for this processor.
+     * @param sb the {@link StringBuilder} to use to store the string value
      * @return
      */
-    protected abstract ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor();
+    protected abstract ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor(StringBuilder sb);
 
     /**
      * Checks if {@code dependenciesVisitor} implements the {@linkplain DependencyProcessorVisitor} defined

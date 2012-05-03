@@ -53,6 +53,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 
 /**
  * A simple semispace scavenger heap.
@@ -546,7 +547,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 detailLogger.logForward(hub.classActor, fromCell, toCell, size.toInt());
             }
 
-            trackLifetime(fromCell);
+            VMTI.handler().objectSurviving(fromCell);
 
             Memory.copyBytes(fromCell, toCell, size);
 
@@ -732,6 +733,15 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {
+        // We invoke the VMTI callbacks here and not via the GCCallBack so that
+        // they occur on the actual thread causing the GC and not the VM operation thread.
+        VMTI.handler().beginGC();
+        boolean result = collectGarbageImpl(requestedFreeSpace);
+        VMTI.handler().endGC();
+        return result;
+    }
+
+    private boolean collectGarbageImpl(Size requestedFreeSpace) {
         if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
             executeGC();
         }

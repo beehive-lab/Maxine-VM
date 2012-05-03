@@ -45,10 +45,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -1277,7 +1277,7 @@ public class VMFunctions {
         }
 
         try {
-            JVMTI.setJVMTIEnv(jvmtiEnv);
+            VMTI.handler().registerAgent(jvmtiEnv);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
