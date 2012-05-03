@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,11 @@
 package com.sun.max.ins.method;
 
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
@@ -36,11 +36,11 @@ import com.sun.max.vm.actor.member.*;
 /**
  * A dialog to let the user select a method from a specified {@link ClassActor} in the VM.
  */
-public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
+public final class MethodActorSearchDialog extends ObjectSearchDialog {
 
     @Override
-    protected TeleObject convertSelectedItem(Object listItem) {
-        return ((NamedTeleObject) listItem).teleObject();
+    protected MaxObject convertSelectedItem(Object listItem) {
+        return ((NamedMaxObject) listItem).object();
     }
 
     @Override
@@ -48,7 +48,7 @@ public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
         final Iterator<TeleMethodActor> teleMethodActors = localTeleMethodActors.iterator();
 
         int i = 0;
-        final NamedTeleObject[] methods = new NamedTeleObject[localTeleMethodActors.size()];
+        final NamedMaxObject[] methods = new NamedMaxObject[localTeleMethodActors.size()];
 
         final String filterLowerCase = filterText.toLowerCase();
         while (teleMethodActors.hasNext()) {
@@ -59,7 +59,7 @@ public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
                 (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                 methodNameLowerCase.contains(filterLowerCase)) {
                 final String signature = methodActor.name + methodActor.descriptor().toJavaString(false, true);
-                methods[i++] = new NamedTeleObject(signature, teleMethodActor);
+                methods[i++] = new NamedMaxObject(signature, teleMethodActor);
             }
         }
 

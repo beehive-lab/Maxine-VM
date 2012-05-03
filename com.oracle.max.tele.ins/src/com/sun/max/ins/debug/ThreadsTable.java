@@ -34,7 +34,6 @@ import javax.swing.table.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 /**
  * A table specialized for displaying the threads in the VM.
  */
@@ -75,7 +74,7 @@ public final class ThreadsTable extends InspectorTable {
     protected Transferable getTransferable(int row, int col) {
         final MaxThread thread = tableModel.getThreadAt(row);
         assert thread != null;
-        final TeleObject vmThreadObject  =  thread.teleVmThread();
+        final MaxObject vmThreadObject  =  thread.teleVmThread();
         if (vmThreadObject != null) {
             return new InspectorTransferable.TeleObjectTransferable(inspection(), vmThreadObject);
         }

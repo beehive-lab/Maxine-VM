@@ -49,7 +49,7 @@ import com.sun.max.vm.value.*;
  */
 public final class ObjectHeaderTable extends InspectorTable {
 
-    private final TeleObject teleObject;
+    private final MaxObject object;
     private final HeaderField[] headerFields;
 
     private final ObjectHeaderTableModel tableModel;
@@ -68,7 +68,7 @@ public final class ObjectHeaderTable extends InspectorTable {
             final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
             if (watchpoints.isEmpty()) {
                 final HeaderField headerField = headerFields[row];
-                actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory").perform();
+                actions().setHeaderWatchpoint(object, headerField, "Watch this field's memory").perform();
             } else {
                 actions().removeWatchpoints(watchpoints, null).perform();
             }
@@ -82,12 +82,12 @@ public final class ObjectHeaderTable extends InspectorTable {
      *
      * @param objectInspector parent that contains this panel
      */
-    public ObjectHeaderTable(Inspection inspection, TeleObject teleObject, ObjectViewPreferences instanceViewPreferences) {
+    public ObjectHeaderTable(Inspection inspection, MaxObject object, ObjectViewPreferences instanceViewPreferences) {
         super(inspection);
-        this.teleObject = teleObject;
+        this.object = object;
         this.instanceViewPreferences = instanceViewPreferences;
-        headerFields = teleObject.headerFields();
-        this.tableModel = new ObjectHeaderTableModel(inspection, teleObject.origin());
+        headerFields = object.headerFields();
+        this.tableModel = new ObjectHeaderTableModel(inspection, object.origin());
         ObjectHeaderColumnModel columnModel = new ObjectHeaderColumnModel(this, this.tableModel, instanceViewPreferences);
         configureMemoryTable(tableModel, columnModel);
         setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, preference().style().defaultBorderColor()));
@@ -108,8 +108,8 @@ public final class ObjectHeaderTable extends InspectorTable {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new ToggleObjectHeaderWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
             final HeaderField headerField = headerFields[row];
-            menu.add(actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory"));
-            menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
+            menu.add(actions().setHeaderWatchpoint(object, headerField, "Watch this field's memory"));
+            menu.add(actions().setObjectWatchpoint(object, "Watch this object's memory"));
             menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
             menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));
             return menu;
@@ -154,7 +154,7 @@ public final class ObjectHeaderTable extends InspectorTable {
     @Override
     public Color cellBackgroundColor() {
         // Gets called during superclass initialization
-        if (teleObject != null && teleObject.status().isDead()) {
+        if (object != null && object.status().isDead()) {
             return preference().style().deadObjectBackgroundColor();
         }
         return null;
@@ -195,8 +195,8 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         public ObjectHeaderTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
-            if (teleObject.status().isNotDead()) {
-                teleHub = teleObject.getTeleHub();
+            if (object.status().isNotDead()) {
+                teleHub = object.getTeleHub();
             }
         }
 
@@ -224,12 +224,12 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         @Override
         public MaxMemoryRegion getMemoryRegion(int row) {
-            return teleObject.headerMemoryRegion(headerFields[row]);
+            return object.headerMemoryRegion(headerFields[row]);
         }
 
         @Override
         public int getOffset(int row) {
-            return teleObject.headerOffset(headerFields[row]);
+            return object.headerOffset(headerFields[row]);
         }
 
         @Override
@@ -249,7 +249,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         @Override
         public TypeDescriptor getRowType(int row) {
-            return teleObject.headerType(headerFields[row]);
+            return object.headerType(headerFields[row]);
         }
 
         public String rowToHeaderDescription(int row) {
@@ -266,9 +266,9 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         @Override
         public void refresh() {
-            setOrigin(teleObject.origin());
-            if (teleObject.status().isNotDead()) {
-                teleHub = teleObject.getTeleHub();
+            setOrigin(object.origin());
+            if (object.status().isNotDead()) {
+                teleHub = object.getTeleHub();
             }
             super.refresh();
         }
@@ -308,16 +308,16 @@ public final class ObjectHeaderTable extends InspectorTable {
                             if (teleHub == null) {
                                 return WordValue.ZERO;
                             }
-                            final Address hubFieldAddress = teleObject.headerAddress(HeaderField.HUB);
+                            final Address hubFieldAddress = object.headerAddress(HeaderField.HUB);
                             return vm().memoryIO().readWordValue(hubFieldAddress);
                         }
                     };
                 } else if (headerField == HeaderField.MISC) {
-                    labels[row] = new MiscWordLabel(inspection, teleObject);
+                    labels[row] = new MiscWordLabel(inspection, object);
                 } else if (headerField == HeaderField.LENGTH) {
-                    switch (teleObject.kind()) {
+                    switch (object.kind()) {
                         case ARRAY:
-                            final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
+                            final TeleArrayObject teleArrayObject = (TeleArrayObject) object;
                             labels[row] = new PrimitiveValueLabel(inspection, Kind.INT) {
 
                                 @Override
@@ -327,7 +327,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                             };
                             break;
                         case HYBRID:
-                            final TeleHybridObject teleHybridObject = (TeleHybridObject) teleObject;
+                            final TeleHybridObject teleHybridObject = (TeleHybridObject) object;
                             labels[row] = new PrimitiveValueLabel(inspection, Kind.INT) {
 
                                 @Override
@@ -348,7 +348,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
                         @Override
                         public Value fetchValue() {
-                            final Address headerFieldAddress = teleObject.headerAddress(finalHeaderField);
+                            final Address headerFieldAddress = object.headerAddress(finalHeaderField);
                             return vm().memoryIO().readWordValue(headerFieldAddress);
                         }
                     };

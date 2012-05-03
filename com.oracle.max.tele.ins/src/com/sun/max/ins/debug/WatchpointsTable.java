@@ -38,7 +38,6 @@ import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -64,9 +63,9 @@ public final class WatchpointsTable extends InspectorTable {
         if (vm().watchpointManager() != null && col == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
             final InspectorPopupMenu menu = new InspectorPopupMenu("Watchpoints");
             final MaxWatchpoint watchpoint = (MaxWatchpoint) tableModel.getValueAt(row, col);
-            final TeleObject teleObject = watchpoint.getTeleObject();
-            if (teleObject != null) {
-                menu.add(views().objects().makeViewAction(teleObject, "View Object"));
+            final MaxObject object = watchpoint.getWatchedObject();
+            if (object != null) {
+                menu.add(views().objects().makeViewAction(object, "View Object"));
                 return menu;
             }
         }
@@ -493,11 +492,11 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
-            final TeleObject teleObject = watchpoint.getTeleObject();
+            final MaxObject object = watchpoint.getWatchedObject();
             final StringBuilder sb = new StringBuilder();
             sb.append(watchpoint.description());
-            if (teleObject != null) {
-                sb.append(": ").append(inspection().nameDisplay().referenceLabelText(teleObject));
+            if (object != null) {
+                sb.append(": ").append(inspection().nameDisplay().referenceLabelText(object));
             }
             final String description = sb.toString();
             setText(description);

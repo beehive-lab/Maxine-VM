@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
@@ -330,10 +329,10 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                         label = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, FocusTable.this) {
                             @Override
                             public Value fetchValue() {
-                                final TeleObject teleObject = focus().heapObject();
+                                final MaxObject object = focus().object();
                                 Address address = Address.zero();
-                                if (teleObject != null) {
-                                    address = teleObject.origin();
+                                if (object != null) {
+                                    address = object.origin();
                                 }
                                 return new WordValue(address);
                             }
@@ -410,7 +409,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         refresh(true);
     }
 
-    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
+    public void heapObjectFocusChanged(MaxObject oldObject, MaxObject object) {
         refresh(true);
     }
 

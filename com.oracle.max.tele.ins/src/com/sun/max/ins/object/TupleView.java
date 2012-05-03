@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,25 +35,25 @@ public class TupleView extends ObjectView<TupleView> {
 
     private ObjectScrollPane fieldsPane;
 
-    TupleView(Inspection inspection, TeleObject teleObject) {
-        super(inspection, teleObject);
+    TupleView(Inspection inspection, MaxObject object) {
+        super(inspection, object);
         createFrame(true);
     }
 
     @Override
     protected void createViewContent() {
         super.createViewContent();
-        final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
+        final TeleTupleObject teleTupleObject = (TeleTupleObject) object();
         fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleTupleObject, instanceViewPreferences);
         getContentPane().add(fieldsPane);
 
         // View-specific menus
-        final MaxCompilation compilation = vm().machineCode().findCompilation(teleObject().origin());
+        final MaxCompilation compilation = vm().machineCode().findCompilation(object().origin());
         if (compilation != null) {
             makeMenu(MenuKind.DEBUG_MENU).add(actions().setMachineCodeBreakpointAtEntry(compilation));
         }
 
-        final TeleClassMethodActor teleClassMethodActor = teleObject().getTeleClassMethodActorForObject();
+        final TeleClassMethodActor teleClassMethodActor = object().getTeleClassMethodActorForObject();
         final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
         if (teleClassMethodActor != null) {
             // This object is associated with a class method

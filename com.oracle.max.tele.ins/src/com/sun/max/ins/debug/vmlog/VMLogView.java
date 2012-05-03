@@ -102,7 +102,7 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
     private static Component emptyStringRenderer;
 
     final Reference vmLogRef;
-    private final TeleObject vmLog;
+    private final MaxObject vmLog;
     final TeleInstanceIntFieldAccess nextIdFieldAccess;
     /**
      * Defines the actual {@link VMLog} subclass in the target VM.

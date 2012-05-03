@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,16 +27,17 @@ import java.util.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.type.*;
 
 /**
  * A dialog to let the user select a class in the {@linkplain VmClassRegistry Inspector class registry}.
  */
-public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
+public final class ClassActorSearchDialog extends ObjectSearchDialog {
 
     @Override
-    protected TeleObject convertSelectedItem(Object listItem) {
+    protected MaxObject convertSelectedItem(Object listItem) {
         final String name = (String) listItem;
         return vm().classes().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(name));
     }
