@@ -107,7 +107,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         final Address  heapLowerBound = endOfCodeRegion;
         final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
 
-
         final Address heapStart = heapLowerBound.roundedUpBy(pageSize);
         final Address heapMarkerDataStart = heapStart.plus(maxSize).roundedUpBy(pageSize);
         final Address leftoverStart = heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);

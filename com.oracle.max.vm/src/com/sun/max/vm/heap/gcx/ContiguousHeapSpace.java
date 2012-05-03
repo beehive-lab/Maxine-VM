@@ -35,7 +35,7 @@ import com.sun.max.vm.runtime.*;
  * Contiguous heap storage backed up by reserved contiguous
  * virtual memory.
  */
-public class ContiguousHeapSpace extends MemoryRegion {
+public class ContiguousHeapSpace extends MemoryRegion implements EvacuatingSpace {
 
     @INSPECTED
     private Address committedEnd;
@@ -108,5 +108,11 @@ public class ContiguousHeapSpace extends MemoryRegion {
     }
     public boolean canGrow() {
         return committedEnd.lessThan(end());
+    }
+
+    public void doBeforeGC() {
+    }
+
+    public void doAfterGC() {
     }
 }

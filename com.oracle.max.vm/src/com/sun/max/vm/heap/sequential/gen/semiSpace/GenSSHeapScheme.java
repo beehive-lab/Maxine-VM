@@ -108,22 +108,29 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         GenCollection() {
             super("GenCollection");
         }
-        private void verifyAfterEvacuation() {
+        private void verifyAfterMinorCollection() {
             // Verify that:
             // 1. offset table is correctly setup
             // 2. there are no pointer from old to young.
-            // 3. cards are all cleaned (except for those holding special references, which may have been dirtied during reference discovery)
             oldSpace.visit(fotVerifier);
-            oldSpace.visit(noYoungReferencesVerifier);
+            noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
+            oldSpace.visit(noFromSpaceReferencesVerifiers);
         }
+
+        private void verifyAfterFullCollection() {
+            oldSpace.visit(fotVerifier);
+            noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
+            oldSpace.visit(noFromSpaceReferencesVerifiers);
+        }
+
         private void doOldGenCollection() {
-            FatalError.unimplemented();
             youngSpaceEvacuator.doBeforeGC();
-            youngSpace.doBeforeGC();
-            oldSpace.doBeforeGC();
             // NOTE: counter must be incremented before a heap phase change  RECLAIMING -> ANALYZING.
             fullCollectionCount++;
-            oldSpace.doAfterGC();
+            oldSpace.flipSpaces();
+            oldSpaceEvacuator.evacuate();
+            final CardFirstObjectTable fot = cardTableRSet.cfoTable;
+            fot.clear(fot.tableEntryIndex(oldSpace.fromSpace.start()), fot.tableEntryIndex(oldSpace.fromSpace.committedEnd()));
             youngSpaceEvacuator.doAfterGC();
         }
 
@@ -147,7 +154,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 Log.println("--End nursery evacuation");
             }
             if (VerifyAfterGC) {
-                verifyAfterEvacuation();
+                verifyAfterMinorCollection();
             }
             Size estimatedEvac = estimatedNextEvac();
             Size freeSpace = youngSpaceEvacuator.freeSpace().plus(oldSpace.freeSpace());
@@ -158,6 +165,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 doOldGenCollection();
                 if (Heap.verbose()) {
                     Log.println("--End   old geneneration collection");
+                }
+                if (VerifyAfterGC) {
+                    verifyAfterFullCollection();
                 }
                 freeSpace = oldSpace.freeSpace();
                 if (estimatedEvac.greaterThan(freeSpace)) {
@@ -203,16 +213,22 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      * Implementation of young space evacuation. Used by minor collection operations.
      */
     @INSPECTED
-    private final NoAgingEvacuator youngSpaceEvacuator;
+    private final NoAgingNurseryEvacuator youngSpaceEvacuator;
+
+    @INSPECTED
+    private final EvacuatorToCardSpace oldSpaceEvacuator;
 
     @INSPECTED
     private int fullCollectionCount;
 
     /**
-     * Support for heap verification. All live objects are evacuated to the old space on minor collection.
+     * Support for heap verification. All live objects are evacuated to the old to space on minor collection.
      * There should remain no references from the old space to the young space.
+     * Similarly, all live objects are evacuated from the old "from" space on full collection.
+     * There should remain no references from the old "to" space to the old "from" space.
+     * This verifier can be used for both verification.
      */
-    private final NoYoungReferenceVerifier noYoungReferencesVerifier;
+    private final NoEvacuatedSpaceReferenceVerifier noFromSpaceReferencesVerifiers;
 
     /**
      * Verify that the FOT table is correctly setup.
@@ -229,8 +245,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
         youngSpace = new ContiguousAllocatingSpace<AtomicBumpPointerAllocator<YoungSpaceRefiller>>(nurseryAllocator, "Young Generation");
         oldSpace = new ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>>(tenuredAllocator, "Old Generation");
-        youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet);
-        noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
+        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, cardTableRSet);
+        oldSpaceEvacuator = new  EvacuatorToCardSpace(oldSpace.fromSpace, oldSpace, cardTableRSet);
+        noFromSpaceReferencesVerifiers = new NoEvacuatedSpaceReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
     }
@@ -313,6 +330,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
               * An alternative would be to allocate an ELAB of size equal to the expected survivor space minus leftover in the current ELAB, but that isn't satisfying either.
             */
             youngSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256), true);
+            oldSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256), true);
             initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
             cardTableRSet.initializeXirStartupConstants();
 

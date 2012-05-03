@@ -274,4 +274,5 @@ public class Log2RegionToByteMapTable {
     void fill(int fromIndex, int toIndex, byte value) {
         Arrays.fill(table, fromIndex, toIndex, value);
     }
+
 }

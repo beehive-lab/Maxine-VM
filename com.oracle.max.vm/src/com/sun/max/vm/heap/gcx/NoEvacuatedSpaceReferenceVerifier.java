@@ -32,17 +32,21 @@ import com.sun.max.vm.runtime.*;
 import static com.sun.max.vm.heap.gcx.rset.ctbl.CardState.*;
 import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
 
-public final class NoYoungReferenceVerifier extends PointerIndexVisitor implements HeapSpaceRangeVisitor, OverlappingCellVisitor {
+public final class NoEvacuatedSpaceReferenceVerifier extends PointerIndexVisitor implements HeapSpaceRangeVisitor, OverlappingCellVisitor {
     final CardTableRSet cardTableRSet;
-    final HeapSpace youngSpace;
+    EvacuatingSpace evacuatedSpace;
     /**
      * Controls whether the whole iterable range passed to {@link #visitCells(Address, Address)} is verified or only dirty cards in the range.
      */
     boolean dirtyCardsOnly;
 
-    public NoYoungReferenceVerifier(CardTableRSet cardTableRSet, HeapSpace youngSpace) {
+    public NoEvacuatedSpaceReferenceVerifier(CardTableRSet cardTableRSet, EvacuatingSpace evacuatedSpace) {
         this.cardTableRSet = cardTableRSet;
-        this.youngSpace = youngSpace;
+        this.evacuatedSpace = evacuatedSpace;
+    }
+
+    public void setEvacuatedSpace(EvacuatingSpace evacuatedSpace) {
+        this.evacuatedSpace = evacuatedSpace;
     }
 
     @Override
@@ -63,7 +67,7 @@ public final class NoYoungReferenceVerifier extends PointerIndexVisitor implemen
 
     private Pointer visitCell(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell);
-        checkNotYoung(origin, Layout.hubIndex());
+        checkNoRef(origin, Layout.hubIndex());
         final Hub hub = Layout.getHub(origin);
         if (hub == heapFreeChunkHub()) {
             return cell.plus(toHeapFreeChunk(origin).size);
@@ -72,7 +76,7 @@ public final class NoYoungReferenceVerifier extends PointerIndexVisitor implemen
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
             if (hub.isJLRReference) {
-                checkNotYoung(origin, SpecialReferenceManager.referentIndex());
+                checkNoRef(origin, SpecialReferenceManager.referentIndex());
             }
             return cell.plus(hub.tupleSize);
         }
@@ -81,7 +85,7 @@ public final class NoYoungReferenceVerifier extends PointerIndexVisitor implemen
         } else if (specificLayout.isReferenceArrayLayout()) {
             final int length = Layout.readArrayLength(origin) + Layout.firstElementIndex();
             for (int index = Layout.firstElementIndex(); index < length; index++) {
-                checkNotYoung(origin, index);
+                checkNoRef(origin, index);
             }
         }
         return cell.plus(Layout.size(origin));
@@ -96,7 +100,7 @@ public final class NoYoungReferenceVerifier extends PointerIndexVisitor implemen
         final Pointer hubPointer = origin.plusWords(Layout.hubIndex());
 
         if (hubPointer.greaterEqual(start) && hubPointer.lessThan(end)) {
-            checkNotYoung(origin, Layout.hubIndex());
+            checkNoRef(origin, Layout.hubIndex());
         }
         final Hub hub = Layout.getHub(origin);
         if (hub == heapFreeChunkHub()) {
@@ -108,7 +112,7 @@ public final class NoYoungReferenceVerifier extends PointerIndexVisitor implemen
             if (hub.isJLRReference) {
                 final Pointer referentFieldPointer = origin.plusWords(SpecialReferenceManager.referentIndex());
                 if (referentFieldPointer.greaterEqual(start) && referentFieldPointer.lessThan(end)) {
-                    checkNotYoung(origin, SpecialReferenceManager.referentIndex());
+                    checkNoRef(origin, SpecialReferenceManager.referentIndex());
                 }
             }
             return cell.plus(hub.tupleSize);
@@ -127,19 +131,19 @@ public final class NoYoungReferenceVerifier extends PointerIndexVisitor implemen
                 length -= p.minus(end).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
             }
             for (int index = firstWordIndex; index < length; index++) {
-                checkNotYoung(origin, index);
+                checkNoRef(origin, index);
             }
         }
         return cell.plus(Layout.size(origin));
     }
 
 
-    void checkNotYoung(Pointer pointer, int wordIndex) {
+    void checkNoRef(Pointer pointer, int wordIndex) {
         final Pointer cell = pointer.getReference(wordIndex).toOrigin();
-        if (youngSpace.contains(cell)) {
+        if (evacuatedSpace.contains(cell)) {
             Log.print("Reference at ");
             Log.print(pointer.plusWords(wordIndex));
-            Log.print(" holds young gen pointer to ");
+            Log.print(" holds pointer to evacuated location ");
             Log.println(cell);
             FatalError.breakpoint();
             FatalError.crash("invariant violation");
@@ -148,6 +152,6 @@ public final class NoYoungReferenceVerifier extends PointerIndexVisitor implemen
 
     @Override
     public void visit(Pointer pointer, int wordIndex) {
-        checkNotYoung(pointer, wordIndex);
+        checkNoRef(pointer, wordIndex);
     }
 }
