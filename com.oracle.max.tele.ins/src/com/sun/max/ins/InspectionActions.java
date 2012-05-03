@@ -669,16 +669,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class CopyObjectOriginAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Copy object origin to clipboard";
-        private final TeleObject teleObject;
+        private final MaxObject object;
 
-        private CopyObjectOriginAction(TeleObject teleObject, String actionTitle) {
+        private CopyObjectOriginAction(MaxObject object, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleObject = teleObject;
+            this.object = object;
         }
 
         @Override
         public void procedure() {
-            gui().postToClipboard(teleObject.origin().toHexString());
+            gui().postToClipboard(object.origin().toHexString());
         }
     }
 
@@ -686,12 +686,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Creates an action that will copy a hex string version of a VM object's origin
      * to the system clipboard.
      *
-     * @param teleObject a VM object
+     * @param object a VM object
      * @param actionTitle optional title of the action
-     * @return an action to copy the object's origin addreess
+     * @return an action to copy the object's origin address
      */
-    public final InspectorAction copyObjectOrigin(TeleObject teleObject, String actionTitle) {
-        return new CopyObjectOriginAction(teleObject, actionTitle);
+    public final InspectorAction copyObjectOrigin(MaxObject object, String actionTitle) {
+        return new CopyObjectOriginAction(object, actionTitle);
     }
 
     /**
@@ -701,18 +701,18 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class CopyObjectDescriptionAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Copy object origin to clipboard";
-        private final TeleObject teleObject;
+        private final MaxObject object;
 
-        private CopyObjectDescriptionAction(TeleObject teleObject, String actionTitle) {
+        private CopyObjectDescriptionAction(MaxObject object, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleObject = teleObject;
+            this.object = object;
         }
 
         @Override
         public void procedure() {
-            final StringBuilder sb = new StringBuilder(teleObject.origin().toHexString());
+            final StringBuilder sb = new StringBuilder(object.origin().toHexString());
             sb.append(": ");
-            sb.append(inspection().nameDisplay().referenceLabelText(teleObject));
+            sb.append(inspection().nameDisplay().referenceLabelText(object));
             gui().postToClipboard(sb.toString());
         }
     }
@@ -721,12 +721,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Creates an action that will copy a hex string version of a VM object's origin,
      * followed by a textual description of the object to the system clipboard.
      *
-     * @param teleObject the VM object to be described
+     * @param object the VM object to be described
      * @param actionTitle optional title of the action
      * @return an action to copy the description
      */
-    public final InspectorAction copyObjectDescription(TeleObject teleObject, String actionTitle) {
-        return new CopyObjectDescriptionAction(teleObject, actionTitle);
+    public final InspectorAction copyObjectDescription(MaxObject object, String actionTitle) {
+        return new CopyObjectDescriptionAction(object, actionTitle);
     }
 
     /**
@@ -786,8 +786,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             MaxMemoryManagementInfo info = inspection().vm().getMemoryManagementInfo(focus().address());
             // TODO: revisit this.
             if (info.status().equals(MaxMemoryStatus.LIVE)) {
-                final TeleObject teleObject = info.tele();
-                focus().setHeapObject(teleObject);
+                final MaxObject object = info.tele();
+                focus().setHeapObject(object);
             }
         }
     }
@@ -1140,8 +1140,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                final TeleObject teleBootClassRegistry = vm().objects().findTeleObject(vm().vmClassRegistryReference());
-                focus().setHeapObject(teleBootClassRegistry);
+                final MaxObject bootClassRegistry = vm().objects().findObject(vm().vmClassRegistryReference());
+                focus().setHeapObject(bootClassRegistry);
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
             }
@@ -3202,13 +3202,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetObjectWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch object memory";
-        private final TeleObject teleObject;
+        private final MaxObject object;
         private final MaxMemoryRegion memoryRegion;
 
-        SetObjectWatchpointAction(TeleObject teleObject, String actionTitle) {
+        SetObjectWatchpointAction(MaxObject object, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleObject = teleObject;
-            this.memoryRegion = teleObject.objectMemoryRegion();
+            this.object = object;
+            this.memoryRegion = object.objectMemoryRegion();
             refresh(true);
         }
 
@@ -3217,7 +3217,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
                 final String description = "Whole object";
-                final MaxWatchpoint watchpoint = vm().watchpointManager().createObjectWatchpoint(description, teleObject, prefs.settings());
+                final MaxWatchpoint watchpoint = vm().watchpointManager().createObjectWatchpoint(description, object, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3243,12 +3243,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * Creates an action that will create an object memory watchpoint.
      *
-     * @param teleObject a heap object in the VM
+     * @param object a heap object in the VM
      * @param actionTitle a name for the action, use default name if null
      * @return an Action that will set an object field watchpoint.
      */
-    public final InspectorAction setObjectWatchpoint(TeleObject teleObject, String actionTitle) {
-        return new SetObjectWatchpointAction(teleObject, actionTitle);
+    public final InspectorAction setObjectWatchpoint(MaxObject object, String actionTitle) {
+        return new SetObjectWatchpointAction(object, actionTitle);
     }
 
     /**
@@ -3257,15 +3257,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetFieldWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch object field";
-        private final TeleObject teleObject;
+        private final MaxObject object;
         private final FieldActor fieldActor;
         private final MaxMemoryRegion memoryRegion;
 
-        SetFieldWatchpointAction(TeleObject teleObject, FieldActor fieldActor, String actionTitle) {
+        SetFieldWatchpointAction(MaxObject object, FieldActor fieldActor, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleObject = teleObject;
+            this.object = object;
             this.fieldActor = fieldActor;
-            this.memoryRegion = teleObject.fieldMemoryRegion(fieldActor);
+            this.memoryRegion = object.fieldMemoryRegion(fieldActor);
             refresh(true);
         }
 
@@ -3274,7 +3274,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
                 final String description = "Field \"" + fieldActor.name.toString() + "\"";
-                final MaxWatchpoint watchpoint = vm().watchpointManager().createFieldWatchpoint(description, teleObject, fieldActor, prefs.settings());
+                final MaxWatchpoint watchpoint = vm().watchpointManager().createFieldWatchpoint(description, object, fieldActor, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3300,13 +3300,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * Creates an action that will create an object field watchpoint.
      *
-     * @param teleObject a heap object in the VM
+     * @param object a heap object in the VM
      * @param fieldActor description of a field in the class type of the heap object
      * @param actionTitle a name for the action, use default name if null
      * @return an Action that will set an object field watchpoint.
      */
-    public final InspectorAction setFieldWatchpoint(TeleObject teleObject, FieldActor fieldActor, String actionTitle) {
-        return new SetFieldWatchpointAction(teleObject, fieldActor, actionTitle);
+    public final InspectorAction setFieldWatchpoint(MaxObject object, FieldActor fieldActor, String actionTitle) {
+        return new SetFieldWatchpointAction(object, fieldActor, actionTitle);
     }
 
     /**
@@ -3315,21 +3315,21 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetArrayElementWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch array element";
-        private final TeleObject teleObject;
+        private final MaxObject object;
         private final Kind elementKind;
         private final int arrayOffsetFromOrigin;
         private final int index;
         private final String indexPrefix;
         private final MaxMemoryRegion memoryRegion;
 
-        SetArrayElementWatchpointAction(TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, String indexPrefix, String actionTitle) {
+        SetArrayElementWatchpointAction(MaxObject object, Kind elementKind, int arrayOffsetFromOrigin, int index, String indexPrefix, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleObject = teleObject;
+            this.object = object;
             this.elementKind = elementKind;
             this.arrayOffsetFromOrigin = arrayOffsetFromOrigin;
             this.index = index;
             this.indexPrefix = indexPrefix;
-            final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes));
+            final Pointer address = object.origin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes));
             this.memoryRegion = new InspectorMemoryRegion(vm(), "", address, elementKind.width.numberOfBytes);
             refresh(true);
         }
@@ -3340,7 +3340,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             try {
                 final String description = "Element " + indexPrefix + "[" + Integer.toString(index) + "]";
                 final MaxWatchpoint watchpoint
-                    = vm().watchpointManager().createArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, prefs.settings());
+                    = vm().watchpointManager().createArrayElementWatchpoint(description, object, elementKind, arrayOffsetFromOrigin, index, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3366,7 +3366,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * Creates an action that will create an array element watchpoint.
      *
-     * @param teleObject a heap object in the VM
+     * @param object a heap object in the VM
      * @param elementKind type category of the array elements
      * @param arrayOffsetFromOrigin offset in bytes from the object origin of element 0
      * @param index index into the array
@@ -3374,8 +3374,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @param actionTitle a name for the action, use default name if null
      * @return an Action that will set an array element watchpoint.
      */
-    public final InspectorAction setArrayElementWatchpoint(TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, String indexPrefix, String actionTitle) {
-        return new SetArrayElementWatchpointAction(teleObject, elementKind, arrayOffsetFromOrigin, index, indexPrefix, actionTitle);
+    public final InspectorAction setArrayElementWatchpoint(MaxObject object, Kind elementKind, int arrayOffsetFromOrigin, int index, String indexPrefix, String actionTitle) {
+        return new SetArrayElementWatchpointAction(object, elementKind, arrayOffsetFromOrigin, index, indexPrefix, actionTitle);
     }
 
      /**
@@ -3384,15 +3384,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetHeaderWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch object header field";
-        private final TeleObject teleObject;
+        private final MaxObject object;
         private final HeaderField headerField;
         private final MaxMemoryRegion memoryRegion;
 
-        SetHeaderWatchpointAction(TeleObject teleObject, HeaderField headerField, String actionTitle)  {
+        SetHeaderWatchpointAction(MaxObject object, HeaderField headerField, String actionTitle)  {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleObject = teleObject;
+            this.object = object;
             this.headerField = headerField;
-            this.memoryRegion = teleObject.headerMemoryRegion(headerField);
+            this.memoryRegion = object.headerMemoryRegion(headerField);
             refresh(true);
         }
 
@@ -3401,7 +3401,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
                 final String description = "Field \"" + headerField.name + "\"";
-                final MaxWatchpoint watchpoint = vm().watchpointManager().createHeaderWatchpoint(description, teleObject, headerField, prefs.settings());
+                final MaxWatchpoint watchpoint = vm().watchpointManager().createHeaderWatchpoint(description, object, headerField, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3427,13 +3427,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * Creates an action that will create an object header field watchpoint.
      *
-     * @param teleObject a heap object in the VM
+     * @param object a heap object in the VM
      * @param headerField identification of an object header field
      * @param actionTitle a name for the action, use default name if null
      * @return an Action that will set an object header watchpoint
      */
-    public final InspectorAction setHeaderWatchpoint(TeleObject teleObject, HeaderField headerField, String actionTitle) {
-        return new SetHeaderWatchpointAction(teleObject, headerField, actionTitle);
+    public final InspectorAction setHeaderWatchpoint(MaxObject object, HeaderField headerField, String actionTitle) {
+        return new SetHeaderWatchpointAction(object, headerField, actionTitle);
     }
 
     /**

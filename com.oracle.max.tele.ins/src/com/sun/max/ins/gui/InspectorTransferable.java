@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@ import javax.activation.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -53,7 +52,7 @@ public abstract class InspectorTransferable<Object_Type> extends AbstractInspect
 
     private static final String VM_TELE_OBJECT_MIME_TYPE = "VM object";
     public static final DataFlavor TELE_OBJECT_FLAVOR =
-        new ActivationDataFlavor(TeleObject.class, DataFlavor.javaJVMLocalObjectMimeType, InspectorTransferable.VM_TELE_OBJECT_MIME_TYPE);
+        new ActivationDataFlavor(MaxObject.class, DataFlavor.javaJVMLocalObjectMimeType, InspectorTransferable.VM_TELE_OBJECT_MIME_TYPE);
 
     private final Object_Type object;
     private final DataFlavor[] supportedDataFlavors;
@@ -120,10 +119,10 @@ public abstract class InspectorTransferable<Object_Type> extends AbstractInspect
     /**
      * Support for passing an object in the VM through drag and drop.
      */
-    public static final class TeleObjectTransferable extends InspectorTransferable<TeleObject> {
+    public static final class TeleObjectTransferable extends InspectorTransferable<MaxObject> {
 
-        public TeleObjectTransferable(Inspection inspection, TeleObject teleObject) {
-            super(inspection, teleObject, InspectorTransferable.TELE_OBJECT_FLAVOR, null);
+        public TeleObjectTransferable(Inspection inspection, MaxObject object) {
+            super(inspection, object, InspectorTransferable.TELE_OBJECT_FLAVOR, null);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,36 @@
  */
 package com.sun.max.ins.gui;
 
-import com.sun.max.ins.*;
-import com.sun.max.tele.object.*;
+import com.sun.max.tele.*;
 
 /**
- * An abstract class for dialogs that enables the user to search for an object in the VM.
- * The dialog is composed of a list of names of objects and a text field that can be used to filter the list.
- */
-public abstract class TeleObjectSearchDialog extends FilteredListDialog<TeleObject> {
+ * Binds a name to an {@linkplain MaxObject object} in the VM.
+  */
+public class NamedMaxObject implements Comparable<NamedMaxObject> {
+
+    private final String name;
+
+    private final MaxObject object;
+
+    public NamedMaxObject(String name, MaxObject object) {
+        this.name = name;
+        this.object = object;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public MaxObject object() {
+        return object;
+    }
+
+    public int compareTo(NamedMaxObject o) {
+        return name.compareTo(o.name);
+    }
 
     @Override
-    protected TeleObject noSelectedObject() {
-        return null;
+    public String toString() {
+        return name;
     }
-
-    protected TeleObjectSearchDialog(Inspection inspection, String title, String filterFieldLabel, String actionName, boolean multiSelection) {
-        super(inspection, title, filterFieldLabel, actionName, multiSelection);
-    }
-
-    protected TeleObjectSearchDialog(Inspection inspection, String title, String filterFieldLabel, boolean multiSelection) {
-        this(inspection, title, filterFieldLabel, null, multiSelection);
-    }
-
 }

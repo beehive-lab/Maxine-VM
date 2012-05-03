@@ -38,7 +38,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -93,8 +92,8 @@ public final class MemoryBytesView extends AbstractView<MemoryBytesView> {
             return memoryBytesView;
         }
 
-        public MemoryBytesView makeView(TeleObject teleObject) {
-            final MaxMemoryRegion region = teleObject.objectMemoryRegion();
+        public MemoryBytesView makeView(MaxObject object) {
+            final MaxMemoryRegion region = object.objectMemoryRegion();
             final long nBytes = region.nBytes();
             assert nBytes < Integer.MAX_VALUE;
             final MemoryBytesView memoryBytesView = new MemoryBytesView(inspection(), region.start(), (int) nBytes, 1, 16);

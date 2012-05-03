@@ -39,7 +39,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 // TODO (mlvdv) try to make columns narrow
@@ -83,8 +82,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
                         MaxMemoryManagementInfo info = vm().getMemoryManagementInfo(address);
                         // TODO: revisit this.
                         if (info.status().equals(MaxMemoryStatus.LIVE)) {
-                            final TeleObject teleObject = info.tele();
-                            focus().setHeapObject(teleObject);
+                            final MaxObject object = info.tele();
+                            focus().setHeapObject(object);
                         } else {
                             gui().errorMessage("Heap Region Info not found for address "  + address.to0xHexString());
                         }
@@ -122,13 +121,13 @@ public final class MemoryView extends AbstractView<MemoryView> {
             return memoryView;
         }
 
-        public MemoryView makeView(TeleObject teleObject) {
+        public MemoryView makeView(MaxObject object) {
             MemoryView memoryView = null;
-            final TeleFixedMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
+            final TeleFixedMemoryRegion objectMemoryRegion = object.objectMemoryRegion();
             if (objectMemoryRegion == null) {
                 gui().warningMessage("Unable to determine memory occupied by object");
             }  else {
-                memoryView = new MemoryView(inspection(), objectMemoryRegion, null, teleObject.origin(), teleObject.status().isDead() ? ViewMode.WORD : ViewMode.OBJECT, null);
+                memoryView = new MemoryView(inspection(), objectMemoryRegion, null, object.origin(), object.status().isDead() ? ViewMode.WORD : ViewMode.OBJECT, null);
                 notifyAddingView(memoryView);
             }
             return memoryView;
@@ -162,12 +161,12 @@ public final class MemoryView extends AbstractView<MemoryView> {
             return inspectorAction;
         }
 
-        public InspectorAction makeViewAction(final TeleObject teleObject, String actionTitle) {
+        public InspectorAction makeViewAction(final MaxObject object, String actionTitle) {
             return new InspectorAction(inspection(), actionTitle == null ? "View memory" : actionTitle) {
 
                 @Override
                 protected void procedure() {
-                    makeView(teleObject);
+                    makeView(object);
                 }
             };
         }
@@ -648,12 +647,12 @@ public final class MemoryView extends AbstractView<MemoryView> {
         final StringBuilder titleBuilder = new StringBuilder();
         switch(viewMode()) {
             case OBJECT:
-                TeleObject teleObject = null;
-                teleObject = vm().objects().findObjectAt(origin);
-                if (teleObject == null) {
+                MaxObject object = null;
+                object = vm().objects().findObjectAt(origin);
+                if (object == null) {
                     titleBuilder.append("Memory object: ").append(memoryWordRegion.start().toHexString());
                 } else {
-                    titleBuilder.append("Memory: object ").append(memoryWordRegion.start().toHexString()).append(inspection().nameDisplay().referenceLabelText(teleObject));
+                    titleBuilder.append("Memory: object ").append(memoryWordRegion.start().toHexString()).append(inspection().nameDisplay().referenceLabelText(object));
                 }
                 titleBuilder.append(regionDescription);
                 break;
@@ -787,15 +786,15 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     private void moveToCurrentObject() {
-        TeleObject teleObject = null;
-        teleObject = vm().objects().findObjectAt(origin);
-        if (teleObject != null) {
-            MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
+        MaxObject object = null;
+        object = vm().objects().findObjectAt(origin);
+        if (object != null) {
+            MaxMemoryRegion objectMemoryRegion = object.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().alignUp(nBytesInWord);
             // User model policy, grow the size of the viewing region if needed, but never shrink it.
             final long newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.nWords());
             setMemoryRegion(new MemoryWordRegion(vm(), start, newWordCount));
-            setOrigin(teleObject.origin());
+            setOrigin(object.origin());
             table.scrollToOrigin();
             setTitle();
         } else {
@@ -804,23 +803,23 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     private void moveToPreviousObject() {
-        final TeleObject teleObject = vm().objects().findObjectPreceding(origin, 1000000);
-        if (teleObject != null) {
-            MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
+        final MaxObject object = vm().objects().findObjectPreceding(origin, 1000000);
+        if (object != null) {
+            MaxMemoryRegion objectMemoryRegion = object.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().alignUp(nBytesInWord);
             // User model policy, grow the size of the viewing region if needed, but never shrink it.
             final long newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.nWords());
             setMemoryRegion(new MemoryWordRegion(vm(), start, newWordCount));
-            setOrigin(teleObject.origin());
+            setOrigin(object.origin());
             table.scrollToOrigin();
             setTitle();
         }
     }
 
     private void moveToNextObject() {
-        final TeleObject teleObject = vm().objects().findObjectFollowing(origin, 1000000);
-        if (teleObject != null) {
-            final MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
+        final MaxObject object = vm().objects().findObjectFollowing(origin, 1000000);
+        if (object != null) {
+            final MaxMemoryRegion objectMemoryRegion = object.objectMemoryRegion();
             // Start stays the same
             final Address start = memoryWordRegion.start();
             // Default is to leave the viewed size the same
@@ -830,7 +829,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
                 newWordCount = objectMemoryRegion.end().minus(start).dividedBy(nBytesInWord).toInt();
             }
             setMemoryRegion(new MemoryWordRegion(vm(), start, newWordCount));
-            setOrigin(teleObject.origin());
+            setOrigin(object.origin());
             // Scroll so that whole object is visible if possible
             table.scrollToRange(origin, objectMemoryRegion.end().minus(nBytesInWord));
             setTitle();

@@ -27,6 +27,7 @@ import javax.swing.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
@@ -44,8 +45,8 @@ class Utf8ConstantView extends ObjectView<Utf8ConstantView> {
     // Follows user's tab selection, but should persist when view reconstructed.
     private boolean alternateDisplay;
 
-    Utf8ConstantView(Inspection inspection, TeleObject teleObject) {
-        super(inspection, teleObject);
+    Utf8ConstantView(Inspection inspection, MaxObject object) {
+        super(inspection, object);
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
@@ -55,7 +56,7 @@ class Utf8ConstantView extends ObjectView<Utf8ConstantView> {
     @Override
     protected void createViewContent() {
         super.createViewContent();
-        final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject();
+        final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) object();
         final String name = teleUtf8Constant.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new InspectorTabbedPane(inspection());
@@ -68,7 +69,7 @@ class Utf8ConstantView extends ObjectView<Utf8ConstantView> {
                 return teleUtf8Constant.utf8Constant().string;
             }
             public ObjectStatus status() {
-                return teleObject().status();
+                return object().status();
             }
         });
         tabbedPane.add("string value", stringPane);

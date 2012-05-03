@@ -107,11 +107,11 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
         return new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, reference.toOrigin(), vmLogView.getTable());
     }
 
-    protected Component safeGetReferenceValueLabel(TeleObject teleObject) {
-        if (teleObject == null) {
+    protected Component safeGetReferenceValueLabel(MaxObject object) {
+        if (object == null) {
             return gui().getUnavailableDataTableCellRenderer();
         } else {
-            return getReferenceValueLabel(teleObject.getReference());
+            return getReferenceValueLabel(object.reference());
         }
 
     }
