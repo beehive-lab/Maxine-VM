@@ -78,7 +78,7 @@ public class T1XTargetMethod extends TargetMethod {
 
     /**
      * This is the max number of slots used by any template and is computed when the templates are
-     * {@linkplain T1X#createTemplates(Class, T1X, boolean, com.oracle.max.vm.ext.t1x.T1X.Templates, boolean) created}.
+     * {@linkplain T1X#createTemplates(Class, T1X, com.oracle.max.vm.ext.t1x.T1X.Templates, boolean) created}.
      */
     static int templateSlots;
 

@@ -59,8 +59,8 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.CompilationBroker.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -183,7 +183,7 @@ public class MaxRuntime implements GraalRuntime {
         }
 
         // Cannot inline a method that has a breakpoint set.
-        if (JVMTIBreakpoints.hasBreakpoints(classMethodActor)) {
+        if (VMTI.handler().hasBreakpoints(classMethodActor)) {
             return true;
         }
 

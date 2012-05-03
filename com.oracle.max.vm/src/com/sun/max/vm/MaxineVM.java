@@ -46,10 +46,10 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -473,7 +473,7 @@ public final class MaxineVM {
 
         ImmortalHeap.initialize();
 
-        NativeInterfaces.initialize(vmInterface, jniEnv, jmmInterface, jvmtiInterface);
+        NativeInterfaces.initialize(vmInterface, jniEnv, jmmInterface);
 
         // Perhaps this should be later, after VM has initialized
         startupTime = System.currentTimeMillis();
@@ -608,8 +608,7 @@ public final class MaxineVM {
         VmThreadMap.ACTIVE.setVMTerminating();
         SignalDispatcher.terminate();
 
-        JVMTI.event(JVMTIEvent.VM_DEATH);
-
+        VMTI.handler().vmDeath();
         // TODO: need to revisit this. Likely, we would want to bring all
         // threads to a safepoint before running the terminating phase.
         vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);

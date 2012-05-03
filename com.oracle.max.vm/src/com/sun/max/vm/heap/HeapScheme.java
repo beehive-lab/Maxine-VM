@@ -370,14 +370,6 @@ public interface HeapScheme extends VMScheme {
     boolean supportsTagging();
 
     /**
-     * Experimental support for the analysis of object lifetimes.
-     * This is called each time an object survives a GC.
-     *
-     * @param cell
-     */
-    void trackLifetime(Pointer cell);
-
-    /**
      * Encapsulates the structure of the heap from a tool (e.g. JVMTI) that want to visit every object
      * in the heap.
      *

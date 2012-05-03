@@ -26,7 +26,7 @@ import java.io.*;
 import java.lang.ref.*;
 import java.util.*;
 
-public class FinalizerTest implements Comparable<FinalizerTest> {
+public class FinalizerTest implements Comparable<FinalizerTest>, Cloneable {
 
     static final PrintStream out = System.out;
 
@@ -48,6 +48,7 @@ public class FinalizerTest implements Comparable<FinalizerTest> {
     }
 
     final String id;
+    boolean isClone;
     WeakString weakString;
 
     static final TreeSet<String> finalized = new TreeSet<String>();
@@ -60,7 +61,15 @@ public class FinalizerTest implements Comparable<FinalizerTest> {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        finalized.add(id);
+        finalized.add(toString());
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        FinalizerTest result = (FinalizerTest) super.clone();
+        result.isClone = true;
+        result.weakString = new WeakString(id + "-clone");
+        return result;
     }
 
 
@@ -71,13 +80,17 @@ public class FinalizerTest implements Comparable<FinalizerTest> {
 
     @Override
     public String toString() {
-        return id;
+        String result = id;
+        if (isClone) {
+            result += "-clone";
+        }
+        return result;
     }
 
     public static void main(String[] args) throws InterruptedException {
-        test(10);
+        int count = test(10);
         int attempts = 5;
-        while (finalized.size() != 10 && attempts-- > 0) {
+        while (finalized.size() != count && attempts-- > 0) {
             System.gc();
             Thread.sleep(1000);
         }
@@ -87,10 +100,20 @@ public class FinalizerTest implements Comparable<FinalizerTest> {
         }
     }
 
-    private static void test(int num) {
+    private static int test(int num) {
+        int count  = num;
         for (int i = 0; i < num; i++) {
             FinalizerTest t = new FinalizerTest("ref" + i);
             out.println("created " + t);
+            if (i == 5) {
+                try {
+                    out.println("created " + t.clone());
+                    count++;
+                } catch (CloneNotSupportedException ex) {
+                    assert false;
+                }
+            }
         }
+        return count;
     }
 }

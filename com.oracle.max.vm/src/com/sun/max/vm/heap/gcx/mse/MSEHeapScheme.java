@@ -37,12 +37,12 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.rset.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 
 /**
  * Region-based Mark Sweep + Evacuation-based defragmentation Heap Scheme.
@@ -290,7 +290,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
             startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
 
-            JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_START);
+            VMTI.handler().beginGC();
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
             vmConfig().monitorScheme().beforeGarbageCollection();
@@ -322,7 +322,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
             heapResizingPolicy.resizeAfterCollection(freeSpaceAfterGC, markSweepSpace);
             markSweepSpace.doAfterGC();
 
-            JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_FINISH);
+            VMTI.handler().endGC();
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
             stopTimer(totalPauseTime);
 
