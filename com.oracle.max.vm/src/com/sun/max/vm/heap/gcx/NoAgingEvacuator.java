@@ -67,9 +67,14 @@ public final class NoAgingEvacuator extends Evacuator {
     private Size minRefillThreshold;
 
     /**
+     * Flags indicating that Evacuator's TLAB must be retired after evacuation.
+     */
+    private boolean retireAfterEvacuation;
+
+    /**
      * Hint of amount of space to use to refill the promotion allocation buffer.
      */
-    private Size pSize;
+    private Size evacuationBufferSize;
 
     /**
      * Remembered set of the from space.
@@ -177,10 +182,19 @@ public final class NoAgingEvacuator extends Evacuator {
         this.heapSpaceDirtyCardClosure = new DirtyCardEvacuationClosure();
     }
 
-    public void initialize(int maxSurvivorRanges, Size labSize, Size minRefillThreshold) {
+    /**
+     * Set the size of thread-local evacuation buffer, used for allocating space for evacuated object.
+     * @param size
+     */
+    public void setEvacuationBufferSize(Size size) {
+        evacuationBufferSize = size;
+    }
+
+    public void initialize(int maxSurvivorRanges, Size evacuationBufferSize, Size minRefillThreshold, boolean retireAfterEvacuation) {
         this.survivorRanges = new SurvivorRangesQueue(maxSurvivorRanges);
-        this.pSize = labSize;
+        this.evacuationBufferSize = evacuationBufferSize;
         this.minRefillThreshold = minRefillThreshold;
+        this.retireAfterEvacuation = retireAfterEvacuation;
     }
 
     public Size evacuatedBytes() {
@@ -211,7 +225,7 @@ public final class NoAgingEvacuator extends Evacuator {
         lastOverflowAllocatedRangeEnd = Pointer.zero();
 
         if (ptop.isZero()) {
-            Address chunk = toSpace.allocateTLAB(pSize);
+            Address chunk = toSpace.allocateTLAB(evacuationBufferSize);
             Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
             pnextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
             rset.notifyRefill(chunk, chunkSize);
@@ -240,6 +254,11 @@ public final class NoAgingEvacuator extends Evacuator {
             // Next evacuation will start from top again.
             HeapFreeChunk.format(ptop, spaceLeft);
             rset.notifyRetireFreeSpace(ptop, spaceLeft);
+            if (retireAfterEvacuation) {
+                toSpace.retireTLAB(ptop, spaceLeft);
+                ptop = Pointer.zero();
+                pend = Pointer.zero();
+            }
         }
     }
 
@@ -284,7 +303,7 @@ public final class NoAgingEvacuator extends Evacuator {
             // Check if there is another chunk in the lab.
             Address chunk = pnextChunk;
             if (chunk.isZero()) {
-                chunk = toSpace.allocateTLAB(pSize);
+                chunk = toSpace.allocateTLAB(evacuationBufferSize);
                 // FIXME: we should have exception path to handle out of memory here -- rollback or stop evacuation to initiate full GC or throw OOM
                 assert !chunk.isZero() && HeapFreeChunk.getFreechunkSize(chunk).greaterEqual(minRefillThreshold);
             }
