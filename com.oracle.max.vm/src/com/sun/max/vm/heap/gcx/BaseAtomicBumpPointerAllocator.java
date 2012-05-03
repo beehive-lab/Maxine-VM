@@ -190,6 +190,27 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     }
 
     /**
+     * Retire top of allocated space.
+     * Cannot succeed if the retired space is not the top of the allocator (i.e., if <code> !top.equals(retiredTop.plus(retiredSize)</code>).
+     *
+     * @param retiredTop
+     * @param retiredSize
+     * @return true if succeed, false otherwise.
+     */
+    public final boolean retireTop(Pointer retiredTop, Size retiredSize) {
+        Pointer thisAddress = Reference.fromJava(this).toOrigin();
+        Address oldTop = retiredTop.plus(retiredSize);
+        Address cell;
+        do {
+            cell = top;
+            if (!cell.equals(oldTop)) {
+                return false;
+            }
+        } while(thisAddress.compareAndSwapWord(topOffset(), oldTop, retiredTop) != oldTop);
+        return true;
+    }
+
+    /**
      * Atomically fill up the allocator with a dead object  to make it parsable.
      */
     public final void doBeforeGC() {

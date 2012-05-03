@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.HeapRegionInfo.Flag;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
@@ -402,6 +403,17 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     @Override
     public Pointer allocateTLAB(Size size) {
         return tlabAllocator.allocateTLAB(size);
+    }
+
+    public void retireTLAB(Pointer start, Size size) {
+        if (tlabAllocator.retireTop(start, size)) {
+            return;
+        }
+        if (size.lessThan(minRetiredFreeChunkSize())) {
+            HeapSchemeAdaptor.fillWithDeadObject(start, start.plus(size));
+        } else {
+            HeapFreeChunk.format(start, size);
+        }
     }
 
     @Override

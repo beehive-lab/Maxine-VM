@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -132,6 +134,13 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
         final Pointer tlab = allocator.allocateCleared(size);
         HeapFreeChunk.format(tlab, size);
         return tlab;
+    }
+
+    public void retireTLAB(Pointer start, Size size) {
+        FatalError.check(allocator.inCurrentContiguousChunk(start), "Retired TLAB Space must be in allocating space");
+        if (!allocator.retireTop(start, size)) {
+            fillWithDeadObject(start, start.plus(size));
+        }
     }
 
     @Override

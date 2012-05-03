@@ -103,7 +103,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      * This is caught by the refiller of the old generation allocator, which in this case allocate space directly in the second semi-space.
      */
     final class GenCollection extends GCOperation {
-        private int minSurvivingPercent = 15; // arbitrary for now
+        private int minSurvivingPercent = 15; // expected percentage of survivors. Arbitrary for now
 
         GenCollection() {
             super("GenCollection");
@@ -140,6 +140,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             if (Heap.verbose()) {
                 Log.println("--Begin nursery evacuation");
             }
+
+            youngSpaceEvacuator.setEvacuationBufferSize(oldSpace.freeSpace());
             youngSpaceEvacuator.evacuate();
             if (Heap.verbose()) {
                 Log.println("--End nursery evacuation");
@@ -157,15 +159,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 if (Heap.verbose()) {
                     Log.println("--End   old geneneration collection");
                 }
-
-                if (VerifyAfterGC) {
-                    verifyAfterEvacuation();
-                }
                 freeSpace = oldSpace.freeSpace();
                 if (estimatedEvac.greaterThan(freeSpace)) {
                     FatalError.unimplemented();
                 }
             }
+            vmConfig().monitorScheme().afterGarbageCollection();
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
         }
     }
@@ -304,7 +303,16 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             Address startOfOldSpace = youngSpace.space.end().alignUp(pageSize);
             oldSpace.initializeAlignment(pageSize);
             oldSpace.initialize(startOfOldSpace, heapResizingPolicy.maxOldGenSize(), heapResizingPolicy.initialOldGenSize());
-            youngSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256));
+            /*
+             * FIXME:
+             * We set retireAfterEvacuation parameter to true. We allocate the entire old free space as evacuation LAB when doing a minor evacuation,
+             * and retire the entire left over. This is necessary in order for the oldSpace.freeSpace to report the free space accurately independently
+             * of the youngSpaceEvacuator (otherwise, we'd have to include the evacuator's ELAB in the calculation). It is also necessary to
+             * retire the TLAB if we need mutators to allocate directly in the old gen.
+             * This is rather complicated and we need to rethink the APIs here and how to share the evacuator.
+              * An alternative would be to allocate an ELAB of size equal to the expected survivor space minus leftover in the current ELAB, but that isn't satisfying either.
+            */
+            youngSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256), true);
             initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
             cardTableRSet.initializeXirStartupConstants();
 

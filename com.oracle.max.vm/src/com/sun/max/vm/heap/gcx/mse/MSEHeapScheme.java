@@ -195,7 +195,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
     public boolean collectGarbage(Size requestedFreeSpace) {
         final Size usedSpaceBefore = markSweepSpace.usedSpace();
         if (MaxineVM.isDebug()) {
-            final int logCursor = (int) (collectionCount % 16);
+            final int logCursor = collectionCount % 16;
             allocatedSinceLastGC[logCursor] = usedSpaceBefore.minus(usedSpaceAfterLastGC).toLong();
             if (logCursor == 15) {
                 long c = collectionCount - 15;

@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
+import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -70,7 +72,7 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
 
     @Override
     public Size totalSpace() {
-        return allocator.size();
+        return space.committedSize();
     }
 
     @Override
@@ -82,6 +84,7 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     public Pointer allocate(Size size) {
         return allocator.allocateCleared(size);
     }
+
     @Override
     public Pointer allocateTLAB(Size size) {
         // FIXME: the interface wants a HeapFreeChunk, but that shouldn't be necessary here. See how this can be changed
@@ -91,9 +94,16 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         return tlab;
     }
 
+    public void retireTLAB(Pointer start, Size size) {
+        FatalError.check(space.contains(start) && space.contains(start.plus(size.minusWords(1))), "Retired TLAB Space must be in allocating space");
+        if (!allocator.retireTop(start, size)) {
+            fillWithDeadObject(start, start.plus(size));
+        }
+    }
+
     @Override
     public boolean contains(Address address) {
-        return allocator.inCurrentContiguousChunk(address);
+        return space.contains(address);
     }
 
     @Override
@@ -113,12 +123,15 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     public Size freeSpace() {
         return allocator.freeSpace();
     }
+
     @Override
     public Size usedSpace() {
+        // Allocator may be refilled with the top of the space, so we need to count what's before as well.
         return allocator.usedSpace();
     }
+
     @Override
     public void visit(HeapSpaceRangeVisitor visitor) {
-        visitor.visitCells(allocator.start(), allocator.unsafeTop());
+        visitor.visitCells(space.start(), allocator.unsafeTop());
     }
 }

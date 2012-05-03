@@ -47,6 +47,13 @@ public interface HeapSpace extends ResizableSpace {
     Pointer allocateTLAB(Size size);
 
     /**
+     * Retire space from a previously allocated TLAB.
+     * @param start pointer to the first word of free space in the retired TLAB
+     * @param size  free space left over in the retired TLAB.
+     */
+    void retireTLAB(Pointer start, Size size);
+
+    /**
      * Indicate whether an address points to this heap space.
      * @param address
      * @return true if the address points to the heap space.
