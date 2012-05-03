@@ -58,7 +58,7 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
     private void initializeNursery() {
         if (nurseryAllocator.isZero()) {
             nurseryAllocator =   TeleInstanceReferenceFieldAccess.readPath(toReference(),
-                            vm().fields().GenMSEHeapScheme_youngSpace, vm().fields().NoAgingNursery_allocator);
+                            vm().fields().GenMSEHeapScheme_youngSpace, vm().fields().NoAgingRegionalizedNursery_allocator);
         }
         nurseryStart = vm().fields().BaseAtomicBumpPointerAllocator_start.readWord(nurseryAllocator).asAddress();
         nurseryEnd = vm().fields().BaseAtomicBumpPointerAllocator_end.readWord(nurseryAllocator).asAddress();

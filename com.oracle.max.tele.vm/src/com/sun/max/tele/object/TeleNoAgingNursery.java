@@ -23,7 +23,6 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.reference.*;
 
 
@@ -44,7 +43,7 @@ public class TeleNoAgingNursery extends TeleTupleObject {
             return false;
         }
         if (allocator == null) {
-            final Reference nurseryAllocatorRef = fields().NoAgingNursery_allocator.readReference(reference());
+            final Reference nurseryAllocatorRef = fields().NoAgingRegionalizedNursery_allocator.readReference(reference());
             allocator = (TeleBaseAtomicBumpPointerAllocator) objects().makeTeleObject(nurseryAllocatorRef);
         }
         return true;

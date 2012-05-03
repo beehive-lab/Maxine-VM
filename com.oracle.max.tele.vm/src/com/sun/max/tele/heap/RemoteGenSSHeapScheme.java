@@ -644,7 +644,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
          * @return an address in the To-space of the old generation.
          */
         public Address firstEvacuatedMark() {
-            return  fields().NoAgingEvacuator_allocatedRangeStart.readWord(fields().GenSSHeapScheme_youngSpaceEvacuator.readReference(getReference())).asAddress();
+            return  fields().EvacuatorToCardSpace_allocatedRangeStart.readWord(fields().GenSSHeapScheme_youngSpaceEvacuator.readReference(getReference())).asAddress();
         }
     }
 }
