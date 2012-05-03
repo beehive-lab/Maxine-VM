@@ -1053,9 +1053,11 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         startMethodGeneration();
         generateTemplateTag("%s", tag);
         out.printf("    public static void adviseAfter%s() {%n", methodName);
-        out.printf(INDENT8_PREFIX + ADVISE_PREFIX +
+        startGuardAdvice();
+        out.printf(INDENT12_PREFIX + ADVISE_PREFIX +
                         "(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());%n",
                         AdviceType.AFTER.methodNameComponent, methodName);
+        endGuardAdvice();
         out.printf("    }%n");
         newLine();
     }

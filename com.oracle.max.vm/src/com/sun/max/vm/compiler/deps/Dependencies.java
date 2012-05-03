@@ -32,7 +32,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.Actor;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.deps.DependencyProcessor.DependencyProcessorVisitor;
+import com.sun.max.vm.compiler.deps.DependencyProcessor.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.jni.MemberID;
@@ -125,6 +125,34 @@ public final class Dependencies {
             return dependencyProcessor.visit(dependencyProcessor.match(this), context, dependencies, index);
         }
     }
+
+    /**
+     * Overrides the {@link DependencyVisitor#visit} method to grab the {@link ToStringDependencyProcessorVisitor}
+     * for the {@link DependencyProcessor}, (which is guaranteed to match) and pass it as the {@lnk DependencyProcessorVisitor}.
+     */
+    private static class GenericToStringDependencyVisitor extends DependencyVisitor {
+        private StringBuilder sb;
+
+        GenericToStringDependencyVisitor setStringBuilder(StringBuilder sb) {
+            this.sb = sb;
+            return this;
+        }
+
+        @Override
+        protected int visit(Dependencies dependencies, ClassActor context, DependencyProcessor dependencyProcessor, int index) {
+            return dependencyProcessor.visit(dependencyProcessor.getToStringDependencyProcessorVisitor(sb), context, dependencies, index);
+        }
+
+    }
+
+    private static class GenericToStringDependencyVisitorTL extends ThreadLocal<GenericToStringDependencyVisitor> {
+        @Override
+        public GenericToStringDependencyVisitor initialValue() {
+            return new GenericToStringDependencyVisitor();
+        }
+    }
+
+    private static final GenericToStringDependencyVisitorTL genericToStringDependencyVisitorTL = new GenericToStringDependencyVisitorTL();
 
     /**
      * Data structure used while encoding the dependencies for a class into a {@code short[]}.
@@ -477,7 +505,7 @@ public final class Dependencies {
             return value;
         } else {
             final StringBuilder sb = new StringBuilder(value + Arrays.toString(packed));
-            visit(new AllToStringDependencyVisitor(sb));
+            visit(genericToStringDependencyVisitorTL.get().setStringBuilder(sb));
             return sb.toString();
         }
     }
@@ -539,23 +567,6 @@ public final class Dependencies {
             }
         }
         return result;
-    }
-
-    static {
-        checkToStringVisitorsInSync();
-    }
-
-    @HOSTED_ONLY
-    private static void checkToStringVisitorsInSync() {
-        try {
-            boolean updatedSource = new ToStringDependencyVisitorGenerator().generate(true);
-            if (updatedSource) {
-                FatalError.unexpected("AllToStringDependencyVisitor is out of sync.\nRun ToStringDependencyVisitorGenerator, recompile (or refresh it in your IDE)" +
-                                " and restart the bootstrapping process.\n\n");
-            }
-        } catch (Exception exception) {
-            FatalError.unexpected("Error while generating AllToStringDependencyVisitor source", exception);
-        }
     }
 
 }

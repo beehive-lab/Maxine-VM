@@ -179,6 +179,7 @@ public abstract class Sweeper {
         public enum Operation {
             DeadSpace, FreeSpace, Gap;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
