@@ -723,7 +723,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
          * @return surrogate for the semispace collector's "from" region
          */
         public TeleLinearAllocationMemoryRegion readTeleFromRegion() {
-            final Reference fromReference = fields().SemiSpaceHeapScheme_fromSpace.readReference(getReference());
+            final Reference fromReference = fields().SemiSpaceHeapScheme_fromSpace.readReference(reference());
             return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(fromReference);
         }
 
@@ -731,7 +731,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
          * @return surrogate for the semispace collector's "to" region
          */
         public TeleLinearAllocationMemoryRegion readTeleToRegion() {
-            final Reference toReference = fields().SemiSpaceHeapScheme_toSpace.readReference(getReference());
+            final Reference toReference = fields().SemiSpaceHeapScheme_toSpace.readReference(reference());
             return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(toReference);
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.MaxWatchpoint.WatchpointSettings;
-import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.type.*;
@@ -99,14 +98,14 @@ public interface MaxWatchpointManager {
      * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
      *
      * @param description text useful to a person, for example capturing the intent of the watchpoint
-     * @param teleObject a heap object in the VM
+     * @param object a heap object in the VM
      * @param settings initial settings for the watchpoint
      * @return a new watchpoint, if successful
      * @throws MaxWatchpointManager.MaxTooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
      * @throws MaxWatchpointManager.MaxDuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
      * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
      */
-    MaxWatchpoint createObjectWatchpoint(String description, TeleObject teleObject, WatchpointSettings settings)
+    MaxWatchpoint createObjectWatchpoint(String description, MaxObject object, WatchpointSettings settings)
         throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException, MaxVMBusyException;
 
     /**
@@ -116,7 +115,7 @@ public interface MaxWatchpointManager {
      * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
      *
      * @param description text useful to a person, for example capturing the intent of the watchpoint
-     * @param teleObject a heap object in the VM
+     * @param object a heap object in the VM
      * @param fieldActor description of a field in object of that type
      * @param settings initial settings for the watchpoint
      * @return a new watchpoint, if successful
@@ -124,7 +123,7 @@ public interface MaxWatchpointManager {
      * @throws MaxWatchpointManager.MaxDuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
      * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
      */
-    MaxWatchpoint createFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
+    MaxWatchpoint createFieldWatchpoint(String description, MaxObject object, FieldActor fieldActor, WatchpointSettings settings)
         throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException, MaxVMBusyException;
 
     /**
@@ -133,7 +132,7 @@ public interface MaxWatchpointManager {
      * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
      *
      * @param description text useful to a person, for example capturing the intent of the watchpoint
-     * @param teleObject a heap object in the VM that contains the array
+     * @param object a heap object in the VM that contains the array
      * @param elementKind the type category of the array elements
      * @param arrayOffsetFromOrigin location relative to the object's origin of element 0 in the array
      * @param index index of the element to watch
@@ -143,7 +142,7 @@ public interface MaxWatchpointManager {
      * @throws MaxWatchpointManager.MaxDuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
      * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
      */
-    MaxWatchpoint createArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
+    MaxWatchpoint createArrayElementWatchpoint(String description, MaxObject object, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
         throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException, MaxVMBusyException;
 
     /**
@@ -153,7 +152,7 @@ public interface MaxWatchpointManager {
      * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
      *
      * @param description text useful to a person, for example capturing the intent of the watchpoint
-     * @param teleObject a heap object in the VM
+     * @param object a heap object in the VM
      * @param headerField a field in the object's header
      * @param settings initial settings for the watchpoint
      * @return a new watchpoint, if successful
@@ -161,7 +160,7 @@ public interface MaxWatchpointManager {
      * @throws MaxWatchpointManager.MaxDuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
      * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
      */
-    MaxWatchpoint createHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
+    MaxWatchpoint createHeaderWatchpoint(String description, MaxObject object, HeaderField headerField, WatchpointSettings settings)
         throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException, MaxVMBusyException;
 
     /**

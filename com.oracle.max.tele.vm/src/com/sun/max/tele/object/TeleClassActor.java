@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -369,19 +369,19 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
 
     private final FieldProvider fakeAddressField = new FakeFieldProvider("address", VMValue.Type.LONG, JavaTypeDescriptor.LONG.toString()) {
         public VMValue getValue(ObjectProvider object) {
-            return vm().vmAccess().createLongValue(((TeleObject) object).getReference().toOrigin().asAddress().toLong());
+            return vm().vmAccess().createLongValue(((TeleObject) object).reference().toOrigin().asAddress().toLong());
         }
     };
 
     private final FieldProvider fakeHubField = new FakeFieldProvider("hub", VMValue.Type.PROVIDER, "Lcom/sun/max/vm/actor/holder/Hub;") {
         public VMValue getValue(ObjectProvider object) {
-            return vm().maxineValueToJDWPValue(TeleReferenceValue.from(vm(), ((TeleObject) object).getTeleHub().getReference()));
+            return vm().maxineValueToJDWPValue(TeleReferenceValue.from(vm(), ((TeleObject) object).getTeleHub().reference()));
         }
     };
 
     private final FieldProvider fakeMiscField = new FakeFieldProvider("misc", VMValue.Type.LONG, JavaTypeDescriptor.LONG.toString()) {
         public VMValue getValue(ObjectProvider object) {
-            return vm().vmAccess().createLongValue(((TeleObject) object).getMiscWord().asAddress().toLong());
+            return vm().vmAccess().createLongValue(((TeleObject) object).readMiscWord().asAddress().toLong());
         }
     };
 

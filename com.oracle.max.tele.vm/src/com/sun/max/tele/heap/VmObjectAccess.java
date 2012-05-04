@@ -249,7 +249,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return false;
     }
 
-    public TeleObject findTeleObject(Reference reference) throws MaxVMBusyException {
+    public TeleObject findObject(Reference reference) throws MaxVMBusyException {
         if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
             try {
                 return makeTeleObject(reference);
@@ -474,11 +474,11 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
     /**
      * Return the address where a forwarding pointer is stored within the specified tele object.
-     * @param teleObject
+     * @param object
      * @return Address of a forwarding pointer.
      */
-    public Address getForwardingPointerAddress(TeleObject teleObject) {
-        return teleObject.origin().plus(gcForwardingAddressOffset);
+    public Address getForwardingPointerAddress(MaxObject object) {
+        return object.origin().plus(gcForwardingAddressOffset);
     }
 
     /**
