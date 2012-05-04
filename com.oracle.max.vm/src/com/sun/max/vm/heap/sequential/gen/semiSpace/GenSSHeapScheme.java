@@ -128,6 +128,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             // NOTE: counter must be incremented before a heap phase change  RECLAIMING -> ANALYZING.
             fullCollectionCount++;
             oldSpace.flipSpaces();
+            oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
             oldSpaceEvacuator.evacuate();
             final CardFirstObjectTable fot = cardTableRSet.cfoTable;
             fot.clear(fot.tableEntryIndex(oldSpace.fromSpace.start()), fot.tableEntryIndex(oldSpace.fromSpace.committedEnd()));
