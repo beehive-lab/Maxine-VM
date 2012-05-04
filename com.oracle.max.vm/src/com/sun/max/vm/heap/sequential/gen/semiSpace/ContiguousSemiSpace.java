@@ -65,6 +65,10 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
         space.growCommittedSpace(semiSpaceInitSize);
         fromSpace.growCommittedSpace(semiSpaceInitSize);
         allocator.refill(space.start(), space.committedSize());
+        // Inspector support:
+        // Zero-fill  the first word of  the still virgin backing storage of the from space to force the OS to map the first page in virtual memory.
+        // This avoids the inspector to get DataIO Error on trying to read the bytes from the first page.
+        fromSpace.start().asPointer().setWord(Word.zero());
     }
 
     void flipSpaces() {

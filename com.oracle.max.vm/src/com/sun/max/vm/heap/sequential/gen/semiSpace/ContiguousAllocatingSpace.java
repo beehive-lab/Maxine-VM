@@ -56,6 +56,10 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         space.setReserved(start, maxSize);
         space.growCommittedSpace(initialSize);
         allocator.refill(start, initialSize);
+        // Inspector support:
+        // Zero-fill  the first word of  the still virgin backing storage of the space to force the OS to map the first page in virtual memory.
+        // This avoids the inspector to get DataIO Error on trying to read the bytes from the first page.
+        space.start().asPointer().setWord(Word.zero());
     }
 
     @Override
