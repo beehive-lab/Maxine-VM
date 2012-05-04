@@ -30,7 +30,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.memory.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -474,7 +473,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             return false;
         }
 
-        public TeleObject getTeleObject() {
+        public MaxObject getWatchedObject() {
             return null;
         }
     }
@@ -495,7 +494,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             return false;
         }
 
-        public TeleObject getTeleObject() {
+        public MaxObject getWatchedObject() {
             return null;
         }
     }
@@ -505,7 +504,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
      * be relocated to follow the absolute location of the object whenever it is relocated by GC.
      *
      */
-    private abstract static class TeleObjectWatchpoint extends VmWatchpoint {
+    private abstract static class ObjectWatchpoint extends VmWatchpoint {
 
         /**
          * Watchpoint settings to use when a system watchpoint is placed on the field
@@ -517,7 +516,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
         /**
          * The VM heap object on which this watchpoint is set.
          */
-        private TeleObject teleObject;
+        private MaxObject object;
 
         /**
          * Starting location of the watchpoint, relative to the origin of the object.
@@ -530,13 +529,13 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          */
         private VmWatchpoint relocationWatchpoint = null;
 
-        private TeleObjectWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, int offset, long nBytes, WatchpointSettings settings)
+        private ObjectWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, MaxObject object, int offset, long nBytes, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException  {
-            super(kind, watchpointManager, description, teleObject.origin().plus(offset), nBytes, settings);
-            TeleError.check(teleObject.status().isNotDead(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
-            this.teleObject = teleObject;
+            super(kind, watchpointManager, description, object.origin().plus(offset), nBytes, settings);
+            TeleError.check(object.status().isNotDead(), "Attempt to set an object-based watchpoint on an object that is not live: ", object);
+            this.object = object;
             this.offset = offset;
-            setRelocationWatchpoint(teleObject);
+            setRelocationWatchpoint(object);
         }
 
         /**
@@ -544,32 +543,32 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          * triggered, the watchpoint relocates this watchpoint as well as itself to the new location
          * identified by the forwarding pointer.
          *
-         * @param teleObject the object origin for this watchpoint
+         * @param object the object origin for this watchpoint
          * @throws MaxWatchpointManager.MaxTooManyWatchpointsException
          */
-        private void setRelocationWatchpoint(final TeleObject teleObject) throws MaxWatchpointManager.MaxTooManyWatchpointsException {
+        private void setRelocationWatchpoint(final MaxObject object) throws MaxWatchpointManager.MaxTooManyWatchpointsException {
             final MaxVM vm = watchpointManager.vm();
-            final Address forwardingPointerAddress = objects().getForwardingPointerAddress(teleObject);
+            final Address forwardingPointerAddress = objects().getForwardingPointerAddress(object);
             final TeleFixedMemoryRegion forwardPointerRegion = new TeleFixedMemoryRegion(vm(), "Forwarding pointer for object relocation watchpoint", forwardingPointerAddress, vm.platform().nBytesInWord());
             relocationWatchpoint = watchpointManager.createSystemWatchpoint("Object relocation watchpoint", forwardPointerRegion, relocationWatchpointSettings);
             relocationWatchpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
 
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-                    final TeleObjectWatchpoint thisWatchpoint = TeleObjectWatchpoint.this;
-                    final Address origin = teleObject.origin();
+                    final ObjectWatchpoint thisWatchpoint = ObjectWatchpoint.this;
+                    final Address origin = object.origin();
                     if (objects().hasForwardingAddressUnsafe(origin)) {
-                        final TeleObject newTeleObject =  objects().findObjectAt(objects().getForwardingAddressUnsafe(origin));
-                        if (newTeleObject == null) {
-                            TeleWarning.message("Unlable to find relocated teleObject" + this);
+                        final MaxObject newObject =  objects().findObjectAt(objects().getForwardingAddressUnsafe(origin));
+                        if (newObject == null) {
+                            TeleWarning.message("Unlable to find relocated object" + this);
                         } else {
-                            TeleObjectWatchpoint.this.teleObject = newTeleObject;
-                            final Pointer newWatchpointStart = newTeleObject.origin().plus(thisWatchpoint.offset);
+                            ObjectWatchpoint.this.object = newObject;
+                            final Pointer newWatchpointStart = newObject.origin().plus(thisWatchpoint.offset);
                             Trace.line(TRACE_VALUE, thisWatchpoint.tracePrefix() + " relocating watchpoint " + thisWatchpoint.memoryRegion().start().toHexString() + "-->" + newWatchpointStart.toHexString());
                             thisWatchpoint.relocate(newWatchpointStart);
                             // Now replace this relocation watchpoint for the next time the objects gets moved.
                             thisWatchpoint.clearRelocationWatchpoint();
                             try {
-                                thisWatchpoint.setRelocationWatchpoint(newTeleObject);
+                                thisWatchpoint.setRelocationWatchpoint(newObject);
                             } catch (MaxWatchpointManager.MaxTooManyWatchpointsException maxTooManyWatchpointsException) {
                                 TeleError.unexpected(thisWatchpoint.tracePrefix() + " failed to relocate the relocation watchpoint for " + thisWatchpoint);
                             }
@@ -619,9 +618,9 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             return true;
         }
 
-        public final TeleObject getTeleObject() {
+        public final MaxObject getWatchedObject() {
             assert isAlive();
-            return teleObject;
+            return object;
         }
 
         @Override
@@ -629,12 +628,12 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             assert isAlive();
             super.updateAfterGC();
             // TODO (mlvdv) watchpoint on forwarded object?
-            switch(teleObject.status()) {
+            switch(object.status()) {
                 case LIVE:
                 case UNKNOWN:
                     // A relocatable watchpoint on a live object should have been relocated
                     // (eagerly) just as the relocation took place.   Check that the locations match.
-                    if (!teleObject.objectMemoryRegion().start().plus(offset).equals(memoryRegion().start())) {
+                    if (!object.objectMemoryRegion().start().plus(offset).equals(memoryRegion().start())) {
                         TeleWarning.message("Watchpoint relocation failure - watchpoint on live object at wrong location " + this);
                     }
                     break;
@@ -660,44 +659,44 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
     /**
      * A watchpoint for a whole object.
      */
-    private static final class TeleWholeObjectWatchpoint extends TeleObjectWatchpoint {
+    private static final class WholeObjectWatchpoint extends ObjectWatchpoint {
 
-        private TeleWholeObjectWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, WatchpointSettings settings)
+        private WholeObjectWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, MaxObject object, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
-            super(kind, watchpointManager, description, teleObject, 0, teleObject.objectMemoryRegion().nBytes(), settings);
+            super(kind, watchpointManager, description, object, 0, object.objectMemoryRegion().nBytes(), settings);
         }
     }
 
     /**
      * A watchpoint for the memory holding an object's field.
      */
-    private static final class TeleFieldWatchpoint extends TeleObjectWatchpoint {
+    private static final class FieldWatchpoint extends ObjectWatchpoint {
 
-        private TeleFieldWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
+        private FieldWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, MaxObject object, FieldActor fieldActor, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
-            super(kind, watchpointManager, description, teleObject, fieldActor.offset(), teleObject.fieldSize(fieldActor), settings);
+            super(kind, watchpointManager, description, object, fieldActor.offset(), object.fieldMemoryRegion(fieldActor).nBytes(), settings);
         }
     }
 
     /**
      *A watchpoint for the memory holding an array element.
      */
-    private static final class TeleArrayElementWatchpoint extends TeleObjectWatchpoint {
+    private static final class ArrayElementWatchpoint extends ObjectWatchpoint {
 
-        private TeleArrayElementWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
+        private ArrayElementWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, MaxObject object, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
-            super(kind, watchpointManager, description, teleObject, arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes), elementKind.width.numberOfBytes, settings);
+            super(kind, watchpointManager, description, object, arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes), elementKind.width.numberOfBytes, settings);
         }
     }
 
     /**
      * A watchpoint for the memory holding an object's header field.
      */
-    private static final class TeleHeaderWatchpoint extends TeleObjectWatchpoint {
+    private static final class HeaderWatchpoint extends ObjectWatchpoint {
 
-        private TeleHeaderWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
+        private HeaderWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, MaxObject object, HeaderField headerField, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
-            super(kind, watchpointManager, description, teleObject, teleObject.headerOffset(headerField), teleObject.headerSize(headerField), settings);
+            super(kind, watchpointManager, description, object, object.headerOffset(headerField), object.headerMemoryRegion(headerField).nBytes(), settings);
         }
     }
 
@@ -827,26 +826,26 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
         /**
          * Creates a new, active watchpoint that covers an entire heap object's memory in the VM.
          * @param description text useful to a person, for example capturing the intent of the watchpoint
-         * @param teleObject a heap object in the VM
+         * @param object a heap object in the VM
          * @param settings initial settings for the watchpoint
          * @return a new watchpoint, if successful
          * @throws MaxWatchpointManager.MaxTooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws MaxWatchpointManager.MaxDuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
          * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public VmWatchpoint createObjectWatchpoint(String description, TeleObject teleObject, WatchpointSettings settings)
+        public VmWatchpoint createObjectWatchpoint(String description, MaxObject object, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException, MaxVMBusyException {
             if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.status().isNotDead()) {
-                    watchpoint  = new TeleWholeObjectWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, settings);
+                if (object.status().isNotDead()) {
+                    watchpoint  = new WholeObjectWatchpoint(WatchpointKind.CLIENT, this, description, object, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
                     amendedDescription = amendedDescription + " (non-live object))";
-                    final TeleFixedMemoryRegion region = teleObject.objectMemoryRegion();
+                    final TeleFixedMemoryRegion region = object.objectMemoryRegion();
                     watchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
                 }
                 watchpoint = addClientWatchpoint(watchpoint);
@@ -863,7 +862,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
          *
          * @param description text useful to a person, for example capturing the intent of the watchpoint
-         * @param teleObject a heap object in the VM
+         * @param object a heap object in the VM
          * @param fieldActor description of a field in object of that type
          * @param settings initial settings for the watchpoint
          * @return a new watchpoint, if successful
@@ -871,19 +870,19 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          * @throws MaxWatchpointManager.MaxDuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
          * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public VmWatchpoint createFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
+        public VmWatchpoint createFieldWatchpoint(String description, MaxObject object, FieldActor fieldActor, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException, MaxVMBusyException {
             if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.status().isNotDead()) {
-                    watchpoint  = new TeleFieldWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, fieldActor, settings);
+                if (object.status().isNotDead()) {
+                    watchpoint  = new FieldWatchpoint(WatchpointKind.CLIENT, this, description, object, fieldActor, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
                     amendedDescription = amendedDescription + " (non-live object))";
-                    final TeleFixedMemoryRegion region = teleObject.fieldMemoryRegion(fieldActor);
+                    final TeleFixedMemoryRegion region = object.fieldMemoryRegion(fieldActor);
                     watchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
                 }
                 watchpoint = addClientWatchpoint(watchpoint);
@@ -897,7 +896,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          * Creates a new, active watchpoint that covers an element in an array in the VM.
          *
          * @param description text useful to a person, for example capturing the intent of the watchpoint
-         * @param teleObject a heap object in the VM that contains the array
+         * @param object a heap object in the VM that contains the array
          * @param elementKind the type category of the array elements
          * @param arrayOffsetFromOrigin location relative to the object's origin of element 0 in the array
          * @param index index of the element to watch
@@ -907,19 +906,19 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          * @throws MaxWatchpointManager.MaxDuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
          * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public VmWatchpoint createArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
+        public VmWatchpoint createArrayElementWatchpoint(String description, MaxObject object, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException, MaxVMBusyException {
             if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.status().isNotDead()) {
-                    watchpoint = new TeleArrayElementWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, elementKind, arrayOffsetFromOrigin, index, settings);
+                if (object.status().isNotDead()) {
+                    watchpoint = new ArrayElementWatchpoint(WatchpointKind.CLIENT, this, description, object, elementKind, arrayOffsetFromOrigin, index, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
                     amendedDescription = amendedDescription + " (non-live object))";
-                    final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes));
+                    final Pointer address = object.origin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes));
                     final TeleFixedMemoryRegion region = new TeleFixedMemoryRegion(vm(), "", address, elementKind.width.numberOfBytes);
                     watchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
                 }
@@ -937,7 +936,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
          *
          * @param description text useful to a person, for example capturing the intent of the watchpoint
-         * @param teleObject a heap object in the VM
+         * @param object a heap object in the VM
          * @param headerField a field in the object's header
          * @param settings initial settings for the watchpoint
          * @return a new watchpoint, if successful
@@ -945,19 +944,19 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          * @throws MaxWatchpointManager.MaxDuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
          * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public VmWatchpoint createHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
+        public VmWatchpoint createHeaderWatchpoint(String description, MaxObject object, HeaderField headerField, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException, MaxVMBusyException {
             if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.status().isNotDead()) {
-                    watchpoint = new TeleHeaderWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, headerField, settings);
+                if (object.status().isNotDead()) {
+                    watchpoint = new HeaderWatchpoint(WatchpointKind.CLIENT, this, description, object, headerField, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
                     amendedDescription = amendedDescription + " (non-live object)";
-                    final TeleFixedMemoryRegion region = teleObject.headerMemoryRegion(headerField);
+                    final TeleFixedMemoryRegion region = object.headerMemoryRegion(headerField);
                     watchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
                 }
                 watchpoint =  addClientWatchpoint(watchpoint);

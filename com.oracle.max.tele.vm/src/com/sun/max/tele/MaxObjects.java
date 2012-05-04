@@ -24,8 +24,8 @@ package com.sun.max.tele;
 
 import java.io.*;
 
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -71,13 +71,13 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      * @return a canonical local surrogate for the object, null for the distinguished zero {@link Reference}.
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
-    TeleObject findTeleObject(Reference reference) throws MaxVMBusyException;
+    MaxObject findObject(Reference reference) throws MaxVMBusyException;
 
     /**
      * @param id an id assigned to each heap object in the VM as needed, unique for the duration of a VM execution.
      * @return an accessor for the specified heap object.
      */
-    TeleObject findObjectByOID(long id);
+    MaxObject findObjectByOID(long id);
 
     /**
      * Finds an object whose origin is at the specified address, if one exists.
@@ -86,7 +86,7 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      * @return surrogate for a VM object, null if none found or if the VM is busy
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
-    TeleObject findObjectAt(Address origin);
+    MaxObject findObjectAt(Address origin);
 
     /**
      * Scans VM memory backwards (smaller address) for an object whose cell begins at the specified address.
@@ -95,7 +95,7 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
      * @return surrogate for a VM object, null if none found
      */
-    TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent);
+    MaxObject findObjectPreceding(Address cellAddress, long maxSearchExtent);
 
     /**
      * Scans VM memory forward (larger address) for an object whose cell begins at the specified address.
@@ -104,7 +104,7 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
      * @return surrogate for a VM object, null if none found
      */
-    TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent);
+    MaxObject findObjectFollowing(Address cellAddress, long maxSearchExtent);
 
     /**
      * Writes current statistics concerning inspection of the VM's heap.
