@@ -398,7 +398,7 @@ public class T1X implements RuntimeCompiler {
         long startTime = System.currentTimeMillis();
 
         ClassActor.fromJava(T1XRuntime.class);
-        ClassVerifier verifier = new TypeCheckingVerifier(ClassActor.fromJava(T1XTemplateSource.class));
+        ClassVerifier verifier = new TypeCheckingVerifier(ClassActor.fromJava(templateSourceClass));
 
         final Method[] templateMethods = templateSourceClass.getDeclaredMethods();
         int codeSize = 0;
@@ -408,7 +408,11 @@ public class T1X implements RuntimeCompiler {
                 if (anno != null) {
                     T1XTemplateTag tag = anno.value();
                     ClassMethodActor templateSource = ClassMethodActor.fromJava(method);
-                    templateSource.verify(verifier);
+                    try {
+                        templateSource.verify(verifier);
+                    } catch (VerifyError e) {
+                        FatalError.unexpected("Error verifying " + templateSource, e);
+                    }
                     MaxTargetMethod templateCode = compileTemplate(compiler, templateSource);
                     codeSize += templateCode.codeLength();
                     T1XTemplate template = templates[tag.ordinal()];
