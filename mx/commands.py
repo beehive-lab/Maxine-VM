@@ -255,7 +255,7 @@ def image(args):
         elif arg.startswith('--XX:LogFile='):
             os.environ['MAXINE_LOG_FILE'] = arg.split('=', 1)[1]
         elif arg == '-vma':
-            systemProps += ['-Dmax.permsize=2', '-Dmax.vmthread.factory.class=com.oracle.max.vm.ext.vma.runtime.VMAVmThreadFactory']
+            systemProps += ['-Dmax.permsize=2']
         else:
             imageArgs += [arg]
         i += 1
