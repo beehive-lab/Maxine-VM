@@ -59,12 +59,10 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
     @Override
     public void initialize(Address start, Size maxSize, Size initialSize) {
         Size semiSpaceMaxSize = maxSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
-        Size semiSpaceInitSize = maxSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
-        space.setReserved(start, semiSpaceMaxSize);
+        Size semiSpaceInitSize = initialSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
+        super.initialize(start, semiSpaceMaxSize, semiSpaceInitSize);
         fromSpace.setReserved(start.plus(semiSpaceMaxSize), semiSpaceMaxSize);
-        space.growCommittedSpace(semiSpaceInitSize);
         fromSpace.growCommittedSpace(semiSpaceInitSize);
-        allocator.refill(space.start(), space.committedSize());
         // Inspector support:
         // Zero-fill  the first word of  the still virgin backing storage of the from space to force the OS to map the first page in virtual memory.
         // This avoids the inspector to get DataIO Error on trying to read the bytes from the first page.

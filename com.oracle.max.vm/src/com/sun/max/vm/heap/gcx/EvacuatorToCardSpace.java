@@ -47,12 +47,12 @@ public class EvacuatorToCardSpace extends Evacuator {
     /**
      * Heap Space that is being evacuated.
      */
-    final EvacuatingSpace fromSpace;
+    EvacuatingSpace fromSpace;
 
     /**
      * Heap Space where the evacuated cells will relocate.
      */
-    protected final HeapSpace toSpace;
+    protected HeapSpace toSpace;
 
     /**
      * Threshold below which refills of the thread local promotion space is automatic.
@@ -134,6 +134,11 @@ public class EvacuatorToCardSpace extends Evacuator {
      */
     public void setEvacuationBufferSize(Size size) {
         evacuationBufferSize = size;
+    }
+
+    public void setEvacuationSpace(EvacuatingSpace fromSpace,  HeapSpace toSpace) {
+        this.fromSpace = fromSpace;
+        this.toSpace = toSpace;
     }
 
     public void initialize(int maxSurvivorRanges, Size evacuationBufferSize, Size minRefillThreshold, boolean retireAfterEvacuation) {
