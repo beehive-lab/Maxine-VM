@@ -745,7 +745,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {
-        if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
+        if ((requestedFreeSpace.isZero() && !DisableExplicitGC) || immediateFreeSpace().lessThan(requestedFreeSpace)) {
             executeGC();
         }
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {

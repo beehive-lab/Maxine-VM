@@ -149,12 +149,9 @@ public final class InspectableHeapInfo {
     }
 
     public static void notifyPhaseChange(HeapPhase phase) {
-        final int oneIfBackToBackGC = (HeapPhase.RECLAIMING.ordinal() == heapPhaseOrdinal && phase == HeapPhase.ANALYZING) ? 1 : 0;
         heapPhaseOrdinal = phase.ordinal();
         switch (phase) {
             case ANALYZING:
-                // Correctly update the counter when GC operations performs multiple back-to-back collections (as, e.g., minor collection immediately followed by a full GC).
-                gcCompletedCounter += oneIfBackToBackGC;
                 gcStartedCounter++;
                 // From the Inspector's perspective, a GC begins when
                 // the epoch counter gets incremented.
