@@ -58,7 +58,7 @@ public final class CardTable extends  Log2RegionToByteMapTable {
      * @param fromIndex index to the first card of the range (inclusive)
      * @param toIndex index to the last card of the range (exclusive)
      */
-    void clean(int fromIndex, int toIndex) {
+    public void clean(int fromIndex, int toIndex) {
         fill(fromIndex, toIndex, CLEAN_CARD.value());
     }
 
@@ -68,7 +68,7 @@ public final class CardTable extends  Log2RegionToByteMapTable {
     * @param fromIndex index to the first card of the range (inclusive)
      * @param toIndex index to the last card of the range (exclusive)
      */
-    void dirty(int fromIndex, int toIndex) {
+    public void dirty(int fromIndex, int toIndex) {
         fill(fromIndex, toIndex, DIRTY_CARD.value());
     }
 
@@ -76,7 +76,7 @@ public final class CardTable extends  Log2RegionToByteMapTable {
      * Set card at specified index to the {@link CardState#CLEAN_CARD} value.
      * @param index a card index
      */
-    void clean(int index) {
+    public void clean(int index) {
         set(index, CLEAN_CARD.value());
     }
 
@@ -84,7 +84,7 @@ public final class CardTable extends  Log2RegionToByteMapTable {
     * Set card at specified index to the {@link CardState#DIRTY_CARD} value.
     * @param index a card index
     */
-    void dirty(int index) {
+    public void dirty(int index) {
         set(index, DIRTY_CARD.value());
     }
 

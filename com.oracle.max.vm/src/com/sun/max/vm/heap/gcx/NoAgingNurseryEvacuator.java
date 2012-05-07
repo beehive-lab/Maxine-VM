@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
@@ -32,13 +33,14 @@ import com.sun.max.vm.runtime.*;
 
 public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
     public static boolean TraceDirtyCardWalk = false;
-    /**
-     * Tells from what GC invocation should tracing of dirty card starts.
-     */
-    public static int TraceDirtyCardFromGC = 0;
+    private static boolean traceDirtyCardWalk = false;
     static {
         VMOptions.addFieldOption("-XX:", "TraceDirtyCardWalk", NoAgingNurseryEvacuator.class, "Trace Dirty Card Walk", Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "TraceDirtyCardFromGC", NoAgingNurseryEvacuator.class, "Tells when to begin tracing of dirty card walk", Phase.PRISTINE);
+    }
+
+    @INLINE
+    private static boolean traceDirtyCardWalk() {
+        return MaxineVM.isDebug() && traceDirtyCardWalk;
     }
 
     /**
@@ -94,14 +96,22 @@ public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
     }
 
     @Override
+    public void setGCOperation(GCOperation gcOperation) {
+        super.setGCOperation(gcOperation);
+        if (MaxineVM.isDebug() && gcOperation != null) {
+            traceDirtyCardWalk = TraceDirtyCardWalk && TraceFromGCInvocation <= gcOperation.invocationCount();
+        }
+    }
+
+    @Override
     protected void evacuateFromRSets() {
         // Visit the dirty cards of the old gen (i.e., the toSpace).
         final boolean traceRSet = CardTableRSet.traceCardTableRSet();
-        if (MaxineVM.isDebug() && TraceDirtyCardWalk && currentGCOperation.invocationCount() >= TraceDirtyCardFromGC) {
+        if (traceDirtyCardWalk()) {
             CardTableRSet.setTraceCardTableRSet(true);
         }
         toSpace.visit(heapSpaceDirtyCardClosure);
-        if (MaxineVM.isDebug() && TraceDirtyCardWalk) {
+        if (traceDirtyCardWalk()) {
             CardTableRSet.setTraceCardTableRSet(traceRSet);
         }
     }
