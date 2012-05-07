@@ -51,6 +51,12 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
 
     private boolean refDiscoveryEnabled = true;
 
+    protected GCOperation currentGCOperation;
+
+    public void setGCOperation(GCOperation gcOperation) {
+        currentGCOperation = gcOperation;
+    }
+
     private void updateSpecialReference(Pointer origin) {
         if (refDiscoveryEnabled) {
             SpecialReferenceManager.discoverSpecialReference(origin);

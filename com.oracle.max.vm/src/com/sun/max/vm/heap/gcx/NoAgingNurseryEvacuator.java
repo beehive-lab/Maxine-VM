@@ -32,8 +32,13 @@ import com.sun.max.vm.runtime.*;
 
 public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
     public static boolean TraceDirtyCardWalk = false;
+    /**
+     * Tells from what GC invocation should tracing of dirty card starts.
+     */
+    public static int TraceDirtyCardFromGC = 0;
     static {
         VMOptions.addFieldOption("-XX:", "TraceDirtyCardWalk", NoAgingNurseryEvacuator.class, "Trace Dirty Card Walk", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "TraceDirtyCardFromGC", NoAgingNurseryEvacuator.class, "Tells when to begin tracing of dirty card walk", Phase.PRISTINE);
     }
 
     /**
@@ -92,7 +97,7 @@ public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
     protected void evacuateFromRSets() {
         // Visit the dirty cards of the old gen (i.e., the toSpace).
         final boolean traceRSet = CardTableRSet.traceCardTableRSet();
-        if (MaxineVM.isDebug() && TraceDirtyCardWalk) {
+        if (MaxineVM.isDebug() && TraceDirtyCardWalk && currentGCOperation.invocationCount() >= TraceDirtyCardFromGC) {
             CardTableRSet.setTraceCardTableRSet(true);
         }
         toSpace.visit(heapSpaceDirtyCardClosure);

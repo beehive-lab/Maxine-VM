@@ -319,7 +319,9 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             if (Heap.verbose()) {
                 Log.println("--Begin nursery evacuation");
             }
+            youngSpaceEvacuator.setGCOperation(this);
             youngSpaceEvacuator.evacuate();
+            youngSpaceEvacuator.setGCOperation(null);
             if (Heap.verbose()) {
                 Log.println("--End nursery evacuation");
             }

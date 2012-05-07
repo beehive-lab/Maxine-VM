@@ -125,19 +125,21 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
         private void doOldGenCollection() {
             youngSpaceEvacuator.doBeforeGC();
-            // NOTE: counter must be incremented before a heap phase change  RECLAIMING -> ANALYZING.
+            // NOTE: counter must be incremented before a heap phase change  to ANALYZING.
             fullCollectionCount++;
             oldSpace.flipSpaces();
+            oldSpaceEvacuator.setGCOperation(this);
             oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
             oldSpaceEvacuator.evacuate();
             final CardFirstObjectTable fot = cardTableRSet.cfoTable;
             fot.clear(fot.tableEntryIndex(oldSpace.fromSpace.start()), fot.tableEntryIndex(oldSpace.fromSpace.committedEnd()));
             youngSpaceEvacuator.doAfterGC();
+            oldSpaceEvacuator.setGCOperation(null);
         }
 
         private Size estimatedNextEvac() {
-            Size min = youngSpace.totalSpace().dividedBy(100).times(minSurvivingPercent);
-            Size lastSurvivorCount = youngSpaceEvacuator.evacuatedBytes();
+            final Size min = youngSpace.totalSpace().dividedBy(100).times(minSurvivingPercent);
+            final Size lastSurvivorCount = youngSpaceEvacuator.evacuatedBytes();
             return lastSurvivorCount.greaterThan(min) ? lastSurvivorCount : min;
         }
 
@@ -148,18 +150,21 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             if (Heap.verbose()) {
                 Log.println("--Begin nursery evacuation");
             }
-
+            youngSpaceEvacuator.setGCOperation(this);
             youngSpaceEvacuator.setEvacuationBufferSize(oldSpace.freeSpace());
             youngSpaceEvacuator.evacuate();
+            youngSpaceEvacuator.setGCOperation(null);
             if (Heap.verbose()) {
                 Log.println("--End nursery evacuation");
             }
             if (VerifyAfterGC) {
                 verifyAfterMinorCollection();
             }
-            Size estimatedEvac = estimatedNextEvac();
-            Size freeSpace = youngSpaceEvacuator.freeSpace().plus(oldSpace.freeSpace());
-            if (estimatedEvac.greaterThan(freeSpace)) {
+            final Size estimatedEvac = estimatedNextEvac();
+            if (estimatedEvac.greaterThan(oldSpace.freeSpace())) {
+                // Force a temporary transition to MUTATING state.
+                // This simplifies the inspector's maintenance of references state and GC counters.
+                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
                 if (Heap.verbose()) {
                     Log.println("--Begin old geneneration collection");
                 }
@@ -170,8 +175,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 if (VerifyAfterGC) {
                     verifyAfterFullCollection();
                 }
-                freeSpace = oldSpace.freeSpace();
-                if (estimatedEvac.greaterThan(freeSpace)) {
+                if (estimatedEvac.greaterThan(oldSpace.freeSpace())) {
+                    // THIS IS WHERE WE PLAY RESIZING of generation instead of throwing OOM.
                     FatalError.unimplemented();
                 }
             }
@@ -266,8 +271,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     @Override
     public boolean collectGarbage(Size requestedFreeSpace) {
-        genCollection.submit();
-        return true;
+        if ((requestedFreeSpace.isZero() && !DisableExplicitGC) || youngSpace.freeSpace().lessThan(requestedFreeSpace)) {
+            if (!Heap.gcDisabled()) {
+                genCollection.submit();
+            }
+        }
+        return oldSpace.freeSpace().plus(youngSpace.freeSpace()).greaterThan(requestedFreeSpace);
     }
 
     @Override

@@ -322,6 +322,7 @@ public class GenSSRemoteReference extends RemoteReference {
             void analysisEnds(GenSSRemoteReference ref, boolean minorCollection) {
                 if (!minorCollection) {
                     ref.refState = OLD_REF_LIVE;
+                    return;
                 }
                 TeleError.unexpected("Illegal state transition");
             }
@@ -365,6 +366,7 @@ public class GenSSRemoteReference extends RemoteReference {
                 if (!minorCollection) {
                     ref.fromOrigin = Address.zero();
                     ref.refState = OLD_REF_LIVE;
+                    return;
                 }
                 TeleError.unexpected("Illegal state transition");
             }
@@ -499,6 +501,7 @@ public class GenSSRemoteReference extends RemoteReference {
      * @return a remote reference to an live object
      */
     public static GenSSRemoteReference createLive(AbstractRemoteHeapScheme remoteScheme, Address toOrigin, boolean isYoung) {
+        TeleError.check(((RemoteGenSSHeapScheme) remoteScheme).canCreateLive());
         final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, Address.zero(), toOrigin);
         ref.refState = isYoung ? RefState.YOUNG_REF_LIVE : RefState.OLD_REF_LIVE;
         return ref;
@@ -510,8 +513,8 @@ public class GenSSRemoteReference extends RemoteReference {
         return ref;
     }
 
-    public static GenSSRemoteReference createFromOnly(AbstractRemoteHeapScheme remoteScheme, Address toOrigin, boolean isYoung) {
-        final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, Address.zero(), toOrigin);
+    public static GenSSRemoteReference createFromOnly(AbstractRemoteHeapScheme remoteScheme, Address fromOrigin, boolean isYoung) {
+        final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, fromOrigin, Address.zero());
         ref.refState = isYoung ? RefState.YOUNG_REF_FROM : RefState.OLD_REF_FROM;
         return ref;
     }
@@ -522,4 +525,21 @@ public class GenSSRemoteReference extends RemoteReference {
         return ref;
     }
 
+    public static void checkNoLiveRef(WeakRemoteReferenceMap<GenSSRemoteReference> map, boolean isYoung) {
+        final RefState prohibitedRefState =  isYoung ? RefState.YOUNG_REF_LIVE : RefState.OLD_REF_LIVE;
+        for (GenSSRemoteReference ref : map.values()) {
+            TeleError.check(ref.refState != prohibitedRefState);
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append(refState.label);
+        sb.append(" to: ");
+        sb.append(toOrigin == null ? "<null>" : toOrigin.to0xHexString());
+        sb.append(" from: ");
+        sb.append(fromOrigin == null ? "<null>" : fromOrigin.to0xHexString());
+        return sb.toString();
+    }
 }
