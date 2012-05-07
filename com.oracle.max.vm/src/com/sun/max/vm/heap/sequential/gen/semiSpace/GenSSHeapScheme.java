@@ -132,7 +132,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
             oldSpaceEvacuator.evacuate();
             final CardFirstObjectTable fot = cardTableRSet.cfoTable;
-            fot.clear(fot.tableEntryIndex(oldSpace.fromSpace.start()), fot.tableEntryIndex(oldSpace.fromSpace.committedEnd()));
+            final int startIndex = fot.tableEntryIndex(oldSpace.fromSpace.start());
+            final int endIndex = fot.tableEntryIndex(oldSpace.fromSpace.committedEnd());
+            fot.clear(startIndex, endIndex);
+            cardTableRSet.cardTable.clean(startIndex, endIndex);
             youngSpaceEvacuator.doAfterGC();
             oldSpaceEvacuator.setGCOperation(null);
         }
