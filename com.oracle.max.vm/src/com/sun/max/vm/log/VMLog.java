@@ -57,7 +57,8 @@ import com.sun.max.vm.thread.*;
  * There is one default instance of {@link VMLog} built into the boot image, that
  * is identified by the static field {@link #vmLog}, and is used by all the
  * standard {@link VMLogger loggers} in the VM. However, it is possible to create
- * additional instances for specific purposes.
+ * additional instances for specific purposes. These are recorded here so that
+ * the GC scanning can have a single entry point.
  *
  * Subclasses should do all their initialization by overriding the {@link #initialize(com.sun.max.vm.MaxineVM.Phase)} method
  * and <b>not</b> in a constructor, as the constructor is called before relevant state, such as registered loggers
@@ -280,6 +281,12 @@ public abstract class VMLog implements Heap.GCCallback {
     @CONSTANT_WHEN_NOT_ZERO
     private static VMLog vmLog;
 
+    @CONSTANT
+    private static VMLog[] customLogs;
+
+    @HOSTED_ONLY
+    private static ArrayList<VMLog> customLogList = new ArrayList<VMLog>();
+
     /**
      * Monotonically increasing global unique id for a log record.
      * Incremented every time {@link #getRecord(int)} is invoked.
@@ -309,6 +316,10 @@ public abstract class VMLog implements Heap.GCCallback {
             nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
             vmLog = Factory.create();
             vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
+            if (customLogList.size() > 0) {
+                customLogs = new VMLog[customLogList.size()];
+                customLogList.toArray(customLogs);
+            }
         }
     }
 
@@ -323,7 +334,11 @@ public abstract class VMLog implements Heap.GCCallback {
      */
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            initialize(hostedLoggerList, new Flusher());
+            setLogEntries();
+            if (vmLog == this) {
+                initialize(hostedLoggerList, new Flusher());
+            }
+            Heap.registerGCCallback(this);
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
             // logging options will have been checked and set during BOOTSTRAPPING,
             // they need to be reset now for the actual VM run.
@@ -336,9 +351,23 @@ public abstract class VMLog implements Heap.GCCallback {
         }
     }
 
+    /**
+     * Register a custom {@link VMLog} with a specific, single, {@link VMLogger} and a {@link VMLog.Flusher}.
+     * @param loggerList
+     * @param flusher
+     */
     @HOSTED_ONLY
-    public void initialize(ArrayList<VMLogger> loggerList, Flusher flusher) {
-        setLogEntries();
+    public void registerCustom(ArrayList<VMLogger> loggerList, Flusher flusher) {
+        initialize(loggerList, flusher);
+        customLogList.add(this);
+    }
+
+    /**
+     * Setup the {@link #loggers} array.
+     * @param loggerList
+     */
+    @HOSTED_ONLY
+    private void initialize(ArrayList<VMLogger> loggerList, Flusher flusher) {
         loggers = new VMLogger[loggerList.size()];
         loggerList.toArray(loggers);
         operationRefMaps = new int[loggers.length + 1][];
@@ -349,7 +378,6 @@ public abstract class VMLog implements Heap.GCCallback {
             }
         }
         this.flusher = flusher;
-        Heap.registerGCCallback(this);
     }
 
     /**
@@ -358,6 +386,10 @@ public abstract class VMLog implements Heap.GCCallback {
     public void threadStart() {
     }
 
+    /**
+     * Returns the singleton default instance uses for general logging.
+     * @return
+     */
     public static VMLog vmLog() {
         return vmLog;
     }
@@ -447,6 +479,20 @@ public abstract class VMLog implements Heap.GCCallback {
      * N.B. This method should be called when no concurrent activity is expected on the log.
      */
     public abstract void flushLog();
+
+    /**
+     * Scan the default log and any custom logs for references in a GC.
+     * @param tla
+     * @param visitor
+     */
+    public static void scanLogs(Pointer tla, PointerIndexVisitor visitor) {
+        vmLog.scanLog(tla, visitor);
+        if (customLogs != null) {
+            for (int i = 0; i < customLogs.length; i++) {
+                customLogs[i].scanLog(tla, visitor);
+            }
+        }
+    }
 
     /**
      * Records the identify of the last visitor passed to {@link #scanLog} to avoid repeat scans
