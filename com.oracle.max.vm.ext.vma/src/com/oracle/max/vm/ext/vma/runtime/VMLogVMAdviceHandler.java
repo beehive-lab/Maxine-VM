@@ -56,7 +56,7 @@ public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
             vmaVMLog.initialize(phase);
             ArrayList<VMLogger> list = new ArrayList<VMLogger>();
             list.add(VMAVMLogger.logger);
-            vmaVMLog.initialize(list, new VMLogFlusher());
+            vmaVMLog.registerCustom(list, new VMLogFlusher());
         } else if (phase == MaxineVM.Phase.RUNNING) {
             logHandler = new LoggingVMAdviceHandler();
             logHandler.initialise(phase);
