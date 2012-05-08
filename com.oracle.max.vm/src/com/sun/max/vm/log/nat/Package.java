@@ -33,7 +33,7 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return VMLog.Factory.is("nat.shared.VMLogNativeShared") || VMLog.Factory.is("nat.thread.VMLogNativeThread");
+        return VMLog.Factory.contains("VMLogNative");
     }
 
 }

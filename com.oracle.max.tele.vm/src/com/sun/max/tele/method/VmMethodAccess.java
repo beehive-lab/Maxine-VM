@@ -216,6 +216,30 @@ public final class VmMethodAccess extends AbstractVmHolder {
         return null;
     }
 
+    /**
+     * Gets a representation of a method in the VM matching a particular key, null if not loaded.
+     */
+    public TeleMethodActor findMethodActor(MethodKey methodKey) {
+        if (vm().tryLock()) {
+            try {
+                final TeleClassActor teleClassActor = classes().findTeleClassActor(methodKey.holder());
+                if (teleClassActor != null) {
+                    // the class has been loaded; find a matching method
+                    for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
+                        MethodKey testMethodKey = new MethodKey.MethodActorKey(teleMethodActor.methodActor());
+                        if (testMethodKey.equals(methodKey)) {
+                            return teleMethodActor;
+                        }
+                    }
+                }
+
+            } finally {
+                vm().unlock();
+            }
+        }
+        return null;
+    }
+
     public static void main(String[] args) {
         Trace.begin(1, "VmMethods updating GENERATED CONTENT");
         Trace.on(1);

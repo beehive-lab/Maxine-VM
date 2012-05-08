@@ -28,6 +28,7 @@ import static com.oracle.max.vm.ext.vma.runtime.AdviceRecordFlusher.*;
 
 import com.oracle.max.vm.ext.vma.*;
 
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.thread.*;
@@ -127,26 +128,25 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void initialise(ObjectStateHandler state) {
-        super.initialise(state);
-        try {
-            // TODO is this really necessary?
-            Heap.enableImmortalMemoryAllocation();
-            tb = new ThreadRecordBuffer();
-            super.setRemovalTracker(new ASyncRemovalTracker(this));
-        } finally {
-            Heap.disableImmortalMemoryAllocation();
+    public void initialise(MaxineVM.Phase phase) {
+        super.initialise(phase);
+        if (phase == MaxineVM.Phase.RUNNING) {
+            try {
+                // TODO is this really necessary?
+                Heap.enableImmortalMemoryAllocation();
+                tb = new ThreadRecordBuffer();
+                super.setRemovalTracker(new ASyncRemovalTracker(this));
+            } finally {
+                Heap.disableImmortalMemoryAllocation();
+            }
+            recordFlusher = AdviceRecordFlusherFactory.create();
+            recordFlusher.initialise(phase, state);
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            finalising = true; // this will prevent daemon threads from logging any more records.
+            // This is called in the main thread which, clearly, has not yet called {@link #threadTerminating}.
+            adviseBeforeThreadTerminating(VmThread.current());
+            recordFlusher.initialise(phase, state);
         }
-        recordFlusher = AdviceRecordFlusherFactory.create();
-        recordFlusher.initialise(state);
-    }
-
-    @Override
-    public void finalise() {
-        finalising = true; // this will prevent daemon threads from logging any more records.
-        // This is called in the main thread which, clearly, has not yet called {@link #threadTerminating}.
-        adviseBeforeThreadTerminating(VmThread.current());
-        recordFlusher.finalise();
     }
 
     @Override
@@ -240,7 +240,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    protected void handleUnseen(Object obj) {
+    protected void unseenObject(Object obj) {
         storeRecord(Unseen, 0, obj);
     }
 

@@ -20,20 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.nat.thread;
+package com.sun.max.vm.log.nat.thread.var.std;
 
 import com.sun.max.config.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.log.*;
 
 
 public class Package extends BootImagePackage {
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return isPartOfMaxineVM();
+    public Package() {
+        if (isPartOfMaxineVM()) {
+            registerThreadLocal(VMLogNativeThreadVariableStd.class, VMLogNativeThreadVariableStd.VMLOG_BUFFER_NAME);
+            registerThreadLocal(VMLogNativeThreadVariableStd.class, VMLogNativeThreadVariableStd.VMLOG_BUFFER_OFFSETS_NAME);
+        }
     }
 
     private static boolean isPartOfMaxineVM() {
-        return VMLog.Factory.contains("VMLogNativeThread");
+        return VMLog.Factory.contains("VMLogNativeThreadVariableStd");
     }
+
 }

@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.vma.runtime;
 import com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog.TimeStampGenerator;
 import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
 
@@ -79,15 +80,15 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
     }
 
     @Override
-    public void initialise(ObjectStateHandler state) {
-        logHandler.initialise(state);
-        logHandler.getLog().setTimeStampGenerator(tsg);
-        super.initialise(state);
-    }
-
-    public void finalise() {
-        tsg.setEvent(null);
-        logHandler.finalise();
+    public void initialise(MaxineVM.Phase phase, ObjectStateHandler state) {
+        super.initialise(phase, state);
+        if (phase == MaxineVM.Phase.RUNNING) {
+            logHandler.initialise(phase);
+            logHandler.getLog().setTimeStampGenerator(tsg);
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            tsg.setEvent(null);
+            logHandler.initialise(phase);
+        }
     }
 
     @Override

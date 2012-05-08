@@ -41,6 +41,10 @@ import com.sun.max.io.*;
 @HOSTED_ONLY
 public class AdviceGeneratorHelper {
 
+    public static final String INDENT4 = "    ";
+    public static final String INDENT8 = INDENT4 + "    ";
+    public static final String INDENT12 = INDENT8 + "    ";
+
     public static final VMABytecodes[] VMABytecodeValues = VMABytecodes.values();
     /**
      * Map from actual bytecode encoding value to {@link VMABytecode}.
@@ -72,6 +76,10 @@ public class AdviceGeneratorHelper {
     }
 
     public static int updateSource(Class target, String updatedContent, boolean checkOnly) throws IOException {
+        return updateSource(target, updatedContent, "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
+    }
+
+    public static int updateSource(Class target, String updatedContent, String startString, String endString, boolean checkOnly) throws IOException {
         File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm.ext.vma/src");
         File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         if (updatedContent == null) {
@@ -79,28 +87,44 @@ public class AdviceGeneratorHelper {
         }
         ReadableSource content = ReadableSource.Static.fromString(updatedContent);
         if (Files.updateGeneratedContent(outputFile, content,
-                        "// START GENERATED CODE", "// END GENERATED CODE", checkOnly)) {
+                        startString, endString, checkOnly)) {
             System.out.println("Source for " + target + " was updated");
             return 1;
         }
         return 0;
 
     }
+
+    public static class MethodNameOverride {
+        public final Method method;
+        public MethodNameOverride(Method m) {
+            this.method = m;
+        }
+        public String overrideName() {
+            return method.getName();
+        }
+    }
+
     /**
      * Generates the name/signature definition for given method, returning a count of the
      * number of arguments.
      * @param m
-     * @param modifiers TODO
+     * @param protection public/private etc or null for nothing
+     * @param modifiers extra modifiers
      * @return
      */
-    public static int generateSignature(Method m, String modifiers) {
-        out.print("    public ");
+    public static int generateSignature(String indent, String protection, MethodNameOverride m, String modifiers) {
+        String methodName = m.overrideName();
+        out.print(indent);
+        if (protection != null) {
+            out.printf("%s ", protection);
+        }
         if (modifiers != null) {
             out.printf("%s ", modifiers);
         }
-        out.printf("void %s(", m.getName());
+        out.printf("void %s(", methodName);
         int count = 1;
-        for (Class<?> klass : m.getParameterTypes()) {
+        for (Class<?> klass : m.method.getParameterTypes()) {
             if (count != 1) {
                 out.print(", ");
             }
@@ -109,6 +133,10 @@ public class AdviceGeneratorHelper {
         }
         out.print(")");
         return count;
+    }
+
+    public static int generateSignature(Method m, String modifiers) {
+        return generateSignature(INDENT4, "public", new MethodNameOverride(m), modifiers);
     }
 
     /**
@@ -140,6 +168,14 @@ public class AdviceGeneratorHelper {
         }
         return types[argc - 1].getSimpleName();
 
+    }
+
+    public static String toFirstUpper(String s) {
+        if (s.length() == 0) {
+            return s;
+        } else {
+            return s.substring(0, 1).toUpperCase() + s.substring(1);
+        }
     }
 
 

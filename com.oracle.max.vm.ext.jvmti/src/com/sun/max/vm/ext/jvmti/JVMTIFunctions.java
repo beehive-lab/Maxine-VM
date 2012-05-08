@@ -85,7 +85,7 @@ public class JVMTIFunctions  {
         private static final LogOperations[] logOperations = LogOperations.values();
 
         private JVMTIFunctionsLogger() {
-            super("JVMTICalls", logOperations.length, null);
+            super("JVMTICalls", logOperations.length, "log JVMTI upcalls");
         }
 
         @Override

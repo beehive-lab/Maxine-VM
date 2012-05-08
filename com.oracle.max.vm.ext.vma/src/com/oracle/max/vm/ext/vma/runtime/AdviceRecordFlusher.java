@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.vma.runtime;
 
 import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -54,7 +55,6 @@ public interface AdviceRecordFlusher {
      */
     void flushBuffer(RecordBuffer buffer);
 
-    void initialise(ObjectStateHandler state);
-    void finalise();
+    void initialise(MaxineVM.Phase phase, ObjectStateHandler state);
 
 }

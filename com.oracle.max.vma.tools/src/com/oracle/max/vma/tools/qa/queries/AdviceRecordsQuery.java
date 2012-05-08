@@ -180,6 +180,7 @@ public class AdviceRecordsQuery extends QueryBase {
                     ps.print(getObjectRecord(ar));
                     break;
 
+                case Removal:
                 case Unseen:
                 case New:
                 case NewArray:

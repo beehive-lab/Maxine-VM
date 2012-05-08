@@ -20,20 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.nat.thread;
+package com.sun.max.ins.debug.vmlog;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.log.*;
+import com.sun.max.ins.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.log.VMLog.*;
+import com.sun.max.vm.log.nat.thread.*;
 
 
-public class Package extends BootImagePackage {
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return isPartOfMaxineVM();
+class VMLogNativeThreadVariableStdElementsTableModel extends VMLogNativeThreadElementsTableModel {
+    VMLogNativeThreadVariableStdElementsTableModel(Inspection inspection, VMLogView vmLogView) {
+        super(inspection, vmLogView);
     }
 
-    private static boolean isPartOfMaxineVM() {
-        return VMLog.Factory.contains("VMLogNativeThread");
+    @Override
+    protected int nativeRecordSize(Pointer r) {
+        int argCount = Record.getArgCount(vmIO.readInt(r));
+        return VMLogNativeThread.ARGS_OFFSET + argCount * Word.size();
     }
 }
+
+

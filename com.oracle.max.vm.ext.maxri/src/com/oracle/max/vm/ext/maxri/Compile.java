@@ -154,7 +154,7 @@ public class Compile {
             MethodInstrumentation.enable(500);
         }
 
-        vmConfigurator.create(true);
+        vmConfigurator.create();
 
         // create the prototype
         if (verboseOption.getValue() > 0) {

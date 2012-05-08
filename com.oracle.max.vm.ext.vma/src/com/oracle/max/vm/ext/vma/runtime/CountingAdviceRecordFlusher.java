@@ -25,6 +25,8 @@ package com.oracle.max.vm.ext.vma.runtime;
 import static com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.RecordType.*;
 import static com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 
+import com.sun.max.vm.*;
+
 /**
  * Counts the number of records of the given types and outputs a summary at the end.
  * Can be used to quantify the basic overhead and to estimate log sizes.
@@ -38,15 +40,13 @@ public class CountingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
     }
 
     @Override
-    public void initialise(ObjectStateHandler state) {
-        super.initialise(state);
-    }
-
-    @Override
-    public void finalise() {
-        // output the data
-        for (RecordType rt : RECORD_TYPE_VALUES) {
-            System.out.printf("%s: %d%n", rt.name(), counts[rt.ordinal()]);
+    public void initialise(MaxineVM.Phase phase, ObjectStateHandler state) {
+        super.initialise(phase, state);
+        if (phase == MaxineVM.Phase.TERMINATING) {
+            // output the data
+            for (RecordType rt : RECORD_TYPE_VALUES) {
+                System.out.printf("%s: %d%n", rt.name(), counts[rt.ordinal()]);
+            }
         }
     }
 

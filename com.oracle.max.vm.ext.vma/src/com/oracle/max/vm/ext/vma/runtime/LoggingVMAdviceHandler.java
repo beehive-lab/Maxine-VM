@@ -27,6 +27,7 @@ import com.oracle.max.vm.ext.vma.log.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
@@ -43,6 +44,14 @@ import com.sun.max.vm.thread.*;
  *
  */
 public class LoggingVMAdviceHandler extends VMAdviceHandler {
+
+    private class RemovalTracker extends ObjectStateHandler.RemovalTracker {
+
+        @Override
+        public void removed(long id) {
+            removal(id);
+        }
+    }
 
     static abstract class ThreadNameGenerator {
         abstract String getThreadName();
@@ -61,6 +70,7 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
      */
     private VMAdviceHandlerLog log;
     private ThreadNameGenerator tng;
+    private ObjectStateHandler state;
 
     public VMAdviceHandlerLog getLog() {
         return log;
@@ -70,24 +80,28 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
         this.tng = tng;
     }
 
-    @Override
-    public void initialise(ObjectStateHandler state) {
-        super.initialise(state);
-        if (tng == null) {
-            tng = new CurrentThreadNameGenerator();
-        }
-
-        log = VMAdviceHandlerLogFactory.create();
-
-        if (log == null || !log.initializeLog()) {
-            throw new RuntimeException("log creation failed");
-        }
+    public ObjectStateHandler.RemovalTracker getRemovalTracker(ObjectStateHandler state) {
+        this.state = state;
+        return new RemovalTracker();
     }
 
     @Override
-    public void finalise() {
-        if (log != null) {
-            log.finalizeLog();
+    public void initialise(MaxineVM.Phase phase) {
+        super.initialise(phase);
+        if (phase == MaxineVM.Phase.RUNNING) {
+            if (tng == null) {
+                tng = new CurrentThreadNameGenerator();
+            }
+
+            log = VMAdviceHandlerLogFactory.create();
+
+            if (log == null || !log.initializeLog()) {
+                throw new RuntimeException("log creation failed");
+            }
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            if (log != null) {
+                log.finalizeLog();
+            }
         }
     }
 

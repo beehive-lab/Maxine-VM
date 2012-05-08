@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.vma.runtime;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 
 /**
  * Counts the bytecodes that are executed. This should give the same results
@@ -38,11 +39,13 @@ public class BytecodeCounter extends NullVMAdviceHandler {
     }
 
     @Override
-    public void finalise() {
-        for (int b = 0; b < counts.length; b++) {
-            long count = counts[b];
-            if (count > 0) {
-                System.out.format("%s: %d%n", Bytecodes.nameOf(b), count);
+    public void initialise(MaxineVM.Phase phase) {
+        if (phase == MaxineVM.Phase.TERMINATING) {
+            for (int b = 0; b < counts.length; b++) {
+                long count = counts[b];
+                if (count > 0) {
+                    System.out.format("%s: %d%n", Bytecodes.nameOf(b), count);
+                }
             }
         }
     }

@@ -22,61 +22,68 @@
  */
 package com.oracle.max.vm.ext.vma.runtime;
 
-import com.oracle.max.vm.ext.vma.*;
+import java.util.*;
+
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.log.*;
+import com.sun.max.vm.log.VMLog.*;
+import com.sun.max.vm.log.java.fix.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * An implementation of {@link VMAdviceHandler} that synchronously logs events.
- *
- * Tracking is controlled by the {@link VMAJavaRunScheme#VM_ADVISING} {@link VmThreadLocal}.
- * It is assumed that all calls to the methods of this class are guarded by a check that tracking is enabled,
- * which is controlled by a bit in the {@link VMAJavaRunScheme#VM_ADVISING} {@link VmThreadLocal}.
- * It also assumes that tracking has been disabled to avoid recursive calls while logging.
- *
- * State for unique ids and lifetime tracking is provided by an implementation of the {@link ObjectStateHandler} class,
- * which is created at image build time. All objects have to be checked for having ids, and may log
- * an {@link #unseenObject(Object)} event first.
- *
- * Since the {@link VMAdviceHandler} and {@link ObjectStateHandler} implementations are required to be
- * thread safe, this class is not otherwise synchronised.
- *
- * The majority of the methods follow a common pattern so are automatically generated.
- *
+ * An implementation that uses a secondary {@link VMLog} for storage.
  */
+public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
-public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
-
+    private VMLog vmaVMLog;
     private LoggingVMAdviceHandler logHandler;
 
-    @Override
-    protected void unseenObject(Object obj) {
-        logHandler.unseenObject(obj);
+    private static class VMLogFlusher extends VMLog.Flusher {
 
+        @Override
+        public void flushRecord(Record r) {
+            VMAVMLogger.logger.trace(r);
+        }
     }
 
     @Override
     public void initialise(MaxineVM.Phase phase) {
         super.initialise(phase);
-        if (phase == MaxineVM.Phase.RUNNING) {
+        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+//            VMLog vmaVMLog = new VMLogNativeThreadVariableVMA();
+            vmaVMLog = new VMLogArrayFixed();
+            vmaVMLog.initialize(phase);
+            ArrayList<VMLogger> list = new ArrayList<VMLogger>();
+            list.add(VMAVMLogger.logger);
+            vmaVMLog.initialize(list, new VMLogFlusher());
+        } else if (phase == MaxineVM.Phase.RUNNING) {
             logHandler = new LoggingVMAdviceHandler();
             logHandler.initialise(phase);
             super.setRemovalTracker(logHandler.getRemovalTracker(state));
+            VMAVMLogger.VMAVMLoggerImpl.setLogHandler(logHandler);
+            VMAVMLogger.logger.enable(true);
         } else if (phase == MaxineVM.Phase.TERMINATING) {
+            vmaVMLog.flushLog();
             logHandler.initialise(phase);
         }
+
+    }
+
+    @Override
+    protected void unseenObject(Object obj) {
+        VMAVMLogger.logger.logUnseenObject(obj);
     }
 
     @Override
     public void adviseBeforeGC() {
-        logHandler.adviseBeforeGC();
+        VMAVMLogger.logger.logAdviseBeforeGC();
     }
 
     @Override
     public void adviseAfterGC() {
         // We log the GC first
-        logHandler.adviseAfterGC();
+        VMAVMLogger.logger.logAdviseAfterGC();
         super.adviseAfterGC();
     }
 
@@ -89,18 +96,336 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
 // START GENERATED CODE
-// EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN VMLogVMAdviceHandlerGenerator.main() TO MODIFY
+
+    @Override
+    public void adviseBeforeConstLoad(long arg1) {
+        super.adviseBeforeConstLoad(arg1);
+        VMAVMLogger.logger.logAdviseBeforeConstLoad(arg1);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(Object arg1) {
+        super.adviseBeforeConstLoad(arg1);
+        VMAVMLogger.logger.logAdviseBeforeConstLoad(arg1);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(float arg1) {
+        super.adviseBeforeConstLoad(arg1);
+        VMAVMLogger.logger.logAdviseBeforeConstLoad(arg1);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(double arg1) {
+        super.adviseBeforeConstLoad(arg1);
+        VMAVMLogger.logger.logAdviseBeforeConstLoad(arg1);
+    }
+
+    @Override
+    public void adviseBeforeLoad(int arg1) {
+        super.adviseBeforeLoad(arg1);
+        VMAVMLogger.logger.logAdviseBeforeLoad(arg1);
+    }
+
+    @Override
+    public void adviseBeforeArrayLoad(Object arg1, int arg2) {
+        super.adviseBeforeArrayLoad(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeArrayLoad(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, long arg2) {
+        super.adviseBeforeStore(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeStore(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, float arg2) {
+        super.adviseBeforeStore(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeStore(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, double arg2) {
+        super.adviseBeforeStore(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeStore(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, Object arg2) {
+        super.adviseBeforeStore(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeStore(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(Object arg1, int arg2, float arg3) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforeArrayStore(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(Object arg1, int arg2, long arg3) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforeArrayStore(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(Object arg1, int arg2, double arg3) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforeArrayStore(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(Object arg1, int arg2, Object arg3) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforeArrayStore(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeStackAdjust(int arg1) {
+        super.adviseBeforeStackAdjust(arg1);
+        VMAVMLogger.logger.logAdviseBeforeStackAdjust(arg1);
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, long arg2, long arg3) {
+        super.adviseBeforeOperation(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforeOperation(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, float arg2, float arg3) {
+        super.adviseBeforeOperation(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforeOperation(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, double arg2, double arg3) {
+        super.adviseBeforeOperation(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforeOperation(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, float arg2) {
+        super.adviseBeforeConversion(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeConversion(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, long arg2) {
+        super.adviseBeforeConversion(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeConversion(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, double arg2) {
+        super.adviseBeforeConversion(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeConversion(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeIf(int arg1, int arg2, int arg3) {
+        super.adviseBeforeIf(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforeIf(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeIf(int arg1, Object arg2, Object arg3) {
+        super.adviseBeforeIf(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforeIf(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeBytecode(int arg1) {
+        super.adviseBeforeBytecode(arg1);
+        VMAVMLogger.logger.logAdviseBeforeBytecode(arg1);
+    }
+
+    @Override
+    public void adviseBeforeReturn() {
+        super.adviseBeforeReturn();
+        VMAVMLogger.logger.logAdviseBeforeReturn();
+    }
+
+    @Override
+    public void adviseBeforeReturn(long arg1) {
+        super.adviseBeforeReturn(arg1);
+        VMAVMLogger.logger.logAdviseBeforeReturn(arg1);
+    }
+
+    @Override
+    public void adviseBeforeReturn(float arg1) {
+        super.adviseBeforeReturn(arg1);
+        VMAVMLogger.logger.logAdviseBeforeReturn(arg1);
+    }
+
+    @Override
+    public void adviseBeforeReturn(double arg1) {
+        super.adviseBeforeReturn(arg1);
+        VMAVMLogger.logger.logAdviseBeforeReturn(arg1);
+    }
+
+    @Override
+    public void adviseBeforeReturn(Object arg1) {
+        super.adviseBeforeReturn(arg1);
+        VMAVMLogger.logger.logAdviseBeforeReturn(arg1);
+    }
+
+    @Override
+    public void adviseBeforeGetStatic(Object arg1, int arg2) {
+        super.adviseBeforeGetStatic(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeGetStatic(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforePutStatic(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforePutStatic(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforePutStatic(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforePutStatic(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeGetField(Object arg1, int arg2) {
+        super.adviseBeforeGetField(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeGetField(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
+        super.adviseBeforePutField(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforePutField(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
+        super.adviseBeforePutField(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforePutField(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforePutField(Object arg1, int arg2, double arg3) {
+        super.adviseBeforePutField(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforePutField(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforePutField(Object arg1, int arg2, long arg3) {
+        super.adviseBeforePutField(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforePutField(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
+        super.adviseBeforeInvokeVirtual(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeInvokeVirtual(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
+        super.adviseBeforeInvokeSpecial(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeInvokeSpecial(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
+        super.adviseBeforeInvokeStatic(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeInvokeStatic(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
+        super.adviseBeforeInvokeInterface(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeInvokeInterface(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeArrayLength(Object arg1, int arg2) {
+        super.adviseBeforeArrayLength(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeArrayLength(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeThrow(Object arg1) {
+        super.adviseBeforeThrow(arg1);
+        VMAVMLogger.logger.logAdviseBeforeThrow(arg1);
+    }
+
+    @Override
+    public void adviseBeforeCheckCast(Object arg1, Object arg2) {
+        super.adviseBeforeCheckCast(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeCheckCast(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeInstanceOf(Object arg1, Object arg2) {
+        super.adviseBeforeInstanceOf(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeInstanceOf(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeMonitorEnter(Object arg1) {
+        super.adviseBeforeMonitorEnter(arg1);
+        VMAVMLogger.logger.logAdviseBeforeMonitorEnter(arg1);
+    }
+
+    @Override
+    public void adviseBeforeMonitorExit(Object arg1) {
+        super.adviseBeforeMonitorExit(arg1);
+        VMAVMLogger.logger.logAdviseBeforeMonitorExit(arg1);
+    }
+
+    @Override
+    public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
+        super.adviseAfterInvokeVirtual(arg1, arg2);
+        VMAVMLogger.logger.logAdviseAfterInvokeVirtual(arg1, arg2);
+    }
+
+    @Override
+    public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
+        super.adviseAfterInvokeSpecial(arg1, arg2);
+        VMAVMLogger.logger.logAdviseAfterInvokeSpecial(arg1, arg2);
+    }
+
+    @Override
+    public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
+        super.adviseAfterInvokeStatic(arg1, arg2);
+        VMAVMLogger.logger.logAdviseAfterInvokeStatic(arg1, arg2);
+    }
+
+    @Override
+    public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
+        super.adviseAfterInvokeInterface(arg1, arg2);
+        VMAVMLogger.logger.logAdviseAfterInvokeInterface(arg1, arg2);
+    }
 
     @Override
     public void adviseAfterNew(Object arg1) {
         super.adviseAfterNew(arg1);
-        logHandler.adviseAfterNew(arg1);
+        VMAVMLogger.logger.logAdviseAfterNew(arg1);
     }
 
     @Override
     public void adviseAfterNewArray(Object arg1, int arg2) {
         super.adviseAfterNewArray(arg1, arg2);
-        logHandler.adviseAfterNewArray(arg1, arg2);
+        VMAVMLogger.logger.logAdviseAfterNewArray(arg1, arg2);
         MultiNewArrayHelper.handleMultiArray(this, arg1);
     }
 
@@ -110,328 +435,11 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeConstLoad(double arg1) {
-        super.adviseBeforeConstLoad(arg1);
-        logHandler.adviseBeforeConstLoad(arg1);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(Object arg1) {
-        super.adviseBeforeConstLoad(arg1);
-        logHandler.adviseBeforeConstLoad(arg1);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(long arg1) {
-        super.adviseBeforeConstLoad(arg1);
-        logHandler.adviseBeforeConstLoad(arg1);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(float arg1) {
-        super.adviseBeforeConstLoad(arg1);
-        logHandler.adviseBeforeConstLoad(arg1);
-    }
-
-    @Override
-    public void adviseBeforeLoad(int arg1) {
-        super.adviseBeforeLoad(arg1);
-        logHandler.adviseBeforeLoad(arg1);
-    }
-
-    @Override
-    public void adviseBeforeArrayLoad(Object arg1, int arg2) {
-        super.adviseBeforeArrayLoad(arg1, arg2);
-        logHandler.adviseBeforeArrayLoad(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, Object arg2) {
-        super.adviseBeforeStore(arg1, arg2);
-        logHandler.adviseBeforeStore(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, float arg2) {
-        super.adviseBeforeStore(arg1, arg2);
-        logHandler.adviseBeforeStore(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, double arg2) {
-        super.adviseBeforeStore(arg1, arg2);
-        logHandler.adviseBeforeStore(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, long arg2) {
-        super.adviseBeforeStore(arg1, arg2);
-        logHandler.adviseBeforeStore(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, Object arg3) {
-        super.adviseBeforeArrayStore(arg1, arg2, arg3);
-        logHandler.adviseBeforeArrayStore(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, float arg3) {
-        super.adviseBeforeArrayStore(arg1, arg2, arg3);
-        logHandler.adviseBeforeArrayStore(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, long arg3) {
-        super.adviseBeforeArrayStore(arg1, arg2, arg3);
-        logHandler.adviseBeforeArrayStore(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, double arg3) {
-        super.adviseBeforeArrayStore(arg1, arg2, arg3);
-        logHandler.adviseBeforeArrayStore(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeStackAdjust(int arg1) {
-        super.adviseBeforeStackAdjust(arg1);
-        logHandler.adviseBeforeStackAdjust(arg1);
-    }
-
-    @Override
-    public void adviseBeforeOperation(int arg1, double arg2, double arg3) {
-        super.adviseBeforeOperation(arg1, arg2, arg3);
-        logHandler.adviseBeforeOperation(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeOperation(int arg1, long arg2, long arg3) {
-        super.adviseBeforeOperation(arg1, arg2, arg3);
-        logHandler.adviseBeforeOperation(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeOperation(int arg1, float arg2, float arg3) {
-        super.adviseBeforeOperation(arg1, arg2, arg3);
-        logHandler.adviseBeforeOperation(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeConversion(int arg1, long arg2) {
-        super.adviseBeforeConversion(arg1, arg2);
-        logHandler.adviseBeforeConversion(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeConversion(int arg1, float arg2) {
-        super.adviseBeforeConversion(arg1, arg2);
-        logHandler.adviseBeforeConversion(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeConversion(int arg1, double arg2) {
-        super.adviseBeforeConversion(arg1, arg2);
-        logHandler.adviseBeforeConversion(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeIf(int arg1, int arg2, int arg3) {
-        super.adviseBeforeIf(arg1, arg2, arg3);
-        logHandler.adviseBeforeIf(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeIf(int arg1, Object arg2, Object arg3) {
-        super.adviseBeforeIf(arg1, arg2, arg3);
-        logHandler.adviseBeforeIf(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeBytecode(int arg1) {
-        super.adviseBeforeBytecode(arg1);
-        logHandler.adviseBeforeBytecode(arg1);
-    }
-
-    @Override
-    public void adviseBeforeReturn() {
-        super.adviseBeforeReturn();
-        logHandler.adviseBeforeReturn();
-    }
-
-    @Override
-    public void adviseBeforeReturn(long arg1) {
-        super.adviseBeforeReturn(arg1);
-        logHandler.adviseBeforeReturn(arg1);
-    }
-
-    @Override
-    public void adviseBeforeReturn(float arg1) {
-        super.adviseBeforeReturn(arg1);
-        logHandler.adviseBeforeReturn(arg1);
-    }
-
-    @Override
-    public void adviseBeforeReturn(double arg1) {
-        super.adviseBeforeReturn(arg1);
-        logHandler.adviseBeforeReturn(arg1);
-    }
-
-    @Override
-    public void adviseBeforeReturn(Object arg1) {
-        super.adviseBeforeReturn(arg1);
-        logHandler.adviseBeforeReturn(arg1);
-    }
-
-    @Override
-    public void adviseBeforeGetStatic(Object arg1, int arg2) {
-        super.adviseBeforeGetStatic(arg1, arg2);
-        logHandler.adviseBeforeGetStatic(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
-        super.adviseBeforePutStatic(arg1, arg2, arg3);
-        logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
-        super.adviseBeforePutStatic(arg1, arg2, arg3);
-        logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
-        super.adviseBeforePutStatic(arg1, arg2, arg3);
-        logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
-        super.adviseBeforePutStatic(arg1, arg2, arg3);
-        logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeGetField(Object arg1, int arg2) {
-        super.adviseBeforeGetField(arg1, arg2);
-        logHandler.adviseBeforeGetField(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
-        super.adviseBeforePutField(arg1, arg2, arg3);
-        logHandler.adviseBeforePutField(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforePutField(Object arg1, int arg2, double arg3) {
-        super.adviseBeforePutField(arg1, arg2, arg3);
-        logHandler.adviseBeforePutField(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
-        super.adviseBeforePutField(arg1, arg2, arg3);
-        logHandler.adviseBeforePutField(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforePutField(Object arg1, int arg2, long arg3) {
-        super.adviseBeforePutField(arg1, arg2, arg3);
-        logHandler.adviseBeforePutField(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
-        super.adviseBeforeInvokeVirtual(arg1, arg2);
-        logHandler.adviseBeforeInvokeVirtual(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
-        super.adviseBeforeInvokeSpecial(arg1, arg2);
-        logHandler.adviseBeforeInvokeSpecial(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
-        super.adviseBeforeInvokeStatic(arg1, arg2);
-        logHandler.adviseBeforeInvokeStatic(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
-        super.adviseBeforeInvokeInterface(arg1, arg2);
-        logHandler.adviseBeforeInvokeInterface(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeArrayLength(Object arg1, int arg2) {
-        super.adviseBeforeArrayLength(arg1, arg2);
-        logHandler.adviseBeforeArrayLength(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeThrow(Object arg1) {
-        super.adviseBeforeThrow(arg1);
-        logHandler.adviseBeforeThrow(arg1);
-    }
-
-    @Override
-    public void adviseBeforeCheckCast(Object arg1, Object arg2) {
-        super.adviseBeforeCheckCast(arg1, arg2);
-        logHandler.adviseBeforeCheckCast(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeInstanceOf(Object arg1, Object arg2) {
-        super.adviseBeforeInstanceOf(arg1, arg2);
-        logHandler.adviseBeforeInstanceOf(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeMonitorEnter(Object arg1) {
-        super.adviseBeforeMonitorEnter(arg1);
-        logHandler.adviseBeforeMonitorEnter(arg1);
-    }
-
-    @Override
-    public void adviseBeforeMonitorExit(Object arg1) {
-        super.adviseBeforeMonitorExit(arg1);
-        logHandler.adviseBeforeMonitorExit(arg1);
-    }
-
-    @Override
-    public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
-        super.adviseAfterInvokeVirtual(arg1, arg2);
-        logHandler.adviseAfterInvokeVirtual(arg1, arg2);
-    }
-
-    @Override
-    public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
-        super.adviseAfterInvokeSpecial(arg1, arg2);
-        logHandler.adviseAfterInvokeSpecial(arg1, arg2);
-    }
-
-    @Override
-    public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
-        super.adviseAfterInvokeStatic(arg1, arg2);
-        logHandler.adviseAfterInvokeStatic(arg1, arg2);
-    }
-
-    @Override
-    public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
-        super.adviseAfterInvokeInterface(arg1, arg2);
-        logHandler.adviseAfterInvokeInterface(arg1, arg2);
-    }
-
-    @Override
     public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
         super.adviseAfterMethodEntry(arg1, arg2);
-        logHandler.adviseAfterMethodEntry(arg1, arg2);
+        VMAVMLogger.logger.logAdviseAfterMethodEntry(arg1, arg2);
     }
 
-// END GENERATED CODE
 }
+// END GENERATED CODE
+

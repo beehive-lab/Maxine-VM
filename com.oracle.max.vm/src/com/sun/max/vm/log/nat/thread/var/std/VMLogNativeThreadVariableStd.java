@@ -20,24 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.debug.vmlog;
+package com.sun.max.vm.log.nat.thread.var.std;
 
-import com.sun.max.ins.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.log.VMLog.*;
-import com.sun.max.vm.log.nat.thread.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.log.nat.thread.var.*;
+import com.sun.max.vm.thread.*;
 
 
-class VMLogNativeThreadVariableElementsTableModel extends VMLogNativeThreadElementsTableModel {
-    VMLogNativeThreadVariableElementsTableModel(Inspection inspection, VMLogView vmLogView) {
-        super(inspection, vmLogView);
-    }
+public class VMLogNativeThreadVariableStd extends VMLogNativeThreadVariableUnbound {
+    public static final String VMLOG_BUFFER_NAME = "VMLOG_BUFFER";
+    public static final String VMLOG_BUFFER_OFFSETS_NAME = "VMLOG_BUFFER_OFFSETS";
+    public static final VmThreadLocal VMLOG_BUFFER = new VmThreadLocal(VMLOG_BUFFER_NAME, false, "VMLog buffer");
+    public static final VmThreadLocal VMLOG_BUFFER_OFFSETS = new VmThreadLocal(VMLOG_BUFFER_OFFSETS_NAME, false, "VMLog buffer first/next offsets");
 
     @Override
-    protected int nativeRecordSize(Pointer r) {
-        int argCount = Record.getArgCount(vmIO.readInt(r));
-        return VMLogNativeThread.ARGS_OFFSET + argCount * Word.size();
+    public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
+            setBufferThreadLocals(VMLOG_BUFFER, VMLOG_BUFFER_OFFSETS);
+        }
     }
+
+
 }
-
-
