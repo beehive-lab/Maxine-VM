@@ -623,6 +623,7 @@ public final class Heap {
 
     @HOSTED_ONLY
     public static void registerGCCallback(GCCallback callback) {
+        FatalError.check(gcCallbacks == null, "too late to register a GC callback");
         gcCallbackList.add(callback);
     }
 

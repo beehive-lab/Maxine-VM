@@ -682,7 +682,7 @@ public class BootImage {
                                                       stringInfo.bootImagePackage(Key.LAYOUT),
                                                       stringInfo.bootImagePackage(Key.HEAP),
                                                       stringInfo.bootImagePackage(Key.MONITOR),
-                                                      stringInfo.bootImagePackage(Key.RUN));
+                                                      stringInfo.bootImagePackage(Key.RUN)).gatherBootImagePackages();
 
                 fileInputStream.skip(header.heapSize + header.codeSize);
                 int trailerOffset = codeOffset() + header.codeSize;

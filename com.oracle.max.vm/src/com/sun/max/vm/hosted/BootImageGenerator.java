@@ -232,7 +232,7 @@ public final class BootImageGenerator {
             vmDirectory.mkdirs();
 
             // Create and installs the VM
-            configurator.create(true);
+            configurator.create();
 
             // Initialize the Java prototype
             JavaPrototype.initialize(prototypeGenerator.threadsOption.getValue());
