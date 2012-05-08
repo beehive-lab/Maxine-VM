@@ -39,7 +39,7 @@ import com.sun.max.vm.thread.*;
 /**
  * A circular buffer of logged VM operations.
  * A logged VM operation is defined by a {@link VMLogger} instance, which
- * is typically associated with some component of the VM,and registered
+ * is typically associated with some component of the VM, and registered
  * with the {@link #registerLogger(VMLogger)} method.
  *
  * A variety of implementations of the log buffer are possible,
@@ -53,6 +53,15 @@ import com.sun.max.vm.thread.*;
  * This code can also execute in {@link MaxineVM#isHosted() hosted} mode, to support
  * logging/tracing during boot image generation. The {@link VMLogHosted} implementation
  * is used during hosted mode.
+ *
+ * There is one default instance of {@link VMLog} built into the boot image, that
+ * is identified by the static field {@link #vmLog}, and is used by all the
+ * standard {@link VMLogger loggers} in the VM. However, it is possible to create
+ * additional instances for specific purposes.
+ *
+ * Subclasses should do all their initialization by overriding the {@link #initialize(com.sun.max.vm.MaxineVM.Phase)} method
+ * and <b>not</b> in a constructor, as the constructor is called before relevant state, such as registered loggers
+ * is available.
  */
 public abstract class VMLog implements Heap.GCCallback {
 
@@ -61,7 +70,7 @@ public abstract class VMLog implements Heap.GCCallback {
      */
     public static class Factory {
         private static final String VMLOG_FACTORY_CLASS = "max.vmlog.class";
-        public static final String DEFAULT_VMLOG_CLASS = "nat.thread.var.VMLogNativeThreadVariable";
+        public static final String DEFAULT_VMLOG_CLASS = "nat.thread.var.std.VMLogNativeThreadVariableStd";
 
         private static VMLog create() {
             String prop = System.getProperty(VMLOG_FACTORY_CLASS);
@@ -78,9 +87,17 @@ public abstract class VMLog implements Heap.GCCallback {
             }
         }
 
-        public static boolean is(String name) {
+        /**
+         * Checks if the specified VM log class contains the string {@code name}.
+         * @param name
+         * @return {@code true} iff he specified VM log class contains the string {@code name}
+         */
+        public static boolean contains(String name) {
             String prop = System.getProperty(VMLOG_FACTORY_CLASS);
-            return prop == null ? name.equals(DEFAULT_VMLOG_CLASS) : name.equals(prop);
+            if (prop == null) {
+                prop = DEFAULT_VMLOG_CLASS;
+            }
+            return prop.contains(name);
         }
     }
 
@@ -241,14 +258,14 @@ public abstract class VMLog implements Heap.GCCallback {
      * List used to accumulate loggers during registration phase.
      */
     @HOSTED_ONLY
-    private static ArrayList<VMLogger> loggerList = new ArrayList<VMLogger>();
+    private static ArrayList<VMLogger> hostedLoggerList = new ArrayList<VMLogger>();
 
     /**
      * Array of registered {@link VMLogger} instances.
      */
     @INSPECTED
     @CONSTANT_WHEN_NOT_ZERO
-    private static VMLogger[] loggers;
+    private VMLogger[] loggers;
 
     /**
      * Number of log records maintained in the circular buffer.
@@ -277,7 +294,10 @@ public abstract class VMLog implements Heap.GCCallback {
      * So this array is one element larger than {@link #loggers}.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    protected static int[][] operationRefMaps;
+    protected int[][] operationRefMaps;
+
+    @HOSTED_ONLY
+    private static final VMLog hostedVMLog = new VMLogHosted();
 
     /**
      * Called to create the specific {@link VMLog} subclass at an appropriate point in the image build.
@@ -289,16 +309,6 @@ public abstract class VMLog implements Heap.GCCallback {
             nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
             vmLog = Factory.create();
             vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
-            loggers = new VMLogger[loggerList.size()];
-            loggerList.toArray(loggers);
-            operationRefMaps = new int[loggers.length + 1][];
-            for (VMLogger logger : loggers) {
-                if (logger != null) {
-                    logger.setVMLog(vmLog, new VMLogHosted());
-                    operationRefMaps[logger.loggerId] = logger.operationRefMaps;
-                }
-            }
-            Heap.registerGCCallback(vmLog);
         }
     }
 
@@ -312,9 +322,11 @@ public abstract class VMLog implements Heap.GCCallback {
      * @param phase the phase
      */
     public void initialize(MaxineVM.Phase phase) {
-        // logging options will have been checked and set during BOOTSTRAPPING,
-        // they need to be reset now for the actual VM run.
-        if (phase == MaxineVM.Phase.PRIMORDIAL) {
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
+            initialize(hostedLoggerList, new Flusher());
+        } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            // logging options will have been checked and set during BOOTSTRAPPING,
+            // they need to be reset now for the actual VM run.
             for (int i = 0; i < loggers.length; i++) {
                 VMLogger logger = loggers[i];
                 if (logger != null) {
@@ -322,6 +334,22 @@ public abstract class VMLog implements Heap.GCCallback {
                 }
             }
         }
+    }
+
+    @HOSTED_ONLY
+    public void initialize(ArrayList<VMLogger> loggerList, Flusher flusher) {
+        setLogEntries();
+        loggers = new VMLogger[loggerList.size()];
+        loggerList.toArray(loggers);
+        operationRefMaps = new int[loggers.length + 1][];
+        for (VMLogger logger : loggers) {
+            if (logger != null) {
+                logger.setVMLog(this, hostedVMLog);
+                operationRefMaps[logger.loggerId] = logger.operationRefMaps;
+            }
+        }
+        this.flusher = flusher;
+        Heap.registerGCCallback(this);
     }
 
     /**
@@ -336,10 +364,10 @@ public abstract class VMLog implements Heap.GCCallback {
 
     @HOSTED_ONLY
     public static void registerLogger(VMLogger logger) {
-        loggerList.add(logger);
+        hostedLoggerList.add(logger);
     }
 
-    private void checkLogEntriesProperty() {
+    private void setLogEntries() {
         String logSizeProperty = System.getProperty(LOG_ENTRIES_PROPERTY);
         if (logSizeProperty != null) {
             logEntries = Integer.parseInt(logSizeProperty);
@@ -349,18 +377,16 @@ public abstract class VMLog implements Heap.GCCallback {
     }
 
     protected VMLog() {
-        checkLogEntriesProperty();
     }
-
 
     /**
      * Called once the VM is up to check for limitations on logging.
      *
      */
     public static void checkLogOptions() {
-        for (int i = 0; i < loggers.length; i++) {
-            if (loggers[i] != null) {
-                loggers[i].checkOptions();
+        for (int i = 0; i < vmLog.loggers.length; i++) {
+            if (vmLog.loggers[i] != null) {
+                vmLog.loggers[i].checkOptions();
             }
         }
     }
@@ -417,6 +443,12 @@ public abstract class VMLog implements Heap.GCCallback {
     public abstract void scanLog(Pointer tla, PointerIndexVisitor visitor);
 
     /**
+     * Flush the contents of the log, using the {@link #flusher}.
+     * N.B. This method should be called when no concurrent activity is expected on the log.
+     */
+    public abstract void flushLog();
+
+    /**
      * Records the identify of the last visitor passed to {@link #scanLog} to avoid repeat scans
      * of global log buffers.
      * N.B. this assumes no parallel calls on multiple threads.
@@ -465,6 +497,27 @@ public abstract class VMLog implements Heap.GCCallback {
                 argIndex++;
                 operationRefMap = operationRefMap >>> 1;
             }
+        }
+    }
+
+    // Log flushing
+
+    /**
+     * The {@link #vmLog.FLusher} for this log, or {@code null} if not set.
+     */
+    @CONSTANT
+    protected Flusher flusher;
+
+    /**
+     * Support for log flushing to some external agent.
+     */
+    public static class Flusher {
+        /**
+         * Invoked in response to a call of {@link VMLog#flushLog()} or whenever the log is about to overflow.
+         * @param r
+         */
+        public void flushRecord(Record r) {
+
         }
     }
 

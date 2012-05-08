@@ -27,6 +27,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.log.nat.thread.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -43,15 +44,14 @@ import com.sun.max.vm.thread.*;
  * firstOffset.
  *
  * Note, as a consequence of the potential overlap of old records, a GC scan cannot just start at the
- * beginning of the buffer; it must start at firstOffset to avoid encountering a partiallly overwritten record.
+ * beginning of the buffer; it must start at firstOffset to avoid encountering a partially overwritten record.
+ *
+ * This class is abstract because it does not define the specific thread locals that are used to control
+ * the buffer. That is left to a concrete subclass, thereby allowing multiple instances of this log to co-exist
+ * for a thread at runtime.
  *
  */
-public class VMLogNativeThreadVariable extends VMLogNativeThread {
-
-    @Override
-    public void initialize(MaxineVM.Phase phase) {
-        super.initialize(phase);
-    }
+public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread {
 
     @Override
     @NEVER_INLINE
@@ -70,7 +70,7 @@ public class VMLogNativeThreadVariable extends VMLogNativeThread {
         int uuid = getUniqueId();
         Pointer tla = VmThread.currentTLA();
         Pointer buffer = getBuffer(tla);
-        Address offsets = VMLOG_BUFFER_OFFSETS.load(tla);
+        Address offsets = vmLogBufferOffsetsTL.load(tla);
         final int nextOffset = (int) (offsets.toLong() & NEXT_OFFSET_MASK);
         long firstOffsetAndWrap = offsets.toLong() & FIRST_OFFSET_WRAP_MASK;
         long wrap = firstOffsetAndWrap & WRAPPED;
@@ -104,7 +104,7 @@ public class VMLogNativeThreadVariable extends VMLogNativeThread {
                 }
             }
         }
-        VMLOG_BUFFER_OFFSETS.store3(Address.fromLong(firstOffsetAndWrap | modLogSize(newNextOffset)));
+        vmLogBufferOffsetsTL.store3(Address.fromLong(firstOffsetAndWrap | modLogSize(newNextOffset)));
 
         recordAddress.writeInt(ID_OFFSET, uuid);
         NativeRecord record = getNativeRecord();
@@ -133,7 +133,7 @@ public class VMLogNativeThreadVariable extends VMLogNativeThread {
 
     @Override
     public void scanLog(Pointer tla, PointerIndexVisitor visitor) {
-        long offsets = VMLOG_BUFFER_OFFSETS.load(tla).toLong();
+        long offsets = vmLogBufferOffsetsTL.load(tla).toLong();
         int nextOffset = nextOffset(offsets);
         if (nextOffset == 0 && !isWrapped(offsets)) {
             // nothing to scan (and therefore no buffer or NativeRecord yet)
@@ -155,5 +155,9 @@ public class VMLogNativeThreadVariable extends VMLogNativeThread {
         }
     }
 
+    @Override
+    public void flushLog() {
+        FatalError.unimplemented();
+    }
 
 }

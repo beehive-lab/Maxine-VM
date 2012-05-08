@@ -88,9 +88,15 @@ public class VMLogger {
      */
     final int[] operationRefMaps;
 
+    /**
+     * The {@link VMLog} used by this logger.
+     */
     private VMLog vmLog;
 
     @HOSTED_ONLY
+    /**
+     * The {@code hosted} {@link VMLog}. There is only one (currently).
+     */
     private static VMLog hostedVMLog;
 
     /**
@@ -148,8 +154,33 @@ public class VMLogger {
         optionsChecked = true;
     }
 
+    /**
+     * Special case variant that makes an invisible logger that is controlled by explicit code in the VM.
+     * In particular, it has no user-visible log/trace command line options.
+     * It is not registered with the standard {@link VMLog} instance, so the controller must
+     * explicitly associate a {@link VMLog} instance with it.
+     * It's {@link #loggerId} is always 1, i.e., there must be a 1-1 relationship
+     * between such a logger and its associated {@link VMLog} instance.
+     * @param numOps
+     * @param operationRefMaps
+     */
     @HOSTED_ONLY
-    public void setVMLog(VMLog vmLog, VMLog hostedVMLog) {
+    public VMLogger(String name, int numOps, int[] operationRefMaps) {
+        this.name = name;
+        this.numOps = numOps;
+        this.operationRefMaps = operationRefMaps;
+        logOp = new BitSet(numOps);
+        for (int i = 0; i < numOps; i++) {
+            logOp.set(i, true);
+        }
+        logOption = traceOption = null;
+        logIncludeOption = logExcludeOption = null;
+        optionsChecked = true;
+        loggerId = 1;
+    }
+
+    @HOSTED_ONLY
+    void setVMLog(VMLog vmLog, VMLog hostedVMLog) {
         this.vmLog = vmLog;
         VMLogger.hostedVMLog = hostedVMLog;
         checkOptions();
@@ -493,6 +524,16 @@ public class VMLogger {
     }
 
     @INLINE
+    public static Word floatArg(float f) {
+        return Address.fromInt(Float.floatToRawIntBits(f));
+    }
+
+    @INLINE
+    public static Word doubleArg(double d) {
+        return Address.fromLong(Double.doubleToRawLongBits(d));
+    }
+
+    @INLINE
     public static Word vmThreadArg(VmThread vmThread) {
         return Address.fromInt(vmThread.id());
     }
@@ -563,6 +604,16 @@ public class VMLogger {
     @INLINE
     public static long toLong(Record r, int argNum) {
         return r.getLongArg(argNum);
+    }
+
+    @INLINE
+    public static float toFloat(Record r, int argNum) {
+        return Float.intBitsToFloat(r.getIntArg(argNum));
+    }
+
+    @INLINE
+    public static double toDouble(Record r, int argNum) {
+        return Double.longBitsToDouble(r.getLongArg(argNum));
     }
 
     @INLINE

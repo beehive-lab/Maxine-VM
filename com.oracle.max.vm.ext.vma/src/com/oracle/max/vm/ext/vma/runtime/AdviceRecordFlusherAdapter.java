@@ -23,11 +23,12 @@
 package com.oracle.max.vm.ext.vma.runtime;
 
 import com.oracle.max.vm.ext.vma.run.java.*;
+import com.sun.max.vm.*;
 
 /**
  * Handles the basic communication between the {@link TransientVMAdviceHandler} and the {@link AdviceRecordFlusher}.
  * It uses a single thread to handle the flushing and takes care of marking the {@link AdviceRecord} as free
- * once the buffer is processed. By default the thread is started by the {@link #initialise(ObjectStateHandler)} method.
+ * once the buffer is processed. By default the thread is started by the {@link #initialise(MaxineVM.Phase, ObjectStateHandler)} method.
  */
 public abstract class AdviceRecordFlusherAdapter extends Thread implements AdviceRecordFlusher {
 
@@ -54,8 +55,10 @@ public abstract class AdviceRecordFlusherAdapter extends Thread implements Advic
     protected abstract void processRecords(RecordBuffer buffer);
 
     @Override
-    public void initialise(ObjectStateHandler objectStateHandler) {
-        start();
+    public void initialise(MaxineVM.Phase phase, ObjectStateHandler objectStateHandler) {
+        if (phase == MaxineVM.Phase.RUNNING) {
+            start();
+        }
     }
 
     @Override

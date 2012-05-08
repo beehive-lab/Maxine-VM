@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.vma.runtime;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
@@ -33,21 +34,35 @@ import com.sun.max.vm.reference.*;
 /**
  * An adaptor class that handles the state (id, liveness) management for advice handlers.
  *
+ * Leaves the actual handling of unseen and removed (dead) objects to subclass.
+ *
+ * Currently hard-wires {@link BitSetObjectStateHandler} as the state implementation.
+ *
  */
 
 public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
 
+    protected ObjectStateHandler state;
     protected ObjectStateHandler.RemovalTracker removalTracker;
+
+    @Override
+    public void initialise(MaxineVM.Phase phase) {
+        super.initialise(phase);
+        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+            state = BitSetObjectStateHandler.create();
+        }
+    }
 
     protected void setRemovalTracker(ObjectStateHandler.RemovalTracker removalTracker) {
         this.removalTracker = removalTracker;
     }
 
     /**
-     * Notify our specific subclass that a previously unseen object has been observed.
+     * Notify our specific subclass that a previously unseen object, i.e.,
+     * one whose allocation was not seen, has been observed.
      * @param obj
      */
-    protected abstract void handleUnseen(Object obj);
+    protected abstract void unseenObject(Object obj);
 
     /**
      * Ensure that {@code obj} has a valid unique id.
@@ -63,7 +78,7 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
                 final Reference objRef = Reference.fromJava(obj);
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
                 checkId(hub.classActor.classLoader);
-                handleUnseen(obj);
+                unseenObject(obj);
             }
         }
     }

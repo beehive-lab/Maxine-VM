@@ -20,20 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.nat.thread;
+package com.oracle.max.vm.ext.vma.runtime;
 
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.log.*;
-
 
 public class Package extends BootImagePackage {
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return isPartOfMaxineVM();
+    public Package() {
+        if (isPartOfMaxineVM()) {
+            registerThreadLocal(VMLogNativeThreadVariableVMA.class, VMLogNativeThreadVariableVMA.VMA_BUFFER_NAME);
+            registerThreadLocal(VMLogNativeThreadVariableVMA.class, VMLogNativeThreadVariableVMA.VMA_BUFFER_OFFSETS_NAME);
+        }
     }
 
     private static boolean isPartOfMaxineVM() {
-        return VMLog.Factory.contains("VMLogNativeThread");
+        return VMConfiguration.activeConfig().runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java");
     }
+
 }

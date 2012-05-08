@@ -20,53 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.java.fix;
+package com.oracle.max.vm.ext.vma.runtime;
 
 import com.sun.max.vm.*;
-import com.sun.max.vm.log.java.*;
+import com.sun.max.vm.log.nat.thread.var.*;
+import com.sun.max.vm.thread.*;
 
-/**
- * Simple space inefficient implementation.
- * Allocates {@link Record records} large enough to hold the maximum number of arguments.
- * All records are considered in use, i.e., not FREE, even if they are not currently filled in (early startup).
- */
-public class VMLogArrayFixed extends VMLogArray {
 
-    private int myIdAtLastFlush;
+public class VMLogNativeThreadVariableVMA extends VMLogNativeThreadVariableUnbound {
+    public static final String VMA_BUFFER_NAME = "VMA_BUFFER";
+    public static final String VMA_BUFFER_OFFSETS_NAME = "VMA_BUFFER_OFFSETS";
+    public static final VmThreadLocal VMA_BUFFER = new VmThreadLocal(VMA_BUFFER_NAME, false, "VMA buffer");
+    public static final VmThreadLocal VMA_BUFFER_OFFSETS = new VmThreadLocal(VMA_BUFFER_OFFSETS_NAME, false, "VMA buffer first/next offsets");
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            for (int i = 0; i < buffer.length; i++) {
-                buffer[i] = new Record8();
-            }
+            setBufferThreadLocals(VMA_BUFFER, VMA_BUFFER_OFFSETS);
         }
-    }
-
-    @Override
-    protected Record getRecord(int argCount) {
-        int myId = getUniqueId();
-        if (myId - myIdAtLastFlush >= logEntries) {
-            // buffer is about to overflow
-            flush(myId);
-        }
-        Record r = buffer[myId % logEntries];
-        return r;
-    }
-
-    private synchronized void flush(int myId) {
-        for (int id = myIdAtLastFlush; id < myId; id++) {
-            flusher.flushRecord(buffer[id % logEntries]);
-        }
-        myIdAtLastFlush = myId;
-    }
-
-    @Override
-    public void flushLog() {
-        // The assumption is that we can safely read "nextId" without
-        // interference from concurrent activity.
-        flush(nextId);
     }
 
 }

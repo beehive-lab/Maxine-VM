@@ -34,10 +34,6 @@ import com.sun.max.vm.thread.*;
 public class NullVMAdviceHandler extends VMAdviceHandler {
 
     @Override
-    public void finalise() {
-    }
-
-    @Override
     public void gcSurvivor(Pointer cell) {
     }
 
