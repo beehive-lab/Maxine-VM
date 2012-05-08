@@ -284,7 +284,7 @@ public final class JavaPrototype extends Prototype {
     public static void initialize(int threadCount) {
         assert theJavaPrototype == null : "Cannot initialize the JavaPrototype more than once";
         if (MaxineVM.vm() == null) {
-            new VMConfigurator(null).create(true);
+            new VMConfigurator(null).create();
         }
         theJavaPrototype = new JavaPrototype(threadCount);
     }

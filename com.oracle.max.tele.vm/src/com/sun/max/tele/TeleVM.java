@@ -485,7 +485,7 @@ public abstract class TeleVM implements MaxVM {
                         bootImageConfig.layoutPackage,
                         bootImageConfig.heapPackage,
                         bootImageConfig.monitorPackage,
-                        bootImageConfig.runPackage);
+                        bootImageConfig.runPackage).gatherBootImagePackages();
         vm = new MaxineVM(config);
         MaxineVM.set(vm);
         config.loadAndInstantiateSchemes(bootImageConfig.vmSchemes());
