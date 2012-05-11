@@ -30,19 +30,11 @@ import com.sun.max.vm.heap.gcx.*;
 public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? extends Refiller>> extends ContiguousAllocatingSpace<T> {
     @INSPECTED
     ContiguousHeapSpace fromSpace;
-    /**
-     * Alignment constraint for a semi-space.
-     */
-    private int semiSpaceAlignment;
-
     ContiguousSemiSpace(T allocator, String name) {
         super(allocator, name + "'s To Space");
         fromSpace = new ContiguousHeapSpace(name + "'s From Space");
     }
 
-    public void initializeAlignment(int semiSpaceAlignment) {
-        this.semiSpaceAlignment = semiSpaceAlignment;
-    }
 
     public Address highestAddress() {
         Address fend = fromSpace.end();
@@ -57,9 +49,7 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
     }
 
     @Override
-    public void initialize(Address start, Size maxSize, Size initialSize) {
-        Size semiSpaceMaxSize = maxSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
-        Size semiSpaceInitSize = initialSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
+    public void initialize(Address start, Size semiSpaceMaxSize, Size semiSpaceInitSize) {
         super.initialize(start, semiSpaceMaxSize, semiSpaceInitSize);
         fromSpace.setReserved(start.plus(semiSpaceMaxSize), semiSpaceMaxSize);
         fromSpace.growCommittedSpace(semiSpaceInitSize);

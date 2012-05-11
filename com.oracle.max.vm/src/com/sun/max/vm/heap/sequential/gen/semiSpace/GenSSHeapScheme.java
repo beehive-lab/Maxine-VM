@@ -146,6 +146,16 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             return lastSurvivorCount.greaterThan(min) ? lastSurvivorCount : min;
         }
 
+        private void resize(HeapSpace space, Size newSize) {
+            if (newSize.lessThan(space.totalSpace())) {
+                Size delta = space.totalSpace().minus(newSize);
+                space.shrinkAfterGC(delta);
+            } else if (newSize.greaterThan(space.totalSpace())) {
+                Size delta = newSize.minus(space.totalSpace());
+                space.growAfterGC(delta);
+            }
+        }
+
         @Override
         protected void collect(int invocationCount) {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
@@ -178,10 +188,21 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 if (VerifyAfterGC) {
                     verifyAfterFullCollection();
                 }
-                if (estimatedEvac.greaterThan(oldSpace.freeSpace())) {
+                if (resizingPolicy.resizeAfterFullGC(estimatedEvac, oldSpace.freeSpace())) {
+                    resize(youngSpace, resizingPolicy.youngGenSize());
+                    resize(oldSpace, resizingPolicy.oldGenSize());
+
+/*                    Log.print("Estimated Evac:");
+                    Log.printlnToPowerOfTwoUnits(estimatedEvac);
+                    Log.print("Young Gen: ");
+                    Log.printlnToPowerOfTwoUnits(youngSpace.totalSpace());
+                    Log.print("Old Free Space: ");
+                    Log.printlnToPowerOfTwoUnits(oldSpace.freeSpace());
+                    Log.print("Old Gen: ");
+                    Log.printlnToPowerOfTwoUnits(oldSpace.totalSpace());
+                    Log.println("Out Of Memory");
                     // THIS IS WHERE WE PLAY RESIZING of generation instead of throwing OOM.
-                    FatalError.unimplemented();
-                }
+*/                }
             }
             vmConfig().monitorScheme().afterGarbageCollection();
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
@@ -205,7 +226,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     /**
      * Policy for resizing the heap after each GC.
      */
-    private GenHeapSizingPolicy heapResizingPolicy;
+    private GenSSHeapSizingPolicy resizingPolicy;
 
     /**
      * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
@@ -328,11 +349,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         try {
             // Use immortal memory for now.
             Heap.enableImmortalMemoryAllocation();
-            heapResizingPolicy = new FixedRatioGenHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
-            youngSpace.initialize(firstUnusedByteAddress, heapResizingPolicy.maxYoungGenSize(), heapResizingPolicy.initialYoungGenSize());
+            // heapResizingPolicy = new FixedRatioGenHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
+            resizingPolicy = new GenSSHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
+            youngSpace.initialize(firstUnusedByteAddress, resizingPolicy.maxYoungGenSize(), resizingPolicy.initialYoungGenSize());
             Address startOfOldSpace = youngSpace.space.end().alignUp(pageSize);
-            oldSpace.initializeAlignment(pageSize);
-            oldSpace.initialize(startOfOldSpace, heapResizingPolicy.maxOldGenSize(), heapResizingPolicy.initialOldGenSize());
+            oldSpace.initialize(startOfOldSpace, resizingPolicy.maxOldGenSize(), resizingPolicy.initialOldGenSize());
             /*
              * FIXME:
              * We set retireAfterEvacuation parameter to true. We allocate the entire old free space as evacuation LAB when doing a minor evacuation,
