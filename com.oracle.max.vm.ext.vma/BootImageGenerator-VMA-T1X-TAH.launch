@@ -25,7 +25,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.vm.hosted.BootImageGenerator"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -layout=xohm -baseline=com.sun.max.vm.t1x.vma.VMAT1X -run=com.oracle.max.vm.ext.vma.run.java -heap=com.oracle.max.vm.ext.vma.heap.semi"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -layout=xohm -baseline=com.sun.max.vm.t1x.vma.VMAT1X -run=com.oracle.max.vm.ext.vma.run.java"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.oracle.max.vm"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xss2m -Xms1G -Xmx2G -Dmax.trace.noconsoles -Dmax.ir.trace=xxx -Dmax.permsize=2 -Dmax.vmthread.factory.class=com.oracle.max.vm.ext.vma.runtime.VMAVmThreadFactory -Dmax.vma.handler=com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandler"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xss2m -Xms1G -Xmx2G -Dmax.trace.noconsoles -Dmax.ir.trace=xxx -Dmax.permsize=2 -Dmax.vma.handler=com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandler"/>
 </launchConfiguration>

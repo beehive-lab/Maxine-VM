@@ -32,7 +32,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.Actor;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.deps.DependencyProcessor.DependencyProcessorVisitor;
+import com.sun.max.vm.compiler.deps.DependencyProcessor.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.jni.MemberID;
@@ -54,6 +54,8 @@ import com.sun.max.vm.type.*;
  * the classes that are ancestors of the new class must be checked
  * to see if any of their dependent assumptions are invalidated as a result
  * of adding the new class to the hierarchy.
+ *
+ * See <a href="https://wikis.oracle.com/display/MaxineVM/Code+Dependencies">the Wiki page</a> for more details.
  */
 public final class Dependencies {
 
@@ -123,6 +125,34 @@ public final class Dependencies {
             return dependencyProcessor.visit(dependencyProcessor.match(this), context, dependencies, index);
         }
     }
+
+    /**
+     * Overrides the {@link DependencyVisitor#visit} method to grab the {@link ToStringDependencyProcessorVisitor}
+     * for the {@link DependencyProcessor}, (which is guaranteed to match) and pass it as the {@lnk DependencyProcessorVisitor}.
+     */
+    private static class GenericToStringDependencyVisitor extends DependencyVisitor {
+        private StringBuilder sb;
+
+        GenericToStringDependencyVisitor setStringBuilder(StringBuilder sb) {
+            this.sb = sb;
+            return this;
+        }
+
+        @Override
+        protected int visit(Dependencies dependencies, ClassActor context, DependencyProcessor dependencyProcessor, int index) {
+            return dependencyProcessor.visit(dependencyProcessor.getToStringDependencyProcessorVisitor(sb), context, dependencies, index);
+        }
+
+    }
+
+    private static class GenericToStringDependencyVisitorTL extends ThreadLocal<GenericToStringDependencyVisitor> {
+        @Override
+        public GenericToStringDependencyVisitor initialValue() {
+            return new GenericToStringDependencyVisitor();
+        }
+    }
+
+    private static final GenericToStringDependencyVisitorTL genericToStringDependencyVisitorTL = new GenericToStringDependencyVisitorTL();
 
     /**
      * Data structure used while encoding the dependencies for a class into a {@code short[]}.
@@ -475,7 +505,7 @@ public final class Dependencies {
             return value;
         } else {
             final StringBuilder sb = new StringBuilder(value + Arrays.toString(packed));
-            visit(new AllDependencyVisitors.ToStringDependencyVisitor(sb));
+            visit(genericToStringDependencyVisitorTL.get().setStringBuilder(sb));
             return sb.toString();
         }
     }

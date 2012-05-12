@@ -186,6 +186,11 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
         return null;
     }
 
+    @Override
+    public boolean canIntrinsify() {
+        return true;
+    }
+
     public int invocationCount() {
         return compiler.getVMEntries().RiMethod_invocationCount(this);
     }

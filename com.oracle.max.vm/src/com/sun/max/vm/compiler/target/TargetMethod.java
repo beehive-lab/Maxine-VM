@@ -594,6 +594,20 @@ public abstract class TargetMethod extends MemoryRegion {
             int dataIndex = 0;
             int currentScalarsPos = 0;
             int scalarsAlignment = 0;
+
+            // Data patches need to be sorted in decreasing order of their alignment requirements
+            for (DataPatch site : dataReferences) {
+                if (site.alignment != 0) {
+                    Collections.sort(dataReferences, new Comparator<DataPatch>() {
+                        @Override
+                        public int compare(DataPatch o1, DataPatch o2) {
+                            return o2.alignment - o1.alignment;
+                        }
+                    });
+                    break;
+                }
+            }
+
             for (DataPatch site : dataReferences) {
                 final CiConstant data = site.constant;
                 if (!data.kind.isObject()) {
@@ -611,12 +625,12 @@ public abstract class TargetMethod extends MemoryRegion {
                 try {
                     switch (data.kind) {
                         case Double:
-                            endianness.writeLong(scalarsBuffer, Double.doubleToLongBits(data.asDouble()));
+                            endianness.writeLong(scalarsBuffer, Double.doubleToRawLongBits(data.asDouble()));
                             currentScalarsPos += 8;
                             break;
 
                         case Float:
-                            endianness.writeInt(scalarsBuffer, Float.floatToIntBits(data.asFloat()));
+                            endianness.writeInt(scalarsBuffer, Float.floatToRawIntBits(data.asFloat()));
                             currentScalarsPos += 4;
                             break;
 
@@ -895,22 +909,25 @@ public abstract class TargetMethod extends MemoryRegion {
                 if (currentDirectCallee == null) {
                     // template call
                     assert classMethodActor.isTemplate();
-                } else {
+                } else if (MaxineVM.isHosted()) {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null) {
-                        if (MaxineVM.isHosted() && classMethodActor.isTemplate()) {
+                        if (classMethodActor.isTemplate()) {
                             assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
                             // leave call site unpatched
                         } else {
                             linkedAll = false;
-                            final int callPos = safepoints.causePosAt(safepointIndex);
-                            final CodePointer callSite = codeAt(callPos);
-                            if (!isPatchableCallSite(callSite)) {
-                                FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
-                                                " [0x" + codeStart.toHexString() + "+" + callPos + "]");
-                            }
-                            fixupCallSite(callPos, vm().stubs.staticTrampoline().codeAt(offset));
+                            patchStaticTrampoline(safepointIndex, offset);
                         }
+                    } else {
+                        int callPos = safepoints.causePosAt(safepointIndex);
+                        fixupCallSite(callPos, callee.codeAt(offset));
+                    }
+                } else {
+                    final TargetMethod callee = getTargetMethod(currentDirectCallee);
+                    if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
+                        linkedAll = false;
+                        patchStaticTrampoline(safepointIndex, offset);
                     } else {
                         int callPos = safepoints.causePosAt(safepointIndex);
                         fixupCallSite(callPos, callee.codeAt(offset));
@@ -921,6 +938,16 @@ public abstract class TargetMethod extends MemoryRegion {
         }
 
         return linkedAll;
+    }
+
+    private void patchStaticTrampoline(final int safepointIndex, final int offset) {
+        final int callPos = safepoints.causePosAt(safepointIndex);
+        final CodePointer callSite = codeAt(callPos);
+        if (!isPatchableCallSite(callSite)) {
+            FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
+                            " [0x" + codeStart.toHexString() + "+" + callPos + "]");
+        }
+        fixupCallSite(callPos, vm().stubs.staticTrampoline().codeAt(offset));
     }
 
     public final TargetMethod getTargetMethod(Object o) {
@@ -1026,8 +1053,6 @@ public abstract class TargetMethod extends MemoryRegion {
     @HOSTED_ONLY
     public abstract void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods);
 
-    public abstract CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception);
-
     /**
      * Modifies the call site at the specified offset to use the new specified entry point.
      * The modification must tolerate the execution of the target method by concurrently running threads.
@@ -1082,6 +1107,32 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param throwable the exception thrown
      */
     public abstract void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable);
+
+    /**
+     * Similar to {@link #catchException} but simply checks if there is a handler for {@code exception}
+     * and returns its code address if so, otherwise {@link CodePointer#zero}.
+     * @param throwAddress the throw address
+     * @param exception
+     * @return
+     */
+    public abstract CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable throwable);
+
+    public static class CatchExceptionInfo {
+        public CodePointer codePointer;
+        public int bci;
+    }
+
+    /**
+     * Similar to {@link #catchException} save that the stack is not unwound, and just the info on the catch
+     * location is returned.
+     * @param current
+     * @param throwable
+     * @param info instance in which to store the info
+     * @return {@code true} iff the exception is handled by this method
+     */
+    public boolean catchExceptionInfo(StackFrameCursor current, Throwable throwable, CatchExceptionInfo info) {
+        return false;
+    }
 
     /**
      * Accepts a visitor for this stack frame. As this only ever happens in Inspector contexts, this method is

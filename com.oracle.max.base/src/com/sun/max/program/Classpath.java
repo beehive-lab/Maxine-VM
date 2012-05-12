@@ -131,11 +131,11 @@ public class Classpath {
     /**
      * Represents a classpath entry that is a path to an existing directory.
      */
-    static final class Directory extends Entry {
+    public static final class Directory extends Entry {
         private final File directory;
 
         public Directory(File directory) {
-            this.directory = directory;
+            this.directory = directory.getAbsoluteFile();  // makes getParent work as expected with relative pathnames
         }
 
         @Override

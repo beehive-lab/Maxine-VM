@@ -229,6 +229,7 @@ public final class ImmortalHeap {
         public enum Operation {
             Allocate, Disable, Enable;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 

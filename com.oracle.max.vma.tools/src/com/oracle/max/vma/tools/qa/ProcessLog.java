@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -726,6 +726,7 @@ public class ProcessLog {
             }
 
             case ADVISE_BEFORE_ARRAY_LENGTH: {
+                objectRecord = getTraceRecord(objIdArg);
                 ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(ArrayLength, AdviceMode.BEFORE);
                 objectAdviceRecord.value = objectRecord;
                 objectAdviceRecord.setPackedValue(Integer.parseInt(arg4));
@@ -813,10 +814,13 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_INSTANCE_OF:
             case ADVISE_BEFORE_CHECK_CAST:  {
+                objectRecord = getTraceRecord(objIdArg);
                 ObjectObjectAdviceRecord objectObjectAdviceRecord = (ObjectObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
                 objectObjectAdviceRecord.value = objectRecord;
                 objectObjectAdviceRecord.value = classRecord;
-                objectRecord.addTraceElement(objectObjectAdviceRecord);
+                if (objectRecord != null) {
+                    objectRecord.addTraceElement(objectObjectAdviceRecord);
+                }
                 adviceRecord = objectObjectAdviceRecord;
                 break;
             }
@@ -827,8 +831,13 @@ public class ProcessLog {
                 break;
             }
 
-            case ADVISE_AFTER_GC: {
+            case ADVISE_BEFORE_GC: {
                 allocationEpoch.setEndTime(lastTime);
+                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+                break;
+            }
+
+            case ADVISE_AFTER_GC: {
                 prevAllocationEpoch = allocationEpoch;
                 allocationEpoch = new AllocationEpoch(lastTime);
                 allocationEpochs.add(allocationEpoch);
@@ -900,7 +909,6 @@ public class ProcessLog {
                 break;
             }
 
-            case ADVISE_BEFORE_GC:
             case ADVISE_BEFORE_THREAD_TERMINATING:
             case ADVISE_BEFORE_THREAD_STARTING:
                 // nothing else
@@ -908,6 +916,11 @@ public class ProcessLog {
 
             case ADVISE_AFTER_MULTI_NEW_ARRAY:
                 assert false : key + " unexpected";
+                break;
+
+            case ADVISE_BEFORE_BYTECODE:
+                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+                adviceRecord.setPackedValue(Integer.parseInt(arg3));
                 break;
 
             default:
@@ -928,7 +941,7 @@ public class ProcessLog {
         AdviceRecord adviceRecord = createAdviceRecordAndSetTimeAndThread(rt, adviceMode);
         switch (valueKey.charAt(0)) {
             case OBJ_VALUE: {
-                ObjectRecord or = value.equals("0") ? null : getTraceRecord(value);
+                ObjectRecord or = getTraceRecord(value);
                 switch (rt) {
                     case PutFieldObject:
                     case PutStaticObject:
@@ -1141,6 +1154,9 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_RETURN:
                 return Return;
+
+            case ADVISE_BEFORE_BYTECODE:
+                return Bytecode;
 
             case ADVISE_AFTER_MULTI_NEW_ARRAY:
                 // These are all value based so do not have a simple static mapping

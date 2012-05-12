@@ -32,7 +32,6 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAssumptions.*;
 import com.sun.cri.ri.*;
-import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -56,7 +55,7 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
      * Implement this interface in a subclass of {@link DependencyVisitor} to
      * process these dependencies.
      */
-    public interface UCTDependencyProcessorVisitor extends DependencyProcessorVisitor {
+    public interface ConcreteTypeDependencyProcessorVisitor extends DependencyProcessorVisitor {
         /**
          * Processes a unique concrete subtype dependency.
          *
@@ -69,7 +68,7 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
         boolean doConcreteSubtype(TargetMethod targetMethod, ClassActor context, ClassActor subtype);
     }
 
-    static class ToStringUCTDependencyProcessorVisitor extends ToStringDependencyProcessorVisitor implements UCTDependencyProcessorVisitor {
+    static class ToStringConcreteTypeDependencyProcessorVisitor extends ToStringDependencyProcessorVisitor implements ConcreteTypeDependencyProcessorVisitor {
         @Override
         public boolean doConcreteSubtype(TargetMethod targetMethod, ClassActor context, ClassActor subtype) {
             sb.append(" UCT[").append(context);
@@ -81,21 +80,16 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
         }
     }
 
-    static final ToStringUCTDependencyProcessorVisitor toStringUCTDependencyProcessorVisitor = new ToStringUCTDependencyProcessorVisitor();
+    static final ToStringConcreteTypeDependencyProcessorVisitor toStringConcreteTypeDependencyProcessorVisitor = new ToStringConcreteTypeDependencyProcessorVisitor();
 
     @Override
-    protected ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor() {
-        return toStringUCTDependencyProcessorVisitor;
+    protected ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor(StringBuilder sb) {
+        return toStringConcreteTypeDependencyProcessorVisitor.setStringBuilder(sb);
     }
 
     private static final ConcreteTypeDependencyProcessor singleton = new ConcreteTypeDependencyProcessor();
 
-    @HOSTED_ONLY
-    public static DependencyProcessor getDependencyProcessor() {
-        return singleton;
-    }
-
-    ConcreteTypeDependencyProcessor() {
+    private ConcreteTypeDependencyProcessor() {
         super(CiAssumptions.ConcreteSubtype.class, false);
     }
 
@@ -109,12 +103,12 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
 
     @Override
     protected DependencyProcessorVisitor match(DependencyVisitor dependencyVisitor) {
-        return dependencyVisitor instanceof UCTDependencyProcessorVisitor ? (UCTDependencyProcessorVisitor) dependencyVisitor : null;
+        return dependencyVisitor instanceof ConcreteTypeDependencyProcessorVisitor ? (ConcreteTypeDependencyProcessorVisitor) dependencyVisitor : null;
     }
 
     @Override
     protected int visit(DependencyProcessorVisitor dependencyProcessorVisitor, ClassActor context, Dependencies dependencies, int index) {
-        UCTDependencyProcessorVisitor uctVisitor = (UCTDependencyProcessorVisitor) dependencyProcessorVisitor;
+        ConcreteTypeDependencyProcessorVisitor uctVisitor = (ConcreteTypeDependencyProcessorVisitor) dependencyProcessorVisitor;
         if (uctVisitor != null) {
             if (!uctVisitor.doConcreteSubtype(dependencies.targetMethod, context, ClassID.toClassActor(context.uniqueConcreteType))) {
                 return -1;
@@ -285,7 +279,7 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
      * Verifies dependencies on a given type when a concrete sub-type is added to the descendants of the type.
      */
     static final class DependencyChecker extends Dependencies.DependencyVisitor
-            implements ConcreteMethodDependencyProcessor.UCMDependencyProcessorVisitor, ConcreteTypeDependencyProcessor.UCTDependencyProcessorVisitor {
+            implements ConcreteMethodDependencyProcessor.ConcreteMethodDependencyProcessorVisitor, ConcreteTypeDependencyProcessor.ConcreteTypeDependencyProcessorVisitor {
         /**
          * Type on which the assumption are made.
          */

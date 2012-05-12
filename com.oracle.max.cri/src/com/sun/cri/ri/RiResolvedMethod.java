@@ -153,6 +153,11 @@ public interface RiResolvedMethod extends RiMethod {
     String intrinsic();
 
     /**
+     * Determines if the compiler can perform its own intrinsification of this method.
+     */
+    boolean canIntrinsify();
+
+    /**
      * Provides an estimate of how often this method has been executed.
      * @return The number of invocations, or -1 if this information isn't available.
      */
