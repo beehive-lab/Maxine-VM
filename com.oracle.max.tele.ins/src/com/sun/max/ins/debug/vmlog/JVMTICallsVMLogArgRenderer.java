@@ -27,7 +27,7 @@ import java.awt.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.jvmti.*;
+import com.sun.max.vm.ext.jvmti.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
 

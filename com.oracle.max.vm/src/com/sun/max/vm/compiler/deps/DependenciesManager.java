@@ -55,6 +55,8 @@ import com.sun.max.vm.log.hosted.*;
  * the addition of a new class to the system. The {@link #addToHierarchy(ClassActor)} method
  * is the method that should be called by the class definition system of the VM to report
  * the addition of a class.
+ *
+ * See <a href="https://wikis.oracle.com/display/MaxineVM/Code+Dependencies">the Wiki page</a> for more details.
  */
 public final class DependenciesManager {
     /**
@@ -264,6 +266,7 @@ public final class DependenciesManager {
             Add, InvalidateDeps, InvalidateUCM,
             InvalidateUCT, Invalidated, Register, Remove;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 

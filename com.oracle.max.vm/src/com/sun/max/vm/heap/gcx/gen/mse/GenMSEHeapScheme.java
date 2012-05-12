@@ -260,7 +260,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
             cardTableRSet.initializeXirStartupConstants();
              // Make the heap inspectable
-            InspectableHeapInfo.init(false, heapBounds, heapMarker.memory(), cardTableRSet.memory());
+            InspectableHeapInfo.init(false, heapBounds, heapMarker.colorMap, cardTableRSet.memory());
         } finally {
             disableCustomAllocation();
         }
@@ -383,7 +383,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     }
 
     @INLINE
-    @FOLD
     @Override
     public boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
         return writeBarrierSpec.isSet(WriteBarrierSpec.POST_WRITE);

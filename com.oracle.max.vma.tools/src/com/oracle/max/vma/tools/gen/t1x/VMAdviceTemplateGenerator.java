@@ -34,7 +34,7 @@ import com.oracle.max.vma.tools.gen.vma.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.t1x.vma.*;
+import com.oracle.max.vm.ext.t1x.vma.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -1053,9 +1053,11 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         startMethodGeneration();
         generateTemplateTag("%s", tag);
         out.printf("    public static void adviseAfter%s() {%n", methodName);
-        out.printf(INDENT8_PREFIX + ADVISE_PREFIX +
+        startGuardAdvice();
+        out.printf(INDENT12_PREFIX + ADVISE_PREFIX +
                         "(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());%n",
                         AdviceType.AFTER.methodNameComponent, methodName);
+        endGuardAdvice();
         out.printf("    }%n");
         newLine();
     }

@@ -36,11 +36,11 @@
  * The compiler manipulates {@link com.sun.cri.ci.CiValue} instances that have a {@link com.sun.cri.ci.CiKind}, and are
  * immutable. A concrete {@link com.sun.cri.ci.CiValue value} is one of the following subclasses:
  * <ul>
- * <li>{@link com.sun.cri.ci.CiConstant}: a constant value.
- * <li>{@link com.sun.cri.ci.CiRegisterValue}: a value stored in a {@linkplain com.sun.cri.ci.CiRegister target machine register}.
- * <li>{@link com.sun.cri.ci.CiStackSlot}: a spill slot or an outgoing stack-based argument in a method's frame.
- * <li>{@link com.sun.cri.ci.CiAddress}: an address in target machine memory.
- * <li>{@link com.sun.cri.ci.CiVariable}: a value (cf. virtual register) that is yet to be bound to a target machine location (physical register or memory address).
+ * <li>{@link com.sun.cri.ci.CiConstant}: a constant value.</li>
+ * <li>{@link com.sun.cri.ci.CiRegisterValue}: a value stored in a {@linkplain com.sun.cri.ci.CiRegister target machine register}.</li>
+ * <li>{@link com.sun.cri.ci.CiStackSlot}: a spill slot or an outgoing stack-based argument in a method's frame.</li>
+ * <li>{@link com.sun.cri.ci.CiAddress}: an address in target machine memory.</li>
+ * <li>{@link com.sun.cri.ci.CiVariable}: a value (cf. virtual register) that is yet to be bound to a target machine location (physical register or memory address).</li>
  *</ul>
  */
 package com.sun.cri.ci;
