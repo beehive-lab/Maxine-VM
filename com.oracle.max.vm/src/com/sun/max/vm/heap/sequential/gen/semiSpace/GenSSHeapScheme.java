@@ -191,18 +191,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 if (resizingPolicy.resizeAfterFullGC(estimatedEvac, oldSpace.freeSpace())) {
                     resize(youngSpace, resizingPolicy.youngGenSize());
                     resize(oldSpace, resizingPolicy.oldGenSize());
-
-/*                    Log.print("Estimated Evac:");
-                    Log.printlnToPowerOfTwoUnits(estimatedEvac);
-                    Log.print("Young Gen: ");
-                    Log.printlnToPowerOfTwoUnits(youngSpace.totalSpace());
-                    Log.print("Old Free Space: ");
-                    Log.printlnToPowerOfTwoUnits(oldSpace.freeSpace());
-                    Log.print("Old Gen: ");
-                    Log.printlnToPowerOfTwoUnits(oldSpace.totalSpace());
-                    Log.println("Out Of Memory");
-                    // THIS IS WHERE WE PLAY RESIZING of generation instead of throwing OOM.
-*/                }
+                }
             }
             vmConfig().monitorScheme().afterGarbageCollection();
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
@@ -226,7 +215,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     /**
      * Policy for resizing the heap after each GC.
      */
-    private GenSSHeapSizingPolicy resizingPolicy;
+    private final GenSSHeapSizingPolicy resizingPolicy;
 
     /**
      * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
@@ -272,7 +261,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             new AtomicBumpPointerAllocator<YoungSpaceRefiller>(new YoungSpaceRefiller());
         CardSpaceAllocator<OldSpaceRefiller> tenuredAllocator =
             new CardSpaceAllocator<GenSSHeapScheme.OldSpaceRefiller>(new OldSpaceRefiller(), cardTableRSet);
-
+        resizingPolicy = new GenSSHeapSizingPolicy();
         youngSpace = new ContiguousAllocatingSpace<AtomicBumpPointerAllocator<YoungSpaceRefiller>>(nurseryAllocator, "Young Generation");
         oldSpace = new ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>>(tenuredAllocator, "Old Generation");
         youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, cardTableRSet);
@@ -349,8 +338,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         try {
             // Use immortal memory for now.
             Heap.enableImmortalMemoryAllocation();
-            // heapResizingPolicy = new FixedRatioGenHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
-            resizingPolicy = new GenSSHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
+            resizingPolicy.initialize(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
             youngSpace.initialize(firstUnusedByteAddress, resizingPolicy.maxYoungGenSize(), resizingPolicy.initialYoungGenSize());
             Address startOfOldSpace = youngSpace.space.end().alignUp(pageSize);
             oldSpace.initialize(startOfOldSpace, resizingPolicy.maxOldGenSize(), resizingPolicy.initialOldGenSize());

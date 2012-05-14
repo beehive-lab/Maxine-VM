@@ -86,13 +86,27 @@ public class ContiguousHeapSpace extends MemoryRegion implements EvacuatingSpace
         return pageAlignedGrowth;
     }
 
-    public boolean growCommittedSpace(Size growth) {
-        Address newCommittedEnd = committedEnd.plus(growth);
+    public boolean growCommittedSpace(Size delta) {
+        Address newCommittedEnd = committedEnd.plus(delta);
         if (MaxineVM.isDebug()) {
             FatalError.check(newCommittedEnd.lessEqual(end()), "Cannot grow beyond reserved space");
-            FatalError.check(growth.isAligned(platform().pageSize), "Heap Growth must be page-aligned");
+            FatalError.check(delta.isAligned(platform().pageSize), "Heap Growth must be page-aligned");
         }
-        final boolean committed = Heap.AvoidsAnonOperations || VirtualMemory.commitMemory(committedEnd, growth, VirtualMemory.Type.HEAP);
+        final boolean committed = Heap.AvoidsAnonOperations || VirtualMemory.commitMemory(committedEnd, delta, VirtualMemory.Type.HEAP);
+        if (committed) {
+            committedEnd = newCommittedEnd;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean shrinkCommittedSpace(Size delta) {
+        Address newCommittedEnd = committedEnd.minus(delta);
+        if (MaxineVM.isDebug()) {
+            FatalError.check(newCommittedEnd.greaterEqual(start()), "Cannot shrink more than committed space");
+            FatalError.check(delta.isAligned(platform().pageSize), "Heap Growth must be page-aligned");
+        }
+        final boolean committed = Heap.AvoidsAnonOperations || VirtualMemory.uncommitMemory(newCommittedEnd, delta, VirtualMemory.Type.HEAP);
         if (committed) {
             committedEnd = newCommittedEnd;
             return true;
