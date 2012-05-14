@@ -25,6 +25,7 @@ package com.sun.max.vm.heap.sequential.gen.semiSpace;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.runtime.*;
 
 
 public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? extends Refiller>> extends ContiguousAllocatingSpace<T> {
@@ -73,6 +74,21 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
         allocator.refill(space.start(), space.committedSize());
     }
 
+    @Override
+    public Size growAfterGC(Size delta) {
+        Size size = super.growAfterGC(delta);
+        boolean shrunk = fromSpace.growCommittedSpace(size);
+        FatalError.check(shrunk, "request for growing space after GC must always succeed");
+        return size;
+    }
+
+    @Override
+    public Size shrinkAfterGC(Size delta) {
+        Size size = super.shrinkAfterGC(delta);
+        boolean shrunk = fromSpace.shrinkCommittedSpace(size);
+        FatalError.check(shrunk, "request for shrinking space after GC must always succeed");
+        return size;
+    }
     @Override
     public void doBeforeGC() {
     }

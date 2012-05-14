@@ -133,6 +133,30 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         top = start;
     }
 
+    /**
+     * Grow the allocator's contiguous chunk of memory.
+     * Not multi-thread safe.
+     * @param delta number of bytes to grow the allocator's backing storage with
+     */
+    public final void grow(Size delta) {
+        end = end.plus(delta);
+    }
+
+    /**
+     * Shrink the allocator's contiguous chunk of memory.
+     * Failed if trying to shrink below the already allocated area.
+     * Not multi-thread safe.
+     * @param delta number of bytes to shrink the allocator's backing storage with
+     */
+    public final boolean shrink(Size delta) {
+        final Address newEnd = end.minus(delta);
+        if (newEnd.lessThan(top.plus(headroom()))) {
+            return false;
+        }
+        end = newEnd;
+        return true;
+    }
+
     public BaseAtomicBumpPointerAllocator(T refillManager) {
         this.refillManager = refillManager;
     }

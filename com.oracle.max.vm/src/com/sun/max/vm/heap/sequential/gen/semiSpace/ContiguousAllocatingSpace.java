@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 
 import com.sun.max.annotate.*;
@@ -64,14 +65,22 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
 
     @Override
     public Size growAfterGC(Size delta) {
-        FatalError.unimplemented();
-        return Size.zero();
+        final Size size = space.adjustGrowth(delta);
+        boolean hasGrown = space.growCommittedSpace(size);
+        FatalError.check(hasGrown, "request for growing space after GC must always succeed");
+        allocator.grow(size);
+        return size;
     }
+
     @Override
     public Size shrinkAfterGC(Size delta) {
-        // TODO Auto-generated method stub
-        FatalError.unimplemented();
-        return Size.zero();
+        int pageSize = platform().pageSize;
+        Size size = delta.alignUp(pageSize);
+        boolean hasShrunk = space.shrinkCommittedSpace(size);
+        FatalError.check(hasShrunk, "request for shrinking space after GC must always succeed");
+        hasShrunk = allocator.shrink(size);
+        FatalError.check(hasShrunk, "request for shrinking allocator's space after GC must always succeed");
+        return size;
     }
 
     @Override

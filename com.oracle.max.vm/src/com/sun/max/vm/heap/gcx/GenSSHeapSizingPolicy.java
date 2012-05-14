@@ -22,8 +22,11 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -56,6 +59,8 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      */
     static final Size MinYoungGenSize = Size.K.times(128);
 
+    public static final HeapSizingPolicyLogger logger = new HeapSizingPolicyLogger();
+
     /**
      * Minimum effective heap size a generational heap can operate with.
      * @return an effective heap size.
@@ -66,46 +71,46 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      * Log 2 of the size generations are always aligned to.
      * Generation are always aligned to some power of two, typically a page or a power of two of the page size.
      */
-    final int log2Alignment;
+    private int log2Alignment;
 
     /**
      * Size to which generations are aligned to. In other words, <pre>unitSize = Size.fromInt(1).shiftedLeft({@link #log2Alignment})</pre>
      */
-    final Size unitSize;
+    private Size unitSize;
 
     /**
      * Max percentage of free space after GC to avoid shrinking.
      */
-    int maxFreePercent = 70;
+    private int maxFreePercent = 70;
 
     /**
      * Min percentage of heap free after GC to increase heap size. Must not be lower than {@link #youngGenMaxHeapPercentage}
      */
-    int minFreePercent = 40;
+    private int minFreePercent = 40;
 
     /**
      * Min change in heap size due to GC.
      */
-    Size minHeapDeltaBytes = Size.K.times(128);
+    private Size minHeapDeltaBytes = Size.K.times(128);
 
-    Size minYoungGenDelta;
+    private Size minYoungGenDelta;
 
     /**
      *  Maximum percentage of effective heap size the young generation can occupy.
      *  Used in normal mode to size the young generation.
      */
-    final int youngGenMaxHeapPercentage;
+    private int youngGenMaxHeapPercentage;
 
-    final Size initHeapSize;
-    final Size maxHeapSize;
+    private Size initHeapSize;
+    private Size maxHeapSize;
 
     /**
      * Size of the old generation when the heap is at its maximum size.
-     * This is used as a threshold for degraded mode. Past the point,
+     * This is used as a threshold for degraded mode. Past that point,
      * the policy can only reduce the size of the young generation (by reducing {@link #youngGenHeapPercentage})
      * to give more breathing room to the old generation.
      */
-    final Size maxHeapOldGenSize;
+    private Size maxHeapOldGenSize;
     /**
      * True if in normal mode, false if degraded.
      */
@@ -164,6 +169,9 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         return alignUp(size.lessThan(MinYoungGenSize) ? MinYoungGenSize : size);
     }
 
+    public GenSSHeapSizingPolicy() {
+    }
+
     /**
      * Construct an instance of the sizing policy, parameterized with an alignment constraint for generation size, and an upper bound of young generation size,
      * wherein the upper bound is specified as a percentage of the effective heap size.
@@ -173,7 +181,7 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      * @param log2Alignment alignment constraints that each space of the heap should satisfy.
      * @param youngGenMaxHeapPercentage maximum percentage of effective heap size the young generation should occupy
      */
-    public GenSSHeapSizingPolicy(Size initSize, Size maxSize, int log2Alignment, int youngGenMaxHeapPercentage) {
+    public void initialize(Size initSize, Size maxSize, int youngGenMaxHeapPercentage, int log2Alignment) {
         // Run validation of heap sizing parameters.
         FatalError.check(youngGenMaxHeapPercentage > 0 && youngGenMaxHeapPercentage < 100, "Not a valid percentage of heap size");
         FatalError.check(log2Alignment > 0 && log2Alignment < Word.widthValue().numberOfBits, "Not a valid log2 alignment");
@@ -195,7 +203,7 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
 
         heapSize = initHeapSize;
         youngGenHeapPercentage = youngGenMaxHeapPercentage;
-        maxHeapOldGenSize = maxHeapSize.minus(maxYoungGenSize());
+        maxHeapOldGenSize = maxHeapSize.minus(minYoungGenSize());
         if (MaxineVM.isDebug()) {
             Log.print("Heap:    max = ");
             Log.printToPowerOfTwoUnits(maxHeapSize);
@@ -228,8 +236,7 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
 
     @Override
     public Size maxOldGenSize() {
-        // The maximum old gen size is when the smallest young generation is used.
-        return maxHeapSize.minus(minYoungGenSize());
+        return maxHeapOldGenSize;
     }
 
     public Size heapSize() {
@@ -247,16 +254,25 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
 
     private void sizeDownYoungGen(Size estimatedEvacuation, Size oldGenFreeSpace) {
         // Reduce nursery size to redistribute space to the old generation.
+        // If the estimated evacuation is larger than half the size of the nursery, we only redistribute half of the young gen to avoid
+        // sharp drop to the young gen size due to a spike in evacuation.
         Size oldSpaceNeeded = alignUp(estimatedEvacuation.minus(oldGenFreeSpace));
+        Size ys =  youngGenSize();
+        Size maxYoungGenTax = ys.dividedBy(2);
         if (oldSpaceNeeded.lessThan(minYoungGenDelta)) {
             oldSpaceNeeded = minYoungGenDelta;
+        } else if (oldSpaceNeeded.greaterThan(maxYoungGenTax)) {
+            oldSpaceNeeded = maxYoungGenTax;
         }
-        Size newYoungGenSize = youngGenSize().minus(oldSpaceNeeded.times(2));
+        Size newYoungGenSize = ys.minus(oldSpaceNeeded.times(2));
         Size newHeapSize = heapSize.minus(oldSpaceNeeded);
         int newYoungGenHeapPercentage = newYoungGenSize.times(100).dividedBy(newHeapSize).toInt();
         heapSize = newHeapSize;
         youngGenHeapPercentage = newYoungGenHeapPercentage;
         normalMode = false;
+        if (logger.enabled()) {
+            logger.logChangeYoungPercent(newHeapSize, youngGenSize(), oldGenSize(), newYoungGenHeapPercentage);
+        }
     }
 
     /**
@@ -301,4 +317,126 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
     public boolean outOfMemory() {
         return outOfMemory;
     }
+
+    @HOSTED_ONLY
+    @VMLoggerInterface(defaultConstructor = true)
+    private interface HeapSizingPolicyLoggerInterface {
+        void changeYoungPercent(
+                        @VMLogParam(name = "heapSize") Size heapSize,
+                        @VMLogParam(name = "youngSize") Size youngSize,
+                        @VMLogParam(name = "oldSize") Size oldSize,
+                        @VMLogParam(name = "youngGenHeapPercentage") int youngGenHeapPercentage);
+
+        void growHeap(
+                        @VMLogParam(name = "heapSize") Size heapSize,
+                        @VMLogParam(name = "youngSize") Size youngSize,
+                        @VMLogParam(name = "oldSize") Size oldSize,
+                        @VMLogParam(name = "delta") Size delta
+        );
+        void shrinkHeap(
+                        @VMLogParam(name = "heapSize") Size heapSize,
+                        @VMLogParam(name = "youngSize") Size youngSize,
+                        @VMLogParam(name = "oldSize") Size oldSize,
+                        @VMLogParam(name = "delta") Size delta
+        );
+    }
+
+    static final class HeapSizingPolicyLogger extends HeapSizingPolicyLoggerAuto {
+        HeapSizingPolicyLogger() {
+            super("HeapSizingPolicy", "Heap Resizing after full GC");
+        }
+        private void traceHeapSize(Size heapSize, Size youngSize, Size oldSize) {
+            Log.print();
+            Log.print("Heap:    size = ");
+            Log.printToPowerOfTwoUnits(heapSize);
+            Log.print(" [ young = ");
+            Log.printToPowerOfTwoUnits(youngSize);
+            Log.print(", old = ");
+            Log.printToPowerOfTwoUnits(oldSize);
+            Log.println("]");
+        }
+
+        @Override
+        protected void traceChangeYoungPercent(Size heapSize, Size youngSize, Size oldSize, int youngGenHeapPercentage) {
+            Log.print("Change young gen heap % = ");
+            Log.println(youngGenHeapPercentage);
+            traceHeapSize(heapSize, youngSize, oldSize);
+        }
+
+        @Override
+        protected void traceGrowHeap(Size heapSize, Size youngSize, Size oldSize, Size delta) {
+            Log.print("Grow heap size +=");
+            Log.printlnToPowerOfTwoUnits(delta);
+            traceHeapSize(heapSize, youngSize, oldSize);
+        }
+
+        @Override
+        protected void traceShrinkHeap(Size heapSize, Size youngSize, Size oldSize, Size delta) {
+            Log.print("Shrink heap size -=");
+            Log.printlnToPowerOfTwoUnits(delta);
+            traceHeapSize(heapSize, youngSize, oldSize);
+        }
+    }
+
+// START GENERATED CODE
+    private static abstract class HeapSizingPolicyLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            ChangeYoungPercent, GrowHeap, ShrinkHeap;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected HeapSizingPolicyLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        protected HeapSizingPolicyLoggerAuto() {
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logChangeYoungPercent(Size heapSize, Size youngSize, Size oldSize, int youngGenHeapPercentage) {
+            log(Operation.ChangeYoungPercent.ordinal(), heapSize, youngSize, oldSize, intArg(youngGenHeapPercentage));
+        }
+        protected abstract void traceChangeYoungPercent(Size heapSize, Size youngSize, Size oldSize, int youngGenHeapPercentage);
+
+        @INLINE
+        public final void logGrowHeap(Size heapSize, Size youngSize, Size oldSize, Size delta) {
+            log(Operation.GrowHeap.ordinal(), heapSize, youngSize, oldSize, delta);
+        }
+        protected abstract void traceGrowHeap(Size heapSize, Size youngSize, Size oldSize, Size delta);
+
+        @INLINE
+        public final void logShrinkHeap(Size heapSize, Size youngSize, Size oldSize, Size delta) {
+            log(Operation.ShrinkHeap.ordinal(), heapSize, youngSize, oldSize, delta);
+        }
+        protected abstract void traceShrinkHeap(Size heapSize, Size youngSize, Size oldSize, Size delta);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //ChangeYoungPercent
+                    traceChangeYoungPercent(toSize(r, 1), toSize(r, 2), toSize(r, 3), toInt(r, 4));
+                    break;
+                }
+                case 1: { //GrowHeap
+                    traceGrowHeap(toSize(r, 1), toSize(r, 2), toSize(r, 3), toSize(r, 4));
+                    break;
+                }
+                case 2: { //ShrinkHeap
+                    traceShrinkHeap(toSize(r, 1), toSize(r, 2), toSize(r, 3), toSize(r, 4));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
+
 }

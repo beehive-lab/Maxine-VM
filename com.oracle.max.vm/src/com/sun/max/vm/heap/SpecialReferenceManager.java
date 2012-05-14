@@ -102,8 +102,6 @@ public class SpecialReferenceManager {
         return JDK.java_lang_ref_Reference.classActor().findLocalInstanceFieldActor("referent").offset() >>  Word.widthValue().log2numberOfBytes;
     }
 
-    // public static final int REFERENT_WORD_INDEX =  JDK.java_lang_ref_Reference.classActor().findLocalInstanceFieldActor("referent").offset() >>  Word.widthValue().log2numberOfBytes;
-
     /**
      * The head of the list of discovered references.
      * This field must only be used by the GC. Accessing it should not trigger any read/write barriers.
