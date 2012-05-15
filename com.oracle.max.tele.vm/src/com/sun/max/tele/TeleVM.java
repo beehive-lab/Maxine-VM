@@ -390,6 +390,7 @@ public abstract class TeleVM implements MaxVM {
         checkClasspath(classpathPrefix);
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
         HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.setClasspath(classpath);
+        HostedBootClassLoader.noOmittedClassExceptions();
 
         if (needTeleLibrary()) {
             Prototype.loadLibrary(TELE_LIBRARY_NAME);

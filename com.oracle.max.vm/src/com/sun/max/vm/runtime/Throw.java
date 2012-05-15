@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ import com.sun.max.vm.jdk.JDK_java_lang_Throwable.Backtrace;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -113,6 +114,8 @@ public final class Throw {
      * @param ip the instruction pointer to be used when determining the point at which exception was raised
      */
     public static void raise(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
+        VMTI.handler().raise(throwable, sp, fp, ip);
+
         convertAssertionToFatalError(throwable);
 
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");

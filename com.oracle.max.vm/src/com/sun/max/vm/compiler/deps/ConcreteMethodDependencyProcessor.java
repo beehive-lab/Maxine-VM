@@ -96,11 +96,11 @@ public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
         }
     }
 
-    static final ToStringConcreteMethodDependencyProcessorVisitor toStringConcreteDependencyProcessorVisitor = new ToStringConcreteMethodDependencyProcessorVisitor();
+    static final ToStringConcreteMethodDependencyProcessorVisitor toStringConcreteMethodDependencyProcessorVisitor = new ToStringConcreteMethodDependencyProcessorVisitor();
 
     @Override
-    protected ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor() {
-        return toStringConcreteDependencyProcessorVisitor;
+    protected ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor(StringBuilder sb) {
+        return toStringConcreteMethodDependencyProcessorVisitor.setStringBuilder(sb);
     }
 
     private static final ConcreteMethodDependencyProcessor singleton = new ConcreteMethodDependencyProcessor();

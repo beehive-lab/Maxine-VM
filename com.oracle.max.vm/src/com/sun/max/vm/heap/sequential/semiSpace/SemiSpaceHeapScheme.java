@@ -53,6 +53,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 
 /**
  * A simple semispace scavenger heap.
@@ -546,7 +547,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 detailLogger.logForward(hub.classActor, fromCell, toCell, size.toInt());
             }
 
-            trackLifetime(fromCell);
+            VMTI.handler().objectSurviving(fromCell);
 
             Memory.copyBytes(fromCell, toCell, size);
 
@@ -732,6 +733,15 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {
+        // We invoke the VMTI callbacks here and not via the GCCallBack so that
+        // they occur on the actual thread causing the GC and not the VM operation thread.
+        VMTI.handler().beginGC();
+        boolean result = collectGarbageImpl(requestedFreeSpace);
+        VMTI.handler().endGC();
+        return result;
+    }
+
+    private boolean collectGarbageImpl(Size requestedFreeSpace) {
         if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
             executeGC();
         }
@@ -1492,6 +1502,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             Forward, Skipped, VerifyObject,
             VisitCell;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
@@ -1560,6 +1571,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             VerifyingCodeObjects, VerifyingHeapObjects, VerifyingObjectSpaces, VerifyingRegion,
             VerifyingStackReferences, ZappingRegion;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
@@ -1631,7 +1643,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         @INLINE
         public final void logVerifyingObjectSpaces(Interval interval, GCCallbackPhase when) {
-            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), objectArg(when));
+            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), gCCallbackPhaseArg(when));
         }
         protected abstract void traceVerifyingObjectSpaces(Interval interval, GCCallbackPhase when);
 
@@ -1649,7 +1661,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         @INLINE
         public final void logZappingRegion(MemoryRegion region, GCCallbackPhase when) {
-            log(Operation.ZappingRegion.ordinal(), objectArg(region), objectArg(when));
+            log(Operation.ZappingRegion.ordinal(), objectArg(region), gCCallbackPhaseArg(when));
         }
         protected abstract void traceZappingRegion(MemoryRegion region, GCCallbackPhase when);
 
@@ -1729,6 +1741,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         public enum Operation {
             PhaseTimes, StackReferenceMapPreparationTime;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 

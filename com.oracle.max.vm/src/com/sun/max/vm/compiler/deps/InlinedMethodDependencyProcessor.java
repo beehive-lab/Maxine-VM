@@ -36,8 +36,8 @@ import com.sun.max.vm.compiler.deps.ContextDependents.*;
 import com.sun.max.vm.compiler.deps.Dependencies.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.log.hosted.*;
+import com.sun.max.vm.ti.*;
 
 /**
  * {@link DependencyProcessor} for inlined methods.
@@ -96,8 +96,8 @@ public class InlinedMethodDependencyProcessor extends DependencyProcessor {
     static final ToStringInlinedMethodDependencyProcessorVisitor toStringInlinedMethodDependencyProcessorVisitor = new ToStringInlinedMethodDependencyProcessorVisitor();
 
     @Override
-    protected ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor() {
-        return toStringInlinedMethodDependencyProcessorVisitor;
+    protected ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor(StringBuilder sb) {
+        return toStringInlinedMethodDependencyProcessorVisitor.setStringBuilder(sb);
     }
 
     private static final InlinedMethodDependencyProcessor singleton = new InlinedMethodDependencyProcessor();
@@ -111,7 +111,7 @@ public class InlinedMethodDependencyProcessor extends DependencyProcessor {
         ClassActor contextClassActor = (ClassActor) ((ContextAssumption) assumption).context;
         InlinedMethod inlineMethod = (InlinedMethod) assumption;
         ClassMethodActor inlinee = (ClassMethodActor) inlineMethod.dependee;
-        if (JVMTIBreakpoints.hasBreakpoints(inlinee)) {
+        if (VMTI.handler().hasBreakpoints(inlinee)) {
             return false;
         }
         short inlineeMIndex = Dependencies.getMIndex(inlinee);
@@ -229,6 +229,7 @@ public class InlinedMethodDependencyProcessor extends DependencyProcessor {
         public enum Operation {
             DoInlinedMethod;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 

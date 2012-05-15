@@ -47,12 +47,12 @@ import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 
 /**
  * This class implements an adaptive compilation system with multiple compilers with different compilation time / code
@@ -442,8 +442,8 @@ public class CompilationBroker {
                         // at prototyping time, default to the opt compiler
                         compiler = optimizingCompiler;
                     } else {
-                        if (JVMTIBreakpoints.hasBreakpoints(cma)) {
-                            reason = "jvmti";
+                        if (VMTI.handler().hasBreakpoints(cma)) {
+                            reason = "vmti";
                             compiler = baselineCompiler;
                         } else {
                             compiler = defaultCompiler;

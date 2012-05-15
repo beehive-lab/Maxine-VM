@@ -108,6 +108,19 @@ public class Compile {
         return result.toArray(new String[result.size()]);
     }
 
+    /**
+     * Check alias (short form of compiler name).
+     * @param compilerName
+     * @return full (aliased) class name or {@code compilerName} if not found
+     */
+    private static String getCompilerClassname(String compilerName) {
+        if (compilerName == null) {
+            return null;
+        }
+        String compilerClassname = compilerAliases.get(compilerName);
+        return compilerClassname == null ? compilerName : compilerClassname;
+    }
+
     public static void main(String[] args) throws IOException {
 
         args = VMOption.extractVMArgs(args);
@@ -122,17 +135,17 @@ public class Compile {
             options.printHelp(System.out, 80);
             return;
         }
-        String compilerName = compilerOption.getValue();
-        if (compilerName == null || !compilerAliases.containsKey(compilerName)) {
+        String compilerName = getCompilerClassname(compilerOption.getValue());
+        if (compilerName == null) {
             System.out.println("Must specify compiler to use with the -" + compilerOption + " option");
-            System.out.println("Valid values are: " + compilerAliasNames);
+            System.out.println("Valid values are: " + compilerAliasNames + " or fully qualified class name");
             return;
         }
 
-        if (compilerName.equals("T1X")) {
-            RuntimeCompiler.baselineCompilerOption.setValue(compilerAliases.get(compilerName));
+        if (compilerName.contains("T1X")) {
+            RuntimeCompiler.baselineCompilerOption.setValue(compilerName);
         } else {
-            RuntimeCompiler.optimizingCompilerOption.setValue(compilerAliases.get(compilerName));
+            RuntimeCompiler.optimizingCompilerOption.setValue(compilerName);
         }
 
         Trace.on(traceOption.getValue());
@@ -153,7 +166,7 @@ public class Compile {
         }
 
         CompilationBroker cb = MaxineVM.vm().compilationBroker;
-        final RuntimeCompiler compiler = compilerName.equals("T1X") ? cb.baselineCompiler : cb.optimizingCompiler;
+        final RuntimeCompiler compiler = compilerName.contains("T1X") ? cb.baselineCompiler : cb.optimizingCompiler;
         cb.optimizingCompiler.initialize(Phase.HOSTED_COMPILING);
         if (cb.optimizingCompiler != cb.baselineCompiler && compiler == cb.baselineCompiler) {
             cb.baselineCompiler.initialize(Phase.HOSTED_COMPILING);

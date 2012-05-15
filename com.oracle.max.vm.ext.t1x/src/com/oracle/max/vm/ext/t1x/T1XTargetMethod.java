@@ -78,7 +78,7 @@ public class T1XTargetMethod extends TargetMethod {
 
     /**
      * This is the max number of slots used by any template and is computed when the templates are
-     * {@linkplain T1X#createTemplates(Class, T1X, boolean, com.oracle.max.vm.ext.t1x.T1X.Templates, boolean) created}.
+     * {@linkplain T1X#createTemplates(Class, T1X, com.oracle.max.vm.ext.t1x.T1X.Templates, boolean) created}.
      */
     static int templateSlots;
 
@@ -615,7 +615,22 @@ public class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public CodePointer throwAddressToCatchAddress(CodePointer ip, Throwable exception) {
+    public CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception) {
+        return throwAddressToCatchAddress(throwAddress, exception, null);
+    }
+
+    @Override
+    public boolean catchExceptionInfo(StackFrameCursor current, Throwable throwable, CatchExceptionInfo info) {
+        CodePointer codePointer = throwAddressToCatchAddress(current.vmIP(), throwable, info);
+        if (!codePointer.isZero()) {
+            info.codePointer = codePointer;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private CodePointer throwAddressToCatchAddress(CodePointer ip, Throwable exception, CatchExceptionInfo info) {
         if (handlers.length != 0) {
             final int exceptionPos = posFor(ip);
             int exceptionBCI = bciForPos(exceptionPos);
@@ -627,7 +642,11 @@ public class T1XTargetMethod extends TargetMethod {
                             if (catchType == null || catchType.isAssignableFrom(ObjectAccess.readClassActor(exception))) {
                                 int handlerPos = posForBci(e.handlerBCI());
                                 checkHandler(exceptionPos, exceptionBCI, e.handlerBCI, handlerPos);
+                                if (info != null) {
+                                    info.bci = e.handlerBCI();
+                                }
                                 return codeAt(handlerPos);
+
                             }
                         }
                     }

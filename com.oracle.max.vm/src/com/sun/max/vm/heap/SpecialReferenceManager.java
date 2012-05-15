@@ -632,6 +632,7 @@ public class SpecialReferenceManager {
             Discover, Enqueue, ProcessDiscovered,
             ProcessDiscoveredInit, ProcessInspectable, RegisterFinalizee, Remove;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 

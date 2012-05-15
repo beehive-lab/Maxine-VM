@@ -48,7 +48,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
 //import com.sun.max.vm.log.*;  // see comment on JxxFunctionsLogger
 import com.sun.max.vm.log.VMLog.*;
@@ -58,6 +57,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -122,7 +122,7 @@ public final class JniFunctions {
     public static Pointer prologue(Pointer env) {
         SafepointPoll.setLatchRegister(env.minus(JNI_ENV.offset));
         Pointer etla = ETLA.load(currentTLA());
-        JVMTIVmThreadLocal.setBit(etla, JVMTIVmThreadLocal.IN_UPCALL);
+        VMTI.handler().beginUpcallVM();
         Pointer anchor = reenterJavaFromNative(etla);
         return anchor;
     }
@@ -135,7 +135,7 @@ public final class JniFunctions {
     public static void epilogue(Pointer anchor) {
         // returning from a JNI upcall is similar to a entering a native method returning; reuse the native call prologue sequence
         Pointer etla = ETLA.load(currentTLA());
-        JVMTIVmThreadLocal.unsetBit(etla, JVMTIVmThreadLocal.IN_UPCALL);
+        VMTI.handler().endUpcallVM();
         Snippets.nativeCallPrologue0(etla, JavaFrameAnchor.PREVIOUS.get(anchor));
     }
 

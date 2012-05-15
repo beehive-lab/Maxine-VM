@@ -83,8 +83,8 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
     static final ToStringConcreteTypeDependencyProcessorVisitor toStringConcreteTypeDependencyProcessorVisitor = new ToStringConcreteTypeDependencyProcessorVisitor();
 
     @Override
-    protected ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor() {
-        return toStringConcreteTypeDependencyProcessorVisitor;
+    protected ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor(StringBuilder sb) {
+        return toStringConcreteTypeDependencyProcessorVisitor.setStringBuilder(sb);
     }
 
     private static final ConcreteTypeDependencyProcessor singleton = new ConcreteTypeDependencyProcessor();
