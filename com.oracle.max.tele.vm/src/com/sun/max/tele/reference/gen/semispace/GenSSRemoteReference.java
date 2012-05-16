@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.heap.gen.semispace;
+package com.sun.max.tele.reference.gen.semispace;
 
 import static com.sun.max.vm.heap.ObjectStatus.*;
 
