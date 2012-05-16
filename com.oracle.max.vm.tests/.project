@@ -2,18 +2,15 @@
 <projectDescription>
 	<name>com.oracle.max.vm.tests</name>
 	<comment></comment>
-	<projects>
-	</projects>
+	<projects></projects>
 	<buildSpec>
 		<buildCommand>
 			<name>org.eclipse.jdt.core.javabuilder</name>
-			<arguments>
-			</arguments>
+			<arguments></arguments>
 		</buildCommand>
 		<buildCommand>
 			<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>
-			<arguments>
-			</arguments>
+			<arguments></arguments>
 		</buildCommand>
 	</buildSpec>
 	<natures>

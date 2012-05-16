@@ -255,7 +255,7 @@ def image(args):
         elif arg.startswith('--XX:LogFile='):
             os.environ['MAXINE_LOG_FILE'] = arg.split('=', 1)[1]
         elif arg == '-vma':
-            systemProps += ['-Dmax.permsize=2', '-Dmax.vmthread.factory.class=com.oracle.max.vm.ext.vma.runtime.VMAVmThreadFactory']
+            systemProps += ['-Dmax.permsize=2']
         else:
             imageArgs += [arg]
         i += 1
@@ -288,6 +288,7 @@ def inspect(args):
         os.makedirs(saveClassDir)
     sysProps = []
     insCP = []
+
     i = 0
     remote = False
     while i < len(args):
@@ -329,7 +330,7 @@ def inspect(args):
             vmArgs += args[i:]
             break
         i += 1
-    
+
     insCP += [saveClassDir]
     insCP = pathsep.join(insCP)
     insArgs += ['-cp=' + insCP]
@@ -338,7 +339,6 @@ def inspect(args):
 
     cmd = mx.java().format_cmd(sysProps + ['-cp', mx.classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
                               insArgs + ['-a=' + ' '.join(vmArgs)])
-    
     
     if mx.get_os() == 'darwin' and not remote:
         # The -E option propagates the environment variables into the sudo process

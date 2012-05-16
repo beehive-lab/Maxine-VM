@@ -409,6 +409,7 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
             ChangeYoungPercent, GrowHeap, ShouldPerformFullGC,
             ShrinkHeap;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 

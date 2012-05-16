@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,9 +36,12 @@ public class GCQuery extends QueryBase {
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
         parseArgs(args);
         TraceRun traceRun = traceRuns.get(traceFocus);
-        ArrayList<AllocationEpoch> gcs = traceRun.allocationEpochs;
         ps.println("Allocation epochs");
-        for (AllocationEpoch gce : gcs) {
+        AllocationEpoch prev = null;
+        for (AllocationEpoch gce : traceRun.allocationEpochs) {
+            if (prev != null) {
+                ps.println("GC time " + TimeFunctions.formatTime(gce.startTime - prev.endTime));
+            }
             if (absTime) {
                 ps.println(gce);
             } else {
@@ -46,6 +49,7 @@ public class GCQuery extends QueryBase {
                 long start = gce.startTime;
                 ps.println(gce.toString(traceRun.relTime(start), traceRun.relTime(end)));
             }
+            prev = gce;
             if (showRemovals) {
                 RemovalRange rr = gce.getRemovalRange();
                 if (rr != null) {

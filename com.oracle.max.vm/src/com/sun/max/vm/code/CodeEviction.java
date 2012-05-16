@@ -142,6 +142,17 @@ public final class CodeEviction extends VmOperation {
         return TraceCodeEviction >= level && evictionCount >= LogStartEviction;
     }
 
+    /**
+     * Protect baseline methods until the given callee depth.
+     */
+    private static int CodeEvictionProtectCalleeDepth = 1;
+
+    static {
+        VMOptions.addFieldOption("-XX:", "CodeEvictionProtectCalleeDepth", CodeEviction.class,
+            "During code eviction, protect callees of on-stack methods up until the given depth (default: 1).",
+            MaxineVM.Phase.STARTING);
+    }
+
     private final class DumpDispatchTables implements ClassActor.Closure {
         @Override
         public boolean doClass(ClassActor classActor) {
@@ -168,18 +179,28 @@ public final class CodeEviction extends VmOperation {
             if (tm != null && CodeManager.isShortlived(tm)) {
                 logMark("ON STACK", tm);
                 tm.mark();
-
-                // iterate over direct calls in tm, mark all direct callees
-                final Safepoints sps = tm.safepoints();
-                for (int i = sps.nextDirectCall(0); i >= 0; i = sps.nextDirectCall(i + 1)) {
-                    TargetMethod directCallee = AMD64TargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
-                    if (directCallee != null && CodeManager.isShortlived(directCallee)) {
-                        logMark("DIRECT CALLEE", directCallee);
-                        directCallee.mark();
-                    }
-                }
+                markDirectCalleesOf(tm, CodeEvictionProtectCalleeDepth);
             }
             return true;
+        }
+
+        /**
+         * Iterate over direct callees in the {@code tm} parameter and mark them.
+         * Recurse (depth-first) if necessary.
+         */
+        private void markDirectCalleesOf(TargetMethod tm, int depthRemaining) {
+            if (depthRemaining == 0) {
+                return;
+            }
+            final Safepoints sps = tm.safepoints();
+            for (int i = sps.nextDirectCall(0); i >= 0; i = sps.nextDirectCall(i + 1)) {
+                TargetMethod directCallee = AMD64TargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
+                if (directCallee != null && CodeManager.isShortlived(directCallee) && !directCallee.isMarked()) {
+                    logMarkLevel("DIRECT CALLEE", directCallee, depthRemaining);
+                    directCallee.mark();
+                    markDirectCalleesOf(directCallee, depthRemaining - 1);
+                }
+            }
         }
     }
 
@@ -1487,6 +1508,18 @@ public final class CodeEviction extends VmOperation {
     private void logMark(String s, TargetMethod tm) {
         if (logLevel(TRACE_DETAILS)) {
             Log.print("MARKING ");
+            Log.print(s);
+            Log.print(' ');
+            Log.println(tm);
+        }
+    }
+
+    @NEVER_INLINE
+    private void logMarkLevel(String s, TargetMethod tm, int level) {
+        if (logLevel(TRACE_DETAILS)) {
+            Log.print("MARKING (level ");
+            Log.print(CodeEvictionProtectCalleeDepth - level + 1);
+            Log.print(')');
             Log.print(s);
             Log.print(' ');
             Log.println(tm);

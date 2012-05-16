@@ -262,8 +262,9 @@ public final class JavaPrototype extends Prototype {
 
     private static ArrayList<InitializationCompleteCallback> initializationCompleteCallbacks = new ArrayList<InitializationCompleteCallback>();
 
-    public static void registerInitializationCompleteCallback(InitializationCompleteCallback completionCallback) {
+    public static InitializationCompleteCallback registerInitializationCompleteCallback(InitializationCompleteCallback completionCallback) {
         initializationCompleteCallbacks.add(completionCallback);
+        return completionCallback;
     }
 
     /**

@@ -42,10 +42,6 @@ import com.sun.max.vm.thread.*;
  * Checks/Generates the boilerplate of a {@link VMLogger} implementation from
  * an interface specified by the developer.
  *
- * TODO
- * <ol>
- * <li>Handle subclasses in standard argument types, e.g, ClassMethodActor.
- * </ol>
  */
 @HOSTED_ONLY
 public class VMLoggerGenerator {
@@ -58,8 +54,10 @@ public class VMLoggerGenerator {
 
     private static final String[] INDENTS = new String[] {"", INDENT4, INDENT8, INDENT12, INDENT16, INDENT20};
 
-    private static boolean generate(boolean checkOnly, Class source, ArrayList<Class<?>> loggerInterfacesArg) throws Exception {
-        File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm/src");
+    private static File workspace;
+
+    private static boolean generate(boolean checkOnly, Class source, File sourceProject, ArrayList<Class<?>> loggerInterfacesArg) throws Exception {
+        File base = new File(sourceProject, "src");
         File outputFile = new File(base, source.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         Class<?>[] loggerInterfaces = loggerInterfacesArg.toArray(new Class<?>[loggerInterfacesArg.size()]);
         sort(loggerInterfaces);
@@ -448,6 +446,7 @@ public class VMLoggerGenerator {
             count++;
         }
         out.println(";\n");
+        out.printf("%s@SuppressWarnings(\"hiding\")%n", INDENT12); // in case of static import of similar
         out.printf("%spublic static final Operation[] VALUES = values();%n%s}%n%n", INDENT12, INDENT8);
         return enumMap;
     }
@@ -455,7 +454,6 @@ public class VMLoggerGenerator {
     private static void outTraceMethod(PrintWriter out, ArrayList<String> caseBodies) {
         out.printf("%s@Override%n", INDENT8);
         out.printf("%sprotected void trace(Record r) {%n", INDENT8);
-//        out.printf("%sOperation op = Operation.VALUES[r.getOperation()];%n", INDENT12);
         out.printf("%sswitch (r.getOperation()) {%n", INDENT12);
         for (String caseBody : caseBodies) {
             out.print(caseBody);
@@ -482,7 +480,11 @@ public class VMLoggerGenerator {
     private static String wrapLogArg(Class sourceClass, Class argClass, String argName) {
         Class standardArgClass = isStandardArgMethod(argClass, true, sourceClass);
         if (standardArgClass == null) {
-            standardArgClass = Object.class;
+            if (argClass.isEnum()) {
+                standardArgClass = argClass;
+            } else {
+                standardArgClass = Object.class;
+            }
         }
         return wrapLogArg(logArgMethodName(standardArgClass), argName);
     }
@@ -562,9 +564,16 @@ public class VMLoggerGenerator {
         final HashSet<String> seenPackages = new HashSet<String>();
         Class<?> updatedSource;
         boolean checkOnly;
+        File resourceParent;
 
         VMLoggerClassSearch(boolean checkOnly) {
             this.checkOnly = checkOnly;
+        }
+
+        @Override
+        protected boolean visitFile(File parent, String resource) {
+            this.resourceParent = parent;
+            return super.visitFile(parent, resource);
         }
 
         @Override
@@ -579,13 +588,14 @@ public class VMLoggerGenerator {
                     source = Classes.forName(className, false, getClass().getClassLoader());
                 } catch (Throwable ex) {
                     // Ignore
-                    System.out.println("WARNING: could not load class for " + className);
+                    System.err.println(ex);
+                    System.err.println("while trying to load: " + className);
                     return true;
                 }
                 ArrayList<Class<?>> loggerInterfaces = findLoggerInterfaces(source);
                 if (loggerInterfaces.size() > 0) {
                     try {
-                        boolean updated = generate(checkOnly, source, loggerInterfaces);
+                        boolean updated = generate(checkOnly, source, resourceParent.getParentFile(), loggerInterfaces);
                         if (updated) {
                             if (checkOnly) {
                                 updatedSource = source;
@@ -606,8 +616,10 @@ public class VMLoggerGenerator {
     }
 
     public static Class<?> generate(final boolean checkOnly) {
+        workspace = JavaProject.findWorkspace();
         VMLoggerClassSearch search = new VMLoggerClassSearch(checkOnly);
         search.run(Classpath.fromSystem(), "com/sun/max");
+        search.run(Classpath.fromSystem(), "com/oracle/max");
         return search.updatedSource;
     }
 

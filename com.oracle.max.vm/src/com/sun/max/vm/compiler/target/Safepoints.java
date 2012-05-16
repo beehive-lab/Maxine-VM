@@ -319,19 +319,30 @@ public final class Safepoints {
             if (sb.length() != 1) {
                 sb.append(", ");
             }
-            sb.append(i).append(" -> ").append(posAt(i));
-            int attrs = safepoints[i] & ATTRS_MASK;
-            if (attrs != 0) {
-                for (Attr a : Safepoints.ALL_ATTRS) {
-                    if (a.isSet(attrs)) {
-                        sb.append(" | ").append(a.name);
-                    }
-                }
-
-            }
+            int safepoint = safepoints[i];
+            sb.append(i);
+            decodeSafepoint(safepoint, sb);
         }
         return sb.append("}").toString();
+    }
 
+    private static void decodeSafepoint(int safepoint, StringBuilder sb) {
+        sb.append(" -> ").append(pos(safepoint));
+        int attrs = safepoint & ATTRS_MASK;
+        if (attrs != 0) {
+            for (Attr a : Safepoints.ALL_ATTRS) {
+                if (a.isSet(attrs)) {
+                    sb.append(" | ").append(a.name);
+                }
+            }
+        }
+    }
+
+    @HOSTED_ONLY
+    public static String inspectSafepoint(int safepoint) {
+        StringBuilder sb = new StringBuilder();
+        decodeSafepoint(safepoint, sb);
+        return sb.toString();
     }
 
     /**

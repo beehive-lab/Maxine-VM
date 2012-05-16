@@ -69,7 +69,7 @@ project@com.oracle.max.graal.compiler.tests@checkstyle=com.oracle.max.graal.grap
 project@com.oracle.max.graal.compiler.tests@javaCompliance=1.6
 
 project@com.oracle.max.tele.ins@sourceDirs=src,test
-project@com.oracle.max.tele.ins@dependencies=JLF_ICONS,NB3_BUTTONS,com.oracle.max.tele.vm
+project@com.oracle.max.tele.ins@dependencies=com.oracle.max.tele.vm,JLF_ICONS,NB3_BUTTONS
 project@com.oracle.max.tele.ins@checkstyle=com.oracle.max.base
 project@com.oracle.max.tele.ins@javaCompliance=1.6
 
@@ -98,7 +98,7 @@ project@com.oracle.max.tele.jdwp@checkstyle=com.oracle.max.base
 project@com.oracle.max.tele.jdwp@javaCompliance=1.6
 
 project@com.oracle.max.tele.vm@sourceDirs=src,test
-project@com.oracle.max.tele.vm@dependencies=com.oracle.max.vm.ext.t1x,com.oracle.max.vmdi,com.oracle.max.elf
+project@com.oracle.max.tele.vm@dependencies=com.oracle.max.vm.ext.jvmti,com.oracle.max.vmdi,com.oracle.max.elf
 project@com.oracle.max.tele.vm@checkstyle=com.oracle.max.base
 project@com.oracle.max.tele.vm@javaCompliance=1.6
 
@@ -147,6 +147,11 @@ project@com.oracle.max.vm.ext.t1x@dependencies=com.oracle.max.vm.ext.maxri
 project@com.oracle.max.vm.ext.t1x@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.t1x@javaCompliance=1.6
 
+project@com.oracle.max.vm.ext.jvmti@sourceDirs=src
+project@com.oracle.max.vm.ext.jvmti@dependencies=com.oracle.max.vm.ext.t1x
+project@com.oracle.max.vm.ext.jvmti@checkstyle=com.oracle.max.base
+project@com.oracle.max.vm.ext.jvmti@javaCompliance=1.6
+
 project@com.oracle.max.elf@sourceDirs=src
 project@com.oracle.max.elf@checkstyle=com.oracle.max.base
 project@com.oracle.max.elf@javaCompliance=1.6
@@ -185,12 +190,12 @@ project@com.oracle.max.vm.ext.bctrans@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.bctrans@javaCompliance=1.6
 
 project@com.oracle.max.vm.ext.vma@sourceDirs=src,test
-project@com.oracle.max.vm.ext.vma@dependencies=com.oracle.max.vm.ext.t1x,com.oracle.max.tele.vm
+project@com.oracle.max.vm.ext.vma@dependencies=com.oracle.max.tele.vm,com.oracle.max.vm.ext.c1x
 project@com.oracle.max.vm.ext.vma@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.vma@javaCompliance=1.6
 
 project@com.oracle.max.vma.tools@sourceDirs=src
-project@com.oracle.max.vma.tools@dependencies=com.oracle.max.vm.ext.vma,com.oracle.max.tele.vm
+project@com.oracle.max.vma.tools@dependencies=com.oracle.max.vm.ext.vma
 project@com.oracle.max.vma.tools@checkstyle=com.oracle.max.base
 project@com.oracle.max.vma.tools@javaCompliance=1.6
 

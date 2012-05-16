@@ -620,6 +620,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         public enum Operation {
             Pad, Refill, Reset;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
