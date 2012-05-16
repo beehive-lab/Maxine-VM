@@ -231,11 +231,11 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
-    public boolean initializeLog() {
+    public boolean initializeLog(boolean timeOrdered) {
         repeatedIds = new HashMap<String, LastId>();
         doRepeats = System.getProperty(NO_REPEATS_PROPERTY) == null;
         doPrefix = System.getProperty(PREFIX_PROPERTY) != null;
-        return del.initializeLog();
+        return del.initializeLog(timeOrdered);
     }
 
     @Override

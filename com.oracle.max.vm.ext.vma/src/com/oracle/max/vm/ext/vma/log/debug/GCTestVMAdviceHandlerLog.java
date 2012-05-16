@@ -55,7 +55,7 @@ public class GCTestVMAdviceHandlerLog extends VMAdviceHandlerLog {
     }
 
     @Override
-    public boolean initializeLog() {
+    public boolean initializeLog(boolean timeOrdered) {
         gcAlways = System.getProperty("max.vma.gctest.everytime") != null;
         return true;
     }

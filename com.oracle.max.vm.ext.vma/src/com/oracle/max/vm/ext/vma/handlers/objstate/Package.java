@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,31 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vm.ext.vma.handlers.objstate;
 
-import com.sun.cri.bytecode.*;
-import com.sun.max.annotate.*;
+import com.oracle.max.vm.ext.vma.handlers.synclog.*;
+import com.oracle.max.vm.ext.vma.handlers.vmlog.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
-/**
- * Counts the bytecodes that are executed. This should give the same results
- * as the hard-wired counting enabled by {@code -T1X:+PrintBytecodeHistogram}.
- */
-public class BytecodeCounter extends NullVMAdviceHandler {
-    private static long[] counts = new long[256];
 
-    @NEVER_INLINE
-    public static void inc(int tag) {
-        counts[tag]++;
-    }
-
+public class Package extends BootImagePackage {
     @Override
-    public void finalise() {
-        for (int b = 0; b < counts.length; b++) {
-            long count = counts[b];
-            if (count > 0) {
-                System.out.format("%s: %d%n", Bytecodes.nameOf(b), count);
-            }
-        }
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
+            (VMAJavaRunScheme.getHandlerClassName().equals(SyncLogVMAdviceHandler.class.getName()) ||
+             VMAJavaRunScheme.getHandlerClassName().equals(VMLogVMAdviceHandler.class.getName()));
     }
 
 }

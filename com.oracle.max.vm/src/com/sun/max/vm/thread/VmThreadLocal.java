@@ -533,7 +533,7 @@ public class VmThreadLocal implements FormatWithToString {
         // that vtable dispatch will no longer work for the object
         scanThreadLocals(tla, wordPointerIndexVisitor);
 
-        VMLog.vmLog().scanLog(tla, wordPointerIndexVisitor);
+        VMLog.scanLogs(tla, wordPointerIndexVisitor);
 
         Pointer anchor = JavaFrameAnchor.from(tla);
         if (!anchor.isZero()) {

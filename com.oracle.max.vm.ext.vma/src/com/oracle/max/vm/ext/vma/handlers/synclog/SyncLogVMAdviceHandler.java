@@ -20,9 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vm.ext.vma.handlers.synclog;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.handlers.*;
+import com.oracle.max.vm.ext.vma.handlers.log.*;
+import com.oracle.max.vm.ext.vma.handlers.objstate.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
 
@@ -36,7 +40,7 @@ import com.sun.max.vm.thread.*;
  *
  * State for unique ids and lifetime tracking is provided by an implementation of the {@link ObjectStateHandler} class,
  * which is created at image build time. All objects have to be checked for having ids, and may log
- * an "unseen" event first.
+ * an {@link #unseenObject(Object)} event first.
  *
  * Since the {@link VMAdviceHandler} and {@link ObjectStateHandler} implementations are required to be
  * thread safe, this class is not otherwise synchronised.
@@ -47,37 +51,25 @@ import com.sun.max.vm.thread.*;
 
 public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
-    static class LogRemovalTracker extends ObjectStateHandler.RemovalTracker {
-        LoggingVMAdviceHandler lta;
-        LogRemovalTracker(LoggingVMAdviceHandler lta) {
-            this.lta = lta;
-        }
-
-        @Override
-        public void removed(long id) {
-            lta.removal(id);
-        }
-    }
-
     private LoggingVMAdviceHandler logHandler;
 
     @Override
-    protected void handleUnseen(Object obj) {
+    protected void unseenObject(Object obj) {
         logHandler.unseenObject(obj);
 
     }
 
     @Override
-    public void initialise(ObjectStateHandler state) {
-        super.initialise(state);
-        logHandler = new LoggingVMAdviceHandler();
-        logHandler.initialise(state);
-        super.setRemovalTracker(new LogRemovalTracker(logHandler));
-    }
-
-    @Override
-    public void finalise() {
-        logHandler.finalise();
+    public void initialise(MaxineVM.Phase phase) {
+        super.initialise(phase);
+        if (phase == MaxineVM.Phase.RUNNING) {
+            logHandler = new LoggingVMAdviceHandler();
+            logHandler.setTimeOrdered(true);
+            logHandler.initialise(phase);
+            super.setRemovalTracker(logHandler.getRemovalTracker(state));
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            logHandler.initialise(phase);
+        }
     }
 
     @Override

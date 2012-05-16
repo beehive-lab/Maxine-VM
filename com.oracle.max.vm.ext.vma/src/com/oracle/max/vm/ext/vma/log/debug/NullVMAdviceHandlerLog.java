@@ -30,7 +30,7 @@ import com.oracle.max.vm.ext.vma.log.*;
 public class NullVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     @Override
-    public boolean initializeLog() {
+    public boolean initializeLog(boolean timeOrdered) {
 
         return false;
     }

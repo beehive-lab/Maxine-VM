@@ -52,6 +52,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
+import com.sun.max.vm.heap.sequential.gen.semiSpace.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jni.DynamicLinker.LibInfo;
 import com.sun.max.vm.ext.jvmti.*;
@@ -147,6 +148,9 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_cardTableRSet = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "cardTableRSet", CardTableRSet.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "oldSpace", FirstFitMarkSweepSpace.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "youngSpace", NoAgingNursery.class);
+    public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_cardTableRSet = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "cardTableRSet", CardTableRSet.class);
+    public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "oldSpace", ContiguousSemiSpace.class);
+    public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "youngSpace", ContiguousAllocatingSpace.class);
     public final TeleStaticReferenceFieldAccess Heap_HEAP_BOOT_NAME = new TeleStaticReferenceFieldAccess(Heap.class, "HEAP_BOOT_NAME", String.class);
     public final TeleStaticReferenceFieldAccess Heap_bootHeapRegion = new TeleStaticReferenceFieldAccess(Heap.class, "bootHeapRegion", BootHeapRegion.class);
     public final TeleStaticIntFieldAccess HeapRegionConstants_regionSizeInBytes = new TeleStaticIntFieldAccess(HeapRegionConstants.class, "regionSizeInBytes");
@@ -240,7 +244,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess Utf8Constant_string = new TeleInstanceReferenceFieldAccess(Utf8Constant.class, "string", String.class);
     public final TeleInstanceReferenceFieldAccess VMConfiguration_heapScheme = new TeleInstanceReferenceFieldAccess(VMConfiguration.class, "heapScheme", HeapScheme.class);
     public final TeleInstanceIntFieldAccess VMLog_logEntries = new TeleInstanceIntFieldAccess(VMLog.class, "logEntries");
-    public final TeleStaticReferenceFieldAccess VMLog_loggers = new TeleStaticReferenceFieldAccess(VMLog.class, "loggers", VMLogger[].class);
+    public final TeleInstanceReferenceFieldAccess VMLog_loggers = new TeleInstanceReferenceFieldAccess(VMLog.class, "loggers", VMLogger[].class);
     public final TeleInstanceIntFieldAccess VMLog_nextId = new TeleInstanceIntFieldAccess(VMLog.class, "nextId");
     public final TeleStaticReferenceFieldAccess VMLog_vmLog = new TeleStaticReferenceFieldAccess(VMLog.class, "vmLog", VMLog.class);
     public final TeleInstanceReferenceFieldAccess VMLogArray_buffer = new TeleInstanceReferenceFieldAccess(VMLogArray.class, "buffer", Record[].class);

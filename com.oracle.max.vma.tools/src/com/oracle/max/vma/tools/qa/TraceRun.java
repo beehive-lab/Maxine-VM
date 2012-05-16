@@ -26,7 +26,7 @@ package com.oracle.max.vma.tools.qa;
 import java.util.*;
 import java.io.*;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 /**
  * This is essentially the raw data read by {@link ProcessLog} organized

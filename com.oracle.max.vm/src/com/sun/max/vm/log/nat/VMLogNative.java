@@ -45,8 +45,6 @@ public abstract class VMLogNative extends VMLog {
     /**
      * Where the per-thread instance of {@link NativeRecord} is stored.
      */
-    private static final VmThreadLocal VMLOG_RECORD = new VmThreadLocal("VMLOG_RECORD", true, "VMLog.Record");
-
     @INTRINSIC(UNSAFE_CAST) private static native NativeRecord asNativeRecord(Object object);
 
     public static class NativeRecord extends VMLog.Record {
@@ -165,7 +163,7 @@ public abstract class VMLogNative extends VMLog {
 
     /**
      * Since we must log before it is even possible to call any native functions,
-     * this byte array provides s pre-allocated, non-moving area.
+     * this byte array provides a pre-allocated, non-moving area.
      */
     @CONSTANT_WHEN_NOT_ZERO
     private byte[] primordialLogBufferArray;
@@ -185,6 +183,15 @@ public abstract class VMLogNative extends VMLog {
     @INSPECTED
     protected Address logBuffer;
 
+    /**
+     * Actual {@link VmThreadLocal} used for {@link VMLogNative.NativeRecord}.
+     */
+    protected VmThreadLocal vmLogNativeRecordTL;
+
+    public void setNativeRecordThreadLocal(VmThreadLocal vmLogNativeRecordTL) {
+        this.vmLogNativeRecordTL = vmLogNativeRecordTL;
+    }
+
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
@@ -197,7 +204,7 @@ public abstract class VMLogNative extends VMLog {
             primordialLogBufferArray = new byte[logSize];
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
             logBuffer = Reference.fromJava(primordialLogBufferArray).toOrigin().plus(byteDataOffset);
-            VMLOG_RECORD.store3(Reference.fromJava(primordialNativeRecord));
+            vmLogNativeRecordTL.store3(Reference.fromJava(primordialNativeRecord));
         }
     }
 
@@ -208,13 +215,13 @@ public abstract class VMLogNative extends VMLog {
         boolean oldState = setThreadState(false);
         Reference nativeRecordRef = Reference.fromJava(new NativeRecord(getArgsOffset()));
         setThreadState(oldState);
-        VMLOG_RECORD.store3(nativeRecordRef);
+        vmLogNativeRecordTL.store3(nativeRecordRef);
         return nativeRecordRef;
     }
 
     @INLINE
     protected final NativeRecord getNativeRecord() {
-        Reference nativeRecordRef = VMLOG_RECORD.loadRef(VmThread.currentTLA());
+        Reference nativeRecordRef = vmLogNativeRecordTL.loadRef(VmThread.currentTLA());
         if (nativeRecordRef.isZero()) {
             nativeRecordRef = allocateNativeRecord();
         }

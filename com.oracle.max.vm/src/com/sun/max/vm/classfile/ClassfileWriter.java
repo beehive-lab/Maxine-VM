@@ -750,8 +750,8 @@ public class ClassfileWriter {
             return;
         }
 
-        vmConfigurator.create(true);
-        JavaPrototype.initialize();
+        vmConfigurator.create();
+        JavaPrototype.initialize(false);
 
         final Map<String, byte[]> classNameToClassfileMap = new LinkedHashMap<String, byte[]>();
         for (String className : arguments) {

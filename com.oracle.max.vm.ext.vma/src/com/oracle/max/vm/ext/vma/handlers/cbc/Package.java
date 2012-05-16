@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,30 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vm.ext.vma.handlers.cbc;
 
-/**
- * Factory for controlling which implementation of {@link AdviceRecordFlusher} is
- * used at runtime.
- *
- */
-public class AdviceRecordFlusherFactory {
-    public static final String ADVICE_RECORD_FLUSHER_PROPERTY = "max.vma.record.flusher";
+import com.oracle.max.vm.ext.vma.run.java.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
-    public static AdviceRecordFlusher create() {
-        AdviceRecordFlusher result = null;
-        final String flusherClassName = System.getProperty(ADVICE_RECORD_FLUSHER_PROPERTY);
-        if (flusherClassName == null) {
-            result = new LoggingAdviceRecordFlusher();
-        } else {
-            try {
-                result = (AdviceRecordFlusher) Class.forName(flusherClassName).newInstance();
-            } catch (Exception exception) {
-                System.err.println("Error instantiating " + flusherClassName
-                        + ": " + exception);
-            }
 
-        }
-        return result;
+public class Package extends BootImagePackage {
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
+            VMAJavaRunScheme.getHandlerClassName().equals(CountsVMAdviceHandler.class.getName());
     }
+
 }
