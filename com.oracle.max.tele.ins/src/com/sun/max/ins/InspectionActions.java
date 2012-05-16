@@ -4565,8 +4565,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 if (methodKey != null) {
                     Method method = getMethod(methodKey);
                     Kind[] parameterKinds = methodKey.signature().copyParameterKinds(null, 0);
-                    gui().getMainMenuBar().debugMenu().add(new ExecuteSpecificHostMethod("Invoke " + method.getName(), method, parameterKinds));
                     invoke(method, parameterKinds);
+                    // remember it as new menu item
+                    String menuName = "Invoke " + method.getName();
+                    InspectorMenu debugMenu = gui().getMainMenuBar().debugMenu();
+                    for (int i = 0; i < debugMenu.getComponentCount(); i++) {
+                        if (debugMenu.getComponent(i).getName().equals(menuName)) {
+                            return;
+                        }
+                    }
+                    debugMenu.add(new ExecuteSpecificHostMethod(menuName, method, parameterKinds));
                 }
             }
         }

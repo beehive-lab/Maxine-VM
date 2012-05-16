@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1464,14 +1464,25 @@ public class CallGraphDisplay extends JPanel {
             String[] methods = new String[1024];
             int entryIndex = 1;
 
+            void inc() {
+                entryIndex++;
+                if (entryIndex == methods.length) {
+                    String[] newMethods = new String[methods.length * 2];
+                    System.arraycopy(methods, 0, newMethods, 0, methods.length);
+                    methods = newMethods;
+                }
+            }
+
         }
+
         private void createNodes() {
             Map<String, ThreadStack> threadMethodStackMap = new HashMap<String, ThreadStack>();
             for (ThreadRecord tr : traceRun.threads.values()) {
                 md = createMethodData(TraceType.DefineThread, tr.getName(), tr.getName());
                 handleMethodData();
             }
-            for (AdviceRecord ar : traceRun.adviceRecordList) {
+            for (int arIndex = 0; arIndex <  traceRun.adviceRecordList.size(); arIndex++) {
+                AdviceRecord ar = traceRun.adviceRecordList.get(arIndex);
                 switch (ar.getRecordType()) {
                     case MethodEntry: {
                         ObjectMethodAdviceRecord oar = (ObjectMethodAdviceRecord) ar;
@@ -1488,7 +1499,7 @@ public class CallGraphDisplay extends JPanel {
                         checkMethodDef(ts.methods[ts.entryIndex]);
                         setMd(createMethodData(TraceType.Entry, threadName, ts.entryIndex, ts.methods[ts.entryIndex], null, timeInfo));
                         handleMethodData();
-                        ts.entryIndex++;
+                        ts.inc();
                         break;
                     }
                     case Return:

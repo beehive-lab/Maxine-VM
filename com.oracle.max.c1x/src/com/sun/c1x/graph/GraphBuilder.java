@@ -29,8 +29,8 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.cri.intrinsics.*;
-import com.sun.c1x.*;
 import com.oracle.max.criutils.*;
+import com.sun.c1x.*;
 import com.sun.c1x.graph.ScopeData.ReturnBlock;
 import com.sun.c1x.intrinsics.*;
 import com.sun.c1x.ir.*;
@@ -154,7 +154,7 @@ public final class GraphBuilder {
         }
 
         // 5.
-        C1XIntrinsic intrinsic = C1XOptions.OptIntrinsify ? C1XIntrinsic.getIntrinsic(rootMethod) : null;
+        C1XIntrinsic intrinsic = C1XOptions.OptIntrinsify && rootMethod.canIntrinsify() ? C1XIntrinsic.getIntrinsic(rootMethod) : null;
         if (intrinsic != null) {
             lastInstr = stdEntry;
             // 6A.1 the root method is an intrinsic; load the parameters onto the stack and try to inline it
@@ -1535,7 +1535,7 @@ public final class GraphBuilder {
                 return true;
             }
 
-            if (C1XOptions.OptIntrinsify) {
+            if (C1XOptions.OptIntrinsify && resolvedTarget.canIntrinsify()) {
                 // try to create an intrinsic node instead of a call
                 C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(resolvedTarget);
                 if (intrinsic != null && tryInlineIntrinsic(resolvedTarget, args, isStatic, intrinsic)) {

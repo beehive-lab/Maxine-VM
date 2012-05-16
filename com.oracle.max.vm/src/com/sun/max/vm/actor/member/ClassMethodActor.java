@@ -185,6 +185,15 @@ public abstract class ClassMethodActor extends MethodActor {
         return codeAttribute;
     }
 
+    @Override
+    public boolean canIntrinsify() {
+        if (compilee() != this) {
+            // Substituted methods should never be intrinsified
+            return false;
+        }
+        return true;
+    }
+
     /**
      * @return the actor for the method that will be compiled and/or executed in lieu of this method
      */

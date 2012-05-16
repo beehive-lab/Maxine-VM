@@ -40,8 +40,6 @@ public final class T1XOptions {
 
     public static boolean TraceMethods                       = ____;
 
-    public static boolean AllowSafepointAfterTemplateCall    = ____;
-
     /**
      * See {@link Filter#Filter(String, Object)}.
      */
@@ -83,9 +81,6 @@ public final class T1XOptions {
                 "Trace calls to T1X compiled methods.");
         map.put("PrintJsrRetRewrites",
                 "Print a message when T1X rewrites a method to inline jsr/ret subroutines.");
-
-        map.put("AllowSafepointAfterTemplateCall",
-                "Temporary workaround for VMA advice after INVOKE");
 
         for (String name : map.keySet()) {
             try {

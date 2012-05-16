@@ -135,7 +135,7 @@ public class Classpath {
         private final File directory;
 
         public Directory(File directory) {
-            this.directory = directory;
+            this.directory = directory.getAbsoluteFile();  // makes getParent work as expected with relative pathnames
         }
 
         @Override

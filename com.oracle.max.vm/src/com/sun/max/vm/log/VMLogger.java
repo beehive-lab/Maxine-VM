@@ -589,6 +589,17 @@ public class VMLogger {
     }
 
     @INLINE
+    public static ClassMethodActor toClassMethodActor(Record r, int argNum) {
+        if (MaxineVM.isHosted()) {
+            return (ClassMethodActor) toMethodActor(r, argNum);
+        }
+        return asClassMethodActor(toMethodActor(r.getArg(argNum)));
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native ClassMethodActor asClassMethodActor(Object arg);
+
+    @INLINE
     public static ClassActor toClassActor(Record r, int argNum) {
         return toClassActor(r.getArg(argNum));
     }

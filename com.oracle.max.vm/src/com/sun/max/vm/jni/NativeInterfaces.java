@@ -41,8 +41,8 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.JniFunctionsGenerator.Customizer;
 import com.sun.max.vm.jni.JniFunctionsGenerator.JniCustomizer;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.ti.*;
 
 /**
  * This class encapsulates the Java side of the native interfaces such as JNI, JVMTI and JMM supported by the VM.
@@ -53,14 +53,13 @@ public final class NativeInterfaces {
         checkGenerateSourcesInSync(VMFunctionsSource.class, VMFunctions.class, new JniFunctionsGenerator.VMCustomizer(true));
         checkGenerateSourcesInSync(JniFunctionsSource.class, JniFunctions.class, null);
         checkGenerateSourcesInSync(JmmFunctionsSource.class, JmmFunctions.class, null);
-        checkGenerateSourcesInSync(JVMTIFunctionsSource.class, JVMTIFunctions.class, new JVMTIFunctionsGenerator.JVMTICustomizer());
     }
 
     /**
      * A few native functions must not have any prologue and epilogue.  We hand-list them here.
      */
     public static boolean needsPrologueAndEpilogue(MethodActor ma) {
-        return ma != JVMTIFunctions.currentJniEnv && ma != Snippets.blockOnThreadLockMethod();
+        return VMTI.handler().nativeCallNeedsPrologueAndEpilogue(ma) && ma != Snippets.blockOnThreadLockMethod();
     }
 
     private NativeInterfaces() {
@@ -74,7 +73,7 @@ public final class NativeInterfaces {
      * @return the static methods in {@code javaClass} that are annotated by {@link VM_ENTRY_POINT}
      */
     @HOSTED_ONLY
-    private static StaticMethodActor[] getNativeInterfaceFunctionActors(Class javaClass) {
+    public static StaticMethodActor[] getNativeInterfaceFunctionActors(Class javaClass) {
         StaticMethodActor[] localStaticMethodActors = ClassActor.fromJava(javaClass).localStaticMethodActors();
         int count = 0;
         for (StaticMethodActor m : localStaticMethodActors) {
@@ -163,37 +162,6 @@ public final class NativeInterfaces {
         return jmmFunctionActors;
     }
 
-    @HOSTED_ONLY
-    private static StaticMethodActor[] checkAgainstJvmtiHeaderFile(StaticMethodActor[] jvmtiFunctionActors) {
-        String jniHeaderFilePath = System.getProperty("max.jni.headerFile");
-        if (jniHeaderFilePath == null) {
-            jniHeaderFilePath = Platform.jniHeaderFilePath();
-        }
-
-        File jvmtiHeaderFile = new File(new File(jniHeaderFilePath).getParentFile(), "jvmti.h");
-        ProgramError.check(jvmtiHeaderFile.isFile(), "JVMTI header file " + jvmtiHeaderFile + " does not exist or is not a file");
-
-        List<String> jvmtiFunctionNames = new ArrayList<String>();
-
-        parseJvmtiFunctions(jvmtiHeaderFile, jvmtiFunctionNames);
-
-        for (int i = 0; i != jvmtiFunctionNames.size(); ++i) {
-            final String jvmtiFunctionName = jvmtiFunctionNames.get(i);
-            final String jvmtiFunctionActorName = jvmtiFunctionActors[i].name.toString();
-            ProgramError.check(jvmtiFunctionName.equals(jvmtiFunctionActorName), "JVMTI function " + jvmtiFunctionName + " at index " + i + " does not match JVMTI function actor " + jvmtiFunctionActorName);
-        }
-
-        if (jvmtiFunctionNames.size() < jvmtiFunctionActors.length) {
-            // This means that an older version of jvmti.h is being used that does not
-            // define functions added in later versions.
-            jvmtiFunctionActors = Arrays.copyOf(jvmtiFunctionActors, jvmtiFunctionNames.size());
-        } else {
-            ProgramError.check(jvmtiFunctionNames.size() == jvmtiFunctionActors.length);
-        }
-
-        return jvmtiFunctionActors;
-    }
-
     /**
      * Parses a given file for declarations of functions in a VM native interface.
      * The declaration of such functions match this pattern:
@@ -219,45 +187,8 @@ public final class NativeInterfaces {
         }
     }
 
-    /**
-     * Parses a given file for declarations of functions in a VM native interface.
-     * The declaration of such functions match this pattern:
-     *
-     *     (JNICALL *<function name>)
-     *
-     * @param nativeHeaderFile the C header file to parse
-     * @param jvmtiFunctionNames the list to which the matched function names are added
-     */
     @HOSTED_ONLY
-    private static void parseJvmtiFunctions(File nativeHeaderFile, List<String> jvmtiFunctionNames) {
-        final Pattern structDeclPattern = Pattern.compile(".*typedef struct jvmtiInterface_1_ \\{(.*)\\} jvmtiInterface_1;.*", Pattern.DOTALL);
-
-        try {
-            String content = new String(Files.toChars(nativeHeaderFile));
-            Matcher m = structDeclPattern.matcher(content);
-            if (m.matches()) {
-                Pattern functionDeclPattern = Pattern.compile("(?:void \\*(reserved\\d+))|(?:\\(JNICALL \\*([^\\)]+)\\)\\s*\\(jvmtiEnv\\s*\\*)", Pattern.DOTALL);
-                String structDecl = m.group(1);
-                m = functionDeclPattern.matcher(structDecl);
-                while (m.find()) {
-                    String functionName = m.group(1);
-                    if (functionName == null) {
-                        functionName = m.group(2);
-                        assert functionName != null;
-                    }
-                    jvmtiFunctionNames.add(functionName);
-                }
-
-            } else {
-                FatalError.unexpected("Could not find JVMTI function table decl");
-            }
-        } catch (IOException ioException) {
-            throw ProgramError.unexpected("Error reading native header file " + nativeHeaderFile.getPath(), ioException);
-        }
-    }
-
-    @HOSTED_ONLY
-    private static CriticalMethod[] toCriticalMethods(StaticMethodActor[] methodActors) {
+    public static CriticalMethod[] toCriticalMethods(StaticMethodActor[] methodActors) {
         CriticalMethod[] result = new CriticalMethod[methodActors.length];
         for (int i = 0; i < result.length; ++i) {
             StaticMethodActor staticMethodActor = methodActors[i];
@@ -271,19 +202,16 @@ public final class NativeInterfaces {
     private static final StaticMethodActor[] vmFunctionActors = getNativeInterfaceFunctionActors(VMFunctions.class);
     private static final StaticMethodActor[] jniFunctionActors = checkAgainstJniHeaderFile(getNativeInterfaceFunctionActors(JniFunctions.class));
     private static final StaticMethodActor[] jmmFunctionActors = checkAgainstJmmHeaderFile(getNativeInterfaceFunctionActors(JmmFunctions.class));
-    private static final StaticMethodActor[] jvmtiFunctionActors = checkAgainstJvmtiHeaderFile(getNativeInterfaceFunctionActors(JVMTIFunctions.class));
 
     private static final CriticalMethod[] vmFunctions = toCriticalMethods(vmFunctionActors);
     private static final CriticalMethod[] jniFunctions = toCriticalMethods(jniFunctionActors);
     private static final CriticalMethod[] jmmFunctions = toCriticalMethods(jmmFunctionActors);
-    private static final CriticalMethod[] jvmtiFunctions = toCriticalMethods(jvmtiFunctionActors);
 
     public static CriticalMethod[] jniFunctions() {
         return jniFunctions;
     }
 
     private static Pointer jniEnv = Pointer.zero();
-    private static Pointer jvmtiEnv = Pointer.zero();
 
     /**
      * Get the address of the table of JNI functions.
@@ -300,17 +228,15 @@ public final class NativeInterfaces {
      * @param vmInterface pointer to the VM function table
      * @param jniEnv pointer to the JNI function table
      * @param jmmInterface pointer to the JMM function table
-     * @param jvmtiInterface pointer to the JVMTI function table
      */
-    public static void initialize(Pointer vmInterface, Pointer jniEnv, Pointer jmmInterface, Pointer jvmtiInterface) {
+    public static void initialize(Pointer vmInterface, Pointer jniEnv, Pointer jmmInterface) {
         NativeInterfaces.jniEnv = jniEnv;
         initFunctionTable(vmInterface, vmFunctions, vmFunctionActors);
         initFunctionTable(jniEnv, jniFunctions, jniFunctionActors);
         initFunctionTable(jmmInterface, jmmFunctions, jmmFunctionActors);
-        initFunctionTable(jvmtiInterface, jvmtiFunctions, jvmtiFunctionActors);
     }
 
-    private static void initFunctionTable(Pointer functionTable, CriticalMethod[] functions, StaticMethodActor[] functionActors) {
+    public static void initFunctionTable(Pointer functionTable, CriticalMethod[] functions, StaticMethodActor[] functionActors) {
         for (int i = 0; i < functions.length; i++) {
             CriticalMethod function = functions[i];
             if (function != null) {
@@ -365,9 +291,14 @@ public final class NativeInterfaces {
     }
 
     @HOSTED_ONLY
-    private static void checkGenerateSourcesInSync(Class source, Class target, Customizer customizer) {
+    public static void checkGenerateSourcesInSync(Class source, Class target, Customizer customizer) {
+        checkGenerateSourcesInSync("com.oracle.max.vm", source, target, customizer);
+    }
+
+    @HOSTED_ONLY
+    public static void checkGenerateSourcesInSync(String project, Class source, Class target, Customizer customizer) {
         try {
-            if (JniFunctionsGenerator.generate(true, source, target, customizer == null ? new JniCustomizer() : customizer)) {
+            if (JniFunctionsGenerator.generate(true, project, source, target, customizer == null ? new JniCustomizer() : customizer)) {
                 String thisFile = target.getSimpleName() + ".java";
                 String sourceFile = source.getSimpleName() + ".java";
                 FatalError.unexpected(String.format("%n%n" + thisFile +
