@@ -20,13 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vm.ext.vma.handlers.log;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.oracle.max.vm.ext.vma.log.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
@@ -43,6 +45,14 @@ import com.sun.max.vm.thread.*;
  *
  */
 public class LoggingVMAdviceHandler extends VMAdviceHandler {
+
+    private class RemovalTracker extends ObjectStateHandler.RemovalTracker {
+
+        @Override
+        public void removed(long id) {
+            removal(id);
+        }
+    }
 
     static abstract class ThreadNameGenerator {
         abstract String getThreadName();
@@ -61,37 +71,47 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
      */
     private VMAdviceHandlerLog log;
     private ThreadNameGenerator tng;
+    private ObjectStateHandler state;
+    private boolean timeOrdered;
 
     public VMAdviceHandlerLog getLog() {
         return log;
+    }
+
+    public void setTimeOrdered(boolean timeOrdered) {
+        this.timeOrdered = timeOrdered;
     }
 
     protected void setThreadNameGenerator(ThreadNameGenerator tng) {
         this.tng = tng;
     }
 
-    @Override
-    public void initialise(ObjectStateHandler state) {
-        super.initialise(state);
-        if (tng == null) {
-            tng = new CurrentThreadNameGenerator();
-        }
-
-        log = VMAdviceHandlerLogFactory.create();
-
-        if (log == null || !log.initializeLog()) {
-            throw new RuntimeException("log creation failed");
-        }
+    public ObjectStateHandler.RemovalTracker getRemovalTracker(ObjectStateHandler state) {
+        this.state = state;
+        return new RemovalTracker();
     }
 
     @Override
-    public void finalise() {
-        if (log != null) {
-            log.finalizeLog();
+    public void initialise(MaxineVM.Phase phase) {
+        super.initialise(phase);
+        if (phase == MaxineVM.Phase.RUNNING) {
+            if (tng == null) {
+                tng = new CurrentThreadNameGenerator();
+            }
+
+            log = VMAdviceHandlerLogFactory.create();
+
+            if (log == null || !log.initializeLog(timeOrdered)) {
+                throw new RuntimeException("log creation failed");
+            }
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            if (log != null) {
+                log.finalizeLog();
+            }
         }
     }
 
-    protected void unseenObject(Object obj) {
+    public void unseenObject(Object obj) {
         final Reference objRef = Reference.fromJava(obj);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
         log.unseenObject(tng.getThreadName(), state.readId(obj), hub.classActor.name(), state.readId(hub.classActor.classLoader));

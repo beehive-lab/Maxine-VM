@@ -20,10 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vm.ext.vma.handlers.cbc;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
 
@@ -33,10 +34,12 @@ public class CountsVMAdviceHandler extends VMAdviceHandler {
     static long[][] counts = new long[AdviceMethod.values().length][AdviceMode.values().length];
 
     @Override
-    public void finalise() {
-        System.out.println("Advice method counts");
-        for (AdviceMethod am : AdviceMethod.values()) {
-            System.out.printf("  %-20s B:%d, A:%d%n", am.name(), counts[am.ordinal()][0], counts[am.ordinal()][1]);
+    public void initialise(MaxineVM.Phase phase) {
+        if (phase == MaxineVM.Phase.TERMINATING) {
+            System.out.println("Advice method counts");
+            for (AdviceMethod am : AdviceMethod.values()) {
+                System.out.printf("  %-20s B:%d, A:%d%n", am.name(), counts[am.ordinal()][0], counts[am.ordinal()][1]);
+            }
         }
     }
 

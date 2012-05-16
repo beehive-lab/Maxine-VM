@@ -51,7 +51,7 @@ import com.sun.max.vm.value.*;
  * The {@link ClassActor} context when {@linkplain BootImageGenerator generating} the
  * boot image or otherwise executing code that loads and uses {@link ClassActor}s.
  *
- * There is a single global {@code JavaPrototype} object which is {@linkplain #initialize(int) initialized} once.
+ * There is a single global {@code JavaPrototype} object which is {@linkplain #initialize(int, boolean) initialized} once.
  *
  */
 public final class JavaPrototype extends Prototype {
@@ -268,11 +268,27 @@ public final class JavaPrototype extends Prototype {
     }
 
     /**
+     * Callback interface for classes that may want to check that their generated code is up to date.
+     *
+     */
+    public interface GeneratedCodeCheckerCallback {
+        void checkGeneratedCode();
+    }
+
+    private static ArrayList<GeneratedCodeCheckerCallback> checkGeneratedCodeCallbacks = new ArrayList<GeneratedCodeCheckerCallback>();
+
+    public static GeneratedCodeCheckerCallback registerGeneratedCodeCheckerCallback(GeneratedCodeCheckerCallback checkGeneratedCodeCallback) {
+        checkGeneratedCodeCallbacks.add(checkGeneratedCodeCallback);
+        return checkGeneratedCodeCallback;
+    }
+
+    /**
      * Initializes the global Java prototype. This also initializes the global {@linkplain MaxineVM#vm() VM}
      * context if it hasn't been set.
+     * @param checkautogen whether to check the automatically generated code for consistency
      */
-    public static void initialize() {
-        initialize(1);
+    public static void initialize(boolean checkautogen) {
+        initialize(1, checkautogen);
     }
 
     /**
@@ -280,23 +296,23 @@ public final class JavaPrototype extends Prototype {
      * context if it hasn't been set.
      * @param threadCount the number of threads that can be used to load packages in parallel. Anything less than or
      *            equal to 1 implies package loading is to be single-threaded.
+     * @param checkautogen whether to check the automatically generated code for consistency
      */
-    public static void initialize(int threadCount) {
+    public static void initialize(int threadCount, boolean checkautogen) {
         assert theJavaPrototype == null : "Cannot initialize the JavaPrototype more than once";
         if (MaxineVM.vm() == null) {
-            new VMConfigurator(null).create(true);
+            new VMConfigurator(null).create();
         }
-        theJavaPrototype = new JavaPrototype(threadCount);
+        theJavaPrototype = new JavaPrototype(threadCount, checkautogen);
     }
 
     /**
      * Create a new Java prototype with the specified VM configuration.
-     *
-     * @param complete specifies whether to load more than just the VM scheme packages
      * @param threadCount the number of threads that can be used to load packages in parallel. Anything less than or
      *            equal to 1 implies package loading is to be single-threaded.
+     * @param checkautogen whether to check the automatically generated code for consistency
      */
-    private JavaPrototype(int threadCount) {
+    private JavaPrototype(int threadCount, boolean checkautogen) {
         VMConfiguration config = vmConfig();
         packageLoader = new PrototypePackageLoader(HOSTED_VM_CLASS_LOADER, HOSTED_VM_CLASS_LOADER.classpath());
         theJavaPrototype = this;
@@ -321,6 +337,12 @@ public final class JavaPrototype extends Prototype {
             loadBootImagePackage(maxPackage);
         }
         loadExtraClassesAndPackages();
+
+        if (checkautogen) {
+            for (GeneratedCodeCheckerCallback checkGeneratedCodeCallback : checkGeneratedCodeCallbacks) {
+                checkGeneratedCodeCallback.checkGeneratedCode();
+            }
+        }
 
         config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 

@@ -131,7 +131,7 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
         vmLogClassActor = vmLog.classActorForObjectType();
         logBufferEntries = vm.fields().VMLog_logEntries.readInt(vmLogRef);
         nextIdFieldAccess = vm.fields().VMLog_nextId;
-        Reference loggersRef = vm.fields().VMLog_loggers.readReference(vm);
+        Reference loggersRef = vm.fields().VMLog_loggers.readReference(vmLogRef);
         TeleArrayObject teleLoggersArray = (TeleArrayObject) VmObjectAccess.make(vm).makeTeleObject(loggersRef);
         loggers = (VMLogger[]) teleLoggersArray.deepCopy();
         emptyStringRenderer = new PlainLabel(inspection, "");

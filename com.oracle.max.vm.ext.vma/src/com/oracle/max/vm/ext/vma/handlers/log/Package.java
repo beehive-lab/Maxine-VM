@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,41 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vm.ext.vma.handlers.log;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
-import com.sun.max.vm.thread.*;
+import com.oracle.max.vm.ext.vma.handlers.synclog.*;
+import com.oracle.max.vm.ext.vma.handlers.vmlog.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
-/**
- * The interface through which {@link TransientVMAdviceHandler} flushes the per-thread event buffer.
- */
 
-public interface AdviceRecordFlusher {
-
-    /**
-     * Thread-specific buffer of events.
-     */
-    public static class RecordBuffer {
-        VmThread vmThread;
-        AdviceRecord[] records;
-        /**
-         * Valid records are {@code x >= 0 && x < index}.
-         */
-        int index;
-
-        public RecordBuffer(AdviceRecord[] records) {
-            this.records = records;
-            this.vmThread = VmThread.current();
-        }
+public class Package extends BootImagePackage {
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
+            (VMAJavaRunScheme.getHandlerClassName().equals(SyncLogVMAdviceHandler.class.getName()) ||
+             VMAJavaRunScheme.getHandlerClassName().equals(VMLogVMAdviceHandler.class.getName()));
     }
-
-    /**
-     * Flush the buffer.
-     * @param buffer
-     */
-    void flushBuffer(RecordBuffer buffer);
-
-    void initialise(ObjectStateHandler state);
-    void finalise();
 
 }

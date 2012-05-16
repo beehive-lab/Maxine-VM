@@ -24,8 +24,7 @@ package com.oracle.max.vma.tools.qa;
 
 import java.io.PrintStream;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.RecordType;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 /**
  * Maintains the basic information on an object instance encountered in a trace.
@@ -57,11 +56,11 @@ public class ObjectRecord {
     /**
      * The record in the trace that corresponds to the creation of this object.
      */
-    private AdviceRecord beginCreationRecord;
+    public AdviceRecord beginCreationRecord;
 
-    private AdviceRecord endCreationRecord;
+    public AdviceRecord endCreationRecord;
 
-    private AdviceRecord removalRecord;
+    public AdviceRecord removalRecord;
 
     /**
      * Indicates that the no more changes will be made to this record and

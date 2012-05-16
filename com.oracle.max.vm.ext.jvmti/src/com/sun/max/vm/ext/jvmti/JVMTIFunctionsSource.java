@@ -40,6 +40,7 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.JVMTI.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -90,8 +91,18 @@ import com.sun.max.vm.thread.*;
 @HOSTED_ONLY
 @SuppressWarnings("null")
 public class JVMTIFunctionsSource {
+
     static {
-        NativeInterfaces.checkGenerateSourcesInSync("com.oracle.max.vm.ext.jvmti", JVMTIFunctionsSource.class, JVMTIFunctions.class, new JVMTIFunctionsGenerator.JVMTICustomizer());
+        JavaPrototype.registerGeneratedCodeCheckerCallback(new GeneratedCodeCheckerCallback());
+    }
+
+    @HOSTED_ONLY
+    private static class GeneratedCodeCheckerCallback implements JavaPrototype.GeneratedCodeCheckerCallback {
+
+        @Override
+        public void checkGeneratedCode() {
+            NativeInterfaces.checkGenerateSourcesInSync("com.oracle.max.vm.ext.jvmti", JVMTIFunctionsSource.class, JVMTIFunctions.class, new JVMTIFunctionsGenerator.JVMTICustomizer());
+        }
     }
 
     static StaticMethodActor[] checkAgainstJvmtiHeaderFile(StaticMethodActor[] jvmtiFunctionActors) {
@@ -1261,4 +1272,5 @@ public class JVMTIFunctionsSource {
         // NULLCHECK: value_ptr
         return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
+
 }

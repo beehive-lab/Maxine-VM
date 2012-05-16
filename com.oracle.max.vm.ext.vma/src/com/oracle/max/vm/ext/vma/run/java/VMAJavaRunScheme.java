@@ -24,9 +24,7 @@ package com.oracle.max.vm.ext.vma.run.java;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.options.*;
-import com.oracle.max.vm.ext.vma.runtime.*;
 import com.sun.max.annotate.*;
-import com.sun.max.memory.VirtualMemory;
 import com.sun.max.program.ProgramError;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -107,17 +105,6 @@ public class VMAJavaRunScheme extends JavaRunScheme {
                     "VMA_METHODRECEIVER", true, "Saved method receiver value for VMA");
 
     /**
-     * A thread local variable that is used to support VM advising, in
-     * particular the native buffer for per thread event storage.
-     */
-    public static final VmThreadLocal VM_ADVISING_BUFFER = new VmThreadLocal(
-            "VM_ADVISING_BUFFER", false, "For use by VM advising framework");
-
-    private static final ObjectStateHandler state = BitSetObjectStateHandler.create();
-
-    private static final int BUFFER_SIZE = 64 * 1024;
-
-    /**
      * Set to true when {@link VMAOptions.VMA} is set AND the VM is in a state to start advising.
      */
     private static boolean advising;
@@ -132,27 +119,34 @@ public class VMAJavaRunScheme extends JavaRunScheme {
      * This property must be specified at boot image time.
      */
     private static final String VMA_HANDLER_CLASS_PROPERTY = "max.vma.handler";
-    private static final String DEFAULT_HANDLER_CLASS = "com.oracle.max.vm.ext.vma.runtime.SyncLogVMAdviceHandler";
+    private static final String DEFAULT_HANDLER_CLASS = "com.oracle.max.vm.ext.vma.handlers.vmlog.VMLogVMAdviceHandler";
+
+    public static String getHandlerClassName() {
+        String handlerClassName = System.getProperty(VMA_HANDLER_CLASS_PROPERTY);
+        if (handlerClassName == null) {
+            handlerClassName = DEFAULT_HANDLER_CLASS;
+        }
+        return handlerClassName;
+    }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             VMTI.registerEventHandler(new VMTIHandler());
             try {
-                String handlerClassName = System.getProperty(VMA_HANDLER_CLASS_PROPERTY);
-                if (handlerClassName == null) {
-                    handlerClassName = DEFAULT_HANDLER_CLASS;
-                }
-                adviceHandler = (VMAdviceHandler) Class.forName(handlerClassName).newInstance();
+                adviceHandler = (VMAdviceHandler) Class.forName(getHandlerClassName()).newInstance();
             } catch (Throwable ex) {
                 ProgramError.unexpected("failed to instantiate VMA advice handler class: ", ex);
             }
+            adviceHandler.initialise(phase);
         }
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
-                adviceHandler.initialise(state);
+                adviceHandler.initialise(phase);
                 advising = true;
+                // we make this call because when the VM originally called VMTIHandler.threadStart
+                // advising was not enabled
                 threadStarting();
             }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
@@ -161,7 +155,7 @@ public class VMAJavaRunScheme extends JavaRunScheme {
                 // N.B. daemon threads may still be running and invoking advice.
                 // There is nothing we can do about that as they may be in the act
                 // of logging so disabling advising for them would be meaningless.
-                adviceHandler.finalise();
+                adviceHandler.initialise(phase);
             }
         }
     }
@@ -176,9 +170,6 @@ public class VMAJavaRunScheme extends JavaRunScheme {
      */
     public static void threadStarting() {
         if (advising) {
-            Pointer buffer = VirtualMemory.allocate(Size.fromInt(BUFFER_SIZE), VirtualMemory.Type.DATA);
-            assert !buffer.isZero();
-            VM_ADVISING_BUFFER.store3(buffer);
             adviceHandler.adviseBeforeThreadStarting(VmThread.current());
             enableAdvising();
         }

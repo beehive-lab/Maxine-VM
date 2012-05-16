@@ -20,24 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.debug.vmlog;
+package com.oracle.max.vm.ext.vma.handlers.vmlog;
 
-import com.sun.max.ins.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.log.VMLog.*;
-import com.sun.max.vm.log.nat.thread.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
+public class Package extends BootImagePackage {
+    public Package() {
+        if (isPartOfMaxineVM()) {
+            registerThreadLocal(VMLogNativeThreadVariableVMA.class, VMLogNativeThreadVariableVMA.VMA_RECORD_NAME);
+            registerThreadLocal(VMLogNativeThreadVariableVMA.class, VMLogNativeThreadVariableVMA.VMA_BUFFER_NAME);
+            registerThreadLocal(VMLogNativeThreadVariableVMA.class, VMLogNativeThreadVariableVMA.VMA_BUFFER_OFFSETS_NAME);
+        }
+    }
 
-class VMLogNativeThreadVariableElementsTableModel extends VMLogNativeThreadElementsTableModel {
-    VMLogNativeThreadVariableElementsTableModel(Inspection inspection, VMLogView vmLogView) {
-        super(inspection, vmLogView);
+    private boolean isPartOfMaxineVM() {
+        return isPartOfMaxineVM(VMConfiguration.activeConfig());
     }
 
     @Override
-    protected int nativeRecordSize(Pointer r) {
-        int argCount = Record.getArgCount(vmIO.readInt(r));
-        return VMLogNativeThread.ARGS_OFFSET + argCount * Word.size();
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
+            VMAJavaRunScheme.getHandlerClassName().equals(VMLogVMAdviceHandler.class.getName());
     }
+
+
 }
-
-

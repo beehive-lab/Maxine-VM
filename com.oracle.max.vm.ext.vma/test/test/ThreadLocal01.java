@@ -59,6 +59,7 @@ public class ThreadLocal01 extends Thread {
 
     static class List {
         ListElement head;
+        int size;
 
         void add(Element e) {
             ListElement le = new ListElement(e);
@@ -68,6 +69,7 @@ public class ThreadLocal01 extends Thread {
                 head.next = le;
                 head = le;
             }
+            size++;
         }
     }
 
@@ -98,8 +100,10 @@ public class ThreadLocal01 extends Thread {
         liveThreads = new ThreadCount(numThreads);
 
         System.out.println("running with " + numThreads + " threads");
+        LeakThread leakThread = null;
         if (leak) {
-            new LeakThread().start();
+            leakThread = new LeakThread();
+            leakThread.start();
         }
         Thread[] threads = new Thread[numThreads];
         for (int t = 0; t < numThreads; t++) {
@@ -108,6 +112,10 @@ public class ThreadLocal01 extends Thread {
         }
         for (int t = 0; t < numThreads; t++) {
             threads[t].join();
+        }
+
+        if (leak) {
+            System.out.printf("global list size %d, LeakObserver accessCount %d%n", globalList.size, leakThread.accessCount);
         }
 
         System.out.println("main thread terminating");
@@ -146,6 +154,8 @@ public class ThreadLocal01 extends Thread {
     }
 
     static class LeakThread extends Thread {
+        int accessCount;
+
         LeakThread() {
             setName("LeakObserver");
             setDaemon(true);
@@ -161,6 +171,7 @@ public class ThreadLocal01 extends Thread {
                         @SuppressWarnings("unused")
                         Element k = element.element;
                         element = element.next;
+                        accessCount++;
                     }
                 }
             }

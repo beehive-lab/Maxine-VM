@@ -4552,6 +4552,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 Kind kind = value.kind();
                 if (kind == Kind.LONG) {
                     objArgs[i] = value.asLong();
+                } else if (kind == Kind.INT) {
+                    objArgs[i] = value.asInt();
                 } else {
                     gui().errorMessage("unsupported argument type");
                 }

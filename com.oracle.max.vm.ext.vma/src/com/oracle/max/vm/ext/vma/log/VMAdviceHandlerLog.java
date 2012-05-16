@@ -70,10 +70,11 @@ public abstract class VMAdviceHandlerLog {
 
     /**
      * Initialize the logging subsystem.
+     * @param timeOrdered {@code true} iff the log is time ordered.
      *
      * @return {@code true} iff the initialization was successful.
      */
-    public abstract boolean initializeLog();
+    public abstract boolean initializeLog(boolean timeOrdered);
 
     /**
      * Finalize the logging, e.g. flush trace.
@@ -105,7 +106,7 @@ public abstract class VMAdviceHandlerLog {
     public abstract void unseenObject(String threadName, long objId, String className, long clId);
 
     /**
-     * Available for the rare case where log records are not time ordered.
+     * Available for the case where log records are not time ordered.
      * This resets the absolute time.
      * @param time
      */
