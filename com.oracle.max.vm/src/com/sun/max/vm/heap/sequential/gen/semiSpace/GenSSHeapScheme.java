@@ -174,7 +174,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 verifyAfterMinorCollection();
             }
             final Size estimatedEvac = estimatedNextEvac();
-            if (estimatedEvac.greaterThan(oldSpace.freeSpace())) {
+            if (resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace())) {
                 // Force a temporary transition to MUTATING state.
                 // This simplifies the inspector's maintenance of references state and GC counters.
                 HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
