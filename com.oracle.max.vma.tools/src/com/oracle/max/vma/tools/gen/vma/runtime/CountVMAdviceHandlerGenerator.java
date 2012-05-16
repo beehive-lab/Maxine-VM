@@ -27,7 +27,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.runtime.*;
+import com.oracle.max.vm.ext.vma.handlers.cbc.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
 public class CountVMAdviceHandlerGenerator {

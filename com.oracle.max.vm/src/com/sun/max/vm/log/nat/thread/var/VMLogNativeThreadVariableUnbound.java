@@ -27,24 +27,26 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.log.nat.thread.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
  * Per-thread log buffer with variable sized records. Most space efficient but most complicated! Once the circular
  * buffer has cycled, new records can partially overlap old ones, so we have to record the logical "first" record offset
- * and keep it updated (for the Inspector). Traversing records also requires using the arg count to correctly locate the
+ * and keep it updated. Traversing records also requires using the arg count to correctly locate the
  * next record. An additional complication is that a record might not fit in the slot at the end of the buffer. We do
- * not split records in this case but leave a "hole". We mark this as "FREE" so that the Inspector will skip it, and
+ * not split records in this case but leave a "hole". We mark this as "FREE" so that scanning will skip it, and
  * maintain the invariant that a full buffer is always completely populated. (For simplicity we actually leave a
  * sequence of zero-arg holes.)
  *
- * On entry/exit to/from {@link #getRecord}, the values of firstOffset/nextOffset are always {@code >= 0} and
+ * On entry/exit to/from {@link #getRecord}, the values of {@code firstOffset/nextOffset} are always {@code >= 0} and
  * {@code < logSize}. However, during the method they may exceed it, which simplifies calculating the new value of
  * firstOffset.
  *
- * Note, as a consequence of the potential overlap of old records, a GC scan cannot just start at the
- * beginning of the buffer; it must start at firstOffset to avoid encountering a partially overwritten record.
+ * Note, as a consequence of the potential overlap of old records, a GC/flush scan cannot just start at the
+ * beginning of the buffer; it must start at {@code firstOffset} to avoid encountering a partially overwritten record.
+ *
+ * A log with a {@link VMLog.Flusher} will only overwrite records after they have been passed to the flusher.
+ * The records are all flushed at once and then the log is then reset to empty.
  *
  * This class is abstract because it does not define the specific thread locals that are used to control
  * the buffer. That is left to a concrete subclass, thereby allowing multiple instances of this log to co-exist
@@ -54,7 +56,6 @@ import com.sun.max.vm.thread.*;
 public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread {
 
     @Override
-    @NEVER_INLINE
     public void threadStart() {
         // we want to allocate the NativeRecord early;
         // crucial for the VMOperation thread, otherwise GC logging will fail
@@ -88,14 +89,29 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
             wrap = WRAPPED;
         } // else fits with no wrap
 
-        if (wrap != 0) {
+        if (wrap == WRAPPED) {
             int firstOffset = (int) ((firstOffsetAndWrap >> FIRST_OFFSET_SHIFT) & SHIFTED_FIRST_OFFSET_MASK);
-            // skip over records until we are >= newNextOffset
-            while (firstOffset < newNextOffset) {
-                firstOffset = nextRecordOffset(buffer, firstOffset);
+            if (firstOffset < newNextOffset) {
+                // may need to flush the log, as are just about to step on a live record
+                if (flusher != null) {
+                    flusher.start();
+                    scanOrFlushLog(tla, null, false);
+                    flusher.end();
+                    // reset
+                    wrap = 0;
+                    firstOffset = 0;
+                    newNextOffset = 0;
+                    recordAddress = buffer;
+                    holeAddress = Pointer.zero();
+                }
+
+                // skip over records until we are >= newNextOffset
+                while (firstOffset < newNextOffset) {
+                    firstOffset = nextRecordOffset(buffer, firstOffset);
+                }
             }
-            // firstOffset may need to wrap now
-            firstOffsetAndWrap = ((long) modLogSize(firstOffset)) << FIRST_OFFSET_SHIFT | WRAPPED;
+            // firstOffset needs to wrap now, unless we flushed
+            firstOffsetAndWrap = ((long) modLogSize(firstOffset)) << FIRST_OFFSET_SHIFT | wrap;
             if (holeAddress.isNotZero()) {
                 Pointer bufferEnd = buffer.plus(logSize);
                 while (holeAddress.lessThan(bufferEnd)) {
@@ -133,6 +149,19 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
 
     @Override
     public void scanLog(Pointer tla, PointerIndexVisitor visitor) {
+        scanOrFlushLog(tla, visitor, true);
+    }
+
+    private void flushLog(Pointer tla) {
+        try {
+            flusher.start();
+            scanOrFlushLog(tla, null, false);
+        } finally {
+            flusher.end();
+        }
+    }
+
+    private void scanOrFlushLog(Pointer tla, PointerIndexVisitor visitor, boolean scanning) {
         long offsets = vmLogBufferOffsetsTL.load(tla).toLong();
         int nextOffset = nextOffset(offsets);
         if (nextOffset == 0 && !isWrapped(offsets)) {
@@ -149,7 +178,11 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
             int header = r.getHeader();
             // variable length records can cause holes
             if (!Record.isFree(header)) {
-                scanArgs(r, r.address.plus(ARGS_OFFSET), visitor);
+                if (scanning) {
+                    scanArgs(r, r.address.plus(ARGS_OFFSET), visitor);
+                } else {
+                    flusher.flushRecord(r);
+                }
             }
             offset = modLogSize(offset + ARGS_OFFSET + r.getArgCount() * Word.size());
         }
@@ -157,7 +190,9 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
 
     @Override
     public void flushLog() {
-        FatalError.unimplemented();
+        flushLog(VmThread.currentTLA());
+        // reset the log
+        vmLogBufferOffsetsTL.store3(Address.zero());
     }
 
 }

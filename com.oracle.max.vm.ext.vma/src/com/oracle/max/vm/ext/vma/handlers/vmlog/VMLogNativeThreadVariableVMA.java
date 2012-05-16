@@ -20,29 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.nat.thread.var.std;
+package com.oracle.max.vm.ext.vma.handlers.vmlog;
 
 import com.sun.max.vm.*;
 import com.sun.max.vm.log.nat.thread.var.*;
 import com.sun.max.vm.thread.*;
 
 
-public class VMLogNativeThreadVariableStd extends VMLogNativeThreadVariableUnbound {
-    public static final String VMLOG_RECORD_NAME = "VMLOG_RECORD";
-    public static final String VMLOG_BUFFER_NAME = "VMLOG_BUFFER";
-    public static final String VMLOG_BUFFER_OFFSETS_NAME = "VMLOG_BUFFER_OFFSETS";
-    public static final VmThreadLocal VMLOG_RECORD = new VmThreadLocal(VMLOG_RECORD_NAME, true, "VMLog.Record");
-    public static final VmThreadLocal VMLOG_BUFFER = new VmThreadLocal(VMLOG_BUFFER_NAME, false, "VMLog buffer");
-    public static final VmThreadLocal VMLOG_BUFFER_OFFSETS = new VmThreadLocal(VMLOG_BUFFER_OFFSETS_NAME, false, "VMLog buffer first/next offsets");
+public class VMLogNativeThreadVariableVMA extends VMLogNativeThreadVariableUnbound {
+    public static final String VMA_RECORD_NAME = "VMA_RECORD";
+    public static final String VMA_BUFFER_NAME = "VMA_BUFFER";
+    public static final String VMA_BUFFER_OFFSETS_NAME = "VMA_BUFFER_OFFSETS";
+    public static final VmThreadLocal VMA_RECORD = new VmThreadLocal(VMA_RECORD_NAME, true, "VMA Record");
+    public static final VmThreadLocal VMA_BUFFER = new VmThreadLocal(VMA_BUFFER_NAME, false, "VMA buffer");
+    public static final VmThreadLocal VMA_BUFFER_OFFSETS = new VmThreadLocal(VMA_BUFFER_OFFSETS_NAME, false, "VMA buffer first/next offsets");
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            setNativeRecordThreadLocal(VMLOG_RECORD);
-            setBufferThreadLocals(VMLOG_BUFFER, VMLOG_BUFFER_OFFSETS);
+            setNativeRecordThreadLocal(VMA_RECORD);
+            setBufferThreadLocals(VMA_BUFFER, VMA_BUFFER_OFFSETS);
         }
     }
-
 
 }

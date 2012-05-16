@@ -119,7 +119,15 @@ public class VMAJavaRunScheme extends JavaRunScheme {
      * This property must be specified at boot image time.
      */
     private static final String VMA_HANDLER_CLASS_PROPERTY = "max.vma.handler";
-    private static final String DEFAULT_HANDLER_CLASS = "com.oracle.max.vm.ext.vma.runtime.SyncLogVMAdviceHandler";
+    private static final String DEFAULT_HANDLER_CLASS = "com.oracle.max.vm.ext.vma.handlers.vmlog.VMLogVMAdviceHandler";
+
+    public static String getHandlerClassName() {
+        String handlerClassName = System.getProperty(VMA_HANDLER_CLASS_PROPERTY);
+        if (handlerClassName == null) {
+            handlerClassName = DEFAULT_HANDLER_CLASS;
+        }
+        return handlerClassName;
+    }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
@@ -127,11 +135,7 @@ public class VMAJavaRunScheme extends JavaRunScheme {
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             VMTI.registerEventHandler(new VMTIHandler());
             try {
-                String handlerClassName = System.getProperty(VMA_HANDLER_CLASS_PROPERTY);
-                if (handlerClassName == null) {
-                    handlerClassName = DEFAULT_HANDLER_CLASS;
-                }
-                adviceHandler = (VMAdviceHandler) Class.forName(handlerClassName).newInstance();
+                adviceHandler = (VMAdviceHandler) Class.forName(getHandlerClassName()).newInstance();
             } catch (Throwable ex) {
                 ProgramError.unexpected("failed to instantiate VMA advice handler class: ", ex);
             }

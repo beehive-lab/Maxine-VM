@@ -34,6 +34,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
@@ -717,19 +718,23 @@ public class VMLogger {
     // check that loggers are up to date in VM image
 
     static {
-        checkGenerateSourcesInSync();
+        JavaPrototype.registerGeneratedCodeCheckerCallback(new GeneratedCodeCheckerCallback());
     }
 
     @HOSTED_ONLY
-    private static void checkGenerateSourcesInSync() {
-        try {
-            Class<?> updatedSource = VMLoggerGenerator.generate(true);
-            if (updatedSource != null) {
-                FatalError.unexpected("VMLogger " + updatedSource + " is out of sync.\n" + "Run 'mx loggen', recompile " + updatedSource.getName() + " (or refresh it in your IDE)" +
-                                " and restart the bootstrapping process.\n\n");
+    private static class GeneratedCodeCheckerCallback implements JavaPrototype.GeneratedCodeCheckerCallback {
+
+        @Override
+        public void checkGeneratedCode() {
+            try {
+                Class< ? > updatedSource = VMLoggerGenerator.generate(true);
+                if (updatedSource != null) {
+                    FatalError.unexpected("VMLogger " + updatedSource + " is out of sync.\n" + "Run 'mx loggen', recompile " + updatedSource.getName() + " (or refresh it in your IDE)" +
+                                    " and restart the bootstrapping process.\n\n");
+                }
+            } catch (Exception exception) {
+                FatalError.unexpected("Error while generating VMLogger sources", exception);
             }
-        } catch (Exception exception) {
-            FatalError.unexpected("Error while generating VMLogger sources", exception);
         }
     }
 

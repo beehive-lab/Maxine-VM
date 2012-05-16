@@ -25,12 +25,12 @@ package com.sun.max.vm.log.nat.thread.var.std;
 import com.sun.max.config.*;
 import com.sun.max.vm.log.*;
 
-
 public class Package extends BootImagePackage {
     public Package() {
         if (isPartOfMaxineVM()) {
             registerThreadLocal(VMLogNativeThreadVariableStd.class, VMLogNativeThreadVariableStd.VMLOG_BUFFER_NAME);
             registerThreadLocal(VMLogNativeThreadVariableStd.class, VMLogNativeThreadVariableStd.VMLOG_BUFFER_OFFSETS_NAME);
+            registerThreadLocal(VMLogNativeThreadVariableStd.class, "VMLOG_RECORD");
         }
     }
 

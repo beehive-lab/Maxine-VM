@@ -29,8 +29,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.runtime.*;
 import com.oracle.max.vma.tools.gen.vma.*;
+import com.oracle.max.vma.tools.qa.*;
 
 
 public class TransientVMAdviceHandlerTypesGenerator {
@@ -55,7 +55,7 @@ public class TransientVMAdviceHandlerTypesGenerator {
         }
         out.printf(";%n%n");
         generateNewAdviceRecord();
-        AdviceGeneratorHelper.updateSource(TransientVMAdviceHandlerTypes.class, null, false);
+        AdviceGeneratorHelper.updateSource("com.oracle.max.vma.tools", TransientVMAdviceHandlerTypes.class, null, false);
 
     }
 

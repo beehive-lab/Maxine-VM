@@ -20,25 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vm.ext.vma.handlers.log;
 
+import com.oracle.max.vm.ext.vma.handlers.synclog.*;
+import com.oracle.max.vm.ext.vma.handlers.vmlog.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.log.nat.thread.var.*;
-import com.sun.max.vm.thread.*;
 
 
-public class VMLogNativeThreadVariableVMA extends VMLogNativeThreadVariableUnbound {
-    public static final String VMA_BUFFER_NAME = "VMA_BUFFER";
-    public static final String VMA_BUFFER_OFFSETS_NAME = "VMA_BUFFER_OFFSETS";
-    public static final VmThreadLocal VMA_BUFFER = new VmThreadLocal(VMA_BUFFER_NAME, false, "VMA buffer");
-    public static final VmThreadLocal VMA_BUFFER_OFFSETS = new VmThreadLocal(VMA_BUFFER_OFFSETS_NAME, false, "VMA buffer first/next offsets");
-
+public class Package extends BootImagePackage {
     @Override
-    public void initialize(MaxineVM.Phase phase) {
-        super.initialize(phase);
-        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            setBufferThreadLocals(VMA_BUFFER, VMA_BUFFER_OFFSETS);
-        }
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
+            (VMAJavaRunScheme.getHandlerClassName().equals(SyncLogVMAdviceHandler.class.getName()) ||
+             VMAJavaRunScheme.getHandlerClassName().equals(VMLogVMAdviceHandler.class.getName()));
     }
 
 }

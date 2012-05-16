@@ -39,7 +39,7 @@
  * and simply invokes the corresponding virtual method.
  * <p>
  * The default implementation of {@link com.oracle.max.vm.ext.vma.VMAdviceHandler}
- * is {@link com.oracle.max.vm.ext.vma.runtime.SyncLogVMAdviceHandler}, which
+ * is {@link com.oracle.max.vm.ext.vma.handlers.synclog.SyncLogVMAdviceHandler}, which
  * performs synchronous logging of the advice events using an instance of
  * {@link com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog}. I.e, the same thread that
  * generated the advice is used to log the advice. An asynchronous implementation
@@ -48,13 +48,13 @@
  * data. In this case, the decision to log or not is made by the processing thread.
  * <p>
  * Logging to an instance of {@link com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog}
- * is actually factored out into{@link com.oracle.max.vm.ext.vma.runtime.LoggingVMAdviceHandler},
+ * is actually factored out into{@link com.oracle.max.vm.ext.vma.handlers.log.LoggingVMAdviceHandler},
  * so that it can be used by both the synchronous and asynchronous implementations.
  * <p>
  * The other component of the runtime that is necessary for persistent recording of the advice
  * data is {@link ObjectStateHandler}. This manages the assignment of unique identifiers to
  * objects and the notification of object death. The default implementation of this abstract class
- * is {@link com.oracle.max.vm.ext.vma.runtime.BitSetObjectStateHandler}, which uses a
+ * is {@link com.oracle.max.vm.ext.vma.handlers.objstate.BitSetObjectStateHandler}, which uses a
  * {@link java.util.BitSet} to manage both unique ids and the liveness of objects.
  *
  */

@@ -20,9 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vm.ext.vma.handlers.log;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.oracle.max.vm.ext.vma.log.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
@@ -71,9 +72,14 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     private VMAdviceHandlerLog log;
     private ThreadNameGenerator tng;
     private ObjectStateHandler state;
+    private boolean timeOrdered;
 
     public VMAdviceHandlerLog getLog() {
         return log;
+    }
+
+    public void setTimeOrdered(boolean timeOrdered) {
+        this.timeOrdered = timeOrdered;
     }
 
     protected void setThreadNameGenerator(ThreadNameGenerator tng) {
@@ -95,7 +101,7 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
 
             log = VMAdviceHandlerLogFactory.create();
 
-            if (log == null || !log.initializeLog()) {
+            if (log == null || !log.initializeLog(timeOrdered)) {
                 throw new RuntimeException("log creation failed");
             }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
@@ -105,7 +111,7 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
         }
     }
 
-    protected void unseenObject(Object obj) {
+    public void unseenObject(Object obj) {
         final Reference objRef = Reference.fromJava(obj);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
         log.unseenObject(tng.getThreadName(), state.readId(obj), hub.classActor.name(), state.readId(hub.classActor.classLoader));

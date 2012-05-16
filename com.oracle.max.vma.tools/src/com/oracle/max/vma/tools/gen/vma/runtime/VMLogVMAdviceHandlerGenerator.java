@@ -26,7 +26,7 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.lang.reflect.*;
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.runtime.*;
+import com.oracle.max.vm.ext.vma.handlers.vmlog.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
 public class VMLogVMAdviceHandlerGenerator {
@@ -56,7 +56,7 @@ public class VMLogVMAdviceHandlerGenerator {
         } else {
             out.printf("        super.%s(", m.getName());
             generateInvokeArgs(argCount);
-            out.printf("        VMAVMLogger.logger.log%s(", toFirstUpper(m.getName()));
+            out.printf("        VMAVMLogger.logger.log%s(getTime()%s", toFirstUpper(m.getName()), argCount > 0 ? ", " : "");
             generateInvokeArgs(argCount);
             if (m.getName().contains("NewArray")) {
                 out.printf("        MultiNewArrayHelper.handleMultiArray(this, arg1);%n");

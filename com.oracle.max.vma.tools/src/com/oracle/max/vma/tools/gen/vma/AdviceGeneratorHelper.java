@@ -75,12 +75,26 @@ public class AdviceGeneratorHelper {
 
     }
 
+    /**
+     * Default generator that assumes {@code com.oracle.max.vm.ext.vma} project.
+     */
     public static int updateSource(Class target, String updatedContent, boolean checkOnly) throws IOException {
-        return updateSource(target, updatedContent, "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
+        return updateSource("com.oracle.max.vm.ext.vma", target, updatedContent, "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
+    }
+
+    /**
+     * Generator with variable project.
+     */
+    public static int updateSource(String project, Class target, String updatedContent, boolean checkOnly) throws IOException {
+        return updateSource(project, target, updatedContent, "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
     }
 
     public static int updateSource(Class target, String updatedContent, String startString, String endString, boolean checkOnly) throws IOException {
-        File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm.ext.vma/src");
+        return updateSource("com.oracle.max.vm.ext.vma", target, updatedContent, startString, endString, checkOnly);
+    }
+
+    private static int updateSource(String project, Class target, String updatedContent, String startString, String endString, boolean checkOnly) throws IOException {
+        File base = new File(JavaProject.findWorkspace(), project + File.separator + "src");
         File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         if (updatedContent == null) {
             updatedContent = bsOut.toString();
@@ -105,15 +119,27 @@ public class AdviceGeneratorHelper {
         }
     }
 
+    public static class ArgumentsPrefix {
+        /**
+         * Handle for adding prefix argument to the signature.
+         * Return the number added.
+         * @return
+         */
+        public int prefixArguments() {
+            return  0;
+        }
+    }
+
     /**
      * Generates the name/signature definition for given method, returning a count of the
      * number of arguments.
-     * @param m
      * @param protection public/private etc or null for nothing
+     * @param m
      * @param modifiers extra modifiers
+     * @param prefix TODO
      * @return
      */
-    public static int generateSignature(String indent, String protection, MethodNameOverride m, String modifiers) {
+    public static int generateSignature(String indent, String protection, MethodNameOverride m, String modifiers, ArgumentsPrefix prefixArgs) {
         String methodName = m.overrideName();
         out.print(indent);
         if (protection != null) {
@@ -123,7 +149,8 @@ public class AdviceGeneratorHelper {
             out.printf("%s ", modifiers);
         }
         out.printf("void %s(", methodName);
-        int count = 1;
+        int prefixArgCount = prefixArgs == null ? 0 : prefixArgs.prefixArguments();
+        int count = 1 + prefixArgCount;
         for (Class<?> klass : m.method.getParameterTypes()) {
             if (count != 1) {
                 out.print(", ");
@@ -132,20 +159,23 @@ public class AdviceGeneratorHelper {
             count++;
         }
         out.print(")");
-        return count;
+        return count - 1;
     }
 
     public static int generateSignature(Method m, String modifiers) {
-        return generateSignature(INDENT4, "public", new MethodNameOverride(m), modifiers);
+        return generateSignature(INDENT4, "public", new MethodNameOverride(m), modifiers, null);
     }
 
+    public static void generateInvokeArgs(int argCount) {
+        generateInvokeArgs(argCount, 1);
+    }
     /**
      * Generate the args for a method invocation and closing bracket and newline.
      * @param argCount
      */
-    public static void generateInvokeArgs(int argCount) {
-        for (int count = 1; count < argCount; count++) {
-            if (count != 1) {
+    public static void generateInvokeArgs(int argCount, int start) {
+        for (int count = start; count <= argCount; count++) {
+            if (count != start) {
                 out.print(", ");
             }
             out.printf("%s", "arg" + count);
