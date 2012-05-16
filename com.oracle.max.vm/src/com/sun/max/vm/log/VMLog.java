@@ -336,7 +336,10 @@ public abstract class VMLog implements Heap.GCCallback {
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             setLogEntries();
             if (vmLog == this) {
-                initialize(hostedLoggerList, new Flusher());
+                // the default log has no need for flushing.
+                // this might change if we wanted to callback to the
+                // Inspector when the log overflowed.
+                initialize(hostedLoggerList, null);
             }
             Heap.registerGCCallback(this);
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
@@ -477,6 +480,7 @@ public abstract class VMLog implements Heap.GCCallback {
     /**
      * Flush the contents of the log, using the {@link #flusher}.
      * N.B. This method should be called when no concurrent activity is expected on the log.
+     * In the case of per thread logs, this flushes the log for the current thread.
      */
     public abstract void flushLog();
 
@@ -557,13 +561,25 @@ public abstract class VMLog implements Heap.GCCallback {
     /**
      * Support for log flushing to some external agent.
      */
-    public static class Flusher {
+    public abstract static class Flusher {
+        /**
+         * Called before any calls to {@link #flushRecord(Record)}.
+         * Allows any setup to be done by flusher.
+         */
+        public void start() {
+        }
+
         /**
          * Invoked in response to a call of {@link VMLog#flushLog()} or whenever the log is about to overflow.
          * @param r
          */
-        public void flushRecord(Record r) {
+        public abstract void flushRecord(Record r);
 
+        /**
+         * Called after all calls to {@link #flushRecord(Record)}.
+         * Allows any tear down to be done by flusher.
+         */
+        public void end() {
         }
     }
 

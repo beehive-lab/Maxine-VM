@@ -21,7 +21,7 @@
  * questions.
  */
 
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vm.ext.vma.handlers.objstate;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;

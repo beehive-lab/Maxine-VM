@@ -27,10 +27,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.log.*;
 
 public class Package extends BootImagePackage {
-    public Package() {
-        registerThreadLocal(VMLogNative.class, "VMLOG_RECORD");
-    }
-
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
         return VMLog.Factory.contains("VMLogNative");

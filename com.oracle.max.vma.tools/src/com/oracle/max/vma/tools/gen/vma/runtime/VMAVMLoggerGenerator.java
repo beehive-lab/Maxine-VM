@@ -27,11 +27,15 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.runtime.*;
+import com.oracle.max.vm.ext.vma.handlers.objstate.*;
+import com.oracle.max.vm.ext.vma.handlers.vmlog.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
 /**
  * Generate the {@code VMAVMLogger} class body which uses the tracing aspect of logging to handle log flushing.
+ *
+ * Provision is made to log "time" as the first argument of the log record. A handler may choose to ignore this field,
+ * when generating log records.
  */
 public class VMAVMLoggerGenerator {
     public static void main(String[] args) throws Exception {
@@ -73,18 +77,29 @@ public class VMAVMLoggerGenerator {
         }
     }
 
+    private static class MyArgumentsPrefix extends ArgumentsPrefix {
+        @Override
+        public int prefixArguments() {
+            out.print("long arg1");
+            return 1;
+        }
+    }
+
+    private static final MyArgumentsPrefix argumentsPrefix = new MyArgumentsPrefix();
+
     private static void generateImpl(Method m) {
         out.print(INDENT8);
         out.println("@Override");
-        int argCount = generateSignature(INDENT8, "protected", new MyMethodNameOverride(m), null);
+        int argCount = generateSignature(INDENT8, "protected", new MyMethodNameOverride(m), null, argumentsPrefix);
         out.println(" {");
+        out.printf("%stimeStamp = arg1;%n", INDENT12);
         out.printf("%shandler.%s(", INDENT12, m.getName());
-        generateInvokeArgs(argCount);
+        generateInvokeArgs(argCount, 2);
         out.printf("%s}%n", INDENT8);
     }
 
     private static void generateInterface(Method m) {
-        generateSignature(INDENT8, null, new MethodNameOverride(m), null);
+        generateSignature(INDENT8, null, new MethodNameOverride(m), null, argumentsPrefix);
         out.printf(";%n%n");
     }
 }

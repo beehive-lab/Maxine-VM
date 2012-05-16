@@ -58,7 +58,7 @@ public class VmTestSetup extends TestSetup {
         Trace.on(1);
         if (JavaPrototype.javaPrototype() == null) {
             initializeVM();
-            JavaPrototype.initialize();
+            JavaPrototype.initialize(false);
         }
     }
 

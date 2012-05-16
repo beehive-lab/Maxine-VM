@@ -48,12 +48,10 @@ public class RunGenerators {
         VMAdviceHandlerLogGenerator.class,
         LoggingVMAdviceHandlerGenerator.class,
         TransientVMAdviceHandlerTypesGenerator.class,
-        TransientVMAdviceHandlerGenerator.class,
         GCTestAdviceHandlerLogGenerator.class,
         DupVMAdviceHandlerLogGenerator.class,
         TextVMAdviceHandlerLogGenerator.class,
         CompactTextVMAdviceHandlerLogGenerator.class,
-        LoggingAdviceRecordFlusherGenerator.class,
         VMAdviceTemplateGenerator.class
     };
 

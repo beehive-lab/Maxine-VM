@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vma.tools.qa;
 
 import java.util.*;
 
@@ -44,29 +44,26 @@ public class TransientVMAdviceHandlerTypes {
         GC,
         ThreadStarting,
         ThreadTerminating,
-        New,
-        NewArray,
-        MultiNewArray,
-        ConstLoadDouble,
-        ConstLoadObject,
         ConstLoadLong,
+        ConstLoadObject,
         ConstLoadFloat,
+        ConstLoadDouble,
         Load,
         ArrayLoad,
-        StoreObject,
+        StoreLong,
         StoreFloat,
         StoreDouble,
-        StoreLong,
-        ArrayStoreObject,
+        StoreObject,
         ArrayStoreFloat,
         ArrayStoreLong,
         ArrayStoreDouble,
+        ArrayStoreObject,
         StackAdjust,
-        OperationDouble,
         OperationLong,
         OperationFloat,
-        ConversionLong,
+        OperationDouble,
         ConversionFloat,
+        ConversionLong,
         ConversionDouble,
         IfInt,
         IfObject,
@@ -77,14 +74,14 @@ public class TransientVMAdviceHandlerTypes {
         ReturnDouble,
         ReturnObject,
         GetStatic,
-        PutStaticFloat,
-        PutStaticLong,
-        PutStaticDouble,
         PutStaticObject,
+        PutStaticFloat,
+        PutStaticDouble,
+        PutStaticLong,
         GetField,
+        PutFieldObject,
         PutFieldFloat,
         PutFieldDouble,
-        PutFieldObject,
         PutFieldLong,
         InvokeVirtual,
         InvokeSpecial,
@@ -96,6 +93,9 @@ public class TransientVMAdviceHandlerTypes {
         InstanceOf,
         MonitorEnter,
         MonitorExit,
+        New,
+        NewArray,
+        MultiNewArray,
         MethodEntry;
 
         public AdviceRecord newAdviceRecord() {

@@ -24,7 +24,7 @@ package com.oracle.max.vma.tools.qa;
 
 import java.util.ArrayList;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 /**
  * Maintains the basic information on a class instance that occurred in a trace.

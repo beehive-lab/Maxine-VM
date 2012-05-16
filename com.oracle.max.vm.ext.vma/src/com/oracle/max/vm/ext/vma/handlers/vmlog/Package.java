@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,34 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vm.ext.vma.handlers.vmlog;
 
-import com.sun.cri.bytecode.*;
-import com.sun.max.annotate.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 
-/**
- * Counts the bytecodes that are executed. This should give the same results
- * as the hard-wired counting enabled by {@code -T1X:+PrintBytecodeHistogram}.
- */
-public class BytecodeCounter extends NullVMAdviceHandler {
-    private static long[] counts = new long[256];
+public class Package extends BootImagePackage {
+    public Package() {
+        if (isPartOfMaxineVM()) {
+            registerThreadLocal(VMLogNativeThreadVariableVMA.class, VMLogNativeThreadVariableVMA.VMA_RECORD_NAME);
+            registerThreadLocal(VMLogNativeThreadVariableVMA.class, VMLogNativeThreadVariableVMA.VMA_BUFFER_NAME);
+            registerThreadLocal(VMLogNativeThreadVariableVMA.class, VMLogNativeThreadVariableVMA.VMA_BUFFER_OFFSETS_NAME);
+        }
+    }
 
-    @NEVER_INLINE
-    public static void inc(int tag) {
-        counts[tag]++;
+    private boolean isPartOfMaxineVM() {
+        return isPartOfMaxineVM(VMConfiguration.activeConfig());
     }
 
     @Override
-    public void initialise(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.TERMINATING) {
-            for (int b = 0; b < counts.length; b++) {
-                long count = counts[b];
-                if (count > 0) {
-                    System.out.format("%s: %d%n", Bytecodes.nameOf(b), count);
-                }
-            }
-        }
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
+            VMAJavaRunScheme.getHandlerClassName().equals(VMLogVMAdviceHandler.class.getName());
     }
+
 
 }

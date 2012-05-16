@@ -63,7 +63,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public boolean initializeLog() {
+    public boolean initializeLog(boolean timeOrdered) {
         final String logFile = VMAdviceHandlerLogFile.getLogFile();
         try {
             ps = new PrintStream(new FileOutputStream(logFile));
@@ -81,6 +81,8 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
             sb.append(lastTime);
             appendSpace();
             sb.append(absTime);
+            appendSpace();
+            sb.append(timeOrdered);
             end();
             return true;
         } catch (IOException ex) {

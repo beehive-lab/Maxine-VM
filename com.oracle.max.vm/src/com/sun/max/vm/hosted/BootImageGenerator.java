@@ -92,26 +92,29 @@ public final class BootImageGenerator {
     private static final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
                     "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
-    // Options regarding target workspace location shared with the Inspector
+    // Options shared with the Inspector
 
-    public static final OptionSet targetVMDirOptions = new OptionSet();
+    public static final OptionSet inspectorSharedOptions = new OptionSet();
 
     /**
      * Partial override of the location of the target VM and associated files, relative to a new workspace root.
      * Abstracts project names, OS and platform details.
      */
-    private static final Option<String> targetWSRootDirectoryOption = targetVMDirOptions.newStringOption("target-ws-root", null,
+    private static final Option<String> targetWSRootDirectoryOption = inspectorSharedOptions.newStringOption("target-ws-root", null,
             "Alternate workspace root for output of the binary image generator.");
 
     /**
      * A complete override of the location of the target VM and associated files. Must be absolutely specific
      * about location, i.e., project names, OS and platform.
      */
-    private static final Option<File> vmDirectoryOption = targetVMDirOptions.newFileOption("vmdir", getDefaultVMDirectory(),
+    private static final Option<File> vmDirectoryOption = inspectorSharedOptions.newFileOption("vmdir", getDefaultVMDirectory(),
             "The output directory for the binary image generator.");
 
+    public static final Option<Boolean> checkGeneratedCodeOption = inspectorSharedOptions.newBooleanOption("checkautogen", true,
+            "Check the automically generated code for consistency");
+
     static {
-        options.addOptions(targetVMDirOptions);
+        options.addOptions(inspectorSharedOptions);
     }
 
     public static boolean nativeTests;
@@ -235,7 +238,7 @@ public final class BootImageGenerator {
             configurator.create();
 
             // Initialize the Java prototype
-            JavaPrototype.initialize(prototypeGenerator.threadsOption.getValue());
+            JavaPrototype.initialize(prototypeGenerator.threadsOption.getValue(),  checkGeneratedCodeOption.getValue());
 
             Heap.genInlinedTLAB = inlinedTLABOption.getValue(); // TODO: cleanup. Just for evaluating impact on performance of inlined tlab alloc.
             Heap.useOutOfLineStubs = useOutOfLineStubs.getValue(); // TODO: cleanup.

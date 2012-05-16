@@ -38,25 +38,25 @@ public class DupVMAdviceHandlerLog extends VMAdviceHandlerLog {
     private VMAdviceHandlerLog b;
 
     @Override
-    public boolean initializeLog() {
+    public boolean initializeLog(boolean timeOrdered) {
         final String dupLogProp = System.getProperty(DUPCLASSES_PROPERTY);
         if (dupLogProp == null) {
             System.err.println(DUPCLASSES_PROPERTY + " not set");
             return false;
         }
         final String[] pair = dupLogProp.split(",");
-        a = create(pair[0]);
-        b = create(pair[1]);
+        a = create(pair[0], timeOrdered);
+        b = create(pair[1], timeOrdered);
         return true;
     }
 
-    private VMAdviceHandlerLog create(String id) {
+    private VMAdviceHandlerLog create(String id, boolean timeOrdered) {
         // Need to mess with the log file/log class properties to duplicate it.
         final String logFile = VMAdviceHandlerLogFile.getLogFile();
         System.setProperty(VMAdviceHandlerLogFile.LOGFILE_PROPERTY, logFile + "-" + id);
         System.setProperty(VMAdviceHandlerLogFactory.LOGCLASS_PROPERTY, "com.oracle.max.vm.ext.vma.log." + id + "VMAdviceHandlerLog");
         final VMAdviceHandlerLog result = VMAdviceHandlerLogFactory.create();
-        result.initializeLog();
+        result.initializeLog(timeOrdered);
         System.setProperty(VMAdviceHandlerLogFile.LOGFILE_PROPERTY, logFile);
         return result;
     }
