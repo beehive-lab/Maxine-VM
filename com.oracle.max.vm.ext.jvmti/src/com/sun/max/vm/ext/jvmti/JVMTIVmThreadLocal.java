@@ -38,7 +38,7 @@ import com.sun.max.vm.thread.*;
  */
 public class JVMTIVmThreadLocal {
     public static final VmThreadLocal JVMTI_STATE = new VmThreadLocal(
-                    "JVMTI", false, "For use by JVMTI", Nature.Single);
+                    "JVMTI", false, "For use by JVMTI", Nature.Triple);
 
     /**
      * Bit is set when a {@link JVMTIRawMonitor#notify()} has occurred on this thread.
@@ -83,12 +83,12 @@ public class JVMTIVmThreadLocal {
 
     @INLINE
     public static void setBit(Pointer tla, int bit) {
-        JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).or(bit));
+        JVMTI_STATE.store3(tla, JVMTI_STATE.load(tla).or(bit));
     }
 
     @INLINE
     public static void unsetBit(Pointer tla, int bit) {
-        JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).and(~bit));
+        JVMTI_STATE.store3(tla, JVMTI_STATE.load(tla).and(~bit));
     }
 
     static int getDepth(Pointer tla) {
@@ -96,7 +96,7 @@ public class JVMTIVmThreadLocal {
     }
 
     static void setDepth(Pointer tla, int depth) {
-        JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).or(depth << DEPTH_SHIFT));
+        JVMTI_STATE.store3(tla, JVMTI_STATE.load(tla).or(depth << DEPTH_SHIFT));
     }
 
 
