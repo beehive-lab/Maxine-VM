@@ -31,7 +31,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.InitializationListener;
 import com.sun.max.tele.field.*;
-import com.sun.max.tele.heap.gen.semispace.*;
+import com.sun.max.tele.reference.gen.semispace.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
