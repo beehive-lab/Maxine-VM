@@ -27,8 +27,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.log.*;
-import com.oracle.max.vm.ext.vma.log.debug.*;
+import com.oracle.max.vm.ext.vma.handlers.gctest.h.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 import com.oracle.max.vma.tools.gen.vma.runtime.*;
 
@@ -38,14 +37,14 @@ public class GCTestAdviceHandlerLogGenerator {
     public static void main(String[] args) throws Exception {
         createGenerator(GCTestAdviceHandlerLogGenerator.class);
         generateAutoComment();
-        SortedMap<String, Integer> enumMap = CountVMAdviceHandlerGenerator.createEnum(VMAdviceHandlerLog.class);
-        for (Method m : VMAdviceHandlerLog.class.getMethods()) {
+        SortedMap<String, Integer> enumMap = CountVMAdviceHandlerGenerator.createEnum(VMAdviceHandler.class);
+        for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
             if (name.startsWith("advise")) {
                 generate(m, enumMap);
             }
         }
-        AdviceGeneratorHelper.updateSource(GCTestVMAdviceHandlerLog.class, null, false);
+        AdviceGeneratorHelper.updateSource(GCTestVMAdviceHandler.class, null, false);
     }
 
     private static void generate(Method m, SortedMap<String, Integer> enumMap) {

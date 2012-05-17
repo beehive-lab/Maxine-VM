@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.vmlog;
+package com.oracle.max.vm.ext.vma.handlers.log.vmlog.h;
 
 import java.util.*;
 import java.util.concurrent.locks.*;
@@ -91,7 +91,7 @@ public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
                 logTime = ltp.equalsIgnoreCase("true");
             }
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            LoggingVMAdviceHandler handler = new LoggingVMAdviceHandler();
+            VMAdviceHandlerLogAdapter handler = new VMAdviceHandlerLogAdapter();
             handler.initialise(phase);
             super.setRemovalTracker(handler.getRemovalTracker(state));
             VMAVMLogger.VMAVMLoggerImpl.setLogHandler(handler);

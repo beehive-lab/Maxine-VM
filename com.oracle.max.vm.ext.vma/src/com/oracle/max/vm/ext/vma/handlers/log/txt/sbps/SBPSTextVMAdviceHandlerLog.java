@@ -20,13 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.log.txt.sbps;
+package com.oracle.max.vm.ext.vma.handlers.log.txt.sbps;
 
 import java.io.*;
 
-import static com.oracle.max.vm.ext.vma.log.txt.TextVMAdviceHandlerLog.Key.*;
-import com.oracle.max.vm.ext.vma.log.*;
-import com.oracle.max.vm.ext.vma.log.txt.*;
+import static com.oracle.max.vm.ext.vma.handlers.log.txt.TextVMAdviceHandlerLog.Key.*;
+
+import com.oracle.max.vm.ext.vma.handlers.log.*;
+import com.oracle.max.vm.ext.vma.handlers.log.txt.*;
 
 /**
  * An implementation of {@link TextVMAdviceHandlerLog} in Java using a {@link PrintStream} and {@link StringBuilder}.

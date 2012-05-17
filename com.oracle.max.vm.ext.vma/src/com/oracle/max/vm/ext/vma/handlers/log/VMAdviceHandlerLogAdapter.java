@@ -24,7 +24,6 @@ package com.oracle.max.vm.ext.vma.handlers.log;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.handlers.objstate.*;
-import com.oracle.max.vm.ext.vma.log.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -37,14 +36,16 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Implements the advice handling by logging to an implementation of {@link VMAdviceHandlerLog}.
+ * An adapter that handles the conversion from the signatures of {@link VMAdviceHandler} that
+ * use VM internal types to the external representation types used by {@link VMAdviceHandlerLog}.
  *
  * There are no "smarts" in this adaptor; it just logs and assumes that object id assignment
  * has already been done and that it can access the id using the provided implementation
- * of {@link ObjectStateHandler}.
+ * of {@link ObjectStateHandler} passed in {@link #getRemovalTracker(ObjectStateHandler),
+ * which <b>must</b> called by adapter client before any logging takes place..
  *
  */
-public class LoggingVMAdviceHandler extends VMAdviceHandler {
+public class VMAdviceHandlerLogAdapter extends VMAdviceHandler {
 
     private class RemovalTracker extends ObjectStateHandler.RemovalTracker {
 
@@ -70,8 +71,24 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
      * Handle to the log instance.
      */
     private VMAdviceHandlerLog log;
+
+    /**
+     * Mechanism for generating the thread name.
+     * Default used the current thread invoking the log method, which
+     * is appropriate for synchronous logging.
+     */
     private ThreadNameGenerator tng;
+
+    /**
+     * Handles the mapping from internal object references to external ids and
+     * object death callbacks. Must be set by caller using {@link #getRemovalTracker(ObjectStateHandler)}.
+     */
     private ObjectStateHandler state;
+
+    /**
+     * Denotes whether the log records are time ordered.
+     * Default is true, but can be changed by {@link #setTimeOrdered(boolean)}.
+     */
     private boolean timeOrdered;
 
     public VMAdviceHandlerLog getLog() {

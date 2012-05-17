@@ -20,10 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.log.dup;
+package com.oracle.max.vm.ext.vma.handlers.log.dup;
 
-import com.oracle.max.vm.ext.vma.log.*;
-
+import com.oracle.max.vm.ext.vma.handlers.log.*;
 
 /**
  * A debugging tool really; allows the log to be sent to two delegate loggers for later (semantic) comparison.
@@ -54,7 +53,7 @@ public class DupVMAdviceHandlerLog extends VMAdviceHandlerLog {
         // Need to mess with the log file/log class properties to duplicate it.
         final String logFile = VMAdviceHandlerLogFile.getLogFile();
         System.setProperty(VMAdviceHandlerLogFile.LOGFILE_PROPERTY, logFile + "-" + id);
-        System.setProperty(VMAdviceHandlerLogFactory.LOGCLASS_PROPERTY, "com.oracle.max.vm.ext.vma.log." + id + "VMAdviceHandlerLog");
+        System.setProperty(VMAdviceHandlerLogFactory.LOGCLASS_PROPERTY, "com.oracle.max.vm.ext.vma.handlers.log.h" + id + "VMAdviceHandlerLog");
         final VMAdviceHandlerLog result = VMAdviceHandlerLogFactory.create();
         result.initializeLog(timeOrdered);
         System.setProperty(VMAdviceHandlerLogFile.LOGFILE_PROPERTY, logFile);

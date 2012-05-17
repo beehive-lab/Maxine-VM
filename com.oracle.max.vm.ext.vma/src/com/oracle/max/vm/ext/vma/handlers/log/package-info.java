@@ -23,17 +23,21 @@
 /**
  * Everything in this subtree is related to the logging of advice-generated data using datatypes that can be stored
  * outside of the VM without any special mechanisms (e.g. object serialialization). The
- * {@link com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog} interface defines an essentially parallel API to
+ * {@link com.oracle.max.vm.ext.vma.handlers.log.VMAdviceHandlerLog} interface defines an essentially parallel API to
  * {@link com.oracle.max.vm.ext.vma.VMAdviceHandler} but using {@link String} and scalar data types. The majority of the
  * interface is automatically generated from {@link com.oracle.max.vm.ext.vma.VMAdviceHandler} by
- * {@link com.oracle.max.vm.ext.vma.log.gen.VMAdviceHandlerLogGenerator}, so can easily be regenerated if necessary.
- * This strategy of automatic generation is used throughout the system and the generators can be found in {@code gen}
- * subpackages.
+ * {@link com.oracle.max.vm.ext.vma.tools.gen.VMAdviceHandlerLogGenerator}, so can easily be regenerated if necessary.
+ * This strategy of automatic generation is used throughout the system and the generators can be found in
+ * {@code com.oracle.max.vm.ext.vma.tools.gen} subpackages.
  * <p>
- * The choice of log implementation is made by {@link com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLogFactory} and
- * defaults to {@link com.oracle.max.vm.ext.vma.log.txt.sbps.SBPSCompactTextVMAdviceHandlerLog}, which uses a compact
+ * The actual candidate handlers are in packages suffixed by {@code h}
+ * to distinguish them from the support code. E.g., {@link com.oracle.max.vm.ext.vma.handlers.log.sync.h.SyncLogVMAdviceHandler}.
+ * In addition the convention is to name them using the pattern {@code NameVMAdviceHandler}.
+ * <p>
+ * The choice of log implementation is made by {@link com.oracle.max.vm.ext.vma.handlers.log.VMAdviceHandlerLogFactory} and
+ * defaults to {@link com.oracle.max.vm.ext.vma.handlers.log.txt.sbps.SBPSCompactTextVMAdviceHandlerLog}, which uses a compact
  * textual representation and buffers output using a {@link java.lang.StringBuilder}, flushing periodically to a file
- * that is chosen with {@link com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLogFile} and defaults to
- * {@value com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLogFile#DEFAULT_LOGFILE}.
+ * that is chosen with {@link com.oracle.max.vm.ext.vma.handlers.log.VMAdviceHandlerLogFile} and defaults to
+ * {@value com.oracle.max.vm.ext.vma.handlers.log.VMAdviceHandlerLogFile#DEFAULT_LOGFILE}.
  */
-package com.oracle.max.vm.ext.vma.log;
+package com.oracle.max.vm.ext.vma.handlers.log;

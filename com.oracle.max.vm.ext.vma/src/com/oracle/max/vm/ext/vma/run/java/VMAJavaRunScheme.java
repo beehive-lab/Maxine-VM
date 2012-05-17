@@ -119,7 +119,7 @@ public class VMAJavaRunScheme extends JavaRunScheme {
      * This property must be specified at boot image time.
      */
     private static final String VMA_HANDLER_CLASS_PROPERTY = "max.vma.handler";
-    private static final String DEFAULT_HANDLER_CLASS = "com.oracle.max.vm.ext.vma.handlers.vmlog.VMLogVMAdviceHandler";
+    private static final String DEFAULT_HANDLER_CLASS = "com.oracle.max.vm.ext.vma.handlers.log.vmlog.h.VMLogVMAdviceHandler";
 
     public static String getHandlerClassName() {
         String handlerClassName = System.getProperty(VMA_HANDLER_CLASS_PROPERTY);
