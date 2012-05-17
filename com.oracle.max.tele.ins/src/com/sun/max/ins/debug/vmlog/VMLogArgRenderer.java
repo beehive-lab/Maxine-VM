@@ -100,6 +100,13 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
         return teleClassMethodActor;
     }
 
+    TeleMethodActor getTeleMethodActor(long arg) {
+        final MethodActor methodActor = getMethodActor(arg);
+        final MethodKey methodKey = new MethodKey.MethodActorKey(methodActor);
+        final TeleMethodActor teleMethodActor =  vm().methods().findMethodActor(methodKey);
+        return teleMethodActor;
+    }
+
     protected WordValueLabel getReferenceValueLabel(Reference reference) {
         return new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, reference.toOrigin(), vmLogView.getTable());
     }

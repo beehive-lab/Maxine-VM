@@ -25,8 +25,8 @@ package com.oracle.max.vma.tools.qa.queries;
 
 import java.io.*;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 import com.oracle.max.vma.tools.qa.*;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 /**
  * Helper class for queries that report by object instance.

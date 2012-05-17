@@ -95,6 +95,8 @@ public class DefaultVMLogArgRenderer extends VMLogArgRenderer {
             return safeGetReferenceValueLabel(getTeleClassActor(argValue));
         } else if (ClassMethodActor.class.isAssignableFrom(klass)) {
             return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
+        } else if (MethodActor.class.isAssignableFrom(klass)) {
+            return safeGetReferenceValueLabel(getTeleMethodActor(argValue));
         } else if (klass == VmThread.class) {
             return VMLogView.ThreadCellRenderer.getThreadRenderer((int) argValue);
         } else if (klass == VMLogger.Interval.class) {

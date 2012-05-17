@@ -154,13 +154,13 @@ public class Compile {
             MethodInstrumentation.enable(500);
         }
 
-        vmConfigurator.create(true);
+        vmConfigurator.create();
 
         // create the prototype
         if (verboseOption.getValue() > 0) {
             out.print("Initializing Java prototype... ");
         }
-        JavaPrototype.initialize();
+        JavaPrototype.initialize(false);
         if (verboseOption.getValue() > 0) {
             out.println("done");
         }

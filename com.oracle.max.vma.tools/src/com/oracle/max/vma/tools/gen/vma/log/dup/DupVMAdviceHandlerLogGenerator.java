@@ -26,8 +26,8 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.lang.reflect.*;
 
-import com.oracle.max.vm.ext.vma.log.*;
-import com.oracle.max.vm.ext.vma.log.dup.*;
+import com.oracle.max.vm.ext.vma.handlers.log.*;
+import com.oracle.max.vm.ext.vma.handlers.log.dup.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
 public class DupVMAdviceHandlerLogGenerator {

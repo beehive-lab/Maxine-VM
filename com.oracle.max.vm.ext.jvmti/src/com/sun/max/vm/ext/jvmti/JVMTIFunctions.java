@@ -85,7 +85,7 @@ public class JVMTIFunctions  {
         private static final LogOperations[] logOperations = LogOperations.values();
 
         private JVMTIFunctionsLogger() {
-            super("JVMTICalls", logOperations.length, null);
+            super("JVMTICalls", logOperations.length, "log JVMTI upcalls");
         }
 
         @Override
@@ -104,11 +104,11 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved1();
-        // Source: JVMTIFunctionsSource.java:177
+        // Source: JVMTIFunctionsSource.java:188
 
     @VM_ENTRY_POINT
     private static int SetEventNotificationMode(Pointer env, int mode, int event_type, JniHandle event_thread) {
-        // Source: JVMTIFunctionsSource.java:180
+        // Source: JVMTIFunctionsSource.java:191
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetEventNotificationMode.ordinal(), env, Address.fromInt(mode), Address.fromInt(event_type), event_thread);        }
@@ -139,11 +139,11 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved3();
-        // Source: JVMTIFunctionsSource.java:188
+        // Source: JVMTIFunctionsSource.java:199
 
     @VM_ENTRY_POINT
     private static int GetAllThreads(Pointer env, Pointer threads_count_ptr, Pointer threads_ptr) {
-        // Source: JVMTIFunctionsSource.java:191
+        // Source: JVMTIFunctionsSource.java:202
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetAllThreads.ordinal(), env, threads_count_ptr, threads_ptr);        }
@@ -170,7 +170,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SuspendThread(Pointer env, JniHandle thread) {
-        // Source: JVMTIFunctionsSource.java:198
+        // Source: JVMTIFunctionsSource.java:209
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SuspendThread.ordinal(), env, thread);        }
@@ -206,7 +206,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ResumeThread(Pointer env, JniHandle thread) {
-        // Source: JVMTIFunctionsSource.java:206
+        // Source: JVMTIFunctionsSource.java:217
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ResumeThread.ordinal(), env, thread);        }
@@ -242,7 +242,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int StopThread(Pointer env, JniHandle thread, JniHandle exception) {
-        // Source: JVMTIFunctionsSource.java:214
+        // Source: JVMTIFunctionsSource.java:225
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.StopThread.ordinal(), env, thread, exception);        }
@@ -263,7 +263,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int InterruptThread(Pointer env, JniHandle thread) {
-        // Source: JVMTIFunctionsSource.java:219
+        // Source: JVMTIFunctionsSource.java:230
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.InterruptThread.ordinal(), env, thread);        }
@@ -299,7 +299,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadInfo(Pointer env, JniHandle thread, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:227
+        // Source: JVMTIFunctionsSource.java:238
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadInfo.ordinal(), env, thread, info_ptr);        }
@@ -335,7 +335,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetOwnedMonitorInfo(Pointer env, JniHandle thread, Pointer owned_monitor_count_ptr, Pointer owned_monitors_ptr) {
-        // Source: JVMTIFunctionsSource.java:235
+        // Source: JVMTIFunctionsSource.java:246
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetOwnedMonitorInfo.ordinal(), env, thread, owned_monitor_count_ptr, owned_monitors_ptr);        }
@@ -356,7 +356,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetCurrentContendedMonitor(Pointer env, JniHandle thread, Pointer monitor_ptr) {
-        // Source: JVMTIFunctionsSource.java:240
+        // Source: JVMTIFunctionsSource.java:251
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetCurrentContendedMonitor.ordinal(), env, thread, monitor_ptr);        }
@@ -377,7 +377,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RunAgentThread(Pointer env, JniHandle jthread, Address proc, Pointer arg, int priority) {
-        // Source: JVMTIFunctionsSource.java:245
+        // Source: JVMTIFunctionsSource.java:256
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.RunAgentThread.ordinal(), env, jthread, proc, arg, Address.fromInt(priority));        }
@@ -404,7 +404,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetTopThreadGroups(Pointer env, Pointer group_count_ptr, Pointer groups_ptr) {
-        // Source: JVMTIFunctionsSource.java:252
+        // Source: JVMTIFunctionsSource.java:263
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetTopThreadGroups.ordinal(), env, group_count_ptr, groups_ptr);        }
@@ -431,7 +431,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadGroupInfo(Pointer env, JniHandle group, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:259
+        // Source: JVMTIFunctionsSource.java:270
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadGroupInfo.ordinal(), env, group, info_ptr);        }
@@ -467,7 +467,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadGroupChildren(Pointer env, JniHandle group, Pointer thread_count_ptr, Pointer threads_ptr, Pointer group_count_ptr, Pointer groups_ptr) {
-        // Source: JVMTIFunctionsSource.java:267
+        // Source: JVMTIFunctionsSource.java:278
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadGroupChildren.ordinal(), env, group, thread_count_ptr, threads_ptr, group_count_ptr, groups_ptr);        }
@@ -504,7 +504,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetFrameCount(Pointer env, JniHandle thread, Pointer count_ptr) {
-        // Source: JVMTIFunctionsSource.java:276
+        // Source: JVMTIFunctionsSource.java:287
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetFrameCount.ordinal(), env, thread, count_ptr);        }
@@ -540,7 +540,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadState(Pointer env, JniHandle thread, Pointer thread_state_ptr) {
-        // Source: JVMTIFunctionsSource.java:284
+        // Source: JVMTIFunctionsSource.java:295
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadState.ordinal(), env, thread, thread_state_ptr);        }
@@ -576,7 +576,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetCurrentThread(Pointer env, Pointer thread_ptr) {
-        // Source: JVMTIFunctionsSource.java:292
+        // Source: JVMTIFunctionsSource.java:303
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetCurrentThread.ordinal(), env, thread_ptr);        }
@@ -604,7 +604,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetFrameLocation(Pointer env, JniHandle thread, int depth, Pointer method_ptr, Pointer location_ptr) {
-        // Source: JVMTIFunctionsSource.java:300
+        // Source: JVMTIFunctionsSource.java:311
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetFrameLocation.ordinal(), env, thread, Address.fromInt(depth), method_ptr, location_ptr);        }
@@ -640,7 +640,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int NotifyFramePop(Pointer env, JniHandle thread, int depth) {
-        // Source: JVMTIFunctionsSource.java:308
+        // Source: JVMTIFunctionsSource.java:319
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.NotifyFramePop.ordinal(), env, Address.fromInt(depth));        }
@@ -671,7 +671,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetLocalObject(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:316
+        // Source: JVMTIFunctionsSource.java:327
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalObject.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
@@ -710,7 +710,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetLocalInt(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:325
+        // Source: JVMTIFunctionsSource.java:336
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalInt.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
@@ -749,7 +749,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetLocalLong(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:334
+        // Source: JVMTIFunctionsSource.java:345
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalLong.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
@@ -788,7 +788,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetLocalFloat(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:343
+        // Source: JVMTIFunctionsSource.java:354
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalFloat.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
@@ -827,7 +827,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetLocalDouble(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:352
+        // Source: JVMTIFunctionsSource.java:363
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalDouble.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
@@ -866,7 +866,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetLocalObject(Pointer env, JniHandle thread, int depth, int slot, JniHandle value) {
-        // Source: JVMTIFunctionsSource.java:361
+        // Source: JVMTIFunctionsSource.java:372
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetLocalObject.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value);        }
@@ -902,7 +902,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetLocalInt(Pointer env, JniHandle thread, int depth, int slot, int value) {
-        // Source: JVMTIFunctionsSource.java:369
+        // Source: JVMTIFunctionsSource.java:380
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetLocalInt.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromInt(value));        }
@@ -938,7 +938,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetLocalLong(Pointer env, JniHandle thread, int depth, int slot, long value) {
-        // Source: JVMTIFunctionsSource.java:377
+        // Source: JVMTIFunctionsSource.java:388
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetLocalLong.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromLong(value));        }
@@ -974,7 +974,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetLocalFloat(Pointer env, JniHandle thread, int depth, int slot, float value) {
-        // Source: JVMTIFunctionsSource.java:385
+        // Source: JVMTIFunctionsSource.java:396
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetLocalFloat.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromInt(Float.floatToRawIntBits(value)));        }
@@ -1010,7 +1010,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetLocalDouble(Pointer env, JniHandle thread, int depth, int slot, double value) {
-        // Source: JVMTIFunctionsSource.java:393
+        // Source: JVMTIFunctionsSource.java:404
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetLocalDouble.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromLong(Double.doubleToRawLongBits(value)));        }
@@ -1046,7 +1046,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int CreateRawMonitor(Pointer env, Pointer name, Pointer monitor_ptr) {
-        // Source: JVMTIFunctionsSource.java:401
+        // Source: JVMTIFunctionsSource.java:412
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.CreateRawMonitor.ordinal(), env, name, monitor_ptr);        }
@@ -1073,7 +1073,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int DestroyRawMonitor(Pointer env, Word rawMonitor) {
-        // Source: JVMTIFunctionsSource.java:408
+        // Source: JVMTIFunctionsSource.java:419
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.DestroyRawMonitor.ordinal(), env, rawMonitor);        }
@@ -1097,7 +1097,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RawMonitorEnter(Pointer env, Word rawMonitor) {
-        // Source: JVMTIFunctionsSource.java:414
+        // Source: JVMTIFunctionsSource.java:425
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.RawMonitorEnter.ordinal(), env, rawMonitor);        }
@@ -1119,7 +1119,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RawMonitorExit(Pointer env, Word rawMonitor) {
-        // Source: JVMTIFunctionsSource.java:420
+        // Source: JVMTIFunctionsSource.java:431
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.RawMonitorExit.ordinal(), env, rawMonitor);        }
@@ -1141,7 +1141,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RawMonitorWait(Pointer env, Word rawMonitor, long millis) {
-        // Source: JVMTIFunctionsSource.java:426
+        // Source: JVMTIFunctionsSource.java:437
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.RawMonitorWait.ordinal(), env, rawMonitor, Address.fromLong(millis));        }
@@ -1163,7 +1163,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotify(Pointer env, Word rawMonitor) {
-        // Source: JVMTIFunctionsSource.java:432
+        // Source: JVMTIFunctionsSource.java:443
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.RawMonitorNotify.ordinal(), env, rawMonitor);        }
@@ -1185,7 +1185,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotifyAll(Pointer env, Word rawMonitor) {
-        // Source: JVMTIFunctionsSource.java:438
+        // Source: JVMTIFunctionsSource.java:449
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.RawMonitorNotifyAll.ordinal(), env, rawMonitor);        }
@@ -1207,7 +1207,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetBreakpoint(Pointer env, MethodID method, long location) {
-        // Source: JVMTIFunctionsSource.java:444
+        // Source: JVMTIFunctionsSource.java:455
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetBreakpoint.ordinal(), env, method, Address.fromLong(location));        }
@@ -1235,7 +1235,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ClearBreakpoint(Pointer env, MethodID method, long location) {
-        // Source: JVMTIFunctionsSource.java:451
+        // Source: JVMTIFunctionsSource.java:462
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ClearBreakpoint.ordinal(), env, method, Address.fromLong(location));        }
@@ -1263,11 +1263,11 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved40();
-        // Source: JVMTIFunctionsSource.java:458
+        // Source: JVMTIFunctionsSource.java:469
 
     @VM_ENTRY_POINT
     private static int SetFieldAccessWatch(Pointer env, JniHandle klass, FieldID field) {
-        // Source: JVMTIFunctionsSource.java:461
+        // Source: JVMTIFunctionsSource.java:472
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetFieldAccessWatch.ordinal(), env, klass, field);        }
@@ -1307,7 +1307,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ClearFieldAccessWatch(Pointer env, JniHandle klass, FieldID field) {
-        // Source: JVMTIFunctionsSource.java:470
+        // Source: JVMTIFunctionsSource.java:481
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ClearFieldAccessWatch.ordinal(), env, klass, field);        }
@@ -1347,7 +1347,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetFieldModificationWatch(Pointer env, JniHandle klass, FieldID field) {
-        // Source: JVMTIFunctionsSource.java:479
+        // Source: JVMTIFunctionsSource.java:490
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetFieldModificationWatch.ordinal(), env, klass, field);        }
@@ -1387,7 +1387,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ClearFieldModificationWatch(Pointer env, JniHandle klass, FieldID field) {
-        // Source: JVMTIFunctionsSource.java:488
+        // Source: JVMTIFunctionsSource.java:499
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ClearFieldModificationWatch.ordinal(), env, klass, field);        }
@@ -1427,7 +1427,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IsModifiableClass(Pointer env, JniHandle klass, Pointer is_modifiable_class_ptr) {
-        // Source: JVMTIFunctionsSource.java:497
+        // Source: JVMTIFunctionsSource.java:508
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IsModifiableClass.ordinal(), env, klass, is_modifiable_class_ptr);        }
@@ -1448,7 +1448,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int Allocate(Pointer env, long size, Pointer mem_ptr) {
-        // Source: JVMTIFunctionsSource.java:502
+        // Source: JVMTIFunctionsSource.java:513
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.Allocate.ordinal(), env, Address.fromLong(size), mem_ptr);        }
@@ -1485,7 +1485,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int Deallocate(Pointer env, Pointer mem) {
-        // Source: JVMTIFunctionsSource.java:521
+        // Source: JVMTIFunctionsSource.java:532
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.Deallocate.ordinal(), env, mem);        }
@@ -1508,7 +1508,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetClassSignature(Pointer env, JniHandle klass, Pointer signature_ptr, Pointer generic_ptr) {
-        // Source: JVMTIFunctionsSource.java:528
+        // Source: JVMTIFunctionsSource.java:539
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassSignature.ordinal(), env, klass, signature_ptr, generic_ptr);        }
@@ -1541,7 +1541,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetClassStatus(Pointer env, JniHandle klass, Pointer status_ptr) {
-        // Source: JVMTIFunctionsSource.java:535
+        // Source: JVMTIFunctionsSource.java:546
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassStatus.ordinal(), env, klass, status_ptr);        }
@@ -1577,7 +1577,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetSourceFileName(Pointer env, JniHandle klass, Pointer source_name_ptr) {
-        // Source: JVMTIFunctionsSource.java:543
+        // Source: JVMTIFunctionsSource.java:554
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetSourceFileName.ordinal(), env, klass, source_name_ptr);        }
@@ -1616,7 +1616,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetClassModifiers(Pointer env, JniHandle klass, Pointer modifiers_ptr) {
-        // Source: JVMTIFunctionsSource.java:552
+        // Source: JVMTIFunctionsSource.java:563
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassModifiers.ordinal(), env, klass, modifiers_ptr);        }
@@ -1653,7 +1653,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetClassMethods(Pointer env, JniHandle klass, Pointer method_count_ptr, Pointer methods_ptr) {
-        // Source: JVMTIFunctionsSource.java:561
+        // Source: JVMTIFunctionsSource.java:572
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassMethods.ordinal(), env, klass, method_count_ptr, methods_ptr);        }
@@ -1689,7 +1689,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetClassFields(Pointer env, JniHandle klass, Pointer field_count_ptr, Pointer fields_ptr) {
-        // Source: JVMTIFunctionsSource.java:569
+        // Source: JVMTIFunctionsSource.java:580
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassFields.ordinal(), env, klass, field_count_ptr, fields_ptr);        }
@@ -1725,7 +1725,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetImplementedInterfaces(Pointer env, JniHandle klass, Pointer interface_count_ptr, Pointer interfaces_ptr) {
-        // Source: JVMTIFunctionsSource.java:577
+        // Source: JVMTIFunctionsSource.java:588
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetImplementedInterfaces.ordinal(), env, klass, interface_count_ptr, interfaces_ptr);        }
@@ -1761,7 +1761,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IsInterface(Pointer env, JniHandle klass, Pointer is_interface_ptr) {
-        // Source: JVMTIFunctionsSource.java:585
+        // Source: JVMTIFunctionsSource.java:596
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IsInterface.ordinal(), env, klass, is_interface_ptr);        }
@@ -1797,7 +1797,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IsArrayClass(Pointer env, JniHandle klass, Pointer is_array_class_ptr) {
-        // Source: JVMTIFunctionsSource.java:595
+        // Source: JVMTIFunctionsSource.java:606
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IsArrayClass.ordinal(), env, klass, is_array_class_ptr);        }
@@ -1833,7 +1833,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetClassLoader(Pointer env, JniHandle klass, Pointer classloader_ptr) {
-        // Source: JVMTIFunctionsSource.java:605
+        // Source: JVMTIFunctionsSource.java:616
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassLoader.ordinal(), env, klass, classloader_ptr);        }
@@ -1868,7 +1868,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetObjectHashCode(Pointer env, JniHandle handle, Pointer hash_code_ptr) {
-        // Source: JVMTIFunctionsSource.java:614
+        // Source: JVMTIFunctionsSource.java:625
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetObjectHashCode.ordinal(), env, handle, hash_code_ptr);        }
@@ -1900,7 +1900,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetObjectMonitorUsage(Pointer env, JniHandle object, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:626
+        // Source: JVMTIFunctionsSource.java:637
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetObjectMonitorUsage.ordinal(), env, object, info_ptr);        }
@@ -1921,7 +1921,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetFieldName(Pointer env, JniHandle klass, FieldID field, Pointer name_ptr, Pointer signature_ptr, Pointer generic_ptr) {
-        // Source: JVMTIFunctionsSource.java:631
+        // Source: JVMTIFunctionsSource.java:642
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetFieldName.ordinal(), env, klass, field, name_ptr, signature_ptr, generic_ptr);        }
@@ -1958,7 +1958,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetFieldDeclaringClass(Pointer env, JniHandle klass, FieldID field, Pointer declaring_class_ptr) {
-        // Source: JVMTIFunctionsSource.java:639
+        // Source: JVMTIFunctionsSource.java:650
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetFieldDeclaringClass.ordinal(), env, klass, field, declaring_class_ptr);        }
@@ -1989,7 +1989,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetFieldModifiers(Pointer env, JniHandle klass, FieldID field, Pointer modifiers_ptr) {
-        // Source: JVMTIFunctionsSource.java:647
+        // Source: JVMTIFunctionsSource.java:658
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetFieldModifiers.ordinal(), env, klass, field, modifiers_ptr);        }
@@ -2021,7 +2021,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IsFieldSynthetic(Pointer env, JniHandle klass, FieldID field, Pointer is_synthetic_ptr) {
-        // Source: JVMTIFunctionsSource.java:656
+        // Source: JVMTIFunctionsSource.java:667
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IsFieldSynthetic.ordinal(), env, klass, field, is_synthetic_ptr);        }
@@ -2057,7 +2057,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetMethodName(Pointer env, MethodID method, Pointer name_ptr, Pointer signature_ptr, Pointer generic_ptr) {
-        // Source: JVMTIFunctionsSource.java:667
+        // Source: JVMTIFunctionsSource.java:678
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetMethodName.ordinal(), env, method, name_ptr, signature_ptr, generic_ptr);        }
@@ -2085,7 +2085,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetMethodDeclaringClass(Pointer env, MethodID method, Pointer declaring_class_ptr) {
-        // Source: JVMTIFunctionsSource.java:674
+        // Source: JVMTIFunctionsSource.java:685
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetMethodDeclaringClass.ordinal(), env, method, declaring_class_ptr);        }
@@ -2116,7 +2116,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetMethodModifiers(Pointer env, MethodID method, Pointer modifiers_ptr) {
-        // Source: JVMTIFunctionsSource.java:682
+        // Source: JVMTIFunctionsSource.java:693
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetMethodModifiers.ordinal(), env, method, modifiers_ptr);        }
@@ -2148,11 +2148,11 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved67();
-        // Source: JVMTIFunctionsSource.java:691
+        // Source: JVMTIFunctionsSource.java:702
 
     @VM_ENTRY_POINT
     private static int GetMaxLocals(Pointer env, MethodID method, Pointer max_ptr) {
-        // Source: JVMTIFunctionsSource.java:694
+        // Source: JVMTIFunctionsSource.java:705
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetMaxLocals.ordinal(), env, method, max_ptr);        }
@@ -2183,7 +2183,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetArgumentsSize(Pointer env, MethodID method, Pointer size_ptr) {
-        // Source: JVMTIFunctionsSource.java:702
+        // Source: JVMTIFunctionsSource.java:713
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetArgumentsSize.ordinal(), env, method, size_ptr);        }
@@ -2214,7 +2214,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetLineNumberTable(Pointer env, MethodID method, Pointer entry_count_ptr, Pointer table_ptr) {
-        // Source: JVMTIFunctionsSource.java:710
+        // Source: JVMTIFunctionsSource.java:721
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLineNumberTable.ordinal(), env, method, entry_count_ptr, table_ptr);        }
@@ -2248,7 +2248,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetMethodLocation(Pointer env, MethodID method, Pointer start_location_ptr, Pointer end_location_ptr) {
-        // Source: JVMTIFunctionsSource.java:719
+        // Source: JVMTIFunctionsSource.java:730
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetMethodLocation.ordinal(), env, method, start_location_ptr, end_location_ptr);        }
@@ -2279,7 +2279,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetLocalVariableTable(Pointer env, MethodID method, Pointer entry_count_ptr, Pointer table_ptr) {
-        // Source: JVMTIFunctionsSource.java:727
+        // Source: JVMTIFunctionsSource.java:738
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalVariableTable.ordinal(), env, method, entry_count_ptr, table_ptr);        }
@@ -2310,7 +2310,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetNativeMethodPrefix(Pointer env, Pointer prefix) {
-        // Source: JVMTIFunctionsSource.java:735
+        // Source: JVMTIFunctionsSource.java:746
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetNativeMethodPrefix.ordinal(), env, prefix);        }
@@ -2331,7 +2331,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetNativeMethodPrefixes(Pointer env, int prefix_count, Pointer prefixes) {
-        // Source: JVMTIFunctionsSource.java:740
+        // Source: JVMTIFunctionsSource.java:751
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetNativeMethodPrefixes.ordinal(), env, Address.fromInt(prefix_count), prefixes);        }
@@ -2352,7 +2352,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetBytecodes(Pointer env, MethodID method, Pointer bytecode_count_ptr, Pointer bytecodes_ptr) {
-        // Source: JVMTIFunctionsSource.java:745
+        // Source: JVMTIFunctionsSource.java:756
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetBytecodes.ordinal(), env, method, bytecode_count_ptr, bytecodes_ptr);        }
@@ -2386,7 +2386,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IsMethodNative(Pointer env, MethodID method, Pointer is_native_ptr) {
-        // Source: JVMTIFunctionsSource.java:754
+        // Source: JVMTIFunctionsSource.java:765
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IsMethodNative.ordinal(), env, method, is_native_ptr);        }
@@ -2418,7 +2418,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IsMethodSynthetic(Pointer env, MethodID method, Pointer is_synthetic_ptr) {
-        // Source: JVMTIFunctionsSource.java:763
+        // Source: JVMTIFunctionsSource.java:774
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IsMethodSynthetic.ordinal(), env, method, is_synthetic_ptr);        }
@@ -2454,7 +2454,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetLoadedClasses(Pointer env, Pointer class_count_ptr, Pointer classes_ptr) {
-        // Source: JVMTIFunctionsSource.java:774
+        // Source: JVMTIFunctionsSource.java:785
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLoadedClasses.ordinal(), env, class_count_ptr, classes_ptr);        }
@@ -2481,7 +2481,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetClassLoaderClasses(Pointer env, JniHandle initiatingLoader, Pointer class_count_ptr, Pointer classes_ptr) {
-        // Source: JVMTIFunctionsSource.java:781
+        // Source: JVMTIFunctionsSource.java:792
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassLoaderClasses.ordinal(), env, initiatingLoader, class_count_ptr, classes_ptr);        }
@@ -2517,7 +2517,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int PopFrame(Pointer env, JniHandle thread) {
-        // Source: JVMTIFunctionsSource.java:789
+        // Source: JVMTIFunctionsSource.java:800
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.PopFrame.ordinal(), env, thread);        }
@@ -2538,7 +2538,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnObject(Pointer env, JniHandle thread, JniHandle value) {
-        // Source: JVMTIFunctionsSource.java:794
+        // Source: JVMTIFunctionsSource.java:805
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnObject.ordinal(), env, thread, value);        }
@@ -2559,7 +2559,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnInt(Pointer env, JniHandle thread, int value) {
-        // Source: JVMTIFunctionsSource.java:799
+        // Source: JVMTIFunctionsSource.java:810
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnInt.ordinal(), env, thread, Address.fromInt(value));        }
@@ -2580,7 +2580,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnLong(Pointer env, JniHandle thread, long value) {
-        // Source: JVMTIFunctionsSource.java:804
+        // Source: JVMTIFunctionsSource.java:815
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnLong.ordinal(), env, thread, Address.fromLong(value));        }
@@ -2601,7 +2601,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnFloat(Pointer env, JniHandle thread, float value) {
-        // Source: JVMTIFunctionsSource.java:809
+        // Source: JVMTIFunctionsSource.java:820
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnFloat.ordinal(), env, thread, Address.fromInt(Float.floatToRawIntBits(value)));        }
@@ -2622,7 +2622,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnDouble(Pointer env, JniHandle thread, double value) {
-        // Source: JVMTIFunctionsSource.java:814
+        // Source: JVMTIFunctionsSource.java:825
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnDouble.ordinal(), env, thread, Address.fromLong(Double.doubleToRawLongBits(value)));        }
@@ -2643,7 +2643,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnVoid(Pointer env, JniHandle thread) {
-        // Source: JVMTIFunctionsSource.java:819
+        // Source: JVMTIFunctionsSource.java:830
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnVoid.ordinal(), env, thread);        }
@@ -2664,7 +2664,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RedefineClasses(Pointer env, int class_count, Pointer class_definitions) {
-        // Source: JVMTIFunctionsSource.java:824
+        // Source: JVMTIFunctionsSource.java:835
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.RedefineClasses.ordinal(), env, Address.fromInt(class_count), class_definitions);        }
@@ -2685,7 +2685,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetVersionNumber(Pointer env, Pointer version_ptr) {
-        // Source: JVMTIFunctionsSource.java:829
+        // Source: JVMTIFunctionsSource.java:840
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetVersionNumber.ordinal(), env, version_ptr);        }
@@ -2711,7 +2711,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetCapabilities(Pointer env, Pointer capabilities_ptr) {
-        // Source: JVMTIFunctionsSource.java:837
+        // Source: JVMTIFunctionsSource.java:848
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetCapabilities.ordinal(), env, capabilities_ptr);        }
@@ -2737,7 +2737,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetSourceDebugExtension(Pointer env, JniHandle klass, Pointer source_debug_extension_ptr) {
-        // Source: JVMTIFunctionsSource.java:845
+        // Source: JVMTIFunctionsSource.java:856
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetSourceDebugExtension.ordinal(), env, klass, source_debug_extension_ptr);        }
@@ -2776,7 +2776,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IsMethodObsolete(Pointer env, MethodID method, Pointer is_obsolete_ptr) {
-        // Source: JVMTIFunctionsSource.java:854
+        // Source: JVMTIFunctionsSource.java:865
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IsMethodObsolete.ordinal(), env, method, is_obsolete_ptr);        }
@@ -2807,7 +2807,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SuspendThreadList(Pointer env, int request_count, Pointer request_list, Pointer results) {
-        // Source: JVMTIFunctionsSource.java:862
+        // Source: JVMTIFunctionsSource.java:873
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SuspendThreadList.ordinal(), env, Address.fromInt(request_count));        }
@@ -2841,7 +2841,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ResumeThreadList(Pointer env, int request_count, Pointer request_list, Pointer results) {
-        // Source: JVMTIFunctionsSource.java:874
+        // Source: JVMTIFunctionsSource.java:885
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ResumeThreadList.ordinal(), env, Address.fromInt(request_count));        }
@@ -2875,31 +2875,31 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved94();
-        // Source: JVMTIFunctionsSource.java:886
+        // Source: JVMTIFunctionsSource.java:897
 
     @VM_ENTRY_POINT
     private static native void reserved95();
-        // Source: JVMTIFunctionsSource.java:889
+        // Source: JVMTIFunctionsSource.java:900
 
     @VM_ENTRY_POINT
     private static native void reserved96();
-        // Source: JVMTIFunctionsSource.java:892
+        // Source: JVMTIFunctionsSource.java:903
 
     @VM_ENTRY_POINT
     private static native void reserved97();
-        // Source: JVMTIFunctionsSource.java:895
+        // Source: JVMTIFunctionsSource.java:906
 
     @VM_ENTRY_POINT
     private static native void reserved98();
-        // Source: JVMTIFunctionsSource.java:898
+        // Source: JVMTIFunctionsSource.java:909
 
     @VM_ENTRY_POINT
     private static native void reserved99();
-        // Source: JVMTIFunctionsSource.java:901
+        // Source: JVMTIFunctionsSource.java:912
 
     @VM_ENTRY_POINT
     private static int GetAllStackTraces(Pointer env, int max_frame_count, Pointer stack_info_ptr, Pointer thread_count_ptr) {
-        // Source: JVMTIFunctionsSource.java:904
+        // Source: JVMTIFunctionsSource.java:915
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetAllStackTraces.ordinal(), env, Address.fromInt(max_frame_count), stack_info_ptr, thread_count_ptr);        }
@@ -2929,7 +2929,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadListStackTraces(Pointer env, int thread_count, Pointer thread_list, int max_frame_count, Pointer stack_info_ptr) {
-        // Source: JVMTIFunctionsSource.java:914
+        // Source: JVMTIFunctionsSource.java:925
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadListStackTraces.ordinal(), env, Address.fromInt(thread_count), thread_list, Address.fromInt(max_frame_count), stack_info_ptr);        }
@@ -2959,7 +2959,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data_ptr) {
-        // Source: JVMTIFunctionsSource.java:924
+        // Source: JVMTIFunctionsSource.java:935
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadLocalStorage.ordinal(), env, thread, data_ptr);        }
@@ -2995,7 +2995,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data) {
-        // Source: JVMTIFunctionsSource.java:932
+        // Source: JVMTIFunctionsSource.java:943
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetThreadLocalStorage.ordinal(), env, thread, data);        }
@@ -3028,7 +3028,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetStackTrace(Pointer env, JniHandle thread, int start_depth, int max_frame_count, Pointer frame_buffer, Pointer count_ptr) {
-        // Source: JVMTIFunctionsSource.java:939
+        // Source: JVMTIFunctionsSource.java:950
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetStackTrace.ordinal(), env, thread, Address.fromInt(start_depth), Address.fromInt(max_frame_count), frame_buffer, count_ptr);        }
@@ -3067,11 +3067,11 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved105();
-        // Source: JVMTIFunctionsSource.java:950
+        // Source: JVMTIFunctionsSource.java:961
 
     @VM_ENTRY_POINT
     private static int GetTag(Pointer env, JniHandle object, Pointer tag_ptr) {
-        // Source: JVMTIFunctionsSource.java:953
+        // Source: JVMTIFunctionsSource.java:964
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetTag.ordinal(), env, object, tag_ptr);        }
@@ -3098,7 +3098,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetTag(Pointer env, JniHandle object, long tag) {
-        // Source: JVMTIFunctionsSource.java:960
+        // Source: JVMTIFunctionsSource.java:971
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetTag.ordinal(), env, object, Address.fromLong(tag));        }
@@ -3122,7 +3122,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ForceGarbageCollection(Pointer env) {
-        // Source: JVMTIFunctionsSource.java:966
+        // Source: JVMTIFunctionsSource.java:977
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceGarbageCollection.ordinal(), env);        }
@@ -3144,7 +3144,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IterateOverObjectsReachableFromObject(Pointer env, JniHandle object, Address object_reference_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:972
+        // Source: JVMTIFunctionsSource.java:983
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IterateOverObjectsReachableFromObject.ordinal(), env, object, object_reference_callback, user_data);        }
@@ -3165,7 +3165,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IterateOverReachableObjects(Pointer env, Address heap_root_callback, Address stack_ref_callback, Address object_ref_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:977
+        // Source: JVMTIFunctionsSource.java:988
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IterateOverReachableObjects.ordinal(), env, heap_root_callback, stack_ref_callback, object_ref_callback, user_data);        }
@@ -3186,7 +3186,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IterateOverHeap(Pointer env, int object_filter, Address heap_object_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:982
+        // Source: JVMTIFunctionsSource.java:993
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IterateOverHeap.ordinal(), env, Address.fromInt(object_filter), heap_object_callback, user_data);        }
@@ -3207,7 +3207,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IterateOverInstancesOfClass(Pointer env, JniHandle klass, int object_filter, Address heap_object_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:987
+        // Source: JVMTIFunctionsSource.java:998
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IterateOverInstancesOfClass.ordinal(), env, klass, Address.fromInt(object_filter), heap_object_callback, user_data);        }
@@ -3228,11 +3228,11 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved113();
-        // Source: JVMTIFunctionsSource.java:992
+        // Source: JVMTIFunctionsSource.java:1003
 
     @VM_ENTRY_POINT
     private static int GetObjectsWithTags(Pointer env, int tag_count, Pointer tags, Pointer count_ptr, Pointer object_result_ptr, Pointer tag_result_ptr) {
-        // Source: JVMTIFunctionsSource.java:995
+        // Source: JVMTIFunctionsSource.java:1006
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetObjectsWithTags.ordinal(), env, Address.fromInt(tag_count), tags, count_ptr, object_result_ptr, tag_result_ptr);        }
@@ -3259,7 +3259,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int FollowReferences(Pointer env, int heap_filter, JniHandle klass, JniHandle initial_object, Pointer callbacks, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:1002
+        // Source: JVMTIFunctionsSource.java:1013
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.FollowReferences.ordinal(), env, Address.fromInt(heap_filter), klass, initial_object, callbacks, user_data);        }
@@ -3280,7 +3280,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IterateThroughHeap(Pointer env, int heap_filter, JniHandle klass, Pointer callbacks, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:1007
+        // Source: JVMTIFunctionsSource.java:1018
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IterateThroughHeap.ordinal(), env, Address.fromInt(heap_filter), klass, callbacks, user_data);        }
@@ -3316,19 +3316,19 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved117();
-        // Source: JVMTIFunctionsSource.java:1016
+        // Source: JVMTIFunctionsSource.java:1027
 
     @VM_ENTRY_POINT
     private static native void reserved118();
-        // Source: JVMTIFunctionsSource.java:1019
+        // Source: JVMTIFunctionsSource.java:1030
 
     @VM_ENTRY_POINT
     private static native void reserved119();
-        // Source: JVMTIFunctionsSource.java:1022
+        // Source: JVMTIFunctionsSource.java:1033
 
     @VM_ENTRY_POINT
     private static int SetJNIFunctionTable(Pointer env, Pointer function_table) {
-        // Source: JVMTIFunctionsSource.java:1025
+        // Source: JVMTIFunctionsSource.java:1036
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetJNIFunctionTable.ordinal(), env, function_table);        }
@@ -3349,7 +3349,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetJNIFunctionTable(Pointer env, Pointer function_table) {
-        // Source: JVMTIFunctionsSource.java:1030
+        // Source: JVMTIFunctionsSource.java:1041
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetJNIFunctionTable.ordinal(), env, function_table);        }
@@ -3370,7 +3370,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetEventCallbacks(Pointer env, Pointer callbacks, int size_of_callbacks) {
-        // Source: JVMTIFunctionsSource.java:1035
+        // Source: JVMTIFunctionsSource.java:1046
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetEventCallbacks.ordinal(), env, callbacks, Address.fromInt(size_of_callbacks));        }
@@ -3396,7 +3396,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GenerateEvents(Pointer env, int event_type) {
-        // Source: JVMTIFunctionsSource.java:1043
+        // Source: JVMTIFunctionsSource.java:1054
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GenerateEvents.ordinal(), env, Address.fromInt(event_type));        }
@@ -3417,7 +3417,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetExtensionFunctions(Pointer env, Pointer extension_count_ptr, Pointer extensions) {
-        // Source: JVMTIFunctionsSource.java:1048
+        // Source: JVMTIFunctionsSource.java:1059
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetExtensionFunctions.ordinal(), env, extension_count_ptr, extensions);        }
@@ -3438,7 +3438,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetExtensionEvents(Pointer env, Pointer extension_count_ptr, Pointer extensions) {
-        // Source: JVMTIFunctionsSource.java:1053
+        // Source: JVMTIFunctionsSource.java:1064
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetExtensionEvents.ordinal(), env, extension_count_ptr, extensions);        }
@@ -3459,7 +3459,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetExtensionEventCallback(Pointer env, int extension_event_index, Address callback) {
-        // Source: JVMTIFunctionsSource.java:1058
+        // Source: JVMTIFunctionsSource.java:1069
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetExtensionEventCallback.ordinal(), env, Address.fromInt(extension_event_index), callback);        }
@@ -3480,7 +3480,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int DisposeEnvironment(Pointer env) {
-        // Source: JVMTIFunctionsSource.java:1063
+        // Source: JVMTIFunctionsSource.java:1074
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.DisposeEnvironment.ordinal(), env);        }
@@ -3502,7 +3502,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetErrorName(Pointer env, int error, Pointer name_ptr) {
-        // Source: JVMTIFunctionsSource.java:1069
+        // Source: JVMTIFunctionsSource.java:1080
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetErrorName.ordinal(), env, Address.fromInt(error), name_ptr);        }
@@ -3534,7 +3534,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetJLocationFormat(Pointer env, Pointer format_ptr) {
-        // Source: JVMTIFunctionsSource.java:1083
+        // Source: JVMTIFunctionsSource.java:1094
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetJLocationFormat.ordinal(), env, format_ptr);        }
@@ -3555,7 +3555,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetSystemProperties(Pointer env, Pointer count_ptr, Pointer property_ptr) {
-        // Source: JVMTIFunctionsSource.java:1088
+        // Source: JVMTIFunctionsSource.java:1099
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetSystemProperties.ordinal(), env, count_ptr, property_ptr);        }
@@ -3576,7 +3576,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetSystemProperty(Pointer env, Pointer property, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:1093
+        // Source: JVMTIFunctionsSource.java:1104
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetSystemProperty.ordinal(), env, property, value_ptr);        }
@@ -3603,7 +3603,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetSystemProperty(Pointer env, Pointer property, Pointer value) {
-        // Source: JVMTIFunctionsSource.java:1100
+        // Source: JVMTIFunctionsSource.java:1111
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetSystemProperty.ordinal(), env, property, value);        }
@@ -3624,7 +3624,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetPhase(Pointer env, Pointer phase_ptr) {
-        // Source: JVMTIFunctionsSource.java:1105
+        // Source: JVMTIFunctionsSource.java:1116
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetPhase.ordinal(), env, phase_ptr);        }
@@ -3649,7 +3649,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetCurrentThreadCpuTimerInfo(Pointer env, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1112
+        // Source: JVMTIFunctionsSource.java:1123
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetCurrentThreadCpuTimerInfo.ordinal(), env, info_ptr);        }
@@ -3670,7 +3670,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetCurrentThreadCpuTime(Pointer env, Pointer nanos_ptr) {
-        // Source: JVMTIFunctionsSource.java:1117
+        // Source: JVMTIFunctionsSource.java:1128
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetCurrentThreadCpuTime.ordinal(), env, nanos_ptr);        }
@@ -3691,7 +3691,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadCpuTimerInfo(Pointer env, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1122
+        // Source: JVMTIFunctionsSource.java:1133
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadCpuTimerInfo.ordinal(), env, info_ptr);        }
@@ -3712,7 +3712,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadCpuTime(Pointer env, JniHandle thread, Pointer nanos_ptr) {
-        // Source: JVMTIFunctionsSource.java:1127
+        // Source: JVMTIFunctionsSource.java:1138
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadCpuTime.ordinal(), env, thread, nanos_ptr);        }
@@ -3733,7 +3733,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetTimerInfo(Pointer env, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1132
+        // Source: JVMTIFunctionsSource.java:1143
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetTimerInfo.ordinal(), env, info_ptr);        }
@@ -3754,7 +3754,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetTime(Pointer env, Pointer nanos_ptr) {
-        // Source: JVMTIFunctionsSource.java:1137
+        // Source: JVMTIFunctionsSource.java:1148
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetTime.ordinal(), env, nanos_ptr);        }
@@ -3780,7 +3780,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetPotentialCapabilities(Pointer env, Pointer capabilities_ptr) {
-        // Source: JVMTIFunctionsSource.java:1145
+        // Source: JVMTIFunctionsSource.java:1156
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetPotentialCapabilities.ordinal(), env, capabilities_ptr);        }
@@ -3809,11 +3809,11 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved141();
-        // Source: JVMTIFunctionsSource.java:1154
+        // Source: JVMTIFunctionsSource.java:1165
 
     @VM_ENTRY_POINT
     private static int AddCapabilities(Pointer env, Pointer capabilities_ptr) {
-        // Source: JVMTIFunctionsSource.java:1157
+        // Source: JVMTIFunctionsSource.java:1168
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.AddCapabilities.ordinal(), env, capabilities_ptr);        }
@@ -3840,7 +3840,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RelinquishCapabilities(Pointer env, Pointer capabilities_ptr) {
-        // Source: JVMTIFunctionsSource.java:1164
+        // Source: JVMTIFunctionsSource.java:1175
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.RelinquishCapabilities.ordinal(), env, capabilities_ptr);        }
@@ -3874,7 +3874,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetAvailableProcessors(Pointer env, Pointer processor_count_ptr) {
-        // Source: JVMTIFunctionsSource.java:1178
+        // Source: JVMTIFunctionsSource.java:1189
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetAvailableProcessors.ordinal(), env, processor_count_ptr);        }
@@ -3900,7 +3900,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetClassVersionNumbers(Pointer env, JniHandle klass, Pointer minor_version_ptr, Pointer major_version_ptr) {
-        // Source: JVMTIFunctionsSource.java:1186
+        // Source: JVMTIFunctionsSource.java:1197
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassVersionNumbers.ordinal(), env, klass, minor_version_ptr, major_version_ptr);        }
@@ -3927,7 +3927,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetConstantPool(Pointer env, JniHandle klass, Pointer constant_pool_count_ptr, Pointer constant_pool_byte_count_ptr, Pointer constant_pool_bytes_ptr) {
-        // Source: JVMTIFunctionsSource.java:1193
+        // Source: JVMTIFunctionsSource.java:1204
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetConstantPool.ordinal(), env, klass, constant_pool_count_ptr, constant_pool_byte_count_ptr, constant_pool_bytes_ptr);        }
@@ -3948,7 +3948,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetEnvironmentLocalStorage(Pointer env, Pointer data_ptr) {
-        // Source: JVMTIFunctionsSource.java:1198
+        // Source: JVMTIFunctionsSource.java:1209
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetEnvironmentLocalStorage.ordinal(), env, data_ptr);        }
@@ -3969,7 +3969,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetEnvironmentLocalStorage(Pointer env, Pointer data) {
-        // Source: JVMTIFunctionsSource.java:1203
+        // Source: JVMTIFunctionsSource.java:1214
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetEnvironmentLocalStorage.ordinal(), env, data);        }
@@ -3990,7 +3990,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int AddToBootstrapClassLoaderSearch(Pointer env, Pointer segment) {
-        // Source: JVMTIFunctionsSource.java:1208
+        // Source: JVMTIFunctionsSource.java:1219
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.AddToBootstrapClassLoaderSearch.ordinal(), env, segment);        }
@@ -4015,7 +4015,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetVerboseFlag(Pointer env, int flag, boolean value) {
-        // Source: JVMTIFunctionsSource.java:1215
+        // Source: JVMTIFunctionsSource.java:1226
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetVerboseFlag.ordinal(), env, Address.fromInt(flag), Address.fromInt(value ? 1 : 0));        }
@@ -4053,7 +4053,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int AddToSystemClassLoaderSearch(Pointer env, Pointer segment) {
-        // Source: JVMTIFunctionsSource.java:1237
+        // Source: JVMTIFunctionsSource.java:1248
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.AddToSystemClassLoaderSearch.ordinal(), env, segment);        }
@@ -4074,7 +4074,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RetransformClasses(Pointer env, int class_count, Pointer classes) {
-        // Source: JVMTIFunctionsSource.java:1242
+        // Source: JVMTIFunctionsSource.java:1253
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.RetransformClasses.ordinal(), env, Address.fromInt(class_count), classes);        }
@@ -4095,7 +4095,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetOwnedMonitorStackDepthInfo(Pointer env, JniHandle thread, Pointer monitor_info_count_ptr, Pointer monitor_info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1247
+        // Source: JVMTIFunctionsSource.java:1258
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetOwnedMonitorStackDepthInfo.ordinal(), env, thread, monitor_info_count_ptr, monitor_info_ptr);        }
@@ -4116,7 +4116,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetObjectSize(Pointer env, JniHandle object, Pointer size_ptr) {
-        // Source: JVMTIFunctionsSource.java:1252
+        // Source: JVMTIFunctionsSource.java:1263
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetObjectSize.ordinal(), env, object, size_ptr);        }
@@ -4143,7 +4143,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetLocalInstance(Pointer env, JniHandle thread, int depth, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:1259
+        // Source: JVMTIFunctionsSource.java:1270
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalInstance.ordinal(), env, thread, Address.fromInt(depth), value_ptr);        }
@@ -4167,6 +4167,7 @@ public class JVMTIFunctions  {
             // currrently no return logging
         }
     }
+
     public static enum LogOperations {
         /* 0 */ SetEventNotificationMode,
         /* 1 */ GetAllThreads,

@@ -41,7 +41,9 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -101,7 +103,7 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
     @SuppressWarnings("unchecked")
     VMLogView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
-        vmLog = inspection().vm().vmLog();
+        vmLog = inspection.vm().vmLog();
         emptyStringRenderer = new PlainLabel(inspection, "");
         viewPreferences = LogViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);

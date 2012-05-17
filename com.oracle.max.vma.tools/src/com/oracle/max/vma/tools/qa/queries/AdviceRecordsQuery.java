@@ -23,14 +23,14 @@
 package com.oracle.max.vma.tools.qa.queries;
 
 import static com.oracle.max.vma.tools.qa.AdviceRecordHelper.*;
-import static com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.RecordType.*;
+import static com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.RecordType.*;
 
 import java.io.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 import com.oracle.max.vma.tools.qa.*;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 
 public class AdviceRecordsQuery extends QueryBase {
@@ -180,6 +180,7 @@ public class AdviceRecordsQuery extends QueryBase {
                     ps.print(getObjectRecord(ar));
                     break;
 
+                case Removal:
                 case Unseen:
                 case New:
                 case NewArray:

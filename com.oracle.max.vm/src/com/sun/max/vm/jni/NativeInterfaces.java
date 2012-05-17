@@ -39,6 +39,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.JniFunctionsGenerator.Customizer;
 import com.sun.max.vm.jni.JniFunctionsGenerator.JniCustomizer;
 import com.sun.max.vm.runtime.*;
@@ -48,12 +49,6 @@ import com.sun.max.vm.ti.*;
  * This class encapsulates the Java side of the native interfaces such as JNI, JVMTI and JMM supported by the VM.
  */
 public final class NativeInterfaces {
-
-    static {
-        checkGenerateSourcesInSync(VMFunctionsSource.class, VMFunctions.class, new JniFunctionsGenerator.VMCustomizer(true));
-        checkGenerateSourcesInSync(JniFunctionsSource.class, JniFunctions.class, null);
-        checkGenerateSourcesInSync(JmmFunctionsSource.class, JmmFunctions.class, null);
-    }
 
     /**
      * A few native functions must not have any prologue and epilogue.  We hand-list them here.
@@ -288,6 +283,21 @@ public final class NativeInterfaces {
      */
     public static boolean verbose() {
         return verboseOption.verboseJNI;
+    }
+
+    static {
+        JavaPrototype.registerGeneratedCodeCheckerCallback(new GeneratedCodeCheckerCallback());
+    }
+
+    @HOSTED_ONLY
+    private static class GeneratedCodeCheckerCallback implements JavaPrototype.GeneratedCodeCheckerCallback {
+
+        @Override
+        public void checkGeneratedCode() {
+            checkGenerateSourcesInSync(VMFunctionsSource.class, VMFunctions.class, new JniFunctionsGenerator.VMCustomizer(true));
+            checkGenerateSourcesInSync(JniFunctionsSource.class, JniFunctions.class, null);
+            checkGenerateSourcesInSync(JmmFunctionsSource.class, JmmFunctions.class, null);
+        }
     }
 
     @HOSTED_ONLY
