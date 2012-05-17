@@ -33,21 +33,21 @@ import com.oracle.max.vma.tools.gen.vma.log.*;
 import com.sun.max.annotate.*;
 
 /**
- * Generates the rote implementations of {@link LoggingVMAdviceHandler} from the
+ * Generates the rote implementation of {@link LoggingVMAdviceHandlerAdapter} from the
  * methods in {@link VMAdviceHandler}.
  */
 @HOSTED_ONLY
-public class LoggingVMAdviceHandlerGenerator {
+public class VMAdviceHandlerLogAdaptorGenerator {
 
     public static void main(String[] args) throws Exception {
-        createGenerator(LoggingVMAdviceHandlerGenerator.class);
+        createGenerator(VMAdviceHandlerLogAdaptorGenerator.class);
         generateAutoComment();
         for (Method m : VMAdviceHandler.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generate(m);
             }
         }
-        AdviceGeneratorHelper.updateSource(LoggingVMAdviceHandler.class, null, false);
+        AdviceGeneratorHelper.updateSource(VMAdviceHandlerLogAdapter.class, null, false);
     }
 
     private static void generate(Method m) {

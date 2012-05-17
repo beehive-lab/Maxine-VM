@@ -26,7 +26,7 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.lang.reflect.*;
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.vmlog.*;
+import com.oracle.max.vm.ext.vma.handlers.log.vmlog.h.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
 public class VMLogVMAdviceHandlerGenerator {

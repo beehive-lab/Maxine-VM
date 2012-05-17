@@ -46,7 +46,7 @@ public class RunGenerators {
         SyncLogVMAdviceHandlerGenerator.class,
         CountVMAdviceHandlerGenerator.class,
         VMAdviceHandlerLogGenerator.class,
-        LoggingVMAdviceHandlerGenerator.class,
+        VMAdviceHandlerLogAdaptorGenerator.class,
         TransientVMAdviceHandlerTypesGenerator.class,
         GCTestAdviceHandlerLogGenerator.class,
         DupVMAdviceHandlerLogGenerator.class,

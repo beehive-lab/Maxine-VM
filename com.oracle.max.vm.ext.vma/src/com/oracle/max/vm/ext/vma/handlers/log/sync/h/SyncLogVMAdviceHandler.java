@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.synclog;
+package com.oracle.max.vm.ext.vma.handlers.log.sync.h;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.handlers.*;
@@ -51,7 +51,7 @@ import com.sun.max.vm.thread.*;
 
 public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
-    private LoggingVMAdviceHandler logHandler;
+    private VMAdviceHandlerLogAdapter logHandler;
 
     @Override
     protected void unseenObject(Object obj) {
@@ -63,7 +63,7 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void initialise(MaxineVM.Phase phase) {
         super.initialise(phase);
         if (phase == MaxineVM.Phase.RUNNING) {
-            logHandler = new LoggingVMAdviceHandler();
+            logHandler = new VMAdviceHandlerLogAdapter();
             logHandler.setTimeOrdered(true);
             logHandler.initialise(phase);
             super.setRemovalTracker(logHandler.getRemovalTracker(state));

@@ -20,35 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.log;
-
-import com.oracle.max.vm.ext.vma.log.txt.sbps.*;
+package com.oracle.max.vm.ext.vma.handlers.log;
 
 /**
- * Factory for controlling which subclass of {@link VMAdviceHandlerLog} is used.
+ * Specification of the file to be used for a persistent log.
+ * The default file name is {@value DEFAULT_LOGFILE} but this
+ * can be changed using the {@value LOGFILE_PROPERTY} system property.
  *
- * The default choice is {@link SBPSCompactTextVMAdviceHandlerLog} but this
- * can be changed with the {@value LOGCLASS_PROPERTY} system property,
- * which should be the fully qualified name of the class.
  */
+public class VMAdviceHandlerLogFile {
+    public static final String LOGFILE_PROPERTY = "max.vma.logfile";
+    public static final String DEFAULT_LOGFILE = "output.vma";
 
-public class VMAdviceHandlerLogFactory {
-    public static final String LOGCLASS_PROPERTY = "max.vma.logger";
-
-    public static VMAdviceHandlerLog create() {
-        VMAdviceHandlerLog result = null;
-        final String logClass = System.getProperty(LOGCLASS_PROPERTY);
-        if (logClass == null) {
-            result = new SBPSCompactTextVMAdviceHandlerLog();
-        } else {
-            try {
-                result = (VMAdviceHandlerLog) Class.forName(logClass).newInstance();
-            } catch (Exception exception) {
-                System.err.println("Error instantiating " + logClass + ": "
-                        + exception);
-            }
+    public static String getLogFile() {
+        String logFile = System.getProperty(LOGFILE_PROPERTY);
+        if (logFile == null) {
+            logFile = DEFAULT_LOGFILE;
         }
-        return result;
+        return logFile;
     }
-
 }

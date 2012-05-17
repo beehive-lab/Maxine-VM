@@ -22,8 +22,8 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.objstate;
 
-import com.oracle.max.vm.ext.vma.handlers.synclog.*;
-import com.oracle.max.vm.ext.vma.handlers.vmlog.*;
+import com.oracle.max.vm.ext.vma.handlers.log.sync.h.*;
+import com.oracle.max.vm.ext.vma.handlers.log.vmlog.h.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;

@@ -20,9 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.log.txt.sbps;
+package com.oracle.max.vm.ext.vma.handlers.log.txt.sbps;
 
-import com.oracle.max.vm.ext.vma.log.txt.*;
+import com.oracle.max.vm.ext.vma.handlers.log.txt.*;
 
 /**
  * A compact variant of {@link SBPSTextVMAdviceHandlerLog} using {@link CompactTextVMAdviceHandlerLog}.

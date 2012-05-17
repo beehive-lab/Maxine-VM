@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.log;
+package com.oracle.max.vm.ext.vma.handlers.log;
 
 import com.oracle.max.vm.ext.vma.*;
 

@@ -20,12 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.vmlog;
+package com.oracle.max.vm.ext.vma.handlers.log.vmlog.h;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.oracle.max.vm.ext.vma.handlers.log.*;
-import com.oracle.max.vm.ext.vma.log.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.log.VMLog.Record;
@@ -58,7 +57,7 @@ public class VMAVMLogger {
 
     static final VMAVMLoggerImpl logger = new VMAVMLoggerImpl();
 
-    static LoggingVMAdviceHandler handler;
+    static VMAdviceHandlerLogAdapter handler;
 
     public static class VMAVMLoggerImpl extends VMAVMLoggerAuto implements VMAdviceHandlerLog.TimeStampGenerator {
 
@@ -73,7 +72,7 @@ public class VMAVMLogger {
             super("VMAdvice");
         }
 
-        public static void setLogHandler(LoggingVMAdviceHandler h) {
+        public static void setLogHandler(VMAdviceHandlerLogAdapter h) {
             handler = h;
         }
 

@@ -39,16 +39,16 @@
  * and simply invokes the corresponding virtual method.
  * <p>
  * The default implementation of {@link com.oracle.max.vm.ext.vma.VMAdviceHandler}
- * is {@link com.oracle.max.vm.ext.vma.handlers.synclog.SyncLogVMAdviceHandler}, which
+ * is {@link com.oracle.max.vm.ext.vma.handlers.log.sync.h.SyncLogVMAdviceHandler}, which
  * performs synchronous logging of the advice events using an instance of
- * {@link com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog}. I.e, the same thread that
+ * {@link com.oracle.max.vm.ext.vma.handlers.log.VMAdviceHandlerLog}. I.e, the same thread that
  * generated the advice is used to log the advice. An asynchronous implementation
  * is available in {@link ASyncVMAdviceHandler}, which stores a representation of the
  * advice data in an internal data structure, and uses a separate thread to process the
  * data. In this case, the decision to log or not is made by the processing thread.
  * <p>
- * Logging to an instance of {@link com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog}
- * is actually factored out into{@link com.oracle.max.vm.ext.vma.handlers.log.LoggingVMAdviceHandler},
+ * Logging to an instance of {@link com.oracle.max.vm.ext.vma.handlers.log.VMAdviceHandlerLog}
+ * is actually factored out into{@link com.oracle.max.vm.ext.vma.handlers.log.VMAdviceHandlerLogAdapter},
  * so that it can be used by both the synchronous and asynchronous implementations.
  * <p>
  * The other component of the runtime that is necessary for persistent recording of the advice
