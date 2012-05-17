@@ -20,44 +20,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.debug.vmlog;
+package com.sun.max.tele.debug;
 
-import com.sun.max.ins.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.log.hosted.*;
 
 
-abstract class VMLogNativeElementsTableModel extends VMLogElementsTableModel {
+public class TeleHostedLogRecord extends VMLogHosted.HostedLogRecord implements Comparable<TeleHostedLogRecord> {
 
-    protected final TeleVMLogNative teleVMLogNative;
-
-    protected VMLogNativeElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {
-        super(inspection, teleVMLog);
-        this.teleVMLogNative = (TeleVMLogNative) teleVMLog;
+    public TeleHostedLogRecord(int id, int header, Word... args) {
+        this.id = id;
+        this.header = header;
+        this.args = args;
     }
 
     /**
-     * Get the size of the record at {@code r}.
-     * Default implementation is fixed length.
-     * @return
+     * For when we can't access VM but need to create a record.
      */
-    protected int nativeRecordSize(Pointer r) {
-        return teleVMLogNative.defaultNativeRecordSize();
-    }
-
-    protected int nativeRecordSize() {
-        return nativeRecordSize(Pointer.zero());
+    public TeleHostedLogRecord() {
+        header = 0;
+        id = 0;
+        args = new Word[0];
     }
 
     @Override
-    protected TeleHostedLogRecord getRecordFromVM(int id) {
-        // native buffer, access directly
-        Pointer recordAddress = getRecordAddress(id);
-        return teleVMLogNative.getLogRecord(recordAddress, id);
+    public void setHeader(int header) {
+        assert false;
     }
 
-    protected abstract Pointer getRecordAddress(long id);
-
+    public int compareTo(TeleHostedLogRecord other) {
+        if (id < other.id) {
+            return -1;
+        } else if (id > other.id) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
 }
-

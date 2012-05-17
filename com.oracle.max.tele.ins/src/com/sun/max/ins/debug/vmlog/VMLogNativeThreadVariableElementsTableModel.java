@@ -23,21 +23,17 @@
 package com.sun.max.ins.debug.vmlog;
 
 import com.sun.max.ins.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.log.VMLog.*;
-import com.sun.max.vm.log.nat.thread.*;
 
 
 class VMLogNativeThreadVariableElementsTableModel extends VMLogNativeThreadElementsTableModel {
-    VMLogNativeThreadVariableElementsTableModel(Inspection inspection, VMLogView vmLogView) {
-        super(inspection, vmLogView);
+    VMLogNativeThreadVariableElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {
+        super(inspection, teleVMLog);
     }
 
     @Override
     protected int nativeRecordSize(Pointer r) {
-        int argCount = Record.getArgCount(vmIO.readInt(r));
-        return VMLogNativeThread.ARGS_OFFSET + argCount * Word.size();
+        return teleVMLogNative.nativeRecordSize(r.asAddress());
     }
 }
-
-

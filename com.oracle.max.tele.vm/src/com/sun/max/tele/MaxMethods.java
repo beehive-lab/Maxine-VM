@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,31 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.debug.vmlog;
 
-import com.sun.max.ins.*;
-import com.sun.max.tele.debug.*;
+package com.sun.max.tele;
+
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.log.java.fix.*;
-
+import com.sun.max.vm.actor.member.*;
 
 /**
- * Model corresponds to {@link VMLogArrayFixed}.
- * Fixed length records stored in fixed length array (circular buffer).
- * So the {@code id} trivially maps to the array index of the associated record.
+ * Access to information about methods in the VM.
  */
-class VMLogArrayElementsTableModel extends VMLogElementsTableModel {
+public interface MaxMethods {
 
-    private final TeleVMLogArray teleVMLogArray;
+    /**
+     * Gets a representation of a method in the VM matching a particular key, null if not loaded.
+     */
+    TeleClassMethodActor findClassMethodActor(MethodKey methodKey);
 
-    protected VMLogArrayElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {
-        super(inspection, teleVMLog);
-        this.teleVMLogArray = (TeleVMLogArray) teleVMLog;
-    }
-
-    @Override
-    protected TeleHostedLogRecord getRecordFromVM(int id) {
-        return teleVMLogArray.getLogRecord(id);
-    }
 }
-
