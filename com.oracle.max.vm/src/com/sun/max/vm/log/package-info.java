@@ -277,7 +277,7 @@
  * {@link com.sun.max.vm.log.VMLog} maintains the global table of {@link com.sun.max.vm.log.VMLogger} instances, and
  * provides the log storage implementation and support for interacting with the garbage collector.
  * The actual log storage implementation is specified by {@code abstract} methods and a particular implementation
- * is chosen at VM image build time. The default implementation is {@link com.sun.max.vm.log.nat.thread.var.VMLogNativeThreadVariable}
+ * is chosen at VM image build time. The default implementation is {@link com.sun.max.vm.log.nat.thread.var.VMLogNativeThreadVariableUnbound}
  * which stores log records in a per-thread native buffer. The other implementation that is provided with Maxine is
  * {@link com.sun.max.vm.log.java.fix.VMLogArrayFixed}, which can be enabled by setting the
  * {@code max.vmlog.class} system property to {@code java.fix.VMLogArrayFixed}. This is an all-Java implementation

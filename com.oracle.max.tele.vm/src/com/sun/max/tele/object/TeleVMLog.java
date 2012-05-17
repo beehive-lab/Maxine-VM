@@ -116,7 +116,7 @@ public class TeleVMLog extends TeleTupleObject {
 
     private VMLogger[] loggers() {
         if (loggers == null) {
-            Reference loggersRef = fields().VMLog_loggers.readReference(vm());
+            Reference loggersRef = fields().VMLog_loggers.readReference(reference());
             TeleArrayObject teleLoggersArray = (TeleArrayObject) objects().makeTeleObject(loggersRef);
             loggers = (VMLogger[]) teleLoggersArray.deepCopy();
         }

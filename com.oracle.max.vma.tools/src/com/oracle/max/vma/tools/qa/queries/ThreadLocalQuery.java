@@ -32,8 +32,8 @@ import java.util.*;
  * N.B. This requires that the trace was generated with read tracking.
  */
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
 import com.oracle.max.vma.tools.qa.*;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 public class ThreadLocalQuery extends QueryBase {
 
@@ -49,7 +49,7 @@ public class ThreadLocalQuery extends QueryBase {
                 final Set<ThreadRecord> threads = accessedByAnotherThread(obj);
                 if (threads != null) {
                     for (ThreadRecord thread : threads) {
-                        ps.println("object " + obj.getId() + " is accessed by thread " + thread);
+                        ps.printf("object %s created by '%s' is accessed by '%s'%n", obj.getId(), obj.thread, thread);
                     }
                 }
             }

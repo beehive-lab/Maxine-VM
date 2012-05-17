@@ -29,6 +29,7 @@ import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.nat.thread.*;
+import com.sun.max.vm.log.nat.thread.var.std.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -81,14 +82,14 @@ public class TeleThreadVMLog extends AbstractVmHolder implements MaxThreadVMLog 
             if (tla != null) {
                 final int logSize = teleVMLogNative.logSize();
                 for (VmThreadLocal vmtl : tla.values()) {
-                    if (vmtl.name.equals(VMLogNativeThread.VMLOG_BUFFER_NAME)) {
+                    if (vmtl.name.equals(VMLogNativeThreadVariableStd.VMLOG_BUFFER_NAME)) {
                         MaxThreadLocalVariable tlaBuf = tla.getThreadLocalVariable(vmtl.index);
                         Address addr = tlaBuf.value().toWord().asAddress();
                         if (addr.isNotZero()) {
                             vmLogMemoryRegion = new VMLogMemoryRegion(vm(), this, entityName + " VMLog", addr, logSize);
                             vm().addressSpace().add(vmLogMemoryRegion);
                         }
-                    } else if (vmtl.name.equals(VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME)) {
+                    } else if (vmtl.name.equals(VMLogNativeThreadVariableStd.VMLOG_BUFFER_OFFSETS_NAME)) {
                         bufOffsets = tla.getThreadLocalVariable(vmtl.index);
                     }
                 }

@@ -38,7 +38,7 @@ public class Package extends BootImagePackage {
     }
 
     private static boolean isPartOfMaxineVM() {
-        return VMLog.Factory.is("java.fix.VMLogArrayFixed") || VMLog.Factory.is("java.var.VMLogArrayVariable");
+        return VMLog.Factory.contains("VMLogArray");
     }
 
 }

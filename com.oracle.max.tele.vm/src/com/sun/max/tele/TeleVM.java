@@ -283,7 +283,9 @@ public abstract class TeleVM implements MaxVM {
         public Options() {
             heapOption = newStringOption("heap", "1024", "Relocation address for the heap and code in the boot image.");
             vmArguments = newStringOption("a", "", "Specifies the arguments to the target VM.");
-            addOptions(BootImageGenerator.targetVMDirOptions);
+            // We do not want to check the auto generated code for consistency (by default), so change default value
+            BootImageGenerator.checkGeneratedCodeOption.setDefaultValue(false);
+            addOptions(BootImageGenerator.inspectorSharedOptions);
         }
     }
 
@@ -485,11 +487,11 @@ public abstract class TeleVM implements MaxVM {
                         bootImageConfig.layoutPackage,
                         bootImageConfig.heapPackage,
                         bootImageConfig.monitorPackage,
-                        bootImageConfig.runPackage);
+                        bootImageConfig.runPackage).gatherBootImagePackages();
         vm = new MaxineVM(config);
         MaxineVM.set(vm);
         config.loadAndInstantiateSchemes(bootImageConfig.vmSchemes());
-        JavaPrototype.initialize();
+        JavaPrototype.initialize(BootImageGenerator.checkGeneratedCodeOption.getValue());
     }
 
     /**

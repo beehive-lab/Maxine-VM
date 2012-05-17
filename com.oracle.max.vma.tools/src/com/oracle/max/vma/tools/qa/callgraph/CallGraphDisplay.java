@@ -27,10 +27,8 @@ import javax.swing.tree.*;
 import javax.swing.event.*;
 import javax.swing.SpringLayout;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.ObjectMethodAdviceRecord;
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.RecordType;
 import com.oracle.max.vma.tools.qa.*;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 import java.io.*;
 import java.util.*;

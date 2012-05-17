@@ -36,4 +36,8 @@ public interface MaxMethods {
      */
     TeleClassMethodActor findClassMethodActor(MethodKey methodKey);
 
+    /**
+     * Gets a representation of a method in the VM matching a particular key, null if not loaded.
+     */
+    TeleMethodActor findMethodActor(MethodKey methodKey);
 }
