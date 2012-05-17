@@ -108,6 +108,11 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      */
     MaxHeap heap();
 
+    /*
+     * @returns access to method descriptions in the VM.
+     */
+    MaxMethods methods();
+
     /**
      * @return access to the VM's cache of compiled code
      */
@@ -160,6 +165,11 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @return the singleton manager for information about threads in the VM.
      */
     MaxThreadManager threadManager();
+
+    /**
+     * @return access to the {@link VMLog} object in the VM.
+     */
+    TeleVMLog vmLog();
 
     /**
      * An immutable summary of the VM state as of the most recent state transition.

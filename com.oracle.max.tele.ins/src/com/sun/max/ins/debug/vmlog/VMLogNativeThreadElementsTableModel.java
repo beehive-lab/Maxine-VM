@@ -26,6 +26,8 @@ import java.util.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.nat.thread.*;
@@ -39,49 +41,48 @@ import com.sun.max.vm.log.nat.thread.*;
  */
 class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel {
 
-    protected int vmLogBufferNextIdIndex;
     /**
      * This records the log records for all threads, including those that have died.
      */
-    protected final HashMap<MaxThreadVMLog, ArrayList<HostedLogRecord>> threadVMLogs = new HashMap<MaxThreadVMLog, ArrayList<HostedLogRecord>>();
+    protected final HashMap<MaxThreadVMLog, ArrayList<TeleHostedLogRecord>> threadVMLogs = new HashMap<MaxThreadVMLog, ArrayList<TeleHostedLogRecord>>();
 
-    private HostedLogRecord[] sortedCache;
+    private TeleHostedLogRecord[] sortedCache;
 
     private Pointer recordAddress;
 
-    protected VMLogNativeThreadElementsTableModel(Inspection inspection, VMLogView vmLogView) {
-        super(inspection, vmLogView);
+    protected VMLogNativeThreadElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {
+        super(inspection, teleVMLog);
     }
 
     @Override
     protected void modelSpecificRefresh() {
         // look at every active thread's buffer for new records
-        for (MaxThread thread : vm.state().threads()) {
-            MaxThreadVMLog vmLog = thread.vmLog();
-            if (vmLog.memoryRegion() == null) {
+        for (MaxThread thread : vm().state().threads()) {
+            MaxThreadVMLog threadVmLog = thread.vmLog();
+            if (threadVmLog.memoryRegion() == null) {
                 continue;
             }
-            ArrayList<HostedLogRecord> threadLogRecordCache = threadVMLogs.get(vmLog);
+            ArrayList<TeleHostedLogRecord> threadLogRecordCache = threadVMLogs.get(threadVmLog);
             if (threadLogRecordCache ==  null) {
-                threadLogRecordCache = new ArrayList<HostedLogRecord>(vmLogView.logBufferEntries);
-                threadVMLogs.put(vmLog, threadLogRecordCache);
+                threadLogRecordCache = new ArrayList<TeleHostedLogRecord>(teleVMLogNative.logEntries());
+                threadVMLogs.put(threadVmLog, threadLogRecordCache);
             }
 
             int threadLastId = threadLogRecordCache.size() == 0 ? -1 : threadLogRecordCache.get(threadLogRecordCache.size() - 1).getId();
 
-            Pointer logBuffer = vmLog.start().asPointer();
-            int size = vmLog.size();
+            Pointer logBuffer = threadVmLog.start().asPointer();
+            int size = threadVmLog.size();
             Pointer logBufferEnd = logBuffer.plus(size);
 
-            int offset = vmLog.firstOffset();
-            int nextOffset = vmLog.nextOffset();
+            int offset = threadVmLog.firstOffset();
+            int nextOffset = threadVmLog.nextOffset();
             do {
                 recordAddress = logBuffer.plus(offset);
                 assert recordAddress.lessThan(logBufferEnd);
-                int header = vmIO.readInt(recordAddress);
+                int header = vm().memoryIO().readInt(recordAddress);
                 // variable length records can cause holes
                 if (!Record.isFree(header)) {
-                    int sharedId = vmIO.readInt(recordAddress, VMLogNativeThread.ID_OFFSET);
+                    int sharedId = vm().memoryIO().readInt(recordAddress, VMLogNativeThread.ID_OFFSET);
                     if (sharedId > threadLastId) {
                         threadLogRecordCache.add(getRecordFromVM(sharedId));
                     }
@@ -91,13 +92,13 @@ class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel 
         }
 
         int sortedCacheSize = 0;
-        for (ArrayList<HostedLogRecord> threadLogRecordCache : threadVMLogs.values()) {
+        for (ArrayList<TeleHostedLogRecord> threadLogRecordCache : threadVMLogs.values()) {
             sortedCacheSize += threadLogRecordCache.size();
         }
-        sortedCache = new HostedLogRecord[sortedCacheSize];
+        sortedCache = new TeleHostedLogRecord[sortedCacheSize];
         sortedCacheSize = 0;
-        for (ArrayList<HostedLogRecord> threadLogRecordCache : threadVMLogs.values()) {
-            for (HostedLogRecord r : threadLogRecordCache) {
+        for (ArrayList<TeleHostedLogRecord> threadLogRecordCache : threadVMLogs.values()) {
+            for (TeleHostedLogRecord r : threadLogRecordCache) {
                 sortedCache[sortedCacheSize++] = r;
             }
         }

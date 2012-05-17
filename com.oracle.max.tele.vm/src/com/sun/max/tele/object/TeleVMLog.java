@@ -23,18 +23,104 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Exists solely to truncate the deep copy.
+ * Access to the VM's singleton object that manages the {@linkplain VMLog log}.
+ * <p>
+ * Truncates the deep copy.
+ *
+ * @see VMLog
  */
 public class TeleVMLog extends TeleTupleObject {
-    protected TeleVMLog(TeleVM vm, Reference vmLogReference) {
-        super(vm, vmLogReference);
+
+    private static TeleVMLog vmLog = null;
+
+    /**
+     * Gets the singleton object in the VM that manages the log.
+     */
+    public static TeleVMLog getVMLog(TeleVM vm) {
+        if (vmLog == null) {
+            final Reference vmLogRef = vm.fields().VMLog_vmLog.readReference(vm);
+            if (vmLogRef != null) {
+                vmLog = (TeleVMLog) vm.objects().makeTeleObject(vmLogRef);
+            }
+        }
+        return vmLog;
     }
 
+    private final int logEntries;
+
+    private int nextID;
+
+    /**
+     * The deep-copied set of {@link VMLogger} instances, used for operation/argument customization.
+     */
+    private VMLogger[] loggers = null;
+
+    protected TeleVMLog(TeleVM vm, Reference vmLogReference) {
+        super(vm, vmLogReference);
+        this.logEntries = fields().VMLog_logEntries.readInt(vmLogReference);
+        this.nextID = fields().VMLog_nextId.readInt(vmLogReference);
+    }
+
+    @Override
+    protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        if (!super.updateObjectCache(epoch, statsPrinter)) {
+            return false;
+        }
+        this.nextID = fields().VMLog_nextId.readInt(reference());
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Truncate deep copy.
+     */
     @Override
     public Object createDeepCopy(DeepCopier context) {
         return null;
     }
+
+    /**
+     * The value of {@link VMLog#logEntries}, which is set at image build time.
+     * For implementations with a shared global buffer and fixed size log records
+     * this value is the largest number of records that can be in existence.
+     * However, for per-thread buffers and/or variable size log records,
+     * it may be an underestimate.
+     */
+    public int logEntries() {
+        return logEntries;
+    }
+
+    /**
+     * Monotonically increasing global unique id for a log record.
+     * Incremented every time {@link #getRecord(int)} is invoked.
+     *
+     * @see VMLog
+     */
+    public int nextID() {
+        return nextID;
+    }
+
+    public VMLogger getLogger(int id) {
+        for (VMLogger logger : loggers()) {
+            if (logger != null && logger.loggerId == id) {
+                return logger;
+            }
+        }
+        return null;
+    }
+
+    private VMLogger[] loggers() {
+        if (loggers == null) {
+            Reference loggersRef = fields().VMLog_loggers.readReference(vm());
+            TeleArrayObject teleLoggersArray = (TeleArrayObject) objects().makeTeleObject(loggersRef);
+            loggers = (VMLogger[]) teleLoggersArray.deepCopy();
+        }
+        return loggers;
+    }
+
 }

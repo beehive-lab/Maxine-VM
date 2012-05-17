@@ -66,6 +66,14 @@ public final class VmMemoryIO extends AbstractVmHolder implements MaxMemoryIO {
         access.readFully(address, bytes);
     }
 
+    public int readInt(Address address) {
+        return access.readInt(address);
+    }
+
+    public int readInt(Address address, int offset) {
+        return access.readInt(address, offset);
+    }
+
     /**
      * @return extended access to low-level reading and writing of memory in the VM.
      */
@@ -124,27 +132,6 @@ public final class VmMemoryIO extends AbstractVmHolder implements MaxMemoryIO {
      */
     public byte readByte(Address address, int offset) {
         return access.readByte(address, offset);
-    }
-
-    /**
-     * Reads an {@code int} from VM memory.
-     *
-     * @param address a location in VM memory
-     * @return the current contents of VM memory at that location as an int
-     */
-    public int readInt(Address address) {
-        return access.readInt(address);
-    }
-
-    /**
-     * Reads an {@code int} from VM memory.
-     *
-     * @param address a location in VM memory
-     * @param offset from the location at which to read
-     * @return the current contents of VM memory at that location as an int
-     */
-    public int readInt(Address address, int offset) {
-        return access.readInt(address, offset);
     }
 
     /**

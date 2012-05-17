@@ -37,16 +37,11 @@ import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPrefe
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.field.*;
-import com.sun.max.tele.heap.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -101,39 +96,12 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
     private int[] filterMatchingRows = null;
     private static Component emptyStringRenderer;
 
-    final Reference vmLogRef;
-    private final TeleObject vmLog;
-    final TeleInstanceIntFieldAccess nextIdFieldAccess;
-    /**
-     * Defines the actual {@link VMLog} subclass in the target VM.
-     * Used to select the correct {@link VMLogElementsTableModel}.
-     */
-    private final ClassActor vmLogClassActor;
-    /**
-     * Copy of {@link VMLog#logEntries}, which is set at image build time.
-     * For implementations with a shared global buffer and fixed size log records
-     * this value is the largest number of records that can be in existence.
-     * However, for per-thread buffers and/or variable size log records,
-     * it may be an underestimate.
-     */
-    final int logBufferEntries;
-    /**
-     * The deep-copied set of {@link VMLogger} instances, used for operation/argument customization.
-     */
-    final VMLogger[] loggers;
+    private final TeleVMLog vmLog;
 
     @SuppressWarnings("unchecked")
     VMLogView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
-        TeleVM vm = (TeleVM) vm();
-        vmLogRef = vm.fields().VMLog_vmLog.readReference(vm);
-        vmLog = VmObjectAccess.make(vm).makeTeleObject(vmLogRef);
-        vmLogClassActor = vmLog.classActorForObjectType();
-        logBufferEntries = vm.fields().VMLog_logEntries.readInt(vmLogRef);
-        nextIdFieldAccess = vm.fields().VMLog_nextId;
-        Reference loggersRef = vm.fields().VMLog_loggers.readReference(vm);
-        TeleArrayObject teleLoggersArray = (TeleArrayObject) VmObjectAccess.make(vm).makeTeleObject(loggersRef);
-        loggers = (VMLogger[]) teleLoggersArray.deepCopy();
+        vmLog = inspection().vm().vmLog();
         emptyStringRenderer = new PlainLabel(inspection, "");
         viewPreferences = LogViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
@@ -155,15 +123,6 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
         viewMenu.add(showFilterCheckboxMenuItem);
         viewMenu.addSeparator();
         viewMenu.add(defaultViewMenuItems);
-    }
-
-    VMLogger getLogger(int id) {
-        for (VMLogger logger : loggers) {
-            if (logger != null && logger.loggerId == id) {
-                return logger;
-            }
-        }
-        return null;
     }
 
     private final RowMatchListener rowMatchListener = new RowMatchListener() {
@@ -242,17 +201,24 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
         reconstructView();
     }
 
+    /**
+     * @return the log being viewed
+     */
+    public TeleVMLog vmLog() {
+        return vmLog;
+    }
+
     private static class VMLogElementsTable extends InspectorTable {
         private VMLogView vmLogView;
 
         VMLogElementsTable(Inspection inspection, VMLogView vmLogView) {
             super(inspection);
             this.vmLogView = vmLogView;
-            String vmLogClassName = vmLogView.vmLogClassActor.simpleName();
+            String vmLogClassName = vmLogView.vmLog().classActorForObjectType().simpleName();
             try {
                 Class<?> klass = Class.forName(VMLogView.class.getPackage().getName() + "." + vmLogClassName + "ElementsTableModel");
-                Constructor<?> cons = klass.getDeclaredConstructor(Inspection.class, VMLogView.class);
-                vmLogView.tableModel = (VMLogElementsTableModel) cons.newInstance(inspection, vmLogView);
+                Constructor<?> cons = klass.getDeclaredConstructor(Inspection.class, TeleVMLog.class);
+                vmLogView.tableModel = (VMLogElementsTableModel) cons.newInstance(inspection, vmLogView.vmLog);
             } catch (Exception ex) {
                 TeleError.unexpected("Exception instantiating VMLog subclass: " + vmLogClassName, ex);
             }
@@ -419,7 +385,7 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
                 int key = loggerId << 16 | op;
                 renderer = operationRenderers.get(key);
                 if (renderer == null) {
-                    VMLogger logger = vmLogView.getLogger(loggerId);
+                    VMLogger logger = vmLogView.vmLog().getLogger(loggerId);
                     renderer = new PlainLabel(vmLogView.inspection(), logger.name + "." + logger.operationName(op));
                     operationRenderers.put(key, renderer);
                 }
@@ -450,7 +416,7 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
                 }
 
                 long argValue = ((Word) value).value;
-                VMLogArgRenderer vmLogArgRenderer = VMLogArgRendererFactory.getArgRenderer(vmLogView.getLogger(VMLog.Record.getLoggerId(header)).name, vmLogView);
+                VMLogArgRenderer vmLogArgRenderer = VMLogArgRendererFactory.getArgRenderer(vmLogView.vmLog().getLogger(VMLog.Record.getLoggerId(header)).name, vmLogView);
                 renderer = vmLogArgRenderer.getRenderer(header, argNum, argValue);
                 vmLogView.tableModel.setRenderer(row, column, renderer);
             }

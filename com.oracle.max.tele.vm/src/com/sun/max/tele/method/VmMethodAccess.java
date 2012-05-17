@@ -50,7 +50,7 @@ import com.sun.max.vm.type.*;
  * by executing the {@link #main(String[])} method in this class (ensuring that the VM
  * class path contains all the {@code com.sun.max} classes).
  */
-public final class VmMethodAccess extends AbstractVmHolder {
+public final class VmMethodAccess extends AbstractVmHolder implements MaxMethods {
 
     private static final int TRACE_VALUE = 1;
 
@@ -192,9 +192,6 @@ public final class VmMethodAccess extends AbstractVmHolder {
         return gcAllocating;
     }
 
-    /**
-     * Gets a representation of a method in the VM matching a particular key, null if not loaded.
-     */
     public TeleClassMethodActor findClassMethodActor(MethodKey methodKey) {
         if (vm().tryLock()) {
             try {

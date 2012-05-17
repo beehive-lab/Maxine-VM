@@ -65,25 +65,27 @@ public class TeleThreadVMLog extends AbstractVmHolder implements MaxThreadVMLog 
     private final String entityDescription;
     MaxThreadLocalVariable bufOffsets;
     private int lastId;
+    private final TeleVMLogNative teleVMLogNative;
 
     public TeleThreadVMLog(TeleVM vm, TeleNativeThread teleNativeThread) {
         super(vm);
         this.teleNativeThread = teleNativeThread;
         this.entityName = "VM log for Thread-" + teleNativeThread.localHandle();
         this.entityDescription = "VM log for the thread named " + teleNativeThread.entityName();
+        this.teleVMLogNative = (TeleVMLogNative) vm.vmLog();
     }
 
     public void updateCache(long epoch) {
         if (vmLogMemoryRegion == null) {
             MaxThreadLocalsArea tla = teleNativeThread.localsBlock().tlaFor(SafepointPoll.State.ENABLED);
             if (tla != null) {
+                final int logSize = teleVMLogNative.logSize();
                 for (VmThreadLocal vmtl : tla.values()) {
                     if (vmtl.name.equals(VMLogNativeThread.VMLOG_BUFFER_NAME)) {
                         MaxThreadLocalVariable tlaBuf = tla.getThreadLocalVariable(vmtl.index);
                         Address addr = tlaBuf.value().toWord().asAddress();
                         if (addr.isNotZero()) {
-                            int size = vm().fields().VMLogNative_logSize.readInt(vm().fields().VMLog_vmLog.readReference(vm()));
-                            vmLogMemoryRegion = new VMLogMemoryRegion(vm(), this, entityName + " VMLog", addr, size);
+                            vmLogMemoryRegion = new VMLogMemoryRegion(vm(), this, entityName + " VMLog", addr, logSize);
                             vm().addressSpace().add(vmLogMemoryRegion);
                         }
                     } else if (vmtl.name.equals(VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME)) {

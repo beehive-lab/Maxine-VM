@@ -63,7 +63,7 @@ public class DefaultVMLogArgRenderer extends VMLogArgRenderer {
     @Override
     protected Component getRenderer(int header, int argNum, long argValue) {
         int op = Record.getOperation(header);
-        VMLogger vmLogger = vmLogView.getLogger(Record.getLoggerId(header));
+        VMLogger vmLogger = vmLogView.vmLog().getLogger(Record.getLoggerId(header));
         String inspectedArg = vmLogger.inspectedArgValue(op, argNum, Address.fromLong(argValue));
         if (inspectedArg != null) {
             return new PlainLabel(vmLogView.inspection(), inspectedArg);
@@ -85,7 +85,6 @@ public class DefaultVMLogArgRenderer extends VMLogArgRenderer {
             }
         }
         return defaultRenderer(argValue);
-
     }
 
     private Component getRenderer(Class klass, long argValue) {
@@ -161,7 +160,6 @@ public class DefaultVMLogArgRenderer extends VMLogArgRenderer {
             }
         }
         return null;
-
     }
 
 }
