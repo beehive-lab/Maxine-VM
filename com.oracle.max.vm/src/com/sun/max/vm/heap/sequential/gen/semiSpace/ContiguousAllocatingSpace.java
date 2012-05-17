@@ -22,20 +22,23 @@
  */
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.runtime.*;
 
 
 public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<? extends Refiller>> implements HeapSpace {
     /**
      * Contiguous space used for allocation.
      */
+    @INSPECTED
     protected ContiguousHeapSpace space;
     /**
      * Allocator that allocates cells from the toSpace.
      */
+    @INSPECTED
     protected T allocator;
-
 
     ContiguousAllocatingSpace(T allocator) {
         this.allocator = allocator;
@@ -45,24 +48,33 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         return allocator;
     }
 
+    public void initialize(Address start, Size maxSize, Size initialSize) {
+        space.reserve(start, maxSize);
+        space.growCommittedSpace(initialSize);
+    }
+
     @Override
     public Size growAfterGC(Size delta) {
-        // TODO Auto-generated method stub
-        return null;
+        FatalError.unimplemented();
+        return Size.zero();
     }
     @Override
     public Size shrinkAfterGC(Size delta) {
         // TODO Auto-generated method stub
-        return null;
+        FatalError.unimplemented();
+        return Size.zero();
     }
+
     @Override
     public Size totalSpace() {
         return space.committedSize();
     }
+
     @Override
     public Size capacity() {
         return space.size();
     }
+
     @Override
     public Pointer allocate(Size size) {
         return allocator.allocateCleared(size);
@@ -73,6 +85,7 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         // based on the code for TLAB overflow handling.
         return allocator.allocateCleared(size);
     }
+
     @Override
     public boolean contains(Address address) {
         return space.inCommittedSpace(address);
@@ -98,8 +111,7 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     }
     @Override
     public void visit(HeapSpaceRangeVisitor visitor) {
-        // TODO Auto-generated method stub
-
+        FatalError.unimplemented();
     }
 
 
