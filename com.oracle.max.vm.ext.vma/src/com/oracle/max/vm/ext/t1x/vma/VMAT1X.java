@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,10 +27,12 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.util.*;
 
+import com.oracle.max.vm.ext.c1x.vma.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.cri.ci.CiStatistics;
 import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.compiler.*;
@@ -44,7 +46,7 @@ import com.sun.max.vm.compiler.target.TargetMethod;
  * per-bytecode level, we create two sets of additional templates one with just before
  * advice and one with just after advice.
  *
- * The {@link VMAT1X} instance has access to the standard templates array via the {@link #altT1X} field.
+ * The {@link VMAT1X} instance has access to the standard templates array via the {@link #stdT1X} field.
  * The {@link #templates} array for the instance has both before and after advice generated.
  * The {@link #beforeTemplates} array has the templates with only before advice.
  * The {@link #afterTemplates} array has the templates with only after advice.
@@ -64,26 +66,27 @@ public class VMAT1X extends T1X {
 
     @HOSTED_ONLY
     public VMAT1X() {
-        super(VMAdviceBeforeAfterTemplateSource.class, getDefaultT1X(), new VMAT1XCompilationFactory());
+        super(VMAdviceBeforeAfterTemplateSource.class, getDefaultT1X());
     }
 
-    private static T1X getDefaultT1X() {
-        // TODO if opt is T1X use it
-        final T1X t1x = new T1X();
-        return t1x;
+    private static T1XCompilationFactory getDefaultT1X() {
+        new T1X();
+        return new VMAT1XCompilationFactory();
     }
 
     @Override
     public void initialize(Phase phase) {
         instrumenting = VMAOptions.initialize(phase);
-        altT1X.initialize(phase);
+        stdT1X.initialize(phase);
         if (isHosted() && phase == Phase.HOSTED_COMPILING) {
             super.initialize(phase);
             RuntimeCompiler compiler = createBootCompiler();
             templateSource = BeforeTemplateSourceClass;
-            beforeTemplates = createTemplates(compiler, templateSource, altT1X, true, null);
+            beforeTemplates = createTemplates(compiler, templateSource, true, null);
             templateSource = AfterTemplateSourceClass;
-            afterTemplates = createTemplates(compiler, templateSource, altT1X, true, null);
+            afterTemplates = createTemplates(compiler, templateSource, true, null);
+            VMAC1X vmaC1X = (VMAC1X) MaxineVM.vm().compilationBroker.optimizingCompiler;
+            vmaC1X.setVMAT1X(this);
         } else {
             super.initialize(phase);
         }
@@ -94,12 +97,12 @@ public class VMAT1X extends T1X {
         if (instrumenting && VMAOptions.instrumentForAdvising(method)) {
             return super.compile(method, isDeopt, install, stats);
         } else {
-            return altT1X.compile(method, false, install, stats);
+            return stdT1X.compile(method, false, install, stats);
         }
     }
 
     T1X getAltT1X() {
-        return altT1X;
+        return stdT1X;
     }
 
     // These will eventually be implemented

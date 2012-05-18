@@ -103,34 +103,57 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      * This is caught by the refiller of the old generation allocator, which in this case allocate space directly in the second semi-space.
      */
     final class GenCollection extends GCOperation {
-        private int minSurvivingPercent = 15; // arbitrary for now
+        private int minSurvivingPercent = 15; // expected percentage of survivors. Arbitrary for now
 
         GenCollection() {
             super("GenCollection");
         }
-        private void verifyAfterEvacuation() {
+        private void verifyAfterMinorCollection() {
             // Verify that:
             // 1. offset table is correctly setup
             // 2. there are no pointer from old to young.
-            // 3. cards are all cleaned (except for those holding special references, which may have been dirtied during reference discovery)
             oldSpace.visit(fotVerifier);
-            oldSpace.visit(noYoungReferencesVerifier);
+            noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
+            oldSpace.visit(noFromSpaceReferencesVerifiers);
         }
+
+        private void verifyAfterFullCollection() {
+            oldSpace.visit(fotVerifier);
+            noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
+            oldSpace.visit(noFromSpaceReferencesVerifiers);
+        }
+
         private void doOldGenCollection() {
-            FatalError.unimplemented();
             youngSpaceEvacuator.doBeforeGC();
-            youngSpace.doBeforeGC();
-            oldSpace.doBeforeGC();
-            // NOTE: counter must be incremented before a heap phase change  RECLAIMING -> ANALYZING.
+            // NOTE: counter must be incremented before a heap phase change  to ANALYZING.
             fullCollectionCount++;
-            oldSpace.doAfterGC();
+            oldSpace.flipSpaces();
+            oldSpaceEvacuator.setGCOperation(this);
+            oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
+            oldSpaceEvacuator.evacuate();
+            final CardFirstObjectTable fot = cardTableRSet.cfoTable;
+            final int startIndex = fot.tableEntryIndex(oldSpace.fromSpace.start());
+            final int endIndex = fot.tableEntryIndex(oldSpace.fromSpace.committedEnd());
+            fot.clear(startIndex, endIndex);
+            cardTableRSet.cardTable.clean(startIndex, endIndex);
             youngSpaceEvacuator.doAfterGC();
+            oldSpaceEvacuator.setGCOperation(null);
         }
 
         private Size estimatedNextEvac() {
-            Size min = youngSpace.totalSpace().dividedBy(100).times(minSurvivingPercent);
-            Size lastSurvivorCount = youngSpaceEvacuator.evacuatedBytes();
+            final Size min = youngSpace.totalSpace().dividedBy(100).times(minSurvivingPercent);
+            final Size lastSurvivorCount = youngSpaceEvacuator.evacuatedBytes();
             return lastSurvivorCount.greaterThan(min) ? lastSurvivorCount : min;
+        }
+
+        private void resize(HeapSpace space, Size newSize) {
+            if (newSize.lessThan(space.totalSpace())) {
+                Size delta = space.totalSpace().minus(newSize);
+                space.shrinkAfterGC(delta);
+            } else if (newSize.greaterThan(space.totalSpace())) {
+                Size delta = newSize.minus(space.totalSpace());
+                space.growAfterGC(delta);
+            }
         }
 
         @Override
@@ -140,16 +163,21 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             if (Heap.verbose()) {
                 Log.println("--Begin nursery evacuation");
             }
+            youngSpaceEvacuator.setGCOperation(this);
+            youngSpaceEvacuator.setEvacuationBufferSize(oldSpace.freeSpace());
             youngSpaceEvacuator.evacuate();
+            youngSpaceEvacuator.setGCOperation(null);
             if (Heap.verbose()) {
                 Log.println("--End nursery evacuation");
             }
             if (VerifyAfterGC) {
-                verifyAfterEvacuation();
+                verifyAfterMinorCollection();
             }
-            Size estimatedEvac = estimatedNextEvac();
-            Size freeSpace = oldSpace.freeSpace();
-            if (estimatedEvac.greaterThan(freeSpace)) {
+            final Size estimatedEvac = estimatedNextEvac();
+            if (resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace())) {
+                // Force a temporary transition to MUTATING state.
+                // This simplifies the inspector's maintenance of references state and GC counters.
+                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
                 if (Heap.verbose()) {
                     Log.println("--Begin old geneneration collection");
                 }
@@ -157,15 +185,15 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 if (Heap.verbose()) {
                     Log.println("--End   old geneneration collection");
                 }
-
                 if (VerifyAfterGC) {
-                    verifyAfterEvacuation();
+                    verifyAfterFullCollection();
                 }
-                freeSpace = oldSpace.freeSpace();
-                if (estimatedEvac.greaterThan(freeSpace)) {
-                    FatalError.unimplemented();
+                if (resizingPolicy.resizeAfterFullGC(estimatedEvac, oldSpace.freeSpace())) {
+                    resize(youngSpace, resizingPolicy.youngGenSize());
+                    resize(oldSpace, resizingPolicy.oldGenSize());
                 }
             }
+            vmConfig().monitorScheme().afterGarbageCollection();
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
         }
     }
@@ -187,7 +215,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     /**
      * Policy for resizing the heap after each GC.
      */
-    private GenHeapSizingPolicy heapResizingPolicy;
+    private final GenSSHeapSizingPolicy resizingPolicy;
 
     /**
      * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
@@ -204,16 +232,22 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      * Implementation of young space evacuation. Used by minor collection operations.
      */
     @INSPECTED
-    private final NoAgingEvacuator youngSpaceEvacuator;
+    private final NoAgingNurseryEvacuator youngSpaceEvacuator;
+
+    @INSPECTED
+    private final EvacuatorToCardSpace oldSpaceEvacuator;
 
     @INSPECTED
     private int fullCollectionCount;
 
     /**
-     * Support for heap verification. All live objects are evacuated to the old space on minor collection.
+     * Support for heap verification. All live objects are evacuated to the old to space on minor collection.
      * There should remain no references from the old space to the young space.
+     * Similarly, all live objects are evacuated from the old "from" space on full collection.
+     * There should remain no references from the old "to" space to the old "from" space.
+     * This verifier can be used for both verification.
      */
-    private final NoYoungReferenceVerifier noYoungReferencesVerifier;
+    private final NoEvacuatedSpaceReferenceVerifier noFromSpaceReferencesVerifiers;
 
     /**
      * Verify that the FOT table is correctly setup.
@@ -227,11 +261,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             new AtomicBumpPointerAllocator<YoungSpaceRefiller>(new YoungSpaceRefiller());
         CardSpaceAllocator<OldSpaceRefiller> tenuredAllocator =
             new CardSpaceAllocator<GenSSHeapScheme.OldSpaceRefiller>(new OldSpaceRefiller(), cardTableRSet);
-
+        resizingPolicy = new GenSSHeapSizingPolicy();
         youngSpace = new ContiguousAllocatingSpace<AtomicBumpPointerAllocator<YoungSpaceRefiller>>(nurseryAllocator, "Young Generation");
         oldSpace = new ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>>(tenuredAllocator, "Old Generation");
-        youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet);
-        noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
+        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, cardTableRSet);
+        oldSpaceEvacuator = new  EvacuatorToCardSpace(oldSpace.fromSpace, oldSpace, cardTableRSet);
+        noFromSpaceReferencesVerifiers = new NoEvacuatedSpaceReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
     }
@@ -249,8 +284,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     @Override
     public boolean collectGarbage(Size requestedFreeSpace) {
-        genCollection.submit();
-        return true;
+        if ((requestedFreeSpace.isZero() && !DisableExplicitGC) || youngSpace.freeSpace().lessThan(requestedFreeSpace)) {
+            if (!Heap.gcDisabled()) {
+                genCollection.submit();
+            }
+        }
+        return oldSpace.freeSpace().plus(youngSpace.freeSpace()).greaterThan(requestedFreeSpace);
     }
 
     @Override
@@ -299,12 +338,21 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         try {
             // Use immortal memory for now.
             Heap.enableImmortalMemoryAllocation();
-            heapResizingPolicy = new FixedRatioGenHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
-            youngSpace.initialize(firstUnusedByteAddress, heapResizingPolicy.maxYoungGenSize(), heapResizingPolicy.initialYoungGenSize());
+            resizingPolicy.initialize(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
+            youngSpace.initialize(firstUnusedByteAddress, resizingPolicy.maxYoungGenSize(), resizingPolicy.initialYoungGenSize());
             Address startOfOldSpace = youngSpace.space.end().alignUp(pageSize);
-            oldSpace.initializeAlignment(pageSize);
-            oldSpace.initialize(startOfOldSpace, heapResizingPolicy.maxOldGenSize(), heapResizingPolicy.initialOldGenSize());
-            youngSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256));
+            oldSpace.initialize(startOfOldSpace, resizingPolicy.maxOldGenSize(), resizingPolicy.initialOldGenSize());
+            /*
+             * FIXME:
+             * We set retireAfterEvacuation parameter to true. We allocate the entire old free space as evacuation LAB when doing a minor evacuation,
+             * and retire the entire left over. This is necessary in order for the oldSpace.freeSpace to report the free space accurately independently
+             * of the youngSpaceEvacuator (otherwise, we'd have to include the evacuator's ELAB in the calculation). It is also necessary to
+             * retire the TLAB if we need mutators to allocate directly in the old gen.
+             * This is rather complicated and we need to rethink the APIs here and how to share the evacuator.
+              * An alternative would be to allocate an ELAB of size equal to the expected survivor space minus leftover in the current ELAB, but that isn't satisfying either.
+            */
+            youngSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256), true);
+            oldSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256), true);
             initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
             cardTableRSet.initializeXirStartupConstants();
 

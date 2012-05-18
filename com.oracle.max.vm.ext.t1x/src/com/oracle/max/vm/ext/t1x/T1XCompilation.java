@@ -1506,7 +1506,7 @@ public abstract class T1XCompilation {
             assignObject(0, "method", method.toString() + "}");
             finish();
         }
-        if (method.holder() == ClassRegistry.OBJECT) {
+        if (method.holder() == ClassRegistry.OBJECT && method.isInitializer()) {
             start(RETURN$registerFinalizer);
             loadObject(0, "object", 0);
             finish();

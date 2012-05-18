@@ -1081,6 +1081,7 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
             Safepoint, ScanThread, SetReferenceMapBits, StackSlot,
             Start, StartThreadLocals, ThreadSlotRange;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 

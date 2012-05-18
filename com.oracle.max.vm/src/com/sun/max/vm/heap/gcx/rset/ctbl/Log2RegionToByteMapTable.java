@@ -182,6 +182,7 @@ public class Log2RegionToByteMapTable {
         return address.greaterEqual(coveredAreaStart) && address.lessThan(coveredAreaEnd);
     }
 
+    @INLINE
     private void checkCoverage(Address address) {
         if (MaxineVM.isDebug()) {
             FatalError.check(isCovered(address), "must not pass an uncovered address to an unsafe method");
@@ -215,6 +216,7 @@ public class Log2RegionToByteMapTable {
      * @param coveredAddress an address in the contiguous range of virtual memory covered by the table.
      * @return
      */
+    @INLINE
     private Pointer byteAddressFor(Address coveredAddress) {
         checkCoverage(coveredAddress);
         return biasedTableAddress.plus(coveredAddress.unsignedShiftedRight(log2RangeSize));
@@ -274,4 +276,5 @@ public class Log2RegionToByteMapTable {
     void fill(int fromIndex, int toIndex, byte value) {
         Arrays.fill(table, fromIndex, toIndex, value);
     }
+
 }

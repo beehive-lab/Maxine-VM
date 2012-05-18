@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,8 +34,8 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -53,12 +53,12 @@ final class JDK_sun_reflect_Reflection {
      * This class implements a closure that records the method actor at a particular
      * position in the stack.
      */
-    static class Context extends SourceFrameVisitor {
+    public static class Context extends SourceFrameVisitor {
         MethodActor method;
         long frameId;
-        int realFramesToSkip;
+        private int realFramesToSkip;
 
-        Context(int realFramesToSkip) {
+        protected Context(int realFramesToSkip) {
             this.realFramesToSkip = realFramesToSkip;
         }
 
@@ -85,6 +85,11 @@ final class JDK_sun_reflect_Reflection {
             realFramesToSkip--;
             return true;
         }
+
+        public MethodActor methodActor() {
+            return method;
+        }
+
     }
 
     /**
@@ -109,7 +114,8 @@ final class JDK_sun_reflect_Reflection {
      * @return the class of the caller at the specified stack depth
      */
     @SUBSTITUTE
-    public static Class getCallerClass(int realFramesToSkip) {
+    @NEVER_INLINE
+    private static Class getCallerClass(int realFramesToSkip) {
         if (realFramesToSkip < 0) {
             return null;
         }
@@ -140,39 +146,14 @@ final class JDK_sun_reflect_Reflection {
      * @param realFramesToSkip from caller's perspective
      * @return
      */
+    @NEVER_INLINE
     public static Class getCallerClassForFindClass(int realFramesToSkip) {
         realFramesToSkip++; // add this frame
-        if (JVMTI.anyActiveAgents()) {
-            JVMTICheckContext context = new JVMTICheckContext(realFramesToSkip);
-            context.walk(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
-            if (context.isJVMTI) {
-                return JVMTIClassLoader.getCallerClass();
-            }
-            if (context.method == null) {
-                return null;
-            }
-            return context.method.holder().toJava();
+        if (VMTI.handler().needsSpecialGetCallerClass()) {
+            return VMTI.handler().getCallerClassForFindClass(realFramesToSkip + 1);
         } else {
             return getCallerClass(realFramesToSkip + 1);
         }
-    }
-
-    private static class JVMTICheckContext extends Context {
-        boolean isJVMTI;
-
-        JVMTICheckContext(int realFramesToSkip) {
-            super(realFramesToSkip);
-        }
-
-        @Override
-        public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
-            if (method.holder().toJava() == JVMTICallbacks.class) {
-                isJVMTI = true;
-                return false;
-            }
-            return super.visitSourceFrame(method, bci, trapped, frameId);
-        }
-
     }
 
 }

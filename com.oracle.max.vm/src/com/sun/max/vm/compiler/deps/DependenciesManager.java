@@ -266,6 +266,7 @@ public final class DependenciesManager {
             Add, InvalidateDeps, InvalidateUCM,
             InvalidateUCT, Invalidated, Register, Remove;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 

@@ -53,7 +53,7 @@ public class NearBootRegionCodeManager extends CodeManager {
 
     private void tryAllocate(VMSizeOption s, CodeRegion cr, Address address) {
         final Size size = s.getValue();
-        if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
+        if (!Heap.AvoidsAnonOperations && !VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
             throw ProgramError.unexpected("could not allocate " + cr.regionName());
         }
         cr.bind(address, size);

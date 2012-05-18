@@ -81,6 +81,11 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         return intrinsic;
     }
 
+    @Override
+    public boolean canIntrinsify() {
+        return true;
+    }
+
     public final boolean isVM() {
         return holder().isVM();
     }

@@ -160,8 +160,11 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
     }
 
     protected boolean isHeapFreeChunkOrigin(Address origin) throws TeleError {
+        if (heapFreeChunkHubOrigin.isZero()) {
+            return false;
+        }
         final Address hubOrigin = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(origin)).asAddress();
-        return heapFreeChunkHubOrigin.isNotZero() && hubOrigin.equals(heapFreeChunkHubOrigin);
+        return hubOrigin.equals(heapFreeChunkHubOrigin);
     }
 
 

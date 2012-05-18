@@ -38,6 +38,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.HeapScheme.PIN_SUPPORT_FLAG;
 import com.sun.max.vm.heap.debug.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.Record;
@@ -152,6 +153,10 @@ public final class Heap {
      * Lock for synchronizing access to the heap.
      */
     public static final Object HEAP_LOCK = JavaMonitorManager.newVmLock("HEAP_LOCK");
+
+    public static boolean holdsHeapLock() {
+        return Monitor.threadHoldsMonitor(HEAP_LOCK, VmThread.current());
+    }
 
     private static Size maxSize;
     private static Size initialSize;
@@ -611,25 +616,41 @@ public final class Heap {
 
     /**
      * A class that wants to register for callbacks must implement this interface
-     * register itself with {@link #registerCallback}.
+     * and register itself with {@link #registerCallback}.
      */
     public interface GCCallback {
         void gcCallback(GCCallbackPhase gcCallbackPhase);
     }
 
-    private static final GCCallback[] gcCallbacks = new GCCallback[4];
-    private static int gcCallbacksIndex = 0;
+    @HOSTED_ONLY
+    private static ArrayList<GCCallback> gcCallbackList = new ArrayList<GCCallback>();
 
     @HOSTED_ONLY
     public static void registerGCCallback(GCCallback callback) {
-        gcCallbacks[gcCallbacksIndex++] = callback;
+        gcCallbackList.add(callback);
     }
+
+    @HOSTED_ONLY
+    private static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
+
+        @Override
+        public void initializationComplete() {
+            gcCallbacks = new GCCallback[gcCallbackList.size()];
+            gcCallbackList.toArray(gcCallbacks);
+        }
+
+    }
+
+    static {
+        JavaPrototype.registerInitializationCompleteCallback(new InitializationCompleteCallback());
+    }
+
+    @CONSTANT
+    private static GCCallback[] gcCallbacks;
 
     public static void invokeGCCallbacks(GCCallbackPhase callbackPhase) {
         for (int i = 0; i < gcCallbacks.length; i++) {
-            if (gcCallbacks[i] != null) {
-                gcCallbacks[i].gcCallback(callbackPhase);
-            }
+            gcCallbacks[i].gcCallback(callbackPhase);
         }
     }
 
@@ -907,6 +928,7 @@ public final class Heap {
             Clone, CreateArray, CreateHybrid,
             CreateTuple, ExpandHybrid;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
@@ -985,6 +1007,7 @@ public final class Heap {
         public enum Operation {
             ScanningBootHeap, VisitReferenceMapSlot;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 

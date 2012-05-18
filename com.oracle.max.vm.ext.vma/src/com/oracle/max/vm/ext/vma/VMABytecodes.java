@@ -245,6 +245,8 @@ public enum VMABytecodes {
     public final int code;
     public final String methodName;
 
+    public static final VMABytecodes[] VALUES = values();
+
     private VMABytecodes(int code, String methodName) {
         this.code = code;
         this.methodName = methodName;

@@ -26,12 +26,30 @@ import com.sun.max.unsafe.*;
 
 public interface GenHeapSizingPolicy {
 
+    /**
+     * Initial size of the young generation, based on the arguments specified in command line.
+     * @return aligned size.
+     */
     Size initialYoungGenSize();
 
+    /**
+     * Initial size of the old generation, based on the arguments specified in command line.
+     * @return aligned size.
+     */
     Size initialOldGenSize();
 
+    /**
+     * Maximum size of the young generation, based on the arguments specified in command line.
+     * This is the maximum space that must be reserved for the old generation.
+     * @return  aligned size.
+     */
     Size maxYoungGenSize();
 
+    /**
+     * Maximum size of the old generation, based on the arguments specified in command line.
+     * This is the maximum space that must be reserved for the old generation.
+     * @return  aligned size.
+     */
     Size maxOldGenSize();
 
 }

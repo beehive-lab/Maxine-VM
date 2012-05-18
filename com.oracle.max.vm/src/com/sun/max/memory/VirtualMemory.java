@@ -68,7 +68,10 @@ public final class VirtualMemory {
      * @return the address of the allocated memory or {@link Pointer#zero()} if the allocation failed
      */
     public static Pointer allocate(Size size, Type type) {
-        return virtualMemory_allocate(size, type.ordinal());
+        allocateMemoryTime.start();
+        final Pointer allocated = virtualMemory_allocate(size, type.ordinal());
+        allocateMemoryTime.stop();
+        return allocated;
     }
 
     /**
@@ -83,7 +86,10 @@ public final class VirtualMemory {
         if (TraceAnonOperations) {
             traceRange("deallocate", pointer, size);
         }
-        return virtualMemory_deallocate(pointer, size, type.ordinal());
+        deallocateMemoryTime.start();
+        Address deallocated = virtualMemory_deallocate(pointer, size, type.ordinal());
+        deallocateMemoryTime.stop();
+        return deallocated;
     }
 
     /**
@@ -96,7 +102,10 @@ public final class VirtualMemory {
      * @return true if the memory was allocated, false otherwise
      */
     public static boolean allocateAtFixedAddress(Address address, Size size, Type type) {
-        return virtualMemory_allocateAtFixedAddress(address, size, type.ordinal());
+        allocateAtFixedAddressTime.start();
+        final boolean allocated = virtualMemory_allocateAtFixedAddress(address, size, type.ordinal());
+        allocateAtFixedAddressTime.stop();
+        return allocated;
     }
 
     /**
@@ -113,7 +122,7 @@ public final class VirtualMemory {
         if (!pointer.isAligned(Platform.platform().pageSize)) {
             throw new IllegalArgumentException("start address of the request memory must be page aligned ");
         }
-        return virtualMemory_allocateAtFixedAddress(pointer, size, type.ordinal());
+        return allocateAtFixedAddress(pointer, size, type);
     }
 
     /**
@@ -151,14 +160,22 @@ public final class VirtualMemory {
     @C_FUNCTION
     private static native Pointer virtualMemory_deallocate(Address start, Size size, int type);
 
+
+    private static final TimerMetric allocateAtFixedAddressTime = new TimerMetric(new SingleUseTimer(Clock.SYSTEM_MILLISECONDS));
+    private static final TimerMetric allocateMemoryTime = new TimerMetric(new SingleUseTimer(Clock.SYSTEM_MILLISECONDS));
+
     private static final TimerMetric reserveMemoryTime = new TimerMetric(new SingleUseTimer(Clock.SYSTEM_MILLISECONDS));
     private static final TimerMetric commitMemoryTime = new TimerMetric(new SingleUseTimer(Clock.SYSTEM_MILLISECONDS));
     private static final TimerMetric uncommitMemoryTime = new TimerMetric(new SingleUseTimer(Clock.SYSTEM_MILLISECONDS));
+    private static final TimerMetric deallocateMemoryTime = new TimerMetric(new SingleUseTimer(Clock.SYSTEM_MILLISECONDS));
 
     public static void reportMetrics() {
         reserveMemoryTime.report("VirtualMemory.reserveMemory", Log.out);
         commitMemoryTime.report("VirtualMemory.commitMemory", Log.out);
         uncommitMemoryTime.report("VirtualMemory.uncommitMemory", Log.out);
+        deallocateMemoryTime.report("VirtualMemory.deallocate", Log.out);
+        allocateMemoryTime.report("VirtualMemory.allocate", Log.out);
+        allocateAtFixedAddressTime.report("VirtualMemory.allocateAtFixedAddress", Log.out);
     }
 
     /**

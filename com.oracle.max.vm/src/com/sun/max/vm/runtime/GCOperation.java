@@ -165,6 +165,10 @@ public abstract class GCOperation extends VmOperation {
 
     private int invocationCount;
 
+    public int invocationCount() {
+        return invocationCount;
+    }
+
     @NEVER_INLINE
     private void collect() {
         final long k = Size.K.toLong();

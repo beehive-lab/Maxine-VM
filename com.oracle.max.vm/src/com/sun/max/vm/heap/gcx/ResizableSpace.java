@@ -37,6 +37,12 @@ public interface ResizableSpace {
      */
     Size growAfterGC(Size delta);
 
+    /**
+     * Try to shrink the resizable space by delta bytes.
+      * The method rounds the delta up to any alignment constraints the resizable space may have to enforce.
+    * @param delta the number of bytes to shrink the resizable with
+     * @return the effective size the space shrunk
+     */
     Size shrinkAfterGC(Size delta);
     /**
      * Amount of memory used by the space. This includes space allocated to live data, dark matter, and space available for allocation.

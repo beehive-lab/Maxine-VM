@@ -338,12 +338,13 @@ public class MaxineTesterConfiguration {
 
       // VMA configs - the -vma option is interpreted by the mx tool to set additional system properties
         final String vmaT1X = "com.oracle.max.vm.ext.t1x.vma.VMAT1X";
+        final String vmaC1X = "com.oracle.max.vm.ext.c1x.vma.VMAC1X";
         final String vmaBaseline = "-baseline=" + vmaT1X;
+        final String vmaOpt = "-opt=" + vmaC1X;
         final String vmaRun = "-run=com.oracle.max.vm.ext.vma.run.java";
-        final String vmaHeap = "-heap=com.oracle.max.vm.ext.vma.heap.semi";
         final String vmaLayout = "-layout=xohm";
-        imageConfig("vma-c1x-t1x", vmaLayout, vmaHeap, vmaBaseline, vmaRun,"-vma");
-        imageConfig("vma-t1x-t1x", "-opt=" + vmaT1X, vmaLayout, vmaHeap, vmaBaseline, vmaRun, "-vma");
+        imageConfig("vma-c1x-t1x", vmaLayout, vmaBaseline, vmaOpt, vmaRun, "-vma");
+        imageConfig("vma-t1x-t1x", "-opt=" + vmaT1X, vmaLayout, vmaBaseline, vmaRun, "-vma");
 
         maxvmConfig("vma", "-XX:+VMA");
 

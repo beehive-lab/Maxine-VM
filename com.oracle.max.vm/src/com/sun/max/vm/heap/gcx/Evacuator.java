@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
@@ -43,20 +44,42 @@ import com.sun.max.vm.type.*;
  *
  */
 public abstract class Evacuator extends PointerIndexVisitor implements CellVisitor, OverlappingCellVisitor, SpecialReferenceManager.GC  {
-    protected static boolean TraceEvacVisitedCell = false;
+    /**
+     * Tells from what GC invocation should tracing of dirty card starts.
+     */
+    public static int TraceFromGCInvocation = 0;
+    private static boolean TraceEvacVisitedCell = false;
+    private static boolean traceEvacVisitedCellEnabled = false;
+
     static {
+        VMOptions.addFieldOption("-XX:", "TraceFromGCInvocation", Evacuator.class, "Tells from which GC invocation tracing starts from", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "TraceEvacVisitedCell", Evacuator.class, "Trace cells visited by the evacuator (Debug mode only)", Phase.PRISTINE);
     }
+
+    @INLINE
+    protected static boolean traceEvacVisitedCell() {
+        return MaxineVM.isDebug() && traceEvacVisitedCellEnabled;
+    }
+
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
 
     private boolean refDiscoveryEnabled = true;
+
+    protected GCOperation currentGCOperation;
+
+    public void setGCOperation(GCOperation gcOperation) {
+        currentGCOperation = gcOperation;
+        if (MaxineVM.isDebug() && gcOperation != null) {
+            traceEvacVisitedCellEnabled = TraceEvacVisitedCell && TraceFromGCInvocation <= gcOperation.invocationCount();
+        }
+    }
 
     private void updateSpecialReference(Pointer origin) {
         if (refDiscoveryEnabled) {
             SpecialReferenceManager.discoverSpecialReference(origin);
         } else {
             // Treat referent as strong reference.
-            if (MaxineVM.isDebug() && TraceEvacVisitedCell) {
+            if (traceEvacVisitedCell()) {
                 Log.print("Resurecting referent");
                 Log.print(origin.getReference(SpecialReferenceManager.referentIndex()).toOrigin());
                 Log.print(" from special ref ");
@@ -257,7 +280,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * @return
      */
     final protected Pointer scanCellForEvacuatees(Pointer cell) {
-        if (MaxineVM.isDebug() && TraceEvacVisitedCell) {
+        if (traceEvacVisitedCell()) {
             Log.print("visitCell "); Log.println(cell);
         }
         final Pointer origin = Layout.cellToOrigin(cell);
