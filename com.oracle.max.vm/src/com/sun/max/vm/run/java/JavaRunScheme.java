@@ -48,11 +48,12 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -286,18 +287,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             vm.phase = Phase.RUNNING;
             vmConfig().initializeSchemes(MaxineVM.Phase.RUNNING);
 
-            /*
-             * JVMTI has a VM_START and a VM_INIT event, but the distinction
-             * is minimal and only relates to which JVMTI functions may be called.
-             * The gating function for dispatching either event this late
-             * is that any JNI function can be called from VM_START, e.g, FindClass,
-             * which requires that essentially all of the VM machinery is working.
-             */
-            JVMTI.event(JVMTIEvent.VM_START);
-            // VM_INIT must precede the THREAD_START event for the main thread
-            JVMTI.event(JVMTIEvent.VM_INIT);
-
-            JVMTI.event(JVMTIEvent.THREAD_START);
+            VMTI.handler().vmInitialized();
+            VMTI.handler().threadStart(VmThread.current());
 
             // load -javaagent agents
             loadJavaAgents();

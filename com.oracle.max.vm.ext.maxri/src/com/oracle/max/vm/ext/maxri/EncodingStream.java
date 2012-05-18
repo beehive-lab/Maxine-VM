@@ -103,7 +103,7 @@ final class EncodingStream {
     }
 
     public void writeFloat(float v) {
-        writeInt(Float.floatToIntBits(v));
+        writeInt(Float.floatToRawIntBits(v));
     }
 
     public void writeLong(long v) {
@@ -127,7 +127,7 @@ final class EncodingStream {
     }
 
     public void writeDouble(double v) {
-        writeLong(Double.doubleToLongBits(v));
+        writeLong(Double.doubleToRawLongBits(v));
     }
 
     /**

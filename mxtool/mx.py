@@ -129,7 +129,7 @@ import shutil, fnmatch, re, xml.dom.minidom
 from collections import Callable
 from threading import Thread
 from argparse import ArgumentParser, REMAINDER
-from os.path import join, dirname, exists, getmtime, isabs, expandvars, isdir, isfile
+from os.path import join, basename, dirname, exists, getmtime, isabs, expandvars, isdir, isfile
 
 DEFAULT_JAVA_ARGS = '-ea -Xss2m -Xmx1g'
 
@@ -400,6 +400,73 @@ class Suite:
             if existing is not None:
                 abort('cannot redefine library  ' + l.name)
             _libs[l.name] = l
+
+class XMLElement(xml.dom.minidom.Element):
+    def writexml(self, writer, indent="", addindent="", newl=""):
+        writer.write(indent+"<" + self.tagName)
+    
+        attrs = self._get_attributes()
+        a_names = attrs.keys()
+        a_names.sort()
+    
+        for a_name in a_names:
+            writer.write(" %s=\"" % a_name)
+            xml.dom.minidom._write_data(writer, attrs[a_name].value)
+            writer.write("\"")
+        if self.childNodes:
+            if not self.ownerDocument.padTextNodeWithoutSiblings and len(self.childNodes) == 1 and isinstance(self.childNodes[0], xml.dom.minidom.Text):
+                # if the only child of an Element node is a Text node, then the
+                # text is printed without any indentation or new line padding  
+                writer.write(">")
+                self.childNodes[0].writexml(writer)
+                writer.write("</%s>%s" % (self.tagName,newl))
+            else:
+                writer.write(">%s"%(newl))
+                for node in self.childNodes:
+                    node.writexml(writer,indent+addindent,addindent,newl)
+                writer.write("%s</%s>%s" % (indent,self.tagName,newl))
+        else:
+            writer.write("/>%s"%(newl))
+
+class XMLDoc(xml.dom.minidom.Document):
+
+    def __init__(self):
+        xml.dom.minidom.Document.__init__(self)
+        self.current = self
+        self.padTextNodeWithoutSiblings = False
+
+    def createElement(self, tagName):
+        # overwritten to create XMLElement
+        e = XMLElement(tagName)
+        e.ownerDocument = self
+        return e
+    
+    def open(self, tag, attributes={}, data=None):
+        element = self.createElement(tag)
+        for key, value in attributes.items():
+            element.setAttribute(key, value)
+        self.current.appendChild(element)
+        self.current = element
+        if data is not None:
+            element.appendChild(self.createTextNode(data))
+        return self
+
+    def close(self, tag):
+        assert self.current != self
+        assert tag == self.current.tagName, str(tag) + ' != ' + self.current.tagName  
+        self.current = self.current.parentNode
+        return self
+    
+    def element(self, tag, attributes={}, data=None):
+        return self.open(tag, attributes, data).close(tag)
+            
+    def xml(self, indent='', newl='', escape=False):
+        assert self.current == self
+        result = self.toprettyxml(indent, newl, encoding="UTF-8")
+        if escape:
+            entities = { '"':  "&quot;", "'":  "&apos;", '\n': '&#10;' }
+            result = xml.sax.saxutils.escape(result, entities)
+        return result
 
 def get_os():
     """
@@ -728,8 +795,10 @@ def lib_suffix(name):
     os = get_os();
     if os == 'windows':
         return name + '.dll'
-    if os == 'linux':
+    if os == 'linux' or os == 'solaris':
         return name + '.so'
+    if os == 'darwin':
+        return name + '.dylib'
     return name
 
 """
@@ -963,6 +1032,10 @@ def build(args, parser=None):
     Compile all the Java source code using the appropriate compilers
     and linkers for the various source code types."""
 
+
+    run([java().javac, '-version'])
+
+      
     suppliedParser = parser is not None
     if not suppliedParser:
         parser = ArgumentParser(prog='mx build')
@@ -970,9 +1043,9 @@ def build(args, parser=None):
     javaCompliance = java().javaCompliance
 
     defaultEcjPath = join(_mainSuite.dir, 'mx', 'ecj.jar')
-
+    
     parser = parser if parser is not None else ArgumentParser(prog='mx build')
-    parser.add_argument('-f', action='store_true', dest='force', help='force compilation even if class files are up to date')
+    parser.add_argument('-f', action='store_true', dest='force', help='force build (disables timestamp checking)')
     parser.add_argument('-c', action='store_true', dest='clean', help='removes existing build output')
     parser.add_argument('--source', dest='compliance', help='Java compliance level', default=str(javaCompliance))
     parser.add_argument('--Wapi', action='store_true', dest='warnAPI', help='show warnings about using internal APIs')
@@ -1208,7 +1281,9 @@ If no projects are given, then all Java projects are checked."""
                 log('[no Java sources in {0} - skipping]'.format(sourceDir))
                 continue
 
-            timestampFile = join(p.suite.dir, 'mx', '.checkstyle' + sourceDir[len(p.suite.dir):].replace(os.sep, '_') + '.timestamp')
+            timestampFile = join(p.suite.dir, 'mx', 'checkstyle-timestamps', sourceDir[len(p.suite.dir) + 1:].replace(os.sep, '_') + '.timestamp')
+            if not exists(dirname(timestampFile)):
+                os.makedirs(dirname(timestampFile))
             mustCheck = False
             if exists(timestampFile):
                 timestamp = os.path.getmtime(timestampFile)
@@ -1369,6 +1444,120 @@ def projectgraph(args, suite=None):
         for dep in p.canonical_deps():
             print '"' + p.name + '"->"' + dep + '"'
     print '}'
+    
+    
+def _source_locator_memento(deps):
+    slm = XMLDoc()
+    slm.open('sourceLookupDirector')
+    slm.open('sourceContainers', {'duplicates' : 'false'})
+
+    # Every Java program depends on the JRE
+    memento = XMLDoc().element('classpathContainer', {'path' : 'org.eclipse.jdt.launching.JRE_CONTAINER'}).xml()
+    slm.element('classpathContainer', {'memento' : memento, 'typeId':'org.eclipse.jdt.launching.sourceContainer.classpathContainer'})
+        
+    for dep in deps:
+        if dep.isLibrary():
+            if hasattr(dep, 'eclipse.container'):
+                memento = XMLDoc().element('classpathContainer', {'path' : getattr(dep, 'eclipse.container')}).xml()
+                slm.element('classpathContainer', {'memento' : memento, 'typeId':'org.eclipse.jdt.launching.sourceContainer.classpathContainer'})
+        else:
+            memento = XMLDoc().element('javaProject', {'name' : dep.name}).xml()
+            slm.element('container', {'memento' : memento, 'typeId':'org.eclipse.jdt.launching.sourceContainer.javaProject'})
+
+    slm.close('sourceContainers')
+    slm.close('sourceLookupDirector')
+    return slm
+
+def make_eclipse_attach(hostname, port, name=None, deps=[]):
+    """
+    Creates an Eclipse launch configuration file for attaching to a Java process.
+    """
+    slm = _source_locator_memento(deps)
+    launch = XMLDoc()
+    launch.open('launchConfiguration', {'type' : 'org.eclipse.jdt.launching.remoteJavaApplication'})
+    launch.element('stringAttribute', {'key' : 'org.eclipse.debug.core.source_locator_id', 'value' : 'org.eclipse.jdt.launching.sourceLocator.JavaSourceLookupDirector'})
+    launch.element('stringAttribute', {'key' : 'org.eclipse.debug.core.source_locator_memento', 'value' : '%s'})
+    launch.element('booleanAttribute', {'key' : 'org.eclipse.jdt.launching.ALLOW_TERMINATE', 'value' : 'true'})
+    launch.open('mapAttribute', {'key' : 'org.eclipse.jdt.launching.CONNECT_MAP'})
+    launch.element('mapEntry', {'key' : 'hostname', 'value' : hostname})
+    launch.element('mapEntry', {'key' : 'port', 'value' : port})
+    launch.close('mapAttribute')
+    launch.element('stringAttribute', {'key' : 'org.eclipse.jdt.launching.PROJECT_ATTR', 'value' : ''})
+    launch.element('stringAttribute', {'key' : 'org.eclipse.jdt.launching.VM_CONNECTOR_ID', 'value' : 'org.eclipse.jdt.launching.socketAttachConnector'})
+    launch.close('launchConfiguration')
+    launch = launch.xml(newl='\n') % slm.xml(escape=True)
+    
+    if name is None:
+        name = 'attach-' + hostname + '-' + port
+    eclipseLaunches = join('mx', 'eclipse-launches')
+    if not exists(eclipseLaunches):
+        os.makedirs(eclipseLaunches)
+    return update_file(join(eclipseLaunches, name + '.launch'), launch)
+
+def make_eclipse_launch(javaArgs, jre, name=None, deps=[]):
+    """
+    Creates an Eclipse launch configuration file for running/debugging a Java command.
+    """
+    mainClass = None
+    vmArgs = []
+    appArgs = []
+    cp = None
+    argsCopy = list(reversed(javaArgs))
+    while len(argsCopy) != 0:
+        a = argsCopy.pop()
+        if a == '-jar':
+            mainClass = '-jar'
+            appArgs = list(reversed(argsCopy))
+            break
+        if a == '-cp' or a == '-classpath':
+            assert len(argsCopy) != 0
+            cp = argsCopy.pop()
+            vmArgs.append(a)
+            vmArgs.append(cp)
+        elif a.startswith('-'):
+            vmArgs.append(a)
+        else:
+            mainClass = a
+            appArgs = list(reversed(argsCopy))
+            break
+    
+    if mainClass is None:
+        log('Cannot create Eclipse launch configuration without main class or jar file: java ' + ' '.join(javaArgs))
+        return False
+    
+    if name is None:
+        if mainClass == '-jar':
+            name = basename(appArgs[0])
+            if len(appArgs) > 1 and not appArgs[1].startswith('-'):
+                name = name + '_' + appArgs[1]
+        else:
+            name = mainClass
+        name = time.strftime('%Y-%m-%d-%H%M%S_' + name)
+
+    if cp is not None:
+        for e in cp.split(os.pathsep):
+            for s in suites():
+                deps += [p for p in s.projects if e == p.output_dir()]
+                deps += [l for l in s.libs if e == l.get_path(False)]
+    
+    slm = _source_locator_memento(deps)
+    
+    launch = XMLDoc()
+    launch.open('launchConfiguration', {'type' : 'org.eclipse.jdt.launching.localJavaApplication'})
+    launch.element('stringAttribute', {'key' : 'org.eclipse.debug.core.source_locator_id', 'value' : 'org.eclipse.jdt.launching.sourceLocator.JavaSourceLookupDirector'})
+    launch.element('stringAttribute', {'key' : 'org.eclipse.debug.core.source_locator_memento', 'value' : '%s'})
+    launch.element('stringAttribute', {'key' : 'org.eclipse.jdt.launching.JRE_CONTAINER', 'value' : 'org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/' + jre})
+    launch.element('stringAttribute', {'key' : 'org.eclipse.jdt.launching.MAIN_TYPE', 'value' : mainClass})
+    launch.element('stringAttribute', {'key' : 'org.eclipse.jdt.launching.PROGRAM_ARGUMENTS', 'value' : ' '.join(appArgs)})
+    launch.element('stringAttribute', {'key' : 'org.eclipse.jdt.launching.PROJECT_ATTR', 'value' : ''})
+    launch.element('stringAttribute', {'key' : 'org.eclipse.jdt.launching.VM_ARGUMENTS', 'value' : ' '.join(vmArgs)})
+    launch.close('launchConfiguration')
+    launch = launch.xml(newl='\n') % slm.xml(escape=True)
+
+    eclipseLaunches = join('mx', 'eclipse-launches')
+    if not exists(eclipseLaunches):
+        os.makedirs(eclipseLaunches)
+    return update_file(join(eclipseLaunches, name + '.launch'), launch)
 
 def eclipseinit(args, suite=None):
     """(re)generate Eclipse project configurations"""
@@ -1376,31 +1565,24 @@ def eclipseinit(args, suite=None):
     if suite is None:
         suite = _mainSuite
 
-    def println(out, obj):
-        out.write(str(obj) + '\n')
-
-    source_locator_memento = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n<sourceLookupDirector><sourceContainers duplicates="false">'
-    entities = { '"':  "&quot;", "'":  "&apos;", '\n': '&#10;' }
-
     for p in projects():
         if p.native:
             continue
-
+        
         if not exists(p.dir):
             os.makedirs(p.dir)
 
-        out = StringIO.StringIO()
-
-        println(out, '<?xml version="1.0" encoding="UTF-8"?>')
-        println(out, '<classpath>')
+        out = XMLDoc()
+        out.open('classpath')
+        
         for src in p.srcDirs:
             srcDir = join(p.dir, src)
             if not exists(srcDir):
                 os.mkdir(srcDir)
-            println(out, '\t<classpathentry kind="src" path="' + src + '"/>')
+            out.element('classpathentry', {'kind' : 'src', 'path' : src})
 
         # Every Java program depends on the JRE
-        println(out, '\t<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>')
+        out.element('classpathentry', {'kind' : 'con', 'path' : 'org.eclipse.jdt.launching.JRE_CONTAINER'})
 
         for dep in p.all_deps([], True):
             if dep == p:
@@ -1408,92 +1590,82 @@ def eclipseinit(args, suite=None):
 
             if dep.isLibrary():
                 if hasattr(dep, 'eclipse.container'):
-                    println(out, '\t<classpathentry exported="true" kind="con" path="' + getattr(dep, 'eclipse.container') + '"/>')
+                    out.element('classpathentry', {'exported' : 'true', 'kind' : 'con', 'path' : getattr(dep, 'eclipse.container')})
                 elif hasattr(dep, 'eclipse.project'):
-                    println(out, '\t<classpathentry combineaccessrules="false" exported="true" kind="src" path="/' + getattr(dep, 'eclipse.project') + '"/>')
+                    out.element('classpathentry', {'combineaccessrules' : 'false', 'exported' : 'true', 'kind' : 'src', 'path' : '/' + getattr(dep, 'eclipse.project')})
                 else:
                     path = dep.path
                     if dep.mustExist:
                         dep.get_path(resolve=True)
                         if isabs(path):
-                            println(out, '\t<classpathentry exported="true" kind="lib" path="' + path + '"/>')
+                            out.element('classpathentry', {'exported' : 'true', 'kind' : 'lib', 'path' : path})
                         else:
                             # Relative paths for "lib" class path entries have various semantics depending on the Eclipse
                             # version being used (e.g. see https://bugs.eclipse.org/bugs/show_bug.cgi?id=274737) so it's
                             # safest to simply use absolute paths.
-                            println(out, '\t<classpathentry exported="true" kind="lib" path="' + join(suite.dir, path) + '"/>')
+                            out.element('classpathentry', {'exported' : 'true', 'kind' : 'lib', 'path' : join(suite.dir, path)})
             else:
-                println(out, '\t<classpathentry combineaccessrules="false" exported="true" kind="src" path="/' + dep.name + '"/>')
+                out.element('classpathentry', {'combineaccessrules' : 'false', 'exported' : 'true', 'kind' : 'src', 'path' : '/' + dep.name})
 
-        println(out, '\t<classpathentry kind="output" path="' + getattr(p, 'eclipse.output', 'bin') + '"/>')
-        println(out, '</classpath>')
-        update_file(join(p.dir, '.classpath'), out.getvalue())
-        out.close()
+        out.element('classpathentry', {'kind' : 'output', 'path' : getattr(p, 'eclipse.output', 'bin')})
+        out.close('classpath')
+        update_file(join(p.dir, '.classpath'), out.xml(indent='\t', newl='\n'))
 
         csConfig = join(project(p.checkstyleProj).dir, '.checkstyle_checks.xml')
         if exists(csConfig):
-            out = StringIO.StringIO()
+            out = XMLDoc()
 
             dotCheckstyle = join(p.dir, ".checkstyle")
             checkstyleConfigPath = '/' + p.checkstyleProj + '/.checkstyle_checks.xml'
-            println(out, '<?xml version="1.0" encoding="UTF-8"?>')
-            println(out, '<fileset-config file-format-version="1.2.0" simple-config="true">')
-            println(out, '\t<local-check-config name="Checks" location="' + checkstyleConfigPath + '" type="project" description="">')
-            println(out, '\t\t<additional-data name="protect-config-file" value="false"/>')
-            println(out, '\t</local-check-config>')
-            println(out, '\t<fileset name="all" enabled="true" check-config-name="Checks" local="true">')
-            println(out, '\t\t<file-match-pattern match-pattern="." include-pattern="true"/>')
-            println(out, '\t</fileset>')
-            println(out, '\t<filter name="FileTypesFilter" enabled="true">')
-            println(out, '\t\t<filter-data value="java"/>')
-            println(out, '\t</filter>')
+            out.open('fileset-config', {'file-format-version' : '1.2.0', 'simple-config' : 'true'})
+            out.open('local-check-config', {'name' : 'Checks', 'location' : checkstyleConfigPath, 'type' : 'project', 'description' : ''})
+            out.element('additional-data', {'name' : 'protect-config-file', 'value' : 'false'})
+            out.close('local-check-config')
+            out.open('fileset', {'name' : 'all', 'enabled' : 'true', 'check-config-name' : 'Checks', 'local' : 'true'})
+            out.element('file-match-pattern', {'match-pattern' : '.', 'include-pattern' : 'true'})
+            out.close('fileset')
+            out.open('filter', {'name' : 'all', 'enabled' : 'true', 'check-config-name' : 'Checks', 'local' : 'true'})
+            out.element('filter-data', {'value' : 'java'})
+            out.close('filter')
 
             exclude = join(p.dir, '.checkstyle.exclude')
             if exists(exclude):
-                println(out, '\t<filter name="FilesFromPackage" enabled="true">')
+                out.open('filter', {'name' : 'FilesFromPackage', 'enabled' : 'true'})
                 with open(exclude) as f:
                     for line in f:
                         if not line.startswith('#'):
                             line = line.strip()
                             exclDir = join(p.dir, line)
                             assert isdir(exclDir), 'excluded source directory listed in ' + exclude + ' does not exist or is not a directory: ' + exclDir
-                        println(out, '\t\t<filter-data value="' + line + '"/>')
-                println(out, '\t</filter>')
+                        out.element('filter-data', {'value' : line})
+                out.close('filter')
 
-            println(out, '</fileset-config>')
-            update_file(dotCheckstyle, out.getvalue())
-            out.close()
+            out.close('fileset-config')
+            update_file(dotCheckstyle, out.xml(indent='  ', newl='\n'))
 
-
-        out = StringIO.StringIO()
-
-        println(out, '<?xml version="1.0" encoding="UTF-8"?>')
-        println(out, '<projectDescription>')
-        println(out, '\t<name>' + p.name + '</name>')
-        println(out, '\t<comment></comment>')
-        println(out, '\t<projects>')
-        println(out, '\t</projects>')
-        println(out, '\t<buildSpec>')
-        println(out, '\t\t<buildCommand>')
-        println(out, '\t\t\t<name>org.eclipse.jdt.core.javabuilder</name>')
-        println(out, '\t\t\t<arguments>')
-        println(out, '\t\t\t</arguments>')
-        println(out, '\t\t</buildCommand>')
+        out = XMLDoc()
+        out.open('projectDescription')
+        out.element('name', data=p.name)
+        out.element('comment', data='')
+        out.element('projects', data='')
+        out.open('buildSpec')
+        out.open('buildCommand')
+        out.element('name', data='org.eclipse.jdt.core.javabuilder')
+        out.element('arguments', data='')
+        out.close('buildCommand')
         if exists(csConfig):
-            println(out, '\t\t<buildCommand>')
-            println(out, '\t\t\t<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>')
-            println(out, '\t\t\t<arguments>')
-            println(out, '\t\t\t</arguments>')
-            println(out, '\t\t</buildCommand>')
-        println(out, '\t</buildSpec>')
-        println(out, '\t<natures>')
-        println(out, '\t\t<nature>org.eclipse.jdt.core.javanature</nature>')
+            out.open('buildCommand')
+            out.element('name', data='net.sf.eclipsecs.core.CheckstyleBuilder')
+            out.element('arguments', data='')
+            out.close('buildCommand')
+        out.close('buildSpec')
+        out.open('natures')
+        out.element('nature', data='org.eclipse.jdt.core.javanature')
         if exists(csConfig):
-            println(out, '\t\t<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>')
-        println(out, '\t</natures>')
-        println(out, '</projectDescription>')
-        update_file(join(p.dir, '.project'), out.getvalue())
-        out.close()
+            out.element('nature', data='net.sf.eclipsecs.core.CheckstyleNature')
+        out.close('natures')
+        out.close('projectDescription')
+        update_file(join(p.dir, '.project'), out.xml(indent='\t', newl='\n'))
 
         settingsDir = join(p.dir, ".settings")
         if not exists(settingsDir):
@@ -1509,23 +1681,7 @@ def eclipseinit(args, suite=None):
                     content = content.replace('${javaCompliance}', str(p.javaCompliance))
                     update_file(join(settingsDir, name), content)
 
-        memento = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n<javaProject name="' + p.name + '"/>\n'
-        source_locator_memento += '\n<container memento="' + xml.sax.saxutils.escape(memento, entities) + '" typeId="org.eclipse.jdt.launching.sourceContainer.javaProject"/>'
-
-    source_locator_memento += '</sourceContainers>\n</sourceLookupDirector>'
-    launch = r"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<launchConfiguration type="org.eclipse.jdt.launching.remoteJavaApplication">
-<stringAttribute key="org.eclipse.debug.core.source_locator_id" value="org.eclipse.jdt.launching.sourceLocator.JavaSourceLookupDirector"/>
-<stringAttribute key="org.eclipse.debug.core.source_locator_memento" value="{0}"/>
-<booleanAttribute key="org.eclipse.jdt.launching.ALLOW_TERMINATE" value="true"/>
-<mapAttribute key="org.eclipse.jdt.launching.CONNECT_MAP">
-<mapEntry key="hostname" value="localhost"/>
-<mapEntry key="port" value="8000"/>
-</mapAttribute>
-<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value=""/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_CONNECTOR_ID" value="org.eclipse.jdt.launching.socketAttachConnector"/>
-</launchConfiguration>""".format(xml.sax.saxutils.escape(source_locator_memento, entities))
-    update_file(join(suite.dir, 'mx', 'attach-8000.launch'), launch)
+    make_eclipse_attach('localhost', '8000', deps=projects())                    
 
 def netbeansinit(args, suite=None):
     """(re)generate NetBeans project configurations"""
@@ -1544,32 +1700,28 @@ def netbeansinit(args, suite=None):
         if not exists(join(p.dir, 'nbproject')):
             os.makedirs(join(p.dir, 'nbproject'))
 
-        out = StringIO.StringIO()
+        out = XMLDoc()
+        out.open('project', {'name' : p.name, 'default' : 'default', 'basedir' : '.'})
+        out.element('description', data='Builds, tests, and runs the project ' + p.name + '.')
+        out.element('import', {'file' : 'nbproject/build-impl.xml'})
+        out.close('project')
+        updated = update_file(join(p.dir, 'build.xml'), out.xml(indent='\t', newl='\n')) or updated
 
-        println(out, '<?xml version="1.0" encoding="UTF-8"?>')
-        println(out, '<project name="' + p.name + '" default="default" basedir=".">')
-        println(out, '\t<description>Builds, tests, and runs the project ' + p.name + '.</description>')
-        println(out, '\t<import file="nbproject/build-impl.xml"/>')
-        println(out, '</project>')
-        updated = update_file(join(p.dir, 'build.xml'), out.getvalue()) or updated
-        out.close()
-
-        out = StringIO.StringIO()
-        println(out, '<?xml version="1.0" encoding="UTF-8"?>')
-        println(out, '<project xmlns="http://www.netbeans.org/ns/project/1">')
-        println(out, '    <type>org.netbeans.modules.java.j2seproject</type>')
-        println(out, '    <configuration>')
-        println(out, '        <data xmlns="http://www.netbeans.org/ns/j2se-project/3">')
-        println(out, '            <name>' + p.name+ '</name>')
-        println(out, '            <explicit-platform explicit-source-supported="true"/>')
-        println(out, '            <source-roots>')
-        println(out, '                <root id="src.dir"/>')
-        println(out, '            </source-roots>')
-        println(out, '            <test-roots>')
-        println(out, '                <root id="test.src.dir"/>')
-        println(out, '            </test-roots>')
-        println(out, '        </data>')
-
+        out = XMLDoc()
+        out.open('project', {'xmlns' : 'http://www.netbeans.org/ns/project/1'})
+        out.element('type', data='org.netbeans.modules.java.j2seproject')
+        out.open('configuration')
+        out.open('data', {'xmlns' : 'http://www.netbeans.org/ns/j2se-project/3'})
+        out.element('name', data=p.name)
+        out.element('explicit-platform', {'explicit-source-supported' : 'true'})
+        out.open('source-roots')
+        out.element('root', {'id' : 'src.dir'})
+        out.close('source-roots')
+        out.open('test-roots')
+        out.element('root', {'id' : 'test.src.dir'})
+        out.close('test-roots')
+        out.close('data')
+        
         firstDep = True
         for dep in p.all_deps([], True):
             if dep == p:
@@ -1578,28 +1730,26 @@ def netbeansinit(args, suite=None):
             if not dep.isLibrary():
                 n = dep.name.replace('.', '_')
                 if firstDep:
-                    println(out, '        <references xmlns="http://www.netbeans.org/ns/ant-project-references/1">')
+                    out.open('references', {'xmlns' : 'http://www.netbeans.org/ns/ant-project-references/1'})
                     firstDep = False
 
-                println(out, '            <reference>')
-                println(out, '                <foreign-project>' + n + '</foreign-project>')
-                println(out, '                <artifact-type>jar</artifact-type>')
-                println(out, '                <script>build.xml</script>')
-                println(out, '                <target>jar</target>')
-                println(out, '                <clean-target>clean</clean-target>')
-                println(out, '                <id>jar</id>')
-                println(out, '            </reference>')
+                out.open('reference')
+                out.element('foreign-project', data=n)
+                out.element('artifact-type', data='jar')
+                out.element('script', data='build.xml')
+                out.element('target', data='jar')
+                out.element('clean-target', data='clean')
+                out.element('id', data='jar')
+                out.close('reference')
 
         if not firstDep:
-            println(out, '        </references>')
+            out.close('references')
 
-        println(out, '    </configuration>')
-        println(out, '</project>')
-        updated = update_file(join(p.dir, 'nbproject', 'project.xml'), out.getvalue()) or updated
-        out.close()
+        out.close('configuration')
+        out.close('project')
+        updated = update_file(join(p.dir, 'nbproject', 'project.xml'), out.xml(indent='    ', newl='\n')) or updated
 
         out = StringIO.StringIO()
-
         jdkPlatform = 'JDK_' + java().version
 
         content = """
@@ -1675,7 +1825,7 @@ run.test.classpath=\\
     ${build.test.classes.dir}
 test.src.dir=
 source.encoding=UTF-8""".replace(':', os.pathsep).replace('/', os.sep)
-        println(out, content)
+        print >> out, content
 
         mainSrc = True
         for src in p.srcDirs:
@@ -1683,12 +1833,12 @@ source.encoding=UTF-8""".replace(':', os.pathsep).replace('/', os.sep)
             if not exists(srcDir):
                 os.mkdir(srcDir)
             ref = 'file.reference.' + p.name + '-' + src
-            println(out, ref + '=' + src)
+            print >> out, ref + '=' + src
             if mainSrc:
-                println(out, 'src.dir=${' + ref + '}')
+                print >> out, 'src.dir=${' + ref + '}'
                 mainSrc = False
             else:
-                println(out, 'src.' + src + '.dir=${' + ref + '}')
+                print >> out, 'src.' + src + '.dir=${' + ref + '}'
 
         javacClasspath = []
         for dep in p.all_deps([], True):
@@ -1702,18 +1852,18 @@ source.encoding=UTF-8""".replace(':', os.pathsep).replace('/', os.sep)
                 if os.sep == '\\':
                     path = path.replace('\\', '\\\\')
                 ref = 'file.reference.' + dep.name + '-bin'
-                println(out, ref + '=' + path)
+                print >> out, ref + '=' + path
 
             else:
                 n = dep.name.replace('.', '_')
                 relDepPath = os.path.relpath(dep.dir, p.dir).replace(os.sep, '/')
                 ref = 'reference.' + n + '.jar'
-                println(out, 'project.' + n + '=' + relDepPath)
-                println(out, ref + '=${project.' + n + '}/dist/' + dep.name + '.jar')
+                print >> out, 'project.' + n + '=' + relDepPath
+                print >> out, ref + '=${project.' + n + '}/dist/' + dep.name + '.jar'
 
             javacClasspath.append('${' + ref + '}')
 
-        println(out, 'javac.classpath=\\\n    ' + (os.pathsep + '\\\n    ').join(javacClasspath))
+        print >> out, 'javac.classpath=\\\n    ' + (os.pathsep + '\\\n    ').join(javacClasspath)
 
 
         updated = update_file(join(p.dir, 'nbproject', 'project.properties'), out.getvalue()) or updated
@@ -1748,7 +1898,7 @@ def ideinit(args, suite=None):
 
 def javadoc(args):
     """generate javadoc for some/all Java projects"""
-
+    
     parser = ArgumentParser(prog='mx javadoc')
     parser.add_argument('--unified', action='store_true', help='put javadoc in a single directory instead of one per project')
     parser.add_argument('--force', action='store_true', help='(re)generate javadoc even if package-list file exists')

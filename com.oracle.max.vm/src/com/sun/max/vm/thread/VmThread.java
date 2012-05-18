@@ -49,13 +49,13 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.ti.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -500,7 +500,7 @@ public class VmThread {
                 // JVMTIEvent.THREAD_START is dispatched in JavaRunScheme
                 vmConfig().runScheme().run();
             } else {
-                JVMTI.event(JVMTIEvent.THREAD_START);
+                VMTI.handler().threadStart(vmThread);
                 vmThread.javaThread.run();
             }
         } finally {
@@ -626,8 +626,8 @@ public class VmThread {
 
         // Enable safepoints:
         Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla));
-        // prologue sets the IN_UPCALL bit, but we aren't actually in a JVMTI/JNI upcall
-        JVMTIVmThreadLocal.unsetBit(etla, JVMTIVmThreadLocal.IN_UPCALL);
+        // JniFunctions.prologue calls VMTI.beginUpcallVM but we aren't actually in an upcall into the VM
+        VMTI.handler().endUpcallVM();
 
         final VmThread thread = VmThread.current();
 
@@ -647,8 +647,8 @@ public class VmThread {
             // The main thread manages to avoid the normal runtime mechanism that sets this value
             thread.suspendMonitor.init();
 
-            // Initialize JVMTI agents
-            JVMTI.initialize();
+            // Initialize VMTI agents
+            VMTI.handler().initialize();
 
             // Code manager initialization must happen after parsing of pristine options
             // It must also be performed before pristine initialization of the heap scheme.
@@ -682,7 +682,7 @@ public class VmThread {
             }
             thread.terminationCause = throwable;
         }
-        JVMTI.event(JVMTIEvent.THREAD_END);
+        VMTI.handler().threadEnd(thread);
 
         // If this is the main thread terminating, initiate shutdown hooks after waiting for other non-daemons to terminate
         if (thread == mainThread) {

@@ -842,6 +842,11 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         return useTLABBin ? binAllocateTLAB(size, Address.zero()).asPointer() : smallObjectAllocator.allocateTLAB(size);
     }
 
+    public void retireTLAB(Pointer start, Size size) {
+        // Ignore.
+        HeapSchemeAdaptor.fillWithDeadObject(start, start.plus(size));
+    }
+
     /**
      * Try to grow free space backing storage by delta bytes.
      * The method rounds the delta up to the alignment constraint of the free space backing

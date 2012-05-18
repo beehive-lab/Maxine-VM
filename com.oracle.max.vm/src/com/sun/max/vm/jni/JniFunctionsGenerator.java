@@ -31,7 +31,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.jvmti.*;
 
 /**
  * This class implements the {@linkplain #generate process} by which the source in {@link JniFunctionsSource JniFunctionsSource.java}
@@ -341,7 +340,7 @@ public class JniFunctionsGenerator {
     }
 
     public static boolean generate(boolean checkOnly, Class source, Class target) throws Exception {
-        return generate(checkOnly, source, target, new JniCustomizer());
+        return generate(checkOnly, "com.oracle.max.vm", source, target, new JniCustomizer());
     }
 
     /**
@@ -358,10 +357,11 @@ public class JniFunctionsGenerator {
      *
      * @param checkOnly if {@code true}, then {@code target} is not updated; the value returned by this method indicates
      *            whether it would have been updated were this argument {@code true}
+     * @param project TODO
      * @return {@code true} if {@code target} was modified (or would have been if {@code checkOnly} was {@code false}); {@code false} otherwise
      */
-    public static boolean generate(boolean checkOnly, Class source, Class target, Customizer customizer) throws Exception {
-        File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm/src");
+    public static boolean generate(boolean checkOnly, String project, Class source, Class target, Customizer customizer) throws Exception {
+        File base = new File(JavaProject.findWorkspace(), project + File.separator + "src");
         File inputFile = new File(base, source.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
 
@@ -507,12 +507,10 @@ public class JniFunctionsGenerator {
             System.out.println("Source for " + JmmFunctions.class + " was updated");
             updated = true;
         }
-        if (generate(false, VMFunctionsSource.class, VMFunctions.class, new VMCustomizer(false))) {
+        if (generate(false, "com.oracle.max.vm", VMFunctionsSource.class, VMFunctions.class, new VMCustomizer(false))) {
             System.out.println("Source for " + VMFunctions.class + " was updated");
             updated = true;
         }
-
-        JVMTIFunctionsGenerator.main(args);
 
         if (updated) {
             System.exit(1);

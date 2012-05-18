@@ -74,7 +74,11 @@ final class JDK_java_lang_Object {
     @SUBSTITUTE("clone")
     public Object clone_SUBSTITUTE() throws CloneNotSupportedException {
         if (Cloneable.class.isInstance(this)) {
-            return Heap.clone(this);
+            Object clone = Heap.clone(this);
+            if (ObjectAccess.readClassActor(this).hasFinalizer()) {
+                SpecialReferenceManager.registerFinalizee(clone);
+            }
+            return clone;
         }
         throw new CloneNotSupportedException();
     }

@@ -242,6 +242,7 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         public enum Operation {
             ScanningThreadRoots;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
@@ -278,6 +279,7 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         public enum Operation {
             StackReferenceMapPreparationTime;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 

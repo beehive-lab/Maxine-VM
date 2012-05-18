@@ -49,6 +49,13 @@ import com.sun.max.vm.type.*;
  * Class to capture common methods for heap scheme implementations.
  */
 public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements HeapScheme {
+    /**
+     * A VM option for disabling use of TLABs.
+     */
+    public static boolean DisableExplicitGC = false;
+    static {
+        VMOptions.addFieldOption("-XX:", "DisableExplicitGC", HeapSchemeAdaptor.class, "Tells whether System.gc() forces a full GC", MaxineVM.Phase.PRISTINE);
+    }
 
 
     public static class GarbageCollectorMXBeanAdaptor extends MemoryManagerMXBeanAdaptor implements GarbageCollectorMXBean  {

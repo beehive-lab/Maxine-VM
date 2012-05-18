@@ -130,7 +130,7 @@ public class DependenciesStats {
                 @Override
                 protected int visit(Dependencies dependencies, ClassActor context, DependencyProcessor dependencyProcessor, int index) {
                     StringBuilder sb = new StringBuilder();
-                    ToStringDependencyProcessorVisitor v = dependencyProcessor.getToStringDependencyProcessorVisitor();
+                    ToStringDependencyProcessorVisitor v = dependencyProcessor.getToStringDependencyProcessorVisitor(null);
                     v.setStringBuilder(sb);
                     dependencyProcessor.visit(v, context, dependencies, index);
                     out.println("    " + sb.toString());

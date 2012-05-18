@@ -414,9 +414,7 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
     public Reference compareAndSwapReference(Reference ref, int offset, Reference expectedValue, Reference newValue) {
         heapScheme().preWriteBarrier(ref, Offset.fromInt(offset), newValue);
         final Reference result = toOrigin(ref).compareAndSwapReference(offset, expectedValue, newValue);
-        if (newValue.equals(result)) {
-            heapScheme().postWriteBarrier(ref,  Offset.fromInt(offset), newValue);
-        }
+        heapScheme().postWriteBarrier(ref,  Offset.fromInt(offset), newValue);
         return result;
     }
 

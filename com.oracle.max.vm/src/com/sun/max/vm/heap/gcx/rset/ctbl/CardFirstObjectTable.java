@@ -269,6 +269,10 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
         return rangeStart(nextCardIndex).plus(offset);
     }
 
+    public void clear(int fromIndex, int toIndex) {
+        fill(fromIndex, toIndex, ZERO);
+    }
+
     public void verify(Address start, Address end) {
         // iterate over all entry and verify the invariant on the first object.
         int firstCard = tableEntryIndex(start);

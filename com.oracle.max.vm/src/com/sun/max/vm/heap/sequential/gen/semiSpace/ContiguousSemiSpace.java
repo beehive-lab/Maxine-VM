@@ -25,24 +25,17 @@ package com.sun.max.vm.heap.sequential.gen.semiSpace;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.runtime.*;
 
 
 public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? extends Refiller>> extends ContiguousAllocatingSpace<T> {
     @INSPECTED
     ContiguousHeapSpace fromSpace;
-    /**
-     * Alignment constraint for a semi-space.
-     */
-    private int semiSpaceAlignment;
-
     ContiguousSemiSpace(T allocator, String name) {
         super(allocator, name + "'s To Space");
         fromSpace = new ContiguousHeapSpace(name + "'s From Space");
     }
 
-    public void initializeAlignment(int semiSpaceAlignment) {
-        this.semiSpaceAlignment = semiSpaceAlignment;
-    }
 
     public Address highestAddress() {
         Address fend = fromSpace.end();
@@ -57,27 +50,47 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
     }
 
     @Override
-    public void initialize(Address start, Size maxSize, Size initialSize) {
-        Size semiSpaceMaxSize = maxSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
-        Size semiSpaceInitSize = maxSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
-        space.setReserved(start, semiSpaceMaxSize);
+    public void initialize(Address start, Size semiSpaceMaxSize, Size semiSpaceInitSize) {
+        super.initialize(start, semiSpaceMaxSize, semiSpaceInitSize);
         fromSpace.setReserved(start.plus(semiSpaceMaxSize), semiSpaceMaxSize);
-        space.growCommittedSpace(semiSpaceInitSize);
         fromSpace.growCommittedSpace(semiSpaceInitSize);
-        allocator.refill(space.start(), space.committedSize());
+        // Inspector support:
+        // Zero-fill  the first word of  the still virgin backing storage of the from space to force the OS to map the first page in virtual memory.
+        // This avoids the inspector to get DataIO Error on trying to read the bytes from the first page.
+        fromSpace.start().asPointer().setWord(Word.zero());
     }
 
     void flipSpaces() {
+        String fromSpaceName = fromSpace.regionName();
+        String toSpaceName = space.regionName();
+        // Make allocator parsable before flipping semi-space.
+        allocator.doBeforeGC();
         ContiguousHeapSpace toSpace = fromSpace;
         fromSpace = space;
+        fromSpace.setRegionName(fromSpaceName);
         space = toSpace;
-        // FIXME
-        // allocator.refill(space.start(), space.committedSize());
+        space.setRegionName(toSpaceName);
+        // Now, refill the allocator with the new to Space.
+        allocator.refill(space.start(), space.committedSize());
     }
 
     @Override
+    public Size growAfterGC(Size delta) {
+        Size size = super.growAfterGC(delta);
+        boolean shrunk = fromSpace.growCommittedSpace(size);
+        FatalError.check(shrunk, "request for growing space after GC must always succeed");
+        return size;
+    }
+
+    @Override
+    public Size shrinkAfterGC(Size delta) {
+        Size size = super.shrinkAfterGC(delta);
+        boolean shrunk = fromSpace.shrinkCommittedSpace(size);
+        FatalError.check(shrunk, "request for shrinking space after GC must always succeed");
+        return size;
+    }
+    @Override
     public void doBeforeGC() {
-        allocator.doBeforeGC();
     }
 
     @Override

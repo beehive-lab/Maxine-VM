@@ -337,9 +337,24 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
         Log.print(cardTable.rangeStart(startCardIndex));
         Log.print(", ");
         Log.print(cardTable.rangeStart(endCardIndex));
-        Log.print(")  R = ");
-        Log.print(RegionTable.theRegionTable().regionID(cardTable.rangeStart(startCardIndex)));
         Log.println(")");
+    }
+
+
+    public void checkNoCardInState(Address start, Address end, CardState cardState) {
+        final int endOfRange = cardTable.tableEntryIndex(end);
+        int cardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, cardState);
+        if (cardIndex < endOfRange) {
+            Log.print("Unexpected state for card #");
+            Log.print(cardIndex);
+            Log.print(" [");
+            Log.print(cardTable.rangeStart(cardIndex));
+            Log.print(", ");
+            Log.print(cardTable.rangeStart(cardIndex + 1));
+            Log.println(" ]");
+            FatalError.breakpoint();
+            FatalError.crash("invariant violation");
+        }
     }
 
     /**
