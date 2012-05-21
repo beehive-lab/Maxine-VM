@@ -389,7 +389,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitMonitorEnter(MonitorEnterNode x) {
         XirArgument obj = toXirArgument(x.object().owner());
-        XirArgument lockAddress = toXirArgument(emitLea(debugInfoBuilder.lockDataFor(x.object(), true)));
+        StackBlock stackLock = debugInfoBuilder.lockDataFor(x.object(), true);
+        XirArgument lockAddress = stackLock == null ? null : toXirArgument(emitLea(stackLock));
         XirSnippet snippet = xir.genMonitorEnter(site(x), obj, lockAddress);
         emitXir(snippet, x, state(), stateFor(x.stateAfter()), null, true);
     }
@@ -397,7 +398,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitMonitorExit(MonitorExitNode x) {
         XirArgument obj = toXirArgument(x.object().owner());
-        XirArgument lockAddress = toXirArgument(emitLea(debugInfoBuilder.lockDataFor(x.object(), false)));
+        StackBlock stackLock = debugInfoBuilder.lockDataFor(x.object(), false);
+        XirArgument lockAddress = stackLock == null ? null : toXirArgument(emitLea(stackLock));
         XirSnippet snippet = xir.genMonitorExit(site(x), obj, lockAddress);
         emitXir(snippet, x, state(), null, true);
     }
