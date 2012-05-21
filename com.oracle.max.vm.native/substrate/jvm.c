@@ -403,13 +403,15 @@ JVM_SetThreadPriority(JNIEnv *env, jobject thread, jint prio) {
     vm.SetThreadPriority(env, thread, prio);
 }
 
-#if os_DARWIN
-/* This function is expected by libjava.jnilib on Mac OS X. The current signature is just a guess. [Doug].*/
+
 void
-JVM_SetNativeThreadName(JNIEnv *env, jobject thread, jobject name) {
+JVM_SetNativeThreadName(JNIEnv *env, jobject jthread, jstring name) {
+#if os_DARWIN
     UNIMPLEMENTED_WITH_ENV();
-}
+#elif os_SOLARIS || os_LINUX
+    /* Same as JDK7u4 (and before): do nothing as not yet implemented on either Solaris / Linux */
 #endif
+}
 
 void
 JVM_Yield(JNIEnv *env, jclass threadClass) {
