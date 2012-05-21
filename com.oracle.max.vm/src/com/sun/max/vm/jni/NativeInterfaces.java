@@ -313,7 +313,7 @@ public final class NativeInterfaces {
                 String sourceFile = source.getSimpleName() + ".java";
                 FatalError.unexpected(String.format("%n%n" + thisFile +
                     " is out of sync with respect to " + sourceFile + ".%n" +
-                    "Run 'mx jnigen', recompile " + thisFile + " (or refresh it in your IDE)" +
+                    "Run 'mx jnigen or mx jvmtigen', recompile " + thisFile + " (or refresh it in your IDE)" +
                     " and restart the bootstrapping process.%n%n"));
             }
         } catch (Exception exception) {
