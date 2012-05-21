@@ -82,7 +82,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
     private final String methodName;
     private final String signatureDescriptorString;
 
-    private boolean enabled = true;
+    private boolean enabled = false;
 
     // Breakpoint is unconditional by default.
     private BreakpointCondition condition = null;
@@ -94,7 +94,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
      * All machine code breakpoints created in compilations of the method in the VM.
      * Non-null if this breakpoint is enabled; null if disabled.
      */
-    private List<VmTargetBreakpoint> targetBreakpoints = new ArrayList<VmTargetBreakpoint>();
+    private List<VmTargetBreakpoint> targetBreakpoints = null;
 
     /**
      * A new bytecode breakpoint, enabled by default, at a specified location.
@@ -542,6 +542,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             }
             final VmBytecodeBreakpoint breakpoint = new VmBytecodeBreakpoint(vm(), codeLocation, kind, key);
             breakpoint.setDescription(codeLocation.description());
+            breakpoint.setEnabled(true);
             breakpoints.put(key, breakpoint);
             updateBreakpointCache();
             Trace.line(TRACE_VALUE, tracePrefix + "new=" + breakpoint);
