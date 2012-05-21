@@ -24,10 +24,7 @@ package com.sun.max.vm.ext.jvmti;
 
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
-import java.util.*;
-
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * Thread local storage for agents.
@@ -35,36 +32,38 @@ import com.sun.max.vm.thread.*;
  */
 public class JVMTIThreadLocalStorage {
 
-    private static Map<Thread, Long> tlsMap;
+    private static class NativeData {
+        Pointer data;
+    }
+
+    private static class NativeDataThreadLocal extends ThreadLocal<NativeData> {
+        @Override
+        public NativeData initialValue() {
+            return new NativeData();
+        }
+    }
+
+    private static final NativeDataThreadLocal ndtl = new NativeDataThreadLocal();
 
     static int setThreadLocalStorage(Thread thread, Pointer data) {
+        thread = JVMTIThreadFunctions.checkThread(thread);
         if (thread == null) {
-            thread = VmThread.current().javaThread();
-        }
-        if (!thread.isAlive()) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
-        checkMap().put(thread, data.toLong());
+        NativeData nd = ndtl.get();
+        nd.data = data;
         return JVMTI_ERROR_NONE;
     }
 
     static int getThreadLocalStorage(Thread thread, Pointer dataPtr) {
+        thread = JVMTIThreadFunctions.checkThread(thread);
         if (thread == null) {
-            thread = VmThread.current().javaThread();
-        }
-        if (!thread.isAlive()) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
-        Long value = checkMap().get(thread);
-        Pointer result = value == null ? Pointer.zero() : Address.fromLong(value.longValue()).asPointer();
-        dataPtr.setWord(result);
+        NativeData nd = ndtl.get();
+        dataPtr.setWord(nd.data);
         return JVMTI_ERROR_NONE;
     }
 
-    private static Map<Thread, Long> checkMap() {
-        if (tlsMap == null) {
-            tlsMap  = Collections.synchronizedMap(new WeakHashMap<Thread, Long>());
-        }
-        return tlsMap;
-    }
+
 }
