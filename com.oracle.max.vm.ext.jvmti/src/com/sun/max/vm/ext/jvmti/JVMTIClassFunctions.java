@@ -90,12 +90,10 @@ class JVMTIClassFunctions {
         Pointer classDataPtr = Reference.fromJava(classfileBytes).toOrigin().plus(JVMTIUtil.byteDataOffset);
         int classfileBytesLength = classfileBytes.length;
         boolean changed = false;
-        for (int i = 0; i < jvmtiEnvs.length; i++) {
-            Pointer callback = getCallbackForEvent(jvmtiEnvs[i], JVMTIEvent.CLASS_FILE_LOAD_HOOK, VmThread.current());
-            if (callback.isZero()) {
-                continue;
-            }
-            Pointer env = jvmtiEnvs[i].env;
+        for (int i = 0; i < MAX_NATIVE_ENVS; i++) {
+            NativeEnv nativEnv = (NativeEnv) jvmtiEnvs[i];
+            Pointer callback = getCallbackForEvent(nativEnv, JVMTIEvent.CLASS_FILE_LOAD_HOOK, VmThread.current());
+            Pointer cstruct = nativEnv.cstruct;
             // class name is passed as a char * not a JNI handle, sigh
             Pointer classNamePtr = Pointer.zero();
             if (className != null) {
@@ -103,7 +101,9 @@ class JVMTIClassFunctions {
             }
 
             newClassDataPtrPtr.setWord(Word.zero());
-            invokeClassfileLoadHookCallback(callback, env, Word.zero(), JniHandles.createLocalHandle(classLoader), classNamePtr, JniHandles.createLocalHandle(protectionDomain), classfileBytesLength,
+            invokeClassfileLoadHookCallback(
+                            callback, cstruct, Word.zero(),
+                            JniHandles.createLocalHandle(classLoader), classNamePtr, JniHandles.createLocalHandle(protectionDomain), classfileBytesLength,
                             classDataPtr, newClassDataLenPtr, newClassDataPtrPtr);
             if (!classNamePtr.isZero()) {
                 Memory.deallocate(classNamePtr);
@@ -115,9 +115,23 @@ class JVMTIClassFunctions {
             }
         }
         if (changed) {
-            byte[] result = new byte[classfileBytesLength];
-            Memory.readBytes(classDataPtr, result);
-            return result;
+            classfileBytes = new byte[classfileBytesLength];
+            Memory.readBytes(classDataPtr, classfileBytes);
+        }
+
+        // now the Java implementations
+        for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
+            JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
+            if (javaEnv != null) {
+                byte[] newClassfileBytes = javaEnv.classFileLoadHook(classLoader, className, protectionDomain, classfileBytes);
+                if (newClassfileBytes != null) {
+                    classfileBytes = newClassfileBytes;
+                    changed = true;
+                }
+            }
+        }
+        if (changed) {
+            return classfileBytes;
         } else {
             return null;
         }
@@ -133,7 +147,7 @@ class JVMTIClassFunctions {
         if (getAddedBootClassPathCalled) {
             return JVMTI_ERROR_INTERNAL;
         }
-        Env jvmtiEnv = JVMTI.getEnv(env);
+        NativeEnv jvmtiEnv = (NativeEnv) JVMTI.getEnv(env);
         if (jvmtiEnv == null) {
             return JVMTI_ERROR_INVALID_ENVIRONMENT;
         }
@@ -162,8 +176,8 @@ class JVMTIClassFunctions {
             return null;
         }
         String result = null;
-        for (int i = 0; i < jvmtiEnvs.length; i++) {
-            Env jvmtiEnv = jvmtiEnvs[i];
+        for (int i = 0; i < MAX_NATIVE_ENVS; i++) {
+            NativeEnv jvmtiEnv = (NativeEnv) jvmtiEnvs[i];
             for (long pathAsLong : jvmtiEnv.bootClassPathAdd) {
                 if (pathAsLong != 0) {
                     Pointer pathPtr = Address.fromLong(pathAsLong).asPointer();

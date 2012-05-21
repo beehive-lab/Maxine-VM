@@ -23,7 +23,7 @@
 package com.sun.max.vm.ext.jvmti;
 
 import static com.sun.max.vm.ext.jvmti.JVMTI.*;
-import static com.sun.max.vm.ext.jvmti.JVMTICapabilities.*;
+import static com.sun.max.vm.ext.jvmti.JVMTICapabilities.E.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIEnvNativeStruct.*;
 import static com.sun.max.vm.jni.JniFunctions.epilogue;
@@ -75,6 +75,9 @@ public class JVMTIFunctions  {
         CriticalNativeMethod cnm = new CriticalNativeMethod(JVMTIFunctions.class, "currentJniEnv");
         currentJniEnv = cnm.classMethodActor;
     }
+
+    static final StaticMethodActor[] jvmtiFunctionActors = JVMTIFunctionsSource.checkAgainstJvmtiHeaderFile(NativeInterfaces.getNativeInterfaceFunctionActors(JVMTIFunctions.class));
+    static final CriticalMethod[] jvmtiFunctions = NativeInterfaces.toCriticalMethods(jvmtiFunctionActors);
 
     @INLINE
     static Pointer prologue(Pointer env) {
@@ -3797,7 +3800,7 @@ public class JVMTIFunctions  {
                 return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             // Currently we don't have any phase-limited or ownership limitations
-            JVMTICapabilities.setAll(capabilities_ptr);
+            JVMTICapabilities.E.setAll(capabilities_ptr);
             return JVMTI_ERROR_NONE;
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
@@ -3856,14 +3859,7 @@ public class JVMTIFunctions  {
             if (jvmtiEnv == null) {
                 return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
-            Pointer envCaps = CAPABILITIES.getPtr(env);
-            for (int i = 0; i < JVMTICapabilities.values.length; i++) {
-                JVMTICapabilities cap = JVMTICapabilities.values[i];
-                if (cap.get(capabilities_ptr)) {
-                   cap.set(envCaps, false);
-                }
-            }
-            return JVMTI_ERROR_NONE;
+            return JVMTICapabilities.relinquishCapabilities(env, capabilities_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
@@ -3874,7 +3870,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetAvailableProcessors(Pointer env, Pointer processor_count_ptr) {
-        // Source: JVMTIFunctionsSource.java:1189
+        // Source: JVMTIFunctionsSource.java:1182
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetAvailableProcessors.ordinal(), env, processor_count_ptr);        }
@@ -3900,7 +3896,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetClassVersionNumbers(Pointer env, JniHandle klass, Pointer minor_version_ptr, Pointer major_version_ptr) {
-        // Source: JVMTIFunctionsSource.java:1197
+        // Source: JVMTIFunctionsSource.java:1190
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassVersionNumbers.ordinal(), env, klass, minor_version_ptr, major_version_ptr);        }
@@ -3927,7 +3923,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetConstantPool(Pointer env, JniHandle klass, Pointer constant_pool_count_ptr, Pointer constant_pool_byte_count_ptr, Pointer constant_pool_bytes_ptr) {
-        // Source: JVMTIFunctionsSource.java:1204
+        // Source: JVMTIFunctionsSource.java:1197
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetConstantPool.ordinal(), env, klass, constant_pool_count_ptr, constant_pool_byte_count_ptr, constant_pool_bytes_ptr);        }
@@ -3948,7 +3944,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetEnvironmentLocalStorage(Pointer env, Pointer data_ptr) {
-        // Source: JVMTIFunctionsSource.java:1209
+        // Source: JVMTIFunctionsSource.java:1202
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetEnvironmentLocalStorage.ordinal(), env, data_ptr);        }
@@ -3969,7 +3965,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetEnvironmentLocalStorage(Pointer env, Pointer data) {
-        // Source: JVMTIFunctionsSource.java:1214
+        // Source: JVMTIFunctionsSource.java:1207
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetEnvironmentLocalStorage.ordinal(), env, data);        }
@@ -3990,7 +3986,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int AddToBootstrapClassLoaderSearch(Pointer env, Pointer segment) {
-        // Source: JVMTIFunctionsSource.java:1219
+        // Source: JVMTIFunctionsSource.java:1212
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.AddToBootstrapClassLoaderSearch.ordinal(), env, segment);        }
@@ -4015,7 +4011,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetVerboseFlag(Pointer env, int flag, boolean value) {
-        // Source: JVMTIFunctionsSource.java:1226
+        // Source: JVMTIFunctionsSource.java:1219
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetVerboseFlag.ordinal(), env, Address.fromInt(flag), Address.fromInt(value ? 1 : 0));        }
@@ -4053,7 +4049,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int AddToSystemClassLoaderSearch(Pointer env, Pointer segment) {
-        // Source: JVMTIFunctionsSource.java:1248
+        // Source: JVMTIFunctionsSource.java:1241
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.AddToSystemClassLoaderSearch.ordinal(), env, segment);        }
@@ -4074,7 +4070,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RetransformClasses(Pointer env, int class_count, Pointer classes) {
-        // Source: JVMTIFunctionsSource.java:1253
+        // Source: JVMTIFunctionsSource.java:1246
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.RetransformClasses.ordinal(), env, Address.fromInt(class_count), classes);        }
@@ -4095,7 +4091,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetOwnedMonitorStackDepthInfo(Pointer env, JniHandle thread, Pointer monitor_info_count_ptr, Pointer monitor_info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1258
+        // Source: JVMTIFunctionsSource.java:1251
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetOwnedMonitorStackDepthInfo.ordinal(), env, thread, monitor_info_count_ptr, monitor_info_ptr);        }
@@ -4116,7 +4112,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetObjectSize(Pointer env, JniHandle object, Pointer size_ptr) {
-        // Source: JVMTIFunctionsSource.java:1263
+        // Source: JVMTIFunctionsSource.java:1256
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetObjectSize.ordinal(), env, object, size_ptr);        }
@@ -4143,7 +4139,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetLocalInstance(Pointer env, JniHandle thread, int depth, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:1270
+        // Source: JVMTIFunctionsSource.java:1263
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalInstance.ordinal(), env, thread, Address.fromInt(depth), value_ptr);        }

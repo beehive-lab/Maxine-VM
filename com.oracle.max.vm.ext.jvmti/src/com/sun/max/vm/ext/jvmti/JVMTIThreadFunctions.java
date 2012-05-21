@@ -160,7 +160,7 @@ public class JVMTIThreadFunctions {
     }
 
     static int getThreadInfo(Thread thread, Pointer threadInfoPtr) {
-        VmThread vmThread = checkThread(thread);
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
@@ -181,7 +181,7 @@ public class JVMTIThreadFunctions {
     // Single thread stack trace
 
     static int getStackTrace(Thread thread, int startDepth, int maxFrameCount, Pointer frameBuffer, Pointer countPtr) {
-        VmThread vmThread = checkThread(thread);
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
@@ -221,7 +221,6 @@ public class JVMTIThreadFunctions {
             this.frameAccess = frameAccess;
             if (bci < 0) {
                 // outside the actual bytecode area, e.g. in method entry count overflow code
-                assert JVMTI.JVMTI_VM;
                 // make it look like a call from first instruction
                 bci = 0;
             }
@@ -657,16 +656,35 @@ public class JVMTIThreadFunctions {
      * Checks for current thread request ({@code thread == null}, and live state.
      * @return {@code null} if should return error, the {@link VmThread} otherwise.
      */
-    private static VmThread checkThread(Thread thread) {
-        VmThread vmThread = thread == null ? VmThread.current() : VmThread.fromJava(thread);
+    static VmThread checkVmThread(Thread thread) {
+        if (thread == null) {
+            return VmThread.current();
+        }
+        VmThread vmThread = VmThread.fromJava(thread);
         if (vmThread == null || vmThread.state() == Thread.State.TERMINATED) {
             return null;
         }
         return vmThread;
     }
 
+    /**
+     * Checks for {@code null} which means current thread (which is alive).
+     * else checks if alive.
+     * @param thread
+     * @return {@code null} if the thread is not alive, {@code thread} otherwise
+     */
+    static Thread checkThread(Thread thread) {
+        if (thread == null) {
+            return VmThread.current().javaThread();
+        }
+        if (!thread.isAlive()) {
+            return null;
+        }
+        return thread;
+    }
+
     static int getFrameCount(Thread thread, Pointer countPtr) {
-        VmThread vmThread = checkThread(thread);
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
@@ -676,7 +694,7 @@ public class JVMTIThreadFunctions {
     }
 
     static int getFrameLocation(Thread thread, int depth, Pointer methodPtr, Pointer locationPtr) {
-        VmThread vmThread = checkThread(thread);
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
@@ -735,7 +753,7 @@ public class JVMTIThreadFunctions {
     }
 
     static int notifyFramePop(Thread thread, int depth) {
-        VmThread vmThread = checkThread(thread);
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
@@ -922,7 +940,7 @@ public class JVMTIThreadFunctions {
     }
 
     private static int getOrSetLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, TypedData typedData) {
-        VmThread vmThread = checkThread(thread);
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
