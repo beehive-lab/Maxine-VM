@@ -22,27 +22,17 @@
  */
 package com.oracle.max.vm.ext.vma;
 
-import com.oracle.max.vm.ext.vma.runtime.*;
+import com.sun.max.vm.*;
 
 
 /**
  * The interface (abstract class) that must be implemented to handle generated advice calls from the VM.
  */
 public abstract class VMAdviceHandler extends RuntimeAdvice {
-    protected ObjectStateHandler state;
-
     /**
-     * Initialise the handler with given {@link ObjectStateHandler} instance.
-     * @param state
+     * @param phase one of {@code BOOTSTRAPPING}, {@code STARTING} or {@code TERMINATING}
      */
-    public void initialise(ObjectStateHandler state) {
-        this.state = state;
+    public void initialise(MaxineVM.Phase phase) {
     }
-
-    /**
-     * Close down the handler.
-     */
-    public abstract void finalise();
-
 
 }

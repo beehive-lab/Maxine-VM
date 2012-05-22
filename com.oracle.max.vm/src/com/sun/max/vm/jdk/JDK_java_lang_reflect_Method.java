@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,6 +58,9 @@ public final class JDK_java_lang_reflect_Method {
         return MethodActor.fromJava(thisMethod());
     }
 
+    @ALIAS(declaringClass = Method.class)
+    private Map<Class, Annotation> declaredAnnotations;
+
     /**
      * Gets the declared annotations for this method.
      * @return a map from the declaring class to its annotations
@@ -66,9 +69,14 @@ public final class JDK_java_lang_reflect_Method {
     @SUBSTITUTE
     private synchronized Map<Class, Annotation> declaredAnnotations() {
         final MethodActor methodActor = thisMethodActor();
-        // in java.lang.reflect.Method.declaredAnnotations, the result is cached. Not sure how to do that using substitution.
-
-        // JDK 7 uses the method signature Map<Class<? extends Annotation>, Annotation>. In order to be compatible with both JDK 6 and JDK 7, use the casts below
-        return (Map<Class, Annotation>) ((Object) AnnotationParser.parseAnnotations(methodActor.runtimeVisibleAnnotationsBytes(), new ConstantPoolAdapter(methodActor.holder().constantPool()), methodActor.holder().toJava()));
+        if (declaredAnnotations == null) {
+            byte[] annotations = methodActor.runtimeVisibleAnnotationsBytes();
+            ConstantPoolAdapter cp = new ConstantPoolAdapter(methodActor.holder().constantPool());
+            Class declaringClass = methodActor.holder().toJava();
+            // JDK 7 uses the method signature Map<Class<? extends Annotation>, Annotation>. In order to be compatible with both JDK 6 and JDK 7, use the casts below
+            declaredAnnotations = (Map<Class, Annotation>) ((Object) AnnotationParser.parseAnnotations(
+                annotations, cp, declaringClass));
+        }
+        return declaredAnnotations;
     }
 }

@@ -23,14 +23,14 @@
 
 package com.oracle.max.vma.tools.log;
 
-import static com.oracle.max.vm.ext.vma.log.txt.TextVMAdviceHandlerLog.*;
+import static com.oracle.max.vm.ext.vma.handlers.log.txt.TextVMAdviceHandlerLog.*;
 
 import java.io.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.log.*;
-import com.oracle.max.vm.ext.vma.log.txt.*;
+import com.oracle.max.vm.ext.vma.handlers.log.*;
+import com.oracle.max.vm.ext.vma.handlers.log.txt.*;
 import com.oracle.max.vma.tools.qa.*;
 import com.sun.max.program.*;
 

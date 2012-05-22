@@ -71,13 +71,21 @@ public class VMLoggerGenerator {
             Set<Class> enumArgMap = new HashSet<Class>();
             int[] refMaps = computeRefMaps(methods, enumArgMap);
             out.format("%sprivate static abstract class %s extends %s {%n", INDENT4, autoName, sanitizedName(vmLoggerInterface.parent().getName()));
-            Map<String, Integer> enumMap = outOperationEnum(out, methods);
+            OperationEnumInfo[] enumMap = outOperationEnum(out, methods);
             Set<Class> customTypes = new HashSet<Class>();
 
-            out.printf("%sprivate static final int[] REFMAPS = %s;%n%n", INDENT8, refMapArray(refMaps));
-            out.printf("%sprotected %s(String name, String optionDescription) {%n", INDENT8, autoName);
-            out.printf("%ssuper(name, Operation.VALUES.length, optionDescription, REFMAPS);%n", INDENT12);
+            out.printf("%sprivate static final int[] REFMAPS = %s;%n%n", INDENT8, refMapArray(INDENT8, refMaps));
+
+            String optionDescriptionParam = ", String optionDescription";
+            String openDescriptionArg = ", optionDescription";
+            if (vmLoggerInterface.hidden()) {
+                optionDescriptionParam = "";
+                openDescriptionArg = "";
+            }
+            out.printf("%sprotected %s(String name%s) {%n", INDENT8, autoName, optionDescriptionParam);
+            out.printf("%ssuper(name, Operation.VALUES.length%s, REFMAPS);%n", INDENT12, openDescriptionArg);
             out.printf("%s}%n%n", INDENT8);
+
             if (vmLoggerInterface.defaultConstructor()) {
                 out.printf("%sprotected %s() {%n", INDENT8, autoName);
                 out.printf("%s}%n%n", INDENT8);
@@ -90,13 +98,15 @@ public class VMLoggerGenerator {
             // where we store the string for the case body of the trace method
             ArrayList<String> traceCaseBodies = new ArrayList<String>(methods.length);
 
-            for (Method method : methods) {
-                String uName = operationName(method);
-                if (isOverride(method, vmLoggerInterface)) {
+            for (int i = 0; i < methods.length; i++) {
+                Method method = methods[i];
+                String uMethodName = operationName(method);
+                String uEnumName = enumMap[i].uName;
+                if (isOverride(uEnumName, vmLoggerInterface)) {
                     out.printf("%s@Override%n", INDENT8);
                 }
                 out.printf("%s@INLINE%n", INDENT8);
-                out.printf("%spublic final void log%s(", INDENT8, uName);
+                out.printf("%spublic final void log%s(", INDENT8, uMethodName);
                 Class<?>[] parameters = method.getParameterTypes();
                 Annotation[][] parameterAnnotations = method.getParameterAnnotations();
                 String[] formalNames = new String[parameters.length + 1];
@@ -120,7 +130,7 @@ public class VMLoggerGenerator {
 
                 // generate call to VMLogger.log method with argument typing
                 // generate case body for trace method at same time
-                out.printf("%slog(Operation.%s.ordinal()", INDENT12, uName);
+                out.printf("%slog(Operation.%s.ordinal()", INDENT12, uEnumName);
 
                 argIndex = 1;
                 for (Class< ? > parameter : parameters) {
@@ -151,8 +161,8 @@ public class VMLoggerGenerator {
                     // trace call in case body
                     int indx = 4;
                     StringBuilder caseBody = new StringBuilder(INDENTS[indx]).append("case ");
-                    caseBody.append(enumMap.get(uName)).append(':').append(" { //").append(uName).append('\n');
-                    caseBody.append(INDENTS[indx + 1]).append("trace").append(uName).append('(');
+                    caseBody.append(enumMap[i].ordinal).append(':').append(" { //").append(uEnumName).append('\n');
+                    caseBody.append(INDENTS[indx + 1]).append("trace").append(uMethodName).append('(');
                     argIndex = 1;
                     for (Class< ? > parameter : parameters) {
                         if (argIndex > 1) {
@@ -167,7 +177,7 @@ public class VMLoggerGenerator {
                     traceCaseBodies.add(caseBody.toString());
 
                     // trace method
-                    out.printf("%sprotected abstract void trace%s(", INDENT8, uName);
+                    out.printf("%sprotected abstract void trace%s(", INDENT8, uMethodName);
                     argIndex = 1;
                     for (Class< ? > parameter : parameters) {
                         Annotation[] paramAnnotations = parameterAnnotations[argIndex - 1];
@@ -191,22 +201,23 @@ public class VMLoggerGenerator {
                 outTraceMethod(out, traceCaseBodies);
 
                 // casts
-                for (Class type : customTypes) {
-                    String typeName = type.getSimpleName();
-                    out.printf("%sstatic %s to%s(Record r, int argNum) {%n", INDENT8, typeName, typeName);
-                    out.printf("%sreturn as%s(toObject(r, argNum));%n", INDENT12, typeName);
+                for (Class klass : customTypes) {
+                    String typeName = klass.getSimpleName();
+                    String methodName = traceMethodName(klass);
+                    out.printf("%sstatic %s to%s(Record r, int argNum) {%n", INDENT8, typeName, methodName);
+                    out.printf("%sreturn as%s(toObject(r, argNum));%n", INDENT12, methodName);
                     out.printf("%s}%n", INDENT8);
                     out.printf("%s@INTRINSIC(UNSAFE_CAST)%n", INDENT8);
-                    out.printf("%sprivate static native %s as%s(Object arg);%n", INDENT8, typeName, typeName);
+                    out.printf("%sprivate static native %s as%s(Object arg);%n", INDENT8, typeName, methodName);
                 }
 
                 // enum args
                 for (Class klass : enumArgMap) {
-                    final String type = klass.getSimpleName();
-                    out.printf("%n%sprivate static %s to%s(Record r, int argNum) {%n", INDENT8, type, type);
-                    out.printf("%sreturn %s.VALUES[r.getIntArg(argNum)];%n", INDENT12, type);
+                    final String typeName = klass.getSimpleName();
+                    out.printf("%n%sprivate static %s to%s(Record r, int argNum) {%n", INDENT8, typeName, typeName);
+                    out.printf("%sreturn %s.VALUES[r.getIntArg(argNum)];%n", INDENT12, typeName);
                     out.printf("%s}%n%n", INDENT8);
-                    out.printf("%sprivate static Word %sArg(%s enumType) {%n", INDENT8, toFirstLower(type), type);
+                    out.printf("%sprivate static Word %sArg(%s enumType) {%n", INDENT8, toFirstLower(typeName), typeName);
                     out.printf("%sreturn Address.fromInt(enumType.ordinal());%n", INDENT12);
                     out.printf("%s}%n", INDENT8);
                 }
@@ -344,13 +355,13 @@ public class VMLoggerGenerator {
         return name.replace("$", ".");
     }
 
-    private static boolean isOverride(Method method, VMLoggerInterface vmLoggerInterface) {
+    private static boolean isOverride(String uName, VMLoggerInterface vmLoggerInterface) {
         Class parent = vmLoggerInterface.parent();
         if (parent == VMLogger.class) {
             return false;
         }
         // look in parent for method that matches method name
-        String logName = "log" + operationName(method);
+        String logName = "log" + uName;
         for (Method parentMethod : parent.getDeclaredMethods()) {
             if (parentMethod.getName().equals(logName)) {
                 return true;
@@ -398,7 +409,8 @@ public class VMLoggerGenerator {
         return toFirstUpper(method.getName());
     }
 
-    private static String refMapArray(int[] refMaps) {
+    private static String refMapArray(String indent, int[] refMaps) {
+        indent += INDENT4;
         boolean zero = true;
         for (int x : refMaps) {
             if (x != 0) {
@@ -410,12 +422,21 @@ public class VMLoggerGenerator {
             return "null";
         }
         StringBuilder sb = new StringBuilder("new int[] {");
+        int lineNum = 0;
         boolean first = true;
         for (int bits : refMaps) {
             if (first) {
                 first = false;
             } else {
-                sb.append(", ");
+                sb.append(',');
+                int newLineNum = sb.length() / 80;
+                if (newLineNum != lineNum) {
+                    sb.append('\n');
+                    sb.append(indent);
+                    lineNum = newLineNum;
+                } else {
+                    sb.append(' ');
+                }
             }
             sb.append("0x").append(Integer.toHexString(bits));
         }
@@ -423,13 +444,26 @@ public class VMLoggerGenerator {
         return sb.toString();
     }
 
-    private static Map<String, Integer> outOperationEnum(PrintWriter out, Method[] methods) {
-        Map<String, Integer> enumMap = new HashMap<String, Integer>();
+    private static class OperationEnumInfo {
+        String uName;
+        int ordinal;
+        int overLoadIndex = 1;
+
+        OperationEnumInfo(String uName, int ordinal) {
+            this.uName = uName;
+            this.ordinal = ordinal;
+        }
+    }
+
+    private static OperationEnumInfo[] outOperationEnum(PrintWriter out, Method[] methods) {
+        OperationEnumInfo[] result = new OperationEnumInfo[methods.length];
+        Map<String, Integer> nameMap = new HashMap<String, Integer>();
         out.format("%spublic enum Operation {%n", INDENT8);
         boolean first = true;
         out.print(INDENT12);
         int count = 0;
-        for (Method method : methods) {
+        for (int i = 0; i < methods.length; i++) {
+            Method method = methods[i];
             if (!first) {
                 out.print(",");
                 if ((count + 1) % 4 == 0) {
@@ -440,15 +474,26 @@ public class VMLoggerGenerator {
             } else {
                 first = false;
             }
-            String enumName = operationName(method);
+            final String opName = operationName(method);
+            String enumName = opName;
+            Integer overLoadIndex = nameMap.get(opName);
+            if (overLoadIndex != null) {
+                // overloaded method name
+                overLoadIndex = new Integer(++overLoadIndex);
+                enumName += Integer.toString(overLoadIndex.intValue());
+            } else {
+                overLoadIndex = new Integer(1);
+            }
+            OperationEnumInfo info = new OperationEnumInfo(enumName, count);
+            result[i] = info;
+            nameMap.put(opName, overLoadIndex);
             out.print(enumName);
-            enumMap.put(enumName, count);
             count++;
         }
         out.println(";\n");
         out.printf("%s@SuppressWarnings(\"hiding\")%n", INDENT12); // in case of static import of similar
         out.printf("%spublic static final Operation[] VALUES = values();%n%s}%n%n", INDENT12, INDENT8);
-        return enumMap;
+        return result;
     }
 
     private static void outTraceMethod(PrintWriter out, ArrayList<String> caseBodies) {
@@ -493,8 +538,16 @@ public class VMLoggerGenerator {
         return toFirstLower(argClass.getSimpleName()) + "Arg";
     }
 
+    private static String traceMethodName(Class argClass) {
+        String name = toFirstUpper(argClass.getSimpleName());
+        if (argClass.isArray()) {
+            name = name.substring(0, name.length() - 2) + "Array";
+        }
+        return name;
+    }
+
     private static String traceArgMethodName(Class argClass) {
-        return "to" + toFirstUpper(argClass.getSimpleName());
+        return "to" + traceMethodName(argClass);
     }
 
     private static String wrapLogArg(String methodName, String name) {

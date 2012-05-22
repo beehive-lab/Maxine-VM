@@ -23,12 +23,13 @@
 package com.sun.max.ins.debug.vmlog;
 
 import com.sun.max.ins.*;
+import com.sun.max.tele.object.*;
 
 
 class VMLogArrayFixedElementsTableModel extends VMLogArrayElementsTableModel {
 
-    VMLogArrayFixedElementsTableModel(Inspection inspection, VMLogView vmLogView) {
-        super(inspection, vmLogView);
+    VMLogArrayFixedElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {
+        super(inspection, teleVMLog);
     }
 
 }

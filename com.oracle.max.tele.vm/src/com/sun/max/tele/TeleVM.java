@@ -283,7 +283,9 @@ public abstract class TeleVM implements MaxVM {
         public Options() {
             heapOption = newStringOption("heap", "1024", "Relocation address for the heap and code in the boot image.");
             vmArguments = newStringOption("a", "", "Specifies the arguments to the target VM.");
-            addOptions(BootImageGenerator.targetVMDirOptions);
+            // We do not want to check the auto generated code for consistency (by default), so change default value
+            BootImageGenerator.checkGeneratedCodeOption.setDefaultValue(false);
+            addOptions(BootImageGenerator.inspectorSharedOptions);
         }
     }
 
@@ -485,11 +487,11 @@ public abstract class TeleVM implements MaxVM {
                         bootImageConfig.layoutPackage,
                         bootImageConfig.heapPackage,
                         bootImageConfig.monitorPackage,
-                        bootImageConfig.runPackage);
+                        bootImageConfig.runPackage).gatherBootImagePackages();
         vm = new MaxineVM(config);
         MaxineVM.set(vm);
         config.loadAndInstantiateSchemes(bootImageConfig.vmSchemes());
-        JavaPrototype.initialize();
+        JavaPrototype.initialize(BootImageGenerator.checkGeneratedCodeOption.getValue());
     }
 
     /**
@@ -670,10 +672,6 @@ public abstract class TeleVM implements MaxVM {
     }
 
     private final VmMethodAccess methodAccess;
-
-    public final VmMethodAccess methods() {
-        return methodAccess;
-    }
 
     private final VMConfiguration vmConfiguration;
 
@@ -974,6 +972,10 @@ public abstract class TeleVM implements MaxVM {
         return heapAccess;
     }
 
+    public final VmMethodAccess methods() {
+        return methodAccess;
+    }
+
     public final VmCodeCacheAccess codeCache() {
         return codeCacheAccess;
     }
@@ -1000,6 +1002,10 @@ public abstract class TeleVM implements MaxVM {
 
     public final VmThreadAccess threadManager() {
         return threadAccess;
+    }
+
+    public final TeleVMLog vmLog() {
+        return TeleVMLog.getVMLog(this);
     }
 
     /**

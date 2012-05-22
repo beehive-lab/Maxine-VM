@@ -222,6 +222,9 @@ public final class TeleThreadLocalsArea extends AbstractVmHolder implements Tele
         if (address.isNotZero()) {
             if (memoryRegion().contains(address)) {
                 final int index = address.minus(memoryRegion().start()).dividedBy(vm().platform().nBytesInWord()).toInt();
+                if (index >= threadLocalVariables.length) {
+                    return null;
+                }
                 return threadLocalVariables[index];
             }
         }

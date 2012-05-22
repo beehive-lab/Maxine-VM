@@ -22,58 +22,24 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
-import java.awt.Component;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.tele.*;
+import com.sun.max.tele.debug.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.log.hosted.*;
+import com.sun.max.vm.log.hosted.VMLogHosted.HostedLogRecord;
 
 
 abstract class VMLogElementsTableModel extends InspectorTableModel {
 
-    public static class HostedLogRecord extends VMLogHosted.HostedLogRecord implements Comparable<HostedLogRecord> {
-        HostedLogRecord(int id, int header, Word... args) {
-            this.id = id;
-            this.header = header;
-            this.args = args;
-        }
-
-        /**
-         * For when we can't access VM but need to create a record.
-         */
-        HostedLogRecord() {
-            header = 0;
-            id = 0;
-            args = new Word[0];
-        }
-
-        @Override
-        public void setHeader(int header) {
-            assert false;
-        }
-
-        public int compareTo(HostedLogRecord other) {
-            if (id < other.id) {
-                return -1;
-            } else if (id > other.id) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-    }
-
     private class ColumnRenderers {
         Component[] renderers = new Component[VMLogColumnKind.values().length];
     }
-
-
-    protected TeleVM vm;
 
     /**
      * Cache of the (logical) buffer of log records in the target VM.
@@ -90,32 +56,31 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
      * appropriately.
      *
      */
-    protected List<HostedLogRecord> logRecordCache;
+    protected List<TeleHostedLogRecord> logRecordCache;
 
     /**
      * During {@link #refresh}, this holds the new value of the {@link VMLog#nextId} field,
      * which is the id of the next record that will be written.
      */
-    protected int nextId;
+    private int nextId;
 
     /**
      * After {@link #refresh}, this is set equal to {@link #nextId}, allowing
      * optimization on a subsequent refresh where nothing changed.
      */
-    protected int lastNextId;
+    private int lastNextId;
 
-    protected VMLogView vmLogView;
+    private final TeleVMLog teleVMLog;
 
     private int[] displayedRows;
 
     private ArrayList<ColumnRenderers> tableRenderers;
 
-    protected VMLogElementsTableModel(Inspection inspection, VMLogView vmLogView) {
+    protected VMLogElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {
         super(inspection);
-        vm = (TeleVM) vm();
-        this.vmLogView = vmLogView;
-        logRecordCache = new ArrayList<HostedLogRecord>(vmLogView.logBufferEntries);
-        tableRenderers = new ArrayList<ColumnRenderers>(vmLogView.logBufferEntries);
+        this.teleVMLog = teleVMLog;
+        logRecordCache = new ArrayList<TeleHostedLogRecord>(teleVMLog.logEntries());
+        tableRenderers = new ArrayList<ColumnRenderers>(teleVMLog.logEntries());
     }
 
     public int getColumnCount() {
@@ -139,7 +104,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
         return displayedRows == null ? displayedRow : displayedRows[displayedRow];
     }
 
-    HostedLogRecord getRecord(int row) {
+    TeleHostedLogRecord getRecord(int row) {
         return logRecordCache.get(displayed2ModelRow(row));
     }
 
@@ -168,7 +133,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
      * Get the value of the slot in the log buffer at the given logical row and column.
      */
     public Object getValueAt(int row, int col) {
-        HostedLogRecord record = getRecord(row);
+        TeleHostedLogRecord record = getRecord(row);
         if (record == null) {
             TeleError.unexpected("null log record in LogElementsTableModel.getValueAt");
         }
@@ -205,7 +170,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
 
     @Override
     public void refresh() {
-        nextId = vmLogView.nextIdFieldAccess.readInt(vmLogView.vmLogRef);
+        nextId = teleVMLog.nextID();
         if (nextId != lastNextId) {
             // Some new records.
             modelSpecificRefresh();
@@ -229,7 +194,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
             return false;
         }
         int loggerId = VMLog.Record.getLoggerId(header);
-        if (vmLogView.getLogger(loggerId) == null) {
+        if (teleVMLog.getLogger(loggerId) == null) {
             return false;
         }
         return true;
@@ -256,9 +221,9 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
      * @return
      */
     protected int firstId() {
-        if (nextId - lastNextId > vmLogView.logBufferEntries) {
+        if (nextId - lastNextId > teleVMLog.logEntries()) {
             // missed some records
-            return nextId - vmLogView.logBufferEntries;
+            return nextId - teleVMLog.logEntries();
         } else {
             // pick up where we left off
             return lastNextId;
@@ -270,7 +235,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
      * @param id the id of the record (N.B. may not be stored in target).
      * @return
      */
-    protected abstract HostedLogRecord getRecordFromVM(int id);
+    protected abstract TeleHostedLogRecord getRecordFromVM(int id);
 
     /**
      * Refreshes the display of every renderer in a column displaying a specified

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,9 @@ public final class CiMonitorValue extends CiValue {
 
     public CiMonitorValue(CiValue owner, CiValue lockData, boolean eliminated) {
         super(CiKind.Illegal);
-
+        assert !owner.isIllegal();
         this.owner = owner;
-        this.lockData = lockData;
+        this.lockData = lockData == null ? CiValue.IllegalValue : lockData;
         this.eliminated = eliminated;
     }
 
@@ -47,7 +47,16 @@ public final class CiMonitorValue extends CiValue {
 
     @Override
     public boolean equalsIgnoringKind(CiValue other) {
-        return this == other;
+        if (this == other) {
+            return true;
+        }
+        if (other instanceof CiMonitorValue) {
+            CiMonitorValue mon = (CiMonitorValue) other;
+            return mon.owner.equalsIgnoringKind(owner) &&
+                   mon.eliminated == eliminated &&
+                   mon.lockData.equalsIgnoringKind(lockData);
+        }
+        return false;
     }
 
     @Override

@@ -24,7 +24,7 @@ package com.oracle.max.vma.tools.qa;
 
 import java.util.*;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 /**
  * Manages the list of {@link } instances for an {@link ObjectRecord}.

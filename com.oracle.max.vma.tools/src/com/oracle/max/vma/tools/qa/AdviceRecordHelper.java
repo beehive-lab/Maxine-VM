@@ -22,8 +22,7 @@
  */
 package com.oracle.max.vma.tools.qa;
 
-import com.oracle.max.vm.ext.vma.runtime.*;
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 /**
  * Finesses the use of {@link Object} in {@link TransientVMAdviceHandlerTypes} when at analysis
