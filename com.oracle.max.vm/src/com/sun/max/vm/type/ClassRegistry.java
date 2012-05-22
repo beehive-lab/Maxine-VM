@@ -24,9 +24,9 @@ package com.sun.max.vm.type;
 
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
-import static com.sun.max.vm.hosted.HostedVMClassLoader.HOSTED_VM_CLASS_LOADER;
+import static com.sun.max.vm.hosted.HostedVMClassLoader.*;
 import static com.sun.max.vm.jdk.JDK.*;
-
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.nio.*;
@@ -47,6 +47,8 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.JDK.ClassRef;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
@@ -128,6 +130,8 @@ public final class ClassRegistry {
     public static final ClassMethodActor VmThread_attach = (ClassMethodActor) findMethod("attach", VmThread.class);
     public static final ClassMethodActor VmThread_detach = (ClassMethodActor) findMethod("detach", VmThread.class);
     public static final ClassMethodActor ClassLoader_findBootstrapClass = (ClassMethodActor) findMethod("findBootstrapClass", ClassLoader.class);
+
+    public static final ClassLoadingLogger logger = new ClassLoadingLogger();
 
     private static int loadCount;        // total loaded
     private static int unloadCount;    // total unloaded
@@ -251,7 +255,10 @@ public final class ClassRegistry {
      * @see <a href="http://download.java.net/jdk7/docs/api/java/lang/ClassLoader.html#registerAsParallelCapable()">registerAsParallelCapable</a>
      */
     private ClassActor define0(ClassActor classActor) {
-//        Trace.line(1, "defining " + classActor.typeDescriptor.toJavaString() + " in " + this);
+        if (!MaxineVM.isHosted() && MaxineVM.isDebug() && logger.enabled()) {
+            // Only trace these when in DEBUG build. Too noisy otherwise
+            logger.logClassRegistration(classLoader, classActor.name(), classActor, classActor.id);
+        }
         final TypeDescriptor typeDescriptor = classActor.typeDescriptor;
 
         final ClassActor existingClassActor = typeDescriptorToClassActor.putIfAbsent(typeDescriptor, classActor);
@@ -275,6 +282,9 @@ public final class ClassRegistry {
             bootImageClasses.add(classActor);
         }
 
+        if (!MaxineVM.isHosted() && logger.enabled()) {
+            logger.logClassDefinition(classLoader, classActor.name(), classActor, classActor.id);
+        }
         InspectableClassInfo.notifyClassLoaded(classActor);
 
         return classActor;
@@ -659,4 +669,107 @@ public final class ClassRegistry {
     @HOSTED_ONLY
     private static ClassRegistry testClassRegistry;
 
+    @HOSTED_ONLY
+    @VMLoggerInterface(defaultConstructor = true)
+    private interface ClassLoadingLoggerInterface {
+        void classRegistration(
+                        @VMLogParam(name = "classLoader") ClassLoader classLoader,
+                        @VMLogParam(name = "className") String className,
+                        @VMLogParam(name = "actor") Object classActor,
+                        @VMLogParam(name = "classID") int classID
+        );
+        void classDefinition(
+                        @VMLogParam(name = "classLoader") ClassLoader classLoader,
+                        @VMLogParam(name = "className") String className,
+                        @VMLogParam(name = "actor") Object classActor,
+                        @VMLogParam(name = "classID") int classID
+        );
+    }
+
+    public static class ClassLoadingLogger extends ClassLoadingLoggerAuto {
+
+        private void traceClass(ClassLoader classLoader, String className, Object actor, int classID) {
+            Log.print(className);
+            Log.print(" [#");
+            Log.print(classID);
+            Log.print(", ");
+            Log.print(Reference.fromJava(actor).toOrigin());
+            Log.print("] < ");
+            Log.print(ClassActor.fromJava(classLoader.getClass()).name());
+            Log.print(" @");
+            Log.print(Reference.fromJava(classLoader).toOrigin());
+            Log.println(" >");
+        }
+        @Override
+        protected void traceClassDefinition(ClassLoader classLoader, String className, Object actor, int classID) {
+            Log.print("Class Definition    ");
+            traceClass(classLoader, className, actor, classID);
+        }
+
+        @Override
+        protected void traceClassRegistration(ClassLoader classLoader, String className, Object actor, int classID) {
+            Log.print("Class Registration     ");
+            traceClass(classLoader, className, actor, classID);
+        }
+        ClassLoadingLogger() {
+            super("ClassLoading", "Class loading & definition");
+        }
+    }
+
+// START GENERATED CODE
+    private static abstract class ClassLoadingLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            ClassDefinition, ClassRegistration;
+
+            @SuppressWarnings("hiding")
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = new int[] {0x7, 0x7};
+
+        protected ClassLoadingLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        protected ClassLoadingLoggerAuto() {
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logClassDefinition(ClassLoader classLoader, String className, Object actor, int classID) {
+            log(Operation.ClassDefinition.ordinal(), objectArg(classLoader), objectArg(className), objectArg(actor), intArg(classID));
+        }
+        protected abstract void traceClassDefinition(ClassLoader classLoader, String className, Object actor, int classID);
+
+        @INLINE
+        public final void logClassRegistration(ClassLoader classLoader, String className, Object actor, int classID) {
+            log(Operation.ClassRegistration.ordinal(), objectArg(classLoader), objectArg(className), objectArg(actor), intArg(classID));
+        }
+        protected abstract void traceClassRegistration(ClassLoader classLoader, String className, Object actor, int classID);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //ClassDefinition
+                    traceClassDefinition(toClassLoader(r, 1), toString(r, 2), toObject(r, 3), toInt(r, 4));
+                    break;
+                }
+                case 1: { //ClassRegistration
+                    traceClassRegistration(toClassLoader(r, 1), toString(r, 2), toObject(r, 3), toInt(r, 4));
+                    break;
+                }
+            }
+        }
+        static ClassLoader toClassLoader(Record r, int argNum) {
+            return asClassLoader(toObject(r, argNum));
+        }
+        @INTRINSIC(UNSAFE_CAST)
+        private static native ClassLoader asClassLoader(Object arg);
+    }
+
+// END GENERATED CODE
 }
