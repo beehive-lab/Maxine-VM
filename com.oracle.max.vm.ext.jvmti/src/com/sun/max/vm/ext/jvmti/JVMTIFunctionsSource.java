@@ -1157,7 +1157,7 @@ public class JVMTIFunctionsSource {
         // PHASES: ONLOAD,LIVE
         // NULLCHECK: capabilities_ptr
         // Currently we don't have any phase-limited or ownership limitations
-        JVMTICapabilities.setAll(capabilities_ptr);
+        JVMTICapabilities.E.setAll(capabilities_ptr);
         return JVMTI_ERROR_NONE;
     }
 
@@ -1175,14 +1175,7 @@ public class JVMTIFunctionsSource {
     private static int RelinquishCapabilities(Pointer env, Pointer capabilities_ptr) {
         // PHASES: ONLOAD,LIVE
         // NULLCHECK: capabilities_ptr
-        Pointer envCaps = CAPABILITIES.getPtr(env);
-        for (int i = 0; i < JVMTICapabilities.values.length; i++) {
-            JVMTICapabilities cap = JVMTICapabilities.values[i];
-            if (cap.get(capabilities_ptr)) {
-               cap.set(envCaps, false);
-            }
-        }
-        return JVMTI_ERROR_NONE;
+        return JVMTICapabilities.relinquishCapabilities(env, capabilities_ptr);
     }
 
     @VM_ENTRY_POINT
