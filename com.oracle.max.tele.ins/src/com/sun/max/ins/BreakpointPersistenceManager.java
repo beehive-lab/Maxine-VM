@@ -66,12 +66,13 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         // Register with the persistence service; must do this before load.
         settings.addSaveSettingsListener(this);
 
+        // These should reload ok, even if the image has been changed, since we only support them at method entry.
+        loadBytecodeBreakpoints(settings);
+
         if (!settings.bootImageChanged()) {
             loadMachineCodeBreakpoints(settings);
-            loadBytecodeBreakpoints(settings);
         } else {
-            // TODO (mlvdv) some breakpoints could be saved across image builds,
-            // for example method entry bytecode breakpoints.
+            // TODO (mlvdv) can we attempt to recreate these is some cases?
             InspectorWarning.message(inspection, "Ignoring breakpoints related to a different boot image");
         }
 

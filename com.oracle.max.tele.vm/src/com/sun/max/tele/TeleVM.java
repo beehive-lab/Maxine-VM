@@ -673,10 +673,6 @@ public abstract class TeleVM implements MaxVM {
 
     private final VmMethodAccess methodAccess;
 
-    public final VmMethodAccess methods() {
-        return methodAccess;
-    }
-
     private final VMConfiguration vmConfiguration;
 
     private final Classpath sourcepath;
@@ -976,6 +972,10 @@ public abstract class TeleVM implements MaxVM {
         return heapAccess;
     }
 
+    public final VmMethodAccess methods() {
+        return methodAccess;
+    }
+
     public final VmCodeCacheAccess codeCache() {
         return codeCacheAccess;
     }
@@ -1002,6 +1002,10 @@ public abstract class TeleVM implements MaxVM {
 
     public final VmThreadAccess threadManager() {
         return threadAccess;
+    }
+
+    public final TeleVMLog vmLog() {
+        return TeleVMLog.getVMLog(this);
     }
 
     /**

@@ -190,6 +190,10 @@ def helloworld(args):
     """run the 'hello world' program on the Maxine VM"""
     mx.run([join(_vmdir, 'maxvm'), '-cp', mx.classpath('com.oracle.max.tests')] + args + ['test.output.HelloWorld'])
 
+def inspecthelloworld(args):
+    """run the 'hello world' program in the Inspector"""
+    inspect(['-cp', mx.classpath('com.oracle.max.tests')] + args + ['test.output.HelloWorld'])
+
 def image(args):
     """build a boot image
 
@@ -662,6 +666,7 @@ def mx_init():
         'graalexample': [graalexample, '[-v] example names...'],
         'hcfdis': [hcfdis, '[options] files...'],
         'helloworld': [helloworld, '[VM options]'],
+        'inspecthelloworld': [inspecthelloworld, '[VM options]'],
         'image': [image, '[options] classes|packages...'],
         'inspect': [inspect, '[options] [class | -jar jarfile]  [args...]'],
         'inspectoragent': [inspectoragent, '[-impl target] [-port port]'],

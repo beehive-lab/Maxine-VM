@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -208,6 +208,11 @@ public class ValueCodec {
      */
     final static int NONOBJECT_CONSTANT_INDEX_DOUBLE_STACKSLOT_OR_REGISTER = 2;
 
+    /**
+     * Reserved non-object constant index denoting that following is an encoded {@link CiMonitorValue}.
+     */
+    final static int NONOBJECT_CONSTANT_INDEX_MONITOR_VALUE = 3;
+
     static {
         // Reserve index 0 for CiValue.IllegalValue
         nonObjectConstants.put(CiConstant.forObject(new Object()), NONOBJECT_CONSTANT_INDEX_ILLEGAL_VALUE);
@@ -215,6 +220,8 @@ public class ValueCodec {
         nonObjectConstants.put(CiConstant.forObject(new Object()), NONOBJECT_CONSTANT_INDEX_LONG_STACKSLOT_OR_REGISTER);
         // Reserve index 2 to denote the previous register or stack slot is a double
         nonObjectConstants.put(CiConstant.forObject(new Object()), NONOBJECT_CONSTANT_INDEX_DOUBLE_STACKSLOT_OR_REGISTER);
+        // Reserve index 3 to denote an encoded monitor
+        nonObjectConstants.put(CiConstant.forObject(new Object()), NONOBJECT_CONSTANT_INDEX_MONITOR_VALUE);
 
         for (Field field : CiConstant.class.getFields()) {
             if (field.getType() == CiConstant.class) {
@@ -277,6 +284,12 @@ public class ValueCodec {
                     out.writeInt(index);
                 }
             }
+        } else if (value.isMonitor()) {
+            CiMonitorValue monitor = (CiMonitorValue) value;
+            out.write(TYPE.set(NONOBJECT_CONSTANT_INDEX_MONITOR_VALUE, TYPE_NONOBJECT_CONSTANT));
+            writeValue(out, monitor.owner);
+            writeValue(out, monitor.lockData);
+            writeValue(out, CiConstant.forBoolean(monitor.eliminated));
         } else {
             assert value.isConstant() : "cannot encode " + value;
             CiConstant c = (CiConstant) value;
@@ -401,6 +414,14 @@ public class ValueCodec {
             int index = NONOBJECT_CONSTANT.get(b);
             if (index == NONOBJECT_CONSTANT_INDEX_ILLEGAL_VALUE) {
                 return CiValue.IllegalValue;
+            } else if (index == NONOBJECT_CONSTANT_INDEX_MONITOR_VALUE) {
+                CiValue owner = readValue(in, regRefMap, frameRefMap);
+                CiValue lockData = readValue(in, regRefMap, frameRefMap);
+                CiConstant eliminated = (CiConstant) readValue(in, regRefMap, frameRefMap);
+                if (lockData.isIllegal()) {
+                    lockData = null;
+                }
+                return new CiMonitorValue(owner, lockData, eliminated.asBoolean());
             } else if (index == NONOBJECT_CONSTANT_INDEX_LONG_STACKSLOT_OR_REGISTER) {
                 CiValue value = readValue(in, regRefMap, frameRefMap);
                 if (value.isStackSlot()) {
