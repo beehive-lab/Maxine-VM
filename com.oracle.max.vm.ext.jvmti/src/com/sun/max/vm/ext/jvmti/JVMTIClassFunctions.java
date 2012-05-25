@@ -52,6 +52,17 @@ import com.sun.max.vm.type.*;
 class JVMTIClassFunctions {
 
     /**
+     * Value that is used to pass/return information to methods that
+     * operate on behalf on the native and Java API.
+     */
+    private static abstract class ModeUnion {
+        final boolean isNative;
+        ModeUnion(boolean isNative) {
+            this.isNative = isNative;
+        }
+    }
+
+    /**
      * Strict check on whether a class is a VM class.
      * @param classActor
      * @return
@@ -93,6 +104,9 @@ class JVMTIClassFunctions {
         for (int i = 0; i < MAX_NATIVE_ENVS; i++) {
             NativeEnv nativEnv = (NativeEnv) jvmtiEnvs[i];
             Pointer callback = getCallbackForEvent(nativEnv, JVMTIEvent.CLASS_FILE_LOAD_HOOK, VmThread.current());
+            if (callback.isZero()) {
+                continue;
+            }
             Pointer cstruct = nativEnv.cstruct;
             // class name is passed as a char * not a JNI handle, sigh
             Pointer classNamePtr = Pointer.zero();
@@ -119,15 +133,16 @@ class JVMTIClassFunctions {
             Memory.readBytes(classDataPtr, classfileBytes);
         }
 
-        // now the Java implementations
+        // now the Java agents
         for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
             JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
-            if (javaEnv != null) {
-                byte[] newClassfileBytes = javaEnv.classFileLoadHook(classLoader, className, protectionDomain, classfileBytes);
-                if (newClassfileBytes != null) {
-                    classfileBytes = newClassfileBytes;
-                    changed = true;
-                }
+            if (javaEnv == null || !JVMTIEvent.isEventSet(javaEnv, JVMTIEvent.CLASS_FILE_LOAD_HOOK, VmThread.current())) {
+                continue;
+            }
+            byte[] newClassfileBytes = javaEnv.classFileLoadHook(classLoader, className, protectionDomain, classfileBytes);
+            if (newClassfileBytes != null) {
+                classfileBytes = newClassfileBytes;
+                changed = true;
             }
         }
         if (changed) {
@@ -249,27 +264,75 @@ class JVMTIClassFunctions {
     }
 
     /**
+     * Union class to handle native/java variants for {@link #getLoadedClasses} etc.
+     */
+    private static class LoadedClassesUnion extends ModeUnion {
+        Class[] classArray;
+        Pointer classesArrayPtr;
+        int classCount;
+
+        LoadedClassesUnion(boolean isNative) {
+            super(isNative);
+        }
+    }
+
+    /**
      * Get the classes whose loading was initiated by the given class loader. TODO: Handle initiating versus defining
      * loaders (which requires a Maxine upgrade).
      */
+    static Class[] getClassLoaderClasses(ClassLoader classLoader) {
+        LoadedClassesUnion lcu = new LoadedClassesUnion(false);
+        getClassLoaderClasses(lcu, classLoader);
+        return lcu.classArray;
+    }
+
     static int getClassLoaderClasses(ClassLoader classLoader, Pointer classCountPtr, Pointer classesPtrPtr) {
+        LoadedClassesUnion lcu = new LoadedClassesUnion(true);
+        int error = getClassLoaderClasses(lcu, classLoader);
+        if (error == JVMTI_ERROR_NONE) {
+            classCountPtr.setInt(lcu.classCount);
+            classesPtrPtr.setWord(lcu.classesArrayPtr);
+        }
+        return error;
+    }
+    static int getClassLoaderClasses(LoadedClassesUnion lcu, ClassLoader classLoader) {
         if (classLoader == null) {
             classLoader = BootClassLoader.BOOT_CLASS_LOADER;
         }
         Collection<ClassActor> classActors = ClassRegistry.makeRegistry(classLoader).getClassActors();
         int classCount = classActors.size();
-        Pointer classesPtr = allocateClassesArray(classCount, classCountPtr, classesPtrPtr);
-        if (classesPtr.isZero()) {
-            return JVMTI_ERROR_OUT_OF_MEMORY;
+        if (lcu.isNative) {
+            lcu.classesArrayPtr = allocateClassesArray(classCount);
+            if (lcu.classesArrayPtr.isZero()) {
+                return JVMTI_ERROR_OUT_OF_MEMORY;
+            }
+        } else {
+            lcu.classArray = new Class[classCount];
         }
-        copyClassActors(classesPtr, classActors, 0, classCount);
-        classCountPtr.setInt(classCount);
+        copyClassActors(lcu, classActors, 0, classCount);
+        lcu.classCount = classCount;
         return JVMTI_ERROR_NONE;
     }
 
     private static final int NUMBER_OF_PRIMITIVE_CLASS_ACTORS = 9; // void,byte,boolean,short,char,int,long,float,double
 
     static int getLoadedClasses(Pointer classCountPtr, Pointer classesPtrPtr) {
+        LoadedClassesUnion lcu = new LoadedClassesUnion(true);
+        int error = getLoadedClasses(lcu);
+        if (error == JVMTI_ERROR_NONE) {
+            classCountPtr.setInt(lcu.classCount);
+            classesPtrPtr.setWord(lcu.classesArrayPtr);
+        }
+        return error;
+    }
+
+    static Class[] getLoadedClasses() {
+        LoadedClassesUnion lcu = new LoadedClassesUnion(false);
+        getLoadedClasses(lcu);
+        return lcu.classArray;
+    }
+
+    private static int getLoadedClasses(LoadedClassesUnion lcu) {
         // TODO handle all class loaders, requires changes to Maxine
         Collection<ClassActor> bootClassActors = ClassRegistry.makeRegistry(BootClassLoader.BOOT_CLASS_LOADER).getClassActors();
         Collection<ClassActor> systemClassActors = ClassRegistry.makeRegistry(ClassLoader.getSystemClassLoader()).getClassActors();
@@ -282,39 +345,49 @@ class JVMTIClassFunctions {
         int bootClassActorsSize = bootClassActors.size() - NUMBER_OF_PRIMITIVE_CLASS_ACTORS;
         int systemClassActorsSize = systemClassActors.size();
         int totalSize = bootClassActorsSize + systemClassActorsSize + vmClassActors.size();
-        Pointer classesPtr = allocateClassesArray(totalSize, classCountPtr, classesPtrPtr);
-        if (classesPtr.isZero()) {
-            return JVMTI_ERROR_OUT_OF_MEMORY;
+        if (lcu.isNative) {
+            lcu.classesArrayPtr = allocateClassesArray(totalSize);
+            if (lcu.classesArrayPtr.isZero()) {
+                return JVMTI_ERROR_OUT_OF_MEMORY;
+            }
+        } else {
+            lcu.classArray = new Class[totalSize];
         }
-        int bootClassActorsCopied = copyClassActors(classesPtr, bootClassActors, 0, bootClassActorsSize);
-        int systemClassActorsCopied = copyClassActors(classesPtr, systemClassActors, bootClassActorsCopied, systemClassActorsSize);
-        int vmClassActorsCopied = JVMTI.JVMTI_VM ? copyClassActors(classesPtr, vmClassActors, systemClassActorsCopied + bootClassActorsCopied, vmClassActors.size()) : 0;
-        classCountPtr.setInt(bootClassActorsCopied + systemClassActorsCopied + vmClassActorsCopied);
+        int bootClassActorsCopied = copyClassActors(lcu, bootClassActors, 0, bootClassActorsSize);
+        int systemClassActorsCopied = copyClassActors(lcu, systemClassActors, bootClassActorsCopied, systemClassActorsSize);
+        int vmClassActorsCopied = JVMTI.JVMTI_VM ? copyClassActors(lcu, vmClassActors, systemClassActorsCopied + bootClassActorsCopied, vmClassActors.size()) : 0;
+
+        lcu.classCount = bootClassActorsCopied + systemClassActorsCopied + vmClassActorsCopied;
         return JVMTI_ERROR_NONE;
     }
 
-    private static Pointer allocateClassesArray(int classCount, Pointer classCountPtr, Pointer classesPtrPtr) {
+    private static Pointer allocateClassesArray(int classCount) {
         Pointer classesPtr = Memory.allocate(Size.fromInt(classCount * Word.size()));
         if (classesPtr.isZero()) {
             return classesPtr;
         }
-        classesPtrPtr.setWord(classesPtr);
         return classesPtr;
     }
 
     /**
-     * Copies at most {@code count} classes into the C array {@code classesArrayPtr}. Returns the actual number of
+     * Copies at most {@code count} classes into a C array or Java array. Returns the actual number of
      * classes copied. This maybe {@code <= count} the number of class actors has shrunk due to unloading. The added
      * classes are stored starting at {@code arrayIndex}.
      */
-    private static int copyClassActors(Pointer classesArrayPtr, Collection<ClassActor> classActors, int arrayIndex, int count) {
+    private static int copyClassActors(LoadedClassesUnion lcu, Collection<ClassActor> classActors, int arrayIndex, int count) {
         int index = 0;
+
         for (ClassActor classActor : classActors) {
             if (classActor.isPrimitiveClassActor()) {
                 continue;
             }
             if (index < count) {
-                classesArrayPtr.setWord(arrayIndex + index, JniHandles.createLocalHandle(classActor.toJava()));
+                Class<?> klass = classActor.toJava();
+                if (lcu.isNative) {
+                    lcu.classesArrayPtr.setWord(arrayIndex + index, JniHandles.createLocalHandle(klass));
+                } else {
+                    lcu.classArray[arrayIndex + index] = klass;
+                }
                 index++;
             } else {
                 break;
@@ -384,7 +457,36 @@ class JVMTIClassFunctions {
 
     private static final EntryComparator entryComparator = new EntryComparator();
 
+    private static class LocalVariableTableUnion extends ModeUnion {
+        int entryCount;
+        Pointer nativeTablePtr;
+        JJVMTI.LocalVariableEntry[] localVariableEntryArray;
+        LocalVariableTableUnion(boolean isNative) {
+            super(isNative);
+        }
+    }
+
     static int getLocalVariableTable(ClassMethodActor classMethodActor, Pointer entryCountPtr, Pointer tablePtr) {
+        LocalVariableTableUnion lvtu = new LocalVariableTableUnion(true);
+        int error = getLocalVariableTable(lvtu, classMethodActor);
+        if (error == JVMTI_ERROR_NONE) {
+            entryCountPtr.setInt(lvtu.entryCount);
+            tablePtr.setWord(lvtu.nativeTablePtr);
+        }
+        return error;
+    }
+
+    static JJVMTI.LocalVariableEntry[] getLocalVariableTable(ClassMethodActor classMethodActor) {
+        LocalVariableTableUnion lvtu = new LocalVariableTableUnion(false);
+        int error = getLocalVariableTable(lvtu, classMethodActor);
+        if (error == JVMTI_ERROR_NONE) {
+            return lvtu.localVariableEntryArray;
+        } else {
+            throw new JJVMTI.Exception(error);
+        }
+    }
+
+    static int getLocalVariableTable(LocalVariableTableUnion lvtu, ClassMethodActor classMethodActor) {
         if (classMethodActor.isNative()) {
             return JVMTI_ERROR_NATIVE_METHOD;
         }
@@ -397,15 +499,24 @@ class JVMTIClassFunctions {
         // otherwise debuggers show the arguments to a method in the random order returned by table.entries().
         Arrays.sort(entries, entryComparator);
         ConstantPool constantPool = classMethodActor.holder().constantPool();
-        entryCountPtr.setInt(entries.length);
-        Pointer nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLocalVariableEntrySize()));
-        for (int i = 0; i < entries.length; i++) {
-            LocalVariableTable.Entry entry = entries[i];
-            setJVMTILocalVariableEntry(nativeTablePtr, i, CString.utf8FromJava(entry.name(constantPool).string),
-                            CString.utf8FromJava(constantPool.utf8At(entry.descriptorIndex(), "local variable type").toString()),
-                            entry.signatureIndex() == 0 ? Pointer.zero() : CString.utf8FromJava(entry.signature(constantPool).string), entry.startBCI(), entry.length(), entry.slot());
+        lvtu.entryCount = entries.length;
+        if (lvtu.isNative) {
+            lvtu.nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLocalVariableEntrySize()));
+            for (int i = 0; i < entries.length; i++) {
+                LocalVariableTable.Entry entry = entries[i];
+                setJVMTILocalVariableEntry(lvtu.nativeTablePtr, i, CString.utf8FromJava(entry.name(constantPool).string),
+                                CString.utf8FromJava(constantPool.utf8At(entry.descriptorIndex(), "local variable type").toString()),
+                                entry.signatureIndex() == 0 ? Pointer.zero() : CString.utf8FromJava(entry.signature(constantPool).string), entry.startBCI(), entry.length(), entry.slot());
+            }
+        } else {
+            lvtu.localVariableEntryArray = new JJVMTI.LocalVariableEntry[entries.length];
+            for (int i = 0; i < entries.length; i++) {
+                LocalVariableTable.Entry entry = entries[i];
+                lvtu.localVariableEntryArray[i] = new JJVMTI.LocalVariableEntry(entry.startBCI(), entry.length(),
+                                entry.name(constantPool).string, constantPool.utf8At(entry.descriptorIndex(), "local variable type").toString(),
+                                entry.signatureIndex() == 0 ? null : entry.signature(constantPool).string, entry.slot());
+            }
         }
-        tablePtr.setWord(nativeTablePtr);
         return JVMTI_ERROR_NONE;
     }
 

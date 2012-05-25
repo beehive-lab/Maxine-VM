@@ -199,6 +199,11 @@ project@com.oracle.max.vma.tools@dependencies=com.oracle.max.vm.ext.vma
 project@com.oracle.max.vma.tools@checkstyle=com.oracle.max.base
 project@com.oracle.max.vma.tools@javaCompliance=1.6
 
+project@com.oracle.max.jvmti.agents@sourceDirs=src
+project@com.oracle.max.jvmti.agents@dependencies=com.oracle.max.vm,com.oracle.max.vm.ext.jvmti
+project@com.oracle.max.jvmti.agents@checkstyle=com.oracle.max.base
+project@com.oracle.max.jvmti.agents@javaCompliance=1.6
+
 project@com.oracle.max.tests.jsr292@sourceDirs=test
 project@com.oracle.max.tests.jsr292@dependencies=com.oracle.max.vm
 project@com.oracle.max.tests.jsr292@checkstyle=com.oracle.max.base

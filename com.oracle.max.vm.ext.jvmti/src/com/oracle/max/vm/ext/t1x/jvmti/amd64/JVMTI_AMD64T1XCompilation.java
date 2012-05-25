@@ -63,6 +63,8 @@ import com.sun.max.vm.profile.*;
  *
  * TODO: Since field events are specified per field by the agent, a further optimization would be to determine whether
  * the specific field being accessed is subject to a watch.
+ *
+ * All per-compilation fields are reset in {@link #initCompile} so no extra {@link #cleanup() cleanup} is needed.
  */
 public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     /**
@@ -141,6 +143,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     @Override
     protected void initCompile(ClassMethodActor method, CodeAttribute codeAttribute) {
         super.initCompile(method, codeAttribute);
+        eventSettings = 0;
         eventBci = new BitSet(bciToPos.length);
         breakpoints = JVMTIBreakpoints.getBreakpoints(method);
         // N.B. Just because there are breakpoints defined, doesn't mean that
@@ -154,7 +157,10 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.SINGLE_STEP);
         }
         methodID = MethodID.fromMethodActor(method);
-        checkByteCodeEventNeeded(-1);  // METHOD_ENTRY
+        if (!method.isInitializer()) {
+            // initializers are not methods...
+            checkByteCodeEventNeeded(-1);  // METHOD_ENTRY
+        }
         checkByteCodeEventNeeded(Bytecodes.GETFIELD);
         checkByteCodeEventNeeded(Bytecodes.PUTFIELD);
         checkByteCodeEventNeeded(Bytecodes.RETURN);
@@ -182,7 +188,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
 
     @Override
     protected void do_methodTraceEntry() {
-        if ((eventSettings & JVMTIEvent.METHOD_ENTRY) != 0) {
+        if ((eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.METHOD_ENTRY)) != 0) {
             templates = compiler.templates;
             start(TRACE_METHOD_ENTRY);
             assignObject(0, "methodActor", method);
