@@ -88,6 +88,9 @@ public class JVMTI {
 
     }
 
+    /**
+     * Subclass used for traditional native agents.
+     */
     static class NativeEnv extends Env {
         /**
          * The C struct used by the native agents. {@see JVMTIEnvNativeStruct}.
@@ -106,22 +109,29 @@ public class JVMTI {
 
     }
 
+    /**
+     * Subclass used for agents that use {@link JJVMTI}.
+     * In order to access the callbacks in the generic event handling code
+     * we make this class implement {@link JJVMTI.EventCallbacks} and provide
+     * default, empty, implementations.
+     */
     public static class JavaEnv extends Env implements JJVMTI.EventCallbacks {
-        private EnumSet<JVMTICapabilities.E> capabilities;
-        public void agentOnLoad() { }
-        public void vmInit() { }
+        private EnumSet<JVMTICapabilities.E> capabilities = EnumSet.noneOf(JVMTICapabilities.E.class);
+        public void agentStartup() { }
         public void breakpoint(Thread thread, Method method, long location) { }
-        public void garbageCollectionStart() { }
-        public void garbageCollectionFinish() { }
         public void classLoad(Thread thread, Class klass) { }
-        public void classPrepare(Thread thread, Class klass) { }
         public byte[] classFileLoadHook(ClassLoader loader, String name,
                                ProtectionDomain protectionDomain, byte[] classData) {
             return null;
         }
+        public void garbageCollectionStart() { }
+        public void garbageCollectionFinish() { }
+        public void methodEntry(Thread thread, Method method) { }
+        public void methodExit(Thread thread, Method method) { }
         public void threadStart(Thread thread) { }
         public void threadEnd(Thread thread) { }
         public void vmDeath() { }
+        public void vmInit() { }
     }
 
     static class JVMTIHandler extends NullVMTIHandler implements VMTIHandler {
@@ -401,7 +411,7 @@ public class JVMTI {
         for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
             JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
             if (javaEnv != null) {
-                javaEnv.agentOnLoad();
+                javaEnv.agentStartup();
             }
         }
         phase = JVMTI_PHASE_PRIMORDIAL;
@@ -636,10 +646,10 @@ public class JVMTI {
                 }
             } else {
                 JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
-                if (javaEnv == null) {
+                if (javaEnv == null || !JVMTIEvent.isEventSet(javaEnv, eventId, VmThread.current())) {
                     continue;
                 }
-                // In the Java variant the agent gets all the callbacks and decides itself if it wants to process them.
+                Thread currentThread = Thread.currentThread();
                 switch (eventId) {
                     case VM_INIT:
                         javaEnv.vmInit();
@@ -650,11 +660,11 @@ public class JVMTI {
                         break;
 
                     case THREAD_START:
-                        javaEnv.threadStart(Thread.currentThread());
+                        javaEnv.threadStart(currentThread);
                         break;
 
                     case THREAD_END:
-                        javaEnv.threadEnd(Thread.currentThread());
+                        javaEnv.threadEnd(currentThread);
                         break;
 
                     case GARBAGE_COLLECTION_START:
@@ -666,17 +676,14 @@ public class JVMTI {
                         break;
 
                     case CLASS_LOAD:
-                        javaEnv.classLoad(Thread.currentThread(), asClassActor(arg1).javaClass());
+                        javaEnv.classLoad(currentThread, asClassActor(arg1).javaClass());
                         break;
 
-                    case CLASS_PREPARE:
-                        javaEnv.classPrepare(Thread.currentThread(), asClassActor(arg1).javaClass());
-                        break;
-/*
                     case METHOD_ENTRY:
-                        invokeThreadObjectCallback(callback, cstruct, currentThreadHandle(), MethodID.fromMethodActor(asClassMethodActor(arg1)));
+                        javaEnv.methodEntry(currentThread, asClassMethodActor(arg1).toJava());
                         break;
 
+                        /*
                     case FIELD_ACCESS:
                     case FIELD_MODIFICATION:
                         invokeFieldAccessCallback(callback, cstruct, currentThreadHandle(), asFieldEventData(arg1));
