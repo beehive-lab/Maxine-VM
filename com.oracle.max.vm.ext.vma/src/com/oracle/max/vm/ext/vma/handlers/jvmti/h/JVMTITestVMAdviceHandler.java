@@ -77,7 +77,7 @@ public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
     private static final JVMTITestLogger logger = new JVMTITestLogger();
 
     @VMLoggerInterface
-    private static interface JVMTITestLoggerInterface {
+    private interface JVMTITestLoggerInterface {
         void methodEntry(Object arg1, MethodActor arg2, int frameCount);
     }
 
