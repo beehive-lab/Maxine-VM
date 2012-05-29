@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -194,7 +194,7 @@ public class OptionsDialog extends JDialog {
 
     protected static class ListGUIOption extends GUIOption<List<Object>> {
         private final JTextField textField;
-        private final JList list;
+        private final JList<Object> list;
 
         protected ListGUIOption(Option<List<Object>> option) {
             super(option);
@@ -202,7 +202,7 @@ public class OptionsDialog extends JDialog {
                 textField = null;
                 final OptionTypes.EnumListType elt = (OptionTypes.EnumListType) option.getType();
                 final OptionTypes.EnumType et = (OptionTypes.EnumType) elt.elementOptionType;
-                list = new JList(et.values);
+                list = new JList<Object>(et.values);
                 list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
                 list.setVisibleRowCount(Math.min(10, et.values.length));
                 list.setLayoutOrientation(JList.VERTICAL);
@@ -241,7 +241,7 @@ public class OptionsDialog extends JDialog {
             if (guard.isSelected()) {
                 if (textField == null) {
                     final List<Object> result = new LinkedList<Object>();
-                    for (Object value : this.list.getSelectedValues()) {
+                    for (Object value : this.list.getSelectedValuesList()) {
                         result.add(value);
                     }
                     return result;
@@ -283,12 +283,12 @@ public class OptionsDialog extends JDialog {
     }
 
     protected static class EnumGUIOption extends GUIOption<Object> {
-        private final JComboBox comboBox;
+        private final JComboBox<Object> comboBox;
 
         protected EnumGUIOption(Option<Object> option) {
             super(option);
             final OptionTypes.EnumType et = (OptionTypes.EnumType) option.getType();
-            comboBox = new JComboBox(et.values);
+            comboBox = new JComboBox<Object>(et.values);
             input = comboBox;
             setValue(option.getValue());
         }
@@ -362,7 +362,7 @@ public class OptionsDialog extends JDialog {
     }
 
     protected static class PackageGUIOption extends GUIOption<String> {
-        private final JComboBox values;
+        private final JComboBox<String> values;
 
         protected PackageGUIOption(Option<String> option) {
             super(option);
@@ -381,7 +381,7 @@ public class OptionsDialog extends JDialog {
                 }
             }.run(Classpath.fromSystem(), root.replace('.', '/'));
 
-            this.values = new JComboBox(pkgNames.toArray());
+            this.values = new JComboBox<String>(pkgNames.toArray(new String[pkgNames.size()]));
             input = this.values;
 
             // The combo box must be editable as the prepopulated items are just those packages found from the super package
