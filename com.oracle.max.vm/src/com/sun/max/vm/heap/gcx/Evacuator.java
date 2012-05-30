@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMERS.*;
 import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
 
 import com.sun.max.annotate.*;
@@ -65,13 +66,19 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
 
     private boolean refDiscoveryEnabled = true;
 
-    protected GCOperation currentGCOperation;
+    private GCOperation currentGCOperation;
+
+    private EvacuationTimers timers;
 
     public void setGCOperation(GCOperation gcOperation) {
         currentGCOperation = gcOperation;
         if (MaxineVM.isDebug() && gcOperation != null) {
             traceEvacVisitedCellEnabled = TraceEvacVisitedCell && TraceFromGCInvocation <= gcOperation.invocationCount();
         }
+    }
+
+    final public GCOperation getGCOperation() {
+        return currentGCOperation;
     }
 
     private void updateSpecialReference(Pointer origin) {
@@ -127,6 +134,9 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         this.dumper = dumper;
     }
 
+    public void setTimers(EvacuationTimers timers) {
+        this.timers = timers;
+    }
 
   /**
      * Indicate whether the cell at the specified origin is in an area under evacuation.
@@ -134,11 +144,13 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * @return true if the cell is in an evacuation area
      */
     abstract boolean inEvacuatedArea(Pointer origin);
+
     /**
      * Evacuate the cell at the specified origin. The destination of the cell is
      * @param origin origin of the cell to evacuate
      * @return origin of the cell after evacuation
      */
+    @NEVER_INLINE
     abstract Pointer evacuate(Pointer origin);
 
     /**
@@ -263,7 +275,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     /**
      * Evacuate all objects of the evacuated area directly reachable from the boot heap.
      */
-    void evacuateFromBootHeap() {
+    protected void evacuateFromBootHeap() {
         Heap.bootHeapRegion.visitReferences(this);
     }
 
@@ -393,15 +405,34 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     public void evacuate() {
         doBeforeEvacuation();
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
+
+        timers.start(ROOT_SCAN);
         evacuateFromRoots();
+        timers.stop(ROOT_SCAN);
+
+        timers.start(BOOT_HEAP_SCAN);
         evacuateFromBootHeap();
+        timers.stop(BOOT_HEAP_SCAN);
+
+        timers.start(CODE_SCAN);
         evacuateFromCode();
+        timers.stop(CODE_SCAN);
+
+        timers.start(RSET_SCAN);
         evacuateFromRSets();
+        timers.stop(RSET_SCAN);
+
+        timers.start(COPY);
         evacuateReachables();
+        timers.stop(COPY);
+
+        timers.start(WEAK_REF);
         disableSpecialRefDiscovery();
         SpecialReferenceManager.processDiscoveredSpecialReferences(this);
         evacuateReachables();
         enableSpecialRefDiscovery();
+        timers.stop(WEAK_REF);
+
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
         doAfterEvacuation();
     }

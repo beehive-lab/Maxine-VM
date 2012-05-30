@@ -476,5 +476,14 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
         return markSweepSpace.heapAccount();
     }
 
+    @Override
+    public PhaseLogger phaseLogger() {
+        return HeapSchemeLoggerAdaptor.phaseLogger;
+    }
+
+    @Override
+    public TimeLogger timeLogger() {
+        return HeapSchemeLoggerAdaptor.timeLogger;
+    }
 }
 

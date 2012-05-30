@@ -75,9 +75,30 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
     @INSPECTED
     private final AtomicBumpPointerAllocator<NurseryRefiller> allocator = new AtomicBumpPointerAllocator<NurseryRefiller>(new NurseryRefiller());
 
+    private final SpaceBounds bounds;
+
     public NoAgingRegionalizedNursery(HeapAccount<? extends HeapAccountOwner> heapAccount, int regionTag) {
         this.heapAccount = heapAccount;
         this.regionTag = regionTag;
+        this.bounds = new SpaceBounds() {
+            @Override
+            Address lowestAddress() {
+                return allocator.start();
+            }
+            @Override
+            boolean isIn(Address address) {
+                return address.greaterEqual(lowestAddress()) && address.lessEqual(highestAddress());
+            }
+
+            @Override
+            boolean isContiguous() {
+                return true;
+            }
+            @Override
+            Address highestAddress() {
+                return allocator.hardLimit();
+            }
+        };
     }
 
     public NoAgingRegionalizedNursery(HeapAccount<? extends HeapAccountOwner> heapAccount) {
@@ -172,8 +193,13 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
     }
 
     @Override
-    public void visit(HeapSpaceRangeVisitor visitor) {
+    public void visit(CellRangeVisitor visitor) {
         visitor.visitCells(allocator.start(), allocator.top);
+    }
+
+    @Override
+    public SpaceBounds bounds() {
+        return bounds;
     }
 
 }

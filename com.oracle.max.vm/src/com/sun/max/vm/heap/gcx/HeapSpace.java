@@ -23,6 +23,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * Heap Space interface. A heap may be made of one or more heap spaces.
@@ -72,5 +73,5 @@ public interface HeapSpace extends ResizableSpace, EvacuatingSpace {
      *
      * @param visitor a visitor that can iterate over iterable ranges of contiguous heap space.
      */
-    void visit(HeapSpaceRangeVisitor visitor);
+    void visit(CellRangeVisitor visitor);
 }

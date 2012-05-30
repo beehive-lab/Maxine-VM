@@ -32,7 +32,7 @@ import com.sun.max.vm.runtime.*;
 import static com.sun.max.vm.heap.gcx.rset.ctbl.CardState.*;
 import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
 
-public final class NoEvacuatedSpaceReferenceVerifier extends PointerIndexVisitor implements HeapSpaceRangeVisitor, OverlappingCellVisitor {
+public final class NoEvacuatedSpaceReferenceVerifier extends PointerIndexVisitor implements CellRangeVisitor, OverlappingCellVisitor {
     final CardTableRSet cardTableRSet;
     EvacuatingSpace evacuatedSpace;
     /**
