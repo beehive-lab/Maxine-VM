@@ -403,7 +403,9 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     }
 
     public void evacuate() {
+        timers.start(PROLOGUE);
         doBeforeEvacuation();
+        timers.stop(PROLOGUE);
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
         timers.start(ROOT_SCAN);
@@ -434,6 +436,8 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         timers.stop(WEAK_REF);
 
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
+        timers.start(EPILOGUE);
         doAfterEvacuation();
+        timers.stop(EPILOGUE);
     }
 }

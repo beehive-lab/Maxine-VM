@@ -187,7 +187,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
             vmConfig().monitorScheme().beforeGarbageCollection();
-            if (Heap.verbose()) {
+            if (MaxineVM.isDebug() && Heap.verbose()) {
                 Log.println("--Begin nursery evacuation");
             }
             evacTimers.start(TOTAL);
@@ -195,7 +195,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             youngSpaceEvacuator.setEvacuationBufferSize(oldSpace.freeSpace());
             youngSpaceEvacuator.evacuate();
             youngSpaceEvacuator.setGCOperation(null);
-            if (Heap.verbose()) {
+            if (MaxineVM.isDebug() && Heap.verbose()) {
                 Log.println("--End nursery evacuation");
             }
             if (VerifyAfterGC) {
@@ -217,12 +217,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 // Force a temporary transition to MUTATING state.
                 // This simplifies the inspector's maintenance of references state and GC counters.
                 HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
-                if (Heap.verbose()) {
+                if (MaxineVM.isDebug() && Heap.verbose()) {
                     Log.println("--Begin old geneneration collection");
                 }
                 evacTimers.start(TOTAL);
                 doOldGenCollection();
-                if (Heap.verbose()) {
+                if (MaxineVM.isDebug() && Heap.verbose()) {
                     Log.println("--End   old geneneration collection");
                 }
                 if (VerifyAfterGC) {

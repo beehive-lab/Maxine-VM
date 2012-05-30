@@ -307,12 +307,21 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     }
 
     /**
-     * Allocate a zeroed-out space of the specified size.
+     * Allocate a zero-filled contiguous space of the specified size.
      *
      * @param size size requested in bytes.
-     * @return pointer to zero-filled  allocated cell
+     * @return pointer to zero-filled pointer to contiguous space
      */
     public abstract Pointer allocateCleared(Size size);
+
+    /**
+     * Allocate a contiguous space of the specified size.
+     * The space may not be zero-filled.
+     *
+     * @param size size requested in bytes.
+     * @return pointer to contiguous space
+     */
+    public abstract Pointer allocateRaw(Size size);
 
     /**
      * Allocate a space of the specified size.
@@ -322,7 +331,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      */
     @INLINE
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
-    protected final Pointer allocate(Size size) {
+    protected final Pointer bumpAllocate(Size size) {
         if (MaxineVM.isDebug()) {
             FatalError.check(size.isWordAligned(), "Size must be word aligned");
         }
