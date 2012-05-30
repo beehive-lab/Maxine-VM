@@ -89,15 +89,13 @@ public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
     }
 
     final class BootRegionDirtyCardEvacuationClosure extends CardTableRSet.CardRangeVisitor {
-        private final BootHeapRegion bootHeapRegion;
         BootRegionDirtyCardEvacuationClosure() {
-            bootHeapRegion = Heap.bootHeapRegion;
         }
 
         @INLINE
         @Override
         public void visitCards(Address start, Address end) {
-            bootHeapRegion.visitReferences(start, end, NoAgingNurseryEvacuator.this);
+            Heap.bootHeapRegion.visitReferences(start, end, NoAgingNurseryEvacuator.this);
         }
     }
 
