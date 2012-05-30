@@ -211,7 +211,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                                 evacTimers.get(RSET_SCAN).getLastElapsedTime(),
                                 evacTimers.get(COPY).getLastElapsedTime(),
                                 evacTimers.get(WEAK_REF).getLastElapsedTime());
-                timeLogger.logGcTimes(invocationCount, true, gcTimer.getLastElapsedTime());
+                timeLogger.logGcTimes(invocationCount, true, evacTimers.get(TOTAL).getLastElapsedTime());
             }
             if (resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace())) {
                 // Force a temporary transition to MUTATING state.
@@ -242,7 +242,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                                     evacTimers.get(RSET_SCAN).getLastElapsedTime(),
                                     evacTimers.get(COPY).getLastElapsedTime(),
                                     evacTimers.get(WEAK_REF).getLastElapsedTime());
-                    timeLogger.logGcTimes(invocationCount, false, gcTimer.getLastElapsedTime());
+                    timeLogger.logGcTimes(invocationCount, false, evacTimers.get(TOTAL).getLastElapsedTime());
                 }
 
             }
@@ -307,8 +307,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      */
     private final FOTVerifier fotVerifier;
 
-    private final TimerMetric gcTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
-
     private final EvacuationTimers evacTimers = new EvacuationTimers();
 
     private final TimeLogger timeLogger = new TimeLogger();
@@ -347,7 +345,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                                 evacTimers.get(RSET_SCAN).getElapsedTime(),
                                 evacTimers.get(COPY).getElapsedTime(),
                                 evacTimers.get(WEAK_REF).getElapsedTime());
-                timeLogger.logGcTimes(-1, false, gcTimer.getElapsedTime());
+                timeLogger.logGcTimes(-1, false,  evacTimers.get(TOTAL).getElapsedTime());
             }
         }
     }
@@ -684,7 +682,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             Log.print(codeScanTime);
             Log.print(", remembered set scan=");
             Log.print(rsetTime);
-            Log.print(", evacuation=");
+            Log.print(", copy=");
             Log.print(evacTime);
             Log.print(", weak refs=");
             Log.println(weakRefTime);
@@ -701,9 +699,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 if (!minorCollection) {
                     Log.print(" (Full) ");
                 }
-                Log.print(" total=");
-                Log.println(gcTime);
             }
+            Log.print(" total=");
+            Log.println(gcTime);
         }
     }
 
