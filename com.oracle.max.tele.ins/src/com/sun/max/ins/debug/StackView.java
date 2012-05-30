@@ -256,9 +256,9 @@ public final class StackView extends AbstractView<StackView> {
     private MaxVMState lastChangedState = null;
 
     private InspectorPanel contentPane = null;
-    private DefaultListModel stackFrameListModel = null;
-    private DefaultListModel emptyModel = new DefaultListModel();
-    private JList stackFrameList = null;
+    private DefaultListModel stackFrameListModel = null;  // TODO (mlvdv) generic in Java 7
+    private DefaultListModel emptyModel = new DefaultListModel();  // TODO (mlvdv) generic in Java 7
+    private JList stackFrameList = null;  // TODO (mlvdv) generic in Java 7
 
     /**
      * The maximum number of frames to be displayed at any given time, to defend against extremely large
@@ -286,6 +286,7 @@ public final class StackView extends AbstractView<StackView> {
         return title;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void createViewContent() {
         lastUpdatedState = null;
@@ -348,6 +349,7 @@ public final class StackView extends AbstractView<StackView> {
         frameFocusChanged(null, inspection().focus().stackFrame());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void refreshState(boolean force) {
         if (stack != null && stack.thread() != null && stack.thread().isLive()) {
@@ -497,6 +499,7 @@ public final class StackView extends AbstractView<StackView> {
             super(inspection(), "Copy stack list to clipboard");
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public void procedure() {
             // (mlvdv)  This is pretty awkward, but has the virtue that it reproduces exactly what's displayed.  Could be improved.
