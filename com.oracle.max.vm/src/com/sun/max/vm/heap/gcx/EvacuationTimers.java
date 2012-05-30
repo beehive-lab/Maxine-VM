@@ -30,12 +30,14 @@ import com.sun.max.vm.heap.*;
 public final class EvacuationTimers {
     public enum TIMERS {
         TOTAL,
+        PROLOGUE,
         ROOT_SCAN,
         BOOT_HEAP_SCAN,
         CODE_SCAN,
         RSET_SCAN,
         COPY,
-        WEAK_REF
+        WEAK_REF,
+        EPILOGUE
     }
 
     final private TimerMetric [] timers = new TimerMetric[TIMERS.values().length];

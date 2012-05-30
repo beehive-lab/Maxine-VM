@@ -152,7 +152,7 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
 
     @Override
     public Pointer allocateTLAB(Size size) {
-        final Pointer tlab = allocator.allocateCleared(size);
+        final Pointer tlab = allocator.allocateRaw(size);
         HeapFreeChunk.format(tlab, size);
         return tlab;
     }
@@ -201,5 +201,6 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
     public SpaceBounds bounds() {
         return bounds;
     }
+
 
 }

@@ -64,7 +64,6 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         space.start().asPointer().setWord(Word.zero());
     }
 
-    @Override
     public Size growAfterGC(Size delta) {
         final Size size = space.adjustGrowth(delta);
         boolean hasGrown = space.growCommittedSpace(size);
@@ -73,7 +72,6 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         return size;
     }
 
-    @Override
     public Size shrinkAfterGC(Size delta) {
         int pageSize = platform().pageSize;
         Size size = delta.alignUp(pageSize);
@@ -84,26 +82,21 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         return size;
     }
 
-    @Override
     public Size totalSpace() {
         return space.committedSize();
     }
 
-    @Override
     public Size capacity() {
         return space.size();
     }
 
-    @Override
     public Pointer allocate(Size size) {
         return allocator.allocateCleared(size);
     }
 
     @Override
     public Pointer allocateTLAB(Size size) {
-        // FIXME: the interface wants a HeapFreeChunk, but that shouldn't be necessary here. See how this can be changed
-        // based on the code for TLAB overflow handling.
-        final Pointer tlab = allocator.allocateCleared(size);
+        final Pointer tlab = allocator.allocateRaw(size);
         HeapFreeChunk.format(tlab, size);
         return tlab;
     }
@@ -115,17 +108,14 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         }
     }
 
-    @Override
     public boolean contains(Address address) {
         return space.contains(address);
     }
 
-    @Override
     public void doBeforeGC() {
         allocator.doBeforeGC();
     }
 
-    @Override
     public void doAfterGC() {
         if (MaxineVM.isDebug()) {
             allocator.zap();
@@ -133,18 +123,15 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         allocator.reset();
     }
 
-    @Override
     public Size freeSpace() {
         return allocator.freeSpace();
     }
 
-    @Override
     public Size usedSpace() {
         // Allocator may be refilled with the top of the space, so we need to count what's before as well.
         return allocator.usedSpace();
     }
 
-    @Override
     public void visit(CellRangeVisitor visitor) {
         visitor.visitCells(space.start(), allocator.unsafeTop());
     }
@@ -153,4 +140,5 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     public SpaceBounds bounds() {
         return space.bounds();
     }
+
 }

@@ -411,10 +411,6 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         overflowAllocator.initialize(Address.zero(), Size.zero());
     }
 
-    /**
-     * Entry point for direct allocation when TLAB cannot be refilled.
-     */
-    @Override
     public Pointer allocate(Size size) {
         if (isLarge(size)) {
             return allocateLargeCleared(size);
@@ -422,10 +418,6 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         return overflowAllocator.allocateCleared(size);
     }
 
-    /**
-     * Entry point to allocate storage for TLAB refill.
-     */
-    @Override
     public Pointer allocateTLAB(Size size) {
         return tlabAllocator.allocateTLAB(size);
     }
