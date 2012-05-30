@@ -1157,6 +1157,45 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewBootClassRegistryAction;
     }
 
+
+    /**
+     * Menu: display a sub-menu of commands to inspect the basic allocation
+     * regions of the VM.
+     */
+    final class ViewSchemesMenu extends JMenu {
+        public ViewSchemesMenu() {
+            super("View Scheme instances:");
+            addMenuListener(new MenuListener() {
+
+                public void menuCanceled(MenuEvent e) {
+                }
+
+                public void menuDeselected(MenuEvent e) {
+                }
+
+                public void menuSelected(MenuEvent e) {
+                    removeAll();
+                    for (TeleVMScheme scheme : vm().schemes()) {
+                        add(views().objects().makeViewAction(scheme, scheme.schemeName()));
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Creates a menu of actions to view allocated memory regions.
+     * <br>
+     * <strong>Note:</strong> This menu does not depend on context, so it would be natural to use
+     * a singleton to be shared among all uses.  Unfortunately, that does not seem to work.
+     *
+     * @return a dynamically populated menu that contains an action to view each currently allocated
+     * region of memory in the VM.
+     */
+    public final JMenu viewSchemesMenu() {
+        return new ViewSchemesMenu();
+    }
+
     /**
      * Action:  view a {@link ClassActor} object for an interactively named class loaded in the VM,
      * specified by class name.
@@ -4700,6 +4739,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 classHubsMenu.add(viewDynamicHubByName());
                 classHubsMenu.add(viewStaticHubByName());
                 menu.add(classHubsMenu);
+
+                menu.add(viewSchemesMenu());
 
                 menu.add(views().objects().viewMenu());
             }

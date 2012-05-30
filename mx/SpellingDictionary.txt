@@ -55,6 +55,7 @@ affordances
 allocatable
 appendable
 arg
+assignability
 atomicity
 bailed
 bailout
@@ -118,6 +119,7 @@ initializing
 inline
 inlined
 inlining
+inspectability
 inspectable
 inspectee
 instanceof
@@ -172,6 +174,7 @@ probers
 programmatic
 proxy
 quibble
+reachability
 recompilation
 redock
 refactor
@@ -197,6 +200,9 @@ stderr
 stdout
 struct
 subtype
+subtypes
+supertype
+supertypes
 tabbed
 tele
 temp

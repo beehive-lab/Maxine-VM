@@ -29,6 +29,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * An object view specialized for displaying a low-level heap object in the VM that implements a {@link StringConstant}.
@@ -48,9 +49,7 @@ public class StringConstantView extends ObjectView<StringConstantView> {
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -69,8 +68,8 @@ public class StringConstantView extends ObjectView<StringConstantView> {
             public String fetchString() {
                 return teleStringConstant.getString();
             }
-            public boolean isLive() {
-                return teleObject().memoryStatus().isNotDeadYet();
+            public ObjectStatus status() {
+                return teleObject().status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -86,6 +85,9 @@ public class StringConstantView extends ObjectView<StringConstantView> {
             }
         });
         getContentPane().add(tabbedPane);
+
+        // Opportunity for view-specific Object menu
+        makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override

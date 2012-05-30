@@ -175,12 +175,12 @@ public class HeapFreeChunk {
     }
 
     @INLINE
-    static HeapFreeChunk format(Address deadSpace, Size numBytes) {
+    public static HeapFreeChunk format(Address deadSpace, Size numBytes) {
         return format(deadSpace, numBytes, Address.zero());
     }
 
     @INLINE
-    static HeapFreeChunk format(Address deadSpace, int numBytes) {
+    public static HeapFreeChunk format(Address deadSpace, int numBytes) {
         return format(deadSpace, Size.fromInt(numBytes), Address.zero());
     }
 
@@ -264,9 +264,12 @@ public class HeapFreeChunk {
     /**
      * Size of the chunk in bytes (including the size of the instance of HeapFreeChunk prefixing the chunk).
      */
+    @INSPECTED
     Size size;
+
     /**
      * A link to a next free chunk in a linked list.
      */
+    @INSPECTED
     HeapFreeChunk next;
 }

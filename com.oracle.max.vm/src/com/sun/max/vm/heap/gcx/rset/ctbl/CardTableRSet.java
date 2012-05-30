@@ -91,6 +91,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
      * Contiguous regions of virtual memory holding the card table data.
      * Mostly used to feed the inspector.
      */
+    @INSPECTED
     final MemoryRegion cardTableMemory;
 
     /**
@@ -336,9 +337,45 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
         Log.print(cardTable.rangeStart(startCardIndex));
         Log.print(", ");
         Log.print(cardTable.rangeStart(endCardIndex));
-        Log.print(")  R = ");
-        Log.print(RegionTable.theRegionTable().regionID(cardTable.rangeStart(startCardIndex)));
         Log.println(")");
+    }
+
+
+    public void checkNoCardInState(Address start, Address end, CardState cardState) {
+        final int endOfRange = cardTable.tableEntryIndex(end);
+        int cardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, cardState);
+        if (cardIndex < endOfRange) {
+            Log.print("Unexpected state for card #");
+            Log.print(cardIndex);
+            Log.print(" [");
+            Log.print(cardTable.rangeStart(cardIndex));
+            Log.print(", ");
+            Log.print(cardTable.rangeStart(cardIndex + 1));
+            Log.println(" ]");
+            FatalError.breakpoint();
+            FatalError.crash("invariant violation");
+        }
+    }
+
+    public static abstract class CardRangeVisitor {
+        abstract public void visitCards(Address start, Address end);
+    }
+
+    public void cleanAndVisitCards(Address start, Address end, CardRangeVisitor cardRangeVisitor) {
+        final int endOfRange = cardTable.tableEntryIndex(end);
+        int startCardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, CardState.DIRTY_CARD);
+        while (startCardIndex < endOfRange) {
+            int endCardIndex = cardTable.firstNot(startCardIndex + 1, endOfRange, CardState.DIRTY_CARD);
+            if (traceCardTableRSet()) {
+                traceVisitedCard(startCardIndex, endCardIndex, CardState.DIRTY_CARD);
+            }
+            cardTable.clean(startCardIndex, endCardIndex);
+            cardRangeVisitor.visitCards(cardTable.rangeStart(startCardIndex), cardTable.rangeStart(endCardIndex));
+            if (++endCardIndex >= endOfRange) {
+                return;
+            }
+            startCardIndex = cardTable.first(endCardIndex, endOfRange, CardState.DIRTY_CARD);
+        }
     }
 
     /**

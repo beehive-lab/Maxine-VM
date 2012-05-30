@@ -66,27 +66,7 @@ public final class HubView extends ObjectView<HubView> {
         showMTables = globalHubPreferences.showMTables;
         showRefMaps = globalHubPreferences.showRefMaps;
 
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
-        if (teleClassMethodActor != null) {
-            // the object is, or is associated with a ClassMethodActor.
-            final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
-            debugMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor));
-            debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
-
-            objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, teleClassMethodActor.classActorForObjectType().simpleName()));
-            final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-            objectMenu.add(views().objects().makeViewAction(teleClassActor, teleClassActor.classActorForObjectType().simpleName()));
-            objectMenu.add(actions().viewSubstitutionSourceClassActorAction(teleClassMethodActor));
-            objectMenu.add(actions().viewMethodCompilationsMenu(teleClassMethodActor));
-
-            final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
-            codeMenu.add(actions().viewMethodCompilationsCodeMenu(teleClassMethodActor));
-            codeMenu.addSeparator();
-            codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
-        }
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -182,6 +162,28 @@ public final class HubView extends ObjectView<HubView> {
         }
 
         getContentPane().add(panel);
+
+        // View-specific Object menu
+        final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
+        final TeleClassMethodActor teleClassMethodActor = teleObject().getTeleClassMethodActorForObject();
+        if (teleClassMethodActor != null) {
+            // the object is, or is associated with a ClassMethodActor.
+            final InspectorMenu debugMenu = makeMenu(MenuKind.DEBUG_MENU);
+            debugMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor));
+            debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
+
+            objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, teleClassMethodActor.classActorForObjectType().simpleName()));
+            final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
+            objectMenu.add(views().objects().makeViewAction(teleClassActor, teleClassActor.classActorForObjectType().simpleName()));
+            objectMenu.add(actions().viewSubstitutionSourceClassActorAction(teleClassMethodActor));
+            objectMenu.add(actions().viewMethodCompilationsMenu(teleClassMethodActor));
+
+            final InspectorMenu codeMenu = makeMenu(MenuKind.CODE_MENU);
+            codeMenu.add(actions().viewMethodCompilationsCodeMenu(teleClassMethodActor));
+            codeMenu.addSeparator();
+            codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
+        }
+        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override

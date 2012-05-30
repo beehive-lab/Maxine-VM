@@ -26,7 +26,7 @@ package com.sun.max.vm.heap;
  * The object management phases of a {@link HeapScheme} implementation.
  * The heap cycles in order through he following three phases:
  * <ol>
- * <li> {@link #ALLOCATING}: normal operation, new memory being allocated on demand.</li>
+ * <li> {@link #MUTATING}: normal operation, heap mutation & new allocation.</li>
  * <li> {@link #ANALYZING}: first ("liveness analysis") phase of GC.</li>
  * <li> {@link #RECLAIMING}: final ("clean up") phase of GC.</li>
  * </ol>
@@ -41,7 +41,7 @@ public enum HeapPhase {
      * object in one of the heap's regions remains
      * {@link ObjectMemoryStatus#LIVE}, unmoved, and of constant type.
      */
-    ALLOCATING("Allocating", "Allocating only, no GC"),
+    MUTATING("Mutating", "Mutating & new allocation, no GC"),
 
     /**
      * The first phase of a GC, during which the heap investigates
@@ -77,5 +77,40 @@ public enum HeapPhase {
 
     public String description() {
         return description;
+    }
+
+    /**
+     * Returns {@code true} if the heap is in one of the GC phases.
+     * {@code false} if mutating, new object allocation
+     */
+    public boolean isCollecting() {
+        return this != MUTATING;
+    }
+
+    /**
+     * @return whether the heap is in the normal, non-GC phase
+     * during which the heap is mutating and new objects are being allocated.
+     * @see #MUTATING
+     */
+    public boolean isMutating() {
+        return this == MUTATING;
+    }
+
+    /**
+     * @return whether the heap is in the first phase of GC,
+     * during which the reachability of objects is being determined.
+     * @see #ANALYZING
+     */
+    public boolean isAnalyzing() {
+        return this == ANALYZING;
+    }
+
+    /**
+     * @return whether the heap is in the second phase of GC,
+     * during which information no longer necessary is being cleaned up.
+     * @see #RECLAIMING
+     */
+    public boolean isReclaiming() {
+        return this == RECLAIMING;
     }
 }

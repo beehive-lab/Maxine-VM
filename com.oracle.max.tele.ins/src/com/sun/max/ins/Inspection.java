@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * Holds the user interaction state for the inspection of a VM, which is accessed via a surrogate implementing {@link MaxVM}.
@@ -190,8 +191,8 @@ public final class Inspection implements InspectionHolder {
                 sb.append(UNKNOWN.label());
             } else {
                 sb.append(vmState.processState().label());
-                if (vmState.isInGC()) {
-                    sb.append(", in GC");
+                if (vmState.heapPhase() != HeapPhase.MUTATING) {
+                    sb.append(", heap=" + vmState.heapPhase().label());
                 }
                 if (vmState.isInEviction()) {
                     sb.append(", in Eviction");

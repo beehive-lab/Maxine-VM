@@ -415,6 +415,7 @@ public class WordValueLabel extends ValueLabel {
                         if (teleObject == null) {
                             displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         }
+                        // TODO (mlvdv) check now to see if it is a forwarded reference
                     } else if (thread != null && thread.stack().memoryRegion().contains(address)) {
                         stack = thread.stack();
                         displayMode = (valueMode == ValueMode.REFERENCE || forceTxt) ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
@@ -561,13 +562,17 @@ public class WordValueLabel extends ValueLabel {
                     // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
                     final StringBuilder toolTipSB = new StringBuilder();
                     toolTipSB.append(value.toWord().toPadded0xHexString('0'));
-                    toolTipSB.append("<br>Reference to ").append(htmlify(nameDisplay.referenceToolTipText(teleObject)));
+                    toolTipSB.append("<br>Reference(").append(teleObject.status().label()).append(") to ").append(htmlify(nameDisplay.referenceToolTipText(teleObject)));
                     toolTipSB.append("<br>In ");
                     final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
                     if (memoryRegion == null) {
                         toolTipSB.append(htmlify("<unknown memory region>"));
                     } else {
                         toolTipSB.append("\"").append(nameDisplay.longName(memoryRegion)).append("\"");
+                    }
+                    final String gcDescription = teleObject.reference().gcDescription();
+                    if (gcDescription != null) {
+                        toolTipSB.append("<br>GC: " + gcDescription);
                     }
                     setWrappedToolTipHtmlText(toolTipSB.toString());
                 } catch (Throwable throwable) {
@@ -586,17 +591,20 @@ public class WordValueLabel extends ValueLabel {
                     final String labelText = nameDisplay.referenceLabelText(teleObject);
                     if (labelText != null) {
                         setWrappedText(labelText);
-                        final String toolTipText = nameDisplay.referenceToolTipText(teleObject);
                         // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
                         final StringBuilder toolTipSB = new StringBuilder();
                         toolTipSB.append(value.toWord().toPadded0xHexString('0'));
-                        toolTipSB.append("<br>Reference to ").append(htmlify(toolTipText));
+                        toolTipSB.append("<br>Reference(").append(teleObject.status().label()).append(") to ").append(htmlify(nameDisplay.referenceToolTipText(teleObject)));
                         toolTipSB.append("<br>In ");
                         final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
                         if (memoryRegion == null) {
                             toolTipSB.append(htmlify("<unknown memory region>"));
                         } else {
                             toolTipSB.append("\"").append(nameDisplay.longName(memoryRegion)).append("\"");
+                        }
+                        final String gcDescription = teleObject.reference().gcDescription();
+                        if (gcDescription != null) {
+                            toolTipSB.append("<br>GC: " + gcDescription);
                         }
                         setWrappedToolTipHtmlText(toolTipSB.toString());
                         break;
@@ -747,20 +755,34 @@ public class WordValueLabel extends ValueLabel {
                 setFont(wordDataFont);
                 setForeground(style.wordUncheckedReferenceDataColor());
                 setWrappedText(hexString);
+                final StringBuilder toolTipSB = new StringBuilder();
+                toolTipSB.append(value.toWord().toPadded0xHexString('0'));
                 if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setWrappedToolTipHtmlText(htmlify("<unchecked>"));
+                    toolTipSB.append("<br>").append(htmlify("<unchecked>"));
                 } else {
-                    setWrappedToolTipHtmlText("Unchecked Reference");
+                    toolTipSB.append("<br>").append(htmlify("Unchecked Reference"));
                 }
+                setWrappedToolTipHtmlText(toolTipSB.toString());
                 break;
             }
             case INVALID_OBJECT_REFERENCE: {
                 setFont(wordDataFont);
                 setForeground(style.wordInvalidObjectReferenceDataColor());
                 setWrappedText(hexString);
+                final StringBuilder toolTipSB = new StringBuilder();
+                toolTipSB.append(value.toWord().toPadded0xHexString('0'));
                 if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setWrappedToolTipHtmlText(htmlify("<invalid>"));
+                    toolTipSB.append("<br>").append(htmlify("<invalid>"));
+                } else {
+                    toolTipSB.append("<br> invalid object reference");
+                    final MaxEntityMemoryRegion<?> memoryRegion = vm().state().findMemoryRegion(value().asWord().asAddress());
+                    if (memoryRegion == null) {
+                        toolTipSB.append("<br> points into no known memory region");
+                    } else {
+                        toolTipSB.append("<br> points into region " + memoryRegion.regionName());
+                    }
                 }
+                setWrappedToolTipHtmlText(toolTipSB.toString());
                 break;
             }
             case CALL_ENTRY_POINT: {

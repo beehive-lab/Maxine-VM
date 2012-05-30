@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * After mark-sweep verifier for a free space manager with tracing based on TricolorHeapMarker.
  */
-public class AfterMarkSweepVerifier extends PointerIndexVisitor implements HeapSpaceRangeVisitor, CellVisitor {
+public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellRangeVisitor, CellVisitor {
     final TricolorHeapMarker heapMarker;
     final Sweeper sweeper;
     long darkMatterByteCount;

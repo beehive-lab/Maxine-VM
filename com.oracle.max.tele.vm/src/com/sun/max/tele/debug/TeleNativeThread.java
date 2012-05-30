@@ -469,7 +469,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
             try {
                 codePointer = vm().machineCode().makeCodePointer(breakpointAddress);
             } catch (InvalidCodeAddressException e) {
-                TeleWarning.message("Invalid breakpoint address " + e.getAddressString() + ":  " + e.getMessage());
+                TeleWarning.message(tracePrefix() + "Invalid breakpoint address " + e.getAddressString() + ":  " + e.getMessage());
             }
             if (codePointer != null) {
                 breakpoint = breakpointManager().targetBreakpoints().find(codePointer);

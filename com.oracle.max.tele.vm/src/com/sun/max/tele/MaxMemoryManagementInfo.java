@@ -56,7 +56,7 @@ public interface MaxMemoryManagementInfo  {
     Address address();
 
     /**
-     * @return a {@link TeleHeapScheme} specific {@link TeleObject} that represents the memory management info, if any.
+     * @return a {@link RemoteHeapScheme} specific {@link TeleObject} that represents the memory management info, if any.
      */
     TeleObject tele();
 

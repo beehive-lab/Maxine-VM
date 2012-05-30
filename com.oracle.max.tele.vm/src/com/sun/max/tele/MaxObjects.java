@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,10 +42,23 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
     // TODO (mlvdv) This interface as well as others related to memory management is evolving.
 
     /**
-     * @param origin an absolute memory location in the VM.
-     * @return whether there is an object whose origin is at the address
+     * Tests whether there is a legitimate, live object at a VM memory location in a region known to hold objects.
+     *
+     * @param address an absolute memory location in the VM.
+     * @return whether there is an object whose origin is at the address, {@code false} if unable
+     * to complete the check, for example if the VM is busy or terminated
      */
     boolean isValidOrigin(Address origin);
+
+    /**
+     * Tests whether there is an object that has been forwarded at a location in VM memory.  This
+     * can only be {@code true} during the {@linkplain HeapPhase#ANALYZING analyzing} phase of the
+     * heap containing the location.
+     *
+     * @param origin an absolute memory location in the VM.
+     * @return whether there is an object at the location that has been forwarded during GC.
+     */
+    boolean isForwardedOrigin(Address origin);
 
     /**
      * Locator for TeleObjects, which

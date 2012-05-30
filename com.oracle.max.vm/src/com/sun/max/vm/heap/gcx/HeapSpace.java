@@ -23,6 +23,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * Heap Space interface. A heap may be made of one or more heap spaces.
@@ -31,7 +32,7 @@ import com.sun.max.unsafe.*;
  * ease composition of heap management components.
  * WORK IN PROGRESS.
  */
-public interface HeapSpace extends ResizableSpace {
+public interface HeapSpace extends ResizableSpace, EvacuatingSpace {
     /**
      * Allocate a cell of exactly the specified size.
      * @param size size in bytes
@@ -47,23 +48,11 @@ public interface HeapSpace extends ResizableSpace {
     Pointer allocateTLAB(Size size);
 
     /**
-     * Indicate whether an address points to this heap space.
-     * @param address
-     * @return true if the address points to the heap space.
+     * Retire space from a previously allocated TLAB.
+     * @param start pointer to the first word of free space in the retired TLAB
+     * @param size  free space left over in the retired TLAB.
      */
-    boolean contains(Address address);
-
-    /**
-     * Action to be done on the space before GC take place.
-     * TODO: specify precisely when GC should invoke this method
-     */
-    void doBeforeGC();
-
-    /**
-     * Action to be done on the space after GC is done.
-     * TODO: specify precisely when GC should invoke this method
-    */
-    void doAfterGC();
+    void retireTLAB(Pointer start, Size size);
 
     /**
      * Amount of space available for allocation.
@@ -84,5 +73,5 @@ public interface HeapSpace extends ResizableSpace {
      *
      * @param visitor a visitor that can iterate over iterable ranges of contiguous heap space.
      */
-    void visit(HeapSpaceRangeVisitor visitor);
+    void visit(CellRangeVisitor visitor);
 }

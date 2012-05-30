@@ -22,8 +22,13 @@
  */
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.runtime.*;
 
@@ -40,8 +45,9 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     @INSPECTED
     protected T allocator;
 
-    ContiguousAllocatingSpace(T allocator) {
+    ContiguousAllocatingSpace(T allocator, String name) {
         this.allocator = allocator;
+        this.space = new ContiguousHeapSpace(name);
     }
 
     public T allocator() {
@@ -49,20 +55,33 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     }
 
     public void initialize(Address start, Size maxSize, Size initialSize) {
-        space.reserve(start, maxSize);
+        space.setReserved(start, maxSize);
         space.growCommittedSpace(initialSize);
+        allocator.refill(start, initialSize);
+        // Inspector support:
+        // Zero-fill  the first word of  the still virgin backing storage of the space to force the OS to map the first page in virtual memory.
+        // This avoids the inspector to get DataIO Error on trying to read the bytes from the first page.
+        space.start().asPointer().setWord(Word.zero());
     }
 
     @Override
     public Size growAfterGC(Size delta) {
-        FatalError.unimplemented();
-        return Size.zero();
+        final Size size = space.adjustGrowth(delta);
+        boolean hasGrown = space.growCommittedSpace(size);
+        FatalError.check(hasGrown, "request for growing space after GC must always succeed");
+        allocator.grow(size);
+        return size;
     }
+
     @Override
     public Size shrinkAfterGC(Size delta) {
-        // TODO Auto-generated method stub
-        FatalError.unimplemented();
-        return Size.zero();
+        int pageSize = platform().pageSize;
+        Size size = delta.alignUp(pageSize);
+        boolean hasShrunk = space.shrinkCommittedSpace(size);
+        FatalError.check(hasShrunk, "request for shrinking space after GC must always succeed");
+        hasShrunk = allocator.shrink(size);
+        FatalError.check(hasShrunk, "request for shrinking allocator's space after GC must always succeed");
+        return size;
     }
 
     @Override
@@ -79,40 +98,59 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     public Pointer allocate(Size size) {
         return allocator.allocateCleared(size);
     }
+
     @Override
     public Pointer allocateTLAB(Size size) {
-        // FIXME: the interface really want a HeapFreeChunk, but that shouldn't be necessary here. See how this can be changed
+        // FIXME: the interface wants a HeapFreeChunk, but that shouldn't be necessary here. See how this can be changed
         // based on the code for TLAB overflow handling.
-        return allocator.allocateCleared(size);
+        final Pointer tlab = allocator.allocateCleared(size);
+        HeapFreeChunk.format(tlab, size);
+        return tlab;
+    }
+
+    public void retireTLAB(Pointer start, Size size) {
+        FatalError.check(space.contains(start) && space.contains(start.plus(size.minusWords(1))), "Retired TLAB Space must be in allocating space");
+        if (!allocator.retireTop(start, size)) {
+            fillWithDeadObject(start, start.plus(size));
+        }
     }
 
     @Override
     public boolean contains(Address address) {
-        return space.inCommittedSpace(address);
+        return space.contains(address);
     }
 
     @Override
     public void doBeforeGC() {
-        // FIXME: should this be when we flip the to and from space ?
         allocator.doBeforeGC();
     }
 
     @Override
     public void doAfterGC() {
+        if (MaxineVM.isDebug()) {
+            allocator.zap();
+        }
+        allocator.reset();
     }
 
     @Override
     public Size freeSpace() {
         return allocator.freeSpace();
     }
+
     @Override
     public Size usedSpace() {
+        // Allocator may be refilled with the top of the space, so we need to count what's before as well.
         return allocator.usedSpace();
     }
+
     @Override
-    public void visit(HeapSpaceRangeVisitor visitor) {
-        FatalError.unimplemented();
+    public void visit(CellRangeVisitor visitor) {
+        visitor.visitCells(space.start(), allocator.unsafeTop());
     }
 
-
+    @Override
+    public SpaceBounds bounds() {
+        return space.bounds();
+    }
 }

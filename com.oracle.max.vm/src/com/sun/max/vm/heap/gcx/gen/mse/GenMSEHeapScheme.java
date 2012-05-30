@@ -43,7 +43,6 @@ import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 
@@ -86,7 +85,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
      * Young generation.
      */
     @INSPECTED
-    private final NoAgingNursery youngSpace;
+    private final NoAgingRegionalizedNursery youngSpace;
     /**
      * Tenured generation.
      */
@@ -106,7 +105,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Implementation of young space evacuation. Used by minor collection operations.
      */
-    private NoAgingEvacuator youngSpaceEvacuator;
+    private final NoAgingNurseryEvacuator youngSpaceEvacuator;
 
     /**
      * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
@@ -121,7 +120,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Support for heap verification.
      */
-    private final NoYoungReferenceVerifier noYoungReferencesVerifier;
+    private final NoEvacuatedSpaceReferenceVerifier noYoungReferencesVerifier;
     private final FOTVerifier fotVerifier;
 
 
@@ -130,7 +129,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         heapAccount = new HeapAccount<GenMSEHeapScheme>(this);
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(this));
         cardTableRSet = new CardTableRSet();
-        youngSpace = new NoAgingNursery(heapAccount, YOUNG.tag());
+        youngSpace = new NoAgingRegionalizedNursery(heapAccount, YOUNG.tag());
 
         final ChunkListAllocator<RegionChunkListRefillManager> tlabAllocator =
             new ChunkListAllocator<RegionChunkListRefillManager>(new RegionChunkListRefillManager(cardTableRSet));
@@ -138,7 +137,8 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             new CardSpaceAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller(cardTableRSet), cardTableRSet);
 
         oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, tlabAllocator, overflowAllocator, true, cardTableRSet, OLD.tag());
-        noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
+        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, cardTableRSet);
+        noYoungReferencesVerifier = new NoEvacuatedSpaceReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
     }
@@ -246,8 +246,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             // FIXME: the capacity of the survivor range queues should be dynamic. Its upper bound could be computed based on the
             // worst case evacuation and the number of fragments of old space available for allocation.
             // Same with the lab size. In non parallel evacuators, this should be all the space available for allocation in a region.
-            youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace());
-            youngSpaceEvacuator.initialize(1000, ELABSize);
+            youngSpaceEvacuator.initialize(1000, ELABSize, oldSpace.minReclaimableSpace(), false);
 
             if (HeapRangeDumper.DumpOnError) {
                 MemoryRegion dumpingCoverage = new MemoryRegion();
@@ -259,25 +258,14 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             }
 
             cardTableRSet.initializeXirStartupConstants();
+
              // Make the heap inspectable
-            InspectableHeapInfo.init(false, heapBounds, heapMarker.colorMap, cardTableRSet.memory());
+            HeapScheme.Inspect.init(false);
+            HeapScheme.Inspect.notifyHeapRegions(heapBounds, heapMarker.memory(), cardTableRSet.memory());
         } finally {
             disableCustomAllocation();
         }
         theHeapRegionManager().checkOutgoingReferences();
-    }
-
-    @Override
-    public int reservedVirtualSpaceKB() {
-        // 2^30 Kb = 1 TB of reserved virtual space.
-        // This will be truncated as soon as we taxed what we need at initialization time.
-        return Size.G.toInt();
-    }
-
-    @Override
-    protected void releaseUnusedReservedVirtualSpace() {
-        // Do nothing. This heap scheme has its own way of doing this.
-        // See allocateHeapAndGCStorage
     }
 
     final class GenCollection extends GCOperation {
@@ -311,7 +299,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             oldSpace.doAfterGC();
             youngSpaceEvacuator.doAfterGC();
             fullCollectionCount++;
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
         }
 
         @Override
@@ -331,7 +319,9 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             if (Heap.verbose()) {
                 Log.println("--Begin nursery evacuation");
             }
+            youngSpaceEvacuator.setGCOperation(this);
             youngSpaceEvacuator.evacuate();
+            youngSpaceEvacuator.setGCOperation(null);
             if (Heap.verbose()) {
                 Log.println("--End nursery evacuation");
             }
@@ -485,4 +475,13 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         return XirWriteBarrierSpecification.NULL_WRITE_BARRIER_GEN;
     }
 
+    @Override
+    public PhaseLogger phaseLogger() {
+        return HeapSchemeLoggerAdaptor.phaseLogger;
+    }
+
+    @Override
+    public TimeLogger timeLogger() {
+        return HeapSchemeLoggerAdaptor.timeLogger;
+    }
 }

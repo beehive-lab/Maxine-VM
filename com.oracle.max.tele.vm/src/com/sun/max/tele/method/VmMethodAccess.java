@@ -80,8 +80,8 @@ public final class VmMethodAccess extends AbstractVmHolder implements MaxMethods
     public final TeleStaticMethodAccess InspectableCompilationInfo_inspectableCompilationCompleted = new TeleStaticMethodAccess(vm(), InspectableCompilationInfo.class, "inspectableCompilationCompleted", SignatureDescriptor.fromJava(void.class, String.class, String.class, String.class, TargetMethod.class));
     public final TeleStaticMethodAccess InspectableCompilationInfo_inspectableCompilationStarted = new TeleStaticMethodAccess(vm(), InspectableCompilationInfo.class, "inspectableCompilationStarted", SignatureDescriptor.fromJava(void.class, String.class, String.class, String.class));
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableDecreaseMemoryRequested = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableDecreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
-    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCAllocating = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCAllocating", SignatureDescriptor.fromJava(void.class, long.class));
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCAnalyzing = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCAnalyzing", SignatureDescriptor.fromJava(void.class, long.class));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCMutating = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCMutating", SignatureDescriptor.fromJava(void.class, long.class));
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCReclaiming = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCReclaiming", SignatureDescriptor.fromJava(void.class, long.class));
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableIncreaseMemoryRequested = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableIncreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableObjectRelocated = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableObjectRelocated", SignatureDescriptor.fromJava(void.class, Address.class, Address.class));
@@ -94,7 +94,7 @@ public final class VmMethodAccess extends AbstractVmHolder implements MaxMethods
 
     private final CodeLocation compilationStarted;
     private final CodeLocation compilationCompleted;
-    private final CodeLocation gcAllocating;
+    private final CodeLocation gcMutating;
     private final CodeLocation gcAnalyzing;
     private final CodeLocation gcReclaiming;
     private final CodeLocation vmThreadRunning;
@@ -111,7 +111,7 @@ public final class VmMethodAccess extends AbstractVmHolder implements MaxMethods
 
         compilationStarted = codeManager.createMachineCodeLocation(InspectableCompilationInfo_inspectableCompilationStarted, "Compilation start (internal)");
         compilationCompleted = codeManager.createMachineCodeLocation(InspectableCompilationInfo_inspectableCompilationCompleted, "Compilation complete (internal)");
-        gcAllocating = codeManager.createMachineCodeLocation(InspectableHeapInfo_inspectableGCAllocating, "GC completed (internal)");
+        gcMutating = codeManager.createMachineCodeLocation(InspectableHeapInfo_inspectableGCMutating, "GC completed (internal)");
         gcAnalyzing = codeManager.createMachineCodeLocation(InspectableHeapInfo_inspectableGCAnalyzing, "GC starting (internal)");
         gcReclaiming = codeManager.createMachineCodeLocation(InspectableHeapInfo_inspectableGCReclaiming, "GC reclaiming (internal)");
         vmThreadRunning = codeManager.createMachineCodeLocation(VmThread_run, "VmThread running (internal) ");
@@ -181,15 +181,15 @@ public final class VmMethodAccess extends AbstractVmHolder implements MaxMethods
      * reclaiming, i.e. when it enters the {@link HeapPhase#RECLAIMING} phase.
      */
     public CodeLocation gcReclaimingMethodLocation() {
-        return gcAnalyzing;
+        return gcReclaiming;
     }
 
      /**
      * @return a VM method for internal (non-client) use that is called just after each GC end,
-     * i.e. when it enters the {@link HeapPhase#ALLOCATING}.
+     * i.e. when it enters the {@link HeapPhase#MUTATING}.
      */
-    public CodeLocation gcAllocatingMethodLocation() {
-        return gcAllocating;
+    public CodeLocation gcMutatingMethodLocation() {
+        return gcMutating;
     }
 
     public TeleClassMethodActor findClassMethodActor(MethodKey methodKey) {

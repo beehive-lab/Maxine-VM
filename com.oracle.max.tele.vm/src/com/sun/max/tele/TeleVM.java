@@ -56,8 +56,8 @@ import com.sun.max.tele.jdwputil.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.BytecodeLocation;
-import com.sun.max.tele.method.CodeLocation.VmCodeLocationManager;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
+import com.sun.max.tele.method.CodeLocation.VmCodeLocationManager;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.reference.direct.*;
@@ -229,6 +229,21 @@ public abstract class TeleVM implements MaxVM {
     private static File vmDirectory;
 
     /**
+     * The VM object that represents the VM itself.
+     */
+    private static TeleMaxineVM teleMaxineVM;
+
+    /**
+     * The VM object that holds configuration information, including scheme implementations.
+     */
+    private static TeleVMConfiguration teleVMConfiguration;
+
+    /**
+     * The VM object instances that implement the schemes.
+     */
+    private final List<TeleVMScheme> schemes = new ArrayList<TeleVMScheme>();
+
+    /**
      * An abstraction description of the VM's platform, suitable for export.
      */
     private VmPlatform platform;
@@ -237,6 +252,20 @@ public abstract class TeleVM implements MaxVM {
      * If {@code true}, always prompt for native code frame view when entering native code.
      */
     public static boolean promptForNativeCodeView;
+
+    /**
+     * Interface for notification that all of the initialization for a remote inspection session
+     * are substantially complete; some services have needs for setup that can only happen very
+     * late, most notably anything that requires setting a breakpoint.
+     */
+    public interface InitializationListener {
+
+        /**
+         * Notifies listener that all of the remote inspection services are substantially complete,
+         * and that it is safe to use them, for example setting breakpoints.
+         */
+        void initialiationComplete(long epoch);
+    }
 
     /**
      * The options controlling how a VM instance is {@linkplain #newAllocator(String...) created}.
@@ -458,6 +487,7 @@ public abstract class TeleVM implements MaxVM {
                 vm.updateVMCaches(0L);
         }
 
+
         final File commandFile = options.commandFileOption.getValue();
         if (commandFile != null && !commandFile.equals("")) {
             vm.executeCommandsFromFile(commandFile.getPath());
@@ -474,12 +504,13 @@ public abstract class TeleVM implements MaxVM {
      * Creates and installs the {@linkplain MaxineVM#vm() global VM} context based on a given
      * configuration loaded from a boot image.
      *
-     * @param bootImageConfig
+     * @param bootImageConfig information about the particular build, extracted from the boot image
      */
     public static void initializeVM(VMConfiguration bootImageConfig) {
         MaxineVM vm = new MaxineVM(bootImageConfig);
         MaxineVM.set(vm);
         bootImageConfig.loadAndInstantiateSchemes(null);
+        // Create a mirror of the VM's configuration, substituting an implementation of ReferenceScheme specialized for the Inspector.
         final VMConfiguration config = new VMConfiguration(
                         bootImageConfig.buildLevel,
                         Platform.platform(),
@@ -618,6 +649,8 @@ public abstract class TeleVM implements MaxVM {
      */
     private volatile TeleVMState teleVMState;
 
+    private List<InitializationListener> initializationListeners = new ArrayList<InitializationListener>();
+
     private List<MaxVMStateListener> vmStateListeners = new CopyOnWriteArrayList<MaxVMStateListener>();
 
     /**
@@ -631,9 +664,9 @@ public abstract class TeleVM implements MaxVM {
     private VMEventDispatcher<MaxGCPhaseListener> gcReclaimingListeners;
 
     /**
-     * Dispatcher for GC completion events, i.e. when entering the {@link HeapPhase#ALLOCATING} phase.
+     * Dispatcher for GC completion events, i.e. when entering the {@link HeapPhase#MUTATING} phase.
      */
-    private VMEventDispatcher<MaxGCPhaseListener> gcAllocatingListeners;
+    private VMEventDispatcher<MaxGCPhaseListener> gcMutatingListeners;
 
     /**
      * Dispatcher for thread entry events (i.e., when a {@link VmThread} enters its run method).
@@ -673,6 +706,9 @@ public abstract class TeleVM implements MaxVM {
 
     private final VmMethodAccess methodAccess;
 
+    /**
+     * Clone of the configuration descriptor for the current VM, with inspector-specific adjustments.
+     */
     private final VMConfiguration vmConfiguration;
 
     private final Classpath sourcepath;
@@ -780,10 +816,10 @@ public abstract class TeleVM implements MaxVM {
             }
         };
 
-        this.gcAllocatingListeners =  new VMEventDispatcher<MaxGCPhaseListener>(methodAccess.gcAllocatingMethodLocation(), "at GC completion") {
+        this.gcMutatingListeners =  new VMEventDispatcher<MaxGCPhaseListener>(methodAccess.gcMutatingMethodLocation(), "at GC completion") {
             @Override
             protected void listenerDo(MaxThread thread, MaxGCPhaseListener listener) {
-                listener.gcPhaseChange(HeapPhase.ALLOCATING);
+                listener.gcPhaseChange(HeapPhase.MUTATING);
             }
         };
 
@@ -812,6 +848,10 @@ public abstract class TeleVM implements MaxVM {
      * be achieved.
      * <p>
      * Some lazy initialization is done, in order to avoid cycles during startup.
+     * <p>
+     * Note that gathering of thread information happens <em>after</em> this during
+     * the normal refresh cycle.  See {@link TeleProcess}.
+     *
      * @param epoch the number of times the process has run so far
      * @throws TeleError if unable to acquire the VM lock
      * @see #lock
@@ -829,6 +869,7 @@ public abstract class TeleVM implements MaxVM {
                  * This depends on the {@link VmHeapAccess} already existing.
                  */
                 classAccess = VmClassAccess.make(this, epoch);
+
                 /**
                  *  Can only fully initialize the {@link VmHeapAccess} once
                  *  the {@link VmClassAccess} is fully created, otherwise there's a cycle.
@@ -841,6 +882,12 @@ public abstract class TeleVM implements MaxVM {
 
                 nativeCodeAccess = new NativeCodeAccess(this);
 
+                // Locate the root object in the VM that holds the VM's configuration.
+                // We can determine most things from the local instance, but the remote
+                // object is needed for references to specific objects in the VM.
+                teleMaxineVM = (TeleMaxineVM) objects().makeTeleObject(fields().MaxineVM_vm.readReference(this));
+                teleVMConfiguration = teleMaxineVM.teleVMConfiguration();
+
                 if (isAttaching()) {
                     // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
                     TeleError.check((fields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
@@ -849,14 +896,49 @@ public abstract class TeleVM implements MaxVM {
 
                 // read the list of actual VmThreadLocal values from the target
                 TeleThreadLocalsArea.Static.values(this);
+
+                // At this point everything should be read to go; handle any requests
+                // for late initialization.
+                for (InitializationListener listener : initializationListeners) {
+                    listener.initialiationComplete(epoch);
+                }
             }
 
             // The standard update cycle follows; it is sensitive to ordering.
+            // The general ordering is:
+            // 1. Identify any new memory locations that can hold objects and/or code
+            // 2. Update any existing remote object references or code pointers, based
+            //    on the state of the manager for each region.  As much as possible, this
+            //    should be independent of object state, since that hasn't been updated yet.
+            //    In cases where there are dependencies, steps must be taken to avoid
+            //    circularities:  (a) have the state be static in the boot heap, (b) have
+            //    the state be in some other non-managed heap, (c) force any depended-upon
+            //    objects to refresh before depending on their state.
+            // 3. Update information about classes loaded since the previous refresh; this
+            //    will be needed to model correctly any newly allocated objects or references
+            //    of the newly-loaded types.
+            // 4. Update the status, including any cached information, concerning every
+            //    remote heap object. Remote object state can depend on just about everything else,
+            //    especially the location and status of every allocated memory region, their
+            //    management(GC) status, and any remote object references that point into those
+            //    regions.
+            // 5. Update the status of remote code pointers and remote object references that
+            //    point at objects in code cache memory.
 
-            // Update status of the heap, including GC status and any new allocations.
+            // Update status of the heap:  any new heap allocations, the management (GC) status
+            // of each region, and updating any references whose state may have changed.
             heapAccess.updateMemoryStatus(epoch);
 
-            // Update the general status of the code cache, including eviction status and any new allocations.
+            // Update the general status of the code cache, including eviction status and any new
+            // allocations.  This also includes updating existing remote object references that
+            // point into any code cache that is managed.  This latter requirement creates a
+            // circularity, since some remote object references depend on the status of objects
+            // (TeleTargetMethod)s in the dynamic heap, which will not have been refreshed yet.
+            // This is resolved by having any such update to a reference first force an explicit
+            // object refresh on any TaleTargetMethod whose state matters.  That refresh, in turn,
+            // depends on the reference to that TeleTargetMethod having been updated.  That creates
+            // the requirement that references in the dynamic heap be updated before any references
+            // that might be in the code cache, i.e. why this update follows the heap update.
             codeCacheAccess.updateMemoryStatus(epoch);
 
             // Update the general status of any native, dynamically loaded libraries in the address space
@@ -865,13 +947,16 @@ public abstract class TeleVM implements MaxVM {
             // Update registry of loaded classes, so we can understand object types
             classAccess.updateCache(epoch);
 
-            // Update every local surrogate for a VM object
+            // Update every local surrogate for a VM object.
+            // All these updates depend on remote object references, all of which must have been
+            // refreshed earlier.
             objectAccess.updateCache(epoch);
 
             // Detailed update of the contents of every code cache region, as well as information about native code.
             machineCodeAccess.updateCache(epoch);
 
             // Check the status of breakpoints, for example if any are set in recently evicted compilations.
+            // This requires that the status of any managed code cache has already been updated.
             breakpointManager.updateCache(epoch);
 
             // At this point in the refresh cycle, we should be current with every VM-allocated memory region.
@@ -912,8 +997,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final TeleObject representation() {
-        // No distinguished object in VM runtime represents the VM.
-        return null;
+        return teleMaxineVM;
     }
 
     public final String getVersion() {
@@ -946,6 +1030,32 @@ public abstract class TeleVM implements MaxVM {
 
     public final MaxInspectionMode inspectionMode() {
         return mode;
+    }
+
+    public final List<TeleVMScheme> schemes() {
+        if (schemes.isEmpty()) {
+            TeleHeapScheme heapScheme = teleVMConfiguration.heapScheme();
+            if (heapScheme != null) {
+                schemes.add(heapScheme);
+            }
+            TeleLayoutScheme layoutScheme = teleVMConfiguration.layoutScheme();
+            if (layoutScheme != null) {
+                schemes.add(layoutScheme);
+            }
+            TeleMonitorScheme monitorScheme = teleVMConfiguration.monitorScheme();
+            if (monitorScheme != null) {
+                schemes.add(monitorScheme);
+            }
+            TeleReferenceScheme referenceScheme = teleVMConfiguration.referenceScheme();
+            if (referenceScheme != null) {
+                schemes.add(referenceScheme);
+            }
+            TeleRunScheme runScheme = teleVMConfiguration.runScheme();
+            if (runScheme != null) {
+                schemes.add(runScheme);
+            }
+        }
+        return schemes;
     }
 
     public final VmClassAccess classes() {
@@ -1009,6 +1119,15 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
+     * Register an action that will take place once, all of the initialization for a remote inspection session
+     * are substantially complete; some services have needs for setup that can only happen very
+     * late, most notably anything that requires setting a breakpoint.
+     */
+    public final void addInitializationListener(InitializationListener initializationListener) {
+        initializationListeners.add(initializationListener);
+    }
+
+    /**
      * Returns the most recently notified VM state.  Note that this
      * isn't updated until the very end of a refresh cycle after VM
      * halt, so it should be considered out of date until the refresh
@@ -1032,31 +1151,55 @@ public abstract class TeleVM implements MaxVM {
         vmStateListeners.remove(listener);
     }
 
-    public final void addGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException {
-        switch (phase) {
-            case ANALYZING:
-                gcAnalyzingListeners.add(listener, teleProcess);
-                break;
-            case RECLAIMING:
-                gcReclaimingListeners.add(listener, teleProcess);
-                break;
-            case ALLOCATING:
-                gcAllocatingListeners.add(listener, teleProcess);
-                break;
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Registering this listener will cause one or more breakpoints to be created, if they don't exist,
+     * so this must be called after all the other inspection services are in place.
+     */
+    public final void addGCPhaseListener(HeapPhase phase, MaxGCPhaseListener listener) throws MaxVMBusyException {
+        if (phase == null) {
+            gcAnalyzingListeners.add(listener, teleProcess);
+            gcReclaimingListeners.add(listener, teleProcess);
+            gcMutatingListeners.add(listener, teleProcess);
+        } else {
+            switch (phase) {
+                case ANALYZING:
+                    gcAnalyzingListeners.add(listener, teleProcess);
+                    break;
+                case RECLAIMING:
+                    gcReclaimingListeners.add(listener, teleProcess);
+                    break;
+                case MUTATING:
+                    gcMutatingListeners.add(listener, teleProcess);
+                    break;
+            }
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Registering this listener will cause one or more breakpoints to be created, if they don't exist,
+     * so this must be called after all the other inspection services are in place.
+     */
     public final void removeGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException {
-        switch (phase) {
-            case ANALYZING:
-                gcAnalyzingListeners.remove(listener);
-                break;
-            case RECLAIMING:
-                gcReclaimingListeners.remove(listener);
-                break;
-            case ALLOCATING:
-                gcAllocatingListeners.remove(listener);
-                break;
+        if (phase == null) {
+            gcAnalyzingListeners.remove(listener);
+            gcReclaimingListeners.remove(listener);
+            gcMutatingListeners.remove(listener);
+        } else {
+            switch (phase) {
+                case ANALYZING:
+                    gcAnalyzingListeners.remove(listener);
+                    break;
+                case RECLAIMING:
+                    gcReclaimingListeners.remove(listener);
+                    break;
+                case MUTATING:
+                    gcMutatingListeners.remove(listener);
+                    break;
+            }
         }
     }
 
@@ -1259,7 +1402,7 @@ public abstract class TeleVM implements MaxVM {
             threadsDied,
             breakpointEvents,
             watchpointEvent,
-            heapAccess.isInGC(), codeCacheAccess.isInEviction(), teleVMState);
+            heapAccess.phase(), codeCacheAccess.isInEviction(), teleVMState);
         for (final MaxVMStateListener listener : vmStateListeners) {
             listener.stateChanged(teleVMState);
         }
@@ -1348,9 +1491,9 @@ public abstract class TeleVM implements MaxVM {
         // Work only with temporary references that are unsafe across GC
         // Do no testing to determine if the reference points to a valid String object in live memory.
         try {
-            final RemoteTeleReference stringRef = referenceManager().makeTemporaryRemoteReference(origin);
+            final RemoteReference stringRef = referenceManager().makeTemporaryRemoteReference(origin);
             final Address charArrayAddress = stringRef.readWord(fields().String_value.fieldActor().offset()).asAddress();
-            final RemoteTeleReference charArrayRef = referenceManager().makeTemporaryRemoteReference(charArrayAddress);
+            final RemoteReference charArrayRef = referenceManager().makeTemporaryRemoteReference(charArrayAddress);
             int offset = stringRef.readInt(fieldAccess.String_offset.fieldActor().offset());
             final int charArrayCount = stringRef.readInt(fieldAccess.String_count.fieldActor().offset());
             final char[] chars = new char[charArrayCount];
@@ -1401,20 +1544,6 @@ public abstract class TeleVM implements MaxVM {
         } catch (Exception exception) {
             throw new IOException(exception);
         }
-        try {
-            addGCPhaseListener(new MaxGCPhaseListener() {
-                // The purpose of this listener, which doesn't do anything explicitly,
-                // is to force a VM stop at the end of each GC cycle, even if there are
-                // no other listeners.  This presents an opportunity for the Reference/Object
-                // code to update heap-related information that may have been changed as
-                // a result of the GC.
-                public void gcPhaseChange(HeapPhase phase) {
-                    Trace.line(TRACE_VALUE, tracePrefix() + "GC complete");
-                }
-            }, HeapPhase.ALLOCATING);
-        } catch (MaxVMBusyException maxVMBusyException) {
-            TeleError.unexpected("Unable to set initial GC completed listener");
-        }
     }
 
     public final Value interpretMethod(ClassMethodActor classMethodActor, Value... arguments) throws InvocationTargetException {
@@ -1464,6 +1593,16 @@ public abstract class TeleVM implements MaxVM {
 
     public final void executeCommandsFromFile(String fileName) {
         FileCommands.executeCommandsFromFile(this, fileName);
+    }
+
+    /**
+     * Gets the configuration descriptor instance on the VM; the local clone can be used
+     * for most things, but for references to other VM objects we require the remote object.
+     *
+     * @return the VM object that holds configuration information.
+     */
+    public final TeleVMConfiguration teleVMConfiguration() {
+        return teleVMConfiguration;
     }
 
     //

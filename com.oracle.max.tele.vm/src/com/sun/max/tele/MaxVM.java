@@ -84,6 +84,11 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     MaxInspectionMode inspectionMode();
 
     /**
+     * @return object instances that implement the VM's {@linkplain VMScheme schemes}.
+     */
+    List<TeleVMScheme> schemes();
+
+    /**
      * @return access to the VM's class registry and related information.
      */
     MaxClasses classes();
@@ -197,17 +202,22 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void removeVMStateListener(MaxVMStateListener listener);
 
     /**
-     * Adds a listener for GC phase changes in the VM.
+     * Adds a listener for GC phase changes in the VM, either limited to the start of a specific
+     * phase or for every phase transition if the phase argument is {@code null}.
      *
+     * @param phase a specific phase for which phase change notification is requested, null for every phase
      * @param listener a listener for GC phase changes
+     *
      * @throws MaxVMBusyException
      */
-    void addGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException;
+    void addGCPhaseListener(HeapPhase phase, MaxGCPhaseListener listener) throws MaxVMBusyException;
 
     /**
-     * Removes a listener for GC phase changes in the VM.
+     * Removes a listener for GC phase changes in the VM, either limited to the start of a specific
+     * phase or for every phase transition if the phase argument is {@code null}.
      *
      * @param listener a listener for GC phase changes
+     * @param phase a specific phase for which phase change notification was requested, null for every phase
      * @throws MaxVMBusyException
      */
     void removeGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException;
@@ -302,7 +312,8 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void setVMTraceThreshold(long newThreshold);
 
     /**
-     * Creates a remote object reference that can be used for access to a VM object.
+     * Creates a remote object reference that can be used for access to a VM object;
+     * returns {@link Reference#zero()} if there is no valid object at the location.
      *
      * @param origin current location (origin) of a heap object's memory in the VM,
      * subject to relocation by GC.

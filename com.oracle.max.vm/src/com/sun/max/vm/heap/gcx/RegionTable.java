@@ -229,7 +229,7 @@ public final class RegionTable {
         }
     }
 
-    void walk(RegionRange regionRange, HeapSpaceRangeVisitor visitor) {
+    void walk(RegionRange regionRange, CellRangeVisitor visitor) {
         final Address start = regionAddress(regionRange.firstRegion()).asPointer();
         final Address end = start.plus(Pointer.fromInt(regionRange.numRegions()).shiftedLeft(log2RegionSizeInBytes));
         visitor.visitCells(start, end);

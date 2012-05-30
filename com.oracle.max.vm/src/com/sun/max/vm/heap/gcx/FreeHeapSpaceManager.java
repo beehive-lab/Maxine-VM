@@ -164,6 +164,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     /**
      * The currently committed heap space.
      */
+    @INSPECTED
     public final ContiguousHeapSpace committedHeapSpace;
 
     private boolean useTLABBin;
@@ -674,6 +675,9 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
         if (deadSpace.greaterThan(minReclaimableSpace)) {
             recordFreeSpace(endOfLastVisitedObject, deadSpace);
+        } else if (MaxineVM.isDebug()) {
+            // Helping the inspector.
+            DarkMatterDebugHelper.setDarkMatter(endOfLastVisitedObject, deadSpace);
         }
         endOfLastVisitedObject = liveObject.plus(Layout.size(Layout.cellToOrigin(liveObject)));
         return endOfLastVisitedObject;
@@ -688,6 +692,9 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(endOfLeftObject, numDeadBytes);
+        } else if (MaxineVM.isDebug()) {
+            // Helping the inspector.
+            DarkMatterDebugHelper.setDarkMatter(endOfLeftObject, numDeadBytes);
         }
         return rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
     }
@@ -835,6 +842,11 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         return useTLABBin ? binAllocateTLAB(size, Address.zero()).asPointer() : smallObjectAllocator.allocateTLAB(size);
     }
 
+    public void retireTLAB(Pointer start, Size size) {
+        // Ignore.
+        HeapSchemeAdaptor.fillWithDeadObject(start, start.plus(size));
+    }
+
     /**
      * Try to grow free space backing storage by delta bytes.
      * The method rounds the delta up to the alignment constraint of the free space backing
@@ -886,8 +898,13 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     }
 
     @Override
-    public void visit(HeapSpaceRangeVisitor visitor) {
+    public void visit(CellRangeVisitor visitor) {
         visitor.visitCells(committedHeapSpace.start(), committedHeapSpace.committedEnd());
+    }
+
+    @Override
+    public SpaceBounds bounds() {
+        return committedHeapSpace.bounds();
     }
 
 }

@@ -214,26 +214,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
         popupMenu.add(selectAllAction);
         popupMenu.add(clearAction);
 
-        final InspectorFrame frame = createFrame(true);
-
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
-        editMenu.add(copyAction);
-        editMenu.add(cutAction);
-        editMenu.add(pasteAction);
-        editMenu.add(selectAllAction);
-        editMenu.add(clearAction);
-        editMenu.add(insertFromFileAction);
-        editMenu.add(writeToFileAction);
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(inspectSelectedAddressMemoryAction);
-        memoryMenu.add(inspectSelectedAddressRegionAction);
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(inspectSelectedAddressObjectAction);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        createFrame(true);
 
         Trace.end(1,  tracePrefix() + " initializing");
     }
@@ -248,6 +229,31 @@ public final class NotepadView extends AbstractView<NotepadView> {
         setContentPane(new InspectorScrollPane(inspection(), textArea));
         setDisplayStyle(textArea);
         updateHighlighting();
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu editMenu = makeMenu(MenuKind.EDIT_MENU);
+        editMenu.add(copyAction);
+        editMenu.add(cutAction);
+        editMenu.add(pasteAction);
+        editMenu.add(selectAllAction);
+        editMenu.add(clearAction);
+        editMenu.add(insertFromFileAction);
+        editMenu.add(writeToFileAction);
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(inspectSelectedAddressMemoryAction);
+        memoryMenu.add(inspectSelectedAddressRegionAction);
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+
+        final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
+        objectMenu.add(inspectSelectedAddressObjectAction);
+        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
     }
 
     @Override

@@ -41,8 +41,8 @@ import com.sun.max.unsafe.*;
  * specialized implementations of {@link Reference}s to be created that embody knowledge of specific heap implementations in the VM.
  * <p>
  * If no {@link RemoteObjectReferenceManager} is specified, the default is an instance of {@link FixedObjectRemoteReferenceManager},
- * whose implementation assumes that the allocation never moves and that it is unmanaged:  objects, once
- * created, are never moved or collected.
+ * whose implementation assumes that it is managing a single allocated region, that the allocation never
+ * moves and that it is unmanaged:  objects, once created, are never moved or collected.
  *
  * @see RemoteObjectReferenceManager
  */
@@ -52,7 +52,7 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
     private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY_REGION_LIST = Collections.emptyList();
 
     private final String entityDescription;
-    private final TeleRuntimeMemoryRegion teleRuntimeMemoryRegion;
+    private final TeleMemoryRegion teleMemoryRegion;
     private final MaxEntityMemoryRegion<MaxHeapRegion> memoryRegion;
     private final RemoteObjectReferenceManager objectReferenceManager;
 
@@ -61,10 +61,10 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
      * a VM object describing the memory region.  The region is assumed to be at a fixed location, and
      * it is assumed to be unmanaged: objects, once created are never moved or collected.
      */
-    public VmHeapRegion(TeleVM vm, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
+    public VmHeapRegion(TeleVM vm, TeleMemoryRegion teleMemoryRegion) {
         super(vm);
-        this.teleRuntimeMemoryRegion = teleRuntimeMemoryRegion;
-        this.memoryRegion = new DelegatedHeapRegionMemoryRegion(vm, teleRuntimeMemoryRegion);
+        this.teleMemoryRegion = teleMemoryRegion;
+        this.memoryRegion = new DelegatedHeapRegionMemoryRegion(vm, teleMemoryRegion);
         this.objectReferenceManager = new FixedObjectRemoteReferenceManager(vm, this);
         this.entityDescription = "The allocation area " + memoryRegion.regionName() + " owned by the VM heap";
         Trace.line(TRACE_VALUE, tracePrefix() + "heap region created for " + memoryRegion.regionName() + " with " + objectReferenceManager.getClass().getSimpleName());
@@ -77,9 +77,23 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
      */
     public VmHeapRegion(TeleVM vm, String name, Address start, long nBytes) {
         super(vm);
-        this.teleRuntimeMemoryRegion = null;
+        this.teleMemoryRegion = null;
         this.memoryRegion = new FixedHeapRegionMemoryRegion(vm, name, start, nBytes);
         this.objectReferenceManager = new FixedObjectRemoteReferenceManager(vm, this);
+        this.entityDescription = "The allocation area " + memoryRegion.regionName() + " owned by the VM heap";
+        Trace.line(TRACE_VALUE, tracePrefix() + "heap region created for " + memoryRegion.regionName() + " with " + objectReferenceManager.getClass().getSimpleName());
+    }
+
+    /**
+     * Creates a description of a heap allocation region in the VM, with information drawn from
+     * a VM object describing the memory region.  The region is assumed to be at a fixed location, and
+     * it is assumed to be unmanaged: objects, once created are never moved or collected.
+     */
+    public VmHeapRegion(TeleVM vm, TeleMemoryRegion teleMemoryRegion, RemoteObjectReferenceManager objectReferenceManager) {
+        super(vm);
+        this.teleMemoryRegion = teleMemoryRegion;
+        this.memoryRegion = new DelegatedHeapRegionMemoryRegion(vm, teleMemoryRegion);
+        this.objectReferenceManager = objectReferenceManager;
         this.entityDescription = "The allocation area " + memoryRegion.regionName() + " owned by the VM heap";
         Trace.line(TRACE_VALUE, tracePrefix() + "heap region created for " + memoryRegion.regionName() + " with " + objectReferenceManager.getClass().getSimpleName());
     }
@@ -101,7 +115,7 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
     }
 
     public TeleObject representation() {
-        return teleRuntimeMemoryRegion;
+        return teleMemoryRegion;
     }
 
     public RemoteObjectReferenceManager objectReferenceManager() {
@@ -125,11 +139,19 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
         }
         printStream.println(indentation + "    " + sb2.toString());
         // Line 3
-        objectReferenceManager.printSessionStats(printStream, indent + 4, verbose);
+        // TODO (mlvdv)  change this, since the manager can manage multiple regions.
+ //       objectReferenceManager.printSessionStats(printStream, indent + 4, verbose);
     }
 
+    @Override
+    public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        final String indentation = Strings.times(' ', indent);
+        printStream.println(indentation + "Object session stats for: " + entityName());
+    }
+
+
     public void updateStatus(long epoch) {
-        teleRuntimeMemoryRegion.updateCache(epoch);
+        teleMemoryRegion.updateCache(epoch);
     }
 
     /**
@@ -142,9 +164,9 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
      */
     private final class DelegatedHeapRegionMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxHeapRegion> {
 
-        protected DelegatedHeapRegionMemoryRegion(MaxVM vm, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
-            super(vm, teleRuntimeMemoryRegion);
-            assert teleRuntimeMemoryRegion != null;
+        protected DelegatedHeapRegionMemoryRegion(MaxVM vm, TeleMemoryRegion teleMemoryRegion) {
+            super(vm, teleMemoryRegion);
+            assert teleMemoryRegion != null;
         }
 
         public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {

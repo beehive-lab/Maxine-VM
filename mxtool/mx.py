@@ -1032,6 +1032,10 @@ def build(args, parser=None):
     Compile all the Java source code using the appropriate compilers
     and linkers for the various source code types."""
 
+
+    run([java().javac, '-version'])
+
+      
     suppliedParser = parser is not None
     if not suppliedParser:
         parser = ArgumentParser(prog='mx build')

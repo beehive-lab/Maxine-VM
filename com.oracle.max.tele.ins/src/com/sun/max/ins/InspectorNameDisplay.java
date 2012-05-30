@@ -531,9 +531,6 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (immortalHeapRegion != null && memoryRegion.sameAs(immortalHeapRegion.memoryRegion())) {
             return "immortal heap \"" + regionName + "\"";
         }
-        if (memoryRegion.sameAs(vm().heap().rootsMemoryRegion())) {
-            return "Inspector roots region \"" + regionName + "\"";
-        }
 
         // Is it a compiled code region?
         if (memoryRegion.sameAs(vm().codeCache().bootCodeRegion().memoryRegion())) {
@@ -732,7 +729,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final String suffix = " in "
             + (memoryRegion == null ? "unknown region" : memoryRegion.regionName());
         String prefix = "";
-        final ObjectMemoryStatus memoryStatus = teleObject.memoryStatus();
+        final ObjectStatus memoryStatus = teleObject.status();
         if (!memoryStatus.isLive()) {
             prefix = memoryStatus.label() + " ";
         }

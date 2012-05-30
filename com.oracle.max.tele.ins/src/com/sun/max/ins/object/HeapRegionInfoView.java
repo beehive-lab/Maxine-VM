@@ -31,6 +31,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.tele.*;
+import com.sun.max.tele.heap.region.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
@@ -135,9 +136,7 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
     HeapRegionInfoView(Inspection inspection, TeleObject teleObject) {
         super(inspection, teleObject);
         alternateDisplay = true;
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -164,12 +163,15 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
             }
         });
         getContentPane().add(tabbedPane);
+
+        // Opportunity for view-specific Object menu
+        makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override
     protected void refreshState(boolean force) {
         super.refreshState(force);
-        if (teleObject().memoryStatus().isNotDeadYet()) {
+        if (teleObject().status().isNotDead()) {
             // Only refresh the visible pane
             final Prober pane = (Prober) tabbedPane.getSelectedComponent();
             pane.refresh(force);

@@ -33,13 +33,11 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
@@ -54,21 +52,13 @@ import com.sun.max.vm.tele.*;
  * <p>
  * Interesting heap state includes the list of memory regions allocated.
  * <p>
- * ASSUMPTION:  heap regions, once allocated, do not move (have the same start location).
- * <p>
- * This class also provides access to a special root table in the VM, active
- * only when being inspected.  The root table allows inspection references
- * to track object locations when they are relocated by GC.
- * <p>
  * This class needs to be specialized by a helper class that
- * implements the interface {@link TeleHeapScheme}, typically
+ * implements the interface {@link RemoteHeapScheme}, typically
  * a class that contains knowledge of the heap implementation
  * configured into the VM.
  *
  * @see InspectableHeapInfo
- * @see TeleRoots
  * @see HeapScheme
- * @see TeleHeapScheme
  */
 public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmAllocationHolder<MaxHeap> {
 
@@ -82,13 +72,11 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
     private static final int TRACE_VALUE = 1;
 
-    private static final HeapPhase [] heapPhases = HeapPhase.values();
-
     private final TimedTrace updateTracer;
 
     private long lastUpdateEpoch = -1L;
 
-    private HeapPhase lastUpdateHeapPhase = HeapPhase.ALLOCATING;
+    private HeapPhase lastUpdateHeapPhase = HeapPhase.MUTATING;
 
     protected static VmHeapAccess vmHeap;
 
@@ -113,16 +101,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         return heap;
     }
 
-    /**
-     * Return the current heap phase of the inspected VM.
-     *
-     * @param vm the inspected VM
-     * @return the current heap phase
-     */
-    public HeapPhase heapPhase(TeleVM vm) {
-        return heapPhases[vm.fields().InspectableHeapInfo_heapPhaseOrdinal.readInt(vm)];
-    }
-
+    @Deprecated
     public HeapPhase lastUpdateHeapPhase() {
         return lastUpdateHeapPhase;
     }
@@ -138,24 +117,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
      */
     public static VmHeapAccess make(TeleVM vm, VmAddressSpace addressSpace) {
         if (vmHeap ==  null) {
-            final String heapSchemeName = vm.heapScheme().name();
-            TeleHeapScheme teleHeapScheme = null;
-            try {
-                // Reflect a constructor of a TeleHeapScheme implementation based on the name of the HeapScheme for the inspected VM.
-                // The current convention is: the name of the implementation of a TeleHeapScheme is the heap scheme name prefixed with "Tele" and located in the
-                // same package as the VmHeapAccess..
-                String thisClassName = VmHeapAccess.class.getName();
-                String thisPackageName = thisClassName.substring(0, thisClassName.lastIndexOf("."));
-                Class<?> teleHeapSchemeClass = Class.forName(thisPackageName + ".Tele" + heapSchemeName);
-                Constructor c = teleHeapSchemeClass.getDeclaredConstructor(new Class[]  {TeleVM.class});
-                teleHeapScheme = (TeleHeapScheme) c.newInstance(new Object[] {vm});
-            } catch (Exception e) {
-                teleHeapScheme = new TeleUnknownHeapScheme(vm);
-                TeleWarning.message("Unable to construct implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
-                e.printStackTrace();
-            }
-            vmHeap = new VmHeapAccess(vm, addressSpace, teleHeapScheme);
-            Trace.line(1, "[TeleHeap] Scheme=" + heapSchemeName + " using TeleHeapScheme=" + teleHeapScheme.getClass().getSimpleName());
+            vmHeap = new VmHeapAccess(vm, addressSpace);
         }
         return vmHeap;
     }
@@ -179,7 +141,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
     /**
      * Surrogate for the object in VM memory that describes the memory region holding the boot heap.
      */
-    private TeleRuntimeMemoryRegion teleBootHeapMemoryRegion = null;
+    private TeleMemoryRegion teleBootHeapMemoryRegion = null;
 
     /**
      * Description of the boot region holding objects in the VM.
@@ -189,7 +151,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
     /**
      * Surrogate for the object in VM memory that describes the memory region holding the immortal heap.
      */
-    private TeleRuntimeMemoryRegion teleImmortalHeapRegion = null;
+    private TeleMemoryRegion teleImmortalHeapRegion = null;
 
     /**
      * Description of the immortal region holding objects in the Vm.
@@ -205,24 +167,13 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
     /**
      * Unmodifiable list of all currently known heap regions.
      */
-    private volatile List<MaxHeapRegion> allHeapRegions;
+    private volatile List<VmHeapRegion> allHeapRegions;
 
     private Pointer teleRuntimeMemoryRegionRegistrationPointer = Pointer.zero();
 
-    private TeleRuntimeMemoryRegion teleRootsRegion = null;
-    private TeleRootsTable teleRootsTable = null;
-
-    private final TeleHeapScheme teleHeapScheme;
+    private RemoteHeapScheme remoteHeapScheme = null;
 
     private List<MaxCodeLocation> inspectableMethods = null;
-
-    /**
-     * Keep track of memory regions allocated from the OS that are <em>owned</em> by the heap.
-     */
-    private List<MaxEntityMemoryRegion<? extends MaxEntity> > allocations = new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >();
-
-    private long gcStartedCount = -1;
-    private long gcCompletedCount = -1;
 
     private int lastRegionCount = 0;
 
@@ -234,26 +185,19 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             msg.append("#regions=(").append(size);
             msg.append(", new=").append(size - lastRegionCount).append(")");
             lastRegionCount = size;
-            if (isInGC()) {
-                msg.append(", IN GC(");
-                msg.append("#starts=").append(gcStartedCount);
-                msg.append(", #complete=").append(gcCompletedCount).append(")");
-            } else if (gcCompletedCount >= 0) {
-                msg.append(", #GCs=").append(gcCompletedCount);
-            }
             return msg.toString();
         }
     };
 
-    private VmHeapAccess(TeleVM vm, VmAddressSpace addressSpace, TeleHeapScheme teleHeapScheme) {
+    private VmHeapAccess(TeleVM vm, VmAddressSpace addressSpace) {
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
-        this.teleHeapScheme = teleHeapScheme;
+
         this.entityDescription = "Heap allocation and management for the " + vm().entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
-        final List<MaxHeapRegion> heapRegions = new ArrayList<MaxHeapRegion>();
+        final List<VmHeapRegion> heapRegions = new ArrayList<VmHeapRegion>();
 
         // Leverage specific knowledge of the whereabouts of the boot heap region to create
         // a preliminary ("fake") representation of the heap, needed for uniform treatment of objects
@@ -268,67 +212,29 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         addressSpace.add(bootHeapRegion.memoryRegion());
         heapRegions.add(bootHeapRegion);
 
-        // There might already be dynamically allocated regions in a dumped image or when attaching to a running VM
-        for (MaxMemoryRegion dynamicHeapRegion : getDynamicHeapRegionsUnsafe()) {
-            final VmHeapRegion fakeDynamicHeapRegion =
-                new VmHeapRegion(vm, dynamicHeapRegion.regionName(), dynamicHeapRegion.start(), dynamicHeapRegion.nBytes());
-            heapRegions.add(fakeDynamicHeapRegion);
-            addressSpace.add(fakeDynamicHeapRegion.memoryRegion());
+        final String heapSchemeName = vm.heapScheme().name();
+        final String thisClassName = VmHeapAccess.class.getName();
+        final String thisPackageName = thisClassName.substring(0, thisClassName.lastIndexOf("."));
+        try {
+            final Class<?> remoteHeapSchemeClass = Class.forName(thisPackageName + ".Remote" + heapSchemeName);
+            Constructor constructor = remoteHeapSchemeClass.getDeclaredConstructor(new Class[]  {TeleVM.class});
+            this.remoteHeapScheme = (RemoteHeapScheme) constructor.newInstance(new Object[] {vm});
+        } catch (Exception e) {
+            remoteHeapScheme = new UnknownRemoteHeapScheme(vm);
+            TeleWarning.message("Unable to construct implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
+            e.printStackTrace();
         }
+        // In a normal session the dynamic heap will not have been allocated yet, but there might be when attaching
+        // to a dumped image or running VM
+        for (VmHeapRegion heapRegion : remoteHeapScheme.heapRegions()) {
+            heapRegions.add(heapRegion);
+        }
+
         this.allHeapRegions = Collections.unmodifiableList(heapRegions);
 
         tracer.end(statsPrinter);
     }
 
-    /**
-     * Creates a representation of the contents of the inspectable list of dynamic
-     * heap regions in the VM, using low level mechanisms and performing no checking that
-     * the location or objects are valid.
-     * <p>
-     * The intention is to provide a way to read this data without needing any of the
-     * usual type-based mechanisms for reading data, all of which rely on a populated
-     * {@link VmClassAccess}.  This is needed when attaching to a process or reading
-     * a dump, where a description of the dynamic heap must be determined before the
-     * {@link VmClassAccess} can be built.
-     * <p>
-     * <strong>Unsafe:</strong> this method depends on knowledge of the implementation of
-     * arrays.
-     *
-     * @return a list of objects, each of which describes a dynamically allocated heap region
-     * in the VM, empty array if no such heap regions
-     */
-    private List<MaxMemoryRegion> getDynamicHeapRegionsUnsafe() {
-        // Work only with temporary references that are unsafe across GC
-        // Do no testing to determine if the reference points to a valid object in live memory of the correct types.
-
-        final List<MaxMemoryRegion> regions = new ArrayList<MaxMemoryRegion>();
-
-        // Location of the inspectable field that might point to an array of dynamically allocated heap regions
-        final Pointer dynamicHeapRegionsArrayFieldPointer = vm().bootImageStart().plus(vm().bootImage().header.dynamicHeapRegionsArrayFieldOffset);
-
-        // Value of the field, possibly a pointer to an array of dynamically allocated heap regions
-        final Word fieldValue = memory().readWord(dynamicHeapRegionsArrayFieldPointer.asAddress());
-
-        if (fieldValue.isNotZero()) {
-            // Assert that this points to an array of references, read as words
-            final RemoteTeleReference wordArrayRef = referenceManager().makeTemporaryRemoteReference(fieldValue.asAddress());
-            final int wordArrayLength = objects().unsafeReadArrayLength(wordArrayRef);
-
-            // Read the references as words to avoid using too much machinery
-            for (int index = 0; index < wordArrayLength; index++) {
-                // Read an entry from the array
-                final Word regionReferenceWord = Layout.getWord(wordArrayRef, index);
-                // Assert that this points to an object of type {@link MemoryRegion} in the VM
-                RemoteTeleReference memoryRegionRef = referenceManager().makeTemporaryRemoteReference(regionReferenceWord.asAddress());
-                // Read the field MemoryRegion.start
-                final Address regionStartAddress = memoryRegionRef.readWord(fields().MemoryRegion_start.fieldActor().offset()).asAddress();
-                // Read the field MemoryRegion.size
-                final int regionSize = memoryRegionRef.readInt(fields().MemoryRegion_size.fieldActor().offset());
-                regions.add(new TeleFixedMemoryRegion(vm(), "Fake", regionStartAddress, regionSize));
-            }
-        }
-        return regions;
-    }
 
     /**
      * Lazy initialization; try to keep data reading out of constructor.
@@ -345,13 +251,14 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
         // Get a local surrogate for the instance of {@link MemoryRegion} in the VM that describes the boot heap
         final Reference bootHeapRegionReference = fields().Heap_bootHeapRegion.readReference(vm());
-        this.teleBootHeapMemoryRegion = (TeleRuntimeMemoryRegion) objects().makeTeleObject(bootHeapRegionReference);
+        this.teleBootHeapMemoryRegion = (TeleMemoryRegion) objects().makeTeleObject(bootHeapRegionReference);
 
         // Replace the faked representation of the boot heap with one represented uniformly via reference to the VM object
         vm().addressSpace().remove(this.bootHeapRegion.memoryRegion());
         this.bootHeapRegion = new VmHeapRegion(vm(), teleBootHeapMemoryRegion);
-        allocations.add(this.bootHeapRegion.memoryRegion());
         vm().addressSpace().add(this.bootHeapRegion.memoryRegion());
+
+        remoteHeapScheme.initialize(epoch);
         isInitialized = true;
 
         updateMemoryStatus(epoch);
@@ -383,115 +290,42 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             Trace.line(TRACE_VALUE, tracePrefix() + "redundant udpate epoch=" + epoch);
         } else {
             updateTracer.begin();
-            lastUpdateHeapPhase = heapPhase(vm());
-            // Check GC status and update references if a GC has completed since last time we checked
-            final long oldGcStartedCount = gcStartedCount;
-            gcStartedCount = fields().InspectableHeapInfo_gcStartedCounter.readLong(vm());
-            gcCompletedCount = fields().InspectableHeapInfo_gcCompletedCounter.readLong(vm());
-            // Invariant:  oldGcStartedCount <= gcCompletedCount <= gcStartedCount
-            if (gcStartedCount != gcCompletedCount) {
-                // A GC is in progress, local cache is out of date by definition but can't update yet
-                // Sanity check; collection count increases monotonically
-                assert  gcCompletedCount < gcStartedCount;
-            } else if (oldGcStartedCount != gcStartedCount) {
-                // GC is not in progress, but a GC has completed since the last time
-                // we checked, so cached reference data is out of date
-                // Sanity check; collection count increases monotonically
-                assert oldGcStartedCount < gcStartedCount;
-                vm().referenceManager().updateCache(epoch);
-            } else {
-                // oldGcStartedCount == gcStartedCount == gcCompletedCount
-                // GC is not in progress, and no new GCs have happened, so cached reference data is up to date
-            }
+
 
             // Suspend checking for heap containment of object origin addresses.
             updatingHeapMemoryRegions = true;
 
             // Starting from scratch, locate all known heap regions; most of the time it won't change.
-            final List<MaxHeapRegion> discoveredHeapRegions = new ArrayList<MaxHeapRegion>(allHeapRegions.size());
+            final List<VmHeapRegion> discoveredHeapRegions = new ArrayList<VmHeapRegion>(allHeapRegions.size());
 
-            // We already know about the boot heap
+            // We already know about the boot heap, and there's no reason to refresh its status
             discoveredHeapRegions.add(bootHeapRegion);
 
             // Check for the {@link ImmortalHeap} description
             if (teleImmortalHeapRegion == null) {
                 final Reference immortalHeapReference = fields().ImmortalHeap_immortalHeap.readReference(vm());
-                if (immortalHeapReference != null && !immortalHeapReference.isZero()) {
-                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) objects().makeTeleObject(immortalHeapReference);
-                    if (maybeAllocatedRegion != null) {
-                        // Force an early update of the cached data about the region
-                        maybeAllocatedRegion.updateCache(epoch);
-                        if (maybeAllocatedRegion.isAllocated()) {
-                            teleImmortalHeapRegion = maybeAllocatedRegion;
-                            immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion);
-                            vm().addressSpace().add(immortalHeapRegion.memoryRegion());
-                        }
-                    }
+                if (!immortalHeapReference.isZero()) {
+                    teleImmortalHeapRegion = (TeleMemoryRegion) objects().makeTeleObject(immortalHeapReference);
+                    immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion);
+                    vm().addressSpace().add(immortalHeapRegion.memoryRegion());
                 }
+            } else {
+                // Force an update, in case it has just been allocated.
+                teleImmortalHeapRegion.updateCache(epoch);
             }
             if (immortalHeapRegion != null) {
                 discoveredHeapRegions.add(immortalHeapRegion);
             }
 
-            // Check for dynamically allocated heap regions
-            final Reference runtimeHeapRegionsArrayReference = fields().InspectableHeapInfo_dynamicHeapMemoryRegions.readReference(vm());
-            if (!runtimeHeapRegionsArrayReference.isZero()) {
-                final TeleArrayObject teleArrayObject = (TeleArrayObject) objects().makeTeleObject(runtimeHeapRegionsArrayReference);
-                final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
-                for (int i = 0; i < heapRegionReferences.length; i++) {
-                    final TeleRuntimeMemoryRegion dynamicHeapRegion = (TeleRuntimeMemoryRegion) objects().makeTeleObject(heapRegionReferences[i]);
-                    if (dynamicHeapRegion != null) {
-                        final VmHeapRegion knownVmHeapRegion = addressToVmHeapRegion.get(dynamicHeapRegion.getRegionStart().toLong());
-                        if (knownVmHeapRegion != null) {
-                            // We've seen this VM heap region object before and already have an entity that models the state
-                            discoveredHeapRegions.add(knownVmHeapRegion);
-                            // Force an early update of the cached data about the region
-                            knownVmHeapRegion.updateStatus(epoch);
-                        } else {
-                            final VmHeapRegion newVmHeapRegion = new VmHeapRegion(vm(), dynamicHeapRegion);
-                            discoveredHeapRegions.add(newVmHeapRegion);
-                            addressToVmHeapRegion.put(dynamicHeapRegion.getRegionStart().toLong(), newVmHeapRegion);
-                            vm().addressSpace().add(newVmHeapRegion.memoryRegion());
-                        }
-                    } else {
-                        // This can happen when inspecting VM startup
-                    }
-                }
-            }
+            // Update the specific scheme last, in case the immortal heap region has been allocated since the
+            // last time we looked; it will be needed by the scheme update.
+            remoteHeapScheme.updateMemoryStatus(epoch);
+            discoveredHeapRegions.addAll(remoteHeapScheme.heapRegions());
 
             allHeapRegions = Collections.unmodifiableList(discoveredHeapRegions);
 
-            teleHeapScheme.updateCache(epoch);
-
-            // Check for the {@link TeleRootTableMemoryRegion} description, even though it
-            // is not properly considered a heap region.
-            // TODO (mlvdv) this will get encapsulated in support specifically for the semispace collector
-            if (teleRootsRegion == null) {
-                final Reference teleRootsRegionReference = fields().InspectableHeapInfo_rootTableMemoryRegion.readReference(vm());
-                if (teleRootsRegionReference != null && !teleRootsRegionReference.isZero()) {
-                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) objects().makeTeleObject(teleRootsRegionReference);
-                    if (maybeAllocatedRegion != null) {
-                        // Force an early update of the cached data about the region
-                        maybeAllocatedRegion.updateCache(epoch);
-                        if (maybeAllocatedRegion.isAllocated()) {
-                            teleRootsRegion = maybeAllocatedRegion;
-                            teleRootsTable = new TeleRootsTable(vm(), teleRootsRegion);
-                            vm().addressSpace().add(teleRootsTable.memoryRegion());
-                        }
-                    }
-                }
-            }
-
             // Resume checking for heap containment of object origin addresses.
             updatingHeapMemoryRegions = false;
-
-            allocations.clear();
-            for (MaxHeapRegion heapRegion : allHeapRegions) {
-                allocations.add(heapRegion.memoryRegion());
-            }
-            if (teleRootsRegion != null) {
-                allocations.add(teleRootsTable.memoryRegion());
-            }
 
             lastUpdateEpoch = epoch;
             updateTracer.end(statsPrinter);
@@ -540,12 +374,13 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
     }
 
     public List<MaxHeapRegion> heapRegions() {
-        return allHeapRegions;
+        final List<MaxHeapRegion> heapRegions = new ArrayList<MaxHeapRegion>(allHeapRegions.size());
+        heapRegions.addAll(allHeapRegions);
+        return heapRegions;
     }
 
-    public MaxHeapRegion findHeapRegion(Address address) {
-        final List<MaxHeapRegion> heapRegions = allHeapRegions;
-        for (MaxHeapRegion heapRegion : heapRegions) {
+    public VmHeapRegion findHeapRegion(Address address) {
+        for (VmHeapRegion heapRegion : allHeapRegions) {
             if (heapRegion.memoryRegion().contains(address)) {
                 return heapRegion;
             }
@@ -558,12 +393,8 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         return heapRegion != null && !heapRegion.equals(bootHeapRegion) && !heapRegion.equals(immortalHeapRegion);
     }
 
-    public MaxEntityMemoryRegion<MaxRootsTable> rootsMemoryRegion() {
-        return teleRootsTable != null ? teleRootsTable.memoryRegion() : null;
-    }
-
     public boolean providesHeapRegionInfo() {
-        return teleHeapScheme instanceof TeleRegionBasedHeapScheme;
+        return remoteHeapScheme instanceof RemoteRegionBasedHeapScheme;
     }
 
     /**
@@ -572,30 +403,19 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
      * with respect to memory management, non-null.
      */
     public MaxMemoryManagementInfo getMemoryManagementInfo(Address address) {
-        return teleHeapScheme.getMemoryManagementInfo(address);
+        return remoteHeapScheme.getMemoryManagementInfo(address);
     }
 
     public MaxMarkBitsInfo markBitInfo() {
-        return teleHeapScheme.markBitInfo();
+        return remoteHeapScheme.markBitInfo();
     }
 
     public List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations() {
+        final List<MaxEntityMemoryRegion<? extends MaxEntity> > allocations = new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >();
+        for (MaxHeapRegion heapRegion : allHeapRegions) {
+            allocations.add(heapRegion.memoryRegion());
+        }
         return allocations;
-    }
-
-    /**
-     * Finds an object in the VM that has been located at a particular place in memory, but which
-     * may have been relocated.
-     * <p>
-     * Must be called in thread holding the VM lock
-     *
-     * @param origin an object origin in the VM
-     * @return the object originally at the origin, possibly relocated
-     */
-    @Deprecated
-    public TeleObject getForwardedObject(Pointer origin) {
-        final Reference forwardedObjectReference = referenceManager().makeReference(teleHeapScheme.getForwardedOrigin(origin));
-        return objects().makeTeleObject(forwardedObjectReference);
     }
 
     /**
@@ -617,57 +437,61 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         return bootHeapRegionName;
     }
 
-
-    // TODO (mlvdv) does this continue to make sense, or should there be a finer granularity about GC?
     /**
-     * @return is the VM in GC
+     * Gets the current GC phase for the heap.
      */
-    public boolean isInGC() {
-        return gcCompletedCount != gcStartedCount;
+    public HeapPhase phase() {
+        return remoteHeapScheme.phase();
     }
+
     public List<MaxCodeLocation> inspectableMethods() {
         if (inspectableMethods == null) {
             final List<MaxCodeLocation> locations = new ArrayList<MaxCodeLocation>();
             locations.add(vm().codeLocations().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
             locations.add(vm().codeLocations().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
             // There may be implementation-specific methods of interest
-            locations.addAll(teleHeapScheme.inspectableMethods());
+            locations.addAll(remoteHeapScheme.inspectableMethods());
             inspectableMethods = Collections.unmodifiableList(locations);
         }
         return inspectableMethods;
     }
 
-    public int gcForwardingPointerOffset() {
-        return teleHeapScheme.gcForwardingPointerOffset();
-    }
-
-    public  boolean isObjectForwarded(Pointer origin) {
-        return teleHeapScheme.isObjectForwarded(origin);
-    }
-
-    public Address getForwardedOrigin(Pointer origin) {
-        return teleHeapScheme.getForwardedOrigin(origin);
-    }
-
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
+
+        // Statistics about the whole heap
         long totalHeapSize = 0;
         for (MaxHeapRegion region : allHeapRegions) {
             totalHeapSize += region.memoryRegion().nBytes();
         }
-        printStream.println(indentation + "Total size: " + formatter.format(totalHeapSize) + " bytes");
-        if (isInGC()) {
-            printStream.print(indentation + "IN GC(#starts=" + formatter.format(gcStartedCount) + ", #complete=" + formatter.format(gcCompletedCount) + ")\n");
-        } else if (gcCompletedCount >= 0) {
-            printStream.print(indentation + "GC count: " + formatter.format(gcCompletedCount) + "\n");
+        printStream.println(indentation + "Total allocation: " + formatter.format(totalHeapSize) + " bytes");
+
+        // Print statistics from each manager, where managers may manage more than one of the regions.
+        final Set<RemoteObjectReferenceManager> managers = new HashSet<RemoteObjectReferenceManager>();
+        for (VmHeapRegion region : allHeapRegions) {
+            managers.add(region.objectReferenceManager());
         }
-        printStream.print(indentation + "By region: \n");
-        for (MaxHeapRegion region : allHeapRegions) {
-            region.printSessionStats(printStream, indent + 5, verbose);
+        for (RemoteObjectReferenceManager manager : managers) {
+            manager.printObjectSessionStats(printStream, indent, verbose);
         }
-        printStream.println(indentation + "Registered semispace roots: " + formatter.format(vm().referenceManager().registeredRootCount()));
     }
+
+
+    static {
+        if (Trace.hasLevel(1)) {
+            Runtime.getRuntime().addShutdownHook(new Thread("Reference counts") {
+
+                @Override
+                public void run() {
+//                    System.out.println("References(by type):");
+//                    System.out.println("    " + "local = " + vmReferenceManager.localTeleReferenceManager.referenceCount());
+                }
+            });
+        }
+
+    }
+
 
 
 }

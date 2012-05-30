@@ -40,7 +40,7 @@ import com.sun.max.vm.reference.*;
  * <br>
  * Usage defaults to 100% if nothing can be determined about the allocation mark.
  */
-public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
+public class TeleLinearAllocationMemoryRegion extends TeleMemoryRegion {
 
     private static final int TRACE_VALUE = 1;
 
@@ -99,6 +99,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
         try {
             final Reference markReference = fields().LinearAllocationMemoryRegion_mark.readReference(reference());
             markCache = markReference.readWord(AtomicWord.valueOffset()).asPointer();
+            // This essentially marks the usage cache as dirty.
             usageCache = MaxMemoryRegion.Util.NULL_MEMORY_USAGE;
         } catch (DataIOError dataIOError) {
             // No update; data read failed for some reason other than VM availability

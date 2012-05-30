@@ -73,14 +73,7 @@ public final class BootImageView extends AbstractView<BootImageView>  implements
         Trace.begin(1, tracePrefix() + "initializing");
         viewPreferences = BootImageViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
-        final InspectorFrame frame = createFrame(true);
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        createFrame(true);
         Trace.end(1, tracePrefix() + "initializing");
     }
 
@@ -98,6 +91,15 @@ public final class BootImageView extends AbstractView<BootImageView>  implements
     protected void createViewContent() {
         table = new BootImageTable(inspection(), viewPreferences);
         setContentPane(new InspectorScrollPane(inspection(), table));
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
     }
 
     @Override

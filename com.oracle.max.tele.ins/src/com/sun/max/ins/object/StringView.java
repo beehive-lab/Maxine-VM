@@ -28,6 +28,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * An object view specialized for displaying a low-level heap object in the VM that implements a {@link String}.
@@ -47,9 +48,7 @@ public final class StringView extends ObjectView<StringView> {
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -67,8 +66,8 @@ public final class StringView extends ObjectView<StringView> {
             public String fetchString() {
                 return teleString.getString();
             }
-            public boolean isLive() {
-                return teleObject().isLive();
+            public ObjectStatus status() {
+                return teleObject().status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -84,12 +83,15 @@ public final class StringView extends ObjectView<StringView> {
             }
         });
         getContentPane().add(tabbedPane);
+
+        // Opportunity for view-specific Object menu
+        makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override
     protected void refreshState(boolean force) {
         super.refreshState(force);
-        if (teleObject().memoryStatus().isNotDeadYet()) {
+        if (teleObject().status().isNotDead()) {
             // Only refresh the visible pane
             final Prober pane = (Prober) tabbedPane.getSelectedComponent();
             pane.refresh(force);

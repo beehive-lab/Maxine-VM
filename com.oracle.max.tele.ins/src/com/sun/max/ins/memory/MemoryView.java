@@ -38,6 +38,7 @@ import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -122,8 +123,14 @@ public final class MemoryView extends AbstractView<MemoryView> {
         }
 
         public MemoryView makeView(TeleObject teleObject) {
-            final MemoryView memoryView = new MemoryView(inspection(), teleObject.objectMemoryRegion(), null, teleObject.origin(), teleObject.memoryStatus().isNotDeadYet() ? ViewMode.OBJECT : ViewMode.WORD, null);
-            notifyAddingView(memoryView);
+            MemoryView memoryView = null;
+            final TeleFixedMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
+            if (objectMemoryRegion == null) {
+                gui().warningMessage("Unable to determine memory occupied by object");
+            }  else {
+                memoryView = new MemoryView(inspection(), objectMemoryRegion, null, teleObject.origin(), teleObject.status().isDead() ? ViewMode.WORD : ViewMode.OBJECT, null);
+                notifyAddingView(memoryView);
+            }
             return memoryView;
         }
 
@@ -334,7 +341,6 @@ public final class MemoryView extends AbstractView<MemoryView> {
     private MemoryView(Inspection inspection, final MaxMemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryViewPreferences instanceViewPreferences) {
         super(inspection, VIEW_KIND, null);
         assert viewMode != null;
-
         Trace.begin(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());
 
         nBytesInWord = inspection.vm().platform().nBytesInWord();
@@ -455,21 +461,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
         cloneButton.setToolTipText("Create a cloned copy of this memory view");
         cloneButton.setIcon(style.generalCopyIcon());
 
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
-        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-        defaultMenu.addSeparator();
-        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.MEMORY, this));
-        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.MEMORY));
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        setOriginToSelectionAction.refresh(true);
-        memoryMenu.add(setOriginToSelectionAction);
-        memoryMenu.add(scrollToFocusAction);
-        memoryMenu.add(inspectBytesAction);
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        createFrame(true);
         gui().setLocationRelativeToMouse(this, inspection.preference().geometry().newFrameDiagonalOffset());
         originalFrameGeometry = getGeometry();
         table.scrollToOrigin();
@@ -507,6 +499,23 @@ public final class MemoryView extends AbstractView<MemoryView> {
         setContentPane(panel);
         // Force everything into consistency with the current view mode.
         updateViewMode();
+
+        // Populate menu bar
+        final InspectorMenu defaultMenu = makeMenu(MenuKind.DEFAULT_MENU);
+        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        defaultMenu.addSeparator();
+        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.MEMORY, this));
+        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.MEMORY));
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        setOriginToSelectionAction.refresh(true);
+        memoryMenu.add(setOriginToSelectionAction);
+        memoryMenu.add(scrollToFocusAction);
+        memoryMenu.add(inspectBytesAction);
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         // When user grows window height beyond table size, expand region being viewed.
         final JViewport viewport = scrollPane.getViewport();

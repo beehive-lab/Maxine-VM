@@ -76,9 +76,8 @@ public abstract class Sweeper {
     public abstract Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject);
 
     /**
-     * Invoked to record a known chunk of free space.
-     * Used both by precise and imprecise sweeper, typically to record the unmarked space
-     * at both end of the traced space.
+     * Invoked to record a known chunk of free space larger than the minimum reclaimable space.
+     * Used both by precise and imprecise sweeper to record the unmarked space at both end of the traced space.
      * @param freeChunk
      * @param size
      */

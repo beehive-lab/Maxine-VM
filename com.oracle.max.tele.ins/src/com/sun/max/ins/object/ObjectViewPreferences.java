@@ -57,7 +57,7 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
 
     // Names of other preferences in view
     private static final String OBJECT_SHOW_HEADER_PREFERENCE = "showHeader";
-    private static final String OBJECT_HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE = "hideNullArrayElements";
+    private static final String OBJECT_ELIDE_NULL_ARRAY_ELEMENTS_PREFERENCE = "hideNullArrayElements";
 
     /**
      * @return a GUI panel suitable for setting global preferences for this kind of view.
@@ -67,7 +67,7 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
     }
 
     private boolean showHeader = true;
-    private boolean hideNullArrayElements = false;
+    private boolean elideNullArrayElements = false;
 
     /**
      * Creates global preferences for object views.
@@ -78,12 +78,12 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
         final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(OBJECT_VIEW_PREFERENCE) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 saveSettingsEvent.save(OBJECT_SHOW_HEADER_PREFERENCE, showHeader);
-                saveSettingsEvent.save(OBJECT_HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE,  hideNullArrayElements);
+                saveSettingsEvent.save(OBJECT_ELIDE_NULL_ARRAY_ELEMENTS_PREFERENCE,  elideNullArrayElements);
             }
         };
         settings.addSaveSettingsListener(saveSettingsListener);
         showHeader = settings.get(saveSettingsListener, OBJECT_SHOW_HEADER_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
-        hideNullArrayElements = settings.get(saveSettingsListener, OBJECT_HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
+        elideNullArrayElements = settings.get(saveSettingsListener, OBJECT_ELIDE_NULL_ARRAY_ELEMENTS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
     }
 
     /**
@@ -93,7 +93,7 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
     public ObjectViewPreferences(ObjectViewPreferences globalPreferences) {
         super(globalPreferences);
         showHeader = globalPreferences.showHeader;
-        hideNullArrayElements  =  globalPreferences.hideNullArrayElements;
+        elideNullArrayElements  =  globalPreferences.elideNullArrayElements;
     }
 
     /**
@@ -114,16 +114,16 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
     /**
      * @return whether null elements in arrays should be displayed.
      */
-    public boolean hideNullArrayElements() {
-        return hideNullArrayElements;
+    public boolean elideNullArrayElements() {
+        return elideNullArrayElements;
     }
 
     /**
      * Sets preference to new value; subclass and override to receive notification.
      * @param showHeader should object headers be displayed
      */
-    protected void setHideNullArrayElements(boolean hideNullArrayElements) {
-        this.hideNullArrayElements = hideNullArrayElements;
+    protected void setElideNullArrayElements(boolean elideNullArrayElements) {
+        this.elideNullArrayElements = elideNullArrayElements;
     }
 
     @Override
@@ -137,12 +137,12 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
                 setShowHeader(checkBox.isSelected());
             }
         });
-        final InspectorCheckBox hideNullArrayElementsCheckBox =
-            new InspectorCheckBox(inspection(), "Hide null array elements", "Hide null elements in array displays?", hideNullArrayElements);
-        hideNullArrayElementsCheckBox.addItemListener(new ItemListener() {
+        final InspectorCheckBox elideNullArrayElementsCheckBox =
+            new InspectorCheckBox(inspection(), "Elide null array elements", "Elide null elements in array displays?", elideNullArrayElements);
+        elideNullArrayElementsCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final InspectorCheckBox checkBox = (InspectorCheckBox) e.getSource();
-                setHideNullArrayElements(checkBox.isSelected());
+                setElideNullArrayElements(checkBox.isSelected());
             }
         });
 
@@ -151,7 +151,7 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
         final JPanel optionsPanel = new InspectorPanel(inspection());
         optionsPanel.add(new TextLabel(inspection(), "View Options:  "));
         optionsPanel.add(showHeaderCheckBox);
-        optionsPanel.add(hideNullArrayElementsCheckBox);
+        optionsPanel.add(elideNullArrayElementsCheckBox);
         panel2.add(optionsPanel, BorderLayout.WEST);
 
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
