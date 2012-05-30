@@ -41,11 +41,11 @@ def _configs():
     class Configs:
         def __init__(self):
             self.configs = dict()
-            
+
         def eat(self, line):
             (k, v) = line.split('#')
             self.configs[k] = v.rstrip()
-    c = Configs()        
+    c = Configs()
     mx.run([mx.java().java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', mx.classpath(resolve=False), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
     return c.configs
 
@@ -57,7 +57,7 @@ def configs(arg):
     mx.log('    Configuration    Expansion')
     for k, v in sorted(c.iteritems()):
         mx.log('    @{0:<16} {1}'.format(k, v.replace(',', ' ')))
-    
+
 def copycheck(args):
     """run copyright check on the Maxine sources (defined as being under hg control)"""
     mx.build(['--projects', 'com.oracle.max.base'])
@@ -69,33 +69,33 @@ def eclipse(args):
     Run Eclipse with the Maxine VM, by-passing the native Eclipse launcher.
     The ECLIPSE_HOME environment variable must be set and point to
     the parent of the 'plugins' directory in an Eclipse installation."""
-    
+
     # see http://wiki.eclipse.org/FAQ_How_do_I_run_Eclipse%3F
     # and http://wiki.eclipse.org/Starting_Eclipse_Commandline_With_Equinox_Launcher
-    
+
     eclipse = os.environ.get('ECLIPSE_HOME')
     if eclipse is None:
         mx.abort('The ECLIPSE_HOME environment variable must be set')
     plugins = join(eclipse, 'plugins')
     if not exists(plugins):
         mx.abort('The ECLIPSE_HOME variable must denote the parent of the "plugins" directory in an Eclipse installation')
-        
+
     launchers = fnmatch.filter(os.listdir(plugins), 'org.eclipse.equinox.launcher_*.jar')
-    if len(launchers) == 0: 
+    if len(launchers) == 0:
         mx.abort('Could not find org.eclipse.equinox.launcher_*.jar in ' + plugins)
 
     launcher = join(plugins, sorted(launchers)[0])
     return mx.run([join(_vmdir, 'maxvm'), '-Xms1g', '-Xmx3g', '-XX:+ShowConfiguration'] + args + ['-jar', launcher])
-    
+
 def gate(args):
     """run the tests used to validate a push to the stable Maxine repository
 
     If this commands exits with a 0 exit code, then the source code is in
     a state that would be accepted for integration into the main repository."""
-    
+
     if mx.checkstyle([]):
         mx.abort('Checkstyle warnings were found')
-    
+
     if exists(join(_maxine_home, '.hg')):
         # Copyright check depends on the sources being in a Mercurial repo
         mx.log('Running copycheck')
@@ -127,7 +127,7 @@ def gate(args):
     mx.log('Running MaxineTester...')
 
     test(['-image-configs=java', '-fail-fast'] + args)
-    
+
 def graal(args):
     """alias for "mx olc -c=Graal ..." """
     olc(['-c=Graal'] + args)
@@ -144,11 +144,11 @@ def graalexample(args):
     def run_example(verbose, project, mainClass, match):
         cp = mx.classpath(project)
         sharedArgs = [mainClass]
-        
+
         hsPrintArg = '-XX:+PrintCompilation' if verbose else '-XX:-PrintCompilation'
         c1xPrintArg = '-C1X:+PrintCompilation' if verbose else '-C1X:-PrintCompilation'
         graalPrintArg = '-G:+PrintCompilation' if verbose else '-G:-PrintCompilation'
-        
+
         res = []
         mx.log("=== HotSpot Server ===")
         res.append(mx.run(['java', '-server', '-XX:CompileOnly=Main', '-cp', cp, hsPrintArg] + sharedArgs))
@@ -158,7 +158,7 @@ def graalexample(args):
         res.append(mx.run([join(_vmdir, 'maxvm'), '-XX:CompileCommand=' + match + ':Graal', '-cp', cp, graalPrintArg, '-G:-Extend', '-G:-Inline'] + sharedArgs))
         mx.log("=== Maxine Graal with extensions ===")
         res.append(mx.run([join(_vmdir, 'maxvm'), '-XX:CompileCommand=' + match + ':Graal', '-cp', cp, graalPrintArg, '-G:+Extend', '-G:-Inline'] + sharedArgs))
-        
+
         if len([x for x in res if x != 0]) != 0:
             return 1
         return 0
@@ -190,6 +190,10 @@ def helloworld(args):
     """run the 'hello world' program on the Maxine VM"""
     mx.run([join(_vmdir, 'maxvm'), '-cp', mx.classpath('com.oracle.max.tests')] + args + ['test.output.HelloWorld'])
 
+def inspecthelloworld(args):
+    """run the 'hello world' program in the Inspector"""
+    inspect(['-cp', mx.classpath('com.oracle.max.tests')] + args + ['test.output.HelloWorld'])
+
 def image(args):
     """build a boot image
 
@@ -219,7 +223,7 @@ def image(args):
 
     An option starting with '@' denotes one of the preconfigured set of
     options described by running "mx options".
-    
+
     An option starting with '--' is interpreted as a VM option of the same name
     after the leading '-' is removed. For example, to use the '-verbose:class'
     VM option to trace class loading while image building, specify '--verbose:class'.
@@ -334,12 +338,12 @@ def inspect(args):
     insCP += [saveClassDir]
     insCP = pathsep.join(insCP)
     insArgs += ['-cp=' + insCP]
-    
-    mx.expand_project_in_args(vmArgs)  
+
+    mx.expand_project_in_args(vmArgs)
 
     cmd = mx.java().format_cmd(sysProps + ['-cp', mx.classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
                               insArgs + ['-a=' + ' '.join(vmArgs)])
-    
+
     if mx.get_os() == 'darwin' and not remote:
         # The -E option propagates the environment variables into the sudo process
         mx.run(['sudo', '-E', '-p', 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd)
@@ -360,17 +364,28 @@ def inspectoragent(args):
         mx.run(['sudo', '-E', '-p', 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd)
     else:
         mx.run(cmd)
-    
-def jnigen(args):
-    """(re)generate Java source for native function interfaces (i.e. JNI, JMM, JVMTI)
 
-    Run JniFunctionsGenerator.java to update the methods in [Jni|JMM|JVMTI]Functions.java
+def jnigen(args):
+    """(re)generate Java source for native function interfaces (i.e. JNI, JMM, VM)
+
+    Run JniFunctionsGenerator.java to update the methods in [Jni|JMM|VM]Functions.java
     by adding a prologue and epilogue to the @VM_ENTRY_POINT annotated methods in
-    [Jni|JMM|JVMTI]FunctionsSource.java.
+    [Jni|JMM|VM]FunctionsSource.java.
 
     The exit code is non-zero if a Java source file was modified."""
 
     return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm'), 'com.sun.max.vm.jni.JniFunctionsGenerator'])
+
+def jvmtigen(args):
+    """(re)generate Java source for JVMTI native function interfaces
+
+    Run JniFunctionsGenerator.java to update the methods in JVMTIFunctions.java
+    by adding a prologue and epilogue to the @VM_ENTRY_POINT annotated methods in
+    JVMTIFunctionsSource.java.
+
+    The exit code is non-zero if a Java source file was modified."""
+
+    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.ext.jvmti'), 'com.sun.max.vm.ext.jvmti.JVMTIFunctionsGenerator'])
 
 def jttgen(args):
     """(re)generate harness and run scheme for the JavaTester tests
@@ -425,10 +440,10 @@ def makejdk(args):
     if not isdir(jdk):
         mx.log(jdk + " does not exist or is not a directory")
         mx.abort(1)
-        
+
     mx.log('Replicating ' + jdk + ' in ' + maxjdk + '...')
     shutil.copytree(jdk, maxjdk, symlinks=True)
-    
+
     jreExists = exists(join(maxjdk, 'jre'))
 
     for f in os.listdir(_vmdir):
@@ -437,7 +452,7 @@ def makejdk(args):
             shutil.copy(fpath, join(maxjdk, 'bin'))
             if jreExists:
                 shutil.copy(fpath, join(maxjdk, 'jre', 'bin'))
-                
+
     os.unlink(join(maxjdk, 'bin', 'java'))
     if jreExists:
         os.unlink(join(maxjdk, 'jre', 'bin', 'java'))
@@ -537,14 +552,14 @@ def test(args):
                     os.remove(join(root, name))
     else:
         os.mkdir(maxineTesterDir)
-    
+
     class Tee:
         def __init__(self, f):
             self.f = f
         def eat(self, line):
             mx.log(line.rstrip())
             self.f.write(line)
-    
+
     console = join(maxineTesterDir, 'console')
     with open(console, 'w', 0) as f:
         tee = Tee(f)
@@ -567,7 +582,7 @@ def verify(args):
     {0}"""
 
     mx.run_java(['-cp', mx.classpath(), 'test.com.sun.max.vm.verifier.CommandLineVerifier'] + args)
-            
+
 def view(args):
     """browse the boot image under the Inspector
 
@@ -576,7 +591,7 @@ def view(args):
     Use "mx view -help" to see what the Inspector options are."""
 
     mx.run_java(['-cp', mx.classpath(), 'com.sun.max.ins.MaxineInspector', '-vmdir=' + _vmdir, '-mode=image'] + args)
-            
+
 def vm(args):
     """launch the Maxine VM
 
@@ -587,16 +602,16 @@ def vm(args):
     before any other VM options specified on the command line.
 
     Use "mx vm -help" to see what other options this command accepts."""
-    
-    mx.expand_project_in_args(args)  
+
+    mx.expand_project_in_args(args)
     maxvmOptions = os.getenv('MAXVM_OPTIONS', '').split()
-    
+
     debug_port = mx.java().debug_port
     if debug_port is not None:
         maxvmOptions += ['-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=' + str(debug_port)]
-    
+
     mx.run([join(_vmdir, 'maxvm')] + maxvmOptions + args)
-            
+
 _patternHelp="""
     A pattern is a class name pattern followed by an optional method name
     pattern separated by a ':' further followed by an optional signature:
@@ -640,7 +655,7 @@ def _vm_image():
 
 def mx_init():
     mx.add_argument('--vmdir', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
-    
+
     commands = {
         'c1x': [c1x, '[options] patterns...'],
         'configs': [configs, ''],
@@ -651,10 +666,12 @@ def mx_init():
         'graalexample': [graalexample, '[-v] example names...'],
         'hcfdis': [hcfdis, '[options] files...'],
         'helloworld': [helloworld, '[VM options]'],
+        'inspecthelloworld': [inspecthelloworld, '[VM options]'],
         'image': [image, '[options] classes|packages...'],
         'inspect': [inspect, '[options] [class | -jar jarfile]  [args...]'],
         'inspectoragent': [inspectoragent, '[-impl target] [-port port]'],
         'jnigen': [jnigen, ''],
+        'jvmtigen': [jvmtigen, ''],
         'jttgen': [jttgen, ''],
         'loggen': [loggen, ''],
         'makejdk': [makejdk, '[<destination directory>]'],
@@ -670,7 +687,7 @@ def mx_init():
         'vm': [vm, '[options] [class | -jar jarfile]  [args...]']
     }
     mx.commands.update(commands)
-    
+
 def mx_post_parse_cmd_line(opts):
     global _vmdir
     if opts.vmdir is None:

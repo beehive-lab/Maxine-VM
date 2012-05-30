@@ -23,11 +23,9 @@
 package com.sun.max.ins.debug.vmlog;
 
 import com.sun.max.ins.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.heap.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.log.java.fix.*;
-import com.sun.max.vm.reference.*;
 
 
 /**
@@ -36,29 +34,17 @@ import com.sun.max.vm.reference.*;
  * So the {@code id} trivially maps to the array index of the associated record.
  */
 class VMLogArrayElementsTableModel extends VMLogElementsTableModel {
-    private TeleArrayObject teleLogArrayBuffer;
 
-    protected VMLogArrayElementsTableModel(Inspection inspection, VMLogView vmLogView) {
-        super(inspection, vmLogView);
-        Reference logBufferRef = vm.fields().VMLogArray_buffer.readReference(vmLogView.vmLogRef);
-        teleLogArrayBuffer = (TeleArrayObject) VmObjectAccess.make(vm).makeTeleObject(logBufferRef);
+    private final TeleVMLogArray teleVMLogArray;
+
+    protected VMLogArrayElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {
+        super(inspection, teleVMLog);
+        this.teleVMLogArray = (TeleVMLogArray) teleVMLog;
     }
 
     @Override
-    protected HostedLogRecord getRecordFromVM(int id) {
-        TeleVM vm = (TeleVM) vm();
-        int index = id % vmLogView.logBufferEntries;
-        Reference recordRef = teleLogArrayBuffer.readElementValue(index).asReference();
-        return new HostedLogRecord(
-                    id,
-                    vm.fields().VMLogArray$Record0_header.readInt(recordRef),
-                    vm.fields().VMLogArray$Record1_arg1.readWord(recordRef),
-                    vm.fields().VMLogArray$Record2_arg2.readWord(recordRef),
-                    vm.fields().VMLogArray$Record3_arg3.readWord(recordRef),
-                    vm.fields().VMLogArray$Record4_arg4.readWord(recordRef),
-                    vm.fields().VMLogArray$Record5_arg5.readWord(recordRef),
-                    vm.fields().VMLogArray$Record6_arg6.readWord(recordRef),
-                    vm.fields().VMLogArray$Record7_arg7.readWord(recordRef));
+    protected TeleHostedLogRecord getRecordFromVM(int id) {
+        return teleVMLogArray.getLogRecord(id);
     }
 }
 

@@ -34,7 +34,11 @@ import com.sun.max.vm.thread.*;
  * Common superclass for per-thread log buffers.
  *
  * Information on the state of the buffer is stored in a {@link VmThreadLocal},
- * {@link VMLogNativeThread#VMLOG_BUFFER_OFFSETS}. This comprises following:
+ * {@link VMLogNativeThread#vmLogBufferOffsetsTL}. The actual pair of
+ * thread local slots used for this buffer must be set by calling
+ * {@link #setBufferThreadLocals(VmThreadLocal, VmThreadLocal)}.
+ *
+ * The thread local state comprises following:
  *
  * <ul>
  * <li>the offset of the first valid record, {@link #firstOffset}</li>
@@ -55,10 +59,6 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class VMLogNativeThread extends VMLogNative {
 
-    public static final String VMLOG_BUFFER_NAME = "VMLOG_BUFFER";
-    public static final String VMLOG_BUFFER_OFFSETS_NAME = "VMLOG_BUFFER_OFFSETS";
-    public static final VmThreadLocal VMLOG_BUFFER = new VmThreadLocal(VMLOG_BUFFER_NAME, false, "VMLog buffer");
-    public static final VmThreadLocal VMLOG_BUFFER_OFFSETS = new VmThreadLocal(VMLOG_BUFFER_OFFSETS_NAME, false, "VMLog buffer first/next offsets");
 
     public static final int ID_OFFSET = Ints.SIZE;
     public static final int ARGS_OFFSET = 2 * Ints.SIZE;
@@ -75,11 +75,26 @@ public abstract class VMLogNativeThread extends VMLogNative {
     public static final int DISABLED = 0x1;
     public static final long DISABLED_MASK = 0x7FFFFFFFFFFFFFFEL;
 
+    @CONSTANT
+    protected VmThreadLocal vmLogBufferTL;
+    @CONSTANT
+    protected VmThreadLocal vmLogBufferOffsetsTL;
+
+    /**
+     * Sets the specific thread locals used to control this log.
+     * @param vmLogBufferTL
+     * @param vmLogBufferOffsetsTL
+     */
+    public void setBufferThreadLocals(VmThreadLocal vmLogBufferTL, VmThreadLocal vmLogBufferOffsetsTL) {
+        this.vmLogBufferTL = vmLogBufferTL;
+        this.vmLogBufferOffsetsTL = vmLogBufferOffsetsTL;
+    }
+
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRIMORDIAL) {
-            VMLOG_BUFFER.store3(logBuffer);
+            vmLogBufferTL.store3(logBuffer);
         }
     }
 
@@ -99,13 +114,13 @@ public abstract class VMLogNativeThread extends VMLogNative {
     @NEVER_INLINE
     private Pointer allocateBuffer() {
         Pointer buffer = Memory.allocate(Size.fromInt(logSize));
-        VMLOG_BUFFER.store3(buffer);
+        vmLogBufferTL.store3(buffer);
         return buffer;
     }
 
     @INLINE
     protected final Pointer getBuffer(Pointer tla) {
-        Pointer buffer = VMLOG_BUFFER.load(tla);
+        Pointer buffer = vmLogBufferTL.load(tla);
         if (buffer.isZero()) {
             buffer = allocateBuffer();
         }
@@ -122,14 +137,14 @@ public abstract class VMLogNativeThread extends VMLogNative {
     public boolean setThreadState(boolean value) {
         int bit = value ? 0 : DISABLED;
         Pointer tla = VmThread.currentTLA();
-        Address offsets = VMLOG_BUFFER_OFFSETS.load(tla);
-        VMLOG_BUFFER_OFFSETS.store3(Address.fromLong((offsets.toLong() & DISABLED_MASK) | bit));
+        Address offsets = vmLogBufferOffsetsTL.load(tla);
+        vmLogBufferOffsetsTL.store3(Address.fromLong((offsets.toLong() & DISABLED_MASK) | bit));
         return (offsets.toLong() & DISABLED) == 0;
     }
 
     @Override
     public boolean threadIsEnabled() {
-        return (VMLOG_BUFFER_OFFSETS.load(VmThread.currentTLA()).toLong() & DISABLED) == 0;
+        return (vmLogBufferOffsetsTL.load(VmThread.currentTLA()).toLong() & DISABLED) == 0;
     }
 
     // Convenience methods for accessing the data in VMLOG_BUFFER_OFFSETS

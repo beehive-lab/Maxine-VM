@@ -60,7 +60,7 @@ public class CommandLineVerifier extends MethodFinder {
         String[] patterns = options.getArguments();
 
         log.println("Initializing verifier system... ");
-        JavaPrototype.initialize();
+        JavaPrototype.initialize(false);
         log.println("Initialized verifier system");
 
         log.println("Finding specified methods...");

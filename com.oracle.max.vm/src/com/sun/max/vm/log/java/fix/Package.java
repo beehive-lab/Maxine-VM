@@ -30,7 +30,7 @@ import com.sun.max.vm.log.*;
 public class Package extends BootImagePackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return VMLog.Factory.is("java.fix.VMLogArrayVariable");
+        return VMLog.Factory.contains("VMLogArrayVariable");
     }
 
 }

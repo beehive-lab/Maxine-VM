@@ -40,6 +40,7 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.JVMTI.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -90,8 +91,18 @@ import com.sun.max.vm.thread.*;
 @HOSTED_ONLY
 @SuppressWarnings("null")
 public class JVMTIFunctionsSource {
+
     static {
-        NativeInterfaces.checkGenerateSourcesInSync("com.oracle.max.vm.ext.jvmti", JVMTIFunctionsSource.class, JVMTIFunctions.class, new JVMTIFunctionsGenerator.JVMTICustomizer());
+        JavaPrototype.registerGeneratedCodeCheckerCallback(new GeneratedCodeCheckerCallback());
+    }
+
+    @HOSTED_ONLY
+    private static class GeneratedCodeCheckerCallback implements JavaPrototype.GeneratedCodeCheckerCallback {
+
+        @Override
+        public void checkGeneratedCode() {
+            NativeInterfaces.checkGenerateSourcesInSync("com.oracle.max.vm.ext.jvmti", JVMTIFunctionsSource.class, JVMTIFunctions.class, new JVMTIFunctionsGenerator.JVMTICustomizer());
+        }
     }
 
     static StaticMethodActor[] checkAgainstJvmtiHeaderFile(StaticMethodActor[] jvmtiFunctionActors) {
@@ -1146,7 +1157,7 @@ public class JVMTIFunctionsSource {
         // PHASES: ONLOAD,LIVE
         // NULLCHECK: capabilities_ptr
         // Currently we don't have any phase-limited or ownership limitations
-        JVMTICapabilities.setAll(capabilities_ptr);
+        JVMTICapabilities.E.setAll(capabilities_ptr);
         return JVMTI_ERROR_NONE;
     }
 
@@ -1164,14 +1175,7 @@ public class JVMTIFunctionsSource {
     private static int RelinquishCapabilities(Pointer env, Pointer capabilities_ptr) {
         // PHASES: ONLOAD,LIVE
         // NULLCHECK: capabilities_ptr
-        Pointer envCaps = CAPABILITIES.getPtr(env);
-        for (int i = 0; i < JVMTICapabilities.values.length; i++) {
-            JVMTICapabilities cap = JVMTICapabilities.values[i];
-            if (cap.get(capabilities_ptr)) {
-               cap.set(envCaps, false);
-            }
-        }
-        return JVMTI_ERROR_NONE;
+        return JVMTICapabilities.relinquishCapabilities(env, capabilities_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -1261,4 +1265,5 @@ public class JVMTIFunctionsSource {
         // NULLCHECK: value_ptr
         return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
+
 }

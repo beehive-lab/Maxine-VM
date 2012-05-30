@@ -26,11 +26,15 @@ import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.log.*;
 
-
 public class Package extends BootImagePackage {
+
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return VMLog.Factory.is("nat.thread.fix.VMLogNativeThreadVariable");
+        return isPartOfMaxineVM();
+    }
+
+    private static boolean isPartOfMaxineVM() {
+        return VMLog.Factory.contains("VMLogNativeThreadVariable");
     }
 
 }

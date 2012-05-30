@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,6 +97,7 @@ public abstract class FrameState {
         this.maxLocals = maxLocals;
         C1XMetrics.FrameStatesCreated++;
         C1XMetrics.FrameStateValuesCreated += this.values.length;
+        assert bci < 0 || bci <= irScope.method.codeSize();
     }
 
     /**
@@ -635,7 +636,7 @@ public abstract class FrameState {
         IRScope callingScope = scope.caller;
         assert callingScope != null;
         FrameState callerState = scope.callerState;
-        MutableFrameState res = new MutableFrameState(callingScope, bci, callerState.maxLocals, callerState.maxStackSize() + stackIndex);
+        MutableFrameState res = new MutableFrameState(callingScope, callerState.bci, callerState.maxLocals, callerState.maxStackSize() + stackIndex);
         System.arraycopy(callerState.values, 0, res.values, 0, callerState.values.length);
         System.arraycopy(values, maxLocals, res.values, res.maxLocals + callerState.stackIndex, stackIndex);
         res.stackIndex = callerState.stackIndex + stackIndex;

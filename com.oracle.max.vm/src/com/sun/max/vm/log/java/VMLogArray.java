@@ -24,6 +24,7 @@ package com.sun.max.vm.log.java;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.log.*;
@@ -40,14 +41,19 @@ public abstract class VMLogArray extends VMLog {
     private int arg1Offset;
 
     @INSPECTED
-    public final Record[] buffer;
+    @CONSTANT
+    public Record[] buffer;
 
-    protected VMLogArray() {
-        buffer = new Record[logEntries];
-        try {
-            arg1Offset = FieldActor.fromJava(Record1.class.getDeclaredField("arg1")).offset();
-        } catch (NoSuchFieldException ex) {
-            // cannot happen
+    @Override
+    public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+            buffer = new Record[logEntries];
+            try {
+                arg1Offset = FieldActor.fromJava(Record1.class.getDeclaredField("arg1")).offset();
+            } catch (NoSuchFieldException ex) {
+                // cannot happen
+            }
         }
     }
 

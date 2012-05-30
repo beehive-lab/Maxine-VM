@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,6 +108,10 @@ public abstract class CiValue implements Serializable {
         return this instanceof CiConstant;
     }
 
+    public boolean isMonitor() {
+        return this instanceof CiMonitorValue;
+    }
+
     /**
      * Gets a string name for this value without indicating its {@linkplain #kind kind}.
      */
@@ -155,5 +159,4 @@ public abstract class CiValue implements Serializable {
             return operand.toString();
         }
     }
-
 }

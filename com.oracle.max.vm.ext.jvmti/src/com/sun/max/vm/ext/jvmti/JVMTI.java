@@ -30,7 +30,9 @@ import static com.sun.max.vm.ext.jvmti.JVMTIFieldWatch.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.unsafe.UnsafeCast.*;
 
+import java.lang.reflect.*;
 import java.security.*;
+import java.util.*;
 
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.jvmti.*;
@@ -55,24 +57,18 @@ import com.sun.max.vm.ti.*;
 /**
  * The heart of the Maxine JVMTI implementation.
  * Handles environments, event handling.
+ * Supports both standard (native) agents and the Java agents written to {@link JJVMTI}.
  */
 public class JVMTI {
     /**
-     * Holds state associated with this side (i.e. Java) of the implementation.
+     * Holds state associated with this side (i.e. Java) of the implementation that is independent
+     * of whether this is a native or a Java agent.
      */
-    static class Env {
-        /**
-         * The C struct used by the native agents. {@see JVMTIEnvNativeStruct}.
-         */
-        Pointer env = Pointer.zero();
+    static abstract class Env {
         /**
          * Object tagging.
          */
         JVMTITags tags = new JVMTITags();
-        /**
-         * additions to the boot classpath by this agent.
-         */
-        long[] bootClassPathAdd = new long[4];
         /**
          * The global event settings for this agent.
          */
@@ -85,6 +81,57 @@ public class JVMTI {
          *  JVMTI thread local storage.
          */
         JVMTIThreadLocalStorage tls = new JVMTIThreadLocalStorage();
+
+        boolean isFree() {
+            return false;
+        }
+
+    }
+
+    /**
+     * Subclass used for traditional native agents.
+     */
+    static class NativeEnv extends Env {
+        /**
+         * The C struct used by the native agents. {@see JVMTIEnvNativeStruct}.
+         */
+        Pointer cstruct = Pointer.zero();
+
+        /**
+         * additions to the boot classpath by this agent.
+         */
+        long[] bootClassPathAdd = new long[4];
+
+        @Override
+        boolean isFree() {
+            return cstruct.isZero();
+        }
+
+    }
+
+    /**
+     * Subclass used for agents that use {@link JJVMTI}.
+     * In order to access the callbacks in the generic event handling code
+     * we make this class implement {@link JJVMTI.EventCallbacks} and provide
+     * default, empty, implementations.
+     */
+    public static class JavaEnv extends Env implements JJVMTI.EventCallbacks {
+        private EnumSet<JVMTICapabilities.E> capabilities = EnumSet.noneOf(JVMTICapabilities.E.class);
+        public void agentStartup() { }
+        public void breakpoint(Thread thread, Method method, long location) { }
+        public void classLoad(Thread thread, Class klass) { }
+        public byte[] classFileLoadHook(ClassLoader loader, String name,
+                               ProtectionDomain protectionDomain, byte[] classData) {
+            return null;
+        }
+        public void garbageCollectionStart() { }
+        public void garbageCollectionFinish() { }
+        public void methodEntry(Thread thread, Method method) { }
+        public void methodExit(Thread thread, Method method) { }
+        public void threadStart(Thread thread) { }
+        public void threadEnd(Thread thread) { }
+        public void vmDeath() { }
+        public void vmInit() { }
     }
 
     static class JVMTIHandler extends NullVMTIHandler implements VMTIHandler {
@@ -215,9 +262,6 @@ public class JVMTI {
         VMTI.registerEventHandler(new JVMTIHandler());
     }
 
-    private static final StaticMethodActor[] jvmtiFunctionActors = JVMTIFunctionsSource.checkAgainstJvmtiHeaderFile(NativeInterfaces.getNativeInterfaceFunctionActors(JVMTIFunctions.class));
-    private static final CriticalMethod[] jvmtiFunctions = NativeInterfaces.toCriticalMethods(jvmtiFunctionActors);
-
     private static final String AGENT_ONLOAD = "Agent_OnLoad";
     private static final String AGENT_ONUNLOAD = "Agent_OnUnLoad";
 
@@ -227,10 +271,11 @@ public class JVMTI {
      * Maxine with more than {@link MAX_ENVS} agents, we will celebrate -;)
      */
     static final int MAX_ENVS = 8;
+    static final int MAX_NATIVE_ENVS = 6;
 
     /**
      * The record of registered agent environments, used to handle callbacks.
-     * A free slot is denoted by {@link Env#env} having a zero value.
+     * A free slot is denoted by {@link Env#cstruct} having a zero value.
      */
     static final Env[] jvmtiEnvs;
     /**
@@ -239,7 +284,7 @@ public class JVMTI {
      * N.B. after initialization this value should not be used to limit the search of the array as
      * agents may come and go.
      */
-    private static int jvmtiEnvsIndex;
+    private static int nativeEnvsIndex;
 
     /**
      * The number of active agent environments.
@@ -253,8 +298,8 @@ public class JVMTI {
 
     static {
         jvmtiEnvs = new Env[MAX_ENVS];
-        for (int i = 0; i < jvmtiEnvs.length; i++) {
-            Env jvmtiEnv = new Env();
+        for (int i = 0; i < MAX_NATIVE_ENVS; i++) {
+            NativeEnv jvmtiEnv = new NativeEnv();
             jvmtiEnvs[i] = jvmtiEnv;
             for (int j = 0; j < jvmtiEnv.bootClassPathAdd.length; j++) {
                 jvmtiEnv.bootClassPathAdd[j] = 0;
@@ -269,17 +314,46 @@ public class JVMTI {
      * @param agentHandle the jvmtienv C struct
      */
     public static void setJVMTIEnv(Word agentHandle) {
-        if (jvmtiEnvsIndex >= jvmtiEnvs.length) {
+        if (nativeEnvsIndex >= MAX_NATIVE_ENVS) {
             Log.println("too many JVMTI agents");
             MaxineVM.native_exit(-1);
         }
-        jvmtiEnvs[jvmtiEnvsIndex++].env = agentHandle.asPointer();
+        NativeEnv nativeEnv = (NativeEnv) jvmtiEnvs[nativeEnvsIndex++];
+        nativeEnv.cstruct = agentHandle.asPointer();
         activeEnvCount++;
     }
 
+    /**
+     * Called to register the environment for a Java JVMTI agent.
+     * @param env
+     */
+    public static synchronized void setJVMTIJavaEnv(Env env) {
+        for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
+            if (jvmtiEnvs[i] == null) {
+                jvmtiEnvs[i] = env;
+                activeEnvCount++;
+                return;
+            }
+        }
+        Log.println("too many JVMTI agents");
+        MaxineVM.native_exit(-1);
+    }
+
+    public static synchronized int disposeJVMTIJavaEnv(Env env) {
+        for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
+            if (jvmtiEnvs[i] == env) {
+                jvmtiEnvs[i] = null;
+                activeEnvCount--;
+                return JVMTI_ERROR_NONE;
+            }
+        }
+        return JVMTI_ERROR_INVALID_ENVIRONMENT;
+    }
+
     static Env getEnv(Pointer env) {
-        for (int i = 0; i < jvmtiEnvs.length; i++) {
-            if (jvmtiEnvs[i].env == env) {
+        for (int i = 0; i < MAX_NATIVE_ENVS; i++) {
+            NativeEnv nativeEnv = (NativeEnv) jvmtiEnvs[i];
+            if (nativeEnv.cstruct == env) {
                 return jvmtiEnvs[i];
             }
         }
@@ -287,10 +361,11 @@ public class JVMTI {
     }
 
     static synchronized int disposeEnv(Pointer env) {
-        for (int i = 0; i < jvmtiEnvs.length; i++) {
-            if (jvmtiEnvs[i].env == env) {
+        for (int i = 0; i < MAX_NATIVE_ENVS; i++) {
+            NativeEnv nativeEnv = (NativeEnv) jvmtiEnvs[i];
+            if (nativeEnv.cstruct == env) {
                 // TODO cleanup
-                jvmtiEnvs[i].env = Pointer.zero();
+                nativeEnv.cstruct = Pointer.zero();
                 activeEnvCount--;
                 return JVMTI_ERROR_NONE;
             }
@@ -304,7 +379,7 @@ public class JVMTI {
      * agents listed in VM startup command.
      */
     public static void initialize() {
-        NativeInterfaces.initFunctionTable(getJVMTIInterface(-1), jvmtiFunctions, jvmtiFunctionActors);
+        NativeInterfaces.initFunctionTable(getJVMTIInterface(-1), JVMTIFunctions.jvmtiFunctions, JVMTIFunctions.jvmtiFunctionActors);
         for (int i = 0; i < AgentVMOption.count(); i++) {
             AgentVMOption.Info info = AgentVMOption.getInfo(i);
             Word handle = Word.zero();
@@ -330,6 +405,13 @@ public class JVMTI {
             int rc = invokeAgentOnLoad(onLoad.asAddress(), info.optionStart);
             if (rc != 0) {
                 initializeFail("agentlib: ", info.libStart, " failed to initialize");
+            }
+        }
+        // temporary hack to invoke any Java agents built into the image
+        for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
+            JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
+            if (javaEnv != null) {
+                javaEnv.agentStartup();
             }
         }
         phase = JVMTI_PHASE_PRIMORDIAL;
@@ -366,8 +448,7 @@ public class JVMTI {
             return false;
         }
         for (int i = 0; i < jvmtiEnvs.length; i++) {
-            Pointer callback = getCallbackForEvent(jvmtiEnvs[i], eventId, VmThread.current());
-            if (!callback.isZero()) {
+            if (hasCallbackForEvent(jvmtiEnvs[i], eventId, VmThread.current())) {
                 return true;
             }
         }
@@ -438,23 +519,29 @@ public class JVMTI {
      * @param vmThread thread generating the event
      * @return the callback address or zero if none or not enabled
      */
-    static Pointer getCallbackForEvent(Env jvmtiEnv, int eventId, VmThread vmThread) {
-        Pointer env = jvmtiEnv.env;
-        if (env.isZero()) {
-            return env;
+    static Pointer getCallbackForEvent(NativeEnv jvmtiEnv, int eventId, VmThread vmThread) {
+        if (jvmtiEnv.isFree()) {
+            return Pointer.zero();
         }
         if (JVMTIEvent.isEventSet(jvmtiEnv, eventId, vmThread)) {
-            return getCallBack(CALLBACKS.getPtr(env), eventId);
+            return getCallBack(CALLBACKS.getPtr(jvmtiEnv.cstruct), eventId);
         }
         return Pointer.zero();
 
+    }
+
+    static boolean hasCallbackForEvent(Env jvmtiEnv, int eventId, VmThread vmThread) {
+        if (jvmtiEnv == null || jvmtiEnv.isFree()) {
+            return false;
+        }
+        return JVMTIEvent.isEventSet(jvmtiEnv, eventId, vmThread);
     }
 
     private static boolean ignoreEvent(int eventId) {
         if (MaxineVM.isHosted()) {
             return true;
         }
-        if (jvmtiEnvsIndex == 0) {
+        if (activeEnvCount == 0) {
             // no agents
             return true;
         }
@@ -501,62 +588,126 @@ public class JVMTI {
 
         // Check that event is enabled and dispatch it to all interested agents
         for (int i = 0; i < jvmtiEnvs.length; i++) {
-            Pointer callback = getCallbackForEvent(jvmtiEnvs[i], eventId, VmThread.current());
-            if (callback.isZero()) {
-                continue;
-            }
-            Pointer env = jvmtiEnvs[i].env;
-            switch (eventId) {
-                case VM_START:
-                case VM_DEATH:
-                    invokeStartFunctionNoArg(callback, env);
-                    break;
+            if (i < MAX_NATIVE_ENVS) {
+                NativeEnv nativeEnv = (NativeEnv) jvmtiEnvs[i];
+                Pointer callback = getCallbackForEvent(nativeEnv, eventId, VmThread.current());
+                if (callback.isZero()) {
+                    continue;
+                }
+                Pointer cstruct = nativeEnv.cstruct;
+                switch (eventId) {
+                    case VM_START:
+                    case VM_DEATH:
+                        invokeStartFunctionNoArg(callback, cstruct);
+                        break;
 
-                case VM_INIT:
-                case THREAD_START:
-                case THREAD_END:
-                    invokeStartFunction(callback, env, currentThreadHandle());
-                    break;
+                    case VM_INIT:
+                    case THREAD_START:
+                    case THREAD_END:
+                        invokeStartFunction(callback, cstruct, currentThreadHandle());
+                        break;
 
-                case GARBAGE_COLLECTION_START:
-                case GARBAGE_COLLECTION_FINISH:
-                    invokeGarbageCollectionCallback(callback, env);
-                    break;
+                    case GARBAGE_COLLECTION_START:
+                    case GARBAGE_COLLECTION_FINISH:
+                        invokeGarbageCollectionCallback(callback, cstruct);
+                        break;
 
-                case METHOD_ENTRY:
-                    invokeThreadObjectCallback(callback, env, currentThreadHandle(), MethodID.fromMethodActor(asClassMethodActor(arg1)));
-                    break;
+                    case METHOD_ENTRY:
+                        invokeThreadObjectCallback(callback, cstruct, currentThreadHandle(), MethodID.fromMethodActor(asClassMethodActor(arg1)));
+                        break;
 
-                case CLASS_LOAD:
-                case CLASS_PREPARE:
-                    invokeThreadObjectCallback(callback, env, currentThreadHandle(), JniHandles.createLocalHandle(asClassActor(arg1).javaClass()));
-                    break;
+                    case CLASS_LOAD:
+                    case CLASS_PREPARE:
+                        invokeThreadObjectCallback(callback, cstruct, currentThreadHandle(), JniHandles.createLocalHandle(asClassActor(arg1).javaClass()));
+                        break;
 
-                case FIELD_ACCESS:
-                case FIELD_MODIFICATION:
-                    invokeFieldAccessCallback(callback, env, currentThreadHandle(), asFieldEventData(arg1));
-                    break;
+                    case FIELD_ACCESS:
+                    case FIELD_MODIFICATION:
+                        invokeFieldAccessCallback(callback, cstruct, currentThreadHandle(), asFieldEventData(arg1));
+                        break;
 
-                case BREAKPOINT:
-                case SINGLE_STEP:
-                    EventBreakpointID id = asEventBreakpointID(arg1);
-                    invokeBreakpointCallback(callback, env, currentThreadHandle(), id.methodID, id.location);
-                    break;
+                    case BREAKPOINT:
+                    case SINGLE_STEP:
+                        EventBreakpointID id = asEventBreakpointID(arg1);
+                        invokeBreakpointCallback(callback, cstruct, currentThreadHandle(), id.methodID, id.location);
+                        break;
 
-                case FRAME_POP:
-                    FramePopEventData framePopEventData = asFramePopEventData(arg1);
-                    invokeFramePopCallback(callback, env, currentThreadHandle(), framePopEventData.methodID,
-                                           framePopEventData.wasPoppedByException);
-                    break;
+                    case FRAME_POP:
+                        FramePopEventData framePopEventData = asFramePopEventData(arg1);
+                        invokeFramePopCallback(callback, cstruct, currentThreadHandle(), framePopEventData.methodID, framePopEventData.wasPoppedByException);
+                        break;
 
-                case EXCEPTION:
-                case EXCEPTION_CATCH:
-                    ExceptionEventData exceptionEventData = asExceptionEventData(arg1);
-                    invokeExceptionCallback(callback, env, eventId == EXCEPTION_CATCH, currentThreadHandle(),
-                                    exceptionEventData.methodID, exceptionEventData.location,
-                                    JniHandles.createLocalHandle(exceptionEventData.throwable),
-                                    exceptionEventData.catchMethodID, exceptionEventData.catchLocation);
-                    break;
+                    case EXCEPTION:
+                    case EXCEPTION_CATCH:
+                        ExceptionEventData exceptionEventData = asExceptionEventData(arg1);
+                        invokeExceptionCallback(callback, cstruct, eventId == EXCEPTION_CATCH, currentThreadHandle(), exceptionEventData.methodID, exceptionEventData.location,
+                                        JniHandles.createLocalHandle(exceptionEventData.throwable), exceptionEventData.catchMethodID, exceptionEventData.catchLocation);
+                        break;
+                }
+            } else {
+                JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
+                if (javaEnv == null || !JVMTIEvent.isEventSet(javaEnv, eventId, VmThread.current())) {
+                    continue;
+                }
+                Thread currentThread = Thread.currentThread();
+                switch (eventId) {
+                    case VM_INIT:
+                        javaEnv.vmInit();
+                        break;
+
+                    case VM_DEATH:
+                        javaEnv.vmDeath();
+                        break;
+
+                    case THREAD_START:
+                        javaEnv.threadStart(currentThread);
+                        break;
+
+                    case THREAD_END:
+                        javaEnv.threadEnd(currentThread);
+                        break;
+
+                    case GARBAGE_COLLECTION_START:
+                        javaEnv.garbageCollectionStart();
+                        break;
+
+                    case GARBAGE_COLLECTION_FINISH:
+                        javaEnv.garbageCollectionFinish();
+                        break;
+
+                    case CLASS_LOAD:
+                        javaEnv.classLoad(currentThread, asClassActor(arg1).javaClass());
+                        break;
+
+                    case METHOD_ENTRY:
+                        javaEnv.methodEntry(currentThread, asClassMethodActor(arg1).toJava());
+                        break;
+
+                        /*
+                    case FIELD_ACCESS:
+                    case FIELD_MODIFICATION:
+                        invokeFieldAccessCallback(callback, cstruct, currentThreadHandle(), asFieldEventData(arg1));
+                        break;
+
+                    case BREAKPOINT:
+                    case SINGLE_STEP:
+                        EventBreakpointID id = asEventBreakpointID(arg1);
+                        invokeBreakpointCallback(callback, cstruct, currentThreadHandle(), id.methodID, id.location);
+                        break;
+
+                    case FRAME_POP:
+                        FramePopEventData framePopEventData = asFramePopEventData(arg1);
+                        invokeFramePopCallback(callback, cstruct, currentThreadHandle(), framePopEventData.methodID, framePopEventData.wasPoppedByException);
+                        break;
+
+                    case EXCEPTION:
+                    case EXCEPTION_CATCH:
+                        ExceptionEventData exceptionEventData = asExceptionEventData(arg1);
+                        invokeExceptionCallback(callback, cstruct, eventId == EXCEPTION_CATCH, currentThreadHandle(), exceptionEventData.methodID, exceptionEventData.location,
+                                        JniHandles.createLocalHandle(exceptionEventData.throwable), exceptionEventData.catchMethodID, exceptionEventData.catchLocation);
+                        break;
+*/
+                }
             }
         }
         if (eventId == VM_DEATH) {
