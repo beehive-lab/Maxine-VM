@@ -29,11 +29,12 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * The special region describing the heap in the boot image.
  */
-public class BootHeapRegion extends LinearAllocatorRegion {
+public final class BootHeapRegion extends LinearAllocatorRegion {
 
     private byte[] referenceMapBytes;
 
@@ -52,22 +53,43 @@ public class BootHeapRegion extends LinearAllocatorRegion {
         this.specialReferences = specialRefs;
     }
 
+    @INLINE
+    public void discoverSpecialReference() {
+        for (java.lang.ref.Reference specialReference : specialReferences) {
+            SpecialReferenceManager.discoverSpecialReference(Reference.fromJava(specialReference).toOrigin());
+        }
+    }
+
     public void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
         if (referenceMap.isZero()) {
             referenceMap = ArrayAccess.elementPointer(referenceMapBytes, 0);
         }
-
-        final Pointer refMap = referenceMap;
         final int referenceMapWords = UnsignedMath.divide(referenceMapBytes.length, Word.size());
         if (Heap.logRootScanning()) {
             Heap.rootScanLogger.logScanningBootHeap(this, start().plus(referenceMapWords * Word.size()));
-            scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, true);
+            scanReferenceMap(pointerIndexVisitor, referenceMap, referenceMapWords, true);
         } else {
-            scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, false);
+            scanReferenceMap(pointerIndexVisitor, referenceMap, referenceMapWords, false);
         }
+        discoverSpecialReference();
+    }
 
-        for (java.lang.ref.Reference specialReference : specialReferences) {
-            SpecialReferenceManager.discoverSpecialReference(Reference.fromJava(specialReference).toOrigin());
+    /**
+     * Visit references comprised in the specified range within the boot heap region.
+     * @param start first address (inclusive) of the range
+     * @param end last address (exclusive) of the range
+     * @param pointerIndexVisitor
+     */
+    public void visitReferences(Address start, Address end, PointerIndexVisitor pointerIndexVisitor) {
+        if (referenceMap.isZero()) {
+            referenceMap = ArrayAccess.elementPointer(referenceMapBytes, 0);
+        }
+        FatalError.check(contains(start) && contains(end), "range not in boot heap region");
+        if (Heap.logRootScanning()) {
+            // Heap.rootScanLogger.logScanningBootHeap(this, start().plus(referenceMapWords * Word.size()));
+            scanReferences(pointerIndexVisitor, referenceMap, start, end, true);
+        } else {
+            scanReferences(pointerIndexVisitor, referenceMap, start, end, false);
         }
     }
 
