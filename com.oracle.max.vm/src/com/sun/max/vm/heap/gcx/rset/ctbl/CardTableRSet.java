@@ -357,6 +357,27 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
         }
     }
 
+    public static abstract class CardRangeVisitor {
+        abstract public void visitCards(Address start, Address end);
+    }
+
+    public void cleanAndVisitCards(Address start, Address end, CardRangeVisitor cardRangeVisitor) {
+        final int endOfRange = cardTable.tableEntryIndex(end);
+        int startCardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, CardState.DIRTY_CARD);
+        while (startCardIndex < endOfRange) {
+            int endCardIndex = cardTable.firstNot(startCardIndex + 1, endOfRange, CardState.DIRTY_CARD);
+            if (traceCardTableRSet()) {
+                traceVisitedCard(startCardIndex, endCardIndex, CardState.DIRTY_CARD);
+            }
+            cardTable.clean(startCardIndex, endCardIndex);
+            cardRangeVisitor.visitCards(cardTable.rangeStart(startCardIndex), cardTable.rangeStart(endCardIndex));
+            if (++endCardIndex >= endOfRange) {
+                return;
+            }
+            startCardIndex = cardTable.first(endCardIndex, endOfRange, CardState.DIRTY_CARD);
+        }
+    }
+
     /**
      * Iterate over cells that overlap the specified region and comprises recorded reference locations.
      * @param start

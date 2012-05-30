@@ -408,5 +408,15 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         return tlabAllocate(size);
     }
 
+    @Override
+    public PhaseLogger phaseLogger() {
+        return HeapSchemeLoggerAdaptor.phaseLogger;
+    }
+
+    @Override
+    public TimeLogger timeLogger() {
+        return HeapSchemeLoggerAdaptor.timeLogger;
+    }
+
 }
 

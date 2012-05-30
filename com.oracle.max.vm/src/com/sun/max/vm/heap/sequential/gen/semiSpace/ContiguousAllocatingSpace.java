@@ -28,6 +28,7 @@ import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.runtime.*;
 
@@ -144,7 +145,12 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     }
 
     @Override
-    public void visit(HeapSpaceRangeVisitor visitor) {
+    public void visit(CellRangeVisitor visitor) {
         visitor.visitCells(space.start(), allocator.unsafeTop());
+    }
+
+    @Override
+    public SpaceBounds bounds() {
+        return space.bounds();
     }
 }

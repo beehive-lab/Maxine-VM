@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.heap;
 
 import com.sun.max.unsafe.*;
 
@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
  * the address of the cell plus its size gives the address of the next cell.
  * @see HeapSpace
  */
-public interface HeapSpaceRangeVisitor {
+public interface CellRangeVisitor {
     /**
      * Logic to apply to an iterable contiguous range of heap space.
      * @param start Address to the first cell in a  iterable contiguous range of heap space

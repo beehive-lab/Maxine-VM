@@ -51,7 +51,7 @@ public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
      *
      * Note that the allocator that feed the promotion lab is kept in an iterable state.
      */
-    final class DirtyCardEvacuationClosure implements CellVisitor, OverlappingCellVisitor,  HeapSpaceRangeVisitor {
+    final class DirtyCardEvacuationClosure implements CellVisitor, OverlappingCellVisitor,  CellRangeVisitor {
         private final CardTableRSet cachedRSet;
 
         DirtyCardEvacuationClosure() {
@@ -88,11 +88,26 @@ public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
         }
     }
 
+    final class BootRegionDirtyCardEvacuationClosure extends CardTableRSet.CardRangeVisitor {
+        private final BootHeapRegion bootHeapRegion;
+        BootRegionDirtyCardEvacuationClosure() {
+            bootHeapRegion = Heap.bootHeapRegion;
+        }
+
+        @INLINE
+        @Override
+        public void visitCards(Address start, Address end) {
+            bootHeapRegion.visitReferences(start, end, NoAgingNurseryEvacuator.this);
+        }
+    }
+
     private final DirtyCardEvacuationClosure heapSpaceDirtyCardClosure;
+    private final BootRegionDirtyCardEvacuationClosure bootRegionDirtyCardClosure;
 
     public NoAgingNurseryEvacuator(EvacuatingSpace fromSpace, HeapSpace toSpace, CardTableRSet rset) {
         super(fromSpace, toSpace, rset);
         this.heapSpaceDirtyCardClosure = new DirtyCardEvacuationClosure();
+        this.bootRegionDirtyCardClosure = new BootRegionDirtyCardEvacuationClosure();
     }
 
     @Override
@@ -101,6 +116,12 @@ public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
         if (MaxineVM.isDebug() && gcOperation != null) {
             traceDirtyCardWalk = TraceDirtyCardWalk && TraceFromGCInvocation <= gcOperation.invocationCount();
         }
+    }
+    @Override
+    protected void evacuateFromBootHeap() {
+        final BootHeapRegion bootHeapRegion = Heap.bootHeapRegion;
+        rset.cleanAndVisitCards(bootHeapRegion.start(), bootHeapRegion.end(), bootRegionDirtyCardClosure);
+        bootHeapRegion.discoverSpecialReference();
     }
 
     @Override
