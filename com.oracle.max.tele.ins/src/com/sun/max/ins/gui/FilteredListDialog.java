@@ -43,8 +43,15 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
     protected final boolean multiSelection;
     protected final JTextField textField = new JTextField();
     protected final String actionName;
-    protected final DefaultListModel listModel = new DefaultListModel();
-    protected final JList list = new JList(EMPTY_LIST_MODEL);
+    protected final DefaultListModel listModel = new DefaultListModel(); // TODO (mlvdv) generic in Java 7
+
+    /**
+     * Used as the place holder list model while the real list model is being notified. Using a place holder prevents
+     * events being sent to the list for each modification to its (potentially large) model.
+     */
+    protected final AbstractListModel emptyListModel; // TODO (mlvdv) generic in Java 7
+
+    protected final JList list; // TODO (mlvdv) generic in Java 7
 
     private List<T> selectedObjects;
 
@@ -103,20 +110,6 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
         }
     }
 
-    /**
-     * Used as the place holder list model while the real list model is being notified. Using a place holder prevents
-     * events being sent to the list for each modification to its (potentially large) model.
-     */
-    private static final ListModel EMPTY_LIST_MODEL = new AbstractListModel() {
-        public int getSize() {
-            return 0;
-        }
-
-        public Object getElementAt(int i) {
-            return "No Data Model";
-        }
-    };
-
     private class TextListener implements DocumentListener {
         public void changedUpdate(DocumentEvent e) {
             // This should never be called
@@ -142,8 +135,9 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
     /**
      * Rebuilds the list.
      */
+    @SuppressWarnings("unchecked")
     protected void rebuildList() {
-        list.setModel(EMPTY_LIST_MODEL);
+        list.setModel(emptyListModel);
         listModel.clear();
         final String text = textField.getText();
         rebuildList(text);
@@ -153,6 +147,7 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
         }
     }
 
+    @SuppressWarnings("unchecked")
     protected FilteredListDialog(Inspection inspection, String title, String filterFieldLabelText, String actionName, boolean multiSelection) {
         super(inspection, title, true);
         this.multiSelection = multiSelection;
@@ -161,6 +156,17 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
         } else {
             this.actionName = actionName;
         }
+
+        this.emptyListModel = new AbstractListModel() {
+            public int getSize() {
+                return 0;
+            }
+
+            public Object getElementAt(int i) {
+                return null;
+            }
+        };
+        this.list = new JList(emptyListModel);
 
         final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
         final JPanel textPanel = new InspectorPanel(inspection);

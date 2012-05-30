@@ -194,15 +194,16 @@ public class OptionsDialog extends JDialog {
 
     protected static class ListGUIOption extends GUIOption<List<Object>> {
         private final JTextField textField;
-        private final JList<Object> list;
+        private final JList list;
 
+        @SuppressWarnings("unchecked")
         protected ListGUIOption(Option<List<Object>> option) {
             super(option);
             if (option.getType() instanceof OptionTypes.EnumListType) {
                 textField = null;
                 final OptionTypes.EnumListType elt = (OptionTypes.EnumListType) option.getType();
                 final OptionTypes.EnumType et = (OptionTypes.EnumType) elt.elementOptionType;
-                list = new JList<Object>(et.values);
+                list = new JList(et.values);
                 list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
                 list.setVisibleRowCount(Math.min(10, et.values.length));
                 list.setLayoutOrientation(JList.VERTICAL);
@@ -283,12 +284,13 @@ public class OptionsDialog extends JDialog {
     }
 
     protected static class EnumGUIOption extends GUIOption<Object> {
-        private final JComboBox<Object> comboBox;
+        private final JComboBox comboBox;
 
+        @SuppressWarnings("unchecked")
         protected EnumGUIOption(Option<Object> option) {
             super(option);
             final OptionTypes.EnumType et = (OptionTypes.EnumType) option.getType();
-            comboBox = new JComboBox<Object>(et.values);
+            comboBox = new JComboBox(et.values);
             input = comboBox;
             setValue(option.getValue());
         }
@@ -362,8 +364,9 @@ public class OptionsDialog extends JDialog {
     }
 
     protected static class PackageGUIOption extends GUIOption<String> {
-        private final JComboBox<String> values;
+        private final JComboBox values;
 
+        @SuppressWarnings("unchecked")
         protected PackageGUIOption(Option<String> option) {
             super(option);
 
@@ -381,7 +384,7 @@ public class OptionsDialog extends JDialog {
                 }
             }.run(Classpath.fromSystem(), root.replace('.', '/'));
 
-            this.values = new JComboBox<String>(pkgNames.toArray(new String[pkgNames.size()]));
+            this.values = new JComboBox(pkgNames.toArray(new String[pkgNames.size()]));
             input = this.values;
 
             // The combo box must be editable as the prepopulated items are just those packages found from the super package

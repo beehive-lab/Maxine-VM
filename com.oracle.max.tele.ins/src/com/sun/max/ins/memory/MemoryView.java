@@ -318,7 +318,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     private JToolBar toolBar;
     private final AddressInputField.Hex originField;
     private final AddressInputField.Decimal wordCountField;
-    private final InspectorComboBox viewModeComboBox;
+    private final InspectorComboBox viewModeComboBox;  // TODO (mlvdv) generic in Java 7
     private final JLabel viewModeComboBoxRenderer;  // Holds current view mode, even across view reconstructions.
     private final InspectorButton previousButton;
     private final InspectorButton nextButton;
@@ -337,6 +337,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
      * @param viewMode initial mode for the view
      * @param instanceViewPreferences preferences to use for this view
      */
+    @SuppressWarnings("unchecked")
     private MemoryView(Inspection inspection, final MaxMemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryViewPreferences instanceViewPreferences) {
         super(inspection, VIEW_KIND, null);
         assert viewMode != null;
