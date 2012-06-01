@@ -29,7 +29,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.*;
-import com.sun.max.vm.ext.jvmti.JJVMTI.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
 
@@ -39,11 +38,11 @@ public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
     @Override
     public void initialise(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            JJVMTIAgentAdapter.register(jjvmti);
+            JJVMTIMaxAgentAdapter.register(jjvmti);
         }
     }
 
-    private static final JJVMTIAgentAdapter jjvmti = new JJVMTIAgentAdapter();
+    private static final JJVMTIMaxAgentAdapter jjvmti = new JJVMTIMaxAgentAdapter();
 
     @Override
     public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
@@ -57,17 +56,30 @@ public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
         }
 
         @Override
-        protected void traceMethodEntry(Object arg1, MethodActor arg2, int arg3) {
-            System.out.printf("Method entry: %s fc %d%n", arg2.format("%H.%n"), arg3);
-            Method method = arg2.toJava();
-            Class<?>[] params = method.getParameterTypes();
-            LocalVariableEntry[] lve = jjvmti.getLocalVariableTable(method);
-            int slot = 0;
-            for (Class<?> param : params) {
-                System.out.printf("  slot %d, name %s, type %s, value ", slot, lve[slot].name, lve[slot].signature);
+        protected void traceMethodEntry(Object arg1, MethodActor methodActor, int arg3) {
+            System.out.printf("Method entry: %s fc %d%n", methodActor.format("%H.%n"), arg3);
+            JJVMTICommon.LocalVariableEntry[] lve = jjvmti.getLocalVariableTable(methodActor);
+            Type[] params = methodActor.getGenericParameterTypes();
+            for (int i = 0; i < params.length; i++) {
+                Class<?> param = (Class) params[i];
+                int index = methodActor.isStatic() ? i : i + 1;
+                System.out.printf("param %d, name %s, type %s, value ", index, lve[index].name, lve[index].signature);
+                int slot = lve[index].slot;
                 if (Object.class.isAssignableFrom(param)) {
                     Object paramValue = jjvmti.getLocalObject(null, 0, slot);
                     System.out.println(paramValue);
+                } else {
+                    if (param == int.class) {
+                        System.out.println(jjvmti.getLocalInt(null, 0, slot));
+                    } else if (param == long.class) {
+                        System.out.println(jjvmti.getLocalLong(null, 0, slot));
+                    } else if (param == float.class) {
+                        System.out.println(jjvmti.getLocalFloat(null, 0, slot));
+                    } else if (param == double.class) {
+                        System.out.println(jjvmti.getLocalDouble(null, 0, slot));
+                    } else {
+                        assert false;
+                    }
                 }
             }
         }
