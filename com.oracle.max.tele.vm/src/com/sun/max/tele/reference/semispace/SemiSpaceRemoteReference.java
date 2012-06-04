@@ -89,7 +89,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
 
             // Properties
             @Override RemoteObjectStatus status() {
-                return UNKNOWN;
+                return LIVE;
             }
             @Override boolean isForwarded() {
                 return false;

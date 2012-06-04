@@ -57,6 +57,7 @@ public enum RemoteObjectStatus {
      * Only during liveness analysis: the region of memory was live as of the previous collection
      * and has not yet been determined live during the current analysis.
      */
+    @Deprecated
     UNKNOWN("Unknown", "During liveness analysis:  formerly live, not yet determined reachable"),
 
     /**
@@ -97,16 +98,6 @@ public enum RemoteObjectStatus {
      */
     public boolean isNotDead() {
         return this != DEAD;
-    }
-
-    /**
-     * During liveness analysis only, has the formerly live object not yet been determined to be reachable?
-     * Always returns {@code false} during other GC phases.
-     *
-     * @return {@code this == } {@link #UNKNOWN}.
-     */
-    public boolean isUnknown() {
-        return this == UNKNOWN;
     }
 
     /**

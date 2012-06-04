@@ -366,9 +366,6 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                             case LIVE:
                                 toSpaceRef.analysisEnds();
                                 break;
-                            case UNKNOWN:
-                                TeleError.unexpected(tracePrefix() + "UNKNOWN reference found in To-Space map");
-                                break;
                             case DEAD:
                                 TeleError.unexpected(tracePrefix() + "DEAD reference found in To-Space map");
                                 break;
@@ -629,7 +626,6 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         final NumberFormat formatter = NumberFormat.getInstance();
         int totalRefs = 0;
         int liveRefs = 0;
-        int unknownRefs = 0;
         int deadRefs = 0;
 
         for (SemiSpaceRemoteReference ref : map.values()) {
@@ -637,15 +633,12 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                 case LIVE:
                     liveRefs++;
                     break;
-                case UNKNOWN:
-                    unknownRefs++;
-                    break;
                 case DEAD:
                     deadRefs++;
                     break;
             }
         }
-        totalRefs = liveRefs + unknownRefs + deadRefs;
+        totalRefs = liveRefs + deadRefs;
 
         // Line 0
         String indentation = Strings.times(' ', indent);
@@ -680,7 +673,6 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         if (totalRefs > 0) {
             sb2.append(", object status: ");
             sb2.append(RemoteObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
-            sb2.append(RemoteObjectStatus.UNKNOWN.label()).append("=").append(formatter.format(unknownRefs));
         }
         printStream.println(indentation + sb2.toString());
         if (deadRefs > 0) {
