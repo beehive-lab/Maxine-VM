@@ -228,7 +228,7 @@ public class JVMTIException {
         }
         // send if any agent wants it
         return JVMTI.eventNeeded(JVMTIEvent.EXCEPTION) || JVMTI.eventNeeded(JVMTIEvent.METHOD_EXIT) ||
-               JVMTIVmThreadLocal.bitIsSet(VmThread.currentTLA(), JVMTI_FRAME_POP);
+               JVMTIVmThreadLocal.bitIsSet(VmThread.currentTLA(), JVMTI_FRAME_POP) || vmaHandler != null;
     }
 
     public static void raiseEvent(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
@@ -286,12 +286,27 @@ public class JVMTIException {
                     if (JVMTIEvent.isEventSet(JVMTIEvent.METHOD_EXIT)) {
                         JVMTI.event(JVMTI_EVENT_METHOD_EXIT, framePopEventData);
                     }
+                    if (vmaHandler != null) {
+                        vmaHandler.exceptionRaised(stackAnalyser.throwingMethodActor, throwable, stackAnalyser.stackElementSizeAtCatch - 1);
+                    }
                 }
             }
 
         } finally {
             eventState.inProcess = false;
         }
+    }
+
+    // VMA support
+
+    public interface VMAHandler {
+        void exceptionRaised(ClassMethodActor throwingActor, Throwable throwable, int poppedFrameCount);
+    }
+
+    private static VMAHandler vmaHandler;
+
+    public static void registerVMAHAndler(VMAHandler handler) {
+        vmaHandler = handler;
     }
 
 }

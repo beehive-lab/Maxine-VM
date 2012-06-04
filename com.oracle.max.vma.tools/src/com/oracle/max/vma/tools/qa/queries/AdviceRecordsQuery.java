@@ -180,6 +180,10 @@ public class AdviceRecordsQuery extends QueryBase {
                     ps.print(getObjectRecord(ar));
                     break;
 
+                case ReturnByThrow:
+                    ps.printf("%s %d", getObjectRecord(ar), ar.getPackedValue());
+                    break;
+
                 case Removal:
                 case Unseen:
                 case New:

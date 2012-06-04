@@ -84,6 +84,9 @@ public class CompactTextVMAdviceHandlerLogGenerator {
             out.printf(");%n");
         } else if (name.contains("Monitor") || name.contains("Throw")) {
             out.print(", checkRepeatId(arg2, arg1)");
+            if (name.contains("ReturnByThrow")) {
+                out.print(", arg3");
+            }
             out.printf(");%n");
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
             out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4");

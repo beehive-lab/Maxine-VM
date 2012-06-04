@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.vma.handlers.jvmti.h;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
 import com.sun.max.annotate.*;
@@ -44,9 +45,64 @@ public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
 
     private static final JJVMTIMaxAgentAdapter jjvmti = new JJVMTIMaxAgentAdapter();
 
+    private static Stack<MethodActor> callStack = new Stack<MethodActor>();
+
     @Override
     public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
-        logger.logMethodEntry(arg1, arg2, jjvmti.getFrameCount(null));
+        int fc = jjvmti.getFrameCount(null);
+        if (logger.enabled()) {
+            logger.logMethodEntry(arg1, arg2, fc);
+            if (logger.traceEnabled()) {
+                logger.traceMethodEntry(arg1, arg2, fc);
+            }
+        }
+        callStack.push(arg2);
+    }
+
+    @Override
+    public void adviseBeforeReturn(long value) {
+        methodExit(false, value);
+    }
+
+    @Override
+    public void adviseBeforeReturn(float value) {
+        methodExit(false, value);
+    }
+
+    @Override
+    public void adviseBeforeReturn(double value) {
+        methodExit(false, value);
+    }
+
+    @Override
+    public void adviseBeforeReturn(Object value) {
+        methodExit(false, value);
+    }
+
+    @Override
+    public void adviseBeforeReturn() {
+        methodExit(false, null);
+    }
+
+    @Override
+    public void adviseBeforeReturnByThrow(Throwable throwable, int poppedFrames) {
+        methodExit(true, throwable);
+        // May need to pop more frames
+        while (poppedFrames > 1) {
+            callStack.pop();
+            poppedFrames--;
+        }
+    }
+
+    private void methodExit(boolean exeception, Object returnValue) {
+        if (logger.enabled()) {
+            logger.logMethodExit(exeception, returnValue);
+            MethodActor methodActor = callStack.pop();
+            if (logger.traceEnabled()) {
+                // don't print return value as it invokes toString
+                System.out.printf("Method exit: %s, exception %b%n", methodActor.format("%H.%n"), exeception);
+            }
+        }
     }
 
     private static class JVMTITestLogger extends JVMTITestLoggerAuto {
@@ -56,6 +112,8 @@ public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
         }
 
         @Override
+        protected void trace(Record r) { }
+
         protected void traceMethodEntry(Object arg1, MethodActor methodActor, int arg3) {
             System.out.printf("Method entry: %s fc %d%n", methodActor.format("%H.%n"), arg3);
             JJVMTICommon.LocalVariableEntry[] lve = jjvmti.getLocalVariableTable(methodActor);
@@ -88,21 +146,22 @@ public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
 
     private static final JVMTITestLogger logger = new JVMTITestLogger();
 
-    @VMLoggerInterface
+    @VMLoggerInterface(noTrace = true)
     private interface JVMTITestLoggerInterface {
         void methodEntry(Object arg1, MethodActor arg2, int frameCount);
+        void methodExit(boolean exeception, Object returnValue);
     }
 
 // START GENERATED CODE
     private static abstract class JVMTITestLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            MethodEntry;
+            MethodEntry, MethodExit;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x1};
+        private static final int[] REFMAPS = new int[] {0x1, 0x2};
 
         protected JVMTITestLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -117,16 +176,9 @@ public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
         public final void logMethodEntry(Object arg1, MethodActor arg2, int arg3) {
             log(Operation.MethodEntry.ordinal(), objectArg(arg1), methodActorArg(arg2), intArg(arg3));
         }
-        protected abstract void traceMethodEntry(Object arg1, MethodActor arg2, int arg3);
-
-        @Override
-        protected void trace(Record r) {
-            switch (r.getOperation()) {
-                case 0: { //MethodEntry
-                    traceMethodEntry(toObject(r, 1), toMethodActor(r, 2), toInt(r, 3));
-                    break;
-                }
-            }
+        @INLINE
+        public final void logMethodExit(boolean arg1, Object arg2) {
+            log(Operation.MethodExit.ordinal(), booleanArg(arg1), objectArg(arg2));
         }
     }
 
