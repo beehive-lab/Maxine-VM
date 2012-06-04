@@ -100,6 +100,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
      */
     private Size allocationRegionsFreeSpace;
 
+    final private SpaceBounds bounds;
     /**
      * TLAB refill allocator. Can supplies TLAB refill either as a single contiguous chunk,
      * or as an address-ordered list of chunks.
@@ -337,6 +338,30 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         overflowAllocator.refillManager.setRegionProvider(this);
         regionsRangeIterable = new HeapRegionRangeIterable();
         regionInfoIterable = new HeapRegionInfoIterable();
+
+        bounds = new SpaceBounds() {
+            @Override
+            Address lowestAddress() {
+                FatalError.unimplemented();
+                return null;
+            }
+
+            @Override
+            boolean isIn(Address address) {
+                return contains(address);
+            }
+
+            @Override
+            boolean isContiguous() {
+                return false;
+            }
+
+            @Override
+            Address highestAddress() {
+                FatalError.unimplemented(); // TODO
+                return null;
+            }
+        };
     }
 
     public HeapAccount<T> heapAccount() {
@@ -386,10 +411,6 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         overflowAllocator.initialize(Address.zero(), Size.zero());
     }
 
-    /**
-     * Entry point for direct allocation when TLAB cannot be refilled.
-     */
-    @Override
     public Pointer allocate(Size size) {
         if (isLarge(size)) {
             return allocateLargeCleared(size);
@@ -397,10 +418,6 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         return overflowAllocator.allocateCleared(size);
     }
 
-    /**
-     * Entry point to allocate storage for TLAB refill.
-     */
-    @Override
     public Pointer allocateTLAB(Size size) {
         return tlabAllocator.allocateTLAB(size);
     }
@@ -419,7 +436,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     @Override
     public boolean contains(Address address) {
         final HeapRegionInfo regionInfo = fromAddress(address);
-        return regionInfo.owner() == heapAccount.owner;
+        return regionInfo.owner() == heapAccount.owner && regionInfo.tag == regionTag;
     }
 
     public boolean canSatisfyAllocation(Size size) {
@@ -655,7 +672,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         return Size.zero();
     }
 
-    private void iterateRegions(HeapSpaceRangeVisitor visitor) {
+    private void iterateRegions(CellRangeVisitor visitor) {
         final RegionTable regionTable = RegionTable.theRegionTable();
         regionsRangeIterable.initialize(heapAccount.committedRegions());
         if (regionTag == 0) {
@@ -673,7 +690,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     }
 
     @Override
-    public void visit(HeapSpaceRangeVisitor visitor) {
+    public void visit(CellRangeVisitor visitor) {
         // Make allocating regions iterable first.
         tlabAllocator.unsafeMakeParsable();
         overflowAllocator.unsafeMakeParsable();
@@ -747,5 +764,10 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
 
     public Size minRetiredFreeChunkSize() {
         return minReclaimableSpace;
+    }
+
+    @Override
+    public SpaceBounds bounds() {
+        return bounds;
     }
 }

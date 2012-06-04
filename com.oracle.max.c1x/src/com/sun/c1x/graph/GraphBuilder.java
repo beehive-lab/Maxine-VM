@@ -273,10 +273,18 @@ public final class GraphBuilder {
     }
 
     public int bci() {
+        if (curState.scope() != scopeData.scope) {
+            assert scopeData.parent != null && scopeData.parent.scope == curState.scope();
+            return scopeData.parent.stream.currentBCI();
+        }
         return scopeData.stream.currentBCI();
     }
 
     public int nextBCI() {
+        if (curState.scope() != scopeData.scope) {
+            assert scopeData.parent != null && scopeData.parent.scope == curState.scope();
+            return scopeData.parent.stream.nextBCI();
+        }
         return scopeData.stream.nextBCI();
     }
 
@@ -1939,7 +1947,7 @@ public final class GraphBuilder {
             lastInstr.setNext(null, -1);
         } else if (continuationPredecessors == continuationBlock.predecessors().size()) {
             // Inlining caused the instructions after the invoke in the
-            // caller to not reachable any more (i.e. no control flow path
+            // caller to not be reachable any more (i.e. no control flow path
             // in the callee was terminated by a return instruction).
             // So skip filling this block with instructions!
             assert continuationBlock == scopeData.continuation();
@@ -1963,6 +1971,11 @@ public final class GraphBuilder {
             fillSyncHandler(lock, syncHandler, true);
         } else {
             popScope();
+        }
+
+        if (curState.scope() != scopeData.scope) {
+            assert curState.scope().caller == scopeData.scope;
+            curState = curState.popScope();
         }
 
         stats.inlineCount++;

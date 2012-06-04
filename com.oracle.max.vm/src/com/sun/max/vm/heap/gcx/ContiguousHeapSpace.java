@@ -36,17 +36,45 @@ import com.sun.max.vm.runtime.*;
  * virtual memory.
  */
 public class ContiguousHeapSpace extends MemoryRegion implements EvacuatingSpace {
-
     @INSPECTED
     private Address committedEnd;
+
+    private final SpaceBounds bounds;
+
+    private SpaceBounds createSpaceBounds() {
+        return new SpaceBounds() {
+            @Override
+            final Address lowestAddress() {
+                return start;
+            }
+
+            @Override
+            final boolean isIn(Address address) {
+                return address.greaterEqual(start) && address.lessThan(committedEnd);
+            }
+
+            @Override
+            final boolean isContiguous() {
+                return true;
+            }
+
+            @Override
+            final Address highestAddress() {
+                return committedEnd;
+            }
+        };
+    }
 
     public ContiguousHeapSpace() {
         super();
         committedEnd = start;
+        bounds = createSpaceBounds();
     }
+
     public ContiguousHeapSpace(String regionName) {
         super(regionName);
         committedEnd = start;
+        bounds = createSpaceBounds();
     }
 
     public void setReserved(Address reservedStart, Size reservedSize) {
@@ -128,5 +156,9 @@ public class ContiguousHeapSpace extends MemoryRegion implements EvacuatingSpace
     }
 
     public void doAfterGC() {
+    }
+
+    public SpaceBounds bounds() {
+        return bounds;
     }
 }

@@ -475,4 +475,13 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         return XirWriteBarrierSpecification.NULL_WRITE_BARRIER_GEN;
     }
 
+    @Override
+    public PhaseLogger phaseLogger() {
+        return HeapSchemeLoggerAdaptor.phaseLogger;
+    }
+
+    @Override
+    public TimeLogger timeLogger() {
+        return HeapSchemeLoggerAdaptor.timeLogger;
+    }
 }

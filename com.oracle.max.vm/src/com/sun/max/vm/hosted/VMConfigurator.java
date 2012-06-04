@@ -79,12 +79,8 @@ public final class VMConfigurator {
 
     /**
      * Creates a VM from the current option set.
-     *
-     * @param install specifies if the created VM should be {@linkplain MaxineVM#set(MaxineVM) set} as the global VM
-     *            context. If {@code true}, then the schemes in the VM configuration are also
-     *            {@linkplain VMConfiguration#loadAndInstantiateSchemes(VMConfiguration) loaded and instantiated}.
      */
-    public MaxineVM create(boolean install) {
+    public MaxineVM create() {
         VMConfiguration config = new VMConfiguration(buildLevel.getValue(), platform(),
                                     vm(referenceScheme),
                                     vm(layoutScheme),
@@ -92,10 +88,9 @@ public final class VMConfigurator {
                                     vm(monitorScheme),
                                     vm(runScheme));
         MaxineVM vm = new MaxineVM(config);
-        if (install) {
-            MaxineVM.set(vm);
-            config.loadAndInstantiateSchemes(null);
-        }
+        MaxineVM.set(vm);
+        config.gatherBootImagePackages();
+        config.loadAndInstantiateSchemes(null);
         return vm;
     }
 
@@ -162,7 +157,7 @@ public final class VMConfigurator {
     public static void installStandard(BuildLevel buildLevel) {
         VMConfigurator vmConfigurator = new VMConfigurator(null);
         vmConfigurator.buildLevel.setValue(buildLevel);
-        vmConfigurator.create(true);
+        vmConfigurator.create();
     }
 
     /**
@@ -192,7 +187,7 @@ public final class VMConfigurator {
             configurator.options.printHelp(System.out, 80);
         } else {
             configurator.options.parseArguments(args);
-            MaxineVM vm = configurator.create(true);
+            MaxineVM vm = configurator.create();
             System.out.println(vm.config);
         }
     }

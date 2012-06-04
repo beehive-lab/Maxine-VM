@@ -24,7 +24,10 @@ package com.sun.max.vm.ext.jvmti;
 
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIVmThreadLocal.*;
+import static com.sun.max.vm.intrinsics.Infopoints.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -38,6 +41,8 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
+import com.sun.max.vm.ext.jvmti.JJVMTI.*;
+import com.sun.max.vm.ext.jvmti.JJVMTI.Exception;
 import com.sun.max.vm.ext.jvmti.JVMTIUtil.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.run.java.*;
@@ -125,7 +130,11 @@ public class JVMTIThreadFunctions {
     }
 
     static int getThreadState(Thread thread, Pointer threadStatePtr) {
-        threadStatePtr.setInt(getThreadState(VmThread.fromJava(thread)));
+        VmThread vmThread = checkVmThread(thread);
+        if (thread == null) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        }
+        threadStatePtr.setInt(getThreadState(vmThread));
         return JVMTI_ERROR_NONE;
     }
 
@@ -160,7 +169,7 @@ public class JVMTIThreadFunctions {
     }
 
     static int getThreadInfo(Thread thread, Pointer threadInfoPtr) {
-        VmThread vmThread = checkThread(thread);
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
@@ -181,7 +190,7 @@ public class JVMTIThreadFunctions {
     // Single thread stack trace
 
     static int getStackTrace(Thread thread, int startDepth, int maxFrameCount, Pointer frameBuffer, Pointer countPtr) {
-        VmThread vmThread = checkThread(thread);
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
@@ -221,7 +230,6 @@ public class JVMTIThreadFunctions {
             this.frameAccess = frameAccess;
             if (bci < 0) {
                 // outside the actual bytecode area, e.g. in method entry count overflow code
-                assert JVMTI.JVMTI_VM;
                 // make it look like a call from first instruction
                 bci = 0;
             }
@@ -657,16 +665,35 @@ public class JVMTIThreadFunctions {
      * Checks for current thread request ({@code thread == null}, and live state.
      * @return {@code null} if should return error, the {@link VmThread} otherwise.
      */
-    private static VmThread checkThread(Thread thread) {
-        VmThread vmThread = thread == null ? VmThread.current() : VmThread.fromJava(thread);
+    static VmThread checkVmThread(Thread thread) {
+        if (thread == null) {
+            return VmThread.current();
+        }
+        VmThread vmThread = VmThread.fromJava(thread);
         if (vmThread == null || vmThread.state() == Thread.State.TERMINATED) {
             return null;
         }
         return vmThread;
     }
 
+    /**
+     * Checks for {@code null} which means current thread (which is alive).
+     * else checks if alive.
+     * @param thread
+     * @return {@code null} if the thread is not alive, {@code thread} otherwise
+     */
+    static Thread checkThread(Thread thread) {
+        if (thread == null) {
+            return VmThread.current().javaThread();
+        }
+        if (!thread.isAlive()) {
+            return null;
+        }
+        return thread;
+    }
+
     static int getFrameCount(Thread thread, Pointer countPtr) {
-        VmThread vmThread = checkThread(thread);
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
@@ -675,8 +702,38 @@ public class JVMTIThreadFunctions {
         return JVMTI_ERROR_NONE;
     }
 
+    private static class FrameLocationUnion {
+        boolean isNative;
+
+    }
+
+    private static class MethodActorLocation {
+        MethodActor methodActor;
+        int location;
+    }
+
+    static FrameInfo getFrameLocation(Thread thread, int depth) throws Exception {
+        MethodActorLocation methodActorLocation = new MethodActorLocation();
+        int error = getFrameLocation(methodActorLocation, thread, depth);
+        if (error == JVMTI_ERROR_NONE) {
+            return new FrameInfo(methodActorLocation.methodActor.toJava(), methodActorLocation.location);
+        } else {
+            throw new JJVMTI.Exception(error);
+        }
+    }
+
     static int getFrameLocation(Thread thread, int depth, Pointer methodPtr, Pointer locationPtr) {
-        VmThread vmThread = checkThread(thread);
+        MethodActorLocation methodActorLocation = new MethodActorLocation();
+        int error = getFrameLocation(methodActorLocation, thread, depth);
+        if (error == JVMTI_ERROR_NONE) {
+            methodPtr.setWord(MethodID.fromMethodActor(methodActorLocation.methodActor));
+            locationPtr.setLong(methodActorLocation.location);
+        }
+        return error;
+    }
+
+    static int getFrameLocation(MethodActorLocation methodActorLocation, Thread thread, int depth) {
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
@@ -685,8 +742,8 @@ public class JVMTIThreadFunctions {
         }
         SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
         if (depth < op.stackTraceVisitor.stackElements.size()) {
-            methodPtr.setWord(MethodID.fromMethodActor(op.stackTraceVisitor.getStackElement(depth).classMethodActor));
-            locationPtr.setLong(op.stackTraceVisitor.getStackElement(depth).bci);
+            methodActorLocation.methodActor = op.stackTraceVisitor.getStackElement(depth).classMethodActor;
+            methodActorLocation.location = op.stackTraceVisitor.getStackElement(depth).bci;
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_NO_MORE_FRAMES;
@@ -735,7 +792,7 @@ public class JVMTIThreadFunctions {
     }
 
     static int notifyFramePop(Thread thread, int depth) {
-        VmThread vmThread = checkThread(thread);
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
@@ -921,15 +978,33 @@ public class JVMTIThreadFunctions {
         }
     }
 
-    private static int getOrSetLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, TypedData typedData) {
-        VmThread vmThread = checkThread(thread);
+    /**
+     * {@code typedData} carries the type and the input value when {@code isSet}, and carries the output
+     * value when not {@code isSet}.
+     */
+    private static int getOrSetLocalValue(Thread thread, int depth, int slot, TypedData typedData, boolean isSet) {
+        VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
-        GetSetStackTraceVisitor stackTraceVisitor = new GetSetStackTraceVisitor(depth, slot, typedData, valuePtr.isZero());
-        SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor);
-        op.submit();
-        if (valuePtr.isNotZero()) {
+        GetSetStackTraceVisitor stackTraceVisitor = new GetSetStackTraceVisitor(depth, slot, typedData, isSet);
+        if (vmThread == VmThread.current()) {
+            // don't need a VM Operation for analysing own stack
+            stackTraceVisitor.walk(new VmStackFrameWalker(vmThread.tla()), Address.fromLong(here()).asPointer(), getAbiStackPointer(), getCpuFramePointer());
+        } else {
+            SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor);
+            op.submit();
+        }
+        return stackTraceVisitor.returnCode;
+    }
+
+    /**
+     * Native variant. Places value in {@code valuePtr}.
+     */
+    static int getLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, char type) {
+        TypedData typedData = new TypedData(type);
+        int error = getOrSetLocalValue(thread, depth, slot, typedData, false);
+        if (error == JVMTI_ERROR_NONE) {
             switch (typedData.tag) {
                 case 'L':
                     valuePtr.setWord(JniHandles.createLocalHandle(typedData.objectValue));
@@ -948,16 +1023,11 @@ public class JVMTIThreadFunctions {
                     break;
             }
         }
-
-        return stackTraceVisitor.returnCode;
-    }
-
-    static int getLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, char type) {
-        return getOrSetLocalValue(thread, depth, slot, valuePtr, new TypedData(type));
+        return error;
     }
 
     static int setLocalValue(Thread thread, int depth, int slot, TypedData typedData) {
-        return getOrSetLocalValue(thread, depth, slot, Pointer.zero(), typedData);
+        return getOrSetLocalValue(thread, depth, slot, typedData, true);
     }
 
     static int setLocalInt(Thread thread, int depth, int slot, int value) {
@@ -978,6 +1048,39 @@ public class JVMTIThreadFunctions {
 
     static int setLocalObject(Thread thread, int depth, int slot, Object value) {
         return setLocalValue(thread, depth, slot, new TypedData(TypedData.DATA_OBJECT, value));
+    }
+
+    // JJVMTI get variants
+
+
+    static TypedData getLocalValue(Thread thread, int depth, int slot, int typeTag) {
+        TypedData typedData = new TypedData(typeTag);
+        int error = getOrSetLocalValue(thread, depth, slot, typedData, false);
+        if (error == JVMTI_ERROR_NONE) {
+            return typedData;
+        } else {
+            throw new JJVMTI.Exception(error);
+        }
+    }
+
+    static int getLocalInt(Thread thread, int depth, int slot) {
+        return getLocalValue(thread, depth, slot, TypedData.DATA_INT).intValue;
+    }
+
+    static long getLocalLong(Thread thread, int depth, int slot) {
+        return getLocalValue(thread, depth, slot, TypedData.DATA_LONG).longValue;
+    }
+
+    static float getLocalFloat(Thread thread, int depth, int slot) {
+        return getLocalValue(thread, depth, slot, TypedData.DATA_FLOAT).floatValue;
+    }
+
+    static double getLocalDouble(Thread thread, int depth, int slot) {
+        return getLocalValue(thread, depth, slot, TypedData.DATA_DOUBLE).doubleValue;
+    }
+
+    static Object getLocalObject(Thread thread, int depth, int slot) {
+        return getLocalValue(thread, depth, slot, TypedData.DATA_OBJECT).objectValue;
     }
 
     // Thread suspend/resume/stop/interrupt

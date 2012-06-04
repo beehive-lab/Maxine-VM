@@ -118,6 +118,8 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
 
     private boolean outOfMemory = false;
 
+    private boolean minorEvacuationOverflow = false;
+
     /**
      * Young generation heap percentage computed by the last resizing request.
      */
@@ -204,17 +206,8 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         heapSize = initHeapSize;
         youngGenHeapPercentage = youngGenMaxHeapPercentage;
         maxHeapOldGenSize = maxHeapSize.minus(minYoungGenSize());
-        if (MaxineVM.isDebug()) {
-            Log.print("Heap:    max = ");
-            Log.printToPowerOfTwoUnits(maxHeapSize);
-            Log.print(" [ ");
-            Log.printToPowerOfTwoUnits(percent(maxHeapSize, youngGenMaxHeapPercentage));
-            Log.print(", ");
-            Log.printToPowerOfTwoUnits(maxHeapSize);
-            Log.print("]");
-
-            Log.print(", init = ");
-            Log.printlnToPowerOfTwoUnits(initHeapSize);
+        if (logger.enabled() || MaxineVM.isDebug()) {
+            logger.logInitializeHeap(heapSize.toLong(), initialYoungGenSize().toLong(), initialOldGenSize().toLong(), maxHeapSize.toLong(), percent(maxHeapSize, youngGenMaxHeapPercentage).toLong(), maxHeapOldGenSize.toLong());
         }
     }
 
@@ -256,7 +249,15 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         if (logger.enabled()) {
             logger.logShouldPerformFullGC(estimatedEvacuation.toLong(), oldGenFreeSpace.toLong());
         }
-        return estimatedEvacuation.greaterThan(oldGenFreeSpace);
+        return minorEvacuationOverflow || estimatedEvacuation.greaterThan(oldGenFreeSpace);
+    }
+
+    public void notifyMinorEvacuationOverflow() {
+        minorEvacuationOverflow = true;
+    }
+
+    public boolean minorEvacuationOverflow() {
+        return minorEvacuationOverflow;
     }
 
     private void sizeDownYoungGen(Size estimatedEvacuation, Size oldGenFreeSpace) {
@@ -293,6 +294,7 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      */
     public boolean resizeAfterFullGC(Size estimatedEvacuation, Size oldGenFreeSpace) {
         final Size usedSpace = oldGenSize().minus(oldGenFreeSpace);
+        minorEvacuationOverflow = false;
         if (normalMode) {
             Size freeHeapSpace = heapSize.minus(usedSpace);
             Size maxFreeHeapSpace = percent(heapSize, maxFreePercent);
@@ -356,6 +358,14 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
                         @VMLogParam(name = "oldSize") long oldSize,
                         @VMLogParam(name = "delta") long delta
         );
+        void initializeHeap(
+                        @VMLogParam(name = "heapSize") long heapSize,
+                        @VMLogParam(name = "youngSize") long youngSize,
+                        @VMLogParam(name = "oldSize") long oldSize,
+                        @VMLogParam(name = "maxHeapSize") long maxHeapSize,
+                        @VMLogParam(name = "maxYoungSize") long maxYoungSize,
+                        @VMLogParam(name = "maxOldSize") long maxOldSize
+        );
     }
 
     static final class HeapSizingPolicyLogger extends HeapSizingPolicyLoggerAuto {
@@ -368,7 +378,7 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
             Log.printToPowerOfTwoUnits(Size.fromLong(heapSize));
             Log.print(" [ young = ");
             Log.printToPowerOfTwoUnits(Size.fromLong(youngSize));
-            Log.print(", old = ");
+            Log.print(" + old = ");
             Log.printToPowerOfTwoUnits(Size.fromLong(oldSize));
             Log.println("]");
         }
@@ -401,13 +411,25 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
             Log.print("Free old space: ");
             Log.printlnToPowerOfTwoUnits(Size.fromLong(freeOldSpace));
         }
+
+        @Override
+        protected void traceInitializeHeap(long heapSize, long youngSize, long oldSize, long maxHeapSize, long maxYoungSize, long maxOldSize) {
+            Log.print("Initial ");
+            traceHeapSize(heapSize, youngSize, oldSize);
+            Log.print("Max heap size = ");
+            Log.printToPowerOfTwoUnits(Size.fromLong(maxHeapSize));
+            Log.print(", Max  young size = ");
+            Log.printToPowerOfTwoUnits(Size.fromLong(maxYoungSize));
+            Log.print(", Max old size = ");
+            Log.printlnToPowerOfTwoUnits(Size.fromLong(maxOldSize));
+        }
     }
 
 // START GENERATED CODE
     private static abstract class HeapSizingPolicyLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            ChangeYoungPercent, GrowHeap, ShouldPerformFullGC,
-            ShrinkHeap;
+            ChangeYoungPercent, GrowHeap, InitializeHeap,
+            ShouldPerformFullGC, ShrinkHeap;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
@@ -440,6 +462,15 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         protected abstract void traceGrowHeap(long heapSize, long youngSize, long oldSize, long delta);
 
         @INLINE
+        public final void logInitializeHeap(long heapSize, long youngSize, long oldSize, long maxHeapSize, long maxYoungSize,
+                long maxOldSize) {
+            log(Operation.InitializeHeap.ordinal(), longArg(heapSize), longArg(youngSize), longArg(oldSize), longArg(maxHeapSize), longArg(maxYoungSize),
+                longArg(maxOldSize));
+        }
+        protected abstract void traceInitializeHeap(long heapSize, long youngSize, long oldSize, long maxHeapSize, long maxYoungSize,
+                long maxOldSize);
+
+        @INLINE
         public final void logShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace) {
             log(Operation.ShouldPerformFullGC.ordinal(), longArg(estimatedEvacuation), longArg(freeOldSpace));
         }
@@ -462,11 +493,15 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
                     traceGrowHeap(toLong(r, 1), toLong(r, 2), toLong(r, 3), toLong(r, 4));
                     break;
                 }
-                case 2: { //ShouldPerformFullGC
+                case 2: { //InitializeHeap
+                    traceInitializeHeap(toLong(r, 1), toLong(r, 2), toLong(r, 3), toLong(r, 4), toLong(r, 5), toLong(r, 6));
+                    break;
+                }
+                case 3: { //ShouldPerformFullGC
                     traceShouldPerformFullGC(toLong(r, 1), toLong(r, 2));
                     break;
                 }
-                case 3: { //ShrinkHeap
+                case 4: { //ShrinkHeap
                     traceShrinkHeap(toLong(r, 1), toLong(r, 2), toLong(r, 3), toLong(r, 4));
                     break;
                 }

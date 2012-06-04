@@ -111,6 +111,10 @@ public class DiamondEliminator implements BlockClosure {
             leftSux = block.suxAt(1);
             rightSux = block.suxAt(0);
         }
+        if (leftSux == rightSux) {
+            // corner case where the block substitution below would fail.
+            return;
+        }
 
         if (C1XOptions.PrintHIR) {
             TTY.println("Eliminating Block B" + block.blockID + ", phi " + ifPhi.id() + ", connecting blocks B" + leftPred.blockID + "->" + leftSux.blockID + " and " + rightPred.blockID + "->" + rightSux.blockID);

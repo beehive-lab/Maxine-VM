@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.io.PrintStream;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
 import com.oracle.max.vma.tools.qa.*;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 /**
  *

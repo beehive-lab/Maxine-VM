@@ -27,6 +27,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A {@link VMLog} implementation for {@link MaxineVM#isHosted() hosted} mode. Similar to {@link VMLogArrayFixed}.
@@ -166,4 +167,10 @@ public class VMLogHosted extends VMLog {
     public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
         // no hosted GC
     }
+
+    @Override
+    public void flushLog() {
+        FatalError.unimplemented();
+    }
+
 }

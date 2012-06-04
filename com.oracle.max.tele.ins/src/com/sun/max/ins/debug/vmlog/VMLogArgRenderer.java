@@ -42,15 +42,12 @@ import com.sun.max.vm.reference.*;
  * Base class for custom {@link VMlog.Logger} argument renderers.
  */
 public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
-    protected VMLogView vmLogView;
 
-    // TODO (mlvdv) extend MaxVM interfaces so that the implementation class is not needed.
-    protected TeleVM vm;
+    protected VMLogView vmLogView;
 
     public VMLogArgRenderer(VMLogView vmLogView) {
         super(vmLogView.inspection());
         this.vmLogView = vmLogView;
-        this.vm = (TeleVM) vmLogView.vm();
     }
 
     /**
@@ -99,8 +96,15 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
     TeleClassMethodActor getTeleClassMethodActor(long arg) {
         final MethodActor methodActor = getMethodActor(arg);
         final MethodKey methodKey = new MethodKey.MethodActorKey(methodActor);
-        final TeleClassMethodActor teleClassMethodActor =  vm.methods().findClassMethodActor(methodKey);
+        final TeleClassMethodActor teleClassMethodActor =  vm().methods().findClassMethodActor(methodKey);
         return teleClassMethodActor;
+    }
+
+    TeleMethodActor getTeleMethodActor(long arg) {
+        final MethodActor methodActor = getMethodActor(arg);
+        final MethodKey methodKey = new MethodKey.MethodActorKey(methodActor);
+        final TeleMethodActor teleMethodActor =  vm().methods().findMethodActor(methodKey);
+        return teleMethodActor;
     }
 
     protected WordValueLabel getReferenceValueLabel(Reference reference) {
@@ -128,7 +132,7 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
 
     protected TeleClassActor getTeleClassActor(long arg) {
         ClassActor classActor = getClassActor(arg);
-        TeleClassActor teleClassActor = vm.classes().findTeleClassActor((int) arg);
+        TeleClassActor teleClassActor = vm().classes().findTeleClassActor((int) arg);
         assert teleClassActor.classActor() == classActor;
         return teleClassActor;
     }

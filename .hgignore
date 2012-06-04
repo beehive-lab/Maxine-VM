@@ -24,6 +24,8 @@ test-logs.zip
 mx/.checkstyle*.timestamp
 mx/env
 mx/includes
+mx/checkstyle-timestamps
+mx/eclipse-launches
 *~
 *.cfg
 vee2010-results

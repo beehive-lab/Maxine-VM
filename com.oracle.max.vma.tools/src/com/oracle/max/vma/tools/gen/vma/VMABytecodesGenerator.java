@@ -22,7 +22,6 @@
  */
 package com.oracle.max.vma.tools.gen.vma;
 
-import static com.oracle.max.vm.ext.t1x.T1XTemplateGenerator.*;
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.lang.reflect.*;
@@ -131,7 +130,7 @@ public class VMABytecodesGenerator {
         if (name.endsWith(suffix)) {
             int index = name.indexOf(suffix);
             assert index >= 0;
-            return toFirstUpper(name.substring(0, index).toLowerCase()) + toFirstUpper(suffix.toLowerCase());
+            return AdviceGeneratorHelper.toFirstUpper(name.substring(0, index).toLowerCase()) + AdviceGeneratorHelper.toFirstUpper(suffix.toLowerCase());
         } else {
             return null;
         }

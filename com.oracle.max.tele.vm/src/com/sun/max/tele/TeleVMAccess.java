@@ -78,7 +78,7 @@ public interface TeleVMAccess {
      * Gets access to predefined accessors for specific methods
      * in specific classes.
      */
-    VmMethodAccess methods();
+    MaxMethods methods();
 
     /**
      * Gets the manager for information about objects in the VM.

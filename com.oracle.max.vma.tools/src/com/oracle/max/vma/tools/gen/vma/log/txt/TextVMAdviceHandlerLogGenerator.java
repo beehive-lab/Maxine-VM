@@ -27,8 +27,8 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.log.*;
-import com.oracle.max.vm.ext.vma.log.txt.*;
+import com.oracle.max.vm.ext.vma.handlers.log.*;
+import com.oracle.max.vm.ext.vma.handlers.log.txt.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
 /**

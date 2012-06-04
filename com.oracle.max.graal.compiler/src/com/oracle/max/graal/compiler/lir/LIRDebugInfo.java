@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -130,7 +130,7 @@ public class LIRDebugInfo {
         for (CiFrame cur = topFrame; cur != null; cur = cur.caller()) {
             for (int i = 0; i < cur.numLocks; i++) {
                 CiMonitorValue lock = (CiMonitorValue) cur.values[i + cur.numLocals + cur.numStack];
-                if (lock.lockData != null) {
+                if (!lock.lockData.isIllegal()) {
                     cur.values[i + cur.numLocals + cur.numStack] = new CiMonitorValue(lock.owner, frameMap.toStackSlot((StackBlock) lock.lockData), lock.eliminated);
                 }
             }

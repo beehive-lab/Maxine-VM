@@ -26,10 +26,9 @@ package com.oracle.max.vma.tools.qa.queries;
 import java.util.*;
 import java.io.*;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.ObjectFieldAdviceRecord;
 import com.oracle.max.vma.tools.qa.*;
 import com.oracle.max.vma.tools.qa.AdviceRecordHelper.*;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 /**
  * List the mutable objects for all classes or a specific class.

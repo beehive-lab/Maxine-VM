@@ -1702,7 +1702,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         }
         while (bitmapWordIndex <= rightmostBitmapWordIndex) {
             final long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
-            if (bitmapWord != 0) {
+            if (bitmapWord != 0L) {
                 // At least one mark is set.
                 int bitIndexInWord = 0;
                 final int bitmapWordFirstBitIndex = bitmapWordIndex << Word.widthValue().log2numberOfBits;

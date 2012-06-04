@@ -28,6 +28,14 @@ import com.sun.max.unsafe.*;
  * Interface that HeapSpace that may be subject to evacuation must implement.
  */
 public interface EvacuatingSpace {
+    abstract class SpaceBounds {
+        abstract boolean isIn(Address address);
+        abstract boolean isContiguous();
+        abstract Address lowestAddress();
+        abstract Address highestAddress();
+    }
+
+    SpaceBounds bounds();
 
     /**
      * Indicate whether an address points to this heap space.
