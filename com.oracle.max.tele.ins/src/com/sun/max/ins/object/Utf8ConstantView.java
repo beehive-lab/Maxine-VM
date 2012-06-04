@@ -29,6 +29,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * An object view specialized for displaying a low-level heap object in the VMk that implements a {@link Utf8Constant}.
@@ -48,9 +49,7 @@ class Utf8ConstantView extends ObjectView<Utf8ConstantView> {
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -68,8 +67,8 @@ class Utf8ConstantView extends ObjectView<Utf8ConstantView> {
             public String fetchString() {
                 return teleUtf8Constant.utf8Constant().string;
             }
-            public boolean isLive() {
-                return teleObject().memoryStatus().isNotDeadYet();
+            public ObjectStatus status() {
+                return teleObject().status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -85,6 +84,9 @@ class Utf8ConstantView extends ObjectView<Utf8ConstantView> {
             }
         });
         getContentPane().add(tabbedPane);
+
+        // Opportunity for view-specific Object menu
+        makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override

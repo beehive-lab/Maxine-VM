@@ -154,6 +154,10 @@ public final class Heap {
      */
     public static final Object HEAP_LOCK = JavaMonitorManager.newVmLock("HEAP_LOCK");
 
+    public static boolean holdsHeapLock() {
+        return Monitor.threadHoldsMonitor(HEAP_LOCK, VmThread.current());
+    }
+
     private static Size maxSize;
     private static Size initialSize;
 

@@ -661,7 +661,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             try {
                 codePointer = vm().machineCode().makeCodePointer(address);
             } catch (InvalidCodeAddressException e) {
-                TeleWarning.message("Invalid breakpoint address " + e.getAddressString() + ":  " + e.getMessage());
+                TeleWarning.message(tracePrefix() + "Invalid breakpoint address " + e.getAddressString() + ":  " + e.getMessage());
             }
             if (codePointer != null && breakpointManager().targetBreakpoints().find(codePointer) == null) {
                 final CodeLocation location = vm().codeLocations().createMachineCodeLocation(codePointer, "For bytecode breakpoint=" + owner.codeLocation());
@@ -711,7 +711,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             // Write the string into the designated region in the VM, along with length and incremented epoch counter
             final int charsLength = breakpointClassDescriptorsString.length();
             final Reference charArrayReference = fields().InspectableCompilationInfo_breakpointClassDescriptorCharArray.readReference(vm());
-            TeleError.check(charArrayReference != null && !charArrayReference.isZero(), "Can't locate inspectable code array for breakpoint classes");
+            TeleError.check(!charArrayReference.isZero(), "Can't locate inspectable code array for breakpoint classes");
             for (int index = 0; index < charsLength; index++) {
                 Layout.setChar(charArrayReference, index, breakpointClassDescriptorsString.charAt(index));
             }

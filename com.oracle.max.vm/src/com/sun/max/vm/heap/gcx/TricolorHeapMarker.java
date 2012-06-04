@@ -661,6 +661,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         return coveredAreaStart.plus(Address.fromInt(bitIndex).shiftedLeft(log2BytesCoveredPerBit));
     }
 
+    /**
+     * Paint grey a color location that doesn't span words.
+     * @param bitIndex
+     */
     @INLINE
     final void markGrey_(int bitIndex) {
         FatalError.check(!colorSpanWords(bitIndex), "Color must not cross word boundary.");
@@ -669,12 +673,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         basePointer.setLong(wordIndex, basePointer.getLong(wordIndex) | (GREY << bitIndexInWord(bitIndex)));
     }
 
-    @INLINE
-    final void markGrey_(Address cell) {
-        markGrey_(bitIndexOf(cell));
-    }
-
-
+    /**
+     * Paint grey a color location that may span words.
+     * @param bitIndex
+     */
     @INLINE
     final void markGrey(int bitIndex) {
         if (!colorSpanWords(bitIndex)) {
@@ -697,46 +699,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     }
 
     @INLINE
-    final void markBlackFromWhite(int bitIndex) {
-        final int wordIndex = bitmapWordIndex(bitIndex);
-        final Pointer basePointer = base.asPointer();
-        basePointer.setLong(wordIndex, basePointer.getLong(wordIndex) | (BLACK << bitIndexInWord(bitIndex)));
-    }
-
-    @INLINE
-    final void markBlackFromWhite(Address cell) {
-        markBlackFromWhite(bitIndexOf(cell));
-    }
-
     final boolean markGreyIfWhite(Pointer cell) {
         final int bitIndex = bitIndexOf(cell);
         if (isWhite(bitIndex)) {
             traceGreyMark(cell, bitIndex);
             markGrey(bitIndex);
-            return true;
-        }
-        return false;
-    }
-
-    @INLINE
-    final boolean markBlackIfWhite(Pointer cell) {
-        return markBlackIfWhite(bitIndexOf(cell));
-    }
-
-    /**
-     * Mark cell corresponding to this bit index black if white.
-     * @param bitIndex bit index corresponding to the address of a cell in the heap covered area.
-     * @return true if the mark was white.
-     */
-    @INLINE
-    final boolean markBlackIfWhite(int bitIndex) {
-        final Pointer basePointer = base.asPointer();
-        final int wordIndex = bitmapWordIndex(bitIndex);
-        final long bitmask = bitmaskFor(bitIndex);
-        final long bitmapWord = basePointer.getLong(wordIndex);
-        if ((bitmapWord & bitmask) == 0) {
-            // Is white. Mark black.
-            basePointer.setLong(wordIndex, bitmapWord | bitmask);
             return true;
         }
         return false;
@@ -756,13 +723,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         final int bitIndex = bitIndexOf(cell);
         traceBlackMark(cell, bitIndex);
         markBlackFromGrey(bitIndex);
-    }
-
-    @INLINE
-    final boolean isColor_(int bitIndex, long color) {
-        FatalError.check(!colorSpanWords(bitIndex), "Color must not cross word boundary.");
-        final long bitmapWord = bitmapWordAt(bitIndex);
-        return ((bitmapWord >>> bitIndexInWord(bitIndex)) & COLOR_MASK) == color;
     }
 
     final boolean isGrey(int bitIndex) {
@@ -810,26 +770,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
 
     final boolean isGreyWhenNotWhite(int bitIndex) {
         return isSet(bitIndex + 1);
-    }
-
-    @INLINE
-    final boolean isBlack_(int bitIndex) {
-        return isColor_(bitIndex, BLACK);
-    }
-
-    @INLINE
-    final boolean isGrey_(int bitIndex) {
-        return isColor_(bitIndex, GREY);
-    }
-
-    @INLINE
-    final boolean isBlack_(Pointer cell) {
-        return isBlack_(bitIndexOf(cell));
-    }
-
-    @INLINE
-    final boolean isGrey_(Pointer cell) {
-        return isGrey_(bitIndexOf(cell));
     }
 
     /**
@@ -1467,41 +1407,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         return -1;
     }
 
-    /**
-     * Search the tricolor mark bitmap for a grey object in a specific region of the heap.
-     * @param start start of the heap region.
-     * @param end end of the heap region.
-     * @return Return the bit index to the first grey mark found if any, -1 otherwise.
-     */
-    public int firstGreyMark(Pointer start, Pointer end) {
-        final Pointer colorMapBase = base.asPointer();
-        final int lastBitIndex = bitIndexOf(end);
-        final int lastBitmapWordIndex = bitmapWordIndex(lastBitIndex);
-        int bitmapWordIndex = bitmapWordIndex(bitIndexOf(start));
-        while (bitmapWordIndex <= lastBitmapWordIndex) {
-            long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
-            if (bitmapWord != 0) {
-                final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
-                if (greyMarksInWord != 0) {
-                    // First grey mark is the least set bit.
-                    final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
-                    final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + bitIndexInWord;
-                    return bitIndexOfGreyCell < lastBitIndex ? bitIndexOfGreyCell : -1;
-                } else if ((bitmapWord >>> LAST_BIT_INDEX_IN_WORD) == 1L) {
-                    // Mark span two words. Check first bit of next word to decide if mark is grey.
-                    bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
-                    if ((bitmapWord & 1) != 0) {
-                        // it is a grey object.
-                        final int bitIndexOfGreyMark = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + LAST_BIT_INDEX_IN_WORD;
-                        return bitIndexOfGreyMark < lastBitIndex ? bitIndexOfGreyMark : -1;
-                    }
-                }
-            }
-            bitmapWordIndex++;
-        }
-        return -1;
-    }
-
     public void verifyHasNoGreyMarks(HeapRegionRangeIterable regionsRanges, Address end)  {
         final int log2RegionSize = HeapRegionConstants.log2RegionSizeInBytes;
         while (regionsRanges.hasNext()) {
@@ -1741,21 +1646,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     }
 
     /**
-     * Pointer to the last word of cell.
-     * @param cell a pointer to a formatted cell.
-     * @return pointer to the last word of the cell.
-     */
-    private static Address lastWordOfCell(Address cell) {
-        return endOfCell(cell).minusWords(1);
-    }
-
-    @INLINE
-    private Address endOfCellAtBitIndex(int blackBitIndex) {
-        Pointer cell = addressOf(blackBitIndex).asPointer();
-        return cell.plus(Layout.size(Layout.cellToOrigin(cell)));
-    }
-
-    /**
      * Perform imprecise sweeping of a heap region described by a {@link HeapRegionSweeper} and notifies the {@link HeapRegionSweeper}
      * of every encountered dead space larger or equal to {@link HeapRegionSweeper#minReclaimableSpace()}.
      * @param sweeper
@@ -1812,7 +1702,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         }
         while (bitmapWordIndex <= rightmostBitmapWordIndex) {
             final long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
-            if (bitmapWord != 0) {
+            if (bitmapWord != 0L) {
                 // At least one mark is set.
                 int bitIndexInWord = 0;
                 final int bitmapWordFirstBitIndex = bitmapWordIndex << Word.widthValue().log2numberOfBits;
@@ -1864,6 +1754,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         Size tailSpace = sweeper.endOfSweepingRegion().minus(tail).asSize();
         if (tailSpace.greaterEqual(sweeper.minReclaimableSpace())) {
             sweeper.processDeadSpace(tail, tailSpace);
+        } else if (MaxineVM.isDebug()) {
+            DarkMatterDebugHelper.setDarkMatter(tail, tailSpace);
         }
         return lastLiveMark;
     }

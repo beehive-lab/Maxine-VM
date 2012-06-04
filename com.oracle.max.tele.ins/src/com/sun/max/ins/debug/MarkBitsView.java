@@ -66,21 +66,7 @@ public class MarkBitsView extends AbstractView<MarkBitsView> {
 
     protected MarkBitsView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
-        final InspectorFrame frame = createFrame(true);
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
-
-        editMenu.add(actions().setMarkBitAtAddress());
-        editMenu.add(actions().setMarkBitAtIndex());
-        editMenu.addSeparator();
-        editMenu.add(actions().removeSelectedMarkBit());
-        editMenu.add(actions().removeAllMarkBits());
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().viewSelectedMemoryWatchpointAction());
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        createFrame(true);
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
 
@@ -88,6 +74,22 @@ public class MarkBitsView extends AbstractView<MarkBitsView> {
     protected void createViewContent() {
         table = new MarkBitsTable(inspection());
         setContentPane(new InspectorScrollPane(inspection(), table));
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu editMenu = makeMenu(MenuKind.EDIT_MENU);
+        editMenu.add(actions().setMarkBitAtAddress());
+        editMenu.add(actions().setMarkBitAtIndex());
+        editMenu.addSeparator();
+        editMenu.add(actions().removeSelectedMarkBit());
+        editMenu.add(actions().removeAllMarkBits());
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().viewSelectedMemoryWatchpointAction());
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
     }
 
     @Override

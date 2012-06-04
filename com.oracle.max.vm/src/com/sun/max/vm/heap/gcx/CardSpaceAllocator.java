@@ -40,8 +40,15 @@ public final class CardSpaceAllocator<T extends Refiller> extends BaseAtomicBump
     }
 
     @Override
+    public Pointer allocateRaw(Size size) {
+        Pointer cell = bumpAllocate(size);
+        cfoTable.set(cell, size);
+        return cell;
+    }
+
+    @Override
     public Pointer allocateCleared(Size size) {
-        Pointer cell = clearAllocatedCell(allocate(size), size);
+        Pointer cell = clearAllocatedCell(bumpAllocate(size), size);
         cfoTable.set(cell, size);
         return cell;
     }

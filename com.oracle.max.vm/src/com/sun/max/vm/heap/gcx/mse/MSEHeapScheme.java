@@ -40,7 +40,6 @@ import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 
@@ -171,7 +170,9 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
             // Make the heap inspectable
-            InspectableHeapInfo.init(false, heapBounds, heapMarker.colorMap);
+            HeapScheme.Inspect.init(false);
+            HeapScheme.Inspect.notifyHeapRegions(heapBounds, heapMarker.memory());
+
         } finally {
             disableCustomAllocation();
         }
@@ -194,7 +195,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
     public boolean collectGarbage(Size requestedFreeSpace) {
         final Size usedSpaceBefore = markSweepSpace.usedSpace();
         if (MaxineVM.isDebug()) {
-            final int logCursor = (int) (collectionCount % 16);
+            final int logCursor = collectionCount % 16;
             allocatedSinceLastGC[logCursor] = usedSpaceBefore.minus(usedSpaceAfterLastGC).toLong();
             if (logCursor == 15) {
                 long c = collectionCount - 15;
@@ -323,7 +324,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
             markSweepSpace.doAfterGC();
 
             VMTI.handler().endGC();
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
             stopTimer(totalPauseTime);
 
             if (traceGCTimes) {
@@ -475,5 +476,14 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
         return markSweepSpace.heapAccount();
     }
 
+    @Override
+    public PhaseLogger phaseLogger() {
+        return HeapSchemeLoggerAdaptor.phaseLogger;
+    }
+
+    @Override
+    public TimeLogger timeLogger() {
+        return HeapSchemeLoggerAdaptor.timeLogger;
+    }
 }
 

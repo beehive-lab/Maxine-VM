@@ -145,7 +145,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
     }
 
     /**
-     * Determines if the target code in the VM is currently patched at this breakpoint's {@linkplain #address() address} with the
+     * Determines if the target code in the VM is currently patched at this breakpoint's {@linkplain #origin() address} with the
      * platform-dependent target instructions implementing a breakpoint.
      */
     boolean isActive() {

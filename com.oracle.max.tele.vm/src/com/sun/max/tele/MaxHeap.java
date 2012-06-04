@@ -78,17 +78,6 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
     boolean containsInDynamicHeap(Address address);
 
     /**
-     * A memory region used for holding references a surrogates for those held
-     * during remote inspection.
-     * <br>
-     * This region is not part of the heap.
-     *
-     * @return description for the special memory region allocated for holding
-     * remote copies of addresses being held by references.
-     */
-    MaxEntityMemoryRegion<MaxRootsTable> rootsMemoryRegion();
-
-    /**
      * Indicates whether heap management provides detailed heap region information.
      *
      * @return true if detailed heap region information can be provided by heap management.

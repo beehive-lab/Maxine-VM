@@ -98,19 +98,7 @@ public final class AllocationsView extends AbstractView<AllocationsView> impleme
                 }
             }
         });
-        final InspectorFrame frame = createFrame(true);
-
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().viewSelectedMemoryRegion());
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-
-        final InspectorMenuItems defaultViewMenuItems = defaultMenuItems(MenuKind.VIEW_MENU);
-        final InspectorMenu viewMenu = frame.makeMenu(MenuKind.VIEW_MENU);
-        viewMenu.add(showFilterCheckboxMenuItem);
-        viewMenu.addSeparator();
-        viewMenu.add(defaultViewMenuItems);
+        createFrame(true);
 
         Trace.end(1, tracePrefix() + "initializing");
     }
@@ -141,6 +129,19 @@ public final class AllocationsView extends AbstractView<AllocationsView> impleme
             contentPane.add(memoryAllocationsScrollPane, BorderLayout.CENTER);
         }
         setContentPane(contentPane);
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().viewSelectedMemoryRegion());
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+
+        final InspectorMenuItems defaultViewMenuItems = defaultMenuItems(MenuKind.VIEW_MENU);
+        final InspectorMenu viewMenu = makeMenu(MenuKind.VIEW_MENU);
+        viewMenu.add(showFilterCheckboxMenuItem);
+        viewMenu.addSeparator();
+        viewMenu.add(defaultViewMenuItems);
     }
 
     @Override

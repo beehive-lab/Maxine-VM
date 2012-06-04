@@ -79,7 +79,7 @@ import com.sun.max.vm.type.*;
  * @see VmCodeCacheRegion
  * @see TeleClassMethodActor
  */
-public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetMethodAccess {
+public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMethodAccess {
 
     private static final int TRACE_VALUE = 2;
 
@@ -107,7 +107,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
          *
          * @see TargetMethod#scalarLiterals()
          */
-        SCALAR_LITERALS,
+        SCALAR_LITERALS ("array of scalar literals for a compilation"),
 
         /**
          * Reference possibly held in a {@link TargetMethod} to an instance of {@code Object[]} in the code cache
@@ -121,7 +121,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
          *
          * @see TargetMethod#referenceLiterals()
          */
-        REFERENCE_LITERALS,
+        REFERENCE_LITERALS ("array of reference literals for a compilation"),
 
         /**
          * Reference possibly held in a {@link TargetMethod} to an instance of {@code byte[]} in the code cache holding
@@ -134,7 +134,17 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
          *
          * @see TargetMethod#code()
          */
-        CODE;
+        CODE ("byte array holding machine code for a compilation");
+
+        private final String label;
+
+        CodeCacheReferenceKind(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
     }
 
     /**
@@ -329,7 +339,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
                 codeByteArrayOrigin = reference().readWord(fields().TargetMethod_code.fieldActor().offset()).asAddress();
                 // Get the absolute location of all target code bytes.
                 // Use low level machinery; we don't want to create a {@link TeleObject} for every one of them.
-                final RemoteTeleReference codeByteArrayRef = referenceManager().makeTemporaryRemoteReference(codeByteArrayOrigin);
+                final RemoteReference codeByteArrayRef = referenceManager().makeTemporaryRemoteReference(codeByteArrayOrigin);
                 final int length = objects().unsafeReadArrayLength(codeByteArrayRef);
                 codeStartAddress = objects().unsafeArrayIndexToAddress(Kind.BYTE, codeByteArrayOrigin, 0);
                 codeEndAddress = objects().unsafeArrayIndexToAddress(Kind.BYTE, codeByteArrayOrigin, length);
@@ -397,7 +407,12 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * permanently unused by the VM.
      */
     public boolean isCodeEvicted() {
-        return !isLive() || isCodeEvicted;
+        // If the code has been evicted, the first evidence we might see of it could be
+        // that the TargetMethod has been collected.  That is sufficient evidence that
+        // the code has been evicted, because we assume that code cache region implementations
+        // keep a list of all currently allocated TargetMethods, and will release that list
+        // only upon eviction.
+        return status().isDead() || isCodeEvicted;
     }
 
     /**

@@ -37,6 +37,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.tele.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
@@ -447,7 +448,11 @@ public final class MemoryWordsTable extends InspectorTable {
                 label = new WordValueLabel(inspection, ValueMode.WORD, MemoryWordsTable.this) {
                     @Override
                     public Value fetchValue() {
-                        return vm().memoryIO().readWordValue(address);
+                        try {
+                            return vm().memoryIO().readWordValue(address);
+                        } catch (DataIOError dataIOError) {
+                            return VoidValue.VOID;
+                        }
                     }
                 };
                 label.setOpaque(true);

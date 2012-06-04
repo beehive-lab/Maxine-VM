@@ -22,6 +22,9 @@
  */
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
+import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMERS.*;
+
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
 import com.sun.max.annotate.*;
@@ -29,6 +32,7 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
@@ -36,17 +40,17 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.VMLogger.Interval;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
-
+import com.sun.max.vm.thread.*;
 /**
  * A heap scheme implementing a two-generations heap, where each generation implements a semi-space collector.
  *
- *
  */
 public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements XirWriteBarrierSpecification, RSetCoverage {
-
     /**
      * Knob for the fixed ratio resizing policy.
      */
@@ -61,9 +65,24 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     final class OldSpaceRefiller extends Refiller {
         @Override
         public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
-            // TODO
-            // Either we're already GC-ing the old space, in which case we have an out of memory situation.
-            // Or this is a direct allocation and we need to raise a full collection.
+            if (Heap.holdsHeapLock() &&  VmThread.current().isVmOperationThread()) {
+                // First, make sure we're doing minor collection here.
+                if (youngSpaceEvacuator.getGCOperation() != null) {
+                    final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
+                    final ContiguousHeapSpace fromSpace = oldSpace.fromSpace;
+                    FatalError.check(!fromSpace.start().equals(allocator.start()), "Must not have recursive overflow of old space during minor collection");
+                    HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
+                    resizingPolicy.notifyMinorEvacuationOverflow();
+                    // Refill the allocator with the old from space.
+                    allocator.refill(oldSpace.fromSpace.start(), oldSpace.fromSpace.committedSize());
+                } else {
+                    // We may overflow during full GC because of a previous minor collection overflow.
+                    FatalError.unimplemented();
+                }
+            } else {
+                // Force full collection.
+                Heap.collectGarbage(Size.ZERO);
+            }
             return Address.zero();
         }
 
@@ -96,6 +115,143 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
     /**
+     * Always start with a minor collection.
+     * If space left after the minor collection in the old generation is less than estimated space for survivors of the next minor collection,
+     * a full GC is performed immediately.
+     * It is possible for the minor collection to overflow the old generation because of under-estimated survivor space at the last minor collection.
+     * This is caught by the refiller of the old generation allocator, which in this case allocate space directly in the second semi-space.
+     */
+    final class GenCollection extends GCOperation {
+        private int minSurvivingPercent = 15; // expected percentage of survivors. Arbitrary for now
+
+        GenCollection() {
+            super("GenCollection");
+        }
+        private void verifyAfterMinorCollection() {
+            // Verify that:
+            // 1. offset table is correctly setup
+            // 2. there are no pointer from old to young.
+            oldSpace.visit(fotVerifier);
+            noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
+            oldSpace.visit(noFromSpaceReferencesVerifiers);
+        }
+
+        private void verifyAfterFullCollection() {
+            oldSpace.visit(fotVerifier);
+            noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
+            oldSpace.visit(noFromSpaceReferencesVerifiers);
+        }
+
+        private void doOldGenCollection() {
+            youngSpaceEvacuator.doBeforeGC();
+            // NOTE: counter must be incremented before a heap phase change  to ANALYZING.
+            fullCollectionCount++;
+            final boolean minorEvacuationOverflow = resizingPolicy.minorEvacuationOverflow();
+            if (minorEvacuationOverflow) {
+                Address startRange =  oldSpace.allocator.start();
+                Address endRange = oldSpace.allocator.unsafeTop();
+                oldSpaceEvacuator.prefillSurvivorRanges(startRange, endRange);
+            }
+            oldSpace.flipSpaces(!minorEvacuationOverflow);
+            oldSpaceEvacuator.setGCOperation(this);
+            oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
+            oldSpaceEvacuator.evacuate();
+            final CardFirstObjectTable fot = cardTableRSet.cfoTable;
+            final int startIndex = fot.tableEntryIndex(oldSpace.fromSpace.start());
+            final int endIndex = fot.tableEntryIndex(oldSpace.fromSpace.committedEnd());
+            fot.clear(startIndex, endIndex);
+            cardTableRSet.cardTable.clean(startIndex, endIndex);
+            youngSpaceEvacuator.doAfterGC();
+            oldSpaceEvacuator.setGCOperation(null);
+        }
+
+        private Size estimatedNextEvac() {
+            final Size min = youngSpace.totalSpace().dividedBy(100).times(minSurvivingPercent);
+            final Size lastSurvivorCount = youngSpaceEvacuator.evacuatedBytes();
+            return lastSurvivorCount.greaterThan(min) ? lastSurvivorCount : min;
+        }
+
+        private void resize(HeapSpace space, Size newSize) {
+            if (newSize.lessThan(space.totalSpace())) {
+                Size delta = space.totalSpace().minus(newSize);
+                space.shrinkAfterGC(delta);
+            } else if (newSize.greaterThan(space.totalSpace())) {
+                Size delta = newSize.minus(space.totalSpace());
+                space.growAfterGC(delta);
+            }
+        }
+
+        @Override
+        protected void collect(int invocationCount) {
+            evacTimers.resetTrackTime();
+
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
+            vmConfig().monitorScheme().beforeGarbageCollection();
+            if (MaxineVM.isDebug() && Heap.verbose()) {
+                Log.println("--Begin nursery evacuation");
+            }
+            evacTimers.start(TOTAL);
+            youngSpaceEvacuator.setGCOperation(this);
+            youngSpaceEvacuator.setEvacuationBufferSize(oldSpace.freeSpace());
+            youngSpaceEvacuator.evacuate();
+            youngSpaceEvacuator.setGCOperation(null);
+            if (MaxineVM.isDebug() && Heap.verbose()) {
+                Log.println("--End nursery evacuation");
+            }
+            if (VerifyAfterGC) {
+                verifyAfterMinorCollection();
+            }
+            final Size estimatedEvac = estimatedNextEvac();
+            evacTimers.stop(TOTAL);
+            if (Heap.logGCTime()) {
+                timeLogger.logPhaseTimes(invocationCount,
+                                evacTimers.get(ROOT_SCAN).getLastElapsedTime(),
+                                evacTimers.get(BOOT_HEAP_SCAN).getLastElapsedTime(),
+                                evacTimers.get(CODE_SCAN).getLastElapsedTime(),
+                                evacTimers.get(RSET_SCAN).getLastElapsedTime(),
+                                evacTimers.get(COPY).getLastElapsedTime(),
+                                evacTimers.get(WEAK_REF).getLastElapsedTime());
+                timeLogger.logGcTimes(invocationCount, true, evacTimers.get(TOTAL).getLastElapsedTime());
+            }
+            if (resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace())) {
+                // Force a temporary transition to MUTATING state.
+                // This simplifies the inspector's maintenance of references state and GC counters.
+                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
+                if (MaxineVM.isDebug() && Heap.verbose()) {
+                    Log.println("--Begin old geneneration collection");
+                }
+                evacTimers.start(TOTAL);
+                doOldGenCollection();
+                if (MaxineVM.isDebug() && Heap.verbose()) {
+                    Log.println("--End   old geneneration collection");
+                }
+                if (VerifyAfterGC) {
+                    verifyAfterFullCollection();
+                }
+                if (resizingPolicy.resizeAfterFullGC(estimatedEvac, oldSpace.freeSpace())) {
+                    resize(youngSpace, resizingPolicy.youngGenSize());
+                    resize(oldSpace, resizingPolicy.oldGenSize());
+                    oldSpaceEvacuator.setEvacuationBufferSize(oldSpace.fromSpace.committedSize());
+                }
+                evacTimers.stop(TOTAL);
+                if (Heap.logGCTime()) {
+                    timeLogger.logPhaseTimes(invocationCount,
+                                    evacTimers.get(ROOT_SCAN).getLastElapsedTime(),
+                                    evacTimers.get(BOOT_HEAP_SCAN).getLastElapsedTime(),
+                                    evacTimers.get(CODE_SCAN).getLastElapsedTime(),
+                                    evacTimers.get(RSET_SCAN).getLastElapsedTime(),
+                                    evacTimers.get(COPY).getLastElapsedTime(),
+                                    evacTimers.get(WEAK_REF).getLastElapsedTime());
+                    timeLogger.logGcTimes(invocationCount, false, evacTimers.get(TOTAL).getLastElapsedTime());
+                }
+
+            }
+            vmConfig().monitorScheme().afterGarbageCollection();
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
+        }
+    }
+
+    /**
      * Old generation, organized as a semi-space.
      */
     @INSPECTED
@@ -112,8 +268,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     /**
      * Policy for resizing the heap after each GC.
      */
-    private GenHeapSizingPolicy heapResizingPolicy;
+    private final GenSSHeapSizingPolicy resizingPolicy;
 
+    /**
+     * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
+     */
+    private final GenCollection genCollection;
 
     /**
      * Card-table based remembered set for the nursery.
@@ -122,15 +282,36 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     private final CardTableRSet cardTableRSet;
 
     /**
-     * Support for heap verification. All live objects are evacuated to the old space on minor collection.
-     * There should remain no references from the old space to the young space.
+     * Implementation of young space evacuation. Used by minor collection operations.
      */
-    private final NoYoungReferenceVerifier noYoungReferencesVerifier;
+    @INSPECTED
+    private final NoAgingNurseryEvacuator youngSpaceEvacuator;
+
+    @INSPECTED
+    private final EvacuatorToCardSpace oldSpaceEvacuator;
+
+    @INSPECTED
+    private int fullCollectionCount;
+
+    /**
+     * Support for heap verification. All live objects are evacuated to the old to space on minor collection.
+     * There should remain no references from the old space to the young space.
+     * Similarly, all live objects are evacuated from the old "from" space on full collection.
+     * There should remain no references from the old "to" space to the old "from" space.
+     * This verifier can be used for both verification.
+     */
+    private final NoEvacuatedSpaceReferenceVerifier noFromSpaceReferencesVerifiers;
 
     /**
      * Verify that the FOT table is correctly setup.
      */
     private final FOTVerifier fotVerifier;
+
+    private final EvacuationTimers evacTimers = new EvacuationTimers();
+
+    private final TimeLogger timeLogger = new TimeLogger();
+
+    private final PhaseLogger phaseLogger = new PhaseLogger();
 
     @HOSTED_ONLY
     public GenSSHeapScheme() {
@@ -139,17 +320,44 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             new AtomicBumpPointerAllocator<YoungSpaceRefiller>(new YoungSpaceRefiller());
         CardSpaceAllocator<OldSpaceRefiller> tenuredAllocator =
             new CardSpaceAllocator<GenSSHeapScheme.OldSpaceRefiller>(new OldSpaceRefiller(), cardTableRSet);
-
-        youngSpace = new ContiguousAllocatingSpace<AtomicBumpPointerAllocator<YoungSpaceRefiller>>(nurseryAllocator);
-        oldSpace = new ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>>(tenuredAllocator);
-        noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
+        resizingPolicy = new GenSSHeapSizingPolicy();
+        youngSpace = new ContiguousAllocatingSpace<AtomicBumpPointerAllocator<YoungSpaceRefiller>>(nurseryAllocator, "Young Generation");
+        oldSpace = new ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>>(tenuredAllocator, "Old Generation");
+        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, cardTableRSet);
+        oldSpaceEvacuator = new  EvacuatorToCardSpace(oldSpace.fromSpace, oldSpace, cardTableRSet);
+        noFromSpaceReferencesVerifiers = new NoEvacuatedSpaceReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
+        genCollection = new GenCollection();
+        youngSpaceEvacuator.setTimers(evacTimers);
+        oldSpaceEvacuator.setTimers(evacTimers);
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         cardTableRSet.initialize(phase);
+        if (phase == MaxineVM.Phase.TERMINATING) {
+            if (Heap.logGCTime()) {
+                timeLogger.logPhaseTimes(-1,
+                                evacTimers.get(ROOT_SCAN).getElapsedTime(),
+                                evacTimers.get(BOOT_HEAP_SCAN).getElapsedTime(),
+                                evacTimers.get(CODE_SCAN).getElapsedTime(),
+                                evacTimers.get(RSET_SCAN).getElapsedTime(),
+                                evacTimers.get(COPY).getElapsedTime(),
+                                evacTimers.get(WEAK_REF).getElapsedTime());
+                timeLogger.logGcTimes(-1, false,  evacTimers.get(TOTAL).getElapsedTime());
+            }
+        }
+    }
+
+    @Override
+    public TimeLogger timeLogger() {
+        return timeLogger;
+    }
+
+    @Override
+    public PhaseLogger phaseLogger() {
+        return phaseLogger;
     }
 
     @Override
@@ -159,8 +367,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     @Override
     public boolean collectGarbage(Size requestedFreeSpace) {
-        // TODO Auto-generated method stub
-        return false;
+        if ((requestedFreeSpace.isZero() && !DisableExplicitGC) || youngSpace.freeSpace().lessThan(requestedFreeSpace)) {
+            if (!Heap.gcDisabled()) {
+                genCollection.submit();
+            }
+        }
+        return oldSpace.freeSpace().plus(youngSpace.freeSpace()).greaterThan(requestedFreeSpace);
     }
 
     @Override
@@ -206,15 +418,24 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeOptCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
         final Address  firstUnusedByteAddress = endOfCodeRegion.alignUp(pageSize);
-
         try {
             // Use immortal memory for now.
             Heap.enableImmortalMemoryAllocation();
-            heapResizingPolicy = new FixedRatioGenHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
-            youngSpace.initialize(firstUnusedByteAddress, heapResizingPolicy.maxYoungGenSize(), heapResizingPolicy.initialYoungGenSize());
+            resizingPolicy.initialize(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
+            youngSpace.initialize(firstUnusedByteAddress, resizingPolicy.maxYoungGenSize(), resizingPolicy.initialYoungGenSize());
             Address startOfOldSpace = youngSpace.space.end().alignUp(pageSize);
-            oldSpace.initializeAlignment(pageSize);
-            oldSpace.initialize(startOfOldSpace, heapResizingPolicy.maxOldGenSize(), heapResizingPolicy.initialOldGenSize());
+            oldSpace.initialize(startOfOldSpace, resizingPolicy.maxOldGenSize(), resizingPolicy.initialOldGenSize());
+            /*
+             * FIXME:
+             * We set retireAfterEvacuation parameter to true. We allocate the entire old free space as evacuation LAB when doing a minor evacuation,
+             * and retire the entire left over. This is necessary in order for the oldSpace.freeSpace to report the free space accurately independently
+             * of the youngSpaceEvacuator (otherwise, we'd have to include the evacuator's ELAB in the calculation). It is also necessary to
+             * retire the TLAB if we need mutators to allocate directly in the old gen.
+             * This is rather complicated and we need to rethink the APIs here and how to share the evacuator.
+              * An alternative would be to allocate an ELAB of size equal to the expected survivor space minus leftover in the current ELAB, but that isn't satisfying either.
+            */
+            youngSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256), true);
+            oldSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256), true);
             initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
             cardTableRSet.initializeXirStartupConstants();
 
@@ -231,8 +452,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
-           // Make the heap inspectable
-            InspectableHeapInfo.init(true, youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
+            // Make the heap inspectable
+            HeapScheme.Inspect.init(true);
+            // HeapScheme.Inspect.notifyHeapRegions(youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
         } finally {
             Heap.disableImmortalMemoryAllocation();
         }
@@ -344,5 +566,304 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
         return XirWriteBarrierSpecification.NULL_WRITE_BARRIER_GEN;
     }
+
+    @HOSTED_ONLY
+    @VMLoggerInterface(parent = HeapScheme.PhaseLogger.class)
+    private interface PhaseLoggerInterface {
+        void scanningThreadRoots(@VMLogParam(name = "vmThread") VmThread vmThread);
+        void scanningRoots(@VMLogParam(name = "interval") Interval interval);
+        void scanningBootHeap(@VMLogParam(name = "interval") Interval interval);
+        void scanningCode(@VMLogParam(name = "interval") Interval interval);
+        void scanningRSet(@VMLogParam(name = "interval") Interval interval);
+        void evacuating(@VMLogParam(name = "interval") Interval interval);
+        void processingSpecialReferences(@VMLogParam(name = "interval") Interval interval);
+    }
+
+    @HOSTED_ONLY
+    @VMLoggerInterface(parent = HeapScheme.TimeLogger.class)
+    private interface TimeLoggerInterface {
+        void stackReferenceMapPreparationTime(
+            @VMLogParam(name = "stackReferenceMapPreparationTime") long stackReferenceMapPreparationTime);
+
+        void  gcTimes(
+                        @VMLogParam(name = "invocationCount") int invocationCount,
+                        @VMLogParam(name = "minorCollection") boolean minorCollection,
+                        @VMLogParam(name = "gcTime") long gcTime
+        );
+
+        void phaseTimes(
+                        @VMLogParam(name = "invocationCount") int invocationCount,
+                        @VMLogParam(name = "rootScanTime") long rootScanTime,
+                        @VMLogParam(name = "bootHeapScanTime") long bootHeapScanTime,
+                        @VMLogParam(name = "codeScanTime") long codeScanTime,
+                        @VMLogParam(name = "rsetTime") long rsetTime,
+                        @VMLogParam(name = "evacTime") long evacTime,
+                        @VMLogParam(name = "weakRefTime") long weakRefTime
+        );
+    }
+
+    public  static final class PhaseLogger extends PhaseLoggerAuto {
+
+        private static void tracePhase(String description, Interval interval) {
+            Log.print(interval.name()); Log.print(": "); Log.println(description);
+        }
+
+        PhaseLogger() {
+            super(null, null);
+        }
+
+        @Override
+        protected void traceEvacuating(Interval interval) {
+            tracePhase("Evacuating reachables", interval);
+        }
+
+        @Override
+        protected void traceProcessingSpecialReferences(Interval interval) {
+            tracePhase("Processing special references", interval);
+        }
+
+        @Override
+        protected void traceScanningBootHeap(Interval interval) {
+            tracePhase("Scanning boot heap", interval);
+        }
+
+        @Override
+        protected void traceScanningCode(Interval interval) {
+            tracePhase("Scanning code", interval);
+        }
+
+        @Override
+        protected void traceScanningRSet(Interval interval) {
+            tracePhase("Scanning remembered sets", interval);
+        }
+
+        @Override
+        protected void traceScanningRoots(Interval interval) {
+            tracePhase("Scanning roots", interval);
+        }
+
+        @Override
+        protected void traceScanningThreadRoots(VmThread vmThread) {
+            Log.print("Scanning thread local and stack roots for thread ");
+            Log.printThread(vmThread, true);
+        }
+
+    }
+
+    public static final class TimeLogger extends TimeLoggerAuto {
+        private static final String HZ_SUFFIX = TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK);
+        private static final String TIMINGS_LEAD = "Timings (" + HZ_SUFFIX + ") for ";
+
+        TimeLogger() {
+            super(null, null);
+        }
+
+        @Override
+        protected void traceStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime) {
+            Log.print("Stack reference map preparation time: ");
+            Log.print(stackReferenceMapPreparationTime);
+            Log.println(HZ_SUFFIX);
+        }
+
+        @Override
+        protected void tracePhaseTimes(int invocationCount,  long rootScanTime, long bootHeapScanTime, long codeScanTime, long rsetTime, long evacTime, long weakRefTime) {
+            Log.print(TIMINGS_LEAD);
+            if (invocationCount < 0) {
+                Log.print("all GC");
+            } else {
+                Log.print(" GC #");
+                Log.print(invocationCount);
+            }
+            Log.print(", root scan=");
+            Log.print(rootScanTime);
+            Log.print(", boot heap scan=");
+            Log.print(bootHeapScanTime);
+            Log.print(", code scan=");
+            Log.print(codeScanTime);
+            Log.print(", remembered set scan=");
+            Log.print(rsetTime);
+            Log.print(", copy=");
+            Log.print(evacTime);
+            Log.print(", weak refs=");
+            Log.println(weakRefTime);
+        }
+
+        @Override
+        protected void traceGcTimes(int invocationCount, boolean minorCollection, long gcTime) {
+            Log.print(TIMINGS_LEAD);
+            if (invocationCount < 0) {
+                Log.print("all GC");
+            } else {
+                Log.print(" GC #");
+                Log.print(invocationCount);
+                if (!minorCollection) {
+                    Log.print(" (Full) ");
+                }
+            }
+            Log.print(" total=");
+            Log.println(gcTime);
+        }
+    }
+
+// START GENERATED CODE
+    private static abstract class PhaseLoggerAuto extends com.sun.max.vm.heap.HeapScheme.PhaseLogger {
+        public enum Operation {
+            Evacuating, ProcessingSpecialReferences, ScanningBootHeap,
+            ScanningCode, ScanningRSet, ScanningRoots, ScanningThreadRoots;
+
+            @SuppressWarnings("hiding")
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected PhaseLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logEvacuating(Interval interval) {
+            log(Operation.Evacuating.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceEvacuating(Interval interval);
+
+        @INLINE
+        public final void logProcessingSpecialReferences(Interval interval) {
+            log(Operation.ProcessingSpecialReferences.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceProcessingSpecialReferences(Interval interval);
+
+        @INLINE
+        public final void logScanningBootHeap(Interval interval) {
+            log(Operation.ScanningBootHeap.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningBootHeap(Interval interval);
+
+        @INLINE
+        public final void logScanningCode(Interval interval) {
+            log(Operation.ScanningCode.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningCode(Interval interval);
+
+        @INLINE
+        public final void logScanningRSet(Interval interval) {
+            log(Operation.ScanningRSet.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningRSet(Interval interval);
+
+        @INLINE
+        public final void logScanningRoots(Interval interval) {
+            log(Operation.ScanningRoots.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningRoots(Interval interval);
+
+        @Override
+        @INLINE
+        public final void logScanningThreadRoots(VmThread vmThread) {
+            log(Operation.ScanningThreadRoots.ordinal(), vmThreadArg(vmThread));
+        }
+        protected abstract void traceScanningThreadRoots(VmThread vmThread);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //Evacuating
+                    traceEvacuating(toInterval(r, 1));
+                    break;
+                }
+                case 1: { //ProcessingSpecialReferences
+                    traceProcessingSpecialReferences(toInterval(r, 1));
+                    break;
+                }
+                case 2: { //ScanningBootHeap
+                    traceScanningBootHeap(toInterval(r, 1));
+                    break;
+                }
+                case 3: { //ScanningCode
+                    traceScanningCode(toInterval(r, 1));
+                    break;
+                }
+                case 4: { //ScanningRSet
+                    traceScanningRSet(toInterval(r, 1));
+                    break;
+                }
+                case 5: { //ScanningRoots
+                    traceScanningRoots(toInterval(r, 1));
+                    break;
+                }
+                case 6: { //ScanningThreadRoots
+                    traceScanningThreadRoots(toVmThread(r, 1));
+                    break;
+                }
+            }
+        }
+    }
+
+    private static abstract class TimeLoggerAuto extends com.sun.max.vm.heap.HeapScheme.TimeLogger {
+        public enum Operation {
+            GcTimes, PhaseTimes, StackReferenceMapPreparationTime;
+
+            @SuppressWarnings("hiding")
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected TimeLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logGcTimes(int invocationCount, boolean minorCollection, long gcTime) {
+            log(Operation.GcTimes.ordinal(), intArg(invocationCount), booleanArg(minorCollection), longArg(gcTime));
+        }
+        protected abstract void traceGcTimes(int invocationCount, boolean minorCollection, long gcTime);
+
+        @INLINE
+        public final void logPhaseTimes(int invocationCount, long rootScanTime, long bootHeapScanTime, long codeScanTime, long rsetTime,
+                long evacTime, long weakRefTime) {
+            log(Operation.PhaseTimes.ordinal(), intArg(invocationCount), longArg(rootScanTime), longArg(bootHeapScanTime), longArg(codeScanTime), longArg(rsetTime),
+                longArg(evacTime), longArg(weakRefTime));
+        }
+        protected abstract void tracePhaseTimes(int invocationCount, long rootScanTime, long bootHeapScanTime, long codeScanTime, long rsetTime,
+                long evacTime, long weakRefTime);
+
+        @Override
+        @INLINE
+        public final void logStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime) {
+            log(Operation.StackReferenceMapPreparationTime.ordinal(), longArg(stackReferenceMapPreparationTime));
+        }
+        protected abstract void traceStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //GcTimes
+                    traceGcTimes(toInt(r, 1), toBoolean(r, 2), toLong(r, 3));
+                    break;
+                }
+                case 1: { //PhaseTimes
+                    tracePhaseTimes(toInt(r, 1), toLong(r, 2), toLong(r, 3), toLong(r, 4), toLong(r, 5), toLong(r, 6), toLong(r, 7));
+                    break;
+                }
+                case 2: { //StackReferenceMapPreparationTime
+                    traceStackReferenceMapPreparationTime(toLong(r, 1));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
 
 }

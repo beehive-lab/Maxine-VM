@@ -34,9 +34,9 @@ import com.sun.max.unsafe.*;
  */
 public abstract class TeleDelegatedMemoryRegion extends VmMemoryRegion {
 
-    private final TeleRuntimeMemoryRegion teleRuntimeMemoryRegion;
+    private final TeleMemoryRegion teleRuntimeMemoryRegion;
 
-    protected TeleDelegatedMemoryRegion(MaxVM vm, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
+    protected TeleDelegatedMemoryRegion(MaxVM vm, TeleMemoryRegion teleRuntimeMemoryRegion) {
         super(vm);
         this.teleRuntimeMemoryRegion = teleRuntimeMemoryRegion;
     }

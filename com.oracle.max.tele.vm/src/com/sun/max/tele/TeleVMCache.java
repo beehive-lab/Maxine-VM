@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ public interface TeleVMCache {
     /**
      * Causes this object to refresh any state that is read and cached from the VM, must
      * be called in a thread holding the VM lock.
-     * <br>
+     * <p>
      * Caches can be tagged with the process epoch, the number of times the process has run,
      * on the assumption that the contents of VM memory will not change without
      * an increment of the epoch counter.

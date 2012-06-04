@@ -25,7 +25,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
 
-public final class FixedRatioGenHeapSizingPolicy implements GenHeapSizingPolicy {
+public class FixedRatioGenHeapSizingPolicy implements GenHeapSizingPolicy {
     /**
      * Fixed ratio of young to total heap size, expressed as a percentage (value from 1 to 100). The ratio stay fixed throughout heap resizing.
      * Resizing is allowed only if there is enough guaranteed reserve in the old generation.
@@ -39,11 +39,11 @@ public final class FixedRatioGenHeapSizingPolicy implements GenHeapSizingPolicy 
     /**
      * Maximum heap size, aligned up to a {@link #unitSize}.
      */
-    final Size maxHeapSize;
+    protected Size maxHeapSize;
     /**
      * Initial heap size, aligned up to a {@link #unitSize}. Must be less or equal to the maxHeapSize, and at least one unit size.
      */
-    final Size initHeapSize;
+    protected Size initHeapSize;
     /**
      * Size to which generations are aligned to. In other words, <pre>unitSize = Size.fromInt(1).shiftedLeft({@link #log2Alignment})</pre>
      */
@@ -57,18 +57,27 @@ public final class FixedRatioGenHeapSizingPolicy implements GenHeapSizingPolicy 
         return alignUp(size.times(youngGenFixedHeapPercentage).dividedBy(100));
     }
 
-    private Size alignUp(Size size) {
+    protected Size alignUp(Size size) {
         Size alignment = unitSize.minus(1);
         return size.plus(alignment).and(alignment.not());
     }
 
-    public FixedRatioGenHeapSizingPolicy(Size initHeapSize, Size maxHeapSize, int youngToOldGenSizeRatio, int log2Alignment) {
-        this.youngGenFixedHeapPercentage = youngToOldGenSizeRatio;
-        this.log2Alignment = log2Alignment;
-         // Run validation of heap sizing parameters.
-        FatalError.check(youngToOldGenSizeRatio > 0 && youngToOldGenSizeRatio <= 100, "Not a valid percentage of heap size");
+    protected Size alignDown(Size size) {
+        Size alignment = unitSize.minus(1);
+        return size.and(alignment.not());
+    }
+
+    protected FixedRatioGenHeapSizingPolicy(int youngGenFixedHeapPercentage, int log2Alignment) {
+        // Run validation of heap sizing parameters.
+        FatalError.check(youngGenFixedHeapPercentage > 0 && youngGenFixedHeapPercentage <= 100, "Not a valid percentage of heap size");
         FatalError.check(log2Alignment > 0 && log2Alignment < Word.widthValue().numberOfBits, "Not a valid log2 alignment");
+        this.youngGenFixedHeapPercentage = youngGenFixedHeapPercentage;
+        this.log2Alignment = log2Alignment;
         this.unitSize = Size.fromInt(1).shiftedLeft(log2Alignment);
+    }
+
+    public FixedRatioGenHeapSizingPolicy(Size initHeapSize, Size maxHeapSize, int youngGenFixedHeapPercentage, int log2Alignment) {
+        this(youngGenFixedHeapPercentage, log2Alignment);
         this.maxHeapSize = alignUp(maxHeapSize);
         this.initHeapSize = alignUp(initHeapSize);
     }

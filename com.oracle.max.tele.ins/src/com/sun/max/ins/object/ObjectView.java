@@ -25,6 +25,8 @@ package com.sun.max.ins.object;
 import static com.sun.max.tele.MaxProcessState.*;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -57,7 +59,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     private TeleObject teleObject;
 
-    private boolean followingTeleObject = true;
+    private boolean followingTeleObject = false; // true;
 
     /**
      * @return local surrogate for the object being inspected in the VM
@@ -87,6 +89,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
      */
     private String title = "";
 
+
     private InspectorTable objectHeaderTable;
 
     protected final ObjectViewPreferences instanceViewPreferences;
@@ -104,8 +107,8 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
                 reconstructView();
             }
             @Override
-            protected void setHideNullArrayElements(boolean hideNullArrayElements) {
-                super.setHideNullArrayElements(hideNullArrayElements);
+            protected void setElideNullArrayElements(boolean hideNullArrayElements) {
+                super.setElideNullArrayElements(hideNullArrayElements);
                 reconstructView();
             }
         };
@@ -122,13 +125,29 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         final InspectorFrame frame = super.createFrame(addMenuBar);
         gui().setLocationRelativeToMouse(this, preference().geometry().newFrameDiagonalOffset());
         originalFrameGeometry = getGeometry();
-        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
+        return frame;
+    }
+
+    @Override
+    protected void createViewContent() {
+        final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
+        if (instanceViewPreferences.showHeader()) {
+            objectHeaderTable = new ObjectHeaderTable(inspection(), teleObject, instanceViewPreferences);
+            objectHeaderTable.setBorder(preference().style().defaultPaneBottomBorder());
+            // Will add without column headers
+            panel.add(objectHeaderTable, BorderLayout.NORTH);
+        }
+
+        setContentPane(panel);
+
+        // Populate menu bar
+        final InspectorMenu defaultMenu = makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
         defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.OBJECT, this));
         defaultMenu.add(views().deactivateAllViewsAction(ViewKind.OBJECT));
 
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(views().memory().makeViewAction(teleObject, "View this object's memory"));
         if (vm().heap().providesHeapRegionInfo()) {
             // TODO: Need to revisit this to better integrate with the Views framework, e.g., have something like:
@@ -144,30 +163,29 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
-        frame.makeMenu(MenuKind.OBJECT_MENU);
+        // Ensure that the object menu appears in the right position, but defer its creation
+        // to subclasses, so that view-specific items can be prepended to the standard ones.
+        makeMenu(MenuKind.OBJECT_MENU);
+
 
         if (teleObject.getTeleClassMethodActorForObject() != null) {
-            frame.makeMenu(MenuKind.CODE_MENU);
+            makeMenu(MenuKind.CODE_MENU);
         }
 
         if (teleObject.getTeleClassMethodActorForObject() != null || TeleTargetMethod.class.isAssignableFrom(teleObject.getClass())) {
-            frame.makeMenu(MenuKind.DEBUG_MENU);
+            makeMenu(MenuKind.DEBUG_MENU);
         }
 
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-        return frame;
-    }
-
-    @Override
-    protected void createViewContent() {
-        final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
-        if (instanceViewPreferences.showHeader()) {
-            objectHeaderTable = new ObjectHeaderTable(inspection(), teleObject, instanceViewPreferences);
-            objectHeaderTable.setBorder(preference().style().defaultPaneBottomBorder());
-            // Will add without column headers
-            panel.add(objectHeaderTable, BorderLayout.NORTH);
+        final InspectorMenuItems defaultViewMenuItems = defaultMenuItems(MenuKind.VIEW_MENU);
+        final InspectorMenu viewMenu = makeMenu(MenuKind.VIEW_MENU);
+        final List<InspectorAction> extraViewMenuActions = extraViewMenuActions();
+        if (!extraViewMenuActions.isEmpty()) {
+            for (InspectorAction action : extraViewMenuActions) {
+                viewMenu.add(action);
+            }
+            viewMenu.addSeparator();
         }
-        setContentPane(panel);
+        viewMenu.add(defaultViewMenuItems);
     }
 
     @Override
@@ -178,17 +196,20 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     @Override
     public final String getTextForTitle() {
         final StringBuilder titleText = new StringBuilder();
-        final ObjectMemoryStatus status = teleObject.memoryStatus();
+        final ObjectStatus status = teleObject.status();
         if (!status.isLive()) {
-            // Omit the prefix for live objects: the usual case.
+            // Omit the prefix for live objects (the usual case).
             titleText.append("(").append(status.label()).append(") ");
         }
-        if (status.isNotDeadYet()) {
+        if (status.isNotDead()) {
             // Revise the title of the object if we still can
             Pointer pointer = teleObject.origin();
             title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
         }
         titleText.append(title);
+        if (isElided()) {
+            titleText.append("(ELIDED)");
+        }
         final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(currentObjectOrigin);
         titleText.append(" in ").append(memoryRegion == null ? "unknown region" : memoryRegion.regionName());
         return titleText.toString();
@@ -255,9 +276,9 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     protected void refreshState(boolean force) {
-        final ObjectMemoryStatus memoryStatus = teleObject.memoryStatus();
-        if (memoryStatus.isForwarded() && followingTeleObject) {
-            Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardedTeleRef().toOrigin().toHexString());
+        final ObjectStatus status = teleObject.status();
+        if (teleObject.reference().isForwarded() && followingTeleObject) {
+            //Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardReference().toOrigin().toHexString());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
             if (viewManager.isObjectViewObservingObject(forwardedTeleObject.reference().makeOID())) {
                 followingTeleObject = false;
@@ -285,16 +306,27 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             }
         }
         setTitle();
-        switch(memoryStatus) {
-            case DEAD:
-                setStateColor(preference().style().deadObjectBackgroundColor());
-                break;
-            case FORWARDED:
-                setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
-                break;
-            default:
-                setStateColor(null);
+        if (status.isDead()) {
+            setStateColor(preference().style().deadObjectBackgroundColor());
+        } else if (teleObject.reference().isForwarded()) {
+            setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
+        } else {
+            setStateColor(null);
         }
+    }
+
+    /**
+     * Gets any view-specific actions that should appear on the {@link MenuKind#VIEW_MENU}.
+     */
+    protected List<InspectorAction> extraViewMenuActions() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * @return whether the display mode is hiding some of the members of the object
+     */
+    protected boolean isElided() {
+        return false;
     }
 
 }

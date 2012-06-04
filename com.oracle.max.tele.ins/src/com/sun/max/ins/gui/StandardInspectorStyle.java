@@ -274,6 +274,10 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return brighten1(InspectorStyle.Pink);
     }
 
+    public Color forwardedObjectBackgroundColor() {
+        return InspectorStyle.SunYellow3;
+    }
+
     private static final Color debugSelectionBorderColor = InspectorStyle.Blue;
     private static final Color debugBreakpointBorderColor = InspectorStyle.Orange;
     private static final Color debugIPTextColor = InspectorStyle.Red;

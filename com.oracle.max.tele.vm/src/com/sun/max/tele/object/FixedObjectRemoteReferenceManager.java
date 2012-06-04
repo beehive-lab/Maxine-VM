@@ -22,9 +22,13 @@
  */
 package com.sun.max.tele.object;
 
+import java.io.*;
+import java.lang.management.*;
 import java.lang.ref.*;
+import java.text.*;
 import java.util.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
@@ -32,25 +36,25 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 
 /**
- * A manager for remote references to objects allocated in a region of VM memory where:
+ * A manager for remote references to objects allocated in a single region of VM memory where:
  * <ul>
  * <li>The region is assumed not to move during its lifetime; and</li>
  * <li>Objects, once created never move and are never collected/evicted.</li>
  * </ul>
  */
-public final class FixedObjectRemoteReferenceManager extends AbstractRemoteReferenceManager {
+public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder implements RemoteObjectReferenceManager {
 
     private static final int TRACE_VALUE = 1;
 
     private final VmObjectHoldingRegion objectRegion;
 
     /**
-     * Map:  address in VM --> a {@link TeleReference} that refers to the object whose origin is at that location.
+     * Map:  address in VM --> a {@link RemoteReference} that refers to the object whose origin is at that location.
      */
-    private Map<Long, WeakReference<RemoteTeleReference>> originToReference = new HashMap<Long, WeakReference<RemoteTeleReference>>();
+    private Map<Long, WeakReference<RemoteReference>> originToReference = new HashMap<Long, WeakReference<RemoteReference>>();
 
     /**
-     * Creates a manager for remote references to objects in a particular region
+     * Creates a manager for remote references to objects in a single region
      * of memory in the VM, presumed to be an unmanaged region in which object
      * never move and are never collected.
      */
@@ -59,43 +63,50 @@ public final class FixedObjectRemoteReferenceManager extends AbstractRemoteRefer
         this.objectRegion = objectRegion;
     }
 
-    public VmObjectHoldingRegion objectRegion() {
-        return objectRegion;
-    }
-
     /**
      * {@inheritDoc}
      * <p>
      * There is no GC cycle for an unmanaged code cache; object
      * are neither relocated nor collected.
      */
-    public  HeapPhase heapPhase() {
-        return HeapPhase.ALLOCATING;
+    public  HeapPhase phase() {
+        return HeapPhase.MUTATING;
     }
 
     public boolean isObjectOrigin(Address origin) throws TeleError {
         TeleError.check(objectRegion.memoryRegion().contains(origin), "Location is outside region");
         // The only way we can tell in general is with the heuristic.
-        return objects().isObjectOriginHeuristic(origin);
+        return objects().isPlausibleOriginUnsafe(origin);
     }
 
-    public TeleReference makeReference(Address origin) {
+
+    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
+        // Assume no explicit representation of free space
+        return false;
+    }
+
+    public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
+        return null;
+    }
+
+    public RemoteReference makeReference(Address origin) {
+        assert vm().lockHeldByCurrentThread();
         TeleError.check(objectRegion.memoryRegion().contains(origin), "Attempt to make reference at location outside region");
-        RemoteTeleReference teleReference = null;
-        final WeakReference<RemoteTeleReference> existingRef = originToReference.get(origin.toLong());
-        if (existingRef != null) {
-            teleReference = existingRef.get();
+        RemoteReference remoteReference = null;
+        final WeakReference<RemoteReference> weakRef = originToReference.get(origin.toLong());
+        if (weakRef != null) {
+            remoteReference = weakRef.get();
         }
-        if (teleReference == null && objects().isObjectOriginHeuristic(origin)) {
-            teleReference = new UnmanagedCanonicalTeleReference(vm(), origin);
-            originToReference.put(origin.toLong(), new WeakReference<RemoteTeleReference>(teleReference));
+        if (remoteReference == null && objects().isPlausibleOriginUnsafe(origin)) {
+            remoteReference = new UnmanagedCanonicalTeleReference(vm(), origin);
+            originToReference.put(origin.toLong(), new WeakReference<RemoteReference>(remoteReference));
         }
-        return teleReference;
+        return remoteReference == null ? vm().referenceManager().zeroReference() : remoteReference;
     }
 
-    public int activeReferenceCount() {
+    private int activeReferenceCount() {
         int count = 0;
-        for (WeakReference<RemoteTeleReference> weakRef : originToReference.values()) {
+        for (WeakReference<RemoteReference> weakRef : originToReference.values()) {
             if (weakRef.get() != null) {
                 count++;
             }
@@ -103,23 +114,64 @@ public final class FixedObjectRemoteReferenceManager extends AbstractRemoteRefer
         return count;
     }
 
-    public int totalReferenceCount() {
+    private int totalReferenceCount() {
         return originToReference.size();
     }
+
+    public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        final NumberFormat formatter = NumberFormat.getInstance();
+
+        // Line 0
+        String indentation = Strings.times(' ', indent);
+        final StringBuilder sb0 = new StringBuilder();
+        sb0.append(objectRegion.entityName());
+        printStream.println(indentation + sb0.toString());
+
+        // increase indentation
+        indentation += Strings.times(' ', 4);
+
+       // Line 1
+        final StringBuilder sb1 = new StringBuilder();
+        sb1.append("memory: ");
+        final MaxEntityMemoryRegion memoryRegion = objectRegion.memoryRegion();
+        final MemoryUsage usage = memoryRegion.getUsage();
+        final long size = usage.getCommitted();
+        if (size > 0) {
+            sb1.append("size=" + formatter.format(size));
+            final long used = usage.getUsed();
+            sb1.append(", usage=" + (Long.toString(100 * used / size)) + "%");
+        } else {
+            sb1.append(" <unallocated>");
+        }
+        sb1.append(", unmanaged");
+        printStream.println(indentation + sb1.toString());
+
+        // Line 2, indented
+        final StringBuilder sb2 = new StringBuilder();
+        final int activeReferenceCount = activeReferenceCount();
+        final int totalReferenceCount = totalReferenceCount();
+        sb2.append("mapped object refs:  active=" + formatter.format(activeReferenceCount));
+        sb2.append(", inactive=" + formatter.format(totalReferenceCount - activeReferenceCount));
+        if (verbose) {
+            sb2.append(", ref. mgr=" + getClass().getSimpleName());
+        }
+        printStream.println(indentation + sb2.toString());
+    }
+
 
     /**
      * A canonical remote object reference pointing into a region of VM memory that is unmanaged:
      * objects, once allocated, never move and are never collected/evicted.
      */
-    private class UnmanagedCanonicalTeleReference extends ConstantTeleReference {
+    private class UnmanagedCanonicalTeleReference extends ConstantRemoteReference {
 
         UnmanagedCanonicalTeleReference(TeleVM vm, Address origin) {
             super(vm, origin);
         }
 
         @Override
-        public ObjectMemoryStatus memoryStatus() {
-            return ObjectMemoryStatus.LIVE;
+        public ObjectStatus status() {
+            return ObjectStatus.LIVE;
         }
     }
 

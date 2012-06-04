@@ -90,25 +90,9 @@ public final class ThreadLocalsView extends AbstractView<ThreadLocalsView> imple
         viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
 
-        final InspectorFrame frame = createFrame(true);
-
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().viewSelectedThreadLocalsBlockMemory("View memory for thread's locals block"));
-        for (SafepointPoll.State state : SafepointPoll.State.CONSTANTS) {
-            memoryMenu.add(actions().viewSelectedThreadLocalsAreaMemory(state, "View memory for thread's " + state.name() + " area"));
-        }
-        memoryMenu.add(actions().viewSelectedThreadStackMemory("View memory for thread's stack"));
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-
-        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
-        Watchpoints.buildThreadLocalWatchpointMenu(inspection, editMenu);
-
+        createFrame(true);
         forceRefresh();
+
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
 
@@ -165,6 +149,23 @@ public final class ThreadLocalsView extends AbstractView<ThreadLocalsView> imple
         }
         setContentPane(tabbedPane);
         setTitle();
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().viewSelectedThreadLocalsBlockMemory("View memory for thread's locals block"));
+        for (SafepointPoll.State state : SafepointPoll.State.CONSTANTS) {
+            memoryMenu.add(actions().viewSelectedThreadLocalsAreaMemory(state, "View memory for thread's " + state.name() + " area"));
+        }
+        memoryMenu.add(actions().viewSelectedThreadStackMemory("View memory for thread's stack"));
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
+        final InspectorMenu editMenu = makeMenu(MenuKind.EDIT_MENU);
+        Watchpoints.buildThreadLocalWatchpointMenu(inspection(), editMenu);
     }
 
     @Override

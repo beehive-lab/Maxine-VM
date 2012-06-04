@@ -24,11 +24,13 @@ package com.sun.max.tele.heap;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
+import com.sun.max.tele.heap.region.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 
-public abstract class TeleRegionBasedHeapScheme extends AbstractVmHolder implements TeleHeapScheme {
+@Deprecated
+public abstract class TeleRegionBasedHeapScheme extends AbstractVmHolder implements LegacyTeleHeapScheme {
 
     protected final TeleRegionTable teleRegionTable;
 

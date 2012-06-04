@@ -28,12 +28,13 @@ import com.sun.max.annotate.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.reference.*;
-import com.sun.max.tele.reference.LocalTeleReferenceManager.LocalTeleReference;
+import com.sun.max.tele.reference.LocalObjectRemoteReferenceManager.LocalObjectRemoteReference;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 
@@ -43,29 +44,98 @@ import com.sun.max.vm.reference.*;
  */
 public final class RemoteReferenceScheme extends AbstractVMScheme implements ReferenceScheme {
 
+    /**
+     * The default implementation of {@link Reference#zero()}, used as a {@code null} remote reference. It always holds
+     * the {@linkplain Address#zero() null address} and always has status {@linkplain ObjectStatus#DEAD DEAD}.
+     */
+    private static class NullReference extends ConstantRemoteReference {
+
+        NullReference(TeleVM vm) {
+            super(vm, Address.zero());
+        }
+
+        @Override
+        public final ObjectStatus status() {
+            return ObjectStatus.DEAD;
+        }
+
+        @Override
+        public String toString() {
+            return "null Remote Reference";
+        }
+    }
+
+    /**
+     * A specialized implementation of {@link Reference#zero()}, used as a {@code null} remote reference. It carries
+     * with it the history of why it was created: a textual explanation, along with the location in memory where the
+     * creation of a remote reference was attempted and whose failure resulted in creation of this null reference.
+     */
+    private static final class AnnotatedNullReference extends NullReference {
+
+        private final String description;
+        private final Address failedOrigin;
+
+        AnnotatedNullReference(TeleVM vm, String description, Address failedOrigin) {
+            super(vm);
+            this.description = description;
+            this.failedOrigin = failedOrigin;
+        }
+
+        @Override
+        public String toString() {
+            return "ZeroRef: " + description + failedOrigin.to0xHexString();
+        }
+    }
+
     // TODO (mlvdv) Consider replacing all uses of "instanceof" here with a cast to {@link TeleReference},
     // followed by a call to {@link TeleReference#isLocal}.  Although cleaner, there may be some performance
     // issues; I'm not sure.
 
     private TeleVM vm;
     private DataAccess dataAccess;
+    private RemoteReference zero;
+
+    protected LocalObjectRemoteReferenceManager localTeleReferenceManager;
 
     // TODO (mlvdv) (pass in data access specifically)
     public void setContext(TeleVM vm) {
         this.vm = vm;
+        this.localTeleReferenceManager = new LocalObjectRemoteReferenceManager(vm);
         this.dataAccess = vm.memoryIO().access();
+        this.zero = new NullReference(vm);
         assert dataAccess != null;
     }
 
+    /**
+     * Creates a null reference (implementation of {@link Reference#zero()} that carries with it the history
+     * of a failed attempt to create a reference.  An override of {@link Object#toString()} prints out a message
+     * containing this information.
+     *
+     * @param description a description of what part of the system attempted the reference creation, and why it failed
+     * @param failedOrigin the location in VM memory at which the reference creation was attempted
+     * @return a null reference annotated with historical information
+     */
+    public RemoteReference makeZeroReference(String description, Address failedOrigin) {
+        return new AnnotatedNullReference(vm, description, failedOrigin);
+    }
+
+    /**
+     * {@inheritDoc}
+     * Gets the origin of a {@link RemoteReference}.
+     * <p>
+     * @return the origin of an object referred to; {@link Pointer#zero()} if the
+     * reference is {@linkplain ObjectStatus#DEAD DEAD}.
+     */
     public Pointer toOrigin(Reference ref) {
-        if (ref.isZero()) {
+        final RemoteReference remoteRef = (RemoteReference) ref;
+        if (isZero(remoteRef)) {
+            // A {@link RemoteReference} with zero raw value is by definition DEAD.
             return Pointer.zero();
         }
-        if (ref instanceof LocalTeleReference) {
+        if (remoteRef instanceof LocalObjectRemoteReference) {
             throw new UnsupportedOperationException();
         }
-        final RemoteTeleReference remoteTeleRef = (RemoteTeleReference) ref;
-        return remoteTeleRef.raw().asPointer();
+        return remoteRef.origin().asPointer();
     }
 
     public Reference fromOrigin(Pointer origin) {
@@ -73,30 +143,47 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public Reference fromJava(Object object) {
-        return vm.referenceManager().localTeleReferenceManager().make(object);
+        return localTeleReferenceManager.make(object);
     }
 
     public Object toJava(Reference ref) {
-        if (ref instanceof LocalTeleReference) {
-            final LocalTeleReference inspectorLocalTeleRef = (LocalTeleReference) ref;
+        if (ref instanceof LocalObjectRemoteReference) {
+            final LocalObjectRemoteReference inspectorLocalTeleRef = (LocalObjectRemoteReference) ref;
             return inspectorLocalTeleRef.object();
         }
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * <strong>Note:</strong> Unlike the VM implementation of {@link Reference}, there is no
+     * <em>canonical</em> {@code null} reference. This is done to permit subclasses of the
+     * null reference to be created for debugging.
+     */
     public Reference zero() {
-        return vm.referenceManager().zeroReference();
+        return zero;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * We admit to multiple implementations of the zero reference
+     * for debugging purposes (some may be annotated).  The
+     * test for a null/zero reference is defined in terms of the
+     * actually origin being stored.  No legitimate reference may
+     * have this location.
+     */
     public boolean isZero(Reference ref) {
-        return ref == vm.referenceManager().zeroReference();
+        final RemoteReference remoteRef = (RemoteReference) ref;
+        return remoteRef.origin().isZero();
     }
 
     @INLINE
     public boolean isAllOnes(Reference ref) {
         if (ref.isZero()) {
             return false;
-        } else if (ref instanceof LocalTeleReference) {
+        } else if (ref instanceof LocalObjectRemoteReference) {
             TeleError.unexpected();
         }
         return toOrigin(ref).isAllOnes();
@@ -150,7 +237,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public byte readByte(Reference ref, Offset offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return readByte(ref, offset.toInt());
         }
 
@@ -158,7 +245,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public byte readByte(Reference ref, int offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Byte result = (Byte) readField(ref, offset);
             return result.byteValue();
         }
@@ -167,7 +254,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public byte getByte(Reference ref, int displacement, int index) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final byte[] array = (byte[]) ref.toJava();
             return array[index];
         }
@@ -176,7 +263,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public boolean readBoolean(Reference ref, Offset offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return readBoolean(ref, offset.toInt());
         }
 
@@ -184,7 +271,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public boolean readBoolean(Reference ref, int offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Boolean result = (Boolean) readField(ref, offset);
             return result.booleanValue();
         }
@@ -193,7 +280,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public boolean getBoolean(Reference ref, int displacement, int index) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final boolean[] array = (boolean[]) ref.toJava();
             return array[index];
         }
@@ -202,7 +289,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public short readShort(Reference ref, Offset offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return readShort(ref, offset.toInt());
         }
 
@@ -210,7 +297,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public short readShort(Reference ref, int offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Short result = (Short) readField(ref, offset);
             return result.shortValue();
         }
@@ -219,7 +306,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public short getShort(Reference ref, int displacement, int index) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final short[] array = (short[]) ref.toJava();
             return array[index];
         }
@@ -228,7 +315,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public char readChar(Reference ref, Offset offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return readChar(ref, offset.toInt());
         }
 
@@ -236,7 +323,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public char readChar(Reference ref, int offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Character result = (Character) readField(ref, offset);
             return result.charValue();
         }
@@ -245,7 +332,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public char getChar(Reference ref, int displacement, int index) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final char[] array = (char[]) ref.toJava();
             return array[index];
         }
@@ -254,7 +341,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public int readInt(Reference ref, Offset offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return readInt(ref, offset.toInt());
         }
 
@@ -262,7 +349,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public int readInt(Reference ref, int offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Integer result = (Integer) readField(ref, offset);
             return result.intValue();
         }
@@ -271,7 +358,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public int getInt(Reference ref, int displacement, int index) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final int[] array = (int[]) ref.toJava();
             return array[index];
         }
@@ -280,7 +367,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public float readFloat(Reference ref, Offset offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return readFloat(ref, offset.toInt());
         }
 
@@ -288,7 +375,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public float readFloat(Reference ref, int offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Float result = (Float) readField(ref, offset);
             return result.floatValue();
         }
@@ -297,7 +384,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public float getFloat(Reference ref, int displacement, int index) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final float[] array = (float[]) ref.toJava();
             return array[index];
         }
@@ -306,7 +393,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public long readLong(Reference ref, Offset offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return readLong(ref, offset.toInt());
         }
 
@@ -314,7 +401,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public long readLong(Reference ref, int offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Long result = (Long) readField(ref, offset);
             return result.longValue();
         }
@@ -323,7 +410,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public long getLong(Reference ref, int displacement, int index) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final long[] array = (long[]) ref.toJava();
             return array[index];
         }
@@ -332,7 +419,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public double readDouble(Reference ref, Offset offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return readDouble(ref, offset.toInt());
         }
 
@@ -340,7 +427,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public double readDouble(Reference ref, int offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Double result = (Double) readField(ref, offset);
             return result.doubleValue();
         }
@@ -349,7 +436,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public double getDouble(Reference ref, int displacement, int index) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final double[] array = (double[]) ref.toJava();
             return array[index];
         }
@@ -358,7 +445,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public Word readWord(Reference ref, Offset offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return readWord(ref, offset.toInt());
         }
 
@@ -366,7 +453,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public Word readWord(Reference ref, int offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return (Word) readField(ref, offset);
         }
 
@@ -374,7 +461,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public Word getWord(Reference ref, int displacement, int index) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Word[] array = (Word[]) ref.toJava();
             return array[index];
         }
@@ -383,7 +470,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public Reference readReference(Reference ref, Offset offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return readReference(ref, offset.toInt());
         }
 
@@ -391,7 +478,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public Reference readReference(Reference ref, int offset) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             return fromJava(readField(ref, offset));
         }
 
@@ -399,7 +486,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public Reference getReference(Reference ref, int displacement, int index) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Object[] array = (Object[]) toJava(ref);
             return fromJava(array[index]);
         }
@@ -427,7 +514,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeByte(Reference ref, Offset offset, byte value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeByte(ref, offset.toInt(), value);
             return;
         }
@@ -436,7 +523,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeByte(Reference ref, int offset, byte value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeField(ref, offset, new Byte(value));
             return;
         }
@@ -445,7 +532,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void setByte(Reference ref, int displacement, int index, byte value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final byte[] array = (byte[]) ref.toJava();
             array[index] = value;
             return;
@@ -455,7 +542,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeBoolean(Reference ref, Offset offset, boolean value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeBoolean(ref, offset.toInt(), value);
             return;
         }
@@ -464,7 +551,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeBoolean(Reference ref, int offset, boolean value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeField(ref, offset, new Boolean(value));
             return;
         }
@@ -473,7 +560,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void setBoolean(Reference ref, int displacement, int index, boolean value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final boolean[] array = (boolean[]) ref.toJava();
             array[index] = value;
             return;
@@ -483,7 +570,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeShort(Reference ref, Offset offset, short value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeShort(ref, offset.toInt(), value);
             return;
         }
@@ -492,7 +579,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeShort(Reference ref, int offset, short value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeField(ref, offset, new Short(value));
             return;
         }
@@ -501,7 +588,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void setShort(Reference ref, int displacement, int index, short value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final short[] array = (short[]) ref.toJava();
             array[index] = value;
             return;
@@ -511,7 +598,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeChar(Reference ref, Offset offset, char value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeChar(ref, offset.toInt(), value);
             return;
         }
@@ -520,7 +607,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeChar(Reference ref, int offset, char value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeField(ref, offset, new Character(value));
             return;
         }
@@ -529,7 +616,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void setChar(Reference ref, int displacement, int index, char value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final char[] array = (char[]) ref.toJava();
             array[index] = value;
             return;
@@ -539,7 +626,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeInt(Reference ref, Offset offset, int value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeInt(ref, offset.toInt(), value);
             return;
         }
@@ -548,7 +635,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeInt(Reference ref, int offset, int value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeField(ref, offset, new Integer(value));
             return;
         }
@@ -557,7 +644,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void setInt(Reference ref, int displacement, int index, int value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final int[] array = (int[]) ref.toJava();
             array[index] = value;
             return;
@@ -567,7 +654,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeFloat(Reference ref, Offset offset, float value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeFloat(ref, offset.toInt(), value);
             return;
         }
@@ -576,7 +663,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeFloat(Reference ref, int offset, float value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeField(ref, offset, new Float(value));
             return;
         }
@@ -585,7 +672,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void setFloat(Reference ref, int displacement, int index, float value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final float[] array = (float[]) ref.toJava();
             array[index] = value;
             return;
@@ -595,7 +682,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeLong(Reference ref, Offset offset, long value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeLong(ref, offset.toInt(), value);
             return;
         }
@@ -604,7 +691,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeLong(Reference ref, int offset, long value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeField(ref, offset, new Long(value));
             return;
         }
@@ -613,7 +700,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void setLong(Reference ref, int displacement, int index, long value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final long[] array = (long[]) ref.toJava();
             array[index] = value;
             return;
@@ -623,7 +710,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeDouble(Reference ref, Offset offset, double value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeDouble(ref, offset.toInt(), value);
             return;
         }
@@ -632,7 +719,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeDouble(Reference ref, int offset, double value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeField(ref, offset, new Double(value));
             return;
         }
@@ -641,7 +728,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void setDouble(Reference ref, int displacement, int index, double value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final double[] array = (double[]) ref.toJava();
             array[index] = value;
             return;
@@ -651,7 +738,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeWord(Reference ref, Offset offset, Word value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeWord(ref, offset.toInt(), value);
             return;
         }
@@ -660,7 +747,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeWord(Reference ref, int offset, Word value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeField(ref, offset, value);
             return;
         }
@@ -669,7 +756,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void setWord(Reference ref, int displacement, int index, Word value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Word[] array = (Word[]) ref.toJava();
             WordArray.set(array, index, value);
             return;
@@ -679,7 +766,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeReference(Reference ref, Offset offset, Reference value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeReference(ref, offset.toInt(), value);
             return;
         }
@@ -688,7 +775,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void writeReference(Reference ref, int offset, Reference value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             writeField(ref, offset, value.toJava());
             return;
         }
@@ -697,7 +784,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void setReference(Reference ref, int displacement, int index, Reference value) {
-        if (ref instanceof LocalTeleReference) {
+        if (ref instanceof LocalObjectRemoteReference) {
             final Object[] array = (Object[]) toJava(ref);
             array[index] = value.toJava();
             return;
@@ -735,7 +822,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void copyElements(int displacement, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
-        if (src instanceof LocalTeleReference) {
+        if (src instanceof LocalObjectRemoteReference) {
             System.arraycopy(toJava(src), srcIndex, dst, dstIndex, length);
         } else {
             dataAccess.copyElements(toOrigin(src), displacement, srcIndex, dst, dstIndex, length);

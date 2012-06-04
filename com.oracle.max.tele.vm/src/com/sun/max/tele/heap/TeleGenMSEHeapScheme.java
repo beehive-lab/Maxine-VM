@@ -26,13 +26,14 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
 
-
+@Deprecated
 public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
     private TeleCardTableRSet teleCardTableRSet;
     private Address nurseryEnd = Address.zero();
@@ -57,7 +58,7 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
     private void initializeNursery() {
         if (nurseryAllocator.isZero()) {
             nurseryAllocator =   TeleInstanceReferenceFieldAccess.readPath(toReference(),
-                            vm().fields().GenMSEHeapScheme_youngSpace, vm().fields().NoAgingNursery_allocator);
+                            vm().fields().GenMSEHeapScheme_youngSpace, vm().fields().NoAgingRegionalizedNursery_allocator);
         }
         nurseryStart = vm().fields().BaseAtomicBumpPointerAllocator_start.readWord(nurseryAllocator).asAddress();
         nurseryEnd = vm().fields().BaseAtomicBumpPointerAllocator_end.readWord(nurseryAllocator).asAddress();
@@ -65,11 +66,12 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
 
     private void updateNurseryTop() {
         // TODO: add invariant check that the new nursery top must be greater or equal to the old one unless
-        // the GC count is different or we're not in allocating phase.
+        // the GC count is different or we're not in mutating phase.
         nurseryTop = vm().fields().BaseAtomicBumpPointerAllocator_top.readWord(nurseryAllocator).asAddress();
     }
 
 
+    // TODO (mlvdv) instantiate TeleCardTableRSet through ordinary TeleObjectFactory
     TeleCardTableRSet teleCardTableRSet() {
         if (teleCardTableRSet == null) {
             Reference cardTableRSetReference = vm().fields().GenMSEHeapScheme_cardTableRSet.readReference(toReference());
@@ -147,7 +149,7 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
                 return MaxMemoryStatus.LIVE;
             }
             switch(vm().heap().lastUpdateHeapPhase()) {
-                case ALLOCATING:
+                case MUTATING:
                     if (isInNursery(address)) {
                         return address.lessThan(nurseryTop) ? MaxMemoryStatus.LIVE : MaxMemoryStatus.FREE;
                     }

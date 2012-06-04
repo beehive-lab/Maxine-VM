@@ -132,7 +132,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
 
     /**
      * The singleton registry that contains summary information about all classes known to have been
-     * loaded into the VM, initialized at registry creation with classes pre-loaded
+     * loaded into the VM, initialized at registry creation with classes preloaded
      * into the boot image and supplemented with dynamically loaded classes with each
      * call to {@link #updateCache(long)}.
      * <p>
@@ -179,20 +179,20 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
                 if (!entryArrayRef.isZero()) {
                     int entryArrayLength = objects().unsafeReadArrayLength(entryArrayRef);
                     for (int j = 0; j != entryArrayLength; j++) {
-                        Reference entryRef = referenceManager().makeReference(Layout.getWord(entryArrayRef, j).asAddress());
+                        RemoteReference entryRef = referenceManager().makeReference(Layout.getWord(entryArrayRef, j).asAddress());
                         while (!entryRef.isZero()) {
-                            if (entryRef instanceof TemporaryTeleReference && vm().isAttaching()) {
+                            if (entryRef.isProvisional() && vm().isAttaching()) {
                                 // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not
                                 // fully initialized yet so we add it to a fix-up list and handle it later
                                 attachFixupList.add(entryRef);
                             } else {
-                                Reference classActor = f.ConcurrentHashMap$HashEntry_value.readReference(entryRef);
-                                if (!classActor.isZero()) {
-                                    addToRegistry(classActor);
+                                Reference classActorRef = f.ConcurrentHashMap$HashEntry_value.readReference(entryRef);
+                                if (!classActorRef.isZero()) {
+                                    addToRegistry(classActorRef);
                                     count++;
                                 }
                             }
-                            entryRef = f.ConcurrentHashMap$HashEntry_next.readReference(entryRef);
+                            entryRef = (RemoteReference) f.ConcurrentHashMap$HashEntry_next.readReference(entryRef);
                         }
                     }
                 }
@@ -301,7 +301,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     public TeleClassActor findTeleClassActor(TypeDescriptor typeDescriptor) {
         final Reference classActorReference = typeDescriptorToClassActorReference.get(typeDescriptor);
         if (classActorReference == null) {
-            // Class hasn't been loaded yet by the inspectee.
+            // Class hasn't been loaded yet by the VM.
             return null;
         }
         return (TeleClassActor) objects().makeTeleObject(classActorReference);
@@ -310,7 +310,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     public TeleClassActor findTeleClassActor(Class javaClass) {
         final Reference classActorReference = typeDescriptorToClassActorReference.get(JavaTypeDescriptor.forJavaClass(javaClass));
         if (classActorReference == null) {
-            // Class hasn't been loaded yet by the inspectee.
+            // Class hasn't been loaded yet by the VM.
             return null;
         }
         return (TeleClassActor) objects().makeTeleObject(classActorReference);
@@ -371,6 +371,10 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         final Reference utf8ConstantReference = fields().Actor_name.readReference(classActorReference);
         referenceManager().checkReference(utf8ConstantReference);
         final Reference stringReference = fields().Utf8Constant_string.readReference(utf8ConstantReference);
+        if (stringReference.isZero()) {
+            // TODO (mlvdv) call this an error for now; should perhaps be a silent failure eventually.
+            TeleError.unexpected("ClassActor.makeClassActor(" + classActorReference.toOrigin().to0xHexString() + ": string Reference=zero");
+        }
         final String name = vm().getString(stringReference);
         try {
             return makeClassActor(name);

@@ -28,6 +28,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * An object view specialized for displaying a low-level character array in the VM.
@@ -47,9 +48,7 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -70,8 +69,8 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
                 final int length = Math.min(chars.length, preference().style().maxStringFromCharArrayDisplayLength());
                 return new String(chars, 0, length);
             }
-            public boolean isLive() {
-                return teleArrayObject.memoryStatus().isNotDeadYet();
+            public ObjectStatus status() {
+                return teleArrayObject.status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -87,6 +86,9 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
             }
         });
         getContentPane().add(tabbedPane);
+
+        // Opportunity for view-specific Object menu
+        makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override

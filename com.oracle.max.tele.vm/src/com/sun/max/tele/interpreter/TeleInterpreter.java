@@ -243,7 +243,7 @@ public final class TeleInterpreter {
         }
 
         if (returnValue instanceof TeleReferenceValue) {
-            returnValue = TeleReferenceValue.from(vm, machine.makeLocalReference((TeleReference) returnValue.asReference()));
+            returnValue = TeleReferenceValue.from(vm, machine.makeLocalReference((RemoteReference) returnValue.asReference()));
         }
 
         Kind resultKind = classMethodActor.resultKind();

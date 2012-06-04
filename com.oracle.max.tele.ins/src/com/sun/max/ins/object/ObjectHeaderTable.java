@@ -154,10 +154,15 @@ public final class ObjectHeaderTable extends InspectorTable {
     @Override
     public Color cellBackgroundColor() {
         // Gets called during superclass initialization
-        if (teleObject != null && teleObject.memoryStatus().isDead()) {
+        if (teleObject != null && teleObject.status().isDead()) {
             return preference().style().deadObjectBackgroundColor();
         }
         return null;
+    }
+
+    @Override
+    public Color headerBackgroundColor() {
+        return cellBackgroundColor();
     }
 
     /**
@@ -190,7 +195,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         public ObjectHeaderTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
-            if (teleObject.memoryStatus().isNotDeadYet()) {
+            if (teleObject.status().isNotDead()) {
                 teleHub = teleObject.getTeleHub();
             }
         }
@@ -262,7 +267,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         @Override
         public void refresh() {
             setOrigin(teleObject.origin());
-            if (teleObject.memoryStatus().isNotDeadYet()) {
+            if (teleObject.status().isNotDead()) {
                 teleHub = teleObject.getTeleHub();
             }
             super.refresh();

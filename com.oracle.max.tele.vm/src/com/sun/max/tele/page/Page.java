@@ -24,6 +24,7 @@ package com.sun.max.tele.page;
 
 import java.nio.*;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.TargetLocation.Kind;
 import com.sun.max.tele.data.*;
@@ -39,7 +40,9 @@ import com.sun.max.unsafe.*;
  * allocated from a global buffer until the global buffer is exhausted. If the target VM is remote or the
  * global buffer has been exhausted, then the buffer for each page is a heap allocated byte array.
  */
-public class Page {
+public class Page extends AbstractVmHolder {
+
+    private static final int TRACE_VALUE = 1;
 
     /**
      * Access to memory in the {@link TeleVM}.
@@ -52,6 +55,12 @@ public class Page {
     private long epoch = -1;
 
     private final long index;
+
+
+    /**
+     * The VM epoch the last time we reported a page refresh failure, used to avoid duplicate messages.
+     */
+    private long lastFailureEpoch = -1;
 
     /**
      * The buffer for this page.
@@ -106,7 +115,8 @@ public class Page {
         return TeleVM.targetLocation().kind != Kind.REMOTE;
     }
 
-    public Page(TeleIO teleIO, long index, ByteOrder byteOrder) {
+    public Page(TeleVM vm, TeleIO teleIO, long index, ByteOrder byteOrder) {
+        super(vm);
         this.teleIO = teleIO;
         this.index = index;
         this.buffer = allocate(teleIO, byteOrder, index);
@@ -145,7 +155,11 @@ public class Page {
                 epoch = teleIO.epoch();
             } catch (DataIOError e) {
                 if (!(e instanceof ConcurrentDataIOError)) {
-                    TeleWarning.message(e);
+                    if (lastFailureEpoch != teleIO.epoch()) {
+                        Trace.line(TRACE_VALUE, tracePrefix() + "PAGE REFRESH FAILURE @ " + e.faultAddress.to0xHexString());
+                        lastFailureEpoch = teleIO.epoch();
+                        //TeleWarning.message(e);
+                    }
                 }
                 throw e;
             } catch (TerminatedProcessIOException e) {

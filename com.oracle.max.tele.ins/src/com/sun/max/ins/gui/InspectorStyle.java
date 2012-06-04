@@ -214,6 +214,9 @@ public interface InspectorStyle {
     /** Color for the background of any display of memory belonging to an object that has died. */
     Color deadObjectBackgroundColor();
 
+    /** Color for the background of any display of memory belonging to an object that has been forwarded. */
+    Color forwardedObjectBackgroundColor();
+
     // Search related
     /** Icon for the search button that selects the next match moving forward.  */
     Icon searchNextMatchButtonIcon();

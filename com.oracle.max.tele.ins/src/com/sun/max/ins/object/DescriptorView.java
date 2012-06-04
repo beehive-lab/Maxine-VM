@@ -28,6 +28,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -49,9 +50,7 @@ public class DescriptorView extends ObjectView<DescriptorView> {
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -69,8 +68,8 @@ public class DescriptorView extends ObjectView<DescriptorView> {
             public String fetchString() {
                 return teleDescriptor.descriptor().string;
             }
-            public boolean isLive() {
-                return teleObject().memoryStatus().isNotDeadYet();
+            public ObjectStatus status() {
+                return teleObject().status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -86,6 +85,9 @@ public class DescriptorView extends ObjectView<DescriptorView> {
             }
         });
         getContentPane().add(tabbedPane);
+
+        // Opportunity for view-specific Object menu
+        makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override
