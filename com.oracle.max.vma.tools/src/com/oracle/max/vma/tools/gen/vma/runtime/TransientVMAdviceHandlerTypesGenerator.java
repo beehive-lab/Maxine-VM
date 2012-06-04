@@ -70,7 +70,9 @@ public class TransientVMAdviceHandlerTypesGenerator {
     private static String createEnum(Method m) {
         String name = removeAdvise(m.getName());
         String lastParam = getLastParameterName(m);
-        if (name.equals("ConstLoad") || name.endsWith("Store") || name.endsWith("Conversion") ||
+        if (name.equals("ReturnByThrow")) {
+            // nothing special, just avoid match in next clause
+        } else if (name.equals("ConstLoad") || name.endsWith("Store") || name.endsWith("Conversion") ||
                         name.contains("Return") ||  name.contains("PutField") ||
                         name.contains("PutStatic") || name.contains("Operation")) {
             if (lastParam != null) {
@@ -110,7 +112,9 @@ public class TransientVMAdviceHandlerTypesGenerator {
             String uLastParam = lastParam == null ? "" : toFirstUpper(lastParam);
 
             String adviceRecordName = "";
-            if (name.contains("ConstLoad") || name.startsWith("Store") || name.contains("Conversion") ||
+            if (name.equals("ReturnByThrow")) {
+                adviceRecordName = "ObjectLong";
+            } else if (name.contains("ConstLoad") || name.startsWith("Store") || name.contains("Conversion") ||
                             name.contains("Return")) {
                 adviceRecordName = uLastParam;
             } else if (name.contains("GetField") || name.contains("GetStatic")) {

@@ -41,8 +41,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
-import com.sun.max.vm.ext.jvmti.JJVMTI.*;
-import com.sun.max.vm.ext.jvmti.JJVMTI.Exception;
+import com.sun.max.vm.ext.jvmti.JJVMTIStd.*;
 import com.sun.max.vm.ext.jvmti.JVMTIUtil.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.run.java.*;
@@ -407,19 +406,14 @@ public class JVMTIThreadFunctions {
                 stackElements.remove();
             }
             // now 0 is the first app frame
-            int endIndex = 0;
             ListIterator<StackElement> iter = stackElements.listIterator();
             while (iter.hasNext()) {
                 StackElement e = iter.next();
                 classActor = e.classMethodActor.holder();
                 if (JVMTIClassFunctions.isVMClass(classActor)) {
-                    break;
+                    iter.remove();
                 }
-                endIndex++;
             }
-            // endIndex is the first VM frame
-            removeElements(endIndex);
-
         }
 
         /**
@@ -510,6 +504,9 @@ public class JVMTIThreadFunctions {
      * N.B. To workaround a limitation in {@link VmOperation} where a GC cannot be run during the
      * {@link VmOperation} unless all threads are stopped, we run this as a multi-thread operation
      * even though that is not strictly necessary. Typically everything is stopped anyway.
+     *
+     * The case where the current thread is making the request is handled specially as no
+     * {@link VmOperation}is necessary, just the stack walk.
      */
     static class SingleThreadStackTraceVmOperation extends VmOperation {
         FindAppFramesStackTraceVisitor stackTraceVisitor;
@@ -520,7 +517,7 @@ public class JVMTIThreadFunctions {
          * @param vmThread
          * @param stackTraceVisitor
          */
-        SingleThreadStackTraceVmOperation(VmThread vmThread, FindAppFramesStackTraceVisitor stackTraceVisitor) {
+        private SingleThreadStackTraceVmOperation(VmThread vmThread, FindAppFramesStackTraceVisitor stackTraceVisitor) {
             super("JVMTISingleStackTrace", null, Mode.Safepoint);
             this.vmThread = vmThread;
             this.stackTraceVisitor = stackTraceVisitor;
@@ -535,19 +532,25 @@ public class JVMTIThreadFunctions {
         public void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
             stackTraceVisitor.walk(new VmStackFrameWalker(vmThread.tla()), ip, sp, fp);
         }
-    }
 
-    /**
-     * Convenience class for commonly used operation.
-     */
-    static class FindAppFramesStackTraceOperation extends SingleThreadStackTraceVmOperation {
-        FindAppFramesStackTraceOperation(VmThread vmThread) {
-            super(vmThread, new FindAppFramesStackTraceVisitor());
+        /**
+         * The preferred way to invoke the operation, that encapsulates the special case of the current thread.
+         * @param vmThread
+         * @param stackTraceVisitor
+         * @return {@code stackTraceVisitor} for convenience
+         */
+        static FindAppFramesStackTraceVisitor invoke(VmThread vmThread, FindAppFramesStackTraceVisitor stackTraceVisitor) {
+            if (vmThread == VmThread.current()) {
+                stackTraceVisitor.walk(new VmStackFrameWalker(vmThread.tla()), Address.fromLong(here()).asPointer(),
+                                getAbiStackPointer(), getCpuFramePointer());
+            } else {
+                new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor).submit();
+            }
+            return stackTraceVisitor;
         }
 
-        FindAppFramesStackTraceOperation submitOp() {
-            super.submit();
-            return this;
+        static FindAppFramesStackTraceVisitor invoke(VmThread vmThread) {
+            return SingleThreadStackTraceVmOperation.invoke(vmThread, new FindAppFramesStackTraceVisitor());
         }
     }
 
@@ -697,8 +700,8 @@ public class JVMTIThreadFunctions {
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
-        SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
-        countPtr.setInt(op.stackTraceVisitor.stackElements.size());
+        FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
+        countPtr.setInt(stackTraceVisitor.stackElements.size());
         return JVMTI_ERROR_NONE;
     }
 
@@ -712,13 +715,17 @@ public class JVMTIThreadFunctions {
         int location;
     }
 
-    static FrameInfo getFrameLocation(Thread thread, int depth) throws Exception {
+    static JJVMTICommon.FrameInfo getFrameLocation(Thread thread, int depth, boolean maxTypes) throws JJVMTICommon.JJVMTIException {
         MethodActorLocation methodActorLocation = new MethodActorLocation();
         int error = getFrameLocation(methodActorLocation, thread, depth);
         if (error == JVMTI_ERROR_NONE) {
-            return new FrameInfo(methodActorLocation.methodActor.toJava(), methodActorLocation.location);
+            if (maxTypes) {
+                return new JJVMTIMax.FrameInfoMax(methodActorLocation.methodActor, methodActorLocation.location);
+            } else {
+                return new FrameInfoStd(methodActorLocation.methodActor.toJava(), methodActorLocation.location);
+            }
         } else {
-            throw new JJVMTI.Exception(error);
+            throw new JJVMTICommon.JJVMTIException(error);
         }
     }
 
@@ -740,10 +747,10 @@ public class JVMTIThreadFunctions {
         if (depth < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }
-        SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
-        if (depth < op.stackTraceVisitor.stackElements.size()) {
-            methodActorLocation.methodActor = op.stackTraceVisitor.getStackElement(depth).classMethodActor;
-            methodActorLocation.location = op.stackTraceVisitor.getStackElement(depth).bci;
+        FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
+        if (depth < stackTraceVisitor.stackElements.size()) {
+            methodActorLocation.methodActor = stackTraceVisitor.getStackElement(depth).classMethodActor;
+            methodActorLocation.location = stackTraceVisitor.getStackElement(depth).bci;
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_NO_MORE_FRAMES;
@@ -756,6 +763,7 @@ public class JVMTIThreadFunctions {
     static class FramePopEventData {
         MethodID methodID;
         boolean wasPoppedByException;
+        Object value;
     }
 
     static class FramePopEventDataThreadLocal extends ThreadLocal<FramePopEventData> {
@@ -767,28 +775,64 @@ public class JVMTIThreadFunctions {
 
     private static FramePopEventDataThreadLocal framePopEventDataTL = new FramePopEventDataThreadLocal();
 
+    @NEVER_INLINE
+    public static void framePopEvent(boolean wasPoppedByException, long value) {
+        framePopEvent(wasPoppedByException, new Long(value));
+    }
+    @NEVER_INLINE
+    public static void framePopEvent(boolean wasPoppedByException, float value) {
+        framePopEvent(wasPoppedByException, new Float(value));
+    }
+    @NEVER_INLINE
+    public static void framePopEvent(boolean wasPoppedByException, double value) {
+        framePopEvent(wasPoppedByException, new Double(value));
+    }
+    @NEVER_INLINE
+    public static void framePopEvent(boolean wasPoppedByException) {
+        framePopEvent(wasPoppedByException, null);
+    }
+
     /**
      * Invoked from compiled code before a frame is being popped, e.g. a return.
      * @param wasPoppedByException
      */
-    public static void framePopEvent(boolean wasPoppedByException) {
+    @NEVER_INLINE
+    public static void framePopEvent(boolean wasPoppedByException, Object value) {
         VmThread vmThread = VmThread.current();
         Pointer tla = vmThread.tla();
-        if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP)) {
-            SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread);
-            op.submit();
+        if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP) || JVMTIEvent.isEventSet(JVMTIEvent.METHOD_EXIT)) {
+            FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
             // if we are single stepping, we may need to deopt the method we are returning to
-            if (op.stackTraceVisitor.stackElements.size() > 1) {
+            if (stackTraceVisitor.stackElements.size() > 1) {
                 long codeEventSettings = JVMTIEvent.codeEventSettings(null, vmThread);
                 if ((codeEventSettings & JVMTIEvent.bitSetting(JVMTI_EVENT_SINGLE_STEP)) != 0) {
-                    JVMTICode.checkDeOptForMethod(op.stackTraceVisitor.getStackElement(1).classMethodActor, codeEventSettings);
+                    JVMTICode.checkDeOptForMethod(stackTraceVisitor.getStackElement(1).classMethodActor, codeEventSettings);
                 }
             }
-            FramePopEventData framePopEventData = framePopEventDataTL.get();
-            framePopEventData.methodID = MethodID.fromMethodActor(op.stackTraceVisitor.getStackElement(0).classMethodActor);
-            framePopEventData.wasPoppedByException = wasPoppedByException;
-            JVMTI.event(JVMTI_EVENT_FRAME_POP, framePopEventData);
+            // METHOD_EXIT events can cause frame pops from within VM code compiled at run time,
+            // which results in an empty stack
+            if (stackTraceVisitor.stackElements.size() > 0) {
+                FramePopEventData framePopEventData = getFramePopEventData(
+                                MethodID.fromMethodActor(stackTraceVisitor.getStackElement(0).classMethodActor),
+                                wasPoppedByException,
+                                value);
+                if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP)) {
+                    JVMTI.event(JVMTI_EVENT_FRAME_POP, framePopEventData);
+                }
+
+                if (JVMTIEvent.isEventSet(JVMTIEvent.METHOD_EXIT)) {
+                    JVMTI.event(JVMTI_EVENT_METHOD_EXIT, framePopEventData);
+                }
+            }
         }
+    }
+
+    static FramePopEventData getFramePopEventData(MethodID methodID, boolean wasPoppedByException, Object value) {
+        FramePopEventData framePopEventData = framePopEventDataTL.get();
+        framePopEventData.methodID = methodID;
+        framePopEventData.wasPoppedByException = wasPoppedByException;
+        framePopEventData.value = value;
+        return framePopEventData;
     }
 
     static int notifyFramePop(Thread thread, int depth) {
@@ -803,8 +847,8 @@ public class JVMTIThreadFunctions {
             // need deopt for frames below us, else we won't get the frame pop events
             assert false;
         }
-        SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
-        if (depth < op.stackTraceVisitor.stackElements.size()) {
+        FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
+        if (depth < stackTraceVisitor.stackElements.size()) {
             Pointer tla = vmThread.tla();
             JVMTIVmThreadLocal.setDepth(tla, depth);
             JVMTIVmThreadLocal.setBit(tla, JVMTI_FRAME_POP);
@@ -988,13 +1032,7 @@ public class JVMTIThreadFunctions {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         GetSetStackTraceVisitor stackTraceVisitor = new GetSetStackTraceVisitor(depth, slot, typedData, isSet);
-        if (vmThread == VmThread.current()) {
-            // don't need a VM Operation for analysing own stack
-            stackTraceVisitor.walk(new VmStackFrameWalker(vmThread.tla()), Address.fromLong(here()).asPointer(), getAbiStackPointer(), getCpuFramePointer());
-        } else {
-            SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor);
-            op.submit();
-        }
+        SingleThreadStackTraceVmOperation.invoke(vmThread, stackTraceVisitor);
         return stackTraceVisitor.returnCode;
     }
 
@@ -1059,7 +1097,7 @@ public class JVMTIThreadFunctions {
         if (error == JVMTI_ERROR_NONE) {
             return typedData;
         } else {
-            throw new JJVMTI.Exception(error);
+            throw new JJVMTICommon.JJVMTIException(error);
         }
     }
 

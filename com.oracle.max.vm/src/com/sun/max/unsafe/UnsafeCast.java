@@ -70,7 +70,7 @@ public final class UnsafeCast {
     @INTRINSIC(UNSAFE_CAST) public static ArrayClassActor          asArrayClassActor(Object object) { return (ArrayClassActor) object; }
     @INTRINSIC(UNSAFE_CAST) public static ClassActor               asClassActor(Object object) { return (ClassActor) object; }
     @INTRINSIC(UNSAFE_CAST) public static FieldActor               asFieldActor(Object object) { return (FieldActor) object; }
-    @INTRINSIC(UNSAFE_CAST) public static MethodActor              asClassMethodActor(Object object) { return (ClassMethodActor) object; }
+    @INTRINSIC(UNSAFE_CAST) public static ClassMethodActor         asClassMethodActor(Object object) { return (ClassMethodActor) object; }
     @INTRINSIC(UNSAFE_CAST) public static StaticMethodActor        asStaticMethodActor(Object object) { return (StaticMethodActor) object; }
     @INTRINSIC(UNSAFE_CAST) public static VirtualMethodActor       asVirtualMethodActor(Object object) { return (VirtualMethodActor) object; }
     @INTRINSIC(UNSAFE_CAST) public static AccessControlContext     asAccessControlContext(Object object) { return (AccessControlContext) object; }

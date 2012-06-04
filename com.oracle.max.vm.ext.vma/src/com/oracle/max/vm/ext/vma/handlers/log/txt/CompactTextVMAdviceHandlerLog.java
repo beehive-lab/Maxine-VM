@@ -300,22 +300,42 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
 // EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
 
     @Override
-    public void adviseAfterNew(String arg1, long arg2, String arg3, long arg4) {
-        del.adviseAfterNew(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4);
-    }
-
-    @Override
-    public void adviseAfterNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
-        del.adviseAfterNewArray(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, arg5);
-    }
-
-    @Override
     public void adviseAfterMultiNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
         ProgramError.unexpected("adviseAfterMultiNewArray");
     }
 
     @Override
+    public void adviseBeforeGC(String arg1) {
+        del.adviseBeforeGC(getThreadShortForm(arg1));
+    }
+
+    @Override
+    public void adviseAfterGC(String arg1) {
+        del.adviseAfterGC(getThreadShortForm(arg1));
+    }
+
+    @Override
+    public void adviseBeforeThreadStarting(String arg1) {
+        del.adviseBeforeThreadStarting(getThreadShortForm(arg1));
+    }
+
+    @Override
+    public void adviseBeforeThreadTerminating(String arg1) {
+        del.adviseBeforeThreadTerminating(getThreadShortForm(arg1));
+    }
+
+    @Override
+    public void adviseBeforeReturnByThrow(String arg1, long arg2, int arg3) {
+        del.adviseBeforeReturnByThrow(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), arg3);
+    }
+
+    @Override
     public void adviseBeforeConstLoad(String arg1, float arg2) {
+        del.adviseBeforeConstLoad(getThreadShortForm(arg1), arg2);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(String arg1, double arg2) {
         del.adviseBeforeConstLoad(getThreadShortForm(arg1), arg2);
     }
 
@@ -325,8 +345,8 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
-    public void adviseBeforeConstLoad(String arg1, double arg2) {
-        del.adviseBeforeConstLoad(getThreadShortForm(arg1), arg2);
+    public void adviseBeforeConstLoadObject(String arg1, long arg2) {
+        del.adviseBeforeConstLoadObject(getThreadShortForm(arg1), arg2);
     }
 
     @Override
@@ -340,11 +360,6 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
-    public void adviseBeforeStore(String arg1, int arg2, long arg3) {
-        del.adviseBeforeStore(getThreadShortForm(arg1), arg2, arg3);
-    }
-
-    @Override
     public void adviseBeforeStore(String arg1, int arg2, float arg3) {
         del.adviseBeforeStore(getThreadShortForm(arg1), arg2, arg3);
     }
@@ -355,12 +370,22 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
-    public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, double arg4) {
-        del.adviseBeforeArrayStore(getThreadShortForm(arg1),  checkRepeatId(arg2, arg1), arg3, arg4);
+    public void adviseBeforeStore(String arg1, int arg2, long arg3) {
+        del.adviseBeforeStore(getThreadShortForm(arg1), arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeStoreObject(String arg1, int arg2, long arg3) {
+        del.adviseBeforeStoreObject(getThreadShortForm(arg1), arg2, arg3);
     }
 
     @Override
     public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, long arg4) {
+        del.adviseBeforeArrayStore(getThreadShortForm(arg1),  checkRepeatId(arg2, arg1), arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, double arg4) {
         del.adviseBeforeArrayStore(getThreadShortForm(arg1),  checkRepeatId(arg2, arg1), arg3, arg4);
     }
 
@@ -370,12 +395,17 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
+    public void adviseBeforeArrayStoreObject(String arg1, long arg2, int arg3, long arg4) {
+        del.adviseBeforeArrayStoreObject(getThreadShortForm(arg1),  checkRepeatId(arg2, arg1), arg3, arg4);
+    }
+
+    @Override
     public void adviseBeforeStackAdjust(String arg1, int arg2) {
         del.adviseBeforeStackAdjust(getThreadShortForm(arg1), arg2);
     }
 
     @Override
-    public void adviseBeforeOperation(String arg1, int arg2, double arg3, double arg4) {
+    public void adviseBeforeOperation(String arg1, int arg2, float arg3, float arg4) {
         del.adviseBeforeOperation(getThreadShortForm(arg1), arg2, arg3, arg4);
     }
 
@@ -385,12 +415,12 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
-    public void adviseBeforeOperation(String arg1, int arg2, float arg3, float arg4) {
+    public void adviseBeforeOperation(String arg1, int arg2, double arg3, double arg4) {
         del.adviseBeforeOperation(getThreadShortForm(arg1), arg2, arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeConversion(String arg1, int arg2, long arg3) {
+    public void adviseBeforeConversion(String arg1, int arg2, float arg3) {
         del.adviseBeforeConversion(getThreadShortForm(arg1), arg2, arg3);
     }
 
@@ -400,7 +430,7 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
-    public void adviseBeforeConversion(String arg1, int arg2, float arg3) {
+    public void adviseBeforeConversion(String arg1, int arg2, long arg3) {
         del.adviseBeforeConversion(getThreadShortForm(arg1), arg2, arg3);
     }
 
@@ -410,13 +440,13 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
-    public void adviseBeforeBytecode(String arg1, int arg2) {
-        del.adviseBeforeBytecode(getThreadShortForm(arg1), arg2);
+    public void adviseBeforeIfObject(String arg1, int arg2, long arg3, long arg4) {
+        del.adviseBeforeIfObject(getThreadShortForm(arg1), arg2, arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeReturn(String arg1) {
-        del.adviseBeforeReturn(getThreadShortForm(arg1));
+    public void adviseBeforeBytecode(String arg1, int arg2) {
+        del.adviseBeforeBytecode(getThreadShortForm(arg1), arg2);
     }
 
     @Override
@@ -435,13 +465,23 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
+    public void adviseBeforeReturn(String arg1) {
+        del.adviseBeforeReturn(getThreadShortForm(arg1));
+    }
+
+    @Override
+    public void adviseBeforeReturnObject(String arg1, long arg2) {
+        del.adviseBeforeReturnObject(getThreadShortForm(arg1), arg2);
+    }
+
+    @Override
     public void adviseBeforeGetStatic(String arg1, String arg2, long arg3, String arg4) {
         del.adviseBeforeGetStatic(getThreadShortForm(arg1), getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg2, arg3, arg4));
     }
 
     @Override
-    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, float arg5) {
-        del.adviseBeforePutStatic(getThreadShortForm(arg1), getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg2, arg3, arg4), arg5);
+    public void adviseBeforePutStaticObject(String arg1, String arg2, long arg3, String arg4, long arg5) {
+        del.adviseBeforePutStaticObject(getThreadShortForm(arg1), getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg2, arg3, arg4), arg5);
     }
 
     @Override
@@ -455,8 +495,18 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
+    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, float arg5) {
+        del.adviseBeforePutStatic(getThreadShortForm(arg1), getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg2, arg3, arg4), arg5);
+    }
+
+    @Override
     public void adviseBeforeGetField(String arg1, long arg2, String arg3, long arg4, String arg5) {
         del.adviseBeforeGetField(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5));
+    }
+
+    @Override
+    public void adviseBeforePutFieldObject(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
+        del.adviseBeforePutFieldObject(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
     }
 
     @Override
@@ -465,12 +515,12 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
-    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
+    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, double arg6) {
         del.adviseBeforePutField(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
     }
 
     @Override
-    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, double arg6) {
+    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
         del.adviseBeforePutField(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
     }
 
@@ -545,63 +595,18 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
+    public void adviseAfterNew(String arg1, long arg2, String arg3, long arg4) {
+        del.adviseAfterNew(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4);
+    }
+
+    @Override
+    public void adviseAfterNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
+        del.adviseAfterNewArray(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, arg5);
+    }
+
+    @Override
     public void adviseAfterMethodEntry(String arg1, long arg2, String arg3, long arg4, String arg5) {
         del.adviseAfterMethodEntry(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5));
-    }
-
-    @Override
-    public void adviseBeforeGC(String arg1) {
-        del.adviseBeforeGC(getThreadShortForm(arg1));
-    }
-
-    @Override
-    public void adviseAfterGC(String arg1) {
-        del.adviseAfterGC(getThreadShortForm(arg1));
-    }
-
-    @Override
-    public void adviseBeforeThreadStarting(String arg1) {
-        del.adviseBeforeThreadStarting(getThreadShortForm(arg1));
-    }
-
-    @Override
-    public void adviseBeforeThreadTerminating(String arg1) {
-        del.adviseBeforeThreadTerminating(getThreadShortForm(arg1));
-    }
-
-    @Override
-    public void adviseBeforeConstLoadObject(String arg1, long arg2) {
-        del.adviseBeforeConstLoadObject(getThreadShortForm(arg1), arg2);
-    }
-
-    @Override
-    public void adviseBeforeStoreObject(String arg1, int arg2, long arg3) {
-        del.adviseBeforeStoreObject(getThreadShortForm(arg1), arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeArrayStoreObject(String arg1, long arg2, int arg3, long arg4) {
-        del.adviseBeforeArrayStoreObject(getThreadShortForm(arg1),  checkRepeatId(arg2, arg1), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeIfObject(String arg1, int arg2, long arg3, long arg4) {
-        del.adviseBeforeIfObject(getThreadShortForm(arg1), arg2, arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeReturnObject(String arg1, long arg2) {
-        del.adviseBeforeReturnObject(getThreadShortForm(arg1), arg2);
-    }
-
-    @Override
-    public void adviseBeforePutStaticObject(String arg1, String arg2, long arg3, String arg4, long arg5) {
-        del.adviseBeforePutStaticObject(getThreadShortForm(arg1), getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg2, arg3, arg4), arg5);
-    }
-
-    @Override
-    public void adviseBeforePutFieldObject(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
-        del.adviseBeforePutFieldObject(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
     }
 
 // END GENERATED CODE

@@ -44,7 +44,7 @@ public class RunGenerators {
         NullVMAdviceHandlerGenerator.class,
         ObjectStateHandlerAdaptorGenerator.class,
         SyncLogVMAdviceHandlerGenerator.class,
-        CountVMAdviceHandlerGenerator.class,
+        CountsVMAdviceHandlerGenerator.class,
         VMAdviceHandlerLogGenerator.class,
         VMAdviceHandlerLogAdaptorGenerator.class,
         TransientVMAdviceHandlerTypesGenerator.class,

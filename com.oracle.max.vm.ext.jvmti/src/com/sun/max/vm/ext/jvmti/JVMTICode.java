@@ -51,11 +51,11 @@ public class JVMTICode {
     private static void checkDeOptForEvent(JVMTI.Env jvmtiEnv, VmThread vmThread) {
         long codeEventSettings = JVMTIEvent.codeEventSettings(jvmtiEnv, vmThread);
         if (codeEventSettings != 0) {
-            SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
+            FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
             // we only deopt the top frame, which means we need to handle leaving the frame later.
             // if we are in thread termination, stack may be empty
-            if (op.stackTraceVisitor.stackElements.size() > 0) {
-                checkDeOptForMethod(op.stackTraceVisitor.getStackElement(0).classMethodActor, codeEventSettings);
+            if (stackTraceVisitor.stackElements.size() > 0) {
+                checkDeOptForMethod(stackTraceVisitor.getStackElement(0).classMethodActor, codeEventSettings);
             }
         } else {
             // is it worth reopting? perhaps if we are resuming without, say, single step set and

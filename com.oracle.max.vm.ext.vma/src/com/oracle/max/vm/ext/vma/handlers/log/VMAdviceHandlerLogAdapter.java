@@ -144,7 +144,7 @@ public class VMAdviceHandlerLogAdapter extends VMAdviceHandler {
     }
 
 // START GENERATED CODE
-// EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN VMAdviceHandlerLogAdaptorGenerator.main() TO MODIFY
 
     @Override
     public void adviseBeforeGC() {
@@ -164,6 +164,11 @@ public class VMAdviceHandlerLogAdapter extends VMAdviceHandler {
     @Override
     public void adviseBeforeThreadTerminating(VmThread arg1) {
         log.adviseBeforeThreadTerminating(tng.getThreadName());
+    }
+
+    @Override
+    public void adviseBeforeReturnByThrow(Throwable arg1, int arg2) {
+        log.adviseBeforeReturnByThrow(tng.getThreadName(), state.readId(arg1), arg2);
     }
 
     @Override
@@ -337,13 +342,13 @@ public class VMAdviceHandlerLogAdapter extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
+    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         log.adviseBeforePutStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name(), arg3);
     }
 
     @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
+    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         log.adviseBeforePutStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name(), arg3);
     }
@@ -368,7 +373,7 @@ public class VMAdviceHandlerLogAdapter extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
+    public void adviseBeforePutField(Object arg1, int arg2, long arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         FieldActor fa = ca.findInstanceFieldActor(arg2);
         log.adviseBeforePutField(tng.getThreadName(), state.readId(arg1), fa.holder().name(), state.readId(ca.classLoader), fa.name(), arg3);
@@ -389,7 +394,7 @@ public class VMAdviceHandlerLogAdapter extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforePutField(Object arg1, int arg2, long arg3) {
+    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         FieldActor fa = ca.findInstanceFieldActor(arg2);
         log.adviseBeforePutField(tng.getThreadName(), state.readId(arg1), fa.holder().name(), state.readId(ca.classLoader), fa.name(), arg3);

@@ -20,23 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo.jvmti;
+package com.oracle.max.vm.ext.t1x.vma;
+
+import com.oracle.max.vm.ext.t1x.*;
 
 /**
- * Program to debug Maxine's implementation of JVMTI Exception events.
- * Catch an exception thrown up stack.
+ * Marker class that indicates instrumented by VMA.
  */
-public class ExceptionTest_02 {
-    public static void main(String[] args) {
-        try {
-            foo();
-        } catch (TestException t) {
-            System.err.println(t);
-        }
+public class VMAT1XTargetMethod extends T1XTargetMethod {
+    VMAT1XTargetMethod(T1XCompilation comp, boolean install) {
+        super(comp, install);
     }
-
-    public static void foo() throws TestException {
-        throw new TestException("thrown from foo");
-    }
-
 }

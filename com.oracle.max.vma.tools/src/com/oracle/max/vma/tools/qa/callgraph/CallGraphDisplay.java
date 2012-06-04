@@ -864,9 +864,9 @@ public class CallGraphDisplay extends JPanel {
     }
 
     enum TraceType {
-        Entry, Return, VoidReturn, DefineThread, DefineMethod, DefineParam, StartTime, Call;
+        Entry, Return, VoidReturn, ReturnByThrow, DefineThread, DefineMethod, DefineParam, StartTime, Call;
         static boolean isReturn(TraceType tt) {
-            return tt == Return || tt == VoidReturn;
+            return tt == Return || tt == VoidReturn || tt == ReturnByThrow;
         }
     }
 
@@ -1398,6 +1398,7 @@ public class CallGraphDisplay extends JPanel {
 
                 case Return:
                 case VoidReturn:
+                case ReturnByThrow:
                     // We find the entry that corresponds to this return and copy the exit time
                     // in the Return node into the Entry node and ditto for the result.
                     DefaultMutableTreeNode parent = ns.nodes.get(md.depth - 1);
@@ -1481,7 +1482,8 @@ public class CallGraphDisplay extends JPanel {
             }
             for (int arIndex = 0; arIndex <  traceRun.adviceRecordList.size(); arIndex++) {
                 AdviceRecord ar = traceRun.adviceRecordList.get(arIndex);
-                switch (ar.getRecordType()) {
+                RecordType art = ar.getRecordType();
+                switch (art) {
                     case MethodEntry: {
                         ObjectMethodAdviceRecord oar = (ObjectMethodAdviceRecord) ar;
                         String threadName = ((ThreadRecord) ar.thread).getName();
@@ -1504,14 +1506,20 @@ public class CallGraphDisplay extends JPanel {
                     case ReturnLong:
                     case ReturnFloat:
                     case ReturnDouble:
-                    case ReturnObject: {
+                    case ReturnObject:
+                    case ReturnByThrow: {
                         TimeInfo timeInfo = new TimeInfo();
                         timeInfo.wallTime = ar.time;
                         String threadName = ((ThreadRecord) ar.thread).getName();
                         ThreadStack ts = threadMethodStackMap.get(threadName);
                         assert ts != null;
-                        ts.entryIndex--;
-                        setMd(createMethodData(ar.getRecordType() == RecordType.Return ? TraceType.VoidReturn : TraceType.Return,
+                        if (art == RecordType.ReturnByThrow) {
+                            ObjectLongAdviceRecord oar = (ObjectLongAdviceRecord) ar;
+                            ts.entryIndex -= oar.getPackedValue();
+                        } else {
+                            ts.entryIndex--;
+                        }
+                        setMd(createMethodData(forReturn(art),
                                         threadName, ts.entryIndex, ts.methods[ts.entryIndex], null, timeInfo));
                         handleMethodData();
                         break;
@@ -1521,6 +1529,14 @@ public class CallGraphDisplay extends JPanel {
                 }
             }
             finish();
+        }
+
+        private TraceType forReturn(RecordType rt) {
+            switch (rt) {
+                case Return: return TraceType.VoidReturn;
+                case ReturnByThrow: return TraceType.ReturnByThrow;
+                default: return TraceType.Return;
+            }
         }
 
         private void checkMethodDef(String methodName) {

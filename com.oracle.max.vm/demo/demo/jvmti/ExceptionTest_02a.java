@@ -24,19 +24,15 @@ package demo.jvmti;
 
 /**
  * Program to debug Maxine's implementation of JVMTI Exception events.
- * Catch an exception thrown up stack.
+ * Catch an exception thrown in same method.
  */
-public class ExceptionTest_02 {
+public class ExceptionTest_02a {
     public static void main(String[] args) {
         try {
-            foo();
+            throw new TestException("thrown from main");
         } catch (TestException t) {
             System.err.println(t);
         }
-    }
-
-    public static void foo() throws TestException {
-        throw new TestException("thrown from foo");
     }
 
 }

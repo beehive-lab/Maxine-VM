@@ -57,7 +57,7 @@ import com.sun.max.vm.ti.*;
 /**
  * The heart of the Maxine JVMTI implementation.
  * Handles environments, event handling.
- * Supports both standard (native) agents and the Java agents written to {@link JJVMTI}.
+ * Supports both standard (native) agents and the Java agents written to {@link JJVMTIStd}.
  */
 public class JVMTI {
     /**
@@ -110,28 +110,36 @@ public class JVMTI {
     }
 
     /**
-     * Subclass used for agents that use {@link JJVMTI}.
+     * Abstrct subclass used for agents that use {@link JJVMTIStd}.
      * In order to access the callbacks in the generic event handling code
      * we make this class implement {@link JJVMTI.EventCallbacks} and provide
      * default, empty, implementations.
      */
-    public static class JavaEnv extends Env implements JJVMTI.EventCallbacks {
+    public static abstract class JavaEnv extends Env {
         private EnumSet<JVMTICapabilities.E> capabilities = EnumSet.noneOf(JVMTICapabilities.E.class);
-        public void agentStartup() { }
-        public void breakpoint(Thread thread, Method method, long location) { }
-        public void classLoad(Thread thread, Class klass) { }
-        public byte[] classFileLoadHook(ClassLoader loader, String name,
-                               ProtectionDomain protectionDomain, byte[] classData) {
-            return null;
+        final JJVMTICommon.EventCallbacks callbackHandler;
+        protected JavaEnv(JJVMTICommon.EventCallbacks callbackHandler) {
+            this.callbackHandler = callbackHandler;
         }
-        public void garbageCollectionStart() { }
-        public void garbageCollectionFinish() { }
-        public void methodEntry(Thread thread, Method method) { }
-        public void methodExit(Thread thread, Method method) { }
-        public void threadStart(Thread thread) { }
-        public void threadEnd(Thread thread) { }
-        public void vmDeath() { }
-        public void vmInit() { }
+
+    }
+
+    /**
+     * Concrete subclass for reflection-based API, {@link JJVMTIStd}.
+     */
+    public static class JavaEnvStd extends JavaEnv {
+        public JavaEnvStd(JJVMTIStd.EventCallbacksStd callbackHandler) {
+            super(callbackHandler);
+        }
+    }
+
+    /**
+     * Concrete subclass for Maxine actor-based API, {@link JJVMTIMax}.
+     */
+    public static class JavaEnvMax extends JavaEnv {
+        public JavaEnvMax(JJVMTIMax.EventCallbacksMax callbackHandler) {
+            super(callbackHandler);
+        }
     }
 
     static class JVMTIHandler extends NullVMTIHandler implements VMTIHandler {
@@ -411,7 +419,7 @@ public class JVMTI {
         for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
             JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
             if (javaEnv != null) {
-                javaEnv.agentStartup();
+                javaEnv.callbackHandler.agentStartup();
             }
         }
         phase = JVMTI_PHASE_PRIMORDIAL;
@@ -475,6 +483,8 @@ public class JVMTI {
         int eventId;
         if (opcode == -1) {
             eventId = JVMTI_EVENT_METHOD_ENTRY;
+        } else if (opcode == -2) {
+            eventId = JVMTI_EVENT_METHOD_EXIT;
         } else {
             switch (opcode) {
                 case Bytecodes.GETFIELD:
@@ -652,37 +662,59 @@ public class JVMTI {
                 Thread currentThread = Thread.currentThread();
                 switch (eventId) {
                     case VM_INIT:
-                        javaEnv.vmInit();
+                        javaEnv.callbackHandler.vmInit();
                         break;
 
                     case VM_DEATH:
-                        javaEnv.vmDeath();
+                        javaEnv.callbackHandler.vmDeath();
                         break;
 
                     case THREAD_START:
-                        javaEnv.threadStart(currentThread);
+                        javaEnv.callbackHandler.threadStart(currentThread);
                         break;
 
                     case THREAD_END:
-                        javaEnv.threadEnd(currentThread);
+                        javaEnv.callbackHandler.threadEnd(currentThread);
                         break;
 
                     case GARBAGE_COLLECTION_START:
-                        javaEnv.garbageCollectionStart();
+                        javaEnv.callbackHandler.garbageCollectionStart();
                         break;
 
                     case GARBAGE_COLLECTION_FINISH:
-                        javaEnv.garbageCollectionFinish();
+                        javaEnv.callbackHandler.garbageCollectionFinish();
                         break;
 
                     case CLASS_LOAD:
-                        javaEnv.classLoad(currentThread, asClassActor(arg1).javaClass());
+                        if (javaEnv instanceof JavaEnvStd) {
+                            ((JJVMTIStd.EventCallbacksStd) javaEnv.callbackHandler).classLoad(currentThread, asClassActor(arg1).javaClass());
+                        } else {
+                            ((JJVMTIMax.EventCallbacksMax) javaEnv.callbackHandler).classLoad(currentThread, asClassActor(arg1));
+                        }
                         break;
 
-                    case METHOD_ENTRY:
-                        javaEnv.methodEntry(currentThread, asClassMethodActor(arg1).toJava());
+                    case METHOD_ENTRY: {
+                        if (javaEnv instanceof JavaEnvStd) {
+                            Member member = getMethodOrConstructor(asClassMethodActor(arg1));
+                            ((JJVMTIStd.EventCallbacksStd) javaEnv.callbackHandler).methodEntry(currentThread, member);
+                        } else {
+                            ((JJVMTIMax.EventCallbacksMax) javaEnv.callbackHandler).methodEntry(currentThread, asClassMethodActor(arg1));
+                        }
                         break;
+                    }
 
+                    case METHOD_EXIT: {
+                        FramePopEventData framePopEventData = asFramePopEventData(arg1);
+                        if (javaEnv instanceof JavaEnvStd) {
+                            Member member = getMethodOrConstructor(MethodID.toMethodActor(framePopEventData.methodID));
+                            ((JJVMTIStd.EventCallbacksStd) javaEnv.callbackHandler).methodExit(currentThread, member,
+                                            framePopEventData.wasPoppedByException, framePopEventData.value);
+                        } else {
+                            ((JJVMTIMax.EventCallbacksMax) javaEnv.callbackHandler).methodExit(currentThread, MethodID.toMethodActor(framePopEventData.methodID),
+                                            framePopEventData.wasPoppedByException, framePopEventData.value);
+                        }
+                        break;
+                    }
                         /*
                     case FIELD_ACCESS:
                     case FIELD_MODIFICATION:
@@ -713,6 +745,16 @@ public class JVMTI {
         if (eventId == VM_DEATH) {
             phase = JVMTI_PHASE_DEAD;
         }
+    }
+
+    private static Member getMethodOrConstructor(MethodActor methodActor) {
+        Member member;
+        if (methodActor.isConstructor()) {
+            member = methodActor.toJavaConstructor();
+        } else {
+            member = methodActor.toJava();
+        }
+        return member;
     }
 
     private static class ThreadFieldEventData extends ThreadLocal<FieldEventData> {
