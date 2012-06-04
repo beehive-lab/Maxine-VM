@@ -74,7 +74,6 @@ public final class StringPane extends InspectorScrollPane {
             Color background = null;
             switch(stringSource.status()) {
                 case LIVE:
-                case UNKNOWN:
                     stringValue = stringSource.fetchString();
                     break;
                 case DEAD:

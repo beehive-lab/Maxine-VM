@@ -630,7 +630,6 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             // TODO (mlvdv) watchpoint on forwarded object?
             switch(object.status()) {
                 case LIVE:
-                case UNKNOWN:
                     // A relocatable watchpoint on a live object should have been relocated
                     // (eagerly) just as the relocation took place.   Check that the locations match.
                     if (!object.objectMemoryRegion().start().plus(offset).equals(memoryRegion().start())) {
