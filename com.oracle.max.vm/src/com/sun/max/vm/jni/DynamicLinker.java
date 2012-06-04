@@ -52,6 +52,7 @@ public final class DynamicLinker {
 
     private static final String DLOPEN = "dlopen";
     private static final String DLSYM = "dlsym";
+    private static final String JNI_ONLOAD = "JNI_OnLoad";
     public static boolean TraceDL;
     static {
         VMOptions.addFieldOption("-XX:", "TraceDL", "Trace Dynamic Linker calls.");
@@ -199,7 +200,11 @@ public final class DynamicLinker {
             }
         }
         if (addr.isNotZero() && criticalLinked && isVmInspected()) {
-            LibInfo.setSentinel(h, symbolAsCString, addr.asAddress());
+            // every user loaded library checks for JNI_OnLoad first and it is not
+            // usually defined in the library but resolves elsewhere so is useless as a sentinel.
+            if (!symbol.equals(JNI_ONLOAD)) {
+                LibInfo.setSentinel(h, symbolAsCString, addr.asAddress());
+            }
         }
         return addr;
     }

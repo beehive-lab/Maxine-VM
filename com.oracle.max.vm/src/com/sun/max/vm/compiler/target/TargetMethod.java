@@ -592,7 +592,6 @@ public abstract class TargetMethod extends MemoryRegion {
             Endianness endianness = platform().endianness();
             scalarsMap = new int[dataReferences.size()];
             int dataIndex = 0;
-            int currentScalarsPos = 0;
             int scalarsAlignment = 0;
 
             // Data patches need to be sorted in decreasing order of their alignment requirements
@@ -611,13 +610,16 @@ public abstract class TargetMethod extends MemoryRegion {
             for (DataPatch site : dataReferences) {
                 final CiConstant data = site.constant;
                 if (!data.kind.isObject()) {
-                    scalarsMap[dataIndex] = currentScalarsPos;
                     if (site.alignment != 0) {
-                        currentScalarsPos = (currentScalarsPos + (site.alignment - 1)) & ~(site.alignment - 1);
+                        while ((scalarsBuffer.size() & (site.alignment - 1)) != 0) {
+                            scalarsBuffer.write(0);
+                        }
                         if (site.alignment > scalarsAlignment) {
                             scalarsAlignment = site.alignment;
                         }
                     }
+                    scalarsMap[dataIndex] = scalarsBuffer.size();
+
                 } else {
                     assert site.alignment == 0 : "Alignment for object literals not supported";
                     scalarsMap[dataIndex] = -1;
@@ -626,22 +628,18 @@ public abstract class TargetMethod extends MemoryRegion {
                     switch (data.kind) {
                         case Double:
                             endianness.writeLong(scalarsBuffer, Double.doubleToRawLongBits(data.asDouble()));
-                            currentScalarsPos += 8;
                             break;
 
                         case Float:
                             endianness.writeInt(scalarsBuffer, Float.floatToRawIntBits(data.asFloat()));
-                            currentScalarsPos += 4;
                             break;
 
                         case Int:
                             endianness.writeInt(scalarsBuffer, data.asInt());
-                            currentScalarsPos += 4;
                             break;
 
                         case Long:
                             endianness.writeLong(scalarsBuffer, data.asLong());
-                            currentScalarsPos += 8;
                             break;
 
                         case Object: {
@@ -698,6 +696,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 case Float: // fall through
                 case Int: // fall through
                 case Long: {
+                    assert site.alignment == 0 || targetBundleLayout.firstElementPointer(start, ArrayField.scalarLiterals).plus(literals.scalarPos(dataIndex)).isAligned(site.alignment) : "patching to a scalar address that is not aligned";
                     patchRelativeInstruction(site.pcOffset, scalarDiff.plus(literals.scalarPos(dataIndex) - site.pcOffset).toInt());
                     break;
                 }

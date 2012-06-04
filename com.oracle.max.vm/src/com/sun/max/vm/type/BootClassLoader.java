@@ -96,6 +96,13 @@ public final class BootClassLoader extends ClassLoader {
     private Class resolveClassOrNull(Classpath classpath, String name) {
         final ClasspathFile classpathFile = classpath.readClassFile(name);
         if (classpathFile == null) {
+            if (vmResolveOk.get()) {
+                // must use class registry, to avoid recursion back here, as boot is parent of vm
+                ClassActor ca = ClassRegistry.VM_CLASS_REGISTRY.get(JavaTypeDescriptor.getDescriptorForJavaString(name));
+                if (ca != null) {
+                    return ca.toJava();
+                }
+            }
             return null;
         }
         ClassActor classActor = ClassfileReader.defineClassActor(name, this, classpathFile.contents, null, classpathFile.classpathEntry, false);
@@ -156,16 +163,7 @@ public final class BootClassLoader extends ClassLoader {
         }
         Class c = resolveClassOrNull(classpath(), name);
         if (c == null) {
-            if (vmResolveOk.get()) {
-                // must use class registry, to avoid recursion back here, as boot is parent of vm
-                ClassActor ca = ClassRegistry.VM_CLASS_REGISTRY.get(JavaTypeDescriptor.getDescriptorForJavaString(name));
-                if (ca != null) {
-                    c = ca.toJava();
-                }
-            }
-            if (c == null)  {
-                throw new ClassNotFoundException(name);
-            }
+            throw new ClassNotFoundException(name);
         }
         return c;
     }

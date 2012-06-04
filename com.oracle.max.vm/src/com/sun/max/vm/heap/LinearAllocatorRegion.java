@@ -97,28 +97,90 @@ public class LinearAllocatorRegion extends LinearAllocationMemoryRegion {
     }
 
     @INLINE
-    protected final void scanReferenceMap(PointerIndexVisitor pointerIndexVisitor, Pointer refMap, int refMapWords, boolean logging) {
-        for (int i = 0; i < refMapWords; ++i) {
-            Address refmapWord = refMap.getWord(i).asAddress();
-            if (!refmapWord.isZero()) {
-                int bitIndex = 0;
-                while (!refmapWord.isZero()) {
-                    if (!refmapWord.and(1).isZero()) {
-                        final int regionWordIndex = (i * Word.width()) + bitIndex;
-                        if (logging) {
-                            final Pointer address = start().asPointer().plus(regionWordIndex * Word.size());
-                            final Address value = address.readWord(0).asAddress();
-                            if (!value.isZero() && !contains(value) && !Code.bootCodeRegion().contains(value)) {
-                                Heap.rootScanLogger.logVisitReferenceMapSlot(regionWordIndex, address, value);
-                            }
-                        }
-                        pointerIndexVisitor.visit(start().asPointer(), regionWordIndex);
-                    }
-                    refmapWord = refmapWord.dividedBy(2);
-                    bitIndex++;
+    private void scanReferences(PointerIndexVisitor pointerIndexVisitor,  Pointer refMap, int refmapWordIndex, boolean logging) {
+        final int firstWordIndex = refmapWordIndex << Word.widthValue().log2numberOfBits;
+        final Pointer base = start.plusWords(firstWordIndex).asPointer();
+        long refmapWord = refMap.getLong(refmapWordIndex);
+        long w = refmapWord;
+        int bitIndexInWord = 0;
+        while (w != 0L) {
+            bitIndexInWord += Address.fromLong(w).leastSignificantBitSet();
+            if (logging) {
+                final Address value = base.getWord(bitIndexInWord).asAddress();
+                if (!value.isZero() && !contains(value) && !Code.bootCodeRegion().contains(value)) {
+                    final Pointer address = base.plusWords(bitIndexInWord);
+                    Heap.rootScanLogger.logVisitReferenceMapSlot(firstWordIndex + bitIndexInWord, address, value);
                 }
             }
+            pointerIndexVisitor.visit(base, bitIndexInWord);
+            if (++bitIndexInWord == 64) {
+                return;
+            }
+            w = refmapWord >>> bitIndexInWord;
         }
     }
 
+    @INLINE
+    private void scanReferences(PointerIndexVisitor pointerIndexVisitor,  Pointer refMap, int refmapWordIndex, int firstBit, int lastBit, boolean logging) {
+        final int firstWordIndex = refmapWordIndex << Word.widthValue().log2numberOfBits;
+        final Pointer base = start.plusWords(firstWordIndex).asPointer();
+        Address refmapWord = refMap.getWord(refmapWordIndex).asAddress();
+        Address w = refmapWord.unsignedShiftedRight(firstBit);
+        int bitIndex = firstBit;
+        while (!w.isZero()) {
+            bitIndex += w.leastSignificantBitSet();
+            if (bitIndex >= lastBit) {
+                return;
+            }
+            if (logging) {
+                final Pointer address = base.plusWords(bitIndex);
+                final Address value = address.getWord().asAddress();
+                if (!value.isZero() && !contains(value) && !Code.bootCodeRegion().contains(value)) {
+                    Heap.rootScanLogger.logVisitReferenceMapSlot(firstWordIndex + bitIndex, address, value);
+                }
+            }
+            pointerIndexVisitor.visit(base, bitIndex);
+            w = refmapWord.unsignedShiftedRight(++bitIndex);
+        }
+    }
+
+    @INLINE
+    private void scanReferences(PointerIndexVisitor pointerIndexVisitor, Pointer refMap, int firstBitIndex, int lastBitIndex, boolean logging) {
+        final int mask = Word.widthValue().log2numberOfBits - 1;
+        final int firstRefMapWordIndex = firstBitIndex >> Word.widthValue().log2numberOfBits;
+        final int lastRefMapWordIndex = lastBitIndex >> Word.widthValue().log2numberOfBits;
+        int refMapWordIndex = firstRefMapWordIndex;
+        int nextBitIndex = firstBitIndex;
+        if (refMapWordIndex < lastRefMapWordIndex) {
+            if ((firstBitIndex  & mask) != 0) {
+                // first bit is not at a word boundary. Scan reference from the first bit index this the last bit of the current refmap word
+                final int lastBit = (refMapWordIndex + 1) << Word.widthValue().log2numberOfBits;
+                scanReferences(pointerIndexVisitor, refMap, refMapWordIndex++, firstBitIndex, lastBit, logging);
+            }
+            while (refMapWordIndex < lastRefMapWordIndex) {
+                scanReferences(pointerIndexVisitor, refMap, refMapWordIndex++, logging);
+            }
+            nextBitIndex = lastBitIndex  & ~mask;
+        }
+        if ((lastBitIndex  & mask) != 0) {
+            scanReferences(pointerIndexVisitor, refMap, refMapWordIndex, nextBitIndex, lastBitIndex, logging);
+        } else {
+            scanReferences(pointerIndexVisitor, refMap, refMapWordIndex, logging);
+        }
+    }
+
+    @INLINE
+    protected final void scanReferences(PointerIndexVisitor pointerIndexVisitor, Pointer refMap, Address rangeStart, Address rangeEnd, boolean logging) {
+        final int firstBitIndex = rangeStart.minus(start).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        final int lastBitIndex = rangeEnd.minus(start).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        scanReferences(pointerIndexVisitor, refMap, firstBitIndex, lastBitIndex, logging);
+    }
+
+    @INLINE
+    protected final void scanReferenceMap(PointerIndexVisitor pointerIndexVisitor, Pointer refMap, int refMapWords, boolean logging) {
+        int refMapWordIndex = 0;
+        while (refMapWordIndex < refMapWords) {
+            scanReferences(pointerIndexVisitor, refMap, refMapWordIndex++, logging);
+        }
+    }
 }
