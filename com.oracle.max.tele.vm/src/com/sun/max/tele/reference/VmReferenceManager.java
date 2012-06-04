@@ -29,7 +29,6 @@ import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.hosted.*;
 import com.sun.max.vm.value.*;
@@ -89,7 +88,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
      *
      * @param reference a remote reference to a VM object
      * @return a VM memory location that is the object's origin;
-     * {@linkplain Address#zero()} if the reference is {@linkplain ObjectStatus#DEAD DEAD}.
+     * {@linkplain Address#zero()} if the reference is {@linkplain RemoteObjectStatus#DEAD DEAD}.
      */
     public Address toOrigin(Reference reference) {
         return referenceScheme.toOrigin(reference);
@@ -178,7 +177,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * <strong>Unsafe:</strong> These are not canonical and should only be used for temporary, low level access to
      * object state. They should not be retained across VM execution.
      * <p>
-     * The object status is permanently {@link ObjectStatus#DEAD}.
+     * The object status is permanently {@link RemoteObjectStatus#DEAD}.
      *
      * @param origin a constant location in VM memory about which almost nothing is guaranteed
      * @return the address wrapped as a remote object reference for temporary use
@@ -194,7 +193,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * where (for example during an attach) objects may be discovered before
      * meta-information about the region that contains them has been discovered.
      * <p>
-     * Memory status is permanently {@link ObjectStatus#LIVE}.
+     * Memory status is permanently {@link RemoteObjectStatus#LIVE}.
      *
      * @param origin a location in an unknown region of VM memory where an object appears to be stored
      * @return the address wrapped as a reference for temporary use.
@@ -231,8 +230,8 @@ public final class VmReferenceManager extends AbstractVmHolder {
         }
 
         @Override
-        public ObjectStatus status() {
-            return ObjectStatus.DEAD;
+        public RemoteObjectStatus status() {
+            return RemoteObjectStatus.DEAD;
         }
     }
 
@@ -254,8 +253,8 @@ public final class VmReferenceManager extends AbstractVmHolder {
         }
 
         @Override
-        public ObjectStatus status() {
-            return ObjectStatus.LIVE;
+        public RemoteObjectStatus status() {
+            return RemoteObjectStatus.LIVE;
         }
     }
 

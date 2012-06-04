@@ -30,7 +30,6 @@ import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * An object view specialized for displaying a low-level heap object in the VM that implements a {@link StringConstant}.
@@ -69,7 +68,7 @@ public class StringConstantView extends ObjectView<StringConstantView> {
             public String fetchString() {
                 return teleStringConstant.getString();
             }
-            public ObjectStatus status() {
+            public RemoteObjectStatus status() {
                 return object().status();
             }
         });

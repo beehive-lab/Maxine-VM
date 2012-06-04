@@ -25,6 +25,7 @@ package com.sun.max.tele.reference;
 import java.util.concurrent.atomic.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
@@ -64,10 +65,10 @@ public abstract class RemoteReference extends Reference {
 
     /**
      * @return the status of the object representation in memory to which this instance refers:
-     *         {@linkplain ObjectStatus#LIVE LIVE}, {@linkplain ObjectStatus#DEAD DEAD}, or (only possible when heap is
-     *         {@linkplain HeapPhase#ANALYZING ANALYZING}) {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.
+     *         {@linkplain RemoteObjectStatus#LIVE LIVE}, {@linkplain RemoteObjectStatus#DEAD DEAD}, or (only possible when heap is
+     *         {@linkplain HeapPhase#ANALYZING ANALYZING}) {@linkplain RemoteObjectStatus#UNKNOWN UNKNOWN}.
      */
-    public abstract ObjectStatus status();
+    public abstract RemoteObjectStatus status();
 
     /**
      * Gets the absolute location of the object's <em>origin</em> in VM memory. This may or may not be the same as the
@@ -78,7 +79,7 @@ public abstract class RemoteReference extends Reference {
      * {@link #forwardedFrom()} method.
      * <p>
      * Returns the last valid origin when the object has become <em>unreachable</em> and its status is
-     * {@linkplain ObjectStatus#DEAD DEAD}.
+     * {@linkplain RemoteObjectStatus#DEAD DEAD}.
      *
      * @return the VM memory location of the object
      */
@@ -95,7 +96,7 @@ public abstract class RemoteReference extends Reference {
      * <li> {@link #origin()} returns the location of the <em>new</em> copy of the object;</li>
      * <li> {@link #forwardedFrom()}, if known, returns the <em>old</em> copy of the object, or {@code null} if not yet
      * discovered; and</li>
-     * <li> {@link #status()} returns {@linkplain ObjectStatus#LIVE LIVE}.</li>
+     * <li> {@link #status()} returns {@linkplain RemoteObjectStatus#LIVE LIVE}.</li>
      * </ul>
      *
      * @return {@code true} iff the object has been copied to a new location during a heap's
@@ -119,14 +120,14 @@ public abstract class RemoteReference extends Reference {
      * Generates a string describing the status of the object in VM memory with respect to memory management, designed
      * to provide useful information to a person: information that the Inspector can't already deduce from the standard
      * interfaces. For example, the Inspector can identify the region into which the reference points and the basic
-     * status of the object's {@linkplain ObjectStatus status}.
+     * status of the object's {@linkplain RemoteObjectStatus status}.
      *
      * @return an optional string with information useful to a person, null if unavailable.
      */
     public abstract String gcDescription();
 
     /**
-     * @return is this reference a special temporary {@linkplain ObjectStatus#DEAD DEAD} reference that should not be
+     * @return is this reference a special temporary {@linkplain RemoteObjectStatus#DEAD DEAD} reference that should not be
      *         allowed to persist past any VM execution?
      */
     public boolean isTemporary() {
@@ -134,7 +135,7 @@ public abstract class RemoteReference extends Reference {
     }
 
     /**
-     * @return is this reference a special temporary {@linkplain ObjectStatus#LIVE LIVE} reference that appears to refer
+     * @return is this reference a special temporary {@linkplain RemoteObjectStatus#LIVE LIVE} reference that appears to refer
      *         to an object that is not in any known VM memory region?
      */
     public boolean isProvisional() {

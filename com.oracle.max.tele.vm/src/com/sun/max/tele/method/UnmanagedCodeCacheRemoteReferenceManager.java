@@ -224,7 +224,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
      * code cache. In particular, it may refer only to one of the three possible data arrays pointed at by an instance
      * of {@link TeleTargetMethod} in the VM.
      * <p>
-     * Such data, by definition, never moves and is always {@linkplain ObjectStatus#LIVE LIVE}, even if/when the
+     * Such data, by definition, never moves and is always {@linkplain RemoteObjectStatus#LIVE LIVE}, even if/when the
      * {@link TeleTargetMethod} responsible for it has been collected.
      *
      * @see TeleTargetMethod
@@ -247,8 +247,8 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
          * {@link TeleTargetMethod} that points at them has been collected.
          */
         @Override
-        public ObjectStatus status() {
-            return ObjectStatus.LIVE;
+        public RemoteObjectStatus status() {
+            return RemoteObjectStatus.LIVE;
         }
 
         @Override

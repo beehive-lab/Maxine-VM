@@ -609,8 +609,8 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
 
     /**
      * Is the address in an area where an object could be either
-     * {@linkplain ObjectStatus#LIVE LIVE} or
-     * {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.
+     * {@linkplain RemoteObjectStatus#LIVE LIVE} or
+     * {@linkplain RemoteObjectStatus#UNKNOWN UNKNOWN}.
      */
     private boolean inLiveArea(Address address) {
         switch(phase()) {
@@ -679,8 +679,8 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         sb2.append("mapped object refs=").append(formatter.format(totalRefs));
         if (totalRefs > 0) {
             sb2.append(", object status: ");
-            sb2.append(ObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
-            sb2.append(ObjectStatus.UNKNOWN.label()).append("=").append(formatter.format(unknownRefs));
+            sb2.append(RemoteObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
+            sb2.append(RemoteObjectStatus.UNKNOWN.label()).append("=").append(formatter.format(unknownRefs));
         }
         printStream.println(indentation + sb2.toString());
         if (deadRefs > 0) {

@@ -22,15 +22,15 @@
  */
 package com.sun.max.tele.reference.ms;
 
-import static com.sun.max.vm.heap.ObjectStatus.*;
+import static com.sun.max.tele.object.RemoteObjectStatus.*;
 
 import java.util.*;
 
 import com.sun.max.tele.heap.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 
 /**
@@ -62,7 +62,7 @@ public class MSRemoteReference extends  RemoteReference {
 
             // Properties
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return LIVE;
             }
 
@@ -84,7 +84,7 @@ public class MSRemoteReference extends  RemoteReference {
         OBJ_UNKNOWN ("UNKNOWN object (Analyzing)") {
 
             // Properties
-            @Override ObjectStatus status() {
+            @Override RemoteObjectStatus status() {
                 return UNKNOWN;
             }
 
@@ -111,7 +111,7 @@ public class MSRemoteReference extends  RemoteReference {
         OBJ_UNREACHABLE ("UNREACHABLE object (Reclaiming)") {
 
             // Properties
-            @Override ObjectStatus status() {
+            @Override RemoteObjectStatus status() {
                 return DEAD;
             }
 
@@ -139,7 +139,7 @@ public class MSRemoteReference extends  RemoteReference {
         OBJ_DEAD ("DEAD object") {
 
             // Properties
-            @Override ObjectStatus status() {
+            @Override RemoteObjectStatus status() {
                 return DEAD;
             }
 
@@ -156,7 +156,7 @@ public class MSRemoteReference extends  RemoteReference {
 
             // Properties;
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return LIVE;
             }
 
@@ -176,7 +176,7 @@ public class MSRemoteReference extends  RemoteReference {
 
             // Properties;
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return LIVE;
             }
 
@@ -201,7 +201,7 @@ public class MSRemoteReference extends  RemoteReference {
 
             // Properties;
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return DEAD;
             }
 
@@ -224,7 +224,7 @@ public class MSRemoteReference extends  RemoteReference {
         /**
          * @see RemoteReference#status()
          */
-        abstract ObjectStatus status();
+        abstract RemoteObjectStatus status();
 
         /**
          * @see RemoteReference#origin()
@@ -351,7 +351,7 @@ public class MSRemoteReference extends  RemoteReference {
     }
 
     @Override
-    public ObjectStatus status() {
+    public RemoteObjectStatus status() {
         return refState.status();
     }
 

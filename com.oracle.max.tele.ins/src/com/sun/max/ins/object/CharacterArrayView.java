@@ -29,7 +29,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * An object view specialized for displaying a low-level character array in the VM.
@@ -70,7 +69,7 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
                 final int length = Math.min(chars.length, preference().style().maxStringFromCharArrayDisplayLength());
                 return new String(chars, 0, length);
             }
-            public ObjectStatus status() {
+            public RemoteObjectStatus status() {
                 return teleArrayObject.status();
             }
         });

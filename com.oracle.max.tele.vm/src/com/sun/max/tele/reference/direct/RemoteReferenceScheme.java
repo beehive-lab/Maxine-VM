@@ -27,6 +27,7 @@ import java.lang.reflect.*;
 import com.sun.max.annotate.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.reference.LocalObjectRemoteReferenceManager.LocalObjectRemoteReference;
 import com.sun.max.tele.util.*;
@@ -34,7 +35,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 
@@ -46,7 +46,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
 
     /**
      * The default implementation of {@link Reference#zero()}, used as a {@code null} remote reference. It always holds
-     * the {@linkplain Address#zero() null address} and always has status {@linkplain ObjectStatus#DEAD DEAD}.
+     * the {@linkplain Address#zero() null address} and always has status {@linkplain RemoteObjectStatus#DEAD DEAD}.
      */
     private static class NullReference extends ConstantRemoteReference {
 
@@ -55,8 +55,8 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         }
 
         @Override
-        public final ObjectStatus status() {
-            return ObjectStatus.DEAD;
+        public final RemoteObjectStatus status() {
+            return RemoteObjectStatus.DEAD;
         }
 
         @Override
@@ -124,7 +124,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
      * Gets the origin of a {@link RemoteReference}.
      * <p>
      * @return the origin of an object referred to; {@link Pointer#zero()} if the
-     * reference is {@linkplain ObjectStatus#DEAD DEAD}.
+     * reference is {@linkplain RemoteObjectStatus#DEAD DEAD}.
      */
     public Pointer toOrigin(Reference ref) {
         final RemoteReference remoteRef = (RemoteReference) ref;

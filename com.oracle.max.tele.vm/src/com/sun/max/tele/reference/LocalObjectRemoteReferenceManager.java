@@ -28,9 +28,9 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.direct.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.Reference;
 
 
@@ -43,7 +43,7 @@ import com.sun.max.vm.reference.Reference;
  * These are used typically by the remote interpreter.
  * <p>
  * These references are canonical, and their
- * memory status of these references is permanently {@link ObjectStatus#LIVE}.
+ * memory status of these references is permanently {@link RemoteObjectStatus#LIVE}.
  *
  * @see Reference
  * @see RemoteReferenceScheme
@@ -84,7 +84,7 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
      * A local object wrapped into a {@link Remote Reference}, allowing it to stand in for an object in the VM, for
      * example by the remote interpreter.
      * <p>
-     * The memory status is permanently {@link ObjectStatus#LIVE}.
+     * The memory status is permanently {@link RemoteObjectStatus#LIVE}.
      *
      * @see {@link TeleInterpreter}
      */
@@ -102,8 +102,8 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
         }
 
         @Override
-        public ObjectStatus status() {
-            return ObjectStatus.LIVE;
+        public RemoteObjectStatus status() {
+            return RemoteObjectStatus.LIVE;
         }
 
         @Override

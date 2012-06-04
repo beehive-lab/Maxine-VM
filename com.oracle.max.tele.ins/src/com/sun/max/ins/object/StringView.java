@@ -29,7 +29,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * An object view specialized for displaying a low-level heap object in the VM that implements a {@link String}.
@@ -67,7 +66,7 @@ public final class StringView extends ObjectView<StringView> {
             public String fetchString() {
                 return teleString.getString();
             }
-            public ObjectStatus status() {
+            public RemoteObjectStatus status() {
                 return object().status();
             }
         });

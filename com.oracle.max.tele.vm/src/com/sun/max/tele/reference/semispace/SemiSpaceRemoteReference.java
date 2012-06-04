@@ -22,15 +22,15 @@
  */
 package com.sun.max.tele.reference.semispace;
 
-import static com.sun.max.vm.heap.ObjectStatus.*;
+import static com.sun.max.tele.object.RemoteObjectStatus.*;
 
 import java.util.*;
 
 import com.sun.max.tele.heap.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * Representation of a remote object reference in a heap region managed by a semispace GC. The states of the reference
@@ -57,7 +57,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
 
             // Properties
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return LIVE;
             }
             @Override
@@ -88,7 +88,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         REF_FROM ("UNKNOWN (Analyzing: From-only)"){
 
             // Properties
-            @Override ObjectStatus status() {
+            @Override RemoteObjectStatus status() {
                 return UNKNOWN;
             }
             @Override boolean isForwarded() {
@@ -124,7 +124,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         REF_TO("LIVE (Analyzing: To only)") {
 
             // Properties
-            @Override ObjectStatus status() {
+            @Override RemoteObjectStatus status() {
                 return LIVE;
             }
             @Override boolean isForwarded() {
@@ -154,7 +154,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         REF_FROM_TO ("LIVE (Analyzing: From+To)") {
 
             // Properties
-            @Override ObjectStatus status() {
+            @Override RemoteObjectStatus status() {
                 return LIVE;
             }
             @Override boolean isForwarded() {
@@ -180,7 +180,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         REF_DEAD ("Dead") {
 
             // Properties
-            @Override ObjectStatus status() {
+            @Override RemoteObjectStatus status() {
                 return DEAD;
             }
             @Override boolean isForwarded() {
@@ -210,7 +210,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         /**
          * @see RemoteReference#status()
          */
-        abstract ObjectStatus status();
+        abstract RemoteObjectStatus status();
 
         /**
          * @see RemoteReference#isForwarded()
@@ -369,7 +369,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     }
 
     @Override
-    public ObjectStatus status() {
+    public RemoteObjectStatus status() {
         return refState.status();
     }
 

@@ -20,15 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap;
+package com.sun.max.tele.object;
 
 import java.util.*;
 
 /**
- * The status of an object in the VM, or more precisely the status of the region of memory
- * in which an object's state is or might have been represented.
+ * The status of an object represented in VM memory, from the perspective of a remove viewer that
+ * may not have complete information about an object or even, in the case of GC, may have a slightly
+ * different view of the object's status at certain times than does the VM itself.
  * <ul>
- * <li> {@link #LIVE}: Determined to be reachable as of the most recent collection</li>
+ * <li> {@link #LIVE}: Determined to be reachable as of the most recent collection, or <em>presumed</em>
+ * to be reachable during certain GC phases when its reachability has not yet been det.</li>
  * <li> {@link #UNKNOWN}: During liveness analysis:  formerly live, not yet determined reachable</li>
  * <li> {@link #DEAD}: Unreachable object; no assumptions about memory may be made</li>
  * </ul>
@@ -43,7 +45,7 @@ import java.util.*;
  * it becomes certain that an object is unreachable;</li>
  * </ul>
  */
-public enum ObjectStatus {
+public enum RemoteObjectStatus {
 
     /**
      * The region of memory is in a live allocation area and represents an object
@@ -65,7 +67,7 @@ public enum ObjectStatus {
     private final String label;
     private final String description;
 
-    private ObjectStatus(String label, String description) {
+    private RemoteObjectStatus(String label, String description) {
         this.label = label;
         this.description = description;
     }
@@ -116,6 +118,6 @@ public enum ObjectStatus {
         return this == DEAD;
     }
 
-    public static final List<ObjectStatus> VALUES = Arrays.asList(values());
+    public static final List<RemoteObjectStatus> VALUES = Arrays.asList(values());
 
 }
