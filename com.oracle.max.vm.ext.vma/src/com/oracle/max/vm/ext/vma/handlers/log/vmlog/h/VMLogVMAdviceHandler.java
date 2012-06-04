@@ -144,6 +144,12 @@ public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 // EDIT AND RUN VMLogVMAdviceHandlerGenerator.main() TO MODIFY
 
     @Override
+    public void adviseBeforeReturnByThrow(Throwable arg1, int arg2) {
+        super.adviseBeforeReturnByThrow(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeReturnByThrow(getTime(), arg1, arg2);
+    }
+
+    @Override
     public void adviseBeforeConstLoad(long arg1) {
         super.adviseBeforeConstLoad(arg1);
         VMAVMLogger.logger.logAdviseBeforeConstLoad(getTime(), arg1);

@@ -104,6 +104,8 @@ public class VMAdviceHandlerLogGenerator {
             } else {
                 out.print("int op1, int op2");
             }
+        } else if (name.endsWith("ReturnByThrow")) {
+            out.print(", long objId, int poppedFrames");
         } else if (name.endsWith("Return")) {
             if (m.getParameterTypes().length > 0) {
                 out.printf(", %s value", getLastParameterNameHandlingObject(m));

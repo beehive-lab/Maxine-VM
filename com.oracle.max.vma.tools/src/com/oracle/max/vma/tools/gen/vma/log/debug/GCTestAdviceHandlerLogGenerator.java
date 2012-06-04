@@ -37,7 +37,7 @@ public class GCTestAdviceHandlerLogGenerator {
     public static void main(String[] args) throws Exception {
         createGenerator(GCTestAdviceHandlerLogGenerator.class);
         generateAutoComment();
-        SortedMap<String, Integer> enumMap = CountVMAdviceHandlerGenerator.createEnum(VMAdviceHandler.class);
+        SortedMap<String, Integer> enumMap = CountsVMAdviceHandlerGenerator.createEnum(VMAdviceHandler.class);
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
             if (name.startsWith("advise")) {
@@ -51,7 +51,7 @@ public class GCTestAdviceHandlerLogGenerator {
         out.printf("    @Override%n");
         generateSignature(m, null);
         out.printf(" {%n");
-        String[] name = CountVMAdviceHandlerGenerator.stripPrefix(m.getName());
+        String[] name = CountsVMAdviceHandlerGenerator.stripPrefix(m.getName());
         out.printf("        randomlyGC(%d, %d);%n", enumMap.get(name[1]), AdviceMode.valueOf(name[0]).ordinal());
         out.printf("    }%n%n");
     }

@@ -694,6 +694,17 @@ public class VMLogger {
     }
 
     @INTRINSIC(UNSAFE_CAST)
+    private static native Throwable asThrowable(Object arg);
+
+    @INLINE
+    public static Throwable toThrowable(Record r, int argNum) {
+        if (MaxineVM.isHosted()) {
+            return (Throwable) toObject(r, argNum);
+        }
+        return asThrowable(toObject(r, argNum));
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
     private static native String asString(Object arg);
 
     @INLINE

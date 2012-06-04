@@ -955,6 +955,15 @@ public class ProcessLog {
                 break;
             }
 
+            case ADVISE_BEFORE_RETURN_BY_THROW: {
+                objectRecord = getTraceRecord(objIdArg);
+                ObjectLongAdviceRecord objectAdviceRecord = (ObjectLongAdviceRecord) createAdviceRecordAndSetTimeAndThread(ReturnByThrow, AdviceMode.BEFORE);
+                objectAdviceRecord.setPackedValue(Integer.parseInt(arg4));
+                objectAdviceRecord.value = objectRecord;
+                adviceRecord = objectAdviceRecord;
+                break;
+            }
+
             case ADVISE_BEFORE_STACK_ADJUST: {
                 adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
                 adviceRecord.setPackedValue(Integer.parseInt(arg3));

@@ -783,4 +783,12 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         end();
     }
 
+    @Override
+    public void adviseBeforeReturnByThrow(String threadName, long objId, int poppedFrames) {
+        appendTTId(ADVISE_BEFORE_RETURN_BY_THROW, objId, threadName);
+        sb.append(poppedFrames);
+        end();
+
+    }
+
 }

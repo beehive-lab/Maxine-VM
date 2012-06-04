@@ -96,25 +96,13 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 // EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
 
     @Override
-    public void adviseAfterNew(Object arg1) {
-        super.adviseAfterNew(arg1);
-        logHandler.adviseAfterNew(arg1);
+    public void adviseBeforeReturnByThrow(Throwable arg1, int arg2) {
+        super.adviseBeforeReturnByThrow(arg1, arg2);
+        logHandler.adviseBeforeReturnByThrow(arg1, arg2);
     }
 
     @Override
-    public void adviseAfterNewArray(Object arg1, int arg2) {
-        super.adviseAfterNewArray(arg1, arg2);
-        logHandler.adviseAfterNewArray(arg1, arg2);
-        MultiNewArrayHelper.handleMultiArray(this, arg1);
-    }
-
-    @Override
-    public void adviseAfterMultiNewArray(Object arg1, int[] arg2) {
-        adviseAfterNewArray(arg1, arg2[0]);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(double arg1) {
+    public void adviseBeforeConstLoad(long arg1) {
         super.adviseBeforeConstLoad(arg1);
         logHandler.adviseBeforeConstLoad(arg1);
     }
@@ -126,13 +114,13 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeConstLoad(long arg1) {
+    public void adviseBeforeConstLoad(float arg1) {
         super.adviseBeforeConstLoad(arg1);
         logHandler.adviseBeforeConstLoad(arg1);
     }
 
     @Override
-    public void adviseBeforeConstLoad(float arg1) {
+    public void adviseBeforeConstLoad(double arg1) {
         super.adviseBeforeConstLoad(arg1);
         logHandler.adviseBeforeConstLoad(arg1);
     }
@@ -150,7 +138,7 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeStore(int arg1, Object arg2) {
+    public void adviseBeforeStore(int arg1, long arg2) {
         super.adviseBeforeStore(arg1, arg2);
         logHandler.adviseBeforeStore(arg1, arg2);
     }
@@ -168,15 +156,9 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeStore(int arg1, long arg2) {
+    public void adviseBeforeStore(int arg1, Object arg2) {
         super.adviseBeforeStore(arg1, arg2);
         logHandler.adviseBeforeStore(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, Object arg3) {
-        super.adviseBeforeArrayStore(arg1, arg2, arg3);
-        logHandler.adviseBeforeArrayStore(arg1, arg2, arg3);
     }
 
     @Override
@@ -198,15 +180,15 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeStackAdjust(int arg1) {
-        super.adviseBeforeStackAdjust(arg1);
-        logHandler.adviseBeforeStackAdjust(arg1);
+    public void adviseBeforeArrayStore(Object arg1, int arg2, Object arg3) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3);
+        logHandler.adviseBeforeArrayStore(arg1, arg2, arg3);
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, double arg2, double arg3) {
-        super.adviseBeforeOperation(arg1, arg2, arg3);
-        logHandler.adviseBeforeOperation(arg1, arg2, arg3);
+    public void adviseBeforeStackAdjust(int arg1) {
+        super.adviseBeforeStackAdjust(arg1);
+        logHandler.adviseBeforeStackAdjust(arg1);
     }
 
     @Override
@@ -222,13 +204,19 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeConversion(int arg1, long arg2) {
+    public void adviseBeforeOperation(int arg1, double arg2, double arg3) {
+        super.adviseBeforeOperation(arg1, arg2, arg3);
+        logHandler.adviseBeforeOperation(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, float arg2) {
         super.adviseBeforeConversion(arg1, arg2);
         logHandler.adviseBeforeConversion(arg1, arg2);
     }
 
     @Override
-    public void adviseBeforeConversion(int arg1, float arg2) {
+    public void adviseBeforeConversion(int arg1, long arg2) {
         super.adviseBeforeConversion(arg1, arg2);
         logHandler.adviseBeforeConversion(arg1, arg2);
     }
@@ -294,13 +282,13 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
+    public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
         super.adviseBeforePutStatic(arg1, arg2, arg3);
         logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
     }
 
     @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
+    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
         super.adviseBeforePutStatic(arg1, arg2, arg3);
         logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
     }
@@ -312,7 +300,7 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
+    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
         super.adviseBeforePutStatic(arg1, arg2, arg3);
         logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
     }
@@ -324,6 +312,12 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
+    public void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
+        super.adviseBeforePutField(arg1, arg2, arg3);
+        logHandler.adviseBeforePutField(arg1, arg2, arg3);
+    }
+
+    @Override
     public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
         super.adviseBeforePutField(arg1, arg2, arg3);
         logHandler.adviseBeforePutField(arg1, arg2, arg3);
@@ -331,12 +325,6 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     @Override
     public void adviseBeforePutField(Object arg1, int arg2, double arg3) {
-        super.adviseBeforePutField(arg1, arg2, arg3);
-        logHandler.adviseBeforePutField(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
         super.adviseBeforePutField(arg1, arg2, arg3);
         logHandler.adviseBeforePutField(arg1, arg2, arg3);
     }
@@ -429,6 +417,24 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeInterface(arg1, arg2);
         logHandler.adviseAfterInvokeInterface(arg1, arg2);
+    }
+
+    @Override
+    public void adviseAfterNew(Object arg1) {
+        super.adviseAfterNew(arg1);
+        logHandler.adviseAfterNew(arg1);
+    }
+
+    @Override
+    public void adviseAfterNewArray(Object arg1, int arg2) {
+        super.adviseAfterNewArray(arg1, arg2);
+        logHandler.adviseAfterNewArray(arg1, arg2);
+        MultiNewArrayHelper.handleMultiArray(this, arg1);
+    }
+
+    @Override
+    public void adviseAfterMultiNewArray(Object arg1, int[] arg2) {
+        adviseAfterNewArray(arg1, arg2[0]);
     }
 
     @Override
