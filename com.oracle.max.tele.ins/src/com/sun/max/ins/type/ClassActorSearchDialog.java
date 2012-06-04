@@ -27,19 +27,40 @@ import java.util.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.type.*;
 
 /**
  * A dialog to let the user select a class in the {@linkplain VmClassRegistry Inspector class registry}.
  */
-public final class ClassActorSearchDialog extends ObjectSearchDialog {
+public final class ClassActorSearchDialog extends ObjectSearchDialog<TeleClassActor> {
 
-    @Override
-    protected MaxObject convertSelectedItem(Object listItem) {
-        final String name = (String) listItem;
-        return vm().classes().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(name));
+    private final static class ClassActorListItem extends FilteredListItem<TeleClassActor> {
+
+        final TypeDescriptor typeDescriptor;
+        final String name;
+
+        public ClassActorListItem(Inspection inspection, TypeDescriptor typeDescriptor) {
+            super(inspection);
+            this.typeDescriptor = typeDescriptor;
+            this.name = typeDescriptor.toJavaString();
+        }
+
+        @Override
+        public TeleClassActor object() {
+            return inspection().vm().classes().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(name));
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        @Override
+        public int compareTo(FilteredListItem o) {
+            final ClassActorListItem classActorListItem = (ClassActorListItem) o;
+            return name.compareTo(classActorListItem.name);
+        }
     }
 
     /**
@@ -75,33 +96,37 @@ public final class ClassActorSearchDialog extends ObjectSearchDialog {
         return null;
     }
 
+    private final ClassActorListItem[] classActorListItems;
+
     /**
      * Rebuilds the list from scratch.
      */
+    @SuppressWarnings("unchecked")
     @Override
     protected void rebuildList(String filterText) {
         if (!filterText.isEmpty()) {
             final String filter = filterText.toLowerCase();
-            final Set<TypeDescriptor> typeDescriptors = vm().classes().typeDescriptors();
-            final SortedSet<String> classNames = new TreeSet<String>();
-            for (TypeDescriptor typeDescriptor : typeDescriptors) {
-                final String className = match(filter, typeDescriptor);
-                if (className != null) {
-                    classNames.add(className);
+            for (ClassActorListItem classActorListItem : classActorListItems) {
+                if (match(filter, classActorListItem.typeDescriptor) != null) {
+                    listModel.addElement(classActorListItem);
                 }
-            }
-            for (String className : classNames) {
-                listModel.addElement(className);
             }
         }
     }
 
     private ClassActorSearchDialog(Inspection inspection) {
-        super(inspection, "Select Class", "Class Name", false);
+        this(inspection, "Select Class", "Class Name");
     }
 
     private ClassActorSearchDialog(Inspection inspection, String title, String actionName) {
         super(inspection, title == null ? "Select Class" : title, "Class Name", actionName, false);
+        final Set<TypeDescriptor> typeDescriptors = vm().classes().typeDescriptors();
+        classActorListItems = new ClassActorListItem[typeDescriptors.size()];
+        int i = 0;
+        for (TypeDescriptor typeDescriptor : typeDescriptors) {
+            classActorListItems[i++] = new ClassActorListItem(inspection, typeDescriptor);
+        }
+        Arrays.sort(classActorListItems);
     }
 
     /**
@@ -112,7 +137,7 @@ public final class ClassActorSearchDialog extends ObjectSearchDialog {
     public static TeleClassActor show(Inspection inspection) {
         final ClassActorSearchDialog dialog = new ClassActorSearchDialog(inspection);
         dialog.setVisible(true);
-        return (TeleClassActor) dialog.selectedObject();
+        return dialog.selectedObject();
     }
 
     /**
@@ -125,7 +150,7 @@ public final class ClassActorSearchDialog extends ObjectSearchDialog {
     public static TeleClassActor show(Inspection inspection, String title, String actionName) {
         final ClassActorSearchDialog dialog = new ClassActorSearchDialog(inspection, title, actionName);
         dialog.setVisible(true);
-        return (TeleClassActor) dialog.selectedObject();
+        return dialog.selectedObject();
     }
 
 }

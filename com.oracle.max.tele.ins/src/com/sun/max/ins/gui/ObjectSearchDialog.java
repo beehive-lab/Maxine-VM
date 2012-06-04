@@ -29,12 +29,7 @@ import com.sun.max.tele.*;
  * An abstract class for dialogs that enables the user to search for an object in the VM.
  * The dialog is composed of a list of names of objects and a text field that can be used to filter the list.
  */
-public abstract class ObjectSearchDialog extends FilteredListDialog<MaxObject> {
-
-    @Override
-    protected MaxObject noSelectedObject() {
-        return null;
-    }
+public abstract class ObjectSearchDialog<T extends MaxObject> extends FilteredListDialog<T> {
 
     protected ObjectSearchDialog(Inspection inspection, String title, String filterFieldLabel, String actionName, boolean multiSelection) {
         super(inspection, title, filterFieldLabel, actionName, multiSelection);

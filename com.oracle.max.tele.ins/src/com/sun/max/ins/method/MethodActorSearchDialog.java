@@ -27,7 +27,6 @@ import java.util.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
@@ -36,19 +35,37 @@ import com.sun.max.vm.actor.member.*;
 /**
  * A dialog to let the user select a method from a specified {@link ClassActor} in the VM.
  */
-public final class MethodActorSearchDialog extends ObjectSearchDialog {
+public final class MethodActorSearchDialog extends ObjectSearchDialog<TeleMethodActor> {
 
-    @Override
-    protected MaxObject convertSelectedItem(Object listItem) {
-        return ((NamedMaxObject) listItem).object();
+    private final static class MethodActorListItem extends FilteredListItem<TeleMethodActor> {
+
+        final TeleMethodActor teleMethodActor;
+        final String name;
+
+        public MethodActorListItem(Inspection inspection, String name, TeleMethodActor teleMethodActor) {
+            super(inspection);
+            this.teleMethodActor = teleMethodActor;
+            this.name = name;
+        }
+
+        @Override
+        public TeleMethodActor object() {
+            return teleMethodActor;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void rebuildList(String filterText) {
         final Iterator<TeleMethodActor> teleMethodActors = localTeleMethodActors.iterator();
 
         int i = 0;
-        final NamedMaxObject[] methods = new NamedMaxObject[localTeleMethodActors.size()];
+        final MethodActorListItem[] methodItems = new MethodActorListItem[localTeleMethodActors.size()];
 
         final String filterLowerCase = filterText.toLowerCase();
         while (teleMethodActors.hasNext()) {
@@ -59,13 +76,13 @@ public final class MethodActorSearchDialog extends ObjectSearchDialog {
                 (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                 methodNameLowerCase.contains(filterLowerCase)) {
                 final String signature = methodActor.name + methodActor.descriptor().toJavaString(false, true);
-                methods[i++] = new NamedMaxObject(signature, teleMethodActor);
+                methodItems[i++] = new MethodActorListItem(inspection(), signature, teleMethodActor);
             }
         }
 
-        Arrays.sort(methods, 0, i);
+        Arrays.sort(methodItems, 0, i);
         for (int j = 0; j < i; ++j) {
-            listModel.addElement(methods[j]);
+            listModel.addElement(methodItems[j]);
         }
     }
 
@@ -92,7 +109,7 @@ public final class MethodActorSearchDialog extends ObjectSearchDialog {
     public static TeleMethodActor show(Inspection inspection, TeleClassActor teleClassActor, Predicate<TeleMethodActor> filter, String title, String actionName) {
         final MethodActorSearchDialog dialog = new MethodActorSearchDialog(inspection, teleClassActor, filter, title, actionName);
         dialog.setVisible(true);
-        return (TeleMethodActor) dialog.selectedObject();
+        return dialog.selectedObject();
     }
 
     /**

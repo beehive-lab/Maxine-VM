@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.type;
 
+import java.util.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
@@ -33,28 +35,32 @@ import com.sun.max.vm.type.*;
  */
 public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
 
-    @Override
-    protected TypeDescriptor noSelectedObject() {
-        return null;
-    }
+    private static final class TypeDescriptorItem extends FilteredListItem<TypeDescriptor> {
 
-    @Override
-    protected TypeDescriptor convertSelectedItem(Object listItem) {
-        final String className = (String) listItem;
-        return JavaTypeDescriptor.getDescriptorForWellFormedTupleName(className);
+        private final TypeDescriptor typeDescriptor;
+
+        TypeDescriptorItem(Inspection inspection, TypeDescriptor typeDescriptor) {
+            super(inspection);
+            this.typeDescriptor = typeDescriptor;
+        }
+
+        @Override
+        public TypeDescriptor object() {
+            return typeDescriptor;
+        }
     }
 
     /**
      * Rebuilds the list from scratch.
      */
+    @SuppressWarnings("unchecked")
     @Override
     protected void rebuildList(String filterText) {
         if (!filterText.isEmpty()) {
             final String filter = filterText.toLowerCase();
-            for (TypeDescriptor typeDescriptor : types) {
-                final String className = ClassActorSearchDialog.match(filter, typeDescriptor);
-                if (className != null) {
-                    listModel.addElement(className);
+            for (TypeDescriptorItem typeDescriptorItem : typeItems) {
+                if (ClassActorSearchDialog.match(filter, typeDescriptorItem.typeDescriptor) != null) {
+                    listModel.addElement(typeDescriptorItem);
                 }
             }
         }
@@ -66,10 +72,14 @@ public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
 
     private TypeSearchDialog(Inspection inspection, String title, String actionName) {
         super(inspection, title == null ? "Select Class" : title, "Class Name", actionName, false);
-        types = vm().classes().loadableTypeDescriptors();
+        final ArrayList<TypeDescriptorItem> items = new ArrayList<TypeDescriptorItem>();
+        for (TypeDescriptor typeDescriptor : vm().classes().loadableTypeDescriptors()) {
+            items.add(new TypeDescriptorItem(inspection, typeDescriptor));
+        }
+        typeItems = items;
     }
 
-    private final Iterable<TypeDescriptor> types;
+    private final Iterable<TypeDescriptorItem> typeItems;
 
     /**
      * Displays a dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may
