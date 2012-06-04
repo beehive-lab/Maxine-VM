@@ -532,7 +532,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
         private ObjectWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, MaxObject object, int offset, long nBytes, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException  {
             super(kind, watchpointManager, description, object.origin().plus(offset), nBytes, settings);
-            TeleError.check(object.status().isNotDead(), "Attempt to set an object-based watchpoint on an object that is not live: ", object);
+            TeleError.check(object.status().isLive(), "Attempt to set an object-based watchpoint on an object that is not live: ", object);
             this.object = object;
             this.offset = offset;
             setRelocationWatchpoint(object);

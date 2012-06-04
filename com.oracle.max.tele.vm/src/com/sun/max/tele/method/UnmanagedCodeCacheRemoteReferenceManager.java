@@ -253,7 +253,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
 
         @Override
         public Address origin() {
-            if (origin.isZero() && teleTargetMethod().status().isNotDead()) {
+            if (origin.isZero() && teleTargetMethod().status().isLive()) {
                 origin = teleTargetMethod().codeCacheObjectOrigin(kind);
             }
             return origin;
