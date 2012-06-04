@@ -26,7 +26,7 @@ package com.oracle.max.vma.tools.qa;
 import java.io.*;
 import java.util.ArrayList;
 
-import com.oracle.max.vm.ext.vma.log.*;
+import com.oracle.max.vm.ext.vma.handlers.log.*;
 
 /**
  * Main class of the object analysis query application.

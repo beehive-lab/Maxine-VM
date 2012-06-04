@@ -54,7 +54,7 @@ public class JVMTIEvent {
 
     public static class JVMTIEventLogger extends VMLogger {
         private JVMTIEventLogger() {
-            super("JVMTIEvents", EVENT_COUNT, null);
+            super("JVMTIEvents", EVENT_COUNT, "log JVMTI events");
         }
 
         @Override
@@ -356,7 +356,7 @@ public class JVMTIEvent {
 
         for (int i = 0; i < JVMTI.jvmtiEnvs.length; i++) {
             jvmtiEnv = JVMTI.jvmtiEnvs[i];
-            if (jvmtiEnv.env.isZero()) {
+            if (jvmtiEnv == null || jvmtiEnv.isFree()) {
                 continue;
             }
             panAgentGlobalEventSettingCache |= jvmtiEnv.globalEventSettings;

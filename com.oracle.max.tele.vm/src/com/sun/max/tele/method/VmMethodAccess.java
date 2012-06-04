@@ -50,7 +50,7 @@ import com.sun.max.vm.type.*;
  * by executing the {@link #main(String[])} method in this class (ensuring that the VM
  * class path contains all the {@code com.sun.max} classes).
  */
-public final class VmMethodAccess extends AbstractVmHolder {
+public final class VmMethodAccess extends AbstractVmHolder implements MaxMethods {
 
     private static final int TRACE_VALUE = 1;
 
@@ -192,9 +192,6 @@ public final class VmMethodAccess extends AbstractVmHolder {
         return gcMutating;
     }
 
-    /**
-     * Gets a representation of a method in the VM matching a particular key, null if not loaded.
-     */
     public TeleClassMethodActor findClassMethodActor(MethodKey methodKey) {
         if (vm().tryLock()) {
             try {
@@ -205,6 +202,27 @@ public final class VmMethodAccess extends AbstractVmHolder {
                         MethodKey testMethodKey = new MethodKey.MethodActorKey(teleClassMethodActor.methodActor());
                         if (testMethodKey.equals(methodKey)) {
                             return teleClassMethodActor;
+                        }
+                    }
+                }
+
+            } finally {
+                vm().unlock();
+            }
+        }
+        return null;
+    }
+
+    public TeleMethodActor findMethodActor(MethodKey methodKey) {
+        if (vm().tryLock()) {
+            try {
+                final TeleClassActor teleClassActor = classes().findTeleClassActor(methodKey.holder());
+                if (teleClassActor != null) {
+                    // the class has been loaded; find a matching method
+                    for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
+                        MethodKey testMethodKey = new MethodKey.MethodActorKey(teleMethodActor.methodActor());
+                        if (testMethodKey.equals(methodKey)) {
+                            return teleMethodActor;
                         }
                     }
                 }

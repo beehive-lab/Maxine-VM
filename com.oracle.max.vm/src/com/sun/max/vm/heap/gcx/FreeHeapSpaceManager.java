@@ -137,7 +137,6 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);
                 if (tlabSize.lessThan(minChunkSize)) {
-                    // Don't bother adding a new chunk.
                     return firstChunk;
                 }
             }
@@ -827,11 +826,6 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         FatalError.check(total == committedHeapSpace.committedSize().toLong(), "Inconsistent committed space size");
     }
 
-    /**
-     * Allocation of zero-filled memory, ready to use for object allocation.
-     * @param size
-     * @return
-     */
     @INLINE
     public Pointer allocate(Size size) {
         return smallObjectAllocator.allocateCleared(size);
@@ -898,8 +892,12 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     }
 
     @Override
-    public void visit(HeapSpaceRangeVisitor visitor) {
+    public void visit(CellRangeVisitor visitor) {
         visitor.visitCells(committedHeapSpace.start(), committedHeapSpace.committedEnd());
     }
 
+    @Override
+    public SpaceBounds bounds() {
+        return committedHeapSpace.bounds();
+    }
 }

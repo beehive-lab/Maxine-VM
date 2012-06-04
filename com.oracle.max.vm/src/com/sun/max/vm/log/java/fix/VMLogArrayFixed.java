@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.log.java.fix;
 
+import com.sun.max.vm.*;
 import com.sun.max.vm.log.java.*;
 
 /**
@@ -31,17 +32,46 @@ import com.sun.max.vm.log.java.*;
  */
 public class VMLogArrayFixed extends VMLogArray {
 
-    public VMLogArrayFixed() {
-        for (int i = 0; i < buffer.length; i++) {
-            buffer[i] = new Record7();
+    private int myIdAtLastFlush;
+
+    @Override
+    public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
+            for (int i = 0; i < buffer.length; i++) {
+                buffer[i] = new Record8();
+            }
         }
     }
 
     @Override
     protected Record getRecord(int argCount) {
         int myId = getUniqueId();
+        if (myId - myIdAtLastFlush >= logEntries) {
+            // buffer is about to overflow
+            flush(myId);
+        }
         Record r = buffer[myId % logEntries];
         return r;
+    }
+
+    private synchronized void flush(int myId) {
+        try {
+            flusher.start();
+            for (int id = myIdAtLastFlush; id < myId; id++) {
+                flusher.flushRecord(buffer[id % logEntries]);
+            }
+            myIdAtLastFlush = myId;
+        } finally {
+            flusher.end();
+        }
+    }
+
+    @Override
+    public void flushLog() {
+        // The assumption is that we can safely read "nextId" without
+        // interference from concurrent activity.
+        flush(nextId);
     }
 
 }

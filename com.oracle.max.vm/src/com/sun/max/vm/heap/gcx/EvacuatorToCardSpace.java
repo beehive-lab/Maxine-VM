@@ -121,11 +121,14 @@ public class EvacuatorToCardSpace extends Evacuator {
      */
     private SurvivorRangesQueue survivorRanges;
 
+    private EvacuatingSpace.SpaceBounds evacuatedAreaBounds;
+
     public EvacuatorToCardSpace(EvacuatingSpace fromSpace, HeapSpace toSpace, CardTableRSet rset) {
         this.fromSpace = fromSpace;
         this.toSpace = toSpace;
         this.rset = rset;
         this.cfoTable = rset.cfoTable;
+        evacuatedAreaBounds = fromSpace.bounds();
     }
 
     /**
@@ -139,6 +142,7 @@ public class EvacuatorToCardSpace extends Evacuator {
     public void setEvacuationSpace(EvacuatingSpace fromSpace,  HeapSpace toSpace) {
         this.fromSpace = fromSpace;
         this.toSpace = toSpace;
+        evacuatedAreaBounds = fromSpace.bounds();
     }
 
     public void initialize(int maxSurvivorRanges, Size evacuationBufferSize, Size minRefillThreshold, boolean retireAfterEvacuation) {
@@ -230,6 +234,19 @@ public class EvacuatorToCardSpace extends Evacuator {
         }
     }
 
+    /**
+     * Prefill survivor ranges with a range of addresses in the to-space.
+     * This must be done before evacuation start.
+     * Currently used for situation when minor collection overflowed to the from-space.
+     *
+     * @param start start of the range (inclusive)
+     * @param end end of the range (exclusive)
+     */
+    public void prefillSurvivorRanges(Address start, Address end) {
+        FatalError.check(toSpace.contains(start) && toSpace.contains(end), "Range must be in to-space");
+        survivorRanges.add(start, end);
+    }
+
     protected Pointer refillOrAllocate(Size size) {
         if (size.lessThan(minRefillThreshold)) {
             // check if request can fit in the remaining space when taking the headroom into account.
@@ -283,9 +300,11 @@ public class EvacuatorToCardSpace extends Evacuator {
         return cell;
     }
 
+    @INLINE
     @Override
     final boolean inEvacuatedArea(Pointer origin) {
-        return fromSpace.contains(origin);
+        //return fromSpace.contains(origin);
+        return evacuatedAreaBounds.isIn(origin);
     }
 
     /**

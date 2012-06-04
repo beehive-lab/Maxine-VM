@@ -23,6 +23,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * Heap Space interface. A heap may be made of one or more heap spaces.
@@ -33,14 +34,16 @@ import com.sun.max.unsafe.*;
  */
 public interface HeapSpace extends ResizableSpace, EvacuatingSpace {
     /**
-     * Allocate a cell of exactly the specified size.
+     * Allocate a zero-filled contiguous range of heap space of exactly the specified size.
      * @param size size in bytes
-     * @return a pointer to raw heap space of exactly the requested size
+     * @return a pointer to a cleared contiguous range of heap space of exactly the requested size
      */
     Pointer allocate(Size size);
 
     /**
-     * Allocate a cell for a TLAB refill.
+     * Allocate heap space for a TLAB refill.
+     * The space may not be contiguous (e.g., it may be a linked list of {@link HeapFreeChunk}), may only
+     * approximate the requested size, and may not be zero-filled.
      * @param size
      * @return a pointer to a cell formatted as a {@link HeapFreeChunk}
      */
@@ -72,5 +75,5 @@ public interface HeapSpace extends ResizableSpace, EvacuatingSpace {
      *
      * @param visitor a visitor that can iterate over iterable ranges of contiguous heap space.
      */
-    void visit(HeapSpaceRangeVisitor visitor);
+    void visit(CellRangeVisitor visitor);
 }

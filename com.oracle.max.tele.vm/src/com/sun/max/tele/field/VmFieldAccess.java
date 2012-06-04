@@ -264,7 +264,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess VMConfiguration_referenceScheme = new TeleInstanceReferenceFieldAccess(VMConfiguration.class, "referenceScheme", ReferenceScheme.class);
     public final TeleInstanceReferenceFieldAccess VMConfiguration_runScheme = new TeleInstanceReferenceFieldAccess(VMConfiguration.class, "runScheme", RunScheme.class);
     public final TeleInstanceIntFieldAccess VMLog_logEntries = new TeleInstanceIntFieldAccess(VMLog.class, "logEntries");
-    public final TeleStaticReferenceFieldAccess VMLog_loggers = new TeleStaticReferenceFieldAccess(VMLog.class, "loggers", VMLogger[].class);
+    public final TeleInstanceReferenceFieldAccess VMLog_loggers = new TeleInstanceReferenceFieldAccess(VMLog.class, "loggers", VMLogger[].class);
     public final TeleInstanceIntFieldAccess VMLog_nextId = new TeleInstanceIntFieldAccess(VMLog.class, "nextId");
     public final TeleStaticReferenceFieldAccess VMLog_vmLog = new TeleStaticReferenceFieldAccess(VMLog.class, "vmLog", VMLog.class);
     public final TeleInstanceReferenceFieldAccess VMLogArray_buffer = new TeleInstanceReferenceFieldAccess(VMLogArray.class, "buffer", Record[].class);

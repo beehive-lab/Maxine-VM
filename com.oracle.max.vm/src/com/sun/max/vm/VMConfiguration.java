@@ -57,7 +57,7 @@ public final class VMConfiguration {
     @HOSTED_ONLY public final BootImagePackage heapPackage;
     @HOSTED_ONLY public final BootImagePackage monitorPackage;
     @HOSTED_ONLY public final BootImagePackage runPackage;
-    @HOSTED_ONLY public final List<BootImagePackage> bootImagePackages;
+    @HOSTED_ONLY public List<BootImagePackage> bootImagePackages;
     @HOSTED_ONLY private final Set<BootImagePackage> schemePackages = new HashSet<BootImagePackage>();
 
     private ArrayList<VMScheme> vmSchemes = new ArrayList<VMScheme>();
@@ -82,25 +82,29 @@ public final class VMConfiguration {
         this.heapPackage = heapPackage;
         this.monitorPackage = monitorPackage;
         this.runPackage = runPackage;
-        /**
-         * We now gather all the packages that might be part of the VM boot image by scanning the class
-         * path from the well-defined root ({@code com.sun.max.config}) and looking for {@code Package} classes,
-         * instantiating them, and in the process possibly following new roots.
-         * We then ask each package if it should be included in the image in this configuration by
-         * invoking the {@code isPartOfMaxineVM} method. That method may, particularly if it is
-         * in a scheme instance, need to ask questions about the configuration we are constructing.
-         * Valid questions concern the values (names) of the scheme packages and the classes
-         * registered as the scheme implementations. Since the schemes have not be instantiated
-         * at this stage, scheme instances cannot be used. i.e., one must use {@link Class#isAssignableFrom}
-         * rather than {@code instanceof}. The method {@link #schemeImplClassIsSubClass} can be used to
-         * check whether a given class is the same as or a subclass of the registered class for a given scheme.
-         */
         addSchemePackage(referencePackage);
         addSchemePackage(layoutPackage);
         addSchemePackage(heapPackage);
         addSchemePackage(monitorPackage);
         addSchemePackage(runPackage);
 
+    }
+
+    /**
+     * Gather all the packages that might be part of the VM boot image by scanning the class
+     * path from the well-defined root ({@code com.sun.max.config}) and looking for {@code Package} classes,
+     * instantiating them, and in the process possibly following new roots.
+     * We then ask each package if it should be included in the image in this configuration by
+     * invoking the {@code isPartOfMaxineVM} method. That method may, particularly if it is
+     * in a scheme instance, need to ask questions about the configuration we are constructing.
+     * Valid questions concern the values (names) of the scheme packages and the classes
+     * registered as the scheme implementations. Since the schemes have not be instantiated
+     * at this stage, scheme instances cannot be used. i.e., one must use {@link Class#isAssignableFrom}
+     * rather than {@code instanceof}. The method {@link #schemeImplClassIsSubClass} can be used to
+     * check whether a given class is the same as or a subclass of the registered class for a given scheme.
+     */
+    public VMConfiguration gatherBootImagePackages() {
+        activeConfig = this;
         bootImagePackages = new ArrayList<BootImagePackage>();
         for (BootImagePackage pkg : BootImagePackage.getTransitiveSubPackages(
                         HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.classpath(),
@@ -111,6 +115,17 @@ public final class VMConfiguration {
             }
         }
         MaxineVM.registerBootImagePackages(bootImagePackages);
+        return this;
+    }
+
+    private static VMConfiguration activeConfig;
+
+    /**
+     * Provides access to the {@link VMConfiguration} that initiated {@link #gatherBootImagePackages()}.
+     * @return
+     */
+    public static VMConfiguration activeConfig() {
+        return activeConfig;
     }
 
     private void addSchemePackage(BootImagePackage pkg) {

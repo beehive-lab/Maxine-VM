@@ -533,16 +533,6 @@ public class T1X implements RuntimeCompiler {
         Trace.begin(1, "creating T1X templates for intrinsics");
         long startTime = System.currentTimeMillis();
 
-        try {
-            boolean modified = T1XIntrinsicTemplateGenerator.generate(T1XIntrinsicTemplateSource.class);
-            if (modified) {
-                System.out.printf("%nThe generated content in %s was regenerated. Recompile (or refresh it in your IDE) and restart the bootstrapping process.%n%n", T1XIntrinsicTemplateSource.class.getSimpleName());
-                System.exit(1);
-            }
-        } catch (Exception e) {
-            FatalError.unexpected("Error while generating source for " + T1XIntrinsicTemplateSource.class, e);
-        }
-
         ClassActor source = ClassActor.fromJava(T1XIntrinsicTemplateSource.class);
         for (ClassMethodActor intrinsicMethod : intrinsicTemplateMethods()) {
             ClassMethodActor templateSource = source.findLocalStaticMethodActor(SymbolTable.makeSymbol(T1XIntrinsicTemplateGenerator.templateInvokerName(intrinsicMethod)));
@@ -555,18 +545,38 @@ public class T1X implements RuntimeCompiler {
     }
 
     static {
-        try {
-            if (T1XTemplateGenerator.generate(true, T1XTemplateSource.class)) {
-                String thisFile = T1XTemplateSource.class.getSimpleName();
-                System.out.printf("%nThe generated content in %s " +
-                    " is out of sync. Edit %s instead to make the desired changes and then run 'max t1xgen', " +
-                    "recompile %s (or refresh it in your IDE) and restart the bootstrapping process.%n%n",
-                    thisFile, T1XTemplateGenerator.class.getSimpleName(), thisFile);
-                System.exit(1);
+        JavaPrototype.registerGeneratedCodeCheckerCallback(new GeneratedCodeCheckerCallback());
+    }
+
+    @HOSTED_ONLY
+    private static class GeneratedCodeCheckerCallback implements JavaPrototype.GeneratedCodeCheckerCallback {
+
+        @Override
+        public void checkGeneratedCode() {
+            try {
+                if (T1XTemplateGenerator.generate(true, T1XTemplateSource.class)) {
+                    String thisFile = T1XTemplateSource.class.getSimpleName();
+                    System.out.printf("%nThe generated content in %s " +
+                        " is out of sync. Edit %s instead to make the desired changes and then run 'max t1xgen', " +
+                        "recompile %s (or refresh it in your IDE) and restart the bootstrapping process.%n%n",
+                        thisFile, T1XTemplateGenerator.class.getSimpleName(), thisFile);
+                    System.exit(1);
+                }
+            } catch (Exception e) {
+                FatalError.unexpected("Error while generating source for " + T1XTemplateSource.class, e);
             }
-        } catch (Exception e) {
-            FatalError.unexpected("Error while generating source for " + T1XTemplateSource.class, e);
+
+            try {
+                boolean modified = T1XIntrinsicTemplateGenerator.generate(T1XIntrinsicTemplateSource.class);
+                if (modified) {
+                    System.out.printf("%nThe generated content in %s was regenerated. Recompile (or refresh it in your IDE) and restart the bootstrapping process.%n%n", T1XIntrinsicTemplateSource.class.getSimpleName());
+                    System.exit(1);
+                }
+            } catch (Exception e) {
+                FatalError.unexpected("Error while generating source for " + T1XIntrinsicTemplateSource.class, e);
+            }
         }
+
     }
 
     @HOSTED_ONLY

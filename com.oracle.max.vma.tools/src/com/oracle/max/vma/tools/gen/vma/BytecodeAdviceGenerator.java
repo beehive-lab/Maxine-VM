@@ -108,7 +108,7 @@ public class BytecodeAdviceGenerator {
 
         for (AdviceMode am : AdviceMode.values()) {
             adviceMode = am;
-            adviceModeString = toFirstUpper(am.name().toLowerCase());
+            adviceModeString = AdviceGeneratorHelper.toFirstUpper(am.name().toLowerCase());
             for (VMABytecodes f : VMABytecodeValues) {
                 if (checks[f.ordinal()][am.ordinal()]) {
                     generateSpecific(f);

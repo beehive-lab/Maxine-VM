@@ -23,59 +23,38 @@
 package com.sun.max.ins.debug.vmlog;
 
 import com.sun.max.ins.*;
-import com.sun.max.tele.data.*;
+import com.sun.max.tele.debug.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.log.VMLog.Record;
 
 
 abstract class VMLogNativeElementsTableModel extends VMLogElementsTableModel {
-    protected VmMemoryIO vmIO;
 
-    protected VMLogNativeElementsTableModel(Inspection inspection, VMLogView vmLogView) {
-        super(inspection, vmLogView);
-        vmIO = vm.memoryIO();
+    protected final TeleVMLogNative teleVMLogNative;
+
+    protected VMLogNativeElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {
+        super(inspection, teleVMLog);
+        this.teleVMLogNative = (TeleVMLogNative) teleVMLog;
     }
 
-    private int nativeRecordSize;
     /**
      * Get the size of the record at {@code r}.
      * Default implementation is fixed length.
      * @return
      */
     protected int nativeRecordSize(Pointer r) {
-        if (nativeRecordSize == 0) {
-            nativeRecordSize = vm.fields().VMLogNative_defaultNativeRecordSize.readInt(vmLogView.vmLogRef);
-        }
-        return nativeRecordSize;
+        return teleVMLogNative.defaultNativeRecordSize();
     }
 
     protected int nativeRecordSize() {
         return nativeRecordSize(Pointer.zero());
     }
 
-    private int nativeRecordArgsOffset;
-    protected int nativeRecordArgsOffset() {
-        if (nativeRecordArgsOffset == 0) {
-            nativeRecordArgsOffset = vm.fields().VMLogNative_nativeRecordArgsOffset.readInt(vmLogView.vmLogRef);
-        }
-        return nativeRecordArgsOffset;
-    }
-
     @Override
-    protected HostedLogRecord getRecordFromVM(int id) {
+    protected TeleHostedLogRecord getRecordFromVM(int id) {
         // native buffer, access directly
         Pointer recordAddress = getRecordAddress(id);
-        if (recordAddress.isZero()) {
-            return new HostedLogRecord();
-        } else {
-            int header = vmIO.readInt(recordAddress);
-            int argCount = Record.getArgCount(header);
-            Word[] args = new Word[argCount];
-            for (int i = 0; i < argCount; i++) {
-                args[i] = vmIO.getWord(recordAddress, nativeRecordArgsOffset(), i);
-            }
-            return new HostedLogRecord(id, header, args);
-        }
+        return teleVMLogNative.getLogRecord(recordAddress, id);
     }
 
     protected abstract Pointer getRecordAddress(long id);

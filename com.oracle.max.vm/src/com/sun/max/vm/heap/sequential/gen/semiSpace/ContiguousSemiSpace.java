@@ -60,7 +60,7 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
         fromSpace.start().asPointer().setWord(Word.zero());
     }
 
-    void flipSpaces() {
+    void flipSpaces(boolean refillAllocator) {
         String fromSpaceName = fromSpace.regionName();
         String toSpaceName = space.regionName();
         // Make allocator parsable before flipping semi-space.
@@ -70,8 +70,9 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
         fromSpace.setRegionName(fromSpaceName);
         space = toSpace;
         space.setRegionName(toSpaceName);
-        // Now, refill the allocator with the new to Space.
-        allocator.refill(space.start(), space.committedSize());
+        if (refillAllocator) {
+            allocator.refill(space.start(), space.committedSize());
+        }
     }
 
     @Override
