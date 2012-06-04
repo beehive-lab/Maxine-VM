@@ -167,7 +167,7 @@ public interface HeapScheme extends VMScheme {
      * <p> Note that in the presence of reference objects, a given object that
      * is no longer strongly reachable may have to be inspected multiple times
      * before it can be reclaimed.
-    * @return
+    * @return a time in milliseconds
      */
     long maxObjectInspectionAge();
 
