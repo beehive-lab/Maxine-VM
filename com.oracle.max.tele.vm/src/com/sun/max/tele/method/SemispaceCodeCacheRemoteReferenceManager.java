@@ -229,7 +229,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
 
         private final CodeCacheReferenceKind kind;
         private Address origin = Address.zero();
-        private ObjectStatus status = ObjectStatus.LIVE;
+        private RemoteObjectStatus status = RemoteObjectStatus.LIVE;
 
         public SemispaceCodeCacheRemoteReference(TeleVM vm, TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
             super(vm, teleTargetMethod);
@@ -238,11 +238,11 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         }
 
         @Override
-        public ObjectStatus status() {
+        public RemoteObjectStatus status() {
             // References to objects in the code cache are treated for now as either
             // LIVE or DEAD.
             if (status.isLive() && teleTargetMethod().isCodeEvicted()) {
-                status = ObjectStatus.DEAD;
+                status = RemoteObjectStatus.DEAD;
             }
             return status;
         }

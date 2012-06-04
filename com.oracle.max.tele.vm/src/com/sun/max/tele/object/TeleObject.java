@@ -38,7 +38,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
@@ -277,7 +276,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         return true;
     }
 
-    public final ObjectStatus status() {
+    public final RemoteObjectStatus status() {
         return reference().status();
     }
 

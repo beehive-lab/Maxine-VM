@@ -38,7 +38,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * A view that displays the content of a low level heap object in the VM.
@@ -196,7 +195,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     @Override
     public final String getTextForTitle() {
         final StringBuilder titleText = new StringBuilder();
-        final ObjectStatus status = object.status();
+        final RemoteObjectStatus status = object.status();
         if (!status.isLive()) {
             // Omit the prefix for live objects (the usual case).
             titleText.append("(").append(status.label()).append(") ");
@@ -276,7 +275,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     protected void refreshState(boolean force) {
-        final ObjectStatus status = object.status();
+        final RemoteObjectStatus status = object.status();
         if (object.reference().isForwarded() && followingTeleObject) {
             //Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardReference().toOrigin().toHexString());
             MaxObject forwardedTeleObject = object.getForwardedTeleObject();

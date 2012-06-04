@@ -35,7 +35,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * Standardized ways to display textual names of common entities during Inspection sessions.
@@ -729,7 +728,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final String suffix = " in "
             + (memoryRegion == null ? "unknown region" : memoryRegion.regionName());
         String prefix = "";
-        final ObjectStatus memoryStatus = object.status();
+        final RemoteObjectStatus memoryStatus = object.status();
         if (!memoryStatus.isLive()) {
             prefix = memoryStatus.label() + " ";
         }

@@ -22,9 +22,10 @@
  */
 package com.sun.max.tele.reference.gen.semispace;
 
-import static com.sun.max.vm.heap.ObjectStatus.*;
+import static com.sun.max.tele.object.RemoteObjectStatus.*;
 
 import com.sun.max.tele.heap.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -69,7 +70,7 @@ public class GenSSRemoteReference extends RemoteReference {
         YOUNG_REF_LIVE("LIVE(young)") {
             // Properties
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return LIVE;
             }
             @Override
@@ -103,7 +104,7 @@ public class GenSSRemoteReference extends RemoteReference {
         YOUNG_REF_FROM("UNKNOWN(young)") {
 
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return UNKNOWN;
             }
 
@@ -146,7 +147,7 @@ public class GenSSRemoteReference extends RemoteReference {
         OLD_PROMOTED_REF("LIVE(Analyzing: old only)") {
 
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return LIVE;
             }
 
@@ -187,7 +188,7 @@ public class GenSSRemoteReference extends RemoteReference {
         PROMOTED_REF("LIVE(Analyzing: young+old)") {
 
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return LIVE;
             }
 
@@ -223,7 +224,7 @@ public class GenSSRemoteReference extends RemoteReference {
         OLD_REF_LIVE("LIVE(old)") {
 
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return LIVE;
             }
 
@@ -256,7 +257,7 @@ public class GenSSRemoteReference extends RemoteReference {
 
         OLD_REF_FROM("UNKNOWN (Analyzing: old from-only)") {
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return UNKNOWN;
             }
 
@@ -299,7 +300,7 @@ public class GenSSRemoteReference extends RemoteReference {
         OLD_REF_TO("LIVE (Analyzing: old to-only)") {
 
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return LIVE;
             }
 
@@ -342,7 +343,7 @@ public class GenSSRemoteReference extends RemoteReference {
          */
         OLD_REF_FROM_TO("LIVE (Analyzing: old from+to)") {
             @Override
-            ObjectStatus status() {
+            RemoteObjectStatus status() {
                 return LIVE;
             }
 
@@ -374,7 +375,7 @@ public class GenSSRemoteReference extends RemoteReference {
 
         REF_DEAD ("Dead") {
             // Properties
-            @Override ObjectStatus status() {
+            @Override RemoteObjectStatus status() {
                 return DEAD;
             }
             @Override boolean isForwarded() {
@@ -399,7 +400,7 @@ public class GenSSRemoteReference extends RemoteReference {
         /**
          * @see RemoteReference#status()
          */
-        abstract ObjectStatus status();
+        abstract RemoteObjectStatus status();
 
         /**
          * @see RemoteReference#isForwarded()
@@ -454,7 +455,7 @@ public class GenSSRemoteReference extends RemoteReference {
     }
 
     @Override
-    public ObjectStatus status() {
+    public RemoteObjectStatus status() {
         return refState.status();
     }
 
