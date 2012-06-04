@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,25 +40,57 @@ import com.sun.max.ins.util.*;
  */
 public abstract class FilteredListDialog<T> extends InspectorDialog {
 
+    /**
+     * Items that can populate the display list in the dialog, each wrapping an instance of the
+     * kind of object being selected in the dialog.
+     * <p>
+     * Items are compared by default using the string value of the item, and the string value
+     * of the item is by default the string value of the object.
+     *
+     * @param <T> the type of the object being wrapped by this list item
+     */
+    protected static abstract class FilteredListItem<T> extends AbstractInspectionHolder implements Comparable<FilteredListItem<T> > {
+
+        protected FilteredListItem(Inspection inspection) {
+            super(inspection);
+        }
+
+        public abstract T object();
+
+        public int compareTo(FilteredListItem<T> o) {
+            return object().toString().compareTo(o.object().toString());
+        }
+
+        @Override
+        public String toString() {
+            return object().toString();
+        }
+    }
+
     protected final boolean multiSelection;
     protected final JTextField textField = new JTextField();
     protected final String actionName;
-    protected final DefaultListModel listModel = new DefaultListModel(); // TODO (mlvdv) generic in Java 7
+    protected final DefaultListModel listModel = new DefaultListModel(); // TODO (mlvdv) generic in Java 7   <FilteredListItem<T> >
 
     /**
      * Used as the place holder list model while the real list model is being notified. Using a place holder prevents
      * events being sent to the list for each modification to its (potentially large) model.
      */
-    protected final AbstractListModel emptyListModel; // TODO (mlvdv) generic in Java 7
+    protected final AbstractListModel emptyListModel; // TODO (mlvdv) generic in Java 7  <FilteredListItem<T> >
 
-    protected final JList list; // TODO (mlvdv) generic in Java 7
+    /**
+     * A list of the items to be displayed in the dialog.
+     */
+    protected final JList list; // TODO (mlvdv) generic in Java 7  <FilteredListItem<T> >
 
     private List<T> selectedObjects;
 
     /**
      * The value representing that no object was selected.
      */
-    protected abstract T noSelectedObject();
+    protected T noSelectedObject() {
+        return null;
+    }
 
     /**
      * Gets the object selected by the user.
@@ -67,7 +99,7 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
      * multi-selection enabled, returns the first selection.
      */
     public T selectedObject() {
-        return (selectedObjects != null && selectedObjects.size() > 0) ? Utils.first(selectedObjects) :  noSelectedObject();
+        return (selectedObjects != null && selectedObjects.size() > 0) ? Utils.first(selectedObjects) : noSelectedObject();
     }
 
     public List<T> selectedObjects() {
@@ -81,7 +113,7 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
      * @param listItem
      *                the item currently selected when the user pressed the "Select" button that closed the dialog
      */
-    protected abstract T convertSelectedItem(Object listItem);
+         ///protected abstract T convertSelectedItem(Object listItem);
 
     private final class SelectAction extends InspectorAction {
         private SelectAction() {
@@ -93,7 +125,11 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
             final int[] selectedIndices = list.getSelectedIndices();
             selectedObjects = new LinkedList<T>();
             for (int i = 0; i < selectedIndices.length; i++) {
-                selectedObjects.add(convertSelectedItem(listModel.get(selectedIndices[i])));
+                @SuppressWarnings("unchecked")
+                // final T object = (T) listModel.get(selectedIndices[i]);
+                final FilteredListItem<T> listItem = (FilteredListItem<T>) listModel.get(selectedIndices[i]);
+                final T object = listItem.object();
+                selectedObjects.add(object);
             }
             dispose();
         }
@@ -125,6 +161,7 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
         }
     }
 
+    // TODO (mlvdv) when Java 7 generics used, remote warnign suppression from all implementations of this method.
     /**
      * Overwritten by subclasses to update the list model when the filter input field is updated.
      *
