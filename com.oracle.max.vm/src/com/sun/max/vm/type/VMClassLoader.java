@@ -22,11 +22,13 @@
  */
 package com.sun.max.vm.type;
 
+import java.net.*;
 
 /**
- * A classloader that exists solely to isolate the VM classes from the JDK classes
- * and application classes. It has no runtime use (until such time as the VM might
- * dynamically load extra classes at runtime).
+ * A classloader that exists to isolate the VM classes from the JDK classes
+ * and application classes. Runtime extensions to the VM are supported by
+ * delegating to a {@link URLClassLoader} that is handed URLs to search via the
+ * {@link addURL} method from {@link JavaRunScheme#loadVMExtensions}.
  */
 public class VMClassLoader extends ClassLoader {
     /**
@@ -34,8 +36,38 @@ public class VMClassLoader extends ClassLoader {
      */
     public static final VMClassLoader VM_CLASS_LOADER = new VMClassLoader();
 
+    private static class VMURLClassLoader extends URLClassLoader {
+        VMURLClassLoader() {
+            super(new URL[0], VM_CLASS_LOADER);
+        }
+
+        @Override
+        protected void addURL(URL url) {
+            super.addURL(url);
+        }
+
+        @Override
+        protected Class<?> findClass(final String name) throws ClassNotFoundException {
+            return super.findClass(name);
+        }
+
+    }
+
+    private static final VMURLClassLoader urlClassLoader = new VMURLClassLoader();
+
     private VMClassLoader() {
         super(BootClassLoader.BOOT_CLASS_LOADER);
     }
+
+    public static void addURL(URL url) {
+        urlClassLoader.addURL(url);
+    }
+
+    @Override
+    protected Class<?> findClass(final String name) throws ClassNotFoundException {
+        // VM classes in the extension are found using the URL class loader from their JAR file.
+        return urlClassLoader.findClass(name);
+    }
+
 
 }
