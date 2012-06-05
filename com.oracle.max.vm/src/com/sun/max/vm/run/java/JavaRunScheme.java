@@ -75,6 +75,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     private static final VMOption D64Option = register(new VMOption("-d64",
         "Selects the 64-bit data model if available. Currently ignored."), MaxineVM.Phase.PRISTINE);
     private static final JavaAgentVMOption javaagentOption = register(new JavaAgentVMOption(), MaxineVM.Phase.STARTING);
+    private static final VMExtensionVMOption vmExtensionOption = register(new VMExtensionVMOption(), MaxineVM.Phase.STARTING);
     private static final VMStringOption profOption = register(new VMStringOption(
         "-Xprof", false, null, "run sampling profiler"), MaxineVM.Phase.STARTING);
 
@@ -267,6 +268,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 return;
             }
 
+            loadVMExtensions();
+
             error = false;
 
             if (versionOption.isPresent()) {
@@ -393,34 +396,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     }
 
     /**
-     * Invoke the given agent method in the given agent class with the given args.
-     * @param agentClassName agent class name
-     * @param agentMethodName agent method name
-     * @param agentArgs agent args
-     * @throws ClassNotFoundException if agent class not found
-     * @throws NoSuchMethodException if agent method not found
-     * @throws InvocationTargetException if invocation failed
-     * @throws IllegalAccessException if access is denied
-     */
-    public static void invokeAgentMethod(URL url, String agentClassName, String agentMethodName, String agentArgs) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        final ClassLoader appClassLoader = Launcher.getLauncher().getClassLoader();
-        final Class<?> agentClass = appClassLoader.loadClass(agentClassName);
-        Method agentMethod = null;
-        Object[] agentInvokeArgs = null;
-        try {
-            agentMethod = lookupMainOrAgentClass(agentClass, agentMethodName, new Class<?>[] {String.class, Instrumentation.class});
-            agentInvokeArgs = new Object[2];
-            agentInvokeArgs[1] = InstrumentationManager.createInstrumentation();
-        } catch (NoSuchMethodException ex) {
-            agentMethod = lookupMainOrAgentClass(agentClass, agentMethodName, new Class<?>[] {String.class});
-            agentInvokeArgs = new Object[1];
-        }
-        agentInvokeArgs[0] = agentArgs;
-        InstrumentationManager.registerAgent(url);
-        agentMethod.invoke(null, agentInvokeArgs);
-    }
-
-    /**
      * The method used to extend the class path of the app class loader with entries specified by an agent.
      * Reflection is used for this as the method used to make the addition depends on the JDK
      * version in use.
@@ -442,39 +417,117 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     }
 
 
-    private void loadJavaAgents() throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-        for (int i = 0; i < javaagentOption.count(); i++) {
-            final String javaagentOptionString = javaagentOption.getValue(i);
+    /**
+     * Callback class for handling the option specific details of loading agent/vm extension code from jar files.
+      */
+    private static abstract class JarFileOptionHandler {
+        abstract String classNameAttribute();
+        abstract void handle(String className, URL url, String agentArgs)
+            throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException;
+    }
+
+    private static class JavaAgentJarFileOptionHandler extends JarFileOptionHandler {
+        @Override
+        String classNameAttribute() {
+            return "Premain-Class";
+        }
+
+        @Override
+        void handle(String className, URL url, String agentArgs)
+            throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+            addURLToAppClassLoader.invoke(Launcher.getLauncher().getClassLoader(), url);
+            invokeMethod(className, url, "premain", agentArgs);
+        }
+
+        private void invokeMethod(String className, URL url, String methodName, String args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+            final ClassLoader appClassLoader = Launcher.getLauncher().getClassLoader();
+            final Class<?> agentClass = appClassLoader.loadClass(className);
+            Method method = null;
+            Object[] invokeArgs = null;
+            try {
+                method = lookupMainOrAgentClass(agentClass, methodName, new Class<?>[] {String.class, Instrumentation.class});
+                invokeArgs = new Object[2];
+                invokeArgs[1] = InstrumentationManager.createInstrumentation();
+            } catch (NoSuchMethodException ex) {
+                method = lookupMainOrAgentClass(agentClass, methodName, new Class<?>[] {String.class});
+                invokeArgs = new Object[1];
+            }
+            invokeArgs[0] = args;
+            InstrumentationManager.registerAgent(url);
+            method.invoke(null, invokeArgs);
+        }
+
+    }
+
+    private static final JavaAgentJarFileOptionHandler javaAgentJarFileOptionHandler = new JavaAgentJarFileOptionHandler();
+
+    private void loadJavaAgents()
+        throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        loadJarFile(javaagentOption, javaAgentJarFileOptionHandler);
+    }
+
+    private void loadJarFile(JarFileVMOption jarFileVMOption, JarFileOptionHandler handler)
+        throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        for (int i = 0; i < jarFileVMOption.count(); i++) {
+            final String jarFileVMOptionString = jarFileVMOption.getValue(i);
             String jarPath = null;
             String agentArgs = "";
-            final int cIndex = javaagentOptionString.indexOf(':');
-            if (javaagentOptionString.length() > 1 && cIndex >= 0) {
-                final int eIndex = javaagentOptionString.indexOf('=', cIndex);
+            final int cIndex = jarFileVMOptionString.indexOf(':');
+            if (jarFileVMOptionString.length() > 1 && cIndex >= 0) {
+                final int eIndex = jarFileVMOptionString.indexOf('=', cIndex);
                 if (eIndex > 0) {
-                    jarPath = javaagentOptionString.substring(cIndex + 1, eIndex);
-                    agentArgs = javaagentOptionString.substring(eIndex + 1);
+                    jarPath = jarFileVMOptionString.substring(cIndex + 1, eIndex);
+                    agentArgs = jarFileVMOptionString.substring(eIndex + 1);
                 } else {
-                    jarPath = javaagentOptionString.substring(cIndex + 1);
+                    jarPath = jarFileVMOptionString.substring(cIndex + 1);
                 }
                 JarFile jarFile = null;
                 try {
                     jarFile = new JarFile(jarPath);
-                    final String preMainClassName = findClassAttributeInJarFile(jarFile, "Premain-Class");
-                    jarFile.close();
-                    if (preMainClassName == null) {
-                        Log.println("could not find premain class in jarfile: " + jarPath);
+                    final String className = findClassAttributeInJarFile(jarFile, handler.classNameAttribute());
+                    if (className == null) {
+                        throw new IOException("could not find " + handler.classNameAttribute() + "in jarfile manifest: " + jarFile.getName());
                     }
-                    final URL url = new URL("file://" + new File(jarPath).getAbsolutePath());
-                    addURLToAppClassLoader.invoke(Launcher.getLauncher().getClassLoader(), url);
-                    invokeAgentMethod(url, preMainClassName, "premain", agentArgs);
+                    final URL url = new URL("file://" + new File(jarFile.getName()).getAbsolutePath());
+                    handler.handle(className, url, agentArgs);
                 } finally {
                     if (jarFile != null) {
                         jarFile.close();
                     }
                 }
             } else {
-                throw new IOException("syntax error in -javaagent" + javaagentOptionString);
+                throw new IOException("syntax error in " + jarFileVMOption.optionName + jarFileVMOptionString);
             }
         }
+    }
+
+    private static class VMExtensionJarFileOptionHandler extends JarFileOptionHandler {
+        @Override
+        String classNameAttribute() {
+            return "VMExtension-Class";
+        }
+        @Override
+        void handle(String className, URL url, String args)
+            throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+            VMClassLoader.addURL(url);
+            invokeMethod(className, args);
+        }
+
+        private void invokeMethod(String className, String args)
+            throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+            final Class<?> klass = VMClassLoader.VM_CLASS_LOADER.loadClass(className);
+            Method method = lookupMainOrAgentClass(klass, "onLoad", new Class<?>[] {String.class});
+            Object[] invokeArgs = new Object[1];
+            invokeArgs[0] = args;
+            method.invoke(null, invokeArgs);
+        }
+
+    }
+
+    private static final VMExtensionJarFileOptionHandler vmExtensionJarFileOptionHandler = new VMExtensionJarFileOptionHandler();
+
+    private void loadVMExtensions()
+        throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        loadJarFile(vmExtensionOption, vmExtensionJarFileOptionHandler);
     }
 }

@@ -24,11 +24,10 @@ package com.sun.max.vm;
 
 import com.sun.max.annotate.*;
 
-public class JavaAgentVMOption extends JarFileVMOption {
-    @HOSTED_ONLY
-    public JavaAgentVMOption() {
-        super("-javaagent",
-              "load Java programming language agent, see java.lang.instrument");
-    }
 
+public class VMExtensionVMOption extends JarFileVMOption {
+    @HOSTED_ONLY
+    public VMExtensionVMOption() {
+        super("-vmextension", "load a VM extension");
+    }
 }
