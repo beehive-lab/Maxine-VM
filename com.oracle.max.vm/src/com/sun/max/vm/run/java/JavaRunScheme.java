@@ -104,22 +104,18 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     }
 
     /**
-     * While bootstrapping, searches the class registry for non-Maxine classes that have methods called
-     * "initIDs" with signature "()V". Such methods are typically used in the JDK to initialize JNI
-     * identifiers for native code, and need to be re-executed upon startup.
+     * While bootstrapping, searches the boot class registry classes that have methods called "initIDs" with
+     * signature "()V". Such methods are typically used in the JDK to initialize JNI identifiers for native code, and
+     * need to be re-executed upon startup.
      */
     @HOSTED_ONLY
-    public List<? extends MethodActor> gatherNativeInitializationMethods() {
+    public List< ? extends MethodActor> gatherNativeInitializationMethods() {
         final List<StaticMethodActor> methods = new LinkedList<StaticMethodActor>();
-        final String maxinePackagePrefix = "com.sun.max";
-        // TODO remove check given VM_CLASS_REGISTRY
         for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
-            if (!classActor.name.toString().startsWith(maxinePackagePrefix)) { // non-Maxine class => JDK class
-                for (StaticMethodActor method : classActor.localStaticMethodActors()) {
-                    if ((method.name.equals("initIDs") || method.name.equals("initNative")) && (method.descriptor().numberOfParameters() == 0) && method.resultKind() == Kind.VOID) {
-                        method.makeInvocationStub();
-                        methods.add(method);
-                    }
+            for (StaticMethodActor method : classActor.localStaticMethodActors()) {
+                if ((method.name.equals("initIDs") || method.name.equals("initNative")) && (method.descriptor().numberOfParameters() == 0) && method.resultKind() == Kind.VOID) {
+                    method.makeInvocationStub();
+                    methods.add(method);
                 }
             }
         }
