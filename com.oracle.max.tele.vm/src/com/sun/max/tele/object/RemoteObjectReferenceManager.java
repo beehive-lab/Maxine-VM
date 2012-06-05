@@ -54,7 +54,7 @@ public interface RemoteObjectReferenceManager {
     boolean isObjectOrigin(Address origin) throws TeleError;
 
     /**
-     * Determines whether there is a pseudo-object, used to represent <emph>free space</emph> by GC implementations, in
+     * Determines whether there is a pseudo-object, used to represent <em>free space</em> by GC implementations, in
      * the VM memory at a specified origin, using only low-level mechanisms: no {@link, Reference}s.
      *
      * @param origin an address a location in VM memory

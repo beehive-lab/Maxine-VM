@@ -112,12 +112,12 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
         }
 
         @Override
-        public boolean isForwarded() {
+        public Address forwardedFrom() {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public Address forwardedFrom() {
+        public Address forwardedTo() {
             throw new UnsupportedOperationException();
         }
 

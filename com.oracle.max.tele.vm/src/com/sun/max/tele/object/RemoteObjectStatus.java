@@ -25,18 +25,20 @@ package com.sun.max.tele.object;
 import java.util.*;
 
 import com.sun.max.tele.reference.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * The status of an object represented in VM memory, from the perspective of a remove vantage that
  * may not have complete information about an object or even, in the case of GC, may have a slightly
  * different view of the object's status at certain times than does the VM itself.
+ * <p>
+ * There are two fixed states:  {@link #LIVE} and {@link #DEAD}.  The rest are considered <em>Quasi</em>
+ * states: regions of VM memory formatted as objects (or nearly so) that
+ * would be interesting and useful to view as objects, but which are not live objects from the
+ * perspective of the VM.
  * <ul>
  * <li> {@link #LIVE}: Determined to be reachable as of the most recent collection, or <em>presumed</em>
  * to be reachable during certain GC phases when its reachability has not yet been determined.</li>
- * <li> {@link #QUASI}: A region of VM memory that is formatted as an object (or nearly so) that
- * would be interesting and useful to view as an object, but which is not a live object from the
- * perspective of the VM; examples might include forwarded objects (during specific phases of
- * a relocating GC) or free memory chunks formatted as objects for GC implementation convenience;</li>
  * <li> {@link #DEAD}: Unreachable memory, usually at a site that formerly held a live or
  * quasi-object but which no longer does; no assumptions about memory may be made</li>
  * </ul>
@@ -58,17 +60,14 @@ public enum RemoteObjectStatus {
     UNKNOWN("Unknown", "During liveness analysis:  formerly live, not yet determined reachable"),
 
     /**
-     * The region of memory is formatted as (or mostly as) a VM object, and it can be useful to view
-     * the memory's contents as if it were an object, but it does not represent a LIVE object.  Examples
-     * include old copies of forwarded objects (while GC is still underway), explicit representation of
-     * free memory chunks, and others.
-     */
-    QUASI("Quasi", "Formatted as an object, but not a LIVE object"),
-
-    /**
      * The region of memory formerly represented an object that has been collected.
      */
-    DEAD("Dead", "The region of memory formerly represented an object that has been collected");
+    DEAD("Dead", "The region of memory formerly represented an object that has been collected"),
+
+    /**
+     *
+     */
+    FORWARDER("Forwarder", "Old copy of a forwarded object, for the duration of the GC analyzing phase");
 
     private final String label;
     private final String description;
@@ -98,10 +97,10 @@ public enum RemoteObjectStatus {
     /**
      * Does the memory represent interesting information, represented in VM object format, that is not a live object?
      *
-     * @return {@code this != } {@link #QUASI}.
+     * @return {@code this != } {@link #LIVE} {@code && this != } {@link #DEAD}
      */
     public boolean isQuasi() {
-        return this == QUASI;
+        return this != LIVE && this != DEAD;
     }
 
     /**
@@ -121,6 +120,15 @@ public enum RemoteObjectStatus {
      */
     public boolean isDead() {
         return this == DEAD;
+    }
+
+    /**
+     * Does the memory hold the old copy of a forwarded object?
+     *
+     * @return this == FORWARDER; always {@code false} when GC not {@linkplain HeapPhase#ANALYZING ANALYZING}.
+     */
+    public boolean isForwarder() {
+        return this == FORWARDER;
     }
 
     public static final List<RemoteObjectStatus> VALUES = Arrays.asList(values());
