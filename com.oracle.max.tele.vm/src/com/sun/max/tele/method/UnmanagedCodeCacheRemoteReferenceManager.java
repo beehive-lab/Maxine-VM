@@ -265,8 +265,8 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
          * Unmanaged objects never move, and so are never <em>forwarded</em>.
          */
         @Override
-        public boolean isForwarded() {
-            return false;
+        public Address forwardedFrom() {
+            return Address.zero();
         }
 
         /**
@@ -275,7 +275,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
          * Unmanaged objects never move, and so are never <em>forwarded</em>.
          */
         @Override
-        public Address forwardedFrom() {
+        public Address forwardedTo() {
             return Address.zero();
         }
 

@@ -85,7 +85,7 @@ public class MSRemoteReference extends  RemoteReference {
 
             // Properties
             @Override RemoteObjectStatus status() {
-                return UNKNOWN;
+                return LIVE;
             }
 
             @Override
@@ -358,11 +358,6 @@ public class MSRemoteReference extends  RemoteReference {
     @Override
     public Address origin() {
         return origin;
-    }
-
-    @Override
-    public boolean isForwarded() {
-        return false;
     }
 
     @Override

@@ -272,8 +272,8 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
          * in the usual GC sense.
          */
         @Override
-        public boolean isForwarded() {
-            return false;
+        public Address forwardedFrom() {
+            return Address.zero();
         }
 
         /**
@@ -283,7 +283,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
          * in the usual GC sense.
          */
         @Override
-        public Address forwardedFrom() {
+        public Address forwardedTo() {
             return Address.zero();
         }
 
