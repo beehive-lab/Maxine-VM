@@ -378,8 +378,8 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
 
     public TeleHub getTeleHub() {
         if (teleHub == null) {
-            final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
-            teleHub = (TeleHub) objects().makeTeleObject(hubReference);
+                   // final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
+            teleHub = (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(reference).asAddress());
         }
         return teleHub;
     }
