@@ -478,6 +478,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
     }
 
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     /**
      * Return the address where a forwarding pointer is stored within the specified tele object.
      * @param object
@@ -487,6 +488,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return object.origin().plus(gcForwardingAddressOffset);
     }
 
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     /**
      * Assumes the address is a valid object origin; returns whether the object holds a forwarding pointer.
      * <p>
@@ -497,6 +499,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return readForwardWordUnsafe(origin).asAddress().and(1).toLong() == 1;
     }
 
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     /**
      * Returns the actual address pointed at by a forwarding address stored in the object at
      * the specified location in VM memory, <em>assuming</em> that the object's origin is
@@ -506,11 +509,13 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * is actually a forwarding address stored in the object, or even whether the origin is a legitimate
      * address at all.
      */
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     public Address getForwardingAddressUnsafe(Address origin) {
         Address newCellAddress = readForwardWordUnsafe(origin).asAddress().minus(1);
         return Layout.generalLayout().cellToOrigin(newCellAddress.asPointer());
     }
 
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     /**
      * Assuming that the argument is the origin of an object in VM memory, reads the word that would hold the forwarding
      * address.
