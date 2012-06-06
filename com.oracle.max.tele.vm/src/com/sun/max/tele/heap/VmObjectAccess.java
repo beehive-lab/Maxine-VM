@@ -209,6 +209,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * @return whether the location is likely to be an object origin.
      */
     public boolean isPlausibleOriginUnsafe(Address possibleOrigin) {
+
+        // TODO (mlvdv)  LD suggestion; shorten this test.  The Hub of Hubs is constant: a fixed object in the BootHeap.
         // Assuming we're starting an an object origin. follow hub pointers until the same hub is
         // traversed twice or an address outside of heap is encountered.
         //
