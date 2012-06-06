@@ -280,11 +280,6 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         return reference().status();
     }
 
-    public final TeleObject getForwardedTeleObject() {
-        TeleError.unimplemented();
-        return null;
-    }
-
     public final RemoteReference reference() {
         return reference;
     }

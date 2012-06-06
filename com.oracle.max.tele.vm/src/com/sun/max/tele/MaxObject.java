@@ -197,7 +197,4 @@ public interface MaxObject {
      */
     String maxineTerseRole();
 
-    @Deprecated
-    TeleObject getForwardedTeleObject();
-
 }

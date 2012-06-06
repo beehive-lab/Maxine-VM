@@ -594,41 +594,4 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         }
     }
 
-
-    // TODO (mlvdv) Old Heap
-    /**
-     * Finds an object in the VM that has been located at a particular place in memory, but which
-     * may have been relocated.
-     * <p>
-     * Must be called in thread holding the VM lock
-     *
-     * @param origin an object origin in the VM
-     * @return the object originally at the origin, possibly relocated
-     */
-    @Deprecated
-    public TeleObject getForwardedObject(Pointer origin) {
-        TeleError.unimplemented();
-        return null;
-//        final Reference forwardedObjectReference = referenceManager().makeReference(heap().getForwardedOrigin(origin));
-//        return teleObjectFactory.make(forwardedObjectReference);
-    }
-
-    // TODO (mlvdv) Old Heap
-    @Deprecated
-    public int gcForwardingPointerOffset() {
-        TeleError.unimplemented();
-        return 0;
-        // TODO (mlvdv) Should only be called if in a region being managed by relocating GC
-        //return heap().gcForwardingPointerOffset();
-    }
-
-    // TODO (mlvdv) Old Heap
-    @Deprecated
-    public boolean isObjectForwarded(Pointer origin) {
-        TeleError.unimplemented();
-        return false;
-        // TODO (mlvdv) Should only be called if in a region being managed by relocating GC
-        //return heap().isObjectForwarded(origin);
-    }
-
 }
