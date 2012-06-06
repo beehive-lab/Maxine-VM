@@ -1140,8 +1140,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                final MaxObject bootClassRegistry = vm().objects().findObject(vm().vmClassRegistryReference());
-                focus().setHeapObject(bootClassRegistry);
+                focus().setHeapObject(vm().objects().vmClassRegistry());
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
             }
@@ -4728,7 +4727,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 classActorMenu.add(viewClassActorByName());
                 classActorMenu.add(viewClassActorByHexId());
                 classActorMenu.add(viewClassActorByDecimalId());
-                classActorMenu.add(viewBootClassRegistry());
                 menu.add(classActorMenu);
 
                 final JMenu classStaticsMenu = new JMenu("View class statics");
@@ -4743,6 +4741,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(viewSchemesMenu());
 
                 menu.add(views().objects().viewMenu());
+
+                menu.add(viewBootClassRegistry());
+
             }
         };
     }
