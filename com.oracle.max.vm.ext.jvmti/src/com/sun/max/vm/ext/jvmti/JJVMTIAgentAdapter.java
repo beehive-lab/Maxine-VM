@@ -160,7 +160,7 @@ public class JJVMTIAgentAdapter extends JVMTI.JavaEnv implements JJVMTI {
     @Override
     public int getThreadState(Thread thread) throws Exception {
         VmThread vmThread = JVMTIThreadFunctions.checkVmThread(thread);
-        if (thread == null) {
+        if (vmThread == null) {
             throw new JJVMTI.Exception(JVMTI_ERROR_THREAD_NOT_ALIVE);
         }
         return JVMTIThreadFunctions.getThreadState(vmThread);
