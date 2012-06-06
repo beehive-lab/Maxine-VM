@@ -270,9 +270,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     public TeleObject findObjectAt(Address origin) {
         if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
             try {
-                if (isValidOrigin(origin)) {
-                    return makeTeleObject(vm().referenceManager().makeReference(origin.asPointer()));
-                }
+                return makeTeleObject(vm().referenceManager().makeReference(origin));
             } catch (Throwable throwable) {
                 // Can't resolve the address somehow
             } finally {
@@ -294,8 +292,9 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
                 origin = origin.plus(wordSize);
-                if (isValidOrigin(origin)) {
-                    return makeTeleObject(referenceManager().makeReference(origin));
+                final TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                if (teleObject != null) {
+                    return teleObject;
                 }
             }
         } catch (Throwable throwable) {
@@ -315,8 +314,9 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
                 origin = origin.minus(wordSize);
-                if (isValidOrigin(origin)) {
-                    return makeTeleObject(referenceManager().makeReference(origin));
+                final TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                if (teleObject != null) {
+                    return teleObject;
                 }
             }
         } catch (Throwable throwable) {
@@ -540,7 +540,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      *
      * @param origin a memory location in the VM
      * @return whether the object (probably) points at an instance of {@link StaticTuple}
-     * @see #isValidOrigin(Pointer)
      */
     private boolean isStaticTuple(Address origin) {
         // If this is a {@link StaticTuple} then a field in the header points at a {@link StaticHub}
