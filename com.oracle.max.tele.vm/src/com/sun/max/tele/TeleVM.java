@@ -1440,10 +1440,6 @@ public abstract class TeleVM implements MaxVM {
         return referenceManager.makeReference(origin);
     }
 
-    public final Reference vmClassRegistryReference() {
-        return makeReference(bootImageStart.plus(bootImage.header.classRegistryOffset));
-    }
-
     public final ReferenceValue createReferenceValue(Reference reference) {
         return referenceManager.createReferenceValue(reference);
     }

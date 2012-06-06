@@ -324,6 +324,10 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return null;
     }
 
+    public TeleObject vmClassRegistry() throws MaxVMBusyException {
+        return findObject(classes().vmClassRegistryReference());
+    }
+
     /**
      * Registers a type of surrogate object to be created for a specific VM object type.
      * The local object must be a concrete subtype of {@link TeleTupleObject} and must have
