@@ -131,7 +131,7 @@ public class JVMTIThreadFunctions {
 
     static int getThreadState(Thread thread, Pointer threadStatePtr) {
         VmThread vmThread = checkVmThread(thread);
-        if (thread == null) {
+        if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         threadStatePtr.setInt(getThreadState(vmThread));
