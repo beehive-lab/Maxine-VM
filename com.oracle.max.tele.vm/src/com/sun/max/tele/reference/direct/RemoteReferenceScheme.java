@@ -37,6 +37,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.reference.direct.*;
 
 /**
  * A specific implementation of the {@link ReferenceScheme} interface for remote
@@ -193,16 +194,40 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         return ref1.equals(ref2);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Is the reference a forwarding address?
+     *
+     * Uses the same marking information forwarding that
+     * the VM does in normal operation.
+     *
+     * @see DirectReferenceScheme#isMarked
+     */
     public boolean isMarked(Reference ref) {
-        throw new UnsupportedOperationException();
+        return toOrigin(ref).isBitSet(0);
     }
 
     public boolean isTagged(Reference ref) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Gets a reference to the object pointed to by
+     * a reference that might be a forwarding reference.
+     * This is a no-op if the reference is not a forwarding
+     * address.
+     * <p>
+     * Uses the same marking information forwarding that
+     * the VM does in normal operation.
+     *
+     * @see DirectReferenceScheme#marked
+     */
     public Reference marked(Reference ref) {
-        throw new UnsupportedOperationException();
+        final Pointer origin = toOrigin(ref).bitSet(0);
+        return fromOrigin(origin);
     }
 
     public Reference unmarked(Reference ref) {
