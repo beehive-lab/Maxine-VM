@@ -124,11 +124,6 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return ObjectStatus.DEAD;
     }
 
-    public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
-        // Objects are relocated, but are not forwarded in this region.
-        return null;
-    }
-
     @Override
     public RemoteReference makeReference(Address origin) throws TeleError {
         assert vm().lockHeldByCurrentThread();

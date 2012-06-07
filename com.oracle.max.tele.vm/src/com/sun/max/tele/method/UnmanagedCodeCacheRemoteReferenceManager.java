@@ -122,11 +122,6 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return ObjectStatus.DEAD;
     }
 
-    public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
-        // Objects are not forwarded.
-        return null;
-    }
-
     /**
      * {@inheritDoc}
      * <p>
