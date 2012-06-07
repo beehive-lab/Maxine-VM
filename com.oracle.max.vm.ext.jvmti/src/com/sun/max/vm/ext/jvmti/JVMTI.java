@@ -77,10 +77,6 @@ public class JVMTI {
          * The per-thread event settings for this agent.
          */
         JVMTIEvent.PerThreadSettings perThreadEventSettings = new JVMTIEvent.PerThreadSettings();
-        /**
-         *  JVMTI thread local storage.
-         */
-        JVMTIThreadLocalStorage tls = new JVMTIThreadLocalStorage();
 
         boolean isFree() {
             return false;

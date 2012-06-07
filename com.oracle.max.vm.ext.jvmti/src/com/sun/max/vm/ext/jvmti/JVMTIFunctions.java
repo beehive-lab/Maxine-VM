@@ -2987,7 +2987,7 @@ public class JVMTIFunctions  {
             if (jvmtiEnv == null) {
                 return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
-            return JVMTIThreadLocalStorage.getThreadLocalStorage(handleAsThread, data_ptr);
+            return JVMTIVmThreadLocal.getThreadLocalStorage(handleAsThread, data_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
@@ -3020,7 +3020,7 @@ public class JVMTIFunctions  {
             if (jvmtiEnv == null) {
                 return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
-            return JVMTIThreadLocalStorage.setThreadLocalStorage(handleAsThread, data);
+            return JVMTIVmThreadLocal.setThreadLocalStorage(handleAsThread, data);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {

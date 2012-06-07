@@ -36,6 +36,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -60,6 +61,7 @@ public class JVMTIThreadFunctions {
     private static ClassActor jvmtiClassActor;
     private static ClassActor javaRunSchemeClassActor;
     private static MethodActor[] stackBaseMethodActors;
+    private static final LinkedList<StackElement> EMPTY_STACK = new LinkedList<StackElement>();
 
     static ClassActor vmThreadClassActor() {
         if (vmThreadClassActor == null) {
@@ -130,7 +132,7 @@ public class JVMTIThreadFunctions {
 
     static int getThreadState(Thread thread, Pointer threadStatePtr) {
         VmThread vmThread = checkVmThread(thread);
-        if (thread == null) {
+        if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         threadStatePtr.setInt(getThreadState(vmThread));
@@ -330,11 +332,10 @@ public class JVMTIThreadFunctions {
         void walkVariant(StackFrameWalker walker, Pointer ip, Pointer sp, Pointer fp, boolean raw) {
             this.raw = raw;
             super.walk(walker, ip, sp, fp);
+            createDebugArray();
             if (!raw) {
                 removeVMFrames();
             }
-            createDebugArray();
-
         }
 
         /**
@@ -386,7 +387,7 @@ public class JVMTIThreadFunctions {
                     }
                 } else if (classActor == vmThreadMapClassActor()) {
                     // main returned
-                    stackElements = new LinkedList<StackElement>();
+                    stackElements = EMPTY_STACK;
                     return;
                 } else if (classActor == methodClassActor()) {
                     startIndex = 3;
@@ -398,7 +399,10 @@ public class JVMTIThreadFunctions {
             }
 
             if (startIndex < 0) {
-                assert false : "unexpected thread stack layout";
+                // unexpected stack layout, log it and return empty
+                Log.println("JVMTI: unexpected thread stack layout");
+                stackElements = EMPTY_STACK;
+                return;
             }
 
             // discard VM frames below first app frame
