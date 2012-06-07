@@ -132,7 +132,7 @@ public final class BootClassLoader extends ClassLoader {
     }
 
     /**
-     * When {@code true} {@link #findClass} will search {@link VMClassLoader} to handle special cases
+     * When {@code true} {@link #resolveClassOrNull} will search {@link VMClassLoader} to handle special cases
      * where boot classes refer to VM classes, e.g. native method stubs.
      */
     private static final VMResolveState vmResolveOk = new VMResolveState();

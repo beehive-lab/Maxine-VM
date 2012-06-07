@@ -44,6 +44,7 @@ public class TransientVMAdviceHandlerTypes {
         GC,
         ThreadStarting,
         ThreadTerminating,
+        ReturnByThrow,
         ConstLoadLong,
         ConstLoadObject,
         ConstLoadFloat,
@@ -168,6 +169,7 @@ public class TransientVMAdviceHandlerTypes {
                 case ArrayStoreLong:
                 case PutFieldLong:
                 case PutStaticLong:
+                case ReturnByThrow:
                     return new ObjectLongAdviceRecord();
 // END GENERATED CODE
 

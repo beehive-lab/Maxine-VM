@@ -100,6 +100,11 @@ public class VMAVMLogger {
             handler.adviseBeforeThreadTerminating(arg2);
         }
         @Override
+        protected void traceAdviseBeforeReturnByThrow(long arg1, Throwable arg2, int arg3) {
+            timeStamp = arg1;
+            handler.adviseBeforeReturnByThrow(arg2, arg3);
+        }
+        @Override
         protected void traceAdviseBeforeConstLoad(long arg1, long arg2) {
             timeStamp = arg1;
             handler.adviseBeforeConstLoad(arg2);
@@ -402,6 +407,8 @@ public class VMAVMLogger {
 
         void adviseBeforeThreadTerminating(long arg1, VmThread arg2);
 
+        void adviseBeforeReturnByThrow(long arg1, Throwable arg2, int arg3);
+
         void adviseBeforeConstLoad(long arg1, long arg2);
 
         void adviseBeforeConstLoad(long arg1, Object arg2);
@@ -537,9 +544,9 @@ public class VMAVMLogger {
             AdviseBeforeOperation3, AdviseBeforePutField, AdviseBeforePutField2, AdviseBeforePutField3,
             AdviseBeforePutField4, AdviseBeforePutStatic, AdviseBeforePutStatic2, AdviseBeforePutStatic3,
             AdviseBeforePutStatic4, AdviseBeforeReturn, AdviseBeforeReturn2, AdviseBeforeReturn3,
-            AdviseBeforeReturn4, AdviseBeforeReturn5, AdviseBeforeStackAdjust, AdviseBeforeStore,
-            AdviseBeforeStore2, AdviseBeforeStore3, AdviseBeforeStore4, AdviseBeforeThreadStarting,
-            AdviseBeforeThreadTerminating, AdviseBeforeThrow, UnseenObject;
+            AdviseBeforeReturn4, AdviseBeforeReturn5, AdviseBeforeReturnByThrow, AdviseBeforeStackAdjust,
+            AdviseBeforeStore, AdviseBeforeStore2, AdviseBeforeStore3, AdviseBeforeStore4,
+            AdviseBeforeThreadStarting, AdviseBeforeThreadTerminating, AdviseBeforeThrow, UnseenObject;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
@@ -548,8 +555,8 @@ public class VMAVMLogger {
         private static final int[] REFMAPS = new int[] {0x0, 0x2, 0x2, 0x2, 0x2, 0x2, 0x6, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0xa,
             0x2, 0x0, 0x6, 0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2, 0x2, 0x0,
             0xc, 0x6, 0x2, 0x2, 0x2, 0x2, 0x0, 0x2, 0x2, 0x0, 0x0, 0x0, 0x2, 0x2,
-            0xa, 0x2, 0x2, 0x2, 0xa, 0x2, 0x0, 0x0, 0x0, 0x2, 0x0, 0x0, 0x0,
-            0x0, 0x4, 0x0, 0x0, 0x0, 0x2, 0x2};
+            0xa, 0x2, 0x2, 0x2, 0xa, 0x2, 0x0, 0x0, 0x0, 0x2, 0x0, 0x2, 0x0,
+            0x0, 0x0, 0x4, 0x0, 0x0, 0x0, 0x2, 0x2};
 
         protected VMAVMLoggerAuto(String name) {
             super(name, Operation.VALUES.length, REFMAPS);
@@ -879,6 +886,12 @@ public class VMAVMLogger {
         protected abstract void traceAdviseBeforeReturn(long arg1, long arg2);
 
         @INLINE
+        public final void logAdviseBeforeReturnByThrow(long arg1, Throwable arg2, int arg3) {
+            log(Operation.AdviseBeforeReturnByThrow.ordinal(), longArg(arg1), objectArg(arg2), intArg(arg3));
+        }
+        protected abstract void traceAdviseBeforeReturnByThrow(long arg1, Throwable arg2, int arg3);
+
+        @INLINE
         public final void logAdviseBeforeStackAdjust(long arg1, int arg2) {
             log(Operation.AdviseBeforeStackAdjust.ordinal(), longArg(arg1), intArg(arg2));
         }
@@ -1147,39 +1160,43 @@ public class VMAVMLogger {
                     traceAdviseBeforeReturn(toLong(r, 1), toLong(r, 2));
                     break;
                 }
-                case 53: { //AdviseBeforeStackAdjust
+                case 53: { //AdviseBeforeReturnByThrow
+                    traceAdviseBeforeReturnByThrow(toLong(r, 1), toThrowable(r, 2), toInt(r, 3));
+                    break;
+                }
+                case 54: { //AdviseBeforeStackAdjust
                     traceAdviseBeforeStackAdjust(toLong(r, 1), toInt(r, 2));
                     break;
                 }
-                case 54: { //AdviseBeforeStore
+                case 55: { //AdviseBeforeStore
                     traceAdviseBeforeStore(toLong(r, 1), toInt(r, 2), toDouble(r, 3));
                     break;
                 }
-                case 55: { //AdviseBeforeStore2
+                case 56: { //AdviseBeforeStore2
                     traceAdviseBeforeStore(toLong(r, 1), toInt(r, 2), toFloat(r, 3));
                     break;
                 }
-                case 56: { //AdviseBeforeStore3
+                case 57: { //AdviseBeforeStore3
                     traceAdviseBeforeStore(toLong(r, 1), toInt(r, 2), toObject(r, 3));
                     break;
                 }
-                case 57: { //AdviseBeforeStore4
+                case 58: { //AdviseBeforeStore4
                     traceAdviseBeforeStore(toLong(r, 1), toInt(r, 2), toLong(r, 3));
                     break;
                 }
-                case 58: { //AdviseBeforeThreadStarting
+                case 59: { //AdviseBeforeThreadStarting
                     traceAdviseBeforeThreadStarting(toLong(r, 1), toVmThread(r, 2));
                     break;
                 }
-                case 59: { //AdviseBeforeThreadTerminating
+                case 60: { //AdviseBeforeThreadTerminating
                     traceAdviseBeforeThreadTerminating(toLong(r, 1), toVmThread(r, 2));
                     break;
                 }
-                case 60: { //AdviseBeforeThrow
+                case 61: { //AdviseBeforeThrow
                     traceAdviseBeforeThrow(toLong(r, 1), toObject(r, 2));
                     break;
                 }
-                case 61: { //UnseenObject
+                case 62: { //UnseenObject
                     traceUnseenObject(toLong(r, 1), toObject(r, 2));
                     break;
                 }

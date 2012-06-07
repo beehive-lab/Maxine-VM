@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,23 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo.jvmti;
+package com.sun.max.vm;
 
-/**
- * Program to debug Maxine's implementation of JVMTI Exception events.
- * Catch an exception thrown up stack.
- */
-public class ExceptionTest_02 {
-    public static void main(String[] args) {
-        try {
-            foo();
-        } catch (TestException t) {
-            System.err.println(t);
-        }
+import com.sun.max.annotate.*;
+
+
+public class VMExtensionVMOption extends JarFileVMOption {
+    @HOSTED_ONLY
+    public VMExtensionVMOption() {
+        super("-vmextension", "load a VM extension");
     }
-
-    public static void foo() throws TestException {
-        throw new TestException("thrown from foo");
-    }
-
 }

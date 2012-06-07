@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.vma.run.java;
 
+import com.oracle.max.vm.ext.t1x.vma.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.max.annotate.*;
@@ -34,13 +35,14 @@ import com.sun.max.vm.run.java.JavaRunScheme;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.thread.VmThreadLocal;
 import com.sun.max.vm.ti.*;
+import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * Variant of {@link JavaRunScheme} that supports the VMA framework.
  *
  */
 
-public class VMAJavaRunScheme extends JavaRunScheme {
+public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VMAHandler {
     private static class VMTIHandler extends NullVMTIHandler {
         @Override
         public void threadStart(VmThread vmThread) {
@@ -140,6 +142,7 @@ public class VMAJavaRunScheme extends JavaRunScheme {
                 ProgramError.unexpected("failed to instantiate VMA advice handler class: ", ex);
             }
             adviceHandler.initialise(phase);
+            JVMTIException.registerVMAHAndler(this);
         }
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
@@ -242,6 +245,19 @@ public class VMAJavaRunScheme extends JavaRunScheme {
     @INLINE
     public static Object loadReceiver() {
         return VmThread.currentTLA().getReference(VMA_METHODRECEIVER.index).toJava();
+    }
+
+    @Override
+    public void exceptionRaised(ClassMethodActor throwingActor, Throwable throwable, int poppedFrames) {
+        if (isAdvising() && isInstrumented(throwingActor)) {
+            disableAdvising();
+            adviceHandler.adviseBeforeReturnByThrow(throwable, poppedFrames);
+            enableAdvising();
+        }
+    }
+
+    private static boolean isInstrumented(ClassMethodActor classMethodActor) {
+        return classMethodActor.currentTargetMethod() instanceof VMAT1XTargetMethod;
     }
 
 

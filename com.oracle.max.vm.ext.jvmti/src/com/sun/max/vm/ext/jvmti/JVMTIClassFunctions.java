@@ -139,7 +139,7 @@ class JVMTIClassFunctions {
             if (javaEnv == null || !JVMTIEvent.isEventSet(javaEnv, JVMTIEvent.CLASS_FILE_LOAD_HOOK, VmThread.current())) {
                 continue;
             }
-            byte[] newClassfileBytes = javaEnv.classFileLoadHook(classLoader, className, protectionDomain, classfileBytes);
+            byte[] newClassfileBytes = javaEnv.callbackHandler.classFileLoadHook(classLoader, className, protectionDomain, classfileBytes);
             if (newClassfileBytes != null) {
                 classfileBytes = newClassfileBytes;
                 changed = true;
@@ -460,7 +460,7 @@ class JVMTIClassFunctions {
     private static class LocalVariableTableUnion extends ModeUnion {
         int entryCount;
         Pointer nativeTablePtr;
-        JJVMTI.LocalVariableEntry[] localVariableEntryArray;
+        JJVMTICommon.LocalVariableEntry[] localVariableEntryArray;
         LocalVariableTableUnion(boolean isNative) {
             super(isNative);
         }
@@ -476,13 +476,16 @@ class JVMTIClassFunctions {
         return error;
     }
 
-    static JJVMTI.LocalVariableEntry[] getLocalVariableTable(ClassMethodActor classMethodActor) {
+    static JJVMTICommon.LocalVariableEntry[] getLocalVariableTable(ClassMethodActor classMethodActor) {
         LocalVariableTableUnion lvtu = new LocalVariableTableUnion(false);
         int error = getLocalVariableTable(lvtu, classMethodActor);
         if (error == JVMTI_ERROR_NONE) {
             return lvtu.localVariableEntryArray;
         } else {
-            throw new JJVMTI.Exception(error);
+            if (error == JVMTI_ERROR_ABSENT_INFORMATION) {
+                return new JJVMTICommon.LocalVariableEntry[0];
+            }
+            throw new JJVMTICommon.JJVMTIException(error);
         }
     }
 
@@ -491,6 +494,8 @@ class JVMTIClassFunctions {
             return JVMTI_ERROR_NATIVE_METHOD;
         }
         LocalVariableTable table = classMethodActor.codeAttribute().localVariableTable();
+        // Maxine does not (currently) distinguish a class file with no LocalVariableTableAttribute
+        // and one with an empty table.
         if (table.isEmpty()) {
             return JVMTI_ERROR_ABSENT_INFORMATION;
         }
@@ -509,10 +514,10 @@ class JVMTIClassFunctions {
                                 entry.signatureIndex() == 0 ? Pointer.zero() : CString.utf8FromJava(entry.signature(constantPool).string), entry.startBCI(), entry.length(), entry.slot());
             }
         } else {
-            lvtu.localVariableEntryArray = new JJVMTI.LocalVariableEntry[entries.length];
+            lvtu.localVariableEntryArray = new JJVMTICommon.LocalVariableEntry[entries.length];
             for (int i = 0; i < entries.length; i++) {
                 LocalVariableTable.Entry entry = entries[i];
-                lvtu.localVariableEntryArray[i] = new JJVMTI.LocalVariableEntry(entry.startBCI(), entry.length(),
+                lvtu.localVariableEntryArray[i] = new JJVMTICommon.LocalVariableEntry(entry.startBCI(), entry.length(),
                                 entry.name(constantPool).string, constantPool.utf8At(entry.descriptorIndex(), "local variable type").toString(),
                                 entry.signatureIndex() == 0 ? null : entry.signature(constantPool).string, entry.slot());
             }

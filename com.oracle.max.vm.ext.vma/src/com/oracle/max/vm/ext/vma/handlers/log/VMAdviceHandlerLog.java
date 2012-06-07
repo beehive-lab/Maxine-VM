@@ -123,33 +123,27 @@ public abstract class VMAdviceHandlerLog {
 
     public abstract void adviseBeforeThreadTerminating(String threadName);
 
-    public abstract void adviseAfterNew(String threadName, long objId, String className, long clId);
-
-    public abstract void adviseAfterNewArray(String threadName, long objId, String className, long clId, int length);
-
-    public abstract void adviseAfterMultiNewArray(String threadName, long objId, String className, long clId, int length);
-
-    public abstract void adviseBeforeConstLoad(String threadName, double value);
-
-    public abstract void adviseBeforeConstLoadObject(String threadName, long value);
+    public abstract void adviseBeforeReturnByThrow(String threadName, long objId, int poppedFrames);
 
     public abstract void adviseBeforeConstLoad(String threadName, long value);
 
+    public abstract void adviseBeforeConstLoadObject(String threadName, long value);
+
     public abstract void adviseBeforeConstLoad(String threadName, float value);
+
+    public abstract void adviseBeforeConstLoad(String threadName, double value);
 
     public abstract void adviseBeforeLoad(String threadName, int arg1);
 
     public abstract void adviseBeforeArrayLoad(String threadName, long objId, int index);
 
-    public abstract void adviseBeforeStoreObject(String threadName, int index, long value);
+    public abstract void adviseBeforeStore(String threadName, int index, long value);
 
     public abstract void adviseBeforeStore(String threadName, int index, float value);
 
     public abstract void adviseBeforeStore(String threadName, int index, double value);
 
-    public abstract void adviseBeforeStore(String threadName, int index, long value);
-
-    public abstract void adviseBeforeArrayStoreObject(String threadName, long objId, int index, long value);
+    public abstract void adviseBeforeStoreObject(String threadName, int index, long value);
 
     public abstract void adviseBeforeArrayStore(String threadName, long objId, int index, float value);
 
@@ -157,17 +151,19 @@ public abstract class VMAdviceHandlerLog {
 
     public abstract void adviseBeforeArrayStore(String threadName, long objId, int index, double value);
 
-    public abstract void adviseBeforeStackAdjust(String threadName, int arg1);
+    public abstract void adviseBeforeArrayStoreObject(String threadName, long objId, int index, long value);
 
-    public abstract void adviseBeforeOperation(String threadName, int arg1, double arg2, double arg3);
+    public abstract void adviseBeforeStackAdjust(String threadName, int arg1);
 
     public abstract void adviseBeforeOperation(String threadName, int arg1, long arg2, long arg3);
 
     public abstract void adviseBeforeOperation(String threadName, int arg1, float arg2, float arg3);
 
-    public abstract void adviseBeforeConversion(String threadName, int arg1, long arg2);
+    public abstract void adviseBeforeOperation(String threadName, int arg1, double arg2, double arg3);
 
     public abstract void adviseBeforeConversion(String threadName, int arg1, float arg2);
+
+    public abstract void adviseBeforeConversion(String threadName, int arg1, long arg2);
 
     public abstract void adviseBeforeConversion(String threadName, int arg1, double arg2);
 
@@ -189,21 +185,21 @@ public abstract class VMAdviceHandlerLog {
 
     public abstract void adviseBeforeGetStatic(String threadName, String className, long clId, String fieldName);
 
-    public abstract void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, float value);
+    public abstract void adviseBeforePutStaticObject(String threadName, String className, long clId, String fieldName, long value);
 
-    public abstract void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, long value);
+    public abstract void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, float value);
 
     public abstract void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, double value);
 
-    public abstract void adviseBeforePutStaticObject(String threadName, String className, long clId, String fieldName, long value);
+    public abstract void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, long value);
 
     public abstract void adviseBeforeGetField(String threadName, long objId, String className, long clId, String fieldName);
+
+    public abstract void adviseBeforePutFieldObject(String threadName, long objId, String className, long clId, String fieldName, long value);
 
     public abstract void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, float value);
 
     public abstract void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, double value);
-
-    public abstract void adviseBeforePutFieldObject(String threadName, long objId, String className, long clId, String fieldName, long value);
 
     public abstract void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, long value);
 
@@ -234,6 +230,12 @@ public abstract class VMAdviceHandlerLog {
     public abstract void adviseAfterInvokeStatic(String threadName, long objId, String className, long clId, String methodName);
 
     public abstract void adviseAfterInvokeInterface(String threadName, long objId, String className, long clId, String methodName);
+
+    public abstract void adviseAfterNew(String threadName, long objId, String className, long clId);
+
+    public abstract void adviseAfterNewArray(String threadName, long objId, String className, long clId, int length);
+
+    public abstract void adviseAfterMultiNewArray(String threadName, long objId, String className, long clId, int length);
 
     public abstract void adviseAfterMethodEntry(String threadName, long objId, String className, long clId, String methodName);
 
