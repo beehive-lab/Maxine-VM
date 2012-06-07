@@ -68,7 +68,7 @@ public class StringConstantView extends ObjectView<StringConstantView> {
             public String fetchString() {
                 return teleStringConstant.getString();
             }
-            public RemoteObjectStatus status() {
+            public ObjectStatus status() {
                 return object().status();
             }
         });

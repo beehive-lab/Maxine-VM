@@ -66,7 +66,7 @@ public final class StringView extends ObjectView<StringView> {
             public String fetchString() {
                 return teleString.getString();
             }
-            public RemoteObjectStatus status() {
+            public ObjectStatus status() {
                 return object().status();
             }
         });

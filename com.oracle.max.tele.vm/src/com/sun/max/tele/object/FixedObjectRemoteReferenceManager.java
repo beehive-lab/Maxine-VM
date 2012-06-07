@@ -73,20 +73,17 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
         return HeapPhase.MUTATING;
     }
 
-    public boolean isObjectOrigin(Address origin) throws TeleError {
+    public ObjectStatus objectStatusAt(Address origin) throws TeleError {
         TeleError.check(objectRegion.memoryRegion().contains(origin), "Location is outside region");
+        final WeakReference<RemoteReference> weakRef = originToReference.get(origin);
+        if (weakRef != null) {
+            final RemoteReference knownReference = weakRef.get();
+            if (knownReference != null) {
+                return knownReference.status();
+            }
+        }
         // The only way we can tell in general is with the heuristic.
-        return objects().isPlausibleOriginUnsafe(origin);
-    }
-
-
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
-        // Assume no explicit representation of free space
-        return false;
-    }
-
-    public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
-        return null;
+        return objects().isPlausibleOriginUnsafe(origin) ? ObjectStatus.LIVE : ObjectStatus.DEAD;
     }
 
     public RemoteReference makeReference(Address origin) {
@@ -170,8 +167,8 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
         }
 
         @Override
-        public RemoteObjectStatus status() {
-            return RemoteObjectStatus.LIVE;
+        public ObjectStatus status() {
+            return ObjectStatus.LIVE;
         }
     }
 

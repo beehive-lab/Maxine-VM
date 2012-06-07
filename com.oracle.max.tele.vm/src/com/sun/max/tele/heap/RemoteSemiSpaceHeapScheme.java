@@ -475,34 +475,50 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         return null;
     }
 
-    public boolean isObjectOrigin(Address origin) throws TeleError {
+    public ObjectStatus objectStatusAt(Address origin) throws TeleError {
         TeleError.check(contains(origin), "Location is outside semispace heap regions");
         switch(phase()) {
             case MUTATING:
             case RECLAIMING:
-                return toSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin);
+                if (toSpaceMemoryRegion.containsInAllocated(origin)) {
+                    final SemiSpaceRemoteReference knownToSpaceReference = toSpaceRefMap.get(origin);
+                    if (knownToSpaceReference != null) {
+                        return knownToSpaceReference.status();
+                    }
+                    if (objects().isPlausibleOriginUnsafe(origin)) {
+                        return ObjectStatus.LIVE;
+                    }
+                }
+                break;
             case ANALYZING:
                 if (toSpaceMemoryRegion.containsInAllocated(origin)) {
-                    return objects().isPlausibleOriginUnsafe(origin);
-                }
-                if (fromSpaceMemoryRegion.containsInAllocated(origin)) {
+                    final SemiSpaceRemoteReference knownToSpaceReference = toSpaceRefMap.get(origin);
+                    if (knownToSpaceReference != null) {
+                        return knownToSpaceReference.status();
+                    }
+                    if (objects().isPlausibleOriginUnsafe(origin)) {
+                        return ObjectStatus.LIVE;
+                    }
+                } else if (fromSpaceMemoryRegion.containsInAllocated(origin)) {
+                    final SemiSpaceRemoteReference knownFromSpaceReference = fromSpaceRefMap.get(origin);
+                    if (knownFromSpaceReference != null) {
+                        return knownFromSpaceReference.status();
+                    }
+                    if (objects().isPlausibleOriginUnsafe(origin)) {
+                        return ObjectStatus.LIVE;
+                    }
                     if (objects().hasForwardingAddressUnsafe(origin)) {
                         final Address forwardAddress = objects().getForwardingAddressUnsafe(origin);
-                        return toSpaceMemoryRegion.containsInAllocated(forwardAddress) && objects().isPlausibleOriginUnsafe(forwardAddress);
-                    } else {
-                        return objects().isPlausibleOriginUnsafe(origin);
+                        if (toSpaceMemoryRegion.containsInAllocated(forwardAddress) && objectStatusAt(forwardAddress).isLive()) {
+                            return ObjectStatus.FORWARDER;
+                        }
                     }
                 }
                 break;
             default:
                 TeleError.unknownCase();
         }
-        return false;
-    }
-
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
-        // This collector does not represent free space explicitly.
-        return false;
+        return ObjectStatus.DEAD;
     }
 
     public RemoteReference makeReference(Address origin) throws TeleError {
@@ -612,8 +628,8 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
 
     /**
      * Is the address in an area where an object could be either
-     * {@linkplain RemoteObjectStatus#LIVE LIVE} or
-     * {@linkplain RemoteObjectStatus#UNKNOWN UNKNOWN}.
+     * {@linkplain ObjectStatus#LIVE LIVE} or
+     * {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.
      */
     private boolean inLiveArea(Address address) {
         switch(phase()) {
@@ -678,7 +694,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         sb2.append("mapped object refs=").append(formatter.format(totalRefs));
         if (totalRefs > 0) {
             sb2.append(", object status: ");
-            sb2.append(RemoteObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
+            sb2.append(ObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
         }
         printStream.println(indentation + sb2.toString());
         if (deadRefs > 0) {

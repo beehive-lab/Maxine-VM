@@ -65,9 +65,9 @@ public abstract class RemoteReference extends Reference {
 
     /**
      * @return the status of the object representation in memory to which this instance refers:
-     *         {@linkplain RemoteObjectStatus#LIVE LIVE}, {@linkplain RemoteObjectStatus#DEAD DEAD}, or ({@linkplain RemoteObjectStatus#QUASI QUASI}.
+     *         {@linkplain ObjectStatus#LIVE LIVE}, {@linkplain ObjectStatus#DEAD DEAD}, or ({@linkplain ObjectStatus#QUASI QUASI}.
      */
-    public abstract RemoteObjectStatus status();
+    public abstract ObjectStatus status();
 
     /**
      * Gets the absolute location of the object's <em>origin</em> in VM memory. This may or may not be the same as the
@@ -78,7 +78,7 @@ public abstract class RemoteReference extends Reference {
      * {@link #forwardedFrom()} method.
      * <p>
      * Returns the last valid origin when the object has become <em>unreachable</em> and its status is
-     * {@linkplain RemoteObjectStatus#DEAD DEAD}.
+     * {@linkplain ObjectStatus#DEAD DEAD}.
      *
      * @return the VM memory location of the object
      */
@@ -98,7 +98,7 @@ public abstract class RemoteReference extends Reference {
      * Returns the location of the <em>new</em> copy of the object in VM memory during any period of time when the
      * object is being <em>forwarded</em> and a new live copy created elsewhere. This can happen <em>only</em> when the
      * heap phase is {@linkplain HeapPhase#ANALYZING ANALYZING} <em>and</em> the status is
-     * {@link RemoteObjectStatus#FORWARDER}. In all other situations returns {@link Address#zero()}.
+     * {@link ObjectStatus#FORWARDER}. In all other situations returns {@link Address#zero()}.
      *
      * @return the former address of an object while it is being <em>forwarded</em>.
      */
@@ -108,14 +108,14 @@ public abstract class RemoteReference extends Reference {
      * Generates a string describing the status of the object in VM memory with respect to memory management, designed
      * to provide useful information to a person: information that the Inspector can't already deduce from the standard
      * interfaces. For example, the Inspector can identify the region into which the reference points and the basic
-     * status of the object's {@linkplain RemoteObjectStatus status}.
+     * status of the object's {@linkplain ObjectStatus status}.
      *
      * @return an optional string with information useful to a person, null if unavailable.
      */
     public abstract String gcDescription();
 
     /**
-     * @return is this reference a special temporary {@linkplain RemoteObjectStatus#DEAD DEAD} reference that should not be
+     * @return is this reference a special temporary {@linkplain ObjectStatus#DEAD DEAD} reference that should not be
      *         allowed to persist past any VM execution?
      */
     public boolean isTemporary() {
@@ -123,7 +123,7 @@ public abstract class RemoteReference extends Reference {
     }
 
     /**
-     * @return is this reference a special temporary {@linkplain RemoteObjectStatus#LIVE LIVE} reference that appears to refer
+     * @return is this reference a special temporary {@linkplain ObjectStatus#LIVE LIVE} reference that appears to refer
      *         to an object that is not in any known VM memory region?
      */
     public boolean isProvisional() {

@@ -42,7 +42,7 @@ public final class StringPane extends InspectorScrollPane {
 
     public interface StringSource {
         String fetchString();
-        RemoteObjectStatus status();
+        ObjectStatus status();
     }
 
     private final StringSource stringSource;

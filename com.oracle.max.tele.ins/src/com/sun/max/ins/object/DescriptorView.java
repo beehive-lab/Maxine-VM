@@ -68,7 +68,7 @@ public class DescriptorView extends ObjectView<DescriptorView> {
             public String fetchString() {
                 return teleDescriptor.descriptor().string;
             }
-            public RemoteObjectStatus status() {
+            public ObjectStatus status() {
                 return object().status();
             }
         });

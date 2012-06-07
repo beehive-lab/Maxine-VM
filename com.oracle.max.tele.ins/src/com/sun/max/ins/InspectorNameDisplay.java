@@ -728,7 +728,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final String suffix = " in "
             + (memoryRegion == null ? "unknown region" : memoryRegion.regionName());
         String prefix = "";
-        final RemoteObjectStatus memoryStatus = object.status();
+        final ObjectStatus memoryStatus = object.status();
         if (!memoryStatus.isLive()) {
             prefix = memoryStatus.label() + " ";
         }

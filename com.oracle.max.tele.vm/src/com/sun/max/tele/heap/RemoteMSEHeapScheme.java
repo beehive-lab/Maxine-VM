@@ -55,14 +55,9 @@ public final class RemoteMSEHeapScheme extends RemoteRegionBasedHeapScheme imple
         return null;
     }
 
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
+    public ObjectStatus objectStatusAt(Address origin) {
         // TODO Auto-generated method stub
-        return false;
-    }
-
-    public boolean isObjectOrigin(Address origin) throws TeleError {
-        // TODO Auto-generated method stub
-        return false;
+        return null;
     }
 
     public RemoteReference makeReference(Address origin) throws TeleError {
@@ -74,5 +69,7 @@ public final class RemoteMSEHeapScheme extends RemoteRegionBasedHeapScheme imple
         // TODO Auto-generated method stub
 
     }
+
+
 
 }

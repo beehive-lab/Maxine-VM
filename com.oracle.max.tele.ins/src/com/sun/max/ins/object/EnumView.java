@@ -67,7 +67,7 @@ public class EnumView extends ObjectView<EnumView> {
             public String fetchString() {
                 return teleEnum.toJava().name();
             }
-            public RemoteObjectStatus status() {
+            public ObjectStatus status() {
                 return object().status();
             }
         });

@@ -26,7 +26,6 @@ import java.io.*;
 
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -44,23 +43,14 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
     // TODO (mlvdv) This interface as well as others related to memory management is evolving.
 
     /**
-     * Tests whether there is a legitimate, live object at a VM memory location in a region known to hold objects.
-     *
-     * @param address an absolute memory location in the VM.
-     * @return whether there is an object whose origin is at the address, {@code false} if unable
-     * to complete the check, for example if the VM is busy or terminated
-     */
-    boolean isValidOrigin(Address origin);
-
-    /**
-     * Tests whether there is an object that has been forwarded at a location in VM memory.  This
-     * can only be {@code true} during the {@linkplain HeapPhase#ANALYZING analyzing} phase of the
-     * heap containing the location.
+     * Examines the contents of VM memory and determines what kind of object (live, quasi, etc.),
+     * if any, is represented at that location, using only low-level mechanisms and creating
+     * no {@link Reference}s.
      *
      * @param origin an absolute memory location in the VM.
-     * @return whether there is an object at the location that has been forwarded during GC.
+     * @return an enum identifying the kind of object, if any, that is represented at the location in VM memory.
      */
-    boolean isForwardedOrigin(Address origin);
+    ObjectStatus objectStatusAt(Address origin);
 
     /**
      * Locator for TeleObjects, which
