@@ -276,7 +276,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         return true;
     }
 
-    public final RemoteObjectStatus status() {
+    public final ObjectStatus status() {
         return reference().status();
     }
 

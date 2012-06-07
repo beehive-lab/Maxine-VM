@@ -43,25 +43,15 @@ public interface RemoteObjectReferenceManager {
     HeapPhase phase();
 
     /**
-     * Determines whether there is a legitimate object in the VM memory
-     * at a specified origin, using only low-level mechanisms:  no
-     * {@link Reference}s.
+     * Examines the contents of VM memory and determines what kind of object (live, quasi, etc.),
+     * if any, is represented at that location, using only low-level mechanisms and creating
+     * no {@link Reference}s.
      *
-     * @param origin an address a location in VM memory
-     * @return whether the address is the origin of a possibly live VM object
+     * @param origin an absolute memory location in the VM.
+     * @return an enum identifying the kind of object, if any, that is represented at the location in VM memory.
      * @throws TeleError if the origin is not in the memory regions being managed.
      */
-    boolean isObjectOrigin(Address origin) throws TeleError;
-
-    /**
-     * Determines whether there is a pseudo-object, used to represent <em>free space</em> by GC implementations, in
-     * the VM memory at a specified origin, using only low-level mechanisms: no {@link, Reference}s.
-     *
-     * @param origin an address a location in VM memory
-     * @return whether the address is the origin of a free-space pseudo-object.
-     * @throws TeleError if the origin is not in the memory regions being managed.
-     */
-    boolean isFreeSpaceOrigin(Address origin) throws TeleError;
+    ObjectStatus objectStatusAt(Address origin);
 
     /**
      * Creates a canonical remote reference to an object whose origin

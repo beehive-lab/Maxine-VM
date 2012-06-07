@@ -195,7 +195,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     @Override
     public final String getTextForTitle() {
         final StringBuilder titleText = new StringBuilder();
-        final RemoteObjectStatus status = object.status();
+        final ObjectStatus status = object.status();
         if (!status.isLive()) {
             // Omit the prefix for live objects (the usual case).
             titleText.append("(").append(status.label()).append(") ");
@@ -275,24 +275,24 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     protected void refreshState(boolean force) {
-        final RemoteObjectStatus status = object.status();
-        if (object.reference().isForwarded() && followingTeleObject) {
-            //Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardReference().toOrigin().toHexString());
-            MaxObject forwardedTeleObject = object.getForwardedTeleObject();
-            if (viewManager.isObjectViewObservingObject(forwardedTeleObject.reference().makeOID())) {
-                followingTeleObject = false;
-                setWarning();
-                setTitle();
-                return;
-            }
-            viewManager.resetObjectToViewMapEntry(object, forwardedTeleObject, this);
-            object = forwardedTeleObject;
-            currentObjectOrigin = object.origin();
-            reconstructView();
-            if (objectHeaderTable != null) {
-                objectHeaderTable.refresh(force);
-            }
-        }
+            final ObjectStatus status = object.status();
+//        if (object.reference().isForwarded() && followingTeleObject) {
+//            //Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardReference().toOrigin().toHexString());
+//            MaxObject forwardedTeleObject = object.getForwardedTeleObject();
+//            if (viewManager.isObjectViewObservingObject(forwardedTeleObject.reference().makeOID())) {
+//                followingTeleObject = false;
+//                setWarning();
+//                setTitle();
+//                return;
+//            }
+//            viewManager.resetObjectToViewMapEntry(object, forwardedTeleObject, this);
+//            object = forwardedTeleObject;
+//            currentObjectOrigin = object.origin();
+//            reconstructView();
+//            if (objectHeaderTable != null) {
+//                objectHeaderTable.refresh(force);
+//            }
+//        }
 
         final Pointer newOrigin = object.origin();
         if (!newOrigin.equals(currentObjectOrigin)) {
@@ -306,9 +306,9 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         }
         setTitle();
         if (status.isDead()) {
-            setStateColor(preference().style().deadObjectBackgroundColor());
-        } else if (object.reference().isForwarded()) {
-            setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
+                setStateColor(preference().style().deadObjectBackgroundColor());
+//        } else if (object.reference().isForwarded()) {
+//            setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
         } else {
             setStateColor(null);
         }

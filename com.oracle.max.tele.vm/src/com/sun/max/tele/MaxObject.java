@@ -58,7 +58,7 @@ public interface MaxObject {
     RemoteReference reference();
 
     /**
-     * Gets the {@linkplain RemoteObjectStatus status} of the {@link RemoteReference} held by this remote
+     * Gets the {@linkplain ObjectStatus status} of the {@link RemoteReference} held by this remote
      * {@linkplain MaxObject object instance}.
      * <p>
      * Note that during the normal refresh cycle, all instances of {@link RemoteReference}, including the one held here,
@@ -66,14 +66,14 @@ public interface MaxObject {
      * during the object-updating part of the refresh cycle, even if this particular instance has not yet been updated.
      * This is important when dealing with circularities.
      *
-     * @return the {@linkplain RemoteObjectStatus status} of the {@link RemoteReference} held by this instance, independent of
+     * @return the {@linkplain ObjectStatus status} of the {@link RemoteReference} held by this instance, independent of
      *         any other state cached by this instance.
      */
-    RemoteObjectStatus status();
+    ObjectStatus status();
 
     /**
-     * The current "origin" of the object in VM memory, or (if the object status is {@linkplain RemoteObjectStatus#DEAD DEAD})
-     * the origin at which the object was list object status is {@linkplain RemoteObjectStatus#LIVE LIVE}
+     * The current "origin" of the object in VM memory, or (if the object status is {@linkplain ObjectStatus#DEAD DEAD})
+     * the origin at which the object was list object status is {@linkplain ObjectStatus#LIVE LIVE}
      * <p>
      * Note that the origin is not necessarily beginning of the object's memory allocation, depending on the particular
      * object layout used.
@@ -88,7 +88,7 @@ public interface MaxObject {
      * Gets the current area of memory in which the object is stored.
      *
      * @return current memory region occupied by this object in the VM,
-     * subject to relocation by GC, {@code null} if object is {@linkplain RemoteObjectStatus#DEAD DEAD}.
+     * subject to relocation by GC, {@code null} if object is {@linkplain ObjectStatus#DEAD DEAD}.
      */
     TeleFixedMemoryRegion objectMemoryRegion();
 

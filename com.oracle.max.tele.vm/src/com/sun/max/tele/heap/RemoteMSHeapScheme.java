@@ -59,7 +59,7 @@ import com.sun.max.vm.reference.*;
  * <p>
  * For the purpose of exposition, assume two collections of references, indexed by memory location, which we'll
  * call <em>Maps</em>: one for <em>Objects</em> and one for <em>Free Space</em>.
- * These maps contain no {@linkplain RemoteObjectStatus#DEAD DEAD} references except during a
+ * These maps contain no {@linkplain ObjectStatus#DEAD DEAD} references except during a
  * GC {@linkplain HeapPhase#RECLAIMING RECLAIMING} phase.</p>
  * <p>
  * A reference encapsulates the <em>identity</em> of an object (whether legitimate or pseudo-), so there may be
@@ -78,25 +78,25 @@ import com.sun.max.vm.reference.*;
  * <ul>
  * <li><b>Objects:</b>
  * <ol>
- * <li>The Object Map contains only object references that are {@linkplain RemoteObjectStatus#LIVE LIVE}.</li>
- * <li>New {@linkplain RemoteObjectStatus#LIVE LIVE} objects may be discovered and added to the Object Map.</li>
+ * <li>The Object Map contains only object references that are {@linkplain ObjectStatus#LIVE LIVE}.</li>
+ * <li>New {@linkplain ObjectStatus#LIVE LIVE} objects may be discovered and added to the Object Map.</li>
  * <li>No other changes to the Object Map take place during the {@linkplain HeapPhase#MUTATING MUTATING} phase.</li>
  * </ol></li>
  * <li><b>Free Space:</b>
  * <ol>
- * <li>The Free Space map contains only contain pseudo-object references that are {@linkplain RemoteObjectStatus#LIVE LIVE}.
+ * <li>The Free Space map contains only contain pseudo-object references that are {@linkplain ObjectStatus#LIVE LIVE}.
  * Some are pseudo-object instances of {@link HeapFreeChunk}; the rest are unreachable ordinary objects that
  * are unmodified, but implicitly considered <em>Dark Matter</em> by the GC.</li>
  * <li>New instances of {@link HeapFreeChunk} may be discovered and added to the Free Space Map.</li>
  * <li>New unreachable objects marked as <em>DarkMatter</em> may be discovered and added to the Free Space Map.</li>
  * <li>Existing instances of {@link HeapFreeChunk} in the map may be discovered, by observing that their hub pointer
  * has changed, to have been <em>released</em>: replaced by an object allocation. Such references become
- * {@linkplain RemoteObjectStatus#DEAD DEAD} and are removed from the Free Space Map.</li>
+ * {@linkplain ObjectStatus#DEAD DEAD} and are removed from the Free Space Map.</li>
  * <li>Existing instances of {@link HeapFreeChunk} in the map will not change in size, on the assumption that allocation
  * out of a {@link HeapFreeChunk} always happens at the beginning.</li>
  * <li>Existing instances of <em>Dark Matter</em> in the map may be discovered, by observing that they are no longer
  * specially marked, to have been <em>released</em>: replaced by an object allocation.
- * Such references become {@linkplain RemoteObjectStatus#DEAD DEAD} and are removed from the Free Space Map.</li>
+ * Such references become {@linkplain ObjectStatus#DEAD DEAD} and are removed from the Free Space Map.</li>
  * <li>No other changes to the Free Space Map take place during the {@linkplain HeapPhase#MUTATING MUTATING} phase.</li>
  * </ol></li></ul>
  * <p>
@@ -108,18 +108,18 @@ import com.sun.max.vm.reference.*;
  * <ul>
  * <li><b>Objects:</b>
  * <ol>
- * <li>The Object Map contains only object references that are either {@linkplain RemoteObjectStatus#LIVE LIVE} or
- * {@linkplain RemoteObjectStatus#UNKNOWN UNKNOWN}.</li>
+ * <li>The Object Map contains only object references that are either {@linkplain ObjectStatus#LIVE LIVE} or
+ * {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.</li>
  * <li>New objects may be discovered and added to the Object Map; if they are <em>marked</em> then they are
- * {@linkplain RemoteObjectStatus#LIVE LIVE} and if not they are {@linkplain RemoteObjectStatus#UNKNOWN UNKNOWN}.</li>
- * <li>Existing {@linkplain RemoteObjectStatus#UNKNOWN UNKNOWN} objects in the map may be discovered, by checking
+ * {@linkplain ObjectStatus#LIVE LIVE} and if not they are {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.</li>
+ * <li>Existing {@linkplain ObjectStatus#UNKNOWN UNKNOWN} objects in the map may be discovered, by checking
  * their <em>marks</em> to have been determined <em>reachable</em>.
- * Such references become {@linkplain RemoteObjectStatus#LIVE LIVE}.</li>
+ * Such references become {@linkplain ObjectStatus#LIVE LIVE}.</li>
  * <li>No other changes to the Object Map take place during the {@linkplain HeapPhase#ANALYZING ANALYZING} phase.</li>
  * </ol></li>
  * <li><b>Free Space:</b>
  * <ol>
- * <li>The Free Space map contains only pseudo-object references that are {@linkplain RemoteObjectStatus#LIVE LIVE}.
+ * <li>The Free Space map contains only pseudo-object references that are {@linkplain ObjectStatus#LIVE LIVE}.
  * Some are pseudo-object instances of {@link HeapFreeChunk}; the rest are unreachable ordinary objects that
  * are unmodified, but implicitly considered <em>Dark Matter</em> by the GC.</li>
  * <li>New instances of {@link HeapFreeChunk} may be discovered and added to the Free Space Map.</li>
@@ -138,25 +138,25 @@ import com.sun.max.vm.reference.*;
  * <ul>
  * <li><b>Objects:</b>
  * <ol>
- * <li>The Object Map contains only object references that are either {@linkplain RemoteObjectStatus#LIVE LIVE} or
- * {@linkplain RemoteObjectStatus#DEAD DEAD}, the latter case occurring <em>only</em> when a previously {@linkplain RemoteObjectStatus#LIVE LIVE}
+ * <li>The Object Map contains only object references that are either {@linkplain ObjectStatus#LIVE LIVE} or
+ * {@linkplain ObjectStatus#DEAD DEAD}, the latter case occurring <em>only</em> when a previously {@linkplain ObjectStatus#LIVE LIVE}
  * object was discovered to be unreachable during the immediately preceding {@linkplain HeapPhase#ANALYZING ANALYZING} phase.</li>
- * <li>New objects may be discovered and added to the Object Map as {@linkplain RemoteObjectStatus#LIVE LIVE}, but only
+ * <li>New objects may be discovered and added to the Object Map as {@linkplain ObjectStatus#LIVE LIVE}, but only
  * if they are <em>marked</em>; an <em>unmarked</em> location is not considered to be an object.</li>
- * <li>An existing {@linkplain RemoteObjectStatus#DEAD DEAD} object in the Object Map might be discovered, by observing zapped memory,
+ * <li>An existing {@linkplain ObjectStatus#DEAD DEAD} object in the Object Map might be discovered, by observing zapped memory,
  * to have been <em>released</em> through consolidation with another instance of {@link HeapFreeChunk}.
  * Such a reference is removed from the Object Map.</li>
- * <li>An existing {@linkplain RemoteObjectStatus#DEAD DEAD} object in the Object Map might be discovered, by observing its hub pointer,
+ * <li>An existing {@linkplain ObjectStatus#DEAD DEAD} object in the Object Map might be discovered, by observing its hub pointer,
  * to have been <em>released</em> through <em>conversion</em> to an instance of {@link HeapFreeChunk}.
  * Such a reference is removed from the Object Map.</li>
- * <li>At the end of the {@linkplain HeapPhase#RECLAIMING RECLAIMING} phase, every {@linkplain RemoteObjectStatus#DEAD DEAD}
+ * <li>At the end of the {@linkplain HeapPhase#RECLAIMING RECLAIMING} phase, every {@linkplain ObjectStatus#DEAD DEAD}
  * object in the Object Map is presumed to be <em>Dark Space</em>.
  * Such a reference is removed from the Object Map and added to the Free Space Map.</li>
  * <li>No other changes to the Object Map take place during the {@linkplain HeapPhase#RECLAIMING RECLAIMING} phase.</li>
  * </ol></li>
  * <li><b>Free Space:</b>
  * <ol>
- * <li>The Free Space map contains only pseudo-object references that are {@linkplain RemoteObjectStatus#LIVE LIVE}.
+ * <li>The Free Space map contains only pseudo-object references that are {@linkplain ObjectStatus#LIVE LIVE}.
  * Some are pseudo-object instances of {@link HeapFreeChunk}; the rest are unreachable ordinary objects that
  * are unmodified, but implicitly considered <em>Dark Matter</em> by the GC.</li>
  * <li>New instances of {@link HeapFreeChunk} may be discovered and added to the Free Space Map.</li>
@@ -457,23 +457,20 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     }
 
     // TODO (mlvdv) refine
-    public boolean isObjectOrigin(Address origin) throws TeleError {
+    public ObjectStatus objectStatusAt(Address origin) throws TeleError {
         TeleError.check(contains(origin), "Location is outside MS heap region");
         switch(phase()) {
             case MUTATING:
             case RECLAIMING:
             case ANALYZING:
-                return objectSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin);
+                if (objectSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin)) {
+                    return ObjectStatus.LIVE;
+                }
+                break;
             default:
                 TeleError.unknownCase();
         }
-        return false;
-    }
-
-    @Override
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
-        TeleError.check(contains(origin), "Location is outside MS heap region");
-        return super.isHeapFreeChunkOrigin(origin);
+        return ObjectStatus.DEAD;
     }
 
     // TODO (mlvdv) refine; only handles live object now, doesn't support collection.
@@ -512,8 +509,8 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
     /**
      * Is the address in an area where an object could be either
-     * {@linkplain RemoteObjectStatus#LIVE LIVE} or
-     * {@linkplain RemoteObjectStatus#UNKNOWN UNKNOWN}.
+     * {@linkplain ObjectStatus#LIVE LIVE} or
+     * {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.
      */
     private boolean inLiveArea(Address address) {
         // TODO (mlvdv) refine
@@ -586,8 +583,8 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         sb2.append("mapped object refs=").append(formatter.format(totalRefs));
         if (totalRefs > 0) {
             sb2.append(", object status: ");
-            sb2.append(RemoteObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
-            sb2.append(RemoteObjectStatus.UNKNOWN.label()).append("=").append(formatter.format(unknownRefs));
+            sb2.append(ObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
+            sb2.append(ObjectStatus.UNKNOWN.label()).append("=").append(formatter.format(unknownRefs));
         }
         printStream.println(indentation + sb2.toString());
         if (deadRefs > 0) {

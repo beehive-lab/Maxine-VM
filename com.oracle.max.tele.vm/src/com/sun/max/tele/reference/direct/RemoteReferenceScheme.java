@@ -47,7 +47,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
 
     /**
      * The default implementation of {@link Reference#zero()}, used as a {@code null} remote reference. It always holds
-     * the {@linkplain Address#zero() null address} and always has status {@linkplain RemoteObjectStatus#DEAD DEAD}.
+     * the {@linkplain Address#zero() null address} and always has status {@linkplain ObjectStatus#DEAD DEAD}.
      */
     private static class NullReference extends ConstantRemoteReference {
 
@@ -56,8 +56,8 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         }
 
         @Override
-        public final RemoteObjectStatus status() {
-            return RemoteObjectStatus.DEAD;
+        public final ObjectStatus status() {
+            return ObjectStatus.DEAD;
         }
 
         @Override
@@ -125,7 +125,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
      * Gets the origin of a {@link RemoteReference}.
      * <p>
      * @return the origin of an object referred to; {@link Pointer#zero()} if the
-     * reference is {@linkplain RemoteObjectStatus#DEAD DEAD}.
+     * reference is {@linkplain ObjectStatus#DEAD DEAD}.
      */
     public Pointer toOrigin(Reference ref) {
         final RemoteReference remoteRef = (RemoteReference) ref;

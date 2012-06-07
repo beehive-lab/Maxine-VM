@@ -67,7 +67,7 @@ class Utf8ConstantView extends ObjectView<Utf8ConstantView> {
             public String fetchString() {
                 return teleUtf8Constant.utf8Constant().string;
             }
-            public RemoteObjectStatus status() {
+            public ObjectStatus status() {
                 return object().status();
             }
         });

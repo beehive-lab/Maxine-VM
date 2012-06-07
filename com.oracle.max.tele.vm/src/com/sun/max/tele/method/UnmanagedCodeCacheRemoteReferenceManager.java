@@ -100,7 +100,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
      * We don't need a heuristic for objects in a code cache region; if they are present, then they are
      * pointed at by one of the fields in a {@link TargetMethod}.
      */
-    public boolean isObjectOrigin(Address origin) throws TeleError {
+    public ObjectStatus objectStatusAt(Address origin) throws TeleError {
         TeleError.check(codeCacheRegion.memoryRegion().contains(origin), "Location is outside region");
         final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
         if (compilation != null) {
@@ -113,17 +113,13 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
                     if (objectOrigin != null && objectOrigin.equals(origin)) {
                         // The specified location matches one of the target method's pointers.
                         // There should be an object there, but check just in case.
-                        return objects().isPlausibleOriginUnsafe(objectOrigin);
+                        assert objects().isPlausibleOriginUnsafe(objectOrigin);
+                        return ObjectStatus.LIVE;
                     }
                 }
             }
         }
-        return false;
-    }
-
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
-        // Unmanaged means no explicit representation of free space.
-        return false;
+        return ObjectStatus.DEAD;
     }
 
     public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
@@ -224,7 +220,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
      * code cache. In particular, it may refer only to one of the three possible data arrays pointed at by an instance
      * of {@link TeleTargetMethod} in the VM.
      * <p>
-     * Such data, by definition, never moves and is always {@linkplain RemoteObjectStatus#LIVE LIVE}, even if/when the
+     * Such data, by definition, never moves and is always {@linkplain ObjectStatus#LIVE LIVE}, even if/when the
      * {@link TeleTargetMethod} responsible for it has been collected.
      *
      * @see TeleTargetMethod
@@ -247,8 +243,8 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
          * {@link TeleTargetMethod} that points at them has been collected.
          */
         @Override
-        public RemoteObjectStatus status() {
-            return RemoteObjectStatus.LIVE;
+        public ObjectStatus status() {
+            return ObjectStatus.LIVE;
         }
 
         @Override

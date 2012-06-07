@@ -69,7 +69,7 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
                 final int length = Math.min(chars.length, preference().style().maxStringFromCharArrayDisplayLength());
                 return new String(chars, 0, length);
             }
-            public RemoteObjectStatus status() {
+            public ObjectStatus status() {
                 return teleArrayObject.status();
             }
         });

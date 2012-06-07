@@ -22,7 +22,7 @@
  */
 package com.sun.max.tele.reference.semispace;
 
-import static com.sun.max.tele.object.RemoteObjectStatus.*;
+import static com.sun.max.tele.object.ObjectStatus.*;
 
 import java.util.*;
 
@@ -57,7 +57,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
 
             // Properties
             @Override
-            RemoteObjectStatus status() {
+            ObjectStatus status() {
                 return LIVE;
             }
             @Override
@@ -86,7 +86,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         REF_FROM ("LIVE (Analyzing: From-only), not forwarded"){
 
             // Properties
-            @Override RemoteObjectStatus status() {
+            @Override ObjectStatus status() {
                 return LIVE;
             }
             @Override
@@ -121,7 +121,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         REF_TO("LIVE (Analyzing: To only)") {
 
             // Properties
-            @Override RemoteObjectStatus status() {
+            @Override ObjectStatus status() {
                 return LIVE;
             }
             @Override
@@ -152,7 +152,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         REF_FROM_TO ("LIVE (Analyzing: From+To)") {
 
             // Properties
-            @Override RemoteObjectStatus status() {
+            @Override ObjectStatus status() {
                 return LIVE;
             }
             @Override
@@ -179,7 +179,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         REF_FORWARDER ("FORWARDER (Quasi object, only during Analyzing)") {
 
             // Properties
-            @Override RemoteObjectStatus status() {
+            @Override ObjectStatus status() {
                 return FORWARDER;
             }
             @Override
@@ -206,7 +206,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         REF_DEAD ("Dead") {
 
             // Properties
-            @Override RemoteObjectStatus status() {
+            @Override ObjectStatus status() {
                 return DEAD;
             }
             @Override
@@ -237,7 +237,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         /**
          * @see RemoteReference#status()
          */
-        abstract RemoteObjectStatus status();
+        abstract ObjectStatus status();
 
         /**
          * @see RemoteReference#origin()
@@ -401,7 +401,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     }
 
     @Override
-    public RemoteObjectStatus status() {
+    public ObjectStatus status() {
         return refState.status();
     }
 

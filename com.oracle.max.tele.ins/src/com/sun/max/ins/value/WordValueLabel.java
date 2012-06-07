@@ -409,7 +409,7 @@ public class WordValueLabel extends ValueLabel {
                         if (valueMode == ValueMode.REFERENCE || forceTxt) {
                             displayMode = DisplayMode.NULL_WORD;
                         }
-                    } else if (vm().objects().isValidOrigin(address)) {
+                    } else if (vm().objects().objectStatusAt(address).isLive()) {
                         displayMode = (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE || forceTxt) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
                         object = vm().objects().findObjectAt(address);
                         if (object == null) {

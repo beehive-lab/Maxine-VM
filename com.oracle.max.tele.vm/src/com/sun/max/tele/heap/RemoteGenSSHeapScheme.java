@@ -31,9 +31,9 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.InitializationListener;
 import com.sun.max.tele.field.*;
-import com.sun.max.tele.reference.gen.semispace.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.tele.reference.gen.semispace.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
@@ -277,7 +277,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         Trace.end(TRACE_VALUE, prefix + ", forwarded cleared =" + forwarded + ", died=" + died);
     }
 
-    @Override
     public List<VmHeapRegion> heapRegions() {
         return heapRegions;
     }
@@ -401,53 +400,62 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         return null;
     }
 
-    @Override
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
-        TeleError.check(contains(origin), "Location is outside GenSS heap region");
-        return super.isHeapFreeChunkOrigin(origin);
-    }
-
-    @Override
-    public boolean isObjectOrigin(Address origin) throws TeleError {
+    public ObjectStatus objectStatusAt(Address origin) {
         TeleError.check(contains(origin), "Location is outside GenSSHeapScheme regions");
         if (isHeapFreeChunkOrigin(origin)) {
-            return false;
+            return ObjectStatus.FREE;
         }
         switch(phase()) {
             case MUTATING:
-                return  (oldAllocator.containsInAllocated(origin) || nurseryAllocator.containsInAllocated(origin)) && objects().isPlausibleOriginUnsafe(origin);
+                if ((oldAllocator.containsInAllocated(origin) || nurseryAllocator.containsInAllocated(origin)) && objects().isPlausibleOriginUnsafe(origin)) {
+                    return ObjectStatus.LIVE;
+                }
+                break;
             case ANALYZING:
                 if (fullGC) {
                     if (oldFrom.containsInAllocated(origin)) {
                         if (objects().hasForwardingAddressUnsafe(origin)) {
                             final Address forwardAddress = objects().getForwardingAddressUnsafe(origin);
-                            return oldAllocator.containsInAllocated(forwardAddress) && objects().isPlausibleOriginUnsafe(forwardAddress);
+                            if (oldAllocator.containsInAllocated(forwardAddress) && objects().isPlausibleOriginUnsafe(forwardAddress)) {
+                                // TODO (mlvdv) check this. Should it be FORWARDER?
+                                return ObjectStatus.LIVE;
+                            }
+                        } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                            return ObjectStatus.LIVE;
                         }
-                        return objects().isPlausibleOriginUnsafe(origin);
                     }
                 } else if (nursery.containsInAllocated(origin)) {
                     if (objects().hasForwardingAddressUnsafe(origin)) {
                         final Address forwardAddress = objects().getForwardingAddressUnsafe(origin);
-                        return oldAllocator.containsInAllocated(forwardAddress) && objects().isPlausibleOriginUnsafe(forwardAddress);
+                        if (oldAllocator.containsInAllocated(forwardAddress) && objects().isPlausibleOriginUnsafe(forwardAddress)) {
+                            // TODO (mlvdv) check this. Should it be FORWARDER?
+                            return ObjectStatus.LIVE;
+                        }
+                    } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                        return ObjectStatus.LIVE;
                     }
-                    return objects().isPlausibleOriginUnsafe(origin);
                 }
                 // Wasn't a forwarded object, or an object in either of the from space (nursery, old from).
                 // The to-space for both minor and full collection is the old to space. So check it now.
                 if (oldAllocator.containsInAllocated(origin)) {
-                    return objects().isPlausibleOriginUnsafe(origin);
+                    if (objects().isPlausibleOriginUnsafe(origin)) {
+                        return ObjectStatus.LIVE;
+                    }
                 }
                 break;
             case RECLAIMING:
                 // Whether full or minor collection, the nursery and old from space are always empty during the reclaiming phase.
-                return oldAllocator.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin);
+                if (oldAllocator.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin)) {
+                    return ObjectStatus.LIVE;
+                }
+                break;
             default:
                 TeleError.unknownCase();
         }
-        return false;
+        return ObjectStatus.DEAD;
+
     }
 
-    @Override
     public RemoteReference makeReference(Address origin) throws TeleError {
         assert vm().lockHeldByCurrentThread();
         TeleError.check(contains(origin), "Location is outside of " + heapSchemeClass().getSimpleName() + " heap");
@@ -489,7 +497,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                         ref = oldToSpaceRefMap.get(origin);
                         if (ref != null) {
                             // A reference to the object is already in one of the live map.
-                            TeleError.check(ref.status().isLive() && ref.isForwarded());
+                            TeleError.check(ref.status().isLive() && ref.status().isForwarder());
                         } else if (objects().isPlausibleOriginUnsafe(origin)) {
                             /*
                              * A newly discovered object in the old To-Space.  In the analyzing phase of a full GC, the object must be a
@@ -510,7 +518,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                             ref = oldToSpaceRefMap.get(origin);
                             if (ref != null) {
                                 // A reference to the object is already in one of the live map.
-                                TeleError.check(ref.status().isLive() && !ref.isForwarded());
+                                TeleError.check(ref.status().isLive() && !ref.status().isForwarder());
                             } else if (objects().isPlausibleOriginUnsafe(origin)) {
                                 ref = GenSSRemoteReference.createLive(this, origin, false);
                                 oldToSpaceRefMap.put(origin, ref);
@@ -518,7 +526,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                         } else {
                             ref = promotedRefMap.get(origin);
                             if (ref != null) {
-                                TeleError.check(ref.status().isLive() && ref.isForwarded());
+                                TeleError.check(ref.status().isLive() && ref.status().isForwarder());
                             } else if (objects().isPlausibleOriginUnsafe(origin)) {
                                 ref = GenSSRemoteReference.createOldTo(this, origin, true);
                                 promotedRefMap.put(origin, ref);
@@ -545,7 +553,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
      * @param fromOrigin the address in the From Space
      * @param fromRefMap the map holding the reference to objects of the space being evacuated (either the nursery or the old From space).
      * @param toRefMap the map holding the reference to evacuated objects (either the promoted map, or the old To space map)
-     * @param isMinorCollection true if ithis is  minor collection
+     * @param isMinorCollection true if this is  minor collection
      * @return the reference corresponding to the origin.
      */
     private GenSSRemoteReference makeForwardedReference(
@@ -558,7 +566,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         ref = fromRefMap.get(fromOrigin);
         if (ref != null) {
             // A reference to the object is already in the nursery map. Check if it was forwarded and if so, update the ref and maps accordingly.
-            if (!ref.isForwarded() && isForwarder) {
+            if (!ref.status().isForwarder() && isForwarder) {
                 final Address toOrigin = objects().getForwardingAddressUnsafe(fromOrigin);
                 ref.addToOrigin(toOrigin, isMinorCollection);
                 toRefMap.put(toOrigin, ref);

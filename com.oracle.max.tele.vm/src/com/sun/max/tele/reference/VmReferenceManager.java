@@ -68,7 +68,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
     }
 
     /**
-     * Checks that a {@link Reference} points to a heap object in the VM;
+     * Checks that a {@link Reference} points to a live heap object in the VM;
      * throws an unchecked exception if not.  This is a low-level method
      * that uses a debugging tag or (if no tags in image) a heuristic; it does
      * not require access to the {@link VmClassAccess}.
@@ -78,7 +78,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * at a valid heap object.
      */
     public void checkReference(Reference reference) throws InvalidReferenceException {
-        if (!objects().isValidOrigin(reference.toOrigin())) {
+        if (!objects().objectStatusAt(reference.toOrigin()).isLive()) {
             throw new InvalidReferenceException(reference);
         }
     }
@@ -88,7 +88,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
      *
      * @param reference a remote reference to a VM object
      * @return a VM memory location that is the object's origin;
-     * {@linkplain Address#zero()} if the reference is {@linkplain RemoteObjectStatus#DEAD DEAD}.
+     * {@linkplain Address#zero()} if the reference is {@linkplain ObjectStatus#DEAD DEAD}.
      */
     public Address toOrigin(Reference reference) {
         return referenceScheme.toOrigin(reference);
@@ -131,12 +131,10 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * remotely in the VM.  Each instance is specialized for the kind of object management that takes
      * place in the memory region that contains the specified location, and in the case of managed
      * regions, the {@link Reference} tracks the object, just as in the VM itself.
-     * <ol>
-     * <li>Returns {@link Reference#zero()} if the specified location is {@link Address#zero()}.</li>
-     * </ol>
      *
      * @param origin a location in VM Memory
-     * @return a reference
+     * @return a reference, {@link Reference#zero()} if the specified location is {@link Address#zero()}
+     * or there is no object at the location
      */
     public RemoteReference makeReference(Address origin) {
         if (origin.isZero()) {
@@ -177,7 +175,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * <strong>Unsafe:</strong> These are not canonical and should only be used for temporary, low level access to
      * object state. They should not be retained across VM execution.
      * <p>
-     * The object status is permanently {@link RemoteObjectStatus#DEAD}.
+     * The object status is permanently {@link ObjectStatus#DEAD}.
      *
      * @param origin a constant location in VM memory about which almost nothing is guaranteed
      * @return the address wrapped as a remote object reference for temporary use
@@ -193,7 +191,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * where (for example during an attach) objects may be discovered before
      * meta-information about the region that contains them has been discovered.
      * <p>
-     * Memory status is permanently {@link RemoteObjectStatus#LIVE}.
+     * Memory status is permanently {@link ObjectStatus#LIVE}.
      *
      * @param origin a location in an unknown region of VM memory where an object appears to be stored
      * @return the address wrapped as a reference for temporary use.
@@ -230,8 +228,8 @@ public final class VmReferenceManager extends AbstractVmHolder {
         }
 
         @Override
-        public RemoteObjectStatus status() {
-            return RemoteObjectStatus.DEAD;
+        public ObjectStatus status() {
+            return ObjectStatus.DEAD;
         }
     }
 
@@ -253,8 +251,8 @@ public final class VmReferenceManager extends AbstractVmHolder {
         }
 
         @Override
-        public RemoteObjectStatus status() {
-            return RemoteObjectStatus.LIVE;
+        public ObjectStatus status() {
+            return ObjectStatus.LIVE;
         }
     }
 

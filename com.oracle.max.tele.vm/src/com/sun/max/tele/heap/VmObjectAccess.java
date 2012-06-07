@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele.heap;
 
+import static com.sun.max.tele.object.ObjectStatus.*;
+
 import java.io.*;
 import java.text.*;
 import java.util.*;
@@ -40,7 +42,7 @@ import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -110,7 +112,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
-
         // All Maxine collectors stores forwarding pointers in the Hub field of the header
         this.gcForwardingAddressOffset = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
         this.teleObjectFactory = TeleObjectFactory.make(vm, vm.teleProcess().epoch());
@@ -157,38 +158,17 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
     private static  final int MAX_VM_LOCK_TRIALS = 100;
 
-    public boolean isValidOrigin(Address origin) {
+    public ObjectStatus objectStatusAt(Address origin) {
         if (origin.isZero() || origin.equals(zappedMarker)) {
-            return false;
+            return DEAD;
         }
         final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
         if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
             final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
-            if (objectHoldingRegion.objectReferenceManager().isObjectOrigin(origin)) {
-                return true;
-            }
-            Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, in region " + objectHoldingRegion.entityName() + " @" + origin.to0xHexString());
-            return false;
+            return objectHoldingRegion.objectReferenceManager().objectStatusAt(origin);
         }
-        Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, unknown region @" + origin.to0xHexString());
-        return false;
-    }
-
-    public boolean isForwardedOrigin(Address origin) {
-        if (origin.isZero() || origin.equals(zappedMarker)) {
-            return false;
-        }
-        final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
-        if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
-            final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
-            if (objectHoldingRegion.objectReferenceManager().isObjectOrigin(origin)) {
-                return true;
-            }
-            Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, in region " + objectHoldingRegion.entityName() + " @" + origin.to0xHexString());
-            return false;
-        }
-        Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, unknown region @" + origin.to0xHexString());
-        return false;
+        Trace.line(TRACE_VALUE + 1, tracePrefix() + "origin in unknown region @" + origin.to0xHexString());
+        return DEAD;
     }
 
     /**
@@ -201,8 +181,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * <li>Forwarded objects that overwrite the {@code Hub} field are not recognized;</li>
      * <li><strong>May produce false positives</strong>, in particular when the address is a field
      * holding a pointer to a {@link Hub};</li>
-     * <li>Uses only <em>unsafe</em> {@link RemoteReference}s, since this predicate is needed for the
-     * construction of legitimate references.</li>
+     * <li>Uses only <em>unsafe</em> {@link RemoteReference}s to avoid circularities, since this method
+     * is needed for the construction of legitimate references.</li>
      * </ul>
      *
      * @param possibleOrigin a legitimate location in VM memory, in the area managed.
