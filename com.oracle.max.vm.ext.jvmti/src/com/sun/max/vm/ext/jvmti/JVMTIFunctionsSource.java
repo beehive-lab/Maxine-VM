@@ -936,14 +936,14 @@ public class JVMTIFunctionsSource {
         // PHASES: START,LIVE
         // HANDLECHECK: thread=Thread
         // NULLCHECK: data_ptr
-        return JVMTIThreadLocalStorage.getThreadLocalStorage(handleAsThread, data_ptr);
+        return JVMTIVmThreadLocal.getThreadLocalStorage(handleAsThread, data_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int SetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data) {
         // PHASES: START,LIVE
         // HANDLECHECK: thread=Thread
-        return JVMTIThreadLocalStorage.setThreadLocalStorage(handleAsThread, data);
+        return JVMTIVmThreadLocal.setThreadLocalStorage(handleAsThread, data);
     }
 
     @VM_ENTRY_POINT

@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.ext.jvmti;
 
+import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -32,13 +33,18 @@ import com.sun.max.vm.thread.*;
 /**
  * Efficient state storage for thread related JVMTI information.
  *
+ * In {@link #JVMTI_STATE}:
  * Bits 0-7 are status bits:
  * Bits 8-23 record the depth for frame pop events.
+ *
+ * {@link JVMTI_THREADLOCAL} supports {@link JVMTIFunctions#GetThreadLocalStorage}.
  *
  */
 public class JVMTIVmThreadLocal {
     public static final VmThreadLocal JVMTI_STATE = new VmThreadLocal(
-                    "JVMTI", false, "For use by JVMTI", Nature.Triple);
+                    "JVMTI", false, "JVMTI state", Nature.Triple);
+    public static final VmThreadLocal JVMTI_THREADLOCAL = new VmThreadLocal(
+                    "JVMTI_TL", false, "JVMTI thread local storage", Nature.Triple);
 
     /**
      * Bit is set when a {@link JVMTIRawMonitor#notify()} has occurred on this thread.
@@ -98,6 +104,25 @@ public class JVMTIVmThreadLocal {
     static void setDepth(Pointer tla, int depth) {
         JVMTI_STATE.store3(tla, JVMTI_STATE.load(tla).or(depth << DEPTH_SHIFT));
     }
+
+    static int setThreadLocalStorage(Thread thread, Pointer data) {
+        VmThread vmThread = JVMTIThreadFunctions.checkVmThread(thread);
+        if (vmThread == null) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        }
+        JVMTI_THREADLOCAL.store3(vmThread.tla(), data);
+        return JVMTI_ERROR_NONE;
+    }
+
+    static int getThreadLocalStorage(Thread thread, Pointer dataPtr) {
+        VmThread vmThread = JVMTIThreadFunctions.checkVmThread(thread);
+        if (vmThread == null) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        }
+        dataPtr.setWord(JVMTI_THREADLOCAL.load(vmThread.tla()));
+        return JVMTI_ERROR_NONE;
+    }
+
 
 
 }
