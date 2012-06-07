@@ -505,6 +505,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                         return knownFromSpaceReference.status();
                     }
                     if (objects().isPlausibleOriginUnsafe(origin)) {
+                        // An object in From-Space that hasn't been forwarded
                         return ObjectStatus.LIVE;
                     }
                     if (objects().hasForwardingAddressUnsafe(origin)) {
