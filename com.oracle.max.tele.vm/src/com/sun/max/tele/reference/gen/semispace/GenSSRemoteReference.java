@@ -22,9 +22,10 @@
  */
 package com.sun.max.tele.reference.gen.semispace;
 
-import static com.sun.max.vm.heap.ObjectStatus.*;
+import static com.sun.max.tele.object.ObjectStatus.*;
 
 import com.sun.max.tele.heap.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -464,13 +465,14 @@ public class GenSSRemoteReference extends RemoteReference {
     }
 
     @Override
-    public boolean isForwarded() {
-        return refState.isForwarded();
+    public Address forwardedFrom() {
+        return refState.forwardedFrom(this);
     }
 
     @Override
-    public Address forwardedFrom() {
-        return refState.forwardedFrom(this);
+    public Address forwardedTo() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override

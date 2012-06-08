@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.sun.max.ins.object;
 import java.util.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.layout.*;
 
@@ -36,14 +37,14 @@ public final class ArrayView extends ObjectView<ArrayView> {
 
     private ObjectScrollPane elementsPane;
 
-    ArrayView(Inspection inspection, TeleObject teleObject) {
-        super(inspection, teleObject);
+    ArrayView(Inspection inspection, MaxObject object) {
+        super(inspection, object);
         createFrame(true);
     }
 
     @Override
     protected void createViewContent() {
-        final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
+        final TeleArrayObject teleArrayObject = (TeleArrayObject) object();
         elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
         super.createViewContent();
         getContentPane().add(elementsPane);

@@ -22,7 +22,6 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -94,6 +93,6 @@ public interface MaxEntity<Entity_Type extends MaxEntity> {
      *
      * @return surrogate for the VM object that represents this entity
      */
-    TeleObject representation();
+    MaxObject representation();
 
 }

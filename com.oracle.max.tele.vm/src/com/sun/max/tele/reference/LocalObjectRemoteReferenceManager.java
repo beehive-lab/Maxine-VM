@@ -28,9 +28,9 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.direct.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.Reference;
 
 
@@ -112,12 +112,12 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
         }
 
         @Override
-        public boolean isForwarded() {
+        public Address forwardedFrom() {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public Address forwardedFrom() {
+        public Address forwardedTo() {
             throw new UnsupportedOperationException();
         }
 

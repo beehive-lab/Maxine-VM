@@ -39,7 +39,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.ins.view.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
@@ -621,7 +620,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     public void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
     }
 
-    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
+    public void heapObjectFocusChanged(MaxObject oldObject, MaxObject object) {
     }
 
     /**

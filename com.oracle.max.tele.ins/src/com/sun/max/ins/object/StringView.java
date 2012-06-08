@@ -27,8 +27,8 @@ import javax.swing.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * An object view specialized for displaying a low-level heap object in the VM that implements a {@link String}.
@@ -43,8 +43,8 @@ public final class StringView extends ObjectView<StringView> {
     // Follows user's tab selection, but should persist when view reconstructed.
     private boolean alternateDisplay;
 
-    StringView(Inspection inspection, TeleObject teleObject) {
-        super(inspection, teleObject);
+    StringView(Inspection inspection, MaxObject object) {
+        super(inspection, object);
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
@@ -54,7 +54,7 @@ public final class StringView extends ObjectView<StringView> {
     @Override
     protected void createViewContent() {
         super.createViewContent();
-        final TeleString teleString = (TeleString) teleObject();
+        final TeleString teleString = (TeleString) object();
         final String name = teleString.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new InspectorTabbedPane(inspection());
@@ -67,7 +67,7 @@ public final class StringView extends ObjectView<StringView> {
                 return teleString.getString();
             }
             public ObjectStatus status() {
-                return teleObject().status();
+                return object().status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -91,7 +91,7 @@ public final class StringView extends ObjectView<StringView> {
     @Override
     protected void refreshState(boolean force) {
         super.refreshState(force);
-        if (teleObject().status().isNotDead()) {
+        if (object().status().isNotDead()) {
             // Only refresh the visible pane
             final Prober pane = (Prober) tabbedPane.getSelectedComponent();
             pane.refresh(force);

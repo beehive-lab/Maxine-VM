@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,26 +29,34 @@ import com.sun.max.tele.*;
 
 
 public class NativeLibrarySearchDialog extends FilteredListDialog<MaxNativeLibrary> {
-    @Override
-    protected MaxNativeLibrary noSelectedObject() {
-        return null;
+
+
+    private static class NativeLibraryItem extends FilteredListItem<MaxNativeLibrary> {
+
+        private final MaxNativeLibrary nativeLibrary;
+
+        NativeLibraryItem(Inspection inspection, MaxNativeLibrary nativeLibrary) {
+            super(inspection);
+            this.nativeLibrary = nativeLibrary;
+        }
+
+        @Override
+        public MaxNativeLibrary object() {
+            return nativeLibrary;
+        }
     }
 
-    @Override
-    protected MaxNativeLibrary convertSelectedItem(Object listItem) {
-        return (MaxNativeLibrary) listItem;
-    }
-
+    @SuppressWarnings("unchecked")
     @Override
     protected void rebuildList(String filterText) {
         final String filter = filterText.toLowerCase();
         for (MaxNativeLibrary info : vm().nativeCode().nativeLibraries()) {
             if (filter.endsWith(" ")) {
                 if (info.path().equalsIgnoreCase(Strings.chopSuffix(filter, 1))) {
-                    listModel.addElement(info);
+                    listModel.addElement(new NativeLibraryItem(inspection(), info));
                 }
             } else if (info.path().toLowerCase().contains(filter)) {
-                listModel.addElement(info);
+                listModel.addElement(new NativeLibraryItem(inspection(), info));
             }
         }
     }

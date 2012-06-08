@@ -43,37 +43,44 @@ public interface RemoteObjectReferenceManager {
     HeapPhase phase();
 
     /**
-     * Determines whether there is a legitimate object in the VM memory
-     * at a specified origin, using only low-level mechanisms:  no
-     * {@link Reference}s.
+     * Examines the contents of VM memory and determines what kind of object (live, quasi, etc.),
+     * if any, is represented at that location, using only low-level mechanisms and creating
+     * no {@link Reference}s.
      *
-     * @param origin an address a location in VM memory
-     * @return whether the address is the origin of a possibly live VM object
+     * @param origin an absolute memory location in the VM.
+     * @return an enum identifying the kind of object, if any, that is represented at the location in VM memory.
      * @throws TeleError if the origin is not in the memory regions being managed.
      */
-    boolean isObjectOrigin(Address origin) throws TeleError;
+    ObjectStatus objectStatusAt(Address origin);
 
     /**
-     * Determines whether there is a pseudo-object, used to represent <emph>free space</emph> by GC implementations, in
-     * the VM memory at a specified origin, using only low-level mechanisms: no {@link, Reference}s.
-     *
-     * @param origin an address a location in VM memory
-     * @return whether the address is the origin of a free-space pseudo-object.
-     * @throws TeleError if the origin is not in the memory regions being managed.
-     */
-    boolean isFreeSpaceOrigin(Address origin) throws TeleError;
-
-    /**
-     * Creates a canonical remote reference to an object whose origin
+     * Creates a canonical remote reference to a live object whose origin
      * in VM memory is at a specified address, {@link Reference#zero()} if there is no
-     * object with that origin.
+     * live object at that origin.
      * <p>
      * The origin of the object may change over time, for example if
      * a relocating collector is being used for the region by the VM.
+     * <p>
+     * The state of the object may change over time
      *
      * @throws TeleError if the origin is not in the memory regions being managed.
      */
     RemoteReference makeReference(Address origin) throws TeleError;
+
+    /**
+     * Creates a canonical remote reference to a <em>quasi</em> object whose origin
+     * in VM memory is at a specified address, {@link Reference#zero()} if there is no
+     * <em>quasi</em> object at that origin.
+     * <p>
+     * The origin of the object may change over time, for example if
+     * a relocating collector is being used for the region by the VM.
+     * <p>
+     * The state of the object may change over time
+     *
+     * @see ObjectStatus
+     * @throws TeleError if the origin is not in the memory regions being managed.
+     */
+    RemoteReference makeQuasiReference(Address origin);
 
     /**
      * Writes current statistics concerning references to objects in VM memory.
@@ -83,5 +90,6 @@ public interface RemoteObjectReferenceManager {
      * @param verbose possibly write extended information when true
      */
     void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose);
+
 
 }

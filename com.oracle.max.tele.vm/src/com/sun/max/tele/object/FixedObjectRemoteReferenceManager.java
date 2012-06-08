@@ -73,20 +73,17 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
         return HeapPhase.MUTATING;
     }
 
-    public boolean isObjectOrigin(Address origin) throws TeleError {
+    public ObjectStatus objectStatusAt(Address origin) throws TeleError {
         TeleError.check(objectRegion.memoryRegion().contains(origin), "Location is outside region");
+        final WeakReference<RemoteReference> weakRef = originToReference.get(origin);
+        if (weakRef != null) {
+            final RemoteReference knownReference = weakRef.get();
+            if (knownReference != null) {
+                return knownReference.status();
+            }
+        }
         // The only way we can tell in general is with the heuristic.
-        return objects().isPlausibleOriginUnsafe(origin);
-    }
-
-
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
-        // Assume no explicit representation of free space
-        return false;
-    }
-
-    public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
-        return null;
+        return objects().isPlausibleOriginUnsafe(origin) ? ObjectStatus.LIVE : ObjectStatus.DEAD;
     }
 
     public RemoteReference makeReference(Address origin) {
@@ -102,6 +99,15 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
             originToReference.put(origin.toLong(), new WeakReference<RemoteReference>(remoteReference));
         }
         return remoteReference == null ? vm().referenceManager().zeroReference() : remoteReference;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * There are no quasi objects in this kind of region.
+     */
+    public RemoteReference makeQuasiReference(Address origin) {
+        return null;
     }
 
     private int activeReferenceCount() {

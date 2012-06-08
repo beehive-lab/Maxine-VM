@@ -31,7 +31,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.tele.heap.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.value.*;
@@ -139,7 +138,6 @@ final class HeapRegionInfoTable extends InspectorTable {
     }
 
     final class TagRenderer extends PlainLabel {
-        TeleRegionBasedHeapScheme teleHeapScheme;
 
         private void updateText() {
             int tag = teleHeapRegionInfo.tag();

@@ -54,7 +54,7 @@ public final class ObjectFieldsTable extends InspectorTable {
      */
     private final String fieldKindPrefix;
 
-    private final TeleObject teleObject;
+    private final MaxObject object;
     private final FieldActor[] fieldActors;
     private final boolean isTeleActor;
 
@@ -72,16 +72,16 @@ public final class ObjectFieldsTable extends InspectorTable {
      *
      * @param inspection
      * @param fieldKindPrefix information prefix to identify the kind of field, e.g. "Hub" or "Object"
-     * @param teleObject the VM object that holds the fields
+     * @param object the VM object that holds the fields
      * @param fieldActors description of the fields to be displayed
      * @param instanceViewPreferences
      */
-    public ObjectFieldsTable(Inspection inspection, String fieldKindPrefix, TeleObject teleObject, Collection<FieldActor> fieldActors, ObjectViewPreferences instanceViewPreferences) {
+    public ObjectFieldsTable(Inspection inspection, String fieldKindPrefix, MaxObject object, Collection<FieldActor> fieldActors, ObjectViewPreferences instanceViewPreferences) {
         super(inspection);
         this.fieldKindPrefix = fieldKindPrefix;
-        this.teleObject = teleObject;
+        this.object = object;
         this.instanceViewPreferences = instanceViewPreferences;
-        this.isTeleActor = teleObject instanceof TeleActor;
+        this.isTeleActor = object instanceof TeleActor;
         this.fieldActors = new FieldActor[fieldActors.size()];
         // Sort fields by offset in object layout.
         fieldActors.toArray(this.fieldActors);
@@ -100,7 +100,7 @@ public final class ObjectFieldsTable extends InspectorTable {
             startOffset = 0;
             endOffset = 0;
         }
-        this.tableModel = new ObjectFieldsTableModel(inspection, teleObject.origin());
+        this.tableModel = new ObjectFieldsTableModel(inspection, object.origin());
         ObjectFieldsTableColumnModel columnModel = new ObjectFieldsTableColumnModel(this, this.tableModel, instanceViewPreferences);
         configureMemoryTable(tableModel, columnModel);
         updateFocusSelection();
@@ -113,7 +113,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
-                    actions().setFieldWatchpoint(teleObject, tableModel.rowToFieldActor(row), "Watch this field's memory").perform();
+                    actions().setFieldWatchpoint(object, tableModel.rowToFieldActor(row), "Watch this field's memory").perform();
                     final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
                     if (!watchpoints.isEmpty()) {
                         return watchpoints.get(0);
@@ -133,7 +133,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
-                    actions().setFieldWatchpoint(teleObject, tableModel.rowToFieldActor(row), "Watch this field's memory").perform();
+                    actions().setFieldWatchpoint(object, tableModel.rowToFieldActor(row), "Watch this field's memory").perform();
                     final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
                     if (!watchpoints.isEmpty()) {
                         return watchpoints.get(0);
@@ -142,8 +142,8 @@ public final class ObjectFieldsTable extends InspectorTable {
                 }
             });
             final FieldActor fieldActor = tableModel.rowToFieldActor(row);
-            menu.add(actions().setFieldWatchpoint(teleObject, fieldActor, "Watch this field's memory"));
-            menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
+            menu.add(actions().setFieldWatchpoint(object, fieldActor, "Watch this field's memory"));
+            menu.add(actions().setObjectWatchpoint(object, "Watch this object's memory"));
             menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
             menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));
             return menu;
@@ -188,7 +188,7 @@ public final class ObjectFieldsTable extends InspectorTable {
     @Override
     public Color cellBackgroundColor() {
         // Gets called during superclass initialization
-        if (teleObject != null && teleObject.status().isDead()) {
+        if (object != null && object.status().isDead()) {
             return preference().style().deadObjectBackgroundColor();
         }
         return null;
@@ -256,7 +256,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         @Override
         public MaxMemoryRegion getMemoryRegion(int row) {
-            return teleObject.fieldMemoryRegion(fieldActors[row]);
+            return object.fieldMemoryRegion(fieldActors[row]);
         }
 
         @Override
@@ -298,7 +298,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         @Override
         public void refresh() {
-            setOrigin(teleObject.origin());
+            setOrigin(object.origin());
             super.refresh();
         }
     }
@@ -350,7 +350,7 @@ public final class ObjectFieldsTable extends InspectorTable {
                     labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return teleObject.readFieldValue(fieldActor);
+                            return object.readFieldValue(fieldActor);
                         }
                     };
                     labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");
@@ -358,19 +358,19 @@ public final class ObjectFieldsTable extends InspectorTable {
                     labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return teleObject.readFieldValue(fieldActor);
+                            return object.readFieldValue(fieldActor);
                         }
                     };
                     labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");
                 } else if (isTeleActor && fieldActor.name.toString().equals("flags")) {
-                    final TeleActor teleActor = (TeleActor) teleObject;
+                    final TeleActor teleActor = (TeleActor) object;
                     labels[row] = new ActorFlagsValueLabel(inspection(), teleActor);
                     labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
                 } else {
                     labels[row] = new PrimitiveValueLabel(inspection(), fieldActor.kind) {
                         @Override
                         public Value fetchValue() {
-                            return teleObject.readFieldValue(fieldActor);
+                            return object.readFieldValue(fieldActor);
                         }
                     };
                     labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");

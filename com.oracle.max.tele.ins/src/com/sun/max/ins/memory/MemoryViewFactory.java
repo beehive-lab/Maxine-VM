@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.memory.MemoryView.ViewMode;
 import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 
@@ -52,10 +51,10 @@ public interface MemoryViewFactory extends InspectionViewFactory<MemoryView>{
      * Creates a view on the memory holding an object, with the view
      * mode set to {@link ViewMode#OBJECT}.
      *
-     * @param teleObject surrogate for the object in VM whose memory should be viewed
+     * @param object surrogate for the object in VM whose memory should be viewed
      * @return a memory view
      */
-    MemoryView makeView(TeleObject teleObject);
+    MemoryView makeView(MaxObject object);
 
     /**
      * Creates a view on memory, with the view mode set to {@link ViewMode#WORD}.
@@ -96,11 +95,11 @@ public interface MemoryViewFactory extends InspectionViewFactory<MemoryView>{
      * Gets an action that makes a view on the memory holding an object, with the view
      * mode set to {@link ViewMode#OBJECT}.
      *
-     * @param teleObject surrogate for the object in VM whose memory should be viewed
+     * @param object surrogate for the object in VM whose memory should be viewed
      * @param actionTitle an optional title for the action that would appear in a menu
      * @return an action that creates a memory view
      */
-    InspectorAction makeViewAction(TeleObject teleObject, String actionTitle);
+    InspectorAction makeViewAction(MaxObject object, String actionTitle);
 
     /**
      * Gets an action that makes a view on a page of memory, with the view mode

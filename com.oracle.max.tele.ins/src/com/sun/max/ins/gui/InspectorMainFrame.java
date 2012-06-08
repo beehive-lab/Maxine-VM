@@ -40,7 +40,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.heap.*;
@@ -165,9 +164,9 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                     return true;
                 }
                 if (support.isDataFlavorSupported(InspectorTransferable.TELE_OBJECT_FLAVOR)) {
-                    final TeleObject teleObject = (TeleObject) transferable.getTransferData(InspectorTransferable.TELE_OBJECT_FLAVOR);
+                    final MaxObject object = (MaxObject) transferable.getTransferData(InspectorTransferable.TELE_OBJECT_FLAVOR);
                     Trace.line(TRACE_VALUE, tracePrefix + "teleObject dropped on desktop");
-                    InspectorMainFrame.this.inspection.focus().setHeapObject(teleObject);
+                    InspectorMainFrame.this.inspection.focus().setHeapObject(object);
                     return true;
                 }
 

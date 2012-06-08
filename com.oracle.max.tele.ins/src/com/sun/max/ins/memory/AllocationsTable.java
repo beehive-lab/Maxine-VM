@@ -37,7 +37,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
@@ -65,7 +64,7 @@ public final class AllocationsTable extends InspectorTable {
         if (memoryRegion instanceof MaxEntityMemoryRegion) {
             MaxEntityMemoryRegion entityMemoryRegion = (MaxEntityMemoryRegion) memoryRegion;
             if (entityMemoryRegion.owner() != null) {
-                TeleObject representation = entityMemoryRegion.owner().representation();
+                MaxObject representation = entityMemoryRegion.owner().representation();
                 if (representation != null) {
                     final String actionTitle = "Owner: " + inspection().nameDisplay().longName(representation);
                     ownerAction = views().objects().makeViewAction(representation, actionTitle);

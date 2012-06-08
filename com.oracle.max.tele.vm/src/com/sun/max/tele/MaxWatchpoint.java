@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 
 /**
@@ -158,7 +157,7 @@ public interface MaxWatchpoint {
      * @return a heap object in the VM with which the watchpoint is associated, null if none.
      * @see #isRelocatable()
      */
-    TeleObject getTeleObject();
+    MaxObject getWatchedObject();
 
     /**
      * Gets a short textual description concerning the intention of the watchpoint.

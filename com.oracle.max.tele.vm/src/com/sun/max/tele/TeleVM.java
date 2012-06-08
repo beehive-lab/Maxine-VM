@@ -1440,8 +1440,8 @@ public abstract class TeleVM implements MaxVM {
         return referenceManager.makeReference(origin);
     }
 
-    public final Reference vmClassRegistryReference() {
-        return makeReference(bootImageStart.plus(bootImage.header.classRegistryOffset));
+    public final Reference makeQuasiObjectReference(Address origin) {
+        return referenceManager.makeQuasiReference(origin);
     }
 
     public final ReferenceValue createReferenceValue(Reference reference) {
@@ -1863,7 +1863,7 @@ public abstract class TeleVM implements MaxVM {
         } else if (vmValue.asProvider() != null) {
             final Provider p = vmValue.asProvider();
             if (p instanceof TeleObject) {
-                return TeleReferenceValue.from(this, ((TeleObject) p).getReference());
+                return TeleReferenceValue.from(this, ((TeleObject) p).reference());
             }
             throw new IllegalArgumentException(
                     "Could not convert the provider object " + p

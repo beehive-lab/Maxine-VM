@@ -29,7 +29,6 @@ import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.hosted.*;
 import com.sun.max.vm.value.*;
@@ -69,7 +68,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
     }
 
     /**
-     * Checks that a {@link Reference} points to a heap object in the VM;
+     * Checks that a {@link Reference} points to a live heap object in the VM;
      * throws an unchecked exception if not.  This is a low-level method
      * that uses a debugging tag or (if no tags in image) a heuristic; it does
      * not require access to the {@link VmClassAccess}.
@@ -79,7 +78,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * at a valid heap object.
      */
     public void checkReference(Reference reference) throws InvalidReferenceException {
-        if (!objects().isValidOrigin(reference.toOrigin())) {
+        if (!objects().objectStatusAt(reference.toOrigin()).isLive()) {
             throw new InvalidReferenceException(reference);
         }
     }
@@ -128,16 +127,14 @@ public final class VmReferenceManager extends AbstractVmHolder {
 
 
     /**
-     * Creates an specialized instance of the VM's {@link Reference} class that can refer to objects
+     * Creates a specialized instance of the VM's {@link Reference} class that can refer to live objects
      * remotely in the VM.  Each instance is specialized for the kind of object management that takes
      * place in the memory region that contains the specified location, and in the case of managed
      * regions, the {@link Reference} tracks the object, just as in the VM itself.
-     * <ol>
-     * <li>Returns {@link Reference#zero()} if the specified location is {@link Address#zero()}.</li>
-     * </ol>
      *
      * @param origin a location in VM Memory
-     * @return a reference
+     * @return a reference to a live VM object, {@link Reference#zero()} if the specified location is {@link Address#zero()}
+     * or there is no live object at the location
      */
     public RemoteReference makeReference(Address origin) {
         if (origin.isZero()) {
@@ -149,27 +146,71 @@ public final class VmReferenceManager extends AbstractVmHolder {
             if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
                 // In an object-holding region
                 final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
-                final RemoteReference remoteReference = objectHoldingRegion.objectReferenceManager().makeReference(origin);
-                if (remoteReference != null) {
+                final RemoteReference liveObjectReference = objectHoldingRegion.objectReferenceManager().makeReference(origin);
+                if (liveObjectReference != null) {
                     // A valid origin
-                    return remoteReference;
+                    return liveObjectReference;
                 } else {
                     // In an object holding region, but not an origin
                     return referenceScheme.makeZeroReference("Null ref: not a valid origin in " + objectHoldingRegion.entityName(), origin);
                 }
             } else if (maxMemoryRegion != null) {
                 // In a region that isn't supposed to hold objects
-                return referenceScheme.makeZeroReference("Null ref: in non-object holding region " + maxMemoryRegion.owner().entityName(), origin);
+                return referenceScheme.makeZeroReference("Null ref: address in non-object holding region " + maxMemoryRegion.owner().entityName(), origin);
             }
             // Not in any memory region we know about
             if (vm().isAttaching() && objects().isPlausibleOriginUnsafe(origin)) {
                 return new ProvisionalRemoteReference(vm(), origin);
             }
-            return referenceScheme.makeZeroReference("Null ref: in no known memory region", origin);
+            return referenceScheme.makeZeroReference("Null ref: address in no known memory region ", origin);
         } finally {
             vm().unlock();
         }
     }
+
+    /**
+     * Creates a specialized instance of the VM's {@link Reference} class that can refer to <em>quasi</em> objects
+     * remotely in the VM.  Each instance is specialized for the kind of object management that takes
+     * place in the memory region that contains the specified location.
+     *
+     * @param origin a location in VM Memory
+     * @return a reference to a <em>quasi</em> VM object, {@link Reference#zero()} if the specified location is {@link Address#zero()}
+     * or there is no quasi object at the location
+     */
+    public RemoteReference makeQuasiReference(Address origin) {
+        if (origin.isZero()) {
+            return zeroReference();
+        }
+        vm().lock();
+        try {
+            final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
+            if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
+                // In an object-holding region
+                final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
+                final RemoteReference quasiObjectReference = objectHoldingRegion.objectReferenceManager().makeQuasiReference(origin);
+                if (quasiObjectReference != null) {
+                    // Origin of a quasi object
+                    return quasiObjectReference;
+                } else {
+                    // In an object holding region, but not an origin of a quasi object
+                    return referenceScheme.makeZeroReference("Null ref: not a quasi object origin in " + objectHoldingRegion.entityName(), origin);
+                }
+            } else if (maxMemoryRegion != null) {
+                // In a region that isn't supposed to hold objects
+                return referenceScheme.makeZeroReference("Null ref: address in non-object holding region " + maxMemoryRegion.owner().entityName(), origin);
+            }
+            // Not in any memory region we know about
+            if (vm().isAttaching() && objects().isPlausibleOriginUnsafe(origin)) {
+                return new ProvisionalRemoteReference(vm(), origin);
+            }
+            return referenceScheme.makeZeroReference("Null ref: address in no known memory region ", origin);
+        } finally {
+            vm().unlock();
+        }
+    }
+
+
+
 
     /**
      * Create a remote instance of {@link Reference} whose origin is at a given address, but without any checking that a

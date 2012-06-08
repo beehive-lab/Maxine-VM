@@ -100,7 +100,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
      * We don't need a heuristic for objects in a code cache region; if they are present, then they are
      * pointed at by one of the fields in a {@link TargetMethod}.
      */
-    public boolean isObjectOrigin(Address origin) throws TeleError {
+    public ObjectStatus objectStatusAt(Address origin) throws TeleError {
         TeleError.check(codeCacheRegion.memoryRegion().contains(origin), "Location is outside region");
         final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
         if (compilation != null) {
@@ -113,22 +113,13 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
                     if (objectOrigin != null && objectOrigin.equals(origin)) {
                         // The specified location matches one of the target method's pointers.
                         // There should be an object there, but check just in case.
-                        return objects().isPlausibleOriginUnsafe(objectOrigin);
+                        assert objects().isPlausibleOriginUnsafe(objectOrigin);
+                        return ObjectStatus.LIVE;
                     }
                 }
             }
         }
-        return false;
-    }
-
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
-        // Unmanaged means no explicit representation of free space.
-        return false;
-    }
-
-    public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
-        // Objects are not forwarded.
-        return null;
+        return ObjectStatus.DEAD;
     }
 
     /**
@@ -160,6 +151,15 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
             }
         }
         return vm().referenceManager().zeroReference();
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * There are no <em>quasi</em> objects in this kind of region.
+     */
+    public RemoteReference makeQuasiReference(Address origin) throws TeleError {
+        return null;
     }
 
     private int activeReferenceCount() {
@@ -253,7 +253,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
 
         @Override
         public Address origin() {
-            if (origin.isZero() && teleTargetMethod().status().isNotDead()) {
+            if (origin.isZero() && teleTargetMethod().status().isLive()) {
                 origin = teleTargetMethod().codeCacheObjectOrigin(kind);
             }
             return origin;
@@ -265,8 +265,8 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
          * Unmanaged objects never move, and so are never <em>forwarded</em>.
          */
         @Override
-        public boolean isForwarded() {
-            return false;
+        public Address forwardedFrom() {
+            return Address.zero();
         }
 
         /**
@@ -275,7 +275,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
          * Unmanaged objects never move, and so are never <em>forwarded</em>.
          */
         @Override
-        public Address forwardedFrom() {
+        public Address forwardedTo() {
             return Address.zero();
         }
 

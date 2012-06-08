@@ -87,7 +87,7 @@ public abstract class RemoteRegionBasedHeapScheme extends AbstractRemoteHeapSche
             if (regionID < 0) {
                 return null;
             }
-            return objects().makeTeleObject(vm().referenceManager().makeReference(teleRegionTable.regionInfo(regionID).asPointer()));
+            return objects().findObjectAt(teleRegionTable.regionInfo(regionID));
         }
     }
 

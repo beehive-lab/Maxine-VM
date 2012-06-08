@@ -27,8 +27,8 @@ import javax.swing.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -45,8 +45,8 @@ public class DescriptorView extends ObjectView<DescriptorView> {
     // Follows user's tab selection, but should persist when view reconstructed.
     private boolean alternateDisplay;
 
-    DescriptorView(Inspection inspection, TeleObject teleObject) {
-        super(inspection, teleObject);
+    DescriptorView(Inspection inspection, MaxObject object) {
+        super(inspection, object);
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
@@ -56,7 +56,7 @@ public class DescriptorView extends ObjectView<DescriptorView> {
     @Override
     protected void createViewContent() {
         super.createViewContent();
-        final TeleDescriptor teleDescriptor = (TeleDescriptor) teleObject();
+        final TeleDescriptor teleDescriptor = (TeleDescriptor) object();
         final String name = teleDescriptor.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new InspectorTabbedPane(inspection());
@@ -69,7 +69,7 @@ public class DescriptorView extends ObjectView<DescriptorView> {
                 return teleDescriptor.descriptor().string;
             }
             public ObjectStatus status() {
-                return teleObject().status();
+                return object().status();
             }
         });
         tabbedPane.add("string value", stringPane);

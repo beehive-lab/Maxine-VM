@@ -155,7 +155,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         this.lastUpdateEpoch = epoch;
         int count = 0;
         try {
-            final Reference vmClassRegistryReference = vm.vmClassRegistryReference();
+            final Reference vmClassRegistryReference = vmClassRegistryReference();
             count = processClassRegistry(vmClassRegistryReference);
             count += processClassRegistry(fields().ClassRegistry_bootClassRegistry.readReference(vmClassRegistryReference));
             ClassID.setMapping(classIDMapping);
@@ -322,6 +322,13 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         printStream.print(indentation + "Classes loaded: " + formatter.format(initialClassCount + dynamicallyLoadedClassCount) +
                         " (initial: " + formatter.format(initialClassCount) +
                         ", during session: " + formatter.format(dynamicallyLoadedClassCount) + ")\n");
+    }
+
+    /**
+     * @return a reference to the {@link ClassRegistry} in the boot heap of the VM.
+     */
+    public Reference vmClassRegistryReference() {
+        return referenceManager().makeReference(vm().bootImageStart().plus(vm().bootImage().header.classRegistryOffset));
     }
 
     public void processAttachFixupList() {

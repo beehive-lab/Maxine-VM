@@ -197,6 +197,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      * The number of references in the table that point to an object.
      */
     private int liveObjectCount = 0;
+    private int quasiObjectCount = 0;
 
     private long lastUpdateEpoch = -1L;
 
@@ -293,6 +294,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         assert vm().lockHeldByCurrentThread();
         TimerPerType timePerType = new TimerPerType();
         liveObjectCount = 0;
+        quasiObjectCount = 0;
 
         // Make a copy to prevent ConcurrentModificationExceptions while iterating
         ArrayList<WeakReference<TeleObject>> teleObjectRefs = new ArrayList<WeakReference<TeleObject>>(referenceToTeleObject.values());
@@ -300,7 +302,18 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             if (teleObjectRef != null) {
                 TeleObject teleObject = teleObjectRef.get();
                 if (teleObject != null) {
-                    liveObjectCount++;
+                    switch(teleObject.reference().status()) {
+                        case LIVE:
+                            liveObjectCount++;
+                            break;
+                        case DEAD:
+                            // TODO (mlvdv) should probably remove these from the map
+                            TeleWarning.message(tracePrefix() + "DEAD object in map");
+                            break;
+                        default:
+                            quasiObjectCount++;
+                            break;
+                    }
                     Class type = teleObject.getClass();
                     long[] stats = timePerType.get(type);
                     long s = System.currentTimeMillis();
@@ -377,103 +390,118 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             return teleObject;
         }
 
-        // TODO (mlvdv) this should no longer be needed.  If the reference has an ok status, that's we should need.
-        // Keep all the VM traffic outside of synchronization.
-//        if (!objects().isValidOrigin(remoteRef.toOrigin())) {
-//            TeleWarning.message("Attempt to create TeleObject with an invalid origin");
-//            final boolean isIt = objects().isValidOrigin(remoteRef.toOrigin());
-//        }
-
-        // Most important of the roles played by a {@link TeleObject} is to capture
-        // the type of the object at the specified location.  This gets done empirically,
-        // by examining the meta-information stored with the presumed object.
-        // Because of the meta-circular design, this relies on analysis of meta-information
-        // in the VM that is also stored as objects (notably hubs and class actors).  This
-        // must be done carefully in order to avoid circularities, which is why the initial
-        // investigation must be done using the lowest level memory reading primitives.
-
-        // Location of the {@link Hub} in the VM that describes the layout of the presumed object.
-        Reference hubReference = vm().referenceManager().zeroReference();
-
-        // Location of the {@link ClassActor} in the VM that describes the type of the presumed object.
-        Reference classActorReference = vm().referenceManager().zeroReference();
-
-        // Local copy of the {@link ClassActor} in the VM that describes the type of the presumed object.
-        // We presume to have loaded exactly the same classes as in the VM, so we can use this local
-        // copy for a kind of reflective access to the structure of the presumed object.
-        ClassActor classActor = null;
-
-        try {
-            final Address hubAddress = Layout.readHubReferenceAsWord(remoteRef).asAddress();
-            hubReference = referenceManager().makeReference(hubAddress);
-            classActorReference = fields().Hub_classActor.readReference(hubReference);
-            classActor = classes().makeClassActor(classActorReference);
-        } catch (InvalidReferenceException invalidReferenceException) {
-            Log.println("InvalidReferenceException reference: " + remoteRef + "/" + remoteRef.toOrigin() +
-                            " hubReference: " + hubReference + "/" + hubReference.toOrigin() + " classActorReference: " +
-                            classActorReference + "/" + classActorReference.toOrigin() + " classActor: " + classActor);
-            return null;
-        }
-
-        // Must check for the static tuple case first; it doesn't follow the usual rules
-        final Reference hubhubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(hubReference).asAddress());
-        final Reference hubClassActorReference = fields().Hub_classActor.readReference(hubhubReference);
-        final ClassActor hubClassActor = classes().makeClassActor(hubClassActorReference);
-        final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
-        if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
-            teleObject = getTeleObject(remoteRef);
-            if (teleObject == null) {
-                teleObject = new TeleStaticTuple(vm(), remoteRef);
-            }
-        } else if (classActor.isArrayClass()) {
-            // Check map again, just in case there's a race
-            teleObject = getTeleObject(remoteRef);
-            if (teleObject == null) {
-                teleObject = new TeleArrayObject(vm(), remoteRef, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
-            }
-        } else if (classActor.isHybridClass()) {
-            final Class javaClass = classActor.toJava();
-            // Check map again, just in case there's a race
-            teleObject = getTeleObject(remoteRef);
-            if (teleObject == null) {
-                if (DynamicHub.class.isAssignableFrom(javaClass)) {
-                    teleObject = new TeleDynamicHub(vm(), remoteRef);
-                } else if (StaticHub.class.isAssignableFrom(javaClass)) {
-                    teleObject = new TeleStaticHub(vm(), remoteRef);
-                } else {
-                    throw TeleError.unexpected(tracePrefix() + "invalid hybrid implementation type");
-                }
-            }
-        } else if (classActor.isTupleClass()) {
-            // Check map again, just in case there's a race
-            teleObject = getTeleObject(remoteRef);
-            if (teleObject == null) {
-                // Walk up the type hierarchy for the class, locating the most specific type
-                // for which a constructor is defined.
-                Constructor constructor = null;
-                for (Class javaClass = classActor.toJava(); javaClass != null; javaClass = javaClass.getSuperclass()) {
-                    constructor = classToTeleTupleObjectConstructor.get(javaClass);
-                    if (constructor != null) {
-                        break;
-                    }
-                }
-                if (constructor == null) {
-                    TeleError.unexpected(tracePrefix() + "failed to find constructor for class" + classActor.toJava());
-                }
-                try {
-                    teleObject = (TeleObject) constructor.newInstance(vm(), remoteRef);
-                } catch (InstantiationException e) {
-                    TeleError.unexpected();
-                } catch (IllegalAccessException e) {
-                    TeleError.unexpected();
-                } catch (InvocationTargetException e) {
-                    TeleError.unexpected(e);
-                }
+        if (remoteRef.status().isForwarder()) {
+            // Quasi objects:  forwarders
+            // These have to be created specially.
+            // TODO (mlvdv) I'm letting these be put into to the standard map for now; I haven't (yet) found a reason to map them separately.
+            final RemoteReference newCopyReference = referenceManager().makeReference(remoteRef.forwardedTo());
+            final TeleObject newCopyObject = objects().makeTeleObject(newCopyReference);
+            switch (newCopyObject.kind()) {
+                case TUPLE:
+                    teleObject = new TeleTupleForwarderQuasi(vm(), remoteRef);
+                    break;
+                case ARRAY:
+                    // teleObject = new TeleArrayForwarderQuasi(vm(), remoteRef);
+                    // TODO (mlvdv) Indented badly as a reminder to fix
+                        TeleWarning.message("Array Forwarders not yet supported");
+                    return null;
+                    // break;
+                case HYBRID:
+                    teleObject = new TeleHybridForwarderQuasi(vm(), remoteRef);
+                    break;
             }
         } else {
-            //throw TeleError.unexpected("invalid object implementation type");
-            Trace.line(TRACE_VALUE, tracePrefix() + "failed to create object at apparently valid origin=0x" + remoteRef.toOrigin().toHexString());
-            return null;
+            // Most important of the roles played by a {@link TeleObject} is to capture
+            // the type of the object at the specified location.  This gets done empirically,
+            // by examining the meta-information stored with the presumed object.
+            // Because of the meta-circular design, this relies on analysis of meta-information
+            // in the VM that is also stored as objects (notably hubs and class actors).  This
+            // must be done carefully in order to avoid circularities, which is why the initial
+            // investigation must be done using the lowest level memory reading primitives.
+
+            // Location of the {@link Hub} in the VM that describes the layout of the presumed object.
+            Reference hubReference = vm().referenceManager().zeroReference();
+
+            // Location of the {@link ClassActor} in the VM that describes the type of the presumed object.
+            Reference classActorReference = vm().referenceManager().zeroReference();
+
+            // Local copy of the {@link ClassActor} in the VM that describes the type of the presumed object.
+            // We presume to have loaded exactly the same classes as in the VM, so we can use this local
+            // copy for a kind of reflective access to the structure of the presumed object.
+            ClassActor classActor = null;
+
+            try {
+                final Address hubAddress = Layout.readHubReferenceAsWord(remoteRef).asAddress();
+                hubReference = referenceManager().makeReference(hubAddress);
+                classActorReference = fields().Hub_classActor.readReference(hubReference);
+                classActor = classes().makeClassActor(classActorReference);
+            } catch (InvalidReferenceException invalidReferenceException) {
+                Log.println("InvalidReferenceException reference: " + remoteRef + "/" + remoteRef.toOrigin() +
+                                " hubReference: " + hubReference + "/" + hubReference.toOrigin() + " classActorReference: " +
+                                classActorReference + "/" + classActorReference.toOrigin() + " classActor: " + classActor);
+                return null;
+            }
+
+            // Must check for the static tuple case first; it doesn't follow the usual rules
+            final Reference hubhubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(hubReference).asAddress());
+            final Reference hubClassActorReference = fields().Hub_classActor.readReference(hubhubReference);
+            final ClassActor hubClassActor = classes().makeClassActor(hubClassActorReference);
+            final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
+            if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
+                teleObject = getTeleObject(remoteRef);
+                if (teleObject == null) {
+                    teleObject = new TeleStaticTuple(vm(), remoteRef);
+                }
+            } else if (classActor.isArrayClass()) {
+                // Check map again, just in case there's a race
+                teleObject = getTeleObject(remoteRef);
+                if (teleObject == null) {
+                    teleObject = new TeleArrayObject(vm(), remoteRef, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
+                }
+            } else if (classActor.isHybridClass()) {
+                final Class javaClass = classActor.toJava();
+                // Check map again, just in case there's a race
+                teleObject = getTeleObject(remoteRef);
+                if (teleObject == null) {
+                    if (DynamicHub.class.isAssignableFrom(javaClass)) {
+                        teleObject = new TeleDynamicHub(vm(), remoteRef);
+                    } else if (StaticHub.class.isAssignableFrom(javaClass)) {
+                        teleObject = new TeleStaticHub(vm(), remoteRef);
+                    } else {
+                        throw TeleError.unexpected(tracePrefix() + "invalid hybrid implementation type");
+                    }
+                }
+            } else if (classActor.isTupleClass()) {
+                // Check map again, just in case there's a race
+                teleObject = getTeleObject(remoteRef);
+                if (teleObject == null) {
+                    // Walk up the type hierarchy for the class, locating the most specific type
+                    // for which a constructor is defined.
+                    Constructor constructor = null;
+                    for (Class javaClass = classActor.toJava(); javaClass != null; javaClass = javaClass.getSuperclass()) {
+                        constructor = classToTeleTupleObjectConstructor.get(javaClass);
+                        if (constructor != null) {
+                            break;
+                        }
+                    }
+                    if (constructor == null) {
+                        TeleError.unexpected(tracePrefix() + "failed to find constructor for class" + classActor.toJava());
+                    }
+                    try {
+                        teleObject = (TeleObject) constructor.newInstance(vm(), remoteRef);
+                    } catch (InstantiationException e) {
+                        TeleError.unexpected();
+                    } catch (IllegalAccessException e) {
+                        TeleError.unexpected();
+                    } catch (InvocationTargetException e) {
+                        TeleError.unexpected(e);
+                    }
+                }
+            } else {
+                //throw TeleError.unexpected("invalid object implementation type");
+                Trace.line(TRACE_VALUE, tracePrefix() + "failed to create object at apparently valid origin=0x" + remoteRef.toOrigin().toHexString());
+                return null;
+            }
         }
         final WeakReference<TeleObject> teleObjectWeakReference = new WeakReference<TeleObject>(teleObject);
         if (remoteRef.status().isDead()) {
@@ -535,6 +563,13 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      */
     public int liveObjectCount() {
         return liveObjectCount;
+    }
+
+    /**
+     * @return the number of {@linkplain Reference references} in the table that point to <em>quasi</em> objects.
+     */
+    public int quasiObjectCount() {
+        return quasiObjectCount();
     }
 
     private Constructor getConstructor(Class clazz) {
