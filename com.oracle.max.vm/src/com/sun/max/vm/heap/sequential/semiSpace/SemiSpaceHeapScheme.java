@@ -612,17 +612,17 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
-        if (specificLayout.isTupleLayout()) {
+        if (specificLayout == Layout.tupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, refUpdater);
             if (hub.isJLRReference) {
                 SpecialReferenceManager.discoverSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
         }
-        if (specificLayout.isHybridLayout()) {
-            TupleReferenceMap.visitReferences(hub, origin, refUpdater);
-        } else if (specificLayout.isReferenceArrayLayout()) {
+        if (specificLayout == Layout.referenceArrayLayout()) {
             scanReferenceArray(origin);
+        } else if (specificLayout == Layout.hybridLayout()) {
+            TupleReferenceMap.visitReferences(hub, origin, refUpdater);
         }
         return cell.plus(Layout.size(origin));
     }

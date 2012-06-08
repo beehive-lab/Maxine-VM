@@ -286,6 +286,27 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         Code.visitCells(this, includeBootCode);
     }
 
+  /*  final protected Pointer scanCellForEvacuatees2(Pointer cell) {
+        if (traceEvacVisitedCell()) {
+            Log.print("visitCell "); Log.println(cell);
+        }
+        final Pointer origin = Layout.cellToOrigin(cell);
+        // Update the hub first so that is can be dereferenced to obtain
+        // the reference map needed to find the other references in the object
+        updateEvacuatedRef(origin,  Layout.hubIndex());
+        final Hub hub =  Layout.getHub(origin);
+        if (hub == heapFreeChunkHub()) {
+            return cell.plus(toHeapFreeChunk(origin).size);
+        }
+        // Update the other references in the object
+        final SpecificLayout specificLayout = hub.specificLayout;
+        specificLayout.visitReferences(origin, this);
+        if (hub.isJLRReference) {
+            updateSpecialReference(origin);
+        }
+        return cell.plus(specificLayout.specificSize(origin));
+    }
+*/
     /**
      * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
      * @param cell
@@ -303,21 +324,26 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         if (hub == heapFreeChunkHub()) {
             return cell.plus(toHeapFreeChunk(origin).size);
         }
-       // Update the other references in the object
+        // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
-        if (specificLayout.isTupleLayout()) {
-            TupleReferenceMap.visitReferences(hub, origin, this);
+        if (specificLayout == Layout.tupleLayout()) {
+            //TupleReferenceMap.visitReferences(hub, origin, this);
+            hub.visitMappedReferences(origin, this);
             if (hub.isJLRReference) {
                 updateSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
         }
-        if (specificLayout.isHybridLayout()) {
-            TupleReferenceMap.visitReferences(hub, origin, this);
-        } else if (specificLayout.isReferenceArrayLayout()) {
+        final int length = Layout.readArrayLength(origin);
+        if (specificLayout == Layout.hybridLayout()) {
+            hub.visitMappedReferences(origin, this);
+            //TupleReferenceMap.visitReferences(hub, origin, this);
+            return cell.plus(Layout.hybridLayout().getArraySize(length));
+        } else if (specificLayout == Layout.referenceArrayLayout()) {
             updateReferenceArray(origin);
+            return cell.plus(Layout.referenceArrayLayout().getArraySize(Kind.REFERENCE, length));
         }
-        return cell.plus(Layout.size(origin));
+        return cell.plus(Layout.size(origin)); // cell.plus(Layout.arrayLayout().getArraySize(length));
     }
 
     private boolean cellInRegion(Pointer cell, Pointer endOfCell, Address start, Address end) {
@@ -368,22 +394,24 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         }
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
-        if (specificLayout.isTupleLayout()) {
+        if (specificLayout == Layout.tupleLayout()) {
             // Visit all the references of the object and not just those over the range.
-            // This is because the write barrier dirty the card holding tuple header, not
+            // This is because the write barrier dirty the card holding the tuple header, not
             // the actually modified reference. Thus bounding the iteration to the dirty card might
             // miss references on the next card.
-            TupleReferenceMap.visitReferences(hub, origin, this);
+            //TupleReferenceMap.visitReferences(hub, origin, this);
+            hub.visitMappedReferences(origin, this);
             if (hub.isJLRReference) {
                 updateSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
         }
-        if (specificLayout.isHybridLayout()) {
-            // See comment above
-            TupleReferenceMap.visitReferences(hub, origin, this);
-        } else if (specificLayout.isReferenceArrayLayout()) {
+        if (specificLayout == Layout.referenceArrayLayout()) {
             updateReferenceArray(origin, start, end);
+        } else if (specificLayout == Layout.hybridLayout()) {
+            hub.visitMappedReferences(origin, this);
+            // See comment above
+            // TupleReferenceMap.visitReferences(hub, origin, this);
         }
         return cell.plus(Layout.size(origin));
     }

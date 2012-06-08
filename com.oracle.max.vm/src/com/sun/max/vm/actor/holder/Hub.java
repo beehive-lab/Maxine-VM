@@ -353,4 +353,16 @@ public abstract class Hub extends Hybrid {
         return ClassID.toClassActor(id) != null || ClassID.isUsedID(id);
     }
 
+    /**
+     * Visit references of the object described by this hub  using the hub's reference maps.
+     * Note that reference arrays have an empty reference map.
+     */
+    @INLINE
+    public final void visitMappedReferences(Pointer origin, PointerIndexVisitor visitor) {
+        final int n = referenceMapStartIndex + referenceMapLength;
+        for (int i = referenceMapStartIndex; i < n; i++) {
+            final int index = getInt(i);
+            visitor.visit(origin, index);
+        }
+    }
 }
