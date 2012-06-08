@@ -101,6 +101,15 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
         return remoteReference == null ? vm().referenceManager().zeroReference() : remoteReference;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * There are no quasi objects in this kind of region.
+     */
+    public RemoteReference makeQuasiReference(Address origin) {
+        return null;
+    }
+
     private int activeReferenceCount() {
         int count = 0;
         for (WeakReference<RemoteReference> weakRef : originToReference.values()) {

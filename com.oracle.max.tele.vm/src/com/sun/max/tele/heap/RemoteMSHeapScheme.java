@@ -499,6 +499,10 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         return remoteReference;
     }
 
+    // TODO (mlvdv) refine, e.g. for HeapFreeChunks and possibly others.
+    public RemoteReference makeQuasiReference(Address origin) throws TeleError {
+        return null;
+    }
 
     /**
      * Does the heap region contain the address anywhere?

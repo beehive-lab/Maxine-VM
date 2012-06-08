@@ -84,6 +84,11 @@ public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme im
         return null;
     }
 
+    public RemoteReference makeQuasiReference(Address origin) throws TeleError {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
         // TODO Auto-generated method stub
     }

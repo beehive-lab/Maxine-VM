@@ -153,6 +153,15 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return vm().referenceManager().zeroReference();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * There are no <em>quasi</em> objects in this kind of region.
+     */
+    public RemoteReference makeQuasiReference(Address origin) throws TeleError {
+        return null;
+    }
+
     private int activeReferenceCount() {
         int count = 0;
         for (CodeCacheReferenceKind kind : CodeCacheReferenceKind.values()) {

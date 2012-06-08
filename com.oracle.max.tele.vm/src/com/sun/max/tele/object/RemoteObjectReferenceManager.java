@@ -54,16 +54,33 @@ public interface RemoteObjectReferenceManager {
     ObjectStatus objectStatusAt(Address origin);
 
     /**
-     * Creates a canonical remote reference to an object whose origin
+     * Creates a canonical remote reference to a live object whose origin
      * in VM memory is at a specified address, {@link Reference#zero()} if there is no
-     * object with that origin.
+     * live object at that origin.
      * <p>
      * The origin of the object may change over time, for example if
      * a relocating collector is being used for the region by the VM.
+     * <p>
+     * The state of the object may change over time
      *
      * @throws TeleError if the origin is not in the memory regions being managed.
      */
     RemoteReference makeReference(Address origin) throws TeleError;
+
+    /**
+     * Creates a canonical remote reference to a <em>quasi</em> object whose origin
+     * in VM memory is at a specified address, {@link Reference#zero()} if there is no
+     * <em>quasi</em> object at that origin.
+     * <p>
+     * The origin of the object may change over time, for example if
+     * a relocating collector is being used for the region by the VM.
+     * <p>
+     * The state of the object may change over time
+     *
+     * @see ObjectStatus
+     * @throws TeleError if the origin is not in the memory regions being managed.
+     */
+    RemoteReference makeQuasiReference(Address origin);
 
     /**
      * Writes current statistics concerning references to objects in VM memory.
@@ -73,5 +90,6 @@ public interface RemoteObjectReferenceManager {
      * @param verbose possibly write extended information when true
      */
     void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose);
+
 
 }

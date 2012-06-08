@@ -72,7 +72,7 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
     MaxObject findObjectByOID(long id);
 
     /**
-     * Finds an object whose origin is at the specified address, if one exists.
+     * Finds a live object whose origin is at the specified address, if one exists.
      *
      * @param origin memory location in the VM
      * @return surrogate for a VM object, null if none found or if the VM is busy
@@ -81,7 +81,16 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
     MaxObject findObjectAt(Address origin);
 
     /**
-     * Scans VM memory backwards (smaller address) for an object whose cell begins at the specified address.
+     * Finds a quasi object whose origin is at the specified address, if one exists.
+     *
+     * @param origin memory location in the VM
+     * @return surrogate for a VM quasi object, null if none found or if the VM is busy
+     * @throws MaxVMBusyException if data cannot be read from the VM at this time
+     */
+    MaxObject findQuasiObjectAt(Address origin);
+
+    /**
+     * Scans VM memory backwards (smaller address) for a live object whose cell begins at the specified address.
      *
      * @param cellAddress search starts with word preceding this address
      * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
@@ -90,7 +99,7 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
     MaxObject findObjectPreceding(Address cellAddress, long maxSearchExtent);
 
     /**
-     * Scans VM memory forward (larger address) for an object whose cell begins at the specified address.
+     * Scans VM memory forward (larger address) for a live object whose cell begins at the specified address.
      *
      * @param cellAddress search starts with word following this address
      * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.

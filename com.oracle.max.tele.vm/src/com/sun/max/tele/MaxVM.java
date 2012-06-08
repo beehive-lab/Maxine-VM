@@ -314,13 +314,22 @@ public interface MaxVM extends MaxEntity<MaxVM> {
 
     /**
      * Creates a remote object reference that can be used for access to a VM object;
-     * returns {@link Reference#zero()} if there is no valid object at the location.
+     * returns {@link Reference#zero()} if there is no live object at the location.
      *
-     * @param origin current location (origin) of a heap object's memory in the VM,
+     * @param origin current location (origin) of a live heap object's memory in the VM,
      * subject to relocation by GC.
      * @return a remote {@link Reference} to the object.
      */
     Reference makeReference(final Address origin);
+
+    /**
+     * Creates a remote object reference that can be used for access to a VM <em>quasi</em> object;
+     * returns {@link Reference#zero()} if there is no quasi object at the location.
+     *
+     * @param origin current location (origin) of a quasi object's memory in the VM.
+     * @return a remote {@link Reference} to the quasi object.
+     */
+    Reference makeQuasiObjectReference(Address origin);
 
     /**
      * Creates a boxed value that acts as a reference to an object in the VM, useful for
