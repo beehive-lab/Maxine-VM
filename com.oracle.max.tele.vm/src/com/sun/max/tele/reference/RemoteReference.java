@@ -25,6 +25,7 @@ package com.sun.max.tele.reference;
 import java.util.concurrent.atomic.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
@@ -64,8 +65,7 @@ public abstract class RemoteReference extends Reference {
 
     /**
      * @return the status of the object representation in memory to which this instance refers:
-     *         {@linkplain ObjectStatus#LIVE LIVE}, {@linkplain ObjectStatus#DEAD DEAD}, or (only possible when heap is
-     *         {@linkplain HeapPhase#ANALYZING ANALYZING}) {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.
+     *         {@linkplain ObjectStatus#LIVE LIVE}, {@linkplain ObjectStatus#DEAD DEAD}, or ({@linkplain ObjectStatus#QUASI QUASI}.
      */
     public abstract ObjectStatus status();
 
@@ -85,35 +85,24 @@ public abstract class RemoteReference extends Reference {
     public abstract Address origin();
 
     /**
-     * Returns {@code true} during the period when an object is being moved to a new location in VM memory by a
-     * relocating GC, only possible when the heap phase is {@linkplain HeapPhase#ANALYZING ANALYZING}. This state can be
-     * characterized as the object existing in two places simultaneously, even if complete information about its two
-     * locations has not been discovered.
-     * <p>
-     * During such a period:
-     * <ul>
-     * <li> {@link #origin()} returns the location of the <em>new</em> copy of the object;</li>
-     * <li> {@link #forwardedFrom()}, if known, returns the <em>old</em> copy of the object, or {@code null} if not yet
-     * discovered; and</li>
-     * <li> {@link #status()} returns {@linkplain ObjectStatus#LIVE LIVE}.</li>
-     * </ul>
-     *
-     * @return {@code true} iff the object has been copied to a new location during a heap's
-     *         {@linkplain HeapPhase#ANALYZING ANALYZING} phase; always {@code false} during other heap phases
-     * @see #forwardedFrom()
-     */
-    public abstract boolean isForwarded();
-
-    /**
      * Returns the location of the <em>old</em> copy of the object in VM memory during any period of time when the
      * object is being <em>forwarded</em>. This is available <em>only</em> when the heap phase is
      * {@linkplain HeapPhase#ANALYZING ANALYZING} <em>and</em> the object has been copied to a new location. In all
      * other situations returns {@link Address#zero()}.
      *
      * @return the former address of an object while it is being <em>forwarded</em>.
-     * @see #isForwarded()
      */
     public abstract Address forwardedFrom();
+
+    /**
+     * Returns the location of the <em>new</em> copy of the object in VM memory during any period of time when the
+     * object is being <em>forwarded</em> and a new live copy created elsewhere. This can happen <em>only</em> when the
+     * heap phase is {@linkplain HeapPhase#ANALYZING ANALYZING} <em>and</em> the status is
+     * {@link ObjectStatus#FORWARDER}. In all other situations returns {@link Address#zero()}.
+     *
+     * @return the former address of an object while it is being <em>forwarded</em>.
+     */
+    public abstract Address forwardedTo();
 
     /**
      * Generates a string describing the status of the object in VM memory with respect to memory management, designed

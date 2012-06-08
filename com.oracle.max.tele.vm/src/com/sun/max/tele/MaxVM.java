@@ -31,12 +31,13 @@ import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -313,18 +314,22 @@ public interface MaxVM extends MaxEntity<MaxVM> {
 
     /**
      * Creates a remote object reference that can be used for access to a VM object;
-     * returns {@link Reference#zero()} if there is no valid object at the location.
+     * returns {@link Reference#zero()} if there is no live object at the location.
      *
-     * @param origin current location (origin) of a heap object's memory in the VM,
+     * @param origin current location (origin) of a live heap object's memory in the VM,
      * subject to relocation by GC.
      * @return a remote {@link Reference} to the object.
      */
     Reference makeReference(final Address origin);
 
     /**
-     * @return a reference to the {@link ClassRegistry} in the boot heap of the VM.
+     * Creates a remote object reference that can be used for access to a VM <em>quasi</em> object;
+     * returns {@link Reference#zero()} if there is no quasi object at the location.
+     *
+     * @param origin current location (origin) of a quasi object's memory in the VM.
+     * @return a remote {@link Reference} to the quasi object.
      */
-    Reference vmClassRegistryReference();
+    Reference makeQuasiObjectReference(Address origin);
 
     /**
      * Creates a boxed value that acts as a reference to an object in the VM, useful for
@@ -493,5 +498,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @return the singleton invalid reference logger for this VM.
      */
     InvalidReferencesLogger invalidReferencesLogger();
+
 }
 

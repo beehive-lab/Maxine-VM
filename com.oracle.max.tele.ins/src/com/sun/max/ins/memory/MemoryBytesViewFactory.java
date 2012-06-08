@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.sun.max.ins.memory;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.view.*;
-import com.sun.max.tele.object.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 
@@ -48,10 +48,10 @@ public interface MemoryBytesViewFactory extends InspectionViewFactory<MemoryByte
     /**
      * Creates a bytes view on the memory holding an object.
      *
-     * @param teleObject surrogate for the object in VM whose memory should be viewed
+     * @param object surrogate for the object in VM whose memory should be viewed
      * @return a memory bytes view
      */
-    MemoryBytesView makeView(TeleObject teleObject);
+    MemoryBytesView makeView(MaxObject object);
 
     /**
      * Gets an interactive action that makes a byte view on memory, starting

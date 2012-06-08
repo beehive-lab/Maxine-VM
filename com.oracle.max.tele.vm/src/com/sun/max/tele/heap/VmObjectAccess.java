@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele.heap;
 
+import static com.sun.max.tele.object.ObjectStatus.*;
+
 import java.io.*;
 import java.text.*;
 import java.util.*;
@@ -40,7 +42,7 @@ import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -110,7 +112,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
-
         // All Maxine collectors stores forwarding pointers in the Hub field of the header
         this.gcForwardingAddressOffset = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
         this.teleObjectFactory = TeleObjectFactory.make(vm, vm.teleProcess().epoch());
@@ -157,38 +158,17 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
     private static  final int MAX_VM_LOCK_TRIALS = 100;
 
-    public boolean isValidOrigin(Address origin) {
+    public ObjectStatus objectStatusAt(Address origin) {
         if (origin.isZero() || origin.equals(zappedMarker)) {
-            return false;
+            return DEAD;
         }
         final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
         if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
             final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
-            if (objectHoldingRegion.objectReferenceManager().isObjectOrigin(origin)) {
-                return true;
-            }
-            Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, in region " + objectHoldingRegion.entityName() + " @" + origin.to0xHexString());
-            return false;
+            return objectHoldingRegion.objectReferenceManager().objectStatusAt(origin);
         }
-        Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, unknown region @" + origin.to0xHexString());
-        return false;
-    }
-
-    public boolean isForwardedOrigin(Address origin) {
-        if (origin.isZero() || origin.equals(zappedMarker)) {
-            return false;
-        }
-        final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
-        if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
-            final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
-            if (objectHoldingRegion.objectReferenceManager().isObjectOrigin(origin)) {
-                return true;
-            }
-            Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, in region " + objectHoldingRegion.entityName() + " @" + origin.to0xHexString());
-            return false;
-        }
-        Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, unknown region @" + origin.to0xHexString());
-        return false;
+        Trace.line(TRACE_VALUE + 1, tracePrefix() + "origin in unknown region @" + origin.to0xHexString());
+        return DEAD;
     }
 
     /**
@@ -201,14 +181,16 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * <li>Forwarded objects that overwrite the {@code Hub} field are not recognized;</li>
      * <li><strong>May produce false positives</strong>, in particular when the address is a field
      * holding a pointer to a {@link Hub};</li>
-     * <li>Uses only <em>unsafe</em> {@link RemoteReference}s, since this predicate is needed for the
-     * construction of legitimate references.</li>
+     * <li>Uses only <em>unsafe</em> {@link RemoteReference}s to avoid circularities, since this method
+     * is needed for the construction of legitimate references.</li>
      * </ul>
      *
      * @param possibleOrigin a legitimate location in VM memory, in the area managed.
      * @return whether the location is likely to be an object origin.
      */
     public boolean isPlausibleOriginUnsafe(Address possibleOrigin) {
+
+        // TODO (mlvdv)  LD suggestion; shorten this test.  The Hub of Hubs is constant: a fixed object in the BootHeap.
         // Assuming we're starting an an object origin. follow hub pointers until the same hub is
         // traversed twice or an address outside of heap is encountered.
         //
@@ -249,7 +231,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return false;
     }
 
-    public TeleObject findTeleObject(Reference reference) throws MaxVMBusyException {
+    public TeleObject findObject(Reference reference) throws MaxVMBusyException {
         if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
             try {
                 return makeTeleObject(reference);
@@ -268,9 +250,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     public TeleObject findObjectAt(Address origin) {
         if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
             try {
-                if (isValidOrigin(origin)) {
-                    return makeTeleObject(vm().referenceManager().makeReference(origin.asPointer()));
-                }
+                return makeTeleObject(vm().referenceManager().makeReference(origin));
             } catch (Throwable throwable) {
                 // Can't resolve the address somehow
             } finally {
@@ -278,6 +258,24 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             }
         }
         return null;
+    }
+
+    public TeleObject findQuasiObjectAt(Address origin) {
+        if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
+            try {
+                return makeTeleObject(vm().referenceManager().makeQuasiReference(origin));
+            } catch (Throwable throwable) {
+                // Can't resolve the address somehow
+            } finally {
+                vm().unlock();
+            }
+        }
+        return null;
+    }
+
+    public TeleObject findAnyObjectAt(Address origin) {
+        TeleObject object = findObjectAt(origin);
+        return object == null ? findQuasiObjectAt(origin) : object;
     }
 
     public TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent) {
@@ -292,8 +290,9 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
                 origin = origin.plus(wordSize);
-                if (isValidOrigin(origin)) {
-                    return makeTeleObject(referenceManager().makeReference(origin));
+                final TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                if (teleObject != null) {
+                    return teleObject;
                 }
             }
         } catch (Throwable throwable) {
@@ -313,13 +312,18 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
                 origin = origin.minus(wordSize);
-                if (isValidOrigin(origin)) {
-                    return makeTeleObject(referenceManager().makeReference(origin));
+                final TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                if (teleObject != null) {
+                    return teleObject;
                 }
             }
         } catch (Throwable throwable) {
         }
         return null;
+    }
+
+    public TeleObject vmClassRegistry() throws MaxVMBusyException {
+        return findObject(classes().vmClassRegistryReference());
     }
 
     /**
@@ -472,15 +476,17 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
     }
 
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     /**
      * Return the address where a forwarding pointer is stored within the specified tele object.
-     * @param teleObject
+     * @param object
      * @return Address of a forwarding pointer.
      */
-    public Address getForwardingPointerAddress(TeleObject teleObject) {
-        return teleObject.origin().plus(gcForwardingAddressOffset);
+    public Address getForwardingPointerAddress(MaxObject object) {
+        return object.origin().plus(gcForwardingAddressOffset);
     }
 
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     /**
      * Assumes the address is a valid object origin; returns whether the object holds a forwarding pointer.
      * <p>
@@ -491,6 +497,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return readForwardWordUnsafe(origin).asAddress().and(1).toLong() == 1;
     }
 
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     /**
      * Returns the actual address pointed at by a forwarding address stored in the object at
      * the specified location in VM memory, <em>assuming</em> that the object's origin is
@@ -500,11 +507,13 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * is actually a forwarding address stored in the object, or even whether the origin is a legitimate
      * address at all.
      */
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     public Address getForwardingAddressUnsafe(Address origin) {
         Address newCellAddress = readForwardWordUnsafe(origin).asAddress().minus(1);
         return Layout.generalLayout().cellToOrigin(newCellAddress.asPointer());
     }
 
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     /**
      * Assuming that the argument is the origin of an object in VM memory, reads the word that would hold the forwarding
      * address.
@@ -534,7 +543,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      *
      * @param origin a memory location in the VM
      * @return whether the object (probably) points at an instance of {@link StaticTuple}
-     * @see #isValidOrigin(Pointer)
      */
     private boolean isStaticTuple(Address origin) {
         // If this is a {@link StaticTuple} then a field in the header points at a {@link StaticHub}
@@ -566,7 +574,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
         printStream.print(indentation + "Inspection references: " + formatter.format(teleObjectFactory.referenceCount()) +
-                        " (" + formatter.format(teleObjectFactory.liveObjectCount()) + " live)\n");
+                        " (" + formatter.format(teleObjectFactory.liveObjectCount()) + " live, " + formatter.format(teleObjectFactory.quasiObjectCount()) + "quasi)\n");
         final TreeSet<ClassCount> sortedObjectsCreatedPerType = new TreeSet<ClassCount>(new Comparator<ClassCount>() {
             @Override
             public int compare(ClassCount o1, ClassCount o2) {
@@ -587,43 +595,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
                 printStream.println("    " + count.value + "\t" + count.type.getSimpleName());
             }
         }
-    }
-
-
-    // TODO (mlvdv) Old Heap
-    /**
-     * Finds an object in the VM that has been located at a particular place in memory, but which
-     * may have been relocated.
-     * <p>
-     * Must be called in thread holding the VM lock
-     *
-     * @param origin an object origin in the VM
-     * @return the object originally at the origin, possibly relocated
-     */
-    @Deprecated
-    public TeleObject getForwardedObject(Pointer origin) {
-        TeleError.unimplemented();
-        return null;
-//        final Reference forwardedObjectReference = referenceManager().makeReference(heap().getForwardedOrigin(origin));
-//        return teleObjectFactory.make(forwardedObjectReference);
-    }
-
-    // TODO (mlvdv) Old Heap
-    @Deprecated
-    public int gcForwardingPointerOffset() {
-        TeleError.unimplemented();
-        return 0;
-        // TODO (mlvdv) Should only be called if in a region being managed by relocating GC
-        //return heap().gcForwardingPointerOffset();
-    }
-
-    // TODO (mlvdv) Old Heap
-    @Deprecated
-    public boolean isObjectForwarded(Pointer origin) {
-        TeleError.unimplemented();
-        return false;
-        // TODO (mlvdv) Should only be called if in a region being managed by relocating GC
-        //return heap().isObjectForwarded(origin);
     }
 
 }

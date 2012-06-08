@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,16 +50,22 @@ public class NativeFunctionSearchDialog extends FilteredListDialog<MaxNativeFunc
 
     }
 
-    @Override
-    protected MaxNativeFunction noSelectedObject() {
-        return null;
+    private static class NativeFunctionItem extends FilteredListItem<MaxNativeFunction> {
+
+        private final MaxNativeFunction nativeFunction;
+
+        NativeFunctionItem(Inspection inspection, MaxNativeFunction nativeFunction) {
+            super(inspection);
+            this.nativeFunction = nativeFunction;
+        }
+
+        @Override
+        public MaxNativeFunction object() {
+            return nativeFunction;
+        }
     }
 
-    @Override
-    protected MaxNativeFunction convertSelectedItem(Object listItem) {
-        return (MaxNativeFunction) listItem;
-    }
-
+    @SuppressWarnings("unchecked")
     @Override
     protected void rebuildList(String filterText) {
         final String filter = filterText.toLowerCase();
@@ -67,10 +73,10 @@ public class NativeFunctionSearchDialog extends FilteredListDialog<MaxNativeFunc
             for (MaxNativeFunction info : maxNativeLibrary.functions()) {
                 if (filter.endsWith(" ")) {
                     if (info.name().equalsIgnoreCase(Strings.chopSuffix(filter, 1))) {
-                        listModel.addElement(info);
+                        listModel.addElement(new NativeFunctionItem(inspection(), info));
                     }
                 } else if (info.name().toLowerCase().contains(filter)) {
-                    listModel.addElement(info);
+                    listModel.addElement(new NativeFunctionItem(inspection(), info));
                 }
             }
         }

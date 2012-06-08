@@ -22,15 +22,15 @@
  */
 package com.sun.max.tele.reference.ms;
 
-import static com.sun.max.vm.heap.ObjectStatus.*;
+import static com.sun.max.tele.object.ObjectStatus.*;
 
 import java.util.*;
 
 import com.sun.max.tele.heap.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 
 /**
@@ -85,7 +85,7 @@ public class MSRemoteReference extends  RemoteReference {
 
             // Properties
             @Override ObjectStatus status() {
-                return UNKNOWN;
+                return LIVE;
             }
 
             @Override
@@ -361,13 +361,14 @@ public class MSRemoteReference extends  RemoteReference {
     }
 
     @Override
-    public boolean isForwarded() {
-        return false;
+    public Address forwardedFrom() {
+        return Address.zero();
     }
 
     @Override
-    public Address forwardedFrom() {
-        return Address.zero();
+    public Address forwardedTo() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override

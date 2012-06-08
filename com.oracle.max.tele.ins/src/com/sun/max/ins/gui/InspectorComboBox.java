@@ -30,7 +30,9 @@ import com.sun.max.ins.*;
  * A combo box specialized for use in the VM Inspector.
  */
 public class InspectorComboBox extends JComboBox {
+    // TODO (mlvdv) generic in Java 7
 
+    @SuppressWarnings("unchecked")
     public InspectorComboBox(Inspection inspection, Object[] items) {
         super(items);
         setOpaque(true);

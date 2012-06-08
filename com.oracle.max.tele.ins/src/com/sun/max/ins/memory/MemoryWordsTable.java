@@ -150,8 +150,8 @@ public final class MemoryWordsTable extends InspectorTable {
      */
     @Override
     public boolean isBoundaryRow(int row) {
-        // TODO (mlvdv)  this doesn't work when origin != cell
-        return vm().objects().isValidOrigin(tableModel.getMemoryRegion(row).start());
+        // TODO (mlvdv)  this doesn't work when origin != cell, i.e. with layouts other than OHM
+        return vm().objects().objectStatusAt(tableModel.getMemoryRegion(row).start()).isLive();
     }
 
     /**
@@ -319,7 +319,7 @@ public final class MemoryWordsTable extends InspectorTable {
             final Address address = tableModel.getAddress(row);
             WordValueLabel label = addressToLabelMap.get(address.toLong());
             if (label == null) {
-                final ValueMode labelValueMode = vm().objects().isValidOrigin(address) ? ValueMode.REFERENCE : ValueMode.WORD;
+                final ValueMode labelValueMode = vm().objects().objectStatusAt(address).isLive() ? ValueMode.REFERENCE : ValueMode.WORD;
                 label = new WordValueLabel(inspection, labelValueMode, address, MemoryWordsTable.this);
                 label.setToolTipPrefix("Memory word location<br>Address=");
                 label.setOpaque(true);

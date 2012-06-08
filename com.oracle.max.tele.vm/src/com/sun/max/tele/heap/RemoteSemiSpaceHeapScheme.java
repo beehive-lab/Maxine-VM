@@ -289,11 +289,12 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
              */
             if (phase().isCollecting()) {
 
-                /*
-                 * Check first to see if a GC cycle has started since the last time we looked. If so, then the spaces have
-                 * been swapped, and we must account for that before examining what has happened since the swap.
-                 */
+                // Has a GC cycle has started since the last time we looked?
                 if (lastAnalyzingPhaseCount < gcStartedCount()) {
+                    /*
+                     * A GC cycle has started since the last time we checked.  That means that the spaces have been swapped by the GC
+                     * and we must account for that first, before examining what else has happened since the swap.
+                     */
                     Trace.begin(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount() + ", swapping semispace heap regions");
                     assert lastAnalyzingPhaseCount == gcStartedCount() - 1;
                     assert fromSpaceRefMap.isEmpty();
@@ -306,7 +307,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                     final List<SemiSpaceRemoteReference> refs = fromSpaceRefMap.values();
                     for (SemiSpaceRemoteReference fromSpaceRef : refs) {
                         // A former To-Space reference that is now in From-Space: transition state
-                        fromSpaceRef.analysisBegins();
+                        fromSpaceRef.beginAnalyzing();
                     }
                     Trace.end(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount() + ", UNKNOWN refs=" + refs.size());
                     lastAnalyzingPhaseCount = gcStartedCount();
@@ -320,25 +321,32 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                 if (lastReclaimingPhaseCount < gcStartedCount()) {
                     // The transition to reclaiming hasn't yet been processed, so check for any newly forwarded references.
                     Trace.begin(TRACE_VALUE, tracePrefix() + "checking From-Space refs, GC cycle=" + gcStartedCount());
-                    int forwarded = 0;
-                    int live = 0;
+                    int newForwarded = 0;
+                    int oldForwarded = 0;
                     for (SemiSpaceRemoteReference fromSpaceRef : fromSpaceRefMap.values()) {
                         switch (fromSpaceRef.status()) {
-                            case UNKNOWN:
-                                if (objects().hasForwardingAddressUnsafe(fromSpaceRef.origin())) {
-                                    // A From-Space reference that has been forwarded since the last time we looked:
-                                    // transition state and add to To-Space map.
-                                    final Address toOrigin = objects().getForwardingAddressUnsafe(fromSpaceRef.origin());
-                                    fromSpaceRef.addToOrigin(toOrigin);
-                                    // After the state change, the official origin is now the one in To-Space.
-                                    // Note that the reference is still in the From-Space map, indexed by what is now the "forwardedFrom" origin.
-                                    toSpaceRefMap.put(toOrigin, fromSpaceRef);
-                                    forwarded++;
+                            case LIVE:
+                                final Address fromSpaceOrigin = fromSpaceRef.origin();
+                                if (objects().hasForwardingAddressUnsafe(fromSpaceOrigin)) {
+                                    // A known origin in From-Space that has been forwarded since the last time we checked.
+                                    // The object is now live in To-Space; transition the existing reference to reflect this.
+                                    // Remove the reference from the From-Space map.
+                                    fromSpaceRefMap.remove(fromSpaceOrigin);
+                                    // Get new address in To-Space
+                                    final Address toSpaceOrigin = objects().getForwardingAddressUnsafe(fromSpaceOrigin);
+                                    // Relocate the existing reference and add it to the To-Space Map
+                                    fromSpaceRef.discoverForwarded(toSpaceOrigin);
+                                    toSpaceRefMap.put(toSpaceOrigin, fromSpaceRef);
+
+                                    // Create a forwarder quasi reference to retain information about the old location for the duration of the analysis phase
+                                    final SemiSpaceRemoteReference forwarderReference = SemiSpaceRemoteReference.createForwarder(this, fromSpaceOrigin, toSpaceOrigin);
+                                    fromSpaceRefMap.put(fromSpaceOrigin, forwarderReference);
+                                    newForwarded++;
                                 }
                                 break;
-                            case LIVE:
-                                // Do nothing; already has a forwarding pointer and is in the To-Space map
-                                live++;
+                            case FORWARDER:
+                                // Do nothing; already forwarded and a separate reference is in the To-Space map
+                                oldForwarded++;
                                 break;
                             case DEAD:
                                 TeleError.unexpected(tracePrefix() + "DEAD reference found in From-Space map");
@@ -348,15 +356,14 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                         }
                     }
                     Trace.end(TRACE_VALUE, tracePrefix() + "checking From-Space refs, GC cycle=" + gcStartedCount()
-                                    + " forwarded=" + (live + forwarded) + "(old=" + live + ", new=" + forwarded + ")");
+                                    + " forwarded=" + (oldForwarded + newForwarded) + "(old=" + oldForwarded + ", new=" + newForwarded + ")");
                 }
 
                 if (phase().isReclaiming() && lastReclaimingPhaseCount < gcStartedCount()) {
                     /*
                      * The heap is in a GC cycle, and this is the first VM halt during that GC cycle where we know
                      * analysis is complete. This halt will usually be caused by the special breakpoint we've set at
-                     * entry to the {@linkplain #RECLAIMING} phase.  This is the opportunity
-                     * to update reference maps while full information is still available in the collector.
+                     * entry to the {@linkplain #RECLAIMING} phase.
                      */
                     Trace.begin(TRACE_VALUE, tracePrefix() + "first halt in GC RECLAIMING, cycle=" + gcStartedCount() + "; clearing From-Space references");
                     assert lastReclaimingPhaseCount == gcStartedCount() - 1;
@@ -364,39 +371,32 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                     for (SemiSpaceRemoteReference toSpaceRef : toSpaceRefMap.values()) {
                         switch (toSpaceRef.status()) {
                             case LIVE:
-                                toSpaceRef.analysisEnds();
-                                break;
-                            case UNKNOWN:
-                                TeleError.unexpected(tracePrefix() + "UNKNOWN reference found in To-Space map");
-                                break;
-                            case DEAD:
-                                TeleError.unexpected(tracePrefix() + "DEAD reference found in To-Space map");
+                                toSpaceRef.endAnalyzing();
                                 break;
                             default:
-                                TeleError.unknownCase();
+                                TeleError.unexpected(tracePrefix() + toSpaceRef.status().name() + " reference found in To-Space map");
+                                break;
                         }
                     }
-                    int forwarded = 0;
-                    int died = 0;
+                    int objectsDied = 0;
+                    int forwardersDied = 0;
                     for (SemiSpaceRemoteReference fromSpaceRef : fromSpaceRefMap.values()) {
                         switch (fromSpaceRef.status()) {
                             case LIVE:
-                                // Do nothing; the reference will already be in the To-Space map.
-                                forwarded++;
+                                fromSpaceRef.endAnalyzing();
+                                objectsDied++;
                                 break;
-                            case UNKNOWN:
-                                fromSpaceRef.analysisEnds();
-                                died++;
-                                break;
-                            case DEAD:
-                                TeleError.unexpected(tracePrefix() + "DEAD reference found in From-Space map");
+                            case FORWARDER:
+                                fromSpaceRef.endAnalyzing();
+                                forwardersDied++;
                                 break;
                             default:
-                                TeleError.unknownCase();
+                                TeleError.unexpected(tracePrefix() + fromSpaceRef.status().name() + " reference found in From-Space map");
+                                break;
                         }
                     }
                     fromSpaceRefMap.clear();
-                    Trace.end(TRACE_VALUE, tracePrefix() + "first halt in GC RECLAIMING, cycle=" + gcStartedCount() + ", forwarded=" + forwarded + ", died=" + died);
+                    Trace.end(TRACE_VALUE, tracePrefix() + "first halt in GC RECLAIMING, cycle=" + gcStartedCount() + ", died=(objects=" + objectsDied + ", fowarders=" + forwardersDied + ")");
 
                 }
             }
@@ -475,40 +475,79 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         return null;
     }
 
-    public boolean isObjectOrigin(Address origin) throws TeleError {
+    public ObjectStatus objectStatusAt(Address origin) throws TeleError {
         TeleError.check(contains(origin), "Location is outside semispace heap regions");
         switch(phase()) {
             case MUTATING:
             case RECLAIMING:
-                return toSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin);
+                if (toSpaceMemoryRegion.containsInAllocated(origin)) {
+                    final SemiSpaceRemoteReference knownToSpaceReference = toSpaceRefMap.get(origin);
+                    if (knownToSpaceReference != null) {
+                        return knownToSpaceReference.status();
+                    }
+                    if (objects().isPlausibleOriginUnsafe(origin)) {
+                        return ObjectStatus.LIVE;
+                    }
+                }
+                break;
             case ANALYZING:
                 if (toSpaceMemoryRegion.containsInAllocated(origin)) {
-                    return objects().isPlausibleOriginUnsafe(origin);
-                }
-                if (fromSpaceMemoryRegion.containsInAllocated(origin)) {
+                    final SemiSpaceRemoteReference knownToSpaceReference = toSpaceRefMap.get(origin);
+                    if (knownToSpaceReference != null) {
+                        return knownToSpaceReference.status();
+                    }
+                    if (objects().isPlausibleOriginUnsafe(origin)) {
+                        return ObjectStatus.LIVE;
+                    }
+                } else if (fromSpaceMemoryRegion.containsInAllocated(origin)) {
+                    final SemiSpaceRemoteReference knownFromSpaceReference = fromSpaceRefMap.get(origin);
+                    if (knownFromSpaceReference != null) {
+                        return knownFromSpaceReference.status();
+                    }
+                    if (objects().isPlausibleOriginUnsafe(origin)) {
+                        // An object in From-Space that hasn't been forwarded
+                        return ObjectStatus.LIVE;
+                    }
                     if (objects().hasForwardingAddressUnsafe(origin)) {
                         final Address forwardAddress = objects().getForwardingAddressUnsafe(origin);
-                        return toSpaceMemoryRegion.containsInAllocated(forwardAddress) && objects().isPlausibleOriginUnsafe(forwardAddress);
-                    } else {
-                        return objects().isPlausibleOriginUnsafe(origin);
+                        if (toSpaceMemoryRegion.containsInAllocated(forwardAddress) && objectStatusAt(forwardAddress).isLive()) {
+                            return ObjectStatus.FORWARDER;
+                        }
                     }
                 }
                 break;
             default:
                 TeleError.unknownCase();
         }
-        return false;
-    }
-
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
-        // This collector does not represent free space explicitly.
-        return false;
+        return ObjectStatus.DEAD;
     }
 
     public RemoteReference makeReference(Address origin) throws TeleError {
         assert vm().lockHeldByCurrentThread();
-        // It is an error to attempt creating a reference if the address is completely outside the managed region(s).
-        TeleError.check(contains(origin), "Location is outside semispace heap regions");
+        TeleError.check(contains(origin), "Location is outside of " + heapSchemeClass().getSimpleName() + " heap");
+        final RemoteReference reference = internalMakeRef(origin);
+        return reference != null && reference.status().isLive() ? reference : null;
+    }
+
+    public RemoteReference makeQuasiReference(Address origin) throws TeleError {
+        assert vm().lockHeldByCurrentThread();
+        TeleError.check(contains(origin), "Location is outside of " + heapSchemeClass().getSimpleName() + " heap");
+        final RemoteReference reference = internalMakeRef(origin);
+        return reference != null && reference.status().isQuasi() ? reference : null;
+    }
+
+    /**
+     * Creates a reference of the appropriate kind if there is an object or <em>quasi</em>
+     * object at the specified origin in VM memory.
+     * <p>
+     * Using this shared internal method has advantage that the logic is all in one place.
+     * The disadvantage is that references will be created unnecessarily.  That effect should
+     * be small, though.  The most common use case is to look for a live object, and the number
+     * of live objects dominates the number of <em>quasi</em> objects.  Looking for <em>quasi</em>
+     * objects only will probably succeed most of the time anyway, because callers are likely to
+     * have checked the object's status before making the reference.
+     */
+    private RemoteReference internalMakeRef(Address origin) {
         SemiSpaceRemoteReference remoteReference = null;
         switch(phase()) {
             case MUTATING:
@@ -525,70 +564,73 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                 }
                 break;
             case ANALYZING:
-                // In this heap phase, a reference can be in both maps at the same time.
+                // In this heap phase, there can be objects and references in both maps; in the case of a forwarded
+                // object, there might be one of each describing the same object.
                 if (toSpaceMemoryRegion.containsInAllocated(origin)) {
-                    remoteReference = toSpaceRefMap.get(origin);
+                    // A location in the allocated area of To-Space
+                    final Address toSpaceOrigin = origin;
+                    remoteReference = toSpaceRefMap.get(toSpaceOrigin);
                     if (remoteReference != null) {
-                        // A reference to the object is already in the To-Space map.
+                        // A known origin in To-Space
                         TeleError.check(remoteReference.status().isLive());
-                        TeleError.check(remoteReference.isForwarded());
-                    } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                    } else if (objects().isPlausibleOriginUnsafe(toSpaceOrigin)) {
+                        // An origin in To-Space not yet seen.
                         /*
-                         * A newly discovered object in the allocated area of To-Space, which means that it is the new
-                         * copy of a forwarded object. There is no need to look in the From-Space map; if the origin of
-                         * the original copy had been discovered, then it would already have been added to both the
-                         * From-Space and To-Space maps.  Add a new reference to the To-Space map.
+                         * It must be a copy of a forwarded object. We don't know about the old copy, though.  If we had known about
+                         * the old copy, then we would have been able to locate this new object already and we would
+                         * have found a reference in the To-Space Map.  So we only need to add it to the To-Space map.
                          */
-                        remoteReference =  SemiSpaceRemoteReference.createToOnly(this, origin);
-                        toSpaceRefMap.put(origin, remoteReference);
+                        remoteReference = SemiSpaceRemoteReference.createInToOnly(this, toSpaceOrigin);
+                        toSpaceRefMap.put(toSpaceOrigin, remoteReference);
                     }
                 } else if (fromSpaceMemoryRegion.containsInAllocated(origin)) {
-                    remoteReference = fromSpaceRefMap.get(origin);
+                    // A location in the allocated area of From-Space
+                    final Address fromSpaceOrigin = origin;
+                    remoteReference = fromSpaceRefMap.get(fromSpaceOrigin);
                     if (remoteReference != null) {
-                        // A reference to the object is already in the From-Space map
-                        if (!remoteReference.isForwarded() && objects().hasForwardingAddressUnsafe(origin)) {
-                            /*
-                             * An object in From-Space that has been forwarded since the last time we checked:
-                             * transition state and add the reference to the To-Space map.
-                             */
-                            final Address toOrigin = objects().getForwardingAddressUnsafe(origin);
-                            remoteReference.addToOrigin(toOrigin);
-                            toSpaceRefMap.put(toOrigin, remoteReference);
+                        // A known origin in From-Space
+                        if (!remoteReference.status().isForwarder() && objects().hasForwardingAddressUnsafe(fromSpaceOrigin)) {
+                            // A known origin in From-Space that has been forwarded since the last time we checked.
+                            // The object is now live in To-Space; transition the existing reference to reflect this.
+                            // Remove the reference from the From-Space map.
+                            fromSpaceRefMap.remove(fromSpaceOrigin);
+                            // Get new address in To-Space
+                            final Address toSpaceOrigin = objects().getForwardingAddressUnsafe(fromSpaceOrigin);
+                            // Relocate the reference and add it to the To-Space Map
+                            remoteReference.discoverForwarded(toSpaceOrigin);
+                            toSpaceRefMap.put(toSpaceOrigin, remoteReference);
+
+                            // Create a forwarder quasi reference to retain information about the old location for the duration of the analysis phase
+                            final SemiSpaceRemoteReference forwarderReference = SemiSpaceRemoteReference.createForwarder(this, fromSpaceOrigin, toSpaceOrigin);
+                            fromSpaceRefMap.put(fromSpaceOrigin, forwarderReference);
                         }
-                    } else {
-                        if (!objects().hasForwardingAddressUnsafe(origin) && objects().isPlausibleOriginUnsafe(origin)) {
-                            /*
-                             * A newly discovered object in the allocated area of From-Space that is not forwarded; add
-                             * a new reference to the From-Space map, where it is indexed by its origin in From-Space.
-                             */
-                            remoteReference = SemiSpaceRemoteReference.createFromOnly(this, origin);
-                            fromSpaceRefMap.put(origin, remoteReference);
-                        } else if (objects().hasForwardingAddressUnsafe(origin)) {
-                            /*
-                             * A newly discovered object in the allocated area of From-Space that is forwarded.
-                             * Check to see if we already know about the copy in To-Space.
-                             */
-                            final Address toOrigin = objects().getForwardingAddressUnsafe(origin);
-                            remoteReference = toSpaceRefMap.get(toOrigin);
+                    } else if (objects().isPlausibleOriginUnsafe(fromSpaceOrigin)) {
+                        // An origin in From-Space not yet seen
+                        if (objects().hasForwardingAddressUnsafe(fromSpaceOrigin)) {
+                            // TODO (mlvdv) the current implementation of isPlausibleOriginUnsafe won't recognize a forwarder
+                            // So, this case will not be handled.
+
+                            // A forwarder in From-Space not yet seen.
+                            // Check to see if we already know about the copy in To-Space.
+                            final Address toSpaceOrigin = objects().getForwardingAddressUnsafe(fromSpaceOrigin);
+                            remoteReference = toSpaceRefMap.get(toSpaceOrigin);
                             if (remoteReference != null) {
-                                /*
-                                 * We already have a reference to the new copy of the forwarded object in To-Space:
-                                 * transition state and add it to the From-Space map (indexed by what is now its
-                                 * "fowardedFrom" address).
-                                 */
-                                remoteReference.addFromOrigin(origin);
-                                fromSpaceRefMap.put(origin, remoteReference);
-                            } else if (objects().isPlausibleOriginUnsafe(toOrigin)) {
-                                /*
-                                 * A newly discovered object that is forwarded, but whose new copy in To-Space we
-                                 * haven't seen yet; add the reference to both the From-Space map, indexed by
-                                 * "forwardedFrom" origin, and to the To-Space map, where it is indexed by its new
-                                 * origin.
-                                 */
-                                remoteReference = SemiSpaceRemoteReference.createFromTo(this, origin, toOrigin);
-                                fromSpaceRefMap.put(origin, remoteReference);
-                                toSpaceRefMap.put(toOrigin, remoteReference);
+                                // A forwarder whose new copy is already known; add knowledge of the old origin to the new copy's reference
+                                remoteReference.discoverOldOrigin(fromSpaceOrigin);
+                            } else if (objects().isPlausibleOriginUnsafe(toSpaceOrigin)) {
+                                // A forwarder whose new copy in To-Space has not yet been seen; create a reference for the To-Space map
+                                final SemiSpaceRemoteReference newCopyReference = SemiSpaceRemoteReference.createInFromTo(this, fromSpaceOrigin, toSpaceOrigin);
+                                toSpaceRefMap.put(toSpaceOrigin, newCopyReference);
                             }
+
+                            // Create a forwarder quasi reference and add to the From-Space map
+                            final SemiSpaceRemoteReference forwarderReference = SemiSpaceRemoteReference.createForwarder(this, fromSpaceOrigin, toSpaceOrigin);
+                            fromSpaceRefMap.put(fromSpaceOrigin, forwarderReference);
+                        } else {
+                            // An origin in From-Space not yet seen and not forwarded.
+                            // Add a new reference to the From-Space map, where it is indexed by its origin in From-Space.
+                            remoteReference = SemiSpaceRemoteReference.createInFromOnly(this, origin);
+                            fromSpaceRefMap.put(origin, remoteReference);
                         }
                     }
                 }
@@ -629,7 +671,6 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         final NumberFormat formatter = NumberFormat.getInstance();
         int totalRefs = 0;
         int liveRefs = 0;
-        int unknownRefs = 0;
         int deadRefs = 0;
 
         for (SemiSpaceRemoteReference ref : map.values()) {
@@ -637,15 +678,12 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                 case LIVE:
                     liveRefs++;
                     break;
-                case UNKNOWN:
-                    unknownRefs++;
-                    break;
                 case DEAD:
                     deadRefs++;
                     break;
             }
         }
-        totalRefs = liveRefs + unknownRefs + deadRefs;
+        totalRefs = liveRefs + deadRefs;
 
         // Line 0
         String indentation = Strings.times(' ', indent);
@@ -680,7 +718,6 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         if (totalRefs > 0) {
             sb2.append(", object status: ");
             sb2.append(ObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
-            sb2.append(ObjectStatus.UNKNOWN.label()).append("=").append(formatter.format(unknownRefs));
         }
         printStream.println(indentation + sb2.toString());
         if (deadRefs > 0) {
@@ -723,7 +760,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
          * @return surrogate for the semispace collector's "from" region
          */
         public TeleLinearAllocationMemoryRegion readTeleFromRegion() {
-            final Reference fromReference = fields().SemiSpaceHeapScheme_fromSpace.readReference(getReference());
+            final Reference fromReference = fields().SemiSpaceHeapScheme_fromSpace.readReference(reference());
             return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(fromReference);
         }
 
@@ -731,7 +768,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
          * @return surrogate for the semispace collector's "to" region
          */
         public TeleLinearAllocationMemoryRegion readTeleToRegion() {
-            final Reference toReference = fields().SemiSpaceHeapScheme_toSpace.readReference(getReference());
+            final Reference toReference = fields().SemiSpaceHeapScheme_toSpace.readReference(reference());
             return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(toReference);
         }
 

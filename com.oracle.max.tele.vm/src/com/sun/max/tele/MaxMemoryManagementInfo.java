@@ -23,7 +23,6 @@
 package com.sun.max.tele;
 
 import com.sun.max.tele.heap.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -56,8 +55,8 @@ public interface MaxMemoryManagementInfo  {
     Address address();
 
     /**
-     * @return a {@link RemoteHeapScheme} specific {@link TeleObject} that represents the memory management info, if any.
+     * @return a {@link RemoteHeapScheme} specific {@link MaxObject} that represents the memory management info, if any.
      */
-    TeleObject tele();
+    MaxObject tele();
 
 }

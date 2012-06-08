@@ -94,14 +94,15 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return heapPhase;
     }
 
+
+
     /**
      * {@inheritDoc}
      * <p>
      * We don't need a heuristic for objects here; if they are present, then they are
      * pointed at by one of the fields in the {@link TargetMethod}.
      */
-    @Override
-    public boolean isObjectOrigin(Address origin) throws TeleError {
+    public ObjectStatus objectStatusAt(Address origin) throws TeleError {
         TeleError.check(semispaceCodeCacheRegion.memoryRegion().contains(origin), "Location is outside region");
         final TeleCompilation compilation = semispaceCodeCacheRegion.findCompilation(origin);
         if (compilation != null) {
@@ -114,22 +115,13 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
                     if (objectOrigin != null && objectOrigin.equals(origin)) {
                         // The specified location matches one of the target method's pointers.
                         // There should be an object there, but check just in case.
-                        return objects().isPlausibleOriginUnsafe(objectOrigin);
+                        assert objects().isPlausibleOriginUnsafe(objectOrigin);
+                        return ObjectStatus.LIVE;
                     }
                 }
             }
         }
-        return false;
-    }
-
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
-        // This collector does not represent free space explicitly.
-        return false;
-    }
-
-    public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
-        // Objects are relocated, but are not forwarded in this region.
-        return null;
+        return ObjectStatus.DEAD;
     }
 
     @Override
@@ -153,6 +145,15 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
             }
         }
         return vm().referenceManager().zeroReference();
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * There are no <em>quasi</em> objects in this kind of region.
+     */
+    public RemoteReference makeQuasiReference(Address origin) throws TeleError {
+        return null;
     }
 
     private int activeReferenceCount() {
@@ -272,8 +273,8 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
          * in the usual GC sense.
          */
         @Override
-        public boolean isForwarded() {
-            return false;
+        public Address forwardedFrom() {
+            return Address.zero();
         }
 
         /**
@@ -283,7 +284,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
          * in the usual GC sense.
          */
         @Override
-        public Address forwardedFrom() {
+        public Address forwardedTo() {
             return Address.zero();
         }
 

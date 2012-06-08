@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
@@ -44,12 +43,12 @@ import com.sun.max.vm.value.*;
  */
 public final class MiscWordLabel extends ValueLabel {
 
-    private final TeleObject teleObject;
-    private TeleObject teleJavaMonitor = null;
+    private final MaxObject object;
+    private MaxObject javaMonitor = null;
 
-    public MiscWordLabel(Inspection inspection, TeleObject teleObject) {
+    public MiscWordLabel(Inspection inspection, MaxObject object) {
         super(inspection, null);
-        this.teleObject = teleObject;
+        this.object = object;
         addMouseListener(new InspectorMouseClickAdapter(inspection()) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
@@ -80,7 +79,7 @@ public final class MiscWordLabel extends ValueLabel {
 
     @Override
     public Value fetchValue() {
-        return new WordValue(teleObject.getMiscWord());
+        return new WordValue(object.readMiscWord());
     }
 
     public void redisplay() {
@@ -96,7 +95,7 @@ public final class MiscWordLabel extends ValueLabel {
         final String hexString = miscWord.toHexString();
         final MonitorScheme monitorScheme = vm().bootImage().vmConfiguration.monitorScheme();
         if (monitorScheme instanceof ModalMonitorScheme) {
-            teleJavaMonitor = null;
+            javaMonitor = null;
             if (modalLockwordDecoder == null) {
                 final ModalMonitorScheme modalMonitorScheme = (ModalMonitorScheme) monitorScheme;
                 modalLockwordDecoder = modalMonitorScheme.getModalLockwordDecoder();
@@ -129,11 +128,11 @@ public final class MiscWordLabel extends ValueLabel {
                 final boolean isBound = inflatedLockword.isBound();
                 if (isBound) {
                     // JavaMonitor is a proper object, not just a Word.
-                    teleJavaMonitor = vm().objects().findObjectAt(inflatedLockword.getBoundMonitorReferenceAsWord().asAddress());
-                    if (teleJavaMonitor == null) {
+                    javaMonitor = vm().objects().findObjectAt(inflatedLockword.getBoundMonitorReferenceAsWord().asAddress());
+                    if (javaMonitor == null) {
                         setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + inspection().nameDisplay().unavailableDataLongText());
                     } else {
-                        final String name = teleJavaMonitor.classActorForObjectType().qualifiedName();
+                        final String name = javaMonitor.classActorForObjectType().qualifiedName();
                         setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + name);
                     }
                 } else {
@@ -156,8 +155,8 @@ public final class MiscWordLabel extends ValueLabel {
     }
 
     private InspectorAction getInspectJavaMonitorAction() {
-        final InspectorAction action = views().objects().makeViewAction(teleJavaMonitor, "View JavaMonitor (left-button)");
-        action.setEnabled(teleJavaMonitor != null);
+        final InspectorAction action = views().objects().makeViewAction(javaMonitor, "View JavaMonitor (left-button)");
+        action.setEnabled(javaMonitor != null);
         return action;
     }
 }

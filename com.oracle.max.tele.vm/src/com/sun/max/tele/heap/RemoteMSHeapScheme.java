@@ -457,23 +457,20 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     }
 
     // TODO (mlvdv) refine
-    public boolean isObjectOrigin(Address origin) throws TeleError {
+    public ObjectStatus objectStatusAt(Address origin) throws TeleError {
         TeleError.check(contains(origin), "Location is outside MS heap region");
         switch(phase()) {
             case MUTATING:
             case RECLAIMING:
             case ANALYZING:
-                return objectSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin);
+                if (objectSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin)) {
+                    return ObjectStatus.LIVE;
+                }
+                break;
             default:
                 TeleError.unknownCase();
         }
-        return false;
-    }
-
-    @Override
-    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
-        TeleError.check(contains(origin), "Location is outside MS heap region");
-        return super.isHeapFreeChunkOrigin(origin);
+        return ObjectStatus.DEAD;
     }
 
     // TODO (mlvdv) refine; only handles live object now, doesn't support collection.
@@ -502,6 +499,10 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         return remoteReference;
     }
 
+    // TODO (mlvdv) refine, e.g. for HeapFreeChunks and possibly others.
+    public RemoteReference makeQuasiReference(Address origin) throws TeleError {
+        return null;
+    }
 
     /**
      * Does the heap region contain the address anywhere?

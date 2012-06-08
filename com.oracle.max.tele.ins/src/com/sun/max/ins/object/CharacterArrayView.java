@@ -27,8 +27,8 @@ import javax.swing.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * An object view specialized for displaying a low-level character array in the VM.
@@ -43,8 +43,8 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
     // Follows user's tab selection, but should persist when view reconstructed.
     private boolean alternateDisplay;
 
-    CharacterArrayView(Inspection inspection, TeleObject teleObject) {
-        super(inspection, teleObject);
+    CharacterArrayView(Inspection inspection, MaxObject object) {
+        super(inspection, object);
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
@@ -55,7 +55,7 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
     protected void createViewContent() {
         super.createViewContent();
 
-        final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
+        final TeleArrayObject teleArrayObject = (TeleArrayObject) object();
         final String componentTypeName = teleArrayObject.classActorForObjectType().componentClassActor().javaSignature(false);
 
         tabbedPane = new InspectorTabbedPane(inspection());

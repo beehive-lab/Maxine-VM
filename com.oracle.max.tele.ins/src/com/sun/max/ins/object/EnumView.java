@@ -27,8 +27,8 @@ import javax.swing.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * An object view specialized for displaying a low-level heap object
@@ -44,8 +44,8 @@ public class EnumView extends ObjectView<EnumView> {
     // Follows user's tab selection, but should persist when view reconstructed.
     private boolean alternateDisplay;
 
-    EnumView(Inspection inspection, TeleObject teleObject) {
-        super(inspection, teleObject);
+    EnumView(Inspection inspection, MaxObject object) {
+        super(inspection, object);
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
@@ -55,7 +55,7 @@ public class EnumView extends ObjectView<EnumView> {
     @Override
     protected void createViewContent() {
         super.createViewContent();
-        final TeleEnum teleEnum = (TeleEnum) teleObject();
+        final TeleEnum teleEnum = (TeleEnum) object();
         final String name = teleEnum.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new InspectorTabbedPane(inspection());
@@ -68,7 +68,7 @@ public class EnumView extends ObjectView<EnumView> {
                 return teleEnum.toJava().name();
             }
             public ObjectStatus status() {
-                return teleObject().status();
+                return object().status();
             }
         });
         tabbedPane.add("string value", stringPane);

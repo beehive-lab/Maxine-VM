@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
@@ -54,9 +55,9 @@ public final class HubView extends ObjectView<HubView> {
     private ObjectScrollPane mTablePane;
     private ObjectScrollPane refMapPane;
 
-    HubView(Inspection inspection, TeleObject teleObject) {
-        super(inspection, teleObject);
-        teleHub = (TeleHub) teleObject;
+    HubView(Inspection inspection, MaxObject object) {
+        super(inspection, object);
+        teleHub = (TeleHub) object;
 
         // Initialize instance preferences from the global preferences
         final HubViewPreferences globalHubPreferences = HubViewPreferences.globalHubPreferences(inspection());
@@ -165,7 +166,7 @@ public final class HubView extends ObjectView<HubView> {
 
         // View-specific Object menu
         final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
-        final TeleClassMethodActor teleClassMethodActor = teleObject().getTeleClassMethodActorForObject();
+        final TeleClassMethodActor teleClassMethodActor = object().getTeleClassMethodActorForObject();
         if (teleClassMethodActor != null) {
             // the object is, or is associated with a ClassMethodActor.
             final InspectorMenu debugMenu = makeMenu(MenuKind.DEBUG_MENU);

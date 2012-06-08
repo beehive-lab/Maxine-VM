@@ -25,7 +25,6 @@ package com.sun.max.ins.method;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
@@ -42,58 +41,65 @@ import com.sun.max.vm.type.*;
  */
 public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
 
-    @Override
-    protected MethodKey noSelectedObject() {
-        return null;
+    private static final class MethodKeyItem extends FilteredListItem<MethodKey> {
+
+        static MethodKeyItem create(Inspection inspection, SignatureDescriptor signature, TypeDescriptor holder, Utf8Constant name) {
+            return new MethodKeyItem(inspection, new DefaultMethodKey(holder, name, signature));
+        }
+
+        private final MethodKey methodKey;
+        private final String name;
+
+        public MethodKeyItem(Inspection inspection, MethodKey methodKey) {
+            super(inspection);
+            this.methodKey = methodKey;
+            this.name = methodKey.name() + methodKey.signature().toJavaString(false, true);
+        }
+
+        @Override
+        public MethodKey object() {
+            return methodKey;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
-    @Override
-    protected MethodKey convertSelectedItem(Object listItem) {
-        final Class<MethodKey> type = null;
-        return Utils.cast(type, listItem);
-    }
-
+    @SuppressWarnings("unchecked")
     @Override
     protected void rebuildList(String filterText) {
         final String filter = filterText.toLowerCase();
-        for (MethodKey methodKey : methodKeys) {
-            final String methodName = methodKey.name().string;
+        for (MethodKeyItem methodKeyItem : methodKeyItems) {
+            final String methodName = methodKeyItem.methodKey.name().string;
             if (filter.endsWith(" ")) {
                 if (methodName.equalsIgnoreCase(Strings.chopSuffix(filter, 1))) {
-                    listModel.addElement(methodKey);
+                    listModel.addElement(methodKeyItem);
                 }
             } else if (methodName.toLowerCase().contains(filter)) {
-                listModel.addElement(methodKey);
+                listModel.addElement(methodKeyItem);
             }
         }
     }
 
-    private final List<MethodKey> methodKeys;
-
-    private MethodKey createMethodKey(SignatureDescriptor signature, TypeDescriptor holder, Utf8Constant name) {
-        return new DefaultMethodKey(holder, name, signature) {
-            @Override
-            public String toString() {
-                return name + signature.toJavaString(false, true);
-            }
-        };
-    }
+    private final List<MethodKeyItem> methodKeyItems;
 
     private MethodSearchDialog(Inspection inspection, TypeDescriptor holderTypeDescriptor, String title, String actionName) {
         super(inspection, title == null ? "Select Method" : title, "Method Name", actionName, false);
-        methodKeys = new ArrayList<MethodKey>();
+        methodKeyItems = new ArrayList<MethodKeyItem>();
         final String className = holderTypeDescriptor.toJavaString();
         try {
             final Class javaClass = Classes.load(HostedVMClassLoader.HOSTED_VM_CLASS_LOADER, className);
             for (Constructor constructor : javaClass.getDeclaredConstructors()) {
-                methodKeys.add(createMethodKey(SignatureDescriptor.create(Void.TYPE, constructor.getParameterTypes()), holderTypeDescriptor, SymbolTable.INIT));
+                methodKeyItems.add(MethodKeyItem.create(inspection, SignatureDescriptor.create(Void.TYPE, constructor.getParameterTypes()), holderTypeDescriptor, SymbolTable.INIT));
             }
             for (Method method : javaClass.getDeclaredMethods()) {
-                methodKeys.add(createMethodKey(SignatureDescriptor.create(method.getReturnType(), method.getParameterTypes()), holderTypeDescriptor, SymbolTable.makeSymbol(method.getName())));
+                methodKeyItems.add(MethodKeyItem.create(inspection, SignatureDescriptor.create(method.getReturnType(), method.getParameterTypes()), holderTypeDescriptor, SymbolTable.makeSymbol(method.getName())));
             }
             final ClassActor classActor = ClassActor.fromJava(javaClass);
             if (classActor.hasClassInitializer()) {
-                methodKeys.add(createMethodKey(SignatureDescriptor.create(Void.TYPE), holderTypeDescriptor, SymbolTable.CLINIT));
+                methodKeyItems.add(MethodKeyItem.create(inspection, SignatureDescriptor.create(Void.TYPE), holderTypeDescriptor, SymbolTable.CLINIT));
             }
         } catch (Error error) {
             InspectorWarning.message(inspection, "Error loading class " + className, error);
