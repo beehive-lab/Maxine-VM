@@ -90,6 +90,15 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
     MaxObject findQuasiObjectAt(Address origin);
 
     /**
+     * Finds a live or quasi object whose origin is at the specified address, if one exists.
+     *
+     * @param origin memory location in the VM
+     * @return surrogate for a VM live or quasi object, null if none found or if the VM is busy
+     * @throws MaxVMBusyException if data cannot be read from the VM at this time
+     */
+    MaxObject findAnyObjectAt(Address origin);
+
+    /**
      * Scans VM memory backwards (smaller address) for a live object whose cell begins at the specified address.
      *
      * @param cellAddress search starts with word preceding this address

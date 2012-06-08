@@ -273,6 +273,11 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return null;
     }
 
+    public TeleObject findAnyObjectAt(Address origin) {
+        TeleObject object = findObjectAt(origin);
+        return object == null ? findQuasiObjectAt(origin) : object;
+    }
+
     public TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent) {
 
         // Search limit expressed in words
@@ -569,7 +574,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
         printStream.print(indentation + "Inspection references: " + formatter.format(teleObjectFactory.referenceCount()) +
-                        " (" + formatter.format(teleObjectFactory.liveObjectCount()) + " live)\n");
+                        " (" + formatter.format(teleObjectFactory.liveObjectCount()) + " live, " + formatter.format(teleObjectFactory.quasiObjectCount()) + "quasi)\n");
         final TreeSet<ClassCount> sortedObjectsCreatedPerType = new TreeSet<ClassCount>(new Comparator<ClassCount>() {
             @Override
             public int compare(ClassCount o1, ClassCount o2) {

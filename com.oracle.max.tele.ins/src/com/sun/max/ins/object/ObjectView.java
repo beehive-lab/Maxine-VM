@@ -275,7 +275,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     protected void refreshState(boolean force) {
-            final ObjectStatus status = object.status();
+        final ObjectStatus status = object.status();
 //        if (object.reference().isForwarded() && followingTeleObject) {
 //            //Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardReference().toOrigin().toHexString());
 //            MaxObject forwardedTeleObject = object.getForwardedTeleObject();
@@ -294,24 +294,26 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 //            }
 //        }
 
-        final Pointer newOrigin = object.origin();
-        if (!newOrigin.equals(currentObjectOrigin)) {
-            // The object has been relocated in memory
-            currentObjectOrigin = newOrigin;
-            reconstructView();
-        } else {
-            if (objectHeaderTable != null) {
-                objectHeaderTable.refresh(force);
+        // TODO (mlvdv)  This is just a wild fist cut for debugging; this isn't the policy we want
+        if (status.isLive()) {
+            setStateColor(null);
+            final Pointer newOrigin = object.origin();
+            if (!newOrigin.equals(currentObjectOrigin)) {
+                // The object has been relocated in memory
+                currentObjectOrigin = newOrigin;
+                reconstructView();
+            } else {
+                if (objectHeaderTable != null) {
+                    objectHeaderTable.refresh(force);
+                }
             }
+
+        } else if (status.isQuasi()) {
+            setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
+        } else { // DEAD
+            setStateColor(preference().style().deadObjectBackgroundColor());
         }
         setTitle();
-        if (status.isDead()) {
-                setStateColor(preference().style().deadObjectBackgroundColor());
-//        } else if (object.reference().isForwarded()) {
-//            setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
-        } else {
-            setStateColor(null);
-        }
     }
 
     /**
