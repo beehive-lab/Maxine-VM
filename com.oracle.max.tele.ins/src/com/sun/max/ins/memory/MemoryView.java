@@ -649,7 +649,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
         switch(viewMode()) {
             case OBJECT:
                 MaxObject object = null;
-                object = vm().objects().findObjectAt(origin);
+                object = vm().objects().findAnyObjectAt(origin);
                 if (object == null) {
                     titleBuilder.append("Memory object: ").append(memoryWordRegion.start().toHexString());
                 } else {

@@ -427,7 +427,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
 
         public void setSelectedAddress(Address address) {
             this.address = address;
-            this.object = vm().objects().findObjectAt(address);
+            this.object = vm().objects().findAnyObjectAt(address);
             setEnabled(object != null);
         }
     }
