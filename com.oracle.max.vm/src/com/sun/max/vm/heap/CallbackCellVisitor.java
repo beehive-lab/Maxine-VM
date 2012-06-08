@@ -37,14 +37,13 @@ public abstract class CallbackCellVisitor implements CellVisitor {
     public Pointer visitCell(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
-        final SpecificLayout specificLayout = hub.specificLayout;
 
         Object object = Reference.fromOrigin(origin).toJava();
         if (!callback(object)) {
             return Pointer.zero();
         }
 
-        if (specificLayout.isTupleLayout()) {
+        if (hub.specificLayout == Layout.tupleLayout()) {
             return cell.plus(hub.tupleSize);
         } else {
             return cell.plus(Layout.size(origin));
