@@ -260,6 +260,19 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return null;
     }
 
+    public TeleObject findQuasiObjectAt(Address origin) {
+        if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
+            try {
+                return makeTeleObject(vm().referenceManager().makeQuasiReference(origin));
+            } catch (Throwable throwable) {
+                // Can't resolve the address somehow
+            } finally {
+                vm().unlock();
+            }
+        }
+        return null;
+    }
+
     public TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent) {
 
         // Search limit expressed in words

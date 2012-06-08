@@ -459,6 +459,29 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     public RemoteReference makeReference(Address origin) throws TeleError {
         assert vm().lockHeldByCurrentThread();
         TeleError.check(contains(origin), "Location is outside of " + heapSchemeClass().getSimpleName() + " heap");
+        final RemoteReference reference = internalMakeRef(origin);
+        return reference != null && reference.status().isLive() ? reference : null;
+    }
+
+    public RemoteReference makeQuasiReference(Address origin) throws TeleError {
+        assert vm().lockHeldByCurrentThread();
+        TeleError.check(contains(origin), "Location is outside of " + heapSchemeClass().getSimpleName() + " heap");
+        final RemoteReference reference = internalMakeRef(origin);
+        return reference != null && reference.status().isQuasi() ? reference : null;
+    }
+
+    /**
+     * Creates a reference of the appropriate kind if there is an object or <em>quasi</em>
+     * object at the specified origin in VM memory.
+     * <p>
+     * Using this shared internal method has advantage that the logic is all in one place.
+     * The disadvantage is that references will be created unnecessarily.  That effect should
+     * be small, though.  The most common use case is to look for a live object, and the number
+     * of live objects dominates the number of <em>quasi</em> objects.  Looking for <em>quasi</em>
+     * objects only will probably succeed most of the time anyway, because callers are likely to
+     * have already checked the object's status before making the reference.
+     */
+    private RemoteReference internalMakeRef(Address origin) {
         GenSSRemoteReference ref = null;
         switch(phase()) {
             case MUTATING:

@@ -1440,6 +1440,10 @@ public abstract class TeleVM implements MaxVM {
         return referenceManager.makeReference(origin);
     }
 
+    public final Reference makeQuasiObjectReference(Address origin) {
+        return referenceManager.makeQuasiReference(origin);
+    }
+
     public final ReferenceValue createReferenceValue(Reference reference) {
         return referenceManager.createReferenceValue(reference);
     }
