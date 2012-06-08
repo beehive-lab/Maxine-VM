@@ -113,13 +113,13 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      */
     private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(refVerifier);
 
-    private CollectHeap collectHeap;
+    private final CollectHeap collectHeap;
 
     @INSPECTED
-    private LinearAllocationMemoryRegion fromSpace = null;
+    private LinearAllocationMemoryRegion fromSpace = new LinearAllocationMemoryRegion(FROM_REGION_NAME);
 
     @INSPECTED
-    private LinearAllocationMemoryRegion toSpace = null;
+    private LinearAllocationMemoryRegion toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
@@ -188,8 +188,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         super();
         pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(false, false, false);
         collectHeap = new CollectHeap();
-        fromSpace = new LinearAllocationMemoryRegion(FROM_REGION_NAME);
-        toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
     }
 
     @Override
