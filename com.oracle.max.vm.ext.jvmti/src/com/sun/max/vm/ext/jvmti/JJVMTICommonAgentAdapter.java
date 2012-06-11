@@ -370,20 +370,17 @@ public abstract class JJVMTICommonAgentAdapter implements JJVMTICommon, JJVMTICo
 
     @Override
     public Object getTag(Object object) throws JJVMTIException {
-        throw notImplemented;
-
+        return env.tags.getTag(object);
     }
 
     @Override
     public void setTag(Object object, Object tag) throws JJVMTIException {
-        throw notImplemented;
-
+        env.tags.setTag(object, tag);
     }
 
     @Override
     public void forceGarbageCollection() throws JJVMTIException {
-        throw notImplemented;
-
+        System.gc();
     }
 
     @Override
@@ -448,20 +445,17 @@ public abstract class JJVMTICommonAgentAdapter implements JJVMTICommon, JJVMTICo
 
     @Override
     public EnumSet<JVMTICapabilities.E> getPotentialCapabilities() throws JJVMTIException {
-        throw notImplemented;
-
+        return JVMTICapabilities.getPotentialCapabilities(env);
     }
 
     @Override
     public void addCapabilities(EnumSet<JVMTICapabilities.E> caps) throws JJVMTIException {
-        throw notImplemented;
-
+        JVMTICapabilities.addCapabilities(env, caps);
     }
 
     @Override
     public void relinquishCapabilities(EnumSet<JVMTICapabilities.E> caps) throws JJVMTIException {
-        throw notImplemented;
-
+        JVMTICapabilities.relinquishCapabilities(env, caps);
     }
 
     @Override

@@ -94,6 +94,21 @@ public class JVMTIUtil {
         double doubleValue;
         Object objectValue;
         Word wordValue;
+
+        Object asObject() {
+            switch (tag) {
+                // Checkstyle: stop
+                case DATA_NONE: return null;
+                case DATA_INT: return new Integer(intValue);
+                case DATA_LONG: return new Long(longValue);
+                case DATA_FLOAT: return new Float(floatValue);
+                case DATA_DOUBLE: return new Double(doubleValue);
+                case DATA_OBJECT: return objectValue;
+                case DATA_WORD: return wordValue.asAddress().toLong();
+                default: return null;
+                // Checkstyle: resume
+            }
+        }
     }
 
     /**

@@ -57,10 +57,10 @@ public interface JJVMTIStd extends JJVMTICommon {
     }
 
     public static class ClassDefinition {
-        public final Class klass;
+        public final Class<?> klass;
         public final byte[] classBytes;
 
-        public ClassDefinition(Class klass, byte[] classBytes) {
+        public ClassDefinition(Class<?> klass, byte[] classBytes) {
             this.klass = klass;
             this.classBytes = classBytes;
         }
@@ -69,11 +69,13 @@ public interface JJVMTIStd extends JJVMTICommon {
     public interface EventCallbacksStd extends EventCallbacks {
         void breakpoint(Thread thread, Member method, long location);
         /**
-         * There is no CLASS_PREPARE event as Maxine cannot usefully distinguish it from CLASS_LOAD.
+         * There is no separate CLASS_PREPARE event as Maxine cannot usefully distinguish it from CLASS_LOAD.
           */
-        void classLoad(Thread thread, Class klass);
+        void classLoad(Thread thread, Class<?> klass);
         void methodEntry(Thread thread, Member method);
         void methodExit(Thread thread, Member method, boolean exeception, Object returnValue);
+        void fieldAccess(Thread thread, Method method, long location, Class<?> klass, Object object, Field field);
+        void fieldModification(Thread thread, Method method, long location, Class<?> klass, Object object, Field field, Object newValue);
     }
 
     /*
@@ -87,17 +89,17 @@ public interface JJVMTIStd extends JJVMTICommon {
     void clearFieldAccessWatch(Field field) throws JJVMTIException;
     void setFieldModificationWatch(Field field) throws JJVMTIException;
     void clearFieldModificationWatch(Field field) throws JJVMTIException;
-    boolean isModifiableClass(Class klass) throws JJVMTIException;
-    String getClassSignature(Class klass) throws JJVMTIException;
-    int getClassStatus(Class klass) throws JJVMTIException;
-    String getSourceFileName(Class klass) throws JJVMTIException;
-    int getClassModifiers(Class klass) throws JJVMTIException;
-    Method[] getClassMethods(Class klass) throws JJVMTIException;
-    Field[] getClassFields(Class klass) throws JJVMTIException;
-    Class[] getImplementedInterfaces(Class klass) throws JJVMTIException;
-    boolean isInterface(Class klass) throws JJVMTIException;
-    boolean isArrayClass(Class klass) throws JJVMTIException;
-    ClassLoader getClassLoader(Class klass) throws JJVMTIException;
+    boolean isModifiableClass(Class<?> klass) throws JJVMTIException;
+    String getClassSignature(Class<?> klass) throws JJVMTIException;
+    int getClassStatus(Class<?> klass) throws JJVMTIException;
+    String getSourceFileName(Class<?> klass) throws JJVMTIException;
+    int getClassModifiers(Class<?> klass) throws JJVMTIException;
+    Method[] getClassMethods(Class<?> klass) throws JJVMTIException;
+    Field[] getClassFields(Class<?> klass) throws JJVMTIException;
+    Class[] getImplementedInterfaces(Class<?> klass) throws JJVMTIException;
+    boolean isInterface(Class<?> klass) throws JJVMTIException;
+    boolean isArrayClass(Class<?> klass) throws JJVMTIException;
+    ClassLoader getClassLoader(Class<?> klass) throws JJVMTIException;
     String getFieldName(Field field) throws JJVMTIException;
     String getFieldSignature(Field field) throws JJVMTIException;
     Class getFieldDeclaringClass(Field field) throws JJVMTIException;
@@ -116,12 +118,13 @@ public interface JJVMTIStd extends JJVMTICommon {
     byte[] getBytecodes(Member method, byte[] useThis) throws JJVMTIException;
     boolean isMethodNative(Method method) throws JJVMTIException;
     boolean isMethodSynthetic(Method method) throws JJVMTIException;
-    Class[] getLoadedClasses() throws JJVMTIException;
-    Class[] getClassLoaderClasses(ClassLoader loader) throws JJVMTIException;
+    void iterateThroughHeap(int filter, Class<?> klass, HeapCallbacks heapCallbacks, Object userData) throws Exception;
+    Class<?>[] getLoadedClasses() throws JJVMTIException;
+    Class<?>[] getClassLoaderClasses(ClassLoader loader) throws JJVMTIException;
     void redefineClasses(ClassDefinition[] classDefinitions) throws JJVMTIException;
-    String getSourceDebugExtension(Class klass) throws JJVMTIException;
+    String getSourceDebugExtension(Class<?> klass) throws JJVMTIException;
     boolean isMethodObsolete(Method method) throws JJVMTIException;
-    ClassVersionInfo getClassVersionNumbers(Class klasss, ClassVersionInfo classVersionInfo) throws JJVMTIException;
-    int getConstantPool(Class klass, byte[] pool) throws JJVMTIException;
-    void retransformClasses(Class[] klasses) throws JJVMTIException;
+    ClassVersionInfo getClassVersionNumbers(Class<?> klasss, ClassVersionInfo classVersionInfo) throws JJVMTIException;
+    int getConstantPool(Class<?> klass, byte[] pool) throws JJVMTIException;
+    void retransformClasses(Class<?>[] klasses) throws JJVMTIException;
 }

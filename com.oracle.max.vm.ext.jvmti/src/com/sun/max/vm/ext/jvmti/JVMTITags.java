@@ -32,12 +32,11 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.jni.*;
 
 /**
- * JVMTI object tagging support.
- * The tag map is allocated lazily.
- * We cannot use a standard {@link WeakHashMap} because that invokes
- * the class-specific {@link Object#hashCode()} method, which can have all
- * kinds of inappropriate side effects. Plus we only need a handful
- * of the standard {@link Map} methods, and our value is a {@code long} not an {@link Object}.
+ * JVMTI object tagging support. The tag map is allocated lazily. We cannot use a standard {@link WeakHashMap} because
+ * that invokes the class-specific {@link Object#hashCode()} method, which can have all kinds of inappropriate side
+ * effects. Plus we only need a handful of the standard {@link Map} methods.
+ *
+ * We support {@link Object} (for JJVMTI) and {@code long} values, not via {@link Long} to avoid unnecessary allocation.
  *
  */
 class JVMTITags {
@@ -47,17 +46,33 @@ class JVMTITags {
      * The value 0 is not allowed, and used to mean lookup failure.
      */
     static class Map {
-        static class Entry extends WeakReference<Object> {
+        static abstract class Entry extends WeakReference<Object> {
+            final int hash;
+            Entry next;
 
-            Entry(Object object, long value, int hash, Entry next) {
+            Entry(Object object, int hash, Entry next) {
                 super(object);
-                this.value = value;
                 this.hash = hash;
                 this.next = next;
             }
+
+        }
+
+        static class LongEntry extends Entry {
             long value;
-            final int hash;
-            Entry next;
+            LongEntry(Object object, long value, int hash, Entry next) {
+                super(object, hash, next);
+                this.value = value;
+            }
+
+        }
+
+        static class ObjectEntry extends Entry {
+            Object value;
+            ObjectEntry(Object object, Object value, int hash, Entry next) {
+                super(object, hash, next);
+                this.value = value;
+            }
         }
 
         private static final int DEFAULT_INITIAL_CAPACITY = 16;
@@ -73,10 +88,14 @@ class JVMTITags {
             return table;
         }
 
-        Map() {
+        Map(boolean isNative) {
             this.loadFactor = DEFAULT_LOAD_FACTOR;
             threshold = DEFAULT_INITIAL_CAPACITY;
-            table = new Entry[DEFAULT_INITIAL_CAPACITY];
+            if (isNative) {
+                table = new LongEntry[DEFAULT_INITIAL_CAPACITY];
+            } else {
+                table = new ObjectEntry[DEFAULT_INITIAL_CAPACITY];
+            }
         }
 
         static int indexFor(int h, int length) {
@@ -84,36 +103,57 @@ class JVMTITags {
         }
 
         void put(Object key, long value) {
+            LongEntry e = (LongEntry) putCommon(key, true);
+            e.value = value;
+        }
+
+        void put(Object key, Object value) {
+            ObjectEntry e = (ObjectEntry) putCommon(key, false);
+            e.value = value;
+        }
+
+        private Entry putCommon(Object key, boolean isNative) {
             int h = System.identityHashCode(key);
             Entry[] tab = getTable();
             int i = indexFor(h, tab.length);
 
             for (Entry e = tab[i]; e != null; e = e.next) {
                 if (h == e.hash && key == e.get()) {
-                    e.value = value;
-                    return;
+                    return e;
                 }
             }
 
             Entry e = tab[i];
-            tab[i] = new Entry(key, value, h, e);
+            Entry ne = isNative ? new LongEntry(key, 0, h, e) : new ObjectEntry(key, null, h, e);
+            tab[i] = ne;
             if (++size >= threshold) {
                 resize(tab.length * 2);
             }
+            return ne;
         }
 
-        public long get(Object key) {
+        long getLong(Object key) {
+            LongEntry e = (LongEntry) getCommon(key);
+            return e == null ? 0 : e.value;
+        }
+
+        Object getObject(Object key) {
+            ObjectEntry e = (ObjectEntry) getCommon(key);
+            return e == null ? null : e.value;
+        }
+
+        private Entry getCommon(Object key) {
             int h = System.identityHashCode(key);
             Entry[] tab = getTable();
             int index = indexFor(h, tab.length);
             Entry e = tab[index];
             while (e != null) {
                 if (e.hash == h && e.get() == key) {
-                    return e.value;
+                    return e;
                 }
                 e = e.next;
             }
-            return 0;
+            return null;
         }
 
         public void remove(Object key) {
@@ -214,11 +254,19 @@ class JVMTITags {
      */
 
     boolean isTagged(Object object) {
-        return checkMap().get(object) != 0;
+        if (tagMap == null) {
+            return false;
+        } else {
+            return tagMap.getCommon(object) != null;
+        }
     }
 
-    long getTag(Object object) {
-        return checkMap().get(object);
+    long getLongTag(Object object) {
+        return checkMap(true).getLong(object);
+    }
+
+    Object getObjectTag(Object object) {
+        return checkMap(false).getObject(object);
     }
 
     /*
@@ -226,23 +274,31 @@ class JVMTITags {
      */
 
     synchronized int getTag(Object object, Pointer tagPtr) {
-        long tag = checkMap().get(object);
+        long tag = checkMap(true).getLong(object);
         tagPtr.writeLong(0, tag);
         return JVMTI_ERROR_NONE;
     }
 
     synchronized int setTag(Object object, long tag) {
         if (tag == 0) {
-            checkMap().remove(object);
+            checkMap(true).remove(object);
         } else {
-            checkMap().put(object, tag);
+            checkMap(true).put(object, tag);
         }
         return JVMTI_ERROR_NONE;
     }
 
-    private Map checkMap() {
+    public synchronized void setTag(Object object, Object tag) {
+        checkMap(false).put(object, tag);
+    }
+
+    public synchronized Object getTag(Object object) {
+        return checkMap(false).getObject(object);
+    }
+
+    private Map checkMap(boolean isNative) {
         if (tagMap == null) {
-            tagMap  = new Map();
+            tagMap  = new Map(isNative);
         }
         return tagMap;
     }
@@ -265,7 +321,7 @@ class JVMTITags {
             void visit(Map.Entry e) {
                 for (int i = 0; i < tagCount; i++) {
                     long givenTag = tags.getInt(i);
-                    if (givenTag == e.value) {
+                    if (givenTag == ((Map.LongEntry) e).value) {
                         count++;
                     }
                 }
@@ -297,7 +353,7 @@ class JVMTITags {
                 if (key != null) {
                     for (int i = 0; i < tagCount; i++) {
                         long givenTag = tags.getInt(i);
-                        if (givenTag == e.value) {
+                        if (givenTag == ((Map.LongEntry) e).value) {
                             assert index < count;
                             if (!objectResultPtr.isZero()) {
                                 objectResultPtr.setWord(index, JniHandles.createLocalHandle(key));
