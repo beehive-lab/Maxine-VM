@@ -1351,13 +1351,6 @@ public final class ClassfileReader {
             superClassActor.checkAccessBy(classActor);
         }
 
-        // Even though the following methods check against isHosted an explicit guard is needed
-        // here to prevent an initialization problem if JVMTI is initialized too early.
-        if (!MaxineVM.isHosted()) {
-            // Maxine is unable to usefully distinguish CLASS_LOAD and CLASS_PREPARE events which, for example, JVMTI distinguishes,
-            // as we need a ClassActor in order to create a Class object, so we just have the one event.
-            VMTI.handler().classLoad(classActor);
-        }
         return classActor;
     }
 
@@ -1488,7 +1481,14 @@ public final class ClassfileReader {
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
         final ClassActor classActor = classfileReader.loadClass(name, source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
-        return ClassRegistry.define(classActor);
+        ClassRegistry.define(classActor);
+
+        if (!MaxineVM.isHosted()) {
+            // Maxine is unable to usefully distinguish CLASS_LOAD and CLASS_PREPARE events which, for example, JVMTI distinguishes,
+            // as we need a ClassActor in order to create a Class object, so we just have the one event.
+            VMTI.handler().classLoad(classActor);
+        }
+        return classActor;
     }
 
     /**
