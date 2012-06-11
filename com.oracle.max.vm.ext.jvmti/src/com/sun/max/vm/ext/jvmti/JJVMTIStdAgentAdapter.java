@@ -25,7 +25,9 @@ package com.sun.max.vm.ext.jvmti;
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
 import java.lang.reflect.*;
+
 import com.sun.max.annotate.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
@@ -76,90 +78,89 @@ public class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements J
 
     @Override
     public void setFieldAccessWatch(Field field) throws JJVMTIException {
-        throw notImplemented;
-
+        JVMTIFieldWatch.setWatch(FieldActor.fromJava(field), JVMTIFieldWatch.ACCESS_STATE);
     }
 
     @Override
     public void clearFieldAccessWatch(Field field) throws JJVMTIException {
-        throw notImplemented;
-
+        JVMTIFieldWatch.clearWatch(FieldActor.fromJava(field), JVMTIFieldWatch.ACCESS_STATE);
     }
 
     @Override
     public void setFieldModificationWatch(Field field) throws JJVMTIException {
-        throw notImplemented;
-
+        JVMTIFieldWatch.setWatch(FieldActor.fromJava(field), JVMTIFieldWatch.MODIFICATION_STATE);
     }
 
     @Override
     public void clearFieldModificationWatch(Field field) throws JJVMTIException {
+        JVMTIFieldWatch.clearWatch(FieldActor.fromJava(field), JVMTIFieldWatch.MODIFICATION_STATE);
+    }
+
+    @Override
+    public boolean isModifiableClass(Class<?> klass) throws JJVMTIException {
         throw notImplemented;
 
     }
 
     @Override
-    public boolean isModifiableClass(Class klass) throws JJVMTIException {
+    public void iterateThroughHeap(int filter, Class<?> klass, HeapCallbacks heapCallbacks, Object userData) throws JJVMTIException {
+        JVMTIHeapFunctions.iterateThroughHeap(env, filter, klass, heapCallbacks, userData);
+    }
+
+    @Override
+    public String getClassSignature(Class<?> klass) throws JJVMTIException {
+        return ClassActor.fromJava(klass).typeDescriptor.string;
+    }
+
+    @Override
+    public int getClassStatus(Class<?> klass) throws JJVMTIException {
+        return JVMTIClassFunctions.getClassStatus(klass);
+    }
+
+    @Override
+    public String getSourceFileName(Class<?> klass) throws JJVMTIException {
         throw notImplemented;
 
     }
 
     @Override
-    public String getClassSignature(Class klass) throws JJVMTIException {
+    public int getClassModifiers(Class<?> klass) throws JJVMTIException {
         throw notImplemented;
 
     }
 
     @Override
-    public int getClassStatus(Class klass) throws JJVMTIException {
+    public Method[] getClassMethods(Class<?> klass) throws JJVMTIException {
         throw notImplemented;
 
     }
 
     @Override
-    public String getSourceFileName(Class klass) throws JJVMTIException {
+    public Field[] getClassFields(Class<?> klass) throws JJVMTIException {
         throw notImplemented;
 
     }
 
     @Override
-    public int getClassModifiers(Class klass) throws JJVMTIException {
+    public Class[] getImplementedInterfaces(Class<?> klass) throws JJVMTIException {
         throw notImplemented;
 
     }
 
     @Override
-    public Method[] getClassMethods(Class klass) throws JJVMTIException {
+    public boolean isInterface(Class<?> klass) throws JJVMTIException {
         throw notImplemented;
 
     }
 
     @Override
-    public Field[] getClassFields(Class klass) throws JJVMTIException {
+    public boolean isArrayClass(Class<?> klass) throws JJVMTIException {
         throw notImplemented;
 
     }
 
     @Override
-    public Class[] getImplementedInterfaces(Class klass) throws JJVMTIException {
-        throw notImplemented;
-
-    }
-
-    @Override
-    public boolean isInterface(Class klass) throws JJVMTIException {
-        throw notImplemented;
-
-    }
-
-    @Override
-    public boolean isArrayClass(Class klass) throws JJVMTIException {
-        throw notImplemented;
-
-    }
-
-    @Override
-    public ClassLoader getClassLoader(Class klass) throws JJVMTIException {
+    public ClassLoader getClassLoader(Class<?> klass) throws JJVMTIException {
         throw notImplemented;
 
     }
@@ -273,12 +274,12 @@ public class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements J
     }
 
     @Override
-    public Class[] getLoadedClasses() throws JJVMTIException {
+    public Class<?>[] getLoadedClasses() throws JJVMTIException {
         return JVMTIClassFunctions.getLoadedClasses();
     }
 
     @Override
-    public Class[] getClassLoaderClasses(ClassLoader loader) throws JJVMTIException {
+    public Class<?>[] getClassLoaderClasses(ClassLoader loader) throws JJVMTIException {
         throw notImplemented;
 
     }
@@ -290,7 +291,7 @@ public class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements J
     }
 
     @Override
-    public String getSourceDebugExtension(Class klass) throws JJVMTIException {
+    public String getSourceDebugExtension(Class<?> klass) throws JJVMTIException {
         throw notImplemented;
 
     }
@@ -302,20 +303,20 @@ public class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements J
     }
 
     @Override
-    public ClassVersionInfo getClassVersionNumbers(Class klasss, ClassVersionInfo classVersionInfo) throws JJVMTIException {
+    public ClassVersionInfo getClassVersionNumbers(Class<?> klasss, ClassVersionInfo classVersionInfo) throws JJVMTIException {
         throw notImplemented;
 
     }
 
     @Override
-    public int getConstantPool(Class klass, byte[] pool) throws JJVMTIException {
+    public int getConstantPool(Class<?> klass, byte[] pool) throws JJVMTIException {
         throw notImplemented;
 
     }
 
 
     @Override
-    public void retransformClasses(Class[] klasses) throws JJVMTIException {
+    public void retransformClasses(Class<?>[] klasses) throws JJVMTIException {
         throw notImplemented;
 
     }
@@ -338,7 +339,7 @@ public class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements J
     }
 
     @Override
-    public void classLoad(Thread thread, Class klass) {
+    public void classLoad(Thread thread, Class<?> klass) {
     }
 
     @Override
@@ -348,4 +349,13 @@ public class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements J
     @Override
     public void methodExit(Thread thread, Member method, boolean exeception, Object returnValue) {
     }
+
+    @Override
+    public void fieldAccess(Thread thread, Method method, long location, Class<?> klass, Object object, Field field) {
+    }
+
+    @Override
+    public void fieldModification(Thread thread, Method method, long location, Class<?> klass, Object object, Field field, Object newValue) {
+    }
+
 }

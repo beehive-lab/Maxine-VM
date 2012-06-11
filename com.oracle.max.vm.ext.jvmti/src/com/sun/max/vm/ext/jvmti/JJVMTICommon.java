@@ -173,9 +173,23 @@ public interface JJVMTICommon {
         void threadEnd(Thread thread);
         void vmDeath();
         /**
-         * There is no VM_START event as Maxine cannot usefully distinguish it from VM_INIT.
+         * There is no {@code VM_START} event as Maxine cannot usefully distinguish it from {@code VM_INIT}.
+         * When loaded as a VM extension a JJVMTI agent will not receive the {@code vmInit} event.
          */
         void vmInit();
+    }
+
+    /**
+     * Heap callbacks.
+     * TODO: complete
+     */
+
+    public interface HeapCallbacks {
+        /**
+         * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiHeapIterationCallback">heap iteration callback</a>.
+         * @return visit control flags
+         */
+        int heapIteration(Object classTag, long size, Object objectTag, int length, Object userData);
     }
 
     void setEventNotificationMode(int mode, int event, Thread thread) throws JJVMTIException;
@@ -243,7 +257,6 @@ public interface JJVMTICommon {
     void iterateOverInstancesOfClass(JniHandle arg1, int arg2, Address arg3, Pointer arg4) throws Exception;
     void getObjectsWithTags(int arg1, Pointer arg2, Pointer arg3, Pointer arg4, Pointer arg5) throws Exception;
     void followReferences(int arg1, JniHandle arg2, JniHandle arg3, Pointer arg4, Pointer arg5) throws Exception;
-    void iterateThroughHeap(int arg1, JniHandle arg2, Pointer arg3, Pointer arg4) throws Exception;
 
     void generateEvents(int arg1) throws Exception;
     void getExtensionFunctions(Pointer arg1, Pointer arg2) throws Exception;

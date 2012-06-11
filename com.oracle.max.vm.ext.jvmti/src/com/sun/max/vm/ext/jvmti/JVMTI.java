@@ -106,13 +106,10 @@ public class JVMTI {
     }
 
     /**
-     * Abstrct subclass used for agents that use {@link JJVMTIStd}.
-     * In order to access the callbacks in the generic event handling code
-     * we make this class implement {@link JJVMTI.EventCallbacks} and provide
-     * default, empty, implementations.
+     * Abstract subclass used for agents that use {@link JJVMTICommon}.
      */
     public static abstract class JavaEnv extends Env {
-        private EnumSet<JVMTICapabilities.E> capabilities = EnumSet.noneOf(JVMTICapabilities.E.class);
+        final EnumSet<JVMTICapabilities.E> capabilities = EnumSet.noneOf(JVMTICapabilities.E.class);
         final JJVMTICommon.EventCallbacks callbackHandler;
         protected JavaEnv(JJVMTICommon.EventCallbacks callbackHandler) {
             this.callbackHandler = callbackHandler;
@@ -711,12 +708,17 @@ public class JVMTI {
                         }
                         break;
                     }
-                        /*
-                    case FIELD_ACCESS:
-                    case FIELD_MODIFICATION:
-                        invokeFieldAccessCallback(callback, cstruct, currentThreadHandle(), asFieldEventData(arg1));
-                        break;
 
+                    case FIELD_ACCESS:
+                    case FIELD_MODIFICATION: {
+                        if (javaEnv instanceof JavaEnvStd) {
+                            invokeFieldAccessCallback((JJVMTIStd.EventCallbacksStd) javaEnv.callbackHandler, currentThread, asFieldEventData(arg1));
+                        } else {
+                            // TODO
+                        }
+                        break;
+                    }
+/*
                     case BREAKPOINT:
                     case SINGLE_STEP:
                         EventBreakpointID id = asEventBreakpointID(arg1);

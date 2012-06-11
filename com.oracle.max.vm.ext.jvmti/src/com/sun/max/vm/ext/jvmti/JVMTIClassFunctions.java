@@ -229,7 +229,7 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-    static int getClassStatus(Class klass, Pointer statusPtr) {
+    static int getClassStatus(Class<?> klass) {
         ClassActor classActor = ClassActor.fromJava(klass);
         int status = 0;
         if (classActor.isArrayClass()) {
@@ -250,7 +250,11 @@ class JVMTIClassFunctions {
                 status = JVMTI_CLASS_STATUS_ERROR;
             }
         }
-        statusPtr.setInt(status);
+        return status;
+    }
+
+    static int getClassStatus(Class<?> klass, Pointer statusPtr) {
+        statusPtr.setInt(getClassStatus(klass));
         return JVMTI_ERROR_NONE;
     }
 
