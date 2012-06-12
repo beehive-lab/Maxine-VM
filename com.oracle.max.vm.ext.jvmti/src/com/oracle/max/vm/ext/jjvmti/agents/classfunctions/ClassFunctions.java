@@ -29,7 +29,7 @@ import com.sun.max.vm.ext.jvmti.*;
 /**
  * A {@link JJVMTI Java JVMTI agent} that tests the class functions part of the interface.
  */
-public class ClassFunctions extends JJVMTIStdAgentAdapter {
+public class ClassFunctions extends NullJJVMTIStdAgentAdapter {
 
     private ClassFunctions() {
         JJVMTIStdAgentAdapter.register(this);

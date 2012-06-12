@@ -25,7 +25,6 @@ package com.sun.max.vm.ext.jvmti;
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
 import java.lang.reflect.*;
-import java.security.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
@@ -45,7 +44,7 @@ import com.sun.max.vm.thread.*;
  *
  * TODO: complete the implementation.
  */
-public abstract class JJVMTICommonAgentAdapter implements JJVMTICommon, JJVMTICommon.EventCallbacks {
+public abstract class JJVMTICommonAgentAdapter implements JJVMTICommon {
 
     static {
         JavaPrototype.registerInitializationCompleteCallback(new InitializationCompleteCallback());
@@ -504,41 +503,5 @@ public abstract class JJVMTICommonAgentAdapter implements JJVMTICommon, JJVMTICo
     public long getObjectSize(Object object) throws JJVMTIException {
         throw notImplemented;
     }
-
-    // default empty implementations of the event callbacks
-
-    @Override
-    public void agentStartup() {
-    }
-
-    @Override
-    public byte[] classFileLoadHook(ClassLoader loader, String name, ProtectionDomain protectionDomain, byte[] classData) {
-        return null;
-    }
-
-    @Override
-    public void garbageCollectionStart() {
-    }
-
-    @Override
-    public void garbageCollectionFinish() {
-    }
-
-    @Override
-    public void threadStart(Thread thread) {
-    }
-
-    @Override
-    public void threadEnd(Thread thread) {
-    }
-
-    @Override
-    public void vmDeath() {
-    }
-
-    @Override
-    public void vmInit() {
-    }
-
 
 }

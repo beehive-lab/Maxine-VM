@@ -30,15 +30,12 @@ import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.classfile.constant.SymbolTable;
-import com.sun.max.vm.ext.jvmti.JJVMTICommon;
-import com.sun.max.vm.ext.jvmti.JJVMTIStdAgentAdapter;
-import com.sun.max.vm.ext.jvmti.JVMTICapabilities;
-import com.sun.max.vm.ext.jvmti.JVMTIError;
+import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * The standard JVMTI heap viewer demo using JJVMTI.
  */
-public class HeapViewer extends JJVMTIStdAgentAdapter implements JJVMTICommon.HeapCallbacks {
+public class HeapViewer extends NullJJVMTIStdAgentAdapter implements JJVMTICommon.HeapCallbacks {
     private boolean vmDeathCalled;
     private boolean dumpInProgress;
     private int totalCount;
