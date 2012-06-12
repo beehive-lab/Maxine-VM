@@ -20,32 +20,40 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.type;
+package com.oracle.max.vm.ext.jjvmti.agents.classfunctions;
 
-import java.net.*;
+import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
+
+import com.sun.max.vm.ext.jvmti.*;
 
 /**
- * A classloader that exists to isolate the VM classes from the JDK classes
- * and application classes. Runtime extensions to the VM are supported by
- * subclassing  {@link URLClassLoader} that is handed URLs to search via the
- * {@link addURL} method from {@link JavaRunScheme#loadVMExtensions}.
- *
- * VM classes already in the boot image are found via the {@link ClassLoader#findLoadedClass}
- * method that is invoked by {@link ClassLoader#loadClass}.
+ * A {@link JJVMTI Java JVMTI agent} that tests the class functions part of the interface.
  */
-public class VMClassLoader extends URLClassLoader {
-    /**
-     * The singleton instance of this class.
-     */
-    public static final VMClassLoader VM_CLASS_LOADER = new VMClassLoader();
+public class ClassFunctions extends JJVMTIStdAgentAdapter {
 
-    private VMClassLoader() {
-        super(new URL[0]);
+    private ClassFunctions() {
+        JJVMTIStdAgentAdapter.register(this);
+    }
+
+    public static void onLoad(String agentArgs) {
+        boolean classLoad = false;
+        String[] args = agentArgs.split(",");
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if (arg.equals("classLoad")) {
+                classLoad = true;
+            }
+        }
+
+        ClassFunctions classFunctions = new ClassFunctions();
+
+        if (classLoad) {
+            classFunctions.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_LOAD, null);
+        }
     }
 
     @Override
-    public void addURL(URL url) {
-        super.addURL(url);
+    public void classLoad(Thread thread, Class<?> klass) {
+        System.out.printf("JJVMTI.classLoad: %s in %s%n", klass.getName(), thread.getName());
     }
-
 }

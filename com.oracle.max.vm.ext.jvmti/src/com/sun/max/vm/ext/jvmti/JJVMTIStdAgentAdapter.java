@@ -59,9 +59,11 @@ public class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements J
     /**
      * Register an agent.
      * @param the agent implementation subclass
+     * @return
      */
-    public static void register(JJVMTIStdAgentAdapter agent) {
+    public static JJVMTICommonAgentAdapter register(JJVMTIStdAgentAdapter agent) {
         agent.registerEnv(new JVMTI.JavaEnvStd(agent));
+        return agent;
     }
 
     @Override

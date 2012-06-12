@@ -505,7 +505,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         @Override
         void handle(String className, URL url, String args)
             throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-            VMClassLoader.addURL(url);
+            VMClassLoader.VM_CLASS_LOADER.addURL(url);
             invokeMethod(className, args);
         }
 
