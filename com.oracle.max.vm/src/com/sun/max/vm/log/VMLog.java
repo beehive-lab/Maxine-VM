@@ -402,7 +402,7 @@ public abstract class VMLog implements Heap.GCCallback {
         hostedLoggerList.add(logger);
     }
 
-    private void setLogEntries() {
+    protected void setLogEntries() {
         String logSizeProperty = System.getProperty(LOG_ENTRIES_PROPERTY);
         if (logSizeProperty != null) {
             logEntries = Integer.parseInt(logSizeProperty);
