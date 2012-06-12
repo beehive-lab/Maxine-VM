@@ -32,14 +32,12 @@ import java.util.regex.Pattern;
 
 import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.ext.jvmti.JJVMTIStdAgentAdapter;
-import com.sun.max.vm.ext.jvmti.JVMTICapabilities;
-import com.sun.max.vm.ext.jvmti.JVMTIError;
+import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * A {@link JJVMTI Java JVMTI agent} that tests the field watch part of the interface.
  */
-public class FieldWatch  extends JJVMTIStdAgentAdapter {
+public class FieldWatch  extends NullJJVMTIStdAgentAdapter {
     private FieldWatch() {
         JJVMTIStdAgentAdapter.register(this);
     }

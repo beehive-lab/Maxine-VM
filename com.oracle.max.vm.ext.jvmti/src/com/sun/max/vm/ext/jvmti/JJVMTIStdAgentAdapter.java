@@ -40,9 +40,15 @@ import com.sun.max.vm.runtime.*;
  * Although this class is not directly referenced by the VM code, we want it to be fully compiled into the boot image
  * so we define every method as a {@link CriticalMethod}.
  *
+ * <b>N.B.</b> This class is abstract and does <b>not</b> define default empty implementations of the callbacks.
+ * This is to avoid {@link JVMTI#event(int, Object)} being compiled with a unique concrete method optimization
+ * that would have to be undone as soon as an agent that defined a subclass was loaded at runtime.
+ *
+
+ *
  * TODO: complete the implementation.
  */
-public class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements JJVMTIStd, JJVMTIStd.EventCallbacksStd {
+public abstract class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements JJVMTIStd, JJVMTIStd.EventCallbacksStd {
 
     @HOSTED_ONLY
     private static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
@@ -332,32 +338,6 @@ public class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements J
             throw new JJVMTIException(JVMTI_ERROR_INVALID_METHODID);
         }
 
-    }
-
-    // default empty implementations of the event callbacks
-
-    @Override
-    public void breakpoint(Thread thread, Member method, long location) {
-    }
-
-    @Override
-    public void classLoad(Thread thread, Class<?> klass) {
-    }
-
-    @Override
-    public void methodEntry(Thread thread, Member method) {
-    }
-
-    @Override
-    public void methodExit(Thread thread, Member method, boolean exeception, Object returnValue) {
-    }
-
-    @Override
-    public void fieldAccess(Thread thread, Method method, long location, Class<?> klass, Object object, Field field) {
-    }
-
-    @Override
-    public void fieldModification(Thread thread, Method method, long location, Class<?> klass, Object object, Field field, Object newValue) {
     }
 
 }

@@ -38,7 +38,7 @@ import com.sun.max.vm.runtime.*;
  *
  * TODO: complete the implementation.
  */
-public class JJVMTIMaxAgentAdapter extends JJVMTICommonAgentAdapter implements JJVMTIMax, JJVMTIMax.EventCallbacksMax {
+public abstract class JJVMTIMaxAgentAdapter extends JJVMTICommonAgentAdapter implements JJVMTIMax, JJVMTIMax.EventCallbacksMax {
 
     @HOSTED_ONLY
     private static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
@@ -294,24 +294,5 @@ public class JJVMTIMaxAgentAdapter extends JJVMTICommonAgentAdapter implements J
         throw notImplemented;
 
     }
-
-    // default empty implementations of the event callbacks
-
-    @Override
-    public void breakpoint(Thread thread, MethodActor method, long location) {
-    }
-
-    @Override
-    public void classLoad(Thread thread, ClassActor klass) {
-    }
-
-    @Override
-    public void methodEntry(Thread thread, MethodActor method) {
-    }
-
-    @Override
-    public void methodExit(Thread thread, MethodActor method, boolean exeception, Object returnValue) {
-    }
-
 
 }

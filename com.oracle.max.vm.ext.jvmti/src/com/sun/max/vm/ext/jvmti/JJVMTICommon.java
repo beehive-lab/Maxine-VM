@@ -174,7 +174,6 @@ public interface JJVMTICommon {
         void vmDeath();
         /**
          * There is no {@code VM_START} event as Maxine cannot usefully distinguish it from {@code VM_INIT}.
-         * When loaded as a VM extension a JJVMTI agent will not receive the {@code vmInit} event.
          */
         void vmInit();
     }
