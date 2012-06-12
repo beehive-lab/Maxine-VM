@@ -363,7 +363,7 @@ public class CompilationBroker {
                     }
                 } else {
                     Compilations prevCompilations = compilation != null ? compilation.prevCompilations :  (Compilations) compiledState;
-                    RuntimeCompiler compiler = selectCompiler(cma, nature);
+                    RuntimeCompiler compiler = selectCompiler(cma, nature, isDeopt);
                     if (retryRun) {
                         compiler = selectRetryCompiler(cma, nature, compiler);
                     }
@@ -405,9 +405,10 @@ public class CompilationBroker {
      *
      * @param cma the class method actor to compile
      * @param nature the specific type of target method required or {@code null} if any target method is acceptable
+     * @param isDeopt TODO
      * @return the compiler that should be used to perform the next compilation of the method
      */
-    protected RuntimeCompiler selectCompiler(ClassMethodActor cma, RuntimeCompiler.Nature nature) {
+    protected RuntimeCompiler selectCompiler(ClassMethodActor cma, RuntimeCompiler.Nature nature, boolean isDeopt) {
         String reason;
         RuntimeCompiler compiler;
 
@@ -445,6 +446,10 @@ public class CompilationBroker {
                         if (VMTI.handler().hasBreakpoints(cma)) {
                             reason = "vmti";
                             compiler = baselineCompiler;
+                        } else if (!isDeopt && cma.isVM()) {
+                            // compile VM extensions with the opt compiler (cf isHosted)
+                            reason = "vm";
+                            compiler = optimizingCompiler;
                         } else {
                             compiler = defaultCompiler;
                         }

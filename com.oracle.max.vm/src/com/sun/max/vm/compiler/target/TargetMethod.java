@@ -1172,6 +1172,14 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
+     * Determines if this method has been instrumented by a {@link VMTIHandler tooling interface}.
+     * @return
+     */
+    public boolean isInstrumented() {
+        return false;
+    }
+
+    /**
      * Creates a deoptimized frame for this method. This can only be called if {@link #isBaseline()}
      * returns {@code true} for this object.
      *
