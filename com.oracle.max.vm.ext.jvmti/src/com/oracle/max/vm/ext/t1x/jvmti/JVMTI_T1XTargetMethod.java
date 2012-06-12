@@ -71,6 +71,11 @@ public class JVMTI_T1XTargetMethod extends T1XTargetMethod {
     }
 
     @Override
+    public boolean isInstrumented() {
+        return true;
+    }
+
+    @Override
     protected CodePointer findTemplateCallReturnAddress(Info info, int bci, RiMethod callee) throws FatalError {
         if (!eventBci.get(bci)) {
             // no instrumentation code was generated for this bytecode so no special treatment.

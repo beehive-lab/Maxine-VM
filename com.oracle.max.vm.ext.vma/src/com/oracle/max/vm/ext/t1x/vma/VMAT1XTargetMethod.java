@@ -31,4 +31,10 @@ public class VMAT1XTargetMethod extends T1XTargetMethod {
     VMAT1XTargetMethod(T1XCompilation comp, boolean install) {
         super(comp, install);
     }
+
+    @Override
+    public boolean isInstrumented() {
+        return true;
+    }
+
 }
