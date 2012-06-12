@@ -40,6 +40,7 @@ public class VMLogHosted extends VMLog {
     public final HostedLogRecord[] buffer;
 
     public VMLogHosted() {
+        setLogEntries();
         buffer = new HostedLogRecord[logEntries];
         for (int i = 0; i < buffer.length; i++) {
             buffer[i] = new HostedLogRecord();
