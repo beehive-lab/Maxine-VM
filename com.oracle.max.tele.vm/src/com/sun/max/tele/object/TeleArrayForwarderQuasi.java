@@ -27,6 +27,7 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.*;
 
 
 // TODO (mlvdv)  This should extend TeleArrayObject, but that's a more complex constructor than the others.
@@ -34,13 +35,13 @@ import com.sun.max.vm.reference.*;
  * Canonical surrogate for a <em>quasi</em> object:  the old copy of an array object
  * that has been relocated by copying to a new location in the current GC cycle.
  */
-public class TeleArrayForwarderQuasi extends TeleTupleObject {
+public class TeleArrayForwarderQuasi extends TeleArrayObject {
 
     private TeleHub teleHub = null;
     RemoteReference quasiReference;
 
-    protected TeleArrayForwarderQuasi(TeleVM vm, Reference reference) {
-        super(vm, reference);
+    protected TeleArrayForwarderQuasi(TeleVM vm, Reference reference, Kind componentKind, SpecificLayout specificLayout) {
+        super(vm, reference, componentKind, specificLayout);
         quasiReference = (RemoteReference) reference;
         assert quasiReference.status().isForwarder();
     }

@@ -401,11 +401,12 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
                     teleObject = new TeleTupleForwarderQuasi(vm(), remoteRef);
                     break;
                 case ARRAY:
-                    // teleObject = new TeleArrayForwarderQuasi(vm(), remoteRef);
-                    // TODO (mlvdv) Indented badly as a reminder to fix
-                        TeleWarning.message("Array Forwarders not yet supported");
-                    return null;
-                    // break;
+                    final ClassActor classActor = newCopyObject.classActorForObjectType();
+                    if (classActor == null) {
+                        return null;
+                    }
+                    teleObject = new TeleArrayForwarderQuasi(vm(), remoteRef, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
+                    break;
                 case HYBRID:
                     teleObject = new TeleHybridForwarderQuasi(vm(), remoteRef);
                     break;
