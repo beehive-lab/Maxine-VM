@@ -29,6 +29,7 @@ import java.security.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.oracle.max.vm.ext.jjvmti.agents.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -112,6 +113,8 @@ class JJVMTITest {
         else if (name.equals("methodExit")) return JVMTI_EVENT_METHOD_EXIT;
         else if (name.equals("threadStart")) return JVMTI_EVENT_THREAD_START;
         else if (name.equals("threadEnd")) return JVMTI_EVENT_THREAD_END;
+        else if (name.equals("fieldAccess")) return JVMTI_EVENT_FIELD_ACCESS;
+        else if (name.equals("fieldModification")) return JVMTI_EVENT_FIELD_MODIFICATION;
         else assert false;
         return -1;
         // Checkstyle: resume
@@ -282,7 +285,7 @@ class JJVMTITest {
 
     }
 
-    private static class StdTest extends JJVMTIStdAgentAdapter {
+    private static class StdTest extends NullJJVMTIStdAgentAdapter {
 
         private CommandsHandler commandsHandler = new CommandsHandler(JJVMTIStd.class, JJVMTIStd.EventCallbacksStd.class);
         private CommonEventCallbackHandler cbh = new CommonEventCallbackHandler(this, commandsHandler);

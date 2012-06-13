@@ -26,16 +26,29 @@ import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
 import java.util.Arrays;
 import java.util.EnumSet;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
+
+import com.oracle.max.vm.ext.jjvmti.agents.util.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.classfile.constant.SymbolTable;
 import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * The standard JVMTI heap viewer demo using JJVMTI.
+ * Can be included in the boot image or dynamically loaded as a VM extension.
  */
 public class HeapViewer extends NullJJVMTIStdAgentAdapter implements JJVMTICommon.HeapCallbacks {
+
+    private static HeapViewer heapViewer;
+    private static String HeapViewerArgs;
+
+    static {
+        heapViewer = (HeapViewer) JJVMTIStdAgentAdapter.register(new HeapViewer());
+        if (MaxineVM.isHosted()) {
+            VMOptions.addFieldOption("-XX:", "HeapViewerArgs", "arguments for heapviewer JJVMTI agent");
+        }
+    }
+
     private boolean vmDeathCalled;
     private boolean dumpInProgress;
     private int totalCount;
@@ -61,20 +74,35 @@ public class HeapViewer extends NullJJVMTIStdAgentAdapter implements JJVMTICommo
         }
     }
 
-    private HeapViewer() {
-        JJVMTIStdAgentAdapter.register(this);
+    /***
+     * VM extension entry point.
+     * @param args
+     */
+    public static void onLoad(String agentArgs) {
+        HeapViewerArgs = agentArgs;
+        heapViewer.agentStartup();
     }
 
-    public static void onLoad(String agentArgs) {
-        String[] args = agentArgs.split(",");
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i];
-            if (arg.equals("showzero")) {
-                showZero = true;
+    /**
+     * Boot image entry point.
+     */
+    @Override
+    public void agentStartup() {
+        heapViewer.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
+    }
+
+    @Override
+    public void vmInit() {
+        if (HeapViewerArgs != null) {
+            String[] args = HeapViewerArgs.split(",");
+            for (int i = 0; i < args.length; i++) {
+                String arg = args[i];
+                if (arg.equals("showzero")) {
+                    showZero = true;
+                }
             }
         }
 
-        HeapViewer heapViewer = new HeapViewer();
         try {
             heapViewer.addCapabilities(EnumSet.of(JVMTICapabilities.E.CAN_GENERATE_GARBAGE_COLLECTION_EVENTS));
             heapViewer.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_DEATH, null);

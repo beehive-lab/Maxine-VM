@@ -44,11 +44,9 @@ import com.sun.max.vm.runtime.*;
  * This is to avoid {@link JVMTI#event(int, Object)} being compiled with a unique concrete method optimization
  * that would have to be undone as soon as an agent that defined a subclass was loaded at runtime.
  *
-
- *
  * TODO: complete the implementation.
  */
-public abstract class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements JJVMTIStd, JJVMTIStd.EventCallbacksStd {
+public abstract class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter implements JJVMTIStd {
 
     @HOSTED_ONLY
     private static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
@@ -67,8 +65,8 @@ public abstract class JJVMTIStdAgentAdapter extends JJVMTICommonAgentAdapter imp
      * @param the agent implementation subclass
      * @return
      */
-    public static JJVMTICommonAgentAdapter register(JJVMTIStdAgentAdapter agent) {
-        agent.registerEnv(new JVMTI.JavaEnvStd(agent));
+    public static JJVMTIStdAgentAdapter register(JJVMTIStdAgentAdapter agent) {
+        agent.registerEnv(new JVMTI.JavaEnvStd((JJVMTIStd.EventCallbacksStd) agent));
         return agent;
     }
 

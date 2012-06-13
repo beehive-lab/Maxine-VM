@@ -156,13 +156,17 @@ public interface JJVMTICommon {
      * These are defined in a separate interface partly to call them out and partly to permit some implementation
      * flexibility.
      *
+     * There is no {@code VM_START} event as Maxine cannot usefully distinguish it from {@code VM_INIT}.
+     *
      * TODO: Not all events are supported yet.
      */
     public interface EventCallbacks {
         /**
-         * Not really an event callback, equivalent to
+         * This is not really an event, but is essentially equivalent to
          * <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#startup">startup</a>,
-         * and more convenient to put it here.
+         * and it is more more convenient to define it here. <b>N.B.</b>This will only be called for agents
+         * that are built into the boot image and in {code PRIMORDIAL} mode, whereVM functionality is
+         * very limited. Dynamically loaded agents have their {@code onLoad} method called instead.
          */
         void agentStartup();
         byte[] classFileLoadHook(ClassLoader loader, String name,
@@ -173,7 +177,8 @@ public interface JJVMTICommon {
         void threadEnd(Thread thread);
         void vmDeath();
         /**
-         * There is no {@code VM_START} event as Maxine cannot usefully distinguish it from {@code VM_INIT}.
+         * This callback is the recommended place to do the majority of agent setup as it is called for both
+         * dynamically loaded and boot image agents.
          */
         void vmInit();
     }

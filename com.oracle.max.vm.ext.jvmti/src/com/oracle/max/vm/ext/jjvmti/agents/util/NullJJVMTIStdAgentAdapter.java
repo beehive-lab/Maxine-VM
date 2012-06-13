@@ -20,13 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.ext.jvmti;
+package com.oracle.max.vm.ext.jjvmti.agents.util;
 
 import java.lang.reflect.*;
 import java.security.*;
 
+import com.sun.max.vm.ext.jvmti.*;
 
-public class NullJJVMTIStdAgentAdapter extends JJVMTIStdAgentAdapter {
+
+public class NullJJVMTIStdAgentAdapter extends JJVMTIStdAgentAdapter implements JJVMTIStd.EventCallbacksStd {
     @Override
     public void agentStartup() {
     }

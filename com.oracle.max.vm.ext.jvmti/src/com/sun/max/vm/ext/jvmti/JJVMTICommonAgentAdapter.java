@@ -384,8 +384,7 @@ public abstract class JJVMTICommonAgentAdapter implements JJVMTICommon {
 
     @Override
     public void disposeEnvironment() throws JJVMTIException {
-        throw notImplemented;
-
+        JVMTI.disposeJVMTIJavaEnv(env);
     }
 
     @Override

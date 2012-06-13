@@ -24,32 +24,60 @@ package com.oracle.max.vm.ext.jjvmti.agents.classfunctions;
 
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
+import com.oracle.max.vm.ext.jjvmti.agents.util.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * A {@link JJVMTI Java JVMTI agent} that tests the class functions part of the interface.
+ * Can be included in the boot image or dynamically loaded as a VM extension.
  */
 public class ClassFunctions extends NullJJVMTIStdAgentAdapter {
 
-    private ClassFunctions() {
-        JJVMTIStdAgentAdapter.register(this);
+    private static ClassFunctions classFunctions;
+    private static String ClassFunctionsArgs;
+
+    static {
+        classFunctions = (ClassFunctions) JJVMTIStdAgentAdapter.register(new ClassFunctions());
+        if (MaxineVM.isHosted()) {
+            VMOptions.addFieldOption("-XX:", "ClassFunctionsArgs", "arguments for classfunctions JJVMTI agent");
+        }
     }
 
+    /***
+     * VM extension entry point.
+     * @param args
+     */
     public static void onLoad(String agentArgs) {
+        ClassFunctionsArgs = agentArgs;
+        classFunctions.agentStartup();
+    }
+
+    /**
+     * Boot image entry point.
+     */
+    @Override
+    public void agentStartup() {
+        classFunctions.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
+    }
+
+    @Override
+    public void vmInit() {
         boolean classLoad = false;
-        String[] args = agentArgs.split(",");
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i];
-            if (arg.equals("classLoad")) {
-                classLoad = true;
+        if (ClassFunctionsArgs != null) {
+            String[] args = ClassFunctionsArgs.split(",");
+            for (int i = 0; i < args.length; i++) {
+                String arg = args[i];
+                if (arg.equals("classLoad")) {
+                    classLoad = true;
+                }
             }
         }
-
-        ClassFunctions classFunctions = new ClassFunctions();
 
         if (classLoad) {
             classFunctions.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_LOAD, null);
         }
+
     }
 
     @Override

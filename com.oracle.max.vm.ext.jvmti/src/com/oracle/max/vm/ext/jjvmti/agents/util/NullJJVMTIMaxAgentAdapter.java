@@ -20,15 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.ext.jvmti;
+package com.oracle.max.vm.ext.jjvmti.agents.util;
 
 import java.security.*;
 
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.ext.jvmti.*;
 
 
-public class NullJJVMTIMaxAgentAdapter extends JJVMTIMaxAgentAdapter {
+public class NullJJVMTIMaxAgentAdapter extends JJVMTIMaxAgentAdapter implements JJVMTIMax.EventCallbacksMax {
 
     @Override
     public void agentStartup() {
@@ -77,6 +78,14 @@ public class NullJJVMTIMaxAgentAdapter extends JJVMTIMaxAgentAdapter {
 
     @Override
     public void methodExit(Thread thread, MethodActor method, boolean exeception, Object returnValue) {
+    }
+
+    @Override
+    public void fieldAccess(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field) {
+    }
+
+    @Override
+    public void fieldModification(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field, Object newValue) {
     }
 
 
