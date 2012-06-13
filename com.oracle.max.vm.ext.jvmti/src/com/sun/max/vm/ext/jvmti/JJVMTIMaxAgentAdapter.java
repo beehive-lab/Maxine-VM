@@ -38,13 +38,13 @@ import com.sun.max.vm.runtime.*;
  *
  * TODO: complete the implementation.
  */
-public abstract class JJVMTIMaxAgentAdapter extends JJVMTICommonAgentAdapter implements JJVMTIMax, JJVMTIMax.EventCallbacksMax {
+public abstract class JJVMTIMaxAgentAdapter extends JJVMTICommonAgentAdapter implements JJVMTIMax {
 
     @HOSTED_ONLY
     private static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
         @Override
         public void initializationComplete() {
-            registerCriticalMethods(JJVMTIStdAgentAdapter.class);
+            registerCriticalMethods(JJVMTIMaxAgentAdapter.class);
         }
     }
 
@@ -56,8 +56,9 @@ public abstract class JJVMTIMaxAgentAdapter extends JJVMTICommonAgentAdapter imp
      * Register an agent.
      * @param the agent implementation subclass
      */
-    public static void register(JJVMTIMaxAgentAdapter agent) {
-        agent.registerEnv(new JVMTI.JavaEnvMax(agent));
+    public static JJVMTIMaxAgentAdapter register(JJVMTIMaxAgentAdapter agent) {
+        agent.registerEnv(new JVMTI.JavaEnvMax((JJVMTIMax.EventCallbacksMax) agent));
+        return agent;
     }
 
     @Override

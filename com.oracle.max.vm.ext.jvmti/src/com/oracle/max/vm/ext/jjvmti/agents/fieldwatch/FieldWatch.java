@@ -30,16 +30,23 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
+import com.oracle.max.vm.ext.jjvmti.agents.util.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * A {@link JJVMTI Java JVMTI agent} that tests the field watch part of the interface.
+ * Can be included in the boot image or dynamically loaded as a VM extension.
  */
 public class FieldWatch  extends NullJJVMTIStdAgentAdapter {
-    private FieldWatch() {
-        JJVMTIStdAgentAdapter.register(this);
+    private static FieldWatch fieldWatch;
+    private static String FieldWatchArgs;
+
+    static {
+        fieldWatch = (FieldWatch) JJVMTIStdAgentAdapter.register(new FieldWatch());
+        if (MaxineVM.isHosted()) {
+            VMOptions.addFieldOption("-XX:", "FieldWatchArgs", "arguments for fieldwatch JJVMTI agent");
+        }
     }
 
     private static Pattern classPattern;
@@ -54,26 +61,46 @@ public class FieldWatch  extends NullJJVMTIStdAgentAdapter {
 
     private static ConcurrentHashMap<Field, Counter> counters = new ConcurrentHashMap<Field, Counter>();
 
+    /***
+     * VM extension entry point.
+     * @param args
+     */
     public static void onLoad(String agentArgs) {
+        FieldWatchArgs = agentArgs;
+        fieldWatch.agentStartup();
+    }
+
+    /**
+     * Boot image entry point.
+     */
+    @Override
+    public void agentStartup() {
+        fieldWatch.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
+    }
+
+    @Override
+    public void vmInit() {
         String patternString = null;
-        String[] args = agentArgs.split(",");
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i];
-            if (arg.startsWith("pattern")) {
-                int ix = arg.indexOf('=');
-                if (ix < 0) {
-                    fail("= expected after pattern");
-                }
-                patternString = arg.substring(ix + 1);
-            } else if (arg.equals("read")) {
-                read = true;
-            } else if (arg.equals("write")) {
-                write = true;
-            } else {
-                if (patternString == null) {
-                    patternString = arg;
+        if (FieldWatchArgs != null) {
+            String[] args = FieldWatchArgs.split(",");
+            for (int i = 0; i < args.length; i++) {
+                String arg = args[i];
+                if (arg.startsWith("pattern")) {
+                    int ix = arg.indexOf('=');
+                    if (ix < 0) {
+                        fail("= expected after pattern");
+                    }
+                    patternString = arg.substring(ix + 1);
+                } else if (arg.equals("read")) {
+                    read = true;
+                } else if (arg.equals("write")) {
+                    write = true;
                 } else {
-                    fail("illegal option");
+                    if (patternString == null) {
+                        patternString = arg;
+                    } else {
+                        fail("illegal option");
+                    }
                 }
             }
         }

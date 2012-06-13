@@ -12,5 +12,6 @@
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.jvmti/src&lt;com.oracle.max.vm.ext.jjvmti.agents.heapviewer{HeapViewer.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.jvmti/src&lt;com.oracle.max.vm.ext.jjvmti.agents.util{NullJJVMTIStdAgentAdapter.java"/>
     </selectedElements>
 </jardesc>

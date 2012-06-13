@@ -76,6 +76,8 @@ public interface JJVMTIMax extends JJVMTICommon {
         void classLoad(Thread thread, ClassActor klass);
         void methodEntry(Thread thread, MethodActor method);
         void methodExit(Thread thread, MethodActor method, boolean exeception, Object returnValue);
+        void fieldAccess(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field);
+        void fieldModification(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field, Object newValue);
     }
 
     /*
