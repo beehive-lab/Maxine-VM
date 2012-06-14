@@ -28,6 +28,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -681,13 +682,12 @@ public class JJVMTIAgentAdapter implements JJVMTI {
 
     @Override
     public boolean isMethodNative(MethodActor method) throws JJVMTIException {
-        throw notImplemented;
-
+        return method.isNative();
     }
 
     @Override
     public boolean isMethodSynthetic(MethodActor method) throws JJVMTIException {
-        throw notImplemented;
+        return (method.flags() & Actor.ACC_SYNTHETIC) != 0;
     }
 
     @Override
