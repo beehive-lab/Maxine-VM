@@ -104,11 +104,18 @@ public class MethodArgs extends NullJJVMTICallbacks implements JJVMTI.EventCallb
         if (!inEvent) {
             try {
                 inEvent = true;
+                // Don't report synthetic methods (not clear we should even get the event)
+                if (isMethodSynthetic(methodActor)) {
+                    return;
+                }
                 String string = methodActor.format("%H.%n");
                 if (methodPattern.matcher(string).matches()) {
                     System.out.printf("Method entry: %s%n", string);
                     Type[] params = methodActor.getGenericParameterTypes();
                     JJVMTI.LocalVariableEntry[] lve = getLocalVariableTable(methodActor);
+                    if (lve.length == 0) {
+                        return;
+                    }
                     for (int i = 0; i < params.length; i++) {
                         Class< ? > param = (Class) params[i];
                         int index = methodActor.isStatic() ? i : i + 1;
@@ -143,6 +150,10 @@ public class MethodArgs extends NullJJVMTICallbacks implements JJVMTI.EventCallb
         if (!inEvent) {
             try {
                 inEvent = true;
+                // Don't report synthetic methods (not clear we should even get the event)
+                if (isMethodSynthetic(methodActor)) {
+                    return;
+                }
                 String string = methodActor.format("%H.%n");
                 if (methodPattern.matcher(string).matches()) {
                     // don't print return value as it invokes toString
