@@ -163,10 +163,10 @@ public class JVMTIHeapFunctions {
         }
 
         class CBCVJava extends CBCV {
-            private final JJVMTICommon.HeapCallbacks heapCallbacks;
+            private final JJVMTI.HeapCallbacks heapCallbacks;
             private final Object userData;
 
-            CBCVJava(JVMTI.Env env, int heapFilter, Class klass, JJVMTICommon.HeapCallbacks heapCallbacks, Object userData) {
+            CBCVJava(JVMTI.Env env, int heapFilter, Class klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData) {
                 super(env, heapFilter, klass);
                 this.heapCallbacks = heapCallbacks;
                 this.userData = userData;
@@ -185,7 +185,7 @@ public class JVMTIHeapFunctions {
             this.cbcv = new CBCVNative(env, heapFilter, klass, callbacks, userData);
         }
 
-        IterateThroughHeapVmOperation(JVMTI.Env env, int heapFilter, Class klass, JJVMTICommon.HeapCallbacks heapCallbacks, Object userData) {
+        IterateThroughHeapVmOperation(JVMTI.Env env, int heapFilter, Class klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData) {
             super("JVMTI_IterateThroughHeap", null, Mode.Safepoint, false);
             this.cbcv = new CBCVJava(env, heapFilter, klass, heapCallbacks, userData);
         }
@@ -212,8 +212,8 @@ public class JVMTIHeapFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-    static void iterateThroughHeap(JVMTI.Env jvmtiEnv, int heapFilter, Class klass, JJVMTICommon.HeapCallbacks heapCallbacks, Object userData) {
-        IterateThroughHeapVmOperation op = new IterateThroughHeapVmOperation(jvmtiEnv, heapFilter, klass, heapCallbacks, userData);
+    static void iterateThroughHeap(JVMTI.Env jvmtiEnv, int heapFilter, ClassActor klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData) {
+        IterateThroughHeapVmOperation op = new IterateThroughHeapVmOperation(jvmtiEnv, heapFilter, klass == null ? null : klass.toJava(), heapCallbacks, userData);
         op.submit();
     }
 

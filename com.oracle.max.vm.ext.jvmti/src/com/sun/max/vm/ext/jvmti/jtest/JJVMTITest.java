@@ -89,14 +89,7 @@ class JJVMTITest {
     private static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
         @Override
         public void initializationComplete() {
-            String testVariant = System.getProperty(JJVMTI_TEST);
-            if (testVariant.equals("std")) {
-                JJVMTIStdAgentAdapter.register(new JJVMTITest.StdTest());
-            } else if (testVariant.equals("max")) {
-                JJVMTIMaxAgentAdapter.register(new JJVMTITest.MaxTest());
-            } else {
-                ProgramError.unexpected("unknown agent type");
-            }
+            JJVMTIAgentAdapter.register(new Agent(new CommandsHandler(JJVMTI.class, JJVMTI.EventCallbacks.class)));
         }
     }
 
@@ -149,7 +142,7 @@ class JJVMTITest {
                 deathCommands.put(m.getName(), new CommandData(m));
             }
             for (Method m : callbacks.getMethods()) {
-                if (!m.getName().equals("agentStartup")) {
+                if (!m.getName().equals("onBoot")) {
                     events.put(m.getName(), new EventData(false, eventFromName(m.getName())));
                 }
             }
@@ -193,21 +186,19 @@ class JJVMTITest {
         }
     }
 
-    private static class CommonEventCallbackHandler implements JJVMTICommon.EventCallbacks {
+    private static class Agent extends JJVMTIAgentAdapter implements JJVMTI.EventCallbacks {
 
-        JJVMTICommonAgentAdapter agent;
         CommandsHandler commandsHandler;
 
-        CommonEventCallbackHandler(JJVMTICommonAgentAdapter agent, CommandsHandler commandsHandler) {
-            this.agent = agent;
+        Agent(CommandsHandler commandsHandler) {
             this.commandsHandler = commandsHandler;
         }
 
         @Override
-        public void agentStartup() {
+        public void onBoot() {
             // always take these two events
-            agent.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
-            agent.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_DEATH, null);
+            setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
+            setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_DEATH, null);
         }
 
         @Override
@@ -219,7 +210,7 @@ class JJVMTITest {
                         // Checkstyle: stop
                         entry.getValue().enabled = true;
                         // Checkstyle: resume
-                        agent.setEventNotificationMode(JVMTI_ENABLE, eventFromName(entry.getKey()), null);
+                        setEventNotificationMode(JVMTI_ENABLE, eventFromName(entry.getKey()), null);
                     }
                 }
             }
@@ -283,156 +274,6 @@ class JJVMTITest {
         }
 
 
-    }
-
-    private static class StdTest extends NullJJVMTIStdAgentAdapter {
-
-        private CommandsHandler commandsHandler = new CommandsHandler(JJVMTIStd.class, JJVMTIStd.EventCallbacksStd.class);
-        private CommonEventCallbackHandler cbh = new CommonEventCallbackHandler(this, commandsHandler);
-
-        @Override
-        public void agentStartup() {
-            cbh.agentStartup();
-        }
-        @Override
-        public byte[] classFileLoadHook(ClassLoader loader, String name,
-                        ProtectionDomain protectionDomain, byte[] classData) {
-            return cbh.classFileLoadHook(loader, name, protectionDomain, classData);
-        }
-        @Override
-        public void garbageCollectionStart() {
-            cbh.garbageCollectionStart();
-        }
-        @Override
-        public void garbageCollectionFinish() {
-            cbh.garbageCollectionFinish();
-        }
-        @Override
-        public void threadStart(Thread thread) {
-            cbh.threadStart(thread);
-        }
-        @Override
-        public void threadEnd(Thread thread) {
-            cbh.threadEnd(thread);
-        }
-        @Override
-        public void vmDeath() {
-            cbh.vmDeath();
-        }
-
-        @Override
-        public void vmInit() {
-            cbh.vmInit();
-        }
-
-        @Override
-        public void breakpoint(Thread thread, Member method, long location) {
-            if (commandsHandler.events.get("breakpoint").enabled) {
-                output("Breakpoint");
-            }
-        }
-
-        @Override
-        public void classLoad(Thread thread, Class klass) {
-            if (commandsHandler.events.get("classLoad").enabled) {
-                System.out.printf("Class Load: %s in thread %s%n", klass.getName(), thread);
-            }
-        }
-
-        @Override
-        public void methodEntry(Thread thread, Member method) {
-            if (commandsHandler.events.get("methodEntry").enabled) {
-                if (commandsHandler.methodArgsPattern != null) {
-                    boolean isConstructor = method instanceof Constructor;
-                    MethodActor methodActor = isConstructor ? MethodActor.fromJavaConstructor((Constructor) method) : MethodActor.fromJava((Method) method);
-                    if (commandsHandler.methodArgsPattern.matcher(methodActor.format("%H.%n")).matches()) {
-                        System.out.printf("Method entry: %s%n", method.toString());
-                        Class< ? >[] params = isConstructor ? ((Constructor) method).getParameterTypes() : ((Method) method).getParameterTypes();
-                        JJVMTICommon.LocalVariableEntry[] lve = getLocalVariableTable(method);
-                        int modifiers = method.getModifiers();
-                        for (int i = 0; i < params.length; i++) {
-                            Class< ? > param = params[i];
-                            int index = (modifiers & Modifier.STATIC) != 0 ? i : i + 1;
-                            System.out.printf("param %d, name %s, type %s, value ", index, lve[index].name, lve[index].signature);
-                            int slot = lve[index].slot;
-                            if (Object.class.isAssignableFrom(param)) {
-                                Object paramValue = getLocalObject(null, 0, slot);
-                                System.out.println(paramValue);
-                            } else {
-                                if (param == int.class) {
-                                    System.out.println(getLocalInt(null, 0, slot));
-                                } else if (param == long.class) {
-                                    System.out.println(getLocalLong(null, 0, slot));
-                                } else if (param == float.class) {
-                                    System.out.println(getLocalFloat(null, 0, slot));
-                                } else if (param == double.class) {
-                                    System.out.println(getLocalDouble(null, 0, slot));
-                                } else {
-                                    assert false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void methodExit(Thread thread, Member method, boolean exeception, Object returnValue) {
-            if (commandsHandler.events.get("methodExit").enabled) {
-                if (commandsHandler.methodArgsPattern != null) {
-                    boolean isConstructor = method instanceof Constructor;
-                    MethodActor methodActor = isConstructor ? MethodActor.fromJavaConstructor((Constructor) method) : MethodActor.fromJava((Method) method);
-                    if (commandsHandler.methodArgsPattern.matcher(methodActor.format("%H.%n")).matches()) {
-                        // don't print return value as it invokes toString
-                        System.out.printf("Method exit: %s, exception %b%n", method.toString(), exeception);
-                    }
-                }
-            }
-        }
-
-    }
-
-    private static class MaxTest extends JJVMTIMaxAgentAdapter {
-
-        private CommandsHandler commandsHandler = new CommandsHandler(JJVMTIStd.class, JJVMTIStd.EventCallbacksStd.class);
-        private CommonEventCallbackHandler cbh = new CommonEventCallbackHandler(this, commandsHandler);
-
-        @Override
-        public void agentStartup() {
-            cbh.agentStartup();
-        }
-        @Override
-        public byte[] classFileLoadHook(ClassLoader loader, String name,
-                        ProtectionDomain protectionDomain, byte[] classData) {
-            return cbh.classFileLoadHook(loader, name, protectionDomain, classData);
-        }
-        @Override
-        public void garbageCollectionStart() {
-            cbh.garbageCollectionStart();
-        }
-        @Override
-        public void garbageCollectionFinish() {
-            cbh.garbageCollectionFinish();
-        }
-        @Override
-        public void threadStart(Thread thread) {
-            cbh.threadStart(thread);
-        }
-        @Override
-        public void threadEnd(Thread thread) {
-            cbh.threadEnd(thread);
-        }
-        @Override
-        public void vmDeath() {
-            cbh.vmDeath();
-        }
-
-        @Override
-        public void vmInit() {
-            cbh.vmInit();
-        }
-
         @Override
         public void breakpoint(Thread thread, MethodActor method, long location) {
             if (commandsHandler.events.get("breakpoint").enabled) {
@@ -455,7 +296,7 @@ class JJVMTITest {
                     if (commandsHandler.methodArgsPattern.matcher(string).matches()) {
                         System.out.printf("Method entry: %s%n", string);
                         Type[] params = methodActor.getGenericParameterTypes();
-                        JJVMTICommon.LocalVariableEntry[] lve = getLocalVariableTable(methodActor);
+                        JJVMTI.LocalVariableEntry[] lve = getLocalVariableTable(methodActor);
                         for (int i = 0; i < params.length; i++) {
                             Class< ? > param = (Class) params[i];
                             int index = methodActor.isStatic() ? i : i + 1;
@@ -495,6 +336,22 @@ class JJVMTITest {
                 }
             }
         }
+
+        @Override
+        public void fieldAccess(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void fieldModification(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field, Object newValue) {
+            // TODO Auto-generated method stub
+
+        }
+    }
+
+    private static class MaxTest  {
+
 
     }
     private static void commandError(String name, Throwable ex) {

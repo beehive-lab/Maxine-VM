@@ -26,19 +26,20 @@ import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
 import com.oracle.max.vm.ext.jjvmti.agents.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * A {@link JJVMTI Java JVMTI agent} that tests the class functions part of the interface.
  * Can be included in the boot image or dynamically loaded as a VM extension.
  */
-public class ClassFunctions extends NullJJVMTIStdAgentAdapter {
+public class ClassFunctions extends NullJJVMTICallbacks {
 
     private static ClassFunctions classFunctions;
     private static String ClassFunctionsArgs;
 
     static {
-        classFunctions = (ClassFunctions) JJVMTIStdAgentAdapter.register(new ClassFunctions());
+        classFunctions = (ClassFunctions) JJVMTIAgentAdapter.register(new ClassFunctions());
         if (MaxineVM.isHosted()) {
             VMOptions.addFieldOption("-XX:", "ClassFunctionsArgs", "arguments for classfunctions JJVMTI agent");
         }
@@ -50,14 +51,14 @@ public class ClassFunctions extends NullJJVMTIStdAgentAdapter {
      */
     public static void onLoad(String agentArgs) {
         ClassFunctionsArgs = agentArgs;
-        classFunctions.agentStartup();
+        classFunctions.onBoot();
     }
 
     /**
      * Boot image entry point.
      */
     @Override
-    public void agentStartup() {
+    public void onBoot() {
         classFunctions.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
     }
 
@@ -81,7 +82,7 @@ public class ClassFunctions extends NullJJVMTIStdAgentAdapter {
     }
 
     @Override
-    public void classLoad(Thread thread, Class<?> klass) {
-        System.out.printf("JJVMTI.classLoad: %s in %s%n", klass.getName(), thread.getName());
+    public void classLoad(Thread thread, ClassActor klass) {
+        System.out.printf("JJVMTI.classLoad: %s in %s%n", klass.name(), thread.getName());
     }
 }

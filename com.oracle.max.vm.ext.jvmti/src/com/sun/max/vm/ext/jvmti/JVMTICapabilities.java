@@ -29,7 +29,7 @@ import java.util.*;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.ext.jvmti.JJVMTICommon.*;
+import com.sun.max.vm.ext.jvmti.JJVMTI.*;
 
 /**
  * JVMTI Capabilities.

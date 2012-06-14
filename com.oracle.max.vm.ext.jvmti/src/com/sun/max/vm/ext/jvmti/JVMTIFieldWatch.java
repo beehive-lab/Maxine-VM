@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.ext.jvmti;
 
-import java.lang.reflect.*;
 import java.util.concurrent.*;
 
 import com.sun.max.unsafe.*;
@@ -149,15 +148,13 @@ public class JVMTIFieldWatch {
         }
     }
 
-    static void invokeFieldAccessCallback(JJVMTIStd.EventCallbacksStd callbackHandler, Thread thread, FieldEventData data) {
+    static void invokeFieldAccessCallback(JJVMTI.EventCallbacks callbackHandler, Thread thread, FieldEventData data) {
         ClassActor classActor = checkInvoke(data);
         if (classActor != null) {
-            Class<?> klass = classActor.toJava();
-            Field field = data.currentFieldActor.toJava();
             if (data.tag == FieldEventData.DATA_NONE) {
-                callbackHandler.fieldAccess(thread, null, 0L, klass, data.object, field);
+                callbackHandler.fieldAccess(thread, null, 0L, classActor, data.object, data.currentFieldActor);
             } else {
-                callbackHandler.fieldModification(thread, null, 0L, klass, data.object, field, data.asObject());
+                callbackHandler.fieldModification(thread, null, 0L, classActor, data.object, data.currentFieldActor, data.asObject());
             }
         }
     }

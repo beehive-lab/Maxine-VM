@@ -42,7 +42,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
-import com.sun.max.vm.ext.jvmti.JJVMTIStd.*;
+import com.sun.max.vm.ext.jvmti.JJVMTI.FrameInfo;
 import com.sun.max.vm.ext.jvmti.JVMTIUtil.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.run.java.*;
@@ -719,17 +719,13 @@ public class JVMTIThreadFunctions {
         int location;
     }
 
-    static JJVMTICommon.FrameInfo getFrameLocation(Thread thread, int depth, boolean maxTypes) throws JJVMTICommon.JJVMTIException {
+    static JJVMTI.FrameInfo getFrameLocation(Thread thread, int depth) throws JJVMTI.JJVMTIException {
         MethodActorLocation methodActorLocation = new MethodActorLocation();
         int error = getFrameLocation(methodActorLocation, thread, depth);
         if (error == JVMTI_ERROR_NONE) {
-            if (maxTypes) {
-                return new JJVMTIMax.FrameInfoMax(methodActorLocation.methodActor, methodActorLocation.location);
-            } else {
-                return new FrameInfoStd(methodActorLocation.methodActor.toJava(), methodActorLocation.location);
-            }
+            return new FrameInfo(methodActorLocation.methodActor, methodActorLocation.location);
         } else {
-            throw new JJVMTICommon.JJVMTIException(error);
+            throw new JJVMTI.JJVMTIException(error);
         }
     }
 
@@ -1101,7 +1097,7 @@ public class JVMTIThreadFunctions {
         if (error == JVMTI_ERROR_NONE) {
             return typedData;
         } else {
-            throw new JJVMTICommon.JJVMTIException(error);
+            throw new JJVMTI.JJVMTIException(error);
         }
     }
 

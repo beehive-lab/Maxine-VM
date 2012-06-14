@@ -106,33 +106,15 @@ public class JVMTI {
     }
 
     /**
-     * Abstract subclass used for agents that use {@link JJVMTICommon}.
+     * Abstract subclass used for agents that use {@link JJVMTI}.
      */
-    public static abstract class JavaEnv extends Env {
+    public static class JavaEnv extends Env {
         final EnumSet<JVMTICapabilities.E> capabilities = EnumSet.noneOf(JVMTICapabilities.E.class);
-        final JJVMTICommon.EventCallbacks callbackHandler;
-        protected JavaEnv(JJVMTICommon.EventCallbacks callbackHandler) {
+        final JJVMTI.EventCallbacks callbackHandler;
+        protected JavaEnv(JJVMTI.EventCallbacks callbackHandler) {
             this.callbackHandler = callbackHandler;
         }
 
-    }
-
-    /**
-     * Concrete subclass for reflection-based API, {@link JJVMTIStd}.
-     */
-    public static class JavaEnvStd extends JavaEnv {
-        public JavaEnvStd(JJVMTIStd.EventCallbacksStd callbackHandler) {
-            super(callbackHandler);
-        }
-    }
-
-    /**
-     * Concrete subclass for Maxine actor-based API, {@link JJVMTIMax}.
-     */
-    public static class JavaEnvMax extends JavaEnv {
-        public JavaEnvMax(JJVMTIMax.EventCallbacksMax callbackHandler) {
-            super(callbackHandler);
-        }
     }
 
     static class JVMTIHandler extends NullVMTIHandler implements VMTIHandler {
@@ -412,7 +394,7 @@ public class JVMTI {
         for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
             JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
             if (javaEnv != null) {
-                javaEnv.callbackHandler.agentStartup();
+                javaEnv.callbackHandler.onBoot();
             }
         }
         phase = JVMTI_PHASE_PRIMORDIAL;
@@ -679,43 +661,24 @@ public class JVMTI {
                         break;
 
                     case CLASS_LOAD:
-                        if (javaEnv instanceof JavaEnvStd) {
-                            ((JJVMTIStd.EventCallbacksStd) javaEnv.callbackHandler).classLoad(currentThread, asClassActor(arg1).javaClass());
-                        } else {
-                            ((JJVMTIMax.EventCallbacksMax) javaEnv.callbackHandler).classLoad(currentThread, asClassActor(arg1));
-                        }
+                        javaEnv.callbackHandler.classLoad(currentThread, asClassActor(arg1));
                         break;
 
                     case METHOD_ENTRY: {
-                        if (javaEnv instanceof JavaEnvStd) {
-                            Member member = getMethodOrConstructor(asClassMethodActor(arg1));
-                            ((JJVMTIStd.EventCallbacksStd) javaEnv.callbackHandler).methodEntry(currentThread, member);
-                        } else {
-                            ((JJVMTIMax.EventCallbacksMax) javaEnv.callbackHandler).methodEntry(currentThread, asClassMethodActor(arg1));
-                        }
+                        javaEnv.callbackHandler.methodEntry(currentThread, asClassMethodActor(arg1));
                         break;
                     }
 
                     case METHOD_EXIT: {
                         FramePopEventData framePopEventData = asFramePopEventData(arg1);
-                        if (javaEnv instanceof JavaEnvStd) {
-                            Member member = getMethodOrConstructor(MethodID.toMethodActor(framePopEventData.methodID));
-                            ((JJVMTIStd.EventCallbacksStd) javaEnv.callbackHandler).methodExit(currentThread, member,
+                        javaEnv.callbackHandler.methodExit(currentThread, MethodID.toMethodActor(framePopEventData.methodID),
                                             framePopEventData.wasPoppedByException, framePopEventData.value);
-                        } else {
-                            ((JJVMTIMax.EventCallbacksMax) javaEnv.callbackHandler).methodExit(currentThread, MethodID.toMethodActor(framePopEventData.methodID),
-                                            framePopEventData.wasPoppedByException, framePopEventData.value);
-                        }
                         break;
                     }
 
                     case FIELD_ACCESS:
                     case FIELD_MODIFICATION: {
-                        if (javaEnv instanceof JavaEnvStd) {
-                            invokeFieldAccessCallback((JJVMTIStd.EventCallbacksStd) javaEnv.callbackHandler, currentThread, asFieldEventData(arg1));
-                        } else {
-                            // TODO
-                        }
+                        invokeFieldAccessCallback(javaEnv.callbackHandler, currentThread, asFieldEventData(arg1));
                         break;
                     }
 /*
