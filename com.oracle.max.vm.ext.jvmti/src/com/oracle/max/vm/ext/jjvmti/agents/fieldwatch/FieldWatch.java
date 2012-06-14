@@ -24,26 +24,26 @@ package com.oracle.max.vm.ext.jjvmti.agents.fieldwatch;
 
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import com.oracle.max.vm.ext.jjvmti.agents.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * A {@link JJVMTI Java JVMTI agent} that tests the field watch part of the interface.
  * Can be included in the boot image or dynamically loaded as a VM extension.
  */
-public class FieldWatch  extends NullJJVMTIStdAgentAdapter {
+public class FieldWatch  extends NullJJVMTICallbacks {
     private static FieldWatch fieldWatch;
     private static String FieldWatchArgs;
 
     static {
-        fieldWatch = (FieldWatch) JJVMTIStdAgentAdapter.register(new FieldWatch());
+        fieldWatch = (FieldWatch) JJVMTIAgentAdapter.register(new FieldWatch());
         if (MaxineVM.isHosted()) {
             VMOptions.addFieldOption("-XX:", "FieldWatchArgs", "arguments for fieldwatch JJVMTI agent");
         }
@@ -59,7 +59,7 @@ public class FieldWatch  extends NullJJVMTIStdAgentAdapter {
         long writeCount;
     }
 
-    private static ConcurrentHashMap<Field, Counter> counters = new ConcurrentHashMap<Field, Counter>();
+    private static ConcurrentHashMap<FieldActor, Counter> counters = new ConcurrentHashMap<FieldActor, Counter>();
 
     /***
      * VM extension entry point.
@@ -67,14 +67,14 @@ public class FieldWatch  extends NullJJVMTIStdAgentAdapter {
      */
     public static void onLoad(String agentArgs) {
         FieldWatchArgs = agentArgs;
-        fieldWatch.agentStartup();
+        fieldWatch.onBoot();
     }
 
     /**
      * Boot image entry point.
      */
     @Override
-    public void agentStartup() {
+    public void onBoot() {
         fieldWatch.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
     }
 
@@ -118,8 +118,6 @@ public class FieldWatch  extends NullJJVMTIStdAgentAdapter {
         }
         System.out.printf("cp %s, fp %s%n", classPattern.pattern(), fieldPattern.pattern());
 
-        FieldWatch fieldWatch = new FieldWatch();
-
         try {
             fieldWatch.addCapabilities(EnumSet.of(JVMTICapabilities.E.CAN_GENERATE_FIELD_ACCESS_EVENTS,
                                                   JVMTICapabilities.E.CAN_GENERATE_FIELD_MODIFICATION_EVENTS));
@@ -133,11 +131,11 @@ public class FieldWatch  extends NullJJVMTIStdAgentAdapter {
     }
 
     @Override
-    public void classLoad(Thread thread, Class<?> klass) {
-        if (classPattern.matcher(klass.getName()).matches()) {
-            Field[] fields = klass.getDeclaredFields();
-            for (Field field : fields) {
-                if (fieldPattern.matcher(field.getName()).matches()) {
+    public void classLoad(Thread thread, ClassActor klass) {
+        if (classPattern.matcher(klass.qualifiedName()).matches()) {
+            List<FieldActor> fields = klass.getLocalFieldActors();
+            for (FieldActor field : fields) {
+                if (fieldPattern.matcher(field.name()).matches()) {
                     if (read) {
                         setFieldAccessWatch(field);
                     }
@@ -151,22 +149,22 @@ public class FieldWatch  extends NullJJVMTIStdAgentAdapter {
 
     @Override
     public void vmDeath() {
-        for (Map.Entry<Field, Counter> entry : counters.entrySet()) {
+        for (Map.Entry<FieldActor, Counter> entry : counters.entrySet()) {
             System.out.printf("field %s, read %d, write %d%n", entry.getKey(), entry.getValue().readCount, entry.getValue().writeCount);
         }
     }
 
     @Override
-    public void fieldAccess(Thread thread, Method method, long location, Class<?> klass, Object object, Field field) {
+    public void fieldAccess(Thread thread, MethodActor method, long location, ClassActor klass, Object object, FieldActor field) {
         getCounter(field).readCount++;
     }
 
     @Override
-    public void fieldModification(Thread thread, Method method, long location, Class<?> klass, Object object, Field field, Object newValue) {
+    public void fieldModification(Thread thread, MethodActor method, long location, ClassActor klass, Object object, FieldActor field, Object newValue) {
         getCounter(field).writeCount++;
     }
 
-    private static Counter getCounter(Field field) {
+    private static Counter getCounter(FieldActor field) {
         Counter counter = counters.get(field);
         if (counter == null) {
             counter = new Counter();

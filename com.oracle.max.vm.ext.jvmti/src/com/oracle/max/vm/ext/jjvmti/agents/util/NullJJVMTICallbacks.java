@@ -28,11 +28,18 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.*;
 
-
-public class NullJJVMTIMaxAgentAdapter extends JJVMTIMaxAgentAdapter implements JJVMTIMax.EventCallbacksMax {
+/**
+ * Default empty implementations of the {@link JJVMTI.EventCallbacks}.
+ *
+ */
+public class NullJJVMTICallbacks extends JJVMTIAgentAdapter implements JJVMTI.EventCallbacks {
 
     @Override
-    public void agentStartup() {
+    public void onBoot() {
+    }
+
+    @Override
+    public void breakpoint(Thread thread, MethodActor method, long location) {
     }
 
     @Override
@@ -41,11 +48,31 @@ public class NullJJVMTIMaxAgentAdapter extends JJVMTIMaxAgentAdapter implements 
     }
 
     @Override
+    public void classLoad(Thread thread, ClassActor klass) {
+    }
+
+    @Override
+    public void fieldAccess(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field) {
+    }
+
+    @Override
+    public void fieldModification(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field, Object newValue) {
+    }
+
+    @Override
     public void garbageCollectionStart() {
     }
 
     @Override
     public void garbageCollectionFinish() {
+    }
+
+    @Override
+    public void methodEntry(Thread thread, MethodActor method) {
+    }
+
+    @Override
+    public void methodExit(Thread thread, MethodActor method, boolean exeception, Object returnValue) {
     }
 
     @Override
@@ -63,30 +90,5 @@ public class NullJJVMTIMaxAgentAdapter extends JJVMTIMaxAgentAdapter implements 
     @Override
     public void vmInit() {
     }
-
-    @Override
-    public void breakpoint(Thread thread, MethodActor method, long location) {
-    }
-
-    @Override
-    public void classLoad(Thread thread, ClassActor klass) {
-    }
-
-    @Override
-    public void methodEntry(Thread thread, MethodActor method) {
-    }
-
-    @Override
-    public void methodExit(Thread thread, MethodActor method, boolean exeception, Object returnValue) {
-    }
-
-    @Override
-    public void fieldAccess(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field) {
-    }
-
-    @Override
-    public void fieldModification(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field, Object newValue) {
-    }
-
 
 }

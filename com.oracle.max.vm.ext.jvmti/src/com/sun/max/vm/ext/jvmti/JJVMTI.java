@@ -25,10 +25,32 @@ package com.sun.max.vm.ext.jvmti;
 import java.security.*;
 import java.util.*;
 
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+
 /**
- * Types and methods that are common to {@link JJVMTIStd} and {@link JJVMTIMax}.
+/**
+ * A functionally equivalent <A href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html">JVMTI</a> interface
+ * but cast in terms of Maxine Java types that can be called from agents written in Java (for Maxine).
+ *
+ * Some of the JVMTI functions are redundant in that they essentially replicate existing functionality in the JDK,
+ * however, we include them for completeness.
+ *
+ * A few of the JVMTI functions don't have a Java equivalent, and these are omitted. Raw monitors are
+ * unnecessary as agents can use standard Java synchronization mechanisms.
+ *
+ * Whereas native JVMTI returns errors as the function result, {@link JJVMTI} throws a {@link JJVMTIException}.
+ *
+ * Classes, fields and methods are denoted using the Maxine {@link Actor} classes. The other choice would have been to use
+ * the types defined in the standard reflection package. The native JVMTI API uses JNI handles for Class instances and
+ * scalar values for field and method instances, the latter corresponding to Maxine's {@link MemberID} class.
+ * One reason for not using the standard reflection types is that a {@link Method} instance cannot represent a, {@code <init>}
+ * method, which is represented with {@link Constructor}, whereas Maxine's {@link MethodActor} can represent all method instances
+ * uniformly. In contrast, the API uses {@link Thread} over Maxine's {@link VmThread}, as there is no compelling reason to choose
+ * the latter. Conversion between the Maxine types and platform types is, if necessary, straightforward using the {@code fromJava}
+ * and {@code toJava} methods.
  */
-public interface JJVMTICommon {
+public interface JJVMTI {
     /**
      * JVMTI errors. Whereas native JVMTI indicates errors by a return code, Java JVMTI uses an exception with the error
      * code as argument. Since errors are rare this is a {@link RuntimeException}.
@@ -49,13 +71,13 @@ public interface JJVMTICommon {
 
     /**
      * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiFrameInfo">jvmtiFrameInfo</a>.
-     * This class is incomplete as the type of the method object is left to the subclass.
      */
-    public static abstract class FrameInfo {
-        // method of frame specified by subclass
+    public static class FrameInfo {
         public final int location;
+        public final MethodActor method;
 
-        public FrameInfo(int location) {
+        public FrameInfo(MethodActor method, int location) {
+            this.method = method;
             this.location = location;
         }
     }
@@ -124,6 +146,16 @@ public interface JJVMTICommon {
         }
     }
 
+    public static class ClassDefinition {
+        public final ClassActor klass;
+        public final byte[] classBytes;
+
+        public ClassDefinition(ClassActor klass, byte[] classBytes) {
+            this.klass = klass;
+            this.classBytes = classBytes;
+        }
+    }
+
     public static class ClassVersionInfo {
         public final int major;
         public final int minor;
@@ -156,7 +188,8 @@ public interface JJVMTICommon {
      * These are defined in a separate interface partly to call them out and partly to permit some implementation
      * flexibility.
      *
-     * There is no {@code VM_START} event as Maxine cannot usefully distinguish it from {@code VM_INIT}.
+     * There is no separate {@code VM_START} event as Maxine cannot usefully distinguish it from {@code VM_INIT}.
+     * There is no separate {@code CLASS_PREPARE} event as Maxine cannot usefully distinguish it from {@code CLASS_LOAD}.
      *
      * TODO: Not all events are supported yet.
      */
@@ -168,11 +201,17 @@ public interface JJVMTICommon {
          * that are built into the boot image and in {code PRIMORDIAL} mode, whereVM functionality is
          * very limited. Dynamically loaded agents have their {@code onLoad} method called instead.
          */
-        void agentStartup();
+        void onBoot();
+        void breakpoint(Thread thread, MethodActor method, long location);
         byte[] classFileLoadHook(ClassLoader loader, String name,
                         ProtectionDomain protectionDomain, byte[] classData);
+        void classLoad(Thread thread, ClassActor klass);
+        void fieldAccess(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field);
+        void fieldModification(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field, Object newValue);
         void garbageCollectionStart();
         void garbageCollectionFinish();
+        void methodEntry(Thread thread, MethodActor method);
+        void methodExit(Thread thread, MethodActor method, boolean exeception, Object returnValue);
         void threadStart(Thread thread);
         void threadEnd(Thread thread);
         void vmDeath();
@@ -195,6 +234,10 @@ public interface JJVMTICommon {
          */
         int heapIteration(Object classTag, long size, Object objectTag, int length, Object userData);
     }
+
+    /*
+     * The following methods are independent of Class, Field and Method types.
+     */
 
     void setEventNotificationMode(int mode, int event, Thread thread) throws JJVMTIException;
     Thread[] getAllThreads() throws JJVMTIException;
@@ -268,6 +311,9 @@ public interface JJVMTICommon {
     void setExtensionEventCallback(int arg1, Address arg2) throws Exception;
     */
 
+    void iterateThroughHeap(int filter, ClassActor classActor, HeapCallbacks heapCallbacks, Object userData) throws JJVMTIException;
+
+
     void disposeEnvironment() throws JJVMTIException;
     String getErrorName(int error) throws JJVMTIException;
     int getJLocationFormat() throws JJVMTIException;
@@ -295,5 +341,55 @@ public interface JJVMTICommon {
     MonitorStackDepthInfo[] getOwnedMonitorStackDepthInfo(Thread thread) throws JJVMTIException;
     long getObjectSize(Object object) throws JJVMTIException;
 //  void getLocalInstance(JniHandle arg1, int arg2, Pointer arg3) throws Exception;
+
+    /*
+     * These methods refer to methods, fields and classes. in native JVMTI these values are represented
+     * by scalar values that correspond to Maxine's MemberID, ClassID. Here we choose to use the Maxine
+     * Actor types.
+     */
+
+    void setBreakpoint(MethodActor method, long location) throws JJVMTIException;
+    void clearBreakpoint(MethodActor method, long location) throws JJVMTIException;
+    void setFieldAccessWatch(FieldActor field) throws JJVMTIException;
+    void clearFieldAccessWatch(FieldActor field) throws JJVMTIException;
+    void setFieldModificationWatch(FieldActor field) throws JJVMTIException;
+    void clearFieldModificationWatch(FieldActor field) throws JJVMTIException;
+    boolean isModifiableClass(ClassActor klass) throws JJVMTIException;
+    String getClassSignature(ClassActor klass) throws JJVMTIException;
+    int getClassStatus(ClassActor klass) throws JJVMTIException;
+    String getSourceFileName(ClassActor klass) throws JJVMTIException;
+    int getClassModifiers(ClassActor klass) throws JJVMTIException;
+    MethodActor[] getClassMethods(ClassActor klass) throws JJVMTIException;
+    FieldActor[] getClassFields(ClassActor klass) throws JJVMTIException;
+    ClassActor[] getImplementedInterfaces(ClassActor klass) throws JJVMTIException;
+    boolean isInterface(ClassActor klass) throws JJVMTIException;
+    boolean isArrayClass(ClassActor klass) throws JJVMTIException;
+    ClassLoader getClassLoader(ClassActor klass) throws JJVMTIException;
+    String getFieldName(FieldActor field) throws JJVMTIException;
+    String getFieldSignature(FieldActor field) throws JJVMTIException;
+    ClassActor getFieldDeclaringClass(FieldActor field) throws JJVMTIException;
+    int getFieldModifiers(FieldActor field) throws JJVMTIException;
+    boolean isFieldSynthetic(FieldActor field) throws JJVMTIException;
+    String getMethodName(MethodActor method) throws JJVMTIException;
+    String getMethodSignature(MethodActor method) throws JJVMTIException;
+    String getMethodGenericSignature(MethodActor method) throws JJVMTIException;
+    ClassActor getMethodDeclaringClass(MethodActor method) throws JJVMTIException;
+    int getMethodModifiers(MethodActor method) throws JJVMTIException;
+    int getMaxLocals(MethodActor method) throws JJVMTIException;
+    int getArgumentsSize(MethodActor method) throws JJVMTIException;
+    LineNumberEntry[] getLineNumberTable(MethodActor method) throws JJVMTIException;
+    MethodLocation getMethodLocation(MethodActor method) throws JJVMTIException;
+    LocalVariableEntry[] getLocalVariableTable(MethodActor member) throws JJVMTIException;
+    byte[] getBytecodes(MethodActor method, byte[] useThis) throws JJVMTIException;
+    boolean isMethodNative(MethodActor method) throws JJVMTIException;
+    boolean isMethodSynthetic(MethodActor method) throws JJVMTIException;
+    ClassActor[] getLoadedClasses() throws JJVMTIException;
+    ClassActor[] getClassLoaderClasses(ClassLoader loader) throws JJVMTIException;
+    void redefineClasses(ClassDefinition[] classDefinitions) throws JJVMTIException;
+    String getSourceDebugExtension(ClassActor klass) throws JJVMTIException;
+    boolean isMethodObsolete(MethodActor method) throws JJVMTIException;
+    ClassVersionInfo getClassVersionNumbers(ClassActor klasss, ClassVersionInfo classVersionInfo) throws JJVMTIException;
+    int getConstantPool(ClassActor klass, byte[] pool) throws JJVMTIException;
+    void retransformClasses(ClassActor[] klasses) throws JJVMTIException;
 
 }

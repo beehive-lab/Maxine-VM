@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.vma.handlers.jvmti.h;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.vm.ext.jvmti.*;
 import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;

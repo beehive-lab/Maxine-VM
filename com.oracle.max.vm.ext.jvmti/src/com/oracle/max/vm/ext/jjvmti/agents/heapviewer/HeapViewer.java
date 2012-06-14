@@ -37,13 +37,13 @@ import com.sun.max.vm.ext.jvmti.*;
  * The standard JVMTI heap viewer demo using JJVMTI.
  * Can be included in the boot image or dynamically loaded as a VM extension.
  */
-public class HeapViewer extends NullJJVMTIStdAgentAdapter implements JJVMTICommon.HeapCallbacks {
+public class HeapViewer extends NullJJVMTICallbacks implements JJVMTI.HeapCallbacks {
 
     private static HeapViewer heapViewer;
     private static String HeapViewerArgs;
 
     static {
-        heapViewer = (HeapViewer) JJVMTIStdAgentAdapter.register(new HeapViewer());
+        heapViewer = (HeapViewer) JJVMTIAgentAdapter.register(new HeapViewer());
         if (MaxineVM.isHosted()) {
             VMOptions.addFieldOption("-XX:", "HeapViewerArgs", "arguments for heapviewer JJVMTI agent");
         }
@@ -80,14 +80,14 @@ public class HeapViewer extends NullJJVMTIStdAgentAdapter implements JJVMTICommo
      */
     public static void onLoad(String agentArgs) {
         HeapViewerArgs = agentArgs;
-        heapViewer.agentStartup();
+        heapViewer.onBoot();
     }
 
     /**
      * Boot image entry point.
      */
     @Override
-    public void agentStartup() {
+    public void onBoot() {
         heapViewer.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
     }
 
@@ -122,24 +122,24 @@ public class HeapViewer extends NullJJVMTIStdAgentAdapter implements JJVMTICommo
         }
         dumpInProgress = true;
         /* Get all the loaded classes */
-        Class<?>[] classes = getLoadedClasses();
+        ClassActor[] classes = getLoadedClasses();
 
         /* Setup an area to hold details about these classes */
         ClassDetails[] details = new ClassDetails[classes.length];
         for (int i = 0; i < classes.length; i++) {
-            Class<?> klass = classes[i];
+            ClassActor klass = classes[i];
             /* Get and save the class signature */
             details[i] = new ClassDetails(getClassSignature(klass));
             /* Tag this class with ClassDetails instance */
-            setTag(klass, details[i]);
+            setTag(klass.toJava(), details[i]);
         }
         totalCount = 0;
         /* Iterate through the heap and count up uses of classes */
         iterateThroughHeap(JVMTI_HEAP_FILTER_CLASS_UNTAGGED, null, this, null);
 
         /* Remove tags */
-        for (Class<?> klass : classes) {
-            setTag(klass, null);
+        for (ClassActor klass : classes) {
+            setTag(klass.toJava(), null);
         }
         /* Sort details by space used */
         Arrays.sort(details);

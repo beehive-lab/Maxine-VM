@@ -28,6 +28,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.ext.jvmti.JVMTIThreadFunctions.*;
@@ -36,15 +37,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 
-/**
- * An implementation of {@link JJVMTICommon} that reuses as much as possible of the native JVMTI implementation.
- *
- * Although this class is not directly referenced by the VM code, we want it to be fully compiled into the boot image
- * so we define every method as a {@link CriticalMethod}.
- *
- * TODO: complete the implementation.
- */
-public abstract class JJVMTICommonAgentAdapter implements JJVMTICommon {
+public class JJVMTIAgentAdapter implements JJVMTI {
 
     static {
         JavaPrototype.registerInitializationCompleteCallback(new InitializationCompleteCallback());
@@ -60,13 +53,23 @@ public abstract class JJVMTICommonAgentAdapter implements JJVMTICommon {
     private static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
         @Override
         public void initializationComplete() {
-            registerCriticalMethods(JJVMTICommonAgentAdapter.class);
+            registerCriticalMethods(JJVMTIAgentAdapter.class);
         }
     }
 
     protected static final JJVMTIException notImplemented = new JJVMTIException(JVMTI_ERROR_NOT_AVAILABLE);
 
     protected JVMTI.JavaEnv env;
+
+    /**
+     * Register an agent.
+     * @param the agent implementation subclass
+     * @return
+     */
+    public static JJVMTIAgentAdapter register(JJVMTIAgentAdapter agent) {
+        agent.registerEnv(new JVMTI.JavaEnv((JJVMTI.EventCallbacks) agent));
+        return agent;
+    }
 
     protected void registerEnv(JVMTI.JavaEnv env) {
         this.env = env;
@@ -173,7 +176,7 @@ public abstract class JJVMTICommonAgentAdapter implements JJVMTICommon {
 
     @Override
     public FrameInfo getFrameLocation(Thread thread, int depth) throws JJVMTIException {
-        return JVMTIThreadFunctions.getFrameLocation(thread, depth, false);
+        return JVMTIThreadFunctions.getFrameLocation(thread, depth);
     }
 
     @Override
@@ -502,5 +505,241 @@ public abstract class JJVMTICommonAgentAdapter implements JJVMTICommon {
     public long getObjectSize(Object object) throws JJVMTIException {
         throw notImplemented;
     }
+
+    @Override
+    public void setBreakpoint(MethodActor method, long location) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public void clearBreakpoint(MethodActor method, long location) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public void setFieldAccessWatch(FieldActor field) throws JJVMTIException {
+        JVMTIFieldWatch.setWatch(field, JVMTIFieldWatch.ACCESS_STATE);
+    }
+
+    @Override
+    public void clearFieldAccessWatch(FieldActor field) throws JJVMTIException {
+        JVMTIFieldWatch.clearWatch(field, JVMTIFieldWatch.ACCESS_STATE);
+    }
+
+    @Override
+    public void setFieldModificationWatch(FieldActor field) throws JJVMTIException {
+        JVMTIFieldWatch.setWatch(field, JVMTIFieldWatch.MODIFICATION_STATE);
+    }
+
+    @Override
+    public void clearFieldModificationWatch(FieldActor field) throws JJVMTIException {
+        JVMTIFieldWatch.clearWatch(field, JVMTIFieldWatch.MODIFICATION_STATE);
+    }
+
+    @Override
+    public boolean isModifiableClass(ClassActor klass) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public String getClassSignature(ClassActor klass) throws JJVMTIException {
+        return klass.typeDescriptor.string;
+    }
+
+    @Override
+    public int getClassStatus(ClassActor klass) throws JJVMTIException {
+        return JVMTIClassFunctions.getClassStatus(klass);
+    }
+
+    @Override
+    public String getSourceFileName(ClassActor klass) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public int getClassModifiers(ClassActor klass) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public MethodActor[] getClassMethods(ClassActor klass) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public FieldActor[] getClassFields(ClassActor klass) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public ClassActor[] getImplementedInterfaces(ClassActor klass) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public boolean isInterface(ClassActor klass) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public boolean isArrayClass(ClassActor klass) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public ClassLoader getClassLoader(ClassActor klass) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public String getFieldName(FieldActor field) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public String getFieldSignature(FieldActor field) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public ClassActor getFieldDeclaringClass(FieldActor field) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public int getFieldModifiers(FieldActor field) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public boolean isFieldSynthetic(FieldActor field) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public String getMethodName(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public String getMethodSignature(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public String getMethodGenericSignature(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public ClassActor getMethodDeclaringClass(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public int getMethodModifiers(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public int getMaxLocals(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public int getArgumentsSize(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public LineNumberEntry[] getLineNumberTable(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public MethodLocation getMethodLocation(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public LocalVariableEntry[] getLocalVariableTable(MethodActor methodActor) throws JJVMTIException {
+        return JVMTIClassFunctions.getLocalVariableTable((ClassMethodActor) methodActor);
+    }
+
+    @Override
+    public byte[] getBytecodes(MethodActor method, byte[] useThis) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public boolean isMethodNative(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public boolean isMethodSynthetic(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public ClassActor[] getLoadedClasses() throws JJVMTIException {
+        return JVMTIClassFunctions.getLoadedClassActors();
+    }
+
+    @Override
+    public ClassActor[] getClassLoaderClasses(ClassLoader loader) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public void redefineClasses(ClassDefinition[] classDefinitions) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public String getSourceDebugExtension(ClassActor klass) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public boolean isMethodObsolete(MethodActor method) throws JJVMTIException {
+        throw notImplemented;
+    }
+
+    @Override
+    public ClassVersionInfo getClassVersionNumbers(ClassActor klasss, ClassVersionInfo classVersionInfo) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public int getConstantPool(ClassActor klass, byte[] pool) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public void retransformClasses(ClassActor[] klasses) throws JJVMTIException {
+        throw notImplemented;
+
+    }
+
+    @Override
+    public void iterateThroughHeap(int filter, ClassActor classActor, HeapCallbacks heapCallbacks, Object userData) throws JJVMTIException {
+        JVMTIHeapFunctions.iterateThroughHeap(env, filter, classActor, heapCallbacks, userData);
+    }
+
 
 }

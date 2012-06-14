@@ -229,8 +229,7 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-    static int getClassStatus(Class<?> klass) {
-        ClassActor classActor = ClassActor.fromJava(klass);
+    static int getClassStatus(ClassActor classActor) {
         int status = 0;
         if (classActor.isArrayClass()) {
             status = JVMTI_CLASS_STATUS_ARRAY;
@@ -253,6 +252,10 @@ class JVMTIClassFunctions {
         return status;
     }
 
+    static int getClassStatus(Class<?> klass) {
+        return getClassStatus(ClassActor.fromJava(klass));
+    }
+
     static int getClassStatus(Class<?> klass, Pointer statusPtr) {
         statusPtr.setInt(getClassStatus(klass));
         return JVMTI_ERROR_NONE;
@@ -271,7 +274,9 @@ class JVMTIClassFunctions {
      * Union class to handle native/java variants for {@link #getLoadedClasses} etc.
      */
     private static class LoadedClassesUnion extends ModeUnion {
+        boolean actors;
         Class[] classArray;
+        ClassActor[] classActorArray;
         Pointer classesArrayPtr;
         int classCount;
 
@@ -336,6 +341,14 @@ class JVMTIClassFunctions {
         return lcu.classArray;
     }
 
+    static ClassActor[] getLoadedClassActors() {
+        LoadedClassesUnion lcu = new LoadedClassesUnion(false);
+        lcu.actors = true;
+        getLoadedClasses(lcu);
+        return lcu.classActorArray;
+
+    }
+
     private static int getLoadedClasses(LoadedClassesUnion lcu) {
         // TODO handle all class loaders, requires changes to Maxine
         Collection<ClassActor> bootClassActors = ClassRegistry.makeRegistry(BootClassLoader.BOOT_CLASS_LOADER).getClassActors();
@@ -355,7 +368,11 @@ class JVMTIClassFunctions {
                 return JVMTI_ERROR_OUT_OF_MEMORY;
             }
         } else {
-            lcu.classArray = new Class[totalSize];
+            if (lcu.actors) {
+                lcu.classActorArray = new ClassActor[totalSize];
+            } else {
+                lcu.classArray = new Class[totalSize];
+            }
         }
         int bootClassActorsCopied = copyClassActors(lcu, bootClassActors, 0, bootClassActorsSize);
         int systemClassActorsCopied = copyClassActors(lcu, systemClassActors, bootClassActorsCopied, systemClassActorsSize);
@@ -390,7 +407,11 @@ class JVMTIClassFunctions {
                 if (lcu.isNative) {
                     lcu.classesArrayPtr.setWord(arrayIndex + index, JniHandles.createLocalHandle(klass));
                 } else {
-                    lcu.classArray[arrayIndex + index] = klass;
+                    if (lcu.actors) {
+                        lcu.classActorArray[arrayIndex + index] = classActor;
+                    } else {
+                        lcu.classArray[arrayIndex + index] = klass;
+                    }
                 }
                 index++;
             } else {
@@ -464,7 +485,7 @@ class JVMTIClassFunctions {
     private static class LocalVariableTableUnion extends ModeUnion {
         int entryCount;
         Pointer nativeTablePtr;
-        JJVMTICommon.LocalVariableEntry[] localVariableEntryArray;
+        JJVMTI.LocalVariableEntry[] localVariableEntryArray;
         LocalVariableTableUnion(boolean isNative) {
             super(isNative);
         }
@@ -480,16 +501,16 @@ class JVMTIClassFunctions {
         return error;
     }
 
-    static JJVMTICommon.LocalVariableEntry[] getLocalVariableTable(ClassMethodActor classMethodActor) {
+    static JJVMTI.LocalVariableEntry[] getLocalVariableTable(ClassMethodActor classMethodActor) {
         LocalVariableTableUnion lvtu = new LocalVariableTableUnion(false);
         int error = getLocalVariableTable(lvtu, classMethodActor);
         if (error == JVMTI_ERROR_NONE) {
             return lvtu.localVariableEntryArray;
         } else {
             if (error == JVMTI_ERROR_ABSENT_INFORMATION) {
-                return new JJVMTICommon.LocalVariableEntry[0];
+                return new JJVMTI.LocalVariableEntry[0];
             }
-            throw new JJVMTICommon.JJVMTIException(error);
+            throw new JJVMTI.JJVMTIException(error);
         }
     }
 
@@ -518,10 +539,10 @@ class JVMTIClassFunctions {
                                 entry.signatureIndex() == 0 ? Pointer.zero() : CString.utf8FromJava(entry.signature(constantPool).string), entry.startBCI(), entry.length(), entry.slot());
             }
         } else {
-            lvtu.localVariableEntryArray = new JJVMTICommon.LocalVariableEntry[entries.length];
+            lvtu.localVariableEntryArray = new JJVMTI.LocalVariableEntry[entries.length];
             for (int i = 0; i < entries.length; i++) {
                 LocalVariableTable.Entry entry = entries[i];
-                lvtu.localVariableEntryArray[i] = new JJVMTICommon.LocalVariableEntry(entry.startBCI(), entry.length(),
+                lvtu.localVariableEntryArray[i] = new JJVMTI.LocalVariableEntry(entry.startBCI(), entry.length(),
                                 entry.name(constantPool).string, constantPool.utf8At(entry.descriptorIndex(), "local variable type").toString(),
                                 entry.signatureIndex() == 0 ? null : entry.signature(constantPool).string, entry.slot());
             }
