@@ -91,7 +91,9 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     private Rectangle originalFrameGeometry = null;
 
-    private final InspectorAction visitForwardedToAction;
+    private InspectorMenu objectMenu;
+    private InspectorAction visitForwardedToAction = null;
+    private InspectorAction visitForwardedFromAction = null;
 
     protected ObjectView(final Inspection inspection, final MaxObject object) {
         super(inspection, VIEW_KIND, null);
@@ -114,11 +116,6 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
                 reconstructView();
             }
         });
-        if (object.status().isForwarder()) {
-            visitForwardedToAction = new VisitForwardedToAction(inspection);
-        } else {
-            visitForwardedToAction = null;
-        }
         Trace.line(TRACE_VALUE, tracePrefix() + " creating for " + getTextForTitle());
     }
 
@@ -167,14 +164,13 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
         // Ensure that the object menu appears in the right position, but defer its creation
         // to subclasses, so that more view-specific items can be prepended to the standard ones.
-        final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
-        if (visitForwardedToAction != null) {
-            objectMenu.add(visitForwardedToAction);
-        }
+        objectMenu = makeMenu(MenuKind.OBJECT_MENU);
+        visitForwardedToAction = new VisitForwardedToAction(inspection());
+        objectMenu.add(visitForwardedToAction);
+        visitForwardedFromAction = new VisitForwardedFromAction(inspection());
+        objectMenu.add(visitForwardedFromAction);
 
-        if (object.getTeleClassMethodActorForObject() != null) {
-            makeMenu(MenuKind.CODE_MENU);
-        }
+        makeMenu(MenuKind.CODE_MENU);
 
         if (object.getTeleClassMethodActorForObject() != null || TeleTargetMethod.class.isAssignableFrom(object.getClass())) {
             makeMenu(MenuKind.DEBUG_MENU);
@@ -284,25 +280,6 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         final ObjectStatus status = object.status();
         boolean reconstructView = false;
 
-
-//        if (object.reference().isForwarded() && followingTeleObject) {
-//            //Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardReference().toOrigin().toHexString());
-//            MaxObject forwardedTeleObject = object.getForwardedTeleObject();
-//            if (viewManager.isObjectViewObservingObject(forwardedTeleObject.reference().makeOID())) {
-//                followingTeleObject = false;
-//                setWarning();
-//                setTitle();
-//                return;
-//            }
-//            viewManager.resetObjectToViewMapEntry(object, forwardedTeleObject, this);
-//            object = forwardedTeleObject;
-//            currentObjectOrigin = object.origin();
-//            reconstructView();
-//            if (objectHeaderTable != null) {
-//                objectHeaderTable.refresh(force);
-//            }
-//        }
-
         switch (status) {
             case LIVE:
                 final Pointer newOrigin = object.origin();
@@ -324,9 +301,10 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             default:
                 TeleError.unexpected("unexpected object status");
         }
-        if (visitForwardedToAction != null) {
-            visitForwardedToAction.refresh(force);
-        }
+
+        visitForwardedToAction.refresh(force);
+        visitForwardedFromAction.refresh(force);
+
         refreshBackgroundColor();
         setTitle();
         if (reconstructView) {
@@ -412,6 +390,30 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
                 forwardedToObject = vm().objects().findObjectAt(toAddress);
             }
             setEnabled(forwardedToObject != null);
+        }
+    }
+
+    private final class VisitForwardedFromAction extends InspectorAction {
+
+        private MaxObject forwardedFromObject;
+
+        public VisitForwardedFromAction(Inspection inspection) {
+            super(inspection, "View object forwarded from");
+            refresh();
+        }
+
+        @Override
+        protected void procedure() {
+            focus().setHeapObject(forwardedFromObject);
+        }
+
+        public void refresh() {
+            forwardedFromObject = null;
+            final Address fromAddress = object.reference().forwardedFrom();
+            if (fromAddress.isNotZero()) {
+                forwardedFromObject = vm().objects().findQuasiObjectAt(fromAddress);
+            }
+            setEnabled(forwardedFromObject != null);
         }
     }
 }
