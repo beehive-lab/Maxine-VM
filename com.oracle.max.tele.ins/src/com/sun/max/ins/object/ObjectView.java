@@ -91,6 +91,8 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     private Rectangle originalFrameGeometry = null;
 
+    private final InspectorAction visitForwardedToAction;
+
     protected ObjectView(final Inspection inspection, final MaxObject object) {
         super(inspection, VIEW_KIND, null);
         this.object = object;
@@ -112,6 +114,11 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
                 reconstructView();
             }
         });
+        if (object.status().isForwarder()) {
+            visitForwardedToAction = new VisitForwardedToAction(inspection);
+        } else {
+            visitForwardedToAction = null;
+        }
         Trace.line(TRACE_VALUE, tracePrefix() + " creating for " + getTextForTitle());
     }
 
@@ -159,9 +166,11 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         // Ensure that the object menu appears in the right position, but defer its creation
-        // to subclasses, so that view-specific items can be prepended to the standard ones.
-        makeMenu(MenuKind.OBJECT_MENU);
-
+        // to subclasses, so that more view-specific items can be prepended to the standard ones.
+        final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
+        if (visitForwardedToAction != null) {
+            objectMenu.add(visitForwardedToAction);
+        }
 
         if (object.getTeleClassMethodActorForObject() != null) {
             makeMenu(MenuKind.CODE_MENU);
@@ -315,6 +324,9 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             default:
                 TeleError.unexpected("unexpected object status");
         }
+        if (visitForwardedToAction != null) {
+            visitForwardedToAction.refresh(force);
+        }
         refreshBackgroundColor();
         setTitle();
         if (reconstructView) {
@@ -379,4 +391,27 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         return false;
     }
 
+    private final class VisitForwardedToAction extends InspectorAction {
+
+        private MaxObject forwardedToObject;
+
+        public VisitForwardedToAction(Inspection inspection) {
+            super(inspection, "View object forwarded to");
+            refresh();
+        }
+
+        @Override
+        protected void procedure() {
+            focus().setHeapObject(forwardedToObject);
+        }
+
+        public void refresh() {
+            forwardedToObject = null;
+            final Address toAddress = object.reference().forwardedTo();
+            if (toAddress.isNotZero()) {
+                forwardedToObject = vm().objects().findObjectAt(toAddress);
+            }
+            setEnabled(forwardedToObject != null);
+        }
+    }
 }
