@@ -187,4 +187,16 @@ public class DDVMTIHandler implements VMTIHandler {
         eventHandler2.objectSurviving(cell);
     }
 
+    @Override
+    public void methodCompiled(ClassMethodActor classMethodActor) {
+        eventHandler1.methodCompiled(classMethodActor);
+        eventHandler2.methodCompiled(classMethodActor);
+    }
+
+    @Override
+    public void methodUnloaded(ClassMethodActor classMethodActor) {
+        eventHandler1.methodUnloaded(classMethodActor);
+        eventHandler2.methodUnloaded(classMethodActor);
+    }
+
 }

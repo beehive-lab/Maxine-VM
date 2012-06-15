@@ -25,39 +25,68 @@ package com.oracle.max.vm.ext.vma.handlers.jvmti.h;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.max.vm.ext.jvmti.*;
+import com.oracle.max.vm.ext.jjvmti.agents.util.*;
 import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.*;
-import com.sun.max.vm.log.VMLog.Record;
-import com.sun.max.vm.log.hosted.*;
 
-
+/**
+ * A simple test of the VMA variant of method entry/exit events.
+ * Can be built into the boot image or dynamically loaded.
+ */
 public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
 
-    @Override
-    public void initialise(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            JJVMTIMaxAgentAdapter.register(jjvmti);
-        }
-    }
+    /**
+     * Used to get access to local variables.
+     */
+    private static final JJVMTIAgentAdapter jjvmti;
 
-    private static final JJVMTIMaxAgentAdapter jjvmti = new JJVMTIMaxAgentAdapter();
+    static {
+        jjvmti = JJVMTIAgentAdapter.register(new NullJJVMTICallbacks());
+    }
 
     private static Stack<MethodActor> callStack = new Stack<MethodActor>();
 
+    public static void onLoad(String args) {
+        VMAJavaRunScheme.registerAdviceHandler(new JVMTITestVMAdviceHandler());
+    }
+
     @Override
-    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
-        int fc = jjvmti.getFrameCount(null);
-        if (logger.enabled()) {
-            logger.logMethodEntry(arg1, arg2, fc);
-            if (logger.traceEnabled()) {
-                logger.traceMethodEntry(arg1, arg2, fc);
+    public void adviseAfterMethodEntry(Object arg1, MethodActor methodActor) {
+        callStack.push(methodActor);
+        // Don't report synthetic methods (not clear we should even get the event)
+        if (jjvmti.isMethodSynthetic(methodActor)) {
+            return;
+        }
+        System.out.printf("Method entry: %s%n", methodActor.format("%H.%n"));
+        JJVMTI.LocalVariableEntry[] lve = jjvmti.getLocalVariableTable(methodActor);
+        if (lve.length == 0) {
+            return;
+        }
+        Type[] params = methodActor.getGenericParameterTypes();
+        for (int i = 0; i < params.length; i++) {
+            Class<?> param = (Class) params[i];
+            int index = methodActor.isStatic() ? i : i + 1;
+            System.out.printf("param %d, name %s, type %s, value ", index, lve[index].name, lve[index].signature);
+            int slot = lve[index].slot;
+            if (Object.class.isAssignableFrom(param)) {
+                Object paramValue = jjvmti.getLocalObject(null, 0, slot);
+                System.out.println(paramValue);
+            } else {
+                if (param == int.class) {
+                    System.out.println(jjvmti.getLocalInt(null, 0, slot));
+                } else if (param == long.class) {
+                    System.out.println(jjvmti.getLocalLong(null, 0, slot));
+                } else if (param == float.class) {
+                    System.out.println(jjvmti.getLocalFloat(null, 0, slot));
+                } else if (param == double.class) {
+                    System.out.println(jjvmti.getLocalDouble(null, 0, slot));
+                } else {
+                    assert false;
+                }
             }
         }
-        callStack.push(arg2);
     }
 
     @Override
@@ -96,92 +125,12 @@ public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
     }
 
     private void methodExit(boolean exeception, Object returnValue) {
-        if (logger.enabled()) {
-            logger.logMethodExit(exeception, returnValue);
-            MethodActor methodActor = callStack.pop();
-            if (logger.traceEnabled()) {
-                // don't print return value as it invokes toString
-                System.out.printf("Method exit: %s, exception %b%n", methodActor.format("%H.%n"), exeception);
-            }
+        MethodActor methodActor = callStack.pop();
+        // Don't report synthetic methods (not clear we should even get the event)
+        if (jjvmti.isMethodSynthetic(methodActor)) {
+            return;
         }
+        System.out.printf("Method exit: %s, exception %b%n", methodActor.format("%H.%n"), exeception);
     }
 
-    private static class JVMTITestLogger extends JVMTITestLoggerAuto {
-
-        protected JVMTITestLogger() {
-            super("JVMTITest", "test JVMTI in Java implementation");
-        }
-
-        @Override
-        protected void trace(Record r) { }
-
-        protected void traceMethodEntry(Object arg1, MethodActor methodActor, int arg3) {
-            System.out.printf("Method entry: %s fc %d%n", methodActor.format("%H.%n"), arg3);
-            JJVMTICommon.LocalVariableEntry[] lve = jjvmti.getLocalVariableTable(methodActor);
-            Type[] params = methodActor.getGenericParameterTypes();
-            for (int i = 0; i < params.length; i++) {
-                Class<?> param = (Class) params[i];
-                int index = methodActor.isStatic() ? i : i + 1;
-                System.out.printf("param %d, name %s, type %s, value ", index, lve[index].name, lve[index].signature);
-                int slot = lve[index].slot;
-                if (Object.class.isAssignableFrom(param)) {
-                    Object paramValue = jjvmti.getLocalObject(null, 0, slot);
-                    System.out.println(paramValue);
-                } else {
-                    if (param == int.class) {
-                        System.out.println(jjvmti.getLocalInt(null, 0, slot));
-                    } else if (param == long.class) {
-                        System.out.println(jjvmti.getLocalLong(null, 0, slot));
-                    } else if (param == float.class) {
-                        System.out.println(jjvmti.getLocalFloat(null, 0, slot));
-                    } else if (param == double.class) {
-                        System.out.println(jjvmti.getLocalDouble(null, 0, slot));
-                    } else {
-                        assert false;
-                    }
-                }
-            }
-        }
-
-    }
-
-    private static final JVMTITestLogger logger = new JVMTITestLogger();
-
-    @VMLoggerInterface(noTrace = true)
-    private interface JVMTITestLoggerInterface {
-        void methodEntry(Object arg1, MethodActor arg2, int frameCount);
-        void methodExit(boolean exeception, Object returnValue);
-    }
-
-// START GENERATED CODE
-    private static abstract class JVMTITestLoggerAuto extends com.sun.max.vm.log.VMLogger {
-        public enum Operation {
-            MethodEntry, MethodExit;
-
-            @SuppressWarnings("hiding")
-            public static final Operation[] VALUES = values();
-        }
-
-        private static final int[] REFMAPS = new int[] {0x1, 0x2};
-
-        protected JVMTITestLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
-        }
-
-        @Override
-        public String operationName(int opCode) {
-            return Operation.VALUES[opCode].name();
-        }
-
-        @INLINE
-        public final void logMethodEntry(Object arg1, MethodActor arg2, int arg3) {
-            log(Operation.MethodEntry.ordinal(), objectArg(arg1), methodActorArg(arg2), intArg(arg3));
-        }
-        @INLINE
-        public final void logMethodExit(boolean arg1, Object arg2) {
-            log(Operation.MethodExit.ordinal(), booleanArg(arg1), objectArg(arg2));
-        }
-    }
-
-// END GENERATED CODE
 }

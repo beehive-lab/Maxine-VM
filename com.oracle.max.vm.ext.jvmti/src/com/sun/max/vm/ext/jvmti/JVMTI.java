@@ -45,6 +45,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.ext.jvmti.JVMTIBreakpoints.*;
 import com.sun.max.vm.ext.jvmti.JVMTIException.*;
 import com.sun.max.vm.ext.jvmti.JVMTIThreadFunctions.*;
@@ -167,6 +168,16 @@ public class JVMTI {
             // Have to send both events
             JVMTI.event(JVMTI_EVENT_CLASS_LOAD, classActor);
             JVMTI.event(JVMTI_EVENT_CLASS_PREPARE, classActor);
+        }
+
+        @Override
+        public void methodCompiled(ClassMethodActor classMethodActor) {
+            JVMTI.event(JVMTI_EVENT_COMPILED_METHOD_LOAD, classMethodActor);
+        }
+
+        @Override
+        public void methodUnloaded(ClassMethodActor classMethodActor) {
+            JVMTI.event(JVMTI_EVENT_COMPILED_METHOD_UNLOAD, classMethodActor);
         }
 
         @Override
@@ -664,6 +675,13 @@ public class JVMTI {
                         javaEnv.callbackHandler.classLoad(currentThread, asClassActor(arg1));
                         break;
 
+                    case COMPILED_METHOD_LOAD: {
+                        ClassMethodActor cma = asClassMethodActor(arg1);
+                        TargetMethod tm = cma.currentTargetMethod();
+                        javaEnv.callbackHandler.compiledMethodLoad(cma, tm.codeLength(), tm.start(), null, null);
+                        break;
+                    }
+
                     case METHOD_ENTRY: {
                         javaEnv.callbackHandler.methodEntry(currentThread, asClassMethodActor(arg1));
                         break;
@@ -681,25 +699,38 @@ public class JVMTI {
                         invokeFieldAccessCallback(javaEnv.callbackHandler, currentThread, asFieldEventData(arg1));
                         break;
                     }
-/*
-                    case BREAKPOINT:
+
                     case SINGLE_STEP:
+                    case BREAKPOINT:
                         EventBreakpointID id = asEventBreakpointID(arg1);
-                        invokeBreakpointCallback(callback, cstruct, currentThreadHandle(), id.methodID, id.location);
+                        MethodID methodId = MethodID.fromWord(Address.fromLong(id.methodID));
+                        javaEnv.callbackHandler.breakpoint(currentThread, MethodID.toMethodActor(methodId), id.location);
                         break;
 
                     case FRAME_POP:
                         FramePopEventData framePopEventData = asFramePopEventData(arg1);
-                        invokeFramePopCallback(callback, cstruct, currentThreadHandle(), framePopEventData.methodID, framePopEventData.wasPoppedByException);
+                        javaEnv.callbackHandler.framePop(currentThread, MethodID.toMethodActor(framePopEventData.methodID), framePopEventData.wasPoppedByException);
                         break;
 
-                    case EXCEPTION:
-                    case EXCEPTION_CATCH:
+                    case EXCEPTION: {
                         ExceptionEventData exceptionEventData = asExceptionEventData(arg1);
-                        invokeExceptionCallback(callback, cstruct, eventId == EXCEPTION_CATCH, currentThreadHandle(), exceptionEventData.methodID, exceptionEventData.location,
-                                        JniHandles.createLocalHandle(exceptionEventData.throwable), exceptionEventData.catchMethodID, exceptionEventData.catchLocation);
+                        javaEnv.callbackHandler.exception(currentThread,
+                                        MethodID.toMethodActor(exceptionEventData.methodID), exceptionEventData.location,
+                                        exceptionEventData.throwable,
+                                        MethodID.toMethodActor(exceptionEventData.catchMethodID), exceptionEventData.catchLocation);
                         break;
-*/
+                    }
+
+                    case EXCEPTION_CATCH: {
+                        ExceptionEventData exceptionEventData = asExceptionEventData(arg1);
+                        javaEnv.callbackHandler.exceptionCatch(currentThread,
+                                        MethodID.toMethodActor(exceptionEventData.methodID), exceptionEventData.location,
+                                        exceptionEventData.throwable);
+                        break;
+                    }
+
+                    default:
+                        assert false;
                 }
             }
         }

@@ -30,8 +30,12 @@ import com.sun.max.vm.*;
 public class Package extends BootImagePackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
-            (VMAJavaRunScheme.getHandlerClassName().contains(this.getClass().getPackage().getName()));
+        if (vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java")) {
+            String handlerClassName = VMAJavaRunScheme.getHandlerClassName();
+            return handlerClassName == null ? false : handlerClassName.contains(this.getClass().getPackage().getName());
+        } else {
+            return false;
+        }
     }
 
 }

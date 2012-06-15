@@ -25,6 +25,7 @@ package com.sun.max.vm.ext.jvmti;
 import java.security.*;
 import java.util.*;
 
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -180,6 +181,11 @@ public interface JJVMTI {
         }
     }
 
+    public static class AddrLocation {
+        Address startAddress;
+        long location;
+    }
+
     /**
      * Event callbacks to a JJVMTI agent. Unlike the native JVMTI interface where callbacks are registered individually,
      * Java agents register a single object and use overriding to handle just those events they want. The delivery of
@@ -191,35 +197,51 @@ public interface JJVMTI {
      * There is no separate {@code VM_START} event as Maxine cannot usefully distinguish it from {@code VM_INIT}.
      * There is no separate {@code CLASS_PREPARE} event as Maxine cannot usefully distinguish it from {@code CLASS_LOAD}.
      *
-     * TODO: Not all events are supported yet.
+     * N.B: Not all events are supported by the VM at this point. Those marked // TODO are not supported.
      */
     public interface EventCallbacks {
+
         /**
-         * This is not really an event, but is essentially equivalent to
-         * <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#startup">startup</a>,
-         * and it is more more convenient to define it here. <b>N.B.</b>This will only be called for agents
-         * that are built into the boot image and in {code PRIMORDIAL} mode, whereVM functionality is
-         * very limited. Dynamically loaded agents have their {@code onLoad} method called instead.
+         * This is not really an event, but is essentially equivalent to <a
+         * href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#startup">startup</a>, and it is more
+         * more convenient to define it as an event in {@code JJVMTI}. <b>N.B.</b>This will only be called for agents
+         * that are built into the boot image and it is called in {code PRIMORDIAL} mode, where VM functionality is very
+         * limited. Dynamically loaded agents have their {@code onLoad} method called instead. Both variants will
+         * receive the {@code vmInit} event, which is the best place to do general agent setup.
          */
         void onBoot();
+        /*
+         * The standard events.
+         */
         void breakpoint(Thread thread, MethodActor method, long location);
         byte[] classFileLoadHook(ClassLoader loader, String name,
                         ProtectionDomain protectionDomain, byte[] classData);
         void classLoad(Thread thread, ClassActor klass);
+        void compiledMethodLoad(MethodActor method, int codeSize, Address codeAddr, AddrLocation[] map, Object compileInfo);
+        void compiledMethodUnload(MethodActor method, Address codeAddr); // TODO
+        void dataDumpRequest(); // TODO
+        void dynamicCodeGenerated(String name, Address codeAddr, int length); // TODO
+        void exception(Thread thread, MethodActor method, long location, Object exception, MethodActor catchMethod, long catchLocation);
+        void exceptionCatch(Thread thread, MethodActor method, long location, Object exception); // TODO
         void fieldAccess(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field);
         void fieldModification(Thread thread, MethodActor method, long location, ClassActor classActor, Object object, FieldActor field, Object newValue);
+        void framePop(Thread thread, MethodActor method, boolean wasPoppedByException);
         void garbageCollectionStart();
         void garbageCollectionFinish();
         void methodEntry(Thread thread, MethodActor method);
         void methodExit(Thread thread, MethodActor method, boolean exeception, Object returnValue);
+        void monitorContendedEnter(Thread thread, Object object); // TODO
+        void monitorContendedEntered(Thread thread, Object object); // TODO
+        void monitorWait(Thread thread, Object object, long timeout); // TODO
+        void monitorWaited(Thread thread, Object object, long timeout); // TODO
+        void objectFree(Object tag); // TODO
+        void resourceExhausted(int flags, String description); // TODO
+        void singleStep(Thread thread, MethodActor method, long location);
         void threadStart(Thread thread);
         void threadEnd(Thread thread);
         void vmDeath();
-        /**
-         * This callback is the recommended place to do the majority of agent setup as it is called for both
-         * dynamically loaded and boot image agents.
-         */
         void vmInit();
+        void vmObjectAllocation(Thread thread, Object object, ClassActor classActor, int size); // TODO
     }
 
     /**
