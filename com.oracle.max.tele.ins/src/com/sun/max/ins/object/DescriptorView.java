@@ -60,16 +60,14 @@ public class DescriptorView extends ObjectView<DescriptorView> {
         final String name = teleDescriptor.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new InspectorTabbedPane(inspection());
+        tabbedPane.setBackground(viewBackgroundColor());
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleDescriptor, instanceViewPreferences);
+        fieldsPane = ObjectScrollPane.createTupleFieldsPane(inspection(), this);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
                 return teleDescriptor.descriptor().string;
-            }
-            public ObjectStatus status() {
-                return object().status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -92,9 +90,10 @@ public class DescriptorView extends ObjectView<DescriptorView> {
 
     @Override
     protected void refreshState(boolean force) {
-        // Only refresh the visible pane.
-        final Prober pane = (Prober) tabbedPane.getSelectedComponent();
-        pane.refresh(force);
         super.refreshState(force);
+        tabbedPane.setBackground(viewBackgroundColor());
+        // Only refresh the visible pane.
+        final Prober prober = (Prober) tabbedPane.getSelectedComponent();
+        prober.refresh(force);
     }
 }

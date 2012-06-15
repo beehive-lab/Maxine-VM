@@ -49,7 +49,7 @@ import com.sun.max.vm.value.*;
  */
 public final class ObjectHeaderTable extends InspectorTable {
 
-    private final MaxObject object;
+    private final ObjectView view;
     private final HeaderField[] headerFields;
 
     private final ObjectHeaderTableModel tableModel;
@@ -68,27 +68,24 @@ public final class ObjectHeaderTable extends InspectorTable {
             final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
             if (watchpoints.isEmpty()) {
                 final HeaderField headerField = headerFields[row];
-                actions().setHeaderWatchpoint(object, headerField, "Watch this field's memory").perform();
+                actions().setHeaderWatchpoint(view.object(), headerField, "Watch this field's memory").perform();
             } else {
                 actions().removeWatchpoints(watchpoints, null).perform();
             }
         }
     }
 
-    private final ObjectViewPreferences instanceViewPreferences;
-
     /**
      * A {@link JTable} specialized to display object header fields.
      *
      * @param objectInspector parent that contains this panel
      */
-    public ObjectHeaderTable(Inspection inspection, MaxObject object, ObjectViewPreferences instanceViewPreferences) {
+    public ObjectHeaderTable(Inspection inspection, ObjectView objectView) {
         super(inspection);
-        this.object = object;
-        this.instanceViewPreferences = instanceViewPreferences;
-        headerFields = object.headerFields();
-        this.tableModel = new ObjectHeaderTableModel(inspection, object.origin());
-        ObjectHeaderColumnModel columnModel = new ObjectHeaderColumnModel(this, this.tableModel, instanceViewPreferences);
+        this.view = objectView;
+        headerFields = view.object().headerFields();
+        this.tableModel = new ObjectHeaderTableModel(inspection, view.object().origin());
+        ObjectHeaderColumnModel columnModel = new ObjectHeaderColumnModel(this, this.tableModel, objectView.viewPreferences());
         configureMemoryTable(tableModel, columnModel);
         setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, preference().style().defaultBorderColor()));
         updateFocusSelection();
@@ -108,8 +105,8 @@ public final class ObjectHeaderTable extends InspectorTable {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new ToggleObjectHeaderWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
             final HeaderField headerField = headerFields[row];
-            menu.add(actions().setHeaderWatchpoint(object, headerField, "Watch this field's memory"));
-            menu.add(actions().setObjectWatchpoint(object, "Watch this object's memory"));
+            menu.add(actions().setHeaderWatchpoint(view.object(), headerField, "Watch this field's memory"));
+            menu.add(actions().setObjectWatchpoint(view.object(), "Watch this object's memory"));
             menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
             menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));
             return menu;
@@ -153,11 +150,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     @Override
     public Color cellBackgroundColor() {
-        // Gets called during superclass initialization
-        if (object != null && object.status().isDead()) {
-            return preference().style().deadObjectBackgroundColor();
-        }
-        return null;
+        return view == null ? null : view.viewBackgroundColor();
     }
 
     @Override
@@ -195,8 +188,8 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         public ObjectHeaderTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
-            if (object.status().isNotDead()) {
-                teleHub = object.getTeleHub();
+            if (view.object().status().isNotDead()) {
+                teleHub = view.object().getTeleHub();
             }
         }
 
@@ -224,12 +217,12 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         @Override
         public MaxMemoryRegion getMemoryRegion(int row) {
-            return object.headerMemoryRegion(headerFields[row]);
+            return view.object().headerMemoryRegion(headerFields[row]);
         }
 
         @Override
         public int getOffset(int row) {
-            return object.headerOffset(headerFields[row]);
+            return view.object().headerOffset(headerFields[row]);
         }
 
         @Override
@@ -249,7 +242,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         @Override
         public TypeDescriptor getRowType(int row) {
-            return object.headerType(headerFields[row]);
+            return view.object().headerType(headerFields[row]);
         }
 
         public String rowToHeaderDescription(int row) {
@@ -266,9 +259,9 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         @Override
         public void refresh() {
-            setOrigin(object.origin());
-            if (object.status().isNotDead()) {
-                teleHub = object.getTeleHub();
+            setOrigin(view.object().origin());
+            if (view.object().status().isNotDead()) {
+                teleHub = view.object().getTeleHub();
             }
             super.refresh();
         }
@@ -295,6 +288,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         private InspectorLabel[] labels = new InspectorLabel[headerFields.length];
 
         public ValueRenderer(Inspection inspection) {
+            final MaxObject object = view.object();
 
             for (int row = 0; row < headerFields.length; row++) {
                 // Create a label suitable for the kind of header field

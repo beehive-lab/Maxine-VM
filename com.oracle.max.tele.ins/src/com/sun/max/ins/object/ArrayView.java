@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.vm.layout.*;
 
 /**
@@ -44,8 +43,7 @@ public final class ArrayView extends ObjectView<ArrayView> {
 
     @Override
     protected void createViewContent() {
-        final TeleArrayObject teleArrayObject = (TeleArrayObject) object();
-        elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
+        elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), this);
         super.createViewContent();
         getContentPane().add(elementsPane);
         // Force the title to be recomputed, just in case the new pane is eliding

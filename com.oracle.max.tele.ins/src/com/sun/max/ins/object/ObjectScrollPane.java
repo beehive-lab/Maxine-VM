@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,136 +42,145 @@ public final class ObjectScrollPane extends InspectorScrollPane {
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleArrayObject}; never null;
      */
-    public static ObjectScrollPane createArrayElementsPane(Inspection inspection, TeleArrayObject teleArrayObject, ObjectViewPreferences instanceViewPreferences) {
+    public static ObjectScrollPane createArrayElementsPane(Inspection inspection, ObjectView objectView) {
+        final TeleArrayObject teleArrayObject = (TeleArrayObject) objectView.object();
         final int length = teleArrayObject.length();
         final Kind kind = teleArrayObject.componentKind();
         final WordValueLabel.ValueMode valueMode = kind.isReference ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
         final int arrayOffsetFromOrigin = teleArrayObject.arrayOffsetFromOrigin();
-        final ArrayElementsTable arrayElementsTable = new ArrayElementsTable(inspection, teleArrayObject, kind, teleArrayObject.componentType(), arrayOffsetFromOrigin, 0, length, "", valueMode, instanceViewPreferences);
-        return new ObjectScrollPane(inspection, arrayElementsTable);
+        final ArrayElementsTable arrayElementsTable = new ArrayElementsTable(inspection, objectView, kind, teleArrayObject.componentType(), arrayOffsetFromOrigin, 0, length, "", valueMode);
+        return new ObjectScrollPane(inspection, arrayElementsTable, objectView);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleTupleObject} ; never null;
      */
-    public static ObjectScrollPane createFieldsPane(Inspection inspection, TeleTupleObject teleTupleObject, ObjectViewPreferences instanceViewPreferences) {
-        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(inspection, "Object", teleTupleObject, teleTupleObject.getFieldActors(), instanceViewPreferences);
-        return new ObjectScrollPane(inspection, inspectorTable);
+    public static ObjectScrollPane createTupleFieldsPane(Inspection inspection, ObjectView objectView) {
+        final TeleTupleObject teleTupleObject = (TeleTupleObject) objectView.object();
+        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(inspection, objectView, "Object", teleTupleObject.getFieldActors());
+        return new ObjectScrollPane(inspection, inspectorTable, objectView);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleHub} object; never null;
      */
-    public static ObjectScrollPane createFieldsPane(Inspection inspection, TeleHub teleHub, ObjectViewPreferences instanceViewPreferences) {
-        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(inspection, "Hub", teleHub, teleHub.getFieldActors(), instanceViewPreferences);
-        return new ObjectScrollPane(inspection, inspectorTable);
+    public static ObjectScrollPane createHubFieldsPane(Inspection inspection, ObjectView objectView) {
+        final TeleHub teleHub = (TeleHub) objectView.object();
+        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(inspection, objectView, "Hub", teleHub.getFieldActors());
+        return new ObjectScrollPane(inspection, inspectorTable, objectView);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the "vTable" of a {@link TeleHub}object; null if the table is empty.
      */
-    public static ObjectScrollPane createVTablePane(Inspection inspection, TeleHub teleHub, ObjectViewPreferences instanceViewPreferences) {
+    public static ObjectScrollPane createVTablePane(Inspection inspection, ObjectView objectView) {
+        final TeleHub teleHub = (TeleHub) objectView.object();
         if (teleHub.vTableLength() == 0) {
             return null;
         }
         final InspectorTable table = new ArrayElementsTable(inspection,
-                        teleHub,
+                        objectView,
                         teleHub.vTableKind(),
                         teleHub.vTableType(),
                         teleHub.vTableOffset(),
                         teleHub.vTableStartIndex(),
                         teleHub.vTableLength(),
                         "V",
-                        WordValueLabel.ValueMode.CALL_ENTRY_POINT,
-                        instanceViewPreferences);
-        return new ObjectScrollPane(inspection, table);
+                        WordValueLabel.ValueMode.CALL_ENTRY_POINT);
+        return new ObjectScrollPane(inspection, table, objectView);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the "iTable" of a {@link TeleHub} object; null if the table is empty.
      */
-    public static ObjectScrollPane createITablePane(Inspection inspection, TeleHub teleHub, ObjectViewPreferences instanceViewPreferences) {
+    public static ObjectScrollPane createITablePane(Inspection inspection, ObjectView objectView) {
+        final TeleHub teleHub = (TeleHub) objectView.object();
         if (teleHub.iTableLength() == 0) {
             return null;
         }
         final InspectorTable table = new ArrayElementsTable(inspection,
-                        teleHub,
+                        objectView,
                         teleHub.iTableKind(),
                         teleHub.iTableType(),
                         teleHub.iTableOffset(),
                         teleHub.iTableStartIndex(),
                         teleHub.iTableLength(),
                         "I",
-                        WordValueLabel.ValueMode.ITABLE_ENTRY,
-                        instanceViewPreferences);
-        return new ObjectScrollPane(inspection, table);
+                        WordValueLabel.ValueMode.ITABLE_ENTRY);
+        return new ObjectScrollPane(inspection, table, objectView);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the "mTable" of a {@link TeleHub} object; null if the table is empty.
      */
-    public static ObjectScrollPane createMTablePane(Inspection inspection, TeleHub teleHub, ObjectViewPreferences instanceViewPreferences) {
+    public static ObjectScrollPane createMTablePane(Inspection inspection, ObjectView objectView) {
+        final TeleHub teleHub = (TeleHub) objectView.object();
         if (teleHub.mTableLength() == 0) {
             return null;
         }
         final InspectorTable table = new ArrayElementsTable(inspection,
-                        teleHub,
+                        objectView,
                         teleHub.mTableKind(),
                         teleHub.mTableType(),
                         teleHub.mTableOffset(),
                         teleHub.mTableStartIndex(),
                         teleHub.mTableLength(),
                         "M",
-                        WordValueLabel.ValueMode.WORD,
-                        instanceViewPreferences);
-        return new ObjectScrollPane(inspection, table);
+                        WordValueLabel.ValueMode.WORD);
+        return new ObjectScrollPane(inspection, table, objectView);
     }
 
     /**
      * @return a new {@link JScrollPane}  displaying the reference map of the {@link TeleHub}; null if the map is empty.
      */
-    public static ObjectScrollPane createRefMapPane(Inspection inspection, TeleHub teleHub, ObjectViewPreferences instanceViewPreferences) {
+    public static ObjectScrollPane createRefMapPane(Inspection inspection, ObjectView objectView) {
+        final TeleHub teleHub = (TeleHub) objectView.object();
         if (teleHub.hub().referenceMapLength == 0) {
             return null;
         }
         final InspectorTable table = new ArrayElementsTable(inspection,
-                        teleHub,
+                        objectView,
                         teleHub.referenceMapKind(),
                         teleHub.referenceMapType(),
                         teleHub.referenceMapOffset(),
                         teleHub.referenceMapStartIndex(),
                         teleHub.referenceMapLength(),
                         "R",
-                        WordValueLabel.ValueMode.WORD,
-                        instanceViewPreferences);
-        return new ObjectScrollPane(inspection, table);
+                        WordValueLabel.ValueMode.WORD);
+        return new ObjectScrollPane(inspection, table, objectView);
     }
 
+    private final ObjectView objectView;
     private final InspectorTable inspectorTable;
 
     /**
      * Creates a scrollable pane containing the {@link InspectorTable}, with preferred height set to match the size
      * of the table up to a specified limit.
+     * @param objectView TODO
      */
-    public ObjectScrollPane(Inspection inspection, InspectorTable inspectorTable) {
+    public ObjectScrollPane(Inspection inspection, InspectorTable inspectorTable, ObjectView objectView) {
         super(inspection, inspectorTable);
         this.inspectorTable = inspectorTable;
+        this.objectView = objectView;
         // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
         // this is empirical, based only the fuzziest notion of how these dimensions work
         final int displayRows = Math.min(preference().style().memoryTableMaxDisplayRows(), inspectorTable.getRowCount()) + 2;
         final int preferredHeight = displayRows * (inspectorTable.getRowHeight() + inspectorTable.getRowMargin()) +
                                                       inspectorTable.getRowMargin()  + inspectorTable.getTableHeader().getHeight();
         final int preferredWidth = inspectorTable.getPreferredScrollableViewportSize().width;
+        setBackground(objectView.viewBackgroundColor());
         inspectorTable.setPreferredScrollableViewportSize(new Dimension(preferredWidth, preferredHeight));
     }
 
     @Override
     public void redisplay() {
+        setBackground(objectView.viewBackgroundColor());
         inspectorTable.redisplay();
     }
 
     @Override
     public void refresh(boolean force) {
+        setBackground(objectView.viewBackgroundColor());
         inspectorTable.refresh(force);
     }
 

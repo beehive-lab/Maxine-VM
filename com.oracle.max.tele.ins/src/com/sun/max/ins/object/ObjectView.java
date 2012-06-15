@@ -37,6 +37,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -60,13 +61,6 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     private boolean followingTeleObject = false; // true;
 
-    /**
-     * @return local surrogate for the object being inspected in the VM
-     */
-    MaxObject object() {
-        return object;
-    }
-
     /** The origin is an actual location in memory of the VM;
      * keep a copy for comparison, since it might change via GC.
      */
@@ -79,6 +73,8 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     Pointer currentOrigin() {
         return currentObjectOrigin;
     }
+
+    private Color backgroundColor = null;
 
     /**
      * Cache of the most recent update to the frame title; needed
@@ -131,7 +127,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     protected void createViewContent() {
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         if (instanceViewPreferences.showHeader()) {
-            objectHeaderTable = new ObjectHeaderTable(inspection(), object, instanceViewPreferences);
+            objectHeaderTable = new ObjectHeaderTable(inspection(), this);
             objectHeaderTable.setBorder(preference().style().defaultPaneBottomBorder());
             // Will add without column headers
             panel.add(objectHeaderTable, BorderLayout.NORTH);
@@ -185,6 +181,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             viewMenu.addSeparator();
         }
         viewMenu.add(defaultViewMenuItems);
+        refreshBackgroundColor();
     }
 
     @Override
@@ -276,6 +273,9 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     @Override
     protected void refreshState(boolean force) {
         final ObjectStatus status = object.status();
+        boolean reconstructView = false;
+
+
 //        if (object.reference().isForwarded() && followingTeleObject) {
 //            //Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardReference().toOrigin().toHexString());
 //            MaxObject forwardedTeleObject = object.getForwardedTeleObject();
@@ -294,27 +294,76 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 //            }
 //        }
 
-        // TODO (mlvdv)  This is just a wild fist cut for debugging; this isn't the policy we want
-        if (status.isLive()) {
-            setStateColor(null);
-            final Pointer newOrigin = object.origin();
-            if (!newOrigin.equals(currentObjectOrigin)) {
-                // The object has been relocated in memory
-                currentObjectOrigin = newOrigin;
-                reconstructView();
-            } else {
-                if (objectHeaderTable != null) {
-                    objectHeaderTable.refresh(force);
+        switch (status) {
+            case LIVE:
+                final Pointer newOrigin = object.origin();
+                if (!newOrigin.equals(currentObjectOrigin)) {
+                    // The object has been relocated in memory
+                    currentObjectOrigin = newOrigin;
+                    reconstructView = true;
+                } else {
+                    if (objectHeaderTable != null) {
+                        objectHeaderTable.refresh(force);
+                    }
                 }
-            }
-
-        } else if (status.isQuasi()) {
-            setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
-        } else { // DEAD
-            setStateColor(preference().style().deadObjectBackgroundColor());
+                break;
+            case FORWARDER:
+                // TODO (mlvdv) this isn't right.  need to check forwardedFrom() on the reference?  so can't really switch.
+                break;
+            case DEAD:
+                break;
+            default:
+                TeleError.unexpected("unexpected object status");
         }
+        refreshBackgroundColor();
         setTitle();
+        if (reconstructView) {
+            reconstructView();
+        }
+
     }
+
+    /**
+     * @return local surrogate for the VM object being inspected in this object view
+     */
+    public MaxObject object() {
+        return object;
+    }
+
+    /**
+     * @return the view preferences currently in effect for this object view
+     */
+    public ObjectViewPreferences viewPreferences() {
+        return instanceViewPreferences;
+    }
+
+    /**
+     * @return a color to use for background, especially cell backgrounds, in the object view; {@code null} if default color should be used.
+     */
+    public Color viewBackgroundColor() {
+        return backgroundColor;
+    }
+
+    /**
+     * Changes the background color setting for this view, depending on object status.
+     *
+     * @return {@code true} iff color has changed
+     */
+    private boolean refreshBackgroundColor() {
+        final Color oldBackgroundColor = backgroundColor;
+        final ObjectStatus status = object.status();
+        if (status.isLive()) {
+            backgroundColor = null;
+        } else if (status.isQuasi()) {
+            backgroundColor = preference().style().vmStoppedInGCBackgroundColor(false);
+        } else { // DEAD
+            backgroundColor = preference().style().deadObjectBackgroundColor();
+        }
+        setStateColor(backgroundColor);
+        objectHeaderTable.setBackground(backgroundColor);
+        return backgroundColor != oldBackgroundColor;
+    }
+
 
     /**
      * Gets any view-specific actions that should appear on the {@link MenuKind#VIEW_MENU}.
