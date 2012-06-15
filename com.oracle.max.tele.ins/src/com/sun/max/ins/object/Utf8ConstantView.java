@@ -59,16 +59,14 @@ class Utf8ConstantView extends ObjectView<Utf8ConstantView> {
         final String name = teleUtf8Constant.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new InspectorTabbedPane(inspection());
+        tabbedPane.setBackground(viewBackgroundColor());
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleUtf8Constant, instanceViewPreferences);
+        fieldsPane = ObjectScrollPane.createTupleFieldsPane(inspection(), this);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
                 return teleUtf8Constant.utf8Constant().string;
-            }
-            public ObjectStatus status() {
-                return object().status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -91,10 +89,11 @@ class Utf8ConstantView extends ObjectView<Utf8ConstantView> {
 
     @Override
     protected void refreshState(boolean force) {
-        // Only refresh the visible view.
-        final Prober pane = (Prober) tabbedPane.getSelectedComponent();
-        pane.refresh(force);
         super.refreshState(force);
+        tabbedPane.setBackground(viewBackgroundColor());
+        // Only refresh the visible pane.
+        final Prober prober = (Prober) tabbedPane.getSelectedComponent();
+        prober.refresh(force);
     }
 
 }

@@ -43,8 +43,7 @@ public class TupleView extends ObjectView<TupleView> {
     @Override
     protected void createViewContent() {
         super.createViewContent();
-        final TeleTupleObject teleTupleObject = (TeleTupleObject) object();
-        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleTupleObject, instanceViewPreferences);
+        fieldsPane = ObjectScrollPane.createTupleFieldsPane(inspection(), this);
         getContentPane().add(fieldsPane);
 
         // View-specific menus
@@ -82,8 +81,8 @@ public class TupleView extends ObjectView<TupleView> {
     @Override
     protected void refreshState(boolean force) {
         if (getJComponent().isShowing() || force) {
-            fieldsPane.refresh(force);
             super.refreshState(force);
+            fieldsPane.refresh(force);
         }
     }
 

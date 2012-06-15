@@ -60,15 +60,13 @@ public class EnumView extends ObjectView<EnumView> {
 
         tabbedPane = new InspectorTabbedPane(inspection());
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleEnum, instanceViewPreferences);
+        fieldsPane = ObjectScrollPane.createTupleFieldsPane(inspection(), this);
+        tabbedPane.setBackground(viewBackgroundColor());
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
                 return teleEnum.toJava().name();
-            }
-            public ObjectStatus status() {
-                return object().status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -91,9 +89,10 @@ public class EnumView extends ObjectView<EnumView> {
 
     @Override
     protected void refreshState(boolean force) {
-        // Only refresh the visible pane.
-        final Prober pane = (Prober) tabbedPane.getSelectedComponent();
-        pane.refresh(force);
         super.refreshState(force);
+        tabbedPane.setBackground(viewBackgroundColor());
+        // Only refresh the visible pane.
+        final Prober prober = (Prober) tabbedPane.getSelectedComponent();
+        prober.refresh(force);
     }
 }

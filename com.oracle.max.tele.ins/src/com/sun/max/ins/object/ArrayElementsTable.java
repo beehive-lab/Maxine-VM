@@ -57,7 +57,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
     private static final int TRACE_LEVEL = 1;
 
-    private final MaxObject object;
+    private final ObjectView objectView;
     private final Kind elementKind;
     private final TypeDescriptor elementTypeDescriptor;
     private final int startOffset;
@@ -68,8 +68,6 @@ public final class ArrayElementsTable extends InspectorTable {
 
     private final ArrayElementsTableModel tableModel;
 
-    private final ObjectViewPreferences instanceViewPreferences;
-
     private final List<InspectorAction> extraViewMenuActions = new ArrayList<InspectorAction>();
 
     /**
@@ -77,22 +75,18 @@ public final class ArrayElementsTable extends InspectorTable {
      * This table is somewhat complex so that it can serve for both ordinary array elements
      * as well as the various array subsets (tables) in hybrid objects (hubs).
      *
-     * @param inspection
-     * @param object the object being inspected, of which the array elements are part.
      * @param elementKind the VM value "kind" of the array elements.
      * @param startOffset memory position relative to the object origin where the displayed array starts
      * @param startIndex index into the array where the display starts
      * @param length number of elements to display
      * @param indexPrefix text to prepend to the displayed name(index) of each element.
      * @param wordValueMode how to display word values, based on their presumed use in the VM.
-     * @param instanceViewPreferences view preferences to be applied to this view instance
      */
     ArrayElementsTable(Inspection inspection,
-                    MaxObject object, final Kind elementKind, final TypeDescriptor elementTypeDescriptor,
-        final int startOffset, int startIndex, int length, final String indexPrefix,
-        WordValueLabel.ValueMode wordValueMode, ObjectViewPreferences instanceViewPreferences) {
+                    ObjectView objectView, final Kind elementKind, final TypeDescriptor elementTypeDescriptor, final int startOffset,
+                    int startIndex, int length, final String indexPrefix, WordValueLabel.ValueMode wordValueMode) {
         super(inspection);
-        this.object = object;
+        this.objectView = objectView;
         this.elementKind = elementKind;
         this.elementTypeDescriptor = elementTypeDescriptor;
         this.startOffset = startOffset;
@@ -100,10 +94,9 @@ public final class ArrayElementsTable extends InspectorTable {
         this.arrayLength = length;
         this.indexPrefix = indexPrefix;
         this.wordValueMode = wordValueMode;
-        this.instanceViewPreferences = instanceViewPreferences;
 
-        this.tableModel = new ArrayElementsTableModel(inspection, object.origin());
-        ArrayElementsTableColumnModel columnModel = new ArrayElementsTableColumnModel(this, this.tableModel, instanceViewPreferences);
+        this.tableModel = new ArrayElementsTableModel(inspection, objectView.object().origin());
+        ArrayElementsTableColumnModel columnModel = new ArrayElementsTableColumnModel(this, this.tableModel, objectView.viewPreferences());
         configureMemoryTable(tableModel, columnModel);
 
         this.extraViewMenuActions.add(scrollToBeginningAction());
@@ -121,7 +114,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
-                    actions().setArrayElementWatchpoint(object, elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, null).perform();
+                    actions().setArrayElementWatchpoint(objectView.object(), elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, null).perform();
                     final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
                     if (!watchpoints.isEmpty()) {
                         return watchpoints.get(0);
@@ -136,6 +129,7 @@ public final class ArrayElementsTable extends InspectorTable {
     @Override
     protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
         if (vm().watchpointManager() != null) {
+            final MaxObject object = objectView.object();
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 
@@ -193,11 +187,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
     @Override
     public Color cellBackgroundColor() {
-        // Gets called during superclass initialization
-        if (object != null && object.status().isDead()) {
-            return preference().style().deadObjectBackgroundColor();
-        }
-        return null;
+        return objectView == null ? null : objectView.viewBackgroundColor();
     }
 
     @Override
@@ -212,7 +202,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
     @Override
     public boolean isElided() {
-        return instanceViewPreferences.elideNullArrayElements();
+        return objectView.viewPreferences().elideNullArrayElements();
     }
 
     /**
@@ -329,14 +319,14 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public int rowToElementIndex(int row) {
-            if (instanceViewPreferences.elideNullArrayElements()) {
+            if (objectView.viewPreferences().elideNullArrayElements()) {
                 return rowToElementIndex[row];
             }
             return row;
         }
 
         public int findRow(int elementIndex) {
-            if (instanceViewPreferences.elideNullArrayElements()) {
+            if (objectView.viewPreferences().elideNullArrayElements()) {
                 return Arrays.binarySearch(rowToElementIndex, elementIndex);
             }
             return elementIndex;
@@ -363,6 +353,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         @Override
         public void refresh() {
+            final MaxObject object = objectView.object();
             setOrigin(object.origin());
             // Update the mapping between array elements and displayed rows.
             if (object.status().isNotDead()) {
@@ -375,7 +366,7 @@ public final class ArrayElementsTable extends InspectorTable {
             if (isElided()) {
                 visibleElementCount = 0;
                 for (int elementIndex = 0; elementIndex < arrayLength; elementIndex++) {
-                    if (!vm().memoryIO().readArrayElementValue(elementKind,  object.reference(), elementIndex).isZero()) {
+                    if (!vm().memoryIO().readArrayElementValue(elementKind,  objectView.object().reference(), elementIndex).isZero()) {
                         rowToElementIndex[visibleElementCount++] = elementIndex;
                     }
                 }
@@ -437,6 +428,7 @@ public final class ArrayElementsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             final int elementIndex = tableModel.rowToElementIndex(row);
             if (labels[elementIndex] == null) {
+                final MaxObject object = objectView.object();
                 if (elementKind.isReference) {
                     labels[elementIndex] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ArrayElementsTable.this) {
                         @Override

@@ -58,16 +58,14 @@ public final class StringView extends ObjectView<StringView> {
         final String name = teleString.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new InspectorTabbedPane(inspection());
+        tabbedPane.setBackground(viewBackgroundColor());
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleString, instanceViewPreferences);
+        fieldsPane = ObjectScrollPane.createTupleFieldsPane(inspection(), this);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
                 return teleString.getString();
-            }
-            public ObjectStatus status() {
-                return object().status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -91,11 +89,10 @@ public final class StringView extends ObjectView<StringView> {
     @Override
     protected void refreshState(boolean force) {
         super.refreshState(force);
-        if (object().status().isNotDead()) {
-            // Only refresh the visible pane
-            final Prober pane = (Prober) tabbedPane.getSelectedComponent();
-            pane.refresh(force);
-        }
+        tabbedPane.setBackground(viewBackgroundColor());
+        // Only refresh the visible pane.
+        final Prober prober = (Prober) tabbedPane.getSelectedComponent();
+        prober.refresh(force);
     }
 
 }

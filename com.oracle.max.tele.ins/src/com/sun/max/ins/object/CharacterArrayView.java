@@ -59,8 +59,9 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
         final String componentTypeName = teleArrayObject.classActorForObjectType().componentClassActor().javaSignature(false);
 
         tabbedPane = new InspectorTabbedPane(inspection());
+        tabbedPane.setBackground(viewBackgroundColor());
 
-        elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
+        elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), this);
         tabbedPane.add(componentTypeName + "[" + teleArrayObject.length() + "]", elementsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {
@@ -68,9 +69,6 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
                 final char[] chars = (char[]) teleArrayObject.shallowCopy();
                 final int length = Math.min(chars.length, preference().style().maxStringFromCharArrayDisplayLength());
                 return new String(chars, 0, length);
-            }
-            public ObjectStatus status() {
-                return teleArrayObject.status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -93,10 +91,11 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
 
     @Override
     protected void refreshState(boolean force) {
+        super.refreshState(force);
+        tabbedPane.setBackground(viewBackgroundColor());
         // Only refresh the visible pane.
         final Prober prober = (Prober) tabbedPane.getSelectedComponent();
         prober.refresh(force);
-        super.refreshState(force);
     }
 
 }

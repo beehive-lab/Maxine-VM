@@ -146,8 +146,9 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
         final String name = teleHeapRegionInfo.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new InspectorTabbedPane(inspection());
+        tabbedPane.setBackground(viewBackgroundColor());
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleHeapRegionInfo, instanceViewPreferences);
+        fieldsPane = ObjectScrollPane.createTupleFieldsPane(inspection(), this);
         tabbedPane.add(name, fieldsPane);
         regionInfoPane =  new HeapRegionInfoTable(inspection(), teleHeapRegionInfo).makeHeapRegionInfoPane();
         tabbedPane.add("Region #" + teleHeapRegionInfo.regionID() + " info", regionInfoPane);
@@ -171,10 +172,9 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
     @Override
     protected void refreshState(boolean force) {
         super.refreshState(force);
-        if (object().status().isNotDead()) {
-            // Only refresh the visible pane
-            final Prober pane = (Prober) tabbedPane.getSelectedComponent();
-            pane.refresh(force);
-        }
+        tabbedPane.setBackground(viewBackgroundColor());
+        // Only refresh the visible pane.
+        final Prober prober = (Prober) tabbedPane.getSelectedComponent();
+        prober.refresh(force);
     }
 }
