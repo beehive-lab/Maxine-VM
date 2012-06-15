@@ -331,7 +331,7 @@ public class CompilationBroker {
     /**
      * Produces a target method for the specified method actor. If another thread is currently
      * compiling {@code cma}, then the result of that compilation is returned. Otherwise,
-     * a new compilation is scheduled and its result is returned. Either way, this methods
+     * a new compilation is scheduled and its result is returned. Either way, this method
      * waits for the result of a compilation to return it.
      *
      * @param cma the method for which to make the target method
@@ -374,9 +374,13 @@ public class CompilationBroker {
 
             try {
                 if (doCompile) {
-                    return compilation.compile();
+                    TargetMethod tm = compilation.compile();
+                    VMTI.handler().methodCompiled(cma);
+                    return tm;
+                } else {
+                    // return result from other thread (which will have send the VMTI event)
+                    return compilation.get();
                 }
-                return compilation.get();
             } catch (Throwable t) {
                 if (VMOptions.verboseOption.verboseCompilation) {
                     boolean lockDisabledSafepoints = Log.lock();

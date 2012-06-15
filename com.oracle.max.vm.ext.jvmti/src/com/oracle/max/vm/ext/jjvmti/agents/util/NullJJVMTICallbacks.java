@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.jjvmti.agents.util;
 
 import java.security.*;
 
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.*;
@@ -89,6 +90,66 @@ public class NullJJVMTICallbacks extends JJVMTIAgentAdapter implements JJVMTI.Ev
 
     @Override
     public void vmInit() {
+    }
+
+    @Override
+    public void compiledMethodLoad(MethodActor method, int codeSize, Address codeAddr, AddrLocation[] map, Object compileInfo) {
+    }
+
+    @Override
+    public void compiledMethodUnload(MethodActor method, Address codeAddr) {
+    }
+
+    @Override
+    public void dataDumpRequest() {
+    }
+
+    @Override
+    public void dynamicCodeGenerated(String name, Address codeAddr, int length) {
+    }
+
+    @Override
+    public void exception(Thread thread, MethodActor method, long location, Object exception, MethodActor catchMethod, long catchLocation) {
+    }
+
+    @Override
+    public void exceptionCatch(Thread thread, MethodActor method, long location, Object exception) {
+    }
+
+    @Override
+    public void framePop(Thread thread, MethodActor method, boolean wasPoppedByException) {
+    }
+
+    @Override
+    public void monitorContendedEnter(Thread thread, Object object) {
+    }
+
+    @Override
+    public void monitorContendedEntered(Thread thread, Object object) {
+    }
+
+    @Override
+    public void monitorWait(Thread thread, Object object, long timeout) {
+    }
+
+    @Override
+    public void monitorWaited(Thread thread, Object object, long timeout) {
+    }
+
+    @Override
+    public void objectFree(Object tag) {
+    }
+
+    @Override
+    public void resourceExhausted(int flags, String description) {
+    }
+
+    @Override
+    public void singleStep(Thread thread, MethodActor method, long location) {
+    }
+
+    @Override
+    public void vmObjectAllocation(Thread thread, Object object, ClassActor classActor, int size) {
     }
 
 }

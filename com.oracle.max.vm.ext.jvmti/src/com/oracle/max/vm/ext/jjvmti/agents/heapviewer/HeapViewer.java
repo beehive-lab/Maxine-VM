@@ -116,6 +116,7 @@ public class HeapViewer extends NullJJVMTICallbacks implements JJVMTI.HeapCallba
         }
     }
 
+    @Override
     public synchronized void dataDumpRequest() {
         if (vmDeathCalled || dumpInProgress) {
             return;

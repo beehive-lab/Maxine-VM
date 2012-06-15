@@ -155,4 +155,14 @@ class SDVMTIHandler implements VMTIHandler {
         eventHandler.objectSurviving(cell);
     }
 
+    @Override
+    public void methodCompiled(ClassMethodActor classMethodActor) {
+        eventHandler.methodCompiled(classMethodActor);
+    }
+
+    @Override
+    public void methodUnloaded(ClassMethodActor classMethodActor) {
+        eventHandler.methodUnloaded(classMethodActor);
+    }
+
 }

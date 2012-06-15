@@ -42,7 +42,7 @@ public class Package extends BootImagePackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
         return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
-            VMAJavaRunScheme.getHandlerClassName().equals(VMLogVMAdviceHandler.class.getName());
+            VMAJavaRunScheme.isHandlerClass(VMLogVMAdviceHandler.class);
     }
 
 

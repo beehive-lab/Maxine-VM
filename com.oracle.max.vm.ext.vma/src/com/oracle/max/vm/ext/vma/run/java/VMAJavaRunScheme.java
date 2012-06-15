@@ -126,9 +126,28 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
     public static String getHandlerClassName() {
         String handlerClassName = System.getProperty(VMA_HANDLER_CLASS_PROPERTY);
         if (handlerClassName == null) {
-            handlerClassName = DEFAULT_HANDLER_CLASS;
+            // not specified for the boot image, loaded as VM extension
+        } else if (handlerClassName.equals("default")) {
+            return DEFAULT_HANDLER_CLASS;
         }
         return handlerClassName;
+    }
+
+    public static boolean isHandlerClass(Class<? extends VMAdviceHandler> handlerClass) {
+        String handlerClassName = getHandlerClassName();
+        if (handlerClassName == null) {
+            return false;
+        } else {
+            return handlerClassName.equals(handlerClass.getName());
+        }
+    }
+
+    /**
+     * For dynamically loaded advice handlers.
+     * @param handler
+     */
+    public static void registerAdviceHandler(VMAdviceHandler handler) {
+        adviceHandler = handler;
     }
 
     @Override
@@ -136,21 +155,26 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
         super.initialize(phase);
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             VMTI.registerEventHandler(new VMTIHandler());
-            try {
-                adviceHandler = (VMAdviceHandler) Class.forName(getHandlerClassName()).newInstance();
-            } catch (Throwable ex) {
-                ProgramError.unexpected("failed to instantiate VMA advice handler class: ", ex);
-            }
-            adviceHandler.initialise(phase);
             JVMTIException.registerVMAHAndler(this);
+            String handlerClassName = getHandlerClassName();
+            if (handlerClassName != null) {
+                try {
+                    adviceHandler = (VMAdviceHandler) Class.forName(handlerClassName).newInstance();
+                } catch (Throwable ex) {
+                    ProgramError.unexpected("failed to instantiate VMA advice handler class: ", ex);
+                }
+                adviceHandler.initialise(phase);
+            }
         }
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
-                adviceHandler.initialise(phase);
-                advising = true;
-                // we make this call because when the VM originally called VMTIHandler.threadStart
-                // advising was not enabled
-                threadStarting();
+                if (adviceHandler != null) {
+                    adviceHandler.initialise(phase);
+                    advising = true;
+                    // we make this call because when the VM originally called VMTIHandler.threadStart
+                    // advising was not enabled
+                    threadStarting();
+                }
             }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (advising) {

@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.regex.*;
 
 import com.oracle.max.vm.ext.jjvmti.agents.util.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -102,6 +103,8 @@ public class EventDelivery extends NullJJVMTICallbacks implements JJVMTI.EventCa
         else if (name.equals("breakpoint")) return JVMTI_EVENT_BREAKPOINT;
         else if (name.equals("classLoad")) return JVMTI_EVENT_CLASS_LOAD;
         else if (name.equals("classFileLoadHook")) return JVMTI_EVENT_CLASS_FILE_LOAD_HOOK;
+        else if (name.equals("compiledMethodLoad")) return JVMTI_EVENT_COMPILED_METHOD_LOAD;
+        else if (name.equals("compiledMethodUnload")) return JVMTI_EVENT_COMPILED_METHOD_UNLOAD;
         else if (name.equals("garbageCollectionStart")) return JVMTI_EVENT_GARBAGE_COLLECTION_START;
         else if (name.equals("garbageCollectionFinish")) return JVMTI_EVENT_GARBAGE_COLLECTION_FINISH;
         else if (name.equals("methodEntry")) return JVMTI_EVENT_METHOD_ENTRY;
@@ -141,7 +144,9 @@ public class EventDelivery extends NullJJVMTICallbacks implements JJVMTI.EventCa
             String methodName = method.getName();
             EventData eventData = new EventData(eventsPattern.matcher(methodName).matches(), eventFromName(methodName));
             events.put(methodName, eventData);
-            eventDelivery.setEventNotificationMode(JVMTI_ENABLE, eventData.event, null);
+            if (eventData.enabled) {
+                eventDelivery.setEventNotificationMode(JVMTI_ENABLE, eventData.event, null);
+            }
         }
 
         if (events.get("vmInit").enabled) {
@@ -204,6 +209,17 @@ public class EventDelivery extends NullJJVMTICallbacks implements JJVMTI.EventCa
         if (events.get("classLoad").enabled) {
             System.out.printf("classLoad %s%n", klass.name());
         }
+    }
+    @Override
+    public void compiledMethodLoad(MethodActor method, int codeSize, Address codeAddr, AddrLocation[] map, Object compileInfo) {
+        if (events.get("compiledMethodLoad").enabled) {
+            System.out.printf("compiledMethodLoad %s, address %x, size %d%n", method.format("%H.%n"), codeAddr.toLong(), codeSize);
+        }
+    }
+
+    @Override
+    public void compiledMethodUnload(MethodActor method, Address codeAddr) {
+
     }
 
     @Override
