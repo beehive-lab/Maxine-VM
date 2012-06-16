@@ -26,7 +26,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.jjvmti.agents.util.*;
-import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
+import com.oracle.max.vm.ext.vma.handlers.util.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.*;

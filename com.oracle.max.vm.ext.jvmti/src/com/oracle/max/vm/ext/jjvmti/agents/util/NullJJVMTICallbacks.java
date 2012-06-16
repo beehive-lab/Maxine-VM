@@ -32,6 +32,11 @@ import com.sun.max.vm.ext.jvmti.*;
 /**
  * Default empty implementations of the {@link JJVMTI.EventCallbacks}.
  *
+ * N.B. This is <b>not</b> included in the boot image unless an agent that
+ * subclasses it is also included. This prevents a deopt cascade when an
+ * agent is dynamically loaded (because if it is included then all the
+ * methods below provoke the unique concrete method optimization).
+ *
  */
 public class NullJJVMTICallbacks extends JJVMTIAgentAdapter implements JJVMTI.EventCallbacks {
 
