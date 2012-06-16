@@ -22,12 +22,12 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.log.vmlog.h;
 
-import java.util.*;
 import java.util.concurrent.locks.*;
 
 import com.oracle.max.vm.ext.vma.handlers.*;
 import com.oracle.max.vm.ext.vma.handlers.log.*;
 import com.oracle.max.vm.ext.vma.handlers.objstate.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -37,17 +37,24 @@ import com.sun.max.vm.thread.*;
 
 /**
  * An implementation that uses a secondary {@link VMLog} for storage.
+ *
+ * Can be built into the boot image or dynamically loaded. However, the {@code VMLog}
+ * must be built into the boot image because it uses additional {@link VMThreadLocal}
+ * slots that cannot be added dynamically. This is taken care of by {@link VMAJavaRunScheme}
+ * using the {@value VMAJavaRunScheme#VMA_LOG_PROPERTY} system property, which must
+ * be set on the image build.
  */
 public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     private static final String TIME_PROPERTY = "max.vma.logtime";
+
     /**
      * The custom {@link VMLog} used to store VMA advice records.
      * This is a per-thread log.
      */
+    @CONSTANT_WHEN_NOT_ZERO
     private VMLog vmaVMLog;
 
-    @CONSTANT
     private static boolean logTime = true;
 
     private static class VMLogFlusher extends VMLog.Flusher {
@@ -77,20 +84,24 @@ public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
+    public static void onLoad(String args) {
+        VMAJavaRunScheme.registerAdviceHandler(new VMLogVMAdviceHandler());
+        ObjectStateHandlerAdaptor.forceCompile();
+    }
+
+
     @Override
     public void initialise(MaxineVM.Phase phase) {
         super.initialise(phase);
         if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            vmaVMLog = new VMLogNativeThreadVariableVMA();
-            vmaVMLog.initialize(phase);
-            ArrayList<VMLogger> list = new ArrayList<VMLogger>();
-            list.add(VMAVMLogger.logger);
-            vmaVMLog.registerCustom(list, new VMLogFlusher());
-            String ltp = System.getProperty(TIME_PROPERTY);
-            if (ltp != null) {
-                logTime = ltp.equalsIgnoreCase("true");
-            }
+            vmaVMLog = VMAJavaRunScheme.vmaVMLog();
+            vmaVMLog.registerCustom(VMAVMLogger.logger, new VMLogFlusher());
         } else if (phase == MaxineVM.Phase.RUNNING) {
+            if (vmaVMLog == null) {
+                // dynamically loaded
+                vmaVMLog = VMAJavaRunScheme.vmaVMLog();
+                vmaVMLog.registerCustom(VMAVMLogger.logger, new VMLogFlusher());
+            }
             VMAdviceHandlerLogAdapter handler = new VMAdviceHandlerLogAdapter();
             handler.initialise(phase);
             super.setRemovalTracker(handler.getRemovalTracker(state));
@@ -98,6 +109,10 @@ public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
             handler.getLog().setTimeStampGenerator(VMAVMLogger.logger);
             VMAVMLogger.logger.enable(true);
             VMAVMLogger.logger.timeStamp = getTime();
+            String ltp = System.getProperty(TIME_PROPERTY);
+            if (ltp != null) {
+                logTime = ltp.equalsIgnoreCase("true");
+            }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             // the VMA log for the main thread is flushed by adviseBeforeThreadTerminating
             // so we just need to flush the external log

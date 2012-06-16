@@ -162,10 +162,11 @@ public class VMLogger {
      * explicitly associate a {@link VMLog} instance with it.
      * It's {@link #loggerId} is always 1, i.e., there must be a 1-1 relationship
      * between such a logger and its associated {@link VMLog} instance.
+     *
+     * N.B. This may be called at runtime.
      * @param numOps
      * @param operationRefMaps
      */
-    @HOSTED_ONLY
     public VMLogger(String name, int numOps, int[] operationRefMaps) {
         this.name = name;
         this.numOps = numOps;
@@ -185,6 +186,14 @@ public class VMLogger {
         this.vmLog = vmLog;
         VMLogger.hostedVMLog = hostedVMLog;
         checkOptions();
+    }
+
+    /**
+     * Call for custom (hidden) loggers.
+     * @param vmLog
+     */
+    void setVMLog(VMLog vmLog) {
+        this.vmLog = vmLog;
     }
 
     /**

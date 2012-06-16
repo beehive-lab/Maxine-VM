@@ -26,7 +26,7 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
+import com.oracle.max.vm.ext.vma.handlers.util.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
 

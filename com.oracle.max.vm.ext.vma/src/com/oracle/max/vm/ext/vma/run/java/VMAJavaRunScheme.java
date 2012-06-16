@@ -24,12 +24,14 @@ package com.oracle.max.vm.ext.vma.run.java;
 
 import com.oracle.max.vm.ext.t1x.vma.*;
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.handlers.log.vmlog.h.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.ProgramError;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.java.JavaRunScheme;
 import com.sun.max.vm.thread.VmThread;
@@ -111,6 +113,19 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
      */
     private static boolean advising;
 
+    @CONSTANT_WHEN_NOT_ZERO
+    private static VMLog vmaVMLog;
+
+    /**
+     * If a handler wishes to use {@link VMLogNativeThreadVariableVMA} then this property must be set
+     * as it must be included in the boot image.
+     */
+    public static final String VMA_LOG_PROPERTY = "max.vma.vmlog";
+
+    public static VMLog vmaVMLog() {
+        return vmaVMLog;
+    }
+
     /**
      * The build time specified {@link VMAdviceHandler}.
      */
@@ -118,17 +133,15 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
     private static VMAdviceHandler adviceHandler;
 
     /**
-     * This property must be specified at boot image time.
+     * This property may be specified at boot image time to include a specific handler in the boot image.
+     * The preferred approach, however, is to load the handler as a VM extension.
      */
-    private static final String VMA_HANDLER_CLASS_PROPERTY = "max.vma.handler";
-    private static final String DEFAULT_HANDLER_CLASS = "com.oracle.max.vm.ext.vma.handlers.log.vmlog.h.VMLogVMAdviceHandler";
+    public static final String VMA_HANDLER_CLASS_PROPERTY = "max.vma.handler";
 
     public static String getHandlerClassName() {
         String handlerClassName = System.getProperty(VMA_HANDLER_CLASS_PROPERTY);
         if (handlerClassName == null) {
             // not specified for the boot image, loaded as VM extension
-        } else if (handlerClassName.equals("default")) {
-            return DEFAULT_HANDLER_CLASS;
         }
         return handlerClassName;
     }
@@ -157,6 +170,10 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             VMTI.registerEventHandler(new VMTIHandler());
             JVMTIException.registerVMAHAndler(this);
             String handlerClassName = getHandlerClassName();
+            if (System.getProperty(VMA_LOG_PROPERTY) != null) {
+                vmaVMLog = new VMLogNativeThreadVariableVMA();
+                vmaVMLog.initialize(phase);
+            }
             if (handlerClassName != null) {
                 try {
                     adviceHandler = (VMAdviceHandler) Class.forName(handlerClassName).newInstance();

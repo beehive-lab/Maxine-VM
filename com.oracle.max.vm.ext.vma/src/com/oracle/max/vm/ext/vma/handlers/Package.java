@@ -20,18 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.cbc.h;
+package com.oracle.max.vm.ext.vma.handlers;
 
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 
-
+/**
+ * This supports optional inclusion of a handler in the boot image.
+ * The property {@value VMAJavaRunScheme#VMA_HANDLER_CLASS_PROPERTY} should be
+ * set with a value equal to the name of the class of the handler.
+ */
 public class Package extends BootImagePackage {
+
     @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
-            VMAJavaRunScheme.isHandlerClass(CBCVMAdviceHandler.class);
+    public boolean isPartOfMaxineVM(VMConfiguration config) {
+        return System.getProperty(VMAJavaRunScheme.VMA_HANDLER_CLASS_PROPERTY) != null;
     }
 
 }

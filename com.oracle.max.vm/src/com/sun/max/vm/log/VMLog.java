@@ -281,11 +281,7 @@ public abstract class VMLog implements Heap.GCCallback {
     @CONSTANT_WHEN_NOT_ZERO
     private static VMLog vmLog;
 
-    @CONSTANT
     private static VMLog[] customLogs;
-
-    @HOSTED_ONLY
-    private static ArrayList<VMLog> customLogList = new ArrayList<VMLog>();
 
     /**
      * Monotonically increasing global unique id for a log record.
@@ -316,10 +312,6 @@ public abstract class VMLog implements Heap.GCCallback {
             nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
             vmLog = Factory.create();
             vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
-            if (customLogList.size() > 0) {
-                customLogs = new VMLog[customLogList.size()];
-                customLogList.toArray(customLogs);
-            }
         }
     }
 
@@ -339,7 +331,7 @@ public abstract class VMLog implements Heap.GCCallback {
                 // the default log has no need for flushing.
                 // this might change if we wanted to callback to the
                 // Inspector when the log overflowed.
-                initialize(hostedLoggerList, null);
+                initialize(hostedLoggerList);
             }
             Heap.registerGCCallback(this);
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
@@ -356,13 +348,26 @@ public abstract class VMLog implements Heap.GCCallback {
 
     /**
      * Register a custom {@link VMLog} with a specific, single, {@link VMLogger} and a {@link VMLog.Flusher}.
-     * @param loggerList
+     * @param logger
      * @param flusher
      */
-    @HOSTED_ONLY
-    public void registerCustom(ArrayList<VMLogger> loggerList, Flusher flusher) {
-        initialize(loggerList, flusher);
-        customLogList.add(this);
+    public void registerCustom(VMLogger logger, Flusher flusher) {
+        loggers = new VMLogger[1];
+        loggers[0] = logger;
+        operationRefMaps = new int[2][];
+        operationRefMaps[logger.loggerId] = logger.operationRefMaps;
+        logger.setVMLog(this);
+        this.flusher = flusher;
+        if (customLogs == null) {
+            customLogs = new VMLog[1];
+        }
+        int length = customLogs.length;
+        if (customLogs[length - 1] != null) {
+            VMLog[] newCustomLogs = new VMLog[length + 1];
+            System.arraycopy(customLogs, 0, newCustomLogs, 0, length);
+            customLogs = newCustomLogs;
+        }
+        customLogs[length - 1] = this;
     }
 
     /**
@@ -370,7 +375,7 @@ public abstract class VMLog implements Heap.GCCallback {
      * @param loggerList
      */
     @HOSTED_ONLY
-    private void initialize(ArrayList<VMLogger> loggerList, Flusher flusher) {
+    private void initialize(ArrayList<VMLogger> loggerList) {
         loggers = new VMLogger[loggerList.size()];
         loggerList.toArray(loggers);
         operationRefMaps = new int[loggers.length + 1][];
@@ -380,7 +385,6 @@ public abstract class VMLog implements Heap.GCCallback {
                 operationRefMaps[logger.loggerId] = logger.operationRefMaps;
             }
         }
-        this.flusher = flusher;
     }
 
     /**

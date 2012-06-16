@@ -26,6 +26,7 @@ import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.handlers.*;
 import com.oracle.max.vm.ext.vma.handlers.log.*;
 import com.oracle.max.vm.ext.vma.handlers.objstate.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
@@ -39,24 +40,28 @@ import com.sun.max.vm.thread.*;
  * It also assumes that tracking has been disabled to avoid recursive calls while logging.
  *
  * State for unique ids and lifetime tracking is provided by an implementation of the {@link ObjectStateHandler} class,
- * which is created at image build time. All objects have to be checked for having ids, and may log
- * an {@link #unseenObject(Object)} event first.
+ * All objects have to be checked for having ids, and may log an {@link #unseenObject(Object)} event first.
  *
  * Since the {@link VMAdviceHandler} and {@link ObjectStateHandler} implementations are required to be
  * thread safe, this class is not otherwise synchronised.
  *
  * The majority of the methods follow a common pattern so are automatically generated.
  *
+ * Can be built into the boot image or dynamically loaded.
  */
 
 public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     private VMAdviceHandlerLogAdapter logHandler;
 
+    public static void onLoad(String args) {
+        VMAJavaRunScheme.registerAdviceHandler(new SyncLogVMAdviceHandler());
+        ObjectStateHandlerAdaptor.forceCompile();
+    }
+
     @Override
     protected void unseenObject(Object obj) {
         logHandler.unseenObject(obj);
-
     }
 
     @Override
