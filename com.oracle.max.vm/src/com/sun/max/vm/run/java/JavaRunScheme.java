@@ -418,7 +418,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
       */
     private static abstract class JarFileOptionHandler {
         abstract String classNameAttribute();
-        abstract void handle(String className, URL url, String agentArgs)
+        abstract String classPathAttribute();
+        abstract void handle(String className, URL[] urls, String agentArgs)
             throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException;
     }
 
@@ -429,10 +430,17 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         }
 
         @Override
-        void handle(String className, URL url, String agentArgs)
+        String classPathAttribute() {
+            return "Boot-Class-Path";
+        }
+
+        @Override
+        void handle(String className, URL[] urls, String agentArgs)
             throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-            addURLToAppClassLoader.invoke(Launcher.getLauncher().getClassLoader(), url);
-            invokeMethod(className, url, "premain", agentArgs);
+            for (URL url : urls) {
+                addURLToAppClassLoader.invoke(Launcher.getLauncher().getClassLoader(), url);
+            }
+            invokeMethod(className, urls[0], "premain", agentArgs);
         }
 
         private void invokeMethod(String className, URL url, String methodName, String args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
@@ -484,8 +492,26 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     if (className == null) {
                         throw new IOException("could not find " + handler.classNameAttribute() + "in jarfile manifest: " + jarFile.getName());
                     }
-                    final URL url = new URL("file://" + new File(jarFile.getName()).getAbsolutePath());
-                    handler.handle(className, url, agentArgs);
+                    ArrayList<String> classPathParts = null;
+                    final String classPath = findClassAttributeInJarFile(jarFile, handler.classPathAttribute());
+                    if (classPath != null) {
+                        classPathParts = jarFileClassPaths(classPath);
+                    }
+                    URL[] urls = new URL[classPath == null ? 1 : 1 + classPathParts.size()];
+                    String jarAbsPath = new File(jarFile.getName()).getAbsolutePath();
+                    urls[0] = new URL("file://" + jarAbsPath);
+                    for (int u = 1; u < urls.length; u++) {
+                        String classPathPart = classPathParts.get(u - 1);
+                        String absClassPathPart = classPathPart;
+                        if (classPathPart.charAt(0) == '/') {
+                            // absolute
+                        } else {
+                            // relative to jar
+                            absClassPathPart = new File(jarAbsPath).getParent() + File.separator + classPathPart;
+                        }
+                        urls[u] = new URL("file://" + absClassPathPart);
+                    }
+                    handler.handle(className, urls, agentArgs);
                 } finally {
                     if (jarFile != null) {
                         jarFile.close();
@@ -497,15 +523,49 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         }
     }
 
+    private static ArrayList<String> jarFileClassPaths(String classPath) {
+        ArrayList<String> result = new ArrayList<String>();
+        String trimmedClassPath = classPath.trim();
+        int sx = trimmedClassPath.indexOf(' ');
+        if (sx < 0) {
+            result.add(trimmedClassPath);
+            return result;
+        }
+        int length = trimmedClassPath.length();
+        int psx = 0;
+        while (true) {
+            result.add(trimmedClassPath.substring(psx, sx));
+            if (sx >= length) {
+                break;
+            }
+            while (sx < length && trimmedClassPath.charAt(sx) == ' ') {
+                sx++;
+            }
+            psx = sx;
+            while (sx < length && trimmedClassPath.charAt(sx) != ' ') {
+                sx++;
+            }
+        }
+        return result;
+    }
+
     private static class VMExtensionJarFileOptionHandler extends JarFileOptionHandler {
         @Override
         String classNameAttribute() {
             return "VMExtension-Class";
         }
+
         @Override
-        void handle(String className, URL url, String args)
+        String classPathAttribute() {
+            return "VM-Class-Path";
+        }
+
+        @Override
+        void handle(String className, URL[] urls, String args)
             throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-            VMClassLoader.VM_CLASS_LOADER.addURL(url);
+            for (URL url : urls) {
+                VMClassLoader.VM_CLASS_LOADER.addURL(url);
+            }
             invokeMethod(className, args);
         }
 
