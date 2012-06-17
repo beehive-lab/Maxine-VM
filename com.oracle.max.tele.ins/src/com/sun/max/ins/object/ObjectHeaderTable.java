@@ -294,7 +294,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                 // Create a label suitable for the kind of header field
                 HeaderField headerField = headerFields[row];
                 if (headerField == HeaderField.HUB) {
-                    labels[row] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
+                    labels[row] = new WordValueLabel(inspection, WordValueLabel.ValueMode.HUB_REFERENCE, ObjectHeaderTable.this) {
 
                         @Override
                         public Value fetchValue() {

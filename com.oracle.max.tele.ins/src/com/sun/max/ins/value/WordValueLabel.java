@@ -61,6 +61,7 @@ public class WordValueLabel extends ValueLabel {
     public enum ValueMode {
         WORD,
         REFERENCE,
+        HUB_REFERENCE,
         LITERAL_REFERENCE,
         INTEGER_REGISTER,
         FLAGS_REGISTER,
@@ -103,6 +104,16 @@ public class WordValueLabel extends ValueLabel {
          * Textual display of a valid object reference.
          */
         OBJECT_REFERENCE_TEXT,
+
+        /**
+         * Numeric display of a valid object reference occurring in a Hub field.
+         */
+        HUB_REFERENCE,
+
+        /**
+         * Textual display of a valid object reference occurring in a Hub field.
+         */
+        HUB_REFERENCE_TEXT,
 
         /**
          * Numeric display of a valid object reference.
@@ -336,6 +347,11 @@ public class WordValueLabel extends ValueLabel {
                                 // TODO (mlvdv) special right-button menu items to a pointer at a quasi object, perhaps specialized for each kind
                                 break;
                             }
+                            case HUB_REFERENCE:
+                            case HUB_REFERENCE_TEXT: {
+                                // TODO (mlvdv) special right-button menu items appropriate to a forwarding pointer
+                                break;
+                            }
                             case STACK_LOCATION:
                             case STACK_LOCATION_TEXT: {
                                 // TODO (mlvdv)  special right-button menu items appropriate to a pointer into stack memory
@@ -424,17 +440,25 @@ public class WordValueLabel extends ValueLabel {
                         if (valueMode == ValueMode.REFERENCE || forceTxt) {
                             displayMode = DisplayMode.NULL_WORD;
                         }
-                    } else if (vm().objects().objectStatusAt(address).isLive()) {
-                        displayMode = (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE || forceTxt) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
-                        object = vm().objects().findObjectAt(address);
-                        if (object == null) {
-                            displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                    } else if ((object = vm().objects().findObjectAt(address)) != null) {
+                        switch(valueMode) {
+                            case REFERENCE:
+                            case LITERAL_REFERENCE:
+                                displayMode = DisplayMode.OBJECT_REFERENCE_TEXT;
+                                break;
+                            case HUB_REFERENCE:
+                                displayMode = DisplayMode.HUB_REFERENCE_TEXT;
+                                break;
+                            default:
+                                displayMode = forceTxt ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
                         }
-                    } else if (vm().objects().objectStatusAt(address).isQuasi()) {
-                        displayMode = (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE || forceTxt) ? DisplayMode.QUASI_OBJECT_REFERENCE_TEXT : DisplayMode.QUASI_OBJECT_REFERENCE;
-                        object = vm().objects().findQuasiObjectAt(address);
-                        if (object == null) {
-                            displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                    } else if ((object = vm().objects().findQuasiObjectAt(address)) != null) {
+                        switch(valueMode) {
+                            case REFERENCE:
+                                displayMode = DisplayMode.QUASI_OBJECT_REFERENCE_TEXT;
+                                break;
+                            default:
+                                displayMode = forceTxt ? DisplayMode.QUASI_OBJECT_REFERENCE_TEXT : DisplayMode.QUASI_OBJECT_REFERENCE;
                         }
                     } else if (thread != null && thread.stack().memoryRegion().contains(address)) {
                         stack = thread.stack();
@@ -444,6 +468,13 @@ public class WordValueLabel extends ValueLabel {
                         displayMode = (valueMode == ValueMode.REFERENCE || forceTxt) ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                     } else if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
                         displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                    } else if (valueMode == ValueMode.HUB_REFERENCE) {
+                        object = vm().objects().findForwardedObjectAt(address);
+                        if (object != null) {
+                            displayMode = DisplayMode.HUB_REFERENCE_TEXT;
+                        } else {
+                            displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                        }
                     } else {
                         compilation = vm().machineCode().findCompilation(address);
                         if (compilation == null) {
@@ -635,6 +666,38 @@ public class WordValueLabel extends ValueLabel {
                 }
                 break;
             }
+            case HUB_REFERENCE: {
+                final Address address = value.toWord().asAddress();
+                final String forward = vm().objects().findForwardedObjectAt(address) == null ? "" : "=> ";
+                setFont(wordDataFont);
+                setForeground(style.wordValidObjectReferenceDataColor());
+                setWrappedText(forward + hexString);
+                try {
+                    // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
+                    final StringBuilder toolTipSB = new StringBuilder();
+                    toolTipSB.append(value.toWord().toPadded0xHexString('0'));
+                    toolTipSB.append("<br>Forward pointer to ").append(htmlify(nameDisplay.referenceToolTipText(object)));
+                    toolTipSB.append("<br>In ");
+                    final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
+                    if (memoryRegion == null) {
+                        toolTipSB.append(htmlify("<unknown memory region>"));
+                    } else {
+                        toolTipSB.append("\"").append(nameDisplay.longName(memoryRegion)).append("\"");
+                    }
+                    final String gcDescription = object.reference().gcDescription();
+                    if (gcDescription != null) {
+                        toolTipSB.append("<br>GC: " + gcDescription);
+                    }
+                    setWrappedToolTipHtmlText(toolTipSB.toString());
+                } catch (Throwable throwable) {
+                    // If we don't catch this the views will not be updated at all.
+                    object = null;
+                    displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                    setWrappedToolTipHtmlText("<b>" + throwable + "</b><br>See log for complete stack trace.");
+                    throwable.printStackTrace(Trace.stream());
+                }
+                break;
+            }
             case OBJECT_REFERENCE_TEXT: {
                 setFont(style.wordAlternateTextFont());
                 setForeground(style.wordValidObjectReferenceDataColor());
@@ -684,6 +747,45 @@ public class WordValueLabel extends ValueLabel {
                         final StringBuilder toolTipSB = new StringBuilder();
                         toolTipSB.append(value.toWord().toPadded0xHexString('0'));
                         toolTipSB.append("<br>Quasi-reference(").append(object.status().label()).append(") to ").append(htmlify(nameDisplay.referenceToolTipText(object)));
+                        toolTipSB.append("<br>In ");
+                        final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
+                        if (memoryRegion == null) {
+                            toolTipSB.append(htmlify("<unknown memory region>"));
+                        } else {
+                            toolTipSB.append("\"").append(nameDisplay.longName(memoryRegion)).append("\"");
+                        }
+                        final String gcDescription = object.reference().gcDescription();
+                        if (gcDescription != null) {
+                            toolTipSB.append("<br>GC: " + gcDescription);
+                        }
+                        setWrappedToolTipHtmlText(toolTipSB.toString());
+                        break;
+                    }
+                } catch (Throwable throwable) {
+                    // If we don't catch this the views will not be updated at all.
+                    object = null;
+                    displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                    setWrappedToolTipHtmlText("<b>" + throwable + "</b><br>See log for complete stack trace.");
+                    throwable.printStackTrace(Trace.stream());
+                    break;
+                }
+                displayMode = DisplayMode.OBJECT_REFERENCE;
+                updateText();
+                break;
+            }
+            case HUB_REFERENCE_TEXT: {
+                setFont(style.wordAlternateTextFont());
+                setForeground(style.wordValidObjectReferenceDataColor());
+                try {
+                    final Address address = value.toWord().asAddress();
+                    final String forward = vm().objects().findForwardedObjectAt(address) == null ? "" : "=> ";
+                    final String labelText = nameDisplay.referenceLabelText(object);
+                    if (labelText != null) {
+                        setWrappedText(forward + labelText);
+                        // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
+                        final StringBuilder toolTipSB = new StringBuilder();
+                        toolTipSB.append(value.toWord().toPadded0xHexString('0'));
+                        toolTipSB.append("<br>Forward pointer to ").append(htmlify(nameDisplay.referenceToolTipText(object)));
                         toolTipSB.append("<br>In ");
                         final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
                         if (memoryRegion == null) {
@@ -1104,6 +1206,7 @@ public class WordValueLabel extends ValueLabel {
                 alternateValueKind = DisplayMode.OBJECT_REFERENCE;
                 break;
             }
+
             case QUASI_OBJECT_REFERENCE: {
                 alternateValueKind = DisplayMode.QUASI_OBJECT_REFERENCE_TEXT;
                 break;
@@ -1112,6 +1215,16 @@ public class WordValueLabel extends ValueLabel {
                 alternateValueKind = DisplayMode.QUASI_OBJECT_REFERENCE;
                 break;
             }
+
+            case HUB_REFERENCE: {
+                alternateValueKind = DisplayMode.HUB_REFERENCE_TEXT;
+                break;
+            }
+            case HUB_REFERENCE_TEXT: {
+                alternateValueKind = DisplayMode.HUB_REFERENCE;
+                break;
+            }
+
             case STACK_LOCATION: {
                 alternateValueKind = DisplayMode.STACK_LOCATION_TEXT;
                 break;
@@ -1120,6 +1233,7 @@ public class WordValueLabel extends ValueLabel {
                 alternateValueKind = DisplayMode.STACK_LOCATION;
                 break;
             }
+
             case THREAD_LOCALS_BLOCK_LOCATION: {
                 alternateValueKind = DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT;
                 break;
@@ -1128,6 +1242,7 @@ public class WordValueLabel extends ValueLabel {
                 alternateValueKind = DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                 break;
             }
+
             case CALL_ENTRY_POINT: {
                 alternateValueKind = DisplayMode.CALL_ENTRY_POINT_TEXT;
                 break;
@@ -1136,6 +1251,7 @@ public class WordValueLabel extends ValueLabel {
                 alternateValueKind = DisplayMode.CALL_ENTRY_POINT;
                 break;
             }
+
             case NATIVE_FUNCTION: {
                 alternateValueKind = DisplayMode.NATIVE_FUNCTION_TEXT;
                 break;
@@ -1144,6 +1260,7 @@ public class WordValueLabel extends ValueLabel {
                 alternateValueKind = DisplayMode.NATIVE_FUNCTION;
                 break;
             }
+
             case CLASS_ACTOR_ID: {
                 if (teleClassActor != null) {
                     alternateValueKind = DisplayMode.CLASS_ACTOR;
@@ -1154,6 +1271,7 @@ public class WordValueLabel extends ValueLabel {
                 alternateValueKind = DisplayMode.CLASS_ACTOR_ID;
                 break;
             }
+
             case CALL_RETURN_POINT: {
                 alternateValueKind = DisplayMode.CALL_RETURN_POINT_TEXT;
                 break;
@@ -1197,6 +1315,13 @@ public class WordValueLabel extends ValueLabel {
                 }
                 break;
             }
+            case HUB_REFERENCE:
+            case HUB_REFERENCE_TEXT:
+                final MaxObject object = vm().objects().findForwardedObjectAt(valueAsAddress);
+                if (object != null) {
+                    action = views().objects().makeViewAction(object, null);
+                }
+                break;
             case CALL_ENTRY_POINT:
             case CALL_ENTRY_POINT_TEXT:
             case CALL_RETURN_POINT:
@@ -1270,7 +1395,9 @@ public class WordValueLabel extends ValueLabel {
                 case OBJECT_REFERENCE:
                 case OBJECT_REFERENCE_TEXT:
                 case QUASI_OBJECT_REFERENCE:
-                case QUASI_OBJECT_REFERENCE_TEXT: {
+                case QUASI_OBJECT_REFERENCE_TEXT:
+                case HUB_REFERENCE:
+                case HUB_REFERENCE_TEXT: {
                     if (object != null) {
                         action = views().memory().makeViewAction(object, "View memory for " + inspection().nameDisplay().referenceLabelText(object));
                     } else {
@@ -1344,6 +1471,10 @@ public class WordValueLabel extends ValueLabel {
                     }
                     break;
                 }
+                case HUB_REFERENCE:
+                case HUB_REFERENCE_TEXT:
+                    // TODO (mlvdv) what to transfer in this case?
+                    break;
                 case OBJECT_REFERENCE_TEXT:
                 case QUASI_OBJECT_REFERENCE_TEXT: {
                     if (object != null) {
