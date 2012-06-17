@@ -122,6 +122,10 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return ObjectStatus.DEAD;
     }
 
+    public boolean isForwardingAddress(Address forwardingAddress) {
+        return false;
+    }
+
     /**
      * {@inheritDoc}
      * <p>

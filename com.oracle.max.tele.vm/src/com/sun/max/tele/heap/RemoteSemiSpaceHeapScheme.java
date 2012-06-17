@@ -52,6 +52,8 @@ import com.sun.max.vm.runtime.*;
  * {@linkplain SemiSpaceHeapScheme semispace collector},
  * an implementation of the VM's {@link HeapScheme} interface.
  * <p>
+ * <strong>Comments are out of date</strong>
+ * <p>
  * The operation of the semispace collector in the VM is modeled using the
  * following techniques and invariants.
  * <p>
@@ -311,7 +313,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                         // A former To-Space reference that is now in From-Space: transition state
                         fromSpaceRef.beginAnalyzing();
                     }
-                    Trace.end(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount() + ", UNKNOWN refs=" + refs.size());
+                    Trace.end(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount() + ", total refs=" + refs.size());
                     lastAnalyzingPhaseCount = gcStartedCount();
                 }
 
@@ -522,6 +524,17 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                 TeleError.unknownCase();
         }
         return ObjectStatus.DEAD;
+    }
+
+
+    public boolean isForwardingAddress(Address forwardingAddress) {
+        if (phase() == HeapPhase.ANALYZING && toSpaceMemoryRegion.contains(forwardingAddress)) {
+            final Address possibleOrigin = objects().forwardingPointerToOriginUnsafe(forwardingAddress);
+            if (possibleOrigin.isNotZero() && objectStatusAt(possibleOrigin).isLive()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public RemoteReference makeReference(Address origin) throws TeleError {

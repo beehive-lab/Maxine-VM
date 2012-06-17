@@ -86,6 +86,10 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
         return objects().isPlausibleOriginUnsafe(origin) ? ObjectStatus.LIVE : ObjectStatus.DEAD;
     }
 
+    public boolean isForwardingAddress(Address forwardingAddress) {
+        return false;
+    }
+
     public RemoteReference makeReference(Address origin) {
         assert vm().lockHeldByCurrentThread();
         TeleError.check(objectRegion.memoryRegion().contains(origin), "Attempt to make reference at location outside region");

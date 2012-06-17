@@ -456,6 +456,11 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
 
     }
 
+    public boolean isForwardingAddress(Address forwardingAddress) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
     public RemoteReference makeReference(Address origin) throws TeleError {
         assert vm().lockHeldByCurrentThread();
         TeleError.check(contains(origin), "Location is outside of " + heapSchemeClass().getSimpleName() + " heap");
