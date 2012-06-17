@@ -60,6 +60,11 @@ public final class RemoteMSEHeapScheme extends RemoteRegionBasedHeapScheme imple
         return null;
     }
 
+    public boolean isForwardingAddress(Address forwardingAddress) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
     public RemoteReference makeReference(Address origin) throws TeleError {
         // TODO Auto-generated method stub
         return null;

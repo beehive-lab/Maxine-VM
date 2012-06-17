@@ -171,66 +171,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return DEAD;
     }
 
-    /**
-     * Checks if a location in VM memory could be the origin of an object representation,
-     * determined by examining memory contents using only low-level mechanisms that do
-     * not rely on type information.
-     * <ul>
-     * <li>No discrimination is made regarding the location of the proposed origin;</li>
-     * <li>No discrimination is made relative to the state of any memory management;</li>
-     * <li>Forwarded objects that overwrite the {@code Hub} field are not recognized;</li>
-     * <li><strong>May produce false positives</strong>, in particular when the address is a field
-     * holding a pointer to a {@link Hub};</li>
-     * <li>Uses only <em>unsafe</em> {@link RemoteReference}s to avoid circularities, since this method
-     * is needed for the construction of legitimate references.</li>
-     * </ul>
-     *
-     * @param possibleOrigin a legitimate location in VM memory, in the area managed.
-     * @return whether the location is likely to be an object origin.
-     */
-    public boolean isPlausibleOriginUnsafe(Address possibleOrigin) {
-
-        // TODO (mlvdv)  LD suggestion; shorten this test.  The Hub of Hubs is constant: a fixed object in the BootHeap.
-        // Assuming we're starting an an object origin. follow hub pointers until the same hub is
-        // traversed twice or an address outside of heap is encountered.
-        //
-        // For all objects other than a {@link StaticTuple}, the maximum chain takes only two hops
-        // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
-        // class {@link DynamicHub}.
-        //
-        //  Typical pattern:    tuple --> dynamicHub of the tuple's class --> dynamicHub of the DynamicHub class
-        try {
-            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(possibleOrigin));
-            for (int i = 0; i < 3; i++) {
-                if (hubWord.isZero() || hubWord.asAddress().equals(zappedMarker)) {
-                    return false;
-                }
-                final RemoteReference hubRef = referenceManager().makeTemporaryRemoteReference(hubWord.asAddress());
-                Address hubOrigin = hubRef.toOrigin();
-                // Check if the presumed hub is in the heap; it couldn't be elsewhere, for example in the code cache.
-                if (!heap().contains(hubOrigin)) {
-                    return false;
-                }
-                // Presume that we have a valid location of a Hub object.
-                final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);
-                // Does the Hub reference in this object point back to the object itself?
-                if (nextHubWord.equals(hubWord)) {
-                    // We arrived at a DynamicHub for the class DynamicHub
-                    if (i < 2) {
-                        // All ordinary cases will have stopped by now
-                        return true;
-                    }
-                    // This longer chain can only happen when we started with a {@link StaticTuple}.
-                    // Perform a more precise test to check for this.
-                    return isStaticTuple(possibleOrigin);
-                }
-                hubWord = nextHubWord;
-            }
-        } catch (DataIOError dataAccessError) {
-        }
-        return false;
-    }
-
     public TeleObject findObject(Reference reference) throws MaxVMBusyException {
         if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
             try {
@@ -241,6 +181,21 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         } else {
             throw new MaxVMBusyException();
         }
+    }
+
+    public TeleObject findForwardedObjectAt(Address forwardingAddress) {
+        if (forwardingAddress.isZero() || forwardingAddress.equals(zappedMarker)) {
+            return null;
+        }
+        final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(forwardingAddress);
+        if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
+            final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
+            if (objectHoldingRegion.objectReferenceManager().isForwardingAddress(forwardingAddress)) {
+                return findObjectAt(forwardingPointerToOriginUnsafe(forwardingAddress));
+            }
+        }
+        //Trace.line(TRACE_VALUE + 1, tracePrefix() + "origin in unknown region @" + origin.to0xHexString());
+        return null;
     }
 
     public TeleObject findObjectByOID(long id) {
@@ -324,6 +279,66 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
     public TeleObject vmClassRegistry() throws MaxVMBusyException {
         return findObject(classes().vmClassRegistryReference());
+    }
+
+    /**
+     * Checks if a location in VM memory could be the origin of an object representation,
+     * determined by examining memory contents using only low-level mechanisms that do
+     * not rely on type information.
+     * <ul>
+     * <li>No discrimination is made regarding the location of the proposed origin;</li>
+     * <li>No discrimination is made relative to the state of any memory management;</li>
+     * <li>Forwarded objects that overwrite the {@code Hub} field are not recognized;</li>
+     * <li><strong>May produce false positives</strong>, in particular when the address is a field
+     * holding a pointer to a {@link Hub};</li>
+     * <li>Uses only <em>unsafe</em> {@link RemoteReference}s to avoid circularities, since this method
+     * is needed for the construction of legitimate references.</li>
+     * </ul>
+     *
+     * @param possibleOrigin a legitimate location in VM memory, in the area managed.
+     * @return whether the location is likely to be an object origin.
+     */
+    public boolean isPlausibleOriginUnsafe(Address possibleOrigin) {
+
+        // TODO (mlvdv)  LD suggestion; shorten this test.  The Hub of Hubs is constant: a fixed object in the BootHeap.
+        // Assuming we're starting an an object origin. follow hub pointers until the same hub is
+        // traversed twice or an address outside of heap is encountered.
+        //
+        // For all objects other than a {@link StaticTuple}, the maximum chain takes only two hops
+        // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
+        // class {@link DynamicHub}.
+        //
+        //  Typical pattern:    tuple --> dynamicHub of the tuple's class --> dynamicHub of the DynamicHub class
+        try {
+            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(possibleOrigin));
+            for (int i = 0; i < 3; i++) {
+                if (hubWord.isZero() || hubWord.asAddress().equals(zappedMarker)) {
+                    return false;
+                }
+                final RemoteReference hubRef = referenceManager().makeTemporaryRemoteReference(hubWord.asAddress());
+                Address hubOrigin = hubRef.toOrigin();
+                // Check if the presumed hub is in the heap; it couldn't be elsewhere, for example in the code cache.
+                if (!heap().contains(hubOrigin)) {
+                    return false;
+                }
+                // Presume that we have a valid location of a Hub object.
+                final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);
+                // Does the Hub reference in this object point back to the object itself?
+                if (nextHubWord.equals(hubWord)) {
+                    // We arrived at a DynamicHub for the class DynamicHub
+                    if (i < 2) {
+                        // All ordinary cases will have stopped by now
+                        return true;
+                    }
+                    // This longer chain can only happen when we started with a {@link StaticTuple}.
+                    // Perform a more precise test to check for this.
+                    return isStaticTuple(possibleOrigin);
+                }
+                hubWord = nextHubWord;
+            }
+        } catch (DataIOError dataAccessError) {
+        }
+        return false;
     }
 
     /**
@@ -476,6 +491,22 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
     }
 
+    /**
+     * Converts an address, if it is encoded as a forwarding pointer, into the actual
+     * address. This takes no account of the location or the state of memory management
+     * for that area of memory.
+     *
+     * @param address an address possibly encoded as a forwarding pointer
+     * @return the decoded address, {@link Address#zero()} if not encoded as a forwarding pointer.
+     */
+    public Address forwardingPointerToOriginUnsafe(Address address) {
+        if (address.and(1).toLong() == 1) {
+            final Address newCellAddress = address.minus(1);
+            return Layout.generalLayout().cellToOrigin(newCellAddress.asPointer());
+        }
+        return Address.zero();
+    }
+
     // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     /**
      * Return the address where a forwarding pointer is stored within the specified tele object.
@@ -494,7 +525,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * legitimate address at all.
      */
     public boolean hasForwardingAddressUnsafe(Address origin) {
-        return readForwardWordUnsafe(origin).asAddress().and(1).toLong() == 1;
+        return forwardingPointerToOriginUnsafe(readForwardWordUnsafe(origin).asAddress()).isNotZero();
     }
 
     // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
@@ -509,8 +540,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      */
     // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     public Address getForwardingAddressUnsafe(Address origin) {
-        Address newCellAddress = readForwardWordUnsafe(origin).asAddress().minus(1);
-        return Layout.generalLayout().cellToOrigin(newCellAddress.asPointer());
+        return forwardingPointerToOriginUnsafe(readForwardWordUnsafe(origin).asAddress());
     }
 
     // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
