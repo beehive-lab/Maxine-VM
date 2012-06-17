@@ -45,6 +45,7 @@ import com.sun.max.unsafe.*;
  */
 public abstract class ObjectView<View_Type extends ObjectView> extends AbstractView<View_Type> {
 
+    private static final int MAX_TITLE_STRING_LENGTH = 40;
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
 
@@ -205,7 +206,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         if (status.isNotDead()) {
             // Revise the title of the object if we still can
             Pointer pointer = object.origin();
-            title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(object);
+            title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(object, MAX_TITLE_STRING_LENGTH);
         }
         titleText.append(title);
         if (isElided()) {
