@@ -39,6 +39,7 @@ import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
@@ -318,7 +319,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         public ValueRenderer(Inspection inspection) {
         }
 
-        private InspectorLabel[] labels = new InspectorLabel[fieldActors.length];
+        private final InspectorLabel[] labels = new InspectorLabel[fieldActors.length];
 
         public void refresh(boolean force) {
             for (InspectorLabel label : labels) {
@@ -344,7 +345,10 @@ public final class ObjectFieldsTable extends InspectorTable {
                     labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return object.readFieldValue(fieldActor);
+                            final RemoteReference reference = object.reference();
+                            final int offset = fieldActor.offset();
+                            final Word fieldValue = reference.readWord(offset);
+                            return WordValue.from(fieldValue);
                         }
                     };
                     labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");
@@ -352,7 +356,10 @@ public final class ObjectFieldsTable extends InspectorTable {
                     labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return object.readFieldValue(fieldActor);
+                            final RemoteReference reference = object.reference();
+                            final int offset = fieldActor.offset();
+                            final Word fieldValue = reference.readWord(offset);
+                            return WordValue.from(fieldValue);
                         }
                     };
                     labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");
