@@ -191,6 +191,9 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
                     // we make this call because when the VM originally called VMTIHandler.threadStart
                     // advising was not enabled
                     threadStarting();
+                } else {
+                    Log.println("no VMA handler defined");
+                    MaxineVM.exit(-1);
                 }
             }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
