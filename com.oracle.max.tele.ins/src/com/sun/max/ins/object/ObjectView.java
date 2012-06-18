@@ -78,13 +78,10 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     private Color backgroundColor = null;
 
     /**
-     * Cache of the most recent update to the frame title; needed
-     * in situations where the frame becomes unavailable.
-     * This cache does not include the object state modifier or
-     * region information.
+     * Cache of the most recent update to a textual description of the object; needed in situations where the frame
+     * becomes unavailable. This cache does not include the object state modifier or region information.
      */
-    private String title = "";
-
+    private String objectDescription = "";
 
     private InspectorTable objectHeaderTable;
 
@@ -187,7 +184,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             viewMenu.addSeparator();
         }
         viewMenu.add(defaultViewMenuItems);
-        refreshBackgroundColor();
+         refreshBackgroundColor();
     }
 
     @Override
@@ -195,20 +192,22 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         return originalFrameGeometry;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Constructs a full description of the object, including a possible prefix, the
+     * title of the object, and several possible suffixes.
+     */
     @Override
     public final String getTextForTitle() {
         final StringBuilder titleText = new StringBuilder();
+        refreshObjectDescription();
         final ObjectStatus status = object.status();
         if (!status.isLive()) {
             // Omit the prefix for live objects (the usual case).
             titleText.append("(").append(status.label()).append(") ");
         }
-        if (status.isNotDead()) {
-            // Revise the title of the object if we still can
-            Pointer pointer = object.origin();
-            title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(object, MAX_TITLE_STRING_LENGTH);
-        }
-        titleText.append(title);
+        titleText.append(objectDescription);
         if (isElided()) {
             titleText.append("(ELIDED)");
         }
@@ -280,7 +279,6 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     protected void refreshState(boolean force) {
         final ObjectStatus status = object.status();
         boolean reconstructView = false;
-
         switch (status) {
             case LIVE:
                 final Pointer newOrigin = object.origin();
@@ -333,6 +331,25 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
      */
     public Color viewBackgroundColor() {
         return backgroundColor;
+    }
+
+    /**
+     * Constructs a string that identifies the object being viewed.
+     */
+    private void refreshObjectDescription() {
+        final ObjectStatus status = object.status();
+        if (status.isNotDead()) {
+            // Revise the title of the object if we still can
+            final StringBuilder sb = new StringBuilder();
+            if (status.isLive()) {
+                sb.append("Object: ");
+            } else {
+                sb.append("Quasi object: ");
+            }
+            sb.append(object.origin().toHexString());
+            sb.append(inspection().nameDisplay().referenceLabelText(object, MAX_TITLE_STRING_LENGTH));
+            objectDescription = sb.toString();
+        }
     }
 
     /**
