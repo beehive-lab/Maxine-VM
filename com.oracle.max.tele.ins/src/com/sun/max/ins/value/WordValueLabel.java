@@ -1317,7 +1317,10 @@ public class WordValueLabel extends ValueLabel {
             }
             case HUB_REFERENCE:
             case HUB_REFERENCE_TEXT:
-                final MaxObject object = vm().objects().findForwardedObjectAt(valueAsAddress);
+                MaxObject object = vm().objects().findAnyObjectAt(valueAsAddress);
+                if (object == null) {
+                    object = vm().objects().findForwardedObjectAt(valueAsAddress);
+                }
                 if (object != null) {
                     action = views().objects().makeViewAction(object, null);
                 }
