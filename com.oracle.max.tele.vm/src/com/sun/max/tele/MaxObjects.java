@@ -108,22 +108,22 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
     MaxObject findForwardedObjectAt(Address forwardingAddress);
 
     /**
-     * Scans VM memory backwards (smaller address) for a live object whose cell begins at the specified address.
+     * Scans VM memory backwards (smaller address) for a live or quasi object whose cell begins at the specified address.
      *
      * @param cellAddress search starts with word preceding this address
      * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
      * @return surrogate for a VM object, {@code null} if none found
      */
-    MaxObject findObjectPreceding(Address cellAddress, long maxSearchExtent);
+    MaxObject findAnyObjectPreceding(Address cellAddress, long maxSearchExtent);
 
     /**
-     * Scans VM memory forward (larger address) for a live object whose cell begins at the specified address.
+     * Scans VM memory forward (larger address) for a live or quasi object whose cell begins at the specified address.
      *
      * @param cellAddress search starts with word following this address
      * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
      * @return surrogate for a VM object, {@code null} if none found
      */
-    MaxObject findObjectFollowing(Address cellAddress, long maxSearchExtent);
+    MaxObject findAnyObjectFollowing(Address cellAddress, long maxSearchExtent);
 
     /**
      * @return the {@link ClassRegistry} object in the boot heap of the VM.

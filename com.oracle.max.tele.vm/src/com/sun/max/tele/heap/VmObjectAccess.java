@@ -233,7 +233,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return object == null ? findQuasiObjectAt(origin) : object;
     }
 
-    public TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent) {
+    public TeleObject findAnyObjectFollowing(Address cellAddress, long maxSearchExtent) {
 
         // Search limit expressed in words
         long wordSearchExtent = Long.MAX_VALUE;
@@ -245,7 +245,10 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
                 origin = origin.plus(wordSize);
-                final TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                if (teleObject == null) {
+                    teleObject =  makeTeleObject(referenceManager().makeQuasiReference(origin));
+                }
                 if (teleObject != null) {
                     return teleObject;
                 }
@@ -255,7 +258,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return null;
     }
 
-    public TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent) {
+    public TeleObject findAnyObjectPreceding(Address cellAddress, long maxSearchExtent) {
 
         // Search limit expressed in words
         long wordSearchExtent = Long.MAX_VALUE;
@@ -267,7 +270,10 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
                 origin = origin.minus(wordSize);
-                final TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                if (teleObject == null) {
+                    teleObject =  makeTeleObject(referenceManager().makeQuasiReference(origin));
+                }
                 if (teleObject != null) {
                     return teleObject;
                 }
