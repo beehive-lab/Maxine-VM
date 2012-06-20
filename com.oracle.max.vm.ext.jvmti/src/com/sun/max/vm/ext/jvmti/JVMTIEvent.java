@@ -329,9 +329,9 @@ public class JVMTIEvent {
         if (eventType < JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL || eventType > JVMTIConstants.JVMTI_MAX_EVENT_TYPE_VAL) {
             return JVMTI_ERROR_INVALID_EVENT_TYPE;
         }
-        if (eventType == JVMTI_EVENT_EXCEPTION_CATCH) {
-            return JVMTI_ERROR_ACCESS_DENIED;
-        }
+//        if (eventType == JVMTI_EVENT_EXCEPTION_CATCH) {
+//            return JVMTI_ERROR_ACCESS_DENIED;
+//        }
         if (thread == null) {
             // Global
             long newBits = newEventBits(eventType, mode, jvmtiEnv.globalEventSettings);
