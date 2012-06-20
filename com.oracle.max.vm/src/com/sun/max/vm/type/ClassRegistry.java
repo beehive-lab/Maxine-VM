@@ -141,7 +141,8 @@ public final class ClassRegistry {
         new CriticalNativeMethod(Log.class, "log_unlock");
         new CriticalNativeMethod(Log.class, "log_flush");
 
-        new CriticalNativeMethod(Log.class, "log_print_buffer");
+        new CriticalNativeMethod(Log.class, "log_print_bytes");
+        new CriticalNativeMethod(Log.class, "log_print_chars");
         new CriticalNativeMethod(Log.class, "log_print_boolean");
         new CriticalNativeMethod(Log.class, "log_print_char");
         new CriticalNativeMethod(Log.class, "log_print_int");
