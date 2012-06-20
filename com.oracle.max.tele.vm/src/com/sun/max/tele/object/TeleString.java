@@ -68,4 +68,14 @@ public class TeleString extends TeleTupleObject implements StringProvider {
         return getString();
     }
 
+    @Override
+    public boolean hasTextualVisualization() {
+        return true;
+    }
+
+    @Override
+    public String textualVisualization() {
+        return stringValue();
+    }
+
 }

@@ -197,4 +197,23 @@ public interface MaxObject {
      */
     String maxineTerseRole();
 
+    /**
+     * Does this object instance support a useful textual visualization that represents the current value of this object?
+     * A textual visualization might be the empty string if that is the currently correct visualization.  If {@code true}
+     * then {@link #textualVisualization()} will always return a non-null textual value.
+     *
+     * @return whether alternate textual visualization is not supported for this object.
+     */
+    boolean hasTextualVisualization();
+
+    /**
+     * Creates a useful textual visualization that represents the current value of this object, possibly the empty
+     * string if that is the currently correct visualization.
+     *
+     * @return a string that represents textually the value of this object instance, possibly the empty string;
+     * {@code null} if textual visualization is not supported for this object.
+     * @see #hasTextualVisualization()
+     */
+    String textualVisualization();
+
 }

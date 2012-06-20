@@ -86,16 +86,11 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         // Use this if there is no subclass of array component type is matched, or if the component type is an interface.
         defaultArrayViewConstructor = getConstructor(ArrayView.class);
         // Array views for specific subclasses of component type
-        arrayComponentClassToObjectViewConstructor.put(Character.class, getConstructor(CharacterArrayView.class));
+        //arrayComponentClassToObjectViewConstructor.put(<some component class>, getConstructor(<some ArrayView class>));
 
         // Use this if there is no object type subclass matched
         defaultTupleViewConstructor = getConstructor(TupleView.class);
         // Tuple views for specific subclasses
-        teleTupleObjectClassToObjectViewConstructor.put(TeleDescriptor.class, getConstructor(DescriptorView.class));
-        teleTupleObjectClassToObjectViewConstructor.put(TeleEnum.class, getConstructor(EnumView.class));
-        teleTupleObjectClassToObjectViewConstructor.put(TeleString.class, getConstructor(StringView.class));
-        teleTupleObjectClassToObjectViewConstructor.put(TeleStringConstant.class, getConstructor(StringConstantView.class));
-        teleTupleObjectClassToObjectViewConstructor.put(TeleUtf8Constant.class, getConstructor(Utf8ConstantView.class));
         teleTupleObjectClassToObjectViewConstructor.put(TeleHeapRegionInfo.class, getConstructor(HeapRegionInfoView.class));
         focus().addListener(new InspectionFocusAdapter() {
 
