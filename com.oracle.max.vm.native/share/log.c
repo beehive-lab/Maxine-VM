@@ -123,7 +123,7 @@ void log_print_boolean(char val) {
 }
 
 void log_print_char(jchar val) {
-	log_print_format("%lc ", val);
+	log_print_format("%lc", val);
 }
 
 void log_print_long(jlong val) {
