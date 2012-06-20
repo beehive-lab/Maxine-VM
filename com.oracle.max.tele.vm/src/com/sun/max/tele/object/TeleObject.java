@@ -296,6 +296,14 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         return maxineRole();
     }
 
+    public boolean hasTextualVisualization() {
+        return false;
+    }
+
+    public String textualVisualization() {
+        return null;
+    }
+
     /**
      * The class actor for this class is returned when the real class actor
      * of a {@link TeleObject} cannot be retrieved.

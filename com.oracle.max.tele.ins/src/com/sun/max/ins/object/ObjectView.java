@@ -37,7 +37,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -184,7 +183,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             viewMenu.addSeparator();
         }
         viewMenu.add(defaultViewMenuItems);
-         refreshBackgroundColor();
+        refreshBackgroundColor();
     }
 
     @Override
@@ -277,39 +276,31 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     protected void refreshState(boolean force) {
-        final ObjectStatus status = object.status();
-        boolean reconstructView = false;
-        switch (status) {
-            case LIVE:
-                final Pointer newOrigin = object.origin();
-                if (!newOrigin.equals(currentObjectOrigin)) {
-                    // The object has been relocated in memory
-                    currentObjectOrigin = newOrigin;
-                    reconstructView = true;
-                } else {
-                    if (objectHeaderTable != null) {
-                        objectHeaderTable.refresh(force);
-                    }
-                }
-                break;
-            case FORWARDER:
-                // TODO (mlvdv) this isn't right.  need to check forwardedFrom() on the reference?  so can't really switch.
-                break;
-            case DEAD:
-                break;
-            default:
-                TeleError.unexpected("unexpected object status");
+        if (object.reference().forwardedFrom().isNotZero()) {
+            // The object has been forwarded; reset the view back to the forwarder object
+            // This test depends on the "forwardedFrom()" method forgetting the old location once GC is done.
+            final MaxObject forwarder = vm().objects().findQuasiObjectAt(object.reference().forwardedFrom());
+            if (forwarder != null && forwarder.status().isNotDead()) {
+                object = forwarder;
+                reconstructView();
+                return;
+            }
+        }
+        final Pointer newOrigin = object.origin();
+        if (!newOrigin.equals(currentObjectOrigin)) {
+            // The object has been relocated in memory; reset the origin
+            currentObjectOrigin = newOrigin;
+            reconstructView();
+            return;
         }
 
+        if (objectHeaderTable != null) {
+            objectHeaderTable.refresh(force);
+        }
         visitForwardedToAction.refresh(force);
         visitForwardedFromAction.refresh(force);
-
         refreshBackgroundColor();
         setTitle();
-        if (reconstructView) {
-            reconstructView();
-        }
-
     }
 
     /**

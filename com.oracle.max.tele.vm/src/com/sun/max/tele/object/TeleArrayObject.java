@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,6 +96,20 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     @Override
     public Set<FieldActor> getFieldActors() {
         return EMPTY_FIELD_ACTOR_SET;
+    }
+
+    @Override
+    public boolean hasTextualVisualization() {
+        return classActorForObjectType().javaClass() == char[].class;
+    }
+
+    @Override
+    public String textualVisualization() {
+        if (hasTextualVisualization()) {
+            final char[] chars = (char[]) shallowCopy();
+            return new String(chars);
+        }
+        return null;
     }
 
     /**
