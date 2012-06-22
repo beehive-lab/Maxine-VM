@@ -59,8 +59,6 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     private MaxObject object;
 
-    private boolean followingTeleObject = false; // true;
-
     /** The origin is an actual location in memory of the VM;
      * keep a copy for comparison, since it might change via GC.
      */
@@ -276,22 +274,23 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     protected void refreshState(boolean force) {
-        if (object.reference().forwardedFrom().isNotZero()) {
-            // The object has been forwarded; reset the view back to the forwarder object
-            // This test depends on the "forwardedFrom()" method forgetting the old location once GC is done.
-            final MaxObject forwarder = vm().objects().findQuasiObjectAt(object.reference().forwardedFrom());
-            if (forwarder != null && forwarder.status().isNotDead()) {
-                object = forwarder;
+        if (object.reference().forwardedFrom().equals(currentOrigin())) {
+            /*
+             * The object has just been forwarded, and this view was previously showing what is now the old copy. By
+             * policy, we want this view to stick on the old location, so find the "forwarder" object that represents
+             * the old copy and reset this view to display that object.
+             */
+            final MaxObject forwarderObject = vm().objects().findQuasiObjectAt(object.reference().forwardedFrom());
+            if (forwarderObject != null) {
+                final MaxObject oldObject = object;
+                object = forwarderObject;
+                viewManager.resetObjectToViewMapEntry(oldObject, forwarderObject, this);
                 reconstructView();
-                return;
             }
-        }
-        final Pointer newOrigin = object.origin();
-        if (!newOrigin.equals(currentObjectOrigin)) {
-            // The object has been relocated in memory; reset the origin
-            currentObjectOrigin = newOrigin;
+        } else if (!object.origin().equals(currentObjectOrigin)) {
+            // The object has just been relocated in memory; reset this view to display the new copy of the object.
+            currentObjectOrigin = object.origin();
             reconstructView();
-            return;
         }
 
         if (objectHeaderTable != null) {
@@ -384,7 +383,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
         public VisitForwardedToAction(Inspection inspection) {
             super(inspection, "View object forwarded to");
-            refresh();
+            refresh(true);
         }
 
         @Override
@@ -392,7 +391,9 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             focus().setHeapObject(forwardedToObject);
         }
 
-        public void refresh() {
+        @Override
+        public void refresh(boolean force) {
+            super.refresh(force);
             forwardedToObject = null;
             final Address toAddress = object.reference().forwardedTo();
             if (toAddress.isNotZero()) {
@@ -408,7 +409,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
         public VisitForwardedFromAction(Inspection inspection) {
             super(inspection, "View object forwarded from");
-            refresh();
+            refresh(true);
         }
 
         @Override
@@ -416,7 +417,9 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             focus().setHeapObject(forwardedFromObject);
         }
 
-        public void refresh() {
+        @Override
+        public void refresh(boolean force) {
+            super.refresh(force);
             forwardedFromObject = null;
             final Address fromAddress = object.reference().forwardedFrom();
             if (fromAddress.isNotZero()) {

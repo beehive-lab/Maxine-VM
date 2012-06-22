@@ -234,8 +234,10 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     }
 
     public void resetObjectToViewMapEntry(MaxObject oldObject, MaxObject newObject, ObjectView objectView) {
-        objectToView.remove(oldObject);
-        objectToView.put(newObject, objectView);
+        final ObjectView mappedView = objectToView.remove(oldObject);
+        assert mappedView == objectView;
+        final ObjectView collision = objectToView.put(newObject, objectView);
+        assert collision == null;
     }
 
     /**
