@@ -95,7 +95,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
     final MemoryRegion cardTableMemory;
 
     /**
-     * The table recording card state. The table is updated by compiler-generated write-barrier execution and explicitely by the GC.
+     * The table recording card state. The table is updated by compiler-generated write-barrier execution and explicitly by the GC.
      */
     @INSPECTED
     public final CardTable cardTable;

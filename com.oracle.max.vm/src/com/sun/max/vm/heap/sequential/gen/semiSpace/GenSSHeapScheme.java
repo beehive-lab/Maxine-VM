@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMERS.*;
+import static com.sun.max.vm.MaxineVM.Phase.*;
 
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
@@ -234,6 +235,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                     oldSpaceEvacuator.setEvacuationBufferSize(oldSpace.fromSpace.committedSize());
                 }
                 evacTimers.stop(TOTAL);
+                lastFullGCTime = System.currentTimeMillis() - lastFullGCTime;
+
                 if (Heap.logGCTime()) {
                     timeLogger.logPhaseTimes(invocationCount,
                                     evacTimers.get(ROOT_SCAN).getLastElapsedTime(),
@@ -313,6 +316,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     private final PhaseLogger phaseLogger = new PhaseLogger();
 
+    /**
+     * Support for {@link #maxObjectInspectionAge()}.
+     * Keeps track of last time a full GC completed.
+     */
+    private long lastFullGCTime = 0L;
+
     @HOSTED_ONLY
     public GenSSHeapScheme() {
         cardTableRSet = new CardTableRSet();
@@ -336,7 +345,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         cardTableRSet.initialize(phase);
-        if (phase == MaxineVM.Phase.TERMINATING) {
+        if (phase == PRISTINE) {
+            lastFullGCTime = System.currentTimeMillis();
+        }
+        if (phase == TERMINATING) {
             if (Heap.logGCTime()) {
                 timeLogger.logPhaseTimes(-1,
                                 evacTimers.get(ROOT_SCAN).getElapsedTime(),
@@ -401,6 +413,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     @Override
     public void postWriteBarrier(Reference ref,  int displacement, int index, Reference value) {
         cardTableRSet.record(ref, displacement, index);
+    }
+
+    @Override
+    public long maxObjectInspectionAge() {
+        return lastFullGCTime;
     }
 
     @Override
