@@ -473,6 +473,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         return ObjectStatus.DEAD;
     }
 
+    public boolean isForwardingAddress(Address forwardingAddress) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
     // TODO (mlvdv) refine; only handles live object now, doesn't support collection.
     public RemoteReference makeReference(Address origin) throws TeleError {
         assert vm().lockHeldByCurrentThread();

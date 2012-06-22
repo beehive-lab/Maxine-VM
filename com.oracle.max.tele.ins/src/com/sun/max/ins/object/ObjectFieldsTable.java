@@ -39,6 +39,7 @@ import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
@@ -54,7 +55,7 @@ public final class ObjectFieldsTable extends InspectorTable {
      */
     private final String fieldKindPrefix;
 
-    private final MaxObject object;
+    private final ObjectView objectView;
     private final FieldActor[] fieldActors;
     private final boolean isTeleActor;
 
@@ -65,22 +66,18 @@ public final class ObjectFieldsTable extends InspectorTable {
 
     private final ObjectFieldsTableModel tableModel;
 
-    private final ObjectViewPreferences instanceViewPreferences;
-
     /**
      * A table specialized to display object fields.
      *
-     * @param inspection
      * @param fieldKindPrefix information prefix to identify the kind of field, e.g. "Hub" or "Object"
-     * @param object the VM object that holds the fields
      * @param fieldActors description of the fields to be displayed
-     * @param instanceViewPreferences
+     * @param object the VM object that holds the fields
      */
-    public ObjectFieldsTable(Inspection inspection, String fieldKindPrefix, MaxObject object, Collection<FieldActor> fieldActors, ObjectViewPreferences instanceViewPreferences) {
+    public ObjectFieldsTable(Inspection inspection, ObjectView objectView, String fieldKindPrefix, Collection<FieldActor> fieldActors) {
         super(inspection);
+        this.objectView = objectView;
         this.fieldKindPrefix = fieldKindPrefix;
-        this.object = object;
-        this.instanceViewPreferences = instanceViewPreferences;
+        final MaxObject object = objectView.object();
         this.isTeleActor = object instanceof TeleActor;
         this.fieldActors = new FieldActor[fieldActors.size()];
         // Sort fields by offset in object layout.
@@ -101,7 +98,7 @@ public final class ObjectFieldsTable extends InspectorTable {
             endOffset = 0;
         }
         this.tableModel = new ObjectFieldsTableModel(inspection, object.origin());
-        ObjectFieldsTableColumnModel columnModel = new ObjectFieldsTableColumnModel(this, this.tableModel, instanceViewPreferences);
+        ObjectFieldsTableColumnModel columnModel = new ObjectFieldsTableColumnModel(this, this.tableModel, objectView.viewPreferences());
         configureMemoryTable(tableModel, columnModel);
         updateFocusSelection();
     }
@@ -113,7 +110,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
-                    actions().setFieldWatchpoint(object, tableModel.rowToFieldActor(row), "Watch this field's memory").perform();
+                    actions().setFieldWatchpoint(objectView.object(), tableModel.rowToFieldActor(row), "Watch this field's memory").perform();
                     final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
                     if (!watchpoints.isEmpty()) {
                         return watchpoints.get(0);
@@ -129,6 +126,7 @@ public final class ObjectFieldsTable extends InspectorTable {
     protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
         if (vm().watchpointManager() != null) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
+            final MaxObject object = objectView.object();
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 
                 @Override
@@ -187,11 +185,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
     @Override
     public Color cellBackgroundColor() {
-        // Gets called during superclass initialization
-        if (object != null && object.status().isDead()) {
-            return preference().style().deadObjectBackgroundColor();
-        }
-        return null;
+        return objectView == null ? null : objectView.viewBackgroundColor();
     }
 
     @Override
@@ -256,7 +250,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         @Override
         public MaxMemoryRegion getMemoryRegion(int row) {
-            return object.fieldMemoryRegion(fieldActors[row]);
+            return objectView.object().fieldMemoryRegion(fieldActors[row]);
         }
 
         @Override
@@ -298,7 +292,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         @Override
         public void refresh() {
-            setOrigin(object.origin());
+            setOrigin(objectView.object().origin());
             super.refresh();
         }
     }
@@ -325,7 +319,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         public ValueRenderer(Inspection inspection) {
         }
 
-        private InspectorLabel[] labels = new InspectorLabel[fieldActors.length];
+        private final InspectorLabel[] labels = new InspectorLabel[fieldActors.length];
 
         public void refresh(boolean force) {
             for (InspectorLabel label : labels) {
@@ -345,12 +339,16 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             if (labels[row] == null) {
+                final MaxObject object = objectView.object();
                 final FieldActor fieldActor = (FieldActor) value;
                 if (fieldActor.kind.isReference) {
                     labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return object.readFieldValue(fieldActor);
+                            final RemoteReference reference = object.reference();
+                            final int offset = fieldActor.offset();
+                            final Word fieldValue = reference.readWord(offset);
+                            return WordValue.from(fieldValue);
                         }
                     };
                     labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");
@@ -358,7 +356,10 @@ public final class ObjectFieldsTable extends InspectorTable {
                     labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return object.readFieldValue(fieldActor);
+                            final RemoteReference reference = object.reference();
+                            final int offset = fieldActor.offset();
+                            final Word fieldValue = reference.readWord(offset);
+                            return WordValue.from(fieldValue);
                         }
                     };
                     labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");

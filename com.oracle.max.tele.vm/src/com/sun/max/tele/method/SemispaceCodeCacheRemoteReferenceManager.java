@@ -124,6 +124,10 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return ObjectStatus.DEAD;
     }
 
+    public boolean isForwardingAddress(Address forwardingAddress) {
+        return false;
+    }
+
     @Override
     public RemoteReference makeReference(Address origin) throws TeleError {
         assert vm().lockHeldByCurrentThread();

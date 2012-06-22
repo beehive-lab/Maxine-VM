@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,4 +68,14 @@ public final class TeleUtf8Constant extends TelePoolConstant {
         return "Utf8Const";
     }
 
+    @Override
+    public boolean hasTextualVisualization() {
+        return true;
+    }
+
+    @Override
+    public String textualVisualization() {
+        final Utf8Constant utf8Constant = utf8Constant();
+        return utf8Constant == null ? "<null>" : utf8Constant.string;
+    }
 }

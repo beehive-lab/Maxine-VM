@@ -54,6 +54,18 @@ public interface RemoteObjectReferenceManager {
     ObjectStatus objectStatusAt(Address origin);
 
     /**
+     * Examines an address to determine if it is an encoded forwarding pointer that points
+     * to a newly forwarded object. This determination depends not only on whether the address
+     * appears to encode a memory address in the appropriate fashion, but also whether it
+     * occurs in a context where a legitimate forwarding has happened.
+     *
+     * @param forwardingAddress an absolute memory location in the VM.
+     * @return whether the address is a forwarding pointer
+     * @throws TeleError if the origin is not in the memory regions being managed.
+     */
+    boolean isForwardingAddress(Address forwardingAddress);
+
+    /**
      * Creates a canonical remote reference to a live object whose origin
      * in VM memory is at a specified address, {@link Reference#zero()} if there is no
      * live object at that origin.
@@ -63,6 +75,8 @@ public interface RemoteObjectReferenceManager {
      * <p>
      * The state of the object may change over time
      *
+     * @param origin an absolute memory location in the VM.
+     * @return a remote reference to an object in the VM
      * @throws TeleError if the origin is not in the memory regions being managed.
      */
     RemoteReference makeReference(Address origin) throws TeleError;

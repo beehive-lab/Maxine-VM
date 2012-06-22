@@ -171,6 +171,122 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return DEAD;
     }
 
+    public TeleObject findObject(Reference reference) throws MaxVMBusyException {
+        if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
+            try {
+                return makeTeleObject(reference);
+            } finally {
+                vm().unlock();
+            }
+        } else {
+            throw new MaxVMBusyException();
+        }
+    }
+
+    public TeleObject findForwardedObjectAt(Address forwardingAddress) {
+        if (forwardingAddress.isZero() || forwardingAddress.equals(zappedMarker)) {
+            return null;
+        }
+        final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(forwardingAddress);
+        if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
+            final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
+            if (objectHoldingRegion.objectReferenceManager().isForwardingAddress(forwardingAddress)) {
+                return findObjectAt(forwardingPointerToOriginUnsafe(forwardingAddress));
+            }
+        }
+        //Trace.line(TRACE_VALUE + 1, tracePrefix() + "origin in unknown region @" + origin.to0xHexString());
+        return null;
+    }
+
+    public TeleObject findObjectByOID(long id) {
+        return teleObjectFactory.lookupObject(id);
+    }
+
+    public TeleObject findObjectAt(Address origin) {
+        if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
+            try {
+                return makeTeleObject(vm().referenceManager().makeReference(origin));
+            } catch (Throwable throwable) {
+                // Can't resolve the address somehow
+            } finally {
+                vm().unlock();
+            }
+        }
+        return null;
+    }
+
+    public TeleObject findQuasiObjectAt(Address origin) {
+        if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
+            try {
+                return makeTeleObject(vm().referenceManager().makeQuasiReference(origin));
+            } catch (Throwable throwable) {
+                // Can't resolve the address somehow
+            } finally {
+                vm().unlock();
+            }
+        }
+        return null;
+    }
+
+    public TeleObject findAnyObjectAt(Address origin) {
+        TeleObject object = findObjectAt(origin);
+        return object == null ? findQuasiObjectAt(origin) : object;
+    }
+
+    public TeleObject findAnyObjectFollowing(Address cellAddress, long maxSearchExtent) {
+
+        // Search limit expressed in words
+        long wordSearchExtent = Long.MAX_VALUE;
+        final int wordSize = vm().platform().nBytesInWord();
+        if (maxSearchExtent > 0) {
+            wordSearchExtent = maxSearchExtent / wordSize;
+        }
+        try {
+            Pointer origin = cellAddress.asPointer();
+            for (long count = 0; count < wordSearchExtent; count++) {
+                origin = origin.plus(wordSize);
+                TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                if (teleObject == null) {
+                    teleObject =  makeTeleObject(referenceManager().makeQuasiReference(origin));
+                }
+                if (teleObject != null) {
+                    return teleObject;
+                }
+            }
+        } catch (Throwable throwable) {
+        }
+        return null;
+    }
+
+    public TeleObject findAnyObjectPreceding(Address cellAddress, long maxSearchExtent) {
+
+        // Search limit expressed in words
+        long wordSearchExtent = Long.MAX_VALUE;
+        final int wordSize = vm().platform().nBytesInWord();
+        if (maxSearchExtent > 0) {
+            wordSearchExtent = maxSearchExtent / wordSize;
+        }
+        try {
+            Pointer origin = cellAddress.asPointer();
+            for (long count = 0; count < wordSearchExtent; count++) {
+                origin = origin.minus(wordSize);
+                TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                if (teleObject == null) {
+                    teleObject =  makeTeleObject(referenceManager().makeQuasiReference(origin));
+                }
+                if (teleObject != null) {
+                    return teleObject;
+                }
+            }
+        } catch (Throwable throwable) {
+        }
+        return null;
+    }
+
+    public TeleObject vmClassRegistry() throws MaxVMBusyException {
+        return findObject(classes().vmClassRegistryReference());
+    }
+
     /**
      * Checks if a location in VM memory could be the origin of an object representation,
      * determined by examining memory contents using only low-level mechanisms that do
@@ -229,101 +345,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         } catch (DataIOError dataAccessError) {
         }
         return false;
-    }
-
-    public TeleObject findObject(Reference reference) throws MaxVMBusyException {
-        if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
-            try {
-                return makeTeleObject(reference);
-            } finally {
-                vm().unlock();
-            }
-        } else {
-            throw new MaxVMBusyException();
-        }
-    }
-
-    public TeleObject findObjectByOID(long id) {
-        return teleObjectFactory.lookupObject(id);
-    }
-
-    public TeleObject findObjectAt(Address origin) {
-        if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
-            try {
-                return makeTeleObject(vm().referenceManager().makeReference(origin));
-            } catch (Throwable throwable) {
-                // Can't resolve the address somehow
-            } finally {
-                vm().unlock();
-            }
-        }
-        return null;
-    }
-
-    public TeleObject findQuasiObjectAt(Address origin) {
-        if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
-            try {
-                return makeTeleObject(vm().referenceManager().makeQuasiReference(origin));
-            } catch (Throwable throwable) {
-                // Can't resolve the address somehow
-            } finally {
-                vm().unlock();
-            }
-        }
-        return null;
-    }
-
-    public TeleObject findAnyObjectAt(Address origin) {
-        TeleObject object = findObjectAt(origin);
-        return object == null ? findQuasiObjectAt(origin) : object;
-    }
-
-    public TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent) {
-
-        // Search limit expressed in words
-        long wordSearchExtent = Long.MAX_VALUE;
-        final int wordSize = vm().platform().nBytesInWord();
-        if (maxSearchExtent > 0) {
-            wordSearchExtent = maxSearchExtent / wordSize;
-        }
-        try {
-            Pointer origin = cellAddress.asPointer();
-            for (long count = 0; count < wordSearchExtent; count++) {
-                origin = origin.plus(wordSize);
-                final TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
-                if (teleObject != null) {
-                    return teleObject;
-                }
-            }
-        } catch (Throwable throwable) {
-        }
-        return null;
-    }
-
-    public TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent) {
-
-        // Search limit expressed in words
-        long wordSearchExtent = Long.MAX_VALUE;
-        final int wordSize = vm().platform().nBytesInWord();
-        if (maxSearchExtent > 0) {
-            wordSearchExtent = maxSearchExtent / wordSize;
-        }
-        try {
-            Pointer origin = cellAddress.asPointer();
-            for (long count = 0; count < wordSearchExtent; count++) {
-                origin = origin.minus(wordSize);
-                final TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
-                if (teleObject != null) {
-                    return teleObject;
-                }
-            }
-        } catch (Throwable throwable) {
-        }
-        return null;
-    }
-
-    public TeleObject vmClassRegistry() throws MaxVMBusyException {
-        return findObject(classes().vmClassRegistryReference());
     }
 
     /**
@@ -476,6 +497,22 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
     }
 
+    /**
+     * Converts an address, if it is encoded as a forwarding pointer, into the actual
+     * address. This takes no account of the location or the state of memory management
+     * for that area of memory.
+     *
+     * @param address an address possibly encoded as a forwarding pointer
+     * @return the decoded address, {@link Address#zero()} if not encoded as a forwarding pointer.
+     */
+    public Address forwardingPointerToOriginUnsafe(Address address) {
+        if (address.and(1).toLong() == 1) {
+            final Address newCellAddress = address.minus(1);
+            return Layout.generalLayout().cellToOrigin(newCellAddress.asPointer());
+        }
+        return Address.zero();
+    }
+
     // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     /**
      * Return the address where a forwarding pointer is stored within the specified tele object.
@@ -494,7 +531,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * legitimate address at all.
      */
     public boolean hasForwardingAddressUnsafe(Address origin) {
-        return readForwardWordUnsafe(origin).asAddress().and(1).toLong() == 1;
+        return forwardingPointerToOriginUnsafe(readForwardWordUnsafe(origin).asAddress()).isNotZero();
     }
 
     // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
@@ -509,8 +546,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      */
     // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
     public Address getForwardingAddressUnsafe(Address origin) {
-        Address newCellAddress = readForwardWordUnsafe(origin).asAddress().minus(1);
-        return Layout.generalLayout().cellToOrigin(newCellAddress.asPointer());
+        return forwardingPointerToOriginUnsafe(readForwardWordUnsafe(origin).asAddress());
     }
 
     // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme

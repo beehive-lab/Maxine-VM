@@ -788,7 +788,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
 
     private void moveToCurrentObject() {
         MaxObject object = null;
-        object = vm().objects().findObjectAt(origin);
+        object = vm().objects().findAnyObjectAt(origin);
         if (object != null) {
             MaxMemoryRegion objectMemoryRegion = object.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().alignUp(nBytesInWord);
@@ -804,7 +804,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     private void moveToPreviousObject() {
-        final MaxObject object = vm().objects().findObjectPreceding(origin, 1000000);
+        final MaxObject object = vm().objects().findAnyObjectPreceding(origin, 1000000);
         if (object != null) {
             MaxMemoryRegion objectMemoryRegion = object.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().alignUp(nBytesInWord);
@@ -818,7 +818,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     private void moveToNextObject() {
-        final MaxObject object = vm().objects().findObjectFollowing(origin, 1000000);
+        final MaxObject object = vm().objects().findAnyObjectFollowing(origin, 1000000);
         if (object != null) {
             final MaxMemoryRegion objectMemoryRegion = object.objectMemoryRegion();
             // Start stays the same

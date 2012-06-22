@@ -62,7 +62,7 @@ public class TeleTupleObject extends TeleObject {
      * @see TeleStaticTuple
      */
     protected TeleTupleObject(TeleVM vm, Reference reference) {
-        super(vm, reference, Layout.tupleLayout());
+        super(vm, reference, vm.layoutScheme().tupleLayout);
     }
 
     @Override

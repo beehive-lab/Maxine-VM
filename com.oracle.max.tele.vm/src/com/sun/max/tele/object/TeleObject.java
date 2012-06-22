@@ -296,6 +296,14 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         return maxineRole();
     }
 
+    public boolean hasTextualVisualization() {
+        return false;
+    }
+
+    public String textualVisualization() {
+        return null;
+    }
+
     /**
      * The class actor for this class is returned when the real class actor
      * of a {@link TeleObject} cannot be retrieved.
@@ -305,12 +313,14 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     public ClassActor classActorForObjectType() { // TODO: fix class actor lookup
         try {
             TeleHub hub = getTeleHub();
-            TeleClassActor teleClassActor = hub.getTeleClassActor();
-            return teleClassActor.classActor();
+            if (hub != null) {
+                TeleClassActor teleClassActor = hub.getTeleClassActor();
+                return teleClassActor.classActor();
+            }
         } catch (NullPointerException e) {
             e.printStackTrace();
-            return ClassActor.fromJava(InvalidObjectClass.class);
         }
+        return ClassActor.fromJava(InvalidObjectClass.class);
     }
 
     public TeleClassMethodActor getTeleClassMethodActorForObject() {

@@ -127,35 +127,35 @@ public final class HubView extends ObjectView<HubView> {
 
         panel.add(toolBar);
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleHub, instanceViewPreferences);
+        fieldsPane = ObjectScrollPane.createHubFieldsPane(inspection(), this);
         showFieldsCheckBox.setEnabled(true);
         if (showFieldsCheckBox.isSelected()) {
             fieldsPane.setBorder(style.defaultPaneTopBorder());
             panel.add(fieldsPane);
         }
 
-        vTablePane = ObjectScrollPane.createVTablePane(inspection(), teleHub, instanceViewPreferences);
+        vTablePane = ObjectScrollPane.createVTablePane(inspection(), this);
         showVTableCheckBox.setEnabled(vTablePane != null);
         if (vTablePane != null && showVTableCheckBox.isSelected()) {
             vTablePane.setBorder(style.defaultPaneTopBorder());
             panel.add(vTablePane);
         }
 
-        iTablePane = ObjectScrollPane.createITablePane(inspection(), teleHub, instanceViewPreferences);
+        iTablePane = ObjectScrollPane.createITablePane(inspection(), this);
         showITableCheckBox.setEnabled(iTablePane != null);
         if (iTablePane != null && showITableCheckBox.isSelected()) {
             iTablePane.setBorder(style.defaultPaneTopBorder());
             panel.add(iTablePane);
         }
 
-        mTablePane = ObjectScrollPane.createMTablePane(inspection(), teleHub, instanceViewPreferences);
+        mTablePane = ObjectScrollPane.createMTablePane(inspection(), this);
         showMTableCheckBox.setEnabled(mTablePane != null);
         if (mTablePane != null && showMTableCheckBox.isSelected()) {
             mTablePane.setBorder(style.defaultPaneTopBorder());
             panel.add(mTablePane);
         }
 
-        refMapPane = ObjectScrollPane.createRefMapPane(inspection(), teleHub, instanceViewPreferences);
+        refMapPane = ObjectScrollPane.createRefMapPane(inspection(), this);
         showRefMapCheckBox.setEnabled(refMapPane != null);
         if (refMapPane != null && showRefMapCheckBox.isSelected()) {
             refMapPane.setBorder(style.defaultPaneTopBorder());

@@ -1436,6 +1436,9 @@ public abstract class TeleVM implements MaxVM {
         return vmConfiguration.heapScheme();
     }
 
+    public final LayoutScheme layoutScheme() {
+        return vmConfiguration.layoutScheme();
+    }
     public final Reference makeReference(Address origin) {
         return referenceManager.makeReference(origin);
     }

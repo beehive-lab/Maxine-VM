@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.gui;
 
+import java.awt.*;
+
 import javax.swing.*;
 
 import com.sun.max.ins.*;
@@ -122,6 +124,15 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         for (MenuElement element : getSubElements()) {
             final InspectorMenu inspectorMenu = (InspectorMenu) element;
             inspectorMenu.refresh(force);
+        }
+    }
+
+    @Override
+    public void setBackground(Color color) {
+        super.setBackground(color);
+        for (MenuElement menuElement : getSubElements()) {
+            final InspectorMenu menu = (InspectorMenu) menuElement;
+            menu.setBackground(color);
         }
     }
 

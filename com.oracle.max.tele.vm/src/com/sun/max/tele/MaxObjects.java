@@ -60,7 +60,7 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      *  and for other objects for which special treatment is needed.
      *
      * @param reference a heap object in the VM;
-     * @return a canonical local surrogate for the object, null for the distinguished zero {@link Reference}.
+     * @return a canonical local surrogate for the object, {@code null} for the distinguished zero {@link Reference}.
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
     MaxObject findObject(Reference reference) throws MaxVMBusyException;
@@ -75,7 +75,7 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      * Finds a live object whose origin is at the specified address, if one exists.
      *
      * @param origin memory location in the VM
-     * @return surrogate for a VM object, null if none found or if the VM is busy
+     * @return surrogate for a VM object, {@code null} if none found or if the VM is busy
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
     MaxObject findObjectAt(Address origin);
@@ -84,7 +84,7 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      * Finds a quasi object whose origin is at the specified address, if one exists.
      *
      * @param origin memory location in the VM
-     * @return surrogate for a VM quasi object, null if none found or if the VM is busy
+     * @return surrogate for a VM quasi object, {@code null} if none found or if the VM is busy
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
     MaxObject findQuasiObjectAt(Address origin);
@@ -93,28 +93,37 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      * Finds a live or quasi object whose origin is at the specified address, if one exists.
      *
      * @param origin memory location in the VM
-     * @return surrogate for a VM live or quasi object, null if none found or if the VM is busy
+     * @return surrogate for a VM live or quasi object, {@code null} if none found or if the VM is busy
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
     MaxObject findAnyObjectAt(Address origin);
 
     /**
-     * Scans VM memory backwards (smaller address) for a live object whose cell begins at the specified address.
+     * Finds a live object whose location is encoded as a forwarding address.
+     *
+     * @param possibly encoded origin of a newly forwarded object in the VM
+     * @return surrogate for a VM object, {@code null} if none found or if the VM is busy
+     * @throws MaxVMBusyException if data cannot be read from the VM at this time
+     */
+    MaxObject findForwardedObjectAt(Address forwardingAddress);
+
+    /**
+     * Scans VM memory backwards (smaller address) for a live or quasi object whose cell begins at the specified address.
      *
      * @param cellAddress search starts with word preceding this address
      * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
-     * @return surrogate for a VM object, null if none found
+     * @return surrogate for a VM object, {@code null} if none found
      */
-    MaxObject findObjectPreceding(Address cellAddress, long maxSearchExtent);
+    MaxObject findAnyObjectPreceding(Address cellAddress, long maxSearchExtent);
 
     /**
-     * Scans VM memory forward (larger address) for a live object whose cell begins at the specified address.
+     * Scans VM memory forward (larger address) for a live or quasi object whose cell begins at the specified address.
      *
      * @param cellAddress search starts with word following this address
      * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
-     * @return surrogate for a VM object, null if none found
+     * @return surrogate for a VM object, {@code null} if none found
      */
-    MaxObject findObjectFollowing(Address cellAddress, long maxSearchExtent);
+    MaxObject findAnyObjectFollowing(Address cellAddress, long maxSearchExtent);
 
     /**
      * @return the {@link ClassRegistry} object in the boot heap of the VM.
