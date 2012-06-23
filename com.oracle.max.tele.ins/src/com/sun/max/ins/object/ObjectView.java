@@ -353,7 +353,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         if (status.isLive()) {
             backgroundColor = null;
         } else if (status.isQuasi()) {
-            backgroundColor = preference().style().vmStoppedInGCBackgroundColor(false);
+            backgroundColor = preference().style().quasiObjectBackgroundColor();
         } else { // DEAD
             backgroundColor = preference().style().deadObjectBackgroundColor();
         }
