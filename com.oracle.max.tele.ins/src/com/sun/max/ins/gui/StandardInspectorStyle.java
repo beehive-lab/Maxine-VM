@@ -274,8 +274,8 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return brighten1(InspectorStyle.Pink);
     }
 
-    public Color forwardedObjectBackgroundColor() {
-        return InspectorStyle.SunYellow3;
+    public Color quasiObjectBackgroundColor() {
+        return InspectorStyle.BurlyWood;
     }
 
     private static final Color debugSelectionBorderColor = InspectorStyle.Blue;
