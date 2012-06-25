@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import com.sun.max.vm.reference.*;
 /**
  * Inspector's canonical surrogate for an object of type {@link StaticHub} in the VM.
  */
-public final class TeleStaticHub extends TeleHub {
+public class TeleStaticHub extends TeleHub {
 
     protected TeleStaticHub(TeleVM vm, Reference staticHubReference) {
         super(vm, staticHubReference);

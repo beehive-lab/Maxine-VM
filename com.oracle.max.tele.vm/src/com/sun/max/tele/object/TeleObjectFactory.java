@@ -408,7 +408,13 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
                     teleObject = new TeleArrayForwarderQuasi(vm(), remoteRef, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
                     break;
                 case HYBRID:
-                    teleObject = new TeleHybridForwarderQuasi(vm(), remoteRef);
+                    if (newCopyObject instanceof TeleDynamicHub) {
+                        teleObject = new TeleDynamicHubForwarderQuasi(vm(), remoteRef);
+                    } else if (newCopyObject instanceof TeleStaticHub) {
+                        teleObject = new TeleStaticHubForwarderQuasi(vm(), remoteRef);
+                    } else {
+                        TeleError.unexpected(tracePrefix() + "unknown hub type");
+                    }
                     break;
             }
         } else {

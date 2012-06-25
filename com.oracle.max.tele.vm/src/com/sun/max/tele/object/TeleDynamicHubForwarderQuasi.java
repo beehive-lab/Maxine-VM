@@ -25,20 +25,21 @@ package com.sun.max.tele.object;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 
 
 /**
- * Canonical surrogate for a <em>quasi</em> object:  the old copy of a hybrid object
+ * Canonical surrogate for a <em>quasi</em> object:  the old copy of a {@link DynamicHub} object
  * that has been relocated by copying to a new location in the current GC cycle.
  */
-public class TeleHybridForwarderQuasi extends TeleHybridObject {
+public final class TeleDynamicHubForwarderQuasi extends TeleDynamicHub {
 
     private TeleHub teleHub = null;
     RemoteReference quasiReference;
 
-    protected TeleHybridForwarderQuasi(TeleVM vm, Reference reference) {
+    protected TeleDynamicHubForwarderQuasi(TeleVM vm, Reference reference) {
         super(vm, reference);
         quasiReference = (RemoteReference) reference;
         assert quasiReference.status().isForwarder();
