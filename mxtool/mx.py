@@ -50,10 +50,10 @@ The configuration files (i.e. in the 'mx' sub-directory) of a suite are:
 
   commands.py
       Suite specific extensions to the commands available to mx.
-      This is only processed for the primary suite.
 
   includes
-      Other suites to be loaded. This is recursive.
+      Other suites to be loaded. This is recursive. Each
+      line in an includes file is a path to a suite directory.
 
   env
       A set of environment variable definitions. These override any
@@ -294,8 +294,8 @@ class Suite:
         self.primary = primary
         mxDir = join(dir, 'mx')
         self._load_env(mxDir)
-        if primary:
-            self._load_commands(mxDir)
+        self._load_commands(mxDir)
+        self._load_includes(mxDir)
 
     def _load_projects(self, mxDir):
         libsMap = dict()
@@ -366,8 +366,9 @@ class Suite:
         if exists(commands):
             # temporarily extend the Python path
             sys.path.insert(0, mxDir)
-
             mod = __import__('commands')
+            
+            sys.modules[join(mxDir, 'commands')] = sys.modules.pop('commands')
 
             # revert the Python path
             del sys.path[0]
@@ -385,7 +386,9 @@ class Suite:
         if exists(includes):
             with open(includes) as f:
                 for line in f:
-                    self.includes.append(expandvars_in_property(line.strip()))
+                    include = expandvars_in_property(line.strip())
+                    self.includes.append(include)
+                    _loadSuite(include, False)
 
     def _load_env(self, mxDir):
         e = join(mxDir, 'env')
@@ -399,9 +402,8 @@ class Suite:
 
     def _post_init(self, opts):
         mxDir = join(self.dir, 'mx')
-        self._load_includes(mxDir)
         self._load_projects(mxDir)
-        if self.mx_post_parse_cmd_line is not None:
+        if hasattr(self, 'mx_post_parse_cmd_line'):
             self.mx_post_parse_cmd_line(opts)
         for p in self.projects:
             existing = _projects.get(p.name)
