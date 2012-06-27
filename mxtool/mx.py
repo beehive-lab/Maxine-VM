@@ -172,6 +172,13 @@ class Project(Dependency):
         self.javaCompliance = JavaCompliance(javaCompliance) if javaCompliance is not None else None
         self.native = False
         self.dir = dir
+        
+        # Create directories for projects that don't yet exist
+        if not exists(dir):
+            os.mkdir(dir)
+        for s in self.source_dirs():
+            if not exists(s):
+                os.mkdir(s)
 
     def all_deps(self, deps, includeLibs, includeSelf=True):
         """
@@ -216,11 +223,17 @@ class Project(Dependency):
             if d == 1:
                 result.add(n)
 
-
         if len(result) == len(self.deps) and frozenset(self.deps) == result:
             return self.deps
         return result;
 
+    def max_depth(self):
+        """
+        Get the maximum canonical distance between this project and its most distant dependency.
+        """
+        distances = dict()
+        self._compute_max_dep_distances(self.name, distances, 0)
+        return max(distances.values())        
 
     def source_dirs(self):
         """
@@ -892,7 +905,7 @@ class JavaConfig:
 
     def format_cmd(self, args):
         return [self.java] + self.java_args_pfx + self.java_args + self.java_args_sfx + args
-    
+
     def bootclasspath(self):
         if self._bootclasspath is None:
             tmpDir = tempfile.mkdtemp()
@@ -1128,7 +1141,7 @@ def build(args, parser=None):
     for p in sorted_deps(projects):
         if p.native:
             if args.native:
-                log('Calling GNU make {0} ...'.format(p.dir))
+                log('Calling GNU make {0}...'.format(p.dir))
 
                 if args.clean:
                     run([gmake_cmd(), 'clean'], cwd=p.dir)
@@ -1491,7 +1504,6 @@ def projectgraph(args, suite=None):
         for dep in p.canonical_deps():
             print '"' + p.name + '"->"' + dep + '"'
     print '}'
-
 
 def _source_locator_memento(deps):
     slm = XMLDoc()
@@ -1943,16 +1955,17 @@ def ideinit(args, suite=None):
     eclipseinit(args, suite)
     netbeansinit(args, suite)
 
-def javadoc(args):
+def javadoc(args, parser=None, docDir='javadoc', includeDeps=True):
     """generate javadoc for some/all Java projects"""
 
-    parser = ArgumentParser(prog='mx javadoc')
+    parser = ArgumentParser(prog='mx javadoc') if parser is None else parser
+    parser.add_argument('-d', '--base', action='store', help='base directory for output')
     parser.add_argument('--unified', action='store_true', help='put javadoc in a single directory instead of one per project')
     parser.add_argument('--force', action='store_true', help='(re)generate javadoc even if package-list file exists')
     parser.add_argument('--projects', action='store', help='comma separated projects to process (omit to process all projects)')
     parser.add_argument('--argfile', action='store', help='name of file containing extra javadoc options')
+    parser.add_argument('--arg', action='append', dest='extra_args', help='extra Javadoc arguments (e.g. --arg @-use)', metavar='@<arg>', default=[])
     parser.add_argument('-m', '--memory', action='store', help='-Xmx value to pass to underlying JVM')
-    parser.add_argument('--wiki', action='store_true', help='generate Confluence Wiki format for package-info.java files')
     parser.add_argument('--packages', action='store', help='comma separated packages to process (omit to process all packages)')
 
     args = parser.parse_args(args)
@@ -1962,32 +1975,18 @@ def javadoc(args):
     if args.projects is not None:
         candidates = [project(name) for name in args.projects.split(',')]
 
-    # optionally restrict packages within a project (most useful for wiki)
+    # optionally restrict packages within a project
     packages = []
     if args.packages is not None:
         packages = [name for name in args.packages.split(',')]
 
-    # the WikiDoclet cannot see the -classpath argument passed to javadoc so we pass the
-    # full list of projects as an explicit argument, thereby enabling it to map classes
-    # to projects, which is needed to generate Wiki links to the source code.
-    # There is no virtue in running the doclet on dependent projects as there are
-    # no generated links between Wiki pages
-    docletArgs = []
-    if args.wiki:
-        docDir = 'wikidoc'
-        toolsDir = project('com.oracle.max.tools').output_dir()
-        baseDir = project('com.oracle.max.base').output_dir()
-        dp = os.pathsep.join([toolsDir, baseDir])
-        project_list = ','.join(p.name for p in sorted_deps())
-        docletArgs = ['-docletpath', dp, '-doclet', 'com.oracle.max.tools.javadoc.wiki.WikiDoclet', '-projects', project_list]
-    else:
-        docDir = 'javadoc'
+    def outDir(p):
+        if args.base is None:
+            return join(p.dir, docDir)
+        return join(args.base, p.name, docDir)
 
     def check_package_list(p):
-        if args.wiki:
-            return True
-        else:
-            return not exists(join(p.dir, docDir, 'package-list'))
+        return not exists(join(outDir(p), 'package-list'))
 
     def assess_candidate(p, projects):
         if p in projects:
@@ -2000,7 +1999,7 @@ def javadoc(args):
     projects = []
     for p in candidates:
         if not p.native:
-            if not args.wiki:
+            if includeDeps:
                 deps = p.all_deps([], includeLibs=False, includeSelf=False)
                 for d in deps:
                     assess_candidate(d, projects)
@@ -2017,7 +2016,7 @@ def javadoc(args):
                         pkgs.add(pkg)
         return pkgs
 
-    extraArgs = []
+    extraArgs = [a.lstrip('@') for a in args.extra_args]
     if args.argfile is not None:
         extraArgs += ['@' + args.argfile]
     memory = '2g'
@@ -2030,15 +2029,15 @@ def javadoc(args):
             pkgs = find_packages(p.source_dirs(), set())
             deps = p.all_deps([], includeLibs=False, includeSelf=False)
             links = ['-link', 'http://docs.oracle.com/javase/' + str(p.javaCompliance.value) + '/docs/api/']
-            out = join(p.dir, docDir)
+            out = outDir(p)
             for d in deps:
-                depOut = join(d.dir, docDir)
+                depOut = outDir(d)
                 links.append('-link')
                 links.append(os.path.relpath(depOut, out))
             cp = classpath(p.name, includeSelf=True)
             sp = os.pathsep.join(p.source_dirs())
             log('Generating {2} for {0} in {1}'.format(p.name, out, docDir))
-            run([java().javadoc, memory, '-classpath', cp, '-quiet', '-d', out, '-sourcepath', sp] + docletArgs + links + extraArgs + list(pkgs))
+            run([java().javadoc, memory, '-classpath', cp, '-quiet', '-d', out, '-sourcepath', sp] + links + extraArgs + list(pkgs))
             log('Generated {2} for {0} in {1}'.format(p.name, out, docDir))
     else:
         pkgs = set()
@@ -2051,10 +2050,12 @@ def javadoc(args):
 
         links = ['-link', 'http://docs.oracle.com/javase/' + str(_java.javaCompliance.value) + '/docs/api/']
         out = join(_mainSuite.dir, docDir)
+        if args.base is not None:
+            out = join(args.base, docDir)
         cp = classpath()
         sp = os.pathsep.join(sp)
         log('Generating {2} for {0} in {1}'.format(', '.join(names), out, docDir))
-        run([java().javadoc, memory, '-classpath', cp, '-quiet', '-d', out, '-sourcepath', sp] + docletArgs + links + extraArgs + list(pkgs))
+        run([java().javadoc, memory, '-classpath', cp, '-quiet', '-d', out, '-sourcepath', sp] + links + extraArgs + list(pkgs))
         log('Generated {2} for {0} in {1}'.format(', '.join(names), out, docDir))
 
 def findclass(args):
