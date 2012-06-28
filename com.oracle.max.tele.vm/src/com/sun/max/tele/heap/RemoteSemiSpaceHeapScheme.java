@@ -608,6 +608,11 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                     remoteReference = fromSpaceRefMap.get(fromSpaceOrigin);
                     if (remoteReference != null) {
                         // A known object origin in From-Space
+                        if (!remoteReference.status().isForwarder() && objects().hasForwardingAddressUnsafe(fromSpaceOrigin)) {
+                            // LD: shouldn't we move the ref to the to-space map and create a forwarder if the reference has a forwarding address ?
+                            // Added this check in case it happens.
+                            TeleError.unexpected("Must not happen");
+                        }
                         TeleError.check(remoteReference.status().isLive() || remoteReference.status().isForwarder());
                     } else if (objects().isPlausibleOriginUnsafe(fromSpaceOrigin)) {
                         // An origin in From-Space not yet seen and not forwarded.

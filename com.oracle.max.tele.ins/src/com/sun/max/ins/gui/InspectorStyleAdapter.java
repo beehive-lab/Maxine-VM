@@ -101,6 +101,9 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Color wordUncheckedReferenceDataColor() {
         return null;
     }
+    public Color wordForwardingReferenceDataColor() {
+        return null;
+    }
     public Color wordInvalidObjectReferenceDataColor() {
         return null;
     }

@@ -41,17 +41,28 @@ public abstract class TeleHub extends TeleHybridObject {
         super(vm, hubReference);
     }
 
+    /**
+     * Cache for the TeleClassActor.
+     */
     private TeleClassActor teleClassActor = null;
 
     /**
      * @return surrogate for the {@ClassActor} in the VM that contains this {@link Hub}, i.e. for the type that this hub helps implement
      */
-    public TeleClassActor getTeleClassActor() {
+    public final TeleClassActor getTeleClassActor() {
         if (teleClassActor == null) {
-            final Reference classActorReference = fields().Hub_classActor.readReference(reference());
-            teleClassActor = (TeleClassActor) objects().makeTeleObject(classActorReference);
+            teleClassActor = fetchTeleClassActor();
         }
         return teleClassActor;
+    }
+
+    /**
+     * Logic to fetch the tele class actor for this tele hub on cache miss.
+     * @return
+     */
+    protected TeleClassActor fetchTeleClassActor() {
+        final Reference classActorReference = fields().Hub_classActor.readReference(reference());
+        return (TeleClassActor) objects().makeTeleObject(classActorReference);
     }
 
     /**

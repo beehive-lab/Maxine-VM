@@ -32,22 +32,21 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 
 /**
- * Representation of a remote object reference in a generational heap with a non-aging nursery and a semi-space old generation.
+ * Representation of a remote object reference in a generational heap with a non-aging nursery and a semispace old generation.
  */
 public class GenSSRemoteReference extends RemoteReference {
     /**
-     * Address in a to space the reference maps to. To spaces are spaces where live objects reside.
+     * The origin of an object.
      * During mutating phases and analysis phase of minor collection, a reference may map to an address in the non-aging nursery (young generation) or the to space of the old generation.
      * After a minor collection, references can only map to the to space of the old generation.
      * During analysis of a old collection, a reference may map to an address in to space of the old generation only.
      */
-    private Address toOrigin;
+    private Address origin;
     /**
-     * Address in a from space the reference maps to.
-     * A reference can only map to a from space location during the analyzing phase of a collection. Objects with an address in
-     * a from space are either live, or their status is unknown.
+     * An additional address the reference may relate to. This is used to keep track of forwarder/forwardee relationship during object relocation to ease debugging of moving collectors.
+     * Only forwarders or forwarded objects have an alternate origin.
      */
-    private Address fromOrigin;
+    private Address alternateOrigin;
     /**
      * State of an object reference. The state indicates where the object is located and its liveness status,
      */
@@ -74,23 +73,20 @@ public class GenSSRemoteReference extends RemoteReference {
                 return LIVE;
             }
             @Override
-            boolean isForwarded() {
-                return false;
-            }
-            @Override
             Address origin(GenSSRemoteReference ref) {
-                return ref.toOrigin;
+                return ref.origin;
             }
             @Override
             Address forwardedFrom(GenSSRemoteReference ref) {
                 return Address.zero();
             }
-
+            @Override
+            Address forwardedTo(GenSSRemoteReference ref) {
+                return Address.zero();
+            }
             @Override
             void analysisBegins(GenSSRemoteReference ref, boolean minorCollection) {
                 if (minorCollection) {
-                    ref.fromOrigin = ref.toOrigin;
-                    ref.toOrigin = Address.zero();
                     ref.refState = YOUNG_REF_FROM;
                     return;
                 }
@@ -101,21 +97,16 @@ public class GenSSRemoteReference extends RemoteReference {
          * Young reference, not forwarded.
          * Valid only during the {@link #ANALYZING} phase.
          */
-        YOUNG_REF_FROM("UNKNOWN(young)") {
+        YOUNG_REF_FROM("LIVE(young+Analyzing)") {
 
             @Override
             ObjectStatus status() {
-                return UNKNOWN;
-            }
-
-            @Override
-            boolean isForwarded() {
-                return false;
+                return LIVE;
             }
 
             @Override
             Address origin(GenSSRemoteReference ref) {
-                return ref.fromOrigin;
+                return ref.origin;
             }
 
             @Override
@@ -123,6 +114,10 @@ public class GenSSRemoteReference extends RemoteReference {
                 return Address.zero();
             }
 
+            @Override
+            Address forwardedTo(GenSSRemoteReference ref) {
+                return Address.zero();
+            }
             @Override
             void analysisEnds(GenSSRemoteReference ref, boolean minorCollection) {
                 if (minorCollection) {
@@ -132,11 +127,15 @@ public class GenSSRemoteReference extends RemoteReference {
                 TeleError.unexpected("Illegal state transition");
             }
 
+            /**
+             * The reference turns into a PROMOTED_REF. A forwarder will be created separately.
+             */
             @Override
-            void addToOrigin(GenSSRemoteReference ref, Address toOrigin, boolean minorCollection) {
+            void discoverForwarded(GenSSRemoteReference ref, Address forwardedOrigin, boolean minorCollection) {
                 if (minorCollection) {
                     // FIXME: should also check the current heap phase!
-                    ref.toOrigin = toOrigin;
+                    ref.alternateOrigin = ref.origin; // the origin now becomes an alternate as it points to the forwarder
+                    ref.origin = forwardedOrigin; // the reference now points to the forwarded address
                     ref.refState = PROMOTED_REF;
                     return;
                 }
@@ -144,6 +143,9 @@ public class GenSSRemoteReference extends RemoteReference {
             }
         },
 
+        /**
+         * Reference to a promoted object whose forwarder is unknown. The object resides in the old to-space.
+         */
         OLD_PROMOTED_REF("LIVE(Analyzing: old only)") {
 
             @Override
@@ -152,17 +154,16 @@ public class GenSSRemoteReference extends RemoteReference {
             }
 
             @Override
-            boolean isForwarded() {
-                return true;
-            }
-
-            @Override
             Address origin(GenSSRemoteReference ref) {
-                return ref.toOrigin;
+                return ref.origin;
             }
 
             @Override
             Address forwardedFrom(GenSSRemoteReference ref) {
+                return Address.zero();
+            }
+            @Override
+            Address forwardedTo(GenSSRemoteReference ref) {
                 return Address.zero();
             }
 
@@ -175,9 +176,9 @@ public class GenSSRemoteReference extends RemoteReference {
                 TeleError.unexpected("Illegal state transition");
             }
             @Override
-            void addFromOrigin(GenSSRemoteReference ref, Address fromOrigin, boolean minorCollection) {
+            void discoverForwarder(GenSSRemoteReference ref, Address fromOrigin, boolean minorCollection) {
                 if (minorCollection) {
-                    ref.fromOrigin = fromOrigin;
+                    ref.alternateOrigin = fromOrigin;
                     ref.refState = PROMOTED_REF;
                     return;
                 }
@@ -185,7 +186,10 @@ public class GenSSRemoteReference extends RemoteReference {
             }
         },
 
-        PROMOTED_REF("LIVE(Analyzing: young+old)") {
+        /**
+         * Reference to a promoted object whose forwarder in young space is known. The object resides in the old to-space.
+         */
+        PROMOTED_REF("LIVE(Analyzing: promoted+young forwarder)") {
 
             @Override
             ObjectStatus status() {
@@ -193,28 +197,89 @@ public class GenSSRemoteReference extends RemoteReference {
             }
 
             @Override
-            boolean isForwarded() {
-                return true;
-            }
-
-            @Override
             Address origin(GenSSRemoteReference ref) {
-                return ref.toOrigin;
+                return ref.origin;
             }
 
             @Override
             Address forwardedFrom(GenSSRemoteReference ref) {
-                return ref.fromOrigin;
+                return ref.alternateOrigin;
+            }
+
+            @Override
+            Address forwardedTo(GenSSRemoteReference ref) {
+                return Address.zero();
             }
             @Override
             void analysisEnds(GenSSRemoteReference ref, boolean minorCollection) {
                 if (minorCollection) {
-                    ref.fromOrigin = Address.zero();
+                    ref.alternateOrigin = Address.zero();
                     ref.refState = OLD_REF_LIVE;
                     return;
                 }
                 TeleError.unexpected("Illegal state transition");
             }
+            @Override
+            RefState forwarderState() {
+                return YOUNG_FORWARDER;
+            }
+        },
+
+        YOUNG_FORWARDER("FORWARDER(Quasi object, only during minor collection analyzing") {
+            @Override
+            ObjectStatus status() {
+                return FORWARDER;
+            }
+
+            @Override
+            Address origin(GenSSRemoteReference ref) {
+                return ref.origin;
+            }
+
+            @Override
+            Address forwardedFrom(GenSSRemoteReference ref) {
+                return Address.zero();
+            }
+
+            @Override
+            Address forwardedTo(GenSSRemoteReference ref) {
+                return ref.alternateOrigin;
+            }
+
+            @Override
+            void analysisEnds(GenSSRemoteReference ref, boolean minorCollection) {
+                ref.alternateOrigin = Address.zero();
+                ref.refState = REF_DEAD;
+            }
+        },
+
+        OLD_FORWARDER("FORWARDER(Quasi object, only during full collection analyzing") {
+            @Override
+            ObjectStatus status() {
+                return FORWARDER;
+            }
+
+            @Override
+            Address origin(GenSSRemoteReference ref) {
+                return ref.origin;
+            }
+
+            @Override
+            Address forwardedFrom(GenSSRemoteReference ref) {
+                return Address.zero();
+            }
+
+            @Override
+            Address forwardedTo(GenSSRemoteReference ref) {
+                return ref.alternateOrigin;
+            }
+
+            @Override
+            void analysisEnds(GenSSRemoteReference ref, boolean minorCollection) {
+                ref.alternateOrigin = Address.zero();
+                ref.refState = REF_DEAD;
+            }
+
         },
 
         /**
@@ -229,13 +294,8 @@ public class GenSSRemoteReference extends RemoteReference {
             }
 
             @Override
-            boolean isForwarded() {
-                return false;
-            }
-
-            @Override
             Address origin(GenSSRemoteReference ref) {
-                return ref.toOrigin;
+                return ref.origin;
             }
 
             @Override
@@ -244,31 +304,32 @@ public class GenSSRemoteReference extends RemoteReference {
             }
 
             @Override
+            Address forwardedTo(GenSSRemoteReference ref) {
+                return Address.zero();
+            }
+            @Override
             void analysisBegins(GenSSRemoteReference ref, boolean minorCollection) {
                 if (minorCollection) {
                     // nothing to do.
                     return;
                 }
-                ref.fromOrigin = ref.toOrigin;
-                ref.toOrigin = Address.zero();
                 ref.refState = OLD_REF_FROM;
             }
         },
 
-        OLD_REF_FROM("UNKNOWN (Analyzing: old from-only)") {
+        OLD_REF_FROM("LIVE(Analyzing: old from-only)") {
             @Override
             ObjectStatus status() {
-                return UNKNOWN;
+                return LIVE;
             }
 
             @Override
-            boolean isForwarded() {
-                return false;
+            Address forwardedTo(GenSSRemoteReference ref) {
+                return Address.zero();
             }
-
             @Override
             Address origin(GenSSRemoteReference ref) {
-                return ref.fromOrigin;
+                return ref.alternateOrigin;
             }
 
             @Override
@@ -286,9 +347,10 @@ public class GenSSRemoteReference extends RemoteReference {
             }
 
             @Override
-            void addToOrigin(GenSSRemoteReference ref, Address toOrigin, boolean minorCollection) {
+            void discoverForwarded(GenSSRemoteReference ref, Address toOrigin, boolean minorCollection) {
                 if (!minorCollection) {
-                    ref.toOrigin = toOrigin;
+                    ref.alternateOrigin = ref.origin;
+                    ref.origin = toOrigin;
                     ref.refState = OLD_REF_FROM_TO;
                     return;
                 }
@@ -298,20 +360,14 @@ public class GenSSRemoteReference extends RemoteReference {
         },
 
         OLD_REF_TO("LIVE (Analyzing: old to-only)") {
-
             @Override
             ObjectStatus status() {
                 return LIVE;
             }
 
             @Override
-            boolean isForwarded() {
-                return true;
-            }
-
-            @Override
             Address origin(GenSSRemoteReference ref) {
-                return ref.toOrigin;
+                return ref.origin;
             }
 
             @Override
@@ -320,17 +376,23 @@ public class GenSSRemoteReference extends RemoteReference {
             }
 
             @Override
+            Address forwardedTo(GenSSRemoteReference ref) {
+                return Address.zero();
+            }
+
+            @Override
             void analysisEnds(GenSSRemoteReference ref, boolean minorCollection) {
                 if (!minorCollection) {
+                    assert ref.alternateOrigin == Address.zero();
                     ref.refState = OLD_REF_LIVE;
                     return;
                 }
                 TeleError.unexpected("Illegal state transition");
             }
             @Override
-            void addFromOrigin(GenSSRemoteReference ref, Address fromOrigin, boolean minorCollection) {
+            void discoverForwarder(GenSSRemoteReference ref, Address forwarderOrigin, boolean minorCollection) {
                 if (!minorCollection) {
-                    ref.fromOrigin = fromOrigin;
+                    ref.alternateOrigin = forwarderOrigin;
                     ref.refState = OLD_REF_FROM_TO;
                     return;
                 }
@@ -348,28 +410,31 @@ public class GenSSRemoteReference extends RemoteReference {
             }
 
             @Override
-            boolean isForwarded() {
-                return true;
-            }
-
-            @Override
             Address origin(GenSSRemoteReference ref) {
-                return ref.toOrigin;
+                return ref.origin;
             }
 
             @Override
             Address forwardedFrom(GenSSRemoteReference ref) {
-                return ref.fromOrigin;
+                return ref.alternateOrigin;
             }
 
             @Override
+            Address forwardedTo(GenSSRemoteReference ref) {
+                return Address.zero();
+            }
+            @Override
             void analysisEnds(GenSSRemoteReference ref, boolean minorCollection) {
                 if (!minorCollection) {
-                    ref.fromOrigin = Address.zero();
+                    ref.alternateOrigin = Address.zero();
                     ref.refState = OLD_REF_LIVE;
                     return;
                 }
                 TeleError.unexpected("Illegal state transition");
+            }
+            @Override
+            RefState forwarderState() {
+                return OLD_FORWARDER;
             }
         },
 
@@ -378,15 +443,17 @@ public class GenSSRemoteReference extends RemoteReference {
             @Override ObjectStatus status() {
                 return DEAD;
             }
-            @Override boolean isForwarded() {
-                return false;
-            }
             @Override
             Address origin(GenSSRemoteReference ref) {
-                return ref.fromOrigin;
+                return ref.alternateOrigin;
             }
             @Override
             Address forwardedFrom(GenSSRemoteReference ref) {
+                return Address.zero();
+            }
+
+            @Override
+            Address forwardedTo(GenSSRemoteReference ref) {
                 return Address.zero();
             }
         };
@@ -403,11 +470,6 @@ public class GenSSRemoteReference extends RemoteReference {
         abstract ObjectStatus status();
 
         /**
-         * @see RemoteReference#isForwarded()
-         */
-        abstract boolean isForwarded();
-
-        /**
          * @see RemoteReference#origin()
          */
         abstract Address origin(GenSSRemoteReference ref);
@@ -416,6 +478,11 @@ public class GenSSRemoteReference extends RemoteReference {
          * @see RemoteReference#forwardedFrom()
          */
         abstract Address forwardedFrom(GenSSRemoteReference ref);
+
+        /**
+         * @see RemoteReference#forwardedTo()
+         */
+        abstract Address forwardedTo(GenSSRemoteReference ref);
 
         String gcDescription(GenSSRemoteReference ref) {
             return label;
@@ -439,18 +506,37 @@ public class GenSSRemoteReference extends RemoteReference {
             TeleError.unexpected("Illegal state transition");
         }
 
-        void addFromOrigin(GenSSRemoteReference ref, Address fromOrigin, boolean minorCollection) {
+        /**
+         * Notify the discovery of a forwarder for this reference, i.e., a forwarding reference is point this to this reference.
+         * @param ref
+         * @param forwarderOrigin the origin of the forwarder pointing to this reference
+         * @param minorCollection true if the discovery took place at minor collection, false if during full collection.
+         */
+        void discoverForwarder(GenSSRemoteReference ref, Address forwarderOrigin, boolean minorCollection) {
             TeleError.unexpected("Illegal state transition");
         }
-        void addToOrigin(GenSSRemoteReference ref, Address toOrigin, boolean minorCollection) {
+
+        /**
+         * Notify the discovery of the forwarded reference for this reference, i.e., this reference must be a forwarding reference.
+         *
+         * @param ref
+         * @param forwardedOrigin the origin of the object this reference forwards to.
+         * @param minorCollection true if the discovery took place at minor collection, false if during full collection.
+         */
+        void discoverForwarded(GenSSRemoteReference ref, Address forwardedOrigin, boolean minorCollection) {
             TeleError.unexpected("Illegal state transition");
+        }
+
+        RefState forwarderState() {
+            TeleError.unexpected("Reference state without forwarder");
+            return null;
         }
     }
 
-    protected GenSSRemoteReference(AbstractRemoteHeapScheme remoteScheme, Address fromOrigin, Address toOrigin) {
+    protected GenSSRemoteReference(AbstractRemoteHeapScheme remoteScheme, Address origin, Address alternateOrigin) {
         super(remoteScheme.vm());
-        this.fromOrigin = fromOrigin;
-        this.toOrigin = toOrigin;
+        this.alternateOrigin = alternateOrigin;
+        this.origin = origin;
         this.remoteScheme = remoteScheme;
     }
 
@@ -471,8 +557,7 @@ public class GenSSRemoteReference extends RemoteReference {
 
     @Override
     public Address forwardedTo() {
-        // TODO Auto-generated method stub
-        return null;
+        return refState.forwardedTo(this);
     }
 
     @Override
@@ -480,19 +565,20 @@ public class GenSSRemoteReference extends RemoteReference {
         return remoteScheme.heapSchemeClass().getSimpleName() + " state=" + refState.gcDescription(this);
     }
 
-    public void analysisBegins(boolean minorCollection) {
+    public void beginAnalyzing(boolean minorCollection) {
         refState.analysisBegins(this, minorCollection);
     }
 
-    public void analysisEnds(boolean minorCollection) {
+    public void endAnalyzing(boolean minorCollection) {
         refState.analysisEnds(this, minorCollection);
     }
 
-    public void addFromOrigin(Address fromOrigin, boolean minorCollection) {
-        refState.addFromOrigin(this, fromOrigin, minorCollection);
+    public void discoverForwarder(Address fromOrigin, boolean minorCollection) {
+        refState.discoverForwarder(this, fromOrigin, minorCollection);
     }
-    public void addToOrigin(Address toOrigin, boolean minorCollection) {
-        refState.addToOrigin(this, toOrigin, minorCollection);
+
+    public void discoverForwarded(Address toOrigin, boolean minorCollection) {
+        refState.discoverForwarded(this, toOrigin, minorCollection);
     }
 
     /**
@@ -504,13 +590,13 @@ public class GenSSRemoteReference extends RemoteReference {
      */
     public static GenSSRemoteReference createLive(AbstractRemoteHeapScheme remoteScheme, Address toOrigin, boolean isYoung) {
         TeleError.check(((RemoteGenSSHeapScheme) remoteScheme).canCreateLive());
-        final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, Address.zero(), toOrigin);
+        final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, toOrigin, Address.zero());
         ref.refState = isYoung ? RefState.YOUNG_REF_LIVE : RefState.OLD_REF_LIVE;
         return ref;
     }
 
     public static GenSSRemoteReference createOldTo(AbstractRemoteHeapScheme remoteScheme, Address toOrigin, boolean isPromoted) {
-        final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, Address.zero(), toOrigin);
+        final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, toOrigin, Address.zero());
         ref.refState = isPromoted ? RefState.OLD_PROMOTED_REF : RefState.OLD_REF_TO;
         return ref;
     }
@@ -522,7 +608,7 @@ public class GenSSRemoteReference extends RemoteReference {
     }
 
     public static GenSSRemoteReference createFromTo(AbstractRemoteHeapScheme remoteScheme, Address fromOrigin, Address toOrigin, boolean isYoung) {
-        final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, fromOrigin, toOrigin);
+        final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, toOrigin, fromOrigin);
         ref.refState = isYoung ? RefState.PROMOTED_REF  : RefState.OLD_REF_FROM_TO;
         return ref;
     }
@@ -538,10 +624,16 @@ public class GenSSRemoteReference extends RemoteReference {
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append(refState.label);
-        sb.append(" to: ");
-        sb.append(toOrigin == null ? "<null>" : toOrigin.to0xHexString());
-        sb.append(" from: ");
-        sb.append(fromOrigin == null ? "<null>" : fromOrigin.to0xHexString());
+        sb.append(" origin: ");
+        sb.append(origin == null ? "<null>" : origin.to0xHexString());
+        sb.append(" alt: ");
+        sb.append(alternateOrigin == null ? "<null>" : alternateOrigin.to0xHexString());
         return sb.toString();
+    }
+
+    public static GenSSRemoteReference createForwarder(AbstractRemoteHeapScheme remoteScheme, GenSSRemoteReference forwardedRef) {
+        final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, forwardedRef.alternateOrigin, forwardedRef.origin);
+        ref.refState = forwardedRef.refState.forwarderState();
+        return ref;
     }
 }

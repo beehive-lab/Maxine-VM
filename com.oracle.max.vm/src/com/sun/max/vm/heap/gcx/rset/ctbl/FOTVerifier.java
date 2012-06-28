@@ -24,7 +24,6 @@ package com.sun.max.vm.heap.gcx.rset.ctbl;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.gcx.*;
 
 
 public class FOTVerifier implements CellRangeVisitor {
