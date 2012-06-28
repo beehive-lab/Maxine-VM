@@ -33,6 +33,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.field.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObjectFactory.ClassCount;
@@ -98,6 +99,39 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     private List<MaxCodeLocation> inspectableMethods = null;
 
     private final TeleObjectFactory teleObjectFactory;
+
+    private Word cachedDynamicHubHubWord = null;
+
+    private Word cachedStaticHubHubWord = null;
+
+    private boolean initializingHubHubCaches = false;
+
+    private void initializeHubHubCaches() {
+        if (initializingHubHubCaches) {
+            return;
+        }
+        initializingHubHubCaches = true;
+        final Reference hubRef = Layout.readHubReference(vm().classes().vmClassRegistryReference());
+        RemoteReference cachedDynamicHubHubReference = (RemoteReference) Layout.readHubReference(hubRef);
+        assert cachedDynamicHubHubReference.equals(Layout.readHubReference(cachedDynamicHubHubReference));
+        cachedDynamicHubHubWord = cachedDynamicHubHubReference.toOrigin();
+        RemoteReference cachedStaticHubHubReference = (RemoteReference) Layout.readHubReference(TeleInstanceReferenceFieldAccess.readPath(hubRef, vm().fields().Hub_classActor, vm().fields().ClassActor_staticHub));
+        cachedStaticHubHubWord = cachedStaticHubHubReference.toOrigin();
+    }
+
+    private Word dynamicHubHubWord() {
+        if (cachedDynamicHubHubWord == null && vm().classes() != null) {
+            initializeHubHubCaches();
+        }
+        return cachedDynamicHubHubWord;
+    }
+
+    private Word staticHubHubWord() {
+        if (cachedStaticHubHubWord == null && vm().classes() != null) {
+            initializeHubHubCaches();
+        }
+        return cachedStaticHubHubWord;
+    }
 
     private final Object statsPrinter = new Object() {
         @Override
@@ -305,8 +339,9 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * @return whether the location is likely to be an object origin.
      */
     public boolean isPlausibleOriginUnsafe(Address possibleOrigin) {
-
-        // TODO (mlvdv)  LD suggestion; shorten this test.  The Hub of Hubs is constant: a fixed object in the BootHeap.
+        if (dynamicHubHubWord() != null) {
+            return fastIsPlausibleOriginUnsafe(possibleOrigin);
+        }
         // Assuming we're starting an an object origin. follow hub pointers until the same hub is
         // traversed twice or an address outside of heap is encountered.
         //
@@ -342,6 +377,41 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
                 }
                 hubWord = nextHubWord;
             }
+        } catch (DataIOError dataAccessError) {
+        }
+        return false;
+    }
+
+    /**
+     * Fast version of checking if a location in VM memory could be the origin of an object representation.
+     * This relies on the address of the dynamic hub for dynamic hubs and the address of the dynamic Hub for static hubs,
+     * both of which are in the boot region and never relocate.
+     */
+    private boolean fastIsPlausibleOriginUnsafe(Address possibleOrigin) {
+        final Word hubHubWord = dynamicHubHubWord();
+        try {
+            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(possibleOrigin));
+            if (hubWord.equals(hubHubWord)) {
+                // We already arrived at the DynamicHub for the class DynamicHub. This is a possible origin for a dynamic hub.
+                return true;
+            }
+            if (hubWord.isZero() || hubWord.asAddress().equals(zappedMarker)) {
+                return false;
+            }
+            final RemoteReference hubRef = referenceManager().makeTemporaryRemoteReference(hubWord.asAddress());
+            Address hubOrigin = hubRef.toOrigin();
+            // Check if the presumed hub is in the heap; it couldn't be elsewhere, for example in the code cache.
+            if (!heap().contains(hubOrigin)) {
+                return false;
+            }
+            // Presume that we have a valid location of a Hub object.
+            final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);
+            if (nextHubWord.equals(hubHubWord)) {
+                // We arrived at the DynamicHub for the class DynamicHub
+                return true;
+            }
+            // If we're still not at the dynamic hub's hub, this can only be the dynamic hub for static hub. If not, it isn't a plausible object.
+            return nextHubWord.equals(staticHubHubWord());
         } catch (DataIOError dataAccessError) {
         }
         return false;

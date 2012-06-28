@@ -699,8 +699,13 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case OBJECT_REFERENCE_TEXT: {
+                final boolean objectIsForwarded = object != null && object.reference().status().isForwarder();
                 setFont(style.wordAlternateTextFont());
-                setForeground(style.wordValidObjectReferenceDataColor());
+                if (objectIsForwarded) {
+                    setForeground(style.wordForwardingReferenceDataColor());
+                } else {
+                    setForeground(style.wordValidObjectReferenceDataColor());
+                }
                 try {
                     final String labelText = nameDisplay.referenceLabelText(object);
                     if (labelText != null) {

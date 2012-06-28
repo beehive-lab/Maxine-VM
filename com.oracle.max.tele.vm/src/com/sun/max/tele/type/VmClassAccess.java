@@ -101,6 +101,8 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      */
     private int dynamicallyLoadedClassCount = 0;
 
+    private Reference cachedVmRegistryReference;
+
     /**
      * Classes, possibly not loaded, available on the classpath.
      * Lazily initialized; can re re-initialized.
@@ -155,9 +157,9 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         this.lastUpdateEpoch = epoch;
         int count = 0;
         try {
-            final Reference vmClassRegistryReference = vmClassRegistryReference();
-            count = processClassRegistry(vmClassRegistryReference);
-            count += processClassRegistry(fields().ClassRegistry_bootClassRegistry.readReference(vmClassRegistryReference));
+            cachedVmRegistryReference = referenceManager().makeReference(vm().bootImageStart().plus(vm().bootImage().header.classRegistryOffset));
+            count = processClassRegistry(cachedVmRegistryReference);
+            count += processClassRegistry(fields().ClassRegistry_bootClassRegistry.readReference(cachedVmRegistryReference));
             ClassID.setMapping(classIDMapping);
         } catch (Throwable throwable) {
             TeleError.unexpected("could not build inspector type registry", throwable);
@@ -328,7 +330,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      * @return a reference to the {@link ClassRegistry} in the boot heap of the VM.
      */
     public Reference vmClassRegistryReference() {
-        return referenceManager().makeReference(vm().bootImageStart().plus(vm().bootImage().header.classRegistryOffset));
+        return cachedVmRegistryReference;
     }
 
     public void processAttachFixupList() {

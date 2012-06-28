@@ -321,4 +321,7 @@ public interface InspectorStyle {
     Color White = new Color(255, 255, 255);
     Color Gainsboro = new Color(220, 220, 220);
     Color Black = new Color(0, 0, 0);
+    Color Khaki = new Color(240, 230, 140);
+    Color DarkKhaki = new Color(189, 183, 107);
+    Color Olive = new Color(128, 128, 0);
 }
