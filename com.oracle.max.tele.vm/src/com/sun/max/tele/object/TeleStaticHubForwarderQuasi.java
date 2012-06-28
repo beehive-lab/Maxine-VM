@@ -24,7 +24,6 @@ package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -36,24 +35,16 @@ import com.sun.max.vm.reference.*;
  */
 public final class TeleStaticHubForwarderQuasi extends TeleStaticHub {
 
-    private TeleHub teleHub = null;
-    RemoteReference quasiReference;
-
     protected TeleStaticHubForwarderQuasi(TeleVM vm, Reference reference) {
         super(vm, reference);
-        quasiReference = (RemoteReference) reference;
+        final RemoteReference  quasiReference = (RemoteReference) reference;
         assert quasiReference.status().isForwarder();
     }
 
     @Override
-    public TeleHub getTeleHub() {
-        if (teleHub == null) {
-            final Address newCopyOrigin = quasiReference.forwardedTo();
-            final RemoteReference newCopyReference = referenceManager().makeReference(newCopyOrigin);
-                   // final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
-            teleHub = (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(newCopyReference).asAddress());
-        }
-        return teleHub;
+    protected TeleHub fetchTeleHub() {
+         // final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
+        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(jumpForwarder()).asAddress());
     }
 
     @Override

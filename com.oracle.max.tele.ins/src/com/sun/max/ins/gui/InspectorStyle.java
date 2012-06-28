@@ -82,6 +82,9 @@ public interface InspectorStyle {
     /** special foreground color for displaying a word that is an unchecked reference. */
     Color wordUncheckedReferenceDataColor();
 
+    /** special  foreground color for displaying a word that is a forwarding reference. */
+    Color wordForwardingReferenceDataColor();
+
     /** special foreground color for displaying a word that is an invalid heap object reference. */
     Color wordInvalidObjectReferenceDataColor();
 
@@ -314,6 +317,7 @@ public interface InspectorStyle {
 
     Color BurlyWood = new Color(222, 184, 135);
     Color SaddleBrown = new Color(139, 69, 19);
+    Color GoldenRod = new Color(218, 165, 32);
     Color White = new Color(255, 255, 255);
     Color Gainsboro = new Color(220, 220, 220);
     Color Black = new Color(0, 0, 0);

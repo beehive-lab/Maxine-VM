@@ -104,6 +104,14 @@ public abstract class RemoteReference extends Reference {
      */
     public abstract Address forwardedTo();
 
+    final public RemoteReference jumpForwarder() {
+        if (status().isForwarder()) {
+            return vm.referenceManager().makeReference(forwardedTo());
+        }
+        return this;
+    }
+
+
     /**
      * Generates a string describing the status of the object in VM memory with respect to memory management, designed
      * to provide useful information to a person: information that the Inspector can't already deduce from the standard

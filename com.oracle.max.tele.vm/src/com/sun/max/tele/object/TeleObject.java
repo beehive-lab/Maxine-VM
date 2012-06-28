@@ -166,9 +166,12 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
 
     private long lastUpdateEpoch = -1L;
 
-    private RemoteReference reference;
+    private final RemoteReference reference;
     private final SpecificLayout specificLayout;
     private final long oid;
+    /**
+     * Cache for Hub.
+     */
     private TeleHub teleHub = null;
 
     /**
@@ -381,12 +384,24 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         return new TeleFixedMemoryRegion(vm(), "Current memory for header field " + headerField.name, address, nBytes);
     }
 
-    public TeleHub getTeleHub() {
+    public final TeleHub getTeleHub() {
         if (teleHub == null) {
                    // final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
-            teleHub = (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(reference).asAddress());
+            teleHub = fetchTeleHub();
         }
         return teleHub;
+    }
+
+    protected final RemoteReference jumpForwarder() {
+        assert reference.status().isForwarder();
+        return referenceManager().makeReference(reference.forwardedTo());
+    }
+
+    /**
+     * Logic to fetch the hub for this TeleObject when not already cached.
+     */
+    protected TeleHub fetchTeleHub() {
+        return  (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(reference).asAddress());
     }
 
     public Word readMiscWord() {

@@ -134,6 +134,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     private Color wordCallReturnPointColor = new Color(64, 64, 192);
     private Color wordUncheckedCallPointColor = new Color(96, 96, 148);
     private Color wordSelectedColor = InspectorStyle.Blue;
+    private Color wordForwardingReferenceDataColor = InspectorStyle.GoldenRod;
 
     @Override
     public Font defaultWordDataFont() {
@@ -151,6 +152,10 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     @Override
     public Color wordUncheckedReferenceDataColor() {
         return wordUncheckedReferenceDataColor;
+    }
+    @Override
+    public Color wordForwardingReferenceDataColor() {
+        return wordForwardingReferenceDataColor;
     }
     @Override
     public Color wordInvalidObjectReferenceDataColor() {

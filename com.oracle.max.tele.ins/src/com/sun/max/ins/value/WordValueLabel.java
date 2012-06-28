@@ -676,7 +676,7 @@ public class WordValueLabel extends ValueLabel {
                     // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
                     final StringBuilder toolTipSB = new StringBuilder();
                     toolTipSB.append(value.toWord().toPadded0xHexString('0'));
-                    toolTipSB.append("<br>Forward pointer to ").append(htmlify(nameDisplay.referenceToolTipText(object)));
+                    toolTipSB.append("<br>Pointer to ").append(htmlify(nameDisplay.referenceToolTipText(object)));
                     toolTipSB.append("<br>In ");
                     final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
                     if (memoryRegion == null) {
@@ -774,8 +774,13 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case HUB_REFERENCE_TEXT: {
+                final boolean hubIsForwarded = object != null && object.reference().status().isForwarder();
                 setFont(style.wordAlternateTextFont());
-                setForeground(style.wordValidObjectReferenceDataColor());
+                if (hubIsForwarded) {
+                    setForeground(style.wordForwardingReferenceDataColor());
+                } else {
+                    setForeground(style.wordValidObjectReferenceDataColor());
+                }
                 try {
                     final Address address = value.toWord().asAddress();
                     final String forward = vm().objects().findForwardedObjectAt(address) == null ? "" : "=> ";
@@ -785,7 +790,7 @@ public class WordValueLabel extends ValueLabel {
                         // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
                         final StringBuilder toolTipSB = new StringBuilder();
                         toolTipSB.append(value.toWord().toPadded0xHexString('0'));
-                        toolTipSB.append("<br>Forward pointer to ").append(htmlify(nameDisplay.referenceToolTipText(object)));
+                        toolTipSB.append(hubIsForwarded ? "<br> Forwarder to" : "<br>Pointer to ").append(htmlify(nameDisplay.referenceToolTipText(object)));
                         toolTipSB.append("<br>In ");
                         final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
                         if (memoryRegion == null) {

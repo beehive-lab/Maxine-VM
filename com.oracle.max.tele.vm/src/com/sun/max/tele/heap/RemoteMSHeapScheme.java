@@ -338,10 +338,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 if (lastAnalyzingPhaseCount < gcStartedCount()) {
                     Trace.begin(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount());
                     assert lastAnalyzingPhaseCount == gcStartedCount() - 1;
-                    for (MSRemoteReference objectRef : objectRefMap.values()) {
+                    final List<MSRemoteReference> values = objectRefMap.values();
+                    for (MSRemoteReference objectRef : values) {
                         objectRef.analyzingBegins();
                     }
-                    Trace.end(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount() + ", UNKNOWN refs=" + objectRefMap.size());
+                    Trace.end(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount() + ", UNKNOWN refs=" + values.size());
                     lastAnalyzingPhaseCount = gcStartedCount();
                 }
 
