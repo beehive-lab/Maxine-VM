@@ -329,7 +329,7 @@ public class GenSSRemoteReference extends RemoteReference {
             }
             @Override
             Address origin(GenSSRemoteReference ref) {
-                return ref.alternateOrigin;
+                return ref.origin;
             }
 
             @Override
@@ -535,8 +535,8 @@ public class GenSSRemoteReference extends RemoteReference {
 
     protected GenSSRemoteReference(AbstractRemoteHeapScheme remoteScheme, Address origin, Address alternateOrigin) {
         super(remoteScheme.vm());
-        this.alternateOrigin = alternateOrigin;
         this.origin = origin;
+        this.alternateOrigin = alternateOrigin;
         this.remoteScheme = remoteScheme;
     }
 

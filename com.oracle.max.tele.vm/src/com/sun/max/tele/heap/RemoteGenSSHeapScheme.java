@@ -558,7 +558,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                         ref = oldToSpaceRefMap.get(origin);
                         if (ref != null) {
                             // A reference to the object is already in one of the live map.
-                            TeleError.check(ref.status().isLive() && ref.status().isForwarder());
+                            TeleError.check(ref.status().isLive());
                         } else if (objects().isPlausibleOriginUnsafe(origin)) {
                             /*
                              * A newly discovered object in the old To-Space.  In the analyzing phase of a full GC, the object must be a
