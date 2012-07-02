@@ -28,6 +28,7 @@ import com.sun.max.config.*;
 public class Package extends BootImagePackage {
     public Package() {
         BootImagePackage.registerThreadLocal(JVMTIVmThreadLocal.JVMTI_STATE);
+        BootImagePackage.registerThreadLocal(JVMTIVmThreadLocal.JVMTI_THREADLOCAL);
     }
 
 }

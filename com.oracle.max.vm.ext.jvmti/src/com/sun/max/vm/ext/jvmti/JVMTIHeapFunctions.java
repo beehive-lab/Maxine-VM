@@ -67,17 +67,21 @@ public class JVMTIHeapFunctions {
      * override the {@link VmOperation#doIt} method.
      */
     static class IterateThroughHeapVmOperation extends VmOperation {
-        private final JVMTI.Env env;
-        private final int heapFilter;
-        private final Class klass;
-        private final Pointer callbacks;
         private final CBCV cbcv;
-        private final Word userData;
 
-        class CBCV extends CallbackCellVisitor {
+        abstract class CBCV extends CallbackCellVisitor {
+            protected final JVMTI.Env env;
+            protected final int heapFilter;
+            protected final Class klass;
+
+            CBCV(JVMTI.Env env, int heapFilter, Class klass) {
+                this.env = env;
+                this.heapFilter = heapFilter;
+                this.klass = klass;
+            }
+
             @Override
             protected boolean callback(Object object) {
-                Pointer tagPtr = Intrinsics.alloca(Word.size(), false);
                 ClassActor classActor = ObjectAccess.readClassActor(object);
                 ClassActorProxy proxyClassActor = ClassActorProxy.asClassActorProxy(classActor);
 
@@ -111,14 +115,38 @@ public class JVMTIHeapFunctions {
                         return true;
                     }
                 }
+                int flags = doCallback(object, objectClass);
+                if ((flags & JVMTI_VISIT_ABORT) != 0) {
+                    return false;
+                }
+                return true;
+            }
+
+            protected abstract int doCallback(Object object, Class objectClass);
+        }
+
+        class CBCVNative extends CBCV {
+            private final Pointer callbacks;
+            private final Word userData;
+
+            CBCVNative(JVMTI.Env env, int heapFilter, Class klass, Pointer callbacks, Word userData) {
+                super(env, heapFilter, klass);
+                this.callbacks = callbacks;
+                this.userData = userData;
+
+            }
+
+            @Override
+            protected int doCallback(Object object, Class objectClass) {
+                Pointer tagPtr = Intrinsics.alloca(Word.size(), false);
                 Reference objectRef = Reference.fromJava(object);
                 Word heapIterationCallback = HeapCallbacks.HEAP_ITERATION.getCallback(callbacks);
                 if (!heapIterationCallback.isZero()) {
-                    long tag = env.tags.getTag(object);
+                    long tag = env.tags.getLongTag(object);
                     tagPtr.setLong(tag);
                     int flags = invokeHeapIterationCallback(
                                     heapIterationCallback.asPointer(),
-                                    objectClass == null ? 0 : env.tags.getTag(objectClass),
+                                    objectClass == null ? 0 : env.tags.getLongTag(objectClass),
                                     Layout.size(objectRef).toInt(),
                                     tagPtr,
                                     Layout.isArray(objectRef) ? Layout.readArrayLength(objectRef) : -1,
@@ -127,32 +155,53 @@ public class JVMTIHeapFunctions {
                     if (newTag != tag) {
                         env.tags.setTag(object, newTag);
                     }
-                    if ((flags & JVMTI_VISIT_ABORT) != 0) {
-                        return false;
-                    }
+                    return flags;
                 }
-                return true;
+                return 0;
+            }
+
+        }
+
+        class CBCVJava extends CBCV {
+            private final JJVMTI.HeapCallbacks heapCallbacks;
+            private final Object userData;
+
+            CBCVJava(JVMTI.Env env, int heapFilter, Class klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData) {
+                super(env, heapFilter, klass);
+                this.heapCallbacks = heapCallbacks;
+                this.userData = userData;
+            }
+
+            @Override
+            protected int doCallback(Object object, Class objectClass) {
+                Reference objectRef = Reference.fromJava(object);
+                return heapCallbacks.heapIteration(objectClass == null ? 0 : env.tags.getObjectTag(objectClass),
+                                Layout.size(objectRef).toInt(), env.tags.getObjectTag(object), Layout.isArray(objectRef) ? Layout.readArrayLength(objectRef) : -1, objectClass);
             }
         }
 
         IterateThroughHeapVmOperation(JVMTI.Env env, int heapFilter, Class klass, Pointer callbacks, Word userData) {
             super("JVMTI_IterateThroughHeap", null, Mode.Safepoint, false);
-            this.heapFilter = heapFilter;
-            this.klass = klass;
-            this.callbacks = callbacks;
-            this.cbcv = new CBCV();
-            this.env = env;
-            this.userData = userData;
+            this.cbcv = new CBCVNative(env, heapFilter, klass, callbacks, userData);
+        }
+
+        IterateThroughHeapVmOperation(JVMTI.Env env, int heapFilter, Class klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData) {
+            super("JVMTI_IterateThroughHeap", null, Mode.Safepoint, false);
+            this.cbcv = new CBCVJava(env, heapFilter, klass, heapCallbacks, userData);
         }
 
         @Override
         protected void doIt() {
-            // There should be no allocation in this path, so we enforce that as a debugging aid.
+            // Ideally there should be no allocation in this path, at least in the "application" heap.
+            // However, currently, Maxine has a unified heap and, at least for the Java JVMTI agents,
+            // it turns out to be essentially impossible to guarantee no allocation owing to hidden
+            // allocations in the VM itself. So we use the immortal heap for now.
+            // TODO revisit this when Maxine addresses VM and application heap separation
             try {
-                Heap.disableAllocationForCurrentThread();
+                Heap.enableImmortalMemoryAllocation();
                 vmConfig().heapScheme().walkHeap(cbcv);
             } finally {
-                Heap.enableAllocationForCurrentThread();
+                Heap.disableImmortalMemoryAllocation();
             }
         }
     }
@@ -161,6 +210,11 @@ public class JVMTIHeapFunctions {
         IterateThroughHeapVmOperation op = new IterateThroughHeapVmOperation(jvmtiEnv, heapFilter, klass, callbacks, userData);
         op.submit();
         return JVMTI_ERROR_NONE;
+    }
+
+    static void iterateThroughHeap(JVMTI.Env jvmtiEnv, int heapFilter, ClassActor klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData) {
+        IterateThroughHeapVmOperation op = new IterateThroughHeapVmOperation(jvmtiEnv, heapFilter, klass == null ? null : klass.toJava(), heapCallbacks, userData);
+        op.submit();
     }
 
 }

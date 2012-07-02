@@ -331,7 +331,7 @@ public class CompilationBroker {
     /**
      * Produces a target method for the specified method actor. If another thread is currently
      * compiling {@code cma}, then the result of that compilation is returned. Otherwise,
-     * a new compilation is scheduled and its result is returned. Either way, this methods
+     * a new compilation is scheduled and its result is returned. Either way, this method
      * waits for the result of a compilation to return it.
      *
      * @param cma the method for which to make the target method
@@ -363,7 +363,7 @@ public class CompilationBroker {
                     }
                 } else {
                     Compilations prevCompilations = compilation != null ? compilation.prevCompilations :  (Compilations) compiledState;
-                    RuntimeCompiler compiler = selectCompiler(cma, nature);
+                    RuntimeCompiler compiler = selectCompiler(cma, nature, isDeopt);
                     if (retryRun) {
                         compiler = selectRetryCompiler(cma, nature, compiler);
                     }
@@ -374,9 +374,13 @@ public class CompilationBroker {
 
             try {
                 if (doCompile) {
-                    return compilation.compile();
+                    TargetMethod tm = compilation.compile();
+                    VMTI.handler().methodCompiled(cma);
+                    return tm;
+                } else {
+                    // return result from other thread (which will have send the VMTI event)
+                    return compilation.get();
                 }
-                return compilation.get();
             } catch (Throwable t) {
                 if (VMOptions.verboseOption.verboseCompilation) {
                     boolean lockDisabledSafepoints = Log.lock();
@@ -405,9 +409,10 @@ public class CompilationBroker {
      *
      * @param cma the class method actor to compile
      * @param nature the specific type of target method required or {@code null} if any target method is acceptable
+     * @param isDeopt TODO
      * @return the compiler that should be used to perform the next compilation of the method
      */
-    protected RuntimeCompiler selectCompiler(ClassMethodActor cma, RuntimeCompiler.Nature nature) {
+    protected RuntimeCompiler selectCompiler(ClassMethodActor cma, RuntimeCompiler.Nature nature, boolean isDeopt) {
         String reason;
         RuntimeCompiler compiler;
 
@@ -445,6 +450,10 @@ public class CompilationBroker {
                         if (VMTI.handler().hasBreakpoints(cma)) {
                             reason = "vmti";
                             compiler = baselineCompiler;
+                        } else if (!isDeopt && cma.isVM()) {
+                            // compile VM extensions with the opt compiler (cf isHosted)
+                            reason = "vm";
+                            compiler = optimizingCompiler;
                         } else {
                             compiler = defaultCompiler;
                         }

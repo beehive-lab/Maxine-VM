@@ -80,6 +80,11 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     }
 
     @Override
+    protected T1XTargetMethod newT1XTargetMethod(T1XCompilation comp, boolean install) {
+        return new VMAT1XTargetMethod(comp, install);
+    }
+
+    @Override
     protected void initCompile(ClassMethodActor method, CodeAttribute codeAttribute) {
         super.initCompile(method, codeAttribute);
         // we do not want code to be recompiled as the optimizing compiler does not

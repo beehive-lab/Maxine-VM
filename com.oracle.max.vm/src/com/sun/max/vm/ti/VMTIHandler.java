@@ -100,6 +100,18 @@ public interface VMTIHandler {
     void classLoad(ClassActor classActor);
 
     /**
+     * The given method was compiled and the code loaded into memory.
+     * @param classMethodActor
+     */
+    void methodCompiled(ClassMethodActor classMethodActor);
+
+    /**
+     * The code for the given method was unloaded (garbage collected).
+     * @param classMethodActor
+     */
+    void methodUnloaded(ClassMethodActor classMethodActor);
+
+    /**
      * A GC is about to begin.
      */
     void beginGC();

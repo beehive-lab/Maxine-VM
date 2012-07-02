@@ -108,6 +108,9 @@ public class VMAdviceHandlerLogAdaptorGenerator {
             generateValueArg(m, 2);
             generateValueArg(m, 3);
             out.printf(");%n");
+        } else if (name.contains("ReturnByThrow")) {
+            generateLogCallPrefix(oname);
+            out.print(", state.readId(arg1), arg2);\n");
         } else if (name.contains("Return")) {
             generateLogCallPrefix(oname);
             if (m.getParameterTypes().length > 0) {

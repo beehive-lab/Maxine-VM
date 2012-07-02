@@ -28,7 +28,7 @@ import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
  * Support for {@link JVMTIFunctions#GetErrorName}.
  * The use of an enum has the VM create the strings for us.
  */
-enum JVMTIError {
+public enum JVMTIError {
     // Errors
     NONE(JVMTI_ERROR_NONE),
     INVALID_THREAD(JVMTI_ERROR_INVALID_THREAD),
@@ -85,15 +85,17 @@ enum JVMTIError {
 
     private static final String JVMTI_ERROR_PREFIX = "JVMTI_ERROR_";
 
+    private static final JVMTIError[] VALUES = values();
+
     /**
      * Full names as byte arrays. Index is the error code value, NOT {code ordinal()}.
      */
     static final byte[][] nameBytes = new byte[JVMTI_ERROR_MAX + 1][];
 
     static {
-        JVMTIError[] values = values();
-        for (int i = 0; i < values.length; i++) {
-            JVMTIError error = values[i];
+
+        for (int i = 0; i < VALUES.length; i++) {
+            JVMTIError error = VALUES[i];
             String fullName = JVMTI_ERROR_PREFIX + error.name();
             nameBytes[error.code] = fullName.getBytes();
         }
@@ -101,6 +103,10 @@ enum JVMTIError {
 
     private JVMTIError(int code) {
         this.code = code;
+    }
+
+    public static String getName(int code) {
+        return VALUES[code].name();
     }
 
 }

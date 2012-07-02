@@ -133,8 +133,12 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
     protected TeleClassActor getTeleClassActor(long arg) {
         ClassActor classActor = getClassActor(arg);
         TeleClassActor teleClassActor = vm().classes().findTeleClassActor((int) arg);
-        assert teleClassActor.classActor() == classActor;
-        return teleClassActor;
+        if (teleClassActor == null) {
+            return null;
+        } else {
+            assert teleClassActor.classActor() == classActor;
+            return teleClassActor;
+        }
     }
 
     protected String formatMethodActor(long arg) {

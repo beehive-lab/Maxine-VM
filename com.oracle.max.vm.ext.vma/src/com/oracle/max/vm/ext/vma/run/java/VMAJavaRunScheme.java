@@ -22,25 +22,29 @@
  */
 package com.oracle.max.vm.ext.vma.run.java;
 
+import com.oracle.max.vm.ext.t1x.vma.*;
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.handlers.log.vmlog.h.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.ProgramError;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.java.JavaRunScheme;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.thread.VmThreadLocal;
 import com.sun.max.vm.ti.*;
+import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * Variant of {@link JavaRunScheme} that supports the VMA framework.
  *
  */
 
-public class VMAJavaRunScheme extends JavaRunScheme {
+public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VMAHandler {
     private static class VMTIHandler extends NullVMTIHandler {
         @Override
         public void threadStart(VmThread vmThread) {
@@ -109,6 +113,19 @@ public class VMAJavaRunScheme extends JavaRunScheme {
      */
     private static boolean advising;
 
+    @CONSTANT_WHEN_NOT_ZERO
+    private static VMLog vmaVMLog;
+
+    /**
+     * If a handler wishes to use {@link VMLogNativeThreadVariableVMA} then this property must be set
+     * as it must be included in the boot image.
+     */
+    public static final String VMA_LOG_PROPERTY = "max.vma.vmlog";
+
+    public static VMLog vmaVMLog() {
+        return vmaVMLog;
+    }
+
     /**
      * The build time specified {@link VMAdviceHandler}.
      */
@@ -116,17 +133,34 @@ public class VMAJavaRunScheme extends JavaRunScheme {
     private static VMAdviceHandler adviceHandler;
 
     /**
-     * This property must be specified at boot image time.
+     * This property may be specified at boot image time to include a specific handler in the boot image.
+     * The preferred approach, however, is to load the handler as a VM extension.
      */
-    private static final String VMA_HANDLER_CLASS_PROPERTY = "max.vma.handler";
-    private static final String DEFAULT_HANDLER_CLASS = "com.oracle.max.vm.ext.vma.handlers.log.vmlog.h.VMLogVMAdviceHandler";
+    public static final String VMA_HANDLER_CLASS_PROPERTY = "max.vma.handler";
 
     public static String getHandlerClassName() {
         String handlerClassName = System.getProperty(VMA_HANDLER_CLASS_PROPERTY);
         if (handlerClassName == null) {
-            handlerClassName = DEFAULT_HANDLER_CLASS;
+            // not specified for the boot image, loaded as VM extension
         }
         return handlerClassName;
+    }
+
+    public static boolean isHandlerClass(Class<? extends VMAdviceHandler> handlerClass) {
+        String handlerClassName = getHandlerClassName();
+        if (handlerClassName == null) {
+            return false;
+        } else {
+            return handlerClassName.equals(handlerClass.getName());
+        }
+    }
+
+    /**
+     * For dynamically loaded advice handlers.
+     * @param handler
+     */
+    public static void registerAdviceHandler(VMAdviceHandler handler) {
+        adviceHandler = handler;
     }
 
     @Override
@@ -134,20 +168,33 @@ public class VMAJavaRunScheme extends JavaRunScheme {
         super.initialize(phase);
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             VMTI.registerEventHandler(new VMTIHandler());
-            try {
-                adviceHandler = (VMAdviceHandler) Class.forName(getHandlerClassName()).newInstance();
-            } catch (Throwable ex) {
-                ProgramError.unexpected("failed to instantiate VMA advice handler class: ", ex);
+            JVMTIException.registerVMAHAndler(this);
+            String handlerClassName = getHandlerClassName();
+            if (System.getProperty(VMA_LOG_PROPERTY) != null) {
+                vmaVMLog = new VMLogNativeThreadVariableVMA();
+                vmaVMLog.initialize(phase);
             }
-            adviceHandler.initialise(phase);
+            if (handlerClassName != null) {
+                try {
+                    adviceHandler = (VMAdviceHandler) Class.forName(handlerClassName).newInstance();
+                } catch (Throwable ex) {
+                    ProgramError.unexpected("failed to instantiate VMA advice handler class: ", ex);
+                }
+                adviceHandler.initialise(phase);
+            }
         }
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
-                adviceHandler.initialise(phase);
-                advising = true;
-                // we make this call because when the VM originally called VMTIHandler.threadStart
-                // advising was not enabled
-                threadStarting();
+                if (adviceHandler != null) {
+                    adviceHandler.initialise(phase);
+                    advising = true;
+                    // we make this call because when the VM originally called VMTIHandler.threadStart
+                    // advising was not enabled
+                    threadStarting();
+                } else {
+                    Log.println("no VMA handler defined");
+                    MaxineVM.exit(-1);
+                }
             }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (advising) {
@@ -242,6 +289,19 @@ public class VMAJavaRunScheme extends JavaRunScheme {
     @INLINE
     public static Object loadReceiver() {
         return VmThread.currentTLA().getReference(VMA_METHODRECEIVER.index).toJava();
+    }
+
+    @Override
+    public void exceptionRaised(ClassMethodActor throwingActor, Throwable throwable, int poppedFrames) {
+        if (isAdvising() && isInstrumented(throwingActor)) {
+            disableAdvising();
+            adviceHandler.adviseBeforeReturnByThrow(throwable, poppedFrames);
+            enableAdvising();
+        }
+    }
+
+    private static boolean isInstrumented(ClassMethodActor classMethodActor) {
+        return classMethodActor.currentTargetMethod() instanceof VMAT1XTargetMethod;
     }
 
 

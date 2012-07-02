@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,16 +122,34 @@ void log_print_boolean(char val) {
     }
 }
 
-void log_print_char(int val) {
-	log_print_format("%c", val);
+void log_print_char(jchar val) {
+	log_print_format("%lc", val);
 }
 
 void log_print_long(jlong val) {
 	log_print_format("%ld", val);
 }
 
-void log_print_buffer(const char *buffer) {
-	log_print_format("%s", buffer);
+void log_print_bytes(const jbyte *value, int offset, int len) {
+    if (value == NULL) {
+        log_print_format("null");
+    } else {
+        int i;
+        for (i = 0; i < len; i++) {
+            log_print_format("%c", *(value + offset + i));
+        }
+    }
+}
+
+void log_print_chars(const jchar *value, int offset, int len) {
+    if (value == NULL) {
+        log_print_format("null");
+    } else {
+        int i;
+        for (i = 0; i < len; i++) {
+            log_print_format("%lc", *(value + offset + i));
+        }
+    }
 }
 
 void log_print_word(Address address) {
@@ -177,7 +195,7 @@ void log_print_symbol(Address address) {
 void log_print_float(float f) {
 	// TODO: fprintf may not produce exactly the same format of floating point numbers
 #if os_MAXVE
-	log_print_buffer("%f not supported");
+	log_print_format("%%f not supported");
 #else
 	log_print_format("%f", f);
 #endif

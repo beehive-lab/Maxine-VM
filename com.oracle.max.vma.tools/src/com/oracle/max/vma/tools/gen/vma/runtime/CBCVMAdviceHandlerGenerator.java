@@ -30,11 +30,11 @@ import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.handlers.cbc.h.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
-public class CountVMAdviceHandlerGenerator {
+public class CBCVMAdviceHandlerGenerator {
     private static int maxLength;
 
     public static void main(String[] args) throws Exception {
-        createGenerator(CountVMAdviceHandlerGenerator.class);
+        createGenerator(CBCVMAdviceHandlerGenerator.class);
         generateAutoComment();
         SortedMap<String, Integer> enumMap = createEnum(VMAdviceHandler.class);
         out.printf("%n    private static final int MAX_LENGTH = %d;%n%n", maxLength);
@@ -44,7 +44,7 @@ public class CountVMAdviceHandlerGenerator {
                 generate(m, enumMap);
             }
         }
-        AdviceGeneratorHelper.updateSource(CountsVMAdviceHandler.class, null, false);
+        AdviceGeneratorHelper.updateSource(CBCVMAdviceHandler.class, null, false);
     }
 
     private static void generate(Method m, SortedMap<String, Integer> enumMap) {

@@ -397,7 +397,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * @return
      */
     public final TargetMethod makeTargetMethod(TargetMethod caller) {
-        boolean isVMDeopt = caller.isBaseline() && caller.classMethodActor.isVM();
+        boolean isVMDeopt = caller.isInstrumented() && caller.classMethodActor.isVM();
         return makeTargetMethod(null, isVMDeopt);
     }
 

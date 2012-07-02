@@ -24,6 +24,7 @@ package demo.jvmti;
 
 /**
  * Program to debug Maxine's implementation of JVMTI Exception events.
+ * Catch an exception thrown up stack.
  */
 public class ExceptionTest_02 {
     public static void main(String[] args) {

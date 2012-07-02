@@ -237,4 +237,18 @@ class MDVMTIHandler implements VMTIHandler {
         }
     }
 
+    @Override
+    public void methodCompiled(ClassMethodActor classMethodActor) {
+        for (int i = 0; i < eventHandlers.length; i++) {
+            eventHandlers[i].methodCompiled(classMethodActor);
+        }
+    }
+
+    @Override
+    public void methodUnloaded(ClassMethodActor classMethodActor) {
+        for (int i = 0; i < eventHandlers.length; i++) {
+            eventHandlers[i].methodUnloaded(classMethodActor);
+        }
+    }
+
 }

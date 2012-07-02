@@ -25,12 +25,15 @@ package com.sun.max.vm.ext.jvmti;
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIEnvNativeStruct.*;
 
+import java.util.*;
+
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.ext.jvmti.JJVMTI.*;
 
 /**
  * JVMTI Capabilities.
- * A capability is on if the relevant bit is set in the {@code jvmtiCapabilities struct is set.
+ * A capability is on if the relevant bit is set in the {@code jvmtiCapabilities struct} is set.
  * TODO This code currently assume 64 bit,little endian architecture.
  * We have enabled some unimplemented capabilities for jdwp evaluation
  */
@@ -63,7 +66,7 @@ public class JVMTICapabilities {
         CAN_GET_CURRENT_THREAD_CPU_TIME(false),
         CAN_GET_THREAD_CPU_TIME(false),
         CAN_GENERATE_METHOD_ENTRY_EVENTS(true),
-        CAN_GENERATE_METHOD_EXIT_EVENTS(true), // TODO
+        CAN_GENERATE_METHOD_EXIT_EVENTS(true),
         CAN_GENERATE_ALL_CLASS_HOOK_EVENTS(true),
         CAN_GENERATE_COMPILED_METHOD_LOAD_EVENTS(false),
         CAN_GENERATE_MONITOR_EVENTS(true), // TODO
@@ -95,6 +98,8 @@ public class JVMTICapabilities {
          */
         static long allMask;
 
+        static EnumSet<E> allEnumSet = EnumSet.noneOf(E.class);
+
         static final E[] VALUES = values();
 
         static {
@@ -102,6 +107,7 @@ public class JVMTICapabilities {
                 E cap = VALUES[i];
                 if (cap.can) {
                     allMask |= cap.bitMask;
+                    allEnumSet.add(cap);
                 }
             }
         }
@@ -165,4 +171,31 @@ public class JVMTICapabilities {
         }
         return JVMTI_ERROR_NONE;
     }
+
+    // JJVMTI variants
+
+    public static EnumSet<E> getPotentialCapabilities(JVMTI.JavaEnv env) throws JJVMTIException {
+        return E.allEnumSet;
+    }
+
+    public static void addCapabilities(JVMTI.JavaEnv env, EnumSet<E> caps) throws JJVMTIException {
+        for (E cap : caps) {
+            if (cap.can) {
+                env.capabilities.add(cap);
+                if (cap == E.CAN_MAINTAIN_ORIGINAL_METHOD_ORDER) {
+                    ClassActor.preserveMethodActorOrder();
+                }
+            } else {
+                throw new JJVMTIException(JVMTI_ERROR_NOT_AVAILABLE);
+            }
+        }
+    }
+
+    public static void relinquishCapabilities(JVMTI.JavaEnv env, EnumSet<E> caps) throws JJVMTIException {
+        for (E cap : caps) {
+            env.capabilities.remove(cap);
+        }
+    }
+
+
 }
