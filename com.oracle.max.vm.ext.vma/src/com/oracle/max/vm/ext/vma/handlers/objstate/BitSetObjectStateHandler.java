@@ -28,6 +28,8 @@ import java.util.BitSet;
 import com.sun.max.annotate.INLINE;
 import com.sun.max.unsafe.Address;
 import com.sun.max.unsafe.Pointer;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.xohm.XOhmGeneralLayout;
 import com.sun.max.vm.reference.Reference;
 
@@ -64,9 +66,24 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
         nextUnseenId = UNSEEN_ID_BASE;
     }
 
+    /**
+     * Create the instance.
+     * If being used in a dynamically loaded context, the state must be allocated in
+     * immortal memory as it is accessed while a GC is in progress.
+     * @return
+     */
     public static BitSetObjectStateHandler create() {
         final String prop = System.getProperty(MAX_IDS_PROPERTY);
-        return new BitSetObjectStateHandler(prop == null ? DEFAULT_MAX_IDS : Integer.parseInt(prop));
+        try {
+            if (!MaxineVM.isHosted()) {
+                Heap.enableImmortalMemoryAllocation();
+            }
+            return new BitSetObjectStateHandler(prop == null ? DEFAULT_MAX_IDS : Integer.parseInt(prop));
+        } finally {
+            if (!MaxineVM.isHosted()) {
+                Heap.disableImmortalMemoryAllocation();
+            }
+        }
     }
 
     /**

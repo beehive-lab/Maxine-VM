@@ -157,10 +157,8 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.SINGLE_STEP);
         }
         methodID = MethodID.fromMethodActor(method);
-        if (!method.isInitializer()) {
-            // initializers are not methods...
-            checkByteCodeEventNeeded(-1);  // METHOD_ENTRY
-        }
+        checkByteCodeEventNeeded(-1);  // METHOD_ENTRY
+        checkByteCodeEventNeeded(-2);  // METHOD_EXIT
         checkByteCodeEventNeeded(Bytecodes.GETFIELD);
         checkByteCodeEventNeeded(Bytecodes.PUTFIELD);
         checkByteCodeEventNeeded(Bytecodes.RETURN);
@@ -242,7 +240,8 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             case Bytecodes.DRETURN:
             case Bytecodes.ARETURN:
             case Bytecodes.RETURN:
-                bytecodeEvent = (eventSettings & JVMTIEvent.bitSetting(RETURN_EVENT)) != 0;
+                bytecodeEvent = ((eventSettings & JVMTIEvent.bitSetting(RETURN_EVENT)) != 0) ||
+                                ((eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.METHOD_EXIT)) != 0);
                 break;
 
             default:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,10 +42,11 @@ extern void log_unlock(void);
 
 extern void log_print_int(int val);
 extern void log_print_boolean(char val);
-extern void log_print_char(int val);
+extern void log_print_char(jchar val);
 extern void log_print_long(jlong val);
 extern void log_print_word(Address val);
-extern void log_print_buffer(const char *buffer);
+extern void log_print_bytes(const jbyte *value, int offset, int len);
+extern void log_print_chars(const jchar *value, int offset, int len);
 extern void log_print_format(const char *format, ...);
 extern void log_print_vformat(const char *format, va_list ap);
 extern void log_print_newline(void);

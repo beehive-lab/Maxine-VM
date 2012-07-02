@@ -22,48 +22,13 @@
  */
 package com.sun.max.vm;
 
-import java.util.*;
-
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 
-
-public class JavaAgentVMOption extends VMOption {
-    private List<VMStringOption> optionList = new ArrayList<VMStringOption>();
-
+public class JavaAgentVMOption extends JarFileVMOption {
     @HOSTED_ONLY
     public JavaAgentVMOption() {
         super("-javaagent",
               "load Java programming language agent, see java.lang.instrument");
-    }
-
-    /**
-     * Return the number of instances of this option.
-     * @return the number of instances of this option.
-     */
-    public int count() {
-        return optionList.size();
-    }
-
-    /**
-     * Returns the ith option value.
-     * @param index into list of option values
-     * @return the ith option value
-     */
-    public String getValue(int i) {
-        return optionList.get(i).getValue();
-    }
-
-    @Override
-    public boolean parseValue(Pointer optionValue) {
-        VMStringOption option = new VMStringOption(prefix);
-        optionList.add(option);
-        return option.parseValue(optionValue);
-    }
-
-    @Override
-    public void printHelp() {
-        VMOptions.printHelpForOption(category(), prefix, ":<jarpath>[=<options>]", help);
     }
 
 }

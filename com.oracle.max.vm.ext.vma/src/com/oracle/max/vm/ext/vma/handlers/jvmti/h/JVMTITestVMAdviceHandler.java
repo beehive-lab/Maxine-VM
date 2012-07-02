@@ -23,100 +23,114 @@
 package com.oracle.max.vm.ext.vma.handlers.jvmti.h;
 
 import java.lang.reflect.*;
+import java.util.*;
 
-import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
+import com.oracle.max.vm.ext.jjvmti.agents.util.*;
+import com.oracle.max.vm.ext.vma.handlers.util.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.*;
-import com.sun.max.vm.ext.jvmti.JJVMTI.*;
-import com.sun.max.vm.log.VMLog.Record;
-import com.sun.max.vm.log.hosted.*;
 
-
+/**
+ * A simple test of the VMA variant of method entry/exit events.
+ * Can be built into the boot image or dynamically loaded.
+ */
 public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
 
+    /**
+     * Used to get access to local variables.
+     */
+    private static final JJVMTIAgentAdapter jjvmti;
+
+    static {
+        jjvmti = JJVMTIAgentAdapter.register(new NullJJVMTICallbacks());
+    }
+
+    private static Stack<MethodActor> callStack = new Stack<MethodActor>();
+
+    public static void onLoad(String args) {
+        VMAJavaRunScheme.registerAdviceHandler(new JVMTITestVMAdviceHandler());
+    }
+
     @Override
-    public void initialise(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            JJVMTIAgentAdapter.register(jjvmti);
+    public void adviseAfterMethodEntry(Object arg1, MethodActor methodActor) {
+        callStack.push(methodActor);
+        // Don't report synthetic methods (not clear we should even get the event)
+        if (jjvmti.isMethodSynthetic(methodActor)) {
+            return;
         }
-    }
-
-    private static final JJVMTIAgentAdapter jjvmti = new JJVMTIAgentAdapter();
-
-    @Override
-    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
-        logger.logMethodEntry(arg1, arg2, jjvmti.getFrameCount(null));
-    }
-
-    private static class JVMTITestLogger extends JVMTITestLoggerAuto {
-
-        protected JVMTITestLogger() {
-            super("JVMTITest", "test JVMTI in Java implementation");
+        System.out.printf("Method entry: %s%n", methodActor.format("%H.%n"));
+        JJVMTI.LocalVariableEntry[] lve = jjvmti.getLocalVariableTable(methodActor);
+        if (lve.length == 0) {
+            return;
         }
-
-        @Override
-        protected void traceMethodEntry(Object arg1, MethodActor arg2, int arg3) {
-            System.out.printf("Method entry: %s fc %d%n", arg2.format("%H.%n"), arg3);
-            Method method = arg2.toJava();
-            Class<?>[] params = method.getParameterTypes();
-            LocalVariableEntry[] lve = jjvmti.getLocalVariableTable(method);
-            int slot = 0;
-            for (Class<?> param : params) {
-                System.out.printf("  slot %d, name %s, type %s, value ", slot, lve[slot].name, lve[slot].signature);
-                if (Object.class.isAssignableFrom(param)) {
-                    Object paramValue = jjvmti.getLocalObject(null, 0, slot);
-                    System.out.println(paramValue);
-                }
-            }
-        }
-
-    }
-
-    private static final JVMTITestLogger logger = new JVMTITestLogger();
-
-    @VMLoggerInterface
-    private interface JVMTITestLoggerInterface {
-        void methodEntry(Object arg1, MethodActor arg2, int frameCount);
-    }
-
-// START GENERATED CODE
-    private static abstract class JVMTITestLoggerAuto extends com.sun.max.vm.log.VMLogger {
-        public enum Operation {
-            MethodEntry;
-
-            @SuppressWarnings("hiding")
-            public static final Operation[] VALUES = values();
-        }
-
-        private static final int[] REFMAPS = new int[] {0x1};
-
-        protected JVMTITestLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
-        }
-
-        @Override
-        public String operationName(int opCode) {
-            return Operation.VALUES[opCode].name();
-        }
-
-        @INLINE
-        public final void logMethodEntry(Object arg1, MethodActor arg2, int arg3) {
-            log(Operation.MethodEntry.ordinal(), objectArg(arg1), methodActorArg(arg2), intArg(arg3));
-        }
-        protected abstract void traceMethodEntry(Object arg1, MethodActor arg2, int arg3);
-
-        @Override
-        protected void trace(Record r) {
-            switch (r.getOperation()) {
-                case 0: { //MethodEntry
-                    traceMethodEntry(toObject(r, 1), toMethodActor(r, 2), toInt(r, 3));
-                    break;
+        Type[] params = methodActor.getGenericParameterTypes();
+        for (int i = 0; i < params.length; i++) {
+            Class<?> param = (Class) params[i];
+            int index = methodActor.isStatic() ? i : i + 1;
+            System.out.printf("param %d, name %s, type %s, value ", index, lve[index].name, lve[index].signature);
+            int slot = lve[index].slot;
+            if (Object.class.isAssignableFrom(param)) {
+                Object paramValue = jjvmti.getLocalObject(null, 0, slot);
+                System.out.println(paramValue);
+            } else {
+                if (param == int.class) {
+                    System.out.println(jjvmti.getLocalInt(null, 0, slot));
+                } else if (param == long.class) {
+                    System.out.println(jjvmti.getLocalLong(null, 0, slot));
+                } else if (param == float.class) {
+                    System.out.println(jjvmti.getLocalFloat(null, 0, slot));
+                } else if (param == double.class) {
+                    System.out.println(jjvmti.getLocalDouble(null, 0, slot));
+                } else {
+                    assert false;
                 }
             }
         }
     }
 
-// END GENERATED CODE
+    @Override
+    public void adviseBeforeReturn(long value) {
+        methodExit(false, value);
+    }
+
+    @Override
+    public void adviseBeforeReturn(float value) {
+        methodExit(false, value);
+    }
+
+    @Override
+    public void adviseBeforeReturn(double value) {
+        methodExit(false, value);
+    }
+
+    @Override
+    public void adviseBeforeReturn(Object value) {
+        methodExit(false, value);
+    }
+
+    @Override
+    public void adviseBeforeReturn() {
+        methodExit(false, null);
+    }
+
+    @Override
+    public void adviseBeforeReturnByThrow(Throwable throwable, int poppedFrames) {
+        methodExit(true, throwable);
+        // May need to pop more frames
+        while (poppedFrames > 1) {
+            callStack.pop();
+            poppedFrames--;
+        }
+    }
+
+    private void methodExit(boolean exeception, Object returnValue) {
+        MethodActor methodActor = callStack.pop();
+        // Don't report synthetic methods (not clear we should even get the event)
+        if (jjvmti.isMethodSynthetic(methodActor)) {
+            return;
+        }
+        System.out.printf("Method exit: %s, exception %b%n", methodActor.format("%H.%n"), exeception);
+    }
+
 }

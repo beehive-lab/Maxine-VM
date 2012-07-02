@@ -23,6 +23,7 @@
 package com.sun.max.vm;
 
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.io.*;
@@ -30,7 +31,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.ProgramWarning.Handler;
 import com.sun.max.unsafe.*;
@@ -38,7 +38,9 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -50,11 +52,20 @@ import com.sun.max.vm.thread.*;
 @NEVER_INLINE
 public final class Log {
 
+    static final int CHAR_ARRAY_BASE_OFFSET = Layout.charArrayLayout().getElementOffsetFromOrigin(0).toInt();
+    static final int BYTE_ARRAY_BASE_OFFSET = Layout.byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
+
     private Log() {
     }
 
+    /**
+     * @param len if negative, then print until a terminating 0 is encountered
+     */
     @C_FUNCTION
-    static native void log_print_buffer(Address val);
+    static native void log_print_bytes(Address jbytes, int offset, int len);
+
+    @C_FUNCTION
+    static native void log_print_chars(Address jchars, int offset, int len);
 
     @C_FUNCTION
     static native void log_print_boolean(boolean val);
@@ -108,12 +119,6 @@ public final class Log {
      * The singleton VM print stream. This print stream sends all its output to {@link #os}.
      */
     public static final LogPrintStream out = new LogPrintStream(os);
-
-    /**
-     * The non-moving raw memory buffer used to pass data to the native log functions.
-     * The log {@linkplain Log#lock() lock} must be held when using this buffer.
-     */
-    private static final BootMemory buffer = new BootMemory(Ints.K);
 
     /**
      * Equivalent to calling {@link LogPrintStream#print(String)} on {@link #out}.
@@ -543,14 +548,7 @@ public final class Log {
                     }
                 }
             } else {
-                final boolean lockDisabledSafepoints = Log.lock();
-                int i = off;
-                final int end = off + len;
-                while (i < end) {
-                    i = CString.writeBytes(b, i, end, buffer.address(), buffer.size());
-                    log_print_buffer(buffer.address());
-                }
-                Log.unlock(lockDisabledSafepoints);
+                log_print_bytes(Reference.fromJava(b).toOrigin().plus(BYTE_ARRAY_BASE_OFFSET), off, len);
             }
         }
     }
@@ -562,11 +560,7 @@ public final class Log {
          * must be held by the caller.
          */
         private void printChars(char[] ch) {
-            int i = 0;
-            while (i < ch.length) {
-                i = CString.writePartialUtf8(ch, i, buffer.address(), buffer.size());
-                log_print_buffer(buffer.address());
-            }
+            log_print_chars(Reference.fromJava(ch).toOrigin().plus(CHAR_ARRAY_BASE_OFFSET), 0, ch.length);
         }
 
         /**
@@ -599,20 +593,28 @@ public final class Log {
          * @param cString
          */
         public void printCString(Pointer cString) {
-            log_print_buffer(cString);
+            log_print_bytes(cString, 0, -1);
         }
+
+        static class StringAlias {
+            @ALIAS(declaringClass = String.class)
+            char[] value;
+            @ALIAS(declaringClass = String.class)
+            int offset;
+            @ALIAS(declaringClass = String.class)
+            int count;
+        }
+
+        @INTRINSIC(UNSAFE_CAST)
+        public static native StringAlias asStringAlias(String s);
 
         /**
          * Prints a given string to the log stream. The log {@linkplain Log#lock() lock}
          * must be held by the caller.
          */
         private void printString(String string) {
-            final String s = string == null ? "null" : string;
-            int i = 0;
-            while (i < s.length()) {
-                i += CString.writePartialUtf8(s, i, s.length() - i, buffer.address(), buffer.size()) - 1;
-                log_print_buffer(buffer.address());
-            }
+            final StringAlias s = asStringAlias(string == null ? "null" : string);
+            log_print_chars(Reference.fromJava(s.value).toOrigin().plus(CHAR_ARRAY_BASE_OFFSET), s.offset, s.count);
         }
 
         /**

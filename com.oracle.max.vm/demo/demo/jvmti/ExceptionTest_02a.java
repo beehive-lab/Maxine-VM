@@ -20,15 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.ext.jvmti.jtest;
+package demo.jvmti;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-
-
-public class Package extends BootImagePackage {
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration config) {
-        return System.getProperty(JJVMTITest.JJVMTI_TEST) != null;
+/**
+ * Program to debug Maxine's implementation of JVMTI Exception events.
+ * Catch an exception thrown in same method.
+ */
+public class ExceptionTest_02a {
+    public static void main(String[] args) {
+        try {
+            throw new TestException("thrown from main");
+        } catch (TestException t) {
+            System.err.println(t);
+        }
     }
+
 }

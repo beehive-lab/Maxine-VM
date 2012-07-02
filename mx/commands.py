@@ -29,6 +29,7 @@
 import os, shutil, fnmatch, subprocess
 from os.path import join, exists, dirname, isdir, pathsep, isfile
 import mx
+from argparse import ArgumentParser
 
 _maxine_home = dirname(dirname(__file__))
 _vmdir = None
@@ -653,6 +654,27 @@ _patternHelp="""
 def _vm_image():
     return join(_vmdir, 'maxine.vm')
 
+def wikidoc(args):
+    """generate Confluence Wiki format for package-info.java files"""
+    
+    # Ensure the wiki doclet is up to date
+    mx.build(['--projects', 'com.oracle.max.tools'])
+    
+    # the WikiDoclet cannot see the -classpath argument passed to javadoc so we pass the
+    # full list of projects as an explicit argument, thereby enabling it to map classes
+    # to projects, which is needed to generate Wiki links to the source code.
+    # There is no virtue in running the doclet on dependent projects as there are
+    # no generated links between Wiki pages
+    toolsDir = mx.project('com.oracle.max.tools').output_dir()
+    baseDir = mx.project('com.oracle.max.base').output_dir()
+    dp = os.pathsep.join([toolsDir, baseDir])
+    project_list = ','.join(p.name for p in mx.sorted_deps())
+    for a in ['-docletpath', dp, '-doclet', 'com.oracle.max.tools.javadoc.wiki.WikiDoclet', '-projects', project_list]:
+        args.append('--arg')
+        args.append('@' + a)
+    
+    mx.javadoc(args, parser=ArgumentParser('mx wikidoc'), docDir='wikidoc', includeDeps=False)
+
 def mx_init():
     mx.add_argument('--vmdir', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
 
@@ -684,7 +706,8 @@ def mx_init():
         'test': [test, '[options]'],
         'verify': [verify, '[options] patterns...', _patternHelp],
         'view': [view, '[options]'],
-        'vm': [vm, '[options] [class | -jar jarfile]  [args...]']
+        'vm': [vm, '[options] [class | -jar jarfile]  [args...]'],
+        'wikidoc': [wikidoc, '[options]']
     }
     mx.commands.update(commands)
 

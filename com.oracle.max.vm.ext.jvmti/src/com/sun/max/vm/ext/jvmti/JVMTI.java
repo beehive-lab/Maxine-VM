@@ -45,6 +45,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.ext.jvmti.JVMTIBreakpoints.*;
 import com.sun.max.vm.ext.jvmti.JVMTIException.*;
 import com.sun.max.vm.ext.jvmti.JVMTIThreadFunctions.*;
@@ -57,7 +58,7 @@ import com.sun.max.vm.ti.*;
 /**
  * The heart of the Maxine JVMTI implementation.
  * Handles environments, event handling.
- * Supports both standard (native) agents and the Java agents written to {@link JJVMTI}.
+ * Supports both standard (native) agents and the Java agents written to {@link JJVMTIStd}.
  */
 public class JVMTI {
     /**
@@ -77,10 +78,6 @@ public class JVMTI {
          * The per-thread event settings for this agent.
          */
         JVMTIEvent.PerThreadSettings perThreadEventSettings = new JVMTIEvent.PerThreadSettings();
-        /**
-         *  JVMTI thread local storage.
-         */
-        JVMTIThreadLocalStorage tls = new JVMTIThreadLocalStorage();
 
         boolean isFree() {
             return false;
@@ -110,28 +107,15 @@ public class JVMTI {
     }
 
     /**
-     * Subclass used for agents that use {@link JJVMTI}.
-     * In order to access the callbacks in the generic event handling code
-     * we make this class implement {@link JJVMTI.EventCallbacks} and provide
-     * default, empty, implementations.
+     * Abstract subclass used for agents that use {@link JJVMTI}.
      */
-    public static class JavaEnv extends Env implements JJVMTI.EventCallbacks {
-        private EnumSet<JVMTICapabilities.E> capabilities = EnumSet.noneOf(JVMTICapabilities.E.class);
-        public void agentStartup() { }
-        public void breakpoint(Thread thread, Method method, long location) { }
-        public void classLoad(Thread thread, Class klass) { }
-        public byte[] classFileLoadHook(ClassLoader loader, String name,
-                               ProtectionDomain protectionDomain, byte[] classData) {
-            return null;
+    public static class JavaEnv extends Env {
+        final EnumSet<JVMTICapabilities.E> capabilities = EnumSet.noneOf(JVMTICapabilities.E.class);
+        final JJVMTI.EventCallbacks callbackHandler;
+        protected JavaEnv(JJVMTI.EventCallbacks callbackHandler) {
+            this.callbackHandler = callbackHandler;
         }
-        public void garbageCollectionStart() { }
-        public void garbageCollectionFinish() { }
-        public void methodEntry(Thread thread, Method method) { }
-        public void methodExit(Thread thread, Method method) { }
-        public void threadStart(Thread thread) { }
-        public void threadEnd(Thread thread) { }
-        public void vmDeath() { }
-        public void vmInit() { }
+
     }
 
     static class JVMTIHandler extends NullVMTIHandler implements VMTIHandler {
@@ -184,6 +168,16 @@ public class JVMTI {
             // Have to send both events
             JVMTI.event(JVMTI_EVENT_CLASS_LOAD, classActor);
             JVMTI.event(JVMTI_EVENT_CLASS_PREPARE, classActor);
+        }
+
+        @Override
+        public void methodCompiled(ClassMethodActor classMethodActor) {
+            JVMTI.event(JVMTI_EVENT_COMPILED_METHOD_LOAD, classMethodActor);
+        }
+
+        @Override
+        public void methodUnloaded(ClassMethodActor classMethodActor) {
+            JVMTI.event(JVMTI_EVENT_COMPILED_METHOD_UNLOAD, classMethodActor);
         }
 
         @Override
@@ -411,7 +405,7 @@ public class JVMTI {
         for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
             JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
             if (javaEnv != null) {
-                javaEnv.agentStartup();
+                javaEnv.callbackHandler.onBoot();
             }
         }
         phase = JVMTI_PHASE_PRIMORDIAL;
@@ -475,6 +469,8 @@ public class JVMTI {
         int eventId;
         if (opcode == -1) {
             eventId = JVMTI_EVENT_METHOD_ENTRY;
+        } else if (opcode == -2) {
+            eventId = JVMTI_EVENT_METHOD_EXIT;
         } else {
             switch (opcode) {
                 case Bytecodes.GETFIELD:
@@ -652,67 +648,105 @@ public class JVMTI {
                 Thread currentThread = Thread.currentThread();
                 switch (eventId) {
                     case VM_INIT:
-                        javaEnv.vmInit();
+                        javaEnv.callbackHandler.vmInit();
                         break;
 
                     case VM_DEATH:
-                        javaEnv.vmDeath();
+                        javaEnv.callbackHandler.vmDeath();
                         break;
 
                     case THREAD_START:
-                        javaEnv.threadStart(currentThread);
+                        javaEnv.callbackHandler.threadStart(currentThread);
                         break;
 
                     case THREAD_END:
-                        javaEnv.threadEnd(currentThread);
+                        javaEnv.callbackHandler.threadEnd(currentThread);
                         break;
 
                     case GARBAGE_COLLECTION_START:
-                        javaEnv.garbageCollectionStart();
+                        javaEnv.callbackHandler.garbageCollectionStart();
                         break;
 
                     case GARBAGE_COLLECTION_FINISH:
-                        javaEnv.garbageCollectionFinish();
+                        javaEnv.callbackHandler.garbageCollectionFinish();
                         break;
 
                     case CLASS_LOAD:
-                        javaEnv.classLoad(currentThread, asClassActor(arg1).javaClass());
+                        javaEnv.callbackHandler.classLoad(currentThread, asClassActor(arg1));
                         break;
 
-                    case METHOD_ENTRY:
-                        javaEnv.methodEntry(currentThread, asClassMethodActor(arg1).toJava());
+                    case COMPILED_METHOD_LOAD: {
+                        ClassMethodActor cma = asClassMethodActor(arg1);
+                        TargetMethod tm = cma.currentTargetMethod();
+                        javaEnv.callbackHandler.compiledMethodLoad(cma, tm.codeLength(), tm.start(), null, null);
                         break;
+                    }
 
-                        /*
+                    case METHOD_ENTRY: {
+                        javaEnv.callbackHandler.methodEntry(currentThread, asClassMethodActor(arg1));
+                        break;
+                    }
+
+                    case METHOD_EXIT: {
+                        FramePopEventData framePopEventData = asFramePopEventData(arg1);
+                        javaEnv.callbackHandler.methodExit(currentThread, MethodID.toMethodActor(framePopEventData.methodID),
+                                            framePopEventData.wasPoppedByException, framePopEventData.value);
+                        break;
+                    }
+
                     case FIELD_ACCESS:
-                    case FIELD_MODIFICATION:
-                        invokeFieldAccessCallback(callback, cstruct, currentThreadHandle(), asFieldEventData(arg1));
+                    case FIELD_MODIFICATION: {
+                        invokeFieldAccessCallback(javaEnv.callbackHandler, currentThread, asFieldEventData(arg1));
                         break;
+                    }
 
-                    case BREAKPOINT:
                     case SINGLE_STEP:
+                    case BREAKPOINT:
                         EventBreakpointID id = asEventBreakpointID(arg1);
-                        invokeBreakpointCallback(callback, cstruct, currentThreadHandle(), id.methodID, id.location);
+                        MethodID methodId = MethodID.fromWord(Address.fromLong(id.methodID));
+                        javaEnv.callbackHandler.breakpoint(currentThread, MethodID.toMethodActor(methodId), id.location);
                         break;
 
                     case FRAME_POP:
                         FramePopEventData framePopEventData = asFramePopEventData(arg1);
-                        invokeFramePopCallback(callback, cstruct, currentThreadHandle(), framePopEventData.methodID, framePopEventData.wasPoppedByException);
+                        javaEnv.callbackHandler.framePop(currentThread, MethodID.toMethodActor(framePopEventData.methodID), framePopEventData.wasPoppedByException);
                         break;
 
-                    case EXCEPTION:
-                    case EXCEPTION_CATCH:
+                    case EXCEPTION: {
                         ExceptionEventData exceptionEventData = asExceptionEventData(arg1);
-                        invokeExceptionCallback(callback, cstruct, eventId == EXCEPTION_CATCH, currentThreadHandle(), exceptionEventData.methodID, exceptionEventData.location,
-                                        JniHandles.createLocalHandle(exceptionEventData.throwable), exceptionEventData.catchMethodID, exceptionEventData.catchLocation);
+                        javaEnv.callbackHandler.exception(currentThread,
+                                        MethodID.toMethodActor(exceptionEventData.methodID), exceptionEventData.location,
+                                        exceptionEventData.throwable,
+                                        MethodID.toMethodActor(exceptionEventData.catchMethodID), exceptionEventData.catchLocation);
                         break;
-*/
+                    }
+
+                    case EXCEPTION_CATCH: {
+                        ExceptionEventData exceptionEventData = asExceptionEventData(arg1);
+                        javaEnv.callbackHandler.exceptionCatch(currentThread,
+                                        MethodID.toMethodActor(exceptionEventData.methodID), exceptionEventData.location,
+                                        exceptionEventData.throwable);
+                        break;
+                    }
+
+                    default:
+                        assert false;
                 }
             }
         }
         if (eventId == VM_DEATH) {
             phase = JVMTI_PHASE_DEAD;
         }
+    }
+
+    private static Member getMethodOrConstructor(MethodActor methodActor) {
+        Member member;
+        if (methodActor.isConstructor()) {
+            member = methodActor.toJavaConstructor();
+        } else {
+            member = methodActor.toJava();
+        }
+        return member;
     }
 
     private static class ThreadFieldEventData extends ThreadLocal<FieldEventData> {

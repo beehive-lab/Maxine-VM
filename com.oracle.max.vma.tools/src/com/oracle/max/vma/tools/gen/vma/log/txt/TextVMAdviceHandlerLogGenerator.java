@@ -121,7 +121,7 @@ public class TextVMAdviceHandlerLogGenerator {
             if (name.startsWith("advise") && !doneSet.contains(name) &&
                             !(name.endsWith("Return") || name.endsWith("PutStatic") || name.endsWith("GetStatic"))) {
                 String p = getNthParameterName(m, 1);
-                if (p != null && p.equals("Object")) {
+                if (p != null && (p.equals("Object") || p.equals("Throwable"))) {
                     if (first) {
                         first = false;
                     } else {

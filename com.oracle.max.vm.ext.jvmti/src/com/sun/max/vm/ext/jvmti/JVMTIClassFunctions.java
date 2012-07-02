@@ -139,7 +139,7 @@ class JVMTIClassFunctions {
             if (javaEnv == null || !JVMTIEvent.isEventSet(javaEnv, JVMTIEvent.CLASS_FILE_LOAD_HOOK, VmThread.current())) {
                 continue;
             }
-            byte[] newClassfileBytes = javaEnv.classFileLoadHook(classLoader, className, protectionDomain, classfileBytes);
+            byte[] newClassfileBytes = javaEnv.callbackHandler.classFileLoadHook(classLoader, className, protectionDomain, classfileBytes);
             if (newClassfileBytes != null) {
                 classfileBytes = newClassfileBytes;
                 changed = true;
@@ -229,8 +229,7 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-    static int getClassStatus(Class klass, Pointer statusPtr) {
-        ClassActor classActor = ClassActor.fromJava(klass);
+    static int getClassStatus(ClassActor classActor) {
         int status = 0;
         if (classActor.isArrayClass()) {
             status = JVMTI_CLASS_STATUS_ARRAY;
@@ -250,7 +249,15 @@ class JVMTIClassFunctions {
                 status = JVMTI_CLASS_STATUS_ERROR;
             }
         }
-        statusPtr.setInt(status);
+        return status;
+    }
+
+    static int getClassStatus(Class<?> klass) {
+        return getClassStatus(ClassActor.fromJava(klass));
+    }
+
+    static int getClassStatus(Class<?> klass, Pointer statusPtr) {
+        statusPtr.setInt(getClassStatus(klass));
         return JVMTI_ERROR_NONE;
     }
 
@@ -267,7 +274,9 @@ class JVMTIClassFunctions {
      * Union class to handle native/java variants for {@link #getLoadedClasses} etc.
      */
     private static class LoadedClassesUnion extends ModeUnion {
+        boolean actors;
         Class[] classArray;
+        ClassActor[] classActorArray;
         Pointer classesArrayPtr;
         int classCount;
 
@@ -332,6 +341,14 @@ class JVMTIClassFunctions {
         return lcu.classArray;
     }
 
+    static ClassActor[] getLoadedClassActors() {
+        LoadedClassesUnion lcu = new LoadedClassesUnion(false);
+        lcu.actors = true;
+        getLoadedClasses(lcu);
+        return lcu.classActorArray;
+
+    }
+
     private static int getLoadedClasses(LoadedClassesUnion lcu) {
         // TODO handle all class loaders, requires changes to Maxine
         Collection<ClassActor> bootClassActors = ClassRegistry.makeRegistry(BootClassLoader.BOOT_CLASS_LOADER).getClassActors();
@@ -351,7 +368,11 @@ class JVMTIClassFunctions {
                 return JVMTI_ERROR_OUT_OF_MEMORY;
             }
         } else {
-            lcu.classArray = new Class[totalSize];
+            if (lcu.actors) {
+                lcu.classActorArray = new ClassActor[totalSize];
+            } else {
+                lcu.classArray = new Class[totalSize];
+            }
         }
         int bootClassActorsCopied = copyClassActors(lcu, bootClassActors, 0, bootClassActorsSize);
         int systemClassActorsCopied = copyClassActors(lcu, systemClassActors, bootClassActorsCopied, systemClassActorsSize);
@@ -386,7 +407,11 @@ class JVMTIClassFunctions {
                 if (lcu.isNative) {
                     lcu.classesArrayPtr.setWord(arrayIndex + index, JniHandles.createLocalHandle(klass));
                 } else {
-                    lcu.classArray[arrayIndex + index] = klass;
+                    if (lcu.actors) {
+                        lcu.classActorArray[arrayIndex + index] = classActor;
+                    } else {
+                        lcu.classArray[arrayIndex + index] = klass;
+                    }
                 }
                 index++;
             } else {
@@ -482,7 +507,10 @@ class JVMTIClassFunctions {
         if (error == JVMTI_ERROR_NONE) {
             return lvtu.localVariableEntryArray;
         } else {
-            throw new JJVMTI.Exception(error);
+            if (error == JVMTI_ERROR_ABSENT_INFORMATION) {
+                return new JJVMTI.LocalVariableEntry[0];
+            }
+            throw new JJVMTI.JJVMTIException(error);
         }
     }
 
@@ -491,6 +519,8 @@ class JVMTIClassFunctions {
             return JVMTI_ERROR_NATIVE_METHOD;
         }
         LocalVariableTable table = classMethodActor.codeAttribute().localVariableTable();
+        // Maxine does not (currently) distinguish a class file with no LocalVariableTableAttribute
+        // and one with an empty table.
         if (table.isEmpty()) {
             return JVMTI_ERROR_ABSENT_INFORMATION;
         }
