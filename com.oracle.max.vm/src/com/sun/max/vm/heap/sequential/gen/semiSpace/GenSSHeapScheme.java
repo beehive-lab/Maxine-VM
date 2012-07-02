@@ -82,7 +82,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 }
             } else {
                 // Force full collection.
-                Heap.collectGarbage(Size.ZERO);
+                Heap.collectGarbage(Size.zero());
             }
             return Address.zero();
         }
