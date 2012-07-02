@@ -46,6 +46,7 @@ public class InspectorGCDemo {
         long n = 0;
         while (n < nBytes) {
             int s = rand.nextInt(100);
+            @SuppressWarnings("unused")
             byte [] b = new byte[s];
             n += arrayHeader + s;
         }
