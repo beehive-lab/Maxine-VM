@@ -75,7 +75,7 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
 
     public ObjectStatus objectStatusAt(Address origin) throws TeleError {
         TeleError.check(objectRegion.memoryRegion().contains(origin), "Location is outside region");
-        final WeakReference<RemoteReference> weakRef = originToReference.get(origin);
+        final WeakReference<RemoteReference> weakRef = originToReference.get(origin.toLong());
         if (weakRef != null) {
             final RemoteReference knownReference = weakRef.get();
             if (knownReference != null) {
