@@ -784,7 +784,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      */
     private class TupleObjectReferenceRenderer extends AbstractReferenceRenderer {
         public String referenceLabelText(MaxObject object) {
-            final TeleTupleObject teleTupleObject = (TeleTupleObject) object;
+            final TeleObject teleTupleObject = (TeleObject) object;
             final ClassActor classActorForType = teleTupleObject.classActorForObjectType();
             if (classActorForType != null) {
                 return objectReference(null, teleTupleObject, null, classActorForType.simpleName());
@@ -793,7 +793,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
 
         public String referenceToolTipText(MaxObject object) {
-            final TeleTupleObject teleTupleObject = (TeleTupleObject) object;
+            final TeleObject teleTupleObject = (TeleObject) object;
             final ClassActor classActorForType = teleTupleObject.classActorForObjectType();
             if (classActorForType != null) {
                 return objectReference(null, teleTupleObject, null, classActorForType.name.toString());

@@ -50,7 +50,7 @@ public final class TeleDynamicHubForwarderQuasi extends TeleDynamicHub {
     @Override
     public TeleHub fetchTeleHub() {
         // final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
-        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(jumpForwarder()).asAddress());
+        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(jumpForwarder(reference())).asAddress());
     }
 
     @Override

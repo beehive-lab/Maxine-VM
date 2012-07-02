@@ -61,7 +61,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return
      */
     protected TeleClassActor fetchTeleClassActor() {
-        final Reference classActorReference = fields().Hub_classActor.readReference(reference());
+        final Reference classActorReference = jumpForwarder(fields().Hub_classActor.readReference(reference()));
         return (TeleClassActor) objects().makeTeleObject(classActorReference);
     }
 
