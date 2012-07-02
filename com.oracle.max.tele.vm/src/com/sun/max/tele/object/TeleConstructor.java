@@ -43,7 +43,7 @@ public final class TeleConstructor extends TeleTupleObject {
      */
     public Constructor toJava() {
         if (constructor == null) {
-            final Reference methodActorReference = fields().Constructor_methodActor.readReference(reference());
+            final Reference methodActorReference = jumpForwarder(fields().Constructor_methodActor.readReference(reference()));
             final TeleMethodActor teleMethodActor = (TeleMethodActor) objects().makeTeleObject(methodActorReference);
             if (teleMethodActor != null) {
                 constructor = teleMethodActor.methodActor().toJavaConstructor();

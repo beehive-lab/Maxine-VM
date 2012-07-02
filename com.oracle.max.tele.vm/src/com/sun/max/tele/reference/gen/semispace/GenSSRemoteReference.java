@@ -445,7 +445,7 @@ public class GenSSRemoteReference extends RemoteReference {
             }
             @Override
             Address origin(GenSSRemoteReference ref) {
-                return ref.alternateOrigin;
+                return ref.origin;
             }
             @Override
             Address forwardedFrom(GenSSRemoteReference ref) {

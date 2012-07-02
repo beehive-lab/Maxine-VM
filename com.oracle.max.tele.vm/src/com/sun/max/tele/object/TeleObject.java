@@ -375,7 +375,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     public Address headerAddress(HeaderField headerField) {
-        return origin().plus(headerOffset(headerField));
+        return reference().origin().plus(headerOffset(headerField));
     }
 
     public final TeleFixedMemoryRegion headerMemoryRegion(HeaderField headerField) {
@@ -390,11 +390,6 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
             teleHub = fetchTeleHub();
         }
         return teleHub;
-    }
-
-    protected final RemoteReference jumpForwarder() {
-        assert reference.status().isForwarder();
-        return referenceManager().makeReference(reference.forwardedTo());
     }
 
     /**
@@ -688,6 +683,10 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         } finally {
             Trace.end(COPY_TRACE_VALUE, classMessage + " [" + copier.numberOfCopies() + " objects]");
         }
+    }
+
+    protected static Reference jumpForwarder(Reference reference) {
+        return ((RemoteReference) reference).jumpForwarder();
     }
 
     @Override

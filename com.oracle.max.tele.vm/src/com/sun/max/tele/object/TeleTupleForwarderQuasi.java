@@ -42,7 +42,7 @@ public class TeleTupleForwarderQuasi extends TeleTupleObject {
 
     @Override
     protected TeleHub fetchTeleHub() {
-        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(jumpForwarder()).asAddress());
+        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(jumpForwarder(reference())).asAddress());
     }
 
     @Override

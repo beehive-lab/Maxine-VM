@@ -44,7 +44,7 @@ public class TeleArrayForwarderQuasi extends TeleArrayObject {
 
     @Override
     protected TeleHub fetchTeleHub() {
-        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(jumpForwarder()).asAddress());
+        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(jumpForwarder(reference())).asAddress());
     }
 
     @Override
