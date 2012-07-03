@@ -971,27 +971,23 @@ public final class JDK_java_lang_System {
     }
 
     @PLATFORM(os = "!windows")
+    /**
+     * Set basic Unix properties.
+     * Most properties are inherited from the values set when the boot image was built.
+     * For most uses of Maxine this is acceptable but, to be correct, the environment sensitive
+     * properties, e.g. {@code user.country} should not be baked into the image, but reset
+     * appropriately.
+     */
     private static void initBasicUnixProperties(Properties properties) {
-        setIfAbsent(properties, "java.io.tmpdir", "/var/tmp");
-        setIfAbsent(properties, "java.awt.printerjob", "sun.print.PSPrinterJob");
-        setIfAbsent(properties, "os.version", ""); // TODO
-        setIfAbsent(properties, "sun.os.patch.level", "unknown");
-        setIfAbsent(properties, "java.awt.graphicsenv", "sun.awt.X11GraphicsEnvironment");
-        setIfAbsent(properties, "file.encoding", "UTF-8");
-        setIfAbsent(properties, "sun.jnu.encoding", "UTF-8");
+        setIfAbsent(properties, "java.io.tmpdir", "/var/tmp"); // this is questionable, and inconsistent with Hotspot on some platforms
 
         if (getenv("GNOME_DESKTOP_SESSION_ID", false) != null) {
             setIfAbsent(properties, "sun.desktop", "gnome");
         }
-        setIfAbsent(properties, "user.language", "en"); // TODO
-        setIfAbsent(properties, "user.country", "US"); // TODO
-        setIfAbsent(properties, "user.variant", ""); // TODO
 
-        fileSeparator = "/";
-        pathSeparator = ":";
-        setIfAbsent(properties, "line.separator", "\n");
-        setIfAbsent(properties, "file.separator", fileSeparator);
-        setIfAbsent(properties, "path.separator", pathSeparator);
+        fileSeparator = properties.getProperty("file.separator");
+        pathSeparator = properties.getProperty("path.separator");
+        FatalError.check(fileSeparator != null && pathSeparator != null, "file.separator or path.separator property is null");
     }
 
     /**

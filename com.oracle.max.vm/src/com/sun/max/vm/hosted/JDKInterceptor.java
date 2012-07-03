@@ -56,6 +56,12 @@ public final class JDKInterceptor {
      * Strictly speaking java vendor.* should not be inherited. However, from JDK 7 onwards all the platforms on which
      * Maxine is built have Oracle as the vendor so it is ok. [On Mac OS/JDK 6 Maxine will incorrectly have java.vendor
      * set to Apple.]
+     *
+     * Evidently several of these properties are sensitive to the environment the VM is running in.
+     * This isn't important for the typical current uses of Maxine, but should be fixed in due course.
+     * The problem is that finding all the JDK code that might be baked into the image and depends
+     * on such a property. For now, it is better to inherit the host VM value, than simply guess it
+     * on startup, because most users run the VM in the same environment where they build it.
      */
     public static final String[] REMEMBERED_PROPERTY_NAMES = {
         "awt.toolkit",
@@ -69,11 +75,18 @@ public final class JDKInterceptor {
         "java.runtime.version",
         "java.awt.graphicsenv",
         "java.awt.printerjob",
+        "file.encoding",
         "file.encoding.pkg",
         "file.separator",
+        "line.separator",
         "path.separator",
+        "sun.jnu.encoding",
         "sun.io.unicode.encoding",
+        "sun.os.patch.level",
         "os.version",
+        "user.language",
+        "user.country",
+        "user.variant"
     };
 
     public static final Properties initialSystemProperties = buildInitialSystemProperties();
