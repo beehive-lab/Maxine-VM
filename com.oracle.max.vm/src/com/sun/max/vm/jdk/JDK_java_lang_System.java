@@ -833,7 +833,7 @@ public final class JDK_java_lang_System {
         final String jreLibPath = asFilesystemPath(jrePath, "lib");
         final String jreLibIsaPath = os == OS.DARWIN ? jreLibPath : asFilesystemPath(jreLibPath, isa);
 
-        checkSetBootLibraryPath(properties, asClasspath(getenvExecutablePath(), asClasspath(getenvExecutablePath(), jreLibIsaPath)));
+        checkSetBootLibraryPath(properties, asClasspath(getenvExecutablePath(), jreLibIsaPath));
 
         String bootClassPath = null;
         if (bootClasspathOption.isPresent()) {
