@@ -60,7 +60,7 @@ public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
             return;
         }
         System.out.printf("Method entry: %s%n", methodActor.format("%H.%n"));
-        JJVMTI.LocalVariableEntry[] lve = jjvmti.getLocalVariableTable(methodActor);
+        JJVMTI.LocalVariableEntry[] lve = jjvmti.getLocalVariableTable((ClassMethodActor) methodActor);
         if (lve.length == 0) {
             return;
         }

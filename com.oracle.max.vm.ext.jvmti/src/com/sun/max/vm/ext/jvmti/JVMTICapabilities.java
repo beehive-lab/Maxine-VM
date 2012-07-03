@@ -51,7 +51,7 @@ public class JVMTICapabilities {
         CAN_GET_MONITOR_INFO(false),
         CAN_POP_FRAME(false),
         CAN_REDEFINE_CLASSES(false),
-        CAN_SIGNAL_THREAD(false),
+        CAN_SIGNAL_THREAD(true),
         CAN_GET_SOURCE_FILE_NAME(true),
         CAN_GET_LINE_NUMBERS(true),
         CAN_GET_SOURCE_DEBUG_EXTENSION(true),

@@ -27,6 +27,7 @@ import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import static com.sun.max.vm.VMProperty.*;
 
 import java.io.*;
 import java.nio.charset.*;
@@ -53,6 +54,9 @@ import com.sun.max.vm.type.*;
  */
 @METHOD_SUBSTITUTIONS(System.class)
 public final class JDK_java_lang_System {
+
+    public static final String DARWIN_JAVA_HOME_JDK6_DEFAULT = "/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home";
+    public static final String DARWIN_JAVA_HOME_JDK7_DEFAULT = "/Library/Java/JavaVirtualMachines/1.7.0.jdk/Contents/Home";
 
     /**
      * Register any native methods through JNI.
@@ -363,14 +367,16 @@ public final class JDK_java_lang_System {
      * @param properties the properties set in which to set the property
      * @param name the name of the property
      * @param value the value to which the property will be set if it doesn't already have a value
+     * @return the value,whether already set of set by this call
      */
-    private static void setIfAbsent(Properties properties, String name, String value) {
+    private static String setIfAbsent(Properties properties, String name, String value) {
         if (properties.containsKey(name)) {
-            return; // property has already been set by command line argument parsing
+            return properties.getProperty(name); // property has already been set by command line argument parsing
         }
         if (value != null) {
             properties.setProperty(name, value);
         }
+        return value;
     }
 
     /**
@@ -408,14 +414,14 @@ public final class JDK_java_lang_System {
                 String javaHome = getenv("JAVA_HOME", false);
                 if (JDK.JDK_VERSION == JDK.JDK_6) {
                     if (javaHome == null) {
-                        javaHome = "/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home";
+                        javaHome = DARWIN_JAVA_HOME_JDK6_DEFAULT;
                     }
                     if (!javaHome.endsWith("/Home")) {
                         javaHome = javaHome + "/Home";
                     }
                 } else if (JDK.JDK_VERSION == JDK.JDK_7) {
                     if (javaHome == null) {
-                        javaHome = "/System/Library/Frameworks/JavaVM.framework/Versions/1.7/Home";
+                        javaHome = DARWIN_JAVA_HOME_JDK7_DEFAULT;
                     }
                     if (!javaHome.endsWith("/jre")) {
                         javaHome = javaHome + "/jre";
@@ -661,21 +667,19 @@ public final class JDK_java_lang_System {
         VMOptions.addParsedSystemProperties(properties);
 
         // 2. set up basic Maxine configuration information
-        setIfAbsent(properties, "java.vm.name", MaxineVM.name());
-        setIfAbsent(properties, "java.vm.version", MaxineVM.VERSION_STRING);
-        setIfAbsent(properties, "java.vm.info", vm().compilationBroker.mode());
+
+        JAVA_VM_INFO.updateImmutableValue(vm().compilationBroker.mode());
+        // Copy the VM properties that have values already
+        for (VMProperty vmProperty : VMProperty.VALUES) {
+            String value = vmProperty.value();
+            if (value != null) {
+                // value is either set at boot image time, or was set by a VMTI agent or was specified on the command line
+                properties.setProperty(vmProperty.property, value);
+            }
+        }
 
         setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width()));
         setIfAbsent(properties, "sun.cpu.endian", Word.endianness().name().toLowerCase());
-
-        switch (Platform.platform().endianness()) {
-            case LITTLE:
-                setIfAbsent(properties, "sun.io.unicode.encoding", "UnicodeLittle");
-                break;
-            case BIG:
-                setIfAbsent(properties, "sun.io.unicode.encoding", "UnicodeBig");
-                break;
-        }
 
         String isa = properties.getProperty("os.arch");
         if (isa == null) {
@@ -732,17 +736,18 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "java.java2d.fontpath", getenv("JAVA2D_FONTPATH", false));
 
         // 6. set up the java home
-        String javaHome = properties.getProperty("java.home");
+        String javaHome = properties.getProperty(JAVA_HOME.property);
         if (javaHome == null) {
             javaHome = findJavaHome();
-            setIfAbsent(properties, "java.home", javaHome);
+            setIfAbsent(properties, JAVA_HOME.property, javaHome);
         }
+        JAVA_HOME.setValue(javaHome);
 
         // 7. set up classpath and library path
         final String[] javaAndZipLibraryPaths = new String[2];
         if (Platform.platform().os == OS.DARWIN) {
             if (JDK.JDK_VERSION == JDK.JDK_6) {
-                initDarwinPathProperties(properties, javaHome, javaAndZipLibraryPaths);
+                initDarwinJDK6PathProperties(properties, javaHome, javaAndZipLibraryPaths);
             } else {
                 initUnixPathProperties(properties, javaHome, isa, javaAndZipLibraryPaths);
             }
@@ -751,14 +756,15 @@ public final class JDK_java_lang_System {
         } else {
             initUnixPathProperties(properties, javaHome, isa, javaAndZipLibraryPaths);
         }
-        setIfAbsent(properties, "java.library.path", getenvJavaLibraryPath());
+        JAVA_LIBRARY_PATH.setValue(setIfAbsent(properties, JAVA_LIBRARY_PATH.property, getenvJavaLibraryPath()));
 
         // 8. set up the class path
         // N.B. -jar overrides any other classpath setting
+        String javaClassPath = null;
         if (VMOptions.jarFile() == null) {
             // classpath search order (copying the semantic from the java command):
             // (1) the -cp command line option
-            String javaClassPath = classpathOption.getValue();
+            javaClassPath = classpathOption.getValue();
             if (javaClassPath == null) {
                 // (2) the property java.class.path
                 javaClassPath = properties.getProperty("java.class.path");
@@ -771,10 +777,11 @@ public final class JDK_java_lang_System {
                     }
                 }
             }
-            properties.setProperty("java.class.path", javaClassPath);
         } else {
-            properties.setProperty("java.class.path", VMOptions.jarFile());
+            javaClassPath = VMOptions.jarFile();
         }
+        properties.setProperty(JAVA_CLASS_PATH.property, javaClassPath);
+        JAVA_CLASS_PATH.setValue(javaClassPath);
 
         // 9. load the native code for zip and java libraries
         BootClassLoader.BOOT_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
@@ -811,7 +818,7 @@ public final class JDK_java_lang_System {
     }
 
     /**
-     * Initializes the sun.boot.library.path, sun.boot.path and java.ext.dirs system properties when running on Unix.
+     * Initializes the sun.boot.library.path, sun.boot.path, java.endorsed.dirs and java.ext.dirs system properties when running on Unix.
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
@@ -826,38 +833,55 @@ public final class JDK_java_lang_System {
         final String jreLibPath = asFilesystemPath(jrePath, "lib");
         final String jreLibIsaPath = os == OS.DARWIN ? jreLibPath : asFilesystemPath(jreLibPath, isa);
 
-        setIfAbsent(properties, "sun.boot.library.path", asClasspath(getenvExecutablePath(), jreLibIsaPath));
+        checkSetBootLibraryPath(properties, asClasspath(getenvExecutablePath(), asClasspath(getenvExecutablePath(), jreLibIsaPath)));
 
         String bootClassPath = null;
         if (bootClasspathOption.isPresent()) {
             bootClassPath = bootClasspathOption.path();
         } else {
-            bootClassPath = join(pathSeparator,
+            String bootClassPathA = join(pathSeparator,
                             asFilesystemPath(jreLibPath, "resources.jar"),
                             asFilesystemPath(jreLibPath, "rt.jar"),
                             asFilesystemPath(jreLibPath, "sunrsasign.jar"),
                             asFilesystemPath(jreLibPath, "jsse.jar"),
                             asFilesystemPath(jreLibPath, "jce.jar"),
-                            asFilesystemPath(jreLibPath, "charsets.jar"),
-                            asFilesystemPath(jrePath, "classes"));
+                            asFilesystemPath(jreLibPath, "charsets.jar"));
+            if (JDK.JDK_VERSION == JDK.JDK_7) {
+                bootClassPathA = join(pathSeparator, bootClassPathA, asFilesystemPath(jreLibPath, "jfr.jar"));
+                if (os == OS.DARWIN) {
+                    bootClassPathA = join(pathSeparator, bootClassPathA, asFilesystemPath(jreLibPath, "JObjC.jar"));
+                }
+            }
+            bootClassPath = join(pathSeparator, bootClassPathA, asFilesystemPath(jrePath, "classes"));
         }
-        setIfAbsent(properties, "sun.boot.class.path", checkAugmentBootClasspath(bootClassPath));
+        SUN_BOOT_CLASS_PATH.setValue(setIfAbsent(properties, SUN_BOOT_CLASS_PATH.property, checkAugmentBootClasspath(bootClassPath)));
 
         javaAndZipLibraryPaths[0] = jreLibIsaPath;
         javaAndZipLibraryPaths[1] = jreLibIsaPath;
 
+        String javaEndorsedDirs = asFilesystemPath(javaHome, "lib/endorsed");
+        JAVA_ENDORSED_DIRS.setValue(setIfAbsent(properties, JAVA_ENDORSED_DIRS.property, javaEndorsedDirs));
+
+        String javaExtDirs = null;
+        String extPath = asFilesystemPath(javaHome, "lib/ext");
         if (os == OS.LINUX) {
-            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/java/packages/lib/ext"));
+            javaExtDirs = asClasspath(extPath, "/usr/java/packages/lib/ext");
         } else if (os == OS.SOLARIS) {
-            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/jdk/packages/lib/ext"));
+            javaExtDirs = asClasspath(extPath, "/usr/jdk/packages/lib/ext");
         } else if (os == OS.DARWIN) {
-            // TODO (ds) I'm sure what (if any) extra extension directories exist for JDK 7 on Mac OS X
-            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext")));
+            // laundry list (cf Hotspot)!
+            final String userHome = properties.getProperty("user.home");
+            if (userHome != null) {
+                javaExtDirs = new File(userHome, "Library/Java/Extensions").getAbsolutePath();
+            }
+            javaExtDirs = join(pathSeparator, javaExtDirs, asClasspath(extPath), "/Library/Java/Extensions", "/Network/Library/Java/Extensions",
+                            "/System/Library/Java/Extensions", "/usr/lib/java");
         } else if (os == OS.MAXVE) {
-            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext")));
+            javaExtDirs = asClasspath(extPath);
         } else {
             throw ProgramError.unknownCase(os.toString());
         }
+        JAVA_EXT_DIRS.setValue(setIfAbsent(properties, JAVA_EXT_DIRS.property, javaExtDirs));
     }
 
     static String checkAugmentBootClasspath(final String xBootClassPath) {
@@ -869,6 +893,23 @@ public final class JDK_java_lang_System {
             bootClassPath = join(pathSeparator, pBootClasspathOption.path(), bootClassPath);
         }
         return bootClassPath;
+    }
+
+    /**
+     * Unlike similar properties, e.g. java.ext.dirs, Hotspot appends any command line definition of sun.boot.library.path
+     * to the default value, instead of replacing it, so we copy that behavior.
+     * @param properties
+     * @param librariesPath
+     */
+    static void checkSetBootLibraryPath(Properties properties, String librariesPath) {
+        String value = properties.getProperty(SUN_BOOT_LIBRARY_PATH.property);
+        if (value != null) {
+            value = librariesPath + ":" + value;
+        } else {
+            value = librariesPath;
+        }
+        properties.setProperty(SUN_BOOT_LIBRARY_PATH.property, value);
+        SUN_BOOT_LIBRARY_PATH.setValue(value);
     }
 
     /**
@@ -885,7 +926,7 @@ public final class JDK_java_lang_System {
     }
 
     /**
-     * Initializes the sun.boot.library.path, sun.boot.path and java.ext.dirs system properties when running on Darwin.
+     * Initializes the sun.boot.library.path, sun.boot.path, java.endorsed.dirs and java.ext.dirs system properties when running on Darwin with JDK6.
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
@@ -893,12 +934,12 @@ public final class JDK_java_lang_System {
      *            element 0 and the path to {@code libzip.jnilib} will be returned in element 1
      */
     @PLATFORM(os = "darwin")
-    private static void initDarwinPathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
+    private static void initDarwinJDK6PathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
         FatalError.check(javaHome.endsWith("/Home"), "The java.home system property should end with \"/Home\"");
         final String javaPath = Strings.chopSuffix(javaHome, "/Home");
 
         final String librariesPath = javaPath + "/Libraries";
-        setIfAbsent(properties, "sun.boot.library.path", asClasspath(getenvExecutablePath(), librariesPath));
+        checkSetBootLibraryPath(properties, asClasspath(getenvExecutablePath(), librariesPath));
 
         final String classesPath = javaPath + "/Classes";
         String bootClassPath = null;
@@ -914,17 +955,19 @@ public final class JDK_java_lang_System {
                         asFilesystemPath(classesPath, "jce.jar"),
                         asFilesystemPath(classesPath, "charsets.jar"));
         }
-        setIfAbsent(properties, "sun.boot.class.path", checkAugmentBootClasspath(bootClassPath));
+        SUN_BOOT_CLASS_PATH.setValue(setIfAbsent(properties, SUN_BOOT_CLASS_PATH.property, checkAugmentBootClasspath(bootClassPath)));
         javaAndZipLibraryPaths[0] = librariesPath;
         javaAndZipLibraryPaths[1] = librariesPath;
 
         String extDirs = "/Library/Java/Extensions:/System/Library/Java/Extensions:" + javaHome + "/lib/ext";
+        String endorsedDirs = javaHome + "/lib/endorsed";
         final String userHome = properties.getProperty("user.home");
         if (userHome != null) {
             final File userExtDir = new File(userHome, "Library/Java/Extensions/");
             extDirs += ":" + userExtDir;
         }
-        setIfAbsent(properties, "java.ext.dirs", extDirs);
+        JAVA_EXT_DIRS.setValue(setIfAbsent(properties, JAVA_EXT_DIRS.property, extDirs));
+        JAVA_ENDORSED_DIRS.setValue(setIfAbsent(properties, JAVA_ENDORSED_DIRS.property, endorsedDirs));
     }
 
     @PLATFORM(os = "!windows")

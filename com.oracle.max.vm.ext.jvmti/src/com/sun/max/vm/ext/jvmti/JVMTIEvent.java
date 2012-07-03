@@ -341,6 +341,9 @@ public class JVMTIEvent {
             jvmtiEnv.globalEventSettings = newBits;
         } else {
             // Per-thread
+            if (JVMTIThreadFunctions.checkThread(thread) == null) {
+                return JVMTI_ERROR_THREAD_NOT_ALIVE;
+            }
             long newBits = newEventBits(eventType, mode, jvmtiEnv.perThreadEventSettings.get(thread));
             if (newBits < 0) {
                 return JVMTI_ERROR_ILLEGAL_ARGUMENT;

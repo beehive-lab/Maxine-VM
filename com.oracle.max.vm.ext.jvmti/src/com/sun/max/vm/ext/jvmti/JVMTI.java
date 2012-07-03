@@ -38,19 +38,17 @@ import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.jvmti.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.ext.jvmti.JVMTIUtil.ModeUnion;
 import com.sun.max.vm.ext.jvmti.JVMTIBreakpoints.*;
 import com.sun.max.vm.ext.jvmti.JVMTIException.*;
 import com.sun.max.vm.ext.jvmti.JVMTIThreadFunctions.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
@@ -374,6 +372,8 @@ public class JVMTI {
      */
     public static void initialize() {
         NativeInterfaces.initFunctionTable(getJVMTIInterface(-1), JVMTIFunctions.jvmtiFunctions, JVMTIFunctions.jvmtiFunctionActors);
+        JVMTISystem.initSystemProperties();
+
         for (int i = 0; i < AgentVMOption.count(); i++) {
             AgentVMOption.Info info = AgentVMOption.getInfo(i);
             Word handle = Word.zero();
@@ -401,7 +401,8 @@ public class JVMTI {
                 initializeFail("agentlib: ", info.libStart, " failed to initialize");
             }
         }
-        // temporary hack to invoke any Java agents built into the image
+
+        // Invoke onBoot for any Java agents built into the image
         for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
             JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
             if (javaEnv != null) {
@@ -852,51 +853,44 @@ public class JVMTI {
     private static final byte[] JAVA_HOME_BYTES = "JAVA_HOME".getBytes();
 
     static int getPhase(Pointer phasePtr) {
-        int result = phase == JVMTI_PHASE_START ? JVMTI_PHASE_START_ORIG : phase;
+        int result = getPhase();
         phasePtr.setInt(0, result);
         return JVMTI_ERROR_NONE;
     }
 
-    static int getSystemProperty(Pointer env, Pointer property, Pointer valuePtr) {
-        int length = 0;
-        Pointer propValPtr = Pointer.zero();
-        if (MaxineVM.isPristine()) {
-            // If we are in the PRISTINE phase the majority of the system properties are not available
-            // in any easy way, as they are not setup until the STARTING phase. So we have to hand craft
-            // the implementation for a specific set of properties. Yuk.
-            if (CString.equals(property, JAVA_HOME)) {
-                propValPtr = JVMTISystem.findJavaHome();
-                if (propValPtr.isZero()) {
-                    Log.println("Environment variable JAVA_HOME not set");
-                    MaxineVM.native_exit(-1);
-                    return JVMTI_ERROR_NOT_AVAILABLE;
-                }
-                length = CString.length(propValPtr).toInt();
-            } else {
-                assert false;
-            }
-        } else {
-            try {
-                String keyString = CString.utf8ToJava(property);
-                String propVal = System.getProperty(keyString);
-                length = propVal.length();
-                byte[] propValBytes = propVal.getBytes();
-                propValPtr = Reference.fromJava(propValBytes).toOrigin().plus(JVMTIUtil.byteDataOffset);
-            } catch (Utf8Exception ex) {
-                return JVMTI_ERROR_NOT_AVAILABLE;
-            }
+    static int getPhase() {
+        return phase == JVMTI_PHASE_START ? JVMTI_PHASE_START_ORIG : phase;
+    }
+
+    private static class AgentThreadUnion extends ModeUnion {
+        final Thread thread;
+        final int priority;
+        // native
+        Pointer env;
+        Address proc;
+        Pointer arg;
+
+        AgentThreadUnion(boolean isNative, Thread thread, int priority) {
+            super(isNative);
+            this.thread = thread;
+            this.priority = priority;
         }
-        Pointer propValCopyPtr = Memory.allocate(Size.fromInt(length + 1));
-        if (propValCopyPtr.isZero()) {
-            return JVMTI_ERROR_OUT_OF_MEMORY;
-        }
-        Memory.copyBytes(propValPtr, propValCopyPtr, Size.fromInt(length));
-        propValCopyPtr.setByte(length, (byte) 0);
-        valuePtr.setWord(propValCopyPtr);
-        return JVMTI_ERROR_NONE;
+    }
+
+    static void runAgentThread(Thread thread, int priority) {
+        AgentThreadUnion agu = new AgentThreadUnion(false, thread, priority);
+        runAgentThread(agu);
     }
 
     static int runAgentThread(Pointer env, JniHandle jthread, Address proc, Pointer arg, int priority) {
+        AgentThreadUnion agu = new AgentThreadUnion(true, (Thread) jthread.unhand(), priority);
+        agu.env = env;
+        agu.proc = proc;
+        agu.arg = arg;
+        return runAgentThread(agu);
+    }
+
+    static int runAgentThread(AgentThreadUnion agu) {
         /*
          * The JVMTI spec for this says:
          *
@@ -905,18 +899,19 @@ public class JVMTI {
          * The thread is not visible to Java programming language queries but is included in JVM TI queries
          * (for example, GetAllThreads and GetAllStackTraces)."
          *
-         * Evidently there is no runnable method associated with the thread at this stage, and the default
+         * For the native variant, there is no runnable method associated with the thread at this stage, and the default
          * run method just returns. So, knowing the implementation of Thread, we create a runnable and
          * patch the "Runnable target" with an object that will invoke the "proc" native method.
          */
-        Thread agentThread = (Thread) jthread.unhand();
-        agentThread.setPriority(priority);
-        agentThread.setDaemon(true);
+        agu.thread.setPriority(agu.priority);
+        agu.thread.setDaemon(true);
 
-        new AgentThreadRunnable(env, agentThread, proc.asPointer(), arg);
+        if (agu.isNative) {
+            new AgentThreadRunnable(agu.env, agu.thread, agu.proc.asPointer(), agu.arg);
+        }
         // calling VmThread.start0 instead of Thread.start avoids adding the thread
         // to whatever thread group was set when the constructor was invoked.
-        final VmThread vmThread = VmThreadFactory.create(agentThread);
+        final VmThread vmThread = VmThreadFactory.create(agu.thread);
         vmThread.setAsJVMTIAgentThread();
         vmThread.start0();
         return JVMTI_ERROR_NONE;

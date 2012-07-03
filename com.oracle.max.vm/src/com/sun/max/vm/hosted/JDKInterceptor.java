@@ -52,7 +52,10 @@ public final class JDKInterceptor {
     }
 
     /**
-     * These are the properties that are to be remembered from the host VM on which the image was built.
+     * These are the properties that are to be remembered (inherited) from the host VM on which the image was built.
+     * Strictly speaking java vendor.* should not be inherited. However, from JDK 7 onwards all the platforms on which
+     * Maxine is built have Oracle as the vendor so it is ok. [On Mac OS/JDK 6 Maxine will incorrectly have java.vendor
+     * set to Apple.]
      */
     public static final String[] REMEMBERED_PROPERTY_NAMES = {
         "awt.toolkit",
@@ -62,10 +65,6 @@ public final class JDKInterceptor {
         "java.vendor",
         "java.vendor.url",
         "java.vendor.url.bug",
-        "java.vm.vendor",
-        "java.vm.specification.name",
-        "java.vm.specification.vendor",
-        "java.vm.specification.version",
         "java.runtime.name",
         "java.runtime.version",
         "java.awt.graphicsenv",
@@ -73,6 +72,7 @@ public final class JDKInterceptor {
         "file.encoding.pkg",
         "file.separator",
         "path.separator",
+        "sun.io.unicode.encoding",
         "os.version",
     };
 

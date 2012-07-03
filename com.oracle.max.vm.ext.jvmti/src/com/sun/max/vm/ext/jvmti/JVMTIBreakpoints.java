@@ -129,6 +129,13 @@ public class JVMTIBreakpoints {
         return createBreakpointID(methodID, location) | SINGLE_STEP;
     }
 
+    static void setBreakpoint(ClassMethodActor classMethodActor, long location) {
+        int error = setBreakpoint(classMethodActor, MethodID.fromMethodActor(classMethodActor), location);
+        if (error != JVMTI_ERROR_NONE) {
+            throw new JJVMTI.JJVMTIException(error);
+        }
+    }
+
     static int setBreakpoint(ClassMethodActor classMethodActor, MethodID methodID, long location) {
         long id = createBreakpointID(methodID, location);
         int index = tryRecordBreakpoint(id);
@@ -138,6 +145,13 @@ public class JVMTIBreakpoints {
         methodBreakpointsMap.put(classMethodActor, SENTINEL);
         JVMTICode.deOptForNewBreakpoint(classMethodActor);
         return JVMTI_ERROR_NONE;
+    }
+
+    static void clearBreakpoint(ClassMethodActor classMethodActor, long location) {
+        int error = clearBreakpoint(classMethodActor, MethodID.fromMethodActor(classMethodActor), location);
+        if (error != JVMTI_ERROR_NONE) {
+            throw new JJVMTI.JJVMTIException(error);
+        }
     }
 
     static int clearBreakpoint(ClassMethodActor classMethodActor, MethodID methodID, long location) {

@@ -31,7 +31,7 @@ public class JVMTIConstants {
     public static final int JVMTI_VERSION_1_0 = 0x30010000;
     public static final int JVMTI_VERSION_1_1 = 0x30010100;
 
-    public static final int JVMTI_VERSION = 0x30000000 + (1 * 0x10000) + (1 * 0x100) + 102;  // version: 1.1.102
+    public static final int JVMTI_VERSION = 0x30000000 + (1 * 0x10000) + (2 * 0x100) + 1;  // version: 1.2.1
 
     public static final int JVMTI_THREAD_STATE_ALIVE = 0x0001;
     public static final int JVMTI_THREAD_STATE_TERMINATED = 0x0002;

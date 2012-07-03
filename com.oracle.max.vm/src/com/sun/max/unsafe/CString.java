@@ -335,6 +335,21 @@ public final class CString {
         return cstring.getByte(string.length()) == 0;
     }
 
+    public static boolean equals(Pointer cstring1, Pointer cstring2) {
+        if (cstring1.isZero() || cstring2.isZero()) {
+            return false;
+        }
+        int i;
+        for (i = 0; i < CString.length(cstring1).toInt(); i++) {
+            final byte ch1 = cstring1.getByte(i);
+            final byte ch2 = cstring2.getByte(i);
+            if (ch2 == 0 || ch1 != ch2) {
+                return false;
+            }
+        }
+        return cstring2.getByte(i) == 0;
+    }
+
     /**
      * Determines if a given C string starts with a given prefix.
      *
