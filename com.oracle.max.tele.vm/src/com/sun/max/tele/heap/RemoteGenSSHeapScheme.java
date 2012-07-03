@@ -528,11 +528,11 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                     if (ref != null) {
                         // A reference to the object is already in one of the live map.
                         TeleError.check(ref.status().isLive());
-                    } else {
+                    } else if (objects().isPlausibleOriginUnsafe(origin)) {
                         ref = GenSSRemoteReference.createLive(this, origin, true);
                         nurseryRefMap.put(origin, ref);
                     }
-                    return ref;
+                    break;
                 }
                 // Fall-off and check live old objects. Same logic as for the reclaiming phase for old objects.
             case RECLAIMING:
@@ -542,11 +542,10 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                     if (ref != null) {
                         // A reference to the object is already in one of the live map.
                         TeleError.check(ref.status().isLive());
-                    } else {
+                    } else if (objects().isPlausibleOriginUnsafe(origin)) {
                         ref = GenSSRemoteReference.createLive(this, origin, false);
                         oldToSpaceRefMap.put(origin, ref);
                     }
-                    return ref;
                 }
                 break;
             case ANALYZING:
