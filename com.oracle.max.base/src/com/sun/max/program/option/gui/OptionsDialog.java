@@ -25,7 +25,6 @@ package com.sun.max.program.option.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 import java.util.List;
@@ -197,31 +196,6 @@ public class OptionsDialog extends JDialog {
         private final JTextField textField;
         private final JList list;
 
-        private static final Object [] nullParams = new Object[0];
-        private static final Method getSelectedValuesMethod;
-        private static final boolean selectedValuesIsList;
-        static {
-            final Class<?> [] noParams = new Class<?>[0];
-            boolean isList = true;
-            boolean tryJDK7Signature = false;
-            Method selectedMethod = null;
-            try {
-                selectedMethod = JList.class.getMethod("getSelectedValues", noParams);
-                isList = false;
-            } catch (NoSuchMethodException e) {
-                tryJDK7Signature = true;
-            }
-            if (tryJDK7Signature) {
-                try {
-                    selectedMethod = JList.class.getMethod("getSelectedValuesList", noParams);
-                } catch (NoSuchMethodException e) {
-                    throw new Error("must not happens");
-                }
-            }
-            selectedValuesIsList = isList;
-            getSelectedValuesMethod = selectedMethod;
-        }
-
         @SuppressWarnings("unchecked")
         protected ListGUIOption(Option<List<Object>> option) {
             super(option);
@@ -263,27 +237,14 @@ public class OptionsDialog extends JDialog {
             setInputAndLabelEnabled(objects != null);
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public List<Object> getValue() {
             if (guard.isSelected()) {
                 if (textField == null) {
-                    try {
-                        if (selectedValuesIsList) {
-                            return (List<Object>) getSelectedValuesMethod.invoke(this.list, nullParams);
-                        }
-                        final Object [] selectedValues = (Object []) getSelectedValuesMethod.invoke(this.list, nullParams);
-                        final List<Object> result = new LinkedList<Object>();
-                        for (Object value : selectedValues) {
-                            result.add(value);
-                        }
-                        return result;
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    } catch (IllegalArgumentException e) {
-                        e.printStackTrace();
-                    } catch (InvocationTargetException e) {
-                        e.printStackTrace();
+                    final List<Object> result = new LinkedList<Object>();
+                    // Stick to deprecated method until we EOL JDK 6 and before.
+                    for (Object value : this.list.getSelectedValues()) {
+                        result.add(value);
                     }
                     return null;
                 }
