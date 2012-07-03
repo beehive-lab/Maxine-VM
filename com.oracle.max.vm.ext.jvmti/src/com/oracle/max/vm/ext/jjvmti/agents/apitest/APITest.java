@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.jjvmti.agents.autotest;
+package com.oracle.max.vm.ext.jjvmti.agents.apitest;
 
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
@@ -42,7 +42,7 @@ import com.sun.max.vm.thread.*;
  * a test of each function. It can also be used to execute a specific test.
  *
  * Can be included in the boot image or dynamically loaded as a VM extension.
- * In the former case arguments are passed using the {@code -XX:AutoTestArgs} command line option;
+ * In the former case arguments are passed using the {@code -XX:APITestArgs} command line option;
  * in the latter case as part of the {@code -vmextension} option.
  *
  * Argument syntax: verbose,auto=blacklist,bpt=class.method,function1=args,function2=args,...
@@ -66,9 +66,9 @@ import com.sun.max.vm.thread.*;
  * </ul>
  *
  */
-public class AutoTest extends NullJJVMTICallbacks {
-    private static AutoTest autoTest;
-    private static String AutoTestArgs;
+public class APITest extends NullJJVMTICallbacks {
+    private static APITest apiTest;
+    private static String APITestArgs;
     private static TestThread testThread1;
     private static TestThread testThread2;
     private static DeadThread deadThread;
@@ -76,9 +76,9 @@ public class AutoTest extends NullJJVMTICallbacks {
     private static String taggableObject;
 
     static {
-        autoTest = (AutoTest) JJVMTIAgentAdapter.register(new AutoTest());
+        apiTest = (APITest) JJVMTIAgentAdapter.register(new APITest());
         if (MaxineVM.isHosted()) {
-            VMOptions.addFieldOption("-XX:", "AutoTestArgs", "arguments for autotest JJVMTI agent");
+            VMOptions.addFieldOption("-XX:", "testThread1", "arguments for API test JJVMTI agent");
         }
     }
 
@@ -88,7 +88,7 @@ public class AutoTest extends NullJJVMTICallbacks {
     private static class AgentThread extends Thread {
         AgentThread() {
             super();
-            setName("AutoTestAgent");
+            setName("APITestAgent");
         }
 
         @Override
@@ -111,7 +111,7 @@ public class AutoTest extends NullJJVMTICallbacks {
         TestThread(int id) {
             super();
             setDaemon(true);
-            setName("AutoTest" + id);
+            setName("APITest" + id);
         }
 
         @Override
@@ -134,7 +134,7 @@ public class AutoTest extends NullJJVMTICallbacks {
     private static class DeadThread extends Thread {
         DeadThread() {
             super();
-            setName("AutoDead");
+            setName("APIDead");
         }
     }
 
@@ -230,13 +230,13 @@ public class AutoTest extends NullJJVMTICallbacks {
                     String fieldName = null;
                     if (qualName == null) {
                         // use this class
-                        className = AutoTest.class.getName();
+                        className = APITest.class.getName();
                         fieldName = "bptData";
                     } else {
                         // [class.]field, no class means this class
                         int ix = qualName.lastIndexOf('.');
                         if (ix <= 0) {
-                            className = AutoTest.class.getName();
+                            className = APITest.class.getName();
                             fieldName = qualName;
                         } else {
                             className = qualName.substring(0, ix);
@@ -337,8 +337,8 @@ public class AutoTest extends NullJJVMTICallbacks {
      * @param args
      */
     public static void onLoad(String agentArgs) {
-        AutoTestArgs = agentArgs;
-        autoTest.onBoot();
+        APITestArgs = agentArgs;
+        apiTest.onBoot();
     }
 
     /**
@@ -346,15 +346,15 @@ public class AutoTest extends NullJJVMTICallbacks {
      */
     @Override
     public void onBoot() {
-        autoTest.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
+        apiTest.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
     }
 
     @Override
     public void vmInit() {
         String bptMethod = null;
         String auto = null;
-        if (AutoTestArgs != null) {
-            String[] args = AutoTestArgs.split(",");
+        if (APITestArgs != null) {
+            String[] args = APITestArgs.split(",");
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
                 if (arg.equals("verbose")) {
@@ -395,9 +395,9 @@ public class AutoTest extends NullJJVMTICallbacks {
                 bptMethod = JavaRunScheme.getMainClassName() + ".main";
             }
             bptData = tryDecodeBreakpoint(bptMethod);
-            autoTest.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_LOAD, null);
-            autoTest.addCapabilities(EnumSet.of(JVMTICapabilities.E.CAN_GENERATE_BREAKPOINT_EVENTS));
-            autoTest.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_BREAKPOINT, null);
+            apiTest.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_LOAD, null);
+            apiTest.addCapabilities(EnumSet.of(JVMTICapabilities.E.CAN_GENERATE_BREAKPOINT_EVENTS));
+            apiTest.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_BREAKPOINT, null);
 
         } catch (Exception ex) {
             failExit("vmInit: " + ex);
@@ -695,11 +695,11 @@ public class AutoTest extends NullJJVMTICallbacks {
         // check for local method
         if (methodName.equals("sleep")) {
             try {
-                FunctionData fd = convertArgs(AutoTest.class.getDeclaredMethod("sleep", int.class), args, true);
+                FunctionData fd = convertArgs(APITest.class.getDeclaredMethod("sleep", int.class), args, true);
                 functionDataList.add(fd);
                 return true;
             } catch (NoSuchMethodException ex) {
-                failExit("can't find AutoTest.sleep");
+                failExit("can't find APITest.sleep");
             }
         }
         return false;
@@ -710,7 +710,7 @@ public class AutoTest extends NullJJVMTICallbacks {
         if (capAnnotation != null) {
             // need to add the necessary capability
             try {
-                autoTest.addCapabilities(EnumSet.of(capAnnotation.cap()));
+                apiTest.addCapabilities(EnumSet.of(capAnnotation.cap()));
                 return true;
             } catch (JJVMTIException ex) {
                 fail("failed to add necessary capability: " + capAnnotation.cap(), exit);
@@ -832,7 +832,7 @@ public class AutoTest extends NullJJVMTICallbacks {
                                 param == ThreadGroup.class || param == FieldActor.class || param == Object.class) {
                     objectArgs[i] = null; // suitable default
                 } else if (param == Thread[].class) {
-                    objectArgs[i] = new String[] {"AutoTest1", "AutoTest2"};
+                    objectArgs[i] = new String[] {"APITest1", "APITest2"};
                 } else {
                     return null;
                 }
