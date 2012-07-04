@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.ext.jvmti;
 
+import static com.sun.max.vm.ext.jvmti.JVMTICapabilities.E.*;
+
 import java.security.*;
 import java.util.*;
 
@@ -74,8 +76,11 @@ public interface JJVMTI {
      * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiFrameInfo">jvmtiFrameInfo</a>.
      */
     public static class FrameInfo {
-        public final int location;
-        public final MethodActor method;
+        public int location;
+        public MethodActor method;
+
+        public FrameInfo() {
+        }
 
         public FrameInfo(MethodActor method, int location) {
             this.method = method;
@@ -87,12 +92,15 @@ public interface JJVMTI {
      * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiStackInfo">jvmtiStackInfo</a>.
      */
     public static class StackInfo {
-        public final Thread thread;
-        public final int state;
-        public final FrameInfo frameInfo;
-        public final int frameCount;
+        public Thread thread;
+        public int state;
+        public FrameInfo[] frameInfo;
+        public int frameCount;
 
-        public StackInfo(Thread thread, int state, FrameInfo frameInfo, int frameCount) {
+        public StackInfo() {
+        }
+
+        public StackInfo(Thread thread, int state, FrameInfo[] frameInfo, int frameCount) {
             this.thread = thread;
             this.state = state;
             this.frameInfo = frameInfo;
@@ -187,6 +195,54 @@ public interface JJVMTI {
     }
 
     /**
+     * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiThreadInfo">jvmtiThreadInfo</a>
+     * Somewhat redundant but for completeness cf native JVMTI.
+     */
+    public static class ThreadInfo {
+        public final String name;
+        public final int priority;
+        public final boolean isDaemon;
+        public final ThreadGroup threadGroup;
+        public final ClassLoader contextClassLoader;
+
+        ThreadInfo(String name, int priority, boolean isDaemon, ThreadGroup threadGroup, ClassLoader contextClassLoader) {
+            this.name = name;
+            this.priority = priority;
+            this.isDaemon = isDaemon;
+            this.threadGroup = threadGroup;
+            this.contextClassLoader = contextClassLoader;
+        }
+    }
+
+    /**
+     * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiThreadGroupInfo">jvmtiThreadGroupInfo</a>
+     * Somewhat redundant but for completeness cf native JVMTI.
+     */
+    public static class ThreadGroupInfo {
+        public final ThreadGroup parent;
+        public final String name;
+        public final int maxPriority;
+        public final boolean isDaemon;
+
+        ThreadGroupInfo(ThreadGroup parent, String name, int maxPriority, boolean isDaemon) {
+            this.parent = parent;
+            this.name = name;
+            this.maxPriority = maxPriority;
+            this.isDaemon = isDaemon;
+        }
+    }
+
+    public static class ThreadGroupChildrenInfo {
+        public final Thread[] threads;
+        public final ThreadGroup[] groups;
+
+        ThreadGroupChildrenInfo(Thread[] threads, ThreadGroup[] groups) {
+            this.threads = threads;
+            this.groups = groups;
+        }
+    }
+
+    /**
      * Event callbacks to a JJVMTI agent. Unlike the native JVMTI interface where callbacks are registered individually,
      * Java agents register a single object and use overriding to handle just those events they want. The delivery of
      * events is still also controlled by {@link #setEventNotificationMode} as per the JVMTI spec.
@@ -262,61 +318,139 @@ public interface JJVMTI {
      */
 
     void setEventNotificationMode(int mode, int event, Thread thread) throws JJVMTIException;
+
     Thread[] getAllThreads() throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_SUSPEND)
     void suspendThread(Thread thread) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_SUSPEND)
     void resumeThread(Thread thread) throws JJVMTIException;
-    void stopThread(Thread thread, Throwable t) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_SUSPEND)
+    int[] suspendThreadList(Thread[] threads) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_SUSPEND)
+    int[] resumeThreadList(Thread[] threads) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_SIGNAL_THREAD)
     void interruptThread(Thread thread) throws JJVMTIException;
-    void getThreadInfo(Thread thread) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_SIGNAL_THREAD)
+    void stopThread(Thread thread, Throwable t) throws JJVMTIException;
+
+    ThreadInfo getThreadInfo(Thread thread) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GET_OWNED_MONITOR_INFO)
     void getOwnedMonitorInfo(Thread thread) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GET_OWNED_MONITOR_STACK_DEPTH_INFO)
+    MonitorStackDepthInfo[] getOwnedMonitorStackDepthInfo(Thread thread) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GET_CURRENT_CONTENDED_MONITOR)
     Object getCurrentContendedMonitor(Thread thread) throws JJVMTIException;
-    void runAgentThread(Runnable runnable, int priority) throws JJVMTIException;
+
+    void runAgentThread(Thread thread, int priority) throws JJVMTIException;
+
     ThreadGroup[] getTopThreadGroups() throws JJVMTIException;
-    void getThreadGroupInfo(ThreadGroup threadGroup) throws JJVMTIException;
-    void getThreadGroupChildren(ThreadGroup threadGroup) throws JJVMTIException;
+
+    ThreadGroupInfo getThreadGroupInfo(ThreadGroup threadGroup) throws JJVMTIException;
+
+    ThreadGroupChildrenInfo getThreadGroupChildren(ThreadGroup threadGroup) throws JJVMTIException;
+
     int getFrameCount(Thread thread) throws JJVMTIException;
+
     int getThreadState(Thread thread) throws JJVMTIException;
+
     Thread getCurrentThread() throws JJVMTIException;
+
     FrameInfo getFrameLocation(Thread thread, int depth) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GENERATE_FRAME_POP_EVENTS)
     void notifyFramePop(Thread thread, int depth) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_ACCESS_LOCAL_VARIABLES)
     Object getLocalObject(Thread thread, int depth, int slot) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_ACCESS_LOCAL_VARIABLES)
     int getLocalInt(Thread thread, int depth, int slot) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_ACCESS_LOCAL_VARIABLES)
     long getLocalLong(Thread thread, int depth, int slot) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_ACCESS_LOCAL_VARIABLES)
     float getLocalFloat(Thread thread, int depth, int slot) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_ACCESS_LOCAL_VARIABLES)
     double getLocalDouble(Thread thread, int depth, int slot) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_ACCESS_LOCAL_VARIABLES)
     void setLocalObject(Thread thread, int depth, int slot, Object value) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_ACCESS_LOCAL_VARIABLES)
     void setLocalInt(Thread thread, int depth, int slot, int value) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_ACCESS_LOCAL_VARIABLES)
     void setLocalLong(Thread thread, int depth, int slot, long value) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_ACCESS_LOCAL_VARIABLES)
     void setLocalFloat(Thread thread, int depth, int slot, float value) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_ACCESS_LOCAL_VARIABLES)
     void setLocalDouble(Thread thread, int arg2, int arg3, double value) throws JJVMTIException;
 
     int getObjectHashCode(Object object) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GET_MONITOR_INFO)
     ObjectMonitorUsage getObjectMonitorUsage(Object object) throws JJVMTIException;
 
+    @JJVMTI_FUNCTION(cap = CAN_SET_NATIVE_METHOD_PREFIX)
     void setNativeMethodPrefix(String prefix) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_SET_NATIVE_METHOD_PREFIX)
     void setNativeMethodPrefixes(String[] prefixes) throws JJVMTIException;
 
+    @JJVMTI_FUNCTION(cap = CAN_POP_FRAME)
     void popFrame(Thread thread) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_FORCE_EARLY_RETURN)
     void forceEarlyReturnObject(Thread thread, Object value) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_FORCE_EARLY_RETURN)
     void forceEarlyReturnInt(Thread thread, int value) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_FORCE_EARLY_RETURN)
     void forceEarlyReturnLong(Thread thread, long value) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_FORCE_EARLY_RETURN)
     void forceEarlyReturnFloat(Thread thread, float value) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_FORCE_EARLY_RETURN)
     void forceEarlyReturnDouble(Thread thread, double value) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_FORCE_EARLY_RETURN)
     void forceEarlyReturnVoid(Thread thread) throws JJVMTIException;
 
     int getVersionNumber() throws JJVMTIException;
-    long getCapabilities() throws JJVMTIException;
 
-    void suspendThreadList(Thread[] threads) throws JJVMTIException;
-    void resumeThreadList(Thread[] threads) throws JJVMTIException;
-    void getThreadListStackTraces(Thread[] threads, int maxFrameCount) throws JJVMTIException;
+    EnumSet<JVMTICapabilities.E> getCapabilities() throws JJVMTIException;
+
+    StackInfo[] getThreadListStackTraces(Thread[] threads, int maxFrameCount) throws JJVMTIException;
+
     Object getThreadLocalStorage(Thread thread) throws JJVMTIException;
-    void setThreadLocalStorage(Thread thread, Object data) throws JJVMTIException;
-    StackInfo[] getAllStackTraces(int maxFrameCount) throws JJVMTIException;
-    int getStackTrace(Thread thread, int startDepth, int maxFrameCount, FrameInfo[] stackframeInfo) throws JJVMTIException;
 
+    void setThreadLocalStorage(Thread thread, Object data) throws JJVMTIException;
+
+    StackInfo[] getAllStackTraces(int maxFrameCount) throws JJVMTIException;
+
+    FrameInfo[] getStackTrace(Thread thread, int startDepth, int maxFrameCount) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_TAG_OBJECTS)
     Object getTag(Object object) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_TAG_OBJECTS)
     void setTag(Object object, Object tag) throws JJVMTIException;
+
     void forceGarbageCollection() throws JJVMTIException;
 
     /*
@@ -333,34 +467,55 @@ public interface JJVMTI {
     void setExtensionEventCallback(int arg1, Address arg2) throws Exception;
     */
 
+    @JJVMTI_FUNCTION(cap = CAN_TAG_OBJECTS)
     void iterateThroughHeap(int filter, ClassActor classActor, HeapCallbacks heapCallbacks, Object userData) throws JJVMTIException;
 
 
     void disposeEnvironment() throws JJVMTIException;
+
     String getErrorName(int error) throws JJVMTIException;
+
     int getJLocationFormat() throws JJVMTIException;
-    Properties getSystemProperties() throws JJVMTIException;
+
+    String[] getSystemProperties() throws JJVMTIException;
+
     String getSystemProperty(String key) throws JJVMTIException;
+
     void setSystemProperty(String key, String value) throws JJVMTIException;
+
     int getPhase() throws JJVMTIException;
+
 //    void getCurrentThreadCpuTimerInfo(Pointer arg1) throws Exception;
+
     long getCurrentThreadCpuTime() throws JJVMTIException;
+
 //    void getThreadCpuTimerInfo(Pointer arg1) throws Exception;
+
     long getThreadCpuTime(Thread thread) throws JJVMTIException;
+
 //    void getTimerInfo(Pointer arg1) throws Exception;
+
     long getTime() throws JJVMTIException;
+
     EnumSet<JVMTICapabilities.E> getPotentialCapabilities() throws JJVMTIException;
+
     void addCapabilities(EnumSet<JVMTICapabilities.E> caps) throws JJVMTIException;
+
     void relinquishCapabilities(EnumSet<JVMTICapabilities.E> caps) throws JJVMTIException;
+
     int getAvailableProcessors() throws JJVMTIException;
 
     Object getEnvironmentLocalStorage() throws JJVMTIException;
+
     void setEnvironmentLocalStorage(Object data) throws JJVMTIException;
+
     void addToBootstrapClassLoaderSearch(String path) throws JJVMTIException;
-    void setVerboseFlag(int arg1, boolean arg2) throws JJVMTIException;
+
+    void setVerboseFlag(int flag, boolean value) throws JJVMTIException;
+
     void addToSystemClassLoaderSearch(String path) throws JJVMTIException;
 
-    MonitorStackDepthInfo[] getOwnedMonitorStackDepthInfo(Thread thread) throws JJVMTIException;
+
     long getObjectSize(Object object) throws JJVMTIException;
 //  void getLocalInstance(JniHandle arg1, int arg2, Pointer arg3) throws Exception;
 
@@ -370,48 +525,104 @@ public interface JJVMTI {
      * Actor types.
      */
 
-    void setBreakpoint(MethodActor method, long location) throws JJVMTIException;
-    void clearBreakpoint(MethodActor method, long location) throws JJVMTIException;
+    @JJVMTI_FUNCTION(cap = CAN_GENERATE_BREAKPOINT_EVENTS)
+    void setBreakpoint(ClassMethodActor method, long location) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GENERATE_BREAKPOINT_EVENTS)
+    void clearBreakpoint(ClassMethodActor method, long location) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GENERATE_FIELD_ACCESS_EVENTS)
     void setFieldAccessWatch(FieldActor field) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GENERATE_FIELD_ACCESS_EVENTS)
     void clearFieldAccessWatch(FieldActor field) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GENERATE_FIELD_MODIFICATION_EVENTS)
     void setFieldModificationWatch(FieldActor field) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GENERATE_FIELD_MODIFICATION_EVENTS)
     void clearFieldModificationWatch(FieldActor field) throws JJVMTIException;
+
     boolean isModifiableClass(ClassActor klass) throws JJVMTIException;
+
     String getClassSignature(ClassActor klass) throws JJVMTIException;
+
     int getClassStatus(ClassActor klass) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GET_SOURCE_FILE_NAME)
     String getSourceFileName(ClassActor klass) throws JJVMTIException;
+
     int getClassModifiers(ClassActor klass) throws JJVMTIException;
+
     MethodActor[] getClassMethods(ClassActor klass) throws JJVMTIException;
+
     FieldActor[] getClassFields(ClassActor klass) throws JJVMTIException;
+
     ClassActor[] getImplementedInterfaces(ClassActor klass) throws JJVMTIException;
+
     boolean isInterface(ClassActor klass) throws JJVMTIException;
+
     boolean isArrayClass(ClassActor klass) throws JJVMTIException;
+
     ClassLoader getClassLoader(ClassActor klass) throws JJVMTIException;
+
     String getFieldName(FieldActor field) throws JJVMTIException;
+
     String getFieldSignature(FieldActor field) throws JJVMTIException;
+
     ClassActor getFieldDeclaringClass(FieldActor field) throws JJVMTIException;
+
     int getFieldModifiers(FieldActor field) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GET_SYNTHETIC_ATTRIBUTE)
     boolean isFieldSynthetic(FieldActor field) throws JJVMTIException;
+
     String getMethodName(MethodActor method) throws JJVMTIException;
+
     String getMethodSignature(MethodActor method) throws JJVMTIException;
+
     String getMethodGenericSignature(MethodActor method) throws JJVMTIException;
+
     ClassActor getMethodDeclaringClass(MethodActor method) throws JJVMTIException;
+
     int getMethodModifiers(MethodActor method) throws JJVMTIException;
-    int getMaxLocals(MethodActor method) throws JJVMTIException;
-    int getArgumentsSize(MethodActor method) throws JJVMTIException;
-    LineNumberEntry[] getLineNumberTable(MethodActor method) throws JJVMTIException;
-    MethodLocation getMethodLocation(MethodActor method) throws JJVMTIException;
-    LocalVariableEntry[] getLocalVariableTable(MethodActor member) throws JJVMTIException;
-    byte[] getBytecodes(MethodActor method, byte[] useThis) throws JJVMTIException;
+
+    int getMaxLocals(ClassMethodActor method) throws JJVMTIException;
+
+    int getArgumentsSize(ClassMethodActor method) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GET_LINE_NUMBERS)
+    LineNumberEntry[] getLineNumberTable(ClassMethodActor method) throws JJVMTIException;
+
+    MethodLocation getMethodLocation(ClassMethodActor method) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_ACCESS_LOCAL_VARIABLES)
+    LocalVariableEntry[] getLocalVariableTable(ClassMethodActor member) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GET_BYTECODES)
+    byte[] getBytecodes(ClassMethodActor method) throws JJVMTIException;
+
     boolean isMethodNative(MethodActor method) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GET_SYNTHETIC_ATTRIBUTE)
     boolean isMethodSynthetic(MethodActor method) throws JJVMTIException;
+
     ClassActor[] getLoadedClasses() throws JJVMTIException;
+
     ClassActor[] getClassLoaderClasses(ClassLoader loader) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_REDEFINE_CLASSES)
     void redefineClasses(ClassDefinition[] classDefinitions) throws JJVMTIException;
+
     String getSourceDebugExtension(ClassActor klass) throws JJVMTIException;
+
     boolean isMethodObsolete(MethodActor method) throws JJVMTIException;
-    ClassVersionInfo getClassVersionNumbers(ClassActor klasss, ClassVersionInfo classVersionInfo) throws JJVMTIException;
-    int getConstantPool(ClassActor klass, byte[] pool) throws JJVMTIException;
+
+    ClassVersionInfo getClassVersionNumbers(ClassActor klass) throws JJVMTIException;
+
+    @JJVMTI_FUNCTION(cap = CAN_GET_CONSTANT_POOL)
+    byte[] getConstantPool(ClassActor klass) throws JJVMTIException;
+
     void retransformClasses(ClassActor[] klasses) throws JJVMTIException;
 
 }

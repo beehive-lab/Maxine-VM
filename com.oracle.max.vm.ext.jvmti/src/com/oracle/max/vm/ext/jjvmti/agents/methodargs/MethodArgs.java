@@ -112,7 +112,7 @@ public class MethodArgs extends NullJJVMTICallbacks implements JJVMTI.EventCallb
                 if (methodPattern.matcher(string).matches()) {
                     System.out.printf("Method entry: %s%n", string);
                     Type[] params = methodActor.getGenericParameterTypes();
-                    JJVMTI.LocalVariableEntry[] lve = getLocalVariableTable(methodActor);
+                    JJVMTI.LocalVariableEntry[] lve = getLocalVariableTable((ClassMethodActor) methodActor);
                     if (lve.length == 0) {
                         return;
                     }

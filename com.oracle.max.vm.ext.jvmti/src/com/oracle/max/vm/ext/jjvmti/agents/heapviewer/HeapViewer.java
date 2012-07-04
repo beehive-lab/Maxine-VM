@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.jjvmti.agents.heapviewer;
 
+import static com.sun.max.vm.ext.jvmti.JVMTICapabilities.E.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
 import java.util.Arrays;
@@ -104,7 +105,7 @@ public class HeapViewer extends NullJJVMTICallbacks implements JJVMTI.HeapCallba
         }
 
         try {
-            heapViewer.addCapabilities(EnumSet.of(JVMTICapabilities.E.CAN_GENERATE_GARBAGE_COLLECTION_EVENTS));
+            heapViewer.addCapabilities(EnumSet.of(CAN_GENERATE_GARBAGE_COLLECTION_EVENTS, CAN_TAG_OBJECTS));
             heapViewer.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_DEATH, null);
             heapViewer.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_DATA_DUMP_REQUEST, null); // TODO
             // the heapIteration method must be compiled before iterateThroughHeap is called,
