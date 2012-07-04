@@ -1206,12 +1206,17 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetEnvironmentLocalStorage(Pointer env, Pointer data_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        // PHASES: ANY
+        // NULLCHECK data_ptr
+        data_ptr.setWord(((JVMTI.NativeEnv) jvmtiEnv).envStorage);
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
     private static int SetEnvironmentLocalStorage(Pointer env, Pointer data) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        // PHASES: ANY
+        ((JVMTI.NativeEnv) jvmtiEnv).envStorage = data;
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT

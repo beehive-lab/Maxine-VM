@@ -40,7 +40,8 @@ import com.sun.max.vm.actor.member.*;
  * however, we include them for completeness.
  *
  * A few of the JVMTI functions don't have a Java equivalent, and these are omitted. Raw monitors are
- * unnecessary as agents can use standard Java synchronization mechanisms.
+ * unnecessary as agents can use standard Java synchronization mechanisms. The functions for environment
+ * local storage and thread local storage are omitted as these can easily be handled directly by the agent.
  *
  * Whereas native JVMTI returns errors as the function result, {@link JJVMTI} throws a {@link JJVMTIException}.
  *
@@ -437,10 +438,6 @@ public interface JJVMTI {
 
     StackInfo[] getThreadListStackTraces(Thread[] threads, int maxFrameCount) throws JJVMTIException;
 
-    Object getThreadLocalStorage(Thread thread) throws JJVMTIException;
-
-    void setThreadLocalStorage(Thread thread, Object data) throws JJVMTIException;
-
     StackInfo[] getAllStackTraces(int maxFrameCount) throws JJVMTIException;
 
     FrameInfo[] getStackTrace(Thread thread, int startDepth, int maxFrameCount) throws JJVMTIException;
@@ -504,10 +501,6 @@ public interface JJVMTI {
     void relinquishCapabilities(EnumSet<JVMTICapabilities.E> caps) throws JJVMTIException;
 
     int getAvailableProcessors() throws JJVMTIException;
-
-    Object getEnvironmentLocalStorage() throws JJVMTIException;
-
-    void setEnvironmentLocalStorage(Object data) throws JJVMTIException;
 
     void addToBootstrapClassLoaderSearch(String path) throws JJVMTIException;
 

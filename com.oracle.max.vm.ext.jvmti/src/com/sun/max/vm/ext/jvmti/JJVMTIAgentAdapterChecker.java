@@ -325,11 +325,6 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
-    public Object getEnvironmentLocalStorage() {
-        return null;
-    }
-
-    @Override
     public String getErrorName(int arg0) {
         return null;
     }
@@ -551,11 +546,6 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
-    public Object getThreadLocalStorage(Thread arg0) {
-        return null;
-    }
-
-    @Override
     public int getThreadState(Thread arg0) {
         return 0;
     }
@@ -666,10 +656,6 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
-    public void setEnvironmentLocalStorage(Object arg0) {
-    }
-
-    @Override
     public void setEventNotificationMode(int arg0, int arg1, Thread arg2) {
     }
 
@@ -725,10 +711,6 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     @Override
     public void setTag(Object arg0, Object arg1) {
         checkCap(CAN_TAG_OBJECTS);
-    }
-
-    @Override
-    public void setThreadLocalStorage(Thread arg0, Object arg1) {
     }
 
     @Override
