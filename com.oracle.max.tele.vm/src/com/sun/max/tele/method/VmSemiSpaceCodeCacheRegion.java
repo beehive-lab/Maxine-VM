@@ -29,6 +29,7 @@ import java.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
@@ -168,7 +169,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
                 final int targetMethodCount = teleSemiSpaceCodeRegion.nTargetMethods();
                 int index = compilations.size();
                 while (index < targetMethodCount) {
-                    Reference targetMethodReference = teleSemiSpaceCodeRegion.getTargetMethodReference(index++);
+                    Reference targetMethodReference = ((RemoteReference) teleSemiSpaceCodeRegion.getTargetMethodReference(index++)).jumpForwarder();
                     // Have we seen this compilation before, independent of its location in the region?
                     TeleCompilation compilation = getCompilation(targetMethodReference);
                     if (compilation == null) {
