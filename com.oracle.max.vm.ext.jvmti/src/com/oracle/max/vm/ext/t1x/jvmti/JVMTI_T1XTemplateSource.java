@@ -1080,7 +1080,7 @@ public class JVMTI_T1XTemplateSource {
 
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
     public static void traceMethodEntry(MethodActor methodActor) {
-        JVMTI.event(JVMTIEvent.METHOD_ENTRY, methodActor);
+        JVMTI.methodEntryEvent(methodActor);
     }
 
     @T1X_TEMPLATE(BREAKPOINT)

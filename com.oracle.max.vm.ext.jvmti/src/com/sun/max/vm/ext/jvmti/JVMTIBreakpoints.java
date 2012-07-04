@@ -28,6 +28,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.ext.jvmti.JVMTIEvent.E;
 import com.sun.max.vm.jni.*;
 
 /**
@@ -110,11 +111,11 @@ public class JVMTIBreakpoints {
         }
     }
 
-    private static void event(int eventType, long id) {
-        EventBreakpointID eventID = eventArg.get();
-        eventID.methodID = getMethodID(id);
-        eventID.location = getLocation(id);
-        JVMTI.event(eventType, eventID);
+    private static void event(int eventId, long id) {
+        EventBreakpointID eventBptID = eventArg.get();
+        eventBptID.methodID = getMethodID(id);
+        eventBptID.location = getLocation(id);
+        JVMTI.event(E.fromEventId(eventId), eventBptID);
     }
 
     static void setSingleStep(boolean setting) {

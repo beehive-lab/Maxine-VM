@@ -285,7 +285,6 @@ public class APITest extends NullJJVMTICallbacks {
          * Method pairs that should be executed in a given order in auto mode.
          */
         private static final String[][] ORDERED_METHODS = new String[][] {{"setTag", "getTag"},
-                                                                          {"setThreadLocalStorage", "getThreadLocalStorage"},
                                                                           {"suspendThread", "resumeThread"},
                                                                           {"suspendThreadList", "resumeThreadList"},
                                                                           {"setVerboseFlag", "forceGarbageCollection"}};

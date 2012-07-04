@@ -137,28 +137,28 @@ public class JVMTI {
              * is that any JNI function can be called from VM_START, e.g, FindClass,
              * which requires that essentially all of the VM machinery is working.
              */
-            JVMTI.event(JVMTIEvent.VM_START);
-            JVMTI.event(JVMTIEvent.VM_INIT);
+            JVMTI.event(E.VM_START);
+            JVMTI.event(E.VM_INIT);
         }
 
         @Override
         public void vmDeath() {
-            JVMTI.event(JVMTIEvent.VM_DEATH);
+            JVMTI.event(E.VM_DEATH);
         }
 
         @Override
         public void threadStart(VmThread vmThread) {
-            JVMTI.event(JVMTI_EVENT_THREAD_START, vmThread);
+            JVMTI.event(E.THREAD_START, vmThread);
         }
 
         @Override
         public void threadEnd(VmThread vmThread) {
-            JVMTI.event(JVMTI_EVENT_THREAD_END, vmThread);
+            JVMTI.event(E.THREAD_END, vmThread);
         }
 
         @Override
         public boolean classFileLoadHookHandled() {
-            return JVMTI.eventNeeded(JVMTIEvent.CLASS_FILE_LOAD_HOOK);
+            return JVMTI.eventNeeded(E.CLASS_FILE_LOAD_HOOK);
         }
 
         @Override
@@ -169,18 +169,18 @@ public class JVMTI {
         @Override
         public void classLoad(ClassActor classActor) {
             // Have to send both events
-            JVMTI.event(JVMTI_EVENT_CLASS_LOAD, classActor);
-            JVMTI.event(JVMTI_EVENT_CLASS_PREPARE, classActor);
+            JVMTI.event(E.CLASS_LOAD, classActor);
+            JVMTI.event(E.CLASS_PREPARE, classActor);
         }
 
         @Override
         public void methodCompiled(ClassMethodActor classMethodActor) {
-            JVMTI.event(JVMTI_EVENT_COMPILED_METHOD_LOAD, classMethodActor);
+            JVMTI.event(E.COMPILED_METHOD_LOAD, classMethodActor);
         }
 
         @Override
         public void methodUnloaded(ClassMethodActor classMethodActor) {
-            JVMTI.event(JVMTI_EVENT_COMPILED_METHOD_UNLOAD, classMethodActor);
+            JVMTI.event(E.COMPILED_METHOD_UNLOAD, classMethodActor);
         }
 
         @Override
@@ -205,12 +205,12 @@ public class JVMTI {
 
         @Override
         public void beginGC() {
-            JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_START);
+            JVMTI.event(E.GARBAGE_COLLECTION_START);
         }
 
         @Override
         public void endGC() {
-            JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_FINISH);
+            JVMTI.event(E.GARBAGE_COLLECTION_FINISH);
         }
 
         @Override
@@ -437,7 +437,7 @@ public class JVMTI {
      * @param eventId
      * @return
      */
-    public static synchronized boolean eventNeeded(int eventId) {
+    public static synchronized boolean eventNeeded(JVMTIEvent.E event) {
         if (MaxineVM.isHosted()) {
             return false;
         }
@@ -448,7 +448,7 @@ public class JVMTI {
             return false;
         }
         for (int i = 0; i < jvmtiEnvs.length; i++) {
-            if (hasCallbackForEvent(jvmtiEnvs[i], eventId, VmThread.current())) {
+            if (hasCallbackForEvent(jvmtiEnvs[i], event, VmThread.current())) {
                 return true;
             }
         }
@@ -471,36 +471,31 @@ public class JVMTI {
      * @param opcode
      * @return
      */
-    public static int eventForBytecode(int opcode) {
-        int eventId;
+    public static JVMTIEvent.E eventForBytecode(int opcode) {
         if (opcode == -1) {
-            eventId = JVMTI_EVENT_METHOD_ENTRY;
+            return E.METHOD_ENTRY;
         } else if (opcode == -2) {
-            eventId = JVMTI_EVENT_METHOD_EXIT;
+            return E.METHOD_EXIT;
         } else {
             switch (opcode) {
                 case Bytecodes.GETFIELD:
                 case Bytecodes.GETSTATIC:
-                    eventId = JVMTI_EVENT_FIELD_ACCESS;
-                    break;
+                    return E.FIELD_ACCESS;
                 case Bytecodes.PUTFIELD:
                 case Bytecodes.PUTSTATIC:
-                    eventId = JVMTI_EVENT_FIELD_MODIFICATION;
-                    break;
+                    return E.FIELD_MODIFICATION;
                 case Bytecodes.IRETURN:
                 case Bytecodes.LRETURN:
                 case Bytecodes.FRETURN:
                 case Bytecodes.DRETURN:
                 case Bytecodes.ARETURN:
                 case Bytecodes.RETURN:
-                    eventId = JVMTI_EVENT_FRAME_POP;
-                    break;
+                    return E.FRAME_POP;
                 default:
-                    return 0;
+                    return null;
 
             }
         }
-        return eventId;
     }
 
     /**
@@ -509,9 +504,8 @@ public class JVMTI {
      * The value -1 is used to indicate METHOD_ENTRY as this is a pseudo bytecode.
      * @return the eventId corresponding to the bytecode or 0 if not needed
      */
-    public static synchronized int byteCodeEventNeeded(int opcode) {
-        int eventId = eventForBytecode(opcode);
-        return JVMTIEvent.isEventSet(eventId) ? eventId : 0;
+    public static synchronized E byteCodeEventNeeded(int opcode) {
+        return eventForBytecode(opcode);
     }
 
     /**
@@ -521,25 +515,25 @@ public class JVMTI {
      * @param vmThread thread generating the event
      * @return the callback address or zero if none or not enabled
      */
-    static Pointer getCallbackForEvent(NativeEnv jvmtiEnv, int eventId, VmThread vmThread) {
+    static Pointer getCallbackForEvent(NativeEnv jvmtiEnv, JVMTIEvent.E event, VmThread vmThread) {
         if (jvmtiEnv.isFree()) {
             return Pointer.zero();
         }
-        if (JVMTIEvent.isEventSet(jvmtiEnv, eventId, vmThread)) {
-            return getCallBack(CALLBACKS.getPtr(jvmtiEnv.cstruct), eventId);
+        if (JVMTIEvent.isEventSet(jvmtiEnv, event, vmThread)) {
+            return getCallBack(CALLBACKS.getPtr(jvmtiEnv.cstruct), event);
         }
         return Pointer.zero();
 
     }
 
-    static boolean hasCallbackForEvent(Env jvmtiEnv, int eventId, VmThread vmThread) {
+    static boolean hasCallbackForEvent(Env jvmtiEnv, JVMTIEvent.E event, VmThread vmThread) {
         if (jvmtiEnv == null || jvmtiEnv.isFree()) {
             return false;
         }
-        return JVMTIEvent.isEventSet(jvmtiEnv, eventId, vmThread);
+        return JVMTIEvent.isEventSet(jvmtiEnv, event, vmThread);
     }
 
-    private static boolean ignoreEvent(int eventId) {
+    private static boolean ignoreEvent(JVMTIEvent.E event) {
         if (MaxineVM.isHosted()) {
             return true;
         }
@@ -548,15 +542,24 @@ public class JVMTI {
             return true;
         }
 
-        if ((JVMTIEvent.getPhase(eventId) & phase) == 0) {
+        if ((JVMTIEvent.getPhase(event) & phase) == 0) {
             // wrong phase
             return true;
         }
         return false;
     }
 
-    public static void event(int eventId) {
-        event(eventId, null);
+    /**
+     * Invoked from T1X templates, so no inline.
+     * @param methodActor
+     */
+    @NEVER_INLINE
+    public static void methodEntryEvent(MethodActor methodActor) {
+        event(E.METHOD_ENTRY, methodActor);
+    }
+
+    public static void event(JVMTIEvent.E event) {
+        event(event, null);
     }
 
     /**
@@ -565,17 +568,17 @@ public class JVMTI {
      *
      * @param eventId
      */
-    public static void event(int eventId, Object arg1) {
-        boolean ignoring = ignoreEvent(eventId);
+    public static void event(JVMTIEvent.E event, Object arg1) {
+        boolean ignoring = ignoreEvent(event);
 
-        JVMTIEvent.logger.logEvent(eventId, ignoring, arg1);
+        JVMTIEvent.logger.logEvent(event, ignoring, arg1);
 
         if (ignoring) {
             return;
         }
 
         // Regardless of interest in these events there are things that must be done
-        switch (eventId) {
+        switch (event) {
             case VM_START:
                 phase = JVMTI_PHASE_START;
                 break;
@@ -592,12 +595,12 @@ public class JVMTI {
         for (int i = 0; i < jvmtiEnvs.length; i++) {
             if (i < MAX_NATIVE_ENVS) {
                 NativeEnv nativeEnv = (NativeEnv) jvmtiEnvs[i];
-                Pointer callback = getCallbackForEvent(nativeEnv, eventId, VmThread.current());
+                Pointer callback = getCallbackForEvent(nativeEnv, event, VmThread.current());
                 if (callback.isZero()) {
                     continue;
                 }
                 Pointer cstruct = nativeEnv.cstruct;
-                switch (eventId) {
+                switch (event) {
                     case VM_START:
                     case VM_DEATH:
                         invokeStartFunctionNoArg(callback, cstruct);
@@ -642,17 +645,17 @@ public class JVMTI {
                     case EXCEPTION:
                     case EXCEPTION_CATCH:
                         ExceptionEventData exceptionEventData = asExceptionEventData(arg1);
-                        invokeExceptionCallback(callback, cstruct, eventId == EXCEPTION_CATCH, currentThreadHandle(), exceptionEventData.methodID, exceptionEventData.location,
+                        invokeExceptionCallback(callback, cstruct, event == E.EXCEPTION_CATCH, currentThreadHandle(), exceptionEventData.methodID, exceptionEventData.location,
                                         JniHandles.createLocalHandle(exceptionEventData.throwable), exceptionEventData.catchMethodID, exceptionEventData.catchLocation);
                         break;
                 }
             } else {
                 JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
-                if (javaEnv == null || !JVMTIEvent.isEventSet(javaEnv, eventId, VmThread.current())) {
+                if (javaEnv == null || !JVMTIEvent.isEventSet(javaEnv, event, VmThread.current())) {
                     continue;
                 }
                 Thread currentThread = Thread.currentThread();
-                switch (eventId) {
+                switch (event) {
                     case VM_INIT:
                         javaEnv.callbackHandler.vmInit();
                         break;
@@ -720,10 +723,11 @@ public class JVMTI {
 
                     case EXCEPTION: {
                         ExceptionEventData exceptionEventData = asExceptionEventData(arg1);
+                        MethodActor catchMethod = exceptionEventData.catchMethodID.isZero() ? null : MethodID.toMethodActor(exceptionEventData.catchMethodID);
                         javaEnv.callbackHandler.exception(currentThread,
                                         MethodID.toMethodActor(exceptionEventData.methodID), exceptionEventData.location,
                                         exceptionEventData.throwable,
-                                        MethodID.toMethodActor(exceptionEventData.catchMethodID), exceptionEventData.catchLocation);
+                                        catchMethod, exceptionEventData.catchLocation);
                         break;
                     }
 
@@ -740,7 +744,7 @@ public class JVMTI {
                 }
             }
         }
-        if (eventId == VM_DEATH) {
+        if (event == E.VM_DEATH) {
             phase = JVMTI_PHASE_DEAD;
         }
     }
@@ -769,8 +773,8 @@ public class JVMTI {
     @INTRINSIC(UNSAFE_CAST) public static EventBreakpointID  asEventBreakpointID(Object object) { return (EventBreakpointID) object; }
     @INTRINSIC(UNSAFE_CAST) public static ExceptionEventData  asExceptionEventData(Object object) { return (ExceptionEventData) object; }
 
-    private static FieldEventData checkGetFieldModificationEvent(int eventType, Object object, int offset, boolean isStatic) {
-        if (ignoreEvent(eventType)) {
+    private static FieldEventData checkGetFieldModificationEvent(JVMTIEvent.E event, Object object, int offset, boolean isStatic) {
+        if (ignoreEvent(event)) {
             return null;
         }
         FieldEventData data = tfed.get();
@@ -784,56 +788,56 @@ public class JVMTI {
 
     @NEVER_INLINE
     public static void fieldAccessEvent(Object object, int offset, boolean isStatic) {
-        FieldEventData data = checkGetFieldModificationEvent(JVMTI_EVENT_FIELD_ACCESS, object, offset, isStatic);
+        FieldEventData data = checkGetFieldModificationEvent(E.FIELD_ACCESS, object, offset, isStatic);
         if (data == null) {
             return;
         }
         data.tag = FieldEventData.DATA_NONE;
-        event(JVMTI_EVENT_FIELD_ACCESS, data);
+        event(E.FIELD_ACCESS, data);
     }
 
     @NEVER_INLINE
     public static void fieldModificationEvent(Object object, int offset, boolean isStatic, long value) {
-        FieldEventData data = checkGetFieldModificationEvent(JVMTI_EVENT_FIELD_MODIFICATION, object, offset, isStatic);
+        FieldEventData data = checkGetFieldModificationEvent(E.FIELD_MODIFICATION, object, offset, isStatic);
         if (data == null) {
             return;
         }
         data.tag = FieldEventData.DATA_LONG;
         data.longValue = value;
-        event(JVMTI_EVENT_FIELD_MODIFICATION, data);
+        event(E.FIELD_MODIFICATION, data);
     }
 
     @NEVER_INLINE
     public static void fieldModificationEvent(Object object, int offset, boolean isStatic, float value) {
-        FieldEventData data = checkGetFieldModificationEvent(JVMTI_EVENT_FIELD_MODIFICATION, object, offset, isStatic);
+        FieldEventData data = checkGetFieldModificationEvent(E.FIELD_MODIFICATION, object, offset, isStatic);
         if (data == null) {
             return;
         }
         data.tag = FieldEventData.DATA_FLOAT;
         data.floatValue = value;
-        event(JVMTI_EVENT_FIELD_MODIFICATION, data);
+        event(E.FIELD_MODIFICATION, data);
     }
 
     @NEVER_INLINE
     public static void fieldModificationEvent(Object object, int offset, boolean isStatic, double value) {
-        FieldEventData data = checkGetFieldModificationEvent(JVMTI_EVENT_FIELD_MODIFICATION, object, offset, isStatic);
+        FieldEventData data = checkGetFieldModificationEvent(E.FIELD_MODIFICATION, object, offset, isStatic);
         if (data == null) {
             return;
         }
         data.tag = FieldEventData.DATA_DOUBLE;
         data.doubleValue = value;
-        event(JVMTI_EVENT_FIELD_MODIFICATION, data);
+        event(E.FIELD_MODIFICATION, data);
     }
 
     @NEVER_INLINE
     public static void fieldModificationEvent(Object object, int offset, boolean isStatic, Object value) {
-        FieldEventData data = checkGetFieldModificationEvent(JVMTI_EVENT_FIELD_MODIFICATION, object, offset, isStatic);
+        FieldEventData data = checkGetFieldModificationEvent(E.FIELD_MODIFICATION, object, offset, isStatic);
         if (data == null) {
             return;
         }
         data.tag = FieldEventData.DATA_OBJECT;
         data.objectValue = value;
-        event(JVMTI_EVENT_FIELD_MODIFICATION, data);
+        event(E.FIELD_MODIFICATION, data);
     }
 
     public static byte[] classFileLoadHook(ClassLoader classLoader, String className, ProtectionDomain protectionDomain,
@@ -849,8 +853,8 @@ public class JVMTI {
         return JniHandles.createLocalHandle(VmThread.current().javaThread());
     }
 
-    private static Pointer getCallBack(Pointer callbacks, int eventId) {
-        int index = eventId - JVMTI_MIN_EVENT_TYPE_VAL;
+    private static Pointer getCallBack(Pointer callbacks, JVMTIEvent.E event) {
+        int index = event.ordinal();
         return callbacks.readWord(index * Pointer.size()).asPointer();
     }
 

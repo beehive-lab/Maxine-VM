@@ -219,7 +219,7 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
     }
 
     private void generateTraceMethodEntry() {
-        out.printf("        JVMTI.event(JVMTIEvent.METHOD_ENTRY, methodActor);\n");
+        out.printf("        JVMTI.methodEntryEvent(methodActor);\n");
     }
 
     private void generateBreakpoint() {

@@ -926,12 +926,12 @@ public class JVMTIThreadFunctions {
     public static void framePopEvent(boolean wasPoppedByException, Object value) {
         VmThread vmThread = VmThread.current();
         Pointer tla = vmThread.tla();
-        if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP) || JVMTIEvent.isEventSet(JVMTIEvent.METHOD_EXIT)) {
+        if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP) || JVMTIEvent.isEventSet(JVMTIEvent.E.METHOD_EXIT)) {
             FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
             // if we are single stepping, we may need to deopt the method we are returning to
             if (stackTraceVisitor.stackElements.size() > 1) {
                 long codeEventSettings = JVMTIEvent.codeEventSettings(null, vmThread);
-                if ((codeEventSettings & JVMTIEvent.bitSetting(JVMTI_EVENT_SINGLE_STEP)) != 0) {
+                if ((codeEventSettings & JVMTIEvent.bitSetting(JVMTIEvent.E.SINGLE_STEP)) != 0) {
                     JVMTICode.checkDeOptForMethod(stackTraceVisitor.getStackElement(1).classMethodActor, codeEventSettings);
                 }
             }
@@ -943,11 +943,11 @@ public class JVMTIThreadFunctions {
                                 wasPoppedByException,
                                 value);
                 if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP)) {
-                    JVMTI.event(JVMTI_EVENT_FRAME_POP, framePopEventData);
+                    JVMTI.event(JVMTIEvent.E.FRAME_POP, framePopEventData);
                 }
 
-                if (JVMTIEvent.isEventSet(JVMTIEvent.METHOD_EXIT)) {
-                    JVMTI.event(JVMTI_EVENT_METHOD_EXIT, framePopEventData);
+                if (JVMTIEvent.isEventSet(JVMTIEvent.E.METHOD_EXIT)) {
+                    JVMTI.event(JVMTIEvent.E.METHOD_EXIT, framePopEventData);
                 }
             }
         }

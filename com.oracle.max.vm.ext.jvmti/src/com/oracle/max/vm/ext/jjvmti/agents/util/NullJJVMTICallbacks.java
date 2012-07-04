@@ -154,7 +154,7 @@ public class NullJJVMTICallbacks extends JJVMTIAgentAdapter implements JJVMTI.Ev
     }
 
     @Override
-    public void vmObjectAllocation(Thread thread, Object object, ClassActor classActor, int size) {
+    public void vmObjectAlloc(Thread thread, Object object, ClassActor classActor, int size) {
     }
 
 }
