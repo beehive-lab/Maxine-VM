@@ -498,7 +498,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             return reference;
         }
         return reference.status().isForwarder() && phase() == HeapPhase.ANALYZING ? reference : null;
-        // return reference != null && reference.status().isLive() ? reference : null;
     }
 
     public RemoteReference makeQuasiReference(Address origin) throws TeleError {
