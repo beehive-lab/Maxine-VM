@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.sun.max.ins.object;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.view.*;
-import com.sun.max.tele.object.*;
+import com.sun.max.tele.*;
 
 
 /**
@@ -39,10 +39,10 @@ public interface ObjectViewFactory extends InspectionViewFactory<ObjectView>{
      * Gets a view on a specified object in VM memory, either an already existing view
      * if one exits for that object, or a newly created view.
      *
-     * @param teleObject the VM object to be viewed
+     * @param object the VM object to be viewed
      * @return an object view
      */
-    ObjectView makeView(TeleObject teleObject);
+    ObjectView makeView(MaxObject object);
 
     /**
      * Gets an interactive action that makes a view on an object in
@@ -64,10 +64,10 @@ public interface ObjectViewFactory extends InspectionViewFactory<ObjectView>{
      * Gets an action that makes a view on a specified object in
      * VM memory.
      *
-     * @param teleObject the VM object that would be viewed
+     * @param object the VM object that would be viewed
      * @param actionTitle a string to be used if the action is in a menu, default title used if null
      * @return an action that creates an object view
      */
-    InspectorAction makeViewAction(TeleObject teleObject, String actionTitle);
+    InspectorAction makeViewAction(MaxObject object, String actionTitle);
 
 }

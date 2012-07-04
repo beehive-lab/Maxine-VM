@@ -256,9 +256,9 @@ public final class StackView extends AbstractView<StackView> {
     private MaxVMState lastChangedState = null;
 
     private InspectorPanel contentPane = null;
-    private DefaultListModel stackFrameListModel = null;
-    private DefaultListModel emptyModel = new DefaultListModel();
-    private JList stackFrameList = null;
+    private DefaultListModel stackFrameListModel = null;  // TODO (mlvdv) generic in Java 7
+    private DefaultListModel emptyModel = new DefaultListModel();  // TODO (mlvdv) generic in Java 7
+    private JList stackFrameList = null;  // TODO (mlvdv) generic in Java 7
 
     /**
      * The maximum number of frames to be displayed at any given time, to defend against extremely large
@@ -270,20 +270,7 @@ public final class StackView extends AbstractView<StackView> {
     public StackView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
-        final InspectorFrame frame = createFrame(true);
-
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
-        editMenu.add(copyStackToClipboardAction);
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().viewSelectedThreadStackMemory("View memory for stack"));
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-
+        createFrame(true);
         forceRefresh();
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
@@ -299,6 +286,7 @@ public final class StackView extends AbstractView<StackView> {
         return title;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void createViewContent() {
         lastUpdatedState = null;
@@ -342,11 +330,26 @@ public final class StackView extends AbstractView<StackView> {
             contentPane.add(listScrollPane, BorderLayout.CENTER);
         }
         setContentPane(contentPane);
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu editMenu = makeMenu(MenuKind.EDIT_MENU);
+        editMenu.add(copyStackToClipboardAction);
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().viewSelectedThreadStackMemory("View memory for stack"));
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
         forceRefresh();
         // TODO (mlvdv) try to set frame selection to match global focus at creation; doesn't display.
         frameFocusChanged(null, inspection().focus().stackFrame());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void refreshState(boolean force) {
         if (stack != null && stack.thread() != null && stack.thread().isLive()) {
@@ -496,6 +499,7 @@ public final class StackView extends AbstractView<StackView> {
             super(inspection(), "Copy stack list to clipboard");
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public void procedure() {
             // (mlvdv)  This is pretty awkward, but has the virtue that it reproduces exactly what's displayed.  Could be improved.

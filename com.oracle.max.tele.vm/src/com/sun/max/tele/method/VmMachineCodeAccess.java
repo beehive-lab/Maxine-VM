@@ -186,7 +186,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
             try {
                 final Reference targetMethodReference = methods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
                 // Possible that the address points to an unallocated area of a code region.
-                if (targetMethodReference != null && !targetMethodReference.isZero()) {
+                if (!targetMethodReference.isZero()) {
                     objects().makeTeleObject(targetMethodReference);  // Constructor will register the compiled method if successful
                 }
             } catch (MaxVMBusyException maxVMBusyException) {

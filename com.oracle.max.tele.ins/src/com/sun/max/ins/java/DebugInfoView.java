@@ -94,7 +94,6 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
 
         frameBorder = BorderFactory.createMatteBorder(1, 0, 1, 0, inspection.preference().style().defaultBorderColor());
 
-
         nullPanel = new InspectorPanel(inspection, new BorderLayout());
         nullPanel.add(new PlainLabel(inspection, inspection.nameDisplay().unavailableDataShortText()), BorderLayout.PAGE_START);
 
@@ -105,11 +104,7 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
 
         updateCodeLocation(focus().codeLocation());
 
-        final InspectorFrame frame = createFrame(true);
-
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        createFrame(true);
 
         originalFrameGeometry = getGeometry();
         Trace.end(1,  tracePrefix() + " initializing");
@@ -165,6 +160,11 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
             setContentPane(new InspectorScrollPane(inspection(), panel));
         }
         setTitle();
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
     }
 
     @Override

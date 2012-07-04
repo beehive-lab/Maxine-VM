@@ -38,7 +38,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -93,8 +92,8 @@ public final class MemoryBytesView extends AbstractView<MemoryBytesView> {
             return memoryBytesView;
         }
 
-        public MemoryBytesView makeView(TeleObject teleObject) {
-            final MaxMemoryRegion region = teleObject.objectMemoryRegion();
+        public MemoryBytesView makeView(MaxObject object) {
+            final MaxMemoryRegion region = object.objectMemoryRegion();
             final long nBytes = region.nBytes();
             assert nBytes < Integer.MAX_VALUE;
             final MemoryBytesView memoryBytesView = new MemoryBytesView(inspection(), region.start(), (int) nBytes, 1, 16);
@@ -143,19 +142,7 @@ public final class MemoryBytesView extends AbstractView<MemoryBytesView> {
         this.numberOfBytesPerGroup = numberOfBytesPerGroup;
         this.numberOfGroupsPerLine = numberOfGroupsPerLine;
         Trace.begin(TRACE_VALUE, tracePrefix() + " creating for " + getTextForTitle());
-
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
-        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-        defaultMenu.addSeparator();
-        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.MEMORY_BYTES, this));
-        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.MEMORY_BYTES));
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        createFrame(true);
         inspection.gui().setLocationRelativeToMouse(this, inspection.preference().geometry().newFrameDiagonalOffset());
         originalFrameGeometry = getGeometry();
         Trace.end(TRACE_VALUE, tracePrefix() + " creating for " + getTextForTitle());
@@ -303,6 +290,19 @@ public final class MemoryBytesView extends AbstractView<MemoryBytesView> {
                 view.add(charLabels[index]);
             }
         }
+
+        // Populate menu bar
+        final InspectorMenu defaultMenu = makeMenu(MenuKind.DEFAULT_MENU);
+        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        defaultMenu.addSeparator();
+        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.MEMORY_BYTES, this));
+        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.MEMORY_BYTES));
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         forceRefresh();
         SpringUtilities.makeCompactGrid(view, numberOfLines * 2, 1 + numberOfGroupsPerLine, 0, 0, 5, 5);

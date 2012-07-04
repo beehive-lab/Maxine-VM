@@ -31,6 +31,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.tele.*;
+import com.sun.max.tele.heap.region.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
@@ -68,8 +69,8 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
                             MaxMemoryManagementInfo info = vm().heap().getMemoryManagementInfo(address);
                             // TODO: revisit this.
                             if (info.status().equals(MaxMemoryStatus.LIVE)) {
-                                final TeleObject teleObject = info.tele();
-                                focus().setHeapObject(teleObject);
+                                final MaxObject object = info.tele();
+                                focus().setHeapObject(object);
                             } else {
                                 gui().errorMessage("Heap Region Info not found for address "  + address.to0xHexString());
                             }
@@ -89,9 +90,9 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
                         final int regionID = Integer.parseInt(input);
                         if (TeleRegionTable.theTeleRegionTable().isValidRegionID(regionID)) {
                             Address regionInfoAddress = TeleRegionTable.theTeleRegionTable().regionInfo(regionID);
-                            final TeleObject teleObject = vm().objects().findObjectAt(regionInfoAddress);
-                            if (teleObject != null && teleObject instanceof TeleHeapRegionInfo) {
-                                focus().setHeapObject(teleObject);
+                            final MaxObject object = vm().objects().findObjectAt(regionInfoAddress);
+                            if (object != null && object instanceof TeleHeapRegionInfo) {
+                                focus().setHeapObject(object);
                             }
                         } else {
                             gui().errorMessage("Not a valid region ID"  + input);
@@ -105,11 +106,11 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
             makeViewActions.add(interactiveViewRegionInfoByRegionIDAction);
         }
 
-        public InspectorAction makeViewAction(final TeleObject teleObject, String actionTitle) {
+        public InspectorAction makeViewAction(final MaxObject object, String actionTitle) {
             return new InspectorAction(inspection(), actionTitle == null ? "View Heap Region Info" : actionTitle) {
                 @Override
                 protected void procedure() {
-                    TeleHeapRegionInfo teleHeapRegionInfo = (TeleHeapRegionInfo) vm().heap().getMemoryManagementInfo(teleObject.origin()).tele();
+                    TeleHeapRegionInfo teleHeapRegionInfo = (TeleHeapRegionInfo) vm().heap().getMemoryManagementInfo(object.origin()).tele();
                     if (teleHeapRegionInfo != null) {
                         focus().setHeapObject(teleHeapRegionInfo);
                     }
@@ -132,23 +133,22 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
         return viewManager;
     }
 
-    HeapRegionInfoView(Inspection inspection, TeleObject teleObject) {
-        super(inspection, teleObject);
+    HeapRegionInfoView(Inspection inspection, MaxObject object) {
+        super(inspection, object);
         alternateDisplay = true;
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
     protected void createViewContent() {
         super.createViewContent();
-        final TeleHeapRegionInfo teleHeapRegionInfo = (TeleHeapRegionInfo) teleObject();
+        final TeleHeapRegionInfo teleHeapRegionInfo = (TeleHeapRegionInfo) object();
         final String name = teleHeapRegionInfo.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new InspectorTabbedPane(inspection());
+        tabbedPane.setBackground(viewBackgroundColor());
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleHeapRegionInfo, instanceViewPreferences);
+        fieldsPane = ObjectScrollPane.createTupleFieldsPane(inspection(), this);
         tabbedPane.add(name, fieldsPane);
         regionInfoPane =  new HeapRegionInfoTable(inspection(), teleHeapRegionInfo).makeHeapRegionInfoPane();
         tabbedPane.add("Region #" + teleHeapRegionInfo.regionID() + " info", regionInfoPane);
@@ -164,15 +164,17 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
             }
         });
         getContentPane().add(tabbedPane);
+
+        // Opportunity for view-specific Object menu
+        makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override
     protected void refreshState(boolean force) {
         super.refreshState(force);
-        if (teleObject().memoryStatus().isNotDeadYet()) {
-            // Only refresh the visible pane
-            final Prober pane = (Prober) tabbedPane.getSelectedComponent();
-            pane.refresh(force);
-        }
+        tabbedPane.setBackground(viewBackgroundColor());
+        // Only refresh the visible pane.
+        final Prober prober = (Prober) tabbedPane.getSelectedComponent();
+        prober.refresh(force);
     }
 }

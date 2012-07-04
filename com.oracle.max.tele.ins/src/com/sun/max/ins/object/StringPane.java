@@ -24,7 +24,6 @@ package com.sun.max.ins.object;
 
 import javax.swing.*;
 
-import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 
@@ -33,25 +32,24 @@ import com.sun.max.tele.*;
  */
 public final class StringPane extends InspectorScrollPane {
 
-    public static StringPane createStringPane(ObjectView objectInspector, StringSource stringSource) {
-        return new StringPane(objectInspector.inspection(), new JTextArea(), stringSource);
+    public static StringPane createStringPane(ObjectView objectView, StringSource stringSource) {
+        return new StringPane(objectView, new JTextArea(), stringSource);
     }
 
     public interface StringSource {
         String fetchString();
-        boolean isLive();
     }
 
+    private final ObjectView objectView;
     private final StringSource stringSource;
-    private String stringValue;
     private final JTextArea textArea;
 
-    private StringPane(Inspection inspection, JTextArea textArea, StringSource stringSource) {
-        super(inspection, textArea);
+    private StringPane(ObjectView objectView, JTextArea textArea, StringSource stringSource) {
+        super(objectView.inspection(), textArea);
+        this.objectView = objectView;
         this.stringSource = stringSource;
-        this.stringValue = stringSource.fetchString();
         this.textArea = textArea;
-        this.textArea.append(stringValue);
+        this.textArea.append(stringSource.fetchString());
         this.textArea.setEditable(false);
         refresh(true);
     }
@@ -65,20 +63,19 @@ public final class StringPane extends InspectorScrollPane {
 
     @Override
     public void refresh(boolean force) {
+        super.refresh(force);
         if (vm().state().newerThan(lastRefreshedState) || force) {
             lastRefreshedState = vm().state();
-            if (stringSource.isLive()) {
-                final String newString = stringSource.fetchString();
-                if (newString != stringValue) {
-                    stringValue = newString;
-                    textArea.selectAll();
-                    textArea.replaceSelection(stringValue);
-                }
-            } else {
-                textArea.selectAll();
-                textArea.replaceSelection("");
-                textArea.setBackground(preference().style().deadObjectBackgroundColor());
+            setBackground(objectView.viewBackgroundColor());
+            textArea.setBackground(objectView.viewBackgroundColor());
+            textArea.selectAll();
+            String newText;
+            try {
+                newText = stringSource.fetchString();
+            } catch (Throwable e) {
+                newText = inspection().nameDisplay().unavailableDataLongText();
             }
+            textArea.replaceSelection(newText);
         }
     }
 

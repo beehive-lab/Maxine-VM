@@ -24,6 +24,7 @@ package com.sun.max.ins.object;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -36,17 +37,17 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
  * A table that displays VM array elements; for use in an instance of {@link ObjectView}.
- * <br>
+ * <p>
  * Null array elements can be hidden from the display.
- * <br>
+ * <p>
  * This table is somewhat complex so that it can serve for both ordinary array elements
  * as well as the various array subsets (tables) in hybrid objects (hubs).  They are distinguished
  * by a string prefix appearing before any mention of elements, e.g. [3] for an ordinary
@@ -54,7 +55,9 @@ import com.sun.max.vm.value.*;
  */
 public final class ArrayElementsTable extends InspectorTable {
 
-    private final TeleObject teleObject;
+    private static final int TRACE_LEVEL = 1;
+
+    private final ObjectView objectView;
     private final Kind elementKind;
     private final TypeDescriptor elementTypeDescriptor;
     private final int startOffset;
@@ -65,29 +68,25 @@ public final class ArrayElementsTable extends InspectorTable {
 
     private final ArrayElementsTableModel tableModel;
 
-    private final ObjectViewPreferences instanceViewPreferences;
+    private final List<InspectorAction> extraViewMenuActions = new ArrayList<InspectorAction>();
 
     /**
      * A table specialized for the display VM array elements.
      * This table is somewhat complex so that it can serve for both ordinary array elements
      * as well as the various array subsets (tables) in hybrid objects (hubs).
      *
-     * @param inspection
-     * @param teleObject the object being inspected, of which the array elements are part.
      * @param elementKind the VM value "kind" of the array elements.
      * @param startOffset memory position relative to the object origin where the displayed array starts
      * @param startIndex index into the array where the display starts
      * @param length number of elements to display
      * @param indexPrefix text to prepend to the displayed name(index) of each element.
      * @param wordValueMode how to display word values, based on their presumed use in the VM.
-     * @param instanceViewPreferences view preferences to be applied to this view instance
      */
     ArrayElementsTable(Inspection inspection,
-        TeleObject teleObject, final Kind elementKind, final TypeDescriptor elementTypeDescriptor,
-        final int startOffset, int startIndex, int length, final String indexPrefix,
-        WordValueLabel.ValueMode wordValueMode, ObjectViewPreferences instanceViewPreferences) {
+                    ObjectView objectView, final Kind elementKind, final TypeDescriptor elementTypeDescriptor, final int startOffset,
+                    int startIndex, int length, final String indexPrefix, WordValueLabel.ValueMode wordValueMode) {
         super(inspection);
-        this.teleObject = teleObject;
+        this.objectView = objectView;
         this.elementKind = elementKind;
         this.elementTypeDescriptor = elementTypeDescriptor;
         this.startOffset = startOffset;
@@ -95,11 +94,15 @@ public final class ArrayElementsTable extends InspectorTable {
         this.arrayLength = length;
         this.indexPrefix = indexPrefix;
         this.wordValueMode = wordValueMode;
-        this.instanceViewPreferences = instanceViewPreferences;
 
-        this.tableModel = new ArrayElementsTableModel(inspection, teleObject.origin());
-        ArrayElementsTableColumnModel columnModel = new ArrayElementsTableColumnModel(this, this.tableModel, instanceViewPreferences);
+        this.tableModel = new ArrayElementsTableModel(inspection, objectView.object().origin());
+        ArrayElementsTableColumnModel columnModel = new ArrayElementsTableColumnModel(this, this.tableModel, objectView.viewPreferences());
         configureMemoryTable(tableModel, columnModel);
+
+        this.extraViewMenuActions.add(scrollToBeginningAction());
+        this.extraViewMenuActions.add(new ScrollToIndexAction(inspection));
+        this.extraViewMenuActions.add(scrollToEndAction());
+
         setFillsViewportHeight(true);
         updateFocusSelection();
     }
@@ -111,7 +114,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
-                    actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, null).perform();
+                    actions().setArrayElementWatchpoint(objectView.object(), elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, null).perform();
                     final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
                     if (!watchpoints.isEmpty()) {
                         return watchpoints.get(0);
@@ -126,12 +129,13 @@ public final class ArrayElementsTable extends InspectorTable {
     @Override
     protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
         if (vm().watchpointManager() != null) {
+            final MaxObject object = objectView.object();
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
-                    actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, null).perform();
+                    actions().setArrayElementWatchpoint(object, elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, null).perform();
                     final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
                     if (!watchpoints.isEmpty()) {
                         return watchpoints.get(0);
@@ -139,8 +143,8 @@ public final class ArrayElementsTable extends InspectorTable {
                     return null;
                 }
             });
-            menu.add(actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, "Watch this array element"));
-            menu.add(actions().setObjectWatchpoint(teleObject, "Watch this array's memory"));
+            menu.add(actions().setArrayElementWatchpoint(object, elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, "Watch this array element"));
+            menu.add(actions().setObjectWatchpoint(object, "Watch this array's memory"));
             menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
             menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));
             return menu;
@@ -183,11 +187,22 @@ public final class ArrayElementsTable extends InspectorTable {
 
     @Override
     public Color cellBackgroundColor() {
-        // Gets called during superclass initialization
-        if (teleObject != null && teleObject.memoryStatus().isDead()) {
-            return preference().style().deadObjectBackgroundColor();
-        }
-        return null;
+        return objectView == null ? null : objectView.viewBackgroundColor();
+    }
+
+    @Override
+    public Color headerBackgroundColor() {
+        return cellBackgroundColor();
+    }
+
+    @Override
+    public List<InspectorAction> extraViewMenuActions() {
+        return extraViewMenuActions;
+    }
+
+    @Override
+    public boolean isElided() {
+        return objectView.viewPreferences().elideNullArrayElements();
     }
 
     /**
@@ -222,19 +237,21 @@ public final class ArrayElementsTable extends InspectorTable {
 
         private final int nBytesInElement;
 
-        /** Maps display rows to element rows (indexes) in the table. */
-        private int[] rowToElementIndex;
+        /**
+         * Map: display {@code row --> element index}.
+         * <p>
+         * When null elements are not being hidden then {@code row == elementIndex}
+         */
+        private final int[] rowToElementIndex;
+
+
         private int visibleElementCount = 0;  // number of array elements being displayed
 
         public ArrayElementsTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
             this.nBytesInElement = elementKind.width.numberOfBytes;
-
-            // Initialize map so that all elements will display
             this.rowToElementIndex = new int[arrayLength];
-            for (int index = 0; index < arrayLength; index++) {
-                rowToElementIndex[index] = index;
-            }
+            fillRowToElementIndexMap();
             this.visibleElementCount = arrayLength;
         }
 
@@ -247,7 +264,7 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Object getValueAt(int row, int col) {
-            return rowToElementIndex[row];
+            return rowToElementIndex(row);
         }
 
         @Override
@@ -267,7 +284,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         @Override
         public int getOffset(int row) {
-            return startOffset + (rowToElementIndex[row] * nBytesInElement);
+            return startOffset + (rowToElementIndex(row) * nBytesInElement);
         }
 
         /**
@@ -280,10 +297,10 @@ public final class ArrayElementsTable extends InspectorTable {
             if (address.isNotZero()) {
                 final int offset = address.minus(getOrigin()).minus(startOffset).toInt();
                 if (offset >= 0 && offset < arrayLength * nBytesInElement) {
-                    final int elementRow = offset / nBytesInElement;
+                    final int elementIndex = offset / nBytesInElement;
                     for (int row = 0; row < visibleElementCount; row++) {
-                        if (rowToElementIndex[row] == elementRow) {
-                            return elementRow;
+                        if (rowToElementIndex(row) == elementIndex) {
+                            return row;
                         }
                     }
                 }
@@ -293,7 +310,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         @Override
         public String getRowDescription(int row) {
-            return "Array element " + row;
+            return "Array element " + rowToElementIndex(row);
         }
 
         @Override
@@ -301,33 +318,66 @@ public final class ArrayElementsTable extends InspectorTable {
             return elementTypeDescriptor;
         }
 
-
         public int rowToElementIndex(int row) {
-            return rowToElementIndex[row];
+            if (objectView.viewPreferences().elideNullArrayElements()) {
+                return rowToElementIndex[row];
+            }
+            return row;
+        }
+
+        public int findRow(int elementIndex) {
+            if (objectView.viewPreferences().elideNullArrayElements()) {
+                return Arrays.binarySearch(rowToElementIndex, elementIndex);
+            }
+            return elementIndex;
+        }
+
+        public int findClosestRow(int elementIndex) {
+            if (isElided()) {
+                int closestDistance = Integer.MAX_VALUE;
+                int closestRow = -1;
+                for (int row = 0; row < visibleElementCount; row++) {
+                    final int diff = Math.abs(elementIndex - rowToElementIndex[row]);
+                    if (diff == 0) {
+                        return row;
+                    }
+                    if (diff < closestDistance) {
+                        closestDistance = diff;
+                        closestRow = row;
+                    }
+                }
+                return closestRow;
+            }
+            return elementIndex;
         }
 
         @Override
         public void refresh() {
-            setOrigin(teleObject.origin());
+            final MaxObject object = objectView.object();
+            setOrigin(object.origin());
             // Update the mapping between array elements and displayed rows.
-            if (teleObject.memoryStatus().isNotDeadYet()) {
-                if (instanceViewPreferences.hideNullArrayElements()) {
-                    visibleElementCount = 0;
-                    for (int index = 0; index < arrayLength; index++) {
-                        if (!vm().memoryIO().readArrayElementValue(elementKind,  teleObject.reference(), index).isZero()) {
-                            rowToElementIndex[visibleElementCount++] = index;
-                        }
-                    }
-                } else {
-                    if (visibleElementCount != arrayLength) {
-                        // Previously hiding but no longer; reset map
-                        for (int index = 0; index < arrayLength; index++) {
-                            rowToElementIndex[index] = index;
-                        }
-                        visibleElementCount = arrayLength;
+            if (object.status().isNotDead()) {
+                fillRowToElementIndexMap();
+                super.refresh();
+            }
+        }
+
+        private void fillRowToElementIndexMap() {
+            if (isElided()) {
+                visibleElementCount = 0;
+                for (int elementIndex = 0; elementIndex < arrayLength; elementIndex++) {
+                    if (!vm().memoryIO().readArrayElementValue(elementKind,  objectView.object().reference(), elementIndex).isZero()) {
+                        rowToElementIndex[visibleElementCount++] = elementIndex;
                     }
                 }
-                super.refresh();
+                for (int elementIndex = visibleElementCount; elementIndex < arrayLength; elementIndex++) {
+                    rowToElementIndex[elementIndex] = arrayLength;
+                }
+            } else {
+                for (int elementIndex = 0; elementIndex < arrayLength; elementIndex++) {
+                    rowToElementIndex[elementIndex] = elementIndex;
+                }
+                visibleElementCount = arrayLength;
             }
         }
     }
@@ -340,8 +390,9 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+           // final int index = tableModel.rowToElementIndex(row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>address = ");
-            setValue(row, tableModel.getOffset(row), tableModel.getOrigin());
+            setValue(tableModel.rowToElementIndex(row), tableModel.getOffset(row), tableModel.getOrigin());
             setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor());
             return this;
@@ -377,11 +428,12 @@ public final class ArrayElementsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             final int elementIndex = tableModel.rowToElementIndex(row);
             if (labels[elementIndex] == null) {
+                final MaxObject object = objectView.object();
                 if (elementKind.isReference) {
                     labels[elementIndex] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return vm().memoryIO().readArrayElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
+                            return vm().memoryIO().readArrayElementValue(elementKind,  object.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {
@@ -393,7 +445,7 @@ public final class ArrayElementsTable extends InspectorTable {
                     labels[elementIndex] = new WordValueLabel(inspection, wordValueMode, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return vm().memoryIO().readArrayElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
+                            return vm().memoryIO().readArrayElementValue(elementKind,  object.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {
@@ -405,7 +457,7 @@ public final class ArrayElementsTable extends InspectorTable {
                     labels[elementIndex] = new PrimitiveValueLabel(inspection, elementKind) {
                         @Override
                         public Value fetchValue() {
-                            return vm().memoryIO().readArrayElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
+                            return vm().memoryIO().readArrayElementValue(elementKind,  object.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {
@@ -421,5 +473,47 @@ public final class ArrayElementsTable extends InspectorTable {
             return labels[elementIndex];
         }
     }
+
+    private final class ScrollToIndexAction extends InspectorAction {
+
+        public ScrollToIndexAction(Inspection inspection) {
+            super(inspection, "Show array index...");
+        }
+
+        @Override
+        protected void procedure() {
+            int elementIndex = -1;
+            final String input = gui().inputDialog("Show index:", "0");
+            if (input == null) {
+                // User clicked cancel.
+                return;
+            }
+            try {
+                elementIndex = Integer.parseInt(input);
+            } catch (NumberFormatException numberFormatException) {
+                gui().errorMessage(numberFormatException.toString());
+                return;
+            }
+            if (elementIndex < startIndex || elementIndex >= startIndex + arrayLength) {
+                gui().errorMessage("Array index " + Integer.toString(elementIndex) + " out of range");
+                return;
+            }
+            final int row = tableModel.findClosestRow(elementIndex);
+            if (row < 0) {
+                gui().errorMessage("Element " + Integer.toString(elementIndex) + " elided, value is null");
+                return;
+            } else if (row != elementIndex) {
+                gui().warningMessage("Element " + Integer.toString(elementIndex) + " elided (null value), scrolling to closest element");
+            }
+            scrollToRows(row, row);
+            final Address rowAddress = tableModel.getAddress(row);
+            Trace.line(TRACE_LEVEL, tracePrefix() + "scrolling/selecting row=" + row + ", index=" + elementIndex + ", addr=" + rowAddress.to0xHexString());
+
+            if (rowAddress.isNotZero()) {
+                inspection().focus().setAddress(rowAddress);
+            }
+        }
+    }
+
 
 }

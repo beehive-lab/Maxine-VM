@@ -23,6 +23,7 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.heap.region.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 
@@ -47,8 +48,8 @@ public class TeleHeapRegionInfo extends TeleTupleObject {
     }
 
     public Address firstFreeChunk() {
-        if (vm().fields().HeapRegionInfo_numFreeChunks.readInt(getReference()) > 0) {
-            int offsetToFirstFreeChunk = vm().fields().HeapRegionInfo_firstFreeChunkOffset.readInt(getReference());
+        if (vm().fields().HeapRegionInfo_numFreeChunks.readInt(reference()) > 0) {
+            int offsetToFirstFreeChunk = vm().fields().HeapRegionInfo_firstFreeChunkOffset.readInt(reference());
             return regionStart().plus(offsetToFirstFreeChunk);
         }
         return Address.zero();
@@ -56,14 +57,14 @@ public class TeleHeapRegionInfo extends TeleTupleObject {
 
     public int tag() {
         if (regionID >= 0) {
-            return vm().fields().HeapRegionInfo_tag.readInt(getReference());
+            return vm().fields().HeapRegionInfo_tag.readInt(reference());
         }
         return 0;
     }
 
     public int flags() {
         if (regionID  >= 0) {
-            return vm().fields().HeapRegionInfo_flags.readInt(getReference());
+            return vm().fields().HeapRegionInfo_flags.readInt(reference());
         }
         return 0;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -51,20 +52,20 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     private static final String LONG_NAME = "Object View";
 
     /**
-     * Map:   {@link TeleObject} -- > the {@link ObjectView}, if it exists, for the corresponding
+     * Map:   {@link MaxObject} -- > the {@link ObjectView}, if it exists, for the corresponding
      * object in the VM.  Relies on {@link ObjectView}s being canonical.
      */
-    private final Map<TeleObject, ObjectView> teleObjectToView = new HashMap<TeleObject, ObjectView>();
+    private final Map<MaxObject, ObjectView> objectToView = new HashMap<MaxObject, ObjectView>();
 
     /**
-     * Object view constructors for specific tuple-implemented subclasses of {@link TeleObject}s.
-     * The most specific class that matches a particular {@link TeleObject} will
+     * Object view constructors for specific tuple-implemented subclasses of {@link MaxObject}s.
+     * The most specific class that matches a particular {@link MaxObject} will
      * be used, in an emulation of virtual method dispatch.
      */
     private final Map<Class, Constructor> teleTupleObjectClassToObjectViewConstructor = new HashMap<Class, Constructor>();
 
     /**
-     * Object view constructors for specific array-implemented subclasses of {@link TeleObject}s.
+     * Object view constructors for specific array-implemented subclasses of {@link MaxObject}s.
      * The most specific class that matches a particular array component type will
      * be used, in an emulation of virtual method dispatch.
      */
@@ -85,23 +86,18 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         // Use this if there is no subclass of array component type is matched, or if the component type is an interface.
         defaultArrayViewConstructor = getConstructor(ArrayView.class);
         // Array views for specific subclasses of component type
-        arrayComponentClassToObjectViewConstructor.put(Character.class, getConstructor(CharacterArrayView.class));
+        //arrayComponentClassToObjectViewConstructor.put(<some component class>, getConstructor(<some ArrayView class>));
 
         // Use this if there is no object type subclass matched
         defaultTupleViewConstructor = getConstructor(TupleView.class);
         // Tuple views for specific subclasses
-        teleTupleObjectClassToObjectViewConstructor.put(TeleDescriptor.class, getConstructor(DescriptorView.class));
-        teleTupleObjectClassToObjectViewConstructor.put(TeleEnum.class, getConstructor(EnumView.class));
-        teleTupleObjectClassToObjectViewConstructor.put(TeleString.class, getConstructor(StringView.class));
-        teleTupleObjectClassToObjectViewConstructor.put(TeleStringConstant.class, getConstructor(StringConstantView.class));
-        teleTupleObjectClassToObjectViewConstructor.put(TeleUtf8Constant.class, getConstructor(Utf8ConstantView.class));
         teleTupleObjectClassToObjectViewConstructor.put(TeleHeapRegionInfo.class, getConstructor(HeapRegionInfoView.class));
         focus().addListener(new InspectionFocusAdapter() {
 
             @Override
-            public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
-                if (teleObject != null) {
-                    ObjectViewManager.this.makeObjectView(inspection, teleObject);
+            public void heapObjectFocusChanged(MaxObject oldObject, MaxObject newObject) {
+                if (newObject != null) {
+                    ObjectViewManager.this.makeObjectView(inspection, newObject);
                 }
             }
         });
@@ -116,9 +112,9 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         Trace.end(1, tracePrefix() + "initializing");
     }
 
-    public ObjectView makeView(TeleObject teleObject) {
-        focus().setHeapObject(teleObject);
-        return teleObjectToView.get(teleObject);
+    public ObjectView makeView(MaxObject object) {
+        focus().setHeapObject(object);
+        return objectToView.get(object);
     }
 
     public InspectorAction makeViewByAddressAction() {
@@ -129,8 +125,8 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         return interactiveMakeViewByIDAction;
     }
 
-    public InspectorAction makeViewAction(TeleObject teleObject, String actionTitle) {
-        return new ViewSpecifiedObjectAction(teleObject, actionTitle);
+    public InspectorAction makeViewAction(MaxObject object, String actionTitle) {
+        return new ViewSpecifiedObjectAction(object, actionTitle);
     }
 
     @Override
@@ -145,21 +141,21 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         return makeViewActions;
     }
 
-    private ObjectView makeObjectView(Inspection inspection, TeleObject teleObject) {
-        ObjectView objectView =  teleObjectToView.get(teleObject);
+    private ObjectView makeObjectView(Inspection inspection, MaxObject object) {
+        ObjectView objectView =  objectToView.get(object);
         if (objectView == null) {
-            switch (teleObject.kind()) {
+            switch (object.kind()) {
                 case HYBRID: {
-                    objectView = new HubView(inspection, teleObject);
+                    objectView = new HubView(inspection, object);
                     break;
                 }
                 case TUPLE: {
-                    Constructor constructor = lookupViewConstructor(teleTupleObjectClassToObjectViewConstructor, teleObject.getClass());
+                    Constructor constructor = lookupViewConstructor(teleTupleObjectClassToObjectViewConstructor, object.getClass());
                     if (constructor == null) {
                         constructor = defaultTupleViewConstructor;
                     }
                     try {
-                        objectView = (ObjectView) constructor.newInstance(inspection, teleObject);
+                        objectView = (ObjectView) constructor.newInstance(inspection, object);
                     } catch (InstantiationException e) {
                         throw InspectorError.unexpected(e);
                     } catch (IllegalAccessException e) {
@@ -170,7 +166,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
                     break;
                 }
                 case ARRAY: {
-                    ClassActor componentClassActor = teleObject.classActorForObjectType().componentClassActor();
+                    ClassActor componentClassActor = object.classActorForObjectType().componentClassActor();
                     if (componentClassActor.isPrimitiveClassActor()) {
                         final PrimitiveClassActor primitiveClassActor = (PrimitiveClassActor) componentClassActor;
                         componentClassActor = primitiveClassActor.toWrapperClassActor();
@@ -180,7 +176,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
                         constructor = defaultArrayViewConstructor;
                     }
                     try {
-                        objectView = (ObjectView) constructor.newInstance(inspection, teleObject);
+                        objectView = (ObjectView) constructor.newInstance(inspection, object);
                     } catch (InstantiationException e) {
                         throw InspectorError.unexpected();
                     } catch (IllegalAccessException e) {
@@ -193,13 +189,13 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
                 }
             }
             if (objectView != null) {
-                teleObjectToView.put(teleObject, objectView);
+                objectToView.put(object, objectView);
                 objectView.addViewEventListener(new ViewEventListener() {
 
                     @Override
                     public void viewClosing(AbstractView view) {
                         final ObjectView objectView = (ObjectView) view;
-                        assert teleObjectToView.remove(objectView.teleObject()) != null;
+                        assert objectToView.remove(objectView.object()) != null;
                     }
 
                 });
@@ -213,7 +209,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     }
 
     private Constructor getConstructor(Class clazz) {
-        return Classes.getDeclaredConstructor(clazz, Inspection.class, TeleObject.class);
+        return Classes.getDeclaredConstructor(clazz, Inspection.class, MaxObject.class);
     }
 
     private Constructor lookupViewConstructor(Map<Class, Constructor> map, Class clazz) {
@@ -229,24 +225,26 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     }
 
     public boolean isObjectViewObservingObject(long oid) {
-        for (TeleObject teleObject : teleObjectToView.keySet()) {
-            if (teleObject.reference().makeOID() == oid) {
+        for (MaxObject object : objectToView.keySet()) {
+            if (object.reference().makeOID() == oid) {
                 return true;
             }
         }
         return false;
     }
 
-    public void resetObjectToViewMapEntry(TeleObject oldTeleObject, TeleObject newTeleObject, ObjectView objectView) {
-        teleObjectToView.remove(oldTeleObject);
-        teleObjectToView.put(newTeleObject, objectView);
+    public void resetObjectToViewMapEntry(MaxObject oldObject, MaxObject newObject, ObjectView objectView) {
+        final ObjectView mappedView = objectToView.remove(oldObject);
+        assert mappedView == objectView;
+        final ObjectView collision = objectToView.put(newObject, objectView);
+        assert collision == null;
     }
 
     /**
      * @return all existing instances of {@link ObjectView}, even if hidden or iconic.
      */
     public Set<ObjectView> objectViews() {
-        return new HashSet<ObjectView>(teleObjectToView.values());
+        return new HashSet<ObjectView>(objectToView.values());
     }
 
     private final class InteractiveViewObjectByAddressAction extends InspectorAction {
@@ -261,9 +259,9 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
                 @Override
                 public void entered(Address address) {
-                    final TeleObject teleObject = vm().objects().findObjectAt(address);
-                    if (teleObject != null) {
-                        focus().setHeapObject(teleObject);
+                    final MaxObject object = vm().objects().findAnyObjectAt(address);
+                    if (object != null) {
+                        focus().setHeapObject(object);
                     } else {
                         gui().errorMessage("object not found at "  + address.to0xHexString());
                     }
@@ -287,9 +285,9 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
             }
             try {
                 final long oid = Long.parseLong(input);
-                final TeleObject teleObject = vm().objects().findObjectByOID(oid);
-                if (teleObject != null) {
-                    focus().setHeapObject(teleObject);
+                final MaxObject object = vm().objects().findObjectByOID(oid);
+                if (object != null) {
+                    focus().setHeapObject(object);
                 } else {
                     gui().errorMessage("failed to find heap object for ID: " + input);
                 }
@@ -305,16 +303,16 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     private final class ViewSpecifiedObjectAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View object";
-        final TeleObject teleObject;
+        final MaxObject object;
 
-        ViewSpecifiedObjectAction(TeleObject teleObject, String actionTitle) {
+        ViewSpecifiedObjectAction(MaxObject object, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleObject = teleObject;
+            this.object = object;
         }
 
         @Override
         protected void procedure() {
-            focus().setHeapObject(teleObject);
+            focus().setHeapObject(object);
         }
     }
 

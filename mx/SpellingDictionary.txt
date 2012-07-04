@@ -55,6 +55,7 @@ affordances
 allocatable
 appendable
 arg
+assignability
 atomicity
 bailed
 bailout
@@ -75,6 +76,7 @@ classloader
 classpath
 clipboard
 com
+combo
 compaction
 configurability
 deactivate
@@ -118,6 +120,7 @@ initializing
 inline
 inlined
 inlining
+inspectability
 inspectable
 inspectee
 instanceof
@@ -147,6 +150,7 @@ mlvdv
 moniker
 monikers
 mprotected
+multi
 mutex
 namespace
 nop
@@ -164,6 +168,7 @@ preload
 preloaded
 preloads
 preorder
+prepopulated
 preprocessed
 primordial
 println
@@ -172,6 +177,7 @@ probers
 programmatic
 proxy
 quibble
+reachability
 recompilation
 redock
 refactor
@@ -197,6 +203,9 @@ stderr
 stdout
 struct
 subtype
+subtypes
+supertype
+supertypes
 tabbed
 tele
 temp

@@ -149,8 +149,8 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
      */
     public void updateCache(long epoch) {
         updateTracer.begin();
-        // Ensure that we know the code region's current state
-        teleSemiSpaceCodeRegion.updateCache(epoch);
+        // Ensure that we know the code region's current state by refreshing the object cache
+        teleSemiSpaceCodeRegion.updateCacheIfNeeded();
         if (teleSemiSpaceCodeRegion.isAllocated()) {
             if (teleSemiSpaceCodeRegion.isInEviction()) {
                 // Code eviction is currently underway in this region.

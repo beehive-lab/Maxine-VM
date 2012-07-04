@@ -29,8 +29,10 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.JavaTypeDescriptor.WordTypeDescriptor;
 
 /**
@@ -40,6 +42,10 @@ import com.sun.max.vm.type.JavaTypeDescriptor.WordTypeDescriptor;
  * equality test.
  */
 public abstract class TypeDescriptor extends Descriptor {
+    static String BreakAtClassResolution = "";
+    static {
+        VMOptions.addFieldOption("-XX:", "BreakAtClassResolution", TypeDescriptor.class, "Break when resolving an unregistered class with the specified name", Phase.STARTING);
+    }
 
     /**
      * The only concrete subclass of {@link TypeDescriptor}.
@@ -216,10 +222,17 @@ public abstract class TypeDescriptor extends Descriptor {
      */
     public Class resolveType(ClassLoader classLoader) {
         if (!MaxineVM.isHosted()) {
+            // FIXME (ld): Recursing up the class registry's ancestors is wrong.
+            // This assumes a delegation model where a class loader delegates to class loaders up its class hierarchy only.
+            // This will not work with more elaborated loader where delegation may be customized to arbitrary loader, e.g., loader that aren't
+            // in its ancestor branch.
             ClassActor classActor = ClassRegistry.get(classLoader, this, true);
             if (classActor != null) {
                 return classActor.javaClass();
             }
+        }
+        if (MaxineVM.isDebug() && BreakAtClassResolution.equals(toJavaString())) {
+            FatalError.breakpoint();
         }
         return JavaTypeDescriptor.resolveToJavaClass(this, classLoader);
     }

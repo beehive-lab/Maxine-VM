@@ -82,6 +82,9 @@ public interface InspectorStyle {
     /** special foreground color for displaying a word that is an unchecked reference. */
     Color wordUncheckedReferenceDataColor();
 
+    /** special  foreground color for displaying a word that is a forwarding reference. */
+    Color wordForwardingReferenceDataColor();
+
     /** special foreground color for displaying a word that is an invalid heap object reference. */
     Color wordInvalidObjectReferenceDataColor();
 
@@ -214,6 +217,9 @@ public interface InspectorStyle {
     /** Color for the background of any display of memory belonging to an object that has died. */
     Color deadObjectBackgroundColor();
 
+    /** Color for the background of any display of memory belonging to a quasi object. */
+    Color quasiObjectBackgroundColor();
+
     // Search related
     /** Icon for the search button that selects the next match moving forward.  */
     Icon searchNextMatchButtonIcon();
@@ -296,6 +302,7 @@ public interface InspectorStyle {
     Color LightCoral = new Color(240, 128, 128);
     Color Red = new Color(255, 0, 0);
     Color Pink = new Color(255, 192, 203);
+    Color PaleVioletRed = new Color(219, 112, 147);
     Color OrangeRed = new Color(255, 69, 0);
     Color DarkOrange = new Color(255, 140, 0);
     Color Orange = new Color(255, 165, 0);
@@ -308,8 +315,13 @@ public interface InspectorStyle {
     Color Blue =  new Color(0, 0, 255);
     Color MediumBlue =  new Color(0, 0, 205);
 
+    Color BurlyWood = new Color(222, 184, 135);
     Color SaddleBrown = new Color(139, 69, 19);
+    Color GoldenRod = new Color(218, 165, 32);
     Color White = new Color(255, 255, 255);
     Color Gainsboro = new Color(220, 220, 220);
     Color Black = new Color(0, 0, 0);
+    Color Khaki = new Color(240, 230, 140);
+    Color DarkKhaki = new Color(189, 183, 107);
+    Color Olive = new Color(128, 128, 0);
 }

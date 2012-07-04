@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.sun.max.ins.method;
 
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
@@ -36,19 +35,37 @@ import com.sun.max.vm.actor.member.*;
 /**
  * A dialog to let the user select a method from a specified {@link ClassActor} in the VM.
  */
-public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
+public final class MethodActorSearchDialog extends ObjectSearchDialog<TeleMethodActor> {
 
-    @Override
-    protected TeleObject convertSelectedItem(Object listItem) {
-        return ((NamedTeleObject) listItem).teleObject();
+    private final static class MethodActorListItem extends FilteredListItem<TeleMethodActor> {
+
+        final TeleMethodActor teleMethodActor;
+        final String name;
+
+        public MethodActorListItem(Inspection inspection, String name, TeleMethodActor teleMethodActor) {
+            super(inspection);
+            this.teleMethodActor = teleMethodActor;
+            this.name = name;
+        }
+
+        @Override
+        public TeleMethodActor object() {
+            return teleMethodActor;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void rebuildList(String filterText) {
         final Iterator<TeleMethodActor> teleMethodActors = localTeleMethodActors.iterator();
 
         int i = 0;
-        final NamedTeleObject[] methods = new NamedTeleObject[localTeleMethodActors.size()];
+        final MethodActorListItem[] methodItems = new MethodActorListItem[localTeleMethodActors.size()];
 
         final String filterLowerCase = filterText.toLowerCase();
         while (teleMethodActors.hasNext()) {
@@ -59,13 +76,13 @@ public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
                 (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                 methodNameLowerCase.contains(filterLowerCase)) {
                 final String signature = methodActor.name + methodActor.descriptor().toJavaString(false, true);
-                methods[i++] = new NamedTeleObject(signature, teleMethodActor);
+                methodItems[i++] = new MethodActorListItem(inspection(), signature, teleMethodActor);
             }
         }
 
-        Arrays.sort(methods, 0, i);
+        Arrays.sort(methodItems, 0, i);
         for (int j = 0; j < i; ++j) {
-            listModel.addElement(methods[j]);
+            listModel.addElement(methodItems[j]);
         }
     }
 
@@ -92,7 +109,7 @@ public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
     public static TeleMethodActor show(Inspection inspection, TeleClassActor teleClassActor, Predicate<TeleMethodActor> filter, String title, String actionName) {
         final MethodActorSearchDialog dialog = new MethodActorSearchDialog(inspection, teleClassActor, filter, title, actionName);
         dialog.setVisible(true);
-        return (TeleMethodActor) dialog.selectedObject();
+        return dialog.selectedObject();
     }
 
     /**

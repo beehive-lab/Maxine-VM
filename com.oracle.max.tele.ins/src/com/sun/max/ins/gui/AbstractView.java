@@ -34,11 +34,11 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
 import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
 import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
+import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.ins.view.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
@@ -330,7 +330,8 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     }
 
     /**
-     * Creates the content that will be inserted into the View's frame.
+     * Creates the content that will be inserted into the View's frame, including
+     * the population of the frame's menu.
      */
     protected abstract void createViewContent();
 
@@ -390,6 +391,13 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     }
 
     /**
+     * @see InspectorFrame#makeMenu(MenuKind)
+     */
+    protected InspectorMenu makeMenu(MenuKind menuKind) throws InspectorError {
+        return frame.makeMenu(menuKind);
+    }
+
+    /**
      * Each view optionally re-reads, and updates any state caches if needed
      * from the VM.  The expectation is that some views may cache and
      * update selectively, but the argument can override this.
@@ -422,9 +430,13 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
      * Rebuilds the content of the view, much more
      * expensive than {@link #refresh(boolean)}, but necessary when the parameters or
      * configuration of the view changes enough to require creating a new one.
+     * <p>
+     * Note that this clears the menu bar before generating new content, so each
+     * view must provide them.
      */
     protected final void reconstructView() {
         final Dimension size = frame.getSize();
+        frame.clearMenus();
         createViewContent();
         frame.setPreferredSize(size);
         frame.validate();
@@ -608,7 +620,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     public void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
     }
 
-    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
+    public void heapObjectFocusChanged(MaxObject oldObject, MaxObject object) {
     }
 
     /**

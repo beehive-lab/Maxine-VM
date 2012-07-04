@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.sun.max.ins;
 
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -73,6 +72,6 @@ public interface ViewFocusListener {
     /**
      * Notifies that the heap object focus has changed (view state only), possibly to null.
      */
-    void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject);
+    void heapObjectFocusChanged(MaxObject oldObject, MaxObject object);
 
 }

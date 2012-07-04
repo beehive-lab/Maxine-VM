@@ -51,7 +51,6 @@ import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 
@@ -114,10 +113,13 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      */
     private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(refVerifier);
 
-    private CollectHeap collectHeap;
+    private final CollectHeap collectHeap;
 
-    private LinearAllocationMemoryRegion fromSpace = null;
-    private LinearAllocationMemoryRegion toSpace = null;
+    @INSPECTED
+    private LinearAllocationMemoryRegion fromSpace = new LinearAllocationMemoryRegion(FROM_REGION_NAME);
+
+    @INSPECTED
+    private LinearAllocationMemoryRegion toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
@@ -186,8 +188,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         super();
         pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(false, false, false);
         collectHeap = new CollectHeap();
-        fromSpace = new LinearAllocationMemoryRegion(FROM_REGION_NAME);
-        toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
     }
 
     @Override
@@ -212,8 +212,9 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
             // From now on we can allocate
 
+            HeapScheme.Inspect.init(true);
+            HeapScheme.Inspect.notifyHeapRegions(toSpace, fromSpace);
             Heap.invokeGCCallbacks(GCCallbackPhase.INIT);
-            InspectableHeapInfo.init(true, toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
             if (growPolicy.equals(DOUBLE_GROW_POLICY_NAME)) {
@@ -351,7 +352,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 startTimer(gcTimer);
 
                 startTimer(clearTimer);
-                swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
+                swapSemiSpaces(); // Swap semispaces. From--> To and To-->From
                 stopTimer(clearTimer);
 
                 if (Heap.logGCPhases()) {
@@ -415,17 +416,22 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                     phaseLogger.logProcessingSpecialReferences(VMLogger.Interval.END);
                 }
 
-                // The reclaiming phase doesn't do anything in a semi-space collector since all
+                // Bring the To-Space marks up to date, mainly for debugging.
+                toSpace.mark.set(allocationMark()); // not otherwise updated during move.
+
+                // The reclaiming phase doesn't do anything substantial in a semispace collector since all
                 // space of the from space is implicitly reclaimed once the liveness analysis (i.e.,
                 // the copying of all objects reachable from roots) is done.
                 HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
 
-                // Bring the inspectable mark up to date, since it is not updated during the move.
-                toSpace.mark.set(allocationMark()); // for debugging
+                // Now officially mark From-space as having no allocations.
+                fromSpace.mark.set(fromSpace.start());
+
 
                 lastGCTime = System.currentTimeMillis();
                 accumulatedGCTime += lastGCTime - startGCTime;
 
+                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
                 Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
 
                 // Post-verification of the heap.
@@ -485,6 +491,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         final Address oldFromSpaceStart = fromSpace.start();
         final Size oldFromSpaceSize = fromSpace.size();
 
+        // Inspectability: stopping the VM between here and the phase notification below will confuse the Inspector
+
         fromSpace.setStart(toSpace.start());
         fromSpace.setSize(toSpace.size());
         fromSpace.mark.set(toSpace.getAllocationMark());
@@ -492,6 +500,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         toSpace.setStart(oldFromSpaceStart);
         toSpace.setSize(oldFromSpaceSize);
         toSpace.mark.set(toSpace.start());
+
+        // For the purposes of inspection, we declare this phase change immediately after the swap;
+        // The Inspector gets confused it the VM stops after the swap, but when the phase
+        // appears to still be mutating.
+        HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
         top = toSpace.end();
         // If we are currently using the safety zone, we must not install it in the swapped space
@@ -551,8 +564,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
             Memory.copyBytes(fromCell, toCell, size);
 
-            HeapScheme.Inspect.notifyObjectRelocated(fromCell, toCell);
-
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Reference toRef = Reference.fromOrigin(toOrigin);
             Layout.writeForwardRef(fromOrigin, toRef);
@@ -601,17 +612,17 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
-        if (specificLayout.isTupleLayout()) {
+        if (specificLayout == Layout.tupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, refUpdater);
             if (hub.isJLRReference) {
                 SpecialReferenceManager.discoverSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
         }
-        if (specificLayout.isHybridLayout()) {
-            TupleReferenceMap.visitReferences(hub, origin, refUpdater);
-        } else if (specificLayout.isReferenceArrayLayout()) {
+        if (specificLayout == Layout.referenceArrayLayout()) {
             scanReferenceArray(origin);
+        } else if (specificLayout == Layout.hybridLayout()) {
+            TupleReferenceMap.visitReferences(hub, origin, refUpdater);
         }
         return cell.plus(Layout.size(origin));
     }
@@ -742,7 +753,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     }
 
     private boolean collectGarbageImpl(Size requestedFreeSpace) {
-        if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
+        if ((requestedFreeSpace.isZero() && !DisableExplicitGC) || immediateFreeSpace().lessThan(requestedFreeSpace)) {
             executeGC();
         }
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {

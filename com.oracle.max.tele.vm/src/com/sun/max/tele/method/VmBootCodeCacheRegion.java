@@ -193,4 +193,5 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
     public RemoteCodePointerManager codePointerManager() {
         return codePointerManager;
     }
+
 }

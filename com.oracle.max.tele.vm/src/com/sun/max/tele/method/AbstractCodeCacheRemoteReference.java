@@ -24,36 +24,26 @@ package com.sun.max.tele.method;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.tele.object.TeleTargetMethod.*;
 import com.sun.max.tele.reference.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
- * A remote reference constrained to point only to data in object format
- * stored in a code cache region. The absolute origin of the object is delegated to
- * an instance of {@link TeleTargetMethod}, which reads those values from the
+ * A remote reference constrained to point only to data in object format stored in a code cache region. The absolute
+ * origin of the object is delegated to an instance of {@link TeleTargetMethod}, which reads those values from the
  * appropriate fields in the corresponding instance of {@link TargetMethod}.
  * <p>
- * There is no presumption in this implementation concerning the possibility
- * that the locations stored in the {@TargetMethod} might change.
+ * There is no presumption in this implementation concerning the possibility that the origins stored in the
+ * {@TargetMethod} might change.
  *
  * @see TargetMethod
  */
-abstract class AbstractCodeCacheRemoteReference extends RemoteTeleReference {
+abstract class AbstractCodeCacheRemoteReference extends RemoteReference {
 
     private final TeleTargetMethod teleTargetMethod;
-    private final CodeCacheReferenceKind kind;
 
-    public AbstractCodeCacheRemoteReference(TeleVM vm, TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
+    public AbstractCodeCacheRemoteReference(TeleVM vm, TeleTargetMethod teleTargetMethod) {
         super(vm);
         this.teleTargetMethod = teleTargetMethod;
-        this.kind = kind;
-    }
-
-    @Override
-    public Address raw() {
-        return teleTargetMethod.codeCacheObjectOrigin(kind);
     }
 
     protected TeleTargetMethod teleTargetMethod() {

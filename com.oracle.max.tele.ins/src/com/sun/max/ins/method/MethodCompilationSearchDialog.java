@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,30 +40,20 @@ import com.sun.max.vm.actor.member.*;
  */
 public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxCompilation> {
 
-    /**
-     * A tuple (method compilation name, method compilation).
-     */
-    private final class NamedMethodCompilation implements Comparable<NamedMethodCompilation> {
+    private static final class MethodCompilationItem extends FilteredListItem<MaxCompilation> {
 
         private final String name;
-
         private final MaxCompilation compilation;
 
-        public NamedMethodCompilation(String name, MaxCompilation compilation) {
+        public MethodCompilationItem(Inspection inspection, String name, MaxCompilation compilation) {
+            super(inspection);
             this.name = name;
             this.compilation = compilation;
         }
 
-        public String name() {
-            return name;
-        }
-
-        public MaxCompilation compilation() {
+        @Override
+        public MaxCompilation object() {
             return compilation;
-        }
-
-        public int compareTo(NamedMethodCompilation o) {
-            return name.compareTo(o.name);
         }
 
         @Override
@@ -72,15 +62,11 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
         }
     }
 
-    @Override
-    protected MaxCompilation convertSelectedItem(Object listItem) {
-        return ((NamedMethodCompilation) listItem).compilation();
-    }
-
+    @SuppressWarnings("unchecked")
     @Override
     protected void rebuildList(String filterText) {
         final String filterLowerCase = filterText.toLowerCase();
-        final List<NamedMethodCompilation> namedMethodCompilations = new ArrayList<NamedMethodCompilation>();
+        final List<MethodCompilationItem> methodCompilationItems = new ArrayList<MethodCompilationItem>();
 
         if (teleClassActor != null) {
             for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
@@ -92,7 +78,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
                                     methodNameLowerCase.contains(filterLowerCase)) {
                         for (MaxCompilation compilation : vm().machineCode().compilations(teleClassMethodActor)) {
                             final String name = inspection().nameDisplay().shortName(compilation, ReturnTypeSpecification.AS_SUFFIX);
-                            namedMethodCompilations.add(new NamedMethodCompilation(name, compilation));
+                            methodCompilationItems.add(new MethodCompilationItem(inspection(), name, compilation));
                         }
                     }
                 }
@@ -108,21 +94,21 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
                             (filterLowerCase.endsWith(" ") && textToMatch.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                              textToMatch.contains(filterLowerCase)) {
                             final String name = methodActor.format("%h.%n(%p)" + inspection().nameDisplay().shortMethodCompilationID(compilation) + "  " + methodCompilationType);
-                            namedMethodCompilations.add(new NamedMethodCompilation(name, compilation));
+                            methodCompilationItems.add(new MethodCompilationItem(inspection(), name, compilation));
                         }
                     } else {
                         String regionName = compilation.entityName();
                         if (filterLowerCase.isEmpty() || (regionName + " " + methodCompilationType).toLowerCase().contains(filterLowerCase)) {
-                            namedMethodCompilations.add(new NamedMethodCompilation(regionName + " [" + methodCompilationType + "]", compilation));
+                            methodCompilationItems.add(new MethodCompilationItem(inspection(), regionName + " [" + methodCompilationType + "]", compilation));
                         }
                     }
                 }
             }
         }
 
-        Collections.sort(namedMethodCompilations);
-        for (NamedMethodCompilation namedMethodCompilation : namedMethodCompilations) {
-            listModel.addElement(namedMethodCompilation);
+        Collections.sort(methodCompilationItems);
+        for (MethodCompilationItem methodCompilationItem : methodCompilationItems) {
+            listModel.addElement(methodCompilationItem);
         }
     }
 
@@ -162,11 +148,6 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
 //            return teleTargetMethods;
 //        }
 //        return null;
-    }
-
-    @Override
-    protected MaxCompilation noSelectedObject() {
-        return null;
     }
 
 }

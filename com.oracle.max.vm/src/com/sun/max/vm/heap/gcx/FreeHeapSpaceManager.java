@@ -137,7 +137,6 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);
                 if (tlabSize.lessThan(minChunkSize)) {
-                    // Don't bother adding a new chunk.
                     return firstChunk;
                 }
             }
@@ -164,6 +163,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     /**
      * The currently committed heap space.
      */
+    @INSPECTED
     public final ContiguousHeapSpace committedHeapSpace;
 
     private boolean useTLABBin;
@@ -674,6 +674,9 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
         if (deadSpace.greaterThan(minReclaimableSpace)) {
             recordFreeSpace(endOfLastVisitedObject, deadSpace);
+        } else if (MaxineVM.isDebug()) {
+            // Helping the inspector.
+            DarkMatterDebugHelper.setDarkMatter(endOfLastVisitedObject, deadSpace);
         }
         endOfLastVisitedObject = liveObject.plus(Layout.size(Layout.cellToOrigin(liveObject)));
         return endOfLastVisitedObject;
@@ -688,6 +691,9 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(endOfLeftObject, numDeadBytes);
+        } else if (MaxineVM.isDebug()) {
+            // Helping the inspector.
+            DarkMatterDebugHelper.setDarkMatter(endOfLeftObject, numDeadBytes);
         }
         return rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
     }
@@ -820,11 +826,6 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         FatalError.check(total == committedHeapSpace.committedSize().toLong(), "Inconsistent committed space size");
     }
 
-    /**
-     * Allocation of zero-filled memory, ready to use for object allocation.
-     * @param size
-     * @return
-     */
     @INLINE
     public Pointer allocate(Size size) {
         return smallObjectAllocator.allocateCleared(size);
@@ -833,6 +834,11 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     @INLINE
     public Pointer allocateTLAB(Size size) {
         return useTLABBin ? binAllocateTLAB(size, Address.zero()).asPointer() : smallObjectAllocator.allocateTLAB(size);
+    }
+
+    public void retireTLAB(Pointer start, Size size) {
+        // Ignore.
+        HeapSchemeAdaptor.fillWithDeadObject(start, start.plus(size));
     }
 
     /**
@@ -886,8 +892,12 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     }
 
     @Override
-    public void visit(HeapSpaceRangeVisitor visitor) {
+    public void visit(CellRangeVisitor visitor) {
         visitor.visitCells(committedHeapSpace.start(), committedHeapSpace.committedEnd());
     }
 
+    @Override
+    public SpaceBounds bounds() {
+        return committedHeapSpace.bounds();
+    }
 }

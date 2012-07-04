@@ -25,6 +25,8 @@ package com.sun.max.ins.object;
 import static com.sun.max.tele.MaxProcessState.*;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -36,13 +38,13 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * A view that displays the content of a low level heap object in the VM.
  */
 public abstract class ObjectView<View_Type extends ObjectView> extends AbstractView<View_Type> {
 
+    private static final int MAX_TITLE_STRING_LENGTH = 40;
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
 
@@ -55,16 +57,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         return viewManager;
     }
 
-    private TeleObject teleObject;
-
-    private boolean followingTeleObject = true;
-
-    /**
-     * @return local surrogate for the object being inspected in the VM
-     */
-    TeleObject teleObject() {
-        return teleObject;
-    }
+    private MaxObject object;
 
     /** The origin is an actual location in memory of the VM;
      * keep a copy for comparison, since it might change via GC.
@@ -79,13 +72,13 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         return currentObjectOrigin;
     }
 
+    private Color backgroundColor = null;
+
     /**
-     * Cache of the most recent update to the frame title; needed
-     * in situations where the frame becomes unavailable.
-     * This cache does not include the object state modifier or
-     * region information.
+     * Cache of the most recent update to a textual description of the object; needed in situations where the frame
+     * becomes unavailable. This cache does not include the object state modifier or region information.
      */
-    private String title = "";
+    private String objectDescription = "";
 
     private InspectorTable objectHeaderTable;
 
@@ -93,10 +86,14 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     private Rectangle originalFrameGeometry = null;
 
-    protected ObjectView(final Inspection inspection, final TeleObject teleObject) {
+    private InspectorMenu objectMenu;
+    private InspectorAction visitForwardedToAction = null;
+    private InspectorAction visitForwardedFromAction = null;
+
+    protected ObjectView(final Inspection inspection, final MaxObject object) {
         super(inspection, VIEW_KIND, null);
-        this.teleObject = teleObject;
-        this.currentObjectOrigin = teleObject().origin();
+        this.object = object;
+        this.currentObjectOrigin = object().origin();
         instanceViewPreferences = new ObjectViewPreferences(ObjectViewPreferences.globalPreferences(inspection)) {
             @Override
             protected void setShowHeader(boolean showHeader) {
@@ -104,8 +101,8 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
                 reconstructView();
             }
             @Override
-            protected void setHideNullArrayElements(boolean hideNullArrayElements) {
-                super.setHideNullArrayElements(hideNullArrayElements);
+            protected void setElideNullArrayElements(boolean hideNullArrayElements) {
+                super.setElideNullArrayElements(hideNullArrayElements);
                 reconstructView();
             }
         };
@@ -122,39 +119,6 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         final InspectorFrame frame = super.createFrame(addMenuBar);
         gui().setLocationRelativeToMouse(this, preference().geometry().newFrameDiagonalOffset());
         originalFrameGeometry = getGeometry();
-        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
-        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-        defaultMenu.addSeparator();
-        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.OBJECT, this));
-        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.OBJECT));
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(views().memory().makeViewAction(teleObject, "View this object's memory"));
-        if (vm().heap().providesHeapRegionInfo()) {
-            // TODO: Need to revisit this to better integrate with the Views framework, e.g., have something like:
-            // views().heapRegionInfo().makeViewAction(...). This requires adding a factory and other boiler plate.
-            InspectorAction action = HeapRegionInfoView.viewManager(inspection()).makeViewAction(teleObject, "View this object's heap region info");
-            memoryMenu.add(action);
-        }
-        if (vm().watchpointManager() != null) {
-            memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
-        }
-        memoryMenu.add(actions().copyObjectOrigin(teleObject, "Copy this object's origin to clipboard"));
-        memoryMenu.add(actions().copyObjectDescription(teleObject, "Copy this object's origin + description to clipboard"));
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(MenuKind.OBJECT_MENU);
-
-        if (teleObject.getTeleClassMethodActorForObject() != null) {
-            frame.makeMenu(MenuKind.CODE_MENU);
-        }
-
-        if (teleObject.getTeleClassMethodActorForObject() != null || TeleTargetMethod.class.isAssignableFrom(teleObject.getClass())) {
-            frame.makeMenu(MenuKind.DEBUG_MENU);
-        }
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         return frame;
     }
 
@@ -162,12 +126,62 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     protected void createViewContent() {
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         if (instanceViewPreferences.showHeader()) {
-            objectHeaderTable = new ObjectHeaderTable(inspection(), teleObject, instanceViewPreferences);
+            objectHeaderTable = new ObjectHeaderTable(inspection(), this);
             objectHeaderTable.setBorder(preference().style().defaultPaneBottomBorder());
             // Will add without column headers
             panel.add(objectHeaderTable, BorderLayout.NORTH);
         }
+
         setContentPane(panel);
+
+        // Populate menu bar
+        final InspectorMenu defaultMenu = makeMenu(MenuKind.DEFAULT_MENU);
+        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        defaultMenu.addSeparator();
+        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.OBJECT, this));
+        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.OBJECT));
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(views().memory().makeViewAction(object, "View this object's memory"));
+        if (vm().heap().providesHeapRegionInfo()) {
+            // TODO: Need to revisit this to better integrate with the Views framework, e.g., have something like:
+            // views().heapRegionInfo().makeViewAction(...). This requires adding a factory and other boiler plate.
+            InspectorAction action = HeapRegionInfoView.viewManager(inspection()).makeViewAction(object, "View this object's heap region info");
+            memoryMenu.add(action);
+        }
+        if (vm().watchpointManager() != null) {
+            memoryMenu.add(actions().setObjectWatchpoint(object, "Watch this object's memory"));
+        }
+        memoryMenu.add(actions().copyObjectOrigin(object, "Copy this object's origin to clipboard"));
+        memoryMenu.add(actions().copyObjectDescription(object, "Copy this object's origin + description to clipboard"));
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        // Ensure that the object menu appears in the right position, but defer its creation
+        // to subclasses, so that more view-specific items can be prepended to the standard ones.
+        objectMenu = makeMenu(MenuKind.OBJECT_MENU);
+        visitForwardedToAction = new VisitForwardedToAction(inspection());
+        objectMenu.add(visitForwardedToAction);
+        visitForwardedFromAction = new VisitForwardedFromAction(inspection());
+        objectMenu.add(visitForwardedFromAction);
+
+        makeMenu(MenuKind.CODE_MENU);
+
+        if (object.getTeleClassMethodActorForObject() != null || TeleTargetMethod.class.isAssignableFrom(object.getClass())) {
+            makeMenu(MenuKind.DEBUG_MENU);
+        }
+
+        final InspectorMenuItems defaultViewMenuItems = defaultMenuItems(MenuKind.VIEW_MENU);
+        final InspectorMenu viewMenu = makeMenu(MenuKind.VIEW_MENU);
+        final List<InspectorAction> extraViewMenuActions = extraViewMenuActions();
+        if (!extraViewMenuActions.isEmpty()) {
+            for (InspectorAction action : extraViewMenuActions) {
+                viewMenu.add(action);
+            }
+            viewMenu.addSeparator();
+        }
+        viewMenu.add(defaultViewMenuItems);
+        refreshBackgroundColor();
     }
 
     @Override
@@ -175,20 +189,25 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         return originalFrameGeometry;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Constructs a full description of the object, including a possible prefix, the
+     * title of the object, and several possible suffixes.
+     */
     @Override
     public final String getTextForTitle() {
         final StringBuilder titleText = new StringBuilder();
-        final ObjectMemoryStatus status = teleObject.memoryStatus();
+        refreshObjectDescription();
+        final ObjectStatus status = object.status();
         if (!status.isLive()) {
-            // Omit the prefix for live objects: the usual case.
+            // Omit the prefix for live objects (the usual case).
             titleText.append("(").append(status.label()).append(") ");
         }
-        if (status.isNotDeadYet()) {
-            // Revise the title of the object if we still can
-            Pointer pointer = teleObject.origin();
-            title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
+        titleText.append(objectDescription);
+        if (isElided()) {
+            titleText.append("(ELIDED)");
         }
-        titleText.append(title);
         final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(currentObjectOrigin);
         titleText.append(" in ").append(memoryRegion == null ? "unknown region" : memoryRegion.regionName());
         return titleText.toString();
@@ -218,15 +237,15 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     public void viewGetsWindowFocus() {
-        if (teleObject != focus().heapObject()) {
-            focus().setHeapObject(teleObject);
+        if (object != focus().object()) {
+            focus().setHeapObject(object);
         }
         super.viewGetsWindowFocus();
     }
 
     @Override
     public void viewLosesWindowFocus() {
-        if (teleObject == focus().heapObject()) {
+        if (object == focus().object()) {
             focus().setHeapObject(null);
         }
         super.viewLosesWindowFocus();
@@ -234,7 +253,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     public void viewClosing() {
-        if (teleObject == focus().heapObject()) {
+        if (object == focus().object()) {
             focus().setHeapObject(null);
         }
         super.viewClosing();
@@ -255,46 +274,158 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     protected void refreshState(boolean force) {
-        final ObjectMemoryStatus memoryStatus = teleObject.memoryStatus();
-        if (memoryStatus.isForwarded() && followingTeleObject) {
-            Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardedTeleRef().toOrigin().toHexString());
-            TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
-            if (viewManager.isObjectViewObservingObject(forwardedTeleObject.reference().makeOID())) {
-                followingTeleObject = false;
-                setWarning();
-                setTitle();
-                return;
+        if (object.reference().forwardedFrom().equals(currentOrigin())) {
+            /*
+             * The object has just been forwarded, and this view was previously showing what is now the old copy. By
+             * policy, we want this view to stick on the old location, so find the "forwarder" object that represents
+             * the old copy and reset this view to display that object.
+             */
+            final MaxObject forwarderObject = vm().objects().findQuasiObjectAt(object.reference().forwardedFrom());
+            if (forwarderObject != null) {
+                final MaxObject oldObject = object;
+                object = forwarderObject;
+                viewManager.resetObjectToViewMapEntry(oldObject, forwarderObject, this);
+                reconstructView();
             }
-            viewManager.resetObjectToViewMapEntry(teleObject, forwardedTeleObject, this);
-            teleObject = forwardedTeleObject;
-            currentObjectOrigin = teleObject.origin();
+        } else if (!object.origin().equals(currentObjectOrigin)) {
+            // The object has just been relocated in memory; reset this view to display the new copy of the object.
+            currentObjectOrigin = object.origin();
             reconstructView();
-            if (objectHeaderTable != null) {
-                objectHeaderTable.refresh(force);
-            }
         }
 
-        final Pointer newOrigin = teleObject.origin();
-        if (!newOrigin.equals(currentObjectOrigin)) {
-            // The object has been relocated in memory
-            currentObjectOrigin = newOrigin;
-            reconstructView();
-        } else {
-            if (objectHeaderTable != null) {
-                objectHeaderTable.refresh(force);
-            }
+        if (objectHeaderTable != null) {
+            objectHeaderTable.refresh(force);
         }
+        visitForwardedToAction.refresh(force);
+        visitForwardedFromAction.refresh(force);
+        refreshBackgroundColor();
         setTitle();
-        switch(memoryStatus) {
-            case DEAD:
-                setStateColor(preference().style().deadObjectBackgroundColor());
-                break;
-            case FORWARDED:
-                setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
-                break;
-            default:
-                setStateColor(null);
+    }
+
+    /**
+     * @return local surrogate for the VM object being inspected in this object view
+     */
+    public MaxObject object() {
+        return object;
+    }
+
+    /**
+     * @return the view preferences currently in effect for this object view
+     */
+    public ObjectViewPreferences viewPreferences() {
+        return instanceViewPreferences;
+    }
+
+    /**
+     * @return a color to use for background, especially cell backgrounds, in the object view; {@code null} if default color should be used.
+     */
+    public Color viewBackgroundColor() {
+        return backgroundColor;
+    }
+
+    /**
+     * Constructs a string that identifies the object being viewed.
+     */
+    private void refreshObjectDescription() {
+        final ObjectStatus status = object.status();
+        if (status.isNotDead()) {
+            // Revise the title of the object if we still can
+            final StringBuilder sb = new StringBuilder();
+            if (status.isLive()) {
+                sb.append("Object: ");
+            } else {
+                sb.append("Quasi object: ");
+            }
+            sb.append(object.origin().toHexString());
+            sb.append(inspection().nameDisplay().referenceLabelText(object, MAX_TITLE_STRING_LENGTH));
+            objectDescription = sb.toString();
         }
     }
 
+    /**
+     * Changes the background color setting for this view, depending on object status.
+     *
+     * @return {@code true} iff color has changed
+     */
+    private boolean refreshBackgroundColor() {
+        final Color oldBackgroundColor = backgroundColor;
+        final ObjectStatus status = object.status();
+        if (status.isLive()) {
+            backgroundColor = null;
+        } else if (status.isQuasi()) {
+            backgroundColor = preference().style().quasiObjectBackgroundColor();
+        } else { // DEAD
+            backgroundColor = preference().style().deadObjectBackgroundColor();
+        }
+        setStateColor(backgroundColor);
+        objectHeaderTable.setBackground(backgroundColor);
+        return backgroundColor != oldBackgroundColor;
+    }
+
+
+    /**
+     * Gets any view-specific actions that should appear on the {@link MenuKind#VIEW_MENU}.
+     */
+    protected List<InspectorAction> extraViewMenuActions() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * @return whether the display mode is hiding some of the members of the object
+     */
+    protected boolean isElided() {
+        return false;
+    }
+
+    private final class VisitForwardedToAction extends InspectorAction {
+
+        private MaxObject forwardedToObject;
+
+        public VisitForwardedToAction(Inspection inspection) {
+            super(inspection, "View object forwarded to");
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            focus().setHeapObject(forwardedToObject);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            super.refresh(force);
+            forwardedToObject = null;
+            final Address toAddress = object.reference().forwardedTo();
+            if (toAddress.isNotZero()) {
+                forwardedToObject = vm().objects().findObjectAt(toAddress);
+            }
+            setEnabled(forwardedToObject != null);
+        }
+    }
+
+    private final class VisitForwardedFromAction extends InspectorAction {
+
+        private MaxObject forwardedFromObject;
+
+        public VisitForwardedFromAction(Inspection inspection) {
+            super(inspection, "View object forwarded from");
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            focus().setHeapObject(forwardedFromObject);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            super.refresh(force);
+            forwardedFromObject = null;
+            final Address fromAddress = object.reference().forwardedFrom();
+            if (fromAddress.isNotZero()) {
+                forwardedFromObject = vm().objects().findQuasiObjectAt(fromAddress);
+            }
+            setEnabled(forwardedFromObject != null);
+        }
+    }
 }

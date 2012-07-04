@@ -36,7 +36,6 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -62,6 +61,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
      * Implements the {@link Sweeper} interface to be notified by a sweeper of
      * free space.
      */
+    @INSPECTED
     final FreeHeapSpaceManager objectSpace;
 
     private final Collect collect = new Collect();
@@ -107,7 +107,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         final Address  heapLowerBound = endOfCodeRegion;
         final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
 
-
         final Address heapStart = heapLowerBound.roundedUpBy(pageSize);
         final Address heapMarkerDataStart = heapStart.plus(maxSize).roundedUpBy(pageSize);
         final Address leftoverStart = heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
@@ -135,8 +134,11 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
             MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
         }
 
-        // From now on, we can allocate. The following does this because of the var-arg arguments.
-        InspectableHeapInfo.init(true, heapMarker.colorMap, markedSpace);
+        // From now on, we can allocate.
+
+        // Make the heap inspectable
+        HeapScheme.Inspect.init(true);
+        HeapScheme.Inspect.notifyHeapRegions(markedSpace);
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {
@@ -273,7 +275,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
                 Log.print("End mark-sweep #");
                 Log.println(collectionCount);
             }
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
             stopTimer(totalPauseTime);
 
             if (traceGCTimes) {
@@ -404,6 +406,16 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
         allocateAndRefillTLAB(etla, nextTLABSize);
         return tlabAllocate(size);
+    }
+
+    @Override
+    public PhaseLogger phaseLogger() {
+        return HeapSchemeLoggerAdaptor.phaseLogger;
+    }
+
+    @Override
+    public TimeLogger timeLogger() {
+        return HeapSchemeLoggerAdaptor.timeLogger;
     }
 
 }

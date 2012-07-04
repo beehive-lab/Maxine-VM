@@ -22,14 +22,18 @@
  */
 package com.sun.max.tele.heap;
 
+import static com.sun.max.tele.object.ObjectStatus.*;
+
 import java.io.*;
 import java.text.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.field.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObjectFactory.ClassCount;
@@ -38,8 +42,8 @@ import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -69,7 +73,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
     private static VmObjectAccess vmObjectAccess;
 
-    final Address zappedMarker = Address.fromLong(Memory.ZAPPED_MARKER);
 
     public static VmObjectAccess make(TeleVM vm) {
         if (vmObjectAccess == null) {
@@ -77,6 +80,13 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         }
         return vmObjectAccess;
     }
+
+    final Address zappedMarker = Address.fromLong(Memory.ZAPPED_MARKER);
+
+    /**
+     * Offset from an object's origin where GC implementations store forwarding pointers.
+     */
+    private final int gcForwardingAddressOffset;
 
     private final TimedTrace updateTracer;
 
@@ -89,6 +99,39 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     private List<MaxCodeLocation> inspectableMethods = null;
 
     private final TeleObjectFactory teleObjectFactory;
+
+    private Word cachedDynamicHubHubWord = null;
+
+    private Word cachedStaticHubHubWord = null;
+
+    private boolean initializingHubHubCaches = false;
+
+    private void initializeHubHubCaches() {
+        if (initializingHubHubCaches) {
+            return;
+        }
+        initializingHubHubCaches = true;
+        final Reference hubRef = Layout.readHubReference(vm().classes().vmClassRegistryReference());
+        RemoteReference cachedDynamicHubHubReference = (RemoteReference) Layout.readHubReference(hubRef);
+        assert cachedDynamicHubHubReference.equals(Layout.readHubReference(cachedDynamicHubHubReference));
+        cachedDynamicHubHubWord = cachedDynamicHubHubReference.toOrigin();
+        RemoteReference cachedStaticHubHubReference = (RemoteReference) Layout.readHubReference(TeleInstanceReferenceFieldAccess.readPath(hubRef, vm().fields().Hub_classActor, vm().fields().ClassActor_staticHub));
+        cachedStaticHubHubWord = cachedStaticHubHubReference.toOrigin();
+    }
+
+    private Word dynamicHubHubWord() {
+        if (cachedDynamicHubHubWord == null && vm().classes() != null) {
+            initializeHubHubCaches();
+        }
+        return cachedDynamicHubHubWord;
+    }
+
+    private Word staticHubHubWord() {
+        if (cachedStaticHubHubWord == null && vm().classes() != null) {
+            initializeHubHubCaches();
+        }
+        return cachedStaticHubHubWord;
+    }
 
     private final Object statsPrinter = new Object() {
         @Override
@@ -103,7 +146,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
-
+        // All Maxine collectors stores forwarding pointers in the Hub field of the header
+        this.gcForwardingAddressOffset = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
         this.teleObjectFactory = TeleObjectFactory.make(vm, vm.teleProcess().epoch());
         this.entityDescription = "Object creation and management for the " + vm.entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
@@ -148,126 +192,20 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
     private static  final int MAX_VM_LOCK_TRIALS = 100;
 
-    // TODO (mlvdv) this may eventually go away, in favor of isObjectOrigin and much  more precise management
-    /**
-     * Determines whether a location in VM memory is the origin of a VM object.
-     *
-     * @param address an absolute memory location in the VM.
-     * @return whether there is an object whose origin is at the address, false if unable
-     * to complete the check, for example if the VM is busy or terminated
-     */
-    public boolean isValidOrigin(Address address) {
-        if (address.isZero()) {
-            return false;
-        }
-        // TODO (mlvdv) Transition to the new reference management framework; use it for the regions supported so far
-        final VmHeapRegion bootHeapRegion = vm().heap().bootHeapRegion();
-        if (bootHeapRegion.contains(address)) {
-            return bootHeapRegion.objectReferenceManager().isObjectOrigin(address);
-        }
-
-        final VmHeapRegion immortalHeapRegion = vm().heap().immortalHeapRegion();
-        if (immortalHeapRegion != null && immortalHeapRegion.contains(address)) {
-            return immortalHeapRegion.objectReferenceManager().isObjectOrigin(address);
-        }
-
-        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCodeCacheRegion(address);
-        if (compiledCodeRegion != null) {
-            return compiledCodeRegion.objectReferenceManager().isObjectOrigin(address);
-        }
-        // For everything else use the old machinery
-        try {
-            if (!heap().contains(address) && (codeCache() == null || !codeCache().contains(address))) {
-                return false;
-            }
-            if (false && heap().isInGC() && heap().containsInDynamicHeap(address)) {
-                //  Assume that any reference to the dynamic heap is invalid during GC.
-                return false;
-            }
-            if (false && vm().bootImage().vmConfiguration.debugging()) {
-                final Pointer cell = Layout.originToCell(address.asPointer());
-                // Checking is easy in a debugging build; there's a special word preceding each object
-                final Word tag = memory().access().getWord(cell, 0, -1);
-                return DebugHeap.isValidCellTag(tag);
-            }
-            // Now check using heuristic to see if there's actually an object stored at the location.
-            return isObjectOriginHeuristic(address);
-        } catch (DataIOError dataAccessError) {
-        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-        }
-        return false;
-    }
-
-    /**
-     * Determines heuristically whether a location in VM memory is the origin of a VM object, independent
-     * of what region may contain it. May produce rare false positives.
-     *
-     * @param origin an absolute memory location in the VM.
-     * @return whether there is an object whose origin is at the address, false if unable
-     * to complete the check, for example if the VM is busy or terminated
-     */
-    public boolean isObjectOriginHeuristic(Address origin) {
+    public ObjectStatus objectStatusAt(Address origin) {
         if (origin.isZero() || origin.equals(zappedMarker)) {
-            return false;
+            return DEAD;
         }
-
-        try {
-            // Check using none of the higher level services in the Inspector,
-            // since this predicate is necessary to build those services.
-            //
-            // This check can produce a false positive, in particular when looking at a field (not in an
-            // object header) that holds a reference to a dynamic hub.
-            //
-            // Keep following hub pointers until the same hub is traversed twice or
-            // an address outside of heap or code region(s) is encountered.
-            //
-            // For all objects other than a {@link StaticTuple}, the maximum chain takes only two hops
-            // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
-            // class {@link DynamicHub}.
-            //
-            //  Typical pattern:    tuple --> dynamicHub of the tuple's class --> dynamicHub of the DynamicHub class
-            Pointer p = origin.asPointer();
-            if (heap().isInGC() && heap().contains(origin) && isObjectForwarded(p)) {
-                p = heap().getForwardedOrigin(p).asPointer();
-            }
-            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(p));
-            for (int i = 0; i < 3; i++) {
-                if (hubWord.isZero() || hubWord.asAddress().equals(zappedMarker)) {
-                    return false;
-                }
-                final RemoteTeleReference hubRef = referenceManager().makeTemporaryRemoteReference(hubWord.asAddress());
-                Pointer hubOrigin = hubRef.toOrigin();
-                if (!heap().contains(hubOrigin)) {
-                    return false;
-                }
-                if (heap().isInGC() && isObjectForwarded(hubOrigin)) {
-                    hubOrigin = heap().getForwardedOrigin(hubOrigin).asPointer();
-                }
-                final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);
-                if (nextHubWord.equals(hubWord)) {
-                    // We arrived at a DynamicHub for the class DynamicHub
-                    if (i < 2) {
-                        // All ordinary cases will have stopped by now
-                        return true;
-                    }
-                    // This longer chain can only happen when we started with a {@link StaticTuple}.
-                    // Perform a more precise test to check for this.
-                    return isStaticTuple(p);
-                }
-                hubWord = nextHubWord;
-            }
-//        } catch (TerminatedProcessIOException terminatedProcessIOException) {
-//            return false;
-        } catch (DataIOError dataAccessError) {
-            return false;
-        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-            return false;
+        final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
+        if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
+            final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
+            return objectHoldingRegion.objectReferenceManager().objectStatusAt(origin);
         }
-        return false;
+        Trace.line(TRACE_VALUE + 1, tracePrefix() + "origin in unknown region @" + origin.to0xHexString());
+        return DEAD;
     }
 
-
-    public TeleObject findTeleObject(Reference reference) throws MaxVMBusyException {
+    public TeleObject findObject(Reference reference) throws MaxVMBusyException {
         if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
             try {
                 return makeTeleObject(reference);
@@ -279,6 +217,21 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         }
     }
 
+    public TeleObject findForwardedObjectAt(Address forwardingAddress) {
+        if (forwardingAddress.isZero() || forwardingAddress.equals(zappedMarker)) {
+            return null;
+        }
+        final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(forwardingAddress);
+        if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
+            final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
+            if (objectHoldingRegion.objectReferenceManager().isForwardingAddress(forwardingAddress)) {
+                return findObjectAt(forwardingPointerToOriginUnsafe(forwardingAddress));
+            }
+        }
+        //Trace.line(TRACE_VALUE + 1, tracePrefix() + "origin in unknown region @" + origin.to0xHexString());
+        return null;
+    }
+
     public TeleObject findObjectByOID(long id) {
         return teleObjectFactory.lookupObject(id);
     }
@@ -286,9 +239,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     public TeleObject findObjectAt(Address origin) {
         if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
             try {
-                if (isValidOrigin(origin)) {
-                    return makeTeleObject(vm().referenceManager().makeReference(origin.asPointer()));
-                }
+                return makeTeleObject(vm().referenceManager().makeReference(origin));
             } catch (Throwable throwable) {
                 // Can't resolve the address somehow
             } finally {
@@ -298,7 +249,25 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return null;
     }
 
-    public TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent) {
+    public TeleObject findQuasiObjectAt(Address origin) {
+        if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
+            try {
+                return makeTeleObject(vm().referenceManager().makeQuasiReference(origin));
+            } catch (Throwable throwable) {
+                // Can't resolve the address somehow
+            } finally {
+                vm().unlock();
+            }
+        }
+        return null;
+    }
+
+    public TeleObject findAnyObjectAt(Address origin) {
+        TeleObject object = findObjectAt(origin);
+        return object == null ? findQuasiObjectAt(origin) : object;
+    }
+
+    public TeleObject findAnyObjectFollowing(Address cellAddress, long maxSearchExtent) {
 
         // Search limit expressed in words
         long wordSearchExtent = Long.MAX_VALUE;
@@ -310,8 +279,12 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
                 origin = origin.plus(wordSize);
-                if (isValidOrigin(origin)) {
-                    return makeTeleObject(referenceManager().makeReference(origin));
+                TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                if (teleObject == null) {
+                    teleObject =  makeTeleObject(referenceManager().makeQuasiReference(origin));
+                }
+                if (teleObject != null) {
+                    return teleObject;
                 }
             }
         } catch (Throwable throwable) {
@@ -319,7 +292,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return null;
     }
 
-    public TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent) {
+    public TeleObject findAnyObjectPreceding(Address cellAddress, long maxSearchExtent) {
 
         // Search limit expressed in words
         long wordSearchExtent = Long.MAX_VALUE;
@@ -331,8 +304,12 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
                 origin = origin.minus(wordSize);
-                if (isValidOrigin(origin)) {
-                    return makeTeleObject(referenceManager().makeReference(origin));
+                TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
+                if (teleObject == null) {
+                    teleObject =  makeTeleObject(referenceManager().makeQuasiReference(origin));
+                }
+                if (teleObject != null) {
+                    return teleObject;
                 }
             }
         } catch (Throwable throwable) {
@@ -340,12 +317,124 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return null;
     }
 
+    public TeleObject vmClassRegistry() throws MaxVMBusyException {
+        return findObject(classes().vmClassRegistryReference());
+    }
+
+    /**
+     * Checks if a location in VM memory could be the origin of an object representation,
+     * determined by examining memory contents using only low-level mechanisms that do
+     * not rely on type information.
+     * <ul>
+     * <li>No discrimination is made regarding the location of the proposed origin;</li>
+     * <li>No discrimination is made relative to the state of any memory management;</li>
+     * <li>Forwarded objects that overwrite the {@code Hub} field are not recognized;</li>
+     * <li><strong>May produce false positives</strong>, in particular when the address is a field
+     * holding a pointer to a {@link Hub};</li>
+     * <li>Uses only <em>unsafe</em> {@link RemoteReference}s to avoid circularities, since this method
+     * is needed for the construction of legitimate references.</li>
+     * </ul>
+     *
+     * @param possibleOrigin a legitimate location in VM memory, in the area managed.
+     * @return whether the location is likely to be an object origin.
+     */
+    public boolean isPlausibleOriginUnsafe(Address possibleOrigin) {
+        if (dynamicHubHubWord() != null) {
+            return fastIsPlausibleOriginUnsafe(possibleOrigin);
+        }
+        // Assuming we're starting an an object origin. follow hub pointers until the same hub is
+        // traversed twice or an address outside of heap is encountered.
+        //
+        // For all objects other than a {@link StaticTuple}, the maximum chain takes only two hops
+        // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
+        // class {@link DynamicHub}.
+        //
+        //  Typical pattern:    tuple --> dynamicHub of the tuple's class --> dynamicHub of the DynamicHub class
+        try {
+            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(possibleOrigin));
+            for (int i = 0; i < 3; i++) {
+                if (hubWord.isZero() || hubWord.asAddress().equals(zappedMarker)) {
+                    return false;
+                }
+                final RemoteReference hubRef = referenceManager().makeTemporaryRemoteReference(hubWord.asAddress());
+                Address hubOrigin = hubRef.toOrigin();
+                // Check if the presumed hub is in the heap; it couldn't be elsewhere, for example in the code cache.
+                if (!heap().contains(hubOrigin)) {
+                    return false;
+                }
+                // Presume that we have a valid location of a Hub object.
+                final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);
+                // Does the Hub reference in this object point back to the object itself?
+                if (nextHubWord.equals(hubWord)) {
+                    // We arrived at a DynamicHub for the class DynamicHub
+                    if (i < 2) {
+                        // All ordinary cases will have stopped by now
+                        return true;
+                    }
+                    // This longer chain can only happen when we started with a {@link StaticTuple}.
+                    // Perform a more precise test to check for this.
+                    return isStaticTuple(possibleOrigin);
+                }
+                hubWord = nextHubWord;
+            }
+        } catch (DataIOError dataAccessError) {
+        }
+        return false;
+    }
+
+    /**
+     * Fast version of checking if a location in VM memory could be the origin of an object representation.
+     * This relies on the address of the dynamic hub for dynamic hubs and the address of the dynamic Hub for static hubs,
+     * both of which are in the boot region and never relocate.
+     */
+    private boolean fastIsPlausibleOriginUnsafe(Address possibleOrigin) {
+        final Word hubHubWord = dynamicHubHubWord();
+        try {
+            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(possibleOrigin));
+            if (hubWord.equals(hubHubWord)) {
+                // We already arrived at the DynamicHub for the class DynamicHub. This is a possible origin for a dynamic hub.
+                return true;
+            }
+            if (hubWord.isZero() || hubWord.asAddress().equals(zappedMarker)) {
+                return false;
+            }
+            final RemoteReference hubRef = referenceManager().makeTemporaryRemoteReference(hubWord.asAddress());
+            Address hubOrigin = hubRef.toOrigin();
+            // Check if the presumed hub is in the heap; it couldn't be elsewhere, for example in the code cache.
+            if (!heap().contains(hubOrigin)) {
+                return false;
+            }
+            // Presume that we have a valid location of a Hub object.
+            final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);
+            if (nextHubWord.equals(hubHubWord)) {
+                // We arrived at the DynamicHub for the class DynamicHub
+                return true;
+            }
+            // If we're still not at the dynamic hub's hub, this can only be the dynamic hub for static hub. If not, it isn't a plausible object.
+            return nextHubWord.equals(staticHubHubWord());
+        } catch (DataIOError dataAccessError) {
+        }
+        return false;
+    }
+
+    /**
+     * Registers a type of surrogate object to be created for a specific VM object type.
+     * The local object must be a concrete subtype of {@link TeleTupleObject} and must have
+     * a constructor that takes two arguments:  {@link TeleVM}, {@link RemoteReference}.
+     *
+     * @param clazz the VM class for which a specialized representation is desired
+     * @param constructor constructor for the local representation to be constructed
+     */
+    public void registerTeleObjectType(Class vmClass, Class localClass) {
+        teleObjectFactory.register(vmClass, localClass);
+    }
+
     /**
      * Factory method for canonical {@link TeleObject} surrogate for objects in the VM. Specific subclasses are
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
      * <p>
-     * Returns null for the distinguished zero {@link Reference}.
+     * Returns {@code null} for the distinguished zero {@link Reference}.
      * <p>
      * Must be called with current thread holding the VM lock.
      * <p>
@@ -478,23 +567,72 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
     }
 
-    // TODO (mlvdv) this is specific to copying collectors
     /**
-     * Finds an object in the VM that has been located at a particular place in memory, but which
-     * may have been relocated.
-     * <p>
-     * Must be called in thread holding the VM lock
+     * Converts an address, if it is encoded as a forwarding pointer, into the actual
+     * address. This takes no account of the location or the state of memory management
+     * for that area of memory.
      *
-     * @param origin an object origin in the VM
-     * @return the object originally at the origin, possibly relocated
+     * @param address an address possibly encoded as a forwarding pointer
+     * @return the decoded address, {@link Address#zero()} if not encoded as a forwarding pointer.
      */
-    public TeleObject getForwardedObject(Pointer origin) {
-        final Reference forwardedObjectReference = referenceManager().makeReference(heap().getForwardedOrigin(origin));
-        return teleObjectFactory.make(forwardedObjectReference);
+    public Address forwardingPointerToOriginUnsafe(Address address) {
+        if (address.and(1).toLong() == 1) {
+            final Address newCellAddress = address.minus(1);
+            return Layout.generalLayout().cellToOrigin(newCellAddress.asPointer());
+        }
+        return Address.zero();
+    }
+
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
+    /**
+     * Return the address where a forwarding pointer is stored within the specified tele object.
+     * @param object
+     * @return Address of a forwarding pointer.
+     */
+    public Address getForwardingPointerAddress(MaxObject object) {
+        return object.origin().plus(gcForwardingAddressOffset);
+    }
+
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
+    /**
+     * Assumes the address is a valid object origin; returns whether the object holds a forwarding pointer.
+     * <p>
+     * <strong>Does not</strong> check whether the origin is a plausible object origin or even whether it is a
+     * legitimate address at all.
+     */
+    public boolean hasForwardingAddressUnsafe(Address origin) {
+        return forwardingPointerToOriginUnsafe(readForwardWordUnsafe(origin).asAddress()).isNotZero();
+    }
+
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
+    /**
+     * Returns the actual address pointed at by a forwarding address stored in the object at
+     * the specified location in VM memory, <em>assuming</em> that the object's origin is
+     * actually holding a forwarding address.
+     * <p>
+     * <string>Does not</strong> check whether the origin is a plausible object origin, whether there
+     * is actually a forwarding address stored in the object, or even whether the origin is a legitimate
+     * address at all.
+     */
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
+    public Address getForwardingAddressUnsafe(Address origin) {
+        return forwardingPointerToOriginUnsafe(readForwardWordUnsafe(origin).asAddress());
+    }
+
+    // TODO (mlvdv)  Replace with methods derived from Layout, with supporting implementations in RemoteReferenceScheme
+    /**
+     * Assuming that the argument is the origin of an object in VM memory, reads the word that would hold the forwarding
+     * address.
+     * <p>
+     * <strong>Does not</strong> check whether the origin is a plausible object origin or even whether it is a
+     * legitimate address at all.
+     */
+    private Word readForwardWordUnsafe(Address origin) {
+        return memory().readWord(origin.plus(gcForwardingAddressOffset));
     }
 
     /**
-     * Low level predicate for identifying the special case of a {@link StaticTuple} in the VM,
+     * Low-level predicate for identifying the special case of a {@link StaticTuple} in the VM,
      * using only the most primitive operations, since it is needed for building all the higher-level
      * services in the Inspector.
      * <p>
@@ -510,13 +648,12 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      *  No type checks are performed, however, since this predicate must not depend on such higher-level information.
      *
      * @param origin a memory location in the VM
-     * @return whether the object (probably)  points at an instance of {@link StaticTuple}
-     * @see #isValidOrigin(Pointer)
+     * @return whether the object (probably) points at an instance of {@link StaticTuple}
      */
     private boolean isStaticTuple(Address origin) {
         // If this is a {@link StaticTuple} then a field in the header points at a {@link StaticHub}
         Word staticHubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(origin));
-        final RemoteTeleReference staticHubRef = referenceManager().makeTemporaryRemoteReference(staticHubWord.asAddress());
+        final RemoteReference staticHubRef = referenceManager().makeTemporaryRemoteReference(staticHubWord.asAddress());
         final Pointer staticHubOrigin = staticHubRef.toOrigin();
         if (!heap().contains(staticHubOrigin) && !codeCache().contains(staticHubOrigin)) {
             return false;
@@ -524,7 +661,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         // If we really have a {@link StaticHub}, then a known field points at a {@link ClassActor}.
         final int hubClassActorOffset = fields().Hub_classActor.fieldActor().offset();
         final Word classActorWord = memory().readWord(staticHubOrigin, hubClassActorOffset);
-        final RemoteTeleReference classActorRef = referenceManager().makeTemporaryRemoteReference(classActorWord.asAddress());
+        final RemoteReference classActorRef = referenceManager().makeTemporaryRemoteReference(classActorWord.asAddress());
         final Pointer classActorOrigin = classActorRef.toOrigin();
         if (!heap().contains(classActorOrigin) && !codeCache().contains(classActorOrigin)) {
             return false;
@@ -532,27 +669,18 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         // If we really have a {@link ClassActor}, then a known field points at the {@link StaticTuple} for the class.
         final int classActorStaticTupleOffset = fields().ClassActor_staticTuple.fieldActor().offset();
         final Word staticTupleWord = memory().readWord(classActorOrigin, classActorStaticTupleOffset);
-        final RemoteTeleReference staticTupleRef = referenceManager().makeTemporaryRemoteReference(staticTupleWord.asAddress());
+        final RemoteReference staticTupleRef = referenceManager().makeTemporaryRemoteReference(staticTupleWord.asAddress());
         final Pointer staticTupleOrigin = staticTupleRef.toOrigin();
         // If we really started with a {@link StaticTuple}, then this field will point at it
         return staticTupleOrigin.equals(origin);
     }
 
-    public int gcForwardingPointerOffset() {
-        // TODO (mlvdv) Should only be called if in a region being managed by relocating GC
-        return heap().gcForwardingPointerOffset();
-    }
-
-    public  boolean isObjectForwarded(Pointer origin) {
-        // TODO (mlvdv) Should only be called if in a region being managed by relocating GC
-        return heap().isObjectForwarded(origin);
-    }
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
         printStream.print(indentation + "Inspection references: " + formatter.format(teleObjectFactory.referenceCount()) +
-                        " (" + formatter.format(teleObjectFactory.liveObjectCount()) + " live)\n");
+                        " (" + formatter.format(teleObjectFactory.liveObjectCount()) + " live, " + formatter.format(teleObjectFactory.quasiObjectCount()) + "quasi)\n");
         final TreeSet<ClassCount> sortedObjectsCreatedPerType = new TreeSet<ClassCount>(new Comparator<ClassCount>() {
             @Override
             public int compare(ClassCount o1, ClassCount o2) {

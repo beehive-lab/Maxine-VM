@@ -28,59 +28,73 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.reference.*;
 
 /**
- * A manager for remote references to objects allocated in a
- * VM region. Each implementation will likely need to take into account
+ * A manager for remote references to objects allocated in one or more
+ * VM regions. Each implementation will take into account
  * specific object management implementations in the VM.
  */
 public interface RemoteObjectReferenceManager {
 
     /**
-     * Gets the region whose remote object references are being managed.
-     */
-    VmObjectHoldingRegion objectRegion();
-
-    /**
      * Describes the management phase of a heap.
      */
-    HeapPhase heapPhase();
+    HeapPhase phase();
 
     /**
-     * Determines whether there is an object in the VM memory region
-     * with specified origin.
+     * Examines the contents of VM memory and determines what kind of object (live, quasi, etc.),
+     * if any, is represented at that location, using only low-level mechanisms and creating
+     * no {@link Reference}s.
      *
-     * @throws TeleError if the origin is not in the memory region being managed.
+     * @param origin an absolute memory location in the VM.
+     * @return an enum identifying the kind of object, if any, that is represented at the location in VM memory.
+     * @throws TeleError if the origin is not in the memory regions being managed.
      */
-    boolean isObjectOrigin(Address origin) throws TeleError;
+    ObjectStatus objectStatusAt(Address origin);
 
     /**
-     * Creates a canonical remote reference to an object whose origin
-     * in VM memory is at a specified address, null if there is no
-     * object with that origin.
+     * Examines an address to determine if it is an encoded forwarding pointer that points
+     * to a newly forwarded object. This determination depends not only on whether the address
+     * appears to encode a memory address in the appropriate fashion, but also whether it
+     * occurs in a context where a legitimate forwarding has happened.
+     *
+     * @param forwardingAddress an absolute memory location in the VM.
+     * @return whether the address is a forwarding pointer
+     * @throws TeleError if the origin is not in the memory regions being managed.
+     */
+    boolean isForwardingAddress(Address forwardingAddress);
+
+    /**
+     * Creates a canonical remote reference to a live object whose origin
+     * in VM memory is at a specified address, {@link Reference#zero()} if there is no
+     * live object at that origin.
      * <p>
      * The origin of the object may change over time, for example if
      * a relocating collector is being used for the region by the VM.
      * <p>
-     * Remote references are collected when no longer used, or when the
-     * objects to which they point cease to be live in the VM (as well
-     * as can be determined).
+     * The state of the object may change over time
      *
-     * @throws TeleError if the origin is not in the memory region being managed.
+     * @param origin an absolute memory location in the VM.
+     * @return a remote reference to an object in the VM
+     * @throws TeleError if the origin is not in the memory regions being managed.
      */
-    TeleReference makeReference(Address origin) throws TeleError;
+    RemoteReference makeReference(Address origin) throws TeleError;
 
     /**
-     * Returns the total number of remote object references being held by
-     * the manager.
+     * Creates a canonical remote reference to a <em>quasi</em> object whose origin
+     * in VM memory is at a specified address, {@link Reference#zero()} if there is no
+     * <em>quasi</em> object at that origin.
+     * <p>
+     * The origin of the object may change over time, for example if
+     * a relocating collector is being used for the region by the VM.
+     * <p>
+     * The state of the object may change over time
+     *
+     * @see ObjectStatus
+     * @throws TeleError if the origin is not in the memory regions being managed.
      */
-    int activeReferenceCount();
-
-    /**
-     * Returns the number of remote object references being held that are no
-     * longer inactive use.
-     */
-    int totalReferenceCount();
+    RemoteReference makeQuasiReference(Address origin);
 
     /**
      * Writes current statistics concerning references to objects in VM memory.
@@ -89,6 +103,7 @@ public interface RemoteObjectReferenceManager {
      * @param indent number of spaces to indent each line
      * @param verbose possibly write extended information when true
      */
-    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
+    void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose);
+
 
 }

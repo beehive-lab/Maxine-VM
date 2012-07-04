@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -80,7 +79,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         stackFrame = null;
         memoryRegion = null;
         breakpoint  = null;
-        heapObject = null;
+        object = null;
     }
 
     /**
@@ -463,40 +462,40 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
 
-    private TeleObject heapObject;
+    private MaxObject object;
 
     private final Object objectFocusTracer = new Object() {
         @Override
         public String toString() {
-            return tracePrefix() + "Focus(Heap Object):  " + (heapObject == null ? "null" : heapObject.toString());
+            return tracePrefix() + "Focus(Heap Object):  " + (object == null ? "null" : object.toString());
         }
     };
 
     /**
      * Currently selected object in the VM heap; may be null.
      */
-    public TeleObject heapObject() {
-        return heapObject;
+    public MaxObject object() {
+        return object;
     }
 
     /**
      * Whether there is a currently selected heap object.
      */
     public boolean hasHeapObject() {
-        return heapObject != null;
+        return object != null;
     }
 
     /**
      * Shifts the focus of the Inspection to a particular heap object in the VM; notify interested views.
      * This is a view state change that can happen when there is no change to VM state.
      */
-    public void setHeapObject(TeleObject heapObject) {
-        if (this.heapObject != heapObject) {
-            final TeleObject oldTeleObject = this.heapObject;
-            this.heapObject = heapObject;
+    public void setHeapObject(MaxObject object) {
+        if (this.object != object) {
+            final MaxObject oldTeleObject = this.object;
+            this.object = object;
             Trace.line(TRACE_VALUE, objectFocusTracer);
             for (ViewFocusListener listener : copyListeners()) {
-                listener.heapObjectFocusChanged(oldTeleObject, heapObject);
+                listener.heapObjectFocusChanged(oldTeleObject, object);
             }
         }
     }

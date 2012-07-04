@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
@@ -54,9 +55,9 @@ public final class HubView extends ObjectView<HubView> {
     private ObjectScrollPane mTablePane;
     private ObjectScrollPane refMapPane;
 
-    HubView(Inspection inspection, TeleObject teleObject) {
-        super(inspection, teleObject);
-        teleHub = (TeleHub) teleObject;
+    HubView(Inspection inspection, MaxObject object) {
+        super(inspection, object);
+        teleHub = (TeleHub) object;
 
         // Initialize instance preferences from the global preferences
         final HubViewPreferences globalHubPreferences = HubViewPreferences.globalHubPreferences(inspection());
@@ -66,27 +67,7 @@ public final class HubView extends ObjectView<HubView> {
         showMTables = globalHubPreferences.showMTables;
         showRefMaps = globalHubPreferences.showRefMaps;
 
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
-        if (teleClassMethodActor != null) {
-            // the object is, or is associated with a ClassMethodActor.
-            final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
-            debugMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor));
-            debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
-
-            objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, teleClassMethodActor.classActorForObjectType().simpleName()));
-            final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-            objectMenu.add(views().objects().makeViewAction(teleClassActor, teleClassActor.classActorForObjectType().simpleName()));
-            objectMenu.add(actions().viewSubstitutionSourceClassActorAction(teleClassMethodActor));
-            objectMenu.add(actions().viewMethodCompilationsMenu(teleClassMethodActor));
-
-            final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
-            codeMenu.add(actions().viewMethodCompilationsCodeMenu(teleClassMethodActor));
-            codeMenu.addSeparator();
-            codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
-        }
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -146,35 +127,35 @@ public final class HubView extends ObjectView<HubView> {
 
         panel.add(toolBar);
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleHub, instanceViewPreferences);
+        fieldsPane = ObjectScrollPane.createHubFieldsPane(inspection(), this);
         showFieldsCheckBox.setEnabled(true);
         if (showFieldsCheckBox.isSelected()) {
             fieldsPane.setBorder(style.defaultPaneTopBorder());
             panel.add(fieldsPane);
         }
 
-        vTablePane = ObjectScrollPane.createVTablePane(inspection(), teleHub, instanceViewPreferences);
+        vTablePane = ObjectScrollPane.createVTablePane(inspection(), this);
         showVTableCheckBox.setEnabled(vTablePane != null);
         if (vTablePane != null && showVTableCheckBox.isSelected()) {
             vTablePane.setBorder(style.defaultPaneTopBorder());
             panel.add(vTablePane);
         }
 
-        iTablePane = ObjectScrollPane.createITablePane(inspection(), teleHub, instanceViewPreferences);
+        iTablePane = ObjectScrollPane.createITablePane(inspection(), this);
         showITableCheckBox.setEnabled(iTablePane != null);
         if (iTablePane != null && showITableCheckBox.isSelected()) {
             iTablePane.setBorder(style.defaultPaneTopBorder());
             panel.add(iTablePane);
         }
 
-        mTablePane = ObjectScrollPane.createMTablePane(inspection(), teleHub, instanceViewPreferences);
+        mTablePane = ObjectScrollPane.createMTablePane(inspection(), this);
         showMTableCheckBox.setEnabled(mTablePane != null);
         if (mTablePane != null && showMTableCheckBox.isSelected()) {
             mTablePane.setBorder(style.defaultPaneTopBorder());
             panel.add(mTablePane);
         }
 
-        refMapPane = ObjectScrollPane.createRefMapPane(inspection(), teleHub, instanceViewPreferences);
+        refMapPane = ObjectScrollPane.createRefMapPane(inspection(), this);
         showRefMapCheckBox.setEnabled(refMapPane != null);
         if (refMapPane != null && showRefMapCheckBox.isSelected()) {
             refMapPane.setBorder(style.defaultPaneTopBorder());
@@ -182,6 +163,28 @@ public final class HubView extends ObjectView<HubView> {
         }
 
         getContentPane().add(panel);
+
+        // View-specific Object menu
+        final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
+        final TeleClassMethodActor teleClassMethodActor = object().getTeleClassMethodActorForObject();
+        if (teleClassMethodActor != null) {
+            // the object is, or is associated with a ClassMethodActor.
+            final InspectorMenu debugMenu = makeMenu(MenuKind.DEBUG_MENU);
+            debugMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor));
+            debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
+
+            objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, teleClassMethodActor.classActorForObjectType().simpleName()));
+            final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
+            objectMenu.add(views().objects().makeViewAction(teleClassActor, teleClassActor.classActorForObjectType().simpleName()));
+            objectMenu.add(actions().viewSubstitutionSourceClassActorAction(teleClassMethodActor));
+            objectMenu.add(actions().viewMethodCompilationsMenu(teleClassMethodActor));
+
+            final InspectorMenu codeMenu = makeMenu(MenuKind.CODE_MENU);
+            codeMenu.add(actions().viewMethodCompilationsCodeMenu(teleClassMethodActor));
+            codeMenu.addSeparator();
+            codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
+        }
+        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override

@@ -28,7 +28,6 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.heap.*;
@@ -39,7 +38,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
@@ -82,7 +80,7 @@ import com.sun.max.vm.value.*;
  * @see TeleObjectFactory
  * @see VmObjectAccess
  */
-public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache, ObjectProvider {
+public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache, ObjectProvider, MaxObject {
 
     /**
      * Identification for the three low-level Maxine heap objects implementations upon which all objects are
@@ -168,17 +166,13 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
 
     private long lastUpdateEpoch = -1L;
 
-    private TeleReference reference;
+    private final RemoteReference reference;
     private final SpecificLayout specificLayout;
     private final long oid;
-    private TeleHub teleHub = null;
-
-    private Pointer lastValidPointer;
-
     /**
-     * Becomes permanently {@code false} when GC has determined that the object is no longer reachable.
+     * Cache for Hub.
      */
-    private boolean isLive = true;
+    private TeleHub teleHub = null;
 
     /**
      * Creates a "surrogate" object that encapsulates information about an object in the VM.
@@ -201,11 +195,10 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      */
     protected TeleObject(TeleVM vm, Reference reference, SpecificLayout specificLayout) {
         super(vm);
-        this.reference = (TeleReference) reference;
+        assert reference != null;
+        this.reference = (RemoteReference) reference;
         this.specificLayout = specificLayout;
         oid = this.reference.makeOID();
-        lastValidPointer = Pointer.zero();
-
     }
 
     private TimedTrace tracer() {
@@ -215,31 +208,46 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         return updateTracer;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * <strong>Note</strong>: this update gets called automatically as part of {@link TeleObject} instance creation.
+     *
+     * @see TeleObjectFactory#make(Reference)
+     */
     public final void updateCache(long epoch) {
-        // Note that this method gets called automatically as part of instance creation
-        // in {@link TeleObjectFactory#make(Reference)}
-
         // TODO (mlvdv) restore thread-lock assertion here for all updates??
 
         final StatsPrinter statsPrinter = new StatsPrinter();
 
-        // Do some specialized tracing here, since there are subclasses that we
-        // want to contribute to the tracing statistics, and since we want to
-        // selectively trace certain subclasses.
-        tracer().begin(getObjectUpdateTraceValue(epoch));
+        if (status().isNotDead()) {
+            // Do some specialized tracing here, since there are subclasses that we
+            // want to contribute to the tracing statistics, and since we want to
+            // selectively trace certain subclasses.
+            tracer().begin(getObjectUpdateTraceValue(epoch));
 
-        if (epoch > lastUpdateEpoch) {
-            if (updateObjectCache(epoch, statsPrinter)) {
-                lastUpdateEpoch = epoch;
+            if (epoch > lastUpdateEpoch) {
+                if (updateObjectCache(epoch, statsPrinter)) {
+                    lastUpdateEpoch = epoch;
+                }
+            } else {
+                statsPrinter.addStat("Redundant update skipped");
+                Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + " redundant update epoch=" + epoch + ": " + this);
             }
-        } else {
-            statsPrinter.addStat("Redundant update skipped");
-            Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + " redundant update epoch=" + epoch + ": " + this);
+            tracer().end(getObjectUpdateTraceValue(epoch), statsPrinter);
         }
-        tracer().end(getObjectUpdateTraceValue(epoch), statsPrinter);
-        /*
-         * if (reference.toOrigin().equals(Pointer.zero())) { live = false; }
-         */
+    }
+
+    /**
+     * Force an immediate update of any cached data if it has not yet been done during the current refresh cycle.
+     * @see #updateCache(long)
+     */
+    public final void updateCacheIfNeeded() {
+        final long currentEpoch = vm().teleProcess().epoch();
+        if (currentEpoch > lastUpdateEpoch) {
+            Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + "out of order update at " + reference.origin().to0xHexString());
+        }
+        updateCache(currentEpoch);
     }
 
     /**
@@ -256,12 +264,11 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     /**
-     * Internal call to subclasses to update their state, wrapped in the {@link TeleObject} class to provide timing and
-     * update statistics reporting and to handle a uniform method for avoiding redundant updates.
+     * Internal call to subclasses to update their state, wrapped in order to provide timing and update statistics
+     * reporting and for there to be a uniform bail-out if there is an update failure.
      * <p>
-     * If the object is known to be dead then the update fails immediately.
-     * <p>
-     * All subclasses should call this as super immediately and halt any update is fails.
+     * The intention is for updates to take place top-down, so every override should first call {@code super()} and then
+     * halt the update if there is an updating failure.
      *
      * @param epoch the process epoch at the time of this update.
      * @param statsPrinters list of objects that report statistics for updates performed on this object so far (with no
@@ -269,72 +276,35 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * @returns whether the object's cache was successfully updated.
      */
     protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
-        if (isLive()) {
-            return true;
-        }
-        return false;
+        return true;
     }
 
-    /**
-     * @return {@code true} if assumed by the memory manager to be reachable, {@code false} if the object has been collected...
-     */
-    public final boolean isLive() {
-        if (isLive) {
-            isLive = !reference().readWord(0).asAddress().equals(Memory.zappedMarker()) && reference.isLive();
-        }
-        return isLive;
+    public final ObjectStatus status() {
+        return reference().status();
     }
 
-    public final ObjectMemoryStatus memoryStatus() {
-        return reference.memoryStatus();
-    }
-
-    public final TeleObject getForwardedTeleObject() {
-        if (memoryStatus().isForwarded()) {
-            TeleReference forwardedTeleRef = reference.getForwardedTeleRef();
-            TeleObject teleObject = objects().findObjectByOID(forwardedTeleRef.makeOID());
-            if (teleObject == null) {
-                reference = forwardedTeleRef;
-                return this;
-            }
-            return teleObject;
-        }
-        return this;
-    }
-
-    /**
-     * @return canonical reference to this object in the VM
-     */
-    public final TeleReference reference() {
+    public final RemoteReference reference() {
         return reference;
     }
 
-    /**
-     * @return to which of the Maxine heap object representations does this surrogate refer?
-     */
-    public abstract ObjectKind kind();
-
-    /**
-     * @return a number that uniquely identifies this object in the VM for the duration of the inspection
-     */
     public final long getOID() {
         return oid;
     }
 
-    /**
-     * @return a short string describing the role played by this object if it is of special interest in the Maxine
-     *         implementation, null if any other kind of object.
-     */
     public String maxineRole() {
         return null;
     }
 
-    /**
-     * @return an extremely short, abbreviated version of the string {@link #maxineRole()}, describing the role played
-     *         by this object in just a few characters.
-     */
     public String maxineTerseRole() {
         return maxineRole();
+    }
+
+    public boolean hasTextualVisualization() {
+        return false;
+    }
+
+    public String textualVisualization() {
+        return null;
     }
 
     /**
@@ -343,51 +313,25 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      */
     public static class InvalidObjectClass {}
 
-    /**
-     * Gets a local {@link ClassActor}, equivalent to the one in the
-     * VM that describes the type of this object in the VM. Note that
-     * in the singular instance of {@link StaticTuple} this does not
-     * correspond to the actual type of the object, which is an
-     * exceptional Maxine object that has no ordinary Java type; it
-     * returns in this case the type of the class the tuple helps implement.
-     */
     public ClassActor classActorForObjectType() { // TODO: fix class actor lookup
         try {
             TeleHub hub = getTeleHub();
-            TeleClassActor teleClassActor = hub.getTeleClassActor();
-            return teleClassActor.classActor();
+            if (hub != null) {
+                TeleClassActor teleClassActor = hub.getTeleClassActor();
+                return teleClassActor.classActor();
+            }
         } catch (NullPointerException e) {
             e.printStackTrace();
-            return ClassActor.fromJava(InvalidObjectClass.class);
         }
+        return ClassActor.fromJava(InvalidObjectClass.class);
     }
 
-    /**
-     * return local surrogate for the{@link ClassMethodActor} associated with this object in the VM, either because it
-     * is a {@link ClassMethodActor} or because it is a class closely associated with a method that refers to a
-     * {@link ClassMethodActor}. Null otherwise.
-     */
     public TeleClassMethodActor getTeleClassMethodActorForObject() {
         return null;
     }
 
-    /**
-     * The current "origin" of the object in VM memory, which may change through GC as long as the object remains live.
-     * When the object is no longer live, the last live location is returned. <br>
-     * Note that the origin is not necessarily beginning of the object's memory allocation, depending on the particular
-     * object layout used.
-     *
-     * @return current absolute location of the object's origin, subject to change by GC
-     * @see GeneralLayout
-     *
-     */
-    public Pointer origin() {
-        if (memoryStatus().isForwarded() || memoryStatus().isDead()) {
-            return lastValidPointer;
-        }
-        Pointer pointer = reference.toOrigin();
-        lastValidPointer = pointer;
-        return pointer;
+    public final Pointer origin() {
+        return reference.toOrigin();
     }
 
     /**
@@ -396,41 +340,13 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      */
     protected abstract int objectSize();
 
-    /**
-     * Gets the current area of memory in which the object is stored.
-     *
-     * @return current memory region occupied by this object in the VM,
-     * subject to relocation by GC.
-     */
     public final TeleFixedMemoryRegion objectMemoryRegion() {
-        if (memoryStatus().isForwarded() || memoryStatus().isDead()) {
-            // Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
-            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(lastValidPointer), objectSize());
-        }
-        return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.toOrigin()), objectSize());
-    }
-
-    public final MaxMemoryRegion getForwardedMemoryRegion() {
-        if (memoryStatus().isForwarded()) {
-            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.getForwardedTeleRef().toOrigin()), objectSize());
+        if (status().isNotDead() && objectSize() > 0) {
+            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.toOrigin()), objectSize());
         }
         return null;
     }
 
-    /**
-     * The fields in the object's header.
-     *
-     * @return enumeration of the fields in the header of this object
-     */
-    public abstract HeaderField[] headerFields();
-
-    /**
-     * The type of a field in the obejct's header, calling out specially
-     * the standard ones. Unknown ones are treated as words.
-     *
-     * @param headerField identifies a header field in the object layout
-     * @return the type of the header field, Word if unknown.
-     */
     public final TypeDescriptor headerType(HeaderField headerField) {
         if (headerField == HeaderField.HUB) {
             return getTeleHub() == null ? null : JavaTypeDescriptor.forJavaClass(getTeleHub().hub().getClass());
@@ -450,12 +366,6 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         return headerType(headerField).toKind().width.numberOfBytes;
     }
 
-    /**
-     * Offset from the object's origin of a field in the object's header.
-     *
-     * @param headerField identifies a header field in the object layout
-     * @return the location of the header field relative to object origin
-     */
     public final int headerOffset(HeaderField headerField) {
         if (headerField == HeaderField.LENGTH) {
             return objects().layoutScheme().arrayLayout.getOffsetFromOrigin(headerField).toInt();
@@ -464,47 +374,32 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         }
     }
 
-    /**
-     * Address of a field in the object's header.
-     *
-     * @param headerField identifies a header field in the object layout
-     * @return the location of the header in VM memory
-     */
     public Address headerAddress(HeaderField headerField) {
-        return origin().plus(headerOffset(headerField));
+        return reference().origin().plus(headerOffset(headerField));
     }
 
-    /**
-     * The memory region in which an object header field is stored, subject to change by GC relocation.
-     *
-     * @param headerField a field in the object's header
-     * @return current memory region occupied by a header field in this object in the VM
-     */
     public final TeleFixedMemoryRegion headerMemoryRegion(HeaderField headerField) {
         final Address address = headerAddress(headerField);
         final int nBytes = headerSize(headerField);
         return new TeleFixedMemoryRegion(vm(), "Current memory for header field " + headerField.name, address, nBytes);
     }
 
-    /**
-     * Gets the "hub" object pointed to in the object's header.
-     *
-     * @return the local surrogate for the Hub of this object
-     */
-    public TeleHub getTeleHub() {
+    public final TeleHub getTeleHub() {
         if (teleHub == null) {
-            final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
-            teleHub = (TeleHub) objects().makeTeleObject(hubReference);
+                   // final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
+            teleHub = fetchTeleHub();
         }
         return teleHub;
     }
 
     /**
-     * Gets the contents of the misc" word in the object's header.
-     *
-     * @return the "misc" word from the header of this object in the VM
+     * Logic to fetch the hub for this TeleObject when not already cached.
      */
-    public Word getMiscWord() {
+    protected TeleHub fetchTeleHub() {
+        return  (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(reference).asAddress());
+    }
+
+    public Word readMiscWord() {
         return Layout.readMisc(reference);
     }
 
@@ -541,33 +436,12 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      */
     public abstract Address fieldAddress(FieldActor fieldActor);
 
-    /**
-     * The size in bytes of a field in the object.
-     *
-     * @param fieldActor descriptor for a field in this class
-     * @return the memory size of the field
-     */
     public abstract int fieldSize(FieldActor fieldActor);
 
-    /**
-     * The memory region in which field in the object is stored, subject to change by GC relocation.
-     *
-     * @param fieldActor a field in the object
-     * @return current memory region occupied by the field in this object in the VM, subject to relocation by GC.
-     */
     public final TeleFixedMemoryRegion fieldMemoryRegion(FieldActor fieldActor) {
         final Pointer start = origin().plus(fieldActor.offset());
         return new TeleFixedMemoryRegion(vm(), "", start, fieldSize(fieldActor));
     }
-
-    /**
-     * @param fieldActor local {@link FieldActor}, part of the
-     * {@link ClassActor} for the type of this object, that
-     * describes a field in this object in the VM
-     *
-     * @return contents of the designated field in this VM object
-     */
-    public abstract Value readFieldValue(FieldActor fieldActor);
 
     /**
      * @return a shallow copy of the object in the vm, with any references in it nulled out
@@ -652,11 +526,11 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         protected void register(TeleObject teleObject, Object object, boolean newInstance) {
             Object oldValue = teleObjectToObject.put(teleObject, object);
             int numberOfCopies = numberOfCopies();
-            if (oldValue == null && newInstance && Trace.hasLevel(1)) {
+            if (oldValue == null && newInstance && Trace.hasLevel(COPY_TRACE_VALUE)) {
                 copiesPerType.get(object.getClass()).value++;
                 totalCopies++;
                 if ((numberOfCopies % 100) == 0) {
-                    Trace.line(1, "Deep copied " + numberOfCopies + " objects [" + totalCopies + " in total]");
+                    Trace.line(COPY_TRACE_VALUE, "Deep copied " + numberOfCopies + " objects [" + totalCopies + " in total]");
                 }
             }
         }
@@ -811,13 +685,13 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         }
     }
 
+    protected static Reference jumpForwarder(Reference reference) {
+        return ((RemoteReference) reference).jumpForwarder();
+    }
+
     @Override
     public String toString() {
         return getClass().toString() + "<" + oid + ">";
-    }
-
-    public Reference getReference() {
-        return this.reference();
     }
 
     public ReferenceTypeProvider getReferenceType() {

@@ -22,9 +22,12 @@
  */
 package com.sun.max.tele.object;
 
+import java.io.*;
+
 import com.sun.max.tele.*;
 
 
+// TODO (mlvdv) decide whether to expose this as MaxObjectHoldingRegion
 /**
  * A allocatable area in the VM that can contain objects.
  */
@@ -35,5 +38,13 @@ public interface VmObjectHoldingRegion<Entity_Type extends MaxEntity> extends Ma
      */
     RemoteObjectReferenceManager objectReferenceManager();
 
+    /**
+     * Writes current statistics concerning references to objects in VM memory.
+     *
+     * @param printStream stream to which to write
+     * @param indent number of spaces to indent each line
+     * @param verbose possibly write extended information when true
+     */
+    void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose);
 }
 

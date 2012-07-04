@@ -112,21 +112,7 @@ public final class StackFrameView extends AbstractView<StackFrameView> implement
         truncatedFrameTextArea.setEditable(false);
         truncatedFramePanel.add(truncatedFrameTextArea);
 
-        final InspectorFrame frame = createFrame(true);
-
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
-        editMenu.add(copyStackFrameToClipboardAction);
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().viewSelectedStackFrameMemory("View memory for frame"));
-        memoryMenu.add(actions().viewSelectedThreadStackMemory("View memory for stack"));
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-
+        createFrame(true);
         forceRefresh();
         Trace.end(1,  tracePrefix() + " initializing");
     }
@@ -184,6 +170,20 @@ public final class StackFrameView extends AbstractView<StackFrameView> implement
             InspectorError.unexpected(tracePrefix() + " unknown type of stack frame");
         }
         setTitle();
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu editMenu = makeMenu(MenuKind.EDIT_MENU);
+        editMenu.add(copyStackFrameToClipboardAction);
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().viewSelectedStackFrameMemory("View memory for frame"));
+        memoryMenu.add(actions().viewSelectedThreadStackMemory("View memory for stack"));
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
     }
 
     @Override

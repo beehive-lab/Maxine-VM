@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import java.io.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Access to objects in the VM, not all of which may be in the heap.
@@ -42,10 +43,14 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
     // TODO (mlvdv) This interface as well as others related to memory management is evolving.
 
     /**
+     * Examines the contents of VM memory and determines what kind of object (live, quasi, etc.),
+     * if any, is represented at that location, using only low-level mechanisms and creating
+     * no {@link Reference}s.
+     *
      * @param origin an absolute memory location in the VM.
-     * @return whether there is an object whose origin is at the address
+     * @return an enum identifying the kind of object, if any, that is represented at the location in VM memory.
      */
-    boolean isValidOrigin(Address origin);
+    ObjectStatus objectStatusAt(Address origin);
 
     /**
      * Locator for TeleObjects, which
@@ -55,43 +60,75 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      *  and for other objects for which special treatment is needed.
      *
      * @param reference a heap object in the VM;
-     * @return a canonical local surrogate for the object, null for the distinguished zero {@link Reference}.
+     * @return a canonical local surrogate for the object, {@code null} for the distinguished zero {@link Reference}.
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
-    TeleObject findTeleObject(Reference reference) throws MaxVMBusyException;
+    MaxObject findObject(Reference reference) throws MaxVMBusyException;
 
     /**
      * @param id an id assigned to each heap object in the VM as needed, unique for the duration of a VM execution.
      * @return an accessor for the specified heap object.
      */
-    TeleObject findObjectByOID(long id);
+    MaxObject findObjectByOID(long id);
 
     /**
-     * Finds an object whose origin is at the specified address, if one exists.
+     * Finds a live object whose origin is at the specified address, if one exists.
      *
      * @param origin memory location in the VM
-     * @return surrogate for a VM object, null if none found or if the VM is busy
+     * @return surrogate for a VM object, {@code null} if none found or if the VM is busy
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
-    TeleObject findObjectAt(Address origin);
+    MaxObject findObjectAt(Address origin);
 
     /**
-     * Scans VM memory backwards (smaller address) for an object whose cell begins at the specified address.
+     * Finds a quasi object whose origin is at the specified address, if one exists.
+     *
+     * @param origin memory location in the VM
+     * @return surrogate for a VM quasi object, {@code null} if none found or if the VM is busy
+     * @throws MaxVMBusyException if data cannot be read from the VM at this time
+     */
+    MaxObject findQuasiObjectAt(Address origin);
+
+    /**
+     * Finds a live or quasi object whose origin is at the specified address, if one exists.
+     *
+     * @param origin memory location in the VM
+     * @return surrogate for a VM live or quasi object, {@code null} if none found or if the VM is busy
+     * @throws MaxVMBusyException if data cannot be read from the VM at this time
+     */
+    MaxObject findAnyObjectAt(Address origin);
+
+    /**
+     * Finds a live object whose location is encoded as a forwarding address.
+     *
+     * @param possibly encoded origin of a newly forwarded object in the VM
+     * @return surrogate for a VM object, {@code null} if none found or if the VM is busy
+     * @throws MaxVMBusyException if data cannot be read from the VM at this time
+     */
+    MaxObject findForwardedObjectAt(Address forwardingAddress);
+
+    /**
+     * Scans VM memory backwards (smaller address) for a live or quasi object whose cell begins at the specified address.
      *
      * @param cellAddress search starts with word preceding this address
      * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
-     * @return surrogate for a VM object, null if none found
+     * @return surrogate for a VM object, {@code null} if none found
      */
-    TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent);
+    MaxObject findAnyObjectPreceding(Address cellAddress, long maxSearchExtent);
 
     /**
-     * Scans VM memory forward (larger address) for an object whose cell begins at the specified address.
+     * Scans VM memory forward (larger address) for a live or quasi object whose cell begins at the specified address.
      *
      * @param cellAddress search starts with word following this address
      * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
-     * @return surrogate for a VM object, null if none found
+     * @return surrogate for a VM object, {@code null} if none found
      */
-    TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent);
+    MaxObject findAnyObjectFollowing(Address cellAddress, long maxSearchExtent);
+
+    /**
+     * @return the {@link ClassRegistry} object in the boot heap of the VM.
+     */
+    TeleObject vmClassRegistry() throws MaxVMBusyException;
 
     /**
      * Writes current statistics concerning inspection of the VM's heap.

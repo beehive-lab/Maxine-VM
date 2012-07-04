@@ -108,16 +108,16 @@ abstract class RootCellVisitor extends PointerIndexVisitor implements CellVisito
 
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
-        if (specificLayout.isTupleLayout()) {
+        if (specificLayout == Layout.tupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
             if (hub.isJLRReference) {
                 SpecialReferenceManager.discoverSpecialReference(cell);
             }
             return cell.plus(hub.tupleSize);
         }
-        if (specificLayout.isHybridLayout()) {
+        if (specificLayout == Layout.hybridLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
-        } else if (specificLayout.isReferenceArrayLayout()) {
+        } else if (specificLayout == Layout.referenceArrayLayout()) {
             final int length = Layout.readArrayLength(origin);
             for (int index = 0; index < length; index++) {
                 markExternalRoot(Layout.originToCell(Layout.getReference(origin, index).toOrigin()));

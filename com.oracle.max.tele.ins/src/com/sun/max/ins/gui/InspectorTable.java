@@ -26,6 +26,7 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -234,6 +235,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
             getInspectorTableModel().refresh();
             getInspectorTableColumnModel().refresh(force);
             lastRefreshedState = maxVMState;
+            getTableHeader().setBackground(headerBackgroundColor());
             invalidate();
             repaint();
         }
@@ -414,6 +416,16 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         return null;
     }
 
+
+    /**
+     * Gets an alternate background color for rendering the table's header, null for the default.
+     * <p>
+     * Note that this can get called very early in table initialization by superclasses.
+     */
+    public Color headerBackgroundColor() {
+        return null;
+    }
+
     /**
      * Determines if a row should be treated as a "boundary", and an extra border be
      * drawn at the top of any cell rendered in that row.
@@ -495,4 +507,49 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     protected String tracePrefix() {
         return tracePrefix;
     }
+
+    public List<InspectorAction> extraViewMenuActions() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * @return whether the current display mode is hiding some rows of the table
+     */
+    public boolean isElided() {
+        return false;
+    }
+
+    protected InspectorAction scrollToBeginningAction() {
+        return new ShowFirstRowAction(inspection());
+    }
+
+    protected InspectorAction scrollToEndAction() {
+        return new ShowLastRowAction(inspection());
+    }
+
+    private final class ShowFirstRowAction extends InspectorAction {
+
+        public ShowFirstRowAction(Inspection inspection) {
+            super(inspection, "Show first row");
+        }
+
+        @Override
+        protected void procedure() {
+            scrollToRows(0, 0);
+        }
+    }
+
+    private final class ShowLastRowAction extends InspectorAction {
+
+        public ShowLastRowAction(Inspection inspection) {
+            super(inspection, "Show last row");
+        }
+
+        @Override
+        protected void procedure() {
+            final int lastRow = getInspectorTableModel().getRowCount() - 1;
+            scrollToRows(lastRow, lastRow);
+        }
+    }
+
 }

@@ -35,9 +35,9 @@ import com.sun.max.vm.type.*;
 /**
  * Canonical surrogate for an object of type {@link ConstantPool} in the VM .
  */
-public final class TeleConstantPool extends TeleTupleObject{
+public final class TeleConstantPool extends TeleTupleObject {
 
-    private Reference constantsArrayReference;
+    private Reference constantsArrayReference = vm().referenceManager().zeroReference();
 
     TeleConstantPool(TeleVM vm, Reference constantPoolReference) {
         super(vm, constantPoolReference);
@@ -67,8 +67,8 @@ public final class TeleConstantPool extends TeleTupleObject{
     }
 
     private Reference constantsArrayReference() {
-        if (constantsArrayReference == null) {
-            constantsArrayReference = fields().ConstantPool_constants.readReference(reference());
+        if (constantsArrayReference.isZero()) {
+            constantsArrayReference = jumpForwarder(fields().ConstantPool_constants.readReference(reference()));
         }
         return constantsArrayReference;
     }
@@ -84,7 +84,7 @@ public final class TeleConstantPool extends TeleTupleObject{
             throw new MaxVMBusyException();
         }
         try {
-            final Reference poolConstantReference = objects().unsafeReadArrayElementValue(Kind.REFERENCE, constantsArrayReference(), index).asReference();
+            final Reference poolConstantReference = jumpForwarder(objects().unsafeReadArrayElementValue(Kind.REFERENCE, constantsArrayReference(), index).asReference());
             final TeleObject teleObject = objects().makeTeleObject(poolConstantReference);
             if (!(teleObject instanceof TelePoolConstant)) {
                 return null;
@@ -99,7 +99,7 @@ public final class TeleConstantPool extends TeleTupleObject{
      * @return surrogate for the {@link ClassActor} object in the VM  that includes this pool
      */
     public TeleClassActor getTeleHolder() {
-        final Reference classActorReference = fields().ConstantPool_holder.readReference(reference());
+        final Reference classActorReference = jumpForwarder(fields().ConstantPool_holder.readReference(reference()));
         return (TeleClassActor) objects().makeTeleObject(classActorReference);
     }
 

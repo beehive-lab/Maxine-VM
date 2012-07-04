@@ -34,14 +34,18 @@ import com.sun.max.vm.thread.*;
  */
 public class TeleVmThread extends TeleTupleObject {
 
-    private String name;
-
     // the most recent state when we checked the name reference
     private long lastRefreshedEpoch = 0;
 
-    // the string representing the name of the thread the last time we checked the {@link TeleVM}.
-    // assume that strings are immutable, so only re-read when the reference changes.
-    private Reference nameReference;
+    /**
+     * Reference to the string object in the VM holding the thread name.
+     */
+    private Reference nameReference = vm().referenceManager().zeroReference();
+
+    /**
+     * Copy of the string representing the name of the thread the last time we checked the VM.
+     */
+    private String name = "*unset*";
 
     public TeleVmThread(TeleVM vm, Reference vmThreadReference) {
         super(vm, vmThreadReference);
@@ -51,13 +55,13 @@ public class TeleVmThread extends TeleTupleObject {
         if (vm().teleProcess().epoch() > lastRefreshedEpoch) {
             try {
                 final Reference nameReference = fields().VmThread_name.readReference(reference());
-                if (this.nameReference == null || !nameReference.equals(this.nameReference)) {
-                    if (nameReference.isZero()) {
+                if (!nameReference.equals(this.nameReference)) {
+                    this.nameReference = nameReference;
+                    if (this.nameReference.isZero()) {
                         name = "*unset*";
                     } else {
-                        // Assume strings in the {@link TeleVM} don't change, so we don't need to re-read
+                        // Assume strings in the VM don't change, so we don't need to re-read
                         // if we've already seen the string (depends on canonical references).
-                        this.nameReference = nameReference;
                         try {
                             name = vm().getString(this.nameReference);
                         } catch (InvalidReferenceException invalidReferenceExceptoin) {
