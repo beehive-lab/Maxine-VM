@@ -541,7 +541,13 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         assert vm().lockHeldByCurrentThread();
         TeleError.check(contains(origin), "Location is outside of " + heapSchemeClass().getSimpleName() + " heap");
         final RemoteReference reference = internalMakeRef(origin);
-        return reference != null && reference.status().isLive() ? reference : null;
+        if (reference == null) {
+            return null;
+        }
+        if (reference.status().isLive()) {
+            return reference;
+        }
+        return reference.status().isForwarder() && phase() == HeapPhase.ANALYZING ? reference : null;
     }
 
     public RemoteReference makeQuasiReference(Address origin) throws TeleError {
@@ -625,12 +631,18 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                         final Address toSpaceOrigin = objects().getForwardingAddressUnsafe(fromSpaceOrigin);
                         SemiSpaceRemoteReference toSpaceReference = toSpaceRefMap.get(toSpaceOrigin);
                         if (toSpaceReference != null) {
-                            // A forwarder in From-Space, not yet seen, whose new copy is already known
+                            if (toSpaceReference.forwardedFrom().isZero()) {
+                                // A forwarder in From-Space, not yet seen, whose new copy is already known
+                                // Update the existing To-Space reference with newly discovered location of its old copy
+                                toSpaceReference.discoverOldOrigin(fromSpaceOrigin);
+                            } else {
+                                // This may occur when the forwarder ref previously stored in the from map was collected by the GC, leaving
+                                // only the weak ref with no referent.
+                                TeleError.check(toSpaceReference.forwardedFrom().equals(fromSpaceOrigin));
+                            }
                             // Create a forwarder quasi reference to retain information about the old location for the duration of the analysis phase
                             remoteReference = SemiSpaceRemoteReference.createForwarder(this, fromSpaceOrigin, toSpaceOrigin);
                             fromSpaceRefMap.put(fromSpaceOrigin, remoteReference);
-                            // Update the existing To-Space reference with newly discovered location of its old copy
-                            toSpaceReference.discoverOldOrigin(fromSpaceOrigin);
                         } else if (toSpaceMemoryRegion.contains(toSpaceOrigin) && objectStatusAt(toSpaceOrigin).isLive()) {
                             // A forwarder in From-Space, not yet seen, whose new copy in To-Space has not yet been seen
                             // Add a reference for the new copy to the To-Space map
