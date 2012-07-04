@@ -93,7 +93,7 @@ class JVMTIClassFunctions {
         boolean changed = false;
         for (int i = 0; i < MAX_NATIVE_ENVS; i++) {
             NativeEnv nativEnv = (NativeEnv) jvmtiEnvs[i];
-            Pointer callback = getCallbackForEvent(nativEnv, JVMTIEvent.CLASS_FILE_LOAD_HOOK, VmThread.current());
+            Pointer callback = getCallbackForEvent(nativEnv, JVMTIEvent.E.CLASS_FILE_LOAD_HOOK, VmThread.current());
             if (callback.isZero()) {
                 continue;
             }
@@ -126,7 +126,7 @@ class JVMTIClassFunctions {
         // now the Java agents
         for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
             JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
-            if (javaEnv == null || !JVMTIEvent.isEventSet(javaEnv, JVMTIEvent.CLASS_FILE_LOAD_HOOK, VmThread.current())) {
+            if (javaEnv == null || !JVMTIEvent.isEventSet(javaEnv, JVMTIEvent.E.CLASS_FILE_LOAD_HOOK, VmThread.current())) {
                 continue;
             }
             byte[] newClassfileBytes = javaEnv.callbackHandler.classFileLoadHook(classLoader, className, protectionDomain, classfileBytes);

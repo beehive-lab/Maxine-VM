@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.jjvmti.agents.eventdelivery;
 
+import static com.sun.max.vm.ext.jvmti.JVMTIEvent.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
 import java.lang.reflect.*;
@@ -29,7 +30,6 @@ import java.security.*;
 import java.util.*;
 import java.util.regex.*;
 
-import com.oracle.max.vm.ext.jjvmti.agents.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -43,13 +43,13 @@ import com.sun.max.vm.ext.jvmti.*;
  *
  * Can be included in the boot image or dynamically loaded as a VM extension.
  */
-public class EventDelivery extends NullJJVMTICallbacks implements JJVMTI.EventCallbacks {
+public class EventDelivery extends JJVMTIAgentAdapter implements JJVMTI.EventCallbacks {
 
     private static EventDelivery eventDelivery;
     private static String EventDeliveryArgs;
     private static boolean inEvent;
 
-    private static HashMap<String, EventData> events = new HashMap<String, EventData>();
+    private static HashMap<JVMTIEvent.E, EventData> events = new HashMap<JVMTIEvent.E, EventData>();
 
     static {
         eventDelivery = (EventDelivery) JJVMTIAgentAdapter.register(new EventDelivery());
@@ -61,11 +61,12 @@ public class EventDelivery extends NullJJVMTICallbacks implements JJVMTI.EventCa
     static class EventData {
 
         final boolean enabled;
-        final int event;
+        final JVMTIEvent.E event;
 
-        EventData(boolean enabled, int event) {
+        EventData(boolean enabled, JVMTIEvent.E event) {
             this.event = event;
             this.enabled = enabled;
+            events.put(event, this);
         }
     }
 
@@ -84,7 +85,7 @@ public class EventDelivery extends NullJJVMTICallbacks implements JJVMTI.EventCa
      */
     @Override
     public void onBoot() {
-        eventDelivery.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
+        eventDelivery.setEventNotificationMode(JVMTI_ENABLE, E.VM_INIT.code, null);
     }
 
     private static void usage() {
@@ -96,26 +97,15 @@ public class EventDelivery extends NullJJVMTICallbacks implements JJVMTI.EventCa
         MaxineVM.exit(-1);
     }
 
-    private static int eventFromName(String name) {
-        // Checkstyle: stop
-        if (name.equals("vmInit"))return JVMTI_EVENT_VM_INIT;
-        else if (name.equals("vmDeath")) return JVMTI_EVENT_VM_DEATH;
-        else if (name.equals("breakpoint")) return JVMTI_EVENT_BREAKPOINT;
-        else if (name.equals("classLoad")) return JVMTI_EVENT_CLASS_LOAD;
-        else if (name.equals("classFileLoadHook")) return JVMTI_EVENT_CLASS_FILE_LOAD_HOOK;
-        else if (name.equals("compiledMethodLoad")) return JVMTI_EVENT_COMPILED_METHOD_LOAD;
-        else if (name.equals("compiledMethodUnload")) return JVMTI_EVENT_COMPILED_METHOD_UNLOAD;
-        else if (name.equals("garbageCollectionStart")) return JVMTI_EVENT_GARBAGE_COLLECTION_START;
-        else if (name.equals("garbageCollectionFinish")) return JVMTI_EVENT_GARBAGE_COLLECTION_FINISH;
-        else if (name.equals("methodEntry")) return JVMTI_EVENT_METHOD_ENTRY;
-        else if (name.equals("methodExit")) return JVMTI_EVENT_METHOD_EXIT;
-        else if (name.equals("threadStart")) return JVMTI_EVENT_THREAD_START;
-        else if (name.equals("threadEnd")) return JVMTI_EVENT_THREAD_END;
-        else if (name.equals("fieldAccess")) return JVMTI_EVENT_FIELD_ACCESS;
-        else if (name.equals("fieldModification")) return JVMTI_EVENT_FIELD_MODIFICATION;
-        else assert false;
-        return -1;
-        // Checkstyle: resume
+    private static JVMTIEvent.E eventFromName(String methodName) {
+        String uMethodName = methodName.toUpperCase();
+        for (JVMTIEvent.E event : JVMTIEvent.E.VALUES) {
+            String name = event.name().replace("_", "");
+            if (name.equals(uMethodName)) {
+                return event;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -142,83 +132,91 @@ public class EventDelivery extends NullJJVMTICallbacks implements JJVMTI.EventCa
         Method[] methods = JJVMTI.EventCallbacks.class.getDeclaredMethods();
         for (Method method : methods) {
             String methodName = method.getName();
-            EventData eventData = new EventData(eventsPattern.matcher(methodName).matches(), eventFromName(methodName));
-            events.put(methodName, eventData);
+            if (methodName.equals("onBoot")) {
+                continue;
+            }
+            E event = eventFromName(methodName);
+            boolean enabled = eventsPattern.matcher(methodName).matches() || eventsPattern.matcher(event.name()).matches();
+            EventData eventData = new EventData(enabled, event);
             if (eventData.enabled) {
-                eventDelivery.setEventNotificationMode(JVMTI_ENABLE, eventData.event, null);
+                eventDelivery.setEventNotificationMode(JVMTI_ENABLE, eventData.event.code, null);
             }
         }
 
-        if (events.get("vmInit").enabled) {
-            System.out.println("VMInit");
+        if (events.get(E.VM_INIT).enabled) {
+            System.out.println(E.VM_INIT);
         }
     }
 
     @Override
     public void garbageCollectionStart() {
-        if (events.get("garbageCollectionStart").enabled) {
-            System.out.println("GC Start");
+        if (events.get(E.GARBAGE_COLLECTION_START).enabled) {
+            System.out.println(E.GARBAGE_COLLECTION_START);
         }
     }
 
     @Override
     public void garbageCollectionFinish() {
-        if (events.get("garbageCollectionFinish").enabled) {
-            System.out.println("GC Finish");
+        if (events.get(E.GARBAGE_COLLECTION_FINISH).enabled) {
+            System.out.println(E.GARBAGE_COLLECTION_FINISH);
         }
     }
 
     @Override
     public void threadStart(Thread thread) {
-        if (events.get("threadStart").enabled) {
-            System.out.printf("Thread start: %s%n", thread);
+        if (events.get(E.THREAD_START).enabled) {
+            System.out.printf("%s: %s%n", E.THREAD_START, thread);
         }
     }
 
     @Override
     public void threadEnd(Thread thread) {
-        if (events.get("threadEnd").enabled) {
-            System.out.printf("Thread end: %s%n", thread);
+        if (events.get(E.THREAD_END).enabled) {
+            System.out.printf("%s: %s%n", E.THREAD_END, thread);
         }
     }
 
     @Override
     public void vmDeath() {
-        if (events.get("vmDeath").enabled) {
-            System.out.println("VMDeath");
+        if (events.get(E.VM_DEATH).enabled) {
+            System.out.println(E.VM_DEATH);
         }
     }
 
     @Override
     public byte[] classFileLoadHook(ClassLoader loader, String name, ProtectionDomain protectionDomain, byte[] classData) {
-        if (events.get("classFileLoadHook").enabled) {
-            System.out.printf("ClassFile LoadHook: %s, loader %s%n", name, loader);
+        if (events.get(E.CLASS_FILE_LOAD_HOOK).enabled) {
+            System.out.printf("%s: %s, loader %s%n", E.CLASS_FILE_LOAD_HOOK, name, loader);
         }
         return null;
     }
 
     @Override
     public void breakpoint(Thread thread, MethodActor method, long location) {
-        if (events.get("breakpoint").enabled) {
-            System.out.printf("breakpoint%n");
+        if (events.get(E.BREAKPOINT).enabled) {
+            System.out.println(E.BREAKPOINT);
         }
     }
 
     @Override
     public void classLoad(Thread thread, ClassActor klass) {
-        if (events.get("classLoad").enabled) {
-            System.out.printf("classLoad %s%n", klass.name());
+        if (events.get(E.CLASS_LOAD).enabled) {
+            System.out.printf("%s %s%n", E.CLASS_LOAD, klass.name());
         }
     }
+
     @Override
     public void compiledMethodLoad(MethodActor method, int codeSize, Address codeAddr, AddrLocation[] map, Object compileInfo) {
-        if (events.get("compiledMethodLoad").enabled) {
-            System.out.printf("compiledMethodLoad %s, address %x, size %d%n", method.format("%H.%n"), codeAddr.toLong(), codeSize);
+        if (events.get(E.COMPILED_METHOD_LOAD).enabled) {
+            System.out.printf("%s %s, address %x, size %d%n", E.COMPILED_METHOD_LOAD, method.format("%H.%n"), codeAddr.toLong(), codeSize);
         }
     }
 
     @Override
     public void compiledMethodUnload(MethodActor method, Address codeAddr) {
+        if (events.get(E.COMPILED_METHOD_UNLOAD).enabled) {
+            System.out.printf("%s %s, address %x%n", E.COMPILED_METHOD_UNLOAD, method.format("%H.%n"), codeAddr.toLong());
+        }
 
     }
 
@@ -227,8 +225,8 @@ public class EventDelivery extends NullJJVMTICallbacks implements JJVMTI.EventCa
         if (!inEvent) {
             try {
                 inEvent = true;
-                if (events.get("methodEntry").enabled) {
-                    System.out.printf("methodEntry %s%n", method.format("%H.%n"));
+                if (events.get(E.METHOD_ENTRY).enabled) {
+                    System.out.printf("%s %s%n", E.METHOD_ENTRY, method.format("%H.%n"));
                 }
             } finally {
                 inEvent = false;
@@ -241,8 +239,8 @@ public class EventDelivery extends NullJJVMTICallbacks implements JJVMTI.EventCa
         if (!inEvent) {
             try {
                 inEvent = true;
-                if (events.get("methodExit").enabled) {
-                    System.out.printf("methodExit %s  exception %b%n", method.format("%H.%n"), exception);
+                if (events.get(E.METHOD_EXIT).enabled) {
+                    System.out.printf("%s %s  exception %b%n", E.METHOD_EXIT, method.format("%H.%n"), exception);
                 }
             } finally {
                 inEvent = false;
@@ -252,16 +250,113 @@ public class EventDelivery extends NullJJVMTICallbacks implements JJVMTI.EventCa
 
     @Override
     public void fieldAccess(Thread thread, MethodActor method, long location, ClassActor klass, Object object, FieldActor field) {
-        if (events.get("fieldAccess").enabled) {
-            System.out.printf("fieldAccess %s%n", field.format("%H.%n"));
+        if (events.get(E.FIELD_ACCESS).enabled) {
+            System.out.printf("%s %s%n", E.FIELD_ACCESS, field.format("%H.%n"));
         }
     }
 
     @Override
     public void fieldModification(Thread thread, MethodActor method, long location, ClassActor klass, Object object, FieldActor field, Object newValue) {
-        if (events.get("fieldModification").enabled) {
-            System.out.printf("fieldModification %s%n", field.format("%H.%n"));
+        if (events.get(E.FIELD_MODIFICATION).enabled) {
+            System.out.printf("%s %s%n", E.FIELD_MODIFICATION, field.format("%H.%n"));
         }
     }
+
+    @Override
+    public void exception(Thread thread, MethodActor method, long location, Object exception, MethodActor catchMethod, long catchLocation) {
+        if (events.get(E.EXCEPTION).enabled) {
+            System.out.printf("%s %s in %s at %d ", E.EXCEPTION, exception.getClass().getName(), method.format("%H.%n"), location);
+            if (catchMethod == null) {
+                System.out.println("uncaught");
+            } else {
+                System.out.printf("caught in %s at %d%n", catchMethod.format("%H.%n"), catchLocation);
+            }
+        }
+    }
+
+    @Override
+    public void exceptionCatch(Thread thread, MethodActor method, long location, Object exception) {
+        if (events.get(E.EXCEPTION_CATCH).enabled) {
+            System.out.printf("%s %s in %s at %d%n", E.EXCEPTION_CATCH, exception.getClass().getName(), method.format("%H.%n"), location);
+        }
+    }
+
+    @Override
+    public void dataDumpRequest() {
+        if (events.get(E.DATA_DUMP_REQUEST).enabled) {
+            System.out.println(E.DATA_DUMP_REQUEST);
+        }
+    }
+
+    @Override
+    public void dynamicCodeGenerated(String name, Address codeAddr, int length) {
+        if (events.get(E.DATA_DUMP_REQUEST).enabled) {
+            System.out.println(E.DATA_DUMP_REQUEST);
+        }
+    }
+
+    @Override
+    public void framePop(Thread thread, MethodActor method, boolean wasPoppedByException) {
+        if (events.get(E.FRAME_POP).enabled) {
+            System.out.printf("%s thread %s method %s exception %b%n", E.FRAME_POP, thread.getName(), method.format("%H.%n"), wasPoppedByException);
+        }
+    }
+
+    @Override
+    public void monitorContendedEnter(Thread thread, Object object) {
+        if (events.get(E.MONITOR_CONTENDED_ENTER).enabled) {
+            System.out.printf("%s %s%n", E.MONITOR_CONTENDED_ENTER, thread.getName());
+        }
+    }
+
+    @Override
+    public void monitorContendedEntered(Thread thread, Object object) {
+        if (events.get(E.MONITOR_CONTENDED_ENTERED).enabled) {
+            System.out.printf("%s %s%n", E.MONITOR_CONTENDED_ENTERED, thread.getName());
+        }
+    }
+
+    @Override
+    public void monitorWait(Thread thread, Object object, long timeout) {
+        if (events.get(E.MONITOR_WAIT).enabled) {
+            System.out.printf("%s %s %d%n", E.MONITOR_WAIT, thread.getName(), timeout);
+        }
+    }
+
+    @Override
+    public void monitorWaited(Thread thread, Object object, long timeout) {
+        if (events.get(E.MONITOR_WAITED).enabled) {
+            System.out.printf("%s %s %d%n", E.MONITOR_WAITED, thread.getName(), timeout);
+        }
+    }
+
+    @Override
+    public void objectFree(Object tag) {
+        if (events.get(E.OBJECT_FREE).enabled) {
+            System.out.println(E.OBJECT_FREE);
+        }
+    }
+
+    @Override
+    public void resourceExhausted(int flags, String description) {
+        if (events.get(E.RESOURCE_EXHAUSTED).enabled) {
+            System.out.println(E.RESOURCE_EXHAUSTED);
+        }
+    }
+
+    @Override
+    public void singleStep(Thread thread, MethodActor method, long location) {
+        if (events.get(E.SINGLE_STEP).enabled) {
+            System.out.printf("%s %s %d", E.SINGLE_STEP, method.format("%H.%n"), location);
+        }
+    }
+
+    @Override
+    public void vmObjectAlloc(Thread thread, Object object, ClassActor classActor, int size) {
+        if (events.get(E.VM_OBJECT_ALLOC).enabled) {
+            System.out.printf("%s %s%n", E.VM_OBJECT_ALLOC, classActor.format("%H"));
+        }
+    }
+
 
 }

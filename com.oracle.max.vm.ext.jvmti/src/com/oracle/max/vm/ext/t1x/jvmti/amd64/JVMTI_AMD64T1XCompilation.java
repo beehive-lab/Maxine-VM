@@ -96,13 +96,13 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
      */
     private long eventSettings;
 
-    private static final int GETFIELD_EVENT = JVMTI.eventForBytecode(Bytecodes.GETFIELD);
-    private static final int PUTFIELD_EVENT = JVMTI.eventForBytecode(Bytecodes.PUTFIELD);
-    private static final int RETURN_EVENT = JVMTI.eventForBytecode(Bytecodes.RETURN);
+    private static final JVMTIEvent.E GETFIELD_EVENT = JVMTI.eventForBytecode(Bytecodes.GETFIELD);
+    private static final JVMTIEvent.E PUTFIELD_EVENT = JVMTI.eventForBytecode(Bytecodes.PUTFIELD);
+    private static final JVMTIEvent.E RETURN_EVENT = JVMTI.eventForBytecode(Bytecodes.RETURN);
 
-    private static final long DEBUG_EVENTS = JVMTIEvent.bitSetting(JVMTIEvent.BREAKPOINT) |
-                                             JVMTIEvent.bitSetting(JVMTIEvent.SINGLE_STEP) |
-                                             JVMTIEvent.bitSetting(JVMTIEvent.FRAME_POP);
+    private static final long DEBUG_EVENTS = JVMTIEvent.bitSetting(JVMTIEvent.E.BREAKPOINT) |
+                                             JVMTIEvent.bitSetting(JVMTIEvent.E.SINGLE_STEP) |
+                                             JVMTIEvent.bitSetting(JVMTIEvent.E.FRAME_POP);
 
     /**
      * If {@code true}, all debugging-related events will compiled in from the get go.
@@ -150,11 +150,11 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         // breakpoint events are currently enabled by the agent.
         // For simplicity, we make the connection in this code.
         if (breakpoints != null) {
-            eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.BREAKPOINT);
+            eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.E.BREAKPOINT);
         }
         breakpointIndex = 0;
         if (JVMTIBreakpoints.isSingleStepEnabled()) {
-            eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.SINGLE_STEP);
+            eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.E.SINGLE_STEP);
         }
         methodID = MethodID.fromMethodActor(method);
         checkByteCodeEventNeeded(-1);  // METHOD_ENTRY
@@ -176,17 +176,16 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
      * @param bytecode
      * @return the corresponding eventId or zero if not needed.
      */
-    private int checkByteCodeEventNeeded(int bytecode) {
-        int eventId = JVMTI.byteCodeEventNeeded(bytecode);
-        if (eventId != 0) {
-            eventSettings |= JVMTIEvent.bitSetting(eventId);
+    private void checkByteCodeEventNeeded(int bytecode) {
+        JVMTIEvent.E event = JVMTI.byteCodeEventNeeded(bytecode);
+        if (event != null) {
+            eventSettings |= JVMTIEvent.bitSetting(event);
         }
-        return eventId;
     }
 
     @Override
     protected void do_methodTraceEntry() {
-        if ((eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.METHOD_ENTRY)) != 0) {
+        if ((eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.E.METHOD_ENTRY)) != 0) {
             templates = compiler.templates;
             start(TRACE_METHOD_ENTRY);
             assignObject(0, "methodActor", method);
@@ -202,7 +201,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         int currentBCI = stream.currentBCI();
         long id = 0;
         boolean eventCall = false;
-        boolean singleStep = (eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.SINGLE_STEP)) != 0;
+        boolean singleStep = (eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.E.SINGLE_STEP)) != 0;
         boolean breakPossible = breakpoints != null && breakpointIndex < breakpoints.length;
         if (singleStep || breakPossible) {
             if (breakPossible && JVMTIBreakpoints.getLocation(breakpoints[breakpointIndex]) == currentBCI) {
@@ -241,7 +240,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             case Bytecodes.ARETURN:
             case Bytecodes.RETURN:
                 bytecodeEvent = ((eventSettings & JVMTIEvent.bitSetting(RETURN_EVENT)) != 0) ||
-                                ((eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.METHOD_EXIT)) != 0);
+                                ((eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.E.METHOD_EXIT)) != 0);
                 break;
 
             default:

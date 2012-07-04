@@ -268,7 +268,7 @@ public interface JJVMTI {
          */
         void onBoot();
         /*
-         * The standard events.
+         * The standard events. The method names match the JVMTI event names, modulo case and '_' differences.
          */
         void breakpoint(Thread thread, MethodActor method, long location);
         byte[] classFileLoadHook(ClassLoader loader, String name,
@@ -298,7 +298,7 @@ public interface JJVMTI {
         void threadEnd(Thread thread);
         void vmDeath();
         void vmInit();
-        void vmObjectAllocation(Thread thread, Object object, ClassActor classActor, int size); // TODO
+        void vmObjectAlloc(Thread thread, Object object, ClassActor classActor, int size); // TODO
     }
 
     /**
