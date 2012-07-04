@@ -90,7 +90,12 @@ public class JVMTI {
         /**
          * The C struct used by the native agents. {@see JVMTIEnvNativeStruct}.
          */
-        Pointer cstruct = Pointer.zero();
+        Pointer cstruct;
+
+        /**
+         * Support for {@code Get/SetEnvironmentLocalStorage}.
+         */
+        Pointer envStorage;
 
         /**
          * additions to the boot classpath by this agent.

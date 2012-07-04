@@ -393,28 +393,6 @@ public class JJVMTIAgentAdapter extends JJVMTIAgentAdapterChecker implements JJV
         }
     }
 
-    private static final ObjectThreadLocal otl = new ObjectThreadLocal();
-
-    @Override
-    public Object getThreadLocalStorage(Thread thread) throws JJVMTIException {
-        super.getThreadLocalStorage(thread);
-        thread = JVMTIThreadFunctions.checkThread(thread);
-        if (thread == null) {
-            throw new JJVMTIException(JVMTI_ERROR_THREAD_NOT_ALIVE);
-        }
-        return otl.get();
-    }
-
-    @Override
-    public void setThreadLocalStorage(Thread thread, Object data) throws JJVMTIException {
-        super.setThreadLocalStorage(thread, data);
-        thread = JVMTIThreadFunctions.checkThread(thread);
-        if (thread == null) {
-            throw new JJVMTIException(JVMTI_ERROR_THREAD_NOT_ALIVE);
-        }
-        otl.set(data);
-    }
-
     @Override
     public FrameInfo[] getStackTrace(Thread thread, int startDepth, int maxFrameCount) throws JJVMTIException {
         super.getStackTrace(thread, startDepth, maxFrameCount);
@@ -525,20 +503,6 @@ public class JJVMTIAgentAdapter extends JJVMTIAgentAdapterChecker implements JJV
     public int getAvailableProcessors() throws JJVMTIException {
         super.getAvailableProcessors();
         return Runtime.getRuntime().availableProcessors();
-    }
-
-    @Override
-    public Object getEnvironmentLocalStorage() throws JJVMTIException {
-        super.getEnvironmentLocalStorage();
-        throw notImplemented; // TODO
-
-    }
-
-    @Override
-    public void setEnvironmentLocalStorage(Object data) throws JJVMTIException {
-        super.setEnvironmentLocalStorage(data);
-        throw notImplemented; // TODO
-
     }
 
     @Override
