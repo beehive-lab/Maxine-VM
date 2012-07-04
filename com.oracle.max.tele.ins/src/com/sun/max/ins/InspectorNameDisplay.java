@@ -689,10 +689,15 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     public String referenceToolTipText(MaxObject object) {
         if (object != null) {
             try {
-                Class objectClass = object.getClass();
-                while (objectClass != null) {
+                final Class leafClass = object.getClass();
+                Class objectClass = leafClass;
+                do {
                     final ReferenceRenderer objectReferenceRenderer = referenceRenderers.get(objectClass);
                     if (objectReferenceRenderer != null) {
+                        if (leafClass != objectClass) {
+                            // cache it so we will not have to search for it next time.
+                            referenceRenderers.put(leafClass, objectReferenceRenderer);
+                        }
                         try {
                             vm().acquireLegacyVMAccess();
                             try {
@@ -708,7 +713,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                         }
                     }
                     objectClass = objectClass.getSuperclass();
-                }
+                } while (objectClass != null);
                 InspectorError.unexpected("InspectorNameDisplay failed to find renderer for maxObject = " + object);
             } catch (Throwable e) {
                 e.printStackTrace(Trace.stream());
