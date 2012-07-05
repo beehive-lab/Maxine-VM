@@ -96,16 +96,19 @@ public class JVMTISystem {
                 if (javaHome.isZero()) {
                     if (JDK.JDK_VERSION == JDK.JDK_6) {
                         javaHome = JVMTIUtil.getByteArrayStart(DARWIN_JAVA_HOME_JDK6_DEFAULT_BYTES);
-                        if (!CString.endsWith(javaHome, "/Home")) {
-                            javaHome = CString.append(javaHome, "/Home");
-                        }
                     } else if (JDK.JDK_VERSION == JDK.JDK_7) {
                         javaHome = JVMTIUtil.getByteArrayStart(DARWIN_JAVA_HOME_JDK7_DEFAULT_BYTES);
-                        if (!CString.endsWith(javaHome, "/jre")) {
-                            javaHome = CString.append(javaHome, "/jre");
-                        }
                     } else {
                         FatalError.check(false, "Unsupported DARWIN JDK version");
+                    }
+                }
+                if (JDK.JDK_VERSION == JDK.JDK_6) {
+                    if (!CString.endsWith(javaHome, "/Home")) {
+                        javaHome = CString.append(javaHome, "/Home");
+                    }
+                } else if (JDK.JDK_VERSION == JDK.JDK_7) {
+                    if (!CString.endsWith(javaHome, "/jre")) {
+                        javaHome = CString.append(javaHome, "/jre");
                     }
                 }
                 return javaHome;
