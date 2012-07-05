@@ -813,7 +813,7 @@ public class APITest extends NullJJVMTICallbacks {
         // special cases
         if (m.getName().equals("setEventNotificationMode")) {
             objectArgs[0] = JVMTI_ENABLE;
-            objectArgs[1] = JVMTI_EVENT_VM_DEATH;
+            objectArgs[1] = E.VM_DEATH;
         } else if (m.getName().equals("setVerboseFlag")) {
             objectArgs[0] = JVMTI_VERBOSE_GC;
             objectArgs[1] = true;
