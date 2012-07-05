@@ -32,6 +32,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.ext.jvmti.JVMTIBreakpoints.*;
 import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -63,8 +64,8 @@ public class JVMTIEvents {
 
     /**
      * Enum form of int constants.
-     * These are ordered the same as the constants so that their ordinal value is the correct zero-based
-     * value for a bit mask.
+     * Note that there are gaps in the integer values defined by JVMTI, so in order to maintain
+     * the relationship based on {@code ordinal} we define the missing values as {@code MISSINGn}.
      */
     public enum E {
         VM_INIT(JVMTIConstants.JVMTI_EVENT_VM_INIT, START_LIVE_PHASES),
@@ -89,10 +90,14 @@ public class JVMTIEvents {
         COMPILED_METHOD_UNLOAD(JVMTIConstants.JVMTI_EVENT_COMPILED_METHOD_UNLOAD, LIVE_PHASE),
         DYNAMIC_CODE_GENERATED(JVMTIConstants.JVMTI_EVENT_DYNAMIC_CODE_GENERATED, PRIMORDIAL_START_LIVE_PHASES),
         DATA_DUMP_REQUEST(JVMTIConstants.JVMTI_EVENT_DATA_DUMP_REQUEST, LIVE_PHASE),
+        MISSING1(-1, 0),
         MONITOR_WAIT(JVMTIConstants.JVMTI_EVENT_MONITOR_WAIT, LIVE_PHASE),
         MONITOR_WAITED(JVMTIConstants.JVMTI_EVENT_MONITOR_WAITED, LIVE_PHASE),
         MONITOR_CONTENDED_ENTER(JVMTIConstants.JVMTI_EVENT_MONITOR_CONTENDED_ENTER, LIVE_PHASE),
         MONITOR_CONTENDED_ENTERED(JVMTIConstants.JVMTI_EVENT_MONITOR_CONTENDED_ENTERED, LIVE_PHASE),
+        MISSING2(-2, 0),
+        MISSING3(-3, 0),
+        MISSING4(-4, 0),
         RESOURCE_EXHAUSTED(JVMTIConstants.JVMTI_EVENT_RESOURCE_EXHAUSTED, LIVE_PHASE),
         GARBAGE_COLLECTION_START(JVMTIConstants.JVMTI_EVENT_GARBAGE_COLLECTION_START, LIVE_PHASE),
         GARBAGE_COLLECTION_FINISH(JVMTIConstants.JVMTI_EVENT_GARBAGE_COLLECTION_FINISH, LIVE_PHASE),
@@ -125,7 +130,11 @@ public class JVMTIEvents {
             return VALUES[eventId - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL];
         }
 
+        @HOSTED_ONLY
         private E(int code, int phases) {
+            if (code > 0) {
+                FatalError.check(code - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL == ordinal(), "JVMTIEvent code mismatch");
+            }
             this.code = code;
             this.phases = phases;
             bit = 1L << ordinal();
@@ -296,6 +305,11 @@ public class JVMTIEvents {
         return event.phases;
     }
 
+    @NEVER_INLINE
+    private static void debug() {
+
+    }
+
     static int setEventNotificationMode(JVMTI.Env jvmtiEnv, int mode, E event, Thread thread) {
         if (thread == null) {
             // Global
@@ -342,6 +356,9 @@ public class JVMTIEvents {
      * Implementation of upcall to enable/disable event notification.
      */
     static int setEventNotificationMode(JVMTI.Env jvmtiEnv, int mode, int eventId, Thread thread) {
+        if (eventId == JVMTI_EVENT_GARBAGE_COLLECTION_FINISH) {
+            debug();
+        }
         E event = E.fromEventId(eventId);
         if (event == null) {
             return JVMTI_ERROR_INVALID_EVENT_TYPE;
