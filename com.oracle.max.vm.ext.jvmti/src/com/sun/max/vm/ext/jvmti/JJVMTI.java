@@ -318,7 +318,7 @@ public interface JJVMTI {
      * The following methods are independent of Class, Field and Method types.
      */
 
-    void setEventNotificationMode(int mode, int event, Thread thread) throws JJVMTIException;
+    void setEventNotificationMode(int mode, JVMTIEvents.E event, Thread thread) throws JJVMTIException;
 
     Thread[] getAllThreads() throws JJVMTIException;
 

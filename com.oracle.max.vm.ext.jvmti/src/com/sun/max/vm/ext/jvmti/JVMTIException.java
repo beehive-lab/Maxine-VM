@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.ext.jvmti;
 
-import static com.sun.max.vm.ext.jvmti.JVMTIEvent.*;
+import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIVmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -203,8 +203,8 @@ public class JVMTIException {
                 ClassMethodActor classMethodActor = stackElements.get(i).classMethodActor;
                 // check for non-VM class, but not the invocation stub for main which rethrows an unhandled exception
                 if (!(isVmStartup(classMethodActor) || classMethodActor.holder().isReflectionStub())) {
-                    // if this is the top of the stack, we are in the VM startup
-                    return i == stackElements.size() - 1;
+                    // genuine app class
+                    return false;
                 }
             }
             // no app classes, in VM startup
@@ -271,8 +271,8 @@ public class JVMTIException {
             exceptionEventData.location = stackAnalyser.throwingBci;
             exceptionEventData.methodID = MethodID.fromMethodActor(stackAnalyser.throwingMethodActor);
 
-            if (JVMTI.eventNeeded(JVMTIEvent.E.EXCEPTION)) {
-                JVMTI.event(JVMTIEvent.E.EXCEPTION, exceptionEventData);
+            if (JVMTI.eventNeeded(JVMTIEvents.E.EXCEPTION)) {
+                JVMTI.event(JVMTIEvents.E.EXCEPTION, exceptionEventData);
             }
 
             if (!uncaught) {
@@ -283,7 +283,7 @@ public class JVMTIException {
                         JVMTI.event(E.FRAME_POP, framePopEventData);
                     }
 
-                    if (JVMTIEvent.isEventSet(E.METHOD_EXIT)) {
+                    if (JVMTIEvents.isEventSet(E.METHOD_EXIT)) {
                         JVMTI.event(E.METHOD_EXIT, framePopEventData);
                     }
                     if (vmaHandler != null) {
@@ -292,8 +292,8 @@ public class JVMTIException {
                 }
                 // if an agent wants the exception catch event, we need to ensure that the compiled code for the catch method
                 // has that capability, or deopt it and generate the relevant event code
-                if (JVMTI.eventNeeded(JVMTIEvent.E.EXCEPTION_CATCH)) {
-                    JVMTICode.checkDeOptForMethod(ctm.classMethodActor, JVMTIEvent.codeEventSettings(null, VmThread.current()));
+                if (JVMTI.eventNeeded(JVMTIEvents.E.EXCEPTION_CATCH)) {
+                    JVMTICode.checkDeOptForMethod(ctm.classMethodActor, JVMTIEvents.codeEventSettings(null, VmThread.current()));
                 }
             }
         } finally {

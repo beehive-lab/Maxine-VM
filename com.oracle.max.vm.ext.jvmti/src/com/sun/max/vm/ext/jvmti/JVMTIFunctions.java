@@ -130,7 +130,7 @@ public class JVMTIFunctions  {
             if (jvmtiEnv == null) {
                 return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
-            return JVMTIEvent.setEventNotificationMode(jvmtiEnv, mode, event_type, handleAsThread);
+            return JVMTIEvents.setEventNotificationMode(jvmtiEnv, mode, event_type, handleAsThread);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {

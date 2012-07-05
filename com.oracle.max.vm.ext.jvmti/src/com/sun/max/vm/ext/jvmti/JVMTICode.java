@@ -49,7 +49,7 @@ public class JVMTICode {
      * This check occurs just before the thread is resumed.
      */
     private static void checkDeOptForEvent(JVMTI.Env jvmtiEnv, VmThread vmThread) {
-        long codeEventSettings = JVMTIEvent.codeEventSettings(jvmtiEnv, vmThread);
+        long codeEventSettings = JVMTIEvents.codeEventSettings(jvmtiEnv, vmThread);
         if (codeEventSettings != 0) {
             FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
             // we only deopt the top frame, which means we need to handle leaving the frame later.
@@ -107,7 +107,7 @@ public class JVMTICode {
             // may not be active on any thread stack, in which case we just need to recompile
             // and patch call sites. If it is not active, Deoptimization.go does
             // invalidation but does not recompile the method.
-            long codeEventSettings = JVMTIEvent.codeEventSettings(null, null);
+            long codeEventSettings = JVMTIEvents.codeEventSettings(null, null);
             checkDeOptForMethod(classMethodActor, codeEventSettings);
             // recheck
             targetMethod = classMethodActor.currentTargetMethod();

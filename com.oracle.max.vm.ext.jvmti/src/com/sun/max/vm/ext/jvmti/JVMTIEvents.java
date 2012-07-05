@@ -51,7 +51,7 @@ import com.sun.max.vm.thread.*;
  * that can be consulted quickly.
  *
  */
-public class JVMTIEvent {
+public class JVMTIEvents {
 
     /**
      * Enum form of int constants.
@@ -165,7 +165,7 @@ public class JVMTIEvent {
      * Per-agent, per-thread event settings.
      */
     static class PerThreadSettings {
-        private Map<Thread, JVMTIEvent.MutableLong> settings;
+        private Map<Thread, JVMTIEvents.MutableLong> settings;
         /**
          * per-agent setting across all threads.
          */
@@ -196,9 +196,9 @@ public class JVMTIEvent {
             }
         }
 
-        private Map<Thread, JVMTIEvent.MutableLong> checkMap() {
+        private Map<Thread, JVMTIEvents.MutableLong> checkMap() {
             if (settings == null) {
-                settings = new HashMap<Thread, JVMTIEvent.MutableLong>();
+                settings = new HashMap<Thread, JVMTIEvents.MutableLong>();
             }
             return settings;
         }
@@ -247,7 +247,7 @@ public class JVMTIEvent {
      * @param eventType
      * @return
      */
-    static boolean isEventSet(JVMTIEvent.E event) {
+    static boolean isEventSet(JVMTIEvents.E event) {
         return (bitSettings[event.ordinal()] & panAgentEventSettingCache) != 0;
     }
 
@@ -257,7 +257,7 @@ public class JVMTIEvent {
      * @param vmThread thread to check
      * @return
      */
-    static boolean isEventSet(JVMTI.Env env, JVMTIEvent.E event, VmThread vmThread) {
+    static boolean isEventSet(JVMTI.Env env, JVMTIEvents.E event, VmThread vmThread) {
         long setting = bitSettings[event.ordinal()];
         if ((setting & env.globalEventSettings) != 0) {
             return true;
@@ -271,7 +271,7 @@ public class JVMTIEvent {
      * @return
      */
     static boolean anyCodeEventsSet() {
-        return (panAgentEventSettingCache & JVMTIEvent.CODE_EVENTS_SETTING) != 0;
+        return (panAgentEventSettingCache & JVMTIEvents.CODE_EVENTS_SETTING) != 0;
     }
 
     /**
@@ -342,15 +342,7 @@ public class JVMTIEvent {
         return phases[event.ordinal()];
     }
 
-    /**
-     * Implementation of upcall to enable/disable event notification.
-     */
-    static int setEventNotificationMode(JVMTI.Env jvmtiEnv, int mode, int eventId, Thread thread) {
-        E event = E.fromEventId(eventId);
-        if (event == null) {
-            return JVMTI_ERROR_INVALID_EVENT_TYPE;
-        }
-
+    static int setEventNotificationMode(JVMTI.Env jvmtiEnv, int mode, E event, Thread thread) {
         if (thread == null) {
             // Global
             long newBits = newEventBits(event, mode, jvmtiEnv.globalEventSettings);
@@ -370,7 +362,6 @@ public class JVMTIEvent {
             jvmtiEnv.perThreadEventSettings.set(thread, newBits);
         }
 
-
         // recompute pan agent caches
         panAgentEventSettingCache = 0;
         panAgentThreadEventSettingCache = 0;
@@ -386,11 +377,22 @@ public class JVMTIEvent {
             panAgentEventSettingCache |= jvmtiEnv.globalEventSettings | jvmtiEnv.perThreadEventSettings.panThreadSettings;
         }
 
-        if (eventId == E.SINGLE_STEP.code) {
+        if (event == E.SINGLE_STEP) {
             JVMTIBreakpoints.setSingleStep(mode == JVMTI_ENABLE);
         }
 
         return JVMTI_ERROR_NONE;
+    }
+
+    /**
+     * Implementation of upcall to enable/disable event notification.
+     */
+    static int setEventNotificationMode(JVMTI.Env jvmtiEnv, int mode, int eventId, Thread thread) {
+        E event = E.fromEventId(eventId);
+        if (event == null) {
+            return JVMTI_ERROR_INVALID_EVENT_TYPE;
+        }
+        return setEventNotificationMode(jvmtiEnv, mode, event, thread);
     }
 
     static long codeEventSettings(JVMTI.Env jvmtiEnv, VmThread vmThread) {
@@ -401,7 +403,7 @@ public class JVMTIEvent {
         } else {
             settings = jvmtiEnv.perThreadEventSettings.get(vmThread.javaThread());
         }
-        return settings & JVMTIEvent.CODE_EVENTS_SETTING;
+        return settings & JVMTIEvents.CODE_EVENTS_SETTING;
     }
 
     public static long bitSetting(E event) {
@@ -446,7 +448,7 @@ public class JVMTIEvent {
                 } else {
                     first = false;
                 }
-                sb.append(JVMTIEvent.bitToName(bit));
+                sb.append(JVMTIEvents.bitToName(bit));
             }
         }
         return sb.toString();

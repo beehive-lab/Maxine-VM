@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.jjvmti.agents.methodargs;
 
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
+import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 
 import java.lang.reflect.*;
 import java.util.regex.*;
@@ -62,7 +63,7 @@ public class MethodArgs extends NullJJVMTICallbacks implements JJVMTI.EventCallb
      */
     @Override
     public void onBoot() {
-        methodArgs.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
+        methodArgs.setEventNotificationMode(JVMTI_ENABLE, E.VM_INIT, null);
     }
 
     @Override
@@ -86,8 +87,8 @@ public class MethodArgs extends NullJJVMTICallbacks implements JJVMTI.EventCallb
 
         methodPattern = Pattern.compile(pattern);
 
-        methodArgs.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_METHOD_ENTRY, null);
-        methodArgs.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_METHOD_EXIT, null);
+        methodArgs.setEventNotificationMode(JVMTI_ENABLE, E.METHOD_ENTRY, null);
+        methodArgs.setEventNotificationMode(JVMTI_ENABLE, E.METHOD_EXIT, null);
     }
 
     private static void usage() {

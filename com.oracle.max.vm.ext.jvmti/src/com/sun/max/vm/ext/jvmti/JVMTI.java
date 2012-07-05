@@ -25,7 +25,7 @@ package com.sun.max.vm.ext.jvmti;
 import static com.sun.max.vm.ext.jvmti.JVMTICallbacks.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIEnvNativeStruct.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIEvent.*;
+import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIFieldWatch.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.unsafe.UnsafeCast.*;
@@ -75,7 +75,7 @@ public class JVMTI {
         /**
          * The per-thread event settings for this agent.
          */
-        JVMTIEvent.PerThreadSettings perThreadEventSettings = new JVMTIEvent.PerThreadSettings();
+        JVMTIEvents.PerThreadSettings perThreadEventSettings = new JVMTIEvents.PerThreadSettings();
 
         boolean isFree() {
             return false;
@@ -437,7 +437,7 @@ public class JVMTI {
      * @param eventId
      * @return
      */
-    public static synchronized boolean eventNeeded(JVMTIEvent.E event) {
+    public static synchronized boolean eventNeeded(JVMTIEvents.E event) {
         if (MaxineVM.isHosted()) {
             return false;
         }
@@ -461,17 +461,17 @@ public class JVMTI {
      * @return
      */
     public static synchronized boolean compiledCodeEventsNeeded(ClassMethodActor classMethodActor) {
-        return JVMTIEvent.anyCodeEventsSet() ||
+        return JVMTIEvents.anyCodeEventsSet() ||
             (classMethodActor == null ? false : JVMTIBreakpoints.hasBreakpoints(classMethodActor));
     }
 
     /**
-     * Returns the {@link JVMTIEvent event id} that corresponds to a given bytecode,
+     * Returns the {@link JVMTIEvents event id} that corresponds to a given bytecode,
      * should it be instrumented.
      * @param opcode
      * @return
      */
-    public static JVMTIEvent.E eventForBytecode(int opcode) {
+    public static JVMTIEvents.E eventForBytecode(int opcode) {
         if (opcode == -1) {
             return E.METHOD_ENTRY;
         } else if (opcode == -2) {
@@ -515,25 +515,25 @@ public class JVMTI {
      * @param vmThread thread generating the event
      * @return the callback address or zero if none or not enabled
      */
-    static Pointer getCallbackForEvent(NativeEnv jvmtiEnv, JVMTIEvent.E event, VmThread vmThread) {
+    static Pointer getCallbackForEvent(NativeEnv jvmtiEnv, JVMTIEvents.E event, VmThread vmThread) {
         if (jvmtiEnv.isFree()) {
             return Pointer.zero();
         }
-        if (JVMTIEvent.isEventSet(jvmtiEnv, event, vmThread)) {
+        if (JVMTIEvents.isEventSet(jvmtiEnv, event, vmThread)) {
             return getCallBack(CALLBACKS.getPtr(jvmtiEnv.cstruct), event);
         }
         return Pointer.zero();
 
     }
 
-    static boolean hasCallbackForEvent(Env jvmtiEnv, JVMTIEvent.E event, VmThread vmThread) {
+    static boolean hasCallbackForEvent(Env jvmtiEnv, JVMTIEvents.E event, VmThread vmThread) {
         if (jvmtiEnv == null || jvmtiEnv.isFree()) {
             return false;
         }
-        return JVMTIEvent.isEventSet(jvmtiEnv, event, vmThread);
+        return JVMTIEvents.isEventSet(jvmtiEnv, event, vmThread);
     }
 
-    private static boolean ignoreEvent(JVMTIEvent.E event) {
+    private static boolean ignoreEvent(JVMTIEvents.E event) {
         if (MaxineVM.isHosted()) {
             return true;
         }
@@ -542,7 +542,7 @@ public class JVMTI {
             return true;
         }
 
-        if ((JVMTIEvent.getPhase(event) & phase) == 0) {
+        if ((JVMTIEvents.getPhase(event) & phase) == 0) {
             // wrong phase
             return true;
         }
@@ -558,7 +558,7 @@ public class JVMTI {
         event(E.METHOD_ENTRY, methodActor);
     }
 
-    public static void event(JVMTIEvent.E event) {
+    public static void event(JVMTIEvents.E event) {
         event(event, null);
     }
 
@@ -568,10 +568,10 @@ public class JVMTI {
      *
      * @param eventId
      */
-    public static void event(JVMTIEvent.E event, Object arg1) {
+    public static void event(JVMTIEvents.E event, Object arg1) {
         boolean ignoring = ignoreEvent(event);
 
-        JVMTIEvent.logger.logEvent(event, ignoring, arg1);
+        JVMTIEvents.logger.logEvent(event, ignoring, arg1);
 
         if (ignoring) {
             return;
@@ -651,7 +651,7 @@ public class JVMTI {
                 }
             } else {
                 JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
-                if (javaEnv == null || !JVMTIEvent.isEventSet(javaEnv, event, VmThread.current())) {
+                if (javaEnv == null || !JVMTIEvents.isEventSet(javaEnv, event, VmThread.current())) {
                     continue;
                 }
                 Thread currentThread = Thread.currentThread();
@@ -773,7 +773,7 @@ public class JVMTI {
     @INTRINSIC(UNSAFE_CAST) public static EventBreakpointID  asEventBreakpointID(Object object) { return (EventBreakpointID) object; }
     @INTRINSIC(UNSAFE_CAST) public static ExceptionEventData  asExceptionEventData(Object object) { return (ExceptionEventData) object; }
 
-    private static FieldEventData checkGetFieldModificationEvent(JVMTIEvent.E event, Object object, int offset, boolean isStatic) {
+    private static FieldEventData checkGetFieldModificationEvent(JVMTIEvents.E event, Object object, int offset, boolean isStatic) {
         if (ignoreEvent(event)) {
             return null;
         }
@@ -853,7 +853,7 @@ public class JVMTI {
         return JniHandles.createLocalHandle(VmThread.current().javaThread());
     }
 
-    private static Pointer getCallBack(Pointer callbacks, JVMTIEvent.E event) {
+    private static Pointer getCallBack(Pointer callbacks, JVMTIEvents.E event) {
         int index = event.ordinal();
         return callbacks.readWord(index * Pointer.size()).asPointer();
     }

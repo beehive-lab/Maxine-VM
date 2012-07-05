@@ -26,7 +26,7 @@ import java.awt.*;
 
 import com.sun.max.ins.gui.*;
 import com.sun.max.vm.ext.jvmti.*;
-import com.sun.max.vm.ext.jvmti.JVMTIEvent.*;
+import com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 import com.sun.max.vm.log.VMLog.*;
 
 public class JVMTIEventsVMLogArgRenderer extends VMLogArgRenderer {

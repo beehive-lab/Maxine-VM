@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.jjvmti.agents.fieldwatch;
 
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
+import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -75,7 +76,7 @@ public class FieldWatch  extends NullJJVMTICallbacks {
      */
     @Override
     public void onBoot() {
-        fieldWatch.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
+        fieldWatch.setEventNotificationMode(JVMTI_ENABLE, E.VM_INIT, null);
     }
 
     @Override
@@ -121,10 +122,10 @@ public class FieldWatch  extends NullJJVMTICallbacks {
         try {
             fieldWatch.addCapabilities(EnumSet.of(JVMTICapabilities.E.CAN_GENERATE_FIELD_ACCESS_EVENTS,
                                                   JVMTICapabilities.E.CAN_GENERATE_FIELD_MODIFICATION_EVENTS));
-            fieldWatch.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_LOAD, null);
-            fieldWatch.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_FIELD_ACCESS, null);
-            fieldWatch.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_FIELD_MODIFICATION, null);
-            fieldWatch.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_DEATH, null);
+            fieldWatch.setEventNotificationMode(JVMTI_ENABLE, E.CLASS_LOAD, null);
+            fieldWatch.setEventNotificationMode(JVMTI_ENABLE, E.FIELD_ACCESS, null);
+            fieldWatch.setEventNotificationMode(JVMTI_ENABLE, E.FIELD_MODIFICATION, null);
+            fieldWatch.setEventNotificationMode(JVMTI_ENABLE, E.VM_DEATH, null);
         } catch (JJVMTIException ex) {
             fail("initialization error: " + JVMTIError.getName(ex.error));
         }

@@ -28,7 +28,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.ext.jvmti.JVMTIEvent.E;
+import com.sun.max.vm.ext.jvmti.JVMTIEvents.E;
 import com.sun.max.vm.jni.*;
 
 /**

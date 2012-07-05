@@ -51,7 +51,7 @@ import com.sun.max.vm.profile.*;
  * delivery of unwanted events. The remainder of the discussion assumes the strict mode.
  *
  * Prior to compilation, in {@link #initCompile}, a check is made for which kinds of events are required. This results
- * in {@link #eventSettings} having those bits sets, where the bit numbers correspond to the {@link JVMTIEvent} values.
+ * in {@link #eventSettings} having those bits sets, where the bit numbers correspond to the {@link JVMTIEvents} values.
  *
  * Some events, e.g., field access/modification events, require that modified templates be used to translate the
  * bytecode. Prior to each bytecode translation, the templates are set appropriately in {@link #setTemplates(boolean)}.
@@ -92,17 +92,17 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
      */
     private BitSet eventBci;
     /**
-     * The settings as a {@link JVMTIEvent} bitmask.
+     * The settings as a {@link JVMTIEvents} bitmask.
      */
     private long eventSettings;
 
-    private static final JVMTIEvent.E GETFIELD_EVENT = JVMTI.eventForBytecode(Bytecodes.GETFIELD);
-    private static final JVMTIEvent.E PUTFIELD_EVENT = JVMTI.eventForBytecode(Bytecodes.PUTFIELD);
-    private static final JVMTIEvent.E RETURN_EVENT = JVMTI.eventForBytecode(Bytecodes.RETURN);
+    private static final JVMTIEvents.E GETFIELD_EVENT = JVMTI.eventForBytecode(Bytecodes.GETFIELD);
+    private static final JVMTIEvents.E PUTFIELD_EVENT = JVMTI.eventForBytecode(Bytecodes.PUTFIELD);
+    private static final JVMTIEvents.E RETURN_EVENT = JVMTI.eventForBytecode(Bytecodes.RETURN);
 
-    private static final long DEBUG_EVENTS = JVMTIEvent.bitSetting(JVMTIEvent.E.BREAKPOINT) |
-                                             JVMTIEvent.bitSetting(JVMTIEvent.E.SINGLE_STEP) |
-                                             JVMTIEvent.bitSetting(JVMTIEvent.E.FRAME_POP);
+    private static final long DEBUG_EVENTS = JVMTIEvents.bitSetting(JVMTIEvents.E.BREAKPOINT) |
+                                             JVMTIEvents.bitSetting(JVMTIEvents.E.SINGLE_STEP) |
+                                             JVMTIEvents.bitSetting(JVMTIEvents.E.FRAME_POP);
 
     /**
      * If {@code true}, all debugging-related events will compiled in from the get go.
@@ -150,11 +150,11 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         // breakpoint events are currently enabled by the agent.
         // For simplicity, we make the connection in this code.
         if (breakpoints != null) {
-            eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.E.BREAKPOINT);
+            eventSettings |= JVMTIEvents.bitSetting(JVMTIEvents.E.BREAKPOINT);
         }
         breakpointIndex = 0;
         if (JVMTIBreakpoints.isSingleStepEnabled()) {
-            eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.E.SINGLE_STEP);
+            eventSettings |= JVMTIEvents.bitSetting(JVMTIEvents.E.SINGLE_STEP);
         }
         methodID = MethodID.fromMethodActor(method);
         checkByteCodeEventNeeded(-1);  // METHOD_ENTRY
@@ -177,15 +177,15 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
      * @return the corresponding eventId or zero if not needed.
      */
     private void checkByteCodeEventNeeded(int bytecode) {
-        JVMTIEvent.E event = JVMTI.byteCodeEventNeeded(bytecode);
+        JVMTIEvents.E event = JVMTI.byteCodeEventNeeded(bytecode);
         if (event != null) {
-            eventSettings |= JVMTIEvent.bitSetting(event);
+            eventSettings |= JVMTIEvents.bitSetting(event);
         }
     }
 
     @Override
     protected void do_methodTraceEntry() {
-        if ((eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.E.METHOD_ENTRY)) != 0) {
+        if ((eventSettings & JVMTIEvents.bitSetting(JVMTIEvents.E.METHOD_ENTRY)) != 0) {
             templates = compiler.templates;
             start(TRACE_METHOD_ENTRY);
             assignObject(0, "methodActor", method);
@@ -201,7 +201,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         int currentBCI = stream.currentBCI();
         long id = 0;
         boolean eventCall = false;
-        boolean singleStep = (eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.E.SINGLE_STEP)) != 0;
+        boolean singleStep = (eventSettings & JVMTIEvents.bitSetting(JVMTIEvents.E.SINGLE_STEP)) != 0;
         boolean breakPossible = breakpoints != null && breakpointIndex < breakpoints.length;
         if (singleStep || breakPossible) {
             if (breakPossible && JVMTIBreakpoints.getLocation(breakpoints[breakpointIndex]) == currentBCI) {
@@ -227,11 +227,11 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         switch (opcode) {
             case Bytecodes.GETFIELD:
             case Bytecodes.GETSTATIC:
-                bytecodeEvent = (eventSettings & JVMTIEvent.bitSetting(GETFIELD_EVENT)) != 0;
+                bytecodeEvent = (eventSettings & JVMTIEvents.bitSetting(GETFIELD_EVENT)) != 0;
                 break;
             case Bytecodes.PUTFIELD:
             case Bytecodes.PUTSTATIC:
-                bytecodeEvent = (eventSettings & JVMTIEvent.bitSetting(PUTFIELD_EVENT)) != 0;
+                bytecodeEvent = (eventSettings & JVMTIEvents.bitSetting(PUTFIELD_EVENT)) != 0;
                 break;
             case Bytecodes.IRETURN:
             case Bytecodes.LRETURN:
@@ -239,8 +239,8 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             case Bytecodes.DRETURN:
             case Bytecodes.ARETURN:
             case Bytecodes.RETURN:
-                bytecodeEvent = ((eventSettings & JVMTIEvent.bitSetting(RETURN_EVENT)) != 0) ||
-                                ((eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.E.METHOD_EXIT)) != 0);
+                bytecodeEvent = ((eventSettings & JVMTIEvents.bitSetting(RETURN_EVENT)) != 0) ||
+                                ((eventSettings & JVMTIEvents.bitSetting(JVMTIEvents.E.METHOD_EXIT)) != 0);
                 break;
 
             default:
