@@ -2174,33 +2174,28 @@ def site(args):
 
         # Generate dependency graph with Graphviz
         if args.dot_output_base is not None:
-            
-            _, tmp = tempfile.mkstemp()
-            try:
-                svg = join(tmpbase, 'all', str(args.dot_output_base) + '.svg')
-                jpg = join(tmpbase, 'all', str(args.dot_output_base) + '.jpg')
-                with open(tmp, 'w') as fp:
-                    print >> fp, 'digraph projects {'
-                    print >> fp, 'rankdir=BT;'
-                    print >> fp, 'size = "13,13";'
-                    print >> fp, 'node [shape=rect, fontcolor="blue"];'
-                    #print >> fp, 'edge [color="green"];'
-                    for p in projects:
-                        print >> fp, '"' + p.name + '" [URL = "../' + p.name + '/javadoc/index.html", target = "_top"]'
-                        for dep in p.canonical_deps():
-                            if dep in [proj.name for proj in projects]:
-                                print >> fp, '"' + p.name + '" -> "' + dep + '"'
-                    depths = dict()
-                    for p in projects:
-                        d = p.max_depth()
-                        depths.setdefault(d, list()).append(p.name)
-                    for d, names in depths.iteritems():
-                        print >> fp, '{ rank = same; "' + '"; "'.join(names) + '"; }'
-                    print >> fp, '}'
-    
-                run(['dot', '-Tsvg', '-o' + svg, '-Tjpg', '-o' + jpg, tmp])
-            finally:
-                os.remove(tmp)
+            dot = join(tmpbase, 'all', str(args.dot_output_base) + '.dot')
+            svg = join(tmpbase, 'all', str(args.dot_output_base) + '.svg')
+            jpg = join(tmpbase, 'all', str(args.dot_output_base) + '.jpg')
+            with open(dot, 'w') as fp:
+                dim = len(projects)
+                print >> fp, 'digraph projects {'
+                print >> fp, 'rankdir=BT;'
+                print >> fp, 'size = "' + str(dim) + ',' + str(dim) + '";'
+                print >> fp, 'node [shape=rect, fontcolor="blue"];'
+                #print >> fp, 'edge [color="green"];'
+                for p in projects:
+                    print >> fp, '"' + p.name + '" [URL = "../' + p.name + '/javadoc/index.html", target = "_top"]'
+                    for dep in p.canonical_deps():
+                        if dep in [proj.name for proj in projects]:
+                            print >> fp, '"' + p.name + '" -> "' + dep + '"'
+                depths = dict()
+                for p in projects:
+                    d = p.max_depth()
+                    depths.setdefault(d, list()).append(p.name)
+                print >> fp, '}'
+
+            run(['dot', '-Tsvg', '-o' + svg, '-Tjpg', '-o' + jpg, dot])
 
         # Post-process generated SVG to remove title elements which most browsers
         # render as redundant (and annoying) tooltips.
