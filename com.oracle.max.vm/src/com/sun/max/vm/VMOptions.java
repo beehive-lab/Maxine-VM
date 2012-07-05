@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -298,7 +298,7 @@ public final class VMOptions {
 
     /**
      * This option is parsed in the native code (see maxine.c). It's declared here simply so that it
-     * shows up in the {@linkplain #printUsage() usage} message.
+     * shows up in the {@linkplain #printUsage(Category) usage} message.
      */
     private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, null,
         "Redirect VM log output to the specified file. By default, VM log output goes to the standard output stream."), MaxineVM.Phase.STARTING);
@@ -489,7 +489,6 @@ public final class VMOptions {
      *
      * @param prefix the prefix to use for the option (e.g. {@code "-XX:"} or {@code "-C1X:"})
      * @param name the name of the option
-     * @param declaringClass the class in which a field named {@code name} backing the option
      * @param help the help text for the option
      */
     @HOSTED_ONLY
@@ -757,7 +756,6 @@ public final class VMOptions {
      * for the runtime management interface (@see getVmArguments)
      * @param initialArgc
      * @param initialArgv
-     * @return
      */
     private static Pointer copy(int initialArgc, Pointer initialArgv) {
         final Size copySize = Size.fromInt(Pointer.size() * initialArgc);

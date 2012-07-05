@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -133,8 +133,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     /**
-     * Ensures that this monitor is {@linkplain BindingProtection#PROTECTED protected}
-     * if it is bound to a thread.
+     * Ensures that this monitor is protected if it is bound to a thread.
      */
     protected void checkProtection() {
         if (bindingProtection != BindingProtection.PROTECTED && ownerThread != null) {

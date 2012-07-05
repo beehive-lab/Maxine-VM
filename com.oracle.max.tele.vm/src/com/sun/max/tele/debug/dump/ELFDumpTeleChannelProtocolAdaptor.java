@@ -128,7 +128,6 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
      * not null terminated
      *
      * @param length
-     * @return
      */
     private String readNoteString(ELFDataInputStream dis, int length) throws IOException {
         byte[] arr = new byte[length - 1];
@@ -210,7 +209,6 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
     /**
      * Return the absolute address of the symbol in image.c whose vcalue is the base address of the boot heap.
      * Since this is a static, the name may be mangled (e.g. Solaris).
-     * @return
      */
     protected long getBootHeapStartSymbolAddress() {
         return symbolLookup.lookupSymbolValue(HEAP_SYMBOL_NAME).longValue();

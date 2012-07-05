@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -485,8 +485,7 @@ public final class ConstantPool implements RiConstantPool {
      * does not matter. This means that two pool constants for the same index cannot be compared for equality with '=='
      * but that's true anyway given that there's no guarantee of the two constants both being the resolved version.
      *
-     * @param constant
-     *                the {@linkplain PoolConstant#isResolved() resolved} constant to write at {@code index}
+     * @param constant the resolved constant to write at {@code index}
      */
     void updateAt(int index, ResolvableConstant constant) {
         assert constant.isResolved();

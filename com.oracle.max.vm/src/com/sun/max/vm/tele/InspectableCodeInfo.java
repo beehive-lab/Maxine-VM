@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.sun.max.vm.tele;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.code.CodeManager.Inspect;
 
 
 /**
@@ -35,11 +36,11 @@ import com.sun.max.vm.code.*;
  * can interrupt the VM at certain interesting moments.  This could also be used as a kind of low-wattage event
  * mechanism.
  * <p>
- * The inspectable* methods here are distinct from those with similar or identical names in {@link CodeManager.Inspect},
+ * The inspectable* methods here are distinct from those with similar or identical names in {@link Inspect},
  * which are intended to act as convenient places for a user to set a breakpoint, perhaps from a menu of standard
  * locations.  The intention is that those locations would not land the user in this class.
  *
- * @see CodeManager.Inspect
+ * @see Inspect
  * @see CodeRegion
  */
 public final class InspectableCodeInfo {
@@ -67,8 +68,7 @@ public final class InspectableCodeInfo {
      * <strong>Important:</strong> The Inspector assumes that this method is loaded
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
-     * @param codeEvictionStartedCounter the code eviction count that is starting.
-     * @see CodeManager.Inspect#notifyEvictionStarted(CodeRegion)
+     * @see Inspect#notifyEvictionStarted(CodeRegion)
      */
     @INSPECTED
     @NEVER_INLINE
@@ -98,8 +98,7 @@ public final class InspectableCodeInfo {
      * <strong>Important:</strong> The Inspector assumes that this method is loaded
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
-     * @param codeEvictionCompletedCounter the code eviction count that is completing.
-     * @see CodeManager.Inspect#notifyEvictionCompleted(CodeRegion)
+     * @see Inspect#notifyEvictionCompleted(CodeRegion)
      */
     @INSPECTED
     @NEVER_INLINE

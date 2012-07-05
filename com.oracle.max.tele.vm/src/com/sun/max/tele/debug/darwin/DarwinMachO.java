@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -497,7 +497,6 @@ public class DarwinMachO {
      * Sections are numbered from 1 as they occur within SEGMENT_64 commands.
      * @param loadCommands
      * @param sectToFind
-     * @return
      */
     public static Section64 getSection(LoadCommand[] loadCommands, int sectToFind) {
         int sect = 1;

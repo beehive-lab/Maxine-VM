@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,7 +108,7 @@ public class StackFrameCursor {
 
     /**
      * Sets the callee save details for this frame cursor. This must be called
-     * while this cursor denotes the "current" frame just before {@link StackFrameWalker#advance(Word, Word, Word)
+     * while this cursor denotes the "current" frame just before {@link StackFrameWalker#advance(Word, Word, Word)}
      * is called (after which this cursor will be the "callee" frame).
      *
      * @param csl the layout of the callee save area in the frame denoted by this cursor
@@ -141,7 +141,7 @@ public class StackFrameCursor {
      * return address depends on the {@linkplain ISA#offsetToReturnPC platform}.
      *
      * The value returned from this method is valid only if the frame executes a native function.
-     * Callers must be sure about calling {@link #nativeIP()} and {@link vmIP()} correctly.
+     * Callers must be sure about calling {@link #nativeIP()} and {@link #vmIP()} correctly.
      *
      * @return the current instruction pointer in a native function.
      */
@@ -156,7 +156,7 @@ public class StackFrameCursor {
      * return address depends on the {@linkplain ISA#offsetToReturnPC platform}.
      *
      * The value returned from this method is valid only if the frame executes a target method.
-     * Callers must be sure about calling {@link #nativeIP()} and {@link vmIP()} correctly.
+     * Callers must be sure about calling {@link #nativeIP()} and {@link #vmIP()} correctly.
      *
      * @return the current instruction pointer in a target method.
      */

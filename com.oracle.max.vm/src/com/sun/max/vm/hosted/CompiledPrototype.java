@@ -740,7 +740,6 @@ public class CompiledPrototype extends Prototype {
 
     /**
      * Recompile methods whose assumptions were invalidated.
-     * @return true if the recompilation brought new methods in the compiled prototype.
      */
     public synchronized static void invalidateTargetMethod(TargetMethod targetMethod) {
         assert targetMethod != null;

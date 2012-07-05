@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@ package com.sun.max.vm;
 
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * A VM option that represents an integer, such as a tuning parameter or other
@@ -36,8 +35,7 @@ public class VMIntOption extends VMOption {
     /**
      * Creates a new integer option.
      *
-     * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option
-     * in the global registry or VM options.</b>
+     * <b>The caller is responsible for registering this option in the global registry or VM options.</b>
      *
      * @param prefix the name of the option, including the leading '-' character
      * @param defaultValue the default value of the option when it is not specified

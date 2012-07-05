@@ -43,7 +43,7 @@ import com.sun.max.vm.thread.*;
  * marking and sweeping algorithms.
  * Implements TLAB over a linked list of free chunk provided by an object space manager.
  *
- * @see FreeHeapSpaceManager.
+ * @see FreeHeapSpaceManager
  */
 public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
     /**

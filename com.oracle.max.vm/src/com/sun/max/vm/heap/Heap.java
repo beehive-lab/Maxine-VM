@@ -177,7 +177,6 @@ public final class Heap {
     /**
      * Validate heap sizing inputs. This is common to any GC and can be done early on.
      *
-     * @return
      */
     private static String validateHeapSizing() {
         if (heapSizingInputValidated) {
@@ -616,7 +615,7 @@ public final class Heap {
 
     /**
      * A class that wants to register for callbacks must implement this interface
-     * and register itself with {@link #registerCallback}.
+     * and register itself with {@link Heap#registerGCCallback(GCCallback)}.
      */
     public interface GCCallback {
         void gcCallback(GCCallbackPhase gcCallbackPhase);
@@ -708,7 +707,7 @@ public final class Heap {
     /**
      * Determines if object allocation should be logged.
      *
-     * @returns Always {@code false} if the VM build level is not {@link BuildLevel#DEBUG}.
+     * @return {@code false} if the VM build level is not {@link BuildLevel#DEBUG}.
      */
     @INLINE
     public static boolean logAllocation() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -111,7 +111,7 @@ public final class Stub extends TargetMethod {
      * Determines if a given address in a given target method denotes the entry point of a deoptimization stub.
      *
      * @param ip a code address
-     * @param tm the target method {@linkplain Code#codePointerToTargetMethod(Address) found} in the code cache based on {@code ip}
+     * @param tm the target method {@linkplain Code#codePointerToTargetMethod(Pointer) found} in the code cache based on {@code ip}
      */
     public static boolean isDeoptStubEntry(Pointer ip, TargetMethod tm) {
         if (tm != null && (tm.is(DeoptStub) || tm.is(DeoptStubFromCompilerStub) || tm.is(DeoptStubFromSafepoint))) {

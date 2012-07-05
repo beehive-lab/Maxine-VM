@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -282,7 +282,7 @@ public final class Platform {
     /**
      * Changes the current platform context.
      *
-     * @param vm the new platform context (must not be {@code null})
+     * @param platform the new platform context (must not be {@code null})
      * @return the previous platform context
      */
     public static Platform set(Platform platform) {
@@ -420,7 +420,7 @@ public final class Platform {
      * Gets the number of signals supported by the target that may be delivered to the VM.
      * The range of signal numbers that the VM expects to see is between 0 (inclusive) and
      * {@code numberOfSignals()} (exclusive).
-     * This checks the property {@value NUMBER_OF_SIGNALS_PROPERTY} first and only calls
+     * This checks the property {@value #NUMBER_OF_SIGNALS_PROPERTY} first and only calls
      * {@link #nativeNumberOfSignals()} if there is no value set for the property.
      */
     @HOSTED_ONLY
@@ -432,7 +432,6 @@ public final class Platform {
     /**
      * Get the number of signals supported by the host platform, the assumption being that the generated VM
      * will be running on the same platform.
-     * @return
      */
     private static native int nativeNumberOfSignals();
 

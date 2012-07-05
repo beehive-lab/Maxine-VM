@@ -277,6 +277,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
      * <p>
      * This gets called more than once during the startup sequence.
      */
+    @SuppressWarnings("deprecation")
     @Override
     public void updateMemoryStatus(long epoch) {
 
@@ -539,6 +540,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         return heapFreeChunkHubOrigin.isNotZero() && hubOrigin.equals(heapFreeChunkHubOrigin);
     }
 
+    @SuppressWarnings("deprecation")
     private void printRegionObjectStats(PrintStream printStream, int indent, boolean verbose, TeleMemoryRegion region, WeakRemoteReferenceMap<MSRemoteReference> map) {
         final NumberFormat formatter = NumberFormat.getInstance();
         int totalRefs = 0;

@@ -33,7 +33,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A utility for {@linkplain #match(String[]) finding} a set of methods
+ * A utility for {@linkplain #find(String[], Classpath, ClassLoader, List) finding} a set of methods
  * based on a class path and one or more patterns.
  * <p>
  * A pattern is a class name pattern followed by an optional method name
@@ -167,7 +167,6 @@ public class MethodFinder {
      * @param classLoader
      * @param nonFatalErrors list to which non-fatal errors are appended during the search. If {@code null}, then a
      *            {@linkplain ProgramWarning warning} is logged
-     * @return
      */
     public List<MethodActor> find(String[] patterns, Classpath classpath, ClassLoader classLoader, List<Throwable> nonFatalErrors) {
 

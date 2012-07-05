@@ -31,7 +31,6 @@ import com.sun.max.unsafe.*;
 public interface MaxNativeLibrary extends MaxEntity<MaxNativeLibrary> {
     /**
      * The file system path to the native library.
-     * @return
      */
     String path();
 
@@ -39,7 +38,6 @@ public interface MaxNativeLibrary extends MaxEntity<MaxNativeLibrary> {
      * The functions in the library, or {@code null} if this information is not known (yet).
      * There is a window between opening the library and resolving the first symbol where
      * {@code null} can be returned.
-     * @return
      */
     MaxNativeFunction[] functions();
 

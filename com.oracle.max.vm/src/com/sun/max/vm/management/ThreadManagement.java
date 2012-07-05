@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -112,7 +112,6 @@ public class ThreadManagement {
     /**
      * Support method for {@link Thread#getAllStackTraces}.
      * @param threads
-     * @return
      */
     public static StackTraceElement[][] dumpThreads(Thread[] threads) {
         return getStackTrace(threads, Integer.MAX_VALUE);
@@ -123,7 +122,6 @@ public class ThreadManagement {
      * @param ids thread ids or null if all threads
      * @param lockedMonitors
      * @param lockedSynchronizers
-     * @return
      */
     public static ThreadInfo[] dumpThreads(long[] ids, boolean lockedMonitors, boolean lockedSynchronizers) {
         if (ids == null) {

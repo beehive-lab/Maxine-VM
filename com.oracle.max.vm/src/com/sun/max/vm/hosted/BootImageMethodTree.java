@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.util.*;
@@ -40,7 +39,7 @@ import com.sun.max.vm.hosted.CompiledPrototype.Link;
 import com.sun.max.vm.hosted.CompiledPrototype.Link.Relationship;
 
 /**
- * A mechanism for {@linkplain #saveTree(DataOutputStream, IterableWithLength) saving},
+ * A mechanism for {@linkplain #saveTree(DataOutputStream, Collection) saving},
  * {@linkplain #loadTree(DataInputStream) loading} and
  * {@linkplain #printTree(Node, boolean, PrintWriter, boolean) printing}
  * the causality spanning-tree of the {@linkplain CompiledPrototype#links() method graph} in an
@@ -241,7 +240,7 @@ public final class BootImageMethodTree {
     }
 
     /**
-     * Loads a tree that was saved by {@linkplain #saveTree(DataOutputStream, IterableWithLength) this method}.
+     * Loads a tree that was saved by {@linkplain #saveTree(DataOutputStream, Collection) this method}.
      *
      * @param dataInputStream a stream containing a saved tree
      * @return the roots of the loaded tree

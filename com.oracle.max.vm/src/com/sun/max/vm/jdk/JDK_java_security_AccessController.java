@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,7 +74,7 @@ final class JDK_java_security_AccessController {
      * @see java.security.AccessController#doPrivileged(PrivilegedAction, AccessControlContext)
      * @param <T> the type of the result of the privileged action
      * @param action the action to perform
-     * @param context the access control context
+     * @param accessControlContext the access control context
      * @return the result of performing the action
      */
     @SUBSTITUTE
@@ -118,7 +118,7 @@ final class JDK_java_security_AccessController {
      * @see java.security.AccessController#doPrivileged(PrivilegedExceptionAction, AccessControlContext)
      * @param <T> the type of the result of the privileged action
      * @param action the action to perform
-     * @param context the access control context
+     * @param accessControlContext the access control context
      * @return the result of performing the action
      * @throws PrivilegedActionException if the privileged action caused an exception
      */

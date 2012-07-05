@@ -491,7 +491,7 @@ public class ClassfileWriter {
 
     /**
      * Exists for the same reasons as {@link #classfileCodeMap}. The reason {@link #classfileCodeMap} is required
-     * in addition to this map is that {@linkplain BytecodeIntrinsifier intrinsification} occurs 'in situ'.
+     * in addition to this map is that intrinsification occurs 'in situ'.
      */
     @HOSTED_ONLY
     public static final Map<MethodActor, CodeAttribute> classfileCodeAttributeMap = new ConcurrentHashMap<MethodActor, CodeAttribute>();

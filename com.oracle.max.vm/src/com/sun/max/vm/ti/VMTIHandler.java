@@ -25,7 +25,7 @@ package com.sun.max.vm.ti;
 import java.security.*;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -45,9 +45,9 @@ public interface VMTIHandler {
     /**
      * Called very early in the VM startup to allow the tooling system to perform its initialization,
      * and perhaps influence the way the VM itself initializes, e.g, by changing options.
-     * The call is made in {@link MaxineVM.Phase#PRISTINE} mode in the main thread, after
-     * the {@link MaxineVM.Phase#PRISTINE} options have been parsed, but before the schemes
-     * have been initialized in {@link MaxineVM.Phase#PRISTINE} mode. In particular, the
+     * The call is made in {@link Phase#PRISTINE} mode in the main thread, after
+     * the {@link Phase#PRISTINE} options have been parsed, but before the schemes
+     * have been initialized in {@link Phase#PRISTINE} mode. In particular, the
      * the heap is <b>not</b> available.
      *
      */
@@ -150,7 +150,6 @@ public interface VMTIHandler {
      * Checks whether the given method should be compiled with the compiler
      * registered with {@link #runtimeCompiler(RuntimeCompiler)}.
      * @param classMethodActor
-     * @return
      */
     boolean needsVMTICompilation(ClassMethodActor classMethodActor);
 
@@ -158,7 +157,6 @@ public interface VMTIHandler {
      * If the tooling system supports compiled code breakpoints, checks whether
      * the given method has any set.
      * @param classMethodActor
-     * @return
      */
     boolean hasBreakpoints(ClassMethodActor classMethodActor);
 
@@ -190,20 +188,18 @@ public interface VMTIHandler {
      * Check if given native method needs special compilation treatment.
      * JVMTI specific.
      * @param ma
-     * @return
      */
     boolean nativeCallNeedsPrologueAndEpilogue(MethodActor ma);
 
     /**
      * A check whether the custom {@link #getCallerClassForFindClass(int)} needs to be called.
-     * @return
      */
     boolean needsSpecialGetCallerClass();
 
     /**
      * A hook to override the default implementation of the getting the caller of {@code JNI} {@code FindClass}.
      * JVMTI specific.
-     * {@see sun.reflect.Reflection#getCallerClass(int)}
+     * @see sun.reflect.Reflection#getCallerClass(int)
      * @param realFramesToSkip
      * @return {@code null} if not implemented, or the caller class
      */

@@ -97,7 +97,7 @@ public final class VirtualMemory {
      * Evidently the caller of this method must know that the virtual memory
      * at the given address is available for allocation.
      *
-     * @param pointer page aligned address at which to allocate the virtual memory
+     * @param address page aligned address at which to allocate the virtual memory
      * @param size the size requested
      * @return true if the memory was allocated, false otherwise
      */
@@ -115,7 +115,7 @@ public final class VirtualMemory {
      *
      * @param pointer page aligned address at which to allocate the virtual memory
      * @param size the size requested
-     * @type type of memory
+     * @param type of memory
      * @return true if the memory was allocated, false otherwise
      */
     public static boolean allocatePageAlignedAtFixedAddress(Address pointer, Size size, Type type) {
@@ -130,7 +130,7 @@ public final class VirtualMemory {
      * I.e., in the first 2GB of memory. This method may not be implemented on all platforms.
      *
      * @param size the size requested
-     * @type type of memory
+     * @param type of memory
      * @return the address of the allocated memory or {@link Pointer#zero()} if unsuccessful
      */
     public static Pointer allocateIn31BitSpace(Size size, Type type) {
@@ -182,7 +182,7 @@ public final class VirtualMemory {
      * Allocates virtual memory that is not backed by swap space.
      *
      * @param size the size requested
-     * @type type of memory
+     * @param type of memory
      * @return the address of the allocated memory or zero if unsuccessful
      */
     public static Pointer allocateNoSwap(Size size, Type type) {
@@ -244,7 +244,7 @@ public final class VirtualMemory {
      * Sets access protection for a number of memory pages such that any access (read or write) to them causes a trap.
      *
      * @param address an address denoting the first page. This value must be aligned to the
-     *            underlying platform's {@linkplain Platform#pageSize() page size}.
+     *            underlying platform's {@linkplain Platform#pageSize page size}.
      * @param count the number of pages to protect
      */
     @INLINE
@@ -256,7 +256,7 @@ public final class VirtualMemory {
      * Sets access protection for a number of memory pages such that all accesses are allowed.
      *
      * @param address an address denoting the first page. This value must be aligned to the
-     *            underlying platform's {@linkplain Platform#pageSize() page size}.
+     *            underlying platform's {@linkplain Platform#pageSize page size}.
      * @param count the number of pages to unprotect
      */
     @INLINE
@@ -290,7 +290,6 @@ public final class VirtualMemory {
      * @param size
      * @param fileDescriptor
      * @param fileOffset
-     * @return
      * @throws IOException
      */
     public static Pointer mapFile(Size size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
@@ -305,7 +304,6 @@ public final class VirtualMemory {
      * @param size
      * @param fileDescriptor
      * @param fileOffset
-     * @return
      * @throws IOException
      */
     public static Pointer mapFileIn31BitSpace(int size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {

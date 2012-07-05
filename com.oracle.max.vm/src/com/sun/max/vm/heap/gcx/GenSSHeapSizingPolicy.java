@@ -286,7 +286,7 @@ public class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
 
     /**
      * Recompute heap and generation size based on information provided.
-     * The new heap and generation sizes can be consulted using the methods {@link #heapSize(), #youngGenSize(), #oldGenSize()}.
+     * The new heap and generation sizes can be consulted using the methods {@link #heapSize()} {@link #youngGenSize()} {@link #oldGenSize()}.
      *
      * @param estimatedEvacuation
      * @param oldGenFreeSpace

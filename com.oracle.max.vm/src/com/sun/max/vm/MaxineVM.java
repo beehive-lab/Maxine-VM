@@ -169,7 +169,7 @@ public final class MaxineVM {
         RUNNING,
 
         /**
-         * VM about to terminate, all non-daemon threads terminated, shutdown hooks run, but {@link VMOperation} thread still live.
+         * VM about to terminate, all non-daemon threads terminated, shutdown hooks run, but {@link VmOperation} thread still live.
          * Last chance to interpose, but be careful what you do. In particular, thread creation is not permitted.
          */
         TERMINATING

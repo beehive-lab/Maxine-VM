@@ -368,7 +368,7 @@ public class VmThread {
      *
      * This method also:
      * <ol>
-     * <li>Re-enables safepoints (they were disabled in {@link Throw#raise(Throwable, Pointer, Pointer, Pointer)}).</li>
+     * <li>Re-enables safepoints (they were disabled in {@link Throw#raise(Throwable, Pointer, Pointer, CodePointer)}).</li>
      * <li>Executes a safepoint.</li>
      * <li>Reprotects the yellow zone if the raising process unprotected it.</li>
      * </ol>
@@ -458,7 +458,7 @@ public class VmThread {
     /**
      * Gets the current {@linkplain VmThreadLocal TLA}.
      *
-     * @return the value of the safepoint {@linkplain SafepointPoll#latchRegister() latch} register.
+     * @return the value of the safepoint {@linkplain SafepointPoll#getLatchRegister() latch} register.
      */
     @INLINE
     public static Pointer currentTLA() {
@@ -698,15 +698,9 @@ public class VmThread {
     /**
      * ATTENTION: this signature must match 'VmThreadAttachMethod' in "com.oracle.max.vm.native/substrate/threads.h".
      *
-     * @param id the unique identifier assigned to this thread when it was {@linkplain #start0() started}. This
-     *            identifier is only bound to this thread until it is {@linkplain #beTerminated() terminated}. That is,
-     *            only active threads have unique identifiers.
-     * @param nativeThread a handle to the native thread data structure (e.g. a pthread_t value)
      * @param stackBase the lowest address (inclusive) of the stack (i.e. the stack memory range is {@code [stackBase .. stackEnd)})
      * @param stackEnd the highest address (exclusive) of the stack (i.e. the stack memory range is {@code [stackBase .. stackEnd)})
      * @param tla the address of a thread locals area
-     * @param refMap the native memory to be used for the stack reference map
-     * @param yellowZone the stack page(s) that have been protected to detect stack overflow
      */
     @VM_ENTRY_POINT
     private static int attach(
@@ -966,7 +960,7 @@ public class VmThread {
     /**
      * Gets a preallocated, thread local object that can be used to walk the frames in this thread's stack.
      *
-     * <b>This must only be used when {@linkplain Throw#raise(Throwable, Pointer, Pointer, Pointer)} throwing an exception}.
+     * <b>This must only be used when {@linkplain Throw#raise(Throwable, Pointer, Pointer, CodePointer)} throwing an exception}.
      * Allocation must not occur in this context.</b>
      *
      * @param throwable the exception being raised. If {@code null}, then a StackOverflowError is about to be raised.
@@ -1468,7 +1462,7 @@ public class VmThread {
     }
 
     /**
-     * This method parks the current thread according to the semantics of {@link Unsafe#park()}.
+     * This method parks the current thread according to the semantics of {@link Unsafe#park(boolean, long)}.
      * @throws InterruptedException
      */
     public final void park() throws InterruptedException {
@@ -1483,7 +1477,7 @@ public class VmThread {
     }
 
     /**
-     * This method parks the current thread according to the semantics of {@link Unsafe#park()}.
+     * This method parks the current thread according to the semantics of {@link Unsafe#park(boolean, long)}.
      * @throws InterruptedException
      */
     public final void park(long wait) throws InterruptedException {
@@ -1498,7 +1492,7 @@ public class VmThread {
     }
 
     /**
-     * This method unparks the current thread according to the semantics of {@link Unsafe#unpark()}.
+     * This method unparks the current thread according to the semantics of {@link Unsafe#unpark(Object)}.
      */
     public final void unpark() {
         synchronized (this) {

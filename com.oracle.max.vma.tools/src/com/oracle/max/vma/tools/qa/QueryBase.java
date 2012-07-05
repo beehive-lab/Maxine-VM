@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,7 +91,6 @@ public abstract class QueryBase {
     /**
      * Return true if {@code cr.getName()} matches {@link #className}.
      * @param cr
-     * @return
      */
     public boolean classMatches(ClassRecord cr) {
         if (className == null) {
@@ -107,7 +106,6 @@ public abstract class QueryBase {
      * Parse standard arguments and return an array with them removed.
      *
      * @param args
-     * @return
      */
     public String[] parseStandardArgs(String[] args) {
         verbose = false;

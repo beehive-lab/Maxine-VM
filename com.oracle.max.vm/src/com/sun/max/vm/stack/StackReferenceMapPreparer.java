@@ -255,21 +255,7 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
     }
 
     /**
-     * Prints the details for a stack slot. In particular the index, frame offset (if known), address, value and name (if available) of the slot are
-     * printed. Examples of the output for a slot are show below:
-     *
-     * <pre>
-     *     index=6, address=0xfffffc7ffecfe028, value=0xfffffc8002526828, name=VM_THREAD
-     *     index=94, frame offset=16, address=0xfffffc7ffecfbb00, value=0xfffffc7ffecfbb30
-     * </pre>
-     * @param slotIndex the index of the slot to be printed
-     * @param tla a pointer to the VM thread locals corresponding to the stack containing the slot
-     * @param framePointer the address of the frame pointer if known, zero otherwise
-     * @param checkTagging if this is {@code true}, all encountered reference values will be checked whether they
-     * are tagged pointers, and according information is printed
-     */
-    /**
-     * Gets the time taken for the last call to {@link #prepareStackReferenceMap(Pointer, Pointer, Pointer, Pointer, boolean)}.
+     * Gets the time taken for the last call to {@link #prepareStackReferenceMap(Pointer)}.
      * If there was an interleaving call to {@link #completeStackReferenceMap(com.sun.max.unsafe.Pointer)} completeStackReferenceMap(Pointer, Pointer, Pointer, Pointer)}, then that
      * time is included as well. That is, this method gives the amount of time spent preparing the stack
      * reference map for the associated thread during the last/current GC.
@@ -627,7 +613,7 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
     /**
      * Walks the stack of the current thread from the current
      * instruction pointer, stack pointer, and frame pointer, verifying the reference map
-     * for each stack frame by using the {@link Heap#isValidRef(com.sun.max.vm.ref.Reference)}
+     * for each stack frame by using the {@link Heap#isValidRef(Reference)}
      * heuristic.
      */
     public static void verifyReferenceMapsForThisThread() {
@@ -637,7 +623,7 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
 
     /**
      * Walks the stack of a given thread from a specified frame, verifying the reference map
-     * for each stack frame by using the {@link Heap#isValidRef(com.sun.max.vm.ref.Reference)}
+     * for each stack frame by using the {@link Heap#isValidRef(Reference)}
      * heuristic.
      */
     public static void verifyReferenceMaps(VmThread thread, CodePointer ip, Pointer sp, Pointer fp) {

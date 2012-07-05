@@ -229,7 +229,6 @@ public class ProcessLog {
          * or both may need fixing up.
          * @param shortClassName
          * @param shortKindName
-         * @return
          */
         T getRecord(String shortClassName, String shortKindName) {
             ClassRecord cr = getClassRecord(shortClassName);
@@ -483,7 +482,6 @@ public class ProcessLog {
      * {@link #maxEpochMap}.
      *
      * @param id
-     * @return
      * @throws TraceException
      */
     private ObjectRecord getTraceRecord(String id) throws TraceException {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A Java frame anchor is a {@linkplain StackAllocate stack-allocated} block of memory in the frame of a Java
+ * A Java frame anchor is a stack-allocated block of memory in the frame of a Java
  * method that makes a transition between the 'in Java' and 'in native' states for a thread.
  * The anchor records the {@linkplain #PC instruction}, {@linkplain #SP stack} and {@linkplain #FP frame}
  * pointers of an execution point in a Java frame. Each anchor also points to the anchor further
@@ -67,7 +67,7 @@ public enum JavaFrameAnchor {
      * Sets the value of this field.
      *
      * @param anchor the anchor in which to set the value
-     * @value value the new value of this field in {@code anchor}
+     * @param value the new value of this field in {@code anchor}
      */
     @INLINE
     public final void set(Pointer anchor, Word value) {

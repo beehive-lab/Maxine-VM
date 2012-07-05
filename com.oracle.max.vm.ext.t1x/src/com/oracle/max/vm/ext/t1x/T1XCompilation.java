@@ -488,7 +488,6 @@ public abstract class T1XCompilation {
      * Create a new (subclass) of {@link T1XTargetMethod}.
      * @param comp
      * @param install
-     * @return
      */
     protected T1XTargetMethod newT1XTargetMethod(T1XCompilation comp, boolean install) {
         return new T1XTargetMethod(this, install);
@@ -528,7 +527,6 @@ public abstract class T1XCompilation {
      * templates array, but may be overridden by a subclass to make the behavior
      * more context sensitive.
      * @param tag
-     * @return
      */
     protected T1XTemplate getTemplate(T1XTemplateTag tag) {
         return compiler.templates[tag.ordinal()];

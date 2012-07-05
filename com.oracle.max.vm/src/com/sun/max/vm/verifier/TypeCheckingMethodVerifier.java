@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -317,7 +317,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     }
 
     /**
-     * Verifies that the current type state is {@linkplain Frame#mergeInto(Frame, int) compatible} with the type state
+     * Verifies that the current type state is {@linkplain Frame#mergeFrom(Frame, int, int) compatible} with the type state
      * at the destination of a control flow instruction.
      *
      * @param bci the destination of a control flow instruction
@@ -1220,8 +1220,8 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         /**
          * Verifies that type of the parameter for {@code this} in a non-static method is correct.
          *
-         * @param callee the non-static method being invoked
-         * @param thisParameter the parameter for {@code this}
+         * @param methodRef the non-static method being invoked
+         * @param receiver the parameter for {@code this}
          */
         private void protectedMethodAccessCheck(VerificationType receiver, MethodRefConstant methodRef, int index) {
             // Accessing a method from the current class is always okay.

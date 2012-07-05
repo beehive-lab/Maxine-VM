@@ -244,7 +244,7 @@ public class SpecialReferenceManager {
      * during heap scanning.
      * These live reference objects are checked to see whether
      * the reachability of their "referent" objects has changed according to the type of reference.
-     * If so, they are enqueued as "pending" so that the {@link Reference.ReferenceHandler} thread can pick them up
+     * If so, they are enqueued as "pending" so that the {@code ReferenceHandler} thread can pick them up
      * and add them to their respective queues later.
      * The reference handler lock is notified by the thread that {@linkplain VmOperationThread#submit(VmOperation) submitted}
      * the GC operation as it holds the lock. See {@link GCOperation#doItEpilogue(boolean)}.

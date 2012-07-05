@@ -47,7 +47,7 @@ import com.sun.max.vm.type.*;
  *  a heap dumper for the range may be passed to @link {@link FatalError#setOnVMOpError(Runnable)} so that if a memory error occur the
  *  range is dumped.
  *
- *  A HeapRangeDump may be specified a {@link #HeapRangeDumper.DumpRangeRefinement} object that can be used to refined the area to be dumped.
+ *  A HeapRangeDump may be specified a {@link DumpRangeRefinement} object that can be used to refined the area to be dumped.
  *  For instance, heap using a cards may specify a refinement of the dumping range by reseting the bounds of the range to the card holding the corrupted
  *  cell or reference.
  *  @see RefineDumpRangeToCard

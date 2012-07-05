@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -461,7 +461,7 @@ public final class JDKInterceptor {
 
     /**
      * Register a field of a class to be reset while bootstrapping.
-     * @param javaClass the java class that declared the field
+     *
      * @param fieldName the name of the field as a string
      */
     public static void resetField(String className, String fieldName) {

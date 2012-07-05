@@ -80,7 +80,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         "-Xprof", false, null, "run sampling profiler"), MaxineVM.Phase.STARTING);
 
     /**
-     * List of classes to explicitly reinitialise in the {@link MaxineVM.Phase#STARTING} phase.
+     * List of classes to explicitly reinitialise in the {@link Phase#STARTING} phase.
      * This supports extensions to the boot image.
      */
     private static List<String> reinitClasses = new LinkedList<String>();

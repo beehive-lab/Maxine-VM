@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,7 +87,7 @@ public final class TargetBundleLayout {
 
         /**
          * Updates the cell allocated for the array referenced by this field. If {@code length == 0} and this field does
-         * not {@linkplain #allocateEmptyArray() allocate} space for empty arrays, no space is allocated.
+         * not {@linkplain #allocateEmptyArray allocate} space for empty arrays, no space is allocated.
          *
          * @param length the length of the array for which space should be allocated
          * @param targetBundleLayout the target bundle layout recording the field cell allocations

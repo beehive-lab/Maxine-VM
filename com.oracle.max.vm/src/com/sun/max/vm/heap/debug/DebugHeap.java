@@ -53,7 +53,7 @@ public class DebugHeap {
     }
 
     /**
-     * Increments a given allocation mark to reserve space for a {@linkplain writeCellTag debug tag} if
+     * Increments a given allocation mark to reserve space for a {@linkplain #writeCellTag(Pointer) debug tag} if
      * this is a {@linkplain MaxineVM#isDebug() debug} VM.
      *
      * @param mark an address at which a cell will be allocated

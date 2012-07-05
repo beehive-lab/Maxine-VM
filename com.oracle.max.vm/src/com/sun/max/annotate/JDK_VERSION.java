@@ -29,7 +29,7 @@ import java.lang.annotation.*;
  * based on the JDK used for building. For example, to specify that a method should only be
  * included in an image built using at least JDK 7, this annotation is used as follows:
  * <pre>
- *     @JDK_VERSION("1.7")
+ *     JDK_VERSION("1.7")
  *     public void method() { ... }
  * </pre>
  *

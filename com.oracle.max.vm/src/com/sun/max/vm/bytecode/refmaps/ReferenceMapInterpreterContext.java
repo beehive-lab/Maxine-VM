@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ public interface ReferenceMapInterpreterContext {
     int blockStartBCI(int blockIndex);
 
     /**
-     * Gets the entry frame states for the basic blocks. The returned value is encoded according to a {@link ReferenceMapInterpreterFrameFormat} value.
+     * Gets the entry frame states for the basic blocks. The returned value is encoded according to a {@link ReferenceMapInterpreter} value.
      */
     Object blockFrames();
 
@@ -61,7 +61,6 @@ public interface ReferenceMapInterpreterContext {
 
     /**
      * Gets the actor for the method being interpreted.
-     * @return
      */
     ClassMethodActor classMethodActor();
 

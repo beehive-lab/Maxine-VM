@@ -50,7 +50,7 @@ import com.sun.max.vm.stack.*;
  * are defined as static field of this class itself. However, thread locals can also be defined
  * in other {@linkplain VMScheme scheme}-specific classes.
  * <p>
- * All {@link VmThreadLocal} objects must be instantiated before {@link #initializationComplete()},
+ * All {@link VmThreadLocal} objects must be instantiated before
  * {@link #tlaSize()} or {@link #values()} is called. The recommended way to ensure this is
  * to explicitly reference these instances from the constructor of a {@link BootImagePackage}
  * subclass. A set of {@code registerThreadLocal()} methods are provided in
@@ -68,7 +68,7 @@ import com.sun.max.vm.stack.*;
  * <dd>Safepoints for the thread are {@linkplain SafepointPoll#disable() disabled}. The base address of this TLA is
  * obtained by reading the {@link #DTLA} variable from any TLA.</dd>
  * <dt>Triggered</dt>
- * <dd>Safepoints for the thread are {@linkplain SafepointPoll#trigger(Pointer) triggered}. The base address of
+ * <dd>Safepoints for the thread are {@linkplain SafepointPoll#isTriggered() triggered}. The base address of
  * this TLA is obtained by reading the {@link #TTLA} variable from any TLA.</dd>
  * </dl>
  *
@@ -152,7 +152,7 @@ public class VmThreadLocal implements FormatWithToString {
 
     /**
      * The {@linkplain VmThread#currentTLA() current} thread local storage when safepoints for the thread are
-     * {@linkplain SafepointPoll#trigger(Pointer) triggered}.
+     * triggered.
      */
     public static final VmThreadLocal TTLA
         = new VmThreadLocal("TTLA", false, "points to TLA used when safepoints triggered");
@@ -359,7 +359,7 @@ public class VmThreadLocal implements FormatWithToString {
     }
 
     /**
-     * Gets the array of VM thread locals whose class overrides {@link #initialize(com.sun.max.vm.MaxineVM.Phase)}.
+     * Gets the array of VM thread locals whose class overrides {@link #initialize()}.
      */
     static VmThreadLocal[] valuesNeedingInitialization() {
         return valuesNeedingInitialization;
@@ -632,8 +632,6 @@ public class VmThreadLocal implements FormatWithToString {
      * The initialization logic should not perform any synchronization or heap allocation.
      *
      * The set of VM thread locals that override this method can be obtained via {@link #valuesNeedingInitialization()}.
-     *
-     * Note: this method is accessed via reflection in {@link #initializationComplete()}.
      */
     public void initialize() {
     }

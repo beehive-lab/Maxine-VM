@@ -68,7 +68,6 @@ public class LinearAllocatorRegion extends LinearAllocationMemoryRegion {
      *
      * @param size the requested cell size to be allocated. This value must be {@linkplain Address#isWordAligned() word aligned}.
      * @param adjustForDebugTag specifies if an extra word is to be reserved before the cell for the debug tag word
-     * @return
      */
     public Pointer allocate(Size size, boolean adjustForDebugTag) {
         if (!size.isWordAligned()) {

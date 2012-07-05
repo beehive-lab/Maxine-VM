@@ -68,7 +68,7 @@ import com.sun.max.vm.ti.*;
 public class InlinedMethodDependencyProcessor extends DependencyProcessor {
 
     /**
-     * Essentially the Maxine specific mirror of {@link CiAssumptions.InlinedMethod}.
+     * Essentially the Maxine specific mirror of {@link InlinedMethod}.
      * Implement this interface in a subclass of {@link DependencyVisitor} to
      * process these dependencies.
      */
@@ -160,7 +160,6 @@ public class InlinedMethodDependencyProcessor extends DependencyProcessor {
      * Returns all the {@link TargetMethod} instances that inlined {@code inlineeToCheck}.
      *
      * @param inlineeToCheck
-     * @return
      */
     public static ArrayList<TargetMethod> getInliners(final ClassMethodActor inlineeToCheck) {
         if (inlineeToCheck.isDeclaredNeverInline()) {

@@ -254,7 +254,6 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
          * Allocate first chunk of the free list fitting the size.
          * Space left-over is re-entered in the appropriate bin, or dismissed as dark matter.
          * @param size
-         * @return
          */
         Address allocateFirstFit(Size size, boolean exactFit) {
             Size spaceWithHeadRoom = size.plus(HeapSchemeAdaptor.minObjectSize());

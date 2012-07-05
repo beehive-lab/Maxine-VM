@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,7 @@ import com.sun.max.vm.thread.*;
  * <p>
  * This occurs when one of the deoptimization stubs is executed. A deoptimization stub is executed either as the result of the
  * return address patching described above or by a (compiled) call to the {@linkplain Stubs#genUncommonTrapStub() uncommon trap} stub.
- * All the deoptimization stubs eventually route through to {@link #deoptimize(Pointer, Pointer, Pointer, Pointer, CiCalleeSaveLayout, CiConstant) deoptimize()}
+ * All the deoptimization stubs eventually route through to {@link #deoptimize(CodePointer, Pointer, Pointer, Pointer, CiCalleeSaveLayout, CiConstant) deoptimize()}
  * which constructs the deoptimized frames, unrolls them onto the stack and continues execution in the appropriate deoptimized frame.
  * </i>
  * </ul>
@@ -224,7 +224,7 @@ public class Deoptimization extends VmOperation {
          * Sets the continuation frame pointer.
          *
          * @param info a stack modeled as an array of frame slots
-         * @param fp the continuation frame pointer. This is either a {@link CiKind#Word} value encoding an absolute
+         * @param fp the continuation frame pointer. This is either a word value encoding an absolute
          *            address or a {@link CiKind#Jsr} value encoding an index in {@code info.slots} that subsequently
          *            needs fixing up once absolute address have been determined for the slots.
          */
@@ -234,7 +234,7 @@ public class Deoptimization extends VmOperation {
          * Sets the continuation stack pointer.
          *
          * @param info a stack modeled as an array of frame slots
-         * @param sp the continuation stack pointer. This is either a {@link CiKind#Word} value encoding an absolute
+         * @param sp the continuation stack pointer. This is either a word value encoding an absolute
          *            address or a {@link CiKind#Jsr} value encoding an index in {@code info.slots} that subsequently
          *            needs fixing up once absolute address have been determined for the slots.
          */
@@ -323,8 +323,6 @@ public class Deoptimization extends VmOperation {
     /**
      * Overwrites the current thread's stack with deoptimized frames and continues
      * execution in the top frame at {@code info.pc}.
-     *
-     * This method is called from {@link Stubs#unroll(Info, int)}.
      */
     @NEVER_INLINE
     public static void unroll(Info info) {
@@ -677,7 +675,7 @@ public class Deoptimization extends VmOperation {
 
     /**
      * The fixed offset in a method's frame where the original return address is saved when the callee's
-     * return address slot is {@linkplain #patchReturnAddress(StackFrameCursor, StackFrameCursor) patched} with the address
+     * return address slot is {@linkplain #patchReturnAddress(StackFrameCursor, StackFrameCursor, ClassMethodActor) patched} with the address
      * of a {@linkplain Stubs#deoptStub(CiKind, boolean) deoptimization stub}.
      */
     public static final int DEOPT_RETURN_ADDRESS_OFFSET = 0;

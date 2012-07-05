@@ -43,7 +43,7 @@ import com.sun.max.vm.thread.*;
  *
  * @see NativeInterfaces
  * @see JmmFunctionsSource
- * @see Native/substrate/jmm.c
+ * @see "Native/substrate/jmm.c"
  */
 public final class JmmFunctions {
 
