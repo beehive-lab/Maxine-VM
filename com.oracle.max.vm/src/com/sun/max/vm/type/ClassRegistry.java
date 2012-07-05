@@ -671,7 +671,7 @@ public final class ClassRegistry {
     private static ClassRegistry testClassRegistry;
 
     @HOSTED_ONLY
-    @VMLoggerInterface(defaultConstructor = true)
+    @com.sun.max.vm.log.hosted.VMLoggerInterface(defaultConstructor = true)
     private interface ClassLoadingLoggerInterface {
         void classRegistration(
                         @VMLogParam(name = "classLoader") ClassLoader classLoader,
