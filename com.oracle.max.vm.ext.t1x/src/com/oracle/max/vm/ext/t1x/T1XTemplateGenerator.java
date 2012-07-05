@@ -31,6 +31,7 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -405,6 +406,17 @@ public class T1XTemplateGenerator {
         out.printf("    public static void traceMethodEntry(String method) {%n");
         out.printf("        Log.println(method);%n");
         generateAfterAdvice();
+        out.printf("    }%n");
+        newLine();
+    }
+
+    public void generateLoadExceptionTemplate() {
+        startMethodGeneration();
+        generateTemplateTag("%s", LOAD_EXCEPTION);
+        out.println("    public static Object loadException() {");
+        out.println("        Object exception = VmThread.current().loadExceptionForHandler();");
+        generateBeforeAdvice();
+        out.println("        return exception;");
         out.printf("    }%n");
         newLine();
     }
@@ -1473,6 +1485,7 @@ public class T1XTemplateGenerator {
         generateReturnTemplate(VOID, "registerFinalizer");
         generateLockTemplates();
         generateTraceMethodEntryTemplate();
+        generateLoadExceptionTemplate();
     }
 
     public static void main(String[] args) throws Exception {

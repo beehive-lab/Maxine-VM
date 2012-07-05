@@ -551,11 +551,18 @@ public class JVMTI {
 
     /**
      * Invoked from T1X templates, so no inline.
-     * @param methodActor
      */
     @NEVER_INLINE
     public static void methodEntryEvent(MethodActor methodActor) {
         event(E.METHOD_ENTRY, methodActor);
+    }
+
+    /**
+     * Invoked from T1X templates, so no inline.
+     */
+    @NEVER_INLINE
+    public static void exceptionCatchEvent(Object exception) {
+        event(E.EXCEPTION_CATCH, JVMTIException.getExceptionEventData());
     }
 
     public static void event(JVMTIEvents.E event) {
