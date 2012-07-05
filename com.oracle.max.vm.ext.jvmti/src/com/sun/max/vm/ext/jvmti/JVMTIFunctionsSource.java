@@ -191,7 +191,7 @@ public class JVMTIFunctionsSource {
         // PHASES: ONLOAD,LIVE
         // HANDLECHECK_NULLOK: event_thread=Thread
         // LOGARGS: Address.fromInt(mode),Address.fromInt(event_type),event_thread
-        return JVMTIEvent.setEventNotificationMode(jvmtiEnv, mode, event_type, handleAsThread);
+        return JVMTIEvents.setEventNotificationMode(jvmtiEnv, mode, event_type, handleAsThread);
     }
 
     @VM_ENTRY_POINT

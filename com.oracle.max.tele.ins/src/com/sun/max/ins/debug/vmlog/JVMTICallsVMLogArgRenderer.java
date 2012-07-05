@@ -52,7 +52,7 @@ public class JVMTICallsVMLogArgRenderer extends VMLogArgRenderer {
                     if (argNum == 2) {
                         text = argValue == 1 ? "ENABLE" : "DISABLE";
                     } else if (argNum == 3) {
-                        text = JVMTIEvent.E.fromEventId((int) argValue).name();
+                        text = JVMTIEvents.E.fromEventId((int) argValue).name();
                     }
                     break;
 

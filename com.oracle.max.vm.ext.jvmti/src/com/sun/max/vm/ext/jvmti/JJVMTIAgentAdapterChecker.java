@@ -656,7 +656,7 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
-    public void setEventNotificationMode(int arg0, int arg1, Thread arg2) {
+    public void setEventNotificationMode(int arg0, com.sun.max.vm.ext.jvmti.JVMTIEvents.E arg1, Thread arg2) {
     }
 
     @Override

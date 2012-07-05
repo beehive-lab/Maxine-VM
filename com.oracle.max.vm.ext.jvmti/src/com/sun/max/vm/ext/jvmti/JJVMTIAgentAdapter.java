@@ -32,6 +32,7 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.ext.jvmti.JVMTIEvents.E;
 import com.sun.max.vm.ext.jvmti.JVMTIThreadFunctions.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
@@ -84,9 +85,9 @@ public class JJVMTIAgentAdapter extends JJVMTIAgentAdapterChecker implements JJV
     }
 
     @Override
-    public void setEventNotificationMode(int mode, int event, Thread thread) throws JJVMTIException {
+    public void setEventNotificationMode(int mode, E event, Thread thread) throws JJVMTIException {
         super.setEventNotificationMode(mode, event, thread);
-        int error = JVMTIEvent.setEventNotificationMode(env, mode, event, thread);
+        int error = JVMTIEvents.setEventNotificationMode(env, mode, event, thread);
         if (error != JVMTI_ERROR_NONE) {
             throw new JJVMTIException(error);
         }

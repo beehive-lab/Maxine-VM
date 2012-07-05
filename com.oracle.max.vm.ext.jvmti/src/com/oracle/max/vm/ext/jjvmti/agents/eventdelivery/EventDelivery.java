@@ -22,7 +22,7 @@
  */
 package com.oracle.max.vm.ext.jjvmti.agents.eventdelivery;
 
-import static com.sun.max.vm.ext.jvmti.JVMTIEvent.*;
+import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
 import java.lang.reflect.*;
@@ -49,7 +49,7 @@ public class EventDelivery extends JJVMTIAgentAdapter implements JJVMTI.EventCal
     private static String EventDeliveryArgs;
     private static boolean inEvent;
 
-    private static HashMap<JVMTIEvent.E, EventData> events = new HashMap<JVMTIEvent.E, EventData>();
+    private static HashMap<JVMTIEvents.E, EventData> events = new HashMap<JVMTIEvents.E, EventData>();
 
     static {
         eventDelivery = (EventDelivery) JJVMTIAgentAdapter.register(new EventDelivery());
@@ -61,9 +61,9 @@ public class EventDelivery extends JJVMTIAgentAdapter implements JJVMTI.EventCal
     static class EventData {
 
         final boolean enabled;
-        final JVMTIEvent.E event;
+        final JVMTIEvents.E event;
 
-        EventData(boolean enabled, JVMTIEvent.E event) {
+        EventData(boolean enabled, JVMTIEvents.E event) {
             this.event = event;
             this.enabled = enabled;
             events.put(event, this);
@@ -85,7 +85,7 @@ public class EventDelivery extends JJVMTIAgentAdapter implements JJVMTI.EventCal
      */
     @Override
     public void onBoot() {
-        eventDelivery.setEventNotificationMode(JVMTI_ENABLE, E.VM_INIT.code, null);
+        eventDelivery.setEventNotificationMode(JVMTI_ENABLE, E.VM_INIT, null);
     }
 
     private static void usage() {
@@ -97,9 +97,9 @@ public class EventDelivery extends JJVMTIAgentAdapter implements JJVMTI.EventCal
         MaxineVM.exit(-1);
     }
 
-    private static JVMTIEvent.E eventFromName(String methodName) {
+    private static JVMTIEvents.E eventFromName(String methodName) {
         String uMethodName = methodName.toUpperCase();
-        for (JVMTIEvent.E event : JVMTIEvent.E.VALUES) {
+        for (JVMTIEvents.E event : JVMTIEvents.E.VALUES) {
             String name = event.name().replace("_", "");
             if (name.equals(uMethodName)) {
                 return event;
@@ -139,7 +139,7 @@ public class EventDelivery extends JJVMTIAgentAdapter implements JJVMTI.EventCal
             boolean enabled = eventsPattern.matcher(methodName).matches() || eventsPattern.matcher(event.name()).matches();
             EventData eventData = new EventData(enabled, event);
             if (eventData.enabled) {
-                eventDelivery.setEventNotificationMode(JVMTI_ENABLE, eventData.event.code, null);
+                eventDelivery.setEventNotificationMode(JVMTI_ENABLE, eventData.event, null);
             }
         }
 

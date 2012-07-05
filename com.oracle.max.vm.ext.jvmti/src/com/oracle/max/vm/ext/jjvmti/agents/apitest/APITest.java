@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.jjvmti.agents.apitest;
 
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
+import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -345,7 +346,7 @@ public class APITest extends NullJJVMTICallbacks {
      */
     @Override
     public void onBoot() {
-        apiTest.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
+        apiTest.setEventNotificationMode(JVMTI_ENABLE, E.VM_INIT, null);
     }
 
     @Override
@@ -394,9 +395,9 @@ public class APITest extends NullJJVMTICallbacks {
                 bptMethod = JavaRunScheme.getMainClassName() + ".main";
             }
             bptData = tryDecodeBreakpoint(bptMethod);
-            apiTest.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_LOAD, null);
+            apiTest.setEventNotificationMode(JVMTI_ENABLE, E.CLASS_LOAD, null);
             apiTest.addCapabilities(EnumSet.of(JVMTICapabilities.E.CAN_GENERATE_BREAKPOINT_EVENTS));
-            apiTest.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_BREAKPOINT, null);
+            apiTest.setEventNotificationMode(JVMTI_ENABLE, E.BREAKPOINT, null);
 
         } catch (Exception ex) {
             failExit("vmInit: " + ex);
@@ -434,7 +435,7 @@ public class APITest extends NullJJVMTICallbacks {
             MethodActor method = findBptMethod(klass);
             if (method != null) {
                 setBreakpoint((ClassMethodActor) method, 0);
-                setEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_CLASS_LOAD, null);
+                setEventNotificationMode(JVMTI_DISABLE, E.CLASS_LOAD, null);
             } else {
                 failExit("can't find method " + bptData.methodName + "in " + bptData.className);
             }
