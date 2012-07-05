@@ -230,8 +230,9 @@ public class JVMTIException {
             }
         }
         // send if any agent wants it
-        return JVMTI.eventNeeded(E.EXCEPTION) || JVMTI.eventNeeded(E.METHOD_EXIT) ||
-               JVMTIVmThreadLocal.bitIsSet(VmThread.currentTLA(), JVMTI_FRAME_POP) || vmaHandler != null;
+        return JVMTI.eventNeeded(E.EXCEPTION) || JVMTI.eventNeeded(E.EXCEPTION_CATCH)  ||
+                  JVMTI.eventNeeded(E.METHOD_EXIT) ||
+                  JVMTIVmThreadLocal.bitIsSet(VmThread.currentTLA(), JVMTI_FRAME_POP) || vmaHandler != null;
     }
 
     /**

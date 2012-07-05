@@ -93,6 +93,8 @@ public class JVMTIEvents {
 
         public final int code;
 
+        public final long bit;
+
         public static final E[] VALUES = values();
 
         private static final int EVENT_COUNT = VALUES.length;
@@ -106,10 +108,11 @@ public class JVMTIEvents {
 
         private E(int code) {
             this.code = code;
+            bit = 1L << ordinal();
         }
 
-
     }
+
     public static class JVMTIEventLogger extends VMLogger {
         private JVMTIEventLogger() {
             super("JVMTIEvents", E.EVENT_COUNT, "log JVMTI events");
@@ -208,23 +211,11 @@ public class JVMTIEvents {
     /**
      * These events require compiler support.
      */
-    static long CODE_EVENTS_SETTING = computeEventBitSetting(E.FIELD_ACCESS) | computeEventBitSetting(E.FIELD_MODIFICATION) |
-                                   computeEventBitSetting(E.METHOD_ENTRY) | computeEventBitSetting(E.METHOD_EXIT) |
-                                   computeEventBitSetting(E.BREAKPOINT) | computeEventBitSetting(E.SINGLE_STEP) |
-                                   computeEventBitSetting(E.FRAME_POP);
-
-    /**
-     * Returns the bit setting for the given event, or -1 if invalid.
-     * The bit numbers are zero based, i.e. modulo {@link #JVMTI_MIN_EVENT_TYPE_VAL}.
-     */
-    private static long computeEventBitSetting(E event) {
-        return 1L << event.ordinal();
-    }
-
-    /**
-     * Pre-computed bit settings for each event.
-     */
-    private static final long[] bitSettings = new long[E.EVENT_COUNT];
+    static long CODE_EVENTS_SETTING =
+                                   E.FIELD_ACCESS.bit | E.FIELD_MODIFICATION.bit |
+                                   E.METHOD_ENTRY.bit | E.METHOD_EXIT.bit |
+                                   E.BREAKPOINT.bit | E.SINGLE_STEP.bit |
+                                   E.FRAME_POP.bit | E.EXCEPTION_CATCH.bit;
 
     /**
      * This provides a fast check for compiled code event checks.
@@ -248,7 +239,7 @@ public class JVMTIEvents {
      * @return
      */
     static boolean isEventSet(JVMTIEvents.E event) {
-        return (bitSettings[event.ordinal()] & panAgentEventSettingCache) != 0;
+        return (event.bit & panAgentEventSettingCache) != 0;
     }
 
     /**
@@ -258,7 +249,7 @@ public class JVMTIEvents {
      * @return
      */
     static boolean isEventSet(JVMTI.Env env, JVMTIEvents.E event, VmThread vmThread) {
-        long setting = bitSettings[event.ordinal()];
+        long setting = event.bit;
         if ((setting & env.globalEventSettings) != 0) {
             return true;
         } else {
@@ -331,7 +322,6 @@ public class JVMTIEvents {
                     break;
             }
             phases[event.ordinal()] = eventPhase;
-            bitSettings[event.ordinal()] = computeEventBitSetting(event);
         }
     }
 
@@ -406,12 +396,8 @@ public class JVMTIEvents {
         return settings & JVMTIEvents.CODE_EVENTS_SETTING;
     }
 
-    public static long bitSetting(E event) {
-        return bitSettings[event.ordinal()];
-    }
-
     private static long newEventBits(E event, int mode, long oldBits) {
-        long bitSetting = bitSetting(event);
+        long bitSetting = event.bit;
         if (mode == JVMTI_ENABLE) {
             return oldBits | bitSetting;
         } else if (mode == JVMTI_DISABLE) {
@@ -421,16 +407,11 @@ public class JVMTIEvents {
         }
     }
 
-    @NEVER_INLINE
-    private static void debug() {
-
-    }
-
     @HOSTED_ONLY
     public static String bitToName(long bitSetting) {
-        for (int i = 0; i < bitSettings.length; i++) {
-            if (bitSettings[i] == bitSetting) {
-                return E.VALUES[i].name();
+        for (E event : E.VALUES) {
+            if (bitSetting == event.bit) {
+                return event.name();
             }
         }
         return "???";

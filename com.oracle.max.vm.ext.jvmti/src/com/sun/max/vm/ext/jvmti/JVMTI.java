@@ -466,7 +466,7 @@ public class JVMTI {
     }
 
     /**
-     * Returns the {@link JVMTIEvents event id} that corresponds to a given bytecode,
+     * Returns the {@link JVMTIEvents.E event} that corresponds to a given bytecode or null if none.
      * should it be instrumented.
      * @param opcode
      * @return
@@ -502,10 +502,17 @@ public class JVMTI {
      * Support for determining if we need to compile special code to dispatch
      * specific JVMTI events, e.g. METHOD_ENTRY, FIELD_ACCESS.
      * The value -1 is used to indicate METHOD_ENTRY as this is a pseudo bytecode.
-     * @return the eventId corresponding to the bytecode or 0 if not needed
+     * @return the {@link JVMTIEvents.E event} corresponding to the bytecode or null if no associated
+     *              event or not set for an agent
      */
     public static synchronized E byteCodeEventNeeded(int opcode) {
-        return eventForBytecode(opcode);
+        E event =  eventForBytecode(opcode);
+        if (event != null) {
+            if (!JVMTIEvents.isEventSet(event)) {
+                event = null;
+            }
+        }
+        return null;
     }
 
     /**

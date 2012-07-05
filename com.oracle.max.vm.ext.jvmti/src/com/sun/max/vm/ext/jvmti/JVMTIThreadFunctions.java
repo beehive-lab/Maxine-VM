@@ -931,7 +931,7 @@ public class JVMTIThreadFunctions {
             // if we are single stepping, we may need to deopt the method we are returning to
             if (stackTraceVisitor.stackElements.size() > 1) {
                 long codeEventSettings = JVMTIEvents.codeEventSettings(null, vmThread);
-                if ((codeEventSettings & JVMTIEvents.bitSetting(JVMTIEvents.E.SINGLE_STEP)) != 0) {
+                if ((codeEventSettings & JVMTIEvents.E.SINGLE_STEP.bit) != 0) {
                     JVMTICode.checkDeOptForMethod(stackTraceVisitor.getStackElement(1).classMethodActor, codeEventSettings);
                 }
             }
