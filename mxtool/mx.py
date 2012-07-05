@@ -261,6 +261,46 @@ class Project(Dependency):
         if not self.native:
             cp.append(self.output_dir())
 
+    def find_classes_with_matching_source_line(self, pkgRoot, function, includeInnerClasses=False):
+        """
+        Scan the sources of this project for Java source files containing a line for which
+        'function' returns true. The fully qualified class name of each existing class
+        corresponding to a matched source file is returned in a list.
+        """
+        classes = []
+        pkgDecl = re.compile(r"^package\s+([a-zA-Z_][\w\.]*)\s*;$")
+        for srcDir in self.source_dirs():
+            outputDir = self.output_dir()
+            for root, _, files in os.walk(srcDir):
+                for name in files:
+                    if name.endswith('.java') and name != 'package-info.java':
+                        matchFound = False
+                        with open(join(root, name)) as f:
+                            pkg = None
+                            for line in f:
+                                if line.startswith("package "):
+                                    match = pkgDecl.match(line)
+                                    if match:
+                                        pkg = match.group(1)
+                                if function(line.strip()):
+                                    matchFound = True
+                                if pkg and matchFound:
+                                    break
+                                        
+                        if matchFound:
+                            basename = name[:-len('.java')]
+                            assert pkg is not None
+                            if pkgRoot is None or pkg.startswith(pkgRoot):
+                                pkgOutputDir = join(outputDir, pkg.replace('.', os.path.sep))
+                                for e in os.listdir(pkgOutputDir):
+                                    if includeInnerClasses:
+                                        if e.endswith('.class') and (e.startswith(basename) or e.startswith(basename + '$')):
+                                            classes.append(pkg + '.' + e[:-len('.class')])
+                                    elif e == basename + '.class':
+                                        classes.append(pkg + '.' + basename)
+        return classes
+    
+
 class Library(Dependency):
     def __init__(self, suite, name, path, mustExist, urls):
         Dependency.__init__(self, suite, name)
@@ -1098,10 +1138,6 @@ def build(args, parser=None):
     Compile all the Java source code using the appropriate compilers
     and linkers for the various source code types."""
 
-
-    run([java().javac, '-version'])
-
-      
     suppliedParser = parser is not None
     if not suppliedParser:
         parser = ArgumentParser(prog='mx build')
@@ -1252,27 +1288,10 @@ def build(args, parser=None):
         try:
             if jdtJar is None:
                 log('Compiling Java sources for {0} with javac...'.format(p.name))
-                errFilt = None
+                javacCmd = [java().javac, '-g', '-J-Xmx1g', '-source', args.compliance, '-classpath', cp, '-d', outputDir, '@' + argfile.name]
                 if not args.warnAPI:
-                    class Filter:
-                        """
-                        Class to errFilt the 'is Sun proprietary API and may be removed in a future release'
-                        warning when compiling the VM classes.
-
-                        """
-                        def __init__(self):
-                            self.c = 0
-
-                        def eat(self, line):
-                            if 'proprietary API' in line:
-                                self.c = 2
-                            elif self.c != 0:
-                                self.c -= 1
-                            else:
-                                log(line.rstrip())
-                    errFilt=Filter().eat
-
-                run([java().javac, '-g', '-J-Xmx1g', '-source', args.compliance, '-classpath', cp, '-d', outputDir, '@' + argfile.name], err=errFilt)
+                    javacCmd.append('-XDignore.symbol.file')
+                run(javacCmd)
             else:
                 log('Compiling Java sources for {0} with JDT...'.format(p.name))
                 jdtArgs = [java().java, '-Xmx1g', '-jar', jdtJar,
@@ -1969,6 +1988,7 @@ def javadoc(args, parser=None, docDir='javadoc', includeDeps=True):
     parser.add_argument('--unified', action='store_true', help='put javadoc in a single directory instead of one per project')
     parser.add_argument('--force', action='store_true', help='(re)generate javadoc even if package-list file exists')
     parser.add_argument('--projects', action='store', help='comma separated projects to process (omit to process all projects)')
+    parser.add_argument('--Wapi', action='store_true', dest='warnAPI', help='show warnings about using internal APIs')
     parser.add_argument('--argfile', action='store', help='name of file containing extra javadoc options')
     parser.add_argument('--arg', action='append', dest='extra_args', help='extra Javadoc arguments (e.g. --arg @-use)', metavar='@<arg>', default=[])
     parser.add_argument('-m', '--memory', action='store', help='-Xmx value to pass to underlying JVM')
@@ -2017,8 +2037,8 @@ def javadoc(args, parser=None, docDir='javadoc', includeDeps=True):
         for sourceDir in sourceDirs:
             for root, _, files in os.walk(sourceDir):
                 if len([name for name in files if name.endswith('.java')]) != 0:
-                    pkg = root[len(sourceDir) + 1:].replace('/','.')
-                    if (len(packages) == 0) | (pkg in packages):
+                    pkg = root[len(sourceDir) + 1:].replace(os.sep,'.')
+                    if len(packages) == 0 or pkg in packages:
                         pkgs.add(pkg)
         return pkgs
 
@@ -2032,6 +2052,9 @@ def javadoc(args, parser=None, docDir='javadoc', includeDeps=True):
 
     if not args.unified:
         for p in projects:
+            # The project must be built to ensure javadoc can find class files for all referenced classes
+            build(['--no-native', '--projects', p.name])
+            
             pkgs = find_packages(p.source_dirs(), set())
             deps = p.all_deps([], includeLibs=False, includeSelf=False)
             links = ['-link', 'http://docs.oracle.com/javase/' + str(p.javaCompliance.value) + '/docs/api/']
@@ -2042,10 +2065,31 @@ def javadoc(args, parser=None, docDir='javadoc', includeDeps=True):
                 links.append(os.path.relpath(depOut, out))
             cp = classpath(p.name, includeSelf=True)
             sp = os.pathsep.join(p.source_dirs())
+            overviewFile = join(p.dir, 'overview.html')
+            overview = []
+            if exists(overviewFile):
+                overview = ['-overview', overviewFile]
+            nowarnAPI = []
+            if not args.warnAPI:
+                nowarnAPI.append('-XDignore.symbol.file')
             log('Generating {2} for {0} in {1}'.format(p.name, out, docDir))
-            run([java().javadoc, memory, '-classpath', cp, '-quiet', '-d', out, '-sourcepath', sp] + links + extraArgs + list(pkgs))
+            run([java().javadoc, memory,
+                 '-windowtitle', p.name + ' javadoc',
+                 '-XDignore.symbol.file',
+                 '-classpath', cp,
+                 '-quiet',
+                 '-d', out,
+                 '-sourcepath', sp] +
+                 links +
+                 extraArgs +
+                 overview +
+                 nowarnAPI +
+                 list(pkgs))
             log('Generated {2} for {0} in {1}'.format(p.name, out, docDir))
     else:
+        # The projects must be built to ensure javadoc can find class files for all referenced classes
+        build(['--no-native'])
+        
         pkgs = set()
         sp = []
         names = []
@@ -2060,9 +2104,164 @@ def javadoc(args, parser=None, docDir='javadoc', includeDeps=True):
             out = join(args.base, docDir)
         cp = classpath()
         sp = os.pathsep.join(sp)
+        nowarnAPI = []
+        if not args.warnAPI:
+            nowarnAPI.append('-XDignore.symbol.file')
         log('Generating {2} for {0} in {1}'.format(', '.join(names), out, docDir))
-        run([java().javadoc, memory, '-classpath', cp, '-quiet', '-d', out, '-sourcepath', sp] + links + extraArgs + list(pkgs))
+        run([java().javadoc, memory,
+             '-classpath', cp,
+             '-quiet',
+             '-d', out,
+             '-sourcepath', sp] +
+             links +
+             extraArgs +
+             nowarnAPI +
+             list(pkgs))
         log('Generated {2} for {0} in {1}'.format(', '.join(names), out, docDir))
+
+def site(args):
+    """creates a website containing javadoc and the project dependency graph"""
+
+    parser = ArgumentParser(prog='site')
+    parser.add_argument('-d', '--base', action='store', help='directory for generated site', required=True, metavar='<dir>')
+    parser.add_argument('--name', action='store', help='name of overall documentation', required=True, metavar='<name>')
+    parser.add_argument('--overview', action='store', help='path to the overview content for overall documentation', required=True, metavar='<path>')
+    parser.add_argument('--dot-output-base', action='store', help='base file name (relative to <dir>/all) for project dependency graph .svg and .jpg files generated by dot (omit to disable dot generation)', metavar='<path>')
+    parser.add_argument('--title', action='store', help='value used for -windowtitle and -doctitle javadoc args for overall documentation (default: "<name>")', metavar='<title>')
+    args = parser.parse_args(args)
+
+    args.base = os.path.abspath(args.base)
+    tmpbase = tempfile.mkdtemp(prefix=basename(args.base) + '.', dir=dirname(args.base))
+    unified = join(tmpbase, 'all')
+
+    try:
+        # Create javadoc for each project
+        javadoc(['--base', tmpbase])
+
+        # Create unified javadoc for all projects
+        title = args.title if args.title is not None else args.name
+        javadoc(['--base', tmpbase,
+                    '--unified',
+                    '--arg', '@-windowtitle', '--arg', '@' + title,
+                    '--arg', '@-doctitle', '--arg', '@' + title,
+                    '--arg', '@-overview', '--arg', '@' + args.overview])
+        os.rename(join(tmpbase, 'javadoc'), unified)
+
+        # Generate dependency graph with Graphviz
+        if args.dot_output_base is not None:
+            
+            _, tmp = tempfile.mkstemp()
+            try:
+                svg = join(tmpbase, 'all', str(args.dot_output_base) + '.svg')
+                jpg = join(tmpbase, 'all', str(args.dot_output_base) + '.jpg')
+                with open(tmp, 'w') as fp:
+                    print >> fp, 'digraph projects {'
+                    print >> fp, 'rankdir=BT;'
+                    print >> fp, 'size = "13,13";'
+                    print >> fp, 'node [shape=rect, fontcolor="blue"];'
+                    #print >> fp, 'edge [color="green"];'
+                    for p in projects():
+                        print >> fp, '"' + p.name + '" [URL = "../' + p.name + '/javadoc/index.html", target = "_top"]'
+                        for dep in p.canonical_deps():
+                            if project(dep, False):
+                                print >> fp, '"' + p.name + '" -> "' + dep + '"'
+                    depths = dict()
+                    for p in projects():
+                        d = p.max_depth()
+                        depths.setdefault(d, list()).append(p.name)
+                    for d, names in depths.iteritems():
+                        print >> fp, '{ rank = same; "' + '"; "'.join(names) + '"; }'
+                    print >> fp, '}'
+    
+                run(['dot', '-Tsvg', '-o' + svg, '-Tjpg', '-o' + jpg, tmp])
+    
+            finally:
+                os.remove(tmp)
+
+        # Post-process generated SVG to remove title elements which most browsers
+        # render as redundant (and annoying) tooltips.
+        with open(svg, 'r') as fp:
+            content = fp.read()
+        content = re.sub('<title>.*</title>', '', content)
+        content = re.sub('xlink:title="[^"]*"', '', content)
+        with open(svg, 'w') as fp:
+            fp.write(content)
+
+        # Post-process generated overview-summary.html files
+
+        def fix_overview_summary(path, topLink):
+            """
+            Processes an "overview-summary.html" generated by javadoc to put the complete
+            summary text above the Packages table.
+            """
+        
+            # This uses scraping and so will break if the relevant content produced by javadoc changes in any way!
+            with open(path) as fp:
+                content = fp.read()
+        
+            class Chunk:
+                def __init__(self, content, ldelim, rdelim):
+                    lindex = content.find(ldelim)
+                    rindex = content.find(rdelim)
+                    self.ldelim = ldelim
+                    self.rdelim = rdelim
+                    if lindex != -1 and rindex != -1 and rindex > lindex:
+                        self.text = content[lindex + len(ldelim):rindex]
+                    else:
+                        self.text = None
+        
+                def replace(self, content, repl):
+                    lindex = content.find(self.ldelim)
+                    rindex = content.find(self.rdelim)
+                    old = content[lindex:rindex + len(self.rdelim)]
+                    return content.replace(old, repl)
+        
+            chunk1 = Chunk(content, """<div class="header">
+<div class="subTitle">
+<div class="block">""", """</div>
+</div>
+<p>See: <a href="#overview_description">Description</a></p>
+</div>""")
+        
+            chunk2 = Chunk(content, """<div class="footer"><a name="overview_description">
+<!--   -->
+</a>
+<div class="subTitle">
+<div class="block">""", """</div>
+</div>
+</div>
+<!-- ======= START OF BOTTOM NAVBAR ====== -->""")
+        
+            assert chunk1.text, 'Could not find header section in ' + path
+            assert chunk2.text, 'Could not find footer section in ' + path
+        
+            content = chunk1.replace(content, '<div class="header"><div class="subTitle"><div class="block">' + topLink + chunk2.text +'</div></div></div>')
+            content = chunk2.replace(content, '')
+        
+            with open(path, 'w') as fp:
+                fp.write(content)
+        
+        top = join(tmpbase, 'all', 'overview-summary.html')
+        for root, _, files in os.walk(tmpbase):
+            for f in files:
+                if f == 'overview-summary.html':
+                    path = join(root, f)
+                    topLink = ''
+                    if top != path:
+                        link = os.path.relpath(join(tmpbase, 'all', 'index.html'), dirname(path))
+                        topLink = '<p><a href="' + link + '", target="_top"><b>[return to the overall ' + args.name + ' documentation]</b></a></p>'
+                    fix_overview_summary(path, topLink)
+
+
+        if exists(args.base):
+            shutil.rmtree(args.base)
+        shutil.move(tmpbase, args.base)
+
+        print 'Created website - root is ' + join(args.base, 'all', 'index.html')
+
+    finally:
+        if exists(tmpbase):
+            shutil.rmtree(tmpbase)
 
 def findclass(args):
     """find all classes matching a given substring"""
@@ -2126,6 +2325,7 @@ commands = {
     'projectgraph': [projectgraph, ''],
     'javap': [javap, ''],
     'javadoc': [javadoc, '[options]'],
+    'site': [site, '[options]'],
     'netbeansinit': [netbeansinit, ''],
     'projects': [show_projects, ''],
 }
