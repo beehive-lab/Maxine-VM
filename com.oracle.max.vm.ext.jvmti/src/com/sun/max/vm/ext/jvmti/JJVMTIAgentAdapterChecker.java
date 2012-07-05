@@ -34,7 +34,6 @@ import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.ext.jvmti.JVMTICapabilities.E;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 
@@ -136,12 +135,22 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
 
         private static String getTypeName(Class<?> returnClass, Type returnType) {
             if (returnType == returnClass) {
-                return returnClass.getSimpleName();
+                return handleE(returnClass, false);
             } else {
                 ParameterizedType pType = (ParameterizedType) returnType;
                 Type[] pTypeArgs = pType.getActualTypeArguments();
                 Class<?> pTypeArg0Class = (Class) pTypeArgs[0];
-                return returnClass.getSimpleName() + "<" + pTypeArg0Class.getSimpleName() + ">";
+                return returnClass.getSimpleName() + "<" + handleE(pTypeArg0Class, true) + ">";
+            }
+        }
+
+        private static String handleE(Class<?> klass, boolean parameterized) {
+            String name = klass.getSimpleName();
+            if (name.equals("E")) {
+                Class decl = klass.getEnclosingClass();
+                return decl.getSimpleName() + "." + name;
+            } else {
+                return name;
             }
         }
 
@@ -167,7 +176,7 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
 
 // START GENERATED CODE
     @Override
-    public void addCapabilities(EnumSet<E> arg0) {
+    public void addCapabilities(EnumSet<JVMTICapabilities.E> arg0) {
     }
 
     @Override
@@ -258,7 +267,7 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
-    public EnumSet<E> getCapabilities() {
+    public EnumSet<JVMTICapabilities.E> getCapabilities() {
         return null;
     }
 
@@ -484,7 +493,7 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
-    public EnumSet<E> getPotentialCapabilities() {
+    public EnumSet<JVMTICapabilities.E> getPotentialCapabilities() {
         return null;
     }
 
@@ -628,7 +637,7 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
-    public void relinquishCapabilities(EnumSet<E> arg0) {
+    public void relinquishCapabilities(EnumSet<JVMTICapabilities.E> arg0) {
     }
 
     @Override
@@ -656,7 +665,7 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
-    public void setEventNotificationMode(int arg0, com.sun.max.vm.ext.jvmti.JVMTIEvents.E arg1, Thread arg2) {
+    public void setEventNotificationMode(int arg0, JVMTIEvents.E arg1, Thread arg2) {
     }
 
     @Override
