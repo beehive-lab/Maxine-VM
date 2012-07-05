@@ -113,7 +113,6 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
      * The WrappedWord object can be used during the serializing phase of boot image generation  to identify easily the literal locations
      * in the boot code region that hold the biased card table address. A table of these location is added in the boot image and used at
      * VM startup to patch them with the actual biased card table address once this one is known.
-     * See {@link #recordLiteralsLocations()}
      * See {@link #patchBootCodeLiterals()}
      */
     @HOSTED_ONLY
@@ -306,7 +305,6 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
      * The range of visited cards extends from the card startCardIndex, inclusive, to the
      * card endCardIndex, exclusive.
      *
-     * @param cardIndex index of the card
      * @param cellVisitor the logic to apply to the visited cell
      */
     private void visitCards(int startCardIndex, int endCardIndex, OverlappingCellVisitor cellVisitor) {

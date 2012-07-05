@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,12 +72,12 @@
  * scanning every element of the given class path looking for packages that are sub-packages
  * of the root (or the root itself). The class path scan handles both file system directories and jar files.
  * A global map of discovered packages is maintained across the entire process
- * and is used to produce the result. At this stage we are gathering package names as {@link String strings}.
+ * and is used to produce the result. At this stage we are gathering package names as {@link java.lang.String strings}.
  * The result for each root is a set of names stored as a {@link java.util.TreeSet}. Note that only packages
  * that are non-empty are added to the set. The package names are then processed
  * in the order returned by {@link java.util.TreeSet}, that is, lexicographic, so parent packages are processed
  * before children. An attempt is made to instantiate a {@code Package} class in the given
- * package using {@link Class#forName(String)}. If this succeeds the {@code Package} instance is added
+ * package using {@link java.lang.Class#forName(String)}. If this succeeds the {@code Package} instance is added
  * to the map. Depending on which superclass constructor the {@code Package} class invoked, the resulting instance
  * may contain redirection references to other packages. Any redirection references that are tagged
  * as <i>recursive</i> become new roots that are added to  the end of the root array for later processing.
@@ -90,7 +90,7 @@
  * as roots always contain a {@code Package} instance. The discovered instance is then cloned and
  * its name set appropriately. Other state is reset to the default values. Note that, if you subclass
  * {@link com.sun.max.config.BootImagePackage} and add additional state it is your responsibility to decide
- * whether the state should be reset or not after a clone (and you must override the {@link Object#clone} method).
+ * whether the state should be reset or not after a clone (and you must override the {@link java.lang.Object#clone} method).
  * The fact that the nearest parent is used for the clone ensures that any overridden methods
  * in a {@code Package} class in an interior node carries forward to all child nodes. So, for example,
  * platform-specific configuration in a sub-tree works as expected.
@@ -105,7 +105,7 @@
  * <ul>
  * <li>{@code Package()}: this is typically only used in packages that need to override
  * {@link com.sun.max.config.BootImagePackage#isPartOfMaxineVM}, and causes all of the classes
- * in the package containing the {@Code Package} class to be candidates for inclusion. Nested packages are not included unless
+ * in the package containing the {@code Package} class to be candidates for inclusion. Nested packages are not included unless
  * some parent package was specified as recursive.</li>
  * <li>{@code Package(String name, boolean recursive)}: this is the simplest form of redirection, designating a single
  * root, {@code name}, and specifying via {@code recursive}, whether nested packages should be included (recursively).</li>

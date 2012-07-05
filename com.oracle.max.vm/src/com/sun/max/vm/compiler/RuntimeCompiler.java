@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -97,8 +96,7 @@ public interface RuntimeCompiler {
          * <ul>
          * <li> It has a {@linkplain TargetMethod#bciToPosMap() map} from every bytecode instruction
          *      in {@link TargetMethod#classMethodActor} to the target code position(s) implementing the instruction.</li>
-         * <li> It can be used during deoptimization to create
-         *      {@linkplain TargetMethod#createDeoptimizedFrame(Info, CiFrame, Continuation, Throwable) deoptimized frames}.</li>
+         * <li> It can be used during deoptimization to create deoptimized frames.</li>
          * </ul>
          */
         BASELINE,

@@ -257,7 +257,6 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
 
     /**
      * Is advising enabled for the current thread?
-     * @return
      */
     @INLINE
     public static boolean isAdvising() {

@@ -29,8 +29,8 @@ package demo.jvmti;
  * <ol>
  * <li>Set a breakpoint at {@link #postOpt}.</li>
  * <li>Run the program, should hit breakpoint.</li>
- * <li>Set a breakpoint at {@link incTotal}, which should have been optimized.</li>
- * <li>Continue, should hit breakpoint at {@link incTotal}.</li>
+ * <li>Set a breakpoint at {@link #incTotal}, which should have been optimized.</li>
+ * <li>Continue, should hit breakpoint at {@link #incTotal}.</li>
  * <li>Change value of {@link #done} to true and continue; program should terminate.</li>
  * </ol>
  * N.B. In the above scenario, {@code incTotal} has to be deoptimized and recompiled

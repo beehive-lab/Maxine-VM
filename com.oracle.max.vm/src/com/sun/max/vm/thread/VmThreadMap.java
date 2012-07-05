@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.hosted.BootImage.Header;
+import com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.VmLock;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
@@ -92,7 +93,7 @@ public final class VmThreadMap {
     /**
      * The {@code IDMap} class manages thread IDs and a mapping between thread IDs and
      * the corresponding {@code VmThread} instance.
-     * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockword64}).
+     * The id 0 is reserved and never used to aid the modal monitor scheme ({@link ThinLockword64}).
      *
      * Note that callers of {@link #acquire(VmThread)} or {@link #release(int)} must synchronize explicitly on {@link VmThreadMap#THREAD_LOCK} to ensure that
      * the TERMINATED state is not disturbed during thread tear down.
@@ -195,7 +196,7 @@ public final class VmThreadMap {
 
     /**
      * The number of currently running non-daemon threads running, excluding
-     * the {@linkplain VmThread#MAIN_VM_THREAD main} thread.
+     * the {@linkplain VmThread#mainThread main} thread.
      */
     private volatile int nonDaemonThreads;
 
@@ -312,8 +313,7 @@ public final class VmThreadMap {
      *
      * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on {@link #THREAD_LOCK}.</b>
      *
-     * @param threadLocals the thread locals to remove from this map
-     * @param daemon specifies if the thread is a daemon
+     * @param thread the thread for the locals to remove from this map
      */
     public void removeThreadLocals(VmThread thread) {
         Pointer tla = thread.tla();
@@ -380,7 +380,7 @@ public final class VmThreadMap {
     /**
      * Waits for all non-daemon threads to finish.
      *
-     * This must only be called by the {@linkplain VmThread#MAIN_VM_THREAD main} thread.
+     * This must only be called by the {@linkplain VmThread#mainThread main} thread.
      */
     public void joinAllNonDaemons() {
         FatalError.check(VmThread.current() == VmThread.mainThread, "Only the main thread should join non-daemon threads");

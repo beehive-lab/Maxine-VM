@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,6 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
      * to create/highlight a view on the method in focus.
      *
      * @param inspection
-     * @return
      */
     static ViewFocusListener methodFocusListener(final Inspection inspection) {
         if (methodFocusListener == null) {

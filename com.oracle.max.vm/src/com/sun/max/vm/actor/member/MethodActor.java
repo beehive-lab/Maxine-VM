@@ -479,7 +479,6 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
      * @param values
      * @param parameterTypes
      *
-     * @return
      */
     @HOSTED_ONLY
     private static Object[] getBoxedJavaValues(Value[] values, Class[] parameterTypes) {

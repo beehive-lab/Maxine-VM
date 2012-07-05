@@ -66,7 +66,7 @@ import com.sun.max.vm.jni.*;
 public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
 
     /**
-     * Essentially the Maxine specific mirror of {@link CiAssumptions.ConcreteMethod}.
+     * Essentially the Maxine specific mirror of {@link ConcreteMethod}.
      * Implement this interface in a subclass of {@link DependencyVisitor} to
      * process these dependencies.
      */

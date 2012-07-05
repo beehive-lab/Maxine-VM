@@ -201,7 +201,7 @@ public final class Log {
     }
 
     /**
-     * Equivalent to calling {@link LogPrintStream#print(boolean))} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(boolean)} on {@link #out}.
      */
     public static void print(boolean b) {
         out.print(b);
@@ -481,7 +481,7 @@ public final class Log {
     }
 
     /**
-     * Equivalent to a sequence of call to{@link LogPrintStream#print(Long)} and {@link LogPrintStream#print(char)} on {@link #out} with, respectively, the
+     * Equivalent to a sequence of call to{@link LogPrintStream#print(long)} and {@link LogPrintStream#print(char)} on {@link #out} with, respectively, the
      * size converted to the unit and the char representing the unit.
      */
     public static void printToPowerOfTwoUnits(Size size) {
@@ -489,7 +489,7 @@ public final class Log {
     }
 
     /**
-     * Equivalent to a sequence of call to{@link LogPrintStream#print(Long)} and {@link LogPrintStream#println(char)} on {@link #out} with, respectively, the
+     * Equivalent to a sequence of call to{@link LogPrintStream#print(long)} and {@link LogPrintStream#println(char)} on {@link #out} with, respectively, the
      * size converted to the unit and the char representing the unit.
      */
     public static void printlnToPowerOfTwoUnits(Size size) {
@@ -1060,7 +1060,7 @@ public final class Log {
          * </pre>
          *
          * @param hub the hub to print
-         * @withNewLine specifies if a newline should be appended to the stream after the hub
+         * @param withNewLine specifies if a newline should be appended to the stream after the hub
          */
         public void printHub(Hub hub, boolean withNewLine) {
             if (hub instanceof StaticHub) {

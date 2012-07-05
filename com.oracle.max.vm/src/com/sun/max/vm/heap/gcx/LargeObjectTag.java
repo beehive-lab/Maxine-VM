@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -123,7 +123,6 @@ class LargeObjectTag extends DLinkedHeapFreeChunk {
      * Return the address of the large object's tag.
      * @param largeObjectPointer pointer to the large object.
      * @param largeObjectSize size of the large object
-     * @return
      */
     private static Address tagAddress(Address largeObjectPointer, Size largeObjectSize) {
         Address tag = largeObjectPointer.plus(getLargeObjectChunkSize(largeObjectSize)).minus(tagSize());
@@ -136,7 +135,7 @@ class LargeObjectTag extends DLinkedHeapFreeChunk {
     /**
      * Format the end of an allocated chunk into a LargeObjectTag.
      *
-     * @param allocated pointer to the allocated space in a tagged large object space
+     * @param largeObjectPointer pointer to the allocated space in a tagged large object space
      * @param largeObjectSize the size of the allocated object
      * @param listID the large object list the object is assigned to
      */

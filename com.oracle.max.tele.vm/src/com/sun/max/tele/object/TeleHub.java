@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,6 @@ public abstract class TeleHub extends TeleHybridObject {
 
     /**
      * Logic to fetch the tele class actor for this tele hub on cache miss.
-     * @return
      */
     protected TeleClassActor fetchTeleClassActor() {
         final Reference classActorReference = jumpForwarder(fields().Hub_classActor.readReference(reference()));

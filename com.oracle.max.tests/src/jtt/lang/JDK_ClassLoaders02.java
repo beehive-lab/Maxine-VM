@@ -57,7 +57,6 @@ public class JDK_ClassLoaders02 {
     /**
      * If built into boot image, as is standard with tests, classloader is VM classloader.
      * Can't name is statically else won't execute under standard VM.
-     * @return
      */
     private static Class<?> findMyClassLoaderClass() {
         try {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -166,7 +166,7 @@ public enum ValueComparator {
      * @param right the right value
      * @return {@code true} if relationship denoted by this comparator holds between {@code left} and {@code right},
      *         {@code false} otherwise
-     * @throws IllegalArgumentException if {@code left}'s {@linkplain #kind() kind} is not the same as {@code right}'s
+     * @throws IllegalArgumentException if {@code left}'s {@linkplain Value#kind() kind} is not the same as {@code right}'s
      *             kind or the semantics of comparison for the values' kind is undefined
      */
     public final boolean evaluate(Value left, Value right) {

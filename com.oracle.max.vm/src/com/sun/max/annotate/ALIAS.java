@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import com.sun.max.vm.type.*;
  * without using reflection. Aliases avoid the boxing/unboxing required by reflection and they type check an aliased
  * field access or method invocation statically.
  *
- * The idiom for using ALIAS is somewhat related to the {@link @SUBSTITUTE} annotation, but reversed; both are often used
+ * The idiom for using ALIAS is somewhat related to the {@link SUBSTITUTE} annotation, but reversed; both are often used
  * in combination. In both cases a separate class is used to declare the aliased or substituted methods. In the
  * substitution case occurrences of {@code this} actually refer to the instance of the class being substituted. In the
  * aliased case we pretend that the class declaring the aliased method is an instance of the aliasee in order to access
@@ -50,10 +50,10 @@ import com.sun.max.vm.type.*;
  *
  * <code>
  * final class FooAlias {
- *     @ALIAS(declaringClass = Foo.class, name="<init>");
+ *     ALIAS(declaringClass = Foo.class, name="<init>");
  *     private native void init(int arg);
  *
- *     @INTRINSIC(UNSAFE_CAST)
+ *     INTRINSIC(UNSAFE_CAST)
  *     static native FooAlias asThis(Foo foo);
  *
  *     public static Foo createFoo(int arg) {

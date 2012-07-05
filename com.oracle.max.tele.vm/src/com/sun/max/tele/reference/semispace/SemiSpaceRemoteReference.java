@@ -31,11 +31,12 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * Representation of a remote object reference in a heap region managed by a semispace GC. The states of the reference
  * represent possible states of knowledge about the particular object, especially those relevant during the
- * {@link #ANALYZING} phase of the heap.
+ * {@link HeapPhase#ANALYZING} phase of the heap.
  *
  * @see <a href="http://en.wikipedia.org/wiki/State_pattern">"State" design pattern</a>
  */
@@ -51,7 +52,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     private static enum RefState {
 
         /**
-         * Live reference in To-Space, heap not {@link #ANALYZING}, not forwarded.
+         * Live reference in To-Space, heap not {@link HeapPhase#ANALYZING}, not forwarded.
          */
         REF_LIVE ("LIVE (not Analyzing)"){
 
@@ -81,7 +82,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         },
 
         /**
-         * Reference in From-Space, heap {@link #ANALYZING}, not forwarded.
+         * Reference in From-Space, heap {@link HeapPhase#ANALYZING}, not forwarded.
          */
         REF_FROM ("LIVE (Analyzing: From-only), not forwarded"){
 
@@ -116,7 +117,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         },
 
         /**
-         * Reference in To-Space, heap {@link #ANALYZING}, presumed to be forwarded new copy, location of original copy is unknown.
+         * Reference in To-Space, heap {@link HeapPhase#ANALYZING}, presumed to be forwarded new copy, location of original copy is unknown.
          */
         REF_TO("LIVE (Analyzing: To only)") {
 
@@ -312,7 +313,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     }
 
     /**
-     * Creates a reference to an object, discovered in To-Space when the heap is <em>not</em> {@link #ANALYZING}.
+     * Creates a reference to an object, discovered in To-Space when the heap is <em>not</em> {@link HeapPhase#ANALYZING}.
      *
      * @param origin the location of the object in VM To-Space.
      * @return a remote reference to an ordinary live object
@@ -322,7 +323,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     }
 
     /**
-     * Creates a reference to an object discovered in From-Space when the heap is {@link #ANALYZING}, but
+     * Creates a reference to an object discovered in From-Space when the heap is {@link HeapPhase#ANALYZING}, but
      * without a forwarding pointer.
      * In this situation, the object is presumed to be in an unknown state with respect to reachability.
      *
@@ -334,7 +335,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     }
 
     /**
-     * Creates a reference to an object discovered in To-Space when the heap is {@link #ANALYZING}.
+     * Creates a reference to an object discovered in To-Space when the heap is {@link HeapPhase#ANALYZING}.
      * In this situation, the object is presumed to be a forwarded copy of an object in From-Space, even though
      * the location of the old copy is not (yet) known.
      *
@@ -346,7 +347,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     }
 
     /**
-     * Creates a reference to a forwarded object discovered when the heap is {@link #ANALYZING}.
+     * Creates a reference to a forwarded object discovered when the heap is {@link HeapPhase#ANALYZING}.
      * @param fromSpaceOrigin the location of the old copy in VM From-Space.
      * @param toSpaceOrigin the location of the new, live copy of the object in VM To-Space.
      *
@@ -362,7 +363,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * @param fromSpaceOrigin the location of the forwarding object in VM From-Space
      * @param toSpaceOrigin the location of the new, live copy in VM To-Space
      * @return a quasi remote reference to the forwarding object in From-Space, which will only live until the heap
-     * is finished {@link #ANALYZING}.
+     * is finished {@link HeapPhase#ANALYZING}.
      */
     public static SemiSpaceRemoteReference createForwarder(AbstractRemoteHeapScheme remoteScheme, Address fromSpaceOrigin, Address toSpaceOrigin) {
         return new SemiSpaceRemoteReference(remoteScheme, RefState.REF_FORWARDER, fromSpaceOrigin, toSpaceOrigin);
@@ -426,7 +427,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     }
 
     /**
-     * State transition on an ordinary live reference in To-Space when an {@link #ANALYZING} phase is discovered to
+     * State transition on an ordinary live reference in To-Space when an {@link HeapPhase#ANALYZING} phase is discovered to
      * have begun, and in particular when the heap spaces have been swapped. This transition happens before any
      * attempt is made to discover the outcome of any tracing and possible forwarding; it models the state of a
      * live reference immediately after the spaces are swapped.
@@ -435,21 +436,21 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * {@link #MUTATING} (or possibly in the latter part of {@link #RECLAIMING}).
      * <p>
      * <strong>Post:</strong> An object whose origin is in From-Space and presumed to be {@link lIVE} during
-     * an {@link #ANALYZING} heap phase in which the object's reachability has not yet been determined.
+     * an {@link HeapPhase#ANALYZING} heap phase in which the object's reachability has not yet been determined.
      */
     public void beginAnalyzing() {
         refState.beginAnalyzing(this);
     }
 
     /**
-     * State transition during {@link #ANALYZING} when the previously unknown original copy of a
+     * State transition during {@link HeapPhase#ANALYZING} when the previously unknown original copy of a
      * forwarded object is discovered.
      * <p>
-     * <strong>Pre:</strong> A reference to an object in To-Space, during {@link #ANALYZING}, that
+     * <strong>Pre:</strong> A reference to an object in To-Space, during {@link HeapPhase#ANALYZING}, that
      * is assumed to be a forwarded copy of some object, but the location of the original copy
      * in From-Space is unknown.
      * <p>
-     * <strong>Post:</strong> A forwarded object in To-Space, during {@link #ANALYZING}, whose original
+     * <strong>Post:</strong> A forwarded object in To-Space, during {@link HeapPhase#ANALYZING}, whose original
      * location in From-Space is known.
      *
      * @param oldOrigin newly discovered old copy in From-Space of a forwarded object
@@ -459,9 +460,9 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     }
 
     /**
-     * State transition during {@link #ANALYZING} when an object in From-Space is first discovered to be forwarded.
+     * State transition during {@link HeapPhase#ANALYZING} when an object in From-Space is first discovered to be forwarded.
      * <p>
-     * <strong>Pre:</strong> A reference to an object in From-Space, during {@link #ANALYZING}, that has not
+     * <strong>Pre:</strong> A reference to an object in From-Space, during {@link HeapPhase#ANALYZING}, that has not
      * yet been discovered to be forwarded, i.e. in an unknown state of reachability.
      * <p>
      * <strong>Post:</strong> A reference to an object in To-Space (by definition forwarded and thus reachable), whose
@@ -474,13 +475,13 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     }
 
     /**
-     * State transition on a reference at the end of an {@link #ANALYZING} phase, when
+     * State transition on a reference at the end of an {@link HeapPhase#ANALYZING} phase, when
      * all the tracing and forwarding is complete.
      * <p>
-     * <strong>Pre:</strong> A reference held during an {@link #ANALYZING} heap phase.
+     * <strong>Pre:</strong> A reference held during an {@link HeapPhase#ANALYZING} heap phase.
      * <p>
      * <strong>Post:</strong> A reference that is either {@link #LIVE} or {@link #DEAD},
-     * depending on its reachability discovered during {@link #ANALYZING}
+     * depending on its reachability discovered during {@link HeapPhase#ANALYZING}
      */
     public void endAnalyzing() {
         refState.endAnalyzing(this);

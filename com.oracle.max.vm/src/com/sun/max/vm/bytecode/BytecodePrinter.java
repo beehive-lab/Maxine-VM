@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ public class BytecodePrinter extends BytecodeVisitor {
      * @param instructionSuffix the string to be written to the stream after each disassembled instruction
      * @param flags a mask composed of zero or more of the following constants describing extra information to be
      *            included for each disassembled instruction: {@value #PRINT_BYTES},
-     *            {@value #PRINT_CONSTANT_POOL_INDICES
+     *            {@value #PRINT_CONSTANT_POOL_INDICES}
      * @return the disassembly of the stream denoted by {@code bytecodeBlock} or "" if there was an error during
      *         disassembly
      */
@@ -127,7 +127,7 @@ public class BytecodePrinter extends BytecodeVisitor {
      * @param instructionSuffix the string to be written to the stream after each disassembled instruction
      * @param flags a mask composed of zero or more of the following constants describing extra information to be
      *            included for each disassembled instruction: {@value #PRINT_BYTES},
-     *            {@value #PRINT_CONSTANT_POOL_INDICES
+     *            {@value #PRINT_CONSTANT_POOL_INDICES}
      */
     public BytecodePrinter(PrintWriter writer, ConstantPool constantPool, String instructionPrefix, String instructionSuffix, int flags) {
         final int unrecognizedFlags = flags & ~VALID_FLAGS_MASK;

@@ -1424,7 +1424,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * Verifies that a heap region has no grey objects.
      * @param start start of the region
      * @param end end of the region
-     * @return true if the region has no grey objects, false otherwise.
      */
     public void verifyHasNoGreyMarks(Address start, Address end) {
         final int bitIndex = scanForGreyMark(start, end);
@@ -1589,7 +1588,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * This avoids touching the heap for adjacent small objects, and paying reclamation cost for unusable dead spaces.
      *
      * @param sweeper
-     * @param minReclaimableSpace
      */
     public void impreciseSweep(Sweeper sweeper) {
         final Address rightmost = forwardScanState.rightmost;
@@ -1616,8 +1614,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * Sweep a region of memory described by the heap region sweeper.
      * The sweeper implements an API for recording range of dead space, and to specify the bounds of the region.
      * This can server region-based heap as well as contiguous heap, wherein a single region is passed in this case.
-     * @param sweeper
-     * @return
      */
     public void sweep(HeapRegionSweeper regionsSweeper, boolean doImprecise) {
         final Address endOfRightmostLiveObject = endOfCell(forwardScanState.rightmost);

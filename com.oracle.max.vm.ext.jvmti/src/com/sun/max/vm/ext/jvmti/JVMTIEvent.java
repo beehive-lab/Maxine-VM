@@ -226,7 +226,6 @@ public class JVMTIEvent {
     /**
      * Checks whether the given event is set for any agent, either globally or for any thread.
      * @param eventType
-     * @return
      */
     static boolean isEventSet(int eventType) {
         return (bitSettings[eventType - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL] & panAgentEventSettingCache) != 0;
@@ -236,7 +235,6 @@ public class JVMTIEvent {
      * Checks whether the given event is set for any agent, either globally or for a given thread.
      * @param eventType
      * @param vmThread thread to check
-     * @return
      */
     static boolean isEventSet(JVMTI.Env env, int eventType, VmThread vmThread) {
         long setting = bitSettings[eventType - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL];
@@ -249,7 +247,6 @@ public class JVMTIEvent {
 
     /**
      * Check whether any of the events requiring compiler support are set for any agent, either globally or for any thread.
-     * @return
      */
     static boolean anyCodeEventsSet() {
         return (panAgentEventSettingCache & JVMTIEvent.CODE_EVENTS_SETTING) != 0;
@@ -405,7 +402,6 @@ public class JVMTIEvent {
     /**
      * Event tracing support.
      * @param id
-     * @return
      */
     public static String name(int id) {
         switch (id) {

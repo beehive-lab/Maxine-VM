@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.sun.max.vm.verifier.*;
 
 /**
  * A utility for raising errors and associating them with one or more enclosing calling contexts. The general pattern of
- * usage is shown by the following {@linkplain ClassfileReader#loadClass(String) example} of entering a context for
+ * usage is shown by the following {@linkplain ClassfileReader#loadClass example} of entering a context for
  * parsing a class file:
  *
  * <pre>

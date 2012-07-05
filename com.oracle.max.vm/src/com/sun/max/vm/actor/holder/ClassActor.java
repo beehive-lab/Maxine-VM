@@ -1361,7 +1361,6 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
     /**
      * Get all the interfaces implemented by this class or extended by this interface.
-     * @return
      */
     public final List<InterfaceActor> getLocalInterfaceActors() {
         return java.util.Arrays.asList(localInterfaceActors);

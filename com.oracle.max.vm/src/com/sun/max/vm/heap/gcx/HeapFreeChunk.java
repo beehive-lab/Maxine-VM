@@ -116,7 +116,6 @@ public class HeapFreeChunk {
      * Return true if the specified area is formated as a tail chunk (i.e., chunk with a null next field).
      * @param start start of the heap area
      * @param end   end of the heap area
-     * @return
      */
     public static boolean isTailFreeChunk(Pointer start, Pointer end) {
         if (end.lessThan(start.plus(heapFreeChunkHeaderSize()))) {
@@ -188,8 +187,6 @@ public class HeapFreeChunk {
      * Split a chunk. Format the right side of the split as a free chunk, and return
      * its address.
      * @param chunk the original chunk
-     * @param mutexSize size of the left chunk.
-     * @return
      */
     static Pointer splitRight(Address chunk, Size leftChunkSize, Address rightNextFreeChunk) {
         HeapFreeChunk originalChunk = toHeapFreeChunk(chunk);

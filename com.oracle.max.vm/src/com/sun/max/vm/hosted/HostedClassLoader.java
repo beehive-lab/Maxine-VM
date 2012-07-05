@@ -69,7 +69,6 @@ public abstract class HostedClassLoader extends ClassLoader {
 
     /**
      * Set the default classpath for the concrete subclass.
-     * @param classpath
      */
     protected abstract Classpath getDefaultClasspath();
 
@@ -129,7 +128,7 @@ public abstract class HostedClassLoader extends ClassLoader {
     /**
      * Define the class actor for a class successfully loaded by {@link ClassLoader#loadClass}.
      * @param javaClass the {@code Class} that was loaded.
-     * @return the associated {@link ClassAtor}
+     * @return the associated {@link ClassActor}
      * @throws ClassNotFoundException
      */
     private ClassActor defineLoadedClassActor(Class javaClass) throws ClassNotFoundException {
@@ -166,7 +165,6 @@ public abstract class HostedClassLoader extends ClassLoader {
     /**
      * Checks for an array class, returning the associated {@link TypeDescriptor} if so, {@code null} otherwise.
      * @param name
-     * @return
      */
     private TypeDescriptor checkArrayClass(String name) {
         if (name.endsWith("[]")) {
@@ -187,7 +185,6 @@ public abstract class HostedClassLoader extends ClassLoader {
     /**
      * Define a stub class in this loader, if it was placed into our registry by {@link InvocationStubGenerator}.
      * @param name
-     * @return
      */
     protected Class<?> defineStubClass(String name) throws ClassNotFoundException {
         TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(name);
@@ -232,8 +229,6 @@ public abstract class HostedClassLoader extends ClassLoader {
     /**
      * Loads the class with the specified name. Also creates the {@link ClassActor} and records proxy classes, unless
      * prevent by subclass checks.
-     *
-     * @see ClassLoader#loadClass(String, resolve)
      */
     @Override
     protected synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {

@@ -28,30 +28,25 @@ public interface MaxThreadVMLog extends MaxEntity<MaxThreadVMLog> {
 
     /**
      * Thread owning log.
-     * @return
      */
     MaxThread thread();
     /**
      * Start address.
-     * @return
      */
     Address start();
 
     /**
      * Size of. buffer
-     * @return
      */
     int size();
 
     /**
      * Offset in buffer of first log record.
-     * @return
      */
     int firstOffset();
 
     /**
      * Offset in buffer where next record will be written.
-     * @return
      */
     int nextOffset();
 

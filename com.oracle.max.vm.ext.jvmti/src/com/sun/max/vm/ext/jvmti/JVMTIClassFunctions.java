@@ -65,7 +65,6 @@ class JVMTIClassFunctions {
     /**
      * Strict check on whether a class is a VM class.
      * @param classActor
-     * @return
      */
     static boolean isVMClass(ClassActor classActor) {
         return classActor.classLoader == VMClassLoader.VM_CLASS_LOADER;
@@ -184,7 +183,6 @@ class JVMTIClassFunctions {
     /**
      * Handles any extra paths added in the ONLOAD phase.
      *
-     * @return
      */
     static String getAddedBootClassPath() {
         if (JVMTI.activeEnvCount == 0) {

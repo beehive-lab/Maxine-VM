@@ -23,6 +23,7 @@
 package com.sun.max.vm.compiler.deps;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAssumptions.Assumption;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.deps.Dependencies.ClassDeps;
@@ -30,7 +31,7 @@ import com.sun.max.vm.compiler.deps.Dependencies.DependencyVisitor;
 
 /**
  * A {@linkplain DependencyProcessor} handles the dependency-specific aspects of dependency processing,
- * specifically the conversion between the abstract, object-based, view of {@link CiAssumptions.Assumption}
+ * specifically the conversion between the abstract, object-based, view of {@link Assumption}
  * and the encoded packed view used in a {@link Dependencies} object.
  *
  */
@@ -101,7 +102,6 @@ public abstract class DependencyProcessor {
     /**
      * Return the {@linkplain ToStringDependencyProcessorVisitor} for this processor.
      * @param sb the {@link StringBuilder} to use to store the string value
-     * @return
      */
     protected abstract ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor(StringBuilder sb);
 

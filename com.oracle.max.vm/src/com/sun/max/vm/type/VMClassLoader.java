@@ -24,11 +24,13 @@ package com.sun.max.vm.type;
 
 import java.net.*;
 
+import com.sun.max.vm.run.java.*;
+
 /**
  * A classloader that exists to isolate the VM classes from the JDK classes
  * and application classes. Runtime extensions to the VM are supported by
  * subclassing  {@link URLClassLoader} that is handed URLs to search via the
- * {@link addURL} method from {@link JavaRunScheme#loadVMExtensions}.
+ * {@link #addURL} method from {@link JavaRunScheme#loadVMExtensions}.
  *
  * VM classes already in the boot image are found via the {@link ClassLoader#findLoadedClass}
  * method that is invoked by {@link ClassLoader#loadClass}.

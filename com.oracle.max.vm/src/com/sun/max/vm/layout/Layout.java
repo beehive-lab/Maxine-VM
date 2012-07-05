@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,9 +65,7 @@ public final class Layout {
     /**
      * A descriptor for a word-sized slot in an object's header. All that the descriptor
      * encapsulates is the name of a slot in a header. The offset of the
-     * slots is {@linkplain GeneralLayout#getOffsetFromOrigin(HeaderField) determined}
-     * by the configured layout.
-     *
+     * slots is determined by the configured layout.
      */
     public static class HeaderField {
 
@@ -431,7 +429,7 @@ public final class Layout {
      * Writes the length word in an array, using layout information from the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      *
-     * @param pointer location of an array object
+     * @param origin location of an array object
      * @param length the new value of the array's length word
      */
     @ACCESSOR(Pointer.class)

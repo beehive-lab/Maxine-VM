@@ -110,7 +110,7 @@ public class CompilationBroker {
     private LinkedHashMap<String, String> compileCommandMap;
 
     /**
-     * Gets the {@linkplain RuntimeCompiler#name() name} of the compiler to be used to
+     * Gets the name of the compiler to be used to
      * compile {@code cma} as specified by the {@code -XX:CompileCommand} VM option.
      *
      * @return {@code null} if no specific compiler was specified for {@code cma} by a {@code -XX:CompileCommand} VM option
@@ -313,7 +313,6 @@ public class CompilationBroker {
      * Default compilation, not for deopt.
      * @param cma
      * @param nature
-     * @return
      */
     public TargetMethod compile(ClassMethodActor cma, Nature nature) {
         return compile(cma, nature, false);
@@ -322,7 +321,6 @@ public class CompilationBroker {
     /**
      * Deopt compilation.
      * @param cma
-     * @return
      */
     public TargetMethod compileForDeopt(ClassMethodActor cma) {
         return compile(cma, Nature.BASELINE, true);
@@ -338,7 +336,7 @@ public class CompilationBroker {
      * @param nature the specific type of target method required or {@code null} if any target method is acceptable
      * @param isDeopt if the compilation is for a deoptimzation
      * @return a newly compiled version of a {@code cma}
-     * @throws InteralError if an uncaught exception is thrown during compilation
+     * @throws InternalError if an uncaught exception is thrown during compilation
      */
     public TargetMethod compile(ClassMethodActor cma, Nature nature, boolean isDeopt) {
         boolean retryRun = false;
@@ -485,7 +483,7 @@ public class CompilationBroker {
      *
      * @param cma the class method actor to compile
      * @param nature the specific type of target method required or {@code null} if any target method is acceptable
-     * @param previous compiler compiler that already tried to compile
+     * @param previousCompiler compiler compiler that already tried to compile
      * @return the compiler that should be used to perform the next compilation of the method
      */
     protected RuntimeCompiler selectRetryCompiler(ClassMethodActor cma, RuntimeCompiler.Nature nature, RuntimeCompiler previousCompiler) {

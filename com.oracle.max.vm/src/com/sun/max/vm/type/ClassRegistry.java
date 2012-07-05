@@ -587,7 +587,7 @@ public final class ClassRegistry {
      * Finds the field actor denoted by a given name and declaring class.
      *
      * @param name the name of the field which must be unique in the declaring class
-     * @param declaringClass the class to search for a field named {@code name}
+     * @param declaringClassObject the class to search for a field named {@code name}
      * @return the actor for the unique field in {@code declaringClass} named {@code name}
      */
     @HOSTED_ONLY
@@ -606,7 +606,7 @@ public final class ClassRegistry {
      * Finds the method actor denoted by a given name and declaring class.
      *
      * @param name the name of the method which must be unique in the declaring class
-     * @param declaringClass the class to search for a method named {@code name}
+     * @param declaringClassObject the class to search for a method named {@code name}
      * @return the actor for the unique method in {@code declaringClass} named {@code name}
      */
     @HOSTED_ONLY
@@ -632,7 +632,7 @@ public final class ClassRegistry {
      * Finds the method actor denoted by a given name and declaring class.
      * A side effect of this is that the method is compiled into the image.
      *
-     * @param declaringClass the class to search for a method named {@code name}
+     * @param declaringClassObject the class to search for a method named {@code name}
      * @param name the name of the method to find
      * @param parameterTypes the types in the signature of the method
      * @return the actor for the unique method in {@code declaringClass} named {@code name} with the signature composed

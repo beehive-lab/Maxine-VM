@@ -83,7 +83,6 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends BaseAt
      * @see HeapFreeChunk
      *
      * @param tlabSize
-     * @param cleared TODO
      * @return a pointer to a heap free chunk.
      */
     @NO_SAFEPOINT_POLLS("non-blocking tlab allocation loop must not be subjected to safepoints")

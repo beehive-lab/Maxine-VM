@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -131,7 +131,6 @@ public class ObjectRecord {
 
     /**
      * An estimate of the size of an instance of this class.
-     * @return
      */
     public static int getSize() {
         return 80;
@@ -148,7 +147,6 @@ public class ObjectRecord {
 
     /**
      * This returns the full id, i.e. including the subId, even for the root.
-     * @return
      */
     public String getId() {
         if (id == null) {

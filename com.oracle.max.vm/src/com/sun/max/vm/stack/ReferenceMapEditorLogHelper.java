@@ -31,7 +31,6 @@ import com.sun.max.vm.compiler.target.*;
 public interface ReferenceMapEditorLogHelper {
     /**
      * {@link TargetMethod}.
-     * @return
      */
     TargetMethod targetMethod();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,8 @@
 /**
  * Java Virtual Machine instruction and opcode definitions and facilities for dealing with them. Included in this package:
  * <ul>
- * <li> A visitor pattern based framework for {@linkplain BytecodeScanner decoding} and
- * {@linkplain BytecodeVisitor processing} individual bytecode instructions from an instruction stream.</li>
+ * <li> A visitor pattern based framework for {@linkplain com.sun.max.vm.bytecode.BytecodeScanner decoding} and
+ * {@linkplain com.sun.max.vm.bytecode.BytecodeVisitor processing} individual bytecode instructions from an instruction stream.</li>
  * <li></li>
  * </ul>
  */

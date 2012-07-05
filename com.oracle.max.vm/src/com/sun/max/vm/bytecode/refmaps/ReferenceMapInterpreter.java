@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -171,7 +171,7 @@ public abstract class ReferenceMapInterpreter {
     /**
      * Determines if this interpreter performs any allocation during a call to
      * {@link #finalizeFrames(ReferenceMapInterpreterContext)} or
-     * {@link #interpretReferenceSlotsAt(ReferenceMapInterpreterContext, ReferenceSlotVisitor, int)}.
+     * {@link #interpretReferenceSlots(ReferenceMapInterpreterContext, ReferenceSlotVisitor, BCIIterator)}.
      */
     public abstract boolean performsAllocation();
 
@@ -190,7 +190,6 @@ public abstract class ReferenceMapInterpreter {
 
         /**
          * Interprets the parameters in a method's signature to initialize the frame state of the entry block.
-         * @param maxLocals TODO
          */
         public void interpret(SignatureDescriptor signature) {
             for (int i = 0; i < signature.numberOfParameters(); ++i) {

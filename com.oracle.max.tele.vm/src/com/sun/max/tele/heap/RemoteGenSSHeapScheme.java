@@ -210,20 +210,16 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         final boolean minorCollection = !isFullGC();
         final String prefix =  tracePrefix() + "checking forwarding refs, " + (minorCollection ? "MINOR" : "FULL") +  " GC cycle=" + gcStartedCount();
         int newlyForwarded = 0;
-        int alreadyForwarded = 0;
         int live = 0;
-        int nullOriginCount = 0;
 
         Trace.begin(TRACE_VALUE, prefix);
         for (GenSSRemoteReference ref : fromSpaceMap.values()) {
             switch(ref.status()) {
                 case FORWARDER:
-                    alreadyForwarded++;
                     break;
                 case LIVE:
                     final Address origin = ref.origin();
                     if (origin.isZero()) {
-                        nullOriginCount++;
                         break;
                     }
                     if (objects().hasForwardingAddressUnsafe(origin)) {

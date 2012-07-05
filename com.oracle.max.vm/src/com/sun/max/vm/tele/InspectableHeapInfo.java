@@ -28,6 +28,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.Inspect;
 
 /**
  * Makes critical state information about the object heap
@@ -41,11 +42,9 @@ import com.sun.max.vm.heap.*;
  * can interrupt the VM at certain interesting moments.  This could also be used as a kind of low-wattage event
  * mechanism.
  * <p>
- * The inspectable* methods here are distinct from those with similar or identical names in {@link HeapScheme.Inspect},
+ * The inspectable* methods here are distinct from those with similar or identical names in {@link Inspect},
  * which are intended to act as convenient places for a user to set a breakpoint, perhaps from a menu of standard
  * locations.  The intention is that those locations would not land the user in this class.
- *
- * @see HeapScheme.Inspect
  */
 public final class InspectableHeapInfo {
 
@@ -125,7 +124,6 @@ public final class InspectableHeapInfo {
      * in the dynamic heap.
      * <p>
      * No-op when VM is not being inspected.
-     * @param useImmortalMemory should allocations should be made in immortal memory.
      * @param memoryRegions regions allocated by the heap implementation
      */
     public static void setMemoryRegions(MemoryRegion[] memoryRegions) {
@@ -182,7 +180,6 @@ public final class InspectableHeapInfo {
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
      * @param gcStartedCounter the GC epoch that is starting.
-     * @see HeapScheme.Inspect#inspectableGCStarting()
      */
     @INSPECTED
     @NEVER_INLINE
@@ -202,7 +199,6 @@ public final class InspectableHeapInfo {
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
      * @param gcStartedCounter the GC epoch that is starting.
-     * @see HeapScheme.Inspect#inspectableGCReclaiming()
      */
     @INSPECTED
     @NEVER_INLINE
@@ -221,8 +217,7 @@ public final class InspectableHeapInfo {
      * <strong>Important:</strong> The Inspector assumes that this method is loaded
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
-     * @param gcStartedCounter the GC epoch that is ending.
-     * @see HeapScheme.Inspect#inspectableGCComplete()
+     * @param gcCompletedCounter the GC epoch that is ending.
      */
     @INSPECTED
     @NEVER_INLINE
@@ -249,9 +244,6 @@ public final class InspectableHeapInfo {
      * <p>
      * <strong>Important:</strong> The Inspector assumes that this method is loaded
      * and compiled in the boot image and that it will never be dynamically recompiled.
-     *
-     * @param
-     * @see HeapScheme.Inspect#inspectableGCComplete()
      */
     @INSPECTED
     @NEVER_INLINE
@@ -280,7 +272,6 @@ public final class InspectableHeapInfo {
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
      * @param size the desired new heap size
-     * @see HeapScheme.Inspect#inspectableGCComplete()
      */
     @INSPECTED
     @NEVER_INLINE

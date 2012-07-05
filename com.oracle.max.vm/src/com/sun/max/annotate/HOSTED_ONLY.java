@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,8 @@ package com.sun.max.annotate;
 
 import java.lang.annotation.*;
 
+import com.sun.cri.bytecode.*;
+
 /**
  * Indicates that a method, field or class exists only for the purpose of hosted execution.
  * <p>
@@ -31,7 +33,7 @@ import java.lang.annotation.*;
  * indirectly) by a call to {@link com.sun.max.vm.MaxineVM#isHosted()}. For example:
  *
  * <pre>
- * @HOSTED_ONLY
+ * HOSTED_ONLY
  * private int counter;
  *
  * public void getValue() {
@@ -41,14 +43,14 @@ import java.lang.annotation.*;
  *     return value;
  * }
  *
- * @HOSTED_ONLY
+ * HOSTED_ONLY
  * public int counter() {
  *     return counter;
  * }
  * </pre>
  * <p>
  * A second usage of this annotation is for testing compilation of code that references a potentially unresolved symbol.
- * For example, to test the implementation of {@link com.sun.max.vm.bytecode.Bytecodes#INVOKEVIRTUAL INVOKEVIRTUAL}, a test
+ * For example, to test the implementation of {@link Bytecodes#INVOKEVIRTUAL INVOKEVIRTUAL}, a test
  * case can be written that calls a method in a class annotated with this annotation.
  * <p>
  * During {@linkplain com.sun.max.vm.hosted.BootImageGenerator boot image generation}, all such annotated entities are omitted from the
