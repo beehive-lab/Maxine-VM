@@ -485,7 +485,7 @@ public abstract class Assembler {
     }
 
     /**
-     * Gets the maximum size of the code array that would be assembled by a call to {@link #output(OutputStream)} or
+     * Gets the maximum size of the code array that would be assembled by a call to {@link #output(OutputStream, InlineDataRecorder)} or
      * {@link #toByteArray()}. For a variable sized instruction set (e.g. x86), the exact size may be known until the
      * code is assembled as the size of certain instructions depends on their position in the instruction and/or the
      * {@linkplain #baseAddress() base address} at which the code is being assembled.
@@ -500,7 +500,7 @@ public abstract class Assembler {
     private boolean padOutput;
 
     /**
-     * Sets or unsets the flag determining if the code assembled by a call to {@link #output(OutputStream)} or
+     * Sets or unsets the flag determining if the code assembled by a call to {@link #output(OutputStream, InlineDataRecorder)} or
      * {@link #toByteArray()} should be padded with NOPs at the end to ensure that the code size equals the value
      * returned by {@link #upperLimitForCurrentOutputSize()}. This default value of the flag is {@code false}.
      */

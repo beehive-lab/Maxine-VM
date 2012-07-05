@@ -39,8 +39,6 @@ public interface AssemblyInstructionEditor {
 
     /**
      * Returns the immediate int value in the edited instruction.
-     * @param displacementWidth the width of the displacement in the instruction
-     * @return  the displacement in the edited instruction
      */
     int getIntImmediate(WordWidth immediateWidth) throws AssemblyException;
 
@@ -89,7 +87,7 @@ public interface AssemblyInstructionEditor {
 
     /**
      * Replaces the value of the immediate source operand of an  instruction.
-     * @param imm64 the new immediate value of the operand.
+     * @param imm32 the new immediate value of the operand.
      */
     void fixImmediateOperand(int imm32);
 
@@ -101,8 +99,7 @@ public interface AssemblyInstructionEditor {
 
     /**
      * Fix relative displacement of a branch instruction.
-     * 
-     * @param originalDisplacementWidth
+     *
      * @param displacementWidth width of the relative displacement in the original instruction
      * @param disp32 new relative displacement
      */

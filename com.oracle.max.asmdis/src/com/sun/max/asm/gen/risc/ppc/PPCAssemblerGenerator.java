@@ -44,7 +44,7 @@ public final class PPCAssemblerGenerator extends RiscAssemblerGenerator<RiscTemp
         if (section.indexOf("[Book ") == -1) {
             section += " [Book 1]";
         }
-        return "\"<a href=\"http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html\">PowerPC Architecture Book, Version 2.02</a> - Section " + section + "\"";
+        return "\"PowerPC Architecture Book, Version 2.02 - Section " + section + "\"";
     }
 
     public static void main(String[] programArguments) {

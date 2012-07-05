@@ -39,7 +39,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
 
 // START GENERATED RAW ASSEMBLER METHODS
     /**
-     * Pseudo-external assembler syntax: {@code adc{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>immed_8</i>, <i>rotate_amount</i>
+     * Pseudo-external assembler syntax: {@code adc[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>immed_8</i>, <i>rotate_amount</i>
      * Example disassembly syntax: {@code adceq         r0, r0, #0x0, 0x0}
      * <p>
      * Constraint: {@code 0 <= immed_8 && immed_8 <= 255}<br />
@@ -64,7 +64,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code adc{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
+     * Pseudo-external assembler syntax: {@code adc[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code adceq         r0, r0, r0, lsl #0x0}
      * <p>
      * Constraint: {@code 0 <= shift_imm && shift_imm <= 31}<br />
@@ -85,7 +85,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code add{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>immed_8</i>, <i>rotate_amount</i>
+     * Pseudo-external assembler syntax: {@code add[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>immed_8</i>, <i>rotate_amount</i>
      * Example disassembly syntax: {@code addeq         r0, r0, #0x0, 0x0}
      * <p>
      * Constraint: {@code 0 <= immed_8 && immed_8 <= 255}<br />
@@ -110,7 +110,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code add{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
+     * Pseudo-external assembler syntax: {@code add[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code addeq         r0, r0, r0, ror #0x0}
      * <p>
      * Constraint: {@code 0 <= shift_imm && shift_imm <= 31}<br />
@@ -131,7 +131,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bic{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
+     * Pseudo-external assembler syntax: {@code bic[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
      * Example disassembly syntax: {@code biceq         r0, r0, r0, lsr r0}
      *
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.6"
@@ -149,7 +149,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code cmn{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>Rn</i>, <i>Rm</i>, <i>Rs</i>
+     * Pseudo-external assembler syntax: {@code cmn[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rn</i>, <i>Rm</i>, <i>Rs</i>
      * Example disassembly syntax: {@code cmneq         r0, r0, asr r0}
      *
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.13"
@@ -165,7 +165,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code cmn{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>Rn</i>, <i>Rm</i>, <i>Rs</i>
+     * Pseudo-external assembler syntax: {@code cmn[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rn</i>, <i>Rm</i>, <i>Rs</i>
      * Example disassembly syntax: {@code cmneq         r0, r0, ror r0}
      *
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.13"
@@ -181,7 +181,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code cmp{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
+     * Pseudo-external assembler syntax: {@code cmp[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code cmpeq         r0, r0, asr #0x0}
      * <p>
      * Constraint: {@code 0 <= shift_imm % 32 && shift_imm % 32 <= 31}<br />
@@ -200,7 +200,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code eor{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
+     * Pseudo-external assembler syntax: {@code eor[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
      * Example disassembly syntax: {@code eoreq         r0, r0, r0, lsr r0}
      *
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.15"
@@ -218,7 +218,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code mov{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rm</i>, <i>shift_imm</i>
+     * Pseudo-external assembler syntax: {@code mov[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code moveq         r0, r0, ror #0x0}
      * <p>
      * Constraint: {@code 0 <= shift_imm && shift_imm <= 31}<br />
@@ -238,7 +238,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code mvn{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rm</i>, <i>Rs</i>
+     * Pseudo-external assembler syntax: {@code mvn[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rm</i>, <i>Rs</i>
      * Example disassembly syntax: {@code mvneq         r0, r0, ror r0}
      *
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.34"
@@ -255,7 +255,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code orr{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
+     * Pseudo-external assembler syntax: {@code orr[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code orreq         r0, r0, r0, lsl #0x0}
      * <p>
      * Constraint: {@code 0 <= shift_imm && shift_imm <= 31}<br />
@@ -276,7 +276,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code rsb{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>immed_8</i>, <i>rotate_amount</i>
+     * Pseudo-external assembler syntax: {@code rsb[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>immed_8</i>, <i>rotate_amount</i>
      * Example disassembly syntax: {@code rsbeq         r0, r0, #0x0, 0x0}
      * <p>
      * Constraint: {@code 0 <= immed_8 && immed_8 <= 255}<br />
@@ -301,7 +301,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code rsb{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
+     * Pseudo-external assembler syntax: {@code rsb[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code rsbeq         r0, r0, r0, lsl #0x0}
      * <p>
      * Constraint: {@code 0 <= shift_imm && shift_imm <= 31}<br />
@@ -322,7 +322,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code rsc{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>
+     * Pseudo-external assembler syntax: {@code rsc[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>
      * Example disassembly syntax: {@code rsceq         r0, r0, r0}
      *
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.37"
@@ -339,7 +339,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code rsc{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
+     * Pseudo-external assembler syntax: {@code rsc[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
      * Example disassembly syntax: {@code rsceq         r0, r0, r0, lsr r0}
      *
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.37"
@@ -357,7 +357,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code sbc{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
+     * Pseudo-external assembler syntax: {@code sbc[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
      * Example disassembly syntax: {@code sbceq         r0, r0, r0, ror r0}
      *
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.38"
@@ -375,7 +375,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code sub{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>Rd</i>, <i>Rn</i>, <i>immed_8</i>, <i>rotate_amount</i>
+     * Pseudo-external assembler syntax: {@code sub[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>immed_8</i>, <i>rotate_amount</i>
      * Example disassembly syntax: {@code subeq         r0, r0, #0x0, 0x0}
      * <p>
      * Constraint: {@code 0 <= immed_8 && immed_8 <= 255}<br />
@@ -400,7 +400,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code tst{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>Rn</i>, <i>immediate</i>
+     * Pseudo-external assembler syntax: {@code tst[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rn</i>, <i>immediate</i>
      * Example disassembly syntax: {@code tsteq         r0, #0x0}
      * <p>
      * Constraint: {@code ARMImmediates.isValidImmediate(immediate)}<br />
@@ -421,7 +421,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code tst{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
+     * Pseudo-external assembler syntax: {@code tst[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code tsteq         r0, r0, lsr #0x0}
      * <p>
      * Constraint: {@code 0 <= shift_imm % 32 && shift_imm % 32 <= 31}<br />
@@ -440,7 +440,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code smlal{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>RdLo</i>, <i>RdHi</i>, <i>Rm</i>, <i>Rs</i>
+     * Pseudo-external assembler syntax: {@code smlal[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>RdLo</i>, <i>RdHi</i>, <i>Rm</i>, <i>Rs</i>
      * Example disassembly syntax: {@code smlaleq       r0, r0, r0, r0}
      * <p>
      * Constraint: {@code RdLo.value() != RdHi.value()}<br />
@@ -473,7 +473,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code umull{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}{s}  }<i>RdLo</i>, <i>RdHi</i>, <i>Rm</i>, <i>Rs</i>
+     * Pseudo-external assembler syntax: {@code umull[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>RdLo</i>, <i>RdHi</i>, <i>Rm</i>, <i>Rs</i>
      * Example disassembly syntax: {@code umulleq       r0, r0, r0, r0}
      * <p>
      * Constraint: {@code RdLo.value() != RdHi.value()}<br />
@@ -506,7 +506,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ldr{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>
+     * Pseudo-external assembler syntax: {@code ldr[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>
      * Example disassembly syntax: {@code ldreq         r0, [r0, +r0]}
      * <p>
      * Constraint: {@code Rm.value() != 15}<br />
@@ -525,7 +525,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ldr{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>Rd</i>, <i>Rn</i>, <i>offset_12</i>
+     * Pseudo-external assembler syntax: {@code ldr[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>offset_12</i>
      * Example disassembly syntax: {@code ldreq         r0, [r0, #-0x0]!}
      * <p>
      * Constraint: {@code 0 <= offset_12 && offset_12 <= 4095}<br />
@@ -548,7 +548,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ldr{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
+     * Pseudo-external assembler syntax: {@code ldr[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code ldreq         r0, [r0], +r0, ror #0x0}
      * <p>
      * Constraint: {@code 0 <= shift_imm && shift_imm <= 31}<br />
@@ -574,7 +574,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code str{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
+     * Pseudo-external assembler syntax: {@code str[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code streq         r0, [r0, -r0, asr #0x0]}
      * <p>
      * Constraint: {@code 0 <= shift_imm % 32 && shift_imm % 32 <= 31}<br />
@@ -596,7 +596,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code str{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
+     * Pseudo-external assembler syntax: {@code str[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code streq         r0, [r0, -r0, ror #0x0]!}
      * <p>
      * Constraint: {@code 0 <= shift_imm && shift_imm <= 31}<br />
@@ -624,7 +624,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code str{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>Rd</i>, <i>Rn</i>, <i>offset_12</i>
+     * Pseudo-external assembler syntax: {@code str[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>offset_12</i>
      * Example disassembly syntax: {@code streq         r0, [r0], #+0x0}
      * <p>
      * Constraint: {@code 0 <= offset_12 && offset_12 <= 4095}<br />
@@ -645,7 +645,7 @@ public class ExampleARMAssembler extends AbstractARMAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code swi{eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv}  }<i>immed_24</i>
+     * Pseudo-external assembler syntax: {@code swi[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>immed_24</i>
      * Example disassembly syntax: {@code swieq         0x0}
      * <p>
      * Constraint: {@code 0 <= immed_24 && immed_24 <= 16777215}<br />

@@ -23,14 +23,14 @@
 /**
  * An assembly system for (almost all of) the IA32 instruction set.
  * Our own restriction here: the default address and operand size is ALWAYS 32 bits.
- * 
+ *
  * We have the capability to include instructions with 16-bit addressing,
  * but by default we don't.
- * 
- * Once {@link IA32RawAssembler} and {@link IA32LabelAssembler} have been generated,
+ *
+ * Once {@link com.sun.max.asm.ia32.complete.IA32RawAssembler} and {@link com.sun.max.asm.ia32.complete.IA32LabelAssembler} have been generated,
  * this package can be used separate from the framework
  * by importing the following assembler packages only:
- * 
+ *
  *     com.sun.max.asm
  *     com.sun.max.asm.x86
  *     com.sun.max.asm.ia32

@@ -422,8 +422,8 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                             sb.append("|");
                         } else {
                             if (((ExternalMnemonicSuffixArgument) argument).isOptional()) {
-                                sb.append("{");
-                                close = "}";
+                                sb.append("[");
+                                close = "]";
                             } else {
                                 sb.append("[");
                             }
