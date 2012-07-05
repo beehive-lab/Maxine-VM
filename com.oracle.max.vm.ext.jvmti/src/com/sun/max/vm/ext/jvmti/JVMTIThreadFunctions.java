@@ -1282,17 +1282,22 @@ public class JVMTIThreadFunctions {
                 VmThread vmThread = checkVmThread(thread);
                 if (!thread.isAlive()) {
                     results.setInt(i, JVMTI_ERROR_THREAD_NOT_ALIVE);
-                } else if (VmOperation.isSuspendRequest(vmThread.tla())) {
-                    results.setInt(i, JVMTI_ERROR_THREAD_SUSPENDED);
                 } else {
-                    threadSet.add(VmThread.fromJava(thread));
-                    results.setInt(i, JVMTI_ERROR_NONE);
+                    boolean isSuspended = VmOperation.isSuspendRequest(vmThread.tla());
+                    if (isSuspend && isSuspended) {
+                        results.setInt(i, JVMTI_ERROR_THREAD_SUSPENDED);
+                    } else if (!isSuspend && !isSuspended) {
+                        results.setInt(i, JVMTI_ERROR_THREAD_NOT_SUSPENDED);
+                    } else {
+                        threadSet.add(VmThread.fromJava(thread));
+                        results.setInt(i, JVMTI_ERROR_NONE);
+                    }
                 }
             } catch (ClassCastException ex) {
                 results.setInt(i, JVMTI_ERROR_INVALID_THREAD);
             }
         }
-        return suspendOrResumeThreadList(jvmtiEnv, threadSet, true);
+        return suspendOrResumeThreadList(jvmtiEnv, threadSet, isSuspend);
     }
 
     private static int suspendOrResumeThreadList(JVMTI.Env jvmtiEnv, Set<VmThread> threadSet, boolean isSuspend) {
