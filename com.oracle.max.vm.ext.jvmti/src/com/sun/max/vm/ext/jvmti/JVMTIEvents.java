@@ -53,47 +53,66 @@ import com.sun.max.vm.thread.*;
  */
 public class JVMTIEvents {
 
+    /* N.B. The START phase is considered to have been entered when the VM sends the VM_START event,
+       and similarly for VM_INIT. So when JVMTI.event receives these events it is still in the previous
+       phase. To avoid a special case we simply add the previous phase to their bit setting.
+     */
+    private static final int LIVE_PHASE = JVMTIConstants.JVMTI_PHASE_LIVE;
+    private static final int START_LIVE_PHASES = JVMTIConstants.JVMTI_PHASE_START | JVMTIConstants.JVMTI_PHASE_LIVE;
+    private static final int PRIMORDIAL_START_LIVE_PHASES = JVMTIConstants.JVMTI_PHASE_PRIMORDIAL | JVMTIConstants.JVMTI_PHASE_START | JVMTIConstants.JVMTI_PHASE_LIVE;
+
     /**
      * Enum form of int constants.
      * These are ordered the same as the constants so that their ordinal value is the correct zero-based
      * value for a bit mask.
      */
     public enum E {
-        VM_INIT(JVMTIConstants.JVMTI_EVENT_VM_INIT),
-        VM_DEATH(JVMTIConstants.JVMTI_EVENT_VM_DEATH),
-        THREAD_START(JVMTIConstants.JVMTI_EVENT_THREAD_START),
-        THREAD_END(JVMTIConstants.JVMTI_EVENT_THREAD_END),
-        CLASS_FILE_LOAD_HOOK(JVMTIConstants.JVMTI_EVENT_CLASS_FILE_LOAD_HOOK),
-        CLASS_LOAD(JVMTIConstants.JVMTI_EVENT_CLASS_LOAD),
-        CLASS_PREPARE(JVMTIConstants.JVMTI_EVENT_CLASS_PREPARE),
-        VM_START(JVMTIConstants.JVMTI_EVENT_VM_START),
-        EXCEPTION(JVMTIConstants.JVMTI_EVENT_EXCEPTION),
-        EXCEPTION_CATCH(JVMTIConstants.JVMTI_EVENT_EXCEPTION_CATCH),
-        SINGLE_STEP(JVMTIConstants.JVMTI_EVENT_SINGLE_STEP),
-        FRAME_POP(JVMTIConstants.JVMTI_EVENT_FRAME_POP),
-        BREAKPOINT(JVMTIConstants.JVMTI_EVENT_BREAKPOINT),
-        FIELD_ACCESS(JVMTIConstants.JVMTI_EVENT_FIELD_ACCESS),
-        FIELD_MODIFICATION(JVMTIConstants.JVMTI_EVENT_FIELD_MODIFICATION),
-        METHOD_ENTRY(JVMTIConstants.JVMTI_EVENT_METHOD_ENTRY),
-        METHOD_EXIT(JVMTIConstants.JVMTI_EVENT_METHOD_EXIT),
-        NATIVE_METHOD_BIND(JVMTIConstants.JVMTI_EVENT_NATIVE_METHOD_BIND),
-        COMPILED_METHOD_LOAD(JVMTIConstants.JVMTI_EVENT_COMPILED_METHOD_LOAD),
-        COMPILED_METHOD_UNLOAD(JVMTIConstants.JVMTI_EVENT_COMPILED_METHOD_UNLOAD),
-        DYNAMIC_CODE_GENERATED(JVMTIConstants.JVMTI_EVENT_DYNAMIC_CODE_GENERATED),
-        DATA_DUMP_REQUEST(JVMTIConstants.JVMTI_EVENT_DATA_DUMP_REQUEST),
-        MONITOR_WAIT(JVMTIConstants.JVMTI_EVENT_MONITOR_WAIT),
-        MONITOR_WAITED(JVMTIConstants.JVMTI_EVENT_MONITOR_WAITED),
-        MONITOR_CONTENDED_ENTER(JVMTIConstants.JVMTI_EVENT_MONITOR_CONTENDED_ENTER),
-        MONITOR_CONTENDED_ENTERED(JVMTIConstants.JVMTI_EVENT_MONITOR_CONTENDED_ENTERED),
-        RESOURCE_EXHAUSTED(JVMTIConstants.JVMTI_EVENT_RESOURCE_EXHAUSTED),
-        GARBAGE_COLLECTION_START(JVMTIConstants.JVMTI_EVENT_GARBAGE_COLLECTION_START),
-        GARBAGE_COLLECTION_FINISH(JVMTIConstants.JVMTI_EVENT_GARBAGE_COLLECTION_FINISH),
-        OBJECT_FREE(JVMTIConstants.JVMTI_EVENT_OBJECT_FREE),
-        VM_OBJECT_ALLOC(JVMTIConstants.JVMTI_EVENT_VM_OBJECT_ALLOC);
+        VM_INIT(JVMTIConstants.JVMTI_EVENT_VM_INIT, START_LIVE_PHASES),
+        VM_DEATH(JVMTIConstants.JVMTI_EVENT_VM_DEATH, LIVE_PHASE),
+        THREAD_START(JVMTIConstants.JVMTI_EVENT_THREAD_START, START_LIVE_PHASES),
+        THREAD_END(JVMTIConstants.JVMTI_EVENT_THREAD_END, LIVE_PHASE),
+        CLASS_FILE_LOAD_HOOK(JVMTIConstants.JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, PRIMORDIAL_START_LIVE_PHASES),
+        CLASS_LOAD(JVMTIConstants.JVMTI_EVENT_CLASS_LOAD, START_LIVE_PHASES),
+        CLASS_PREPARE(JVMTIConstants.JVMTI_EVENT_CLASS_PREPARE, START_LIVE_PHASES),
+        VM_START(JVMTIConstants.JVMTI_EVENT_VM_START, PRIMORDIAL_START_LIVE_PHASES),
+        EXCEPTION(JVMTIConstants.JVMTI_EVENT_EXCEPTION, LIVE_PHASE),
+        EXCEPTION_CATCH(JVMTIConstants.JVMTI_EVENT_EXCEPTION_CATCH, LIVE_PHASE),
+        SINGLE_STEP(JVMTIConstants.JVMTI_EVENT_SINGLE_STEP, LIVE_PHASE),
+        FRAME_POP(JVMTIConstants.JVMTI_EVENT_FRAME_POP, LIVE_PHASE),
+        BREAKPOINT(JVMTIConstants.JVMTI_EVENT_BREAKPOINT, LIVE_PHASE),
+        FIELD_ACCESS(JVMTIConstants.JVMTI_EVENT_FIELD_ACCESS, LIVE_PHASE),
+        FIELD_MODIFICATION(JVMTIConstants.JVMTI_EVENT_FIELD_MODIFICATION, LIVE_PHASE),
+        METHOD_ENTRY(JVMTIConstants.JVMTI_EVENT_METHOD_ENTRY, LIVE_PHASE),
+        METHOD_EXIT(JVMTIConstants.JVMTI_EVENT_METHOD_EXIT, LIVE_PHASE),
+        NATIVE_METHOD_BIND(JVMTIConstants.JVMTI_EVENT_NATIVE_METHOD_BIND, PRIMORDIAL_START_LIVE_PHASES),
+        COMPILED_METHOD_LOAD(JVMTIConstants.JVMTI_EVENT_COMPILED_METHOD_LOAD, LIVE_PHASE),
+        COMPILED_METHOD_UNLOAD(JVMTIConstants.JVMTI_EVENT_COMPILED_METHOD_UNLOAD, LIVE_PHASE),
+        DYNAMIC_CODE_GENERATED(JVMTIConstants.JVMTI_EVENT_DYNAMIC_CODE_GENERATED, PRIMORDIAL_START_LIVE_PHASES),
+        DATA_DUMP_REQUEST(JVMTIConstants.JVMTI_EVENT_DATA_DUMP_REQUEST, LIVE_PHASE),
+        MONITOR_WAIT(JVMTIConstants.JVMTI_EVENT_MONITOR_WAIT, LIVE_PHASE),
+        MONITOR_WAITED(JVMTIConstants.JVMTI_EVENT_MONITOR_WAITED, LIVE_PHASE),
+        MONITOR_CONTENDED_ENTER(JVMTIConstants.JVMTI_EVENT_MONITOR_CONTENDED_ENTER, LIVE_PHASE),
+        MONITOR_CONTENDED_ENTERED(JVMTIConstants.JVMTI_EVENT_MONITOR_CONTENDED_ENTERED, LIVE_PHASE),
+        RESOURCE_EXHAUSTED(JVMTIConstants.JVMTI_EVENT_RESOURCE_EXHAUSTED, LIVE_PHASE),
+        GARBAGE_COLLECTION_START(JVMTIConstants.JVMTI_EVENT_GARBAGE_COLLECTION_START, LIVE_PHASE),
+        GARBAGE_COLLECTION_FINISH(JVMTIConstants.JVMTI_EVENT_GARBAGE_COLLECTION_FINISH, LIVE_PHASE),
+        OBJECT_FREE(JVMTIConstants.JVMTI_EVENT_OBJECT_FREE, LIVE_PHASE),
+        VM_OBJECT_ALLOC(JVMTIConstants.JVMTI_EVENT_VM_OBJECT_ALLOC, LIVE_PHASE);
 
+        /**
+         * The JVMTI code for this event.
+         */
         public final int code;
 
+        /**
+         * The zero based bit for bitsets conmtaining this event.
+         */
         public final long bit;
+
+        /**
+         * The phases, as bit set, in which this event can be delivered.
+         */
+        public final int phases;
 
         public static final E[] VALUES = values();
 
@@ -106,8 +125,9 @@ public class JVMTIEvents {
             return VALUES[eventId - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL];
         }
 
-        private E(int code) {
+        private E(int code, int phases) {
             this.code = code;
+            this.phases = phases;
             bit = 1L << ordinal();
         }
 
@@ -265,71 +285,15 @@ public class JVMTIEvents {
         return (panAgentEventSettingCache & JVMTIEvents.CODE_EVENTS_SETTING) != 0;
     }
 
-    /**
-     * A set of bits that correspond to the phases in which it is legal to dispatch the event.
-     */
-    private static final int[] phases = new int[E.EVENT_COUNT];
-
     static {
         Heap.registerGCCallback(new GCCallback());
-
-        for (int i = 0; i < E.VALUES.length; i++) {
-            E event = E.VALUES[i];
-            int eventPhase = JVMTIConstants.JVMTI_PHASE_LIVE;
-            /* N.B. The START phase is considered to have been entered when the VM sends the VM_START event,
-               and similarly for VM_INIT. So when JVMTI.event receives these events it is still in the previous
-               phase. To avoid a special case we simply add the previous phase to their bit setting.
-            */
-            switch (event) {
-                case VM_INIT:
-                case THREAD_START:
-                case THREAD_END:
-                case CLASS_LOAD:
-                case CLASS_PREPARE:
-                    eventPhase = JVMTIConstants.JVMTI_PHASE_START | JVMTIConstants.JVMTI_PHASE_LIVE;
-                    break;
-
-                case VM_START:
-                case CLASS_FILE_LOAD_HOOK:
-                case NATIVE_METHOD_BIND:
-                case DYNAMIC_CODE_GENERATED:
-                    eventPhase = JVMTIConstants.JVMTI_PHASE_PRIMORDIAL | JVMTIConstants.JVMTI_PHASE_START | JVMTIConstants.JVMTI_PHASE_LIVE;
-                    break;
-
-                case EXCEPTION:
-                case EXCEPTION_CATCH:
-                case SINGLE_STEP:
-                case FRAME_POP:
-                case BREAKPOINT:
-                case FIELD_ACCESS:
-                case FIELD_MODIFICATION:
-                case METHOD_ENTRY:
-                case METHOD_EXIT:
-                case COMPILED_METHOD_LOAD:
-                case COMPILED_METHOD_UNLOAD:
-                case DATA_DUMP_REQUEST:
-                case MONITOR_WAIT:
-                case MONITOR_WAITED:
-                case MONITOR_CONTENDED_ENTER:
-                case MONITOR_CONTENDED_ENTERED:
-                case RESOURCE_EXHAUSTED:
-                case GARBAGE_COLLECTION_START:
-                case GARBAGE_COLLECTION_FINISH:
-                case OBJECT_FREE:
-                case VM_OBJECT_ALLOC:
-                case VM_DEATH:
-                    // LIVE
-                    break;
-            }
-            phases[event.ordinal()] = eventPhase;
-        }
     }
 
     /**
      * Gets the bit setting to determine if an event should be delivered based on the phase.
      */
-    static int getPhase(E event) {
-        return phases[event.ordinal()];
+    static int getPhases(E event) {
+        return event.phases;
     }
 
     static int setEventNotificationMode(JVMTI.Env jvmtiEnv, int mode, E event, Thread thread) {

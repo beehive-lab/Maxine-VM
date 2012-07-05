@@ -549,7 +549,7 @@ public class JVMTI {
             return true;
         }
 
-        if ((JVMTIEvents.getPhase(event) & phase) == 0) {
+        if ((JVMTIEvents.getPhases(event) & phase) == 0) {
             // wrong phase
             return true;
         }
