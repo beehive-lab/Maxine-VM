@@ -25,7 +25,6 @@ package com.sun.max.ins.debug.vmlog;
 import java.awt.*;
 
 import com.sun.max.ins.gui.*;
-import com.sun.max.vm.ext.jvmti.*;
 import com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 import com.sun.max.vm.log.VMLog.*;
 

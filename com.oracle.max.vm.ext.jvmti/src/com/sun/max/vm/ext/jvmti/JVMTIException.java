@@ -66,6 +66,9 @@ public class JVMTIException {
         }
     }
 
+    /**
+     * A pre-thread value that holds the state necessary to analyze and dispatch and exception event (and it's catch if any).
+     */
     private static EventStateThreadLocal eventStateTL = new EventStateThreadLocal();
 
     /**
@@ -229,6 +232,13 @@ public class JVMTIException {
         // send if any agent wants it
         return JVMTI.eventNeeded(E.EXCEPTION) || JVMTI.eventNeeded(E.METHOD_EXIT) ||
                JVMTIVmThreadLocal.bitIsSet(VmThread.currentTLA(), JVMTI_FRAME_POP) || vmaHandler != null;
+    }
+
+    /**
+     * Used by {@link EXCEPTION_CATCH} events to access the information need to dispatch the event.
+     */
+    static ExceptionEventData getExceptionEventData() {
+        return eventStateTL.get().exceptionEventData;
     }
 
     public static void raiseEvent(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
