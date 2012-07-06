@@ -49,7 +49,7 @@ import com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger;
  * <ol>
  *   <li>Record the {@linkplain JniHandles#top() top} of {@linkplain VmThread#jniHandles() the current thread's JNI handle stack}.</li>
  *   <li>Push the pointer to the {@linkplain VmThread#jniEnv() current thread's native JNI environment data structure}.</li>
- *   <li>If the native method is static, {@linkplain JniHandles#createStackHandle(Object) handlize} and push the class reference
+ *   <li>If the native method is static, handlize and push the class reference
  *       otherwise handlize and push the receiver reference.</li>
  *   <li>Push the remaining parameters, handlizing non-null references before they are pushed.</li>
  *   <li>Save last Java frame info (stack, frame and instruction pointers) from thread local storage (TLS) to

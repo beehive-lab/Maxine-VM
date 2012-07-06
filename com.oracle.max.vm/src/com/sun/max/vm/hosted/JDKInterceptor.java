@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,16 @@ public final class JDKInterceptor {
     }
 
     /**
-     * These are the properties that are to be remembered from the host VM on which the image was built.
+     * These are the properties that are to be remembered (inherited) from the host VM on which the image was built.
+     * Strictly speaking java vendor.* should not be inherited. However, from JDK 7 onwards all the platforms on which
+     * Maxine is built have Oracle as the vendor so it is ok. [On Mac OS/JDK 6 Maxine will incorrectly have java.vendor
+     * set to Apple.]
+     *
+     * Evidently several of these properties are sensitive to the environment the VM is running in.
+     * This isn't important for the typical current uses of Maxine, but should be fixed in due course.
+     * The problem is that finding all the JDK code that might be baked into the image and depends
+     * on such a property. For now, it is better to inherit the host VM value, than simply guess it
+     * on startup, because most users run the VM in the same environment where they build it.
      */
     public static final String[] REMEMBERED_PROPERTY_NAMES = {
         "awt.toolkit",
@@ -62,18 +71,22 @@ public final class JDKInterceptor {
         "java.vendor",
         "java.vendor.url",
         "java.vendor.url.bug",
-        "java.vm.vendor",
-        "java.vm.specification.name",
-        "java.vm.specification.vendor",
-        "java.vm.specification.version",
         "java.runtime.name",
         "java.runtime.version",
         "java.awt.graphicsenv",
         "java.awt.printerjob",
+        "file.encoding",
         "file.encoding.pkg",
         "file.separator",
+        "line.separator",
         "path.separator",
+        "sun.jnu.encoding",
+        "sun.io.unicode.encoding",
+        "sun.os.patch.level",
         "os.version",
+        "user.language",
+        "user.country",
+        "user.variant"
     };
 
     public static final Properties initialSystemProperties = buildInitialSystemProperties();
@@ -461,7 +474,7 @@ public final class JDKInterceptor {
 
     /**
      * Register a field of a class to be reset while bootstrapping.
-     * @param javaClass the java class that declared the field
+     *
      * @param fieldName the name of the field as a string
      */
     public static void resetField(String className, String fieldName) {

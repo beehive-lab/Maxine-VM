@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ public final class CString {
     }
 
     /**
-     * Determines the length of a NULL terminated C string located in natively {@link Memory#allocate(int) allocated} memory.
+     * Determines the length of a NULL terminated C string located in natively {@link Memory#allocate(Size) allocated} memory.
      * @param cString the string for which to get the length
      * @return the length
      */
@@ -335,6 +335,21 @@ public final class CString {
         return cstring.getByte(string.length()) == 0;
     }
 
+    public static boolean equals(Pointer cstring1, Pointer cstring2) {
+        if (cstring1.isZero() || cstring2.isZero()) {
+            return false;
+        }
+        int i;
+        for (i = 0; i < CString.length(cstring1).toInt(); i++) {
+            final byte ch1 = cstring1.getByte(i);
+            final byte ch2 = cstring2.getByte(i);
+            if (ch2 == 0 || ch1 != ch2) {
+                return false;
+            }
+        }
+        return cstring2.getByte(i) == 0;
+    }
+
     /**
      * Determines if a given C string starts with a given prefix.
      *
@@ -426,19 +441,19 @@ public final class CString {
     }
 
     /**
-     * Copy a C string.
+     * Copies a C string.
+     *
      * @param cstring
-     * @param string
      * @return new C string or {@link Pointer#isZero()} if can't allocate.
      */
-    public static Pointer copy(Pointer cstring1) {
-        Size csl1 = CString.length(cstring1);
-        Pointer result = Memory.allocate(csl1.plus(1));
+    public static Pointer copy(Pointer cstring) {
+        Size length = CString.length(cstring);
+        Pointer result = Memory.allocate(length.plus(1));
         if (result.isZero()) {
             return result;
         }
-        Memory.copyBytes(cstring1, result, csl1);
-        result.setByte(csl1.toInt(), (byte) 0);
+        Memory.copyBytes(cstring, result, length);
+        result.setByte(length.toInt(), (byte) 0);
         return result;
     }
 

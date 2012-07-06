@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.sun.max.vm.code;
 
 import com.sun.max.memory.*;
+import com.sun.max.memory.VirtualMemory.Type;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -30,12 +31,12 @@ import com.sun.max.vm.*;
 /**
  * A code manager that allocates virtual memory somewhere in the address space.
  * Since we cannot guarantee that an allocated address of virtual memory is at an address
- * that is a multiple of {@link CodeManager#runtimeCodeRegions} (c.f. {@link FixedAddressCodeManager})
- * we keep the {@link CodeManager#runtimeCodeRegions} array sorted by increasing address.
+ * that is a multiple of {@link CodeManager#runtimeBaselineCodeRegionSize}
+ * we keep the {@link CodeManager#runtimeBaselineCodeRegion} array sorted by increasing address.
  *
  * In general we cannot easily guarantee the invariant that the regions managed by this manager
  * are within 32 bits of each other. We assume that {@link VirtualMemory#allocate(Size, com.sun.max.memory.VirtualMemory.Type)}
- * preserves the constraint when asked to allocate {@linkplain VirtualMemory.Type#CODE code}.
+ * preserves the constraint when asked to allocate {@linkplain Type#CODE code}.
  */
 public class VariableAddressCodeManager extends CodeManager {
 

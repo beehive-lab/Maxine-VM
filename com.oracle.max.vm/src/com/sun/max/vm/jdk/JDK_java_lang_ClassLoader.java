@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,8 +80,6 @@ public final class JDK_java_lang_ClassLoader {
     /**
      * Creates a class from a classfile represented as a byte array with the specified source.
      *
-     * @see java.lang.ClassLoader#defineClass1(String, byte[], int, int, ProtectionDomain)
-     *
      * @param name the name of the class
      * @param bytes a representation of the classfile
      * @param offset offset into the array at which the classfile begins
@@ -98,8 +96,6 @@ public final class JDK_java_lang_ClassLoader {
 
     /**
      * Creates a class from a classfile represented as a byte array with the specified source.
-     *
-     * @see java.lang.ClassLoader#defineClass1(String, byte[], int, int, ProtectionDomain)
      *
      * @param name the name of the class
      * @param bytes a representation of the classfile
@@ -122,8 +118,6 @@ public final class JDK_java_lang_ClassLoader {
     /**
      * Creates a class from a classfile represented as a {@code ByteBuffer} with the specified source.
      *
-     * @see java.lang.ClassLoader#defineClass2(String, java.nio.ByteBuffer, int, int, ProtectionDomain)
-     *
      * @param name the name of the class
      * @param byteBuffer the buffer containing the bytes of the classfile
      * @param offset offset into the array at which the classfile begins
@@ -139,8 +133,6 @@ public final class JDK_java_lang_ClassLoader {
 
     /**
      * Creates a class from a classfile represented as a {@code ByteBuffer} with the specified source.
-     *
-     * @see java.lang.ClassLoader#defineClass2(String, java.nio.ByteBuffer, int, int, ProtectionDomain)
      *
      * @param name the name of the class
      * @param byteBuffer the buffer containing the bytes of the classfile

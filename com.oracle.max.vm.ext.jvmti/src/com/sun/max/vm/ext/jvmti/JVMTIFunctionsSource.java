@@ -35,7 +35,6 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -192,7 +191,7 @@ public class JVMTIFunctionsSource {
         // PHASES: ONLOAD,LIVE
         // HANDLECHECK_NULLOK: event_thread=Thread
         // LOGARGS: Address.fromInt(mode),Address.fromInt(event_type),event_thread
-        return JVMTIEvent.setEventNotificationMode(jvmtiEnv, mode, event_type, handleAsThread);
+        return JVMTIEvents.setEventNotificationMode(jvmtiEnv, mode, event_type, handleAsThread);
     }
 
     @VM_ENTRY_POINT
@@ -659,7 +658,7 @@ public class JVMTIFunctionsSource {
         // PHASES: START,LIVE
         // NULLCHECK: modifiers_ptr
         // MEMBERID: field=Field
-        modifiers_ptr.setInt(fieldActor.flags());
+        modifiers_ptr.setInt(fieldActor.accessFlags());
         return JVMTI_ERROR_NONE;
     }
 
@@ -1092,24 +1091,27 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetJLocationFormat(Pointer env, Pointer format_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        format_ptr.setInt(JVMTIConstants.JVMTI_JLOCATION_JVMBCI);
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
     private static int GetSystemProperties(Pointer env, Pointer count_ptr, Pointer property_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        return JVMTISystem.getSystemProperties(env, count_ptr, property_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int GetSystemProperty(Pointer env, Pointer property, Pointer value_ptr) {
         // PHASES: ONLOAD,LIVE
         // NULLCHECK: property,value_ptr
-        return JVMTI.getSystemProperty(env, property, value_ptr);
+        return JVMTISystem.getSystemProperty(env, property, value_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int SetSystemProperty(Pointer env, Pointer property, Pointer value) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        // PHASES: ONLOAD
+        // NULLCHECK: property
+        return JVMTISystem.setSystemProperty(env, property, value);  // value may be null, writeable enquiry
     }
 
     @VM_ENTRY_POINT
@@ -1190,7 +1192,11 @@ public class JVMTIFunctionsSource {
     private static int GetClassVersionNumbers(Pointer env, JniHandle klass, Pointer minor_version_ptr, Pointer major_version_ptr) {
         // PHASES: START,LIVE
         // NULLCHECK: minor_version_ptr, minor_version_ptr
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        // HANDLECHECK: klass=Class
+        ClassActor classActor = ClassActor.fromJava(handleAsClass);
+        major_version_ptr.setInt(classActor.majorVersion);
+        minor_version_ptr.setInt(classActor.minorVersion);
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
@@ -1200,12 +1206,17 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetEnvironmentLocalStorage(Pointer env, Pointer data_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        // PHASES: ANY
+        // NULLCHECK data_ptr
+        data_ptr.setWord(((JVMTI.NativeEnv) jvmtiEnv).envStorage);
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
     private static int SetEnvironmentLocalStorage(Pointer env, Pointer data) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        // PHASES: ANY
+        ((JVMTI.NativeEnv) jvmtiEnv).envStorage = data;
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
@@ -1218,23 +1229,7 @@ public class JVMTIFunctionsSource {
     @VM_ENTRY_POINT
     private static int SetVerboseFlag(Pointer env, int flag, boolean value) {
         // PHASES: ANY
-        switch (flag) {
-            case JVMTI_VERBOSE_GC:
-                VMOptions.verboseOption.verboseGC = value;
-                break;
-            case JVMTI_VERBOSE_CLASS:
-                VMOptions.verboseOption.verboseClass = value;
-                break;
-            case JVMTI_VERBOSE_JNI:
-                VMOptions.verboseOption.verboseJNI = value;
-                break;
-            case JVMTI_VERBOSE_OTHER:
-                VMOptions.verboseOption.verboseCompilation = value;
-                break;
-            default:
-                return JVMTI_ERROR_ILLEGAL_ARGUMENT;
-        }
-        return JVMTI_ERROR_NONE;
+        return JVMTISystem.setVerboseFlag(flag, value);
     }
 
     @VM_ENTRY_POINT

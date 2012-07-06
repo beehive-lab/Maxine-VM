@@ -273,7 +273,7 @@ public class JDK {
     /**
      * Parses a JDK version string into an integer.
      *
-     * @param version a version string that must conform to {@value #JDK_VERSION_STRING_PATTERN}
+     * @param version a version string that must conform to {@link #JDK_VERSION_STRING_PATTERN}
      * @return the integer value following the decimal in {@code version}
      */
     public static int jdkVersionValue(String version) {

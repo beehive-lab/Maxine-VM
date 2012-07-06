@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -184,7 +184,7 @@ public final class Files {
      * @param file the file to be modified (or created) with some generated content
      * @param content the generated content
      * @param start the starting delimiter of the section in {@code file} to be updated with {@code content}
-     * @param start the ending delimiter of the section in {@code file} to be updated with {@code content}
+     * @param end the ending delimiter of the section in {@code file} to be updated with {@code content}
      * @param checkOnly if {@code true}, then {@code file} is not updated; the value returned by this method indicates
      *            whether it would have been updated were this argument {@code true}
      * @return true if {@code file} was modified or created (or would have been if {@code checkOnly} was {@code false})

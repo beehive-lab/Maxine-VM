@@ -122,7 +122,6 @@ public final class VMConfiguration {
 
     /**
      * Provides access to the {@link VMConfiguration} that initiated {@link #gatherBootImagePackages()}.
-     * @return
      */
     public static VMConfiguration activeConfig() {
         return activeConfig;
@@ -158,7 +157,7 @@ public final class VMConfiguration {
      * Checks whether the actual scheme class that implements a given scheme (class) in this configuration
      * is the same class or a subclass of another given class.
      * It is analogous to comparing the scheme package but allows an assignability check
-     * within {@link BootImagePackage#isPartOfMaxineVM(VMConfiguration) before
+     * within {@link BootImagePackage#isPartOfMaxineVM(VMConfiguration)} before
      * the schemes are instantiated.
      * @param <S>
      * @param schemeClass the scheme class being searched for

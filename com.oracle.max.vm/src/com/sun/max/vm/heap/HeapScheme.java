@@ -306,7 +306,6 @@ public interface HeapScheme extends VMScheme {
     /**
      * Return true if the given object is already pinned. This method must be called only when IS_QUERYABLE is false.
      * @param object
-     * @return
      */
     boolean isPinned(Object object);
 
@@ -391,7 +390,7 @@ public interface HeapScheme extends VMScheme {
         }
 
         /**
-         * All heap schemes scan the {@link VMThreadLocal} references and thread stack roots.
+         * All heap schemes scan the {@link VmThreadLocal} references and thread stack roots.
          * @param vmThread
          */
         public abstract void logScanningThreadRoots(VmThread vmThread);
@@ -399,7 +398,6 @@ public interface HeapScheme extends VMScheme {
 
     /**
      * Get the concrete implementation of {@link PhaseLogger}.
-     * @return
      */
     PhaseLogger phaseLogger();
 
@@ -424,7 +422,6 @@ public interface HeapScheme extends VMScheme {
 
     /**
      * Get the concrete implementation of {@link TimeLogger}.
-     * @return
      */
     TimeLogger timeLogger();
 

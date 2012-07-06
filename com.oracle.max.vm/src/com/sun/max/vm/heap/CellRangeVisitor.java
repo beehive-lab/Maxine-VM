@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ import com.sun.max.unsafe.*;
  * Interface to visit iterable ranges of contiguous heap space.
  * An iterable range is formatted as a sequence of cells whose size can be queried by visitors and such that
  * the address of the cell plus its size gives the address of the next cell.
- * @see HeapSpace
  */
 public interface CellRangeVisitor {
     /**

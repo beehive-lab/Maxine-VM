@@ -22,7 +22,9 @@
  */
 package com.oracle.max.vm.ext.jjvmti.agents.heapviewer;
 
+import static com.sun.max.vm.ext.jvmti.JVMTICapabilities.E.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
+import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -88,7 +90,7 @@ public class HeapViewer extends NullJJVMTICallbacks implements JJVMTI.HeapCallba
      */
     @Override
     public void onBoot() {
-        heapViewer.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null);
+        heapViewer.setEventNotificationMode(JVMTI_ENABLE, E.VM_INIT, null);
     }
 
     @Override
@@ -104,9 +106,9 @@ public class HeapViewer extends NullJJVMTICallbacks implements JJVMTI.HeapCallba
         }
 
         try {
-            heapViewer.addCapabilities(EnumSet.of(JVMTICapabilities.E.CAN_GENERATE_GARBAGE_COLLECTION_EVENTS));
-            heapViewer.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_DEATH, null);
-            heapViewer.setEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_DATA_DUMP_REQUEST, null); // TODO
+            heapViewer.addCapabilities(EnumSet.of(CAN_GENERATE_GARBAGE_COLLECTION_EVENTS, CAN_TAG_OBJECTS));
+            heapViewer.setEventNotificationMode(JVMTI_ENABLE, E.VM_DEATH, null);
+            heapViewer.setEventNotificationMode(JVMTI_ENABLE, E.DATA_DUMP_REQUEST, null); // TODO
             // the heapIteration method must be compiled before iterateThroughHeap is called,
             // as allocation is disabled inside iterateThroughHeap
             ClassActor.fromJava(HeapViewer.class).findLocalClassMethodActor(
@@ -165,7 +167,7 @@ public class HeapViewer extends NullJJVMTICallbacks implements JJVMTI.HeapCallba
     @Override
     public void vmDeath() {
         forceGarbageCollection();
-        setEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_DATA_DUMP_REQUEST, null);
+        setEventNotificationMode(JVMTI_DISABLE, E.DATA_DUMP_REQUEST, null);
         dataDumpRequest();
         vmDeathCalled = true;
     }

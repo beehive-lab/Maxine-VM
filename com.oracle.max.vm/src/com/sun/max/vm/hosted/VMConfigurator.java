@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * This class is used to create and install a {@linkplain MaxineVM VM} whose configuration
@@ -92,18 +91,6 @@ public final class VMConfigurator {
         config.gatherBootImagePackages();
         config.loadAndInstantiateSchemes(null);
         return vm;
-    }
-
-    /**
-     * Gets the package providing the default {@link TargetABIsScheme}.
-     */
-    public static BootImagePackage defaultTargetABIsScheme() {
-        switch (platform().isa) {
-            case AMD64:
-                return new com.sun.max.vm.compiler.target.amd64.Package();
-            default:
-                throw FatalError.unimplemented();
-        }
     }
 
     /**

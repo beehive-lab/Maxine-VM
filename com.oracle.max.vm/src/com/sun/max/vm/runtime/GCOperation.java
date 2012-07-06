@@ -123,7 +123,6 @@ public abstract class GCOperation extends VmOperation {
 
     /**
      *
-     * @return
      */
     @Override
     protected boolean doItPrologue(boolean nested) {

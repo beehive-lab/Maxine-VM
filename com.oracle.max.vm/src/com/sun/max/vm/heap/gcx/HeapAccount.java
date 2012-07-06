@@ -154,7 +154,6 @@ public class HeapAccount<T extends HeapAccountOwner>{
     /**
      * Add a contiguous range of regions into an accounting list. Region in the ranges must be linked in the accounting list's shared storage.
      * @param regionID
-     * @param numRegions
      * @param accountingList
      */
     private void addRange(int regionID, int lastRegionID, HeapRegionList accountingList) {

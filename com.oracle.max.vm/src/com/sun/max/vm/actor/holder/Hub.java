@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,8 +50,6 @@ public abstract class Hub extends Hybrid {
      * - tuples:  the permanent cell size
      * - hybrids: the cell size before expansion
      * - arrays:  the object header size
-     *
-     * @return the "tuple size" of objects having this hub
      */
     public final Size tupleSize;
     public final Hub componentHub;
@@ -82,7 +80,7 @@ public abstract class Hub extends Hybrid {
      * Determines whether a given set of class ids collide in a hash table of size {@code divisor}
      * using a hash function of {@code id % divisor}.
      *
-     * @param set of class ids with interface ids encoded as their negative value
+     * @param ids set of class ids with interface ids encoded as their negative value
      * @see ClassID
      */
     private static boolean colliding(int[] ids, int divisor) {
@@ -115,7 +113,7 @@ public abstract class Hub extends Hybrid {
     /**
      * Gets the smallest table size for which we have perfect (collision free) hashing for the given class ids.
      *
-     * @param set of class ids with interface ids encoded as their negative value
+     * @param ids set of class ids with interface ids encoded as their negative value
      */
     private static int minCollisionFreeDivisor(int[] ids) {
         int divisor = ids.length;
@@ -293,7 +291,7 @@ public abstract class Hub extends Hybrid {
 
     /**
      * Make a given vtable entry point to the trampoline again.
-     * @param index the offset into the vtable as answered by {@linkplain VirtualMethodActor.vTableIndex()}
+     * @param index the offset into the vtable as answered by {@linkplain VirtualMethodActor#vTableIndex()}
      */
     public void resetVTableEntry(int index) {
         setWord(index, vm().stubs.virtualTrampoline(index).toAddress());

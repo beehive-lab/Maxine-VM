@@ -33,9 +33,9 @@ import com.sun.max.vm.thread.*;
 
 /**
  * Subclasses of this implementation uses native buffers and the "records" are stored as a flattened array. The records
- * are, however, not real objects, which requires some subterfuge in the case where a client, e.g, {@VMLogger} wants
+ * are, however, not real objects, which requires some subterfuge in the case where a client, e.g, {@link VMLogger} wants
  * to see a real object. We handle this with a {@link VmThreadLocal} that holds a {@link NativeRecord
- * subclass} of {@link VMLog.Record} which records the native record address, and overrides all the methods that access
+ * subclass} of {@link com.sun.max.vm.log.VMLog.Record} which records the native record address, and overrides all the methods that access
  * the state of the record. Evidently this record must be "used" promptly and not cached, as the value of the underlying
  * state will change every time the {@link NativeRecord#address} is set, which will happen at least every time
  * {@link VMLog#getRecord} is called.
@@ -133,7 +133,6 @@ public abstract class VMLogNative extends VMLog {
 
         /**
          * Default size of a log record in the native buffer, assuming fixed length, max args.
-         * @return
          */
         public final int defaultSize() {
             return argsOffset + VMLog.Record.MAX_ARGS * Word.size();
@@ -231,13 +230,11 @@ public abstract class VMLogNative extends VMLog {
 
     /**
      * The offset (in bytes) to the start of the arguments in the native record.
-     * @return
      */
     protected abstract int getArgsOffset();
 
     /**
      * The total size in bytes of a log buffer.
-     * @return
      */
     protected abstract int getLogSize();
 

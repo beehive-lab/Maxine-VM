@@ -214,7 +214,6 @@ public class Log2RegionToByteMapTable {
     /**
      * Returns the address of the entry holding the byte corresponding to the region that contains the specified address.
      * @param coveredAddress an address in the contiguous range of virtual memory covered by the table.
-     * @return
      */
     @INLINE
     private Pointer byteAddressFor(Address coveredAddress) {
@@ -235,7 +234,7 @@ public class Log2RegionToByteMapTable {
     /**
      * Get the byte in the table corresponding to an address that the caller guarantees is covered by the table.
      * Passing an uncovered address here result in returning an random value or a memory access violation.
-     * @param coveredAddress an address guaranteed to be covered by the table
+     * @param address an address guaranteed to be covered by the table
      * @return a byte value
      */
     final byte unsafeGet(Address address) {

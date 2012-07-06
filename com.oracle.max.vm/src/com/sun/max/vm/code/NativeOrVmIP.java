@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,7 +64,6 @@ public class NativeOrVmIP {
     /**
      * Returns the offset in the target method.
      * Fails if the IP points into native code somewhere and not at a VM method compilation.
-     * @return
      */
     public final int pos() {
         assert tm != null : "target method must not be null";

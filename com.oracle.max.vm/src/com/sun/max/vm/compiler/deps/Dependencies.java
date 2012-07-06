@@ -39,7 +39,7 @@ import com.sun.max.vm.jni.MemberID;
 import com.sun.max.vm.type.*;
 
 /**
- * Encodes the {@link CiAssumptions.Assumption assumptions} made when compiling a target method.
+ * Encodes the {@link Assumption assumptions} made when compiling a target method.
  * The assumptions, which initially are specified using {@link Actor} subtypes,
  * are encoded in an efficient, packed, format using {@link MemberID member ids}.
  * Once the assumptions are validated initially, they are associated with

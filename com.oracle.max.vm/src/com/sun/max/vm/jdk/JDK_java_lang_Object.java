@@ -103,7 +103,7 @@ final class JDK_java_lang_Object {
 
     /**
      * Wait for this object's condition variable.
-     * @see java.lang.Object.wait()
+     *
      * @param timeout the maximum number of milliseconds to wait; with {@code 0}
      * indicating an indefinite wait
      * @throws InterruptedException if this thread is interrupted during the wait

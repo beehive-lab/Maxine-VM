@@ -35,7 +35,7 @@ import com.sun.max.vm.type.*;
 /**
  * Denotes a class (the "substitutor") that provides an alternative implementation
  * (a method annotated by {@link SUBSTITUTE}) for at least one method in another
- * class (the {@link #g "substitutee"}).
+ * class (the "substitutee").
  *
  * @see SUBSTITUTE
  */

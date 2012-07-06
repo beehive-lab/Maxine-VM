@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.ext.jvmti;
 
-import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
+import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIVmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -66,6 +66,9 @@ public class JVMTIException {
         }
     }
 
+    /**
+     * A pre-thread value that holds the state necessary to analyze and dispatch and exception event (and it's catch if any).
+     */
     private static EventStateThreadLocal eventStateTL = new EventStateThreadLocal();
 
     /**
@@ -203,8 +206,8 @@ public class JVMTIException {
                 ClassMethodActor classMethodActor = stackElements.get(i).classMethodActor;
                 // check for non-VM class, but not the invocation stub for main which rethrows an unhandled exception
                 if (!(isVmStartup(classMethodActor) || classMethodActor.holder().isReflectionStub())) {
-                    // if this is the top of the stack, we are in the VM startup
-                    return i == stackElements.size() - 1;
+                    // genuine app class
+                    return false;
                 }
             }
             // no app classes, in VM startup
@@ -227,8 +230,16 @@ public class JVMTIException {
             }
         }
         // send if any agent wants it
-        return JVMTI.eventNeeded(JVMTIEvent.EXCEPTION) || JVMTI.eventNeeded(JVMTIEvent.METHOD_EXIT) ||
-               JVMTIVmThreadLocal.bitIsSet(VmThread.currentTLA(), JVMTI_FRAME_POP) || vmaHandler != null;
+        return JVMTI.eventNeeded(E.EXCEPTION) || JVMTI.eventNeeded(E.EXCEPTION_CATCH)  ||
+                  JVMTI.eventNeeded(E.METHOD_EXIT) ||
+                  JVMTIVmThreadLocal.bitIsSet(VmThread.currentTLA(), JVMTI_FRAME_POP) || vmaHandler != null;
+    }
+
+    /**
+     * Used by {@link EXCEPTION_CATCH} events to access the information need to dispatch the event.
+     */
+    static ExceptionEventData getExceptionEventData() {
+        return eventStateTL.get().exceptionEventData;
     }
 
     public static void raiseEvent(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
@@ -271,8 +282,8 @@ public class JVMTIException {
             exceptionEventData.location = stackAnalyser.throwingBci;
             exceptionEventData.methodID = MethodID.fromMethodActor(stackAnalyser.throwingMethodActor);
 
-            if (JVMTI.eventNeeded(JVMTIEvent.EXCEPTION)) {
-                JVMTI.event(JVMTIEvent.EXCEPTION, exceptionEventData);
+            if (JVMTI.eventNeeded(JVMTIEvents.E.EXCEPTION)) {
+                JVMTI.event(JVMTIEvents.E.EXCEPTION, exceptionEventData);
             }
 
             if (!uncaught) {
@@ -280,18 +291,22 @@ public class JVMTIException {
                 if (ctm.classMethodActor != stackAnalyser.throwingMethodActor) {
                     FramePopEventData framePopEventData = JVMTIThreadFunctions.getFramePopEventData(exceptionEventData.methodID, true, null);
                     if (JVMTIVmThreadLocal.bitIsSet(VmThread.currentTLA(), JVMTI_FRAME_POP)) {
-                        JVMTI.event(JVMTI_EVENT_FRAME_POP, framePopEventData);
+                        JVMTI.event(E.FRAME_POP, framePopEventData);
                     }
 
-                    if (JVMTIEvent.isEventSet(JVMTIEvent.METHOD_EXIT)) {
-                        JVMTI.event(JVMTI_EVENT_METHOD_EXIT, framePopEventData);
+                    if (JVMTIEvents.isEventSet(E.METHOD_EXIT)) {
+                        JVMTI.event(E.METHOD_EXIT, framePopEventData);
                     }
                     if (vmaHandler != null) {
                         vmaHandler.exceptionRaised(stackAnalyser.throwingMethodActor, throwable, stackAnalyser.stackElementSizeAtCatch - 1);
                     }
                 }
+                // if an agent wants the exception catch event, we need to ensure that the compiled code for the catch method
+                // has that capability, or deopt it and generate the relevant event code
+                if (JVMTI.eventNeeded(JVMTIEvents.E.EXCEPTION_CATCH)) {
+                    JVMTICode.checkDeOptForMethod(ctm.classMethodActor, JVMTIEvents.codeEventSettings(null, VmThread.current()));
+                }
             }
-
         } finally {
             eventState.inProcess = false;
         }

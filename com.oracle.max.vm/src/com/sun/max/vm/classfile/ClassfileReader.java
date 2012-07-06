@@ -1364,7 +1364,6 @@ public final class ClassfileReader {
      * @param source
      * @param isRemote specifies if the stream is from a remote/untrusted (e.g. network) source. This is mainly used to
      *            determine the default bytecode verification policy for the class.
-     * @return
      */
     private ClassActor loadClass(final String name, Object source, boolean isRemote) {
         try {
@@ -1509,8 +1508,7 @@ public final class ClassfileReader {
 
     /**
      * Writes all the class files that have been {@linkplain #saveClassfile(String, byte[]) saved} (either explicitly
-     * or as a side effect of being {@linkplain #defineClassActor(String, ClassLoader, byte[], int, int, ProtectionDomain, Object, boolean) loaded)
-     * to a given jar file.
+     * or as a side effect of being loaded to a given jar file).
      *
      * @param jarFile where the class files are to be written
      */
@@ -1541,8 +1539,7 @@ public final class ClassfileReader {
 
     /**
      * Writes all the class files that have been {@linkplain #saveClassfile(String, byte[]) saved} (either explicitly
-     * or as a side effect of being {@linkplain #defineClassActor(String, ClassLoader, byte[], int, int, ProtectionDomain, Object, boolean) loaded)
-     * to a given directory.
+     * or as a side effect of being loaded to a given directory).
      *
      * @param directory where the class files are to be written
      */

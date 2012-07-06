@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * VM options handling.
  */
-public final class VMOptions {
+public class VMOptions {
 
     @HOSTED_ONLY
     private static final Comparator<VMOption> OPTION_COMPARATOR = new Comparator<VMOption>() {
@@ -298,7 +298,7 @@ public final class VMOptions {
 
     /**
      * This option is parsed in the native code (see maxine.c). It's declared here simply so that it
-     * shows up in the {@linkplain #printUsage() usage} message.
+     * shows up in the {@linkplain #printUsage(Category) usage} message.
      */
     private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, null,
         "Redirect VM log output to the specified file. By default, VM log output goes to the standard output stream."), MaxineVM.Phase.STARTING);
@@ -376,7 +376,7 @@ public final class VMOptions {
         register(new VMOption("-server", "ignored (present for compatibility)"), MaxineVM.Phase.STARTING);
     }
 
-    private VMOptions() {
+    protected VMOptions() {
     }
 
     /**
@@ -489,7 +489,6 @@ public final class VMOptions {
      *
      * @param prefix the prefix to use for the option (e.g. {@code "-XX:"} or {@code "-C1X:"})
      * @param name the name of the option
-     * @param declaringClass the class in which a field named {@code name} backing the option
      * @param help the help text for the option
      */
     @HOSTED_ONLY
@@ -757,7 +756,6 @@ public final class VMOptions {
      * for the runtime management interface (@see getVmArguments)
      * @param initialArgc
      * @param initialArgv
-     * @return
      */
     private static Pointer copy(int initialArgc, Pointer initialArgv) {
         final Size copySize = Size.fromInt(Pointer.size() * initialArgc);
@@ -795,7 +793,19 @@ public final class VMOptions {
         return checkOptionsForErrors(pristinePhaseOptions);
     }
 
-    protected static String getArgumentString(int index) throws Utf8Exception {
+    protected static int getArgumentCount() {
+        return argumentStart;
+    }
+
+    protected static Pointer getArgumentCString(int index) {
+        if (index < argumentStart) {
+            return argv.getWord(index).asPointer();
+        } else {
+            return Pointer.zero();
+        }
+    }
+
+    private static String getArgumentString(int index) throws Utf8Exception {
         final Pointer cArgument = argv.getWord(index).asPointer();
         if (cArgument.isZero()) {
             return null;
@@ -931,7 +941,15 @@ public final class VMOptions {
             name = argument.substring(2, index); // get the name of the option
             value = argument.substring(index + 1);
         }
-        properties.setProperty(name, value);
+        VMProperty vmProperty = VMProperty.isVMProperty(name);
+        if (vmProperty != null) {
+            if (vmProperty.mutable) {
+                vmProperty.setValue(value);
+                // gets copied into system properties later
+            }
+        } else {
+            properties.setProperty(name, value);
+        }
     }
 
     public static String mainClassName() {

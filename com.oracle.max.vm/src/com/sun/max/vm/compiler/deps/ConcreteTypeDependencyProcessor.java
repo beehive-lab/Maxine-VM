@@ -44,14 +44,14 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
- * {@linkplain DependencyProcessor} for {@link CiAssumptions.ConcreteSubtype}.
+ * {@linkplain DependencyProcessor} for {@link ConcreteSubtype}.
  *
  * This dependency has no additional data in the packed format.
  */
 public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
 
     /**
-     * Essentially the Maxine specific mirror of {@link CiAssumptions.ConcreteSubtype}.
+     * Essentially the Maxine specific mirror of {@link ConcreteSubtype}.
      * Implement this interface in a subclass of {@link DependencyVisitor} to
      * process these dependencies.
      */
@@ -189,7 +189,7 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
      *
      * @param concreteType a new defined type that is (currently) a concrete type
      * @param ancestor a super class (direct or indirect) of {@code concreteType}
-     * @param the dependencies already invalidated by this update
+     * @param invalidated the dependencies already invalidated by this update
      * @return the dependencies invalidated by this update
      */
     private static ArrayList<Dependencies> propagateConcreteSubType(ClassActor concreteType, ClassActor ancestor, ArrayList<Dependencies> invalidated) {
@@ -353,7 +353,7 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
      *
      * @param ancestor a type for which dependencies need to be re-validated
      * @param concreteType the new sub-type causing the hierarchy change
-     * @param a list of invalidated dependencies (may be null)
+     * @param invalidated a list of invalidated dependencies (may be null)
      * @return the invalidated dependencies
      */
     static ArrayList<Dependencies> flushInvalidDependencies(ClassActor ancestor, ClassActor concreteType, ArrayList<Dependencies> invalidated) {

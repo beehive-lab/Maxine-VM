@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code (-33554432 <= li && li <= 33554428) && ((li % 4) == 0)}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 1, Serial#: 1
     public void b(final int li) {
@@ -52,7 +52,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code (-33554432 <= li && li <= 33554428) && ((li % 4) == 0)}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 2, Serial#: 2
     public void ba(final int li) {
@@ -68,7 +68,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code (-33554432 <= li && li <= 33554428) && ((li % 4) == 0)}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 3, Serial#: 3
     public void bl(final int li) {
@@ -84,7 +84,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code (-33554432 <= li && li <= 33554428) && ((li % 4) == 0)}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 4, Serial#: 4
     public void bla(final int li) {
@@ -101,7 +101,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= bi && bi <= 31}<br />
      * Constraint: {@code (-32768 <= bd && bd <= 32764) && ((bd % 4) == 0)}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 5, Serial#: 5
     public void bc(final BOOperand bo, final int bi, final int bd) {
@@ -121,7 +121,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= bi && bi <= 31}<br />
      * Constraint: {@code (-32768 <= bd && bd <= 32764) && ((bd % 4) == 0)}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 6, Serial#: 6
     public void bca(final BOOperand bo, final int bi, final int bd) {
@@ -141,7 +141,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= bi && bi <= 31}<br />
      * Constraint: {@code (-32768 <= bd && bd <= 32764) && ((bd % 4) == 0)}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 7, Serial#: 7
     public void bcl(final BOOperand bo, final int bi, final int bd) {
@@ -161,7 +161,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= bi && bi <= 31}<br />
      * Constraint: {@code (-32768 <= bd && bd <= 32764) && ((bd % 4) == 0)}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 8, Serial#: 8
     public void bcla(final BOOperand bo, final int bi, final int bd) {
@@ -182,7 +182,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= bh && bh <= 3}<br />
      * Constraint: {@code bh != 2}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 9, Serial#: 9
     public void bclr(final BOOperand bo, final int bi, final int bh) {
@@ -204,7 +204,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= bh && bh <= 3}<br />
      * Constraint: {@code bh != 2}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 10, Serial#: 10
     public void bclrl(final BOOperand bo, final int bi, final int bh) {
@@ -226,7 +226,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= bh && bh <= 3}<br />
      * Constraint: {@code bh != 2}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 11, Serial#: 11
     public void bcctr(final BOOperand bo, final int bi, final int bh) {
@@ -248,7 +248,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= bh && bh <= 3}<br />
      * Constraint: {@code bh != 2}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.1 [Book 1]"
      */
     // Template#: 12, Serial#: 12
     public void bcctrl(final BOOperand bo, final int bi, final int bh) {
@@ -270,7 +270,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= ba && ba <= 31}<br />
      * Constraint: {@code 0 <= bb && bb <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.3 [Book 1]"
      */
     // Template#: 13, Serial#: 13
     public void crand(final int bt, final int ba, final int bb) {
@@ -292,7 +292,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= ba && ba <= 31}<br />
      * Constraint: {@code 0 <= bb && bb <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.3 [Book 1]"
      */
     // Template#: 14, Serial#: 14
     public void crxor(final int bt, final int ba, final int bb) {
@@ -314,7 +314,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= ba && ba <= 31}<br />
      * Constraint: {@code 0 <= bb && bb <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.3 [Book 1]"
      */
     // Template#: 15, Serial#: 15
     public void cror(final int bt, final int ba, final int bb) {
@@ -336,7 +336,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= ba && ba <= 31}<br />
      * Constraint: {@code 0 <= bb && bb <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.3 [Book 1]"
      */
     // Template#: 16, Serial#: 16
     public void crnand(final int bt, final int ba, final int bb) {
@@ -358,7 +358,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= ba && ba <= 31}<br />
      * Constraint: {@code 0 <= bb && bb <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.3 [Book 1]"
      */
     // Template#: 17, Serial#: 17
     public void crnor(final int bt, final int ba, final int bb) {
@@ -380,7 +380,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= ba && ba <= 31}<br />
      * Constraint: {@code 0 <= bb && bb <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.3 [Book 1]"
      */
     // Template#: 18, Serial#: 18
     public void creqv(final int bt, final int ba, final int bb) {
@@ -402,7 +402,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= ba && ba <= 31}<br />
      * Constraint: {@code 0 <= bb && bb <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.3 [Book 1]"
      */
     // Template#: 19, Serial#: 19
     public void crandc(final int bt, final int ba, final int bb) {
@@ -424,7 +424,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= ba && ba <= 31}<br />
      * Constraint: {@code 0 <= bb && bb <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.3 [Book 1]"
      */
     // Template#: 20, Serial#: 20
     public void crorc(final int bt, final int ba, final int bb) {
@@ -442,7 +442,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mcrf  }<i>bf</i>, <i>bfa</i>
      * Example disassembly syntax: {@code mcrf          0, 0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 2.4.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 2.4.4 [Book 1]"
      */
     // Template#: 21, Serial#: 21
     public void mcrf(final CRF bf, final CRF bfa) {
@@ -459,7 +459,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 22, Serial#: 22
     public void lbz(final GPR rt, final int d, final ZeroOrRegister ra) {
@@ -480,7 +480,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() != rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 23, Serial#: 23
     public void lbzu(final GPR rt, final int d, final GPR ra) {
@@ -500,7 +500,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 24, Serial#: 24
     public void lbzx(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -519,7 +519,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() != rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 25, Serial#: 25
     public void lbzux(final GPR rt, final GPR ra, final GPR rb) {
@@ -539,7 +539,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 26, Serial#: 26
     public void lhz(final GPR rt, final int d, final ZeroOrRegister ra) {
@@ -560,7 +560,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() != rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 27, Serial#: 27
     public void lhzu(final GPR rt, final int d, final GPR ra) {
@@ -580,7 +580,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 28, Serial#: 28
     public void lhzx(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -599,7 +599,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() != rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 29, Serial#: 29
     public void lhzux(final GPR rt, final GPR ra, final GPR rb) {
@@ -619,7 +619,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 30, Serial#: 30
     public void lha(final GPR rt, final int d, final ZeroOrRegister ra) {
@@ -640,7 +640,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() != rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 31, Serial#: 31
     public void lhau(final GPR rt, final int d, final GPR ra) {
@@ -660,7 +660,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 32, Serial#: 32
     public void lhax(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -679,7 +679,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() != rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 33, Serial#: 33
     public void lhaux(final GPR rt, final GPR ra, final GPR rb) {
@@ -699,7 +699,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 34, Serial#: 34
     public void lwz(final GPR rt, final int d, final ZeroOrRegister ra) {
@@ -720,7 +720,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() != rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 35, Serial#: 35
     public void lwzu(final GPR rt, final int d, final GPR ra) {
@@ -740,7 +740,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 36, Serial#: 36
     public void lwzx(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -759,7 +759,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() != rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 37, Serial#: 37
     public void lwzux(final GPR rt, final GPR ra, final GPR rb) {
@@ -779,7 +779,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code (-32768 <= ds && ds <= 32764) && ((ds % 4) == 0)}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 38, Serial#: 38
     public void lwa(final GPR rt, final int ds, final ZeroOrRegister ra) {
@@ -798,7 +798,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 39, Serial#: 39
     public void lwax(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -817,7 +817,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() != rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 40, Serial#: 40
     public void lwaux(final GPR rt, final GPR ra, final GPR rb) {
@@ -837,7 +837,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code (-32768 <= ds && ds <= 32764) && ((ds % 4) == 0)}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 41, Serial#: 41
     public void ld(final GPR rt, final int ds, final ZeroOrRegister ra) {
@@ -858,7 +858,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() != rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 42, Serial#: 42
     public void ldu(final GPR rt, final int ds, final GPR ra) {
@@ -878,7 +878,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 43, Serial#: 43
     public void ldx(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -897,7 +897,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() != rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 1]"
      */
     // Template#: 44, Serial#: 44
     public void ldux(final GPR rt, final GPR ra, final GPR rb) {
@@ -917,7 +917,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 45, Serial#: 45
     public void stb(final GPR rs, final int d, final ZeroOrRegister ra) {
@@ -937,7 +937,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 46, Serial#: 46
     public void stbu(final GPR rs, final int d, final GPR ra) {
@@ -956,7 +956,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 47, Serial#: 47
     public void stbx(final GPR rs, final ZeroOrRegister ra, final GPR rb) {
@@ -974,7 +974,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 48, Serial#: 48
     public void stbux(final GPR rs, final GPR ra, final GPR rb) {
@@ -993,7 +993,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 49, Serial#: 49
     public void sth(final GPR rs, final int d, final ZeroOrRegister ra) {
@@ -1013,7 +1013,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 50, Serial#: 50
     public void sthu(final GPR rs, final int d, final GPR ra) {
@@ -1032,7 +1032,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 51, Serial#: 51
     public void sthx(final GPR rs, final ZeroOrRegister ra, final GPR rb) {
@@ -1050,7 +1050,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 52, Serial#: 52
     public void sthux(final GPR rs, final GPR ra, final GPR rb) {
@@ -1069,7 +1069,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 53, Serial#: 53
     public void stw(final GPR rs, final int d, final ZeroOrRegister ra) {
@@ -1089,7 +1089,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 54, Serial#: 54
     public void stwu(final GPR rs, final int d, final GPR ra) {
@@ -1108,7 +1108,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 55, Serial#: 55
     public void stwx(final GPR rs, final ZeroOrRegister ra, final GPR rb) {
@@ -1126,7 +1126,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 56, Serial#: 56
     public void stwux(final GPR rs, final GPR ra, final GPR rb) {
@@ -1145,7 +1145,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code (-32768 <= ds && ds <= 32764) && ((ds % 4) == 0)}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 57, Serial#: 57
     public void std(final GPR rs, final int ds, final ZeroOrRegister ra) {
@@ -1165,7 +1165,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code (-32768 <= ds && ds <= 32764) && ((ds % 4) == 0)}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 58, Serial#: 58
     public void stdu(final GPR rs, final int ds, final GPR ra) {
@@ -1184,7 +1184,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 59, Serial#: 59
     public void stdx(final GPR rs, final ZeroOrRegister ra, final GPR rb) {
@@ -1202,7 +1202,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 1]"
      */
     // Template#: 60, Serial#: 60
     public void stdux(final GPR rs, final GPR ra, final GPR rb) {
@@ -1220,7 +1220,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.4 [Book 1]"
      */
     // Template#: 61, Serial#: 61
     public void lhbrx(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -1238,7 +1238,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.4 [Book 1]"
      */
     // Template#: 62, Serial#: 62
     public void lwbrx(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -1256,7 +1256,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.4 [Book 1]"
      */
     // Template#: 63, Serial#: 63
     public void sthbrx(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -1274,7 +1274,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.4 [Book 1]"
      */
     // Template#: 64, Serial#: 64
     public void stwbrx(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -1294,7 +1294,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code ra.value() < rt.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.5 [Book 1]"
      */
     // Template#: 65, Serial#: 65
     public void lmw(final GPR rt, final int d, final ZeroOrRegister ra) {
@@ -1315,7 +1315,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.5 [Book 1]"
      */
     // Template#: 66, Serial#: 66
     public void stmw(final GPR rs, final int d, final ZeroOrRegister ra) {
@@ -1338,7 +1338,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see com.sun.max.asm.ppc.ZeroOrRegister#isOutsideRegisterRange
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.6 [Book 1]"
      */
     // Template#: 67, Serial#: 67
     public void lswi(final GPR rt, final ZeroOrRegister ra, final int nb) {
@@ -1360,7 +1360,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code rt.value() != ra.value()}<br />
      * Constraint: {@code rt.value() != rb.value()}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.6 [Book 1]"
      */
     // Template#: 68, Serial#: 68
     public void lswx(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -1381,7 +1381,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code 0 <= nb && nb <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.6 [Book 1]"
      */
     // Template#: 69, Serial#: 69
     public void stswi(final GPR rs, final ZeroOrRegister ra, final int nb) {
@@ -1400,7 +1400,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.6 [Book 1]"
      */
     // Template#: 70, Serial#: 70
     public void stswx(final GPR rs, final ZeroOrRegister ra, final GPR rb) {
@@ -1419,7 +1419,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code -32768 <= si && si <= 32767}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 71, Serial#: 71
     public void addi(final GPR rt, final ZeroOrRegister ra, final int si) {
@@ -1439,7 +1439,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code ra != R0}<br />
      * Constraint: {@code -32768 <= sis && sis <= 65535}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 72, Serial#: 72
     public void addis(final GPR rt, final ZeroOrRegister ra, final int sis) {
@@ -1456,7 +1456,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code add  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code add           r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 73, Serial#: 73
     public void add(final GPR rt, final GPR ra, final GPR rb) {
@@ -1471,7 +1471,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code add.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code add.          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 74, Serial#: 74
     public void add_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1486,7 +1486,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addo  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code addo          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 75, Serial#: 75
     public void addo(final GPR rt, final GPR ra, final GPR rb) {
@@ -1501,7 +1501,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addo.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code addo.         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 76, Serial#: 76
     public void addo_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1516,7 +1516,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subf  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subf          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 77, Serial#: 77
     public void subf(final GPR rt, final GPR ra, final GPR rb) {
@@ -1531,7 +1531,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subf.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subf.         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 78, Serial#: 78
     public void subf_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1546,7 +1546,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfo  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subfo         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 79, Serial#: 79
     public void subfo(final GPR rt, final GPR ra, final GPR rb) {
@@ -1561,7 +1561,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfo.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subfo.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 80, Serial#: 80
     public void subfo_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1578,7 +1578,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code -32768 <= si && si <= 32767}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 81, Serial#: 81
     public void addic(final GPR rt, final GPR ra, final int si) {
@@ -1596,7 +1596,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code -32768 <= si && si <= 32767}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 82, Serial#: 82
     public void addic_(final GPR rt, final GPR ra, final int si) {
@@ -1614,7 +1614,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code -32768 <= si && si <= 32767}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 83, Serial#: 83
     public void subfic(final GPR rt, final GPR ra, final int si) {
@@ -1630,7 +1630,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addc  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code addc          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 84, Serial#: 84
     public void addc(final GPR rt, final GPR ra, final GPR rb) {
@@ -1645,7 +1645,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addc.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code addc.         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 85, Serial#: 85
     public void addc_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1660,7 +1660,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addco  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code addco         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 86, Serial#: 86
     public void addco(final GPR rt, final GPR ra, final GPR rb) {
@@ -1675,7 +1675,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addco.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code addco.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 87, Serial#: 87
     public void addco_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1690,7 +1690,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfc  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subfc         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 88, Serial#: 88
     public void subfc(final GPR rt, final GPR ra, final GPR rb) {
@@ -1705,7 +1705,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfc.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subfc.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 89, Serial#: 89
     public void subfc_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1720,7 +1720,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfco  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subfco        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 90, Serial#: 90
     public void subfco(final GPR rt, final GPR ra, final GPR rb) {
@@ -1735,7 +1735,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfco.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subfco.       r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 91, Serial#: 91
     public void subfco_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1750,7 +1750,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code adde  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code adde          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 92, Serial#: 92
     public void adde(final GPR rt, final GPR ra, final GPR rb) {
@@ -1765,7 +1765,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code adde.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code adde.         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 93, Serial#: 93
     public void adde_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1780,7 +1780,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addeo  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code addeo         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 94, Serial#: 94
     public void addeo(final GPR rt, final GPR ra, final GPR rb) {
@@ -1795,7 +1795,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addeo.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code addeo.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 95, Serial#: 95
     public void addeo_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1810,7 +1810,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfe  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subfe         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 96, Serial#: 96
     public void subfe(final GPR rt, final GPR ra, final GPR rb) {
@@ -1825,7 +1825,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfe.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subfe.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 97, Serial#: 97
     public void subfe_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1840,7 +1840,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfeo  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subfeo        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 98, Serial#: 98
     public void subfeo(final GPR rt, final GPR ra, final GPR rb) {
@@ -1855,7 +1855,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfeo.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code subfeo.       r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 99, Serial#: 99
     public void subfeo_(final GPR rt, final GPR ra, final GPR rb) {
@@ -1870,7 +1870,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addme  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code addme         r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 100, Serial#: 100
     public void addme(final GPR rt, final GPR ra) {
@@ -1884,7 +1884,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addme.  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code addme.        r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 101, Serial#: 101
     public void addme_(final GPR rt, final GPR ra) {
@@ -1898,7 +1898,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addmeo  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code addmeo        r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 102, Serial#: 102
     public void addmeo(final GPR rt, final GPR ra) {
@@ -1912,7 +1912,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addmeo.  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code addmeo.       r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 103, Serial#: 103
     public void addmeo_(final GPR rt, final GPR ra) {
@@ -1926,7 +1926,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfme  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code subfme        r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 104, Serial#: 104
     public void subfme(final GPR rt, final GPR ra) {
@@ -1940,7 +1940,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfme.  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code subfme.       r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 105, Serial#: 105
     public void subfme_(final GPR rt, final GPR ra) {
@@ -1954,7 +1954,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfmeo  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code subfmeo       r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 106, Serial#: 106
     public void subfmeo(final GPR rt, final GPR ra) {
@@ -1968,7 +1968,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfmeo.  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code subfmeo.      r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 107, Serial#: 107
     public void subfmeo_(final GPR rt, final GPR ra) {
@@ -1982,7 +1982,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addze  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code addze         r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 108, Serial#: 108
     public void addze(final GPR rt, final GPR ra) {
@@ -1996,7 +1996,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addze.  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code addze.        r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 109, Serial#: 109
     public void addze_(final GPR rt, final GPR ra) {
@@ -2010,7 +2010,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addzeo  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code addzeo        r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 110, Serial#: 110
     public void addzeo(final GPR rt, final GPR ra) {
@@ -2024,7 +2024,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code addzeo.  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code addzeo.       r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 111, Serial#: 111
     public void addzeo_(final GPR rt, final GPR ra) {
@@ -2038,7 +2038,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfze  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code subfze        r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 112, Serial#: 112
     public void subfze(final GPR rt, final GPR ra) {
@@ -2052,7 +2052,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfze.  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code subfze.       r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 113, Serial#: 113
     public void subfze_(final GPR rt, final GPR ra) {
@@ -2066,7 +2066,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfzeo  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code subfzeo       r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 114, Serial#: 114
     public void subfzeo(final GPR rt, final GPR ra) {
@@ -2080,7 +2080,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code subfzeo.  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code subfzeo.      r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 115, Serial#: 115
     public void subfzeo_(final GPR rt, final GPR ra) {
@@ -2094,7 +2094,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code neg  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code neg           r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 116, Serial#: 116
     public void neg(final GPR rt, final GPR ra) {
@@ -2108,7 +2108,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code neg.  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code neg.          r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 117, Serial#: 117
     public void neg_(final GPR rt, final GPR ra) {
@@ -2122,7 +2122,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code nego  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code nego          r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 118, Serial#: 118
     public void nego(final GPR rt, final GPR ra) {
@@ -2136,7 +2136,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code nego.  }<i>rt</i>, <i>ra</i>
      * Example disassembly syntax: {@code nego.         r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 119, Serial#: 119
     public void nego_(final GPR rt, final GPR ra) {
@@ -2152,7 +2152,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code -32768 <= si && si <= 32767}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 120, Serial#: 120
     public void mulli(final GPR rt, final GPR ra, final int si) {
@@ -2168,7 +2168,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulld  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulld         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 121, Serial#: 121
     public void mulld(final GPR rt, final GPR ra, final GPR rb) {
@@ -2183,7 +2183,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulld.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulld.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 122, Serial#: 122
     public void mulld_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2198,7 +2198,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulldo  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulldo        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 123, Serial#: 123
     public void mulldo(final GPR rt, final GPR ra, final GPR rb) {
@@ -2213,7 +2213,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulldo.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulldo.       r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 124, Serial#: 124
     public void mulldo_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2228,7 +2228,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mullw  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mullw         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 125, Serial#: 125
     public void mullw(final GPR rt, final GPR ra, final GPR rb) {
@@ -2243,7 +2243,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mullw.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mullw.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 126, Serial#: 126
     public void mullw_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2258,7 +2258,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mullwo  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mullwo        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 127, Serial#: 127
     public void mullwo(final GPR rt, final GPR ra, final GPR rb) {
@@ -2273,7 +2273,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mullwo.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mullwo.       r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 128, Serial#: 128
     public void mullwo_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2288,7 +2288,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulhd  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulhd         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 129, Serial#: 129
     public void mulhd(final GPR rt, final GPR ra, final GPR rb) {
@@ -2303,7 +2303,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulhd.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulhd.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 130, Serial#: 130
     public void mulhd_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2318,7 +2318,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulhw  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulhw         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 131, Serial#: 131
     public void mulhw(final GPR rt, final GPR ra, final GPR rb) {
@@ -2333,7 +2333,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulhw.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulhw.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 132, Serial#: 132
     public void mulhw_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2348,7 +2348,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulhdu  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulhdu        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 133, Serial#: 133
     public void mulhdu(final GPR rt, final GPR ra, final GPR rb) {
@@ -2363,7 +2363,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulhdu.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulhdu.       r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 134, Serial#: 134
     public void mulhdu_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2378,7 +2378,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulhwu  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulhwu        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 135, Serial#: 135
     public void mulhwu(final GPR rt, final GPR ra, final GPR rb) {
@@ -2393,7 +2393,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mulhwu.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code mulhwu.       r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 136, Serial#: 136
     public void mulhwu_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2408,7 +2408,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divd  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divd          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 137, Serial#: 137
     public void divd(final GPR rt, final GPR ra, final GPR rb) {
@@ -2423,7 +2423,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divd.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divd.         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 138, Serial#: 138
     public void divd_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2438,7 +2438,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divdo  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divdo         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 139, Serial#: 139
     public void divdo(final GPR rt, final GPR ra, final GPR rb) {
@@ -2453,7 +2453,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divdo.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divdo.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 140, Serial#: 140
     public void divdo_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2468,7 +2468,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divw  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divw          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 141, Serial#: 141
     public void divw(final GPR rt, final GPR ra, final GPR rb) {
@@ -2483,7 +2483,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divw.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divw.         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 142, Serial#: 142
     public void divw_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2498,7 +2498,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divwo  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divwo         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 143, Serial#: 143
     public void divwo(final GPR rt, final GPR ra, final GPR rb) {
@@ -2513,7 +2513,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divwo.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divwo.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 144, Serial#: 144
     public void divwo_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2528,7 +2528,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divdu  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divdu         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 145, Serial#: 145
     public void divdu(final GPR rt, final GPR ra, final GPR rb) {
@@ -2543,7 +2543,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divdu.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divdu.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 146, Serial#: 146
     public void divdu_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2558,7 +2558,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divduo  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divduo        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 147, Serial#: 147
     public void divduo(final GPR rt, final GPR ra, final GPR rb) {
@@ -2573,7 +2573,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divduo.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divduo.       r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 148, Serial#: 148
     public void divduo_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2588,7 +2588,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divwu  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divwu         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 149, Serial#: 149
     public void divwu(final GPR rt, final GPR ra, final GPR rb) {
@@ -2603,7 +2603,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divwu.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divwu.        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 150, Serial#: 150
     public void divwu_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2618,7 +2618,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divwuo  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divwuo        r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 151, Serial#: 151
     public void divwuo(final GPR rt, final GPR ra, final GPR rb) {
@@ -2633,7 +2633,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code divwuo.  }<i>rt</i>, <i>ra</i>, <i>rb</i>
      * Example disassembly syntax: {@code divwuo.       r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.8 [Book 1]"
      */
     // Template#: 152, Serial#: 152
     public void divwuo_(final GPR rt, final GPR ra, final GPR rb) {
@@ -2651,7 +2651,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= l && l <= 1}<br />
      * Constraint: {@code -32768 <= si && si <= 32767}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.9 [Book 1]"
      */
     // Template#: 153, Serial#: 153
     public void cmpi(final CRF bf, final int l, final GPR ra, final int si) {
@@ -2671,7 +2671,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= l && l <= 1}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.9 [Book 1]"
      */
     // Template#: 154, Serial#: 154
     public void cmp(final CRF bf, final int l, final GPR ra, final GPR rb) {
@@ -2691,7 +2691,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= l && l <= 1}<br />
      * Constraint: {@code 0 <= ui && ui <= 65535}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.9 [Book 1]"
      */
     // Template#: 155, Serial#: 155
     public void cmpli(final CRF bf, final int l, final GPR ra, final int ui) {
@@ -2711,7 +2711,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= l && l <= 1}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.9 [Book 1]"
      */
     // Template#: 156, Serial#: 156
     public void cmpl(final CRF bf, final int l, final GPR ra, final GPR rb) {
@@ -2731,7 +2731,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= to && to <= 31}<br />
      * Constraint: {@code -32768 <= si && si <= 32767}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.10 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.10 [Book 1]"
      */
     // Template#: 157, Serial#: 157
     public void tdi(final int to, final GPR ra, final int si) {
@@ -2751,7 +2751,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= to && to <= 31}<br />
      * Constraint: {@code -32768 <= si && si <= 32767}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.10 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.10 [Book 1]"
      */
     // Template#: 158, Serial#: 158
     public void twi(final int to, final GPR ra, final int si) {
@@ -2770,7 +2770,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= to && to <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.10 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.10 [Book 1]"
      */
     // Template#: 159, Serial#: 159
     public void td(final int to, final GPR ra, final GPR rb) {
@@ -2788,7 +2788,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= to && to <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.10 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.10 [Book 1]"
      */
     // Template#: 160, Serial#: 160
     public void tw(final int to, final GPR ra, final GPR rb) {
@@ -2806,7 +2806,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= ui && ui <= 65535}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 161, Serial#: 161
     public void andi_(final GPR ra, final GPR rs, final int ui) {
@@ -2824,7 +2824,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= ui && ui <= 65535}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 162, Serial#: 162
     public void andis_(final GPR ra, final GPR rs, final int ui) {
@@ -2842,7 +2842,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= ui && ui <= 65535}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 163, Serial#: 163
     public void ori(final GPR ra, final GPR rs, final int ui) {
@@ -2860,7 +2860,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= ui && ui <= 65535}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 164, Serial#: 164
     public void oris(final GPR ra, final GPR rs, final int ui) {
@@ -2878,7 +2878,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= ui && ui <= 65535}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 165, Serial#: 165
     public void xori(final GPR ra, final GPR rs, final int ui) {
@@ -2896,7 +2896,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= ui && ui <= 65535}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 166, Serial#: 166
     public void xoris(final GPR ra, final GPR rs, final int ui) {
@@ -2912,7 +2912,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code and  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code and           r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 167, Serial#: 167
     public void and(final GPR ra, final GPR rs, final GPR rb) {
@@ -2927,7 +2927,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code and.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code and.          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 168, Serial#: 168
     public void and_(final GPR ra, final GPR rs, final GPR rb) {
@@ -2942,7 +2942,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code or  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code or            r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 169, Serial#: 169
     public void or(final GPR ra, final GPR rs, final GPR rb) {
@@ -2957,7 +2957,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code or.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code or.           r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 170, Serial#: 170
     public void or_(final GPR ra, final GPR rs, final GPR rb) {
@@ -2972,7 +2972,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code xor           r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 171, Serial#: 171
     public void xor(final GPR ra, final GPR rs, final GPR rb) {
@@ -2987,7 +2987,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code xor.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code xor.          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 172, Serial#: 172
     public void xor_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3002,7 +3002,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code nand  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code nand          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 173, Serial#: 173
     public void nand(final GPR ra, final GPR rs, final GPR rb) {
@@ -3017,7 +3017,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code nand.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code nand.         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 174, Serial#: 174
     public void nand_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3032,7 +3032,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code nor  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code nor           r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 175, Serial#: 175
     public void nor(final GPR ra, final GPR rs, final GPR rb) {
@@ -3047,7 +3047,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code nor.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code nor.          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 176, Serial#: 176
     public void nor_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3062,7 +3062,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code eqv  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code eqv           r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 177, Serial#: 177
     public void eqv(final GPR ra, final GPR rs, final GPR rb) {
@@ -3077,7 +3077,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code eqv.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code eqv.          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 178, Serial#: 178
     public void eqv_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3092,7 +3092,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code andc  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code andc          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 179, Serial#: 179
     public void andc(final GPR ra, final GPR rs, final GPR rb) {
@@ -3107,7 +3107,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code andc.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code andc.         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 180, Serial#: 180
     public void andc_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3122,7 +3122,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code orc  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code orc           r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 181, Serial#: 181
     public void orc(final GPR ra, final GPR rs, final GPR rb) {
@@ -3137,7 +3137,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code orc.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code orc.          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 182, Serial#: 182
     public void orc_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3152,7 +3152,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code extsb  }<i>ra</i>, <i>rs</i>
      * Example disassembly syntax: {@code extsb         r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 183, Serial#: 183
     public void extsb(final GPR ra, final GPR rs) {
@@ -3166,7 +3166,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code extsb.  }<i>ra</i>, <i>rs</i>
      * Example disassembly syntax: {@code extsb.        r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 184, Serial#: 184
     public void extsb_(final GPR ra, final GPR rs) {
@@ -3180,7 +3180,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code extsh  }<i>ra</i>, <i>rs</i>
      * Example disassembly syntax: {@code extsh         r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 185, Serial#: 185
     public void extsh(final GPR ra, final GPR rs) {
@@ -3194,7 +3194,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code extsh.  }<i>ra</i>, <i>rs</i>
      * Example disassembly syntax: {@code extsh.        r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 186, Serial#: 186
     public void extsh_(final GPR ra, final GPR rs) {
@@ -3208,7 +3208,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code extsw  }<i>ra</i>, <i>rs</i>
      * Example disassembly syntax: {@code extsw         r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 187, Serial#: 187
     public void extsw(final GPR ra, final GPR rs) {
@@ -3222,7 +3222,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code extsw.  }<i>ra</i>, <i>rs</i>
      * Example disassembly syntax: {@code extsw.        r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 188, Serial#: 188
     public void extsw_(final GPR ra, final GPR rs) {
@@ -3236,7 +3236,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code cntlzd  }<i>ra</i>, <i>rs</i>
      * Example disassembly syntax: {@code cntlzd        r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 189, Serial#: 189
     public void cntlzd(final GPR ra, final GPR rs) {
@@ -3250,7 +3250,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code cntlzd.  }<i>ra</i>, <i>rs</i>
      * Example disassembly syntax: {@code cntlzd.       r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 190, Serial#: 190
     public void cntlzd_(final GPR ra, final GPR rs) {
@@ -3264,7 +3264,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code cntlzw  }<i>ra</i>, <i>rs</i>
      * Example disassembly syntax: {@code cntlzw        r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 191, Serial#: 191
     public void cntlzw(final GPR ra, final GPR rs) {
@@ -3278,7 +3278,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code cntlzw.  }<i>ra</i>, <i>rs</i>
      * Example disassembly syntax: {@code cntlzw.       r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.11 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.11 [Book 1]"
      */
     // Template#: 192, Serial#: 192
     public void cntlzw_(final GPR ra, final GPR rs) {
@@ -3295,7 +3295,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= sh && sh <= 63}<br />
      * Constraint: {@code 0 <= mb && mb <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 193, Serial#: 193
     public void rldicl(final GPR ra, final GPR rs, final int sh, final int mb) {
@@ -3316,7 +3316,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= sh && sh <= 63}<br />
      * Constraint: {@code 0 <= mb && mb <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 194, Serial#: 194
     public void rldicl_(final GPR ra, final GPR rs, final int sh, final int mb) {
@@ -3337,7 +3337,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= sh && sh <= 63}<br />
      * Constraint: {@code 0 <= me && me <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 195, Serial#: 195
     public void rldicr(final GPR ra, final GPR rs, final int sh, final int me) {
@@ -3358,7 +3358,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= sh && sh <= 63}<br />
      * Constraint: {@code 0 <= me && me <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 196, Serial#: 196
     public void rldicr_(final GPR ra, final GPR rs, final int sh, final int me) {
@@ -3379,7 +3379,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= sh && sh <= 63}<br />
      * Constraint: {@code 0 <= mb && mb <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 197, Serial#: 197
     public void rldic(final GPR ra, final GPR rs, final int sh, final int mb) {
@@ -3400,7 +3400,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= sh && sh <= 63}<br />
      * Constraint: {@code 0 <= mb && mb <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 198, Serial#: 198
     public void rldic_(final GPR ra, final GPR rs, final int sh, final int mb) {
@@ -3422,7 +3422,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= mb && mb <= 31}<br />
      * Constraint: {@code 0 <= me && me <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 199, Serial#: 199
     public void rlwinm(final GPR ra, final GPR rs, final int sh, final int mb, final int me) {
@@ -3446,7 +3446,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= mb && mb <= 31}<br />
      * Constraint: {@code 0 <= me && me <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 200, Serial#: 200
     public void rlwinm_(final GPR ra, final GPR rs, final int sh, final int mb, final int me) {
@@ -3468,7 +3468,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= mb && mb <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 201, Serial#: 201
     public void rldcl(final GPR ra, final GPR rs, final GPR rb, final int mb) {
@@ -3487,7 +3487,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= mb && mb <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 202, Serial#: 202
     public void rldcl_(final GPR ra, final GPR rs, final GPR rb, final int mb) {
@@ -3506,7 +3506,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= me && me <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 203, Serial#: 203
     public void rldcr(final GPR ra, final GPR rs, final GPR rb, final int me) {
@@ -3525,7 +3525,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= me && me <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 204, Serial#: 204
     public void rldcr_(final GPR ra, final GPR rs, final GPR rb, final int me) {
@@ -3545,7 +3545,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= mb && mb <= 31}<br />
      * Constraint: {@code 0 <= me && me <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 205, Serial#: 205
     public void rlwnm(final GPR ra, final GPR rs, final GPR rb, final int mb, final int me) {
@@ -3567,7 +3567,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= mb && mb <= 31}<br />
      * Constraint: {@code 0 <= me && me <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 206, Serial#: 206
     public void rlwnm_(final GPR ra, final GPR rs, final GPR rb, final int mb, final int me) {
@@ -3589,7 +3589,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= sh && sh <= 63}<br />
      * Constraint: {@code 0 <= mb && mb <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 207, Serial#: 207
     public void rldimi(final GPR ra, final GPR rs, final int sh, final int mb) {
@@ -3610,7 +3610,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= sh && sh <= 63}<br />
      * Constraint: {@code 0 <= mb && mb <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 208, Serial#: 208
     public void rldimi_(final GPR ra, final GPR rs, final int sh, final int mb) {
@@ -3632,7 +3632,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= mb && mb <= 31}<br />
      * Constraint: {@code 0 <= me && me <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 209, Serial#: 209
     public void rlwimi(final GPR ra, final GPR rs, final int sh, final int mb, final int me) {
@@ -3656,7 +3656,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code 0 <= mb && mb <= 31}<br />
      * Constraint: {@code 0 <= me && me <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12 [Book 1]"
      */
     // Template#: 210, Serial#: 210
     public void rlwimi_(final GPR ra, final GPR rs, final int sh, final int mb, final int me) {
@@ -3676,7 +3676,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code sld  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code sld           r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 211, Serial#: 211
     public void sld(final GPR ra, final GPR rs, final GPR rb) {
@@ -3691,7 +3691,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code sld.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code sld.          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 212, Serial#: 212
     public void sld_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3706,7 +3706,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code slw  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code slw           r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 213, Serial#: 213
     public void slw(final GPR ra, final GPR rs, final GPR rb) {
@@ -3721,7 +3721,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code slw.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code slw.          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 214, Serial#: 214
     public void slw_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3736,7 +3736,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code srd  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code srd           r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 215, Serial#: 215
     public void srd(final GPR ra, final GPR rs, final GPR rb) {
@@ -3751,7 +3751,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code srd.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code srd.          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 216, Serial#: 216
     public void srd_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3766,7 +3766,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code srw  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code srw           r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 217, Serial#: 217
     public void srw(final GPR ra, final GPR rs, final GPR rb) {
@@ -3781,7 +3781,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code srw.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code srw.          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 218, Serial#: 218
     public void srw_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3798,7 +3798,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= sh && sh <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 219, Serial#: 219
     public void sradi(final GPR ra, final GPR rs, final int sh) {
@@ -3816,7 +3816,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= sh && sh <= 63}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 220, Serial#: 220
     public void sradi_(final GPR ra, final GPR rs, final int sh) {
@@ -3834,7 +3834,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= sh && sh <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 221, Serial#: 221
     public void srawi(final GPR ra, final GPR rs, final int sh) {
@@ -3852,7 +3852,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= sh && sh <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 222, Serial#: 222
     public void srawi_(final GPR ra, final GPR rs, final int sh) {
@@ -3868,7 +3868,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code srad  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code srad          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 223, Serial#: 223
     public void srad(final GPR ra, final GPR rs, final GPR rb) {
@@ -3883,7 +3883,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code srad.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code srad.         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 224, Serial#: 224
     public void srad_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3898,7 +3898,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code sraw  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code sraw          r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 225, Serial#: 225
     public void sraw(final GPR ra, final GPR rs, final GPR rb) {
@@ -3913,7 +3913,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code sraw.  }<i>ra</i>, <i>rs</i>, <i>rb</i>
      * Example disassembly syntax: {@code sraw.         r0, r0, r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.12.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.12.2 [Book 1]"
      */
     // Template#: 226, Serial#: 226
     public void sraw_(final GPR ra, final GPR rs, final GPR rb) {
@@ -3930,7 +3930,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= spr && spr <= 1023}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.13 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.13 [Book 1]"
      */
     // Template#: 227, Serial#: 227
     public void mtspr(final int spr, final GPR rs) {
@@ -3947,7 +3947,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= spr && spr <= 1023}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.13 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.13 [Book 1]"
      */
     // Template#: 228, Serial#: 228
     public void mfspr(final GPR rt, final int spr) {
@@ -3964,7 +3964,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= fxm && fxm <= 255}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.13 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.13 [Book 1]"
      */
     // Template#: 229, Serial#: 229
     public void mtcrf(final int fxm, final GPR rs) {
@@ -3979,7 +3979,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mfcr  }<i>rt</i>
      * Example disassembly syntax: {@code mfcr          r0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.13 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.13 [Book 1]"
      */
     // Template#: 230, Serial#: 230
     public void mfcr(final GPR rt) {
@@ -3995,7 +3995,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.2 [Book 1]"
      */
     // Template#: 231, Serial#: 231
     public void lfs(final FPR frt, final int d, final ZeroOrRegister ra) {
@@ -4014,7 +4014,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.2 [Book 1]"
      */
     // Template#: 232, Serial#: 232
     public void lfsx(final FPR frt, final ZeroOrRegister ra, final GPR rb) {
@@ -4033,7 +4033,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.2 [Book 1]"
      */
     // Template#: 233, Serial#: 233
     public void lfsu(final FPR frt, final int d, final GPR ra) {
@@ -4052,7 +4052,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.2 [Book 1]"
      */
     // Template#: 234, Serial#: 234
     public void lfsux(final FPR frt, final GPR ra, final GPR rb) {
@@ -4071,7 +4071,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.2 [Book 1]"
      */
     // Template#: 235, Serial#: 235
     public void lfd(final FPR frt, final int d, final ZeroOrRegister ra) {
@@ -4090,7 +4090,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.2 [Book 1]"
      */
     // Template#: 236, Serial#: 236
     public void lfdx(final FPR frt, final ZeroOrRegister ra, final GPR rb) {
@@ -4109,7 +4109,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.2 [Book 1]"
      */
     // Template#: 237, Serial#: 237
     public void lfdu(final FPR frt, final int d, final GPR ra) {
@@ -4128,7 +4128,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.2 [Book 1]"
      */
     // Template#: 238, Serial#: 238
     public void lfdux(final FPR frt, final GPR ra, final GPR rb) {
@@ -4147,7 +4147,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.3 [Book 1]"
      */
     // Template#: 239, Serial#: 239
     public void stfs(final FPR frs, final int d, final ZeroOrRegister ra) {
@@ -4166,7 +4166,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.3 [Book 1]"
      */
     // Template#: 240, Serial#: 240
     public void stfsx(final FPR frs, final ZeroOrRegister ra, final GPR rb) {
@@ -4185,7 +4185,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.3 [Book 1]"
      */
     // Template#: 241, Serial#: 241
     public void stfsu(final FPR frs, final int d, final GPR ra) {
@@ -4204,7 +4204,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.3 [Book 1]"
      */
     // Template#: 242, Serial#: 242
     public void stfsux(final FPR frs, final GPR ra, final GPR rb) {
@@ -4223,7 +4223,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.3 [Book 1]"
      */
     // Template#: 243, Serial#: 243
     public void stfd(final FPR frs, final int d, final ZeroOrRegister ra) {
@@ -4242,7 +4242,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.3 [Book 1]"
      */
     // Template#: 244, Serial#: 244
     public void stfdx(final FPR frs, final ZeroOrRegister ra, final GPR rb) {
@@ -4261,7 +4261,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Constraint: {@code -32768 <= d && d <= 32767}<br />
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.3 [Book 1]"
      */
     // Template#: 245, Serial#: 245
     public void stfdu(final FPR frs, final int d, final GPR ra) {
@@ -4280,7 +4280,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.3 [Book 1]"
      */
     // Template#: 246, Serial#: 246
     public void stfdux(final FPR frs, final GPR ra, final GPR rb) {
@@ -4296,7 +4296,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmr  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fmr           f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.4 [Book 1]"
      */
     // Template#: 247, Serial#: 247
     public void fmr(final FPR frt, final FPR frb) {
@@ -4310,7 +4310,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmr.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fmr.          f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.4 [Book 1]"
      */
     // Template#: 248, Serial#: 248
     public void fmr_(final FPR frt, final FPR frb) {
@@ -4324,7 +4324,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fneg  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fneg          f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.4 [Book 1]"
      */
     // Template#: 249, Serial#: 249
     public void fneg(final FPR frt, final FPR frb) {
@@ -4338,7 +4338,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fneg.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fneg.         f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.4 [Book 1]"
      */
     // Template#: 250, Serial#: 250
     public void fneg_(final FPR frt, final FPR frb) {
@@ -4352,7 +4352,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fabs  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fabs          f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.4 [Book 1]"
      */
     // Template#: 251, Serial#: 251
     public void fabs(final FPR frt, final FPR frb) {
@@ -4366,7 +4366,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fabs.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fabs.         f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.4 [Book 1]"
      */
     // Template#: 252, Serial#: 252
     public void fabs_(final FPR frt, final FPR frb) {
@@ -4380,7 +4380,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fnabs  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fnabs         f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.4 [Book 1]"
      */
     // Template#: 253, Serial#: 253
     public void fnabs(final FPR frt, final FPR frb) {
@@ -4394,7 +4394,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fnabs.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fnabs.        f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.4 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.4 [Book 1]"
      */
     // Template#: 254, Serial#: 254
     public void fnabs_(final FPR frt, final FPR frb) {
@@ -4408,7 +4408,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fadd  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fadd          f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 255, Serial#: 255
     public void fadd(final FPR frt, final FPR fra, final FPR frb) {
@@ -4423,7 +4423,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fadd.  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fadd.         f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 256, Serial#: 256
     public void fadd_(final FPR frt, final FPR fra, final FPR frb) {
@@ -4438,7 +4438,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fadds  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fadds         f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 257, Serial#: 257
     public void fadds(final FPR frt, final FPR fra, final FPR frb) {
@@ -4453,7 +4453,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fadds.  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fadds.        f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 258, Serial#: 258
     public void fadds_(final FPR frt, final FPR fra, final FPR frb) {
@@ -4468,7 +4468,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fsub  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fsub          f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 259, Serial#: 259
     public void fsub(final FPR frt, final FPR fra, final FPR frb) {
@@ -4483,7 +4483,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fsub.  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fsub.         f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 260, Serial#: 260
     public void fsub_(final FPR frt, final FPR fra, final FPR frb) {
@@ -4498,7 +4498,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fsubs  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fsubs         f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 261, Serial#: 261
     public void fsubs(final FPR frt, final FPR fra, final FPR frb) {
@@ -4513,7 +4513,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fsubs.  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fsubs.        f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 262, Serial#: 262
     public void fsubs_(final FPR frt, final FPR fra, final FPR frb) {
@@ -4528,7 +4528,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmul  }<i>frt</i>, <i>fra</i>, <i>frc</i>
      * Example disassembly syntax: {@code fmul          f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 263, Serial#: 263
     public void fmul(final FPR frt, final FPR fra, final FPR frc) {
@@ -4543,7 +4543,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmul.  }<i>frt</i>, <i>fra</i>, <i>frc</i>
      * Example disassembly syntax: {@code fmul.         f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 264, Serial#: 264
     public void fmul_(final FPR frt, final FPR fra, final FPR frc) {
@@ -4558,7 +4558,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmuls  }<i>frt</i>, <i>fra</i>, <i>frc</i>
      * Example disassembly syntax: {@code fmuls         f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 265, Serial#: 265
     public void fmuls(final FPR frt, final FPR fra, final FPR frc) {
@@ -4573,7 +4573,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmuls.  }<i>frt</i>, <i>fra</i>, <i>frc</i>
      * Example disassembly syntax: {@code fmuls.        f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 266, Serial#: 266
     public void fmuls_(final FPR frt, final FPR fra, final FPR frc) {
@@ -4588,7 +4588,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fdiv  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fdiv          f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 267, Serial#: 267
     public void fdiv(final FPR frt, final FPR fra, final FPR frb) {
@@ -4603,7 +4603,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fdiv.  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fdiv.         f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 268, Serial#: 268
     public void fdiv_(final FPR frt, final FPR fra, final FPR frb) {
@@ -4618,7 +4618,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fdivs  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fdivs         f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 269, Serial#: 269
     public void fdivs(final FPR frt, final FPR fra, final FPR frb) {
@@ -4633,7 +4633,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fdivs.  }<i>frt</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fdivs.        f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 270, Serial#: 270
     public void fdivs_(final FPR frt, final FPR fra, final FPR frb) {
@@ -4648,7 +4648,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmadd  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fmadd         f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 271, Serial#: 271
     public void fmadd(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4664,7 +4664,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmadd.  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fmadd.        f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 272, Serial#: 272
     public void fmadd_(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4680,7 +4680,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmadds  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fmadds        f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 273, Serial#: 273
     public void fmadds(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4696,7 +4696,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmadds.  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fmadds.       f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 274, Serial#: 274
     public void fmadds_(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4712,7 +4712,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmsub  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fmsub         f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 275, Serial#: 275
     public void fmsub(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4728,7 +4728,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmsub.  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fmsub.        f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 276, Serial#: 276
     public void fmsub_(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4744,7 +4744,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmsubs  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fmsubs        f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 277, Serial#: 277
     public void fmsubs(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4760,7 +4760,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fmsubs.  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fmsubs.       f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 278, Serial#: 278
     public void fmsubs_(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4776,7 +4776,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fnmadd  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fnmadd        f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 279, Serial#: 279
     public void fnmadd(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4792,7 +4792,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fnmadd.  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fnmadd.       f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 280, Serial#: 280
     public void fnmadd_(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4808,7 +4808,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fnmadds  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fnmadds       f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 281, Serial#: 281
     public void fnmadds(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4824,7 +4824,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fnmadds.  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fnmadds.      f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 282, Serial#: 282
     public void fnmadds_(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4840,7 +4840,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fnmsub  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fnmsub        f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 283, Serial#: 283
     public void fnmsub(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4856,7 +4856,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fnmsub.  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fnmsub.       f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 284, Serial#: 284
     public void fnmsub_(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4872,7 +4872,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fnmsubs  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fnmsubs       f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 285, Serial#: 285
     public void fnmsubs(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4888,7 +4888,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fnmsubs.  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fnmsubs.      f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.5 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.5 [Book 1]"
      */
     // Template#: 286, Serial#: 286
     public void fnmsubs_(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -4904,7 +4904,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code frsp  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code frsp          f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 287, Serial#: 287
     public void frsp(final FPR frt, final FPR frb) {
@@ -4918,7 +4918,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code frsp.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code frsp.         f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 288, Serial#: 288
     public void frsp_(final FPR frt, final FPR frb) {
@@ -4932,7 +4932,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fctid  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fctid         f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 289, Serial#: 289
     public void fctid(final FPR frt, final FPR frb) {
@@ -4946,7 +4946,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fctid.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fctid.        f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 290, Serial#: 290
     public void fctid_(final FPR frt, final FPR frb) {
@@ -4960,7 +4960,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fctidz  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fctidz        f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 291, Serial#: 291
     public void fctidz(final FPR frt, final FPR frb) {
@@ -4974,7 +4974,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fctidz.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fctidz.       f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 292, Serial#: 292
     public void fctidz_(final FPR frt, final FPR frb) {
@@ -4988,7 +4988,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fctiw  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fctiw         f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 293, Serial#: 293
     public void fctiw(final FPR frt, final FPR frb) {
@@ -5002,7 +5002,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fctiw.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fctiw.        f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 294, Serial#: 294
     public void fctiw_(final FPR frt, final FPR frb) {
@@ -5016,7 +5016,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fctiwz  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fctiwz        f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 295, Serial#: 295
     public void fctiwz(final FPR frt, final FPR frb) {
@@ -5030,7 +5030,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fctiwz.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fctiwz.       f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 296, Serial#: 296
     public void fctiwz_(final FPR frt, final FPR frb) {
@@ -5044,7 +5044,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fcfid  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fcfid         f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 297, Serial#: 297
     public void fcfid(final FPR frt, final FPR frb) {
@@ -5058,7 +5058,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fcfid.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fcfid.        f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.6 [Book 1]"
      */
     // Template#: 298, Serial#: 298
     public void fcfid_(final FPR frt, final FPR frb) {
@@ -5072,7 +5072,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fcmpu  }<i>bf</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fcmpu         0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.7 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.7 [Book 1]"
      */
     // Template#: 299, Serial#: 299
     public void fcmpu(final CRF bf, final FPR fra, final FPR frb) {
@@ -5087,7 +5087,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fcmpo  }<i>bf</i>, <i>fra</i>, <i>frb</i>
      * Example disassembly syntax: {@code fcmpo         0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.7 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.7 [Book 1]"
      */
     // Template#: 300, Serial#: 300
     public void fcmpo(final CRF bf, final FPR fra, final FPR frb) {
@@ -5102,7 +5102,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mffs  }<i>frt</i>
      * Example disassembly syntax: {@code mffs          f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.8 [Book 1]"
      */
     // Template#: 301, Serial#: 301
     public void mffs(final FPR frt) {
@@ -5115,7 +5115,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mffs.  }<i>frt</i>
      * Example disassembly syntax: {@code mffs.         f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.8 [Book 1]"
      */
     // Template#: 302, Serial#: 302
     public void mffs_(final FPR frt) {
@@ -5128,7 +5128,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mcrfs  }<i>bf</i>, <i>bfa</i>
      * Example disassembly syntax: {@code mcrfs         0, 0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.8 [Book 1]"
      */
     // Template#: 303, Serial#: 303
     public void mcrfs(final CRF bf, final CRF bfa) {
@@ -5144,7 +5144,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= u && u <= 15}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.8 [Book 1]"
      */
     // Template#: 304, Serial#: 304
     public void mtfsfi(final CRF bf, final int u) {
@@ -5161,7 +5161,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= u && u <= 15}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.8 [Book 1]"
      */
     // Template#: 305, Serial#: 305
     public void mtfsfi_(final CRF bf, final int u) {
@@ -5178,7 +5178,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= flm && flm <= 255}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.8 [Book 1]"
      */
     // Template#: 306, Serial#: 306
     public void mtfsf(final int flm, final FPR frb) {
@@ -5195,7 +5195,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= flm && flm <= 255}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.8 [Book 1]"
      */
     // Template#: 307, Serial#: 307
     public void mtfsf_(final int flm, final FPR frb) {
@@ -5212,7 +5212,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= bt && bt <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.8 [Book 1]"
      */
     // Template#: 308, Serial#: 308
     public void mtfsb0(final int bt) {
@@ -5228,7 +5228,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= bt && bt <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.8 [Book 1]"
      */
     // Template#: 309, Serial#: 309
     public void mtfsb0_(final int bt) {
@@ -5244,7 +5244,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= bt && bt <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.8 [Book 1]"
      */
     // Template#: 310, Serial#: 310
     public void mtfsb1(final int bt) {
@@ -5260,7 +5260,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= bt && bt <= 31}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 4.6.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 4.6.8 [Book 1]"
      */
     // Template#: 311, Serial#: 311
     public void mtfsb1_(final int bt) {
@@ -5276,7 +5276,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code 0 <= fxm && fxm <= 255}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.1.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.1.1 [Book 1]"
      */
     // Template#: 312, Serial#: 312
     public void mtocrf(final int fxm, final GPR rs) {
@@ -5296,7 +5296,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see com.sun.max.asm.ppc.CRF#isExactlyOneCRFSelected
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.1.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.1.1 [Book 1]"
      */
     // Template#: 313, Serial#: 313
     public void mfocrf(final GPR rt, final int fxm) {
@@ -5312,7 +5312,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fsqrt  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fsqrt         f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 314, Serial#: 314
     public void fsqrt(final FPR frt, final FPR frb) {
@@ -5326,7 +5326,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fsqrt.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fsqrt.        f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 315, Serial#: 315
     public void fsqrt_(final FPR frt, final FPR frb) {
@@ -5340,7 +5340,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fsqrts  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fsqrts        f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 316, Serial#: 316
     public void fsqrts(final FPR frt, final FPR frb) {
@@ -5354,7 +5354,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fsqrts.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fsqrts.       f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 317, Serial#: 317
     public void fsqrts_(final FPR frt, final FPR frb) {
@@ -5368,7 +5368,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fre  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fre           f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 318, Serial#: 318
     public void fre(final FPR frt, final FPR frb) {
@@ -5382,7 +5382,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fre.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fre.          f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 319, Serial#: 319
     public void fre_(final FPR frt, final FPR frb) {
@@ -5396,7 +5396,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fres  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fres          f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 320, Serial#: 320
     public void fres(final FPR frt, final FPR frb) {
@@ -5410,7 +5410,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fres.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code fres.         f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 321, Serial#: 321
     public void fres_(final FPR frt, final FPR frb) {
@@ -5424,7 +5424,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code frsqrte  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code frsqrte       f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 322, Serial#: 322
     public void frsqrte(final FPR frt, final FPR frb) {
@@ -5438,7 +5438,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code frsqrte.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code frsqrte.      f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 323, Serial#: 323
     public void frsqrte_(final FPR frt, final FPR frb) {
@@ -5452,7 +5452,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code frsqrtes  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code frsqrtes      f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 324, Serial#: 324
     public void frsqrtes(final FPR frt, final FPR frb) {
@@ -5466,7 +5466,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code frsqrtes.  }<i>frt</i>, <i>frb</i>
      * Example disassembly syntax: {@code frsqrtes.     f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.1 [Book 1]"
      */
     // Template#: 325, Serial#: 325
     public void frsqrtes_(final FPR frt, final FPR frb) {
@@ -5480,7 +5480,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fsel  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fsel          f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.2 [Book 1]"
      */
     // Template#: 326, Serial#: 326
     public void fsel(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -5496,7 +5496,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code fsel.  }<i>frt</i>, <i>fra</i>, <i>frc</i>, <i>frb</i>
      * Example disassembly syntax: {@code fsel.         f0, f0, f0, f0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 5.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 5.2.2 [Book 1]"
      */
     // Template#: 327, Serial#: 327
     public void fsel_(final FPR frt, final FPR fra, final FPR frc, final FPR frb) {
@@ -5512,7 +5512,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code mcrxr  }<i>bf</i>
      * Example disassembly syntax: {@code mcrxr         0}
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 6.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 6.1 [Book 1]"
      */
     // Template#: 328, Serial#: 328
     public void mcrxr(final CRF bf) {
@@ -5527,7 +5527,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.2.1 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.2.1 [Book 2]"
      */
     // Template#: 329, Serial#: 329
     public void icbi(final ZeroOrRegister ra, final GPR rb) {
@@ -5544,7 +5544,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.2.2 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.2.2 [Book 2]"
      */
     // Template#: 330, Serial#: 330
     public void dcbt(final ZeroOrRegister ra, final GPR rb) {
@@ -5561,7 +5561,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.2.2 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.2.2 [Book 2]"
      */
     // Template#: 331, Serial#: 331
     public void dcbtst(final ZeroOrRegister ra, final GPR rb) {
@@ -5578,7 +5578,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.2.2 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.2.2 [Book 2]"
      */
     // Template#: 332, Serial#: 332
     public void dcbz(final ZeroOrRegister ra, final GPR rb) {
@@ -5595,7 +5595,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.2.2 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.2.2 [Book 2]"
      */
     // Template#: 333, Serial#: 333
     public void dcbst(final ZeroOrRegister ra, final GPR rb) {
@@ -5612,7 +5612,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.2.2 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.2.2 [Book 2]"
      */
     // Template#: 334, Serial#: 334
     public void dcbf(final ZeroOrRegister ra, final GPR rb) {
@@ -5627,7 +5627,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code isync  }
      * Example disassembly syntax: {@code isync         }
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.1 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.1 [Book 2]"
      */
     // Template#: 335, Serial#: 335
     public void isync() {
@@ -5641,7 +5641,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 2]"
      */
     // Template#: 336, Serial#: 336
     public void lwarx(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -5659,7 +5659,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 2]"
      */
     // Template#: 337, Serial#: 337
     public void ldarx(final GPR rt, final ZeroOrRegister ra, final GPR rb) {
@@ -5677,7 +5677,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 2]"
      */
     // Template#: 338, Serial#: 338
     public void stwcx(final GPR rs, final ZeroOrRegister ra, final GPR rb) {
@@ -5695,7 +5695,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * <p>
      * Constraint: {@code ra != R0}<br />
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.2 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.2 [Book 2]"
      */
     // Template#: 339, Serial#: 339
     public void stdcx(final GPR rs, final ZeroOrRegister ra, final GPR rb) {
@@ -5711,7 +5711,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code sync  }
      * Example disassembly syntax: {@code sync          }
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 2]"
      */
     // Template#: 340, Serial#: 340
     public void sync() {
@@ -5723,7 +5723,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      * Pseudo-external assembler syntax: {@code eieio  }
      * Example disassembly syntax: {@code eieio         }
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section 3.3.3 [Book 2]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section 3.3.3 [Book 2]"
      */
     // Template#: 341, Serial#: 341
     public void eieio() {
@@ -5732,7 +5732,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bt{++|--}  }<i>bi</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bt[++|--]  }<i>bi</i>, <i>bd</i>
      * Example disassembly syntax: {@code bt            0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, bi, bd)}
@@ -5742,7 +5742,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 342, Serial#: 342
     public void bt(final int bi, final int bd, final BranchPredictionBits prediction) {
@@ -5756,7 +5756,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bta{++|--}  }<i>bi</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bta[++|--]  }<i>bi</i>, <i>bd</i>
      * Example disassembly syntax: {@code bta           0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, bi, bd)}
@@ -5766,7 +5766,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 343, Serial#: 343
     public void bta(final int bi, final int bd, final BranchPredictionBits prediction) {
@@ -5780,7 +5780,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code btl{++|--}  }<i>bi</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code btl[++|--]  }<i>bi</i>, <i>bd</i>
      * Example disassembly syntax: {@code btl           0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, bi, bd)}
@@ -5790,7 +5790,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 344, Serial#: 344
     public void btl(final int bi, final int bd, final BranchPredictionBits prediction) {
@@ -5804,7 +5804,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code btla{++|--}  }<i>bi</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code btla[++|--]  }<i>bi</i>, <i>bd</i>
      * Example disassembly syntax: {@code btla          0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, bi, bd)}
@@ -5814,7 +5814,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 345, Serial#: 345
     public void btla(final int bi, final int bd, final BranchPredictionBits prediction) {
@@ -5828,7 +5828,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bf{++|--}  }<i>bi</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bf[++|--]  }<i>bi</i>, <i>bd</i>
      * Example disassembly syntax: {@code bf            0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, bi, bd)}
@@ -5838,7 +5838,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 346, Serial#: 346
     public void bf(final int bi, final int bd, final BranchPredictionBits prediction) {
@@ -5852,7 +5852,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bfa{++|--}  }<i>bi</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bfa[++|--]  }<i>bi</i>, <i>bd</i>
      * Example disassembly syntax: {@code bfa           0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, bi, bd)}
@@ -5862,7 +5862,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 347, Serial#: 347
     public void bfa(final int bi, final int bd, final BranchPredictionBits prediction) {
@@ -5876,7 +5876,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bfl{++|--}  }<i>bi</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bfl[++|--]  }<i>bi</i>, <i>bd</i>
      * Example disassembly syntax: {@code bfl           0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, bi, bd)}
@@ -5886,7 +5886,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 348, Serial#: 348
     public void bfl(final int bi, final int bd, final BranchPredictionBits prediction) {
@@ -5900,7 +5900,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bfla{++|--}  }<i>bi</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bfla[++|--]  }<i>bi</i>, <i>bd</i>
      * Example disassembly syntax: {@code bfla          0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, bi, bd)}
@@ -5910,7 +5910,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 349, Serial#: 349
     public void bfla(final int bi, final int bd, final BranchPredictionBits prediction) {
@@ -5924,7 +5924,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdnz{++|--}  }<i>bd</i>
+     * Pseudo-external assembler syntax: {@code bdnz[++|--]  }<i>bd</i>
      * Example disassembly syntax: {@code bdnz          L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CTRNonZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
@@ -5933,7 +5933,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 350, Serial#: 350
     public void bdnz(final int bd, final BranchPredictionBits prediction) {
@@ -5945,7 +5945,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdnza{++|--}  }<i>bd</i>
+     * Pseudo-external assembler syntax: {@code bdnza[++|--]  }<i>bd</i>
      * Example disassembly syntax: {@code bdnza         L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CTRNonZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
@@ -5954,7 +5954,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 351, Serial#: 351
     public void bdnza(final int bd, final BranchPredictionBits prediction) {
@@ -5966,7 +5966,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdnzl{++|--}  }<i>bd</i>
+     * Pseudo-external assembler syntax: {@code bdnzl[++|--]  }<i>bd</i>
      * Example disassembly syntax: {@code bdnzl         L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CTRNonZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
@@ -5975,7 +5975,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 352, Serial#: 352
     public void bdnzl(final int bd, final BranchPredictionBits prediction) {
@@ -5987,7 +5987,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdnzla{++|--}  }<i>bd</i>
+     * Pseudo-external assembler syntax: {@code bdnzla[++|--]  }<i>bd</i>
      * Example disassembly syntax: {@code bdnzla        L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CTRNonZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
@@ -5996,7 +5996,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 353, Serial#: 353
     public void bdnzla(final int bd, final BranchPredictionBits prediction) {
@@ -6008,7 +6008,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdz{++|--}  }<i>bd</i>
+     * Pseudo-external assembler syntax: {@code bdz[++|--]  }<i>bd</i>
      * Example disassembly syntax: {@code bdz           L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CTRZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
@@ -6017,7 +6017,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 354, Serial#: 354
     public void bdz(final int bd, final BranchPredictionBits prediction) {
@@ -6029,7 +6029,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdza{++|--}  }<i>bd</i>
+     * Pseudo-external assembler syntax: {@code bdza[++|--]  }<i>bd</i>
      * Example disassembly syntax: {@code bdza          L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CTRZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
@@ -6038,7 +6038,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 355, Serial#: 355
     public void bdza(final int bd, final BranchPredictionBits prediction) {
@@ -6050,7 +6050,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdzl{++|--}  }<i>bd</i>
+     * Pseudo-external assembler syntax: {@code bdzl[++|--]  }<i>bd</i>
      * Example disassembly syntax: {@code bdzl          L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CTRZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
@@ -6059,7 +6059,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 356, Serial#: 356
     public void bdzl(final int bd, final BranchPredictionBits prediction) {
@@ -6071,7 +6071,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdzla{++|--}  }<i>bd</i>
+     * Pseudo-external assembler syntax: {@code bdzla[++|--]  }<i>bd</i>
      * Example disassembly syntax: {@code bdzla         L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CTRZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
@@ -6080,7 +6080,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 357, Serial#: 357
     public void bdzla(final int bd, final BranchPredictionBits prediction) {
@@ -6102,7 +6102,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 358, Serial#: 358
     public void bdnzt(final int bi, final int bd) {
@@ -6125,7 +6125,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 359, Serial#: 359
     public void bdnzta(final int bi, final int bd) {
@@ -6148,7 +6148,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 360, Serial#: 360
     public void bdnztl(final int bi, final int bd) {
@@ -6171,7 +6171,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 361, Serial#: 361
     public void bdnztla(final int bi, final int bd) {
@@ -6194,7 +6194,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 362, Serial#: 362
     public void bdnzf(final int bi, final int bd) {
@@ -6217,7 +6217,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 363, Serial#: 363
     public void bdnzfa(final int bi, final int bd) {
@@ -6240,7 +6240,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 364, Serial#: 364
     public void bdnzfl(final int bi, final int bd) {
@@ -6263,7 +6263,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 365, Serial#: 365
     public void bdnzfla(final int bi, final int bd) {
@@ -6286,7 +6286,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 366, Serial#: 366
     public void bdzt(final int bi, final int bd) {
@@ -6309,7 +6309,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 367, Serial#: 367
     public void bdzta(final int bi, final int bd) {
@@ -6332,7 +6332,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 368, Serial#: 368
     public void bdztl(final int bi, final int bd) {
@@ -6355,7 +6355,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 369, Serial#: 369
     public void bdztla(final int bi, final int bd) {
@@ -6378,7 +6378,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 370, Serial#: 370
     public void bdzf(final int bi, final int bd) {
@@ -6401,7 +6401,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 371, Serial#: 371
     public void bdzfa(final int bi, final int bd) {
@@ -6424,7 +6424,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 372, Serial#: 372
     public void bdzfl(final int bi, final int bd) {
@@ -6447,7 +6447,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 373, Serial#: 373
     public void bdzfla(final int bi, final int bd) {
@@ -6467,7 +6467,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 374, Serial#: 374
     public void blr() {
@@ -6483,7 +6483,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 375, Serial#: 375
     public void blrl() {
@@ -6492,7 +6492,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code btlr{++|--}  }<i>bi</i>
+     * Pseudo-external assembler syntax: {@code btlr[++|--]  }<i>bi</i>
      * Example disassembly syntax: {@code btlr          0x0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRTrue | prediction, bi, 0)}
@@ -6501,7 +6501,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 376, Serial#: 376
     public void btlr(final int bi, final BranchPredictionBits prediction) {
@@ -6513,7 +6513,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code btlrl{++|--}  }<i>bi</i>
+     * Pseudo-external assembler syntax: {@code btlrl[++|--]  }<i>bi</i>
      * Example disassembly syntax: {@code btlrl         0x0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRTrue | prediction, bi, 0)}
@@ -6522,7 +6522,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 377, Serial#: 377
     public void btlrl(final int bi, final BranchPredictionBits prediction) {
@@ -6534,7 +6534,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bflr{++|--}  }<i>bi</i>
+     * Pseudo-external assembler syntax: {@code bflr[++|--]  }<i>bi</i>
      * Example disassembly syntax: {@code bflr          0x0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRFalse | prediction, bi, 0)}
@@ -6543,7 +6543,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 378, Serial#: 378
     public void bflr(final int bi, final BranchPredictionBits prediction) {
@@ -6555,7 +6555,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bflrl{++|--}  }<i>bi</i>
+     * Pseudo-external assembler syntax: {@code bflrl[++|--]  }<i>bi</i>
      * Example disassembly syntax: {@code bflrl         0x0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRFalse | prediction, bi, 0)}
@@ -6564,7 +6564,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 379, Serial#: 379
     public void bflrl(final int bi, final BranchPredictionBits prediction) {
@@ -6576,14 +6576,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdnzlr{++|--}  }
+     * Pseudo-external assembler syntax: {@code bdnzlr[++|--]  }
      * Example disassembly syntax: {@code bdnzlr        }
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CTRNonZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 380, Serial#: 380
     public void bdnzlr(final BranchPredictionBits prediction) {
@@ -6593,14 +6593,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdnzlrl{++|--}  }
+     * Pseudo-external assembler syntax: {@code bdnzlrl[++|--]  }
      * Example disassembly syntax: {@code bdnzlrl       }
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CTRNonZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 381, Serial#: 381
     public void bdnzlrl(final BranchPredictionBits prediction) {
@@ -6610,14 +6610,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdzlr{++|--}  }
+     * Pseudo-external assembler syntax: {@code bdzlr[++|--]  }
      * Example disassembly syntax: {@code bdzlr         }
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CTRZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 382, Serial#: 382
     public void bdzlr(final BranchPredictionBits prediction) {
@@ -6627,14 +6627,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bdzlrl{++|--}  }
+     * Pseudo-external assembler syntax: {@code bdzlrl[++|--]  }
      * Example disassembly syntax: {@code bdzlrl        }
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CTRZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 383, Serial#: 383
     public void bdzlrl(final BranchPredictionBits prediction) {
@@ -6653,7 +6653,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 384, Serial#: 384
     public void bdnztlr(final int bi) {
@@ -6673,7 +6673,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 385, Serial#: 385
     public void bdnztlrl(final int bi) {
@@ -6693,7 +6693,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 386, Serial#: 386
     public void bdnzflr(final int bi) {
@@ -6713,7 +6713,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 387, Serial#: 387
     public void bdnzflrl(final int bi) {
@@ -6733,7 +6733,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 388, Serial#: 388
     public void bdztlr(final int bi) {
@@ -6753,7 +6753,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 389, Serial#: 389
     public void bdztlrl(final int bi) {
@@ -6773,7 +6773,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 390, Serial#: 390
     public void bdzflr(final int bi) {
@@ -6793,7 +6793,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 391, Serial#: 391
     public void bdzflrl(final int bi) {
@@ -6811,7 +6811,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 392, Serial#: 392
     public void bctr() {
@@ -6827,7 +6827,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 393, Serial#: 393
     public void bctrl() {
@@ -6836,7 +6836,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code btctr{++|--}  }<i>bi</i>
+     * Pseudo-external assembler syntax: {@code btctr[++|--]  }<i>bi</i>
      * Example disassembly syntax: {@code btctr         0x0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRTrue | prediction, bi, 0)}
@@ -6845,7 +6845,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 394, Serial#: 394
     public void btctr(final int bi, final BranchPredictionBits prediction) {
@@ -6857,7 +6857,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code btctrl{++|--}  }<i>bi</i>
+     * Pseudo-external assembler syntax: {@code btctrl[++|--]  }<i>bi</i>
      * Example disassembly syntax: {@code btctrl        0x0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRTrue | prediction, bi, 0)}
@@ -6866,7 +6866,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 395, Serial#: 395
     public void btctrl(final int bi, final BranchPredictionBits prediction) {
@@ -6878,7 +6878,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bfctr{++|--}  }<i>bi</i>
+     * Pseudo-external assembler syntax: {@code bfctr[++|--]  }<i>bi</i>
      * Example disassembly syntax: {@code bfctr         0x0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRFalse | prediction, bi, 0)}
@@ -6887,7 +6887,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 396, Serial#: 396
     public void bfctr(final int bi, final BranchPredictionBits prediction) {
@@ -6899,7 +6899,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bfctrl{++|--}  }<i>bi</i>
+     * Pseudo-external assembler syntax: {@code bfctrl[++|--]  }<i>bi</i>
      * Example disassembly syntax: {@code bfctrl        0x0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRFalse | prediction, bi, 0)}
@@ -6908,7 +6908,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.2 [Book 1]"
      */
     // Template#: 397, Serial#: 397
     public void bfctrl(final int bi, final BranchPredictionBits prediction) {
@@ -6920,7 +6920,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code blt{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code blt[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code blt           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, (crf * 4), bd)}
@@ -6929,7 +6929,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 398, Serial#: 398
     public void blt(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -6942,7 +6942,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code blta{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code blta[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code blta          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, (crf * 4), bd)}
@@ -6951,7 +6951,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 399, Serial#: 399
     public void blta(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -6964,7 +6964,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bltl{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bltl[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bltl          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, (crf * 4), bd)}
@@ -6973,7 +6973,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 400, Serial#: 400
     public void bltl(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -6986,7 +6986,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bltla{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bltla[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bltla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, (crf * 4), bd)}
@@ -6995,7 +6995,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 401, Serial#: 401
     public void bltla(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7008,7 +7008,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ble{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code ble[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code ble           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, 1 | (crf * 4), bd)}
@@ -7017,7 +7017,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 402, Serial#: 402
     public void ble(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7030,7 +7030,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code blea{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code blea[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code blea          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, 1 | (crf * 4), bd)}
@@ -7039,7 +7039,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 403, Serial#: 403
     public void blea(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7052,7 +7052,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code blel{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code blel[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code blel          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, 1 | (crf * 4), bd)}
@@ -7061,7 +7061,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 404, Serial#: 404
     public void blel(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7074,7 +7074,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code blela{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code blela[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code blela         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, 1 | (crf * 4), bd)}
@@ -7083,7 +7083,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 405, Serial#: 405
     public void blela(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7096,7 +7096,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code beq{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code beq[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code beq           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, 2 | (crf * 4), bd)}
@@ -7105,7 +7105,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 406, Serial#: 406
     public void beq(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7118,7 +7118,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code beqa{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code beqa[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code beqa          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, 2 | (crf * 4), bd)}
@@ -7127,7 +7127,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 407, Serial#: 407
     public void beqa(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7140,7 +7140,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code beql{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code beql[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code beql          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, 2 | (crf * 4), bd)}
@@ -7149,7 +7149,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 408, Serial#: 408
     public void beql(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7162,7 +7162,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code beqla{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code beqla[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code beqla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, 2 | (crf * 4), bd)}
@@ -7171,7 +7171,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 409, Serial#: 409
     public void beqla(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7184,7 +7184,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bge{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bge[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bge           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, (crf * 4), bd)}
@@ -7193,7 +7193,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 410, Serial#: 410
     public void bge(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7206,7 +7206,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgea{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bgea[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bgea          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, (crf * 4), bd)}
@@ -7215,7 +7215,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 411, Serial#: 411
     public void bgea(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7228,7 +7228,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgel{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bgel[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bgel          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, (crf * 4), bd)}
@@ -7237,7 +7237,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 412, Serial#: 412
     public void bgel(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7250,7 +7250,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgela{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bgela[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bgela         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, (crf * 4), bd)}
@@ -7259,7 +7259,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 413, Serial#: 413
     public void bgela(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7272,7 +7272,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgt{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bgt[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bgt           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, 1 | (crf * 4), bd)}
@@ -7281,7 +7281,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 414, Serial#: 414
     public void bgt(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7294,7 +7294,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgta{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bgta[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bgta          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, 1 | (crf * 4), bd)}
@@ -7303,7 +7303,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 415, Serial#: 415
     public void bgta(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7316,7 +7316,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgtl{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bgtl[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bgtl          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, 1 | (crf * 4), bd)}
@@ -7325,7 +7325,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 416, Serial#: 416
     public void bgtl(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7338,7 +7338,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgtla{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bgtla[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bgtla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, 1 | (crf * 4), bd)}
@@ -7347,7 +7347,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 417, Serial#: 417
     public void bgtla(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7360,7 +7360,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnl{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnl[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnl           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, (crf * 4), bd)}
@@ -7369,7 +7369,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 418, Serial#: 418
     public void bnl(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7382,7 +7382,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnla{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnla[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnla          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, (crf * 4), bd)}
@@ -7391,7 +7391,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 419, Serial#: 419
     public void bnla(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7404,7 +7404,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnll{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnll[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnll          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, (crf * 4), bd)}
@@ -7413,7 +7413,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 420, Serial#: 420
     public void bnll(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7426,7 +7426,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnlla{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnlla[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnlla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, (crf * 4), bd)}
@@ -7435,7 +7435,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 421, Serial#: 421
     public void bnlla(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7448,7 +7448,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bne{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bne[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bne           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, 2 | (crf * 4), bd)}
@@ -7457,7 +7457,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 422, Serial#: 422
     public void bne(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7470,7 +7470,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnea{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnea[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnea          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, 2 | (crf * 4), bd)}
@@ -7479,7 +7479,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 423, Serial#: 423
     public void bnea(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7492,7 +7492,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnel{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnel[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnel          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, 2 | (crf * 4), bd)}
@@ -7501,7 +7501,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 424, Serial#: 424
     public void bnel(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7514,7 +7514,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnela{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnela[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnela         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, 2 | (crf * 4), bd)}
@@ -7523,7 +7523,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 425, Serial#: 425
     public void bnela(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7536,7 +7536,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bng{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bng[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bng           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, 1 | (crf * 4), bd)}
@@ -7545,7 +7545,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 426, Serial#: 426
     public void bng(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7558,7 +7558,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnga{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnga[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnga          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, 1 | (crf * 4), bd)}
@@ -7567,7 +7567,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 427, Serial#: 427
     public void bnga(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7580,7 +7580,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bngl{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bngl[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bngl          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, 1 | (crf * 4), bd)}
@@ -7589,7 +7589,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 428, Serial#: 428
     public void bngl(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7602,7 +7602,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bngla{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bngla[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bngla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, 1 | (crf * 4), bd)}
@@ -7611,7 +7611,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 429, Serial#: 429
     public void bngla(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7624,7 +7624,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bso{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bso[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bso           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, 3 | (crf * 4), bd)}
@@ -7633,7 +7633,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 430, Serial#: 430
     public void bso(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7646,7 +7646,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bsoa{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bsoa[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bsoa          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, 3 | (crf * 4), bd)}
@@ -7655,7 +7655,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 431, Serial#: 431
     public void bsoa(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7668,7 +7668,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bsol{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bsol[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bsol          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, 3 | (crf * 4), bd)}
@@ -7677,7 +7677,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 432, Serial#: 432
     public void bsol(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7690,7 +7690,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bsola{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bsola[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bsola         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, 3 | (crf * 4), bd)}
@@ -7699,7 +7699,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 433, Serial#: 433
     public void bsola(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7712,7 +7712,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bns{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bns[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bns           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, 3 | (crf * 4), bd)}
@@ -7721,7 +7721,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 434, Serial#: 434
     public void bns(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7734,7 +7734,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnsa{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnsa[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnsa          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, 3 | (crf * 4), bd)}
@@ -7743,7 +7743,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 435, Serial#: 435
     public void bnsa(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7756,7 +7756,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnsl{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnsl[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnsl          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, 3 | (crf * 4), bd)}
@@ -7765,7 +7765,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 436, Serial#: 436
     public void bnsl(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7778,7 +7778,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnsla{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnsla[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnsla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, 3 | (crf * 4), bd)}
@@ -7787,7 +7787,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 437, Serial#: 437
     public void bnsla(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7800,7 +7800,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bun{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bun[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bun           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, 3 | (crf * 4), bd)}
@@ -7809,7 +7809,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 438, Serial#: 438
     public void bun(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7822,7 +7822,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code buna{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code buna[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code buna          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, 3 | (crf * 4), bd)}
@@ -7831,7 +7831,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 439, Serial#: 439
     public void buna(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7844,7 +7844,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bunl{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bunl[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bunl          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, 3 | (crf * 4), bd)}
@@ -7853,7 +7853,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 440, Serial#: 440
     public void bunl(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7866,7 +7866,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bunla{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bunla[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bunla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, 3 | (crf * 4), bd)}
@@ -7875,7 +7875,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 441, Serial#: 441
     public void bunla(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7888,7 +7888,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnu{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnu[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnu           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, 3 | (crf * 4), bd)}
@@ -7897,7 +7897,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bc(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 442, Serial#: 442
     public void bnu(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7910,7 +7910,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnua{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnua[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnua          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, 3 | (crf * 4), bd)}
@@ -7919,7 +7919,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bca(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 443, Serial#: 443
     public void bnua(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7932,7 +7932,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnul{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnul[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnul          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, 3 | (crf * 4), bd)}
@@ -7941,7 +7941,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 444, Serial#: 444
     public void bnul(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7954,7 +7954,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnula{++|--}  }<i>crf</i>, <i>bd</i>
+     * Pseudo-external assembler syntax: {@code bnula[++|--]  }<i>crf</i>, <i>bd</i>
      * Example disassembly syntax: {@code bnula         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, 3 | (crf * 4), bd)}
@@ -7963,7 +7963,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #bcla(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 445, Serial#: 445
     public void bnula(final CRF crf, final int bd, final BranchPredictionBits prediction) {
@@ -7976,14 +7976,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bltlr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bltlr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bltlr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRTrue | prediction, (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 446, Serial#: 446
     public void bltlr(final CRF crf, final BranchPredictionBits prediction) {
@@ -7994,14 +7994,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bltlrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bltlrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bltlrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRTrue | prediction, (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 447, Serial#: 447
     public void bltlrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8012,14 +8012,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code blelr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code blelr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code blelr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRFalse | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 448, Serial#: 448
     public void blelr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8030,14 +8030,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code blelrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code blelrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code blelrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRFalse | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 449, Serial#: 449
     public void blelrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8048,14 +8048,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code beqlr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code beqlr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code beqlr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRTrue | prediction, 2 | (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 450, Serial#: 450
     public void beqlr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8066,14 +8066,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code beqlrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code beqlrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code beqlrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRTrue | prediction, 2 | (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 451, Serial#: 451
     public void beqlrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8084,14 +8084,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgelr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bgelr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bgelr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRFalse | prediction, (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 452, Serial#: 452
     public void bgelr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8102,14 +8102,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgelrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bgelrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bgelrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRFalse | prediction, (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 453, Serial#: 453
     public void bgelrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8120,14 +8120,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgtlr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bgtlr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bgtlr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRTrue | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 454, Serial#: 454
     public void bgtlr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8138,14 +8138,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgtlrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bgtlrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bgtlrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRTrue | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 455, Serial#: 455
     public void bgtlrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8156,14 +8156,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnllr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnllr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnllr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRFalse | prediction, (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 456, Serial#: 456
     public void bnllr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8174,14 +8174,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnllrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnllrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnllrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRFalse | prediction, (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 457, Serial#: 457
     public void bnllrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8192,14 +8192,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnelr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnelr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnelr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRFalse | prediction, 2 | (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 458, Serial#: 458
     public void bnelr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8210,14 +8210,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnelrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnelrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnelrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRFalse | prediction, 2 | (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 459, Serial#: 459
     public void bnelrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8228,14 +8228,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnglr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnglr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnglr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRFalse | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 460, Serial#: 460
     public void bnglr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8246,14 +8246,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnglrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnglrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnglrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRFalse | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 461, Serial#: 461
     public void bnglrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8264,14 +8264,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bsolr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bsolr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bsolr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRTrue | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 462, Serial#: 462
     public void bsolr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8282,14 +8282,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bsolrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bsolrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bsolrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRTrue | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 463, Serial#: 463
     public void bsolrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8300,14 +8300,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnslr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnslr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnslr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRFalse | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 464, Serial#: 464
     public void bnslr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8318,14 +8318,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnslrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnslrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnslrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRFalse | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 465, Serial#: 465
     public void bnslrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8336,14 +8336,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bunlr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bunlr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bunlr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRTrue | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 466, Serial#: 466
     public void bunlr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8354,14 +8354,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bunlrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bunlrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bunlrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRTrue | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 467, Serial#: 467
     public void bunlrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8372,14 +8372,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnulr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnulr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnulr         cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclr(CRFalse | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bclr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 468, Serial#: 468
     public void bnulr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8390,14 +8390,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnulrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnulrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnulrl        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bclrl(CRFalse | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bclrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 469, Serial#: 469
     public void bnulrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8408,14 +8408,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bltctr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bltctr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bltctr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRTrue | prediction, (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 470, Serial#: 470
     public void bltctr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8426,14 +8426,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bltctrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bltctrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bltctrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRTrue | prediction, (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 471, Serial#: 471
     public void bltctrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8444,14 +8444,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code blectr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code blectr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code blectr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRFalse | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 472, Serial#: 472
     public void blectr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8462,14 +8462,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code blectrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code blectrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code blectrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRFalse | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 473, Serial#: 473
     public void blectrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8480,14 +8480,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code beqctr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code beqctr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code beqctr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRTrue | prediction, 2 | (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 474, Serial#: 474
     public void beqctr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8498,14 +8498,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code beqctrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code beqctrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code beqctrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRTrue | prediction, 2 | (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 475, Serial#: 475
     public void beqctrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8516,14 +8516,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgectr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bgectr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bgectr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRFalse | prediction, (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 476, Serial#: 476
     public void bgectr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8534,14 +8534,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgectrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bgectrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bgectrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRFalse | prediction, (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 477, Serial#: 477
     public void bgectrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8552,14 +8552,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgtctr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bgtctr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bgtctr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRTrue | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 478, Serial#: 478
     public void bgtctr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8570,14 +8570,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgtctrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bgtctrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bgtctrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRTrue | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 479, Serial#: 479
     public void bgtctrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8588,14 +8588,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnlctr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnlctr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnlctr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRFalse | prediction, (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 480, Serial#: 480
     public void bnlctr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8606,14 +8606,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnlctrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnlctrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnlctrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRFalse | prediction, (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 481, Serial#: 481
     public void bnlctrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8624,14 +8624,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnectr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnectr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnectr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRFalse | prediction, 2 | (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 482, Serial#: 482
     public void bnectr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8642,14 +8642,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnectrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnectrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnectrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRFalse | prediction, 2 | (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 483, Serial#: 483
     public void bnectrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8660,14 +8660,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bngctr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bngctr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bngctr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRFalse | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 484, Serial#: 484
     public void bngctr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8678,14 +8678,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bngctrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bngctrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bngctrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRFalse | prediction, 1 | (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 485, Serial#: 485
     public void bngctrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8696,14 +8696,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bsoctr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bsoctr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bsoctr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRTrue | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 486, Serial#: 486
     public void bsoctr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8714,14 +8714,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bsoctrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bsoctrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bsoctrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRTrue | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 487, Serial#: 487
     public void bsoctrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8732,14 +8732,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnsctr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnsctr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnsctr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRFalse | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 488, Serial#: 488
     public void bnsctr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8750,14 +8750,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnsctrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnsctrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnsctrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRFalse | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 489, Serial#: 489
     public void bnsctrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8768,14 +8768,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bunctr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bunctr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bunctr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRTrue | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 490, Serial#: 490
     public void bunctr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8786,14 +8786,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bunctrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bunctrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bunctrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRTrue | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 491, Serial#: 491
     public void bunctrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8804,14 +8804,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnuctr{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnuctr[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnuctr        cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctr(CRFalse | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bcctr(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 492, Serial#: 492
     public void bnuctr(final CRF crf, final BranchPredictionBits prediction) {
@@ -8822,14 +8822,14 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bnuctrl{++|--}  }<i>crf</i>
+     * Pseudo-external assembler syntax: {@code bnuctrl[++|--]  }<i>crf</i>
      * Example disassembly syntax: {@code bnuctrl       cr0}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcctrl(CRFalse | prediction, 3 | (crf * 4), 0)}
      *
      * @see #bcctrl(BOOperand, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.2.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.2.3 [Book 1]"
      */
     // Template#: 493, Serial#: 493
     public void bnuctrl(final CRF crf, final BranchPredictionBits prediction) {
@@ -8851,7 +8851,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #creqv(int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.3 [Book 1]"
      */
     // Template#: 494, Serial#: 494
     public void crset(final int ba) {
@@ -8877,7 +8877,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #crxor(int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.3 [Book 1]"
      */
     // Template#: 495, Serial#: 495
     public void crclr(final int ba) {
@@ -8903,7 +8903,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cror(int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.3 [Book 1]"
      */
     // Template#: 496, Serial#: 496
     public void crmove(final int bt, final int ba) {
@@ -8929,7 +8929,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #crnor(int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.3 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.3 [Book 1]"
      */
     // Template#: 497, Serial#: 497
     public void crnot(final int bt, final int ba) {
@@ -8954,7 +8954,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #addi(GPR, ZeroOrRegister, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.1 [Book 1]"
      */
     // Template#: 498, Serial#: 498
     public void subi(final GPR rt, final ZeroOrRegister ra, final int val) {
@@ -8978,7 +8978,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #addis(GPR, ZeroOrRegister, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.1 [Book 1]"
      */
     // Template#: 499, Serial#: 499
     public void subis(final GPR rt, final ZeroOrRegister ra, final int val) {
@@ -9001,7 +9001,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #addic(GPR, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.1 [Book 1]"
      */
     // Template#: 500, Serial#: 500
     public void subic(final GPR rt, final GPR ra, final int val) {
@@ -9023,7 +9023,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #addic_(GPR, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.1 [Book 1]"
      */
     // Template#: 501, Serial#: 501
     public void subic_(final GPR rt, final GPR ra, final int val) {
@@ -9043,7 +9043,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #subf(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.2 [Book 1]"
      */
     // Template#: 502, Serial#: 502
     public void sub(final GPR rt, final GPR rb, final GPR ra) {
@@ -9062,7 +9062,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #subf_(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.2 [Book 1]"
      */
     // Template#: 503, Serial#: 503
     public void sub_(final GPR rt, final GPR rb, final GPR ra) {
@@ -9081,7 +9081,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #subfo(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.2 [Book 1]"
      */
     // Template#: 504, Serial#: 504
     public void subo(final GPR rt, final GPR rb, final GPR ra) {
@@ -9100,7 +9100,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #subfo_(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.2 [Book 1]"
      */
     // Template#: 505, Serial#: 505
     public void subo_(final GPR rt, final GPR rb, final GPR ra) {
@@ -9119,7 +9119,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #subfc(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.2 [Book 1]"
      */
     // Template#: 506, Serial#: 506
     public void subc(final GPR rt, final GPR rb, final GPR ra) {
@@ -9138,7 +9138,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #subfc_(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.2 [Book 1]"
      */
     // Template#: 507, Serial#: 507
     public void subc_(final GPR rt, final GPR rb, final GPR ra) {
@@ -9157,7 +9157,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #subfco(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.2 [Book 1]"
      */
     // Template#: 508, Serial#: 508
     public void subco(final GPR rt, final GPR rb, final GPR ra) {
@@ -9176,7 +9176,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #subfco_(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.4.2 [Book 1]"
      */
     // Template#: 509, Serial#: 509
     public void subco_(final GPR rt, final GPR rb, final GPR ra) {
@@ -9197,7 +9197,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpi(CRF, int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.1 [Book 1]"
      */
     // Template#: 510, Serial#: 510
     public void cmpdi(final CRF bf, final GPR ra, final int si) {
@@ -9219,7 +9219,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpi(CRF, int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.1 [Book 1]"
      */
     // Template#: 511, Serial#: 511
     public void cmpdi(final GPR ra, final int si) {
@@ -9238,7 +9238,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmp(CRF, int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.1 [Book 1]"
      */
     // Template#: 512, Serial#: 512
     public void cmpd(final CRF bf, final GPR ra, final GPR rb) {
@@ -9257,7 +9257,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmp(CRF, int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.1 [Book 1]"
      */
     // Template#: 513, Serial#: 513
     public void cmpd(final GPR ra, final GPR rb) {
@@ -9277,7 +9277,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpli(CRF, int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.1 [Book 1]"
      */
     // Template#: 514, Serial#: 514
     public void cmpldi(final CRF bf, final GPR ra, final int ui) {
@@ -9299,7 +9299,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpli(CRF, int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.1 [Book 1]"
      */
     // Template#: 515, Serial#: 515
     public void cmpldi(final GPR ra, final int ui) {
@@ -9318,7 +9318,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpl(CRF, int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.1 [Book 1]"
      */
     // Template#: 516, Serial#: 516
     public void cmpld(final CRF bf, final GPR ra, final GPR rb) {
@@ -9337,7 +9337,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpl(CRF, int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.1 [Book 1]"
      */
     // Template#: 517, Serial#: 517
     public void cmpld(final GPR ra, final GPR rb) {
@@ -9357,7 +9357,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpi(CRF, int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.2 [Book 1]"
      */
     // Template#: 518, Serial#: 518
     public void cmpwi(final CRF bf, final GPR ra, final int si) {
@@ -9379,7 +9379,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpi(CRF, int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.2 [Book 1]"
      */
     // Template#: 519, Serial#: 519
     public void cmpwi(final GPR ra, final int si) {
@@ -9398,7 +9398,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmp(CRF, int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.2 [Book 1]"
      */
     // Template#: 520, Serial#: 520
     public void cmpw(final CRF bf, final GPR ra, final GPR rb) {
@@ -9417,7 +9417,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmp(CRF, int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.2 [Book 1]"
      */
     // Template#: 521, Serial#: 521
     public void cmpw(final GPR ra, final GPR rb) {
@@ -9437,7 +9437,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpli(CRF, int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.2 [Book 1]"
      */
     // Template#: 522, Serial#: 522
     public void cmplwi(final CRF bf, final GPR ra, final int ui) {
@@ -9459,7 +9459,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpli(CRF, int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.2 [Book 1]"
      */
     // Template#: 523, Serial#: 523
     public void cmplwi(final GPR ra, final int ui) {
@@ -9478,7 +9478,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpl(CRF, int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.2 [Book 1]"
      */
     // Template#: 524, Serial#: 524
     public void cmplw(final CRF bf, final GPR ra, final GPR rb) {
@@ -9497,7 +9497,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #cmpl(CRF, int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.5.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.5.2 [Book 1]"
      */
     // Template#: 525, Serial#: 525
     public void cmplw(final GPR ra, final GPR rb) {
@@ -9517,7 +9517,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 526, Serial#: 526
     public void twlti(final GPR ra, final int si) {
@@ -9538,7 +9538,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 527, Serial#: 527
     public void twlei(final GPR ra, final int si) {
@@ -9559,7 +9559,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 528, Serial#: 528
     public void tweqi(final GPR ra, final int si) {
@@ -9580,7 +9580,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 529, Serial#: 529
     public void twgei(final GPR ra, final int si) {
@@ -9601,7 +9601,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 530, Serial#: 530
     public void twgti(final GPR ra, final int si) {
@@ -9622,7 +9622,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 531, Serial#: 531
     public void twnli(final GPR ra, final int si) {
@@ -9643,7 +9643,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 532, Serial#: 532
     public void twnei(final GPR ra, final int si) {
@@ -9664,7 +9664,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 533, Serial#: 533
     public void twngi(final GPR ra, final int si) {
@@ -9685,7 +9685,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 534, Serial#: 534
     public void twllti(final GPR ra, final int si) {
@@ -9706,7 +9706,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 535, Serial#: 535
     public void twllei(final GPR ra, final int si) {
@@ -9727,7 +9727,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 536, Serial#: 536
     public void twlgei(final GPR ra, final int si) {
@@ -9748,7 +9748,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 537, Serial#: 537
     public void twlgti(final GPR ra, final int si) {
@@ -9769,7 +9769,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 538, Serial#: 538
     public void twlnli(final GPR ra, final int si) {
@@ -9790,7 +9790,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #twi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 539, Serial#: 539
     public void twlngi(final GPR ra, final int si) {
@@ -9809,7 +9809,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 540, Serial#: 540
     public void twlt(final GPR ra, final GPR rb) {
@@ -9827,7 +9827,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 541, Serial#: 541
     public void twle(final GPR ra, final GPR rb) {
@@ -9845,7 +9845,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 542, Serial#: 542
     public void tweq(final GPR ra, final GPR rb) {
@@ -9863,7 +9863,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 543, Serial#: 543
     public void twge(final GPR ra, final GPR rb) {
@@ -9881,7 +9881,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 544, Serial#: 544
     public void twgt(final GPR ra, final GPR rb) {
@@ -9899,7 +9899,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 545, Serial#: 545
     public void twnl(final GPR ra, final GPR rb) {
@@ -9917,7 +9917,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 546, Serial#: 546
     public void twne(final GPR ra, final GPR rb) {
@@ -9935,7 +9935,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 547, Serial#: 547
     public void twng(final GPR ra, final GPR rb) {
@@ -9953,7 +9953,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 548, Serial#: 548
     public void twllt(final GPR ra, final GPR rb) {
@@ -9971,7 +9971,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 549, Serial#: 549
     public void twlle(final GPR ra, final GPR rb) {
@@ -9989,7 +9989,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 550, Serial#: 550
     public void twlge(final GPR ra, final GPR rb) {
@@ -10007,7 +10007,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 551, Serial#: 551
     public void twlgt(final GPR ra, final GPR rb) {
@@ -10025,7 +10025,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 552, Serial#: 552
     public void twlnl(final GPR ra, final GPR rb) {
@@ -10043,7 +10043,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 553, Serial#: 553
     public void twlng(final GPR ra, final GPR rb) {
@@ -10061,7 +10061,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tw(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 554, Serial#: 554
     public void trap() {
@@ -10079,7 +10079,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 555, Serial#: 555
     public void tdlti(final GPR ra, final int si) {
@@ -10100,7 +10100,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 556, Serial#: 556
     public void tdlei(final GPR ra, final int si) {
@@ -10121,7 +10121,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 557, Serial#: 557
     public void tdeqi(final GPR ra, final int si) {
@@ -10142,7 +10142,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 558, Serial#: 558
     public void tdgei(final GPR ra, final int si) {
@@ -10163,7 +10163,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 559, Serial#: 559
     public void tdgti(final GPR ra, final int si) {
@@ -10184,7 +10184,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 560, Serial#: 560
     public void tdnli(final GPR ra, final int si) {
@@ -10205,7 +10205,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 561, Serial#: 561
     public void tdnei(final GPR ra, final int si) {
@@ -10226,7 +10226,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 562, Serial#: 562
     public void tdngi(final GPR ra, final int si) {
@@ -10247,7 +10247,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 563, Serial#: 563
     public void tdllti(final GPR ra, final int si) {
@@ -10268,7 +10268,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 564, Serial#: 564
     public void tdllei(final GPR ra, final int si) {
@@ -10289,7 +10289,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 565, Serial#: 565
     public void tdlgei(final GPR ra, final int si) {
@@ -10310,7 +10310,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 566, Serial#: 566
     public void tdlgti(final GPR ra, final int si) {
@@ -10331,7 +10331,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 567, Serial#: 567
     public void tdlnli(final GPR ra, final int si) {
@@ -10352,7 +10352,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #tdi(int, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 568, Serial#: 568
     public void tdlngi(final GPR ra, final int si) {
@@ -10371,7 +10371,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 569, Serial#: 569
     public void tdlt(final GPR ra, final GPR rb) {
@@ -10389,7 +10389,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 570, Serial#: 570
     public void tdle(final GPR ra, final GPR rb) {
@@ -10407,7 +10407,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 571, Serial#: 571
     public void tdeq(final GPR ra, final GPR rb) {
@@ -10425,7 +10425,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 572, Serial#: 572
     public void tdge(final GPR ra, final GPR rb) {
@@ -10443,7 +10443,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 573, Serial#: 573
     public void tdgt(final GPR ra, final GPR rb) {
@@ -10461,7 +10461,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 574, Serial#: 574
     public void tdnl(final GPR ra, final GPR rb) {
@@ -10479,7 +10479,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 575, Serial#: 575
     public void tdne(final GPR ra, final GPR rb) {
@@ -10497,7 +10497,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 576, Serial#: 576
     public void tdng(final GPR ra, final GPR rb) {
@@ -10515,7 +10515,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 577, Serial#: 577
     public void tdllt(final GPR ra, final GPR rb) {
@@ -10533,7 +10533,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 578, Serial#: 578
     public void tdlle(final GPR ra, final GPR rb) {
@@ -10551,7 +10551,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 579, Serial#: 579
     public void tdlge(final GPR ra, final GPR rb) {
@@ -10569,7 +10569,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 580, Serial#: 580
     public void tdlgt(final GPR ra, final GPR rb) {
@@ -10587,7 +10587,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 581, Serial#: 581
     public void tdlnl(final GPR ra, final GPR rb) {
@@ -10605,7 +10605,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #td(int, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.6 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.6 [Book 1]"
      */
     // Template#: 582, Serial#: 582
     public void tdlng(final GPR ra, final GPR rb) {
@@ -10626,7 +10626,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicr(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 583, Serial#: 583
     public void extldi(final GPR ra, final GPR rs, final int n, final int b) {
@@ -10651,7 +10651,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicr_(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 584, Serial#: 584
     public void extldi_(final GPR ra, final GPR rs, final int n, final int b) {
@@ -10676,7 +10676,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicl(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 585, Serial#: 585
     public void extrdi(final GPR ra, final GPR rs, final int n, final int b) {
@@ -10701,7 +10701,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicl_(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 586, Serial#: 586
     public void extrdi_(final GPR ra, final GPR rs, final int n, final int b) {
@@ -10726,7 +10726,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldimi(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 587, Serial#: 587
     public void insrdi(final GPR ra, final GPR rs, final int n, final int b) {
@@ -10751,7 +10751,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldimi_(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 588, Serial#: 588
     public void insrdi_(final GPR ra, final GPR rs, final int n, final int b) {
@@ -10775,7 +10775,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicl(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 589, Serial#: 589
     public void rotldi(final GPR ra, final GPR rs, final int n) {
@@ -10797,7 +10797,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicl_(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 590, Serial#: 590
     public void rotldi_(final GPR ra, final GPR rs, final int n) {
@@ -10819,7 +10819,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicl(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 591, Serial#: 591
     public void rotrdi(final GPR ra, final GPR rs, final int n) {
@@ -10841,7 +10841,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicl_(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 592, Serial#: 592
     public void rotrdi_(final GPR ra, final GPR rs, final int n) {
@@ -10861,7 +10861,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldcl(GPR, GPR, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 593, Serial#: 593
     public void rotld(final GPR ra, final GPR rs, final GPR rb) {
@@ -10880,7 +10880,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldcl_(GPR, GPR, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 594, Serial#: 594
     public void rotld_(final GPR ra, final GPR rs, final GPR rb) {
@@ -10902,7 +10902,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicr(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 595, Serial#: 595
     public void sldi(final GPR ra, final GPR rs, final int n) {
@@ -10927,7 +10927,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicr_(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 596, Serial#: 596
     public void sldi_(final GPR ra, final GPR rs, final int n) {
@@ -10952,7 +10952,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicl(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 597, Serial#: 597
     public void srdi(final GPR ra, final GPR rs, final int n) {
@@ -10977,7 +10977,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicl_(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 598, Serial#: 598
     public void srdi_(final GPR ra, final GPR rs, final int n) {
@@ -11001,7 +11001,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicl(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 599, Serial#: 599
     public void clrldi(final GPR ra, final GPR rs, final int n) {
@@ -11023,7 +11023,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicl_(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 600, Serial#: 600
     public void clrldi_(final GPR ra, final GPR rs, final int n) {
@@ -11045,7 +11045,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicr(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 601, Serial#: 601
     public void clrrdi(final GPR ra, final GPR rs, final int n) {
@@ -11067,7 +11067,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldicr_(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 602, Serial#: 602
     public void clrrdi_(final GPR ra, final GPR rs, final int n) {
@@ -11090,7 +11090,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldic(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 603, Serial#: 603
     public void clrlsldi(final GPR ra, final GPR rs, final int b, final int n) {
@@ -11115,7 +11115,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rldic_(GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.1 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.1 [Book 1]"
      */
     // Template#: 604, Serial#: 604
     public void clrlsldi_(final GPR ra, final GPR rs, final int b, final int n) {
@@ -11141,7 +11141,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 605, Serial#: 605
     public void extlwi(final GPR ra, final GPR rs, final int n, final int b) {
@@ -11168,7 +11168,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm_(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 606, Serial#: 606
     public void extlwi_(final GPR ra, final GPR rs, final int n, final int b) {
@@ -11195,7 +11195,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 607, Serial#: 607
     public void extrwi(final GPR ra, final GPR rs, final int n, final int b) {
@@ -11222,7 +11222,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm_(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 608, Serial#: 608
     public void extrwi_(final GPR ra, final GPR rs, final int n, final int b) {
@@ -11250,7 +11250,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwimi(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 609, Serial#: 609
     public void inslwi(final GPR ra, final GPR rs, final int n, final int b) {
@@ -11280,7 +11280,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwimi_(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 610, Serial#: 610
     public void inslwi_(final GPR ra, final GPR rs, final int n, final int b) {
@@ -11310,7 +11310,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwimi(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 611, Serial#: 611
     public void insrwi(final GPR ra, final GPR rs, final int n, final int b) {
@@ -11340,7 +11340,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwimi_(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 612, Serial#: 612
     public void insrwi_(final GPR ra, final GPR rs, final int n, final int b) {
@@ -11367,7 +11367,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 613, Serial#: 613
     public void rotlwi(final GPR ra, final GPR rs, final int n) {
@@ -11389,7 +11389,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm_(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 614, Serial#: 614
     public void rotlwi_(final GPR ra, final GPR rs, final int n) {
@@ -11411,7 +11411,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 615, Serial#: 615
     public void rotrwi(final GPR ra, final GPR rs, final int n) {
@@ -11433,7 +11433,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm_(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 616, Serial#: 616
     public void rotrwi_(final GPR ra, final GPR rs, final int n) {
@@ -11453,7 +11453,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwnm(GPR, GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 617, Serial#: 617
     public void rotlw(final GPR ra, final GPR rs, final GPR rb) {
@@ -11472,7 +11472,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwnm_(GPR, GPR, GPR, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 618, Serial#: 618
     public void rotlw_(final GPR ra, final GPR rs, final GPR rb) {
@@ -11495,7 +11495,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 619, Serial#: 619
     public void slwi(final GPR ra, final GPR rs, final int n) {
@@ -11522,7 +11522,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm_(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 620, Serial#: 620
     public void slwi_(final GPR ra, final GPR rs, final int n) {
@@ -11549,7 +11549,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 621, Serial#: 621
     public void srwi(final GPR ra, final GPR rs, final int n) {
@@ -11576,7 +11576,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm_(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 622, Serial#: 622
     public void srwi_(final GPR ra, final GPR rs, final int n) {
@@ -11602,7 +11602,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 623, Serial#: 623
     public void clrlwi(final GPR ra, final GPR rs, final int n) {
@@ -11626,7 +11626,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm_(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 624, Serial#: 624
     public void clrlwi_(final GPR ra, final GPR rs, final int n) {
@@ -11650,7 +11650,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 625, Serial#: 625
     public void clrrwi(final GPR ra, final GPR rs, final int n) {
@@ -11674,7 +11674,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm_(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 626, Serial#: 626
     public void clrrwi_(final GPR ra, final GPR rs, final int n) {
@@ -11701,7 +11701,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 627, Serial#: 627
     public void clrlslwi(final GPR ra, final GPR rs, final int b, final int n) {
@@ -11733,7 +11733,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #rlwinm_(GPR, GPR, int, int, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.7.2 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.7.2 [Book 1]"
      */
     // Template#: 628, Serial#: 628
     public void clrlslwi_(final GPR ra, final GPR rs, final int b, final int n) {
@@ -11759,7 +11759,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #mtspr(int, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.8 [Book 1]"
      */
     // Template#: 629, Serial#: 629
     public void mtxer(final GPR rs) {
@@ -11776,7 +11776,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #mtspr(int, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.8 [Book 1]"
      */
     // Template#: 630, Serial#: 630
     public void mtlr(final GPR rs) {
@@ -11793,7 +11793,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #mtspr(int, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.8 [Book 1]"
      */
     // Template#: 631, Serial#: 631
     public void mtctr(final GPR rs) {
@@ -11810,7 +11810,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #mfspr(GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.8 [Book 1]"
      */
     // Template#: 632, Serial#: 632
     public void mfxer(final GPR rt) {
@@ -11827,7 +11827,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #mfspr(GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.8 [Book 1]"
      */
     // Template#: 633, Serial#: 633
     public void mflr(final GPR rt) {
@@ -11844,7 +11844,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #mfspr(GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.8 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.8 [Book 1]"
      */
     // Template#: 634, Serial#: 634
     public void mfctr(final GPR rt) {
@@ -11861,7 +11861,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #ori(GPR, GPR, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.9 [Book 1]"
      */
     // Template#: 635, Serial#: 635
     public void nop() {
@@ -11879,7 +11879,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #addi(GPR, ZeroOrRegister, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.9 [Book 1]"
      */
     // Template#: 636, Serial#: 636
     public void li(final GPR rt, final int si) {
@@ -11900,7 +11900,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #addis(GPR, ZeroOrRegister, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.9 [Book 1]"
      */
     // Template#: 637, Serial#: 637
     public void lis(final GPR rt, final int sis) {
@@ -11922,7 +11922,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #addi(GPR, ZeroOrRegister, int)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.9 [Book 1]"
      */
     // Template#: 638, Serial#: 638
     public void la(final GPR rt, final int si, final ZeroOrRegister ra) {
@@ -11943,7 +11943,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #or(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.9 [Book 1]"
      */
     // Template#: 639, Serial#: 639
     public void mr(final GPR ra, final GPR rb) {
@@ -11962,7 +11962,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #or_(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.9 [Book 1]"
      */
     // Template#: 640, Serial#: 640
     public void mr_(final GPR ra, final GPR rb) {
@@ -11981,7 +11981,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #nor(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.9 [Book 1]"
      */
     // Template#: 641, Serial#: 641
     public void not(final GPR ra, final GPR rb) {
@@ -12000,7 +12000,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #nor_(GPR, GPR, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.9 [Book 1]"
      */
     // Template#: 642, Serial#: 642
     public void not_(final GPR ra, final GPR rb) {
@@ -12019,7 +12019,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
      *
      * @see #mtcrf(int, GPR)
      *
-     * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.9 [Book 1]"
+     * @see "PowerPC Architecture Book, Version 2.02 - Section B.9 [Book 1]"
      */
     // Template#: 643, Serial#: 643
     public void mtcr(final GPR rs) {

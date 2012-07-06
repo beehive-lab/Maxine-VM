@@ -56,7 +56,6 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
      * @param header value from log buffer
      * @param argNum argument index {@code [1 .. N-1]}
      * @param argValue argument value
-     * @return
      */
     protected Component getRenderer(int header, int argNum, long argValue) {
         return VMLogArgRendererFactory.defaultVMLogArgRenderer.getRenderer(header, argNum, argValue);
@@ -67,7 +66,6 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
      * Perhaps should be elsewhere.
      * @param vm
      * @param cString
-     * @return
      */
     static String stringFromCString(TeleVM vm, Pointer cString) {
         byte[] bytes = new byte[1024];

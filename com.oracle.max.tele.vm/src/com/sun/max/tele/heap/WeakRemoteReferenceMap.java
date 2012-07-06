@@ -78,7 +78,7 @@ public final class WeakRemoteReferenceMap<Ref_Type extends RemoteReference> {
     /**
      * Enumerates the {@link RemoteReference}s contained in the map.
      *
-     * @returns a new list containing the values, modification-safe
+     * @return a new list containing the values, modification-safe
      */
     public List<Ref_Type> values() {
         final ArrayList<Ref_Type> values = new ArrayList<Ref_Type>(map.size());

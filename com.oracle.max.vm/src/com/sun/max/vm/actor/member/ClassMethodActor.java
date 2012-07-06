@@ -364,7 +364,7 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     /**
-     * Records if this object returned {@code true} for a call to {@link #hasCompiledCode()} during
+     * Records if this object returned {@code true} for a call to {@link #canBePermanentlyLinked()} during
      * boot image building.
      */
     @HOSTED_ONLY
@@ -394,7 +394,6 @@ public abstract class ClassMethodActor extends MethodActor {
     /**
      * Variant that detects that the caller is a deopted VM method and passes that on.
      * @param caller
-     * @return
      */
     public final TargetMethod makeTargetMethod(TargetMethod caller) {
         boolean isVMDeopt = caller.isInstrumented() && caller.classMethodActor.isVM();

@@ -56,7 +56,7 @@ import com.sun.max.vm.thread.*;
  * Note that only baseline methods are subject to eviction. Optimised code as well as code in
  * the boot image code region is not affected.
  *
- * The workflow, controlled from the {@link #doit()} method, is as follows.
+ * The workflow, controlled from the {@link #doIt()} method, is as follows.
  * <ul>
  * <li><b>Phase 1: Patching.</b>
  * <ol>
@@ -73,7 +73,7 @@ import com.sun.max.vm.thread.*;
  * <li><i>Invalidate dispatch tables and target states.</i><br>
  * Invalidation here means that the respective vtable and itable entries are made to point to the corresponding virtual
  * trampoline. This takes place for all subclasses of the class containing a stale method as well.<br>
- * This step also takes care of resetting references to native code in {@linkplain ClassMethodActor#targetState method actors}
+ * This step also takes care of resetting references to native code in {@linkplain ClassMethodActor method actors}
  * to {@code null}, and of unmarking marked (live) methods. Furthermore, all stale methods are wiped, i.e., their machine
  * code and literal arrays are made to reference empty sentinel arrays.</li>
  * </ol></li>
@@ -212,7 +212,7 @@ public final class CodeEviction extends VmOperation {
      * <li>having type profiles (as they will soon be recompiled by the optimising compiler),</li>
      * <li>that have just been compiled but are not yet fully installed in the system (e.g., by being referenced
      * from a stack),</li>
-     * <li>whose invocation count is within the threshold denoted by {@link MethodInstrumentation#PROTECTION_THRESHOLD}.</li>
+     * <li>whose invocation count is within the threshold denoted by {@link MethodInstrumentation#PROTECTION_PERCENTAGE}.</li>
      * </ul>
      */
     final class ProtectedMethodsMarker implements TargetMethod.Closure {
@@ -682,7 +682,7 @@ public final class CodeEviction extends VmOperation {
     /**
      * Perform a specific action for a given thread.
      * This method is invoked multiple times during the execution of {@linkplain #doIt()}.
-     * What action is performed is controlled by the {@linkplain phase} member,
+     * What action is performed is controlled by the {@linkplain #phase} member,
      * which is set accordingly in {@linkplain #doIt()}.
      */
     @Override

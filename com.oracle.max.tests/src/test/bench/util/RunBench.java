@@ -425,7 +425,6 @@ public class RunBench {
     /**
      * Remove outliers by sorting {@code timings} and removing {@link #outlierPercent} largest values.
      * @param timings
-     * @return
      */
     public static SubArray removeOutliers(long[] timings) {
         Arrays.sort(timings);

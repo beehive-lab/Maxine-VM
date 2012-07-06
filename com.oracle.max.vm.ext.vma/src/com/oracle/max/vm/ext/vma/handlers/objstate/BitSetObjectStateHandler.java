@@ -70,7 +70,6 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
      * Create the instance.
      * If being used in a dynamically loaded context, the state must be allocated in
      * immortal memory as it is accessed while a GC is in progress.
-     * @return
      */
     public static BitSetObjectStateHandler create() {
         final String prop = System.getProperty(MAX_IDS_PROPERTY);
@@ -88,7 +87,6 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
 
     /**
      * Returns a new id.
-     * @return
      */
     @Override
     public synchronized long assignId(Object obj) {

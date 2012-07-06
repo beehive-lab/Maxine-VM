@@ -59,7 +59,6 @@ public interface MaxThreadLocalsArea extends MaxEntity<MaxThreadLocalsArea> {
     /**
      * Gets the list of {@linkplain VmThreadLocal thread local variables} from the target VM.
      * This should always be used in preference to {@link VmThreadLocal#values()}.
-     * @return
      */
     List<VmThreadLocal> values();
 

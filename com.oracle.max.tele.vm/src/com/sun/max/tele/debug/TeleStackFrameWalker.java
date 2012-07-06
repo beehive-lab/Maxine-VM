@@ -130,7 +130,6 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
      * a {@link TruncatedStackFrame} is appended the end of the returned list.
      *
      * @param maxDepth
-     * @return
      */
     public List<StackFrame> frames(final int maxDepth) {
         if (maxDepth <= 0) {

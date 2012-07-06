@@ -108,7 +108,7 @@ public abstract class VMLog implements Heap.GCCallback {
      * <li>The {@link VMLogger} id that created the record.
      * <li>The operation code.
      * <li>The thread that created the record.
-     * <li>Up to {@value MAX_ARGS} {@link Word} valued arguments.
+     * <li>Up to {@value #MAX_ARGS} {@link Word} valued arguments.
      * </ul>
      * Everything except the arguments is stored in a {@code header} word,
      * the format of which is specified here as a set of bit fields.
@@ -395,7 +395,6 @@ public abstract class VMLog implements Heap.GCCallback {
 
     /**
      * Returns the singleton default instance uses for general logging.
-     * @return
      */
     public static VMLog vmLog() {
         return vmLog;
@@ -433,7 +432,6 @@ public abstract class VMLog implements Heap.GCCallback {
     /**
      * Allocate a monotonically increasing unique id for a log record.
      *
-     * @return
      */
     @INLINE
     @NO_SAFEPOINT_POLLS("atomic")
@@ -455,7 +453,6 @@ public abstract class VMLog implements Heap.GCCallback {
      * Acquire a record that is capable of storing at least {@code argCount} arguments.
      * N.B. This value should be considered single use and not cached.
      * @param argCount
-     * @return
      */
     protected abstract Record getRecord(int argCount);
 
@@ -519,7 +516,6 @@ public abstract class VMLog implements Heap.GCCallback {
     /**
      * Returns {@code true} is {@code visitor} is the same as the last call.
      * @param visitor
-     * @return
      */
     protected boolean isRepeatScanLogVisitor(PointerIndexVisitor visitor) {
         // if it's the same visitor (and not null) it's a repeat call for a different thread.
@@ -557,7 +553,7 @@ public abstract class VMLog implements Heap.GCCallback {
     // Log flushing
 
     /**
-     * The {@link #vmLog.FLusher} for this log, or {@code null} if not set.
+     * The flusher for this log, or {@code null} if not set.
      */
     @CONSTANT
     protected Flusher flusher;
@@ -567,7 +563,7 @@ public abstract class VMLog implements Heap.GCCallback {
      */
     public abstract static class Flusher {
         /**
-         * Called before any calls to {@link #flushRecord(Record)}.
+         * Called before any flushes.
          * Allows any setup to be done by flusher.
          */
         public void start() {
@@ -580,7 +576,7 @@ public abstract class VMLog implements Heap.GCCallback {
         public abstract void flushRecord(Record r);
 
         /**
-         * Called after all calls to {@link #flushRecord(Record)}.
+         * Called after all flushes.
          * Allows any tear down to be done by flusher.
          */
         public void end() {

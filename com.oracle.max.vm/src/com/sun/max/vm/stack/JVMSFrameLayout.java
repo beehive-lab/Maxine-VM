@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -148,7 +148,7 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
 
     /**
      * Gets the number of local variable slots in this frame. This is equivalent to the value returned by
-     * {@link CodeAttribute#maxLocals()}.
+     * {@link CodeAttribute#maxLocals}.
      */
     public int numberOfLocalSlots() {
         return numberOfLocalSlots;
@@ -156,7 +156,7 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
 
     /**
      * Gets the number of operand stack slots in this frame. This is equivalent to the value returned by
-     * {@link CodeAttribute#maxStack()}.
+     * {@link CodeAttribute#maxStack}.
      */
     public int numberOfOperandStackSlots() {
         return numberOfOperandStackSlots;

@@ -129,7 +129,7 @@ public final class Throw {
     }
 
     /**
-     * Converts an {@link AssertionError} to a {@link FatalError} if {@value #FatalVMAssertions} is {@code true}
+     * Converts an {@link AssertionError} to a {@link FatalError} if {@link #FatalVMAssertions} is {@code true}
      * and {@code throwable} is an AssertionError.
      */
     public static void convertAssertionToFatalError(Throwable throwable) {

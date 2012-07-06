@@ -31,6 +31,7 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -192,7 +193,6 @@ public class T1XTemplateGenerator {
     /**
      * Returns the argument with first character upper-cased.
      * @param s
-     * @return
      */
     public static String toFirstUpper(String s) {
         if (s.length() == 0) {
@@ -205,7 +205,6 @@ public class T1XTemplateGenerator {
     /**
      * If the argument is the empty string, returns it, otherwise returns it prefixed with a {@code $}.
      * @param s
-     * @return
      */
     public static String prefixDollar(String s) {
         if (s.length() == 0) {
@@ -223,7 +222,6 @@ public class T1XTemplateGenerator {
      * The string that precedes the generic template tag name to indicate type.
      * E.g. The {@code A} in {@code ALOAD}.
      * @param k
-     * @return
      */
     public static String tagPrefix(Kind k) {
         switch (k.asEnum) {
@@ -241,7 +239,6 @@ public class T1XTemplateGenerator {
     /**
      * The string that precedes the generic template method name to indicate type.
      * @param k
-     * @return
      */
     public static String opPrefix(Kind k) {
         switch (k.asEnum) {
@@ -405,6 +402,17 @@ public class T1XTemplateGenerator {
         out.printf("    public static void traceMethodEntry(String method) {%n");
         out.printf("        Log.println(method);%n");
         generateAfterAdvice();
+        out.printf("    }%n");
+        newLine();
+    }
+
+    public void generateLoadExceptionTemplate() {
+        startMethodGeneration();
+        generateTemplateTag("%s", LOAD_EXCEPTION);
+        out.println("    public static Object loadException() {");
+        out.println("        Object exception = VmThread.current().loadExceptionForHandler();");
+        generateBeforeAdvice();
+        out.println("        return exception;");
         out.printf("    }%n");
         newLine();
     }
@@ -1473,6 +1481,7 @@ public class T1XTemplateGenerator {
         generateReturnTemplate(VOID, "registerFinalizer");
         generateLockTemplates();
         generateTraceMethodEntryTemplate();
+        generateLoadExceptionTemplate();
     }
 
     public static void main(String[] args) throws Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import java.util.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.Pointer.Predicate;
+import com.sun.max.unsafe.Pointer.Procedure;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
@@ -44,7 +45,7 @@ import com.sun.max.vm.thread.*;
  * one or more mutator threads frozen at a safepoint.
  * A thread is frozen at a safepoint when it is blocked in native
  * code (typically on an OS-level lock) and cannot (re)enter compiled/interpreted
- * Java code without being {@linkplain ThawThread thawed} by the VM operation thread.
+ * Java code without being {@linkplain com.sun.max.vm.runtime.VmOperation.ThawThread thawed} by the VM operation thread.
  * Every frame of a compiled/interpreted method on a frozen thread's stack is guaranteed to be
  * at an execution point where the complete frame state of the method is available.
  * <p>
@@ -71,18 +72,18 @@ import com.sun.max.vm.thread.*;
  * The state pertains to the mutator thread and is recorded in the
  * {@link VmThreadLocal#MUTATOR_STATE} thread local variable of the mutator thread.
  * Each transition describes which thread makes the transition ({@code M} == mutator thread, {@code VM} == VM operation
- * thread), the VM code implementing the transition ({@linkplain Snippets#nativeCallPrologue() JNI-Prolog},
- * {@linkplain Snippets#nativeCallEpilogue() JNI-Epilog}, {@linkplain WaitUntilFrozen
- * WaitUntilFrozen} and {@linkplain ThawThread ThawThread}) and the instruction used to update the state
+ * thread), the VM code implementing the transition ({@linkplain Snippets#nativeCallPrologue JNI-Prolog},
+ * {@linkplain Snippets#nativeCallEpilogue() JNI-Epilog}, {@linkplain #waitUntilFrozenProcedure
+ * WaitUntilFrozen} and {@linkplain com.sun.max.vm.runtime.VmOperation.ThawThread ThawThread}) and the instruction used to update the state
  * variable ({@code CAS} == atomic compare-and-swap, {@code STORE} == normal memory store).</dd>
  *
  * <dt>FENCE</dt>
  * <dd>Memory fences are used to implement Dekkers algorithm to ensure that a thread is never
  * mutating during a GC. This mechanism uses both the {@link VmThreadLocal#MUTATOR_STATE} and
  * {@link VmThreadLocal#FROZEN} thread local variables of the mutator thread. The operations
- * that access these variables are in {@link Snippets#nativeCallPrologue()},
- * {@link Snippets#nativeCallEpilogue()}, {@link WaitUntilFrozen} and
- * {@link ThawThread}.
+ * that access these variables are in {@link Snippets#nativeCallPrologue},
+ * {@link Snippets#nativeCallEpilogue()}, {@link #waitUntilFrozenProcedure} and
+ * {@link com.sun.max.vm.runtime.VmOperation.ThawThread}.
  * </dd>
  * </dl>
  * The choice of which synchronization mechanism to use is specified by the {@link #UseCASBasedThreadFreezing} variable.
@@ -93,7 +94,7 @@ import com.sun.max.vm.thread.*;
  * {@linkplain SafepointPoll safepoints} are employed.
  * Safepoints are small polling code sequences injected by the compiler at prudently chosen execution points.
  * The effect of executing a triggered safepoint is for the thread to trap. The trap handler will then call
- * a specified {@linkplain AtSafepoint} procedure. This procedure synchronizes
+ * a specified {@linkplain #atSafepoint()} procedure. This procedure synchronizes
  * on the global GC and thread lock. Since the VM operation thread holds this lock, a trapped thread will
  * eventually enter native code to block on the native monitor associated with the lock.
  * <p>
@@ -156,7 +157,7 @@ public class VmOperation {
     VmOperation enclosing;
 
     /**
-     * The {@link #Mode} of this operation.
+     * The {@link Mode} of this operation.
      */
     public final Mode mode;
 
@@ -344,7 +345,7 @@ public class VmOperation {
      * threads have been frozen.
      *
      * The implementation of this method in {@link VmOperation} simply applies {@link #doThread}
-     * to each frozen thread by calling {@link doAllThreads}.
+     * to each frozen thread by calling {@link #doAllThreads}.
      */
     protected void doIt() {
         doAllThreads();
@@ -431,7 +432,7 @@ public class VmOperation {
 
     /**
      * Performs an operation on a frozen thread. If the thread was stopped in native code
-     * before the call to {@link VmThread#run()} then the {@code ip}, {@code sp} and
+     * before the call to {@link VmThread#run} then the {@code ip}, {@code sp} and
      * {@code fp} arguments will be {@link Pointer#zero()}. Otherwise,
      * these arguments denote the last Java method on the thread's stack at the
      * time it was frozen. If the thread was frozen in native code, the Java method
@@ -458,7 +459,7 @@ public class VmOperation {
     private final VmThread singleThread;
 
     /**
-     * Adapter from {@link Pointer.Procedure#run(Pointer)} to {@linkplain #doThread(VmThread, Pointer, Pointer, Pointer)}.
+     * Adapter from {@link Procedure#run(Pointer)} to {@linkplain #doThread(VmThread, Pointer, Pointer, Pointer)}.
      */
     private final Pointer.Procedure doThreadAdapter;
 
@@ -497,7 +498,8 @@ public class VmOperation {
 
     /**
      * Normal use constructor that allows nested operations.
-     * {@see VmOperation#VmOperation(String, VmThread, Mode, boolean)}.
+     *
+     * @see VmOperation#VmOperation(String, VmThread, Mode, boolean)
      */
     public VmOperation(String name, VmThread singleThread, Mode mode) {
         this(name, singleThread, mode, false);
@@ -813,7 +815,7 @@ public class VmOperation {
     /**
      * Thaws a frozen thread.
      *
-     * @param tla thread locals of the thread about to be thawed
+     * @param thread the thread about to be thawed
      */
     public final void thawThread(VmThread thread) {
 
@@ -875,7 +877,7 @@ public class VmOperation {
 
     /**
      * Bit set in {@link VmThreadLocal#SUSPEND} when a {@link #THREAD_IN_JAVA} is suspended.
-     * I.e. if {@link #doSafepoint} is called. This allows threads that are suspended when
+     * This allows threads that are suspended when
      * returning from native code to be distinguished from those suspended explicitly by a safepoint.
      * The issue being that the final act of the safepoint mechanism is to block by calling
      * native code and we do not want to suspend such a thread at that point, as that will prevent

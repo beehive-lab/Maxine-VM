@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -142,7 +142,7 @@ public class CodeRegion extends LinearAllocatorRegion {
     public static final int FIND_INDEX_ALIGN = 1 << FIND_INDEX_ALIGN_SHIFT;
 
     /**
-     * Index into {@link #targetMethods} that allows a constant-time implementation of {@link #find()}.
+     * Index into {@link #targetMethods} that allows a constant-time implementation of {@link #find(Address)}.
      * The code region is divided in pages of size {@link #FIND_INDEX_ALIGN}, and this array stores the index
      * of the method in the {@link #targetMethods} that covers the beginning of the page.
      * Since {@link #targetMethods} is sorted, a linear search with this starting point quickly finds the method

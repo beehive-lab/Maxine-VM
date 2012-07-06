@@ -1085,7 +1085,6 @@ public class CallGraphDisplay extends JPanel {
                  * Check if arg is a param id, in which case the value is in the map
                  *
                  * @param arg
-                 * @return
                  */
                 private String checkParamMap(String arg) {
                         if (arg.charAt(0) == 'A') {

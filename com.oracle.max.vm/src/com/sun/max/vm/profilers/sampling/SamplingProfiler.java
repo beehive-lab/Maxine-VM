@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ import com.sun.max.unsafe.*;
  * A singleton global instance, {@link #workingStackInfo}, of {@link StackInfo} is used to gather the stack for a thread,
  * and an exact-length copy is entered into the map when a new stack is discovered.
  *
- * Note that due to the way the {@link VMOperation} works, all threads will be stopped in a
+ * Note that due to the way the {@link VmOperation} works, all threads will be stopped in a
  * native method at the time the stack is gathered. Some threads may indeed be blocked
  * on a native method called by the thread. Others will be in the monitor code after
  * taking the trap that starts the thread stopping machinery. These stack frames should not
@@ -61,7 +61,7 @@ import com.sun.max.unsafe.*;
 public final class SamplingProfiler extends Thread {
     private static final int DEFAULT_FREQUENCY = 10;
     /**
-     * This is a conservative empirically derived number that includes the {@link VMOperation}
+     * This is a conservative empirically derived number that includes the {@link VmOperation}
      * frames for a stopped thread.
      */
     private static final int MINIMUM_DEPTH = 16;
@@ -87,7 +87,7 @@ public final class SamplingProfiler extends Thread {
     /**
      * The maximum stack depth the profiler will ever gather.
      * N.B. This applies to "user" frames, not the raw frames that include those caused
-     * by the {@link VMOperation} thread stopping mechanism.
+     * by the {@link VmOperation} thread stopping mechanism.
      */
     @CONSTANT_WHEN_NOT_ZERO
     private static int maxStackDepth;
@@ -237,8 +237,8 @@ public final class SamplingProfiler extends Thread {
 
     /**
      * Create a sample-based profiler with given measurement frequency, stack depth and dump period.
-     * @param frequency base period for measurements in millisecs, 0 implies {@value DEFAULT_FREQUENCY}
-     * @param depth stack depth to record, 0 implies {@value DEFAULT_DEPTH}
+     * @param frequency base period for measurements in millisecs, 0 implies {@value #DEFAULT_FREQUENCY}
+     * @param depth stack depth to record, 0 implies {@value #DEFAULT_DEPTH}
      * @param dumpPeriod time in seconds between dumps to log, 0 implies only at termination (default)
      */
     private static void create(int frequency, int depth, int dumpPeriod) {
@@ -335,9 +335,9 @@ public final class SamplingProfiler extends Thread {
     private static final StackTraceGatherer stackTraceGatherer = new StackTraceGatherer();
 
     /**
-     * Allocation free stack frame analyzer that builds up the {@StackInfo} in {@link SampleProfiler#workingStackInfo}.
+     * Allocation free stack frame analyzer that builds up the stack info in {@link SamplingProfiler#workingStackInfo}.
      */
-    private static class SamplingStackTraceVisitor extends StackTraceVisitor {
+    public static class SamplingStackTraceVisitor extends StackTraceVisitor {
 
         SamplingStackTraceVisitor() {
             super(null);
@@ -379,7 +379,7 @@ public final class SamplingProfiler extends Thread {
     /**
      * Value class that records a thread and a sample count.
      */
-    private static class ThreadSample {
+    public static class ThreadSample {
         VmThread vmThread;
         private long count;
 
@@ -438,7 +438,7 @@ public final class SamplingProfiler extends Thread {
      * The "logical" length of the stack is the number of elements, starting from zero,
      * for which classMethodActor != null. Comparison and hashing use the logical length.
      */
-    private static class StackInfo {
+    public static class StackInfo {
         StackElement[] stack;
 
         StackInfo(int depth) {

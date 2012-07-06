@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -363,7 +363,6 @@ public final class Safepoints {
      * Encodes a safepoint with no attributes.
      *
      * @param safepointPos the position of the safepoint (also its {@linkplain #causePosAt(int) cause} position)
-     * @param an attribute of the safepoint
      */
     public static int make(int safepointPos) {
         return make(safepointPos, safepointPos, 0);

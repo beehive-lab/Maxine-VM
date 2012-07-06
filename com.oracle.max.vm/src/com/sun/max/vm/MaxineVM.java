@@ -169,7 +169,7 @@ public final class MaxineVM {
         RUNNING,
 
         /**
-         * VM about to terminate, all non-daemon threads terminated, shutdown hooks run, but {@link VMOperation} thread still live.
+         * VM about to terminate, all non-daemon threads terminated, shutdown hooks run, but {@link VmOperation} thread still live.
          * Last chance to interpose, but be careful what you do. In particular, thread creation is not permitted.
          */
         TERMINATING
@@ -608,7 +608,11 @@ public final class MaxineVM {
         VmThreadMap.ACTIVE.setVMTerminating();
         SignalDispatcher.terminate();
 
-        VMTI.handler().vmDeath();
+        try {
+            VMTI.handler().vmDeath();
+        } catch (Throwable throwable) {
+            System.err.println("Exception thrown by VMTI handler: " + throwable);
+        }
         // TODO: need to revisit this. Likely, we would want to bring all
         // threads to a safepoint before running the terminating phase.
         vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);

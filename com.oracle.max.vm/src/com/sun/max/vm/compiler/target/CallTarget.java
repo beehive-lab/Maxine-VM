@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,8 +73,6 @@ public class CallTarget {
      * Gets the object for linking a direct call site.
      *
      * @param target the target of a direct call site
-     * @param the object to be used for linking a direct call site or {@code null} if {@code target} does not represent
-     *            a directly linkable target
      */
     public static Object directCallee(Object target) {
         assertSupportedTarget(target);
