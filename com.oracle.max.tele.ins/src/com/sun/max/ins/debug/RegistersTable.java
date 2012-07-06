@@ -273,8 +273,14 @@ public final class RegistersTable extends InspectorTable {
                         labels[row] = new NullValueLabel(inspection());
                 }
             }
-            labels[row].setValue(registerHistory.value());
-            labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + " value = " + registerHistory.value().asWord().toHexString() + "<br>");
+            Value historyValue = registerHistory.value();
+            if (historyValue != null) {
+                labels[row].setValue(historyValue);
+                labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + " value = " + historyValue.asWord().toHexString() + "<br>");
+            } else {
+                labels[row].setValue(VoidValue.VOID);
+                labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + " value = " + inspection().nameDisplay().unavailableDataLongText() + "<br>");
+            }
             labels[row].setBackground(cellBackgroundColor());
             return labels[row];
         }
