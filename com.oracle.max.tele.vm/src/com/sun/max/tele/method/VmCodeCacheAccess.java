@@ -85,6 +85,9 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements MaxCode
      */
     private TeleCodeManager teleCodeManager;
 
+    private List<MaxObject> codeCacheInspectableObjects = null;
+
+
     private final String bootCodeCacheRegionName;
 
     // The three code cache regions known to be allocated by the VM
@@ -233,10 +236,15 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements MaxCode
     }
 
     /**
-     * @return the object in the VM that manages cached compiled code.
+     * @see MaxVM#inspectableObjects()
      */
-    public TeleCodeManager codeManager() {
-        return teleCodeManager;
+    public List<MaxObject> codeCacheInspectableObjects() {
+        ArrayList<MaxObject> codeCacheInspectableObjects = new ArrayList<MaxObject>();
+        codeCacheInspectableObjects.add(teleCodeManager);
+        codeCacheInspectableObjects.addAll(bootCodeCacheRegion.inspectableObjects());
+        codeCacheInspectableObjects.addAll(dynamicBaselineCodeCacheRegion.inspectableObjects());
+        codeCacheInspectableObjects.addAll(dynamicOptCodeCacheRegion.inspectableObjects());
+        return codeCacheInspectableObjects;
     }
 
     /**

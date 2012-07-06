@@ -58,6 +58,8 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
      */
     private final TeleSemiSpaceCodeRegion teleSemiSpaceCodeRegion;
 
+    private final List<MaxObject> inspectableObjects;
+
     /**
      * Local manager of code regions.
      */
@@ -131,6 +133,8 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
     public VmSemiSpaceCodeCacheRegion(TeleVM vm, TeleSemiSpaceCodeRegion teleSemiSpaceCodeRegion, VmCodeCacheAccess codeCache) {
         super(vm, teleSemiSpaceCodeRegion);
         this.teleSemiSpaceCodeRegion = teleSemiSpaceCodeRegion;
+        this.inspectableObjects = new ArrayList<MaxObject>();
+        this.inspectableObjects.add(teleSemiSpaceCodeRegion);
         this.codeCache = codeCache;
         this.entityDescription = "The managed allocation area " + teleSemiSpaceCodeRegion.getRegionName() + " owned by the VM code cache";
         this.addressToCompilationMap = new AddressToCompilationMap(vm);
@@ -270,6 +274,11 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
 
     public RemoteCodePointerManager codePointerManager() {
         return codePointerManager;
+    }
+
+    @Override
+    public List<MaxObject> inspectableObjects() {
+        return inspectableObjects;
     }
 
 }

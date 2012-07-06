@@ -47,4 +47,12 @@ public interface RemoteScheme {
      */
     List<MaxCodeLocation> inspectableMethods();
 
+    /**
+     * Identifies objects specific to a particular scheme implementation in the VM, which
+     * a user might find helpful to view.
+     *
+     * @return descriptions of objects unique to a specific scheme implementation.
+     */
+    List<MaxObject> inspectableObjects();
+
 }

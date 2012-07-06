@@ -1483,18 +1483,19 @@ public abstract class TeleVM implements MaxVM {
         inspectableObjects.add(teleMaxineVM);
         inspectableObjects.add(teleVMConfiguration);
         try {
-            inspectableObjects.add(objects().vmBootClassRegistry());
+            inspectableObjects.add(objectAccess.vmBootClassRegistry());
         } catch (MaxVMBusyException e) {
         }
-        inspectableObjects.add(codeCacheAccess.codeManager());
-        inspectableObjects.addAll(objects().schemes());
+        inspectableObjects.addAll(objectAccess.schemes());
+        inspectableObjects.addAll(codeCacheAccess.codeCacheInspectableObjects());
+        inspectableObjects.addAll(heapAccess.heapInspectableObjects());
         return inspectableObjects;
     }
 
 
     public final List<MaxCodeLocation> inspectableMethods() {
         final List<MaxCodeLocation> inspectableMethods = new ArrayList<MaxCodeLocation>(methods().clientInspectableMethods());
-        inspectableMethods.addAll(heapAccess.inspectableMethods());
+        inspectableMethods.addAll(heapAccess.heapInspectableMethods());
         return inspectableMethods;
     }
 

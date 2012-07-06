@@ -166,7 +166,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
     private RemoteHeapScheme remoteHeapScheme = null;
 
-    private List<MaxCodeLocation> inspectableMethods = null;
+    private List<MaxCodeLocation> heapInspectableMethods = null;
 
     private int lastRegionCount = 0;
 
@@ -437,16 +437,26 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         return remoteHeapScheme.phase();
     }
 
-    public List<MaxCodeLocation> inspectableMethods() {
-        if (inspectableMethods == null) {
+    /**
+     * @see MaxVM#inspectableMethods()
+     */
+    public List<MaxCodeLocation> heapInspectableMethods() {
+        if (heapInspectableMethods == null) {
             final List<MaxCodeLocation> locations = new ArrayList<MaxCodeLocation>();
             locations.add(vm().codeLocations().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
             locations.add(vm().codeLocations().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
             // There may be implementation-specific methods of interest
             locations.addAll(remoteHeapScheme.inspectableMethods());
-            inspectableMethods = Collections.unmodifiableList(locations);
+            heapInspectableMethods = Collections.unmodifiableList(locations);
         }
-        return inspectableMethods;
+        return heapInspectableMethods;
+    }
+
+    /**
+     * @see MaxVM#inspectableObjects()
+     */
+    public List<MaxObject> heapInspectableObjects() {
+        return remoteHeapScheme.inspectableObjects();
     }
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {

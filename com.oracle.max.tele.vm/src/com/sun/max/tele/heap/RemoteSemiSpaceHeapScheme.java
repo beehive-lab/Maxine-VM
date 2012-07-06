@@ -189,6 +189,19 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         return SemiSpaceHeapScheme.class;
     }
 
+    @Override
+    public List<MaxObject> inspectableObjects() {
+        List<MaxObject> inspectableObjects = new ArrayList<MaxObject>();
+        inspectableObjects.addAll(super.inspectableObjects());
+        if (fromSpaceMemoryRegion != null) {
+            inspectableObjects.add(fromSpaceMemoryRegion);
+        }
+        if (toSpaceMemoryRegion != null) {
+            inspectableObjects.add(toSpaceMemoryRegion);
+        }
+        return inspectableObjects;
+    }
+
     public void initialize(long epoch) {
 
         vm().addInitializationListener(new InitializationListener() {
