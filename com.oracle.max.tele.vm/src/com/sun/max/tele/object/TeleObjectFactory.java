@@ -252,6 +252,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         // Other Maxine support
         classToTeleTupleObjectConstructor.put(MaxineVM.class, getConstructor(TeleMaxineVM.class));
         classToTeleTupleObjectConstructor.put(VMConfiguration.class, getConstructor(TeleVMConfiguration.class));
+        classToTeleTupleObjectConstructor.put(ClassRegistry.class, getConstructor(TeleClassRegistry.class));
         classToTeleTupleObjectConstructor.put(Kind.class, getConstructor(TeleKind.class));
         classToTeleTupleObjectConstructor.put(ObjectReferenceValue.class, getConstructor(TeleObjectReferenceValue.class));
         classToTeleTupleObjectConstructor.put(CiConstant.class, getConstructor(TeleCiConstant.class));

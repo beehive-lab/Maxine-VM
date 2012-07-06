@@ -31,7 +31,6 @@ import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
@@ -83,11 +82,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @return the mode in which the inspection is taking place.
      */
     MaxInspectionMode inspectionMode();
-
-    /**
-     * @return object instances that implement the VM's {@linkplain VMScheme schemes}.
-     */
-    List<TeleVMScheme> schemes();
 
     /**
      * @return access to the VM's class registry and related information.
@@ -340,6 +334,13 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @see #interpretMethod(ClassMethodActor, Value...)
      */
     ReferenceValue createReferenceValue(Reference reference);
+
+    /**
+     * Interesting, singleton objects in the VM.
+     *
+     * @return possibly interesting, singleton objects.
+     */
+    List<MaxObject> inspectableObjects();
 
     /**
      * Interesting, predefined method entries that might be useful, for example, for setting breakpoints.

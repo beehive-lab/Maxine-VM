@@ -233,6 +233,13 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements MaxCode
     }
 
     /**
+     * @return the object in the VM that manages cached compiled code.
+     */
+    public TeleCodeManager codeManager() {
+        return teleCodeManager;
+    }
+
+    /**
      * Gets the name used by the VM to identify the distinguished
      * boot code region, determined by static inspection of the field
      * that holds the value in the VM.

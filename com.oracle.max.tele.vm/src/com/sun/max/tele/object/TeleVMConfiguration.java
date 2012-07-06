@@ -23,11 +23,14 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
 
 
 /**
  * Access to configuration information in the VM.
+ *
+ * @see VMConfiguration
  */
 public final class TeleVMConfiguration extends TeleTupleObject {
 
@@ -88,5 +91,10 @@ public final class TeleVMConfiguration extends TeleTupleObject {
             }
         }
         return teleRunScheme;
+    }
+
+    @Override
+    public String maxineRole() {
+        return "VM configuration";
     }
 }

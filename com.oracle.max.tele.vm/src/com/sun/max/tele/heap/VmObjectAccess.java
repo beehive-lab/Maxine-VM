@@ -98,6 +98,11 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
     private List<MaxCodeLocation> inspectableMethods = null;
 
+    /**
+     * The VM object instances that implement the schemes.
+     */
+    private final List<TeleVMScheme> schemes = new ArrayList<TeleVMScheme>();
+
     private final TeleObjectFactory teleObjectFactory;
 
     private Word cachedDynamicHubHubWord = null;
@@ -111,7 +116,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             return;
         }
         initializingHubHubCaches = true;
-        final Reference hubRef = Layout.readHubReference(vm().classes().vmClassRegistryReference());
+        final Reference hubRef = Layout.readHubReference(vm().classes().vmBootClassRegistryReference());
         RemoteReference cachedDynamicHubHubReference = (RemoteReference) Layout.readHubReference(hubRef);
         assert cachedDynamicHubHubReference.equals(Layout.readHubReference(cachedDynamicHubHubReference));
         cachedDynamicHubHubWord = cachedDynamicHubHubReference.toOrigin();
@@ -317,8 +322,37 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return null;
     }
 
-    public TeleObject vmClassRegistry() throws MaxVMBusyException {
-        return findObject(classes().vmClassRegistryReference());
+    public TeleObject vmBootClassRegistry() throws MaxVMBusyException {
+        return findObject(classes().vmBootClassRegistryReference());
+    }
+
+    /**
+     * @return the specific scheme implementations in the VM.
+     */
+    public List<TeleVMScheme> schemes() {
+        if (schemes.isEmpty()) {
+            TeleHeapScheme heapScheme = vm().teleVMConfiguration().heapScheme();
+            if (heapScheme != null) {
+                schemes.add(heapScheme);
+            }
+            TeleLayoutScheme layoutScheme = vm().teleVMConfiguration().layoutScheme();
+            if (layoutScheme != null) {
+                schemes.add(layoutScheme);
+            }
+            TeleMonitorScheme monitorScheme = vm().teleVMConfiguration().monitorScheme();
+            if (monitorScheme != null) {
+                schemes.add(monitorScheme);
+            }
+            TeleReferenceScheme referenceScheme = vm().teleVMConfiguration().referenceScheme();
+            if (referenceScheme != null) {
+                schemes.add(referenceScheme);
+            }
+            TeleRunScheme runScheme = vm().teleVMConfiguration().runScheme();
+            if (runScheme != null) {
+                schemes.add(runScheme);
+            }
+        }
+        return schemes;
     }
 
     /**

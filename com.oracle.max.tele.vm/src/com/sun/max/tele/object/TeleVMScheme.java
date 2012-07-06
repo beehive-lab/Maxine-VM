@@ -40,4 +40,14 @@ public abstract class TeleVMScheme extends TeleTupleObject {
 
     public abstract String schemeName();
 
+    @Override
+    public String maxineRole() {
+        return schemeName() + " implementation";
+    }
+
+    @Override
+    public String maxineTerseRole() {
+        return "Scheme implementation";
+    }
+
 }

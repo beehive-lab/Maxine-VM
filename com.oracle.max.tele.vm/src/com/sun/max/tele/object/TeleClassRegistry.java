@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,37 +23,31 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
-
+import com.sun.max.vm.type.*;
 
 /**
- * Local surrogate for the distinguished object int the VM that represents the VM itself.
+ * Canonical surrogate for an object of type {@link ClassRegistry} in the VM.
  *
- * @see MaxineVM
+ * @see ClassRegistry
  */
-public final class TeleMaxineVM extends TeleTupleObject {
+public final class TeleClassRegistry extends TeleTupleObject {
 
-    TeleVMConfiguration teleVMConfiguration;
-
-    public TeleMaxineVM(TeleVM vm, Reference reference) {
-        super(vm, reference);
-    }
-
-    /**
-     * @return the VM object that holds configuration information for the particular VM build.
-     */
-    public TeleVMConfiguration teleVMConfiguration() {
-        if (teleVMConfiguration == null) {
-            final Reference configReference = fields().MaxineVM_config.readReference(reference());
-            teleVMConfiguration = (TeleVMConfiguration) objects().makeTeleObject(configReference);
-        }
-        return teleVMConfiguration;
+    protected TeleClassRegistry(TeleVM vm, Reference classRegistryReference) {
+        super(vm, classRegistryReference);
     }
 
     @Override
     public String maxineRole() {
-        return "VM global context";
+        if (reference().equals(classes().vmBootClassRegistryReference())) {
+            return "Boot class registry";
+        }
+        return "Class registry";
+    }
+
+    @Override
+    public String maxineTerseRole() {
+        return "Class registry";
     }
 
 }

@@ -30,6 +30,8 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Access to the singleton {@link CodeManager} in the VM.
+ *
+ * @see CodeManager
  */
 public final class TeleCodeManager extends TeleTupleObject {
 
@@ -99,6 +101,11 @@ public final class TeleCodeManager extends TeleTupleObject {
     public TeleCodeRegion teleRuntimeOptCodeRegion() {
         initialize();
         return teleRuntimeOptCodeRegion;
+    }
+
+    @Override
+    public String maxineRole() {
+        return "Code manager";
     }
 
 }

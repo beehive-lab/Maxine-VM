@@ -27,7 +27,6 @@ import java.io.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Access to objects in the VM, not all of which may be in the heap.
@@ -124,11 +123,6 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      * @return surrogate for a VM object, {@code null} if none found
      */
     MaxObject findAnyObjectFollowing(Address cellAddress, long maxSearchExtent);
-
-    /**
-     * @return the {@link ClassRegistry} object in the boot heap of the VM.
-     */
-    TeleObject vmClassRegistry() throws MaxVMBusyException;
 
     /**
      * Writes current statistics concerning inspection of the VM's heap.

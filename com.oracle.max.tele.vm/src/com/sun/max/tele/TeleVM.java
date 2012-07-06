@@ -239,11 +239,6 @@ public abstract class TeleVM implements MaxVM {
     private static TeleVMConfiguration teleVMConfiguration;
 
     /**
-     * The VM object instances that implement the schemes.
-     */
-    private final List<TeleVMScheme> schemes = new ArrayList<TeleVMScheme>();
-
-    /**
      * An abstraction description of the VM's platform, suitable for export.
      */
     private VmPlatform platform;
@@ -1032,32 +1027,6 @@ public abstract class TeleVM implements MaxVM {
         return mode;
     }
 
-    public final List<TeleVMScheme> schemes() {
-        if (schemes.isEmpty()) {
-            TeleHeapScheme heapScheme = teleVMConfiguration.heapScheme();
-            if (heapScheme != null) {
-                schemes.add(heapScheme);
-            }
-            TeleLayoutScheme layoutScheme = teleVMConfiguration.layoutScheme();
-            if (layoutScheme != null) {
-                schemes.add(layoutScheme);
-            }
-            TeleMonitorScheme monitorScheme = teleVMConfiguration.monitorScheme();
-            if (monitorScheme != null) {
-                schemes.add(monitorScheme);
-            }
-            TeleReferenceScheme referenceScheme = teleVMConfiguration.referenceScheme();
-            if (referenceScheme != null) {
-                schemes.add(referenceScheme);
-            }
-            TeleRunScheme runScheme = teleVMConfiguration.runScheme();
-            if (runScheme != null) {
-                schemes.add(runScheme);
-            }
-        }
-        return schemes;
-    }
-
     public final VmClassAccess classes() {
         return classAccess;
     }
@@ -1509,6 +1478,20 @@ public abstract class TeleVM implements MaxVM {
             return null;
         }
     }
+
+    public final List<MaxObject> inspectableObjects() {
+        final List<MaxObject> inspectableObjects = new ArrayList<MaxObject>();
+        inspectableObjects.add(teleMaxineVM);
+        inspectableObjects.add(teleVMConfiguration);
+        try {
+             inspectableObjects.add(objects().vmBootClassRegistry());
+        } catch (MaxVMBusyException e) {
+        }
+        inspectableObjects.add(codeCacheAccess.codeManager());
+        inspectableObjects.addAll(objects().schemes());
+        return inspectableObjects;
+    }
+
 
     public final List<MaxCodeLocation> inspectableMethods() {
         final List<MaxCodeLocation> inspectableMethods = new ArrayList<MaxCodeLocation>(methods().clientInspectableMethods());
