@@ -1484,7 +1484,7 @@ public abstract class TeleVM implements MaxVM {
         inspectableObjects.add(teleMaxineVM);
         inspectableObjects.add(teleVMConfiguration);
         try {
-             inspectableObjects.add(objects().vmBootClassRegistry());
+            inspectableObjects.add(objects().vmBootClassRegistry());
         } catch (MaxVMBusyException e) {
         }
         inspectableObjects.add(codeCacheAccess.codeManager());
