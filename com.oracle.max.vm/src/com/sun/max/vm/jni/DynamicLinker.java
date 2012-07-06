@@ -139,8 +139,6 @@ public final class DynamicLinker {
 
     /**
      * Variant of {@link #load(String)} used to load JVMTI agent libraries, before we have a heap.
-     * @param absolutePath
-     * @return
      */
     public static Word load(Pointer pathAsCString) {
         Word handle = dlopen(pathAsCString);
@@ -304,7 +302,7 @@ public final class DynamicLinker {
     private static boolean criticalLinked;
 
     /**
-     * Critical native methods linked, so safe to call {@link Memory.allocate}.
+     * Critical native methods linked, so safe to call {@link Memory#allocate(Size)}.
      */
     public static void markCriticalLinked() {
         criticalLinked = true;

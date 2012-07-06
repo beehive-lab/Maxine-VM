@@ -524,6 +524,15 @@ def olc(args):
 
     mx.run_java(['-cp', mx.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
 
+def site(args):
+    """creates a website containing javadoc and the project dependency graph"""
+
+    return mx.site(['--name', 'Maxine',
+                    '--exclude-packages', 'com.sun.max.asm.amd64.complete,com.sun.max.asm.ia32.complete',
+                    '--overview', join(_maxine_home, 'overview.html'),
+                    '--title', 'Maxine Project Documentation',
+                    '--dot-output-base', 'modules'] + args)
+
 def t1x(args):
     """alias for "mx olc -c=T1X ..." """
     olc(['-c=T1X'] + args)
@@ -701,6 +710,7 @@ def mx_init():
         'nm': [nm, '[options] [boot image file]', _vm_image],
         'objecttree': [objecttree, '[options]'],
         'olc': [olc, '[options] patterns...', _patternHelp],
+        'site' : [site, '[options]'],
         't1x': [t1x, '[options] patterns...'],
         't1xgen': [t1xgen, ''],
         'test': [test, '[options]'],

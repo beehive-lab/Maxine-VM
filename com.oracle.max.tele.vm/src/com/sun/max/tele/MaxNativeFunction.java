@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ public interface MaxNativeFunction extends MaxMachineCodeRoutine<MaxNativeFuncti
      * The name of the function.
      * For a disconnected function this is the name assigned interactively
      * or automatically generated.
-     * @return
      */
     String name();
 
@@ -47,13 +46,11 @@ public interface MaxNativeFunction extends MaxMachineCodeRoutine<MaxNativeFuncti
     /**
      * Combines the library name and the function name.
      * Returns {@code name()} for a disconnected function.
-     * @return
      */
     String qualName();
 
     /**
      * The library that owns this function or {@code null} if it is stand-alone (disconnected).
-     * @return
      */
     MaxNativeLibrary library();
 

@@ -89,7 +89,6 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
 
     /**
      * The number of log records in the view.
-     * @return
      */
     public int getRowCount() {
         return displayedRows == null ? logRecordCache.size() : displayedRows.length;
@@ -183,7 +182,6 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
     /**
      * Is this header value well-formed?
      * @param header
-     * @return
      */
     boolean wellFormedHeader(int header) {
         // there are brief periods when a record may not be well formed,
@@ -218,7 +216,6 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
      * Return the first id to start gathering new records from.
      * Default assumes contiguous id range, i.e. global, shared, buffer, handling case
      * where some records have been overwritten.
-     * @return
      */
     protected int firstId() {
         if (nextId - lastNextId > teleVMLog.logEntries()) {
@@ -233,7 +230,6 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
     /**
      * Create a {@link HostedLogRecord} from the target VM record.
      * @param id the id of the record (N.B. may not be stored in target).
-     * @return
      */
     protected abstract TeleHostedLogRecord getRecordFromVM(int id);
 

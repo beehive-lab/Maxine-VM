@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package demo;
 
 import java.util.*;
 
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -40,7 +41,7 @@ public class VmOperationDemoHelper {
         }
 
         /**
-         * Used by a subclass to customize a thread created by {@link createThreads},
+         * Used by a subclass to customize a thread created by {@link #createThreads},
          * e.g., set the name, set as daemon etc.
          * @param thread
          */
@@ -85,7 +86,7 @@ public class VmOperationDemoHelper {
     }
 
     /**
-     * Create a set of threads all executing the same {@link #DemoRunnable}.
+     * Create a set of threads all executing the same {@link DemoRunnable}.
      * Wait for all of them to enter their run method before returning.
      * @param numThreads
      * @param runnable

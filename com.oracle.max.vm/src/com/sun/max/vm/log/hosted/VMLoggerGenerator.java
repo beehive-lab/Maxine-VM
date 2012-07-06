@@ -264,7 +264,6 @@ public class VMLoggerGenerator {
      * repeat runs. {@link Class#getDeclaredMethods} does not guarantee any order and, experimentally,
      * it can vary from run to run.
      * @param methods
-     * @return
      */
     private static Method[] sort(Method[] methods) {
         CMethod[] cmethods = new CMethod[methods.length];
@@ -372,7 +371,7 @@ public class VMLoggerGenerator {
 
     /**
      * Attempts to locate an existing definition for the given argument class, either
-     * in {@link VMLogger} or a custom definition in the user {@code sourceClass).
+     * in {@link VMLogger} or a custom definition in the user {@code sourceClass}.
      * @param argClass
      * @param log
      * @param sourceClass

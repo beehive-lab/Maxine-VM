@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ import com.sun.max.vm.type.*;
  * constant type. For some constant types, there are one or more additional subclasses representing unresolved
  * version(s) of the constant. The process of resolving a constant will always result with relevant constant pool slot
  * being updated with the resolved version. That is, the constant pool will never be
- * {@linkplain ConstantPool#updateAt(int, PoolConstant) updated} with an unresolved version of a constant.
+ * {@linkplain ConstantPool#updateAt(int, ResolvableConstant) updated} with an unresolved version of a constant.
  */
 public interface PoolConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> {
 

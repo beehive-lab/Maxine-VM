@@ -226,7 +226,6 @@ public final class AllocationsTable extends InspectorTable {
          * of VM memory as the one specified.
          *
          * @param memoryRegion description of a region of VM memory
-         * @return
          */
         int findRow(MaxMemoryRegion memoryRegion) {
             final int displayedRowCount = getRowCount();

@@ -311,7 +311,6 @@ public class EvacuatorToCardSpace extends Evacuator {
      * Allocate space in evacuator's promotion allocation buffer.
      *
      * @param size
-     * @return
      */
     private Pointer allocate(Size size) {
         Pointer cell = ptop;

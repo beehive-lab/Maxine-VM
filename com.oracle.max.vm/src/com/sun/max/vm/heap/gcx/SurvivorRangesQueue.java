@@ -108,7 +108,6 @@ public class SurvivorRangesQueue {
 
     /**
      * Number of ranges in the queue.
-     * @return
      */
     int size() {
         return size;

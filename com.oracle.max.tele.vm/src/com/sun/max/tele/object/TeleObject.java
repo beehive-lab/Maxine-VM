@@ -273,7 +273,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * @param epoch the process epoch at the time of this update.
      * @param statsPrinters list of objects that report statistics for updates performed on this object so far (with no
      *            newlines)
-     * @returns whether the object's cache was successfully updated.
+     * @return whether the object's cache was successfully updated.
      */
     protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
         return true;

@@ -208,7 +208,6 @@ public abstract class HeapRegionSweeper extends Sweeper {
 
     /**
      * Indicates whether the current sweeping region is the head of a multi-regions object.
-     * @return
      */
     public final boolean sweepingRegionIsLargeHead() {
         return csrIsMultiRegionObjectHead;
@@ -232,7 +231,6 @@ public abstract class HeapRegionSweeper extends Sweeper {
      *
      * @param leftLiveObject
      * @param rightLiveObject
-     * @return
      */
     @Override
     public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {

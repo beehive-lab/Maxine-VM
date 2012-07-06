@@ -61,7 +61,6 @@ public interface XirWriteBarrierSpecification extends WriteBarrierSpecification 
      * Return a XIR write-barrier generator that implements the specification encoded in a bit set whose elements correspond to enum-based flags.
      *
      * @param writeBarrierSpec a bit set encoding a write barrier specification.
-     * @return
      */
     XirWriteBarrierGenerator barrierGenerator(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec);
 }

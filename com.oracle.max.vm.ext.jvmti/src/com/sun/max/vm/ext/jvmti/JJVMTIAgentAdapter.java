@@ -72,7 +72,6 @@ public class JJVMTIAgentAdapter extends JJVMTIAgentAdapterChecker implements JJV
     /**
      * Register an agent.
      * @param the agent implementation subclass
-     * @return
      */
     public static JJVMTIAgentAdapter register(JJVMTIAgentAdapter agent) {
         agent.registerEnv(new JVMTI.JavaEnv((JJVMTI.EventCallbacks) agent));

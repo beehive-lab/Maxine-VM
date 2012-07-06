@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,6 @@ public final class ARMImmediates {
      * 
      * @param value
      *            rotate amount specified as operand
-     * @return
      */
     public static boolean isValidRotate(int value) {
         return value % 2 == 0;
@@ -67,7 +66,6 @@ public final class ARMImmediates {
      * 
      * @param value
      *            32 bit immediate operand value
-     * @return
      */
     public static boolean isValidImmediate(int value) {
         int a;
@@ -85,7 +83,6 @@ public final class ARMImmediates {
      * 
      * @param value
      *            6 bit number with only 0 to 32 allowed
-     * @return
      */
     public static boolean isValidShiftImm(int value) {
         return value >= 0 && value <= 32;

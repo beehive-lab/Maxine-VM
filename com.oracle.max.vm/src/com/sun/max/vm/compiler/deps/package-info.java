@@ -54,13 +54,13 @@
  * <li> the validation of the associated assumption.</li>
  * <li> the encoding of the assumption into an efficient packed form</li>
  * <li> the processing of the packed form, converting back to an object form for ease of analysis</li>
- * <li> supporting the application of a {@link com.sun.max.vm.compiler.deps.DependencyVisitor dependency visitor} for analysis</li>
+ * <li> supporting the application of a {@link com.sun.max.vm.compiler.deps.DependencyProcessor dependency visitor} for analysis</li>
  * <li> providing a string based representation of the dependency for tracing</li>
  * </ol>
  * <h2>Analysing Dependencies</h2>
  * A {@link com.sun.max.vm.compiler.deps.Dependencies.DependencyVisitor visitor pattern} is used to support the analysis of a
  * {@link com.sun.max.vm.compiler.deps.Dependencies} instance.
- * Recall that each such instance relates to a single {@link TargetMethod}, may contain dependencies related to
+ * Recall that each such instance relates to a single {@link com.sun.max.vm.compiler.target.TargetMethod}, may contain dependencies related to
  * several context classes and each of these may contain dependencies corresponding to several
  * {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor dependency processors}.
  * <p>
@@ -81,20 +81,20 @@
  * for each individual dependency. This method is generic since it cannot know anything about the types
  * of the data associated with the dependency. The default implementation handles this by calling
  * {@link com.sun.max.vm.compiler.deps.DependencyProcessor#match} which returns {@code dependencyVisitor} if the visitor
- * implements the {@link com.sun.max.vm.compiler.deps.DependencyProcessorVisitor} interface defined by the processor that specifies the types of the data in the dependency,
+ * implements the {@link com.sun.max.vm.compiler.deps.DependencyProcessor} interface defined by the processor that specifies the types of the data in the dependency,
  * or {@code null} if not. It then invokes {@link com.sun.max.vm.compiler.deps.DependencyProcessor#visit} with this value, which invokes the
  * typed method in the interface if the value is non-null, and steps the index to the next dependency. Defining {@link com.sun.max.vm.compiler.deps.DependencyProcessor#visit}
- * this way allows a different {@link com.sun.max.vm.compiler.deps.DependencyProcessorVisitor} to be called by an overriding implementation of
+ * this way allows a different {@link com.sun.max.vm.compiler.deps.DependencyProcessor} to be called by an overriding implementation of
  * {@link com.sun.max.vm.compiler.deps.Dependencies.DependencyVisitor#visit}. For example, a visitor that cannot know all the  {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor dependency processors}
  * in the system, yet wants to invoke the {@link com.sun.max.vm.compiler.deps.DependencyProcessor.ToStringDependencyProcessorVisitor}.
  * <h2>Defining a new Dependency Processor</h2>
  * The first step is to define a new subclass of {@link com.sun.cri.ci.CiAssumptions.Assumption}. If, as is typical, the dependency is
  * used within the optimizing compiler, then this subclass should be defined by adding it to {@link com.sun.cri.ci.CiAssumptions}.
  * <p>
- * Next define a subclass of {@link DependencyProcessor} that will handle this assumption in Maxine, and place it in the
+ * Next define a subclass of {@link com.sun.max.vm.compiler.deps.DependencyProcessor} that will handle this assumption in Maxine, and place it in the
  * {@code com.sun.max.vm.compiler.deps} package. Define a nested interface that extends
- * of {@link com.sun.max.vm.compiler.deps.DependencyProcessorVisitor} and defines a method with the same arguments as the method in the
- * {@link CiAssumptions.Assumption} subclass. To support generic tracing of dependencies you should also define
+ * of {@link com.sun.max.vm.compiler.deps.DependencyProcessor} and defines a method with the same arguments as the method in the
+ * {@link com.sun.cri.ci.CiAssumptions.Assumption} subclass. To support generic tracing of dependencies you should also define
  * a subclass of {@link com.sun.max.vm.compiler.deps.DependencyProcessor.ToStringDependencyProcessorVisitor} that implements your interface method(s) and appends appropriate
  * tracing data to the {@link java.lang.StringBuilder} variable in {@link com.sun.max.vm.compiler.deps.DependencyProcessor.ToStringDependencyProcessorVisitor}.
  * <p>
@@ -104,7 +104,7 @@
  * Finally, implement the remaining abstract methods:
  * <ul>
  * <li>{@link com.sun.max.vm.compiler.deps.DependencyProcessor#match}</li>
- * <li>{@link com.sun.max.vm.compiler.deps.DependencyProcessor.getToStringDependencyProcessorVisitor}</li>
+ * <li>{@link com.sun.max.vm.compiler.deps.DependencyProcessor#getToStringDependencyProcessorVisitor(StringBuilder)}</li>
  * <li>{@link com.sun.max.vm.compiler.deps.DependencyProcessor#visit}</li>
  * </ul>
  * <p>

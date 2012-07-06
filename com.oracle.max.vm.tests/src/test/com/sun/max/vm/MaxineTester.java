@@ -932,7 +932,6 @@ public class MaxineTester {
      *            streams are to be discarded
      * @param name a descriptive name for the command or {@code null} if {@code command[0]} should be used instead
      * @param timeout the timeout in seconds
-     * @return
      */
     private static int exec(File workingDir, String[] command, String[] env, File inputFile, Logs logs, boolean append, String name, int timeout) {
         traceExec(workingDir, command);

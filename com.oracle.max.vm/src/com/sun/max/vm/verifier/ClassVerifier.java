@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ public abstract class ClassVerifier extends Verifier {
     }
 
     /**
-     * Performs bytecode verification for all methods in {@linkplain #classActor() the given class} that have a non-null
+     * Performs bytecode verification for all methods in {@linkplain #classActor the given class} that have a non-null
      * {@link ClassMethodActor#codeAttribute() code attribute}.
      */
     public synchronized void verify() {

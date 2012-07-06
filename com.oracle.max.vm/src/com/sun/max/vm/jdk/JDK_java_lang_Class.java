@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -180,7 +180,7 @@ final class JDK_java_lang_Class {
 
     /**
      * Gets the superclass of this class.
-     * @see java.lang.Class#getSuperClass()
+     *
      * @return the superclass of this class; null if this class is {@code java.lang.Object}
      */
     @SUBSTITUTE
@@ -246,7 +246,7 @@ final class JDK_java_lang_Class {
 
     /**
      * Set the signers for this class.
-     * @see java.lang.Class#setSigners()
+     *
      * @param signers the new signers for this class
      */
     @SUBSTITUTE
@@ -295,7 +295,6 @@ final class JDK_java_lang_Class {
     /**
      * Get the protection domain for this class.
      * @see java.lang.Class#getProtectionDomain0()
-     * @return
      */
     @SUBSTITUTE
     public ProtectionDomain getProtectionDomain0() {
@@ -304,7 +303,7 @@ final class JDK_java_lang_Class {
 
     /**
      * Set the protection domain for this class.
-     * @see java.lang.Class#setProtectionDomain0()
+     *
      * @param protectionDomain
      */
     @SUBSTITUTE
@@ -314,7 +313,7 @@ final class JDK_java_lang_Class {
 
     /**
      * Gets a primitive class by its name.
-     * @see java.lang.Class#getPrimitiveClass()
+     *
      * @param name the name of the class
      * @return the class for the specified primitive, if it exists; null otherwise
      */
@@ -364,7 +363,7 @@ final class JDK_java_lang_Class {
 
     /**
      * Gets the declared fields of this class.
-     * @see java.lang.Class#getDeclaredFields0()
+     *
      * @param publicOnly true if this method should only return public fields
      * @return an array of the declared fields of this class
      */
@@ -387,7 +386,7 @@ final class JDK_java_lang_Class {
 
     /**
      * Get the declared methods of this class.
-     * @see java.lang.Class#getDeclaredMethods0()
+     *
      * @param publicOnly true if this method should return only those methods that are declared public
      * @return an array of the declared methods of this class
      */
@@ -415,7 +414,7 @@ final class JDK_java_lang_Class {
 
     /**
      * Get the declared constructors of this class.
-     * @see java.lang.Class#getDeclaredConstructors0()
+     *
      * @param publicOnly true if only the public constructors should be returned
      * @return an array representing the declared constructors of this class
      */
@@ -432,7 +431,7 @@ final class JDK_java_lang_Class {
     }
 
     /**
-     * Gets the classes that are declared within this class as specified by the {@link InnerClassesAttribute}
+     * Gets the classes that are declared within this class as specified by the {@code InnerClassesAttribute}
      * present in the classfile of this class. Note that the returned classes do not include local or
      * anonymous classes. This is not exactly clear from the specification of {@link Class#getDeclaredClasses()}
      * but is implied by http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4191731.
@@ -466,7 +465,7 @@ final class JDK_java_lang_Class {
      * TODO(mjj) consider nulling out all the unnecessary fields in the dummy instance.
      * to minimize boot image heap space.
      *
-     * @see java.lang.Class#desiredAssertionStatus0()
+     * @see java.lang.Class#desiredAssertionStatus()
      * @param javaClass the class for which to get the assertion status
      * @return the desired assertion status of the specified class
      */

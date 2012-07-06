@@ -31,7 +31,7 @@ import com.sun.max.vm.type.JavaTypeDescriptor.AtomicTypeDescriptor;
 import com.sun.max.vm.type.JavaTypeDescriptor.WordTypeDescriptor;
 
 /**
- * An {@linkplain RiType#isResolved() unresolved} type. An unresolved type is
+ * An unresolved type. An unresolved type is
  * derived from a {@linkplain UnresolvedType.InPool constant pool entry} or
  * from a {@linkplain TypeDescriptor type descriptor} and an associated
  * accessing class.
@@ -39,7 +39,7 @@ import com.sun.max.vm.type.JavaTypeDescriptor.WordTypeDescriptor;
 public abstract class UnresolvedType implements RiType {
 
     /**
-     * Gets a {@link RiType}. This method will return a {@linkplain RiType#isResolved() resolved}
+     * Gets a {@link RiType}. This method will return a resolved
      * type if possible but without triggering any class loading or resolution.
      *
      * @param typeDescriptor a type descriptor
@@ -119,8 +119,6 @@ public abstract class UnresolvedType implements RiType {
      * Creates a new unresolved type for a specified type descriptor.
      *
      * @param typeDescriptor the type's descriptor
-     * @param pool the constant pool containing the unresolved type reference
-     * @param cpi the index in {@code constantPool} of the unresolved type reference
      */
     public UnresolvedType(TypeDescriptor typeDescriptor) {
         this.typeDescriptor = typeDescriptor;

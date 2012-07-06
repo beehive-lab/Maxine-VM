@@ -69,7 +69,6 @@ public final class DataPrototype extends Prototype {
     /**
      * Retrieves the graph prototype from which this data prototype was built.
      *
-     * @return
      */
     public GraphPrototype graphPrototype() {
         return graphPrototype;
@@ -256,7 +255,7 @@ public final class DataPrototype extends Prototype {
      *
      * @param heapRegion the boot heap region in which the objects are to be allocated
      * @param objectsWithMutableReferences if {@code true} then only objects
-     *            {@linkplain ClassInfo#containsMutableReferences() containing mutable references} are processed;
+     *            {@linkplain ClassInfo#containsMutableReferences(Object) containing mutable references} are processed;
      *            otherwise only objects the do not contain mutable object references are processed
      */
     private void assignHeapCells(BootHeapRegion heapRegion, boolean objectsWithMutableReferences) {

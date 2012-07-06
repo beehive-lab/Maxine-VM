@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * The trap frame on AMD64 contains the {@linkplain Trap.Number trap number} and the values of the
+ * The trap frame on AMD64 contains the {@linkplain com.sun.max.vm.runtime.Trap.Number trap number} and the values of the
  * processor's registers when a trap occurs. The trap frame is as follows:
  *
  * <pre>

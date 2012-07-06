@@ -58,7 +58,7 @@ public final class SemiSpaceDebugHeap extends DebugHeap {
      * @param end the end of memory region
      * @param space the address space in which valid objects can be found apart from the boot
      *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions.
-     * @param verifier a {@link PointerOffsetVisitor} instance that will call
+     * @param verifier a {@link PointerIndexVisitor} instance that will call
      *            {@link #verifyRefAtIndex(Address, int, Reference, MemoryRegion, MemoryRegion)} for a reference value denoted by a base
      *            pointer and offset
      */

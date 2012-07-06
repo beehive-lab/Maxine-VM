@@ -265,7 +265,6 @@ public class JVMTIEvents {
     /**
      * Checks whether the given event is set for any agent, either globally or for any thread.
      * @param eventType
-     * @return
      */
     static boolean isEventSet(JVMTIEvents.E event) {
         return (event.bit & panAgentEventSettingCache) != 0;
@@ -275,7 +274,6 @@ public class JVMTIEvents {
      * Checks whether the given event is set for any agent, either globally or for a given thread.
      * @param eventType
      * @param vmThread thread to check
-     * @return
      */
     static boolean isEventSet(JVMTI.Env env, JVMTIEvents.E event, VmThread vmThread) {
         long setting = event.bit;
@@ -288,7 +286,6 @@ public class JVMTIEvents {
 
     /**
      * Check whether any of the events requiring compiler support are set for any agent, either globally or for any thread.
-     * @return
      */
     static boolean anyCodeEventsSet() {
         return (panAgentEventSettingCache & JVMTIEvents.CODE_EVENTS_SETTING) != 0;

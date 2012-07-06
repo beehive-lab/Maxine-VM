@@ -107,7 +107,6 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
     /**
      * Unlink the chunk off it's doubly linked list and return the next block.
      * @param dlinkedChunkAddress
-     * @return
      */
     public static Address unlink(Pointer dlinkedChunkAddress) {
         DLinkedHeapFreeChunk chunk = asDLinkedHeapFreeChunk(Reference.fromOrigin(dlinkedChunkAddress));
@@ -130,7 +129,6 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
      * Remove chunk from linked list headed by cell specified in argument.
      * @param listHead pointer to the location holding the head of the linked list.
      * @param dlinkedChunkAddress
-     * @return
      */
     public static Address unlink(Pointer listHead, Pointer dlinkedChunkAddress) {
         DLinkedHeapFreeChunk chunk = asDLinkedHeapFreeChunk(Reference.fromOrigin(dlinkedChunkAddress));

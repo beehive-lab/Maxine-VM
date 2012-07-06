@@ -435,7 +435,6 @@ public class JVMTI {
      * Support for avoiding unnecessary work in the VM.
      * Returns {@code true} iff at least one agent wants to handle this event.
      * @param eventId
-     * @return
      */
     public static synchronized boolean eventNeeded(JVMTIEvents.E event) {
         if (MaxineVM.isHosted()) {
@@ -458,7 +457,6 @@ public class JVMTI {
     /**
      * Are there any agents requesting any events needing compiled code support?
      * @param classMethodActor the method about to be compiled or {@code null} if none.
-     * @return
      */
     public static synchronized boolean compiledCodeEventsNeeded(ClassMethodActor classMethodActor) {
         return JVMTIEvents.anyCodeEventsSet() ||
@@ -469,7 +467,6 @@ public class JVMTI {
      * Returns the {@link JVMTIEvents.E event} that corresponds to a given bytecode or null if none.
      * should it be instrumented.
      * @param opcode
-     * @return
      */
     public static JVMTIEvents.E eventForBytecode(int opcode) {
         if (opcode == -1) {

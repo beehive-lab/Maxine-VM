@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,7 +82,7 @@ public final class Code {
 
     /**
      * Allocates space in a code region for the code-related arrays of a given target method
-     * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
+     * and {@linkplain TargetMethod#setCodeArrays(byte[], Pointer, byte[], Object[]) initializes} them.
      *
      * @param targetBundleLayout describes the layout of the arrays in the allocate space
      * @param targetMethod the target method for which the code-related arrays are allocated
@@ -93,7 +93,7 @@ public final class Code {
 
     /**
      * Allocates space in the heap for the code-related arrays of a given target method
-     * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
+     * and {@linkplain TargetMethod#setCodeArrays(byte[], Pointer, byte[], Object[]) initializes} them.
      * The target method cannot be executed. This option exists for the purpose of testing
      * or benchmarking a compiler at runtime without polluting the code cache.
      *

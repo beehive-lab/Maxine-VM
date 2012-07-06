@@ -59,7 +59,7 @@ public class Word {
     /**
      * The array of all the subclasses of {@link Word} that are accessible in the VM boot image configuration
      * in hosted mode. This value of this array is constructed
-     * by scanning the {@link VMConfiguration#bootImagePackages packages (that subclasses {@link BootImagePackage}).
+     * by scanning the {@link VMConfiguration#bootImagePackages packages} (that subclasses {@link BootImagePackage}).
      * Any instance that overrides the {@link BootImagePackage#wordSubclasses()} method
      * has it invoked to obtain the set of classes in the denoted package that subclass {@code Word}.
      */

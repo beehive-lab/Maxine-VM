@@ -196,10 +196,9 @@ public final class JDK_java_lang_Thread {
 
     /**
      * Counts the number of stack frames on this thread's stack.
-     * @deprecated The definition of this call depends on {@link #suspend},
+     * @deprecated The definition of this call depends on {@link #suspend0()},
      *         which is deprecated.  Further, the results of this call
      *         were never well-defined.
-     * @see java.lang.Thread#countStackFrames()
      * @return 0
      */
     @SUBSTITUTE
@@ -222,7 +221,6 @@ public final class JDK_java_lang_Thread {
 
     /**
      * Dump the stacks of the specified threads.
-     * @see java.lang.Thread#dumpThreads()
      * @param threads the threads to dump
      * @return an array of {@link java.lang.StackTraceElement java.lang.StackTraceElement}'s for each
      * thread's stack
@@ -234,7 +232,6 @@ public final class JDK_java_lang_Thread {
 
     /**
      * Gets all threads in the system.
-     * @see java.lang.Thread#getThreads()
      * @return an array of all the threads in the system
      */
     @SUBSTITUTE
@@ -244,7 +241,7 @@ public final class JDK_java_lang_Thread {
 
     /**
      * Set the priority of this thread at the OS level.
-     * @see java.lang.Thread#setPriority0(int)
+     * @see java.lang.Thread#setPriority(int)
      * @param newPriority the new priority
      */
     @SUBSTITUTE
@@ -257,7 +254,6 @@ public final class JDK_java_lang_Thread {
 
     /**
      * Stops this thread at the OS level.
-     * @see java.lang.Thread#stop0(Object)
      * @param throwable the throwable to throw in the target thread
      */
     @SUBSTITUTE
@@ -270,7 +266,6 @@ public final class JDK_java_lang_Thread {
 
     /**
      * Suspends this thread at the OS-level.
-     * @see java.lang.Thread#suspend0()
      */
     @SUBSTITUTE
     private void suspend0() {
@@ -296,7 +291,6 @@ public final class JDK_java_lang_Thread {
 
     /**
      * Resumes this thread at the OS level.
-     * @see java.lang.Thread#resume0()
      */
     @SUBSTITUTE
     private void resume0() {
@@ -308,7 +302,7 @@ public final class JDK_java_lang_Thread {
 
     /**
      * Interrupts this thread at the OS level.
-     * @see java.lang.Thread#interrupt0()
+     * @see java.lang.Thread#interrupt()
      */
     @SUBSTITUTE
     private void interrupt0() {
@@ -320,7 +314,7 @@ public final class JDK_java_lang_Thread {
 
     /**
      * Gets the state of this thread.
-     * @see java.lang.Thread#getState();
+     * @see java.lang.Thread#getState()
      * @return the state of this thread
      */
     @SUBSTITUTE
@@ -332,7 +326,6 @@ public final class JDK_java_lang_Thread {
     /**
      * Gets the name directly out of the {@link Thread}.
      * @param thread
-     * @return
      */
     public static String getName(Thread thread) {
         if (MaxineVM.isHosted()) {
@@ -346,7 +339,6 @@ public final class JDK_java_lang_Thread {
     /**
      * We substitute this because {@link Thread} holds the name as a {@code char} array,
      * and we have cached it as a {@link String} in the {@link VmThread} after the thread was started.
-     * @return
      */
     @SUBSTITUTE
     public String getName() {

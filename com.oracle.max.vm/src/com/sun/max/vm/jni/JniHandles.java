@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -138,7 +138,7 @@ public final class JniHandles {
      * The name of this field also gives some indication of how handles can be allocated
      * and freed in a stack like fashion.
      *
-     * Invariant: All elements in {@link #handles} at an index greater than or equal to {@link top} are null.
+     * Invariant: All elements in {@link #handles} at an index greater than or equal to {@link #top} are null.
      */
     private int top;
 

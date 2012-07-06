@@ -109,7 +109,6 @@ public class Page extends AbstractVmHolder {
     /**
      * Decide whether to use direct buffers.
      * It is counter-productive to use them if the target VM is remote.
-     * @return
      */
     private static boolean useDirectBuffers() {
         return TeleVM.targetLocation().kind != Kind.REMOTE;

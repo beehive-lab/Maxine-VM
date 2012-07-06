@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -727,7 +727,6 @@ final class JDK_sun_misc_Unsafe {
      * @param bytes a byte array containing the class file
      * @param offset the offset in the byte array for the start of the classfile
      * @param length the length of the classfile
-     * @param loader the classloader in which to create the class
      * @return a new class from the specified parameters
      */
     @SUBSTITUTE
@@ -1151,7 +1150,6 @@ final class JDK_sun_misc_Unsafe {
 
     /**
      * @see Unsafe#unpark(Object)
-     * @param thread
      */
     @SUBSTITUTE
     public void unpark(Object javaThread) {

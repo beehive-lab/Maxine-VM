@@ -53,7 +53,7 @@ public class HeapRegionInfo {
         IS_ALLOCATING,
         /**
          * Region has a list of {@link HeapFreeChunk} tracking space available for allocation within the region.
-         * The head of the list is located at the {@link HeapRegionInfo#firstFreeChunkIndex} word in the region.
+         * The head of the list is located at the {@link HeapRegionInfo#firstFreeChunkOffset} word in the region.
          * Note that empty regions doesn't have free chunks according to this definition.
          */
         HAS_FREE_CHUNK,
@@ -211,7 +211,6 @@ public class HeapRegionInfo {
     /**
      * Total number of free bytes in free chunks. This is only relevant for region with at least one free chunk.
      * Empty regions have a free bytes count of zero.
-     * @return
      */
     public final int freeBytesInChunks() {
         return freeSpace;
@@ -340,7 +339,6 @@ public class HeapRegionInfo {
     /**
      * Return heap region associated information from an address guaranteed to point in a heap region.
      * @param address
-     * @return
      */
     @INLINE
     static HeapRegionInfo fromInRegionAddress(Address address) {
@@ -351,7 +349,6 @@ public class HeapRegionInfo {
      * Return heap region associated information from an address not guaranteed to point in a heap region.
      * Return {@linkplain RegionTable#nullHeapRegionInfo} if not.
      * @param address
-     * @return
      */
     @INLINE
     static HeapRegionInfo fromAddress(Address address) {

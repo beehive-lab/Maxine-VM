@@ -116,7 +116,6 @@ public abstract class AgentVMOption extends VMOption {
     /**
      * Get address of library string for i'th occurrence.
      * @param i
-     * @return
      */
     public static Info getInfo(int i) {
         return infoArray[i];

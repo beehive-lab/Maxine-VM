@@ -40,7 +40,6 @@ abstract class VMLogNativeElementsTableModel extends VMLogElementsTableModel {
     /**
      * Get the size of the record at {@code r}.
      * Default implementation is fixed length.
-     * @return
      */
     protected int nativeRecordSize(Pointer r) {
         return teleVMLogNative.defaultNativeRecordSize();

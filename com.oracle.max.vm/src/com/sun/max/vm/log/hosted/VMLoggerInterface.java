@@ -34,22 +34,18 @@ import com.sun.max.vm.log.*;
 public @interface VMLoggerInterface {
     /**
      * Identifies the parent class for the auto-generated implementation.
-     * @return
      */
     Class parent() default VMLogger.class;
     /**
      * If {@code true} creates a default no-arg constructor that can be used to completely hide and disable the logger.
-     * @return
      */
     boolean defaultConstructor() default false;
     /**
      * Suppresses all tracing aspects when {@code true}.
-     * @return
      */
     boolean noTrace() default false;
     /**
      * Special logger that is hidden to the user and controlled by VM code.
-     * @return
      */
     boolean hidden() default false;
 

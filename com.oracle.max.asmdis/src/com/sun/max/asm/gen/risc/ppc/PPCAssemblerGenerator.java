@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ public final class PPCAssemblerGenerator extends RiscAssemblerGenerator<RiscTemp
         if (section.indexOf("[Book ") == -1) {
             section += " [Book 1]";
         }
-        return "\"<a href=\"http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html\">PowerPC Architecture Book, Version 2.02</a> - Section " + section + "\"";
+        return "\"PowerPC Architecture Book, Version 2.02 - Section " + section + "\"";
     }
 
     public static void main(String[] programArguments) {

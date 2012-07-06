@@ -50,6 +50,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 //import com.sun.max.vm.log.*;  // see comment on JxxFunctionsLogger
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
@@ -71,7 +72,7 @@ import com.sun.max.vm.value.*;
  *
  * @see NativeInterfaces
  * @see JniFunctionsSource
- * @see Native/substrate/jni.c
+ * @see "Native/substrate/jni.c"
  */
 public final class JniFunctions {
 
@@ -152,7 +153,7 @@ public final class JniFunctions {
 
     /**
      * Print counters and timers for all of the JNI and JMM entrypoints.
-     * To generate the necessary instrumentation code, set {@linkplain JniFunctionsGenerator#TIME_JNI_FUNCTIONS}
+     * To generate the necessary instrumentation code, set {@linkplain JniFunctions#INSTRUMENTED}
      * to true and run "max jnigen".
      */
     public static void printJniFunctionTimers() {

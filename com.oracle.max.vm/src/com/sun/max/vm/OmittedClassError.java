@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,10 +23,9 @@
 package com.sun.max.vm;
 
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.type.*;
 
 /**
- * Error thrown when an attempt is made to load an {@linkplain HostedBootClassLoader#isOmittedType(TypeDescriptor) omitted}
+ * Error thrown when an attempt is made to load an {@linkplain HostedBootClassLoader#isOmittedType(String) omitted}
  * class via the {@link HostedBootClassLoader}.
  */
 public class OmittedClassError extends NoClassDefFoundError {

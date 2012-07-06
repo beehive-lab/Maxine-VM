@@ -27,7 +27,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.run.*;
 
 /**
- * @see MaxPackage
  */
 public class Package extends BootImagePackage {
     public Package() {

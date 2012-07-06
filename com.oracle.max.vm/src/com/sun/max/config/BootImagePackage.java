@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -189,7 +189,6 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
      * Note that in the former case, there is no check as to whether the
      * class files really exist.
      *
-     * @param name the name of the package to search
      * @return the class names
      */
     public String[] listClasses(Classpath classpath) {
@@ -221,7 +220,6 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
 
     /**
      * Check whether the given class should be in the boot image.
-     * @return
      */
     public boolean isBootImageClass(String name) {
         if (classes == null) {

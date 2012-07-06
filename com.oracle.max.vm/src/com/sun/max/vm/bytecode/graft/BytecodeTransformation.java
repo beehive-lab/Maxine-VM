@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 
 /**
- * This interface must be implemented by {@linkplain BytecodeTransformer} clients.
- *
- * @return the CodeAttribute resulting from the transformation.
+ * This interface must be implemented by bytecode transformer clients.
  */
 public interface BytecodeTransformation {
 

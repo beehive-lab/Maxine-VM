@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ public class JarFileVMOption extends VMOption {
 
     /**
      * Returns the ith option value.
-     * @param index into list of option values
+     * @param i into list of option values
      * @return the ith option value
      */
     public String getValue(int i) {

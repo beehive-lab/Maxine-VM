@@ -29,6 +29,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.runtime.*;
 
@@ -122,7 +123,7 @@ public final class SemiSpaceCodeRegion extends CodeRegion {
     }
 
     /**
-     * Allocates some memory from this region. See {@linkplain LinearAllocationHeapRegion} for details.
+     * Allocates some memory from this region. See {@linkplain LinearAllocatorRegion} for details.
      */
     @Override
     public Pointer allocate(Size size, boolean adjustForDebugTag) {

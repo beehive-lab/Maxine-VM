@@ -123,7 +123,6 @@ public class AdviceGeneratorHelper {
         /**
          * Handle for adding prefix argument to the signature.
          * Return the number added.
-         * @return
          */
         public int prefixArguments() {
             return  0;
@@ -137,7 +136,6 @@ public class AdviceGeneratorHelper {
      * @param m
      * @param modifiers extra modifiers
      * @param prefix TODO
-     * @return
      */
     public static int generateSignature(String indent, String protection, MethodNameOverride m, String modifiers, ArgumentsPrefix prefixArgs) {
         String methodName = m.overrideName();

@@ -145,7 +145,6 @@ public final class ClassActorSearchDialog extends ObjectSearchDialog<TeleClassAc
      * @param inspection
      * @param title Title string for the dialog frame.
      * @param actionName Name of the action, appears on on the button to activate
-     * @return
      */
     public static TeleClassActor show(Inspection inspection, String title, String actionName) {
         final ClassActorSearchDialog dialog = new ClassActorSearchDialog(inspection, title, actionName);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,6 @@ public interface MethodProvider extends Provider {
      * @param arguments the arguments for invoking the method
      * @param threadProvider the thread that should be used for the method execution
      * @param singleThreaded if this boolean is set to true then it is guaranteed that only the specified thread will run
-     * @return
      */
     VMValue invokeStatic(VMValue[] arguments, ThreadProvider threadProvider, boolean singleThreaded);
 
@@ -72,7 +71,6 @@ public interface MethodProvider extends Provider {
      * @param threadProvider the thread that should be used for the method execution
      * @param singleThreaded  if this boolean is set to true then it is guaranteed that only the specified thread will run
      * @param nonVirtual if this boolean is set then a non-virtual call should be preformed
-     * @return
      */
     VMValue invoke(ObjectProvider object, VMValue[] arguments, ThreadProvider threadProvider, boolean singleThreaded, boolean nonVirtual);
 

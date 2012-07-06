@@ -196,7 +196,6 @@ public class T1X implements RuntimeCompiler {
     /**
      * Checks whether to use the JVMTI templates.
      * @param methodActor
-     * @return
      */
     private boolean useVMTITemplates(ClassMethodActor classMethodActor) {
         if (MaxineVM.isHosted()) {

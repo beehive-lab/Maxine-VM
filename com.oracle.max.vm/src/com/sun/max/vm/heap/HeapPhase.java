@@ -36,10 +36,10 @@ public enum HeapPhase {
     /**
      * This is the non-GC phase, during which the only activity
      * is to allocate object memory from its free
-     * list, which is initially {@link ObjectMemoryStatus#LIVE}.
-     * During this phase any {@link ObjectMemoryStatus#LIVE}
-     * object in one of the heap's regions remains
-     * {@link ObjectMemoryStatus#LIVE}, unmoved, and of constant type.
+     * list, which is initially live.
+     * During this phase any live
+     * object in one of the heap's regions remains live,
+     * unmoved, and of constant type.
      */
     MUTATING("Mutating", "Mutating & new allocation, no GC"),
 
@@ -47,18 +47,18 @@ public enum HeapPhase {
      * The first phase of a GC, during which the heap investigates
      * the liveness of every object in its region without loss of historical
      * information. During this phase no new objects are allocated.  The status
-     * of all objects becomes {@link ObjectMemoryStatus#UNKNOWN} at the beginning
-     * of this phase and they may or may not become once again {@link ObjectMemoryStatus#LIVE}
-     * during the phase. Objects whose status remains {@link ObjectMemoryStatus#UNKNOWN}
+     * of all objects becomes unknown at the beginning
+     * of this phase and they may or may not become once again live
+     * during the phase. Objects whose status remains unknown
      * at the end of the phase are deemed unreachable and become permanently
-     * {@link ObjectMemoryStatus#DEAD}.
+     * dead.
      */
     ANALYZING("Analyzing", "First (liveness analysis) phase of GC"),
 
     /**
      * The second phase of a GC, during which the heap finalizes the status of
      * objects and reclaims unreachable memory that had been allocated to objects
-     * now determined to be {@link ObjectMemoryStatus#DEAD}, as well as any other
+     * now determined to be dead, as well as any other
      * information produced during GC that is no longer needed.
      */
     RECLAIMING("Reclaiming", "Second (clean up, reclaim memory) phase of GC");

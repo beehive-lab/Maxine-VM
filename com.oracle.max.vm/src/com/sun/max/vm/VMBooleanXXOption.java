@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.sun.max.vm;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * Support for HotSpot style boolean options that start with "-XX:+" or "-XX:-".
@@ -39,8 +38,7 @@ public class VMBooleanXXOption extends VMOption {
     /**
      * Creates a new boolean option whose prefix starts with "-XX:+" or "-XX:-".
      *
-     * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option in the
-     * global registry or VM options.</b>
+     * <b>The caller is responsible for registering this option in the global registry or VM options.</b>
      *
      * @param name the name of the option, including the leading '-' character. The default {@linkplain #getValue()
      *            value} of the option is true or false depending on whether the prefix starts with "-XX:+" or "-XX:-"
@@ -55,10 +53,9 @@ public class VMBooleanXXOption extends VMOption {
     /**
      * Creates a new boolean option.
      *
-     * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option in the
-     * global registry or VM options.</b>
+     * <b>The caller is responsible for registering this option in the global registry or VM options.</b>
      *
-     * @param a prefix that must end with {@code '+'} or {@code '-'} to indicate te default value of the option
+     * @param prefix a prefix that must end with {@code '+'} or {@code '-'} to indicate te default value of the option
      * @param name the name of the option, including the leading '-' character. The default {@linkplain #getValue()
      *            value} of the option is true or false depending on whether the prefix starts with "-XX:+" or "-XX:-"
      *            respectively.
