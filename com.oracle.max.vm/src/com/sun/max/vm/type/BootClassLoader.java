@@ -46,7 +46,7 @@ import com.sun.max.vm.ti.*;
  * The VM internal class loader that is commonly referred to as the bootstrap class
  * loader in JVM specification.
  *
- * @see http://java.sun.com/docs/books/jvms/second_edition/html/ConstantPool.doc.html#79383
+ * @see "http://java.sun.com/docs/books/jvms/second_edition/html/ConstantPool.doc.html#79383"
  *
  */
 public final class BootClassLoader extends ClassLoader {

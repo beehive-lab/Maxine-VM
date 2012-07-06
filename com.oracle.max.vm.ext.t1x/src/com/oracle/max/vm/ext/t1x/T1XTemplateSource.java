@@ -58,11 +58,6 @@ public class T1XTemplateSource {
     @INTRINSIC(CMP_BYTECODE)
     public static native int rawCompare(@INTRINSIC.Constant int opcode, double l, double r);
 
-    @T1X_TEMPLATE(LOAD_EXCEPTION)
-    public static Object loadException() {
-        return VmThread.current().loadExceptionForHandler();
-    }
-
     @T1X_TEMPLATE(RETHROW_EXCEPTION)
     public static void rethrowException() {
         Throw.raise(VmThread.current().loadExceptionForHandler());
@@ -2364,6 +2359,12 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
     public static void traceMethodEntry(String method) {
         Log.println(method);
+    }
+
+    @T1X_TEMPLATE(LOAD_EXCEPTION)
+    public static Object loadException() {
+        Object exception = VmThread.current().loadExceptionForHandler();
+        return exception;
     }
 
 // END GENERATED CODE

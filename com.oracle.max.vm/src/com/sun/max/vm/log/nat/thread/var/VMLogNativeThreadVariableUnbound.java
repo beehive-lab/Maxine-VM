@@ -45,7 +45,7 @@ import com.sun.max.vm.thread.*;
  * Note, as a consequence of the potential overlap of old records, a GC/flush scan cannot just start at the
  * beginning of the buffer; it must start at {@code firstOffset} to avoid encountering a partially overwritten record.
  *
- * A log with a {@link VMLog.Flusher} will only overwrite records after they have been passed to the flusher.
+ * A log with a {@link com.sun.max.vm.log.VMLog.Flusher} will only overwrite records after they have been passed to the flusher.
  * The records are all flushed at once and then the log is then reset to empty.
  *
  * This class is abstract because it does not define the specific thread locals that are used to control
@@ -134,7 +134,6 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
      * N.B. This does not wrap to ensure that the calling loop terminates.
      * @param buffer
      * @param offset
-     * @return
      */
     private int nextRecordOffset(Pointer buffer, int offset) {
         int argCount = Record.getArgCount(buffer.plus(modLogSize(offset)).getInt());

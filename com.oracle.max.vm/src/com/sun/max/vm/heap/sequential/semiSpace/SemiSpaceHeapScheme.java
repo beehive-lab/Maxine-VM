@@ -943,8 +943,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     /**
      * Inserts {@linkplain DebugHeap#writeCellPadding(Pointer, int) padding} into the unused portion of a thread's TLAB.
-     * This is required if {@linkplain DebugHeap#verifyRegion(SemiSpaceHeapScheme.RegionKind, Pointer, Address, MemoryRegion, PointerOffsetVisitor) verification}
-     * of the heap will be performed.
      *
      * @param etla the pointer to the safepoint-enabled VM thread locals for the thread whose TLAB is
      *            to be padded

@@ -34,6 +34,7 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.debug.*;
@@ -345,7 +346,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
 
     /**
-     * Release whatever reserved virtual space was left after CodeManager initialization. This is called during {@link MaxineVM.Phase#PRISTINE} initialization phase.
+     * Release whatever reserved virtual space was left after CodeManager initialization. This is called during {@link Phase#PRISTINE} initialization phase.
      * This <b>must</b> be overridden by HeapScheme implementations that either override {@link #createCodeManager()} or {@link #bootRegionMappingConstraint()},
      * or make use of the extra space reserved by default.
      */

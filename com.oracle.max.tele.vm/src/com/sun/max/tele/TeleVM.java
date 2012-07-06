@@ -559,7 +559,6 @@ public abstract class TeleVM implements MaxVM {
      *
      * @param bootImageFile the file containing the boot image
      * @param sourcepath the source code path to search for class or interface definitions
-     * @return
      * @throws BootImageException
      * @throws IOException
      */

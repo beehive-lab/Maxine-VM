@@ -297,7 +297,6 @@ public class VMAOptions {
      * Check if bytecode:advice combination is matched by the provided pattern.
      * @param pattern
      * @param b
-     * @return
      */
     private static void matchBytecode(Pattern pattern, VMABytecodes b, boolean[] state, boolean setting) {
         final String name = b.name();
@@ -316,7 +315,6 @@ public class VMAOptions {
      * Check if given method should be instrumented for advising.
      * Currently limited to per class not per method.
      * @param cma
-     * @return
      */
     public static boolean instrumentForAdvising(ClassMethodActor cma) {
         final String className = cma.holder().typeDescriptor.toJavaString();
@@ -337,7 +335,6 @@ public class VMAOptions {
      * Returns the template options for the given bytecode.
      * The result is a {@code boolean} array indexed by {@link AdviceMode#ordinal()}.
      * @param opcode
-     * @return
      */
     public static boolean[] getVMATemplateOptions(int opcode) {
         return bytecodeApply[opcode];

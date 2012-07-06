@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,13 +57,11 @@ public abstract class TLABRefillPolicy {
      * Return policy decision regarding whether the TLAB for the current thread should be refilled.
      * @param size size of the allocation request that causes the request to refill the TLAB
      * @param allocationMark allocation mark of the TLAB
-     * @return
      */
     public abstract boolean shouldRefill(Size size, Pointer allocationMark);
 
     /**
      * Returns the size the TLAB should have on next refill.
-     * @return
      */
     public abstract Size nextTlabSize();
 

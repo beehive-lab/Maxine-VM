@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ public class Extensions {
      * Causes the named field in named class to be reset to its default value in the boot image.
      * This also prevents any objects solely reachable from the field from being include in the boot heap.
      *
-     * @param classname fully qualified class name
+     * @param className fully qualified class name
      * @param fieldName name of field to be rest to default value
      */
     public static void resetField(String className, String fieldName) {

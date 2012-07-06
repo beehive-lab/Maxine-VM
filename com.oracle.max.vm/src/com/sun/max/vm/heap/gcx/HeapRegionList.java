@@ -417,7 +417,6 @@ public class HeapRegionList {
 
     /**
      * Remove a contiguous range of regions from the list.
-     * @param elem
      */
     void removeRange(int rangeHead, int rangeTail) {
         FatalError.check(rangeHead != nullElement, "Must be a valid list element");

@@ -194,7 +194,7 @@ public abstract class CodeManager {
 
     /**
      * Allocates memory for the code-related arrays of a given target method
-     * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
+     * and {@linkplain TargetMethod#setCodeArrays(byte[], Pointer, byte[], Object[]) initializes} them.
      *
      * @param targetBundleLayout describes the layout of the arrays in the allocated space
      * @param targetMethod the target method for which the code-related arrays are allocated

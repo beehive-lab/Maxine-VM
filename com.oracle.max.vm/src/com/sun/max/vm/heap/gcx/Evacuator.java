@@ -310,7 +310,6 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     /**
      * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
      * @param cell
-     * @return
      */
     final protected Pointer scanCellForEvacuatees(Pointer cell) {
         if (traceEvacVisitedCell()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -105,13 +105,13 @@ public class LargeObjectSpace extends Sweeper {
 
     /**
      * Allocation hand of the tail of the large object space.
-     * @see {@linkplain LargeObjectSpace#tailAllocate(int)}.
+     * @see LargeObjectSpace#tailAllocate(Size)
      */
     private Pointer top;
 
     /**
      * Soft end of the tail of the large object space.
-     * @see {@linkplain LargeObjectSpace#tailAllocate(int)}.
+     * @see LargeObjectSpace#tailAllocate(Size)
      */
     private Pointer end;
 
@@ -255,7 +255,6 @@ public class LargeObjectSpace extends Sweeper {
     /**
      * Get the head of the free list at the specified index in the chunk size table.
      * @param listIndex
-     * @return
      */
     protected Pointer getHead(int listIndex) {
         return chunkSizeTableStart.getWord(listIndex).asPointer();
@@ -330,7 +329,6 @@ public class LargeObjectSpace extends Sweeper {
      * Allocation hits there first, then if failed, search the very large object list
      * to satisfy allocation. If that failed too, a zero pointer is returned.
      * @param size size in bytes
-     * @return
      */
     private Pointer tailAllocate(Size size) {
         while (true) {
@@ -391,7 +389,6 @@ public class LargeObjectSpace extends Sweeper {
      * @param listIndex index of the list whose first block is to be split
      * @param splitListIndex
      * @param numBlocks
-     * @return
      */
     private Pointer splitAllocate(int listIndex, int splitListIndex, int numBlocks) {
         // Remove the chunk from its list.

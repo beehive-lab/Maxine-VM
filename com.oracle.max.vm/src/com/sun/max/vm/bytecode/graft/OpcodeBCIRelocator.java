@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@ package com.sun.max.vm.bytecode.graft;
 
 /**
  * A mechanism for communicating how instructions have changed location as the result of a
- * {@linkplain BytecodeTransformer bytecode transformation}.
+ * {@linkplain BytecodeTransformation bytecode transformation}.
  */
 public interface OpcodeBCIRelocator {
 

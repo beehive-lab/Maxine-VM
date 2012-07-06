@@ -148,7 +148,6 @@ public class FieldActor extends MemberActor implements RiResolvedField {
 
     /**
      * Generates an error that the field could not be accessed.
-     * @param fieldActor the field actor that caused the problem
      */
     @HOSTED_ONLY
     private InternalError accessError(Throwable cause) {

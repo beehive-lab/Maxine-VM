@@ -80,11 +80,12 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         "-Xprof", false, null, "run sampling profiler"), MaxineVM.Phase.STARTING);
 
     /**
-     * List of classes to explicitly reinitialise in the {@link MaxineVM.Phase#STARTING} phase.
+     * List of classes to explicitly reinitialise in the {@link Phase#STARTING} phase.
      * This supports extensions to the boot image.
      */
     private static List<String> reinitClasses = new LinkedList<String>();
     private static boolean profiling;
+    private static String mainClassName;
 
     @HOSTED_ONLY
     public JavaRunScheme() {
@@ -286,6 +287,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             vm.phase = Phase.RUNNING;
             vmConfig().initializeSchemes(MaxineVM.Phase.RUNNING);
 
+            mainClassName = getMainClassName();
             VMTI.handler().vmInitialized();
             VMTI.handler().threadStart(VmThread.current());
 
@@ -360,20 +362,34 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
     private Class<?> loadMainClass() throws IOException, ClassNotFoundException {
         final ClassLoader appClassLoader = Launcher.getLauncher().getClassLoader();
-        final String jarFileName = VMOptions.jarFile();
-        String mainClassName = null;
-        if (jarFileName == null) {
-            // the main class was specified on the command line
-            mainClassName = VMOptions.mainClassName();
-        } else {
-            // the main class is in the jar file
-            final JarFile jarFile = new JarFile(jarFileName);
-            mainClassName = findClassAttributeInJarFile(jarFile, "Main-Class");
-            if (mainClassName == null) {
-                throw new ClassNotFoundException("Could not find main class in jarfile: " + jarFileName);
-            }
-        }
         return appClassLoader.loadClass(mainClassName);
+    }
+
+    /**
+     * Finds the main class name from the command line either explicitly or via the jar file.
+     *
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    public static String getMainClassName() throws IOException, ClassNotFoundException {
+        if (mainClassName == null) {
+            final String jarFileName = VMOptions.jarFile();
+            if (jarFileName == null) {
+                // the main class was specified on the command line
+                mainClassName = VMOptions.mainClassName();
+            } else {
+                // the main class is in the jar file
+                final JarFile jarFile = new JarFile(jarFileName);
+                mainClassName = findClassAttributeInJarFile(jarFile, "Main-Class");
+                if (mainClassName == null) {
+                    throw new ClassNotFoundException("Could not find main class in jarfile: " + jarFileName);
+                }
+            }
+            VMProperty.SUN_JAVA_COMMAND.updateImmutableValue(mainClassName);
+            System.setProperty(VMProperty.SUN_JAVA_COMMAND.property, mainClassName);
+        }
+        return mainClassName;
     }
 
     /**

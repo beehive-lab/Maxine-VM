@@ -55,6 +55,7 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.ti.*;
 
 /**
  * Represents machine code produced and managed by the VM. The machine code
@@ -77,7 +78,7 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Call back for use with {@link #forEachCodePos(CodePosClosure, com.sun.max.unsafe.Pointer)}.
+     * Call back for use with {@link TargetMethod#forEachCodePos(CodePosClosure, CodePointer)}.
      */
     public interface CodePosClosure {
         /**
@@ -206,15 +207,12 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * Notify this method that it survived an {@linkplain CodeEviction eviction cycle}.
-     * This is overridden in {@link T1XTargetMethod}.
      */
     public void survivedEviction() {
         // empty
     }
 
     /**
-     * This is overridden in {@link T1XTargetMethod}.
-     *
      * @return true if this method has been {@linkplain CodeEviction evicted} (i.e., its
      * machine code is no longer present in the code cache).
      */
@@ -223,8 +221,6 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * This is overridden in {@link T1XTargetMethod}.
-     *
      * @return the number of survived {@linkplain CodeEviction eviction cycles}.
      */
     public int timesRelocated() {
@@ -893,7 +889,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * Links all the calls from this target method to other methods for which the exact method actor is known. Linking a
      * call means patching the operand of a call instruction that specifies the address of the target code to call. In
      * the case of a callee for which there is no target code available (i.e. it has not yet been compiled or it has
-     * been evicted from the code cache), the address of a {@linkplain StaticTrampoline static trampoline} is patched
+     * been evicted from the code cache), the address of a static trampoline is patched
      * into the call instruction.
      *
      * @return true if target code was available for all the direct callees
@@ -1056,7 +1052,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * Modifies the call site at the specified offset to use the new specified entry point.
      * The modification must tolerate the execution of the target method by concurrently running threads.
      *
-     * @param callSite offset to a call site relative to the start of the code of this target method
+     * @param callOffset offset to a call site relative to the start of the code of this target method
      * @param callEntryPoint entry point the call site should call after patching
      * @return the entry point of the call prior to patching
      */
@@ -1111,8 +1107,6 @@ public abstract class TargetMethod extends MemoryRegion {
      * Similar to {@link #catchException} but simply checks if there is a handler for {@code exception}
      * and returns its code address if so, otherwise {@link CodePointer#zero}.
      * @param throwAddress the throw address
-     * @param exception
-     * @return
      */
     public abstract CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable throwable);
 
@@ -1173,7 +1167,6 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * Determines if this method has been instrumented by a {@link VMTIHandler tooling interface}.
-     * @return
      */
     public boolean isInstrumented() {
         return false;
@@ -1223,7 +1216,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * Determines whether the entry count of this method is within the threshold
-     * denoted by {@link MethodInstrumentation#PROTECTION_THRESHOLD}.
+     * denoted by {@link MethodInstrumentation#PROTECTION_PERCENTAGE}.
      */
     public boolean withinInvocationThreshold() {
         return profile() != null && profile().protectedEntryCount();

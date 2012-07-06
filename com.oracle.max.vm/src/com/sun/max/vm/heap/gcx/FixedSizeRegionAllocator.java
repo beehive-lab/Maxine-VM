@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,7 +74,6 @@ class FixedSizeRegionAllocator {
         /**
          * Bitmask with all the bits to the left of the specified index (including it) set to 1.
          * @param bitIndex
-         * @return
          */
         private static long bitsLeftOf(int bitIndex) {
             return ALL_ONES << bitIndex;
@@ -82,7 +81,6 @@ class FixedSizeRegionAllocator {
         /**
          * Bitmask with all the bits to the right of the specified index (excluding it) set to 1.
          * @param bitIndex
-         * @return
          */
         private static long bitsRightOf(int bitIndex) {
             // ALL_ONES >>> -X  == ALL_ONES >>> (ALL_ONES - X + 1), i.e.,
@@ -96,7 +94,6 @@ class FixedSizeRegionAllocator {
          * both index to the same word.
          * @param startIndex
          * @param endIndex
-         * @return
          */
         private static long bitmask(int startIndex, int endIndex) {
             return bitsLeftOf(startIndex) & bitsRightOf(endIndex);
@@ -258,9 +255,8 @@ class FixedSizeRegionAllocator {
      * is used to allocate the part or all of the objects implementing it).
      *
      * @param start address to the first byte of backing storage for the allocator
-     * @param mutexSize size of the memory region backing the region allocator
-     * @param the size of the regions. Must be a multiple of the platform's page size.
-     * @param amount of space already allocated from the start of the backing storage space.
+     * @param numRegions the size of the regions. Must be a multiple of the platform's page size.
+     * @param numPreCommitted amount of space already allocated from the start of the backing storage space.
      */
     void initialize(Address start, int numRegions, int numPreCommitted) {
         FatalError.check(backingStorage.start().isZero(), "Can only be initialized once");

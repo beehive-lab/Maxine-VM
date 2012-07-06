@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,23 +30,23 @@ import com.sun.max.vm.thread.*;
 import demo.VmOperationDemoHelper.DemoRunnable;
 
 /**
- * A demo (test) for thread suspend and resume {@link VMOperation}s.
+ * A demo (test) for thread suspend and resume {@link VmOperation}s.
  *
  * The test creates a variable number of compute bound spinners
  * and one thread that blocks in native code by calling {@link Thread#sleep}
- * for {@link #blockTime} seconds, default {@value #blockTime}, which can be
+ * for {@link #blockTime} seconds, default {@link #blockTime}, which can be
  * changed by the {@code -b time} argument.
  *
  * After the threads have all entered their {@link Thread#run} methods,
- * they are all suspended. There is then a delay specified by {@link $resumeDelay},
- * default {@value #resumeDelay}, which can be changed by the {@code -d time} argument.
+ * they are all suspended. There is then a delay specified by {@link #resumeDelay},
+ * default {@link #resumeDelay}, which can be changed by the {@code -d time} argument.
  *
  * Then the threads are resumed. Finally, the main thread waits for all the spinners
  * and the native blocker to terminate.
  *
- * If {@value #blockTime} is larger than {@value #resumeDelay}, then the resume operation
+ * If {@link #blockTime} is larger than {@link #resumeDelay}, then the resume operation
  * should cancel the suspend request for the native blocker, i.e. the program
- * will not deadlock. Conversely, if {@value #resumeDelay} is larger than {@value #blockTime},
+ * will not deadlock. Conversely, if {@link #resumeDelay} is larger than {@link #blockTime},
  * the native blocker should suspend but then be released immediately by the resume operation.
  *
  */

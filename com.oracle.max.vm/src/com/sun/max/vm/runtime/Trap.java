@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,7 +71,7 @@ public abstract class Trap {
      * those of the same name defined in Native/substrate/trap.c.
      *
      * The {@link #NULL_POINTER_EXCEPTION} and {@link #SAFEPOINT} values are used in
-     * {@link Trap#handleMemoryFault(Pointer, TargetMethod, Pointer, Pointer, Pointer, Address)} to disambiguate a memory fault.
+     * {@link Trap#handleMemoryFault(CodePointer, TargetMethod, Pointer, Pointer, Pointer, Address)} to disambiguate a memory fault.
      */
     public static final class Number {
         public static final int MEMORY_FAULT = 0;
@@ -166,7 +166,7 @@ public abstract class Trap {
     /**
      * Initializes the native side of trap handling by informing the C code of the address of {@link Stubs#trapStub}.
      *
-     * @param the entry point of {@link Stubs#trapStub}
+     * @param vmTrapHandler the entry point of {@link Stubs#trapStub}
      */
     @C_FUNCTION
     private static native void nativeTrapInitialize(Word vmTrapHandler);
@@ -390,7 +390,7 @@ public abstract class Trap {
      * This means that the register allocator can assume that registers are not modified in the control flow
      * from an implicit exception to the exception handler.
      *
-     * Otherwise, the {@linkplain Throw#raise(Throwable, Pointer, Pointer, Pointer) standard mechanism} for throwing an
+     * Otherwise, the {@linkplain Throw#raise(Throwable, Pointer, Pointer, CodePointer) standard mechanism} for throwing an
      * exception is used.
      *
      * @param trapFrame a pointer to the trap frame

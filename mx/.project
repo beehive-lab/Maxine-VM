@@ -3,6 +3,7 @@
 	<name>mx</name>
 	<comment></comment>
 	<projects>
+		<project>mxtool</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

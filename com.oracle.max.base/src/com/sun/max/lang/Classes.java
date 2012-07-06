@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -334,7 +334,6 @@ public final class Classes {
      * @param withEnclosingClass specifies if the returned name should be qualified with the name(s) of the enclosing
      *            class/classes of {@code clazz} (if any). This option is ignored if {@code clazz} denotes an anonymous
      *            or local class.
-     * @return
      */
     public static String getSimpleName(Class<?> clazz, boolean withEnclosingClass) {
         final String simpleName = clazz.getSimpleName();

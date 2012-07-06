@@ -104,12 +104,12 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     MaxObjects objects();
 
     /**
-     * @returns access to the heap in the VM.
+     * @return access to the heap in the VM.
      */
     MaxHeap heap();
 
-    /*
-     * @returns access to method descriptions in the VM.
+    /**
+     * @return access to method descriptions in the VM.
      */
     MaxMethods methods();
 
@@ -133,7 +133,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     MaxCodeLocationManager codeLocations();
 
     /**
-     * @returns access to information about machine code in the VM.
+     * @return access to information about machine code in the VM.
      */
     VmMachineCodeAccess machineCode();
 

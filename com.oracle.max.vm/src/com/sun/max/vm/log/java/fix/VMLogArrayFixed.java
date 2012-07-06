@@ -27,7 +27,7 @@ import com.sun.max.vm.log.java.*;
 
 /**
  * Simple space inefficient implementation.
- * Allocates {@link Record records} large enough to hold the maximum number of arguments.
+ * Allocates records large enough to hold the maximum number of arguments.
  * All records are considered in use, i.e., not FREE, even if they are not currently filled in (early startup).
  */
 public class VMLogArrayFixed extends VMLogArray {

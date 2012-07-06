@@ -71,7 +71,6 @@ public abstract class Sweeper {
      *
      * @param leftLiveObject
      * @param rightLiveObject
-     * @return
      */
     public abstract Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject);
 
@@ -90,15 +89,12 @@ public abstract class Sweeper {
 
     /**
      * Notify the space manager that sweeping is terminated.
-     *
-     * @return total free spaces
      */
     public abstract void endSweep();
 
     /**
      * Total free space after sweeping.
      * May not be accurate with actual free space if allocation took place since endSweep was called.
-     * @return
      */
     public abstract Size freeSpaceAfterSweep();
 

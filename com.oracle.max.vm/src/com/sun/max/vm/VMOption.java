@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * A class that represents an option to the virtual machine, including both the low-level,
@@ -38,8 +37,7 @@ import com.sun.max.vm.MaxineVM.Phase;
  * are parsed at different times than others; thus a VM option can have an associated
  * phase in which it is parsed.
  *
- * A VM option must be {@linkplain VMOptions#register(VMOption, Phase) registered} to be
- * enabled at runtime.
+ * A VM option must be registered to be enabled at runtime.
  */
 public class VMOption {
 
@@ -155,8 +153,7 @@ public class VMOption {
     /**
      * Creates a new VM option with the specified string prefix (which includes the '-') and the specified help text.
      *
-     * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option
-     * in the global registry or VM options.</b>
+     * <b>The caller is responsible for registering this option in the global registry or VM options.</b>
      *
      * @param prefix the name of the option, including the leading '-' character. If the name ends with a space, then it
      *            must be matched exactly against a VM argument, otherwise it matches if it is a prefix of a VM

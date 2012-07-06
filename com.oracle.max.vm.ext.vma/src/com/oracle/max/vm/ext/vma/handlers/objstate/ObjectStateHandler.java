@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,13 +46,11 @@ public abstract class ObjectStateHandler {
 
     /**
      * Create and assign a unique id for a tracked object.
-     * @return
      */
     public abstract long assignId(Object obj);
 
     /**
      * Create and assign a unique id for a tracked object via its reference.
-     * @return
      */
     public abstract long assignId(Reference objRef);
 
@@ -66,7 +64,6 @@ public abstract class ObjectStateHandler {
     /**
      * Return the unique id for given object or zero if {@code obj == null}.
      * @param obj
-     * @return
      */
     public abstract long readId(Object obj);
 

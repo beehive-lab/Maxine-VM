@@ -20,18 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.jjvmti.agents.classfunctions;
+package com.sun.max.vm.ext.jvmti;
 
-import static com.oracle.max.vm.ext.jjvmti.agents.Package.*;
+import java.lang.annotation.*;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-
-public class Package extends BootImagePackage {
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration config) {
-        return agentIsIncluded("classfunctions");
-    }
-
+/**
+ * Tag used to indicate a {@link JJVMTI} function, and set relevant data, e.g., its required capability.
+ */
+@Retention(RetentionPolicy.RUNTIME)
+public @interface JJVMTI_FUNCTION {
+   JVMTICapabilities.E cap();
 }

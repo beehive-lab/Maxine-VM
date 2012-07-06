@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,7 @@ public class WordUtil {
     }
 
     /**
-     * Architecture-specific {@link CiConstant} representation of {@link Word#zero()}.
+     * Architecture-specific {@link CiConstant} word representation of 0.
      */
     public static final CiConstant ZERO = archConstant(Word.zero());
 

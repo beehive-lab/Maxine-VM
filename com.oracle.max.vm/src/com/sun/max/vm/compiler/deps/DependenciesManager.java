@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.locks.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAssumptions.Assumption;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -60,7 +61,7 @@ import com.sun.max.vm.log.hosted.*;
  */
 public final class DependenciesManager {
     /**
-     * The collection of {@link DependencyProcessor} objects that handle specific types of {@link CiAssumptions.Assumption}.
+     * The collection of {@link DependencyProcessor} objects that handle specific types of {@link Assumption}.
      * This is immutable after image build and we keep an array of the values for fast, allocation free, iteration.
      */
     public static final Map<Class<? extends CiAssumptions.Assumption>, DependencyProcessor> dependencyProcessors = new HashMap<Class<? extends CiAssumptions.Assumption>, DependencyProcessor>();
@@ -119,7 +120,7 @@ public final class DependenciesManager {
     /**
      * Registration of a new {@linkplain DependencyProcessor}.
      * @param dependencyProcessor the {@linkplain DependencyProcessor}
-     * @param assumptionClass the associated subclass of {@linkplain CiAssumptions.Assumption}
+     * @param assumptionClass the associated subclass of {@linkplain Assumption}
      * @return the unique id for the processor
      */
     @HOSTED_ONLY

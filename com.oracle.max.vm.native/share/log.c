@@ -134,9 +134,14 @@ void log_print_bytes(const jbyte *value, int offset, int len) {
     if (value == NULL) {
         log_print_format("null");
     } else {
-        int i;
-        for (i = 0; i < len; i++) {
-            log_print_format("%c", *(value + offset + i));
+        if (len < 0) {
+            c_ASSERT(offset == 0);
+            log_print_format("%s", value);
+        } else {
+            int i;
+            for (i = 0; i < len; i++) {
+                log_print_format("%c", *(value + offset + i));
+            }
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,14 +25,13 @@ package com.sun.max.vm.actor.member;
 import java.util.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.stackmap.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.types.*;
 
 /**
- * Adapts liveness information in a {@link StackMapTable} to the {@linkplain RiMethod#livenessMap() format}
+ * Adapts liveness information in a {@link StackMapTable} to the format
  * used by the compiler interface.
  */
 public final class LivenessAdapter implements FrameModel {

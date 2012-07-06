@@ -31,7 +31,7 @@
  * The standard method for debugging Maxine is interactively with the Maxine Inspector.
  * However, there are times when pure interactive debugging is inadequate, for example, in complex
  * multi-threaded situations. To address this Maxine has, historically, used tracing calls,
- * embedded in the VM source code and using the {@link Log} class, that output specific data
+ * embedded in the VM source code and using the {@link com.sun.max.vm.Log} class, that output specific data
  * to either the standard output or a file. This approach has some drawbacks:
  * <p>
  * <ul>
@@ -47,7 +47,7 @@
  * <li>Replace the tracing generation calls with more abstract calls to methods in {@link com.sun.max.vm.log.VMLogger}.</li>
  * <li>Handle multi-threading, GC issues automatically.</li>
  * <li>Integrate the {@link com.sun.max.vm.log.VMLogger} data with the Maxine Inspector.</li>
- * <li>Provide optional custom tracing in the style of {@link Log} but driven from the log.</li>
+ * <li>Provide optional custom tracing in the style of {@link com.sun.max.vm.Log} but driven from the log.</li>
  * </ul>
  * <p>
  * Note, the name {@code log} is overloaded. The existing {@link com.sun.max.vm.Log} class
@@ -66,7 +66,7 @@
  * All logger state is reset when the target VM starts, so host settings do not persist.
  * <p>
  * It is also expected is that most loggers will be implemented using the automatic generation
- * features of {@link com.sun.max.vm.log.VMLoggerGenerator} and not be hand-written, except as
+ * features of {@link com.sun.max.vm.log.hosted.VMLoggerGenerator} and not be hand-written, except as
  * regards custom tracing support. See the section below entitled Automatic Generation.
  * <p>
  * {@link com.sun.max.vm.log.VMLogger} does not define the implementation of the log storage.
@@ -76,11 +76,11 @@
  * <p>
  * A {@link com.sun.max.vm.log.VMLogger} defines a set of operations, cardinality {@code N} each identified by an {@code int} code in the
  * range {@code [0 .. N-1]}. A series of {@code log} methods are provided, that take the operation code and a varying number
- * of {@link Word} arguments (up to {@link com.sun.max.vm.log.VMLog.Record#MAX_ARGS}). Each {@code log} operation creates a {@link com.sun.max.vm.log.VMLog.Record log record}
+ * of {@link com.sun.max.unsafe.Word} arguments (up to {@link com.sun.max.vm.log.VMLog.Record#MAX_ARGS}). Each {@code log} operation creates a {@link com.sun.max.vm.log.VMLog.Record log record}
  * that is stored in a circular buffer, the size of which is determined when the VM image is built.
  * The thread (id) generating the log record is automatically recorded.
  * <p>
- * In order to connect the operation code with a {@link String} value that can be used to identify the operation,
+ * In order to connect the operation code with a {@link java.lang.String} value that can be used to identify the operation,
  * e.g. for tracing, VM startup options, etc., a logger should provide an overriding implementation of {@link com.sun.max.vm.log.VMLogger#operationName(int)}
  * that returns a descriptive name for the operation.
  * <h3>Enabling Logging</h3>
@@ -144,7 +144,7 @@
  * but we want a way to turn both loggers on with a single overriding option. The way to do this is to create a logger,
  * say {@code ALL}, typically with no operations, that forces {@code A} and {@code B} into the enabled state if, and only if, it is itself
  * enabled. This can be achieved by overriding {@link com.sun.max.vm.log.VMLogger#checkOptions()} for the {@code ALL} logger, and calling the
- * {@link com.sun.max.vm.log.VMLogger#forceDependentLoggerState} method. See {@link Heap#gcAllLogger} for an example of this.
+ * {@link com.sun.max.vm.log.VMLogger#forceDependentLoggerState} method. See {@link com.sun.max.vm.heap.Heap#gcAllLogger} for an example of this.
  * <p>
  * It is also possible for a logger, say {@code C}, to inherit the settings of another logger, say {@code ALL}, again by forcing {@code ALL} to
  * check its options from within {@code C}'s {@code checkOptions} and then use {@code ALL}'s values to set {@code C}'s settings. This is
@@ -158,7 +158,7 @@
  *
  * <h3>Automatic Generation</h3>
  * <p>
- * The standard type-safe way to log a collection of heteregenously typed values would be to first define a class
+ * The standard type-safe way to log a collection of heterogeneously typed values would be to first define a class
  * containing fields that correspond to the values, then acquire an instance of such a class, store the values in the
  * fields and then save the instance in the log. Note that this generally involves allocation; at best it involves
  * acquiring a pre-allocated instance in some way. It also necessarily involves a level of indirection in the log buffer
@@ -169,11 +169,11 @@
  * storage overhead for log records and the performance overhead of logging the data. Therefore, a less type safe
  * approach is adopted, that is partly mitigated by automatic generation of logger code at VM image build time.
  * <p>
- * The automatic generation, see {@link com.sun.max.vm.log.VMLoggerGenerator}, is driven from an interface defining the logger operations
- * that is tagged with the {@link com.sun.max.vm.log.VMLoggerInterface} annotation. Since this is only used during image generation the
- * interface should also be tagged with {@link HOSTED_ONLY}. The logging operations are defined as methods
+ * The automatic generation, see {@link com.sun.max.vm.log.hosted.VMLoggerGenerator}, is driven from an interface defining the logger operations
+ * that is tagged with the {@link com.sun.max.vm.log.hosted.VMLoggerInterface} annotation. Since this is only used during image generation the
+ * interface should also be tagged with {@link com.sun.max.annotate.HOSTED_ONLY}. The logging operations are defined as methods
  * in the interface. In order to preserve the parameter names in the generated code, each parameter should also be annotated
- * with {@link com.sun.max.vm.log.VMLogParam}, e.g.:
+ * with {@link com.sun.max.vm.log.hosted.VMLogParam}, e.g.:
  *
  * <pre>
  * &#64HOSTED_ONLY
@@ -194,13 +194,13 @@
  * </pre>
  * <p>
  * somewhere in the source, typically at the end of the class.
- * When {@link com.sun.max.vm.log.VMLoggerGenerator} is executed it scans all VM classes for interfaces annotated with {@link com.sun.max.vm.log.VMLoggerInterface}
+ * When {@link com.sun.max.vm.log.hosted.VMLoggerGenerator} is executed it scans all VM classes for interfaces annotated with {@link com.sun.max.vm.log.hosted.VMLoggerInterface}
  * and then generates an abstract class containing the log methods, abstract method definitions for the associated {@code trace}
  * methods, and an implementation of the {@link com.sun.max.vm.log.VMLogger#trace} method that decodes the operation and invokes the
  * appropriate {@code trace} method.
  * <p>
  * The developer then defines the concrete implementation class that inherits from the automatically generated class
- * and, if required implements the trace methods, e.g, from the {@link ExampleLoggerOwner} class:
+ * and, if required implements the trace methods, e.g, from the {@link demo.ExampleLoggerOwner} class:
  * <pre>
  * public static final class ExampleLogger extends ExampleLoggerAuto {
  *      ExampleLogger() {
@@ -220,14 +220,14 @@
  * }
  * </pre>
  * <p>
- * Note that if an argument name is not identified with {@link com.sun.max.vm.log.VMLogParam} it will be defined as {@code argN}, where
+ * Note that if an argument name is not identified with {@link com.sun.max.vm.log.hosted.VMLogParam} it will be defined as {@code argN}, where
  * {@code N} is the argument index.
  * <p>
- * {@link com.sun.max.vm.VMLogger} has built-in support for several standard reference types, that have alternate representations
- * as scalar values, such as {@link ClassActor}. As a general principle, reference types without an alternate, unique, scalar
+ * {@link com.sun.max.vm.log.VMLogger} has built-in support for several standard reference types, that have alternate representations
+ * as scalar values, such as {@link com.sun.max.vm.actor.holder.ClassActor}. As a general principle, reference types without an alternate, unique, scalar
  * representation should be avoided as log method arguments. However, this is sometimes difficult or inconvenient, so
- * it is possible to store references types. These should be passed using {@link com.sun.max.vm.VMLogger#objectArg}
- * and retrieved using {@link com.sun.max.vm.VMLogger#toObject}. This is automatically handled by the generator.
+ * it is possible to store references types. These should be passed using {@link com.sun.max.vm.log.VMLogger#objectArg}
+ * and retrieved using {@link com.sun.max.vm.log.VMLogger#toObject}. This is automatically handled by the generator.
  * <b>N.B.</b> Storing reference types in the log makes them reachable until such time as they are overwritten.
  * It is assumed that {@code Enum} types are always stored using their ordinal value. The generator creates the
  * appropriate conversions methods. It assumes that the {@code enum} declares the following field:
@@ -237,13 +237,13 @@
  *
  * <h4>Tracing</h4>
  * <p>
- * When the tracing option for a logger is enabled, {@link com.sun.max.vm.VMLogger#doTrace} is invoked immediately after the log record is created.
- * After checking that calls to the {@link Log} class are possible, {@link Log#lock} is called, then
- * {@link com.sun.max.vm.VMLogger#trace} is called, followed by {@link Log#unlock}.
+ * When the tracing option for a logger is enabled, {@link com.sun.max.vm.log.VMLogger#doTrace} is invoked immediately after the log record is created.
+ * After checking that calls to the {@link com.sun.max.vm.Log} class are possible, {@link com.sun.max.vm.Log#lock} is called, then
+ * {@link com.sun.max.vm.log.VMLogger#trace} is called, followed by {@link com.sun.max.vm.Log#unlock}.
  * <p>
- * A default implementation of {@link com.sun.max.vm.VMLogger} is provided that calls methods in the {@link com.sun.max.vm.Log} class to print the
+ * A default implementation of {@link com.sun.max.vm.log.VMLogger} is provided that calls methods in the {@link com.sun.max.vm.Log} class to print the
  * logger name, thread name and arguments. There are two ways to customize the output. The first is to override the
- * {@link com.sun.max.vm.log.VMLogger#logArg(int, Word)} method to customize the output of a particular argument - the default action is to print
+ * {@link com.sun.max.vm.log.VMLogger#logArg(int, com.sun.max.unsafe.Word)} method to customize the output of a particular argument - the default action is to print
  * the value as a hex number. The second is to override {@link com.sun.max.vm.log.VMLogger#trace} and do full customization.
  * <b>N.B.</b> Although the log is locked automatically and safepoints are disabled, custom tracing must still
  * take care not to invoke object allocation. In particular, string concatenation and formatting should not be used.
@@ -253,7 +253,7 @@
  * arguments.
  * <p>
  * Two additional mechanisms are available for Inspector customization. The first is an override to generate a custom
- * {@link String} representation of a log argument:
+ * {@link java.lang.String} representation of a log argument:
  *
  * <pre>
  * &#64HOSTED_ONLY

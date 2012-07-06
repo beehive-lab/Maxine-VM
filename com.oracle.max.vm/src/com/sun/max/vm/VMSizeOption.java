@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.sun.max.vm;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * A VM command line option that can accept a size (i.e. a number that has an associated kilobyte,
@@ -38,8 +37,7 @@ public class VMSizeOption extends VMOption {
      * Creates a new size option with the specified values and adds this option to the command line
      * arguments.
      *
-     * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option
-     * in the global registry or VM options.</b>
+     * <b>The caller is responsible for registering this option in the global registry or VM options.</b>
      *
      * @param prefix the name of the option, including the leading '-' character
      * @param defaultValue the default size for this option when it is not present on the command line

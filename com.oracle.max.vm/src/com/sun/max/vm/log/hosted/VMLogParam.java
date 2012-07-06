@@ -24,6 +24,8 @@ package com.sun.max.vm.log.hosted;
 
 import java.lang.annotation.*;
 
+import com.sun.max.vm.log.*;
+
 /**
  * Allows a {@link VMLogger} method parameter to be named.
  */

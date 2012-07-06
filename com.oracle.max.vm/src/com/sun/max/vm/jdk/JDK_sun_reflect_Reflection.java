@@ -144,7 +144,6 @@ final class JDK_sun_reflect_Reflection {
      * {@link JniFunctions#FindClass} and check for JVMTI
      * which requires special handling.
      * @param realFramesToSkip from caller's perspective
-     * @return
      */
     @NEVER_INLINE
     public static Class getCallerClassForFindClass(int realFramesToSkip) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -395,7 +395,7 @@ public class Stubs {
 
     /**
      * Generates a stub that links a call to a method whose actor is available in
-     * data {@linkplain TargetMethod#callSiteToCallee(Address) associated} with the call site.
+     * data {@linkplain TargetMethod#callSiteToCallee(CodePointer) associated} with the call site.
      * The stub also saves and restores all the callee-saved registers specified in the
      * {@linkplain RegisterConfigs#trampoline trampoline} register configuration.
      */
