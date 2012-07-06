@@ -156,6 +156,11 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder
     }
 
     /**
+     * @see MaxVM#inspectableObjects()
+     */
+    public abstract List<MaxObject> inspectableObjects();
+
+    /**
      * Notifies the code cache region that a target method has been discovered
      * in the region and that an instance of {@link TeleTargetMethod} has
      * been created to represent it.

@@ -85,6 +85,11 @@ public class TeleMemoryRegion extends TeleTupleObject {
         return updateRegionInfoCache();
     }
 
+    @Override
+    public String maxineRole() {
+        return getRegionName();
+    }
+
     /**
      * Attempts to read information about the region from the {@link MemoryRegion} object in VM memory.
      */
