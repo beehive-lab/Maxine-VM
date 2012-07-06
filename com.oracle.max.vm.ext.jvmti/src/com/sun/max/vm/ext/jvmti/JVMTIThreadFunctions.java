@@ -42,7 +42,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
-import com.sun.max.vm.ext.jvmti.JJVMTI.FrameInfo;
+import com.sun.max.vm.ext.jvmti.JJVMTI.*;
 import com.sun.max.vm.ext.jvmti.JVMTIUtil.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.run.java.*;
@@ -169,6 +169,15 @@ public class JVMTIThreadFunctions {
         return state;
     }
 
+    static ThreadInfo getThreadInfo(Thread thread) {
+        VmThread vmThread = checkVmThread(thread);
+        if (vmThread == null) {
+            throw new JJVMTI.JJVMTIException(JVMTI_ERROR_THREAD_NOT_ALIVE);
+        }
+        thread = vmThread.javaThread();
+        return new ThreadInfo(thread.getName(), thread.getPriority(), thread.isDaemon(), thread.getThreadGroup(), thread.getContextClassLoader());
+    }
+
     static int getThreadInfo(Thread thread, Pointer threadInfoPtr) {
         VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
@@ -190,14 +199,32 @@ public class JVMTIThreadFunctions {
 
     // Single thread stack trace
 
+    static FrameInfo[] getStackTrace(Thread thread, int startDepth, int maxFrameCount) {
+        VmThread vmThread = checkVmThread(thread);
+        if (vmThread == null) {
+            throw new JJVMTI.JJVMTIException(JVMTI_ERROR_THREAD_NOT_ALIVE);
+        }
+        FrameInfo[] frameInfo = new FrameInfo[maxFrameCount];
+        for (int i = 0; i < frameInfo.length; i++) {
+            frameInfo[i] = new FrameInfo();
+        }
+        JavaThreadListStackTraceVisitor stackTraceVisitor = new JavaThreadListStackTraceVisitor(vmThread, startDepth, maxFrameCount, frameInfo);
+        new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor).submit();
+        if (stackTraceVisitor.frameBufferIndex < frameInfo.length) {
+            FrameInfo[] newFrameInfo = new FrameInfo[stackTraceVisitor.frameBufferIndex];
+            System.arraycopy(frameInfo, 0, newFrameInfo, 0, stackTraceVisitor.frameBufferIndex);
+            frameInfo = newFrameInfo;
+        }
+        return frameInfo;
+    }
+
     static int getStackTrace(Thread thread, int startDepth, int maxFrameCount, Pointer frameBuffer, Pointer countPtr) {
         VmThread vmThread = checkVmThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
-        FrameBufferStackTraceVisitor stackTraceVisitor = new FrameBufferStackTraceVisitor(vmThread, startDepth, maxFrameCount, frameBuffer);
-        SingleThreadStackTraceVmOperation vmOperation = new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor);
-        vmOperation.submit();
+        NativeThreadListStackTraceVisitor stackTraceVisitor = new NativeThreadListStackTraceVisitor(vmThread, startDepth, maxFrameCount, frameBuffer);
+        new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor).submit();
         countPtr.setInt(stackTraceVisitor.frameBufferIndex);
         return JVMTI_ERROR_NONE;
     }
@@ -464,17 +491,15 @@ public class JVMTIThreadFunctions {
      * Visitor for copying portions of a stack to an agent provided buffer.
      * We do this as a visitor because it is used in single/multiple thread variants.
      */
-    private static class FrameBufferStackTraceVisitor extends FindAppFramesStackTraceVisitor {
+    private static abstract class ThreadListStackTraceVisitor extends FindAppFramesStackTraceVisitor {
         int startDepth;       // first frame to record; > 0 => from top, < 0 from bottom
         int maxCount;         // max number of frames to record
         int frameBufferIndex; // in range 0 .. maxCount - 1
-        Pointer frameBuffer;  // C struct for storing info
         VmThread vmThread;    // thread associated with this stack
 
-        FrameBufferStackTraceVisitor(VmThread vmThread, int startDepth, int maxCount, Pointer frameBuffer) {
+        ThreadListStackTraceVisitor(VmThread vmThread, int startDepth, int maxCount) {
             this.startDepth = startDepth;
             this.maxCount = maxCount;
-            this.frameBuffer = frameBuffer;
             this.vmThread = vmThread;
         }
 
@@ -493,13 +518,50 @@ public class JVMTIThreadFunctions {
             }
         }
 
-        private boolean store(StackElement se) {
-            setJVMTIFrameInfo(frameBuffer, frameBufferIndex, MethodID.fromMethodActor(se.classMethodActor), se.bci);
-            frameBufferIndex++;
+        /**
+         * Subclass-specific mechanism for storing information.
+         * @param se
+         */
+        protected abstract void subStore(StackElement se);
+
+        protected boolean store(StackElement se) {
             if (frameBufferIndex >= maxCount) {
                 return true;
+            } else {
+                subStore(se);
+                frameBufferIndex++;
+                return false;
             }
-            return false;
+        }
+    }
+
+    private static class NativeThreadListStackTraceVisitor extends ThreadListStackTraceVisitor {
+        Pointer frameBuffer;  // C struct for storing info
+
+        NativeThreadListStackTraceVisitor(VmThread vmThread, int startDepth, int maxCount, Pointer frameBuffer) {
+            super(vmThread, startDepth, maxCount);
+            this.frameBuffer = frameBuffer;
+        }
+
+        @Override
+        protected void subStore(StackElement se) {
+            setJVMTIFrameInfo(frameBuffer, frameBufferIndex, MethodID.fromMethodActor(se.classMethodActor), se.bci);
+        }
+    }
+
+    private static class JavaThreadListStackTraceVisitor extends ThreadListStackTraceVisitor {
+        FrameInfo[] frameInfo;
+
+        JavaThreadListStackTraceVisitor(VmThread vmThread, int startDepth, int maxCount, FrameInfo[] frameInfo) {
+            super(vmThread, startDepth, maxCount);
+            this.frameInfo = frameInfo;
+        }
+
+        @Override
+        protected void subStore(StackElement se) {
+            FrameInfo fi = frameInfo[frameBufferIndex];
+            fi.method = se.classMethodActor;
+            fi.location = se.bci;
         }
     }
 
@@ -560,6 +622,29 @@ public class JVMTIThreadFunctions {
 
     // Stack traces for all threads
 
+    private static class StackTraceUnion extends ModeUnion {
+        // native
+        Pointer stackInfoArrayPtr;
+        // java
+        StackInfo[] stackInfoArray;
+        StackTraceUnion(boolean isNative) {
+            super(isNative);
+        }
+    }
+
+    static StackInfo[] getAllStackTraces(int maxFrameCount) {
+        return getThreadListStackTraces(VmThreadMap.getThreads(false), maxFrameCount);
+    }
+
+    static StackInfo[] getThreadListStackTraces(Thread[] threads, int maxFrameCount) {
+        StackTraceUnion stu = new StackTraceUnion(ModeUnion.JAVA);
+        int error = getThreadListStackTraces(threads, maxFrameCount, stu);
+        if (error != JVMTI_ERROR_NONE) {
+            throw new JJVMTI.JJVMTIException(error);
+        }
+        return stu.stackInfoArray;
+    }
+
     static int getAllStackTraces(int maxFrameCount, Pointer stackInfoPtrPtr, Pointer threadCountPtr) {
         return getThreadListStackTraces(VmThreadMap.getThreads(false), maxFrameCount, stackInfoPtrPtr, threadCountPtr);
     }
@@ -578,29 +663,70 @@ public class JVMTIThreadFunctions {
     }
 
     private static int getThreadListStackTraces(Thread[] threads, int maxFrameCount, Pointer stackInfoPtrPtr, Pointer threadCountPtr) {
-        int threadCount = threads.length;
-        // Have to preallocate all the memory in one contiguous chunk
-        Pointer stackInfoArrayPtr = Memory.allocate(Size.fromInt(threadCount * (stackInfoSize() + maxFrameCount * FRAME_INFO_STRUCT_SIZE)));
-        if (stackInfoArrayPtr.isZero()) {
-            return JVMTI_ERROR_OUT_OF_MEMORY;
+        StackTraceUnion stu = new StackTraceUnion(ModeUnion.NATIVE);
+        int error = getThreadListStackTraces(threads, maxFrameCount, stu);
+        if (error == JVMTI_ERROR_NONE) {
+            stackInfoPtrPtr.setWord(stu.stackInfoArrayPtr);
+            if (!threadCountPtr.isZero()) {
+                threadCountPtr.setInt(threads.length);
+            }
         }
-        Pointer frameBuffersBasePtr = stackInfoArrayPtr.plus(threadCount * stackInfoSize());
-        FrameBufferStackTraceVisitor[] stackTraceVisitors = new FrameBufferStackTraceVisitor[threadCount];
-        for (int i = 0; i < threadCount; i++) {
-            stackTraceVisitors[i] = new FrameBufferStackTraceVisitor(VmThread.fromJava(threads[i]), 0, maxFrameCount,
-                            frameBuffersBasePtr.plus(i * maxFrameCount * FRAME_INFO_STRUCT_SIZE));
+        return error;
+    }
+
+    private static int getThreadListStackTraces(Thread[] threads, int maxFrameCount, StackTraceUnion stu) {
+        int threadCount = threads.length;
+        Pointer frameBuffersBasePtr = Pointer.zero();
+
+        if (stu.isNative) {
+            // Have to preallocate all the memory in one contiguous chunk
+            stu.stackInfoArrayPtr = Memory.allocate(Size.fromInt(threadCount * (stackInfoSize() + maxFrameCount * FRAME_INFO_STRUCT_SIZE)));
+            if (stu.stackInfoArrayPtr.isZero()) {
+                return JVMTI_ERROR_OUT_OF_MEMORY;
+            }
+            frameBuffersBasePtr = stu.stackInfoArrayPtr.plus(threadCount * stackInfoSize());
+        } else {
+            stu.stackInfoArray = new StackInfo[threadCount];
+            for (int i = 0; i < stu.stackInfoArray.length; i++) {
+                stu.stackInfoArray[i] = new StackInfo();
+                FrameInfo[] frameInfo = new FrameInfo[maxFrameCount];
+                for (int j = 0; j < maxFrameCount; j++) {
+                    frameInfo[j] = new FrameInfo();
+                }
+                stu.stackInfoArray[i].frameInfo = frameInfo;
+            }
+        }
+        ThreadListStackTraceVisitor[] stackTraceVisitors = null;
+        if (stu.isNative) {
+            stackTraceVisitors = new NativeThreadListStackTraceVisitor[threadCount];
+            for (int i = 0; i < threadCount; i++) {
+                stackTraceVisitors[i] = new NativeThreadListStackTraceVisitor(VmThread.fromJava(threads[i]), 0, maxFrameCount,
+                                frameBuffersBasePtr.plus(i * maxFrameCount * FRAME_INFO_STRUCT_SIZE));
+            }
+        } else {
+            stackTraceVisitors = new JavaThreadListStackTraceVisitor[threadCount];
+            for (int i = 0; i < threadCount; i++) {
+                stackTraceVisitors[i] = new JavaThreadListStackTraceVisitor(VmThread.fromJava(threads[i]), 0, maxFrameCount,
+                                stu.stackInfoArray[i].frameInfo);
+            }
         }
 
-        MultipleThreadStackTraceVmOperation vmOperation = new MultipleThreadStackTraceVmOperation(threads, stackTraceVisitors);
-        vmOperation.submit();
+        new MultipleThreadStackTraceVmOperation(threads, stackTraceVisitors).submit();
+
         for (int i = 0; i < threadCount; i++) {
-            FrameBufferStackTraceVisitor sv = stackTraceVisitors[i];
-            setJVMTIStackInfo(stackInfoArrayPtr, i, JniHandles.createLocalHandle(sv.vmThread.javaThread()),
-                            getThreadState(sv.vmThread), sv.frameBuffer, sv.frameBufferIndex);
-        }
-        stackInfoPtrPtr.setWord(stackInfoArrayPtr);
-        if (!threadCountPtr.isZero()) {
-            threadCountPtr.setInt(threadCount);
+            ThreadListStackTraceVisitor sv = stackTraceVisitors[i];
+            Thread thread = sv.vmThread.javaThread();
+            int state = getThreadState(sv.vmThread);
+            if (stu.isNative) {
+                NativeThreadListStackTraceVisitor nsv = (NativeThreadListStackTraceVisitor) sv;
+                setJVMTIStackInfo(stu.stackInfoArrayPtr, i, JniHandles.createLocalHandle(thread),
+                            state, nsv.frameBuffer, nsv.frameBufferIndex);
+            } else {
+                StackInfo si = stu.stackInfoArray[i];
+                si.thread = thread;
+                si.state = state;
+                si.frameCount = sv.frameBufferIndex;
+            }
         }
         return JVMTI_ERROR_NONE;
     }
@@ -800,12 +926,12 @@ public class JVMTIThreadFunctions {
     public static void framePopEvent(boolean wasPoppedByException, Object value) {
         VmThread vmThread = VmThread.current();
         Pointer tla = vmThread.tla();
-        if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP) || JVMTIEvent.isEventSet(JVMTIEvent.METHOD_EXIT)) {
+        if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP) || JVMTIEvents.isEventSet(JVMTIEvents.E.METHOD_EXIT)) {
             FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
             // if we are single stepping, we may need to deopt the method we are returning to
             if (stackTraceVisitor.stackElements.size() > 1) {
-                long codeEventSettings = JVMTIEvent.codeEventSettings(null, vmThread);
-                if ((codeEventSettings & JVMTIEvent.bitSetting(JVMTI_EVENT_SINGLE_STEP)) != 0) {
+                long codeEventSettings = JVMTIEvents.codeEventSettings(null, vmThread);
+                if ((codeEventSettings & JVMTIEvents.E.SINGLE_STEP.bit) != 0) {
                     JVMTICode.checkDeOptForMethod(stackTraceVisitor.getStackElement(1).classMethodActor, codeEventSettings);
                 }
             }
@@ -817,11 +943,11 @@ public class JVMTIThreadFunctions {
                                 wasPoppedByException,
                                 value);
                 if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP)) {
-                    JVMTI.event(JVMTI_EVENT_FRAME_POP, framePopEventData);
+                    JVMTI.event(JVMTIEvents.E.FRAME_POP, framePopEventData);
                 }
 
-                if (JVMTIEvent.isEventSet(JVMTIEvent.METHOD_EXIT)) {
-                    JVMTI.event(JVMTI_EVENT_METHOD_EXIT, framePopEventData);
+                if (JVMTIEvents.isEventSet(JVMTIEvents.E.METHOD_EXIT)) {
+                    JVMTI.event(JVMTIEvents.E.METHOD_EXIT, framePopEventData);
                 }
             }
         }
@@ -1124,38 +1250,63 @@ public class JVMTIThreadFunctions {
     // Thread suspend/resume/stop/interrupt
 
     static int suspendThread(JVMTI.Env jvmtiEnv, Thread thread) {
-        if (!thread.isAlive()) {
-            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        int[] error = suspendThreadList(jvmtiEnv, new Thread[] {thread});
+        return error[0];
+    }
+
+    static int[] suspendThreadList(JVMTI.Env jvmtiEnv, Thread[] threads) {
+        Set<VmThread> threadSet = new HashSet<VmThread>();
+        int[] errors = new int[threads.length];
+        for (int i = 0; i < threads.length; i++) {
+            VmThread vmThread = checkVmThread(threads[i]);
+            if (vmThread == null) {
+                errors[i] = JVMTI_ERROR_THREAD_NOT_ALIVE;
+            } else if (VmOperation.isSuspendRequest(vmThread.tla())) {
+                errors[i] = JVMTI_ERROR_THREAD_SUSPENDED;
+            } else {
+                threadSet.add(vmThread);
+            }
         }
-        new VmOperation.SuspendThreadSet(VmThread.fromJava(thread)).submit();
-        JVMTICode.suspendThreadNotify(jvmtiEnv, VmThread.fromJava(thread));
-        return JVMTI_ERROR_NONE;
+        suspendOrResumeThreadList(jvmtiEnv, threadSet, true);
+        return errors;
     }
 
     private static int suspendOrResumeThreadList(JVMTI.Env jvmtiEnv, int requestCount, Pointer requestList, Pointer results, boolean isSuspend) {
         if (requestCount < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }
-        Set<VmThread> set = new HashSet<VmThread>();
+        Set<VmThread> threadSet = new HashSet<VmThread>();
         for (int i = 0; i < requestCount; i++) {
             try {
                 Thread thread = (Thread) requestList.getWord(i).asJniHandle().unhand();
+                VmThread vmThread = checkVmThread(thread);
                 if (!thread.isAlive()) {
                     results.setInt(i, JVMTI_ERROR_THREAD_NOT_ALIVE);
                 } else {
-                    set.add(VmThread.fromJava(thread));
-                    results.setInt(i, JVMTI_ERROR_NONE);
+                    boolean isSuspended = VmOperation.isSuspendRequest(vmThread.tla());
+                    if (isSuspend && isSuspended) {
+                        results.setInt(i, JVMTI_ERROR_THREAD_SUSPENDED);
+                    } else if (!isSuspend && !isSuspended) {
+                        results.setInt(i, JVMTI_ERROR_THREAD_NOT_SUSPENDED);
+                    } else {
+                        threadSet.add(VmThread.fromJava(thread));
+                        results.setInt(i, JVMTI_ERROR_NONE);
+                    }
                 }
             } catch (ClassCastException ex) {
                 results.setInt(i, JVMTI_ERROR_INVALID_THREAD);
             }
         }
+        return suspendOrResumeThreadList(jvmtiEnv, threadSet, isSuspend);
+    }
+
+    private static int suspendOrResumeThreadList(JVMTI.Env jvmtiEnv, Set<VmThread> threadSet, boolean isSuspend) {
         if (isSuspend) {
-            new VmOperation.SuspendThreadSet(set).submit();
-            JVMTICode.suspendThreadListNotify(jvmtiEnv, set);
+            new VmOperation.SuspendThreadSet(threadSet).submit();
+            JVMTICode.suspendThreadListNotify(jvmtiEnv, threadSet);
         } else {
-            JVMTICode.resumeThreadListNotify(jvmtiEnv, set);
-            new VmOperation.ResumeThreadSet(set).submit();
+            JVMTICode.resumeThreadListNotify(jvmtiEnv, threadSet);
+            new VmOperation.ResumeThreadSet(threadSet).submit();
         }
         return JVMTI_ERROR_NONE;
 
@@ -1166,12 +1317,25 @@ public class JVMTIThreadFunctions {
     }
 
     static int resumeThread(JVMTI.Env jvmtiEnv, Thread thread) {
-        if (!thread.isAlive()) {
-            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        int[] error = resumeThreadList(jvmtiEnv, new Thread[] {thread});
+        return error[0];
+    }
+
+    static int[] resumeThreadList(JVMTI.Env jvmtiEnv, Thread[] threads) {
+        Set<VmThread> threadSet = new HashSet<VmThread>();
+        int[] errors = new int[threads.length];
+        for (int i = 0; i < threads.length; i++) {
+            VmThread vmThread = checkVmThread(threads[i]);
+            if (vmThread == null) {
+                errors[i] = JVMTI_ERROR_THREAD_NOT_ALIVE;
+            } else if (!VmOperation.isSuspendRequest(vmThread.tla())) {
+                errors[i] = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+            } else {
+                threadSet.add(vmThread);
+            }
         }
-        JVMTICode.resumeThreadNotify(jvmtiEnv, VmThread.fromJava(thread));
-        new VmOperation.ResumeThreadSet(VmThread.fromJava(thread)).submit();
-        return JVMTI_ERROR_NONE;
+        suspendOrResumeThreadList(jvmtiEnv, threadSet, false);
+        return errors;
     }
 
     static int resumeThreadList(JVMTI.Env jvmtiEnv, int requestCount, Pointer requestList, Pointer results) {
@@ -1200,11 +1364,46 @@ public class JVMTIThreadFunctions {
                     Pointer name, int maxPriority, boolean isDaemon);
 
 
+    private static class ThreadGroupChildrenUnion extends ModeUnion {
+        // native
+        Pointer threadGroupsPtr;
+        Pointer threadsPtr;
+        int nGroups;
+        int nThreads;
+        // Java
+        ThreadGroupChildrenInfo threadGroupChildrenInfo;
+
+        ThreadGroupChildrenUnion(boolean isNative) {
+            super(isNative);
+        }
+    }
+
+    static JJVMTI.ThreadGroupChildrenInfo getThreadGroupChildren(ThreadGroup threadGroup) {
+        ThreadGroupChildrenUnion tgu = new ThreadGroupChildrenUnion(false);
+        getThreadGroupChildren(threadGroup, tgu);
+        return tgu.threadGroupChildrenInfo;
+    }
+
     static int getThreadGroupChildren(ThreadGroup threadGroup, Pointer threadCountPtr, Pointer threadsPtrPtr, Pointer groupCountPtr, Pointer groupsPtrPtr) {
+        ThreadGroupChildrenUnion tgu = new ThreadGroupChildrenUnion(true);
+        int error = getThreadGroupChildren(threadGroup, tgu);
+        if (error == JVMTI_ERROR_NONE) {
+            threadCountPtr.setInt(tgu.nThreads);
+            groupCountPtr.setInt(tgu.nGroups);
+            threadsPtrPtr.setWord(tgu.threadsPtr);
+            groupsPtrPtr.setWord(tgu.threadGroupsPtr);
+
+        }
+        return error;
+    }
+
+    private static int getThreadGroupChildren(ThreadGroup threadGroup, ThreadGroupChildrenUnion tgu) {
         // We reach directly into the ThreadGroup class state to avoid security checks and clumsy iterators.
         ThreadGroupProxy proxy = ThreadGroupProxy.asThreadGroupProxy(threadGroup);
         Thread[] threads = proxy.threads;
         ThreadGroup[] threadGroups = proxy.groups;
+        ArrayList<ThreadGroup> activeGroups = null;
+        ArrayList<Thread> liveThreads = null;
         // Holding the lock means no changes to the ThreadGroup, however threads may die at any time.
         synchronized (threadGroup) {
             int nGroups = 0;
@@ -1219,33 +1418,54 @@ public class JVMTIThreadFunctions {
                     nThreads++;
                 }
             }
-            Pointer threadsPtr = Memory.allocate(Size.fromInt(nThreads * Word.size()));
-            if (threadsPtr.isZero()) {
-                return JVMTI_ERROR_OUT_OF_MEMORY;
-            }
-            Pointer threadGroupsPtr = Memory.allocate(Size.fromInt(nGroups * Word.size()));
-            if (threadGroupsPtr.isZero()) {
-                Memory.deallocate(threadsPtr);
-                return JVMTI_ERROR_OUT_OF_MEMORY;
+
+            if (tgu.isNative) {
+                tgu.threadsPtr = Memory.allocate(Size.fromInt(nThreads * Word.size()));
+                if (tgu.threadsPtr.isZero()) {
+                    return JVMTI_ERROR_OUT_OF_MEMORY;
+                }
+                tgu.threadGroupsPtr = Memory.allocate(Size.fromInt(nGroups * Word.size()));
+                if (tgu.threadGroupsPtr.isZero()) {
+                    Memory.deallocate(tgu.threadsPtr);
+                    return JVMTI_ERROR_OUT_OF_MEMORY;
+                }
+            } else {
+                activeGroups = new ArrayList<ThreadGroup>();
+                liveThreads = new ArrayList<Thread>();
             }
             // we recompute the live thread count
-            int liveThreads = 0;
+            int liveThreadCount = 0;
             for (int i = 0; i < nThreads; i++) {
                 if (threads[i].isAlive()) {
-                    threadsPtr.setWord(i, JniHandles.createLocalHandle(threads[i]));
-                    liveThreads++;
+                    if (tgu.isNative) {
+                        tgu.threadsPtr.setWord(i, JniHandles.createLocalHandle(threads[i]));
+                    } else {
+                        liveThreads.add(threads[i]);
+                    }
+                    liveThreadCount++;
                 }
             }
+            int activeGroupCount = 0;
             for (int i = 0; i < nGroups; i++) {
                 if (!threadGroups[i].isDestroyed()) {
-                    threadGroupsPtr.setWord(i, JniHandles.createLocalHandle(threadGroups[i]));
+                    if (tgu.isNative) {
+                        tgu.threadGroupsPtr.setWord(i, JniHandles.createLocalHandle(threadGroups[i]));
+                        activeGroupCount++;
+                    } else {
+                        activeGroups.add(threadGroups[i]);
+                    }
                 }
             }
-            threadCountPtr.setInt(liveThreads);
-            groupCountPtr.setInt(nGroups);
-            threadsPtrPtr.setWord(threadsPtr);
-            groupsPtrPtr.setWord(threadGroupsPtr);
-
+            if (!tgu.isNative) {
+                Thread[] threadArray = new Thread[liveThreadCount];
+                ThreadGroup[] threadGroupArray = new ThreadGroup[activeGroupCount];
+                liveThreads.toArray(threadArray);
+                activeGroups.toArray(threadGroupArray);
+                tgu.threadGroupChildrenInfo = new JJVMTI.ThreadGroupChildrenInfo(threadArray, threadGroupArray);
+            } else {
+                tgu.nThreads = liveThreadCount;
+                tgu.nGroups = activeGroupCount;
+            }
             return JVMTI_ERROR_NONE;
         }
     }

@@ -49,7 +49,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * VM options handling.
  */
-public final class VMOptions {
+public class VMOptions {
 
     @HOSTED_ONLY
     private static final Comparator<VMOption> OPTION_COMPARATOR = new Comparator<VMOption>() {
@@ -376,7 +376,7 @@ public final class VMOptions {
         register(new VMOption("-server", "ignored (present for compatibility)"), MaxineVM.Phase.STARTING);
     }
 
-    private VMOptions() {
+    protected VMOptions() {
     }
 
     /**
@@ -793,7 +793,19 @@ public final class VMOptions {
         return checkOptionsForErrors(pristinePhaseOptions);
     }
 
-    protected static String getArgumentString(int index) throws Utf8Exception {
+    protected static int getArgumentCount() {
+        return argumentStart;
+    }
+
+    protected static Pointer getArgumentCString(int index) {
+        if (index < argumentStart) {
+            return argv.getWord(index).asPointer();
+        } else {
+            return Pointer.zero();
+        }
+    }
+
+    private static String getArgumentString(int index) throws Utf8Exception {
         final Pointer cArgument = argv.getWord(index).asPointer();
         if (cArgument.isZero()) {
             return null;
@@ -929,7 +941,15 @@ public final class VMOptions {
             name = argument.substring(2, index); // get the name of the option
             value = argument.substring(index + 1);
         }
-        properties.setProperty(name, value);
+        VMProperty vmProperty = VMProperty.isVMProperty(name);
+        if (vmProperty != null) {
+            if (vmProperty.mutable) {
+                vmProperty.setValue(value);
+                // gets copied into system properties later
+            }
+        } else {
+            properties.setProperty(name, value);
+        }
     }
 
     public static String mainClassName() {

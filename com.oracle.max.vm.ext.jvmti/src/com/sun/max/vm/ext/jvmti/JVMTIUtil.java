@@ -142,4 +142,18 @@ public class JVMTIUtil {
         }
     }
 
+    /**
+     * Value that is used to pass/return information to methods that
+     * operate on behalf on the native and Java API.
+     */
+    static abstract class ModeUnion {
+        static final boolean NATIVE = true;
+        static final boolean JAVA = false;
+        final boolean isNative;
+        ModeUnion(boolean isNative) {
+            this.isNative = isNative;
+        }
+    }
+
+
 }

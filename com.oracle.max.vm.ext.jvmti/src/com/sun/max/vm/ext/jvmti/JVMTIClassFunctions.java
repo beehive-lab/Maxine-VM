@@ -40,6 +40,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.ext.jvmti.JJVMTI.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -50,17 +51,6 @@ import com.sun.max.vm.type.*;
  * Support for all the JVMTI functions related to {@link Class} handling.
  */
 class JVMTIClassFunctions {
-
-    /**
-     * Value that is used to pass/return information to methods that
-     * operate on behalf on the native and Java API.
-     */
-    private static abstract class ModeUnion {
-        final boolean isNative;
-        ModeUnion(boolean isNative) {
-            this.isNative = isNative;
-        }
-    }
 
     /**
      * Strict check on whether a class is a VM class.
@@ -86,7 +76,7 @@ class JVMTIClassFunctions {
     }
 
     /**
-     * Dispatch the {@link JVMTIEvent#CLASS_FILE_LOAD_HOOK}.
+     * Dispatch the {@link JVMTIEvents#CLASS_FILE_LOAD_HOOK}.
      * We do not check the event state, caller is presumed to have called {@link JVMTI#eventNeeded(int).
      * @param classLoader null for boot
      * @param className
@@ -102,7 +92,7 @@ class JVMTIClassFunctions {
         boolean changed = false;
         for (int i = 0; i < MAX_NATIVE_ENVS; i++) {
             NativeEnv nativEnv = (NativeEnv) jvmtiEnvs[i];
-            Pointer callback = getCallbackForEvent(nativEnv, JVMTIEvent.CLASS_FILE_LOAD_HOOK, VmThread.current());
+            Pointer callback = getCallbackForEvent(nativEnv, JVMTIEvents.E.CLASS_FILE_LOAD_HOOK, VmThread.current());
             if (callback.isZero()) {
                 continue;
             }
@@ -135,7 +125,7 @@ class JVMTIClassFunctions {
         // now the Java agents
         for (int i = MAX_NATIVE_ENVS; i < MAX_ENVS; i++) {
             JavaEnv javaEnv = (JavaEnv) jvmtiEnvs[i];
-            if (javaEnv == null || !JVMTIEvent.isEventSet(javaEnv, JVMTIEvent.CLASS_FILE_LOAD_HOOK, VmThread.current())) {
+            if (javaEnv == null || !JVMTIEvents.isEventSet(javaEnv, JVMTIEvents.E.CLASS_FILE_LOAD_HOOK, VmThread.current())) {
                 continue;
             }
             byte[] newClassfileBytes = javaEnv.callbackHandler.classFileLoadHook(classLoader, className, protectionDomain, classfileBytes);
@@ -272,8 +262,6 @@ class JVMTIClassFunctions {
      * Union class to handle native/java variants for {@link #getLoadedClasses} etc.
      */
     private static class LoadedClassesUnion extends ModeUnion {
-        boolean actors;
-        Class[] classArray;
         ClassActor[] classActorArray;
         Pointer classesArrayPtr;
         int classCount;
@@ -287,10 +275,10 @@ class JVMTIClassFunctions {
      * Get the classes whose loading was initiated by the given class loader. TODO: Handle initiating versus defining
      * loaders (which requires a Maxine upgrade).
      */
-    static Class[] getClassLoaderClasses(ClassLoader classLoader) {
+    static ClassActor[] getClassLoaderClasses(ClassLoader classLoader) {
         LoadedClassesUnion lcu = new LoadedClassesUnion(false);
         getClassLoaderClasses(lcu, classLoader);
-        return lcu.classArray;
+        return lcu.classActorArray;
     }
 
     static int getClassLoaderClasses(ClassLoader classLoader, Pointer classCountPtr, Pointer classesPtrPtr) {
@@ -314,7 +302,7 @@ class JVMTIClassFunctions {
                 return JVMTI_ERROR_OUT_OF_MEMORY;
             }
         } else {
-            lcu.classArray = new Class[classCount];
+            lcu.classActorArray = new ClassActor[classCount];
         }
         copyClassActors(lcu, classActors, 0, classCount);
         lcu.classCount = classCount;
@@ -333,15 +321,8 @@ class JVMTIClassFunctions {
         return error;
     }
 
-    static Class[] getLoadedClasses() {
-        LoadedClassesUnion lcu = new LoadedClassesUnion(false);
-        getLoadedClasses(lcu);
-        return lcu.classArray;
-    }
-
     static ClassActor[] getLoadedClassActors() {
         LoadedClassesUnion lcu = new LoadedClassesUnion(false);
-        lcu.actors = true;
         getLoadedClasses(lcu);
         return lcu.classActorArray;
 
@@ -366,11 +347,7 @@ class JVMTIClassFunctions {
                 return JVMTI_ERROR_OUT_OF_MEMORY;
             }
         } else {
-            if (lcu.actors) {
-                lcu.classActorArray = new ClassActor[totalSize];
-            } else {
-                lcu.classArray = new Class[totalSize];
-            }
+            lcu.classActorArray = new ClassActor[totalSize];
         }
         int bootClassActorsCopied = copyClassActors(lcu, bootClassActors, 0, bootClassActorsSize);
         int systemClassActorsCopied = copyClassActors(lcu, systemClassActors, bootClassActorsCopied, systemClassActorsSize);
@@ -405,11 +382,7 @@ class JVMTIClassFunctions {
                 if (lcu.isNative) {
                     lcu.classesArrayPtr.setWord(arrayIndex + index, JniHandles.createLocalHandle(klass));
                 } else {
-                    if (lcu.actors) {
-                        lcu.classActorArray[arrayIndex + index] = classActor;
-                    } else {
-                        lcu.classArray[arrayIndex + index] = klass;
-                    }
+                    lcu.classActorArray[arrayIndex + index] = classActor;
                 }
                 index++;
             } else {
@@ -427,7 +400,39 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
+    private static class LineNumberTableUnion extends ModeUnion {
+        // NATIVE
+        Pointer nativeTablePtr;
+        int count;
+        // JAVA
+        LineNumberEntry[] lineNumberEntries;
+
+        LineNumberTableUnion(boolean isNative) {
+            super(isNative);
+        }
+    }
+
+    static LineNumberEntry[] getLineNumberTable(ClassMethodActor method) {
+        LineNumberTableUnion lnu = new LineNumberTableUnion(ModeUnion.JAVA);
+        int error = getLineNumberTable(method, lnu);
+        if (error == JVMTI_ERROR_NONE) {
+            return lnu.lineNumberEntries;
+        } else {
+            throw new JJVMTI.JJVMTIException(error);
+        }
+    }
+
     static int getLineNumberTable(ClassMethodActor classMethodActor, Pointer entryCountPtr, Pointer tablePtr) {
+        LineNumberTableUnion lnu = new LineNumberTableUnion(ModeUnion.NATIVE);
+        int error = getLineNumberTable(classMethodActor, lnu);
+        if (error == JVMTI_ERROR_NONE) {
+            entryCountPtr.setInt(lnu.count);
+            tablePtr.setWord(lnu.nativeTablePtr);
+        }
+        return error;
+    }
+
+    static int getLineNumberTable(ClassMethodActor classMethodActor, LineNumberTableUnion lnu) {
         if (classMethodActor.isNative()) {
             return JVMTI_ERROR_NATIVE_METHOD;
         }
@@ -436,13 +441,20 @@ class JVMTIClassFunctions {
             return JVMTI_ERROR_ABSENT_INFORMATION;
         }
         LineNumberTable.Entry[] entries = table.entries();
-        entryCountPtr.setInt(entries.length);
-        Pointer nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLineNumberEntrySize()));
+        lnu.count = entries.length;
+        if (lnu.isNative) {
+            lnu.nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLineNumberEntrySize()));
+        } else {
+            lnu.lineNumberEntries = new LineNumberEntry[entries.length];
+        }
         for (int i = 0; i < entries.length; i++) {
             LineNumberTable.Entry entry = entries[i];
-            setJVMTILineNumberEntry(nativeTablePtr, i, entry.bci(), entry.lineNumber());
+            if (lnu.isNative) {
+                setJVMTILineNumberEntry(lnu.nativeTablePtr, i, entry.bci(), entry.lineNumber());
+            } else {
+                lnu.lineNumberEntries[i] = new LineNumberEntry(entry.bci(), entry.lineNumber());
+            }
         }
-        tablePtr.setWord(nativeTablePtr);
         return JVMTI_ERROR_NONE;
     }
 
@@ -637,33 +649,69 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
+    private static class ClassMethodsUnion extends ModeUnion {
+        int length;
+        Pointer methodsPtr;
+        MethodActor[] methodsArray;
+
+        ClassMethodsUnion(boolean isNative) {
+            super(isNative);
+        }
+    }
+
+    static MethodActor[] getClassMethods(ClassActor klass) {
+        ClassMethodsUnion cmu = new ClassMethodsUnion(false);
+        getClassMethods(klass, cmu);
+        return cmu.methodsArray;
+    }
+
     static int getClassMethods(Class klass, Pointer methodCountPtr, Pointer methodsPtrPtr) {
-        ClassActor classActor = ClassActor.fromJava(klass);
+        ClassMethodsUnion cmu = new ClassMethodsUnion(true);
+        int error = getClassMethods(ClassActor.fromJava(klass), cmu);
+        methodsPtrPtr.setWord(cmu.methodsPtr);
+        methodCountPtr.setInt(cmu.length);
+        return error;
+    }
+
+    private static int getClassMethods(ClassActor classActor, ClassMethodsUnion cmu) {
         MethodActor[] methodActors = ClassActorProxy.asClassActorProxy(classActor).methodActors;
         boolean ordered = methodActors != null;
         if (!ordered) {
             methodActors = classActor.getLocalMethodActorsArray();
         }
         int length = methodActors.length;
-        Pointer methodsPtr = Memory.allocate(Size.fromInt(length * Word.size()));
-        if (methodsPtr.isZero()) {
-            return JVMTI_ERROR_OUT_OF_MEMORY;
+
+        if (cmu.isNative) {
+            cmu.methodsPtr = Memory.allocate(Size.fromInt(length * Word.size()));
+            if (cmu.methodsPtr.isZero()) {
+                return JVMTI_ERROR_OUT_OF_MEMORY;
+            }
+        } else {
+            cmu.methodsArray = new MethodActor[length];
         }
-        methodsPtrPtr.setWord(methodsPtr);
-        methodCountPtr.setInt(length);
+        cmu.length = length;
+
         // One issue: Maxine puts clinit at the end, it should be first (based on Hotspot).
         int last = length;
         int offset = 0;
         if (ordered) {
             if (classActor.clinit != null) {
                 assert methodActors[last - 1] == classActor.clinit;
-                methodsPtr.setWord(0, MethodID.fromMethodActor(classActor.clinit));
+                if (cmu.isNative) {
+                    cmu.methodsPtr.setWord(0, MethodID.fromMethodActor(classActor.clinit));
+                } else {
+                    cmu.methodsArray[0] = classActor.clinit;
+                }
                 last--;
                 offset++;
             }
         }
         for (int i = 0; i < last; i++) {
-            methodsPtr.setWord(i + offset, MethodID.fromMethodActor(methodActors[i]));
+            if (cmu.isNative) {
+                cmu.methodsPtr.setWord(i + offset, MethodID.fromMethodActor(methodActors[i]));
+            } else {
+                cmu.methodsArray[i + offset] = methodActors[i];
+            }
         }
         return JVMTI_ERROR_NONE;
     }

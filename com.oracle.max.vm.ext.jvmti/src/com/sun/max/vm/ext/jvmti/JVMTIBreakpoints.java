@@ -28,6 +28,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.ext.jvmti.JVMTIEvents.E;
 import com.sun.max.vm.jni.*;
 
 /**
@@ -110,11 +111,11 @@ public class JVMTIBreakpoints {
         }
     }
 
-    private static void event(int eventType, long id) {
-        EventBreakpointID eventID = eventArg.get();
-        eventID.methodID = getMethodID(id);
-        eventID.location = getLocation(id);
-        JVMTI.event(eventType, eventID);
+    private static void event(int eventId, long id) {
+        EventBreakpointID eventBptID = eventArg.get();
+        eventBptID.methodID = getMethodID(id);
+        eventBptID.location = getLocation(id);
+        JVMTI.event(E.fromEventId(eventId), eventBptID);
     }
 
     static void setSingleStep(boolean setting) {
@@ -129,6 +130,13 @@ public class JVMTIBreakpoints {
         return createBreakpointID(methodID, location) | SINGLE_STEP;
     }
 
+    static void setBreakpoint(ClassMethodActor classMethodActor, long location) {
+        int error = setBreakpoint(classMethodActor, MethodID.fromMethodActor(classMethodActor), location);
+        if (error != JVMTI_ERROR_NONE) {
+            throw new JJVMTI.JJVMTIException(error);
+        }
+    }
+
     static int setBreakpoint(ClassMethodActor classMethodActor, MethodID methodID, long location) {
         long id = createBreakpointID(methodID, location);
         int index = tryRecordBreakpoint(id);
@@ -138,6 +146,13 @@ public class JVMTIBreakpoints {
         methodBreakpointsMap.put(classMethodActor, SENTINEL);
         JVMTICode.deOptForNewBreakpoint(classMethodActor);
         return JVMTI_ERROR_NONE;
+    }
+
+    static void clearBreakpoint(ClassMethodActor classMethodActor, long location) {
+        int error = clearBreakpoint(classMethodActor, MethodID.fromMethodActor(classMethodActor), location);
+        if (error != JVMTI_ERROR_NONE) {
+            throw new JJVMTI.JJVMTIException(error);
+        }
     }
 
     static int clearBreakpoint(ClassMethodActor classMethodActor, MethodID methodID, long location) {

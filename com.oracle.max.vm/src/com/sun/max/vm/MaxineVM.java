@@ -608,7 +608,11 @@ public final class MaxineVM {
         VmThreadMap.ACTIVE.setVMTerminating();
         SignalDispatcher.terminate();
 
-        VMTI.handler().vmDeath();
+        try {
+            VMTI.handler().vmDeath();
+        } catch (Throwable throwable) {
+            System.err.println("Exception thrown by VMTI handler: " + throwable);
+        }
         // TODO: need to revisit this. Likely, we would want to bring all
         // threads to a safepoint before running the terminating phase.
         vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);

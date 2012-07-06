@@ -161,6 +161,10 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
                     generateTraceMethodEntry();
                     break;
 
+                case LOAD_EXCEPTION:
+                    generateLoadException();
+                    break;
+
                 case BREAKPOINT:
                     generateBreakpoint();
                     break;
@@ -219,7 +223,11 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
     }
 
     private void generateTraceMethodEntry() {
-        out.printf("        JVMTI.event(JVMTIEvent.METHOD_ENTRY, methodActor);\n");
+        out.printf("        JVMTI.methodEntryEvent(methodActor);\n");
+    }
+
+    private void generateLoadException() {
+        out.println("        JVMTI.exceptionCatchEvent(exception);");
     }
 
     private void generateBreakpoint() {
@@ -266,6 +274,7 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
         generateGetStaticTemplates();
         generatePutStaticTemplates();
         generateTraceMethodEntryTemplate();
+        generateLoadExceptionTemplate();
         generateBreakpointTemplate();
         generateReturnTemplates();
     }

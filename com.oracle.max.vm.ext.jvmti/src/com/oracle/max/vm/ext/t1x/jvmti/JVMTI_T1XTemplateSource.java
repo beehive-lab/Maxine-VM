@@ -34,6 +34,7 @@ import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 
 public class JVMTI_T1XTemplateSource {
@@ -1080,7 +1081,14 @@ public class JVMTI_T1XTemplateSource {
 
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
     public static void traceMethodEntry(MethodActor methodActor) {
-        JVMTI.event(JVMTIEvent.METHOD_ENTRY, methodActor);
+        JVMTI.methodEntryEvent(methodActor);
+    }
+
+    @T1X_TEMPLATE(LOAD_EXCEPTION)
+    public static Object loadException() {
+        Object exception = VmThread.current().loadExceptionForHandler();
+        JVMTI.exceptionCatchEvent(exception);
+        return exception;
     }
 
     @T1X_TEMPLATE(BREAKPOINT)
