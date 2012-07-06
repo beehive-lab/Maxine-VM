@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="MacRoman" standalone="no"?>
+<jardesc>
+    <jar path="com.oracle.max.vm.ext.vma/bin/com/oracle/max/vm/ext/vma/handlers/log/vmlog/h/vmloghandler.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/com.oracle.max.vm.ext.vma/src/com/oracle/max/vm/ext/vma/handlers/log/vmlog/h/vmloghandler.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="false" manifestLocation="/com.oracle.max.vm.ext.vma/src/com/oracle/max/vm/ext/vma/handlers/log/vmlog/h/MANIFEST.MF" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.log.vmlog.h{VMLogVMAdviceHandler.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.log.vmlog.h{VMAVMLogger.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.log.{VMAdviceHandlerLog.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.log.{VMAdviceHandlerLogAdapter.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.log.{VMAdviceHandlerLogFactory.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.log.{VMAdviceHandlerLogFile.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.log.txt.{CompactTextVMAdviceHandlerLog.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.log.txt.{TextVMAdviceHandlerLog.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.log.txt.sbps{SBPSCompactTextVMAdviceHandlerLog.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.log.txt.sbps.{SBPSTextVMAdviceHandlerLog.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.objstate{ObjectStateHandlerAdaptor.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.objstate{ObjectStateHandler.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.objstate{BitSetObjectStateHandler.java"/>
+    </selectedElements>
+</jardesc>
