@@ -87,6 +87,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     private Rectangle originalFrameGeometry = null;
 
     private InspectorMenu objectMenu;
+    private InspectorAction visitStaticTupleAction = null;
     private InspectorAction visitForwardedToAction = null;
     private InspectorAction visitForwardedFromAction = null;
 
@@ -160,6 +161,8 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         // Ensure that the object menu appears in the right position, but defer its creation
         // to subclasses, so that more view-specific items can be prepended to the standard ones.
         objectMenu = makeMenu(MenuKind.OBJECT_MENU);
+        visitStaticTupleAction = actions().viewStaticTupleForObject(object);
+        objectMenu.add(visitStaticTupleAction);
         visitForwardedToAction = new VisitForwardedToAction(inspection());
         objectMenu.add(visitForwardedToAction);
         visitForwardedFromAction = new VisitForwardedFromAction(inspection());
