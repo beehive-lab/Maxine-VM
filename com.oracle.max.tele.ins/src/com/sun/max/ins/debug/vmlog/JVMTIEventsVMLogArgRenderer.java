@@ -60,6 +60,11 @@ public class JVMTIEventsVMLogArgRenderer extends VMLogArgRenderer {
                     //location
                     return new PlainLabel(inspection(), Long.toString(argValue));
                 }
+                break;
+            case COMPILED_METHOD_LOAD:
+                if (argNum == 2) {
+                    return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
+                }
             default:
         }
         return super.getRenderer(header, argNum, argValue);

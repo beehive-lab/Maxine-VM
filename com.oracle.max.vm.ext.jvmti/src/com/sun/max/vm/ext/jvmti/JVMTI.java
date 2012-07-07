@@ -509,7 +509,7 @@ public class JVMTI {
                 event = null;
             }
         }
-        return null;
+        return event;
     }
 
     /**

@@ -30,6 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
@@ -82,10 +83,12 @@ public class JVMTICode {
             if (logger.enabled()) {
                 logger.logCompileForDeopt(targetMethod.classMethodActor);
             }
-            vm().compilationBroker.compileForDeopt(targetMethod.classMethodActor);
+            // This forces the compilation
+            vm().compilationBroker.compile(targetMethod.classMethodActor, Nature.BASELINE, true);
         }
         // Calling this multiple times for different threads is harmless as it takes care to
-        // filter out already invalidated methods.
+        // filter out already invalidated methods. This may also think it needs to recompile
+        // the method we just compiled but the new TM won't be invalidated so it will just use it.
         new Deoptimization(targetMethods).go();
     }
 

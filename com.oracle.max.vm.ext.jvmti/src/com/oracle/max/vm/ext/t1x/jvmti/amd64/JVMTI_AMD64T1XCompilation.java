@@ -164,7 +164,9 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         checkByteCodeEventNeeded(Bytecodes.PUTFIELD);
         checkByteCodeEventNeeded(Bytecodes.RETURN);
 
-        eventSettings |= JVMTIEvents.E.EXCEPTION_CATCH.bit;
+        if (JVMTIEvents.isEventSet(JVMTIEvents.E.EXCEPTION_CATCH)) {
+            eventSettings |= JVMTIEvents.E.EXCEPTION_CATCH.bit;
+        }
 
         if (JVMTI_CDE) {
             // any debug events => all debug events

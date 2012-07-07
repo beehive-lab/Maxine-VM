@@ -29,6 +29,7 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.JVMTIBreakpoints.*;
 import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.log.*;
@@ -164,6 +165,10 @@ public class JVMTIEvents {
                     log(event.ordinal(), booleanArg(ignoring), Address.fromLong(bptId.methodID), intArg(bptId.location));
                     break;
                 }
+                case COMPILED_METHOD_LOAD: {
+                    log(event.ordinal(), booleanArg(ignoring), methodActorArg((MethodActor) arg));
+                    break;
+                }
 
                 default:
                     log(event.ordinal(), booleanArg(ignoring));
@@ -266,7 +271,7 @@ public class JVMTIEvents {
      * Checks whether the given event is set for any agent, either globally or for any thread.
      * @param eventType
      */
-    static boolean isEventSet(JVMTIEvents.E event) {
+    public static boolean isEventSet(JVMTIEvents.E event) {
         return (event.bit & panAgentEventSettingCache) != 0;
     }
 
@@ -353,7 +358,7 @@ public class JVMTIEvents {
      * Implementation of upcall to enable/disable event notification.
      */
     static int setEventNotificationMode(JVMTI.Env jvmtiEnv, int mode, int eventId, Thread thread) {
-        if (eventId == JVMTI_EVENT_GARBAGE_COLLECTION_FINISH) {
+        if (eventId == JVMTI_EVENT_METHOD_ENTRY) {
             debug();
         }
         E event = E.fromEventId(eventId);

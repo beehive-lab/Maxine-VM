@@ -926,14 +926,20 @@ public class JVMTIThreadFunctions {
     public static void framePopEvent(boolean wasPoppedByException, Object value) {
         VmThread vmThread = VmThread.current();
         Pointer tla = vmThread.tla();
-        if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP) || JVMTIEvents.isEventSet(JVMTIEvents.E.METHOD_EXIT)) {
+        boolean framePop = JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP);
+        if (framePop || JVMTIEvents.isEventSet(JVMTIEvents.E.METHOD_EXIT)) {
             FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
-            // if we are single stepping, we may need to deopt the method we are returning to
-            if (stackTraceVisitor.stackElements.size() > 1) {
+            /* We have to deopt the method we are returning to for FRAME_POP. The specific scenario that fails otherwise is:
+             * Agent was single stepping and the stack now contains several optimized methods below the baseline
+             * method we are popping, owing to a call from the method originally being stepped.
+             * jdwp disables SINGLE STEP in that case and requests METHOD_ENTRY and FRAME_POP
+             * events instead, matching the frame depth against the original to decide when control returns to
+             * the original, where it re-enables SINGLE STEP. If we don't deopt, it never detects the ultimate return
+             * and SINGLE_STEP never gets re-enabled.
+             */
+            if (framePop && stackTraceVisitor.stackElements.size() > 1) {
                 long codeEventSettings = JVMTIEvents.codeEventSettings(null, vmThread);
-                if ((codeEventSettings & JVMTIEvents.E.SINGLE_STEP.bit) != 0) {
-                    JVMTICode.checkDeOptForMethod(stackTraceVisitor.getStackElement(1).classMethodActor, codeEventSettings);
-                }
+                JVMTICode.checkDeOptForMethod(stackTraceVisitor.getStackElement(1).classMethodActor, codeEventSettings);
             }
             // METHOD_EXIT events can cause frame pops from within VM code compiled at run time,
             // which results in an empty stack
