@@ -42,6 +42,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.type.JavaTypeDescriptor.WordTypeDescriptor;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -353,7 +354,9 @@ public final class ObjectFieldsTable extends InspectorTable {
                     };
                     labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");
                 } else if (fieldActor.kind.isWord) {
-                    labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, ObjectFieldsTable.this) {
+                    final WordValueLabel.ValueMode valueMode = ((WordTypeDescriptor) fieldActor.descriptor).javaClass == Size.class ?
+                                    WordValueLabel.ValueMode.SIZE : WordValueLabel.ValueMode.WORD;
+                    labels[row] = new WordValueLabel(inspection(), valueMode, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
                             final RemoteReference reference = object.reference();
