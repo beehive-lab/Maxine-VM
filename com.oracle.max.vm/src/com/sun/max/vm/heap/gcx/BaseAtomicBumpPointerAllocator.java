@@ -88,6 +88,11 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         return top;
     }
 
+    public final void unsafeSetTop(Address newTop) {
+        FatalError.check(inCurrentContiguousChunk(newTop), "top must be within allocating chunk");
+        top = newTop;
+    }
+
     @INLINE
     public boolean inCurrentContiguousChunk(Address address) {
         return address.greaterEqual(start) && address.lessThan(end);
