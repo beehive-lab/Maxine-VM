@@ -1125,11 +1125,17 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style.sizeDataFont());
                 if (value.isZero()) {
                     setForeground(style.wordNullDataColor());
+                    setWrappedText("0");
                     setWrappedToolTipHtmlText("zero");
                 } else {
+                    final long longValue = value.toLong();
                     setForeground(null);
-                    setWrappedText(Long.toString(value.toLong()));
-                    setWrappedToolTipHtmlText(Longs.toUnitsString(value.toLong(), false) + " [" + valueToDecimalAndHex(value) + "]");
+                    setWrappedText(Long.toString(longValue));
+                    if (longValue == Long.MAX_VALUE) {
+                        setWrappedToolTipHtmlText("MAX Size" + " [" + valueToDecimalAndHex(value) + "]");
+                    } else {
+                        setWrappedToolTipHtmlText(Longs.toUnitsString(longValue, false) + " [" + valueToDecimalAndHex(value) + "]");
+                    }
                 }
                 break;
             }
