@@ -246,7 +246,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             // FIXME: the capacity of the survivor range queues should be dynamic. Its upper bound could be computed based on the
             // worst case evacuation and the number of fragments of old space available for allocation.
             // Same with the lab size. In non parallel evacuators, this should be all the space available for allocation in a region.
-            youngSpaceEvacuator.initialize(1000, ELABSize, oldSpace.minReclaimableSpace(), false);
+            youngSpaceEvacuator.initialize(1000, ELABSize, false, oldSpace.minReclaimableSpace(), false);
 
             if (HeapRangeDumper.DumpOnError) {
                 MemoryRegion dumpingCoverage = new MemoryRegion();

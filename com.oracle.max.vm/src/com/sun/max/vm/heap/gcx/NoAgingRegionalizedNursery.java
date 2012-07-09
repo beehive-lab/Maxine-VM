@@ -127,14 +127,14 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
     }
 
     @Override
-    public Size growAfterGC(Size delta) {
+    public Size increaseSize(Size delta) {
         // TODO
         FatalError.unimplemented();
         return Size.zero();
     }
 
     @Override
-    public Size shrinkAfterGC(Size delta) {
+    public Size decreaseSize(Size delta) {
         // TODO
         FatalError.unimplemented();
         return Size.zero();

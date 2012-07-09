@@ -53,7 +53,7 @@ public class HeapResizingPolicy {
             Size minDesiredCapacity =  Size.fromLong((spaceUsedAfterGC.toLong() * 100) / (100 - minFreeSpaceRatioForExpansion));
             Size growth = minDesiredCapacity.minus(totalSpace);
             // Resize take care of rounding up to alignment constraints.
-            Size actualGrowth = heapSpace.growAfterGC(growth);
+            Size actualGrowth = heapSpace.increaseSize(growth);
             if (MaxineVM.isDebug()) {
                 Log.print("Request to grow the heap: requested ");
                 Log.print(growth.toLong());
@@ -67,7 +67,7 @@ public class HeapResizingPolicy {
         if (spaceLeftAfterGC.greaterThan(max)) {
             Size maxDesiredCapacity =  Size.fromLong((spaceUsedAfterGC.toLong() * 100) / (100 - maxFreeSpaceRatioForShrinking));
             Size shrinkage = totalSpace.minus(maxDesiredCapacity);
-            return !heapSpace.shrinkAfterGC(shrinkage).isZero();
+            return !heapSpace.decreaseSize(shrinkage).isZero();
         }
         return false;
     }

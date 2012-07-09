@@ -657,7 +657,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
 
 
     @Override
-    public Size growAfterGC(Size delta) {
+    public Size increaseSize(Size delta) {
         int numRegions = delta.roundedUpBy(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
         if (numRegions == 0) {
             numRegions = 1;
@@ -667,7 +667,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     }
 
     @Override
-    public Size shrinkAfterGC(Size delta) {
+    public Size decreaseSize(Size delta) {
         // TODO
         return Size.zero();
     }
