@@ -1123,13 +1123,12 @@ public class WordValueLabel extends ValueLabel {
             }
             case SIZE: {
                 setFont(style.sizeDataFont());
+                setForeground(null);
                 if (value.isZero()) {
-                    setForeground(style.wordNullDataColor());
                     setWrappedText("0");
                     setWrappedToolTipHtmlText("zero");
                 } else {
                     final long longValue = value.toLong();
-                    setForeground(null);
                     setWrappedText(Long.toString(longValue));
                     if (longValue == Long.MAX_VALUE) {
                         setWrappedToolTipHtmlText("MAX Size" + " [" + valueToDecimalAndHex(value) + "]");
