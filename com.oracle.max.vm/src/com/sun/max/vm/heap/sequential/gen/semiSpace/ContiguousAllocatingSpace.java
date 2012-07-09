@@ -64,7 +64,7 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         space.start().asPointer().setWord(Word.zero());
     }
 
-    public Size growAfterGC(Size delta) {
+    public Size increaseSize(Size delta) {
         final Size size = space.adjustGrowth(delta);
         boolean hasGrown = space.growCommittedSpace(size);
         FatalError.check(hasGrown, "request for growing space after GC must always succeed");
@@ -72,7 +72,7 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         return size;
     }
 
-    public Size shrinkAfterGC(Size delta) {
+    public Size decreaseSize(Size delta) {
         int pageSize = platform().pageSize;
         Size size = delta.alignUp(pageSize);
         boolean hasShrunk = space.shrinkCommittedSpace(size);
@@ -102,7 +102,6 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     }
 
     public void retireTLAB(Pointer start, Size size) {
-        FatalError.check(space.contains(start) && space.contains(start.plus(size.minusWords(1))), "Retired TLAB Space must be in allocating space");
         if (!allocator.retireTop(start, size)) {
             fillWithDeadObject(start, start.plus(size));
         }

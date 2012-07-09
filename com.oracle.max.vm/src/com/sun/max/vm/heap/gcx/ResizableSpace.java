@@ -33,17 +33,17 @@ public interface ResizableSpace {
      * The method rounds the delta up to any alignment constraints the resizable space may have to enforce.
      * If the requested delta is larger than the reserve of space the resizable space can grow from,  the heap is simply grown to its capacity.
      * @param delta the number of bytes to grow the resizable with
-     * @return the effective growth of the space
+     * @return the effective growth of the space, zero if failed to increase the space.
      */
-    Size growAfterGC(Size delta);
+    Size increaseSize(Size delta);
 
     /**
      * Try to shrink the resizable space by delta bytes.
       * The method rounds the delta up to any alignment constraints the resizable space may have to enforce.
     * @param delta the number of bytes to shrink the resizable with
-     * @return the effective size the space shrunk
+     * @return the effective size the space shrunk, zero if failed to decrease the space.
      */
-    Size shrinkAfterGC(Size delta);
+    Size decreaseSize(Size delta);
     /**
      * Amount of memory used by the space. This includes space allocated to live data, dark matter, and space available for allocation.
      * The total space must be less or equal to the capacity of the resizable space.
