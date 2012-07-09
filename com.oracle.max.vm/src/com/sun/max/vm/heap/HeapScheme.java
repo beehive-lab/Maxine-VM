@@ -173,6 +173,7 @@ public interface HeapScheme extends VMScheme {
 
     /**
      * A request for the heap scheme to attempt to reduce its memory usage.
+     * This interface is optional and a default implementation can just return false.
      * @param amount suggested amount to reduce
      * @return true if can/will reduce, false otherwise
      */
@@ -180,6 +181,7 @@ public interface HeapScheme extends VMScheme {
 
     /**
      * A hint that the heap scheme can increase its memory usage.
+     * This interface is optional and a default implementation can just return false.
      * @param amount suggested amount to increase
      * @return true if can/will increase memory usage, false otherwise
      */
