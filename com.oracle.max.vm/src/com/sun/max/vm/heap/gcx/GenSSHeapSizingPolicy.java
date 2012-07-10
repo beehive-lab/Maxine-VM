@@ -304,7 +304,7 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         }
     }
 
-    public boolean canResizeDuringFullGC(Size overflowEvacuationSize, Size oldGenFreeSpace) {
+    public boolean canIncreaseSizeDuringFullGC(Size overflowEvacuationSize, Size oldGenFreeSpace) {
         FatalError.check(minorEvacuationOverflow, "Shouldn't resizing during full GC without minor evacuation overflow");
         return canIncreaseSize(overflowEvacuationSize, oldGenFreeSpace);
     }
@@ -357,20 +357,27 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      */
     public boolean resizeAfterFullGC(Size estimatedEvacuation, Size oldGenFreeSpace) {
         minorEvacuationOverflow = false;
-        if (normalMode) {
-            final Size usedSpace = oldGenSize().minus(oldGenFreeSpace);
-            Size freeHeapSpace = heapSize.minus(usedSpace);
-            Size maxFreeHeapSpace = percent(heapSize, maxFreePercent);
-            // Should we shrink ?
-            if (freeHeapSpace.greaterThan(maxFreeHeapSpace)) {
+        final Size usedSpace = oldGenSize().minus(oldGenFreeSpace);
+        Size freeHeapSpace = heapSize.minus(usedSpace);
+        Size maxFreeHeapSpace = percent(heapSize, maxFreePercent);
+        // Should we shrink ?
+        if (freeHeapSpace.greaterThan(maxFreeHeapSpace) && maxFreeHeapSpace.greaterEqual(estimatedEvacuation)) {
+            if (normalMode) {
+                Size newHeapSize = alignUp(usedSpace.plus(maxFreeHeapSpace));
+                Size delta = newHeapSize.minus(heapSize);
+                heapSize = newHeapSize;
+                if (logger.enabled()) {
+                    logger.logShrinkHeap(heapSize.toLong(), youngGenSize().toLong(), oldGenSize().toLong(), delta.toLong());
+                }
+                return true;
+            } else {
                 // TODO
                 // for now, do nothing.
-                return false;
             }
-            return canIncreaseSize(estimatedEvacuation, oldGenFreeSpace);
+            return false;
         }
-        // TODO: Check if we can increase young generation again, or return to normal mode.
-        return false;
+        // Should we grow ?
+        return canIncreaseSize(estimatedEvacuation, oldGenFreeSpace);
     }
 
     public boolean outOfMemory() {
