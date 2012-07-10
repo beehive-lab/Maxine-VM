@@ -29,7 +29,6 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 
-// TODO (mlvdv)  This should extend TeleArrayObject, but that's a more complex constructor than the others.
 /**
  * Canonical surrogate for a <em>quasi</em> object:  the old copy of an array object
  * that has been relocated by copying to a new location in the current GC cycle.

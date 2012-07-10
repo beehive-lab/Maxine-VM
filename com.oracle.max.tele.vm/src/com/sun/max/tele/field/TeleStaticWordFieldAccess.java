@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,13 +27,19 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.type.*;
 
 /**
+ * An accessor for reading static word-sized fields as raw words from VM memory, specified by class and field name.
  */
-public class TeleStaticWordFieldAccess extends TeleStaticFieldAccess {
+public final class TeleStaticWordFieldAccess extends TeleStaticFieldAccess {
 
     public TeleStaticWordFieldAccess(Class holder, String name) {
         super(holder, name, Kind.WORD);
     }
 
+    /**
+     * Reads a static word-sized field from VM memory.
+     *
+     * @return the value of the field in VM memory as a raw {@link Word}
+     */
     public Word readWord(MaxVM vm) {
         return staticTupleReference(vm).readWord(fieldActor().offset());
     }

@@ -685,6 +685,10 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         }
     }
 
+    /**
+     * @return a reference to the actual location of the object, possibly following a forwarder to a new copy.
+     * @see RemoteReference#jumpForwarder()
+     */
     protected static Reference jumpForwarder(Reference reference) {
         return ((RemoteReference) reference).jumpForwarder();
     }
