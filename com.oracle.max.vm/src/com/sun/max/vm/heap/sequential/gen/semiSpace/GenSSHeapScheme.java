@@ -310,7 +310,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final Address oldAllocatorTop =  oldSpace.allocator.unsafeTop();
         oldSpace.flipSpaces();
         if (minorEvacuationOverflow) {
-            Address startRange =  oldSpace.allocator.start();
+            final Address startRange =  oldSpace.allocator.start();
             oldSpace.allocator.unsafeSetTop(oldAllocatorTop);
             oldSpaceEvacuator.prefillSurvivorRanges(startRange, oldAllocatorTop);
         }
@@ -332,9 +332,14 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      */
     private void handleFullGCOldGenOverflow(Size spaceLeft) {
         // Try growing the heap (mostly the old space)
-        if (resizingPolicy.canResizeDuringFullGC(youngSpaceEvacuator.evacuatedBytes(), spaceLeft)) {
+        if (resizingPolicy.canIncreaseSizeDuringFullGC(youngSpaceEvacuator.evacuatedBytes(), spaceLeft)) {
+            final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
+            final Address allocatorTop = allocator.unsafeTop();
+            final ContiguousHeapSpace space = oldSpace.space;
             resize(youngSpace, resizingPolicy.youngGenSize());
             resize(oldSpace, resizingPolicy.oldGenSize());
+            allocator.refill(space.start(), space.committedSize());
+            allocator.unsafeSetTop(allocatorTop);
             return;
         }
         // Need to refill old gen allocator with young gen space.
