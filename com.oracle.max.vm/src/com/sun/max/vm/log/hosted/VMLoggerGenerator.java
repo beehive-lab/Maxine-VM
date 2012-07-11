@@ -56,6 +56,73 @@ public class VMLoggerGenerator {
 
     private static File workspace;
 
+    /**
+     * Support for generic parameter types.
+     */
+    private static class GClass implements Comparable<GClass> {
+        Class<?> klass;
+        Type type;
+
+        GClass(Class<?> klass, Type type) {
+            this.klass = klass;
+            this.type = type;
+        }
+
+        private String getTypeName() {
+            return getTypeName(true);
+        }
+
+        private String getTypeName(boolean generic) {
+            if (type == klass) {
+                return klass.getSimpleName();
+            } else {
+                ParameterizedType pType = (ParameterizedType) type;
+                Type[] pTypeArgs = pType.getActualTypeArguments();
+                Class<?> pTypeArg0Class = (Class) pTypeArgs[0];
+                String result = klass.getSimpleName();
+                if (generic) {
+                    result += "<";
+                }
+                result += pTypeArg0Class.getSimpleName();
+                if (generic) {
+                    result += ">";
+                }
+                return result;
+            }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            GClass otherGClass = (GClass) other;
+            if (klass != otherGClass.klass) {
+                return false;
+            }
+            if (type != otherGClass.type) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int r = klass.hashCode();
+            if (type != klass) {
+                r ^= type.hashCode();
+            }
+            return r;
+        }
+
+        private static String getTypeName(Class<?> klass, Type type) {
+            return new GClass(klass, type).getTypeName();
+        }
+
+        @Override
+        public int compareTo(GClass o) {
+            return getTypeName(false).compareTo(o.getTypeName(false));
+        }
+
+    }
+
     private static boolean generate(boolean checkOnly, Class source, File sourceProject, ArrayList<Class<?>> loggerInterfacesArg) throws Exception {
         File base = new File(sourceProject, "src");
         File outputFile = new File(base, source.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
@@ -72,7 +139,7 @@ public class VMLoggerGenerator {
             int[] refMaps = computeRefMaps(methods, enumArgMap);
             out.format("%sprivate static abstract class %s extends %s {%n", INDENT4, autoName, sanitizedName(vmLoggerInterface.parent().getName()));
             OperationEnumInfo[] enumMap = outOperationEnum(out, methods);
-            Set<Class> customTypes = new HashSet<Class>();
+            Set<GClass> customTypes = new TreeSet<GClass>();
 
             out.printf("%sprivate static final int[] REFMAPS = %s;%n%n", INDENT8, refMapArray(INDENT8, refMaps));
 
@@ -108,6 +175,7 @@ public class VMLoggerGenerator {
                 out.printf("%s@INLINE%n", INDENT8);
                 out.printf("%spublic final void log%s(", INDENT8, uMethodName);
                 Class<?>[] parameters = method.getParameterTypes();
+                Type[] genericParams = method.getGenericParameterTypes();
                 Annotation[][] parameterAnnotations = method.getParameterAnnotations();
                 String[] formalNames = new String[parameters.length + 1];
 
@@ -168,7 +236,7 @@ public class VMLoggerGenerator {
                         if (argIndex > 1) {
                             caseBody.append(", ");
                         }
-                        caseBody.append(wrapTraceArg(customTypes, source, parameter, argIndex));
+                        caseBody.append(wrapTraceArg(customTypes, source, new GClass(parameter, genericParams[argIndex - 1]), argIndex));
                         argIndex++;
                     }
                     caseBody.append(");\n");
@@ -190,7 +258,7 @@ public class VMLoggerGenerator {
                             }
                         }
                         formalNames[argIndex] = formalName(paramAnnotations, argIndex);
-                        out.printf("%s %s", parameter.getSimpleName(), formalNames[argIndex]);
+                        out.printf("%s %s", GClass.getTypeName(parameter, genericParams[argIndex - 1]), formalNames[argIndex]);
                         argIndex++;
                     }
                     out.print(");\n\n");
@@ -201,9 +269,9 @@ public class VMLoggerGenerator {
                 outTraceMethod(out, traceCaseBodies);
 
                 // casts
-                for (Class klass : customTypes) {
-                    String typeName = klass.getSimpleName();
-                    String methodName = traceMethodName(klass);
+                for (GClass gclass : customTypes) {
+                    String typeName = gclass.getTypeName();
+                    String methodName = traceMethodName(gclass);
                     out.printf("%sstatic %s to%s(Record r, int argNum) {%n", INDENT8, typeName, methodName);
                     out.printf("%sreturn as%s(toObject(r, argNum));%n", INDENT12, methodName);
                     out.printf("%s}%n", INDENT8);
@@ -389,7 +457,7 @@ public class VMLoggerGenerator {
 
     private static Class isStandardArgMethodX(Class argClass, boolean log, Class sourceClass) {
         // The most common case is an exact match against the argument class
-        String methodName = log ? logArgMethodName(argClass) : traceArgMethodName(argClass);
+        String methodName = log ? logArgMethodName(argClass) : traceArgMethodName(new GClass(argClass, argClass));
         for (Method m : sourceClass.getDeclaredMethods()) {
             if (m.getName().equals(methodName)) {
                 return argClass;
@@ -537,15 +605,15 @@ public class VMLoggerGenerator {
         return toFirstLower(argClass.getSimpleName()) + "Arg";
     }
 
-    private static String traceMethodName(Class argClass) {
-        String name = toFirstUpper(argClass.getSimpleName());
-        if (argClass.isArray()) {
+    private static String traceMethodName(GClass argClass) {
+        String name = toFirstUpper(argClass.getTypeName(false));
+        if (argClass.klass.isArray()) {
             name = name.substring(0, name.length() - 2) + "Array";
         }
         return name;
     }
 
-    private static String traceArgMethodName(Class argClass) {
+    private static String traceArgMethodName(GClass argClass) {
         return "to" + traceMethodName(argClass);
     }
 
@@ -553,15 +621,15 @@ public class VMLoggerGenerator {
         return methodName + "(" + name + ")";
     }
 
-    private static String wrapTraceArg(Set<Class> customTypes, Class sourceClass, Class argClass, int argNum) {
-        Class standardArgClass = isStandardArgMethod(argClass, false, sourceClass);
+    private static String wrapTraceArg(Set<GClass> customTypes, Class sourceClass, GClass argClass, int argNum) {
+        Class standardArgClass = isStandardArgMethod(argClass.klass, false, sourceClass);
         if (standardArgClass == null) {
-            if (!argClass.isEnum()) {
+            if (!argClass.klass.isEnum()) {
                 customTypes.add(argClass);
             }
-            standardArgClass = argClass;
+            standardArgClass = argClass.klass;
         }
-        return wrapTraceArg(traceArgMethodName(standardArgClass), argNum);
+        return wrapTraceArg(traceArgMethodName(new GClass(standardArgClass, argClass.type)), argNum);
     }
 
     private static String wrapTraceArg(String kind, int argNum) {
@@ -603,18 +671,15 @@ public class VMLoggerGenerator {
                 checkOnly = true;
             }
         }
-        Class<?> updatedSource = generate(checkOnly);
-        if (checkOnly && updatedSource != null) {
-            System.out.println("Source for " + updatedSource + " would be updated");
-        }
-        if (updatedSource != null) {
+        ArrayList<Class<?>> updatedSources = generate(checkOnly);
+        if (updatedSources != null) {
             System.exit(1);
         }
     }
 
     private static class VMLoggerClassSearch extends ClassSearch {
         final HashSet<String> seenPackages = new HashSet<String>();
-        Class<?> updatedSource;
+        ArrayList<Class<?>> updatedSources;
         boolean checkOnly;
         File resourceParent;
 
@@ -649,12 +714,11 @@ public class VMLoggerGenerator {
                     try {
                         boolean updated = generate(checkOnly, source, resourceParent.getParentFile(), loggerInterfaces);
                         if (updated) {
-                            if (checkOnly) {
-                                updatedSource = source;
-                                return false;
-                            } else {
-                                System.out.println("Source for " + source + " was updated");
+                            if (updatedSources == null) {
+                                updatedSources = new ArrayList<Class<?>>();
                             }
+                            updatedSources.add(source);
+                            System.out.println("Source for " + source + (checkOnly ? " would be" : " was") + " updated");
                         }
                     } catch (Exception ex) {
                         System.err.println(ex);
@@ -667,12 +731,12 @@ public class VMLoggerGenerator {
 
     }
 
-    public static Class<?> generate(final boolean checkOnly) {
+    public static ArrayList<Class<?>> generate(final boolean checkOnly) {
         workspace = JavaProject.findWorkspace();
         VMLoggerClassSearch search = new VMLoggerClassSearch(checkOnly);
         search.run(Classpath.fromSystem(), "com/sun/max");
         search.run(Classpath.fromSystem(), "com/oracle/max");
-        return search.updatedSource;
+        return search.updatedSources;
     }
 
     private static ArrayList<Class< ? >> findLoggerInterfaces(Class< ? > klass) {
