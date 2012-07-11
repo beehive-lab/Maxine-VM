@@ -282,7 +282,7 @@ public class Deoptimization extends VmOperation {
             if (returnAddressIndex >= 0) {
                 info.slots.set(returnAddressIndex, WordUtil.archConstant(ip));
                 if (deoptLogger.enabled()) {
-                    deoptLogger.traceContinuation(ip);
+                    deoptLogger.logContinuation(ip);
                 }
             }
         }
@@ -310,7 +310,7 @@ public class Deoptimization extends VmOperation {
         public void setIP(Info info, Pointer ip) {
             this.ip.derive(ip);
             if (deoptLogger.enabled()) {
-                deoptLogger.traceContinuation(ip);
+                deoptLogger.logContinuation(ip);
             }
         }
     }
