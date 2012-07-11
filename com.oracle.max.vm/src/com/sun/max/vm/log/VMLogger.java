@@ -573,6 +573,11 @@ public class VMLogger {
     }
 
     @INLINE
+    public static Word codePointerArg(CodePointer codePointer) {
+        return Address.fromLong(codePointer.toTaggedLong());
+    }
+
+    @INLINE
     public static Word twoIntArgs(int a, int b) {
         return Address.fromLong(((long) a) << 32 | b);
     }
@@ -735,6 +740,22 @@ public class VMLogger {
         return asTargetMethod(toObject(r, argNum));
     }
 
+    @INTRINSIC(UNSAFE_CAST)
+    private static native Stub asStub(Object arg);
+
+    @INLINE
+    public static Stub toStub(Record r, int argNum) {
+        if (MaxineVM.isHosted()) {
+            return (Stub) toObject(r, argNum);
+        }
+        return asStub(toObject(r, argNum));
+    }
+
+    @INLINE
+    public static CodePointer toCodePointer(Record r, int argNum) {
+        return CodePointer.fromTaggedLong(toLong(r, argNum));
+    }
+
     // check that loggers are up to date in VM image
 
     static {
@@ -747,9 +768,14 @@ public class VMLogger {
         @Override
         public void checkGeneratedCode() {
             try {
-                Class< ? > updatedSource = VMLoggerGenerator.generate(true);
-                if (updatedSource != null) {
-                    FatalError.unexpected("VMLogger " + updatedSource + " is out of sync.\n" + "Run 'mx loggen', recompile " + updatedSource.getName() + " (or refresh it in your IDE)" +
+                ArrayList<Class<?>> updatedSources = VMLoggerGenerator.generate(true);
+                StringBuilder sb = new StringBuilder();
+                if (updatedSources != null) {
+                    for (Class<?> source : updatedSources) {
+                        sb.append(source.getSimpleName());
+                        sb.append(' ');
+                    }
+                    FatalError.unexpected("VMLogger(s) " + sb.toString() + " is/are out of sync.\n" + "Run 'mx loggen', recompile (or refresh in your IDE)" +
                                     " and restart the bootstrapping process.\n\n");
                 }
             } catch (Exception exception) {
