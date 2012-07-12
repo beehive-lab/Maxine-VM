@@ -50,9 +50,9 @@ import com.sun.max.vm.runtime.*;
  */
 public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      /**
-     * Minimal size of the young generation (2% of the effective heap size).
+     * Minimal size of the young generation (5% of the effective heap size).
      */
-    static final int MinYoungGenPercent = 2;
+    static final int MinYoungGenPercent = 5;
     /**
      * Absolute lowest bound for the size of a young generation. If MinYoungGenPercent * heap size is lower than this bound, then the bound is used instead.
      * The lowest bound must be enough to fire a out-of-memory exception.
