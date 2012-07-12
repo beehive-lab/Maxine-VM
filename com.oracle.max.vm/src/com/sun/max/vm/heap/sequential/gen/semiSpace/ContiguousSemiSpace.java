@@ -60,7 +60,7 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
         fromSpace.start().asPointer().setWord(Word.zero());
     }
 
-    void flipSpaces(boolean refillAllocator) {
+    void flipSpaces() {
         String fromSpaceName = fromSpace.regionName();
         String toSpaceName = space.regionName();
         // Make allocator parsable before flipping semi-space.
@@ -70,24 +70,22 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
         fromSpace.setRegionName(fromSpaceName);
         space = toSpace;
         space.setRegionName(toSpaceName);
-        if (refillAllocator) {
-            allocator.refill(space.start(), space.committedSize());
-        }
+        allocator.refill(space.start(), space.committedSize());
     }
 
     @Override
-    public Size growAfterGC(Size delta) {
-        Size size = super.growAfterGC(delta);
-        boolean shrunk = fromSpace.growCommittedSpace(size);
-        FatalError.check(shrunk, "request for growing space after GC must always succeed");
+    public Size increaseSize(Size delta) {
+        Size size = super.increaseSize(delta);
+        boolean succeed = fromSpace.growCommittedSpace(size);
+        FatalError.check(succeed, "request for growing space after GC must always succeed");
         return size;
     }
 
     @Override
-    public Size shrinkAfterGC(Size delta) {
-        Size size = super.shrinkAfterGC(delta);
-        boolean shrunk = fromSpace.shrinkCommittedSpace(size);
-        FatalError.check(shrunk, "request for shrinking space after GC must always succeed");
+    public Size decreaseSize(Size delta) {
+        Size size = super.decreaseSize(delta);
+        boolean succeed = fromSpace.shrinkCommittedSpace(size);
+        FatalError.check(succeed, "request for shrinking space after GC must always succeed");
         return size;
     }
     @Override

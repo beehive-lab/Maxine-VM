@@ -68,6 +68,9 @@ public interface InspectorStyle {
     // Defaults for integers displayed in hex
     Font hexDataFont();
 
+    /** font for Size. */
+    Font sizeDataFont();
+
    // Special styles for interpreted machine word  values
 
     /** font for displaying word data as hex. */

@@ -60,7 +60,12 @@ public class EvacuatorToCardSpace extends Evacuator {
     private Size minRefillThreshold;
 
     /**
-     * Flags indicating that Evacuator's TLAB must be retired after evacuation.
+     * Set to true if always refill.
+     */
+    private boolean alwaysRefill;
+
+    /**
+     * Flags indicating that Evacuation buffers must be retired after evacuation.
      */
     private boolean retireAfterEvacuation;
 
@@ -68,6 +73,8 @@ public class EvacuatorToCardSpace extends Evacuator {
      * Hint of amount of space to use to refill the promotion allocation buffer.
      */
     private Size evacuationBufferSize;
+
+    private final EvacuationBufferProvider evacuationBufferProvider;
 
     /**
      * Remembered set of the from space.
@@ -123,12 +130,13 @@ public class EvacuatorToCardSpace extends Evacuator {
 
     private EvacuatingSpace.SpaceBounds evacuatedAreaBounds;
 
-    public EvacuatorToCardSpace(EvacuatingSpace fromSpace, HeapSpace toSpace, CardTableRSet rset) {
+    public EvacuatorToCardSpace(EvacuatingSpace fromSpace, HeapSpace toSpace, EvacuationBufferProvider evacuationBufferProvider, CardTableRSet rset) {
         this.fromSpace = fromSpace;
         this.toSpace = toSpace;
         this.rset = rset;
         this.cfoTable = rset.cfoTable;
-        evacuatedAreaBounds = fromSpace.bounds();
+        this.evacuationBufferProvider = evacuationBufferProvider;
+        this.evacuatedAreaBounds = fromSpace.bounds();
     }
 
     /**
@@ -145,10 +153,11 @@ public class EvacuatorToCardSpace extends Evacuator {
         evacuatedAreaBounds = fromSpace.bounds();
     }
 
-    public void initialize(int maxSurvivorRanges, Size evacuationBufferSize, Size minRefillThreshold, boolean retireAfterEvacuation) {
+    public void initialize(int maxSurvivorRanges, Size evacuationBufferSize, boolean alwaysRefill, Size minRefillThreshold, boolean retireAfterEvacuation) {
         this.survivorRanges = new SurvivorRangesQueue(maxSurvivorRanges);
         this.evacuationBufferSize = evacuationBufferSize;
-        this.minRefillThreshold = minRefillThreshold;
+        this.alwaysRefill = alwaysRefill;
+        this.minRefillThreshold =  alwaysRefill ? Size.fromLong(Long.MAX_VALUE) : minRefillThreshold;
         this.retireAfterEvacuation = retireAfterEvacuation;
     }
 
@@ -180,7 +189,7 @@ public class EvacuatorToCardSpace extends Evacuator {
         lastOverflowAllocatedRangeEnd = Pointer.zero();
 
         if (ptop.isZero()) {
-            Address chunk = toSpace.allocateTLAB(evacuationBufferSize);
+            Address chunk = evacuationBufferProvider.refillEvacuationBuffer();
             Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
             pnextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
             rset.notifyRefill(chunk, chunkSize);
@@ -196,24 +205,26 @@ public class EvacuatorToCardSpace extends Evacuator {
         fromSpace.doAfterGC();
         Pointer limit = pend.plus(evacuationBufferHeadroom());
         Size spaceLeft = limit.minus(ptop).asSize();
-        if (spaceLeft.lessThan(minRefillThreshold)) {
-            // Will trigger refill in doBeforeEvacution on next GC
-            if (!spaceLeft.isZero()) {
-                fillWithDeadObject(ptop, limit);
-                rset.notifyRetireDeadSpace(ptop, spaceLeft);
-            }
-            ptop = Pointer.zero();
-            pend = Pointer.zero();
-        } else {
+        if ((alwaysRefill && spaceLeft.greaterThan(minObjectSize())) || spaceLeft.greaterEqual(minRefillThreshold)) {
             // Leave remaining space in an iterable format.
             // Next evacuation will start from top again.
             HeapFreeChunk.format(ptop, spaceLeft);
             rset.notifyRetireFreeSpace(ptop, spaceLeft);
             if (retireAfterEvacuation) {
-                toSpace.retireTLAB(ptop, spaceLeft);
+                // Note: if an overflow occurred and the TLAB isn't in the toSpace but in some other space, the leftover will not be retired but simply formatted as dead object.
+                evacuationBufferProvider.retireEvacuationBuffer(ptop, limit);
+                // Will trigger refill in doBeforeEvacution on next GC
                 ptop = Pointer.zero();
                 pend = Pointer.zero();
             }
+        } else {
+            if (!spaceLeft.isZero()) {
+                fillWithDeadObject(ptop, limit);
+                rset.notifyRetireDeadSpace(ptop, spaceLeft);
+            }
+            // Will trigger refill in doBeforeEvacution on next GC
+            ptop = Pointer.zero();
+            pend = Pointer.zero();
         }
     }
 
@@ -247,6 +258,8 @@ public class EvacuatorToCardSpace extends Evacuator {
         survivorRanges.add(start, end);
     }
 
+    private Address debugRetired_ptop = Address.zero(); // FIXME: just for debugging for now
+
     protected Pointer refillOrAllocate(Size size) {
         if (size.lessThan(minRefillThreshold)) {
             // check if request can fit in the remaining space when taking the headroom into account.
@@ -256,11 +269,11 @@ public class EvacuatorToCardSpace extends Evacuator {
                 return ptop;
             }
             if (ptop.lessThan(limit)) {
-                // format remaining storage into dead space for parsability
-                fillWithDeadObject(ptop, limit);
-                // Update FOT accordingly
-                // FIXME:  it'll be cleaner to call  rset.notifyRetireDeadSpace(ptop, limit.minus(ptop).asSize());
+                debugRetired_ptop = ptop;
+                // Retire and update FOT accordingly
+                // FIXME: same as  rset.notifyRetireDeadSpace(ptop, limit.minus(ptop).asSize()) but faster. It'll be cleaner to use the rset interface though.
                 cfoTable.set(ptop, limit);
+                evacuationBufferProvider.retireEvacuationBuffer(ptop, limit);
                 if (MaxineVM.isDebug()) {
                     final Address deadSpaceLastWordAddress = limit.minus(Word.size());
                     if (CardTableRSet.alignDownToCard(ptop).lessThan(CardTableRSet.alignDownToCard(deadSpaceLastWordAddress))) {
@@ -271,9 +284,8 @@ public class EvacuatorToCardSpace extends Evacuator {
             // Check if there is another chunk in the lab.
             Address chunk = pnextChunk;
             if (chunk.isZero()) {
-                chunk = toSpace.allocateTLAB(evacuationBufferSize);
-                // FIXME: we should have exception path to handle out of memory here -- rollback or stop evacuation to initiate full GC or throw OOM
-                assert !chunk.isZero() && HeapFreeChunk.getFreechunkSize(chunk).greaterEqual(minRefillThreshold);
+                chunk = evacuationBufferProvider.refillEvacuationBuffer();
+                FatalError.check(!chunk.isZero() && (alwaysRefill || HeapFreeChunk.getFreechunkSize(chunk).greaterEqual(minRefillThreshold)), "refill request should always succeed");
             }
             pnextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
             if (!chunk.equals(limit)) {
@@ -299,11 +311,9 @@ public class EvacuatorToCardSpace extends Evacuator {
         lastOverflowAllocatedRangeEnd = cell.plus(size);
         return cell;
     }
-
     @INLINE
     @Override
     final boolean inEvacuatedArea(Pointer origin) {
-        //return fromSpace.contains(origin);
         return evacuatedAreaBounds.isIn(origin);
     }
 
