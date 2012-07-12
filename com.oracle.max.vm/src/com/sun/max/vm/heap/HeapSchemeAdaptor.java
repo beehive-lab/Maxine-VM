@@ -143,6 +143,10 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         Layout.writeHubReference(origin, Reference.fromJava(byteArrayHub()));
     }
 
+    @INLINE
+    public static void fillWithDeadObject(Address start, Address end) {
+        fillWithDeadObject(start.asPointer(), end.asPointer());
+    }
 
     /**
      * Helper function to fill an area with a (tagged) dead object.

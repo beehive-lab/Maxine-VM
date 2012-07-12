@@ -264,28 +264,51 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         return minorEvacuationOverflow;
     }
 
-    private void sizeDownYoungGen(Size estimatedEvacuation, Size oldGenFreeSpace) {
-        // Reduce nursery size to redistribute space to the old generation.
-        // If the estimated evacuation is larger than half the size of the nursery, we only redistribute half of the young gen to avoid
-        // sharp drop to the young gen size due to a spike in evacuation.
-        Size oldSpaceNeeded = alignUp(estimatedEvacuation.minus(oldGenFreeSpace));
+    private boolean sizeDownYoungGen(Size estimatedEvacuation, Size oldGenFreeSpace) {
         Size ys =  youngGenSize();
-        Size maxYoungGenTax = ys.dividedBy(4);
-        if (oldSpaceNeeded.greaterThan(maxYoungGenTax)) {
-            oldSpaceNeeded = maxYoungGenTax;
+        Size minYS = minYoungGenSize();
+        if (ys.greaterThan(minYS)) {
+            // Reduce nursery size to redistribute space to the old generation.
+            // If the estimated evacuation is larger than half the size of the nursery, we only redistribute half of the young gen to avoid
+            // sharp drop to the young gen size due to a spike in evacuation.
+            Size oldSpaceNeeded = alignUp(estimatedEvacuation.minus(oldGenFreeSpace));
+            Size maxYoungGenTax = ys.dividedBy(4);
+            if (oldSpaceNeeded.greaterThan(maxYoungGenTax)) {
+                oldSpaceNeeded = maxYoungGenTax;
+            }
+            if (oldSpaceNeeded.lessThan(minYoungGenDelta)) {
+                oldSpaceNeeded = minYoungGenDelta;
+            }
+            Size newYoungGenSize = ys.minus(oldSpaceNeeded.times(2));
+            if (newYoungGenSize.lessThan(minYS)) {
+                youngGenHeapPercentage = MinYoungGenPercent;
+                heapSize = minYS.plus(maxHeapOldGenSize);
+            } else {
+                // We're taking 2*oldSpaceNeeded off the young generation to redistribute it equally to each of the old gen semi-space.
+                // Consequently, the effective heap size is reduced by 1*oldSpaceNeeded.
+                Size newHeapSize = heapSize.minus(oldSpaceNeeded);
+                int newYoungGenHeapPercentage = newYoungGenSize.times(100).dividedBy(newHeapSize).toInt();
+                if (!(newYoungGenHeapPercentage >= MinYoungGenPercent && newYoungGenHeapPercentage <= youngGenMaxHeapPercentage)) {
+                    Log.print("newYoungGenHeapPercentage = ");
+                    Log.println(newYoungGenHeapPercentage);
+                    Log.print("newHeapSize = ");
+                    Log.printToPowerOfTwoUnits(newHeapSize);
+                    Log.print(" (");
+                    Log.print(newHeapSize.toLong());
+                    Log.println(")");
+                    FatalError.unexpected("incorrect downsizing of young gen");
+                }
+                heapSize = newHeapSize;
+                youngGenHeapPercentage = newYoungGenHeapPercentage;
+            }
+            normalMode = false;
+            if (logger.enabled()) {
+                logger.logChangeYoungPercent(heapSize.toLong(), youngGenSize().toLong(), oldGenSize().toLong(), youngGenHeapPercentage);
+            }
+            return true;
         }
-        if (oldSpaceNeeded.lessThan(minYoungGenDelta)) {
-            oldSpaceNeeded = minYoungGenDelta;
-        }
-        Size newYoungGenSize = ys.minus(oldSpaceNeeded.times(2));
-        Size newHeapSize = heapSize.minus(oldSpaceNeeded);
-        int newYoungGenHeapPercentage = newYoungGenSize.times(100).dividedBy(newHeapSize).toInt();
-        heapSize = newHeapSize;
-        youngGenHeapPercentage = newYoungGenHeapPercentage;
-        normalMode = false;
-        if (logger.enabled()) {
-            logger.logChangeYoungPercent(newHeapSize.toLong(), youngGenSize().toLong(), oldGenSize().toLong(), newYoungGenHeapPercentage);
-        }
+        outOfMemory = true;
+        return false;
     }
 
     private void adjustForEstimatedEvacuation(Size estimatedEvacuation, Size usedSpace, Size targetGrowth) {
@@ -335,14 +358,12 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
                 }
                 return true;
             }  else if (oldGenFreeSpace.lessThan(estimatedEvacuation)) {
-                sizeDownYoungGen(estimatedEvacuation, oldGenFreeSpace);
-                return true;
+                return sizeDownYoungGen(estimatedEvacuation, oldGenFreeSpace);
             }
             return false;
         }
         if (oldGenFreeSpace.lessThan(estimatedEvacuation)) {
-            sizeDownYoungGen(estimatedEvacuation, oldGenFreeSpace);
-            return true;
+            return sizeDownYoungGen(estimatedEvacuation, oldGenFreeSpace);
         }
         return false;
     }
@@ -463,7 +484,7 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         protected void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace) {
             Log.print("Estimated next evacuation: ");
             Log.printToPowerOfTwoUnits(Size.fromLong(estimatedEvacuation));
-            Log.print("Free old space: ");
+            Log.print(", Free old space: ");
             Log.printlnToPowerOfTwoUnits(Size.fromLong(freeOldSpace));
         }
 
@@ -471,7 +492,7 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         protected void traceInitializeHeap(long heapSize, long youngSize, long oldSize, long maxHeapSize, long maxYoungSize, long maxOldSize) {
             Log.print("Initial ");
             traceHeapSize(heapSize, youngSize, oldSize);
-            Log.print("Max heap size = ");
+            Log.print(", Max heap size = ");
             Log.printToPowerOfTwoUnits(Size.fromLong(maxHeapSize));
             Log.print(", Max  young size = ");
             Log.printToPowerOfTwoUnits(Size.fromLong(maxYoungSize));
