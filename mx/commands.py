@@ -129,8 +129,8 @@ def gate(args):
 
     test(['-image-configs=java', '-fail-fast'] + args)
 
-def ssgate(args):
-    """run the tests used to validate a push to the stable Maxine repository
+def gssgate(args):
+    """run the tests used to validate a push to the stable Maxine repository with GenSSHeapScheme
 
     If this commands exits with a 0 exit code, then the source code is in
     a state that would be accepted for integration into the main repository."""
@@ -719,7 +719,7 @@ def mx_init():
         'copycheck': [copycheck, ''],
         'eclipse': [eclipse, '[VM options]'],
         'gate': [gate, '[options]'],
-        'ssgate': [ssgate, '[options]'],
+        'gssgate': [gssgate, '[options]'],
         'graal': [graal, '[options] patterns...'],
         'graalexample': [graalexample, '[-v] example names...'],
         'hcfdis': [hcfdis, '[options] files...'],
