@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,9 +83,13 @@ public final class StackFrameView extends AbstractView<StackFrameView> implement
         @Override
         public void procedure() {
             // TODO (mlvdv)  This is pretty awkward, but has the virtue that it reproduces exactly what's displayed.  Could be improved.
-            final StringBuilder result = new StringBuilder(100);
-            // TODO (mlvdv) maybe just rely on the generic print command based on the table
-            gui().postToClipboard(result.toString());
+            final String contents = compiledStackFramePanel.getContentString();
+            gui().postToClipboard(contents);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(compiledStackFramePanel != null);
         }
     }
 
@@ -193,6 +197,7 @@ public final class StackFrameView extends AbstractView<StackFrameView> implement
         }
         // Title displays thread state, so must be updated
         setTitle();
+        copyStackFrameToClipboardAction.refresh(force);
     }
 
     @Override

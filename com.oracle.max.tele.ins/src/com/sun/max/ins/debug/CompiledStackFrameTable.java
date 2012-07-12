@@ -282,6 +282,27 @@ public class CompiledStackFrameTable extends InspectorTable {
         }
     }
 
+    /**
+     * @return a string representing the currently displayed data in the panel,
+     * not clipped by scrolling.
+     */
+    public String getContentString() {
+        final StringBuilder result = new StringBuilder();
+        final int columnCount = getColumnCount();
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            for (int col = 0; col < columnCount; col++) {
+                if (col > 0) {
+                    result.append("\t");
+                }
+                TableCellRenderer cellRenderer = this.getCellRenderer(row, col);
+                Object valueAt = tableModel.getValueAt(row, col);
+                final InspectorLabel label = (InspectorLabel) cellRenderer.getTableCellRendererComponent(this, valueAt, false, false, row, col);
+                result.append(label.getTextDeHtmlify());
+            }
+            result.append("\n");
+        }
+        return result.toString();
+    }
     private final class NameRenderer extends TextLabel implements TableCellRenderer {
 
         public NameRenderer(Inspection inspection) {
