@@ -342,8 +342,8 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         bounds = new SpaceBounds() {
             @Override
             Address lowestAddress() {
-                FatalError.unimplemented();
-                return null;
+                FatalError.unexpected("must not be used for now");
+                return Address.zero();
             }
 
             @Override
@@ -358,8 +358,8 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
 
             @Override
             Address highestAddress() {
-                FatalError.unimplemented(); // TODO
-                return null;
+                FatalError.unexpected("must not be used for now");
+                return Address.zero();
             }
         };
     }
