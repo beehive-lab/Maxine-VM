@@ -84,30 +84,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     final class OldSpaceRefiller extends Refiller {
         @Override
         public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
-            if (VmThread.current().isVmOperationThread()) {
-                // TODO: remove this branch and replace with a FatalError.check
-                FatalError.unexpected("Must not be here during GC");
-                // First, make sure we're doing minor collection here.
-                if (youngSpaceEvacuator.getGCOperation() != null) {
-                    final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
-                    final ContiguousHeapSpace fromSpace = oldSpace.fromSpace;
-                    FatalError.check(!resizingPolicy.minorEvacuationOverflow(), "Must not have recursive overflow of old space during minor collection");
-                    FatalError.check(oldSpace.space.contains(startOfSpaceLeft), "sanity check");
-                    // Left-over in allocator is not formated.
-                    fillWithDeadObject(startOfSpaceLeft, startOfSpaceLeft.plus(spaceLeft));
-                    // Notify that we need to run a full GC immediately after this overflowing minor collection.
-                    resizingPolicy.notifyMinorEvacuationOverflow();
-                    // Refill the allocator with the old to space.
-                    allocator.refill(fromSpace.start(), fromSpace.committedSize());
-                    // Loop back in allocator
-                    return Address.zero();
-                } else if (oldSpaceEvacuator.getGCOperation() != null) {
-                    // Return the address of the exact refill (already formatted as a HeapFreeChunk), to short cut the allocation loop which will try to allocate the requested TLAB size.
-                    return handleFullGCOldGenOverflow(startOfSpaceLeft, spaceLeft);
-                }
-            }
             // Force full collection.
             Heap.collectGarbage(Size.zero());
+            // The current thread hold the refill lock and will do the refill of the allocator.
             return Address.zero();
         }
 
@@ -127,7 +106,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             Size size = allocator.size();
             while (!Heap.collectGarbage(size)) {
                 size = allocator.size();
-                // TODO: condition for OOM
             }
             // We're out of safepoint. The current thread hold the refill lock and will do the refill of the allocator.
             return Address.zero();
@@ -394,29 +372,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     @Override
     public void retireEvacuationBuffer(Address startOfSpaceLeft, Address endOfSpaceLeft) {
         oldSpace.allocator().retireTop(startOfSpaceLeft, endOfSpaceLeft.minus(startOfSpaceLeft).asSize());
-    }
-
-    /**
-     * Handle overflow of the old generation during a full GC.
-     */
-    private Address handleFullGCOldGenOverflow(Pointer startOfSpaceLeft, Size spaceLeft) {
-        // Try growing the heap (mostly the old space)
-        if (resizingPolicy.canIncreaseSizeDuringFullGC(youngSpaceEvacuator.evacuatedBytes(), spaceLeft)) {
-            final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
-            final ContiguousHeapSpace space = oldSpace.space;
-            resize(youngSpace, resizingPolicy.youngGenSize());
-            resize(oldSpace, resizingPolicy.oldGenSize());
-            final Address endOfRefill = space.committedEnd();
-            final Address startOfRefill = allocator.unsafeSetTopToLimit();
-            FatalError.check(startOfSpaceLeft.plus(spaceLeft).equals(startOfRefill), "");
-            HeapFreeChunk.format(startOfSpaceLeft, endOfRefill.minus(startOfSpaceLeft).asSize());
-            return startOfSpaceLeft;
-        }
-        // Need to refill old gen allocator with young gen space.
-        resizingPolicy.notifyOutOfMemory();
-        oldSpace.allocator.refill(youngSpace.space.start(), youngSpace.space.committedSize());
-        FatalError.unimplemented();
-        return Address.zero();
     }
 
     private Size estimatedNextEvac() {
