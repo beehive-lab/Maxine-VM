@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.sun.max.tele.object;
 import java.lang.reflect.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link Constructor} in the {@link TeleVM}.
@@ -34,7 +34,7 @@ public final class TeleConstructor extends TeleTupleObject {
 
     private Constructor constructor;
 
-    protected TeleConstructor(TeleVM vm, Reference constructorReference) {
+    protected TeleConstructor(TeleVM vm, RemoteReference constructorReference) {
         super(vm, constructorReference);
     }
 
@@ -43,7 +43,7 @@ public final class TeleConstructor extends TeleTupleObject {
      */
     public Constructor toJava() {
         if (constructor == null) {
-            final Reference methodActorReference = jumpForwarder(fields().Constructor_methodActor.readReference(reference()));
+            final RemoteReference methodActorReference = jumpForwarder(fields().Constructor_methodActor.readReference(reference()));
             final TeleMethodActor teleMethodActor = (TeleMethodActor) objects().makeTeleObject(methodActorReference);
             if (teleMethodActor != null) {
                 constructor = teleMethodActor.methodActor().toJavaConstructor();

@@ -23,7 +23,7 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
  */
 public final class TeleClassRegistry extends TeleTupleObject {
 
-    protected TeleClassRegistry(TeleVM vm, Reference classRegistryReference) {
+    protected TeleClassRegistry(TeleVM vm, RemoteReference classRegistryReference) {
         super(vm, classRegistryReference);
     }
 

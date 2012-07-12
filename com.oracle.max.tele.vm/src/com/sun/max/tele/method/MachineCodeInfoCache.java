@@ -43,6 +43,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -54,7 +55,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
-import com.sun.max.vm.reference.*;
 
 /**
  * A cache that encapsulates a {@link TargetMethod} instance copied from the VM, together with derived information that
@@ -290,7 +290,7 @@ public final class MachineCodeInfoCache extends AbstractVmHolder {
                 } else {
                     Address callEntryAddress = codeStart;
                     if (MaxineVM.vm().compilationBroker.needsAdapters()) {
-                        final Reference callEntryPointReference = fields().TargetMethod_callEntryPoint.readReference(teleTargetMethod.reference());
+                        final RemoteReference callEntryPointReference = fields().TargetMethod_callEntryPoint.readReference(teleTargetMethod.reference());
                         final TeleObject teleCallEntryPoint = objects().makeTeleObject(callEntryPointReference);
                         if (teleCallEntryPoint != null) {
                             final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();

@@ -28,7 +28,6 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * A manager for remote references to objects allocated in one or more
@@ -45,7 +44,7 @@ public interface RemoteObjectReferenceManager {
     /**
      * Examines the contents of VM memory and determines what kind of object (live, quasi, etc.),
      * if any, is represented at that location, using only low-level mechanisms and creating
-     * no {@link Reference}s.
+     * no zero {@link RemoteReference}s.
      *
      * @param origin an absolute memory location in the VM.
      * @return an enum identifying the kind of object, if any, that is represented at the location in VM memory.
@@ -67,7 +66,7 @@ public interface RemoteObjectReferenceManager {
 
     /**
      * Creates a canonical remote reference to a live object whose origin
-     * in VM memory is at a specified address, {@link Reference#zero()} if there is no
+     * in VM memory is at a specified address, the zero {@link RemoteReference} if there is no
      * live object at that origin.
      * <p>
      * The origin of the object may change over time, for example if
@@ -83,7 +82,7 @@ public interface RemoteObjectReferenceManager {
 
     /**
      * Creates a canonical remote reference to a <em>quasi</em> object whose origin
-     * in VM memory is at a specified address, {@link Reference#zero()} if there is no
+     * in VM memory is at a specified address, the zero {@link RemoteReference} if there is no
      * <em>quasi</em> object at that origin.
      * <p>
      * The origin of the object may change over time, for example if

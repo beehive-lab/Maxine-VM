@@ -23,8 +23,8 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a {@link SemiSpaceCodeRegion} object in the VM, which describes a
@@ -51,7 +51,7 @@ public final class TeleSemiSpaceCodeRegion extends TeleCodeRegion {
 
     private long lastEvictionCompletedCount = 0;
 
-    public TeleSemiSpaceCodeRegion(TeleVM vm, Reference codeRegionReference) {
+    public TeleSemiSpaceCodeRegion(TeleVM vm, RemoteReference codeRegionReference) {
         super(vm, codeRegionReference);
     }
 

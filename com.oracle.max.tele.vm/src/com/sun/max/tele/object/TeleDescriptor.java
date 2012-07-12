@@ -23,7 +23,7 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
  */
 public abstract class TeleDescriptor extends TeleTupleObject {
 
-    protected TeleDescriptor(TeleVM vm, Reference descriptorReference) {
+    protected TeleDescriptor(TeleVM vm, RemoteReference descriptorReference) {
         super(vm, descriptorReference);
     }
 
@@ -42,7 +42,7 @@ public abstract class TeleDescriptor extends TeleTupleObject {
      */
     public Descriptor descriptor() {
         if (descriptor == null) {
-            final Reference stringReference = jumpForwarder(fields().Descriptor_string.readReference(reference()));
+            final RemoteReference stringReference = jumpForwarder(fields().Descriptor_string.readReference(reference()));
             final TeleString teleString = (TeleString) objects().makeTeleObject(stringReference);
             String string = teleString.getString();
             if (string != null) {

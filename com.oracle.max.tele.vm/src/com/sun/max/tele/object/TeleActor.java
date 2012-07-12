@@ -25,9 +25,9 @@ package com.sun.max.tele.object;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link Actor} in the VM.
@@ -43,7 +43,7 @@ public abstract class TeleActor extends TeleTupleObject {
      * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
      * object and another are mutually referential.
      */
-    protected TeleActor(TeleVM vm, Reference actorReference) {
+    protected TeleActor(TeleVM vm, RemoteReference actorReference) {
         super(vm, actorReference);
     }
 
@@ -210,7 +210,7 @@ public abstract class TeleActor extends TeleTupleObject {
         if (actorName == null) {
             // Have to read the name using low level operations, because the name needed
             // to create the local instance of the Actor.
-            Reference utf8ConstantReference = jumpForwarder(fields().Actor_name.readReference(jumpForwarder(reference())));
+            RemoteReference utf8ConstantReference = jumpForwarder(fields().Actor_name.readReference(jumpForwarder(reference())));
             TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) objects().makeTeleObject(utf8ConstantReference);
             actorName = teleUtf8Constant.utf8Constant();
         }

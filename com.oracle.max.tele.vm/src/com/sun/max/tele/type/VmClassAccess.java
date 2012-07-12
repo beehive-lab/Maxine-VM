@@ -41,7 +41,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -81,10 +80,10 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     private long lastUpdateEpoch = -1L;
 
     // TODO (mlvdv)  Generalize to map either  (TypeDescriptor, ClassLoader) -> ClassActor Reference *or*  TypeDescriptor -> ClassActor Reference*
-    private final Map<TypeDescriptor, Reference> typeDescriptorToClassActorReference = new HashMap<TypeDescriptor, Reference>();
+    private final Map<TypeDescriptor, RemoteReference> typeDescriptorToClassActorReference = new HashMap<TypeDescriptor, RemoteReference>();
 
     // ClassID of a {@link ClassActor} in the VM -> reference to the ClassActor
-    private final Map<Integer, Reference> idToClassActorReference = new HashMap<Integer, Reference>();
+    private final Map<Integer, RemoteReference> idToClassActorReference = new HashMap<Integer, RemoteReference>();
 
     /**
      * ClassID Mapping.
@@ -101,7 +100,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      */
     private int dynamicallyLoadedClassCount = 0;
 
-    private Reference cachedVmBootClassRegistryReference;
+    private RemoteReference cachedVmBootClassRegistryReference;
 
     /**
      * Classes, possibly not loaded, available on the classpath.
@@ -113,7 +112,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     /**
      * A set of ConcurrentHashMap.HashEntry values in the class registry table that need processing after the {@link VmObjectAccess} is fully initialized.
      */
-    private List<Reference> attachFixupList = new ArrayList<Reference>();
+    private List<RemoteReference> attachFixupList = new ArrayList<RemoteReference>();
 
     private final Object statsPrinter = new Object() {
 
@@ -168,16 +167,16 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         initTracer.end(statsPrinter);
     }
 
-    private int processClassRegistry(Reference classRegistryRef) {
+    private int processClassRegistry(RemoteReference classRegistryRef) {
         int count = 0;
         VmFieldAccess f = fields();
-        final Reference hashMapRef = f.ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryRef);
-        Reference segmentArrayRef = f.ConcurrentHashMap_segments.readReference(hashMapRef);
+        final RemoteReference hashMapRef = f.ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryRef);
+        RemoteReference segmentArrayRef = f.ConcurrentHashMap_segments.readReference(hashMapRef);
         int segmentArrayLength = objects().unsafeReadArrayLength(segmentArrayRef);
         for (int i = 0; i < segmentArrayLength; i++) {
-            final Reference segmentRef = referenceManager().makeReference(Layout.getWord(segmentArrayRef, i).asAddress());
+            final RemoteReference segmentRef = referenceManager().makeReference(Layout.getWord(segmentArrayRef, i).asAddress());
             if (!segmentRef.isZero()) {
-                Reference entryArrayRef = f.ConcurrentHashMap$Segment_table.readReference(segmentRef);
+                RemoteReference entryArrayRef = f.ConcurrentHashMap$Segment_table.readReference(segmentRef);
                 if (!entryArrayRef.isZero()) {
                     int entryArrayLength = objects().unsafeReadArrayLength(entryArrayRef);
                     for (int j = 0; j != entryArrayLength; j++) {
@@ -188,13 +187,13 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
                                 // fully initialized yet so we add it to a fix-up list and handle it later
                                 attachFixupList.add(entryRef);
                             } else {
-                                Reference classActorRef = f.ConcurrentHashMap$HashEntry_value.readReference(entryRef);
+                                RemoteReference classActorRef = f.ConcurrentHashMap$HashEntry_value.readReference(entryRef);
                                 if (!classActorRef.isZero()) {
                                     addToRegistry(classActorRef);
                                     count++;
                                 }
                             }
-                            entryRef = (RemoteReference) f.ConcurrentHashMap$HashEntry_next.readReference(entryRef);
+                            entryRef = f.ConcurrentHashMap$HashEntry_next.readReference(entryRef);
                         }
                     }
                 }
@@ -215,14 +214,14 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
             // Adds information to the registry about any newly loaded classes in the VM.
             updateTracer.begin();
             assert vm().lockHeldByCurrentThread();
-            final Reference teleClassInfoStaticTupleReference = fields().InspectableClassInfo_classActorCount.staticTupleReference(vm());
+            final RemoteReference teleClassInfoStaticTupleReference = fields().InspectableClassInfo_classActorCount.staticTupleReference(vm());
             final Pointer loadedClassCountPointer = teleClassInfoStaticTupleReference.toOrigin().plus(fields().InspectableClassInfo_classActorCount.fieldActor().offset());
             final int newLoadedClassCount = memory().readInt(loadedClassCountPointer);
             if (dynamicallyLoadedClassCount < newLoadedClassCount) {
                 final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(fields().InspectableClassInfo_classActors.fieldActor().offset());
-                final Reference loadedClassActorsArrayReference = referenceManager().makeReference(memory().readWord(loadedClassActorsPointer).asAddress());
+                final RemoteReference loadedClassActorsArrayReference = referenceManager().makeReference(memory().readWord(loadedClassActorsPointer).asAddress());
                 while (dynamicallyLoadedClassCount < newLoadedClassCount) {
-                    final Reference classActorReference = objects().unsafeReadArrayElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, dynamicallyLoadedClassCount).asReference();
+                    final RemoteReference classActorReference = (RemoteReference) objects().unsafeReadArrayElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, dynamicallyLoadedClassCount).asReference();
                     try {
                         addToRegistry(classActorReference);
                     } catch (InvalidReferenceException e) {
@@ -293,7 +292,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     }
 
     public TeleClassActor findTeleClassActor(int id) {
-        final Reference classActorReference = idToClassActorReference.get(id);
+        final RemoteReference classActorReference = idToClassActorReference.get(id);
         if (classActorReference != null && !classActorReference.isZero()) {
             return (TeleClassActor) objects().makeTeleObject(classActorReference);
         }
@@ -301,7 +300,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     }
 
     public TeleClassActor findTeleClassActor(TypeDescriptor typeDescriptor) {
-        final Reference classActorReference = typeDescriptorToClassActorReference.get(typeDescriptor);
+        final RemoteReference classActorReference = typeDescriptorToClassActorReference.get(typeDescriptor);
         if (classActorReference == null) {
             // Class hasn't been loaded yet by the VM.
             return null;
@@ -310,7 +309,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     }
 
     public TeleClassActor findTeleClassActor(Class javaClass) {
-        final Reference classActorReference = typeDescriptorToClassActorReference.get(JavaTypeDescriptor.forJavaClass(javaClass));
+        final RemoteReference classActorReference = typeDescriptorToClassActorReference.get(JavaTypeDescriptor.forJavaClass(javaClass));
         if (classActorReference == null) {
             // Class hasn't been loaded yet by the VM.
             return null;
@@ -329,7 +328,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     /**
      * @return a reference to the {@link ClassRegistry} in the boot heap of the VM.
      */
-    public Reference vmBootClassRegistryReference() {
+    public RemoteReference vmBootClassRegistryReference() {
         return cachedVmBootClassRegistryReference;
     }
 
@@ -337,11 +336,11 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         if (attachFixupList != null) {
             final TimedTrace timedTrace = new TimedTrace(TRACE_VALUE, tracePrefix() + " adding entries from attach fixup list");
             timedTrace.begin();
-            for (Reference entry : attachFixupList) {
+            for (RemoteReference entry : attachFixupList) {
                 if (!entry.isZero()) {
-                    Reference classActor = fields().ConcurrentHashMap$HashEntry_value.readReference(entry);
-                    if (!classActor.isZero()) {
-                        addToRegistry(classActor);
+                    RemoteReference classActorReference = fields().ConcurrentHashMap$HashEntry_value.readReference(entry);
+                    if (!classActorReference.isZero()) {
+                        addToRegistry(classActorReference);
                     }
                 }
             }
@@ -356,7 +355,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     public ReferenceTypeProvider[] teleClassActors() {
         final ReferenceTypeProvider[] result = new ReferenceTypeProvider[idToClassActorReference.size()];
         int index = 0;
-        for (Reference classActorReference : idToClassActorReference.values()) {
+        for (RemoteReference classActorReference : idToClassActorReference.values()) {
             result[index++] = (TeleClassActor) objects().makeTeleObject(classActorReference);
         }
         return result;
@@ -375,11 +374,11 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      * @throws NoClassDefFoundError if the classfile is not on the classpath and the copy from the VM fails.
      * @throws TeleError if a classfile copied from the VM is cannot be loaded
      */
-    public ClassActor makeClassActor(Reference classActorReference) throws InvalidReferenceException {
+    public ClassActor makeClassActor(RemoteReference classActorReference) throws InvalidReferenceException {
         referenceManager().checkReference(classActorReference);
-        final Reference utf8ConstantReference = fields().Actor_name.readReference(classActorReference);
+        final RemoteReference utf8ConstantReference = fields().Actor_name.readReference(classActorReference);
         referenceManager().checkReference(utf8ConstantReference);
-        final Reference stringReference = fields().Utf8Constant_string.readReference(utf8ConstantReference);
+        final RemoteReference stringReference = fields().Utf8Constant_string.readReference(utf8ConstantReference);
         if (stringReference.isZero()) {
             // TODO (mlvdv) call this an error for now; should perhaps be a silent failure eventually.
             TeleError.unexpected("ClassActor.makeClassActor(" + classActorReference.toOrigin().to0xHexString() + ": string Reference=zero");
@@ -389,7 +388,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
             return makeClassActor(name);
         } catch (ClassNotFoundException classNotFoundException) {
             // Not loaded and not available on local classpath; load by copying classfile from the VM
-            final Reference byteArrayReference = fields().ClassActor_classfile.readReference(classActorReference);
+            final RemoteReference byteArrayReference = fields().ClassActor_classfile.readReference(classActorReference);
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) objects().makeTeleObject(byteArrayReference);
             if (teleByteArrayObject == null) {
                 throw new NoClassDefFoundError(String.format("Could not retrieve class file from VM for %s%nTry using '%s' VM option to access generated class files.",
@@ -427,10 +426,10 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      * @return Local {@link ClassActor} representing the type of the object.
      * @throws InvalidReferenceException
      */
-    public ClassActor makeClassActorForTypeOf(Reference objectReference)  throws InvalidReferenceException {
+    public ClassActor makeClassActorForTypeOf(RemoteReference objectReference)  throws InvalidReferenceException {
         referenceManager().checkReference(objectReference);
-        final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(objectReference).asAddress());
-        final Reference classActorReference = fields().Hub_classActor.readReference(hubReference);
+        final RemoteReference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(objectReference).asAddress());
+        final RemoteReference classActorReference = fields().Hub_classActor.readReference(hubReference);
         return makeClassActor(classActorReference);
     }
 
@@ -440,11 +439,11 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      * @param classActorReference a {@link ClassActor} for a class loaded in the VM
      * @throws ClassFormatError
      */
-    private void addToRegistry(final Reference classActorReference) throws ClassFormatError {
+    private void addToRegistry(final RemoteReference classActorReference) throws ClassFormatError {
         final int id = fields().ClassActor_id.readInt(classActorReference);
         idToClassActorReference.put(id, classActorReference);
-        final Reference typeDescriptorReference = fields().ClassActor_typeDescriptor.readReference(classActorReference);
-        final Reference stringReference = fields().Descriptor_string.readReference(typeDescriptorReference);
+        final RemoteReference typeDescriptorReference = fields().ClassActor_typeDescriptor.readReference(classActorReference);
+        final RemoteReference stringReference = fields().Descriptor_string.readReference(typeDescriptorReference);
         String typeDescriptorString = null;
         try {
             typeDescriptorString = vm().getString(stringReference);
@@ -468,7 +467,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     private ClassActor findClassActorByID(int id) {
         ClassActor classActor = idToClassActor.get(id);
         if (classActor == null) {
-            final Reference classActorReference = idToClassActorReference.get(id);
+            final RemoteReference classActorReference = idToClassActorReference.get(id);
             if (classActorReference != null) {
                 classActor = makeClassActor(classActorReference);
                 idToClassActor.put(id, classActor);

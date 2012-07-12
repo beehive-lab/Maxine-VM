@@ -139,7 +139,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         return remoteRef.origin().asPointer();
     }
 
-    public Reference fromOrigin(Pointer origin) {
+    public RemoteReference fromOrigin(Pointer origin) {
         return vm.referenceManager().makeReference(origin);
     }
 

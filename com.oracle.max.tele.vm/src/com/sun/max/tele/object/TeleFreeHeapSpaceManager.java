@@ -24,8 +24,8 @@ package com.sun.max.tele.object;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a free heap space manager object in the VM.
@@ -41,7 +41,7 @@ public class TeleFreeHeapSpaceManager extends TeleTupleObject {
      */
     private TeleContiguousHeapSpace committedHeapSpace = null;
 
-    public TeleFreeHeapSpaceManager(TeleVM vm, Reference freeHeapSpaceManagerReference) {
+    public TeleFreeHeapSpaceManager(TeleVM vm, RemoteReference freeHeapSpaceManagerReference) {
         super(vm, freeHeapSpaceManagerReference);
     }
 
@@ -54,7 +54,7 @@ public class TeleFreeHeapSpaceManager extends TeleTupleObject {
             return false;
         }
         if (committedHeapSpace == null) {
-            final Reference contiguousHeapSpaceRef = fields().FreeHeapSpaceManager_committedHeapSpace.readReference(reference());
+            final RemoteReference contiguousHeapSpaceRef = fields().FreeHeapSpaceManager_committedHeapSpace.readReference(reference());
             if (!contiguousHeapSpaceRef.isZero()) {
                 committedHeapSpace = (TeleContiguousHeapSpace) objects().makeTeleObject(contiguousHeapSpaceRef);
                 Trace.line(TRACE_VALUE, tracePrefix() + "contiguousHeapSpace now allocated");

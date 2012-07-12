@@ -23,8 +23,8 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Access to the VM's singleton object that manages the {@linkplain VMLog log}.
@@ -42,7 +42,7 @@ public class TeleVMLog extends TeleTupleObject {
      */
     public static TeleVMLog getVMLog(TeleVM vm) {
         if (vmLog == null) {
-            final Reference vmLogRef = vm.fields().VMLog_vmLog.readReference(vm);
+            final RemoteReference vmLogRef = vm.fields().VMLog_vmLog.readReference(vm);
             if (vmLogRef != null) {
                 vmLog = (TeleVMLog) vm.objects().makeTeleObject(vmLogRef);
             }
@@ -59,7 +59,7 @@ public class TeleVMLog extends TeleTupleObject {
      */
     private VMLogger[] loggers = null;
 
-    protected TeleVMLog(TeleVM vm, Reference vmLogReference) {
+    protected TeleVMLog(TeleVM vm, RemoteReference vmLogReference) {
         super(vm, vmLogReference);
         this.logEntries = fields().VMLog_logEntries.readInt(vmLogReference);
         this.nextID = fields().VMLog_nextId.readInt(vmLogReference);
@@ -116,7 +116,7 @@ public class TeleVMLog extends TeleTupleObject {
 
     private VMLogger[] loggers() {
         if (loggers == null) {
-            Reference loggersRef = fields().VMLog_loggers.readReference(reference());
+            RemoteReference loggersRef = fields().VMLog_loggers.readReference(reference());
             TeleArrayObject teleLoggersArray = (TeleArrayObject) objects().makeTeleObject(loggersRef);
             loggers = (VMLogger[]) teleLoggersArray.deepCopy();
         }

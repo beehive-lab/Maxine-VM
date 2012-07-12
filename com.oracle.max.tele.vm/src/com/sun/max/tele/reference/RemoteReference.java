@@ -104,6 +104,13 @@ public abstract class RemoteReference extends Reference {
      */
     public abstract Address forwardedTo();
 
+    /**
+     * Returns {@code this} unless the reference status is {@link ObjectStatus#FORWARDER}, in which case a reference is
+     * returned to the new, live copy created elsewhere. This can happen <em>only</em> when the heap phase is
+     * {@linkplain HeapPhase#ANALYZING ANALYZING}.
+     *
+     * @return a reference to the actual location of the object, possibly following a forwarder to a new copy.
+     */
     final public RemoteReference jumpForwarder() {
         if (status().isForwarder()) {
             return vm.referenceManager().makeReference(forwardedTo());

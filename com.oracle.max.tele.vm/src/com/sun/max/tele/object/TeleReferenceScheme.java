@@ -23,6 +23,7 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.reference.*;
 
 
@@ -33,7 +34,7 @@ import com.sun.max.vm.reference.*;
  */
 public class TeleReferenceScheme extends TeleVMScheme {
 
-    public TeleReferenceScheme(TeleVM vm, Reference reference) {
+    public TeleReferenceScheme(TeleVM vm, RemoteReference reference) {
         super(vm, reference);
     }
 

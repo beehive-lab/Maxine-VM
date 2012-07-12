@@ -44,7 +44,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -116,7 +115,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             return;
         }
         initializingHubHubCaches = true;
-        final Reference hubRef = Layout.readHubReference(vm().classes().vmBootClassRegistryReference());
+        final RemoteReference hubRef = (RemoteReference) Layout.readHubReference(vm().classes().vmBootClassRegistryReference());
         RemoteReference cachedDynamicHubHubReference = (RemoteReference) Layout.readHubReference(hubRef);
         assert cachedDynamicHubHubReference.equals(Layout.readHubReference(cachedDynamicHubHubReference));
         cachedDynamicHubHubWord = cachedDynamicHubHubReference.toOrigin();
@@ -210,7 +209,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return DEAD;
     }
 
-    public TeleObject findObject(Reference reference) throws MaxVMBusyException {
+    public TeleObject findObject(RemoteReference reference) throws MaxVMBusyException {
         if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
             try {
                 return makeTeleObject(reference);
@@ -468,7 +467,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
      * <p>
-     * Returns {@code null} for the distinguished zero {@link Reference}.
+     * Returns {@code null} for the distinguished zero {@link RemoteReference}.
      * <p>
      * Must be called with current thread holding the VM lock.
      * <p>
@@ -479,7 +478,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * @param reference non-null location of a Java object in the VM
      * @return canonical local surrogate for the object
      */
-    public TeleObject makeTeleObject(Reference reference) {
+    public TeleObject makeTeleObject(RemoteReference reference) {
         return teleObjectFactory.make(reference);
     }
 
@@ -513,7 +512,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * @param reference location in the VM presumed (but not checked) to be an array origin of the specified kind
      * @return the value in the length field of the array
      */
-    public int unsafeReadArrayLength(Reference reference) {
+    public int unsafeReadArrayLength(RemoteReference reference) {
         return arrayLayout().readLength(reference);
     }
 
@@ -556,7 +555,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * @param index offset into the array
      * @return a generic boxed value based on the contents of the word in VM memory.
      */
-    public Value unsafeReadArrayElementValue(Kind kind, Reference reference, int index) {
+    public Value unsafeReadArrayElementValue(Kind kind, RemoteReference reference, int index) {
         switch (kind.asEnum) {
             case BYTE:
                 return ByteValue.from(Layout.getByte(reference, index));
@@ -597,10 +596,11 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * @param length the number of elements to copy
      * @see ArrayLayout#copyElements(Accessor, int, Object, int, int)
      */
-    public void unsafeCopyElements(Kind kind, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
+    public void unsafeCopyElements(Kind kind, RemoteReference src, int srcIndex, Object dst, int dstIndex, int length) {
         arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
     }
 
+    // TODO (mlvdv) use e ReferenceScheme.isMarked() and related methods instead
     /**
      * Converts an address, if it is encoded as a forwarding pointer, into the actual
      * address. This takes no account of the location or the state of memory management

@@ -26,7 +26,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 
 
 /**
@@ -35,15 +34,14 @@ import com.sun.max.vm.reference.*;
  */
 public final class TeleDynamicHubForwarderQuasi extends TeleDynamicHub {
 
-    protected TeleDynamicHubForwarderQuasi(TeleVM vm, Reference reference) {
-        super(vm, reference);
-        final RemoteReference quasiReference = (RemoteReference) reference;
+    protected TeleDynamicHubForwarderQuasi(TeleVM vm, RemoteReference quasiReference) {
+        super(vm, quasiReference);
         assert quasiReference.status().isForwarder();
     }
 
     @Override
     protected TeleClassActor fetchTeleClassActor() {
-        final Reference classActorReference = ((RemoteReference) fields().Hub_classActor.readReference(reference().jumpForwarder())).jumpForwarder();
+        final RemoteReference classActorReference = fields().Hub_classActor.readReference(reference().jumpForwarder()).jumpForwarder();
         return (TeleClassActor) objects().makeTeleObject(classActorReference);
     }
 

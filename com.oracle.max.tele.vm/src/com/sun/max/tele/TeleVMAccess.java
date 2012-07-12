@@ -30,7 +30,6 @@ import com.sun.max.tele.method.CodeLocation.VmCodeLocationManager;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -61,9 +60,9 @@ public interface TeleVMAccess {
 
     /**
      * Gets access to information and services for managing
-     * object {@link Reference}s in the VM.
+     * object {@link RemoteReference}s in the VM.
      *
-     * @see Reference
+     * @see RemoteReference
      * @see TeleRererence
      */
     VmReferenceManager referenceManager();

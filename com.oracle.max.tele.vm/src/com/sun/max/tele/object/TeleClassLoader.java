@@ -26,15 +26,15 @@ import java.util.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a  {@link ClassLoader} in the {@link TeleVM}.
  */
 public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvider {
 
-    protected TeleClassLoader(TeleVM vm, Reference classLoaderReference) {
+    protected TeleClassLoader(TeleVM vm, RemoteReference classLoaderReference) {
         super(vm, classLoaderReference);
         teleClassLoaders.add(this);
     }

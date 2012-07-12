@@ -25,7 +25,6 @@ package com.sun.max.tele.object;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 
@@ -35,9 +34,8 @@ import com.sun.max.vm.type.*;
  */
 public class TeleArrayForwarderQuasi extends TeleArrayObject {
 
-    protected TeleArrayForwarderQuasi(TeleVM vm, Reference reference, Kind componentKind, SpecificLayout specificLayout) {
-        super(vm, reference, componentKind, specificLayout);
-        final RemoteReference quasiReference = (RemoteReference) reference;
+    protected TeleArrayForwarderQuasi(TeleVM vm, RemoteReference quasiReference, Kind componentKind, SpecificLayout specificLayout) {
+        super(vm, quasiReference, componentKind, specificLayout);
         assert quasiReference.status().isForwarder();
     }
 

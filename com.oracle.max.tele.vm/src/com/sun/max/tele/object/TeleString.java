@@ -24,8 +24,8 @@ package com.sun.max.tele.object;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link String} in the VM.
@@ -44,7 +44,7 @@ public class TeleString extends TeleTupleObject implements StringProvider {
         return string;
     }
 
-    protected TeleString(TeleVM vm, Reference stringReference) {
+    protected TeleString(TeleVM vm, RemoteReference stringReference) {
         super(vm, stringReference);
     }
 

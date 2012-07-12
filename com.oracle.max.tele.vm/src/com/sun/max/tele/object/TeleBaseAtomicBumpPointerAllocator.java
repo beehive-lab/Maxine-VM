@@ -23,9 +23,9 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.reference.*;
 
 
 /**
@@ -37,7 +37,7 @@ public class TeleBaseAtomicBumpPointerAllocator extends TeleTupleObject {
     Address end = Address.zero();
     Address top = Address.zero();
 
-    public TeleBaseAtomicBumpPointerAllocator(TeleVM vm, Reference reference) {
+    public TeleBaseAtomicBumpPointerAllocator(TeleVM vm, RemoteReference reference) {
         super(vm, reference);
     }
 

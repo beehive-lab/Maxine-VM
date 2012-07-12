@@ -38,7 +38,6 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.gen.semiSpace.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Inspector support for working with VM sessions using the VM's simple
@@ -683,13 +682,13 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     }
 
     public static class TeleGenSSHeapScheme extends TeleHeapScheme {
-        private Reference oldSpaceReference = Reference.zero();
-        public TeleGenSSHeapScheme(TeleVM vm, Reference reference) {
+        private RemoteReference oldSpaceReference = referenceManager().zeroReference();
+        public TeleGenSSHeapScheme(TeleVM vm, RemoteReference reference) {
             super(vm, reference);
         }
 
         public TeleCardTableRSet readTeleCardTableRSet() {
-            final Reference cardTableRSetReference = fields().GenSSHeapScheme_cardTableRSet.readReference(reference());
+            final RemoteReference cardTableRSetReference = fields().GenSSHeapScheme_cardTableRSet.readReference(reference());
             if (cardTableRSetReference.isZero()) {
                 return null;
             }
@@ -697,7 +696,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         }
 
         public TeleContiguousHeapSpace readTeleYoungSpace() {
-            final Reference youngSpaceReference = fields().GenSSHeapScheme_youngSpace.readReference(reference());
+            final RemoteReference youngSpaceReference = fields().GenSSHeapScheme_youngSpace.readReference(reference());
             if (youngSpaceReference.isZero()) {
                 return null;
             }
@@ -725,7 +724,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         }
 
         private TeleBaseAtomicBumpPointerAllocator readTeleBumpAllocator(TeleInstanceReferenceFieldAccess spaceFieldAccess) {
-            Reference spaceReference = spaceFieldAccess.readReference(reference());
+            RemoteReference spaceReference = spaceFieldAccess.readReference(reference());
             if (spaceReference.isZero()) {
                 return null;
             }
