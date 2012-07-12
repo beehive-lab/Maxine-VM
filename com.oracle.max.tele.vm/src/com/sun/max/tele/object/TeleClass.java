@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,8 @@ package com.sun.max.tele.object;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link Class} in the VM.
@@ -34,7 +34,7 @@ public final class TeleClass extends TeleTupleObject implements ClassObjectProvi
 
     private Class clazz;
 
-    protected TeleClass(TeleVM vm, Reference classReference) {
+    protected TeleClass(TeleVM vm, RemoteReference classReference) {
         super(vm, classReference);
     }
 
@@ -42,7 +42,7 @@ public final class TeleClass extends TeleTupleObject implements ClassObjectProvi
      * @return the {@link ClassActor} in the VM corresponding to this {@link Class} in the VM.
      */
     public TeleClassActor getTeleClassActor() {
-        final Reference classActorReference = jumpForwarder(fields().Class_classActor.readReference(reference()));
+        final RemoteReference classActorReference = jumpForwarder(fields().Class_classActor.readReference(reference()));
         final TeleClassActor teleClassActor = (TeleClassActor) objects().makeTeleObject(classActorReference);
         return teleClassActor;
     }

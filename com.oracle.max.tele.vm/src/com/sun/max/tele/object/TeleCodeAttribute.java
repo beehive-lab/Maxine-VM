@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,9 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.vm.classfile.constant.*;
 
 /**
  * Canonical surrogate for an object of type {@link CodeAttribute} in the VM.
@@ -32,7 +33,7 @@ import com.sun.max.vm.reference.*;
 public class TeleCodeAttribute extends TeleTupleObject {
 
     // Keep construction minimal for both performance and synchronization.
-    protected TeleCodeAttribute(TeleVM vm, Reference codeAttributeReference) {
+    protected TeleCodeAttribute(TeleVM vm, RemoteReference codeAttributeReference) {
         super(vm, codeAttributeReference);
     }
 
@@ -45,7 +46,7 @@ public class TeleCodeAttribute extends TeleTupleObject {
      */
     public final byte[] readBytecodes() {
         assert vm().lockHeldByCurrentThread();
-        final Reference byteArrayReference = jumpForwarder(fields().CodeAttribute_code.readReference(reference()));
+        final RemoteReference byteArrayReference = jumpForwarder(fields().CodeAttribute_code.readReference(reference()));
         final TeleArrayObject teleByteArrayObject = (TeleArrayObject) objects().makeTeleObject(byteArrayReference);
         return (byte[]) teleByteArrayObject.shallowCopy();
     }
@@ -54,7 +55,7 @@ public class TeleCodeAttribute extends TeleTupleObject {
      * Gets the local surrogate for the {@link ConstantPool} associated with this code in the VM.
      */
     public final TeleConstantPool getTeleConstantPool() {
-        final Reference constantPoolReference = jumpForwarder(fields().CodeAttribute_cp.readReference(reference()));
+        final RemoteReference constantPoolReference = jumpForwarder(fields().CodeAttribute_cp.readReference(reference()));
         return (TeleConstantPool) objects().makeTeleObject(constantPoolReference);
     }
 

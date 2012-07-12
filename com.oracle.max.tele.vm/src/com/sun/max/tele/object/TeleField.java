@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.sun.max.tele.object;
 import java.lang.reflect.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.reference.*;
 
 /**
 * Canonical surrogate for an object of type {@link Field} in the VM.
@@ -35,7 +35,7 @@ public class TeleField extends TeleTupleObject {
 
     private Field field;
 
-    protected TeleField(TeleVM vm, Reference fieldReference) {
+    protected TeleField(TeleVM vm, RemoteReference fieldReference) {
         super(vm, fieldReference);
     }
 
@@ -44,7 +44,7 @@ public class TeleField extends TeleTupleObject {
      */
     public Field toJava() {
         if (field == null) {
-            final Reference fieldActorReference = jumpForwarder(fields().Field_fieldActor.readReference(reference()));
+            final RemoteReference fieldActorReference = jumpForwarder(fields().Field_fieldActor.readReference(reference()));
             final TeleFieldActor teleFieldActor = (TeleFieldActor) objects().makeTeleObject(fieldActorReference);
             field = teleFieldActor.fieldActor().toJava();
         }

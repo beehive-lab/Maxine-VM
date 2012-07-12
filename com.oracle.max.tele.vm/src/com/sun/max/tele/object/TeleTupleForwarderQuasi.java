@@ -25,7 +25,6 @@ package com.sun.max.tele.object;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 
 
 /**
@@ -34,9 +33,8 @@ import com.sun.max.vm.reference.*;
  */
 public class TeleTupleForwarderQuasi extends TeleTupleObject {
 
-    protected TeleTupleForwarderQuasi(TeleVM vm, Reference reference) {
-        super(vm, reference);
-        final RemoteReference quasiReference = (RemoteReference) reference;
+    protected TeleTupleForwarderQuasi(TeleVM vm, RemoteReference quasiReference) {
+        super(vm, quasiReference);
         assert quasiReference.status().isForwarder();
     }
 

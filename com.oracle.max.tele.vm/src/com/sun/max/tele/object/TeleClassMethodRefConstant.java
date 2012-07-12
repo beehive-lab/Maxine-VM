@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,15 +23,15 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant} in the VM.
  */
 public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
 
-    public TeleClassMethodRefConstant(TeleVM vm, Reference classMethodRefConstantReference) {
+    public TeleClassMethodRefConstant(TeleVM vm, RemoteReference classMethodRefConstantReference) {
         super(vm, classMethodRefConstantReference);
     }
 
@@ -48,7 +48,7 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
 
         private TeleClassMethodActor teleClassMethodActor;
 
-        public Resolved(TeleVM vm, Reference resolvedClassMethodRefConstantReference) {
+        public Resolved(TeleVM vm, RemoteReference resolvedClassMethodRefConstantReference) {
             super(vm, resolvedClassMethodRefConstantReference);
         }
 
@@ -62,7 +62,7 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
          */
         public TeleClassMethodActor getTeleClassMethodActor() {
             if (teleClassMethodActor == null) {
-                final Reference methodActorReference = fields().ResolvedMethodRefConstant_methodActor.readReference(reference());
+                final RemoteReference methodActorReference = fields().ResolvedMethodRefConstant_methodActor.readReference(reference());
                 teleClassMethodActor = (TeleClassMethodActor) objects().makeTeleObject(methodActorReference);
             }
             return teleClassMethodActor;
@@ -86,7 +86,7 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
      */
     public static final class Unresolved extends TeleClassMethodRefConstant {
 
-        public Unresolved(TeleVM vm, Reference resolvedClassMethodRefConstantReference) {
+        public Unresolved(TeleVM vm, RemoteReference resolvedClassMethodRefConstantReference) {
             super(vm, resolvedClassMethodRefConstantReference);
         }
 
@@ -108,7 +108,7 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
      */
     public static final class UnresolvedIndices extends TeleClassMethodRefConstant {
 
-        public UnresolvedIndices(TeleVM vm, Reference resolvedClassMethodRefConstantReference) {
+        public UnresolvedIndices(TeleVM vm, RemoteReference resolvedClassMethodRefConstantReference) {
             super(vm, resolvedClassMethodRefConstantReference);
         }
 

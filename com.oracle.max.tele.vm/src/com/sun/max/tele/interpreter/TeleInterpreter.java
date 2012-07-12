@@ -362,7 +362,7 @@ public final class TeleInterpreter {
 
     private void arrayLoad(Kind kind) throws TeleInterpreterException {
         int index = machine.pop().asInt();
-        Reference array = machine.pop().asReference();
+        RemoteReference array = (RemoteReference) machine.pop().asReference();
 
         if (array.isZero()) {
             machine.raiseException(new NullPointerException());
@@ -387,7 +387,7 @@ public final class TeleInterpreter {
             case LONG:      push(LongValue.from(Layout.getLong(array, index))); break;
             case FLOAT:     push(FloatValue.from(Layout.getFloat(array, index))); break;
             case DOUBLE:    push(DoubleValue.from(Layout.getDouble(array, index))); break;
-            case REFERENCE: push(machine.toReferenceValue(Layout.getReference(array, index))); break;
+            case REFERENCE: push(machine.toReferenceValue((RemoteReference) Layout.getReference(array, index))); break;
             default:        machine.raiseException(new ClassFormatError("Invalid array kind: " + kind));
             // Checkstyle: resume
         }
@@ -964,7 +964,7 @@ public final class TeleInterpreter {
 
             case GETSTATIC:  push(machine.getStatic(readU2())); break;
             case PUTSTATIC:  machine.putStatic(readU2(), pop()); break;
-            case GETFIELD:   push(machine.getField(pop().asReference(), readU2())); break;
+            case GETFIELD:   push(machine.getField((RemoteReference) pop().asReference(), readU2())); break;
             case PUTFIELD: {
                 Value value = pop();
                 Object instance = pop().asBoxedJavaValue();

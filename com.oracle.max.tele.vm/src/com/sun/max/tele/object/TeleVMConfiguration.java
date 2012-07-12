@@ -23,8 +23,8 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.reference.*;
 
 
 /**
@@ -40,13 +40,13 @@ public final class TeleVMConfiguration extends TeleTupleObject {
     private TeleReferenceScheme teleReferenceScheme;
     private TeleRunScheme teleRunScheme;
 
-    public TeleVMConfiguration(TeleVM vm, Reference reference) {
+    public TeleVMConfiguration(TeleVM vm, RemoteReference reference) {
         super(vm, reference);
     }
 
     public TeleHeapScheme heapScheme() {
         if (teleHeapScheme == null) {
-            final Reference heapSchemeReference = fields().VMConfiguration_heapScheme.readReference(reference());
+            final RemoteReference heapSchemeReference = fields().VMConfiguration_heapScheme.readReference(reference());
             teleHeapScheme = (TeleHeapScheme) objects().makeTeleObject(heapSchemeReference);
         }
         return teleHeapScheme;
@@ -54,7 +54,7 @@ public final class TeleVMConfiguration extends TeleTupleObject {
 
     public TeleLayoutScheme layoutScheme() {
         if (teleLayoutScheme == null) {
-            final Reference layoutSchemeReference = fields().VMConfiguration_layoutScheme.readReference(reference());
+            final RemoteReference layoutSchemeReference = fields().VMConfiguration_layoutScheme.readReference(reference());
             teleLayoutScheme = (TeleLayoutScheme) objects().makeTeleObject(layoutSchemeReference);
         }
         return teleLayoutScheme;
@@ -62,7 +62,7 @@ public final class TeleVMConfiguration extends TeleTupleObject {
 
     public TeleMonitorScheme monitorScheme() {
         if (teleMonitorScheme == null) {
-            final Reference monitorSchemeReference = fields().VMConfiguration_monitorScheme.readReference(reference());
+            final RemoteReference monitorSchemeReference = fields().VMConfiguration_monitorScheme.readReference(reference());
             TeleObject monitorScheme = objects().makeTeleObject(monitorSchemeReference);
             if (monitorScheme instanceof TeleMonitorScheme) {
                 teleMonitorScheme = (TeleMonitorScheme) monitorScheme;
@@ -73,7 +73,7 @@ public final class TeleVMConfiguration extends TeleTupleObject {
 
     public TeleReferenceScheme referenceScheme() {
         if (teleReferenceScheme == null) {
-            final Reference referenceSchemeReference = fields().VMConfiguration_referenceScheme.readReference(reference());
+            final RemoteReference referenceSchemeReference = fields().VMConfiguration_referenceScheme.readReference(reference());
             TeleObject referenceScheme = objects().makeTeleObject(referenceSchemeReference);
             if (referenceScheme instanceof TeleReferenceScheme) {
                 teleReferenceScheme = (TeleReferenceScheme) referenceScheme;
@@ -84,7 +84,7 @@ public final class TeleVMConfiguration extends TeleTupleObject {
 
     public TeleRunScheme runScheme() {
         if (teleRunScheme == null) {
-            final Reference runSchemeReference = fields().VMConfiguration_runScheme.readReference(reference());
+            final RemoteReference runSchemeReference = fields().VMConfiguration_runScheme.readReference(reference());
             TeleObject runScheme = objects().makeTeleObject(runSchemeReference);
             if (runScheme instanceof TeleRunScheme) {
                 teleRunScheme = (TeleRunScheme) runScheme;

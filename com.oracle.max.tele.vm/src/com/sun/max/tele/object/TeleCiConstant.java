@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,15 +24,15 @@ package com.sun.max.tele.object;
 
 import com.sun.cri.ci.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link CiConstant} in the VM.
  */
 public final class TeleCiConstant extends TeleTupleObject {
 
-    protected TeleCiConstant(TeleVM vm, Reference reference) {
+    protected TeleCiConstant(TeleVM vm, RemoteReference reference) {
         super(vm, reference);
     }
 

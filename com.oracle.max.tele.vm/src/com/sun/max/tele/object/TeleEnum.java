@@ -23,9 +23,9 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link Enum} in the VM.
@@ -34,7 +34,7 @@ public final class TeleEnum extends TeleTupleObject {
 
     private Enum enumCopy;
 
-    protected TeleEnum(TeleVM vm, Reference enumReference) {
+    protected TeleEnum(TeleVM vm, RemoteReference enumReference) {
         super(vm, enumReference);
     }
 

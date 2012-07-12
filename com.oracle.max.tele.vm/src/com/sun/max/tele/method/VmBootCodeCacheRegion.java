@@ -28,10 +28,11 @@ import java.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.vm.compiler.target.*;
 
 
 /**
@@ -120,7 +121,7 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
             final int vmTargetMethodCount = teleCodeRegion.nTargetMethods();
             int registeredTargetMethodCount = teleTargetMethods.size();
             while (registeredTargetMethodCount < vmTargetMethodCount) {
-                Reference targetMethodReference = teleCodeRegion.getTargetMethodReference(registeredTargetMethodCount++);
+                RemoteReference targetMethodReference = teleCodeRegion.getTargetMethodReference(registeredTargetMethodCount++);
                 // Creating a {@link TeleTargetMethod} causes it to be added to the code registry
                 TeleTargetMethod teleTargetMethod = (TeleTargetMethod) objects().makeTeleObject(targetMethodReference);
                 if (teleTargetMethod == null) {

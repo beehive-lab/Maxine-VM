@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.sun.max.tele.debug;
 import java.util.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.reference.*;
 
 /**
  * In progress support for tolerating invalid references and reporting them to the end-user.
@@ -35,13 +35,13 @@ import com.sun.max.vm.reference.*;
 public class InvalidReferencesLogger {
 
     static class InvalidReference {
-        final Reference reference;
+        final RemoteReference reference;
         final Class expectedType;
         final long epoch;
         // In case a same reference may be expected multiple types, if the VM state is really screwed up.
         private InvalidReference next;
 
-        InvalidReference(Reference reference, Class expectedType, long epoch) {
+        InvalidReference(RemoteReference reference, Class expectedType, long epoch) {
             this.reference = reference;
             this.expectedType = expectedType;
             this.epoch = epoch;
@@ -51,14 +51,14 @@ public class InvalidReferencesLogger {
             next = ref;
         }
     }
-    private final HashMap<Reference, InvalidReference> invalidReferences = new HashMap<Reference, InvalidReference>();
+    private final HashMap<RemoteReference, InvalidReference> invalidReferences = new HashMap<RemoteReference, InvalidReference>();
     final TeleVM vm;
 
     public InvalidReferencesLogger(TeleVM vm) {
         this.vm = vm;
     }
 
-    public void record(Reference reference, Class expectedType) {
+    public void record(RemoteReference reference, Class expectedType) {
         final long epoch = vm.teleProcess().epoch();
         InvalidReference iref = invalidReferences.get(reference);
         if (iref == null) {

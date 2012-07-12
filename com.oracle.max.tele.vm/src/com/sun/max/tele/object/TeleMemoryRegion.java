@@ -28,9 +28,9 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a {@link MemoryRegion} object in the VM, which represents a region of VM memory.
@@ -56,7 +56,7 @@ public class TeleMemoryRegion extends TeleTupleObject {
         }
     };
 
-    TeleMemoryRegion(TeleVM vm, Reference runtimeMemoryRegionReference) {
+    TeleMemoryRegion(TeleVM vm, RemoteReference runtimeMemoryRegionReference) {
         super(vm, runtimeMemoryRegionReference);
         TimedTrace timedTrace = new TimedTrace(TRACE_VALUE, tracePrefix() + "Initializing");
         timedTrace.begin();
@@ -97,7 +97,7 @@ public class TeleMemoryRegion extends TeleTupleObject {
         try {
             final long nBytes = fields().MemoryRegion_size.readWord(reference()).asSize().toLong();
 
-            final Reference regionNameStringReference = fields().MemoryRegion_regionName.readReference(reference());
+            final RemoteReference regionNameStringReference = fields().MemoryRegion_regionName.readReference(reference());
             final TeleString teleString = (TeleString) objects().makeTeleObject(regionNameStringReference);
             final String regionName = teleString == null ? "<null>" : teleString.getString();
 

@@ -38,7 +38,7 @@ import com.sun.max.unsafe.*;
  * Description of an allocation area in the VM owned by the heap.
  * <p>
  * Interaction with objects in the area is delegated to an instance of {@link RemoteObjectReferenceManager}, which permits
- * specialized implementations of {@link Reference}s to be created that embody knowledge of specific heap implementations in the VM.
+ * specialized implementations of {@link RemoteReference}s to be created that embody knowledge of specific heap implementations in the VM.
  * <p>
  * If no {@link RemoteObjectReferenceManager} is specified, the default is an instance of {@link FixedObjectRemoteReferenceManager},
  * whose implementation assumes that it is managing a single allocated region, that the allocation never

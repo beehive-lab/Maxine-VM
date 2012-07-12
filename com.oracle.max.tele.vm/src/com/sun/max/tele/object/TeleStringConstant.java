@@ -23,15 +23,15 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link StringConstant} in the VM.
  */
 public final class TeleStringConstant extends TelePoolConstant {
 
-    protected TeleStringConstant(TeleVM vm, Reference stringConstantReference) {
+    protected TeleStringConstant(TeleVM vm, RemoteReference stringConstantReference) {
         super(vm, stringConstantReference);
     }
 
@@ -43,7 +43,7 @@ public final class TeleStringConstant extends TelePoolConstant {
      */
     public String getString() {
         if (value == null) {
-            final Reference stringReference = fields().StringConstant_value.readReference(reference());
+            final RemoteReference stringReference = fields().StringConstant_value.readReference(reference());
             final TeleString teleString = (TeleString) objects().makeTeleObject(stringReference);
             value = teleString.getString();
         }

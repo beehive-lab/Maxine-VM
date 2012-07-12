@@ -27,10 +27,10 @@ import java.lang.management.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a {@link ContiguousHeapSpace} object in the VM.
@@ -56,7 +56,7 @@ public class TeleContiguousHeapSpace extends TeleMemoryRegion {
         }
     };
 
-    public TeleContiguousHeapSpace(TeleVM vm, Reference contiguousHeapSpaceReference) {
+    public TeleContiguousHeapSpace(TeleVM vm, RemoteReference contiguousHeapSpaceReference) {
         super(vm, contiguousHeapSpaceReference);
         // Initialize committed end to region end: default 100% utilization
         committedEndCache = super.getRegionEnd();

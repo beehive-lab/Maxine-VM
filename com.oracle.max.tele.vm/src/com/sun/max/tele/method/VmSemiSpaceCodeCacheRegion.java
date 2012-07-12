@@ -34,7 +34,6 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.reference.Reference;
 
 
 /**
@@ -85,13 +84,13 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
     private final AddressToCompilationMap addressToCompilationMap;
 
     /**
-     * Known method compilations organized for lookup by {@link Reference} to the {@link TargetMethod} in the VM; this
+     * Known method compilations organized for lookup by {@link RemoteReference} to the {@link TargetMethod} in the VM; this
      * map doesn't get cleared in the case of eviction.  It serves as memory of compilations that have been seen
      * in this region, making it easier to track them when they have been relocated.
      * <p>
      * Map: Reference to VM {@link TargetMethod} --> the {@link TeleCompilation} representation of that method compilation.
      */
-    private final Map<Reference, WeakReference<TeleCompilation>> referenceToCompilationMap = new HashMap<Reference, WeakReference<TeleCompilation>>();
+    private final Map<RemoteReference, WeakReference<TeleCompilation>> referenceToCompilationMap = new HashMap<RemoteReference, WeakReference<TeleCompilation>>();
 
     private long lastEvictionCompletedCount = 0;
 
@@ -173,7 +172,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
                 final int targetMethodCount = teleSemiSpaceCodeRegion.nTargetMethods();
                 int index = compilations.size();
                 while (index < targetMethodCount) {
-                    Reference targetMethodReference = ((RemoteReference) teleSemiSpaceCodeRegion.getTargetMethodReference(index++)).jumpForwarder();
+                    RemoteReference targetMethodReference = teleSemiSpaceCodeRegion.getTargetMethodReference(index++).jumpForwarder();
                     // Have we seen this compilation before, independent of its location in the region?
                     TeleCompilation compilation = getCompilation(targetMethodReference);
                     if (compilation == null) {
@@ -263,7 +262,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
      * @param teleTargetMethod local surrogate for a {@link TargetMethod} in the VM.
      * @return the existing instance of {@link TeleCompilation} that wraps the target method, null if none.
      */
-    private TeleCompilation getCompilation(Reference reference) {
+    private TeleCompilation getCompilation(RemoteReference reference) {
         final WeakReference<TeleCompilation> weakReference = referenceToCompilationMap.get(reference);
         return (weakReference != null) ? weakReference.get() : null;
     }

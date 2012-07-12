@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,9 @@ package com.sun.max.tele.object;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.jdwp.vm.proxy.VMValue.Type;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -38,7 +38,7 @@ public final class TeleFieldActor extends TeleMemberActor implements FieldProvid
     private FieldActor fieldActor;
 
     // Keep construction minimal for both performance and synchronization.
-    protected TeleFieldActor(TeleVM vm, Reference fieldActorReference) {
+    protected TeleFieldActor(TeleVM vm, RemoteReference fieldActorReference) {
         super(vm, fieldActorReference);
     }
 

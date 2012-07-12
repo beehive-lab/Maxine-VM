@@ -23,9 +23,9 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -37,7 +37,7 @@ import com.sun.max.vm.type.*;
  */
 public abstract class TeleHub extends TeleHybridObject {
 
-    protected TeleHub(TeleVM vm, Reference hubReference) {
+    protected TeleHub(TeleVM vm, RemoteReference hubReference) {
         super(vm, hubReference);
     }
 
@@ -60,7 +60,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * Logic to fetch the tele class actor for this tele hub on cache miss.
      */
     protected TeleClassActor fetchTeleClassActor() {
-        final Reference classActorReference = jumpForwarder(fields().Hub_classActor.readReference(reference()));
+        final RemoteReference classActorReference = jumpForwarder(fields().Hub_classActor.readReference(reference()));
         return (TeleClassActor) objects().makeTeleObject(classActorReference);
     }
 

@@ -27,6 +27,7 @@ import java.lang.reflect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
@@ -35,7 +36,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -49,8 +49,8 @@ public class TeleTupleObject extends TeleObject {
      * <p>
      * Most Java objects in the VM are represented by this type. The exceptions are those types that carry important
      * information about the execution state of the VM, for which specific subclasses of this type are declared. The
-     * factory method {@link TeleObjectFactory#make(Reference)} creates an instance of {@link TeleObject} of the most
-     * specific subtype corresponding to the VM object to which the {@link Reference} refers.
+     * factory method {@link TeleObjectFactory#make(RemoteReference)} creates an instance of {@link TeleObject} of the most
+     * specific subtype corresponding to the VM object to which the {@link RemoteReference} refers.
      * <p>
      * Note also that there is one exceptional subclass; {@link TeleStaticTuple} represents {@link StaticTuple} objects
      * in the VM, objects for which there is no type expressible in the (extended) Java type system.
@@ -61,7 +61,7 @@ public class TeleTupleObject extends TeleObject {
      * @see TeleObjectFactory
      * @see TeleStaticTuple
      */
-    protected TeleTupleObject(TeleVM vm, Reference reference) {
+    protected TeleTupleObject(TeleVM vm, RemoteReference reference) {
         super(vm, reference, vm.layoutScheme().tupleLayout);
     }
 
@@ -102,7 +102,7 @@ public class TeleTupleObject extends TeleObject {
     public TeleClassMethodActor getTeleClassMethodActorForObject() {
         final Class<?> javaClass = classActorForObjectType().toJava();
         if (TargetMethod.class.isAssignableFrom(javaClass)) {
-            final Reference classMethodActorReference = fields().TargetMethod_classMethodActor.readReference(reference());
+            final RemoteReference classMethodActorReference = fields().TargetMethod_classMethodActor.readReference(reference());
             return (TeleClassMethodActor) objects().makeTeleObject(classMethodActorReference);
         }
         return null;

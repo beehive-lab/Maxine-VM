@@ -71,7 +71,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -1407,15 +1406,15 @@ public abstract class TeleVM implements MaxVM {
     public final LayoutScheme layoutScheme() {
         return vmConfiguration.layoutScheme();
     }
-    public final Reference makeReference(Address origin) {
+    public final RemoteReference makeReference(Address origin) {
         return referenceManager.makeReference(origin);
     }
 
-    public final Reference makeQuasiObjectReference(Address origin) {
+    public final RemoteReference makeQuasiObjectReference(Address origin) {
         return referenceManager.makeQuasiReference(origin);
     }
 
-    public final ReferenceValue createReferenceValue(Reference reference) {
+    public final ReferenceValue createReferenceValue(RemoteReference reference) {
         return referenceManager.createReferenceValue(reference);
     }
 
@@ -1426,9 +1425,9 @@ public abstract class TeleVM implements MaxVM {
      * @return A local {@link String} duplicating the object's contents.
      * @throws InvalidReferenceException if the argument does not point a valid heap object.
      */
-    public final String getString(Reference stringRef) throws InvalidReferenceException {
+    public final String getString(RemoteReference stringRef) throws InvalidReferenceException {
         referenceManager.checkReference(stringRef);
-        final Reference charArrayRef = fields().String_value.readReference(stringRef);
+        final RemoteReference charArrayRef = fields().String_value.readReference(stringRef);
         if (charArrayRef.isZero()) {
             return null;
         }
@@ -1721,7 +1720,7 @@ public abstract class TeleVM implements MaxVM {
      * @return a JDWP ObjectProvider object or null, if no object is found at
      *         the address specified by the reference
      */
-    private ObjectProvider findObject(Reference reference) {
+    private ObjectProvider findObject(RemoteReference reference) {
         return objects().makeTeleObject(reference);
     }
 
@@ -1806,7 +1805,7 @@ public abstract class TeleVM implements MaxVM {
             case LONG:
                 return jdwpAccess.createLongValue(value.asLong());
             case REFERENCE:
-                return jdwpAccess.createObjectProviderValue(findObject(value.asReference()));
+                return jdwpAccess.createObjectProviderValue(findObject((RemoteReference) value.asReference()));
             case SHORT:
                 return jdwpAccess.createShortValue(value.asShort());
             case VOID:

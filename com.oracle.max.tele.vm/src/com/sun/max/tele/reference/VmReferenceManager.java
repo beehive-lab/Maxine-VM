@@ -26,11 +26,9 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.direct.*;
 import com.sun.max.tele.type.*;
-import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.reference.hosted.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -68,7 +66,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
     }
 
     /**
-     * Checks that a {@link Reference} points to a live heap object in the VM;
+     * Checks that a {@link RemoteReference} points to a live heap object in the VM;
      * throws an unchecked exception if not.  This is a low-level method
      * that uses a debugging tag or (if no tags in image) a heuristic; it does
      * not require access to the {@link VmClassAccess}.
@@ -77,7 +75,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * @throws InvalidReferenceException when the location does <strong>not</strong> point
      * at a valid heap object.
      */
-    public void checkReference(Reference reference) throws InvalidReferenceException {
+    public void checkReference(RemoteReference reference) throws InvalidReferenceException {
         if (!objects().objectStatusAt(reference.toOrigin()).isLive()) {
             throw new InvalidReferenceException(reference);
         }
@@ -90,12 +88,12 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * @return a VM memory location that is the object's origin;
      * {@linkplain Address#zero()} if the reference is {@linkplain ObjectStatus#DEAD DEAD}.
      */
-    public Address toOrigin(Reference reference) {
+    public Address toOrigin(RemoteReference reference) {
         return referenceScheme.toOrigin(reference);
     }
 
    /**
-     * Gets a non-canonical instance of {@link Reference} that represents the {@code null} remote object reference.
+     * Gets a non-canonical instance of {@link RemoteReference} that represents the {@code null} remote object reference.
      *
      * @return the default instance of a zero reference
      */
@@ -130,10 +128,10 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * Creates a specialized instance of the VM's {@link Reference} class that can refer to live objects
      * remotely in the VM.  Each instance is specialized for the kind of object management that takes
      * place in the memory region that contains the specified location, and in the case of managed
-     * regions, the {@link Reference} tracks the object, just as in the VM itself.
+     * regions, the {@link RemoteReference} tracks the object, just as in the VM itself.
      *
      * @param origin a location in VM Memory
-     * @return a reference to a live VM object, {@link Reference#zero()} if the specified location is {@link Address#zero()}
+     * @return a reference to a live VM object, the zero {@link RemoteReference} if the specified location is {@link Address#zero()}
      * or there is no live object at the location
      */
     public RemoteReference makeReference(Address origin) {
@@ -174,7 +172,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * place in the memory region that contains the specified location.
      *
      * @param origin a location in VM Memory
-     * @return a reference to a <em>quasi</em> VM object, {@link Reference#zero()} if the specified location is {@link Address#zero()}
+     * @return a reference to a <em>quasi</em> VM object, the zero {@link RemoteReference} if the specified location is {@link Address#zero()}
      * or there is no quasi object at the location
      */
     public RemoteReference makeQuasiReference(Address origin) {
@@ -209,9 +207,6 @@ public final class VmReferenceManager extends AbstractVmHolder {
         }
     }
 
-
-
-
     /**
      * Create a remote instance of {@link Reference} whose origin is at a given address, but without any checking that a
      * valid object is at that address and without any support for possible relocation.
@@ -244,15 +239,15 @@ public final class VmReferenceManager extends AbstractVmHolder {
         return new ProvisionalRemoteReference(vm(), origin);
     }
 
-    public ReferenceValue createReferenceValue(Reference reference) {
-        if (reference instanceof RemoteReference) {
-            return TeleReferenceValue.from(vm(), reference);
-        } else if (reference instanceof HostedReference) {
-            return TeleReferenceValue.from(vm(), Reference.fromJava(reference.toJava()));
-        }
-        throw TeleError.unexpected("Got a non-Prototype, non-Tele reference in createReferenceValue");
+    /**
+     * Boxes the remote flavor of reference as a {@link ReferenceValue}.
+     *
+     * @param reference
+     * @return a boxed remote reference
+     */
+    public ReferenceValue createReferenceValue(RemoteReference reference) {
+        return TeleReferenceValue.from(vm(), reference);
     }
-
 
     /**
      * A constant reference intended for use when performing some computation on

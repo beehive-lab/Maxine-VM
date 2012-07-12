@@ -40,7 +40,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -89,7 +88,7 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
      * stored as three contiguous arrays in the code cache allocation, although two of them might be omitted if not
      * needed.
      * <p>
-     * The {@link TargetMethod} holds standard object {@link Reference}s to these three arrays.
+     * The {@link TargetMethod} holds standard object {@link RemoteReference}s to these three arrays.
      * <p>
      * No other kinds of objects should ever appear in a {@linkplain VmCodeCacheRegion code cache region}, so this enum
      * completely describes the possibilities.
@@ -272,7 +271,7 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
 
     private final Object evictedTracer = new EventTracer("EVICTED");
 
-    protected TeleTargetMethod(TeleVM vm, Reference targetMethodReference) {
+    protected TeleTargetMethod(TeleVM vm, RemoteReference targetMethodReference) {
         super(vm, targetMethodReference);
         machineCodeInfoCache = new MachineCodeInfoCache(vm, this);
 
@@ -307,7 +306,7 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
             // Start with some basic attributes we need to capture.
             if (teleClassMethodActor == null) {
                 // Assumed not to change, once set.
-                final Reference classMethodActorReference = fields().TargetMethod_classMethodActor.readReference(reference());
+                final RemoteReference classMethodActorReference = fields().TargetMethod_classMethodActor.readReference(reference());
                 teleClassMethodActor = (TeleClassMethodActor) objects().makeTeleObject(classMethodActorReference);
             }
             if (codeWipedSentinelAddress.isZero()) {
@@ -364,7 +363,7 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
         }
         try {
             // Test for a patch to the target code since the last time we looked.
-            final Reference byteArrayReference = fields().TargetMethod_code.readReference(reference());
+            final RemoteReference byteArrayReference = fields().TargetMethod_code.readReference(reference());
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) objects().makeTeleObject(byteArrayReference);
             final byte[] codeInVM = (byte[]) teleByteArrayObject.shallowCopy();
             if (!Arrays.equals(codeInVM, machineCodeInfoCache.machineCodeInfo().code())) {

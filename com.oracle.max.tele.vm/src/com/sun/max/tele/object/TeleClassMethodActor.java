@@ -32,15 +32,15 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.LineNumberTable.Entry;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.LineNumberTable.Entry;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link ClassMethodActor} in the VM.
@@ -91,7 +91,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      *
      * @param classMethodActorReference reference to an instance of {@link ClassMethodActor} in the VM.
      */
-    protected TeleClassMethodActor(TeleVM vm, Reference classMethodActorReference) {
+    protected TeleClassMethodActor(TeleVM vm, RemoteReference classMethodActorReference) {
         super(vm, classMethodActorReference);
     }
 
@@ -109,7 +109,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
             return false;
         }
         try {
-            final Reference compiledStateReference = jumpForwarder(fields().ClassMethodActor_compiledState.readReference(reference()));
+            final RemoteReference compiledStateReference = jumpForwarder(fields().ClassMethodActor_compiledState.readReference(reference()));
             if (compiledStateReference.isZero()) {
                 clearCompiledState();
             } else if (updatingCompiledState) {
@@ -167,7 +167,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     public TeleCodeAttribute getTeleCodeAttribute() {
         if (vm().tryLock()) {
             try {
-                final Reference codeAttributeReference = jumpForwarder(fields().ClassMethodActor_codeAttribute.readReference(reference()));
+                final RemoteReference codeAttributeReference = jumpForwarder(fields().ClassMethodActor_codeAttribute.readReference(reference()));
                 return (TeleCodeAttribute) objects().makeTeleObject(codeAttributeReference);
             } finally {
                 vm().unlock();
@@ -195,8 +195,8 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         if (compiledState == null) {
             clearCompiledState();
         } else if (compiledState.classActorForObjectType().javaClass() == Compilations.class) {
-            Reference optimizedReference = jumpForwarder(fields().Compilations_optimized.readReference(compiledState.reference()));
-            Reference baselineReference = jumpForwarder(fields().Compilations_baseline.readReference(compiledState.reference()));
+            RemoteReference optimizedReference = jumpForwarder(fields().Compilations_optimized.readReference(compiledState.reference()));
+            RemoteReference baselineReference = jumpForwarder(fields().Compilations_baseline.readReference(compiledState.reference()));
             compilations = new ArrayList<TeleTargetMethod>(2);
             if (optimizedReference.isZero()) {
                 optimizedTargetMethod = null;
@@ -212,7 +212,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
             }
         } else if (compiledState.classActorForObjectType().javaClass() == Compilation.class) {
             // this is a compilation that is currently underway, get the previous compiled state from it
-            Reference prevCompilationsReference = jumpForwarder(fields().Compilation_prevCompilations.readReference(compiledState.reference()));
+            RemoteReference prevCompilationsReference = jumpForwarder(fields().Compilation_prevCompilations.readReference(compiledState.reference()));
             if (!prevCompilationsReference.isZero()) {
                 translateCompiledState(objects().makeTeleObject(prevCompilationsReference));
             }  else {

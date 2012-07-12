@@ -23,10 +23,10 @@
 package com.sun.max.tele.field;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -44,8 +44,8 @@ public final class TeleStaticReferenceFieldAccess extends TeleStaticFieldAccess 
      *
      * @return the value of the field in VM memory interpreted as a reference
      */
-    public Reference readReference(MaxVM vm) {
-        return staticTupleReference(vm).readReference(fieldActor().offset());
+    public RemoteReference readReference(MaxVM vm) {
+        return (RemoteReference) staticTupleReference(vm).readReference(fieldActor().offset());
     }
 
     /**

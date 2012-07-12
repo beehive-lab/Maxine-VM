@@ -22,10 +22,10 @@
  */
 package com.sun.max.tele.field;
 
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -49,12 +49,12 @@ public final class TeleInstanceReferenceFieldAccess extends TeleInstanceFieldAcc
      *
      * @return the value of the field in VM memory interpreted as a reference
      */
-    public Reference readReference(Reference reference) {
-        return reference.readReference(fieldActor().offset());
+    public RemoteReference readReference(RemoteReference reference) {
+        return (RemoteReference) reference.readReference(fieldActor().offset());
     }
 
-    public static Reference readPath(Reference reference, TeleInstanceReferenceFieldAccess... fields) {
-        Reference r = reference;
+    public static RemoteReference readPath(RemoteReference reference, TeleInstanceReferenceFieldAccess... fields) {
+        RemoteReference r = reference;
         for (TeleInstanceReferenceFieldAccess field : fields) {
             if (r.isZero()) {
                 return r;

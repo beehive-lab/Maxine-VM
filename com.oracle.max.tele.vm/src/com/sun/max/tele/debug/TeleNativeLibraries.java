@@ -28,8 +28,8 @@ import java.util.*;
 import com.sun.max.tele.MaxPlatform.OS;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -38,10 +38,10 @@ import com.sun.max.vm.type.*;
 public class TeleNativeLibraries {
 
     private static class TargetVMLibInfo {
-        private Reference reference;
+        private RemoteReference reference;
         private TeleVM vm;
 
-        protected TargetVMLibInfo(TeleVM vm, Reference teleNativeLibraryReference) {
+        protected TargetVMLibInfo(TeleVM vm, RemoteReference teleNativeLibraryReference) {
             this.vm = vm;
             this.reference = teleNativeLibraryReference;
         }
@@ -98,11 +98,11 @@ public class TeleNativeLibraries {
      */
     public static void update(TeleVM vm) throws Exception {
         int length = vm.fields().DynamicLinker_libInfoIndex.readInt(vm);
-        Reference libInfoArrayReference = vm.fields().DynamicLinker_libInfoArray.readReference(vm);
+        RemoteReference libInfoArrayReference = vm.fields().DynamicLinker_libInfoArray.readReference(vm);
         for (int index = 0; index < length; index++) {
             boolean newLib = index >= libs.size();
             if (newLib || libs.get(index).base().isZero()) {
-                Reference libInfoReference = vm.memoryIO().readArrayElementValue(Kind.REFERENCE, libInfoArrayReference, index).asReference();
+                RemoteReference libInfoReference = (RemoteReference) vm.memoryIO().readArrayElementValue(Kind.REFERENCE, libInfoArrayReference, index).asReference();
                 TargetVMLibInfo targetVMLibInfo = new TargetVMLibInfo(vm, libInfoReference);
                 TeleNativeLibrary teleNativeLibrary = processLibrary(targetVMLibInfo, newLib ? null : libs.get(index));
                 if (index >= libs.size()) {

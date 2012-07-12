@@ -23,8 +23,8 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.reference.*;
 
 
 /**
@@ -32,7 +32,7 @@ import com.sun.max.vm.reference.*;
  */
 public final class TeleFirstFitMarkSweepSpace extends TeleTupleObject {
 
-    public TeleFirstFitMarkSweepSpace(TeleVM vm, Reference reference) {
+    public TeleFirstFitMarkSweepSpace(TeleVM vm, RemoteReference reference) {
         super(vm, reference);
     }
 

@@ -23,9 +23,9 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -44,7 +44,7 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     /**
      * Reference to the array of references to {@link TargetMethod}s allocated in the code cache region.
      */
-    private Reference targetMethodsReference = vm().referenceManager().zeroReference();
+    private RemoteReference targetMethodsReference = vm().referenceManager().zeroReference();
 
     // These two counters tell us when an eviction has taken place since the last time
     // we checked, and whether we are currently in an eviction.
@@ -59,7 +59,7 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     protected int additionStartedCount = 0;
     protected int additionCompletedCount = 0;
 
-    TeleCodeRegion(TeleVM vm, Reference codeRegionReference) {
+    TeleCodeRegion(TeleVM vm, RemoteReference codeRegionReference) {
         super(vm, codeRegionReference);
     }
 
@@ -104,8 +104,8 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
      * @param index identifies the desired target method.  Must be less than {@link #nTargetMethods()}.
      * @return a reference to a {@link TargetMethod} in the VM.
      */
-    public final Reference getTargetMethodReference(int index) {
-        return objects().unsafeReadArrayElementValue(Kind.REFERENCE, targetMethodsReference, index).asReference();
+    public final RemoteReference getTargetMethodReference(int index) {
+        return (RemoteReference) objects().unsafeReadArrayElementValue(Kind.REFERENCE, targetMethodsReference, index).asReference();
     }
 
     /**

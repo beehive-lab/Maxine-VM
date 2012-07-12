@@ -44,7 +44,7 @@ public final class TeleStaticIntFieldAccess extends TeleStaticFieldAccess {
     }
 
     /**
-     * Writes into an object instance field, presumed to be of type {@code int}, into VM memory.
+     * Writes into a static field, presumed to be of type {@code int}, in VM memory.
      */
     public void writeInt(MaxVM vm, int value) {
         staticTupleReference(vm).writeInt(fieldActor().offset(), value);

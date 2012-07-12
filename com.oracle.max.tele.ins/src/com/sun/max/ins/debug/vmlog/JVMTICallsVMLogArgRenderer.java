@@ -26,10 +26,10 @@ import java.awt.*;
 
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.ext.jvmti.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.reference.*;
 
 
 public class JVMTICallsVMLogArgRenderer extends VMLogArgRenderer {
@@ -70,7 +70,7 @@ public class JVMTICallsVMLogArgRenderer extends VMLogArgRenderer {
                     // arg1 value is the address (origin) of the JVMTIRawMonitor.Monitor object
                     // from which we can get the name
                     if (argNum == 2) {
-                        Reference rawMonitor = Reference.fromOrigin(Address.fromLong(argValue).asPointer());
+                        RemoteReference rawMonitor = vm().makeReference(Address.fromLong(argValue));
                         Pointer nameCString = vm.fields().JVMTIRawMonitor$Monitor_name.readWord(rawMonitor).asPointer();
                         text = stringFromCString(vm, nameCString);
                     }

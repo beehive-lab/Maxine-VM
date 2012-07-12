@@ -24,8 +24,8 @@ package com.sun.max.tele.field;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -41,7 +41,7 @@ public abstract class TeleStaticFieldAccess extends TeleFieldAccess {
     /**
      * Gets a reference to the static tuple holding the value of this field.
      */
-    public Reference staticTupleReference(MaxVM vm) {
+    public RemoteReference staticTupleReference(MaxVM vm) {
         final TeleClassActor teleClassActor = vm.classes().findTeleClassActor(fieldActor().holder().typeDescriptor);
         final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
         return teleStaticTuple.reference();

@@ -23,15 +23,15 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Inspector's canonical surrogate for an object of type {@link DynamicHub} in the VM.
  */
 public class TeleDynamicHub extends TeleHub {
 
-    protected TeleDynamicHub(TeleVM vm, Reference dynamicHubReference) {
+    protected TeleDynamicHub(TeleVM vm, RemoteReference dynamicHubReference) {
         super(vm, dynamicHubReference);
     }
 

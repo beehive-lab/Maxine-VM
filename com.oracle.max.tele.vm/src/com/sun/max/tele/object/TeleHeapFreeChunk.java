@@ -23,9 +23,9 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.reference.*;
 
 
 /**
@@ -34,9 +34,9 @@ import com.sun.max.vm.reference.*;
 public class TeleHeapFreeChunk extends TeleTupleObject {
 
     private Size size = Size.zero();
-    private Reference nextRef = Reference.zero();
+    private RemoteReference nextRef = referenceManager().zeroReference();
 
-    public TeleHeapFreeChunk(TeleVM vm, Reference heapFreeChunkReference) {
+    public TeleHeapFreeChunk(TeleVM vm, RemoteReference heapFreeChunkReference) {
         super(vm, heapFreeChunkReference);
     }
 
@@ -54,7 +54,7 @@ public class TeleHeapFreeChunk extends TeleTupleObject {
         return size;
     }
 
-    public final Reference nextRef() {
+    public final RemoteReference nextRef() {
         return nextRef;
     }
 

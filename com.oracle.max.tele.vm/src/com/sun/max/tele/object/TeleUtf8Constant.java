@@ -23,15 +23,15 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link Utf8Constant} in the VM.
  */
 public final class TeleUtf8Constant extends TelePoolConstant {
 
-    protected TeleUtf8Constant(TeleVM vm, Reference utf8ConstantReference) {
+    protected TeleUtf8Constant(TeleVM vm, RemoteReference utf8ConstantReference) {
         super(vm, utf8ConstantReference);
     }
 
@@ -43,7 +43,7 @@ public final class TeleUtf8Constant extends TelePoolConstant {
      */
     public Utf8Constant utf8Constant() {
         if (utf8Constant == null) {
-            Reference reference = fields().Utf8Constant_string.readReference(reference());
+            RemoteReference reference = fields().Utf8Constant_string.readReference(reference());
             TeleString teleString = (TeleString) objects().makeTeleObject(reference);
             if (teleString != null) {
                 utf8Constant = SymbolTable.makeSymbol(teleString.getString());

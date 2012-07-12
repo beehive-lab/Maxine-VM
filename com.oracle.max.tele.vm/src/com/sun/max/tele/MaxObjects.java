@@ -25,8 +25,8 @@ package com.sun.max.tele;
 import java.io.*;
 
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Access to objects in the VM, not all of which may be in the heap.
@@ -44,7 +44,7 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
     /**
      * Examines the contents of VM memory and determines what kind of object (live, quasi, etc.),
      * if any, is represented at that location, using only low-level mechanisms and creating
-     * no {@link Reference}s.
+     * no {@link RemoteReference}s.
      *
      * @param origin an absolute memory location in the VM.
      * @return an enum identifying the kind of object, if any, that is represented at the location in VM memory.
@@ -59,10 +59,10 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      *  and for other objects for which special treatment is needed.
      *
      * @param reference a heap object in the VM;
-     * @return a canonical local surrogate for the object, {@code null} for the distinguished zero {@link Reference}.
+     * @return a canonical local surrogate for the object, {@code null} for the distinguished zero {@link RemoteReference}.
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
-    MaxObject findObject(Reference reference) throws MaxVMBusyException;
+    MaxObject findObject(RemoteReference reference) throws MaxVMBusyException;
 
     /**
      * @param id an id assigned to each heap object in the VM as needed, unique for the duration of a VM execution.

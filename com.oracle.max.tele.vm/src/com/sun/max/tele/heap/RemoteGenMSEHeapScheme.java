@@ -33,7 +33,6 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
-import com.sun.max.vm.reference.*;
 
 // TODO (mlvdv)  this is just a preliminary outline; NON-FUNCTIONAL
 /**
@@ -110,7 +109,7 @@ public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme im
 
         private TeleCardTableRSet cardTableRSet;
 
-        public TeleGenMSEHeapScheme(TeleVM vm, Reference reference) {
+        public TeleGenMSEHeapScheme(TeleVM vm, RemoteReference reference) {
             super(vm, reference);
         }
 
@@ -121,17 +120,17 @@ public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme im
             }
             if (nursery == null) {
                 // Final in the heap scheme; no need to check once discovered
-                final Reference nurseryRef = fields().GenMSEHeapScheme_youngSpace.readReference(reference());
+                final RemoteReference nurseryRef = fields().GenMSEHeapScheme_youngSpace.readReference(reference());
                 nursery = (TeleNoAgingNursery) objects().makeTeleObject(nurseryRef);
             }
             if (oldSpace == null) {
                 // Final in the heap scheme; no need to check once discovered
-                final Reference oldSpaceRef = fields().GenMSEHeapScheme_oldSpace.readReference(reference());
+                final RemoteReference oldSpaceRef = fields().GenMSEHeapScheme_oldSpace.readReference(reference());
                 oldSpace = (TeleFirstFitMarkSweepSpace) objects().makeTeleObject(oldSpaceRef);
             }
             if (cardTableRSet == null) {
                 // Final in the heap scheme; no need to check once discovered
-                final Reference cardTableRSetRef = fields().GenMSEHeapScheme_cardTableRSet.readReference(reference());
+                final RemoteReference cardTableRSetRef = fields().GenMSEHeapScheme_cardTableRSet.readReference(reference());
                 cardTableRSet = (TeleCardTableRSet) objects().makeTeleObject(cardTableRSetRef);
             }
             return true;

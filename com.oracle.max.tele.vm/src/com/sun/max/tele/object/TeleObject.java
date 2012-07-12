@@ -40,14 +40,13 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
  * A canonical surrogate for a heap object in the VM.
  *
- * This class and its subclasses play the role of typed wrappers for {@link Reference}s that refer to heap objects in
+ * This class and its subclasses play the role of typed wrappers for {@link RemoteReference}s that refer to heap objects in
  * the VM. These wrappers encapsulate implementation details needed for working remotely with VM objects. This is not a
  * general proxy mechanisms, but rather an encapsulation of the design knowledge about the VM that is needed make sense
  * of VM state for debugging and visualization purposes.
@@ -74,7 +73,7 @@ import com.sun.max.vm.value.*;
  * There is an ongoing danger of circularity in the creation of {@link TeleObject} instances for VM objects that have
  * two-way (or circular) references to other objects; this can lead to infinite regress and stack overflow. The general
  * strategy for avoiding this is to keep the constructors for concrete subclasses as simple as possible and to avoid
- * following {@link Reference} fields in constructors if at all possible. A troublesome example of such relationships
+ * following {@link RemoteReference} fields in constructors if at all possible. A troublesome example of such relationships
  * involves {@link TeleClassMethodActor}s and {@link TeleTargetMethod}s.
  *
  * @see TeleObjectFactory
@@ -182,21 +181,21 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * access. Most important are the subclasses for {@link Actor}s, objects in the VM that encapsulate meta-information
      * about the language and object representation.
      * <p>
-     * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation, and
+     * The factory method {@link TeleObjectFactory#make(RemoteReference)} ensures synchronized TeleObjects creation, and
      * instances should <em>only</em> be created via that factory.
      * <p>
      * It is important to avoid in the constructor (and in the constructors of subclasses) the following of
-     * {@link Reference} fields, which leads to the creation of another instance of {@link TeleObject}. This can lead to
+     * {@link RemoteReference} fields, which leads to the creation of another instance of {@link TeleObject}. This can lead to
      * infinite regress in the presence of mutually referential objects.
      *
      * @param vm the VM in which the object resides
      * @param reference the location of the object in the VM (whose absolute address can change via GC)
      * @param specificLayout information about the layout of information in the object
      */
-    protected TeleObject(TeleVM vm, Reference reference, SpecificLayout specificLayout) {
+    protected TeleObject(TeleVM vm, RemoteReference reference, SpecificLayout specificLayout) {
         super(vm);
         assert reference != null;
-        this.reference = (RemoteReference) reference;
+        this.reference = reference;
         this.specificLayout = specificLayout;
         oid = this.reference.makeOID();
     }
@@ -213,7 +212,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * <p>
      * <strong>Note</strong>: this update gets called automatically as part of {@link TeleObject} instance creation.
      *
-     * @see TeleObjectFactory#make(Reference)
+     * @see TeleObjectFactory#make(RemoteReference)
      */
     public final void updateCache(long epoch) {
         // TODO (mlvdv) restore thread-lock assertion here for all updates??
@@ -562,7 +561,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
                         if (a != null && !a.deepCopied()) {
                             return;
                         }
-                        final TeleObject teleFieldReferenceObject = teleObject.objects().makeTeleObject(value.asReference());
+                        final TeleObject teleFieldReferenceObject = teleObject.objects().makeTeleObject((RemoteReference) value.asReference());
                         if (teleFieldReferenceObject == null) {
                             newJavaValue = null;
                         } else {
@@ -689,8 +688,8 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * @return a reference to the actual location of the object, possibly following a forwarder to a new copy.
      * @see RemoteReference#jumpForwarder()
      */
-    protected static Reference jumpForwarder(Reference reference) {
-        return ((RemoteReference) reference).jumpForwarder();
+    protected static RemoteReference jumpForwarder(RemoteReference reference) {
+        return reference.jumpForwarder();
     }
 
     @Override
