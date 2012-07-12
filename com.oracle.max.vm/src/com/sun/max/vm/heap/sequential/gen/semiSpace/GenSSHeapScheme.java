@@ -22,9 +22,9 @@
  */
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
+import static com.sun.max.vm.MaxineVM.Phase.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMERS.*;
-import static com.sun.max.vm.MaxineVM.Phase.*;
 
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
@@ -47,43 +47,46 @@ import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 /**
  * A heap scheme implementing a two-generations heap, where each generation implements a semi-space collector.
  *
  */
-public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements XirWriteBarrierSpecification, RSetCoverage {
+public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements XirWriteBarrierSpecification, RSetCoverage, EvacuationBufferProvider {
     /**
      * Knob for the fixed ratio resizing policy.
      */
     static int YoungGenHeapPercent = 30;
+    /**
+     * Expected default percentage of survivors. Used to estimate old generation growth at minor collection and decide when to trigger a full GC.
+     * Default value is arbitrary at the moment.
+     */
+    static private int minSurvivingPercent = 15;
+
     static {
         VMOptions.addFieldOption("-XX:", "YoungGenHeapPercent", GenSSHeapScheme.class, "Fixed percentage of heap size that must be used by young gen", Phase.PRISTINE);
     }
 
     /**
      * Refiller for the OldSpace allocator.
+     * The old space allocator is primarily used for promoting objects from the young space at minor collection.
+     * Large objects that doesn't fit in the young generation may be allocated directly in the old space as well.
+     * Refill to the old space only happen in exceptional cases. If refill is triggered by a failed large object allocation, it means the old space is exhausted
+     * and a full GC is warranted.  All other refill occurrences take place during GC. If a refill occurs during a minor collection, it means that the
+     * estimation of surviving objects was incorrect and there isn't enough space in the to-space of the old generation to allocate all survivors.
+     * In this case, we overflow over to the old generation's from-space, and mark down for an immediate full GC. The overflow into from space
+     * will be considered live and root of full GC collection.
+     * Overflow during full GC may subsequently occur (e.g., because minor collection overflow generate more live data than the current semi-space size).
+     * There two sub-cases: there enough room to grow the current semi-space to absorb the overflow, in which case the heap is resized. Or there isn't enough space.
+     * In this case, we overflow into the young generation and raise a OOM.
+     *
      */
     final class OldSpaceRefiller extends Refiller {
         @Override
         public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
-            if (Heap.holdsHeapLock() &&  VmThread.current().isVmOperationThread()) {
-                // First, make sure we're doing minor collection here.
-                if (youngSpaceEvacuator.getGCOperation() != null) {
-                    final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
-                    final ContiguousHeapSpace fromSpace = oldSpace.fromSpace;
-                    FatalError.check(!fromSpace.start().equals(allocator.start()), "Must not have recursive overflow of old space during minor collection");
-                    HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
-                    resizingPolicy.notifyMinorEvacuationOverflow();
-                    // Refill the allocator with the old from space.
-                    allocator.refill(oldSpace.fromSpace.start(), oldSpace.fromSpace.committedSize());
-                } else {
-                    // We may overflow during full GC because of a previous minor collection overflow.
-                    FatalError.unimplemented();
-                }
-            } else {
-                // Force full collection.
-                Heap.collectGarbage(Size.zero());
-            }
+            // Force full collection.
+            Heap.collectGarbage(Size.zero());
+            // The current thread hold the refill lock and will do the refill of the allocator.
             return Address.zero();
         }
 
@@ -103,7 +106,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             Size size = allocator.size();
             while (!Heap.collectGarbage(size)) {
                 size = allocator.size();
-                // TODO: condition for OOM
             }
             // We're out of safepoint. The current thread hold the refill lock and will do the refill of the allocator.
             return Address.zero();
@@ -116,141 +118,16 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
     /**
-     * Always start with a minor collection.
-     * If space left after the minor collection in the old generation is less than estimated space for survivors of the next minor collection,
-     * a full GC is performed immediately.
-     * It is possible for the minor collection to overflow the old generation because of under-estimated survivor space at the last minor collection.
-     * This is caught by the refiller of the old generation allocator, which in this case allocate space directly in the second semi-space.
+     * VM Operation implementing a generational collection. Delegates to the GenSSHeapScheme.
      */
     final class GenCollection extends GCOperation {
-        private int minSurvivingPercent = 15; // expected percentage of survivors. Arbitrary for now
-
         GenCollection() {
             super("GenCollection");
-        }
-        private void verifyAfterMinorCollection() {
-            // Verify that:
-            // 1. offset table is correctly setup
-            // 2. there are no pointer from old to young.
-            oldSpace.visit(fotVerifier);
-            noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
-            oldSpace.visit(noFromSpaceReferencesVerifiers);
-        }
-
-        private void verifyAfterFullCollection() {
-            oldSpace.visit(fotVerifier);
-            noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
-            oldSpace.visit(noFromSpaceReferencesVerifiers);
-        }
-
-        private void doOldGenCollection() {
-            youngSpaceEvacuator.doBeforeGC();
-            // NOTE: counter must be incremented before a heap phase change  to ANALYZING.
-            fullCollectionCount++;
-            final boolean minorEvacuationOverflow = resizingPolicy.minorEvacuationOverflow();
-            if (minorEvacuationOverflow) {
-                Address startRange =  oldSpace.allocator.start();
-                Address endRange = oldSpace.allocator.unsafeTop();
-                oldSpaceEvacuator.prefillSurvivorRanges(startRange, endRange);
-            }
-            oldSpace.flipSpaces(!minorEvacuationOverflow);
-            oldSpaceEvacuator.setGCOperation(this);
-            oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
-            oldSpaceEvacuator.evacuate();
-            final CardFirstObjectTable fot = cardTableRSet.cfoTable;
-            final int startIndex = fot.tableEntryIndex(oldSpace.fromSpace.start());
-            final int endIndex = fot.tableEntryIndex(oldSpace.fromSpace.committedEnd());
-            fot.clear(startIndex, endIndex);
-            cardTableRSet.cardTable.clean(startIndex, endIndex);
-            youngSpaceEvacuator.doAfterGC();
-            oldSpaceEvacuator.setGCOperation(null);
-        }
-
-        private Size estimatedNextEvac() {
-            final Size min = youngSpace.totalSpace().dividedBy(100).times(minSurvivingPercent);
-            final Size lastSurvivorCount = youngSpaceEvacuator.evacuatedBytes();
-            return lastSurvivorCount.greaterThan(min) ? lastSurvivorCount : min;
-        }
-
-        private void resize(HeapSpace space, Size newSize) {
-            if (newSize.lessThan(space.totalSpace())) {
-                Size delta = space.totalSpace().minus(newSize);
-                space.shrinkAfterGC(delta);
-            } else if (newSize.greaterThan(space.totalSpace())) {
-                Size delta = newSize.minus(space.totalSpace());
-                space.growAfterGC(delta);
-            }
         }
 
         @Override
         protected void collect(int invocationCount) {
-            evacTimers.resetTrackTime();
-
-            VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
-            vmConfig().monitorScheme().beforeGarbageCollection();
-            if (MaxineVM.isDebug() && Heap.verbose()) {
-                Log.println("--Begin nursery evacuation");
-            }
-            evacTimers.start(TOTAL);
-            youngSpaceEvacuator.setGCOperation(this);
-            youngSpaceEvacuator.setEvacuationBufferSize(oldSpace.freeSpace());
-            youngSpaceEvacuator.evacuate();
-            youngSpaceEvacuator.setGCOperation(null);
-            if (MaxineVM.isDebug() && Heap.verbose()) {
-                Log.println("--End nursery evacuation");
-            }
-            if (VerifyAfterGC) {
-                verifyAfterMinorCollection();
-            }
-            final Size estimatedEvac = estimatedNextEvac();
-            evacTimers.stop(TOTAL);
-            if (Heap.logGCTime()) {
-                timeLogger.logPhaseTimes(invocationCount,
-                                evacTimers.get(ROOT_SCAN).getLastElapsedTime(),
-                                evacTimers.get(BOOT_HEAP_SCAN).getLastElapsedTime(),
-                                evacTimers.get(CODE_SCAN).getLastElapsedTime(),
-                                evacTimers.get(RSET_SCAN).getLastElapsedTime(),
-                                evacTimers.get(COPY).getLastElapsedTime(),
-                                evacTimers.get(WEAK_REF).getLastElapsedTime());
-                timeLogger.logGcTimes(invocationCount, true, evacTimers.get(TOTAL).getLastElapsedTime());
-            }
-            if (resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace())) {
-                // Force a temporary transition to MUTATING state.
-                // This simplifies the inspector's maintenance of references state and GC counters.
-                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
-                if (MaxineVM.isDebug() && Heap.verbose()) {
-                    Log.println("--Begin old geneneration collection");
-                }
-                evacTimers.start(TOTAL);
-                doOldGenCollection();
-                if (MaxineVM.isDebug() && Heap.verbose()) {
-                    Log.println("--End   old geneneration collection");
-                }
-                if (VerifyAfterGC) {
-                    verifyAfterFullCollection();
-                }
-                if (resizingPolicy.resizeAfterFullGC(estimatedEvac, oldSpace.freeSpace())) {
-                    resize(youngSpace, resizingPolicy.youngGenSize());
-                    resize(oldSpace, resizingPolicy.oldGenSize());
-                    oldSpaceEvacuator.setEvacuationBufferSize(oldSpace.fromSpace.committedSize());
-                }
-                evacTimers.stop(TOTAL);
-                lastFullGCTime = System.currentTimeMillis() - lastFullGCTime;
-
-                if (Heap.logGCTime()) {
-                    timeLogger.logPhaseTimes(invocationCount,
-                                    evacTimers.get(ROOT_SCAN).getLastElapsedTime(),
-                                    evacTimers.get(BOOT_HEAP_SCAN).getLastElapsedTime(),
-                                    evacTimers.get(CODE_SCAN).getLastElapsedTime(),
-                                    evacTimers.get(RSET_SCAN).getLastElapsedTime(),
-                                    evacTimers.get(COPY).getLastElapsedTime(),
-                                    evacTimers.get(WEAK_REF).getLastElapsedTime());
-                    timeLogger.logGcTimes(invocationCount, false, evacTimers.get(TOTAL).getLastElapsedTime());
-                }
-
-            }
-            vmConfig().monitorScheme().afterGarbageCollection();
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
+            doCollect(invocationCount);
         }
     }
 
@@ -332,8 +209,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         resizingPolicy = new GenSSHeapSizingPolicy();
         youngSpace = new ContiguousAllocatingSpace<AtomicBumpPointerAllocator<YoungSpaceRefiller>>(nurseryAllocator, "Young Generation");
         oldSpace = new ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>>(tenuredAllocator, "Old Generation");
-        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, cardTableRSet);
-        oldSpaceEvacuator = new  EvacuatorToCardSpace(oldSpace.fromSpace, oldSpace, cardTableRSet);
+        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, this, cardTableRSet);
+        oldSpaceEvacuator = new  EvacuatorToCardSpace(oldSpace.fromSpace, oldSpace, this, cardTableRSet);
         noFromSpaceReferencesVerifiers = new NoEvacuatedSpaceReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
@@ -379,12 +256,214 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     @Override
     public boolean collectGarbage(Size requestedFreeSpace) {
+        VMTI.handler().beginGC();
         if ((requestedFreeSpace.isZero() && !DisableExplicitGC) || youngSpace.freeSpace().lessThan(requestedFreeSpace)) {
             if (!Heap.gcDisabled()) {
                 genCollection.submit();
             }
         }
-        return oldSpace.freeSpace().plus(youngSpace.freeSpace()).greaterThan(requestedFreeSpace);
+        final boolean result = oldSpace.freeSpace().plus(youngSpace.freeSpace()).greaterThan(requestedFreeSpace);
+        VMTI.handler().endGC();
+        if (resizingPolicy.outOfMemory()) {
+            throw new OutOfMemoryError();
+        }
+        return result;
+    }
+    private void verifyAfterMinorCollection() {
+        // Verify that:
+        // 1. offset table is correctly setup
+        // 2. there are no pointer from old to young.
+        oldSpace.visit(fotVerifier);
+        noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
+        if (resizingPolicy.minorEvacuationOverflow()) {
+            // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
+            final ContiguousHeapSpace oldToSpace = oldSpace.space;
+            final BaseAtomicBumpPointerAllocator oldSpaceAllocator = oldSpace.allocator;
+            noFromSpaceReferencesVerifiers.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
+            noFromSpaceReferencesVerifiers.visitCells(oldSpaceAllocator.start(), oldSpaceAllocator.unsafeTop());
+        } else {
+            oldSpace.visit(noFromSpaceReferencesVerifiers);
+        }
+    }
+
+    private void verifyAfterFullCollection() {
+        oldSpace.visit(fotVerifier);
+        noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
+        oldSpace.visit(noFromSpaceReferencesVerifiers);
+    }
+
+    private void doOldGenCollection() {
+        youngSpaceEvacuator.doBeforeGC();
+        // NOTE: counter must be incremented before a heap phase change  to ANALYZING.
+        fullCollectionCount++;
+        // Gather information needed in case we overflowed.
+        // We need these because the flipSpace method refill the allocator from the start of the to-space.
+        final boolean minorEvacuationOverflow = resizingPolicy.minorEvacuationOverflow();
+        final Address oldAllocatorTop =  oldSpace.allocator.unsafeTop();
+        oldSpace.flipSpaces();
+        if (minorEvacuationOverflow) {
+            final Address startRange =  oldSpace.allocator.start();
+            oldSpace.allocator.unsafeSetTop(oldAllocatorTop);
+            oldSpaceEvacuator.prefillSurvivorRanges(startRange, oldAllocatorTop);
+        }
+        oldSpaceEvacuator.setGCOperation(genCollection);
+        oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
+        oldSpaceEvacuator.evacuate();
+        final CardFirstObjectTable fot = cardTableRSet.cfoTable;
+        final int startIndex = fot.tableEntryIndex(oldSpace.fromSpace.start());
+        final int endIndex = fot.tableEntryIndex(oldSpace.fromSpace.committedEnd());
+        fot.clear(startIndex, endIndex);
+        cardTableRSet.cardTable.clean(startIndex, endIndex);
+        youngSpaceEvacuator.doAfterGC();
+        oldSpaceEvacuator.setGCOperation(null);
+    }
+
+    @Override
+    public Address refillEvacuationBuffer() {
+        final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
+        Size spaceLeft = allocator.freeSpace();
+        Address startOfSpaceLeft = allocator.unsafeSetTopToLimit();
+        FatalError.check(VmThread.current().isVmOperationThread(), "must only be called by VmOperation");
+        // First, make sure we're doing minor collection here.
+        if (youngSpaceEvacuator.getGCOperation() != null) {
+            FatalError.check(!resizingPolicy.minorEvacuationOverflow(), "Must not have recursive overflow of old space during minor collection");
+            if (youngSpaceEvacuator.evacuatedBytes().isNotZero()) {
+                // This is not a refill before minor evacuation start, but an overflow situation.
+                // Refill using the from space.
+                final ContiguousHeapSpace fromSpace = oldSpace.fromSpace;
+                // Left-over in allocator is not formated.
+                fillWithDeadObject(startOfSpaceLeft, allocator.hardLimit());
+                // Notify that we need to run a full GC immediately after this overflowing minor collection.
+                resizingPolicy.notifyMinorEvacuationOverflow();
+                // Refill the allocator with the old from space.
+                spaceLeft = fromSpace.committedSize();
+                allocator.refill(fromSpace.start(), spaceLeft);
+                startOfSpaceLeft = allocator.unsafeSetTopToLimit();
+            }
+            HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
+            return startOfSpaceLeft;
+        } else if (oldSpaceEvacuator.getGCOperation() != null) {
+            if (oldSpaceEvacuator.evacuatedBytes().isZero()) {
+                // We haven't started evacuating.
+                HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
+                return startOfSpaceLeft;
+            }
+            // Try growing the heap (mostly the old space)
+            if (resizingPolicy.canIncreaseSizeDuringFullGC(youngSpaceEvacuator.evacuatedBytes(), spaceLeft)) {
+                final ContiguousHeapSpace space = oldSpace.space;
+                resize(youngSpace, resizingPolicy.youngGenSize());
+                resize(oldSpace, resizingPolicy.oldGenSize());
+                final Address endOfRefill = space.committedEnd();
+                final Address startOfRefill = allocator.unsafeSetTopToLimit();
+                FatalError.check(startOfSpaceLeft.plus(spaceLeft).equals(startOfRefill), "");
+                HeapFreeChunk.format(startOfSpaceLeft, endOfRefill.minus(startOfSpaceLeft).asSize());
+                return startOfSpaceLeft;
+            }
+            // Need to refill old gen allocator with young gen space.
+            resizingPolicy.notifyOutOfMemory();
+            oldSpace.allocator.refill(youngSpace.space.start(), youngSpace.space.committedSize());
+            FatalError.unimplemented();
+        } else {
+            FatalError.unexpected("Shouldn't refill evacuation buffer outside of GC operations");
+        }
+        return Address.zero();
+    }
+
+    @Override
+    public void retireEvacuationBuffer(Address startOfSpaceLeft, Address endOfSpaceLeft) {
+        oldSpace.allocator().retireTop(startOfSpaceLeft, endOfSpaceLeft.minus(startOfSpaceLeft).asSize());
+    }
+
+    private Size estimatedNextEvac() {
+        final Size min = youngSpace.totalSpace().dividedBy(100).times(minSurvivingPercent);
+        final Size lastSurvivorCount = youngSpaceEvacuator.evacuatedBytes();
+        return lastSurvivorCount.greaterThan(min) ? lastSurvivorCount : min;
+    }
+
+    private void resize(HeapSpace space, Size newSize) {
+        if (newSize.lessThan(space.totalSpace())) {
+            Size delta = space.totalSpace().minus(newSize);
+            space.decreaseSize(delta);
+        } else if (newSize.greaterThan(space.totalSpace())) {
+            Size delta = newSize.minus(space.totalSpace());
+            space.increaseSize(delta);
+        }
+    }
+
+    /**
+     * Implement logic for garbage collecting at safetpoint.
+     * Always start with a minor collection.
+     * If space left after the minor collection in the old generation is less than estimated space for survivors of the next minor collection,
+     * a full GC is performed immediately.
+     * It is possible for the minor collection to overflow the old generation because of under-estimated survivor space at the last minor collection.
+     * This is caught by the refiller of the old generation allocator, which in this case allocate space directly in the second semi-space.
+     */
+    private void doCollect(int invocationCount) {
+        evacTimers.resetTrackTime();
+
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
+        vmConfig().monitorScheme().beforeGarbageCollection();
+        if (MaxineVM.isDebug() && Heap.verbose()) {
+            Log.println("--Begin nursery evacuation");
+        }
+        evacTimers.start(TOTAL);
+        youngSpaceEvacuator.setGCOperation(genCollection);
+        youngSpaceEvacuator.evacuate();
+        youngSpaceEvacuator.setGCOperation(null);
+        if (MaxineVM.isDebug() && Heap.verbose()) {
+            Log.println("--End nursery evacuation");
+        }
+        if (VerifyAfterGC) {
+            verifyAfterMinorCollection();
+        }
+        final Size estimatedEvac = estimatedNextEvac();
+        evacTimers.stop(TOTAL);
+        if (Heap.logGCTime()) {
+            timeLogger.logPhaseTimes(invocationCount,
+                            evacTimers.get(ROOT_SCAN).getLastElapsedTime(),
+                            evacTimers.get(BOOT_HEAP_SCAN).getLastElapsedTime(),
+                            evacTimers.get(CODE_SCAN).getLastElapsedTime(),
+                            evacTimers.get(RSET_SCAN).getLastElapsedTime(),
+                            evacTimers.get(COPY).getLastElapsedTime(),
+                            evacTimers.get(WEAK_REF).getLastElapsedTime());
+            timeLogger.logGcTimes(invocationCount, true, evacTimers.get(TOTAL).getLastElapsedTime());
+        }
+        if (resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace())) {
+            // Force a temporary transition to MUTATING state.
+            // This simplifies the inspector's maintenance of references state and GC counters.
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
+            if (MaxineVM.isDebug() && Heap.verbose()) {
+                Log.println("--Begin old geneneration collection");
+            }
+            evacTimers.start(TOTAL);
+            doOldGenCollection();
+            if (MaxineVM.isDebug() && Heap.verbose()) {
+                Log.println("--End   old geneneration collection");
+            }
+            if (VerifyAfterGC) {
+                verifyAfterFullCollection();
+            }
+            if (resizingPolicy.resizeAfterFullGC(estimatedEvac, oldSpace.freeSpace())) {
+                resize(youngSpace, resizingPolicy.youngGenSize());
+                resize(oldSpace, resizingPolicy.oldGenSize());
+                oldSpaceEvacuator.setEvacuationBufferSize(oldSpace.fromSpace.committedSize());
+            }
+            evacTimers.stop(TOTAL);
+            lastFullGCTime = System.currentTimeMillis() - lastFullGCTime;
+
+            if (Heap.logGCTime()) {
+                timeLogger.logPhaseTimes(invocationCount,
+                                evacTimers.get(ROOT_SCAN).getLastElapsedTime(),
+                                evacTimers.get(BOOT_HEAP_SCAN).getLastElapsedTime(),
+                                evacTimers.get(CODE_SCAN).getLastElapsedTime(),
+                                evacTimers.get(RSET_SCAN).getLastElapsedTime(),
+                                evacTimers.get(COPY).getLastElapsedTime(),
+                                evacTimers.get(WEAK_REF).getLastElapsedTime());
+                timeLogger.logGcTimes(invocationCount, false, evacTimers.get(TOTAL).getLastElapsedTime());
+            }
+        }
+        vmConfig().monitorScheme().afterGarbageCollection();
+        HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
     }
 
     @Override
@@ -444,15 +523,17 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             oldSpace.initialize(startOfOldSpace, resizingPolicy.maxOldGenSize(), resizingPolicy.initialOldGenSize());
             /*
              * FIXME:
-             * We set retireAfterEvacuation parameter to true. We allocate the entire old free space as evacuation LAB when doing a minor evacuation,
+             * We set retireAfterEvacuation parameter to true. We allocate the entire old free space as evacuation allocation buffer (EAB)  when doing a minor evacuation,
              * and retire the entire left over. This is necessary in order for the oldSpace.freeSpace to report the free space accurately independently
-             * of the youngSpaceEvacuator (otherwise, we'd have to include the evacuator's ELAB in the calculation). It is also necessary to
+             * of the youngSpaceEvacuator (otherwise, we'd have to include the evacuator's EAB in the calculation). It is also necessary to
              * retire the TLAB if we need mutators to allocate directly in the old gen.
              * This is rather complicated and we need to rethink the APIs here and how to share the evacuator.
-              * An alternative would be to allocate an ELAB of size equal to the expected survivor space minus leftover in the current ELAB, but that isn't satisfying either.
-            */
-            youngSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256), true);
-            oldSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256), true);
+             * An alternative would be to allocate an ELAB of size equal to the expected survivor space minus leftover in the current ELAB, but that isn't satisfying either.
+             */
+            // Set the minRefillThreshold to max size of the generation to never overflow allocate. This forces all allocation failure at GC to
+            // refill the EAB.
+            youngSpaceEvacuator.initialize(2, oldSpace.freeSpace(), true, Size.zero(), true);
+            oldSpaceEvacuator.initialize(2, oldSpace.freeSpace(), true, Size.zero(), true);
             initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
             cardTableRSet.initializeXirStartupConstants();
 

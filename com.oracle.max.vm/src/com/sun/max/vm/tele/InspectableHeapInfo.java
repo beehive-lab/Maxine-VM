@@ -244,6 +244,9 @@ public final class InspectableHeapInfo {
      * <p>
      * <strong>Important:</strong> The Inspector assumes that this method is loaded
      * and compiled in the boot image and that it will never be dynamically recompiled.
+     *
+     * @param
+     * @see HeapScheme.Inspect#inspectableIncreaseMemoryRequestedCriticalMethod()
      */
     @INSPECTED
     @NEVER_INLINE
@@ -272,6 +275,7 @@ public final class InspectableHeapInfo {
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
      * @param size the desired new heap size
+     * @see HeapScheme.Inspect#inspectableDecreaseMemoryRequestedCriticalMethod()
      */
     @INSPECTED
     @NEVER_INLINE
