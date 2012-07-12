@@ -49,7 +49,7 @@ import com.sun.max.vm.thread.*;
 /**
  * Generational Heap Scheme with a mark-sweep old generation and a simple copying collector nursery.
  */
-final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification, RSetCoverage {
+final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification, RSetCoverage, EvacuationBufferProvider {
     /**
      * Number of heap words covered by a single mark.
      */
@@ -62,7 +62,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     static Size ELABSize = Size.K.times(64);
     static {
         VMOptions.addFieldOption("-XX:", "YoungGenHeapPercent", GenMSEHeapScheme.class, "Fixed percentage of heap size that must be used by young gen", Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "ELABSize", GenMSEHeapScheme.class, "Size of local allocation buffers for evacuation to old gen", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "ELABSize", GenMSEHeapScheme.class, "Size of evacuation buffers for young gen evacuation to old gen", Phase.PRISTINE);
     }
 
     public enum GenMSEHeapRegionTag {
@@ -137,7 +137,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             new CardSpaceAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller(cardTableRSet), cardTableRSet);
 
         oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, tlabAllocator, overflowAllocator, true, cardTableRSet, OLD.tag());
-        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, cardTableRSet);
+        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, this, cardTableRSet);
         noYoungReferencesVerifier = new NoEvacuatedSpaceReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
@@ -483,5 +483,15 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     @Override
     public TimeLogger timeLogger() {
         return HeapSchemeLoggerAdaptor.timeLogger;
+    }
+
+    @Override
+    public Address refillEvacuationBuffer() {
+        return oldSpace.allocateTLAB(ELABSize);
+    }
+
+    @Override
+    public void retireEvacuationBuffer(Address startOfSpaceLeft, Address endOfSpaceLeft) {
+        oldSpace.retireTLAB(startOfSpaceLeft.asPointer(), endOfSpaceLeft.minus(startOfSpaceLeft).asSize());
     }
 }
