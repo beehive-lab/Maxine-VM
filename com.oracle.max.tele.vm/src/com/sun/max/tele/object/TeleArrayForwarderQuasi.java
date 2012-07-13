@@ -25,26 +25,25 @@ package com.sun.max.tele.object;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 
-// TODO (mlvdv)  This should extend TeleArrayObject, but that's a more complex constructor than the others.
 /**
  * Canonical surrogate for a <em>quasi</em> object:  the old copy of an array object
  * that has been relocated by copying to a new location in the current GC cycle.
  */
 public class TeleArrayForwarderQuasi extends TeleArrayObject {
 
-    protected TeleArrayForwarderQuasi(TeleVM vm, Reference reference, Kind componentKind, SpecificLayout specificLayout) {
-        super(vm, reference, componentKind, specificLayout);
-        final RemoteReference quasiReference = (RemoteReference) reference;
+    protected TeleArrayForwarderQuasi(TeleVM vm, RemoteReference quasiReference, Kind componentKind, SpecificLayout specificLayout) {
+        super(vm, quasiReference, componentKind, specificLayout);
         assert quasiReference.status().isForwarder();
     }
 
     @Override
     protected TeleHub fetchTeleHub() {
-        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(jumpForwarder(reference())).asAddress());
+        // Read the hub reference from the new copy
+        final RemoteReference newArrayReference = reference().jumpForwarder();
+        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(newArrayReference).asAddress());
     }
 
     @Override

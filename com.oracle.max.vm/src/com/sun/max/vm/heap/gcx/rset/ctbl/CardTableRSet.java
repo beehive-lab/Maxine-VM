@@ -492,11 +492,11 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
     // In both case, subsequent split event on this dead space only need to update the left-hand side of the allocation split (using the set() method).
     private Address splitLastCard(Address deadSpace, Size numDeadBytes) {
         if (numDeadBytes.greaterEqual(CARD_SIZE)) {
-            final Pointer end = deadSpace.plus(numDeadBytes).asPointer();
+            final Address end = deadSpace.plus(numDeadBytes);
             final Address lastCardStart = alignDownToCard(end);
             if (lastCardStart.minus(deadSpace).greaterThan(HeapFreeChunk.heapFreeChunkHeaderSize())) {
                 // Format the end of the heap free chunk as a dead object.
-                Pointer deadObjectAddress = lastCardStart.asPointer();
+                Address deadObjectAddress = lastCardStart;
                 Size deadObjectSize = end.minus(deadObjectAddress).asSize();
 
                 if (deadObjectSize.lessThan(minObjectSize())) {

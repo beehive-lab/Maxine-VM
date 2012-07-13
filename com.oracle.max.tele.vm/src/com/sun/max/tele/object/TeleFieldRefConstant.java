@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,15 +23,15 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Inspector's canonical surrogate for an object of type {@link FieldRefConstant} in the VM.
  */
 public abstract class TeleFieldRefConstant extends TelePoolConstant {
 
-    public TeleFieldRefConstant(TeleVM vm, Reference fieldRefConstantReference) {
+    public TeleFieldRefConstant(TeleVM vm, RemoteReference fieldRefConstantReference) {
         super(vm, fieldRefConstantReference);
     }
 
@@ -46,7 +46,7 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
      */
     public static final class Resolved extends TeleFieldRefConstant {
 
-        public Resolved(TeleVM vm, Reference resolvedFieldRefConstantReference) {
+        public Resolved(TeleVM vm, RemoteReference resolvedFieldRefConstantReference) {
             super(vm, resolvedFieldRefConstantReference);
         }
 
@@ -59,7 +59,7 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
          * @return surrogate for the {@FieldActor} in the VM to which the constant was resolved
          */
         public TeleFieldActor getTeleFieldActor() {
-            final Reference fieldActorReference = fields().FieldRefConstant$Resolved_fieldActor.readReference(reference());
+            final RemoteReference fieldActorReference = fields().FieldRefConstant$Resolved_fieldActor.readReference(reference());
             return (TeleFieldActor) objects().makeTeleObject(fieldActorReference);
         }
 
@@ -76,7 +76,7 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
      */
     public static final class Unresolved extends TeleFieldRefConstant {
 
-        public Unresolved(TeleVM vm, Reference unresolvedFieldRefConstantReference) {
+        public Unresolved(TeleVM vm, RemoteReference unresolvedFieldRefConstantReference) {
             super(vm, unresolvedFieldRefConstantReference);
         }
 
@@ -98,7 +98,7 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
      */
     public static final class UnresolvedIndices extends TeleFieldRefConstant {
 
-        public UnresolvedIndices(TeleVM vm, Reference unresolvedFieldRefConstantReference) {
+        public UnresolvedIndices(TeleVM vm, RemoteReference unresolvedFieldRefConstantReference) {
             super(vm, unresolvedFieldRefConstantReference);
         }
 

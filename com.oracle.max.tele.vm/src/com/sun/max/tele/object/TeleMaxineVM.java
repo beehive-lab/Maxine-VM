@@ -23,17 +23,20 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.reference.*;
+import com.sun.max.vm.*;
 
 
 /**
  * Local surrogate for the distinguished object int the VM that represents the VM itself.
+ *
+ * @see MaxineVM
  */
 public final class TeleMaxineVM extends TeleTupleObject {
 
     TeleVMConfiguration teleVMConfiguration;
 
-    public TeleMaxineVM(TeleVM vm, Reference reference) {
+    public TeleMaxineVM(TeleVM vm, RemoteReference reference) {
         super(vm, reference);
     }
 
@@ -42,10 +45,15 @@ public final class TeleMaxineVM extends TeleTupleObject {
      */
     public TeleVMConfiguration teleVMConfiguration() {
         if (teleVMConfiguration == null) {
-            final Reference configReference = fields().MaxineVM_config.readReference(reference());
+            final RemoteReference configReference = fields().MaxineVM_config.readReference(reference());
             teleVMConfiguration = (TeleVMConfiguration) objects().makeTeleObject(configReference);
         }
         return teleVMConfiguration;
+    }
+
+    @Override
+    public String maxineRole() {
+        return "VM global context";
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import java.util.logging.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.reference.*;
 
 /**
  *
@@ -36,7 +36,7 @@ public class TeleArrayClassActor extends TeleReferenceClassActor implements Arra
 
     private static final Logger LOGGER = Logger.getLogger(TeleArrayClassActor.class.getName());
 
-    protected TeleArrayClassActor(TeleVM vm, Reference referenceClassActorReference) {
+    protected TeleArrayClassActor(TeleVM vm, RemoteReference referenceClassActorReference) {
         super(vm, referenceClassActorReference);
     }
 

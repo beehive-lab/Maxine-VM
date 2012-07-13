@@ -28,11 +28,11 @@ import java.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.reference.*;
 
 
 /**
@@ -56,6 +56,7 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
      */
     private final TeleCodeRegion teleCodeRegion;
 
+    private final List<MaxObject> inspectableObjects;
     /**
      * Local manager of code regions.
      */
@@ -88,6 +89,8 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
     public VmUnmanagedCodeCacheRegion(TeleVM vm, TeleCodeRegion teleCodeRegion, VmCodeCacheAccess codeCache) {
         super(vm, teleCodeRegion);
         this.teleCodeRegion = teleCodeRegion;
+        this.inspectableObjects = new ArrayList<MaxObject>();
+        this.inspectableObjects.add(teleCodeRegion);
         this.codeCache = codeCache;
         this.entityDescription = "The unmanaged allocation area " + teleCodeRegion.getRegionName() + " owned by the VM code cache";
         this.addressToCompilationMap = new AddressToCompilationMap(vm);
@@ -114,7 +117,7 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
             final int targetMethodCount = teleCodeRegion.nTargetMethods();
             int index = teleTargetMethods.size();
             while (index < targetMethodCount) {
-                Reference targetMethodReference = teleCodeRegion.getTargetMethodReference(index++);
+                RemoteReference targetMethodReference = teleCodeRegion.getTargetMethodReference(index++);
                 // Creating a {@link TeleTargetMethod} causes it to be added to the code registry
                 TeleTargetMethod teleTargetMethod = (TeleTargetMethod) objects().makeTeleObject(targetMethodReference);
                 if (teleTargetMethod == null) {
@@ -193,4 +196,8 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
         return codePointerManager;
     }
 
+    @Override
+    public List<MaxObject> inspectableObjects() {
+        return inspectableObjects;
+    }
 }

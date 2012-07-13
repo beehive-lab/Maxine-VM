@@ -20,33 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.object;
+package com.sun.max.tele.field;
 
-import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.reference.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.type.*;
 
 /**
- * Canonical surrogate for a  {@link PrimitiveClassActor} in the VM.
+ * An accessor for reading static fields of type {@code float} from VM memory, specified by class and field name.
  */
-public class TelePrimitiveClassActor extends TeleClassActor implements ClassProvider {
+public final class TeleStaticFloatFieldAccess extends TeleStaticFieldAccess {
 
-    protected TelePrimitiveClassActor(TeleVM vm, RemoteReference primitiveClassActorReference) {
-        super(vm, primitiveClassActorReference);
+    public TeleStaticFloatFieldAccess(Class holder, String name) {
+        super(holder, name, Kind.FLOAT);
     }
 
-    public PrimitiveClassActor primitiveClassActor() {
-        return (PrimitiveClassActor) classActor();
+    /**
+     * Reads a static field, presumed to be of type {@code float}, from VM memory.
+     *
+     * @return the value of the field in VM memory interpreted as a {@code float}
+     */
+    public float readFloat(MaxVM vm) {
+        return staticTupleReference(vm).readFloat(fieldActor().offset());
     }
-
-    @Override
-    public String maxineRole() {
-        return "PrimitiveClassActor";
-    }
-
-    public ClassProvider getSuperClass() {
-        return (ClassProvider) classes().findTeleClassActor(this.classActor().superClassActor.typeDescriptor);
-    }
-
 }

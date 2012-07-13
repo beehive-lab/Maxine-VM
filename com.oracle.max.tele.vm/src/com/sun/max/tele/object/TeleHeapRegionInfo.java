@@ -24,13 +24,13 @@ package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.heap.region.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.reference.*;
 
 public class TeleHeapRegionInfo extends TeleTupleObject {
     final int regionID;
 
-    protected TeleHeapRegionInfo(TeleVM vm, Reference heapRegionInfoReference) {
+    protected TeleHeapRegionInfo(TeleVM vm, RemoteReference heapRegionInfoReference) {
         super(vm, heapRegionInfoReference);
         regionID = TeleRegionTable.theTeleRegionTable().toRegionID(heapRegionInfoReference.toOrigin());
     }

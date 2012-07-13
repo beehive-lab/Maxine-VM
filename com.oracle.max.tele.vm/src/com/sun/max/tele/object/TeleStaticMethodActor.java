@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,8 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a {@link StaticMethodActor} in the VM.
@@ -35,7 +35,7 @@ public final class TeleStaticMethodActor extends TeleClassMethodActor {
      * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
      * object and another are mutually referential.
      */
-    TeleStaticMethodActor(TeleVM vm, Reference staticMethodActorReference) {
+    TeleStaticMethodActor(TeleVM vm, RemoteReference staticMethodActorReference) {
         super(vm, staticMethodActorReference);
     }
 

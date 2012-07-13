@@ -25,9 +25,9 @@ package com.sun.max.tele.heap.region;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.reference.*;
 
 // TODO (mlvdv) recast this as a descendant of TeleObject, register it in REmoteRegionBasedHeapScheme.
 /**
@@ -73,7 +73,7 @@ public class TeleRegionTable extends AbstractVmHolder {
             return;
         }
         initializing = true;
-        Reference theRegionTableReference =  vm().fields().RegionTable_theRegionTable.readReference(vm());
+        RemoteReference theRegionTableReference =  vm().fields().RegionTable_theRegionTable.readReference(vm());
         if (theRegionTableReference.isZero()) {
             return;
         }

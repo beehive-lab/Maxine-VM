@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.sun.max.tele.object;
 import java.lang.reflect.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link Method} in the VM.
@@ -34,7 +34,7 @@ public class TeleMethod extends TeleTupleObject {
 
     private Method method;
 
-    protected TeleMethod(TeleVM vm, Reference methodReference) {
+    protected TeleMethod(TeleVM vm, RemoteReference methodReference) {
         super(vm, methodReference);
     }
 
@@ -43,7 +43,7 @@ public class TeleMethod extends TeleTupleObject {
      */
     public Method toJava() {
         if (method == null) {
-            final Reference methodActorReference = fields().Method_methodActor.readReference(reference());
+            final RemoteReference methodActorReference = fields().Method_methodActor.readReference(reference());
             final TeleMethodActor teleMethodActor = (TeleMethodActor) objects().makeTeleObject(methodActorReference);
             method = teleMethodActor.methodActor().toJava();
         }

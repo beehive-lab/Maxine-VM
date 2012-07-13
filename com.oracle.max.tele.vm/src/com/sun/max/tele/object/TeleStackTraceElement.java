@@ -23,12 +23,12 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.reference.*;
 
 
 public class TeleStackTraceElement extends TeleTupleObject {
 
-    public TeleStackTraceElement(TeleVM vm, Reference stackTraceElementReference) {
+    public TeleStackTraceElement(TeleVM vm, RemoteReference stackTraceElementReference) {
         super(vm, stackTraceElementReference);
     }
 

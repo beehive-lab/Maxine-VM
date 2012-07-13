@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,12 +24,14 @@ package com.sun.max.tele.object;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Access to the singleton {@link CodeManager} in the VM.
+ *
+ * @see CodeManager
  */
 public final class TeleCodeManager extends TeleTupleObject {
 
@@ -54,7 +56,7 @@ public final class TeleCodeManager extends TeleTupleObject {
      */
     private TeleCodeRegion teleRuntimeOptCodeRegion = null;
 
-    TeleCodeManager(TeleVM vm, Reference codeManagerReference) {
+    TeleCodeManager(TeleVM vm, RemoteReference codeManagerReference) {
         super(vm, codeManagerReference);
     }
 
@@ -67,13 +69,13 @@ public final class TeleCodeManager extends TeleTupleObject {
             Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
             final long startTimeMillis = System.currentTimeMillis();
 
-            final Reference bootCodeRegionReference = jumpForwarder(fields().Code_bootCodeRegion.readReference(vm()));
+            final RemoteReference bootCodeRegionReference = fields().Code_bootCodeRegion.readReference(vm());
             teleBootCodeRegion = (TeleCodeRegion) objects().makeTeleObject(bootCodeRegionReference);
 
-            final Reference runtimeBaselineCodeRegionReference = jumpForwarder(fields().CodeManager_runtimeBaselineCodeRegion.readReference(vm()));
+            final RemoteReference runtimeBaselineCodeRegionReference = fields().CodeManager_runtimeBaselineCodeRegion.readReference(vm());
             teleRuntimeBaselineCodeRegion = (TeleSemiSpaceCodeRegion) objects().makeTeleObject(runtimeBaselineCodeRegionReference);
 
-            final Reference runtimeOptCodeRegionReference = jumpForwarder(fields().CodeManager_runtimeOptCodeRegion.readReference(vm()));
+            final RemoteReference runtimeOptCodeRegionReference = fields().CodeManager_runtimeOptCodeRegion.readReference(vm());
             teleRuntimeOptCodeRegion = (TeleCodeRegion) objects().makeTeleObject(runtimeOptCodeRegionReference);
 
             Trace.end(TRACE_VALUE, tracePrefix() + "initializing", startTimeMillis);
@@ -99,6 +101,11 @@ public final class TeleCodeManager extends TeleTupleObject {
     public TeleCodeRegion teleRuntimeOptCodeRegion() {
         initialize();
         return teleRuntimeOptCodeRegion;
+    }
+
+    @Override
+    public String maxineRole() {
+        return "Code manager";
     }
 
 }

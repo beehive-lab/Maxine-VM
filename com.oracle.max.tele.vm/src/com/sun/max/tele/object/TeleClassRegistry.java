@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,31 +22,32 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.type.*;
 
 /**
- * Canonical surrogate for a  {@link PrimitiveClassActor} in the VM.
+ * Canonical surrogate for an object of type {@link ClassRegistry} in the VM.
+ *
+ * @see ClassRegistry
  */
-public class TelePrimitiveClassActor extends TeleClassActor implements ClassProvider {
+public final class TeleClassRegistry extends TeleTupleObject {
 
-    protected TelePrimitiveClassActor(TeleVM vm, RemoteReference primitiveClassActorReference) {
-        super(vm, primitiveClassActorReference);
-    }
-
-    public PrimitiveClassActor primitiveClassActor() {
-        return (PrimitiveClassActor) classActor();
+    protected TeleClassRegistry(TeleVM vm, RemoteReference classRegistryReference) {
+        super(vm, classRegistryReference);
     }
 
     @Override
     public String maxineRole() {
-        return "PrimitiveClassActor";
+        if (reference().equals(classes().vmBootClassRegistryReference())) {
+            return "Boot class registry";
+        }
+        return "Class registry";
     }
 
-    public ClassProvider getSuperClass() {
-        return (ClassProvider) classes().findTeleClassActor(this.classActor().superClassActor.typeDescriptor);
+    @Override
+    public String maxineTerseRole() {
+        return "Class registry";
     }
 
 }

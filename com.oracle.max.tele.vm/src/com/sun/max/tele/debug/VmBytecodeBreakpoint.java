@@ -36,6 +36,7 @@ import com.sun.max.tele.debug.BreakpointCondition.ExpressionException;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.BytecodeLocation;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -43,7 +44,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.DefaultMethodKey;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
 /**
@@ -359,7 +359,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
                             return true;
                         }
                         // Match; must set a target breakpoint on the method just compiled; is is acceptable to incur some overhead now.
-                        final Reference targetMethodReference = referenceManager().makeReference(teleIntegerRegisters.getValue(parameter3));
+                        final RemoteReference targetMethodReference = referenceManager().makeReference(teleIntegerRegisters.getValue(parameter3));
                         if (targetMethodReference.isZero()) {
                             TeleWarning.message("targetMethod parameter to post-compilation trigger method was null");
                             continue;
@@ -710,7 +710,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             Trace.line(TRACE_VALUE, tracePrefix + "Writing to VM type descriptors for breakpoint classes =\"" + breakpointClassDescriptorsString + "\"");
             // Write the string into the designated region in the VM, along with length and incremented epoch counter
             final int charsLength = breakpointClassDescriptorsString.length();
-            final Reference charArrayReference = fields().InspectableCompilationInfo_breakpointClassDescriptorCharArray.readReference(vm());
+            final RemoteReference charArrayReference = fields().InspectableCompilationInfo_breakpointClassDescriptorCharArray.readReference(vm());
             TeleError.check(!charArrayReference.isZero(), "Can't locate inspectable code array for breakpoint classes");
             for (int index = 0; index < charsLength; index++) {
                 Layout.setChar(charArrayReference, index, breakpointClassDescriptorsString.charAt(index));

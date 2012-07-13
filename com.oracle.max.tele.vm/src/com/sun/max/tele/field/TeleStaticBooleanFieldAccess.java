@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,17 +26,26 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.type.*;
 
 /**
+ * An accessor for reading and writing static fields of type {@code boolean} from VM memory, specified by class and field name.
  */
-public class TeleStaticBooleanFieldAccess extends TeleStaticFieldAccess {
+public final class TeleStaticBooleanFieldAccess extends TeleStaticFieldAccess {
 
     public TeleStaticBooleanFieldAccess(Class holder, String name) {
         super(holder, name, Kind.BOOLEAN);
     }
 
+    /**
+     * Reads a static field, presumed to be of type {@code boolean}, from VM memory.
+     *
+     * @return the value of the field in VM memory interpreted as a {@code boolean}
+     */
     public boolean readBoolean(MaxVM vm) {
         return staticTupleReference(vm).readBoolean(fieldActor().offset());
     }
 
+    /**
+     * Writes into object instance field, presumed to be of type {@code boolean}, in VM memory.
+     */
     public void writeBoolean(MaxVM vm, boolean value) {
         staticTupleReference(vm).writeBoolean(fieldActor().offset(), value);
     }

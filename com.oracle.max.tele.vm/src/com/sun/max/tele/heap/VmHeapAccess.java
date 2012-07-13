@@ -33,12 +33,12 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
 /**
@@ -166,7 +166,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
     private RemoteHeapScheme remoteHeapScheme = null;
 
-    private List<MaxCodeLocation> inspectableMethods = null;
+    private List<MaxCodeLocation> heapInspectableMethods = null;
 
     private int lastRegionCount = 0;
 
@@ -239,11 +239,11 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         tracer.begin();
 
         // Get a copy of the string in the VM that holds the name of the boot heap
-        final Reference nameReference = fields().Heap_HEAP_BOOT_NAME.readReference(vm());
+        final RemoteReference nameReference = fields().Heap_HEAP_BOOT_NAME.readReference(vm());
         this.bootHeapRegionName = vm().getString(nameReference);
 
         // Get a local surrogate for the instance of {@link MemoryRegion} in the VM that describes the boot heap
-        final Reference bootHeapRegionReference = fields().Heap_bootHeapRegion.readReference(vm());
+        final RemoteReference bootHeapRegionReference = fields().Heap_bootHeapRegion.readReference(vm());
         this.teleBootHeapMemoryRegion = (TeleMemoryRegion) objects().makeTeleObject(bootHeapRegionReference);
 
         // Replace the faked representation of the boot heap with one represented uniformly via reference to the VM object
@@ -296,7 +296,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
             // Check for the {@link ImmortalHeap} description
             if (teleImmortalHeapRegion == null) {
-                final Reference immortalHeapReference = fields().ImmortalHeap_immortalHeap.readReference(vm());
+                final RemoteReference immortalHeapReference = fields().ImmortalHeap_immortalHeap.readReference(vm());
                 if (!immortalHeapReference.isZero()) {
                     teleImmortalHeapRegion = (TeleMemoryRegion) objects().makeTeleObject(immortalHeapReference);
                     immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion);
@@ -437,16 +437,26 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         return remoteHeapScheme.phase();
     }
 
-    public List<MaxCodeLocation> inspectableMethods() {
-        if (inspectableMethods == null) {
+    /**
+     * @see MaxVM#inspectableMethods()
+     */
+    public List<MaxCodeLocation> heapInspectableMethods() {
+        if (heapInspectableMethods == null) {
             final List<MaxCodeLocation> locations = new ArrayList<MaxCodeLocation>();
             locations.add(vm().codeLocations().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
             locations.add(vm().codeLocations().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
             // There may be implementation-specific methods of interest
             locations.addAll(remoteHeapScheme.inspectableMethods());
-            inspectableMethods = Collections.unmodifiableList(locations);
+            heapInspectableMethods = Collections.unmodifiableList(locations);
         }
-        return inspectableMethods;
+        return heapInspectableMethods;
+    }
+
+    /**
+     * @see MaxVM#inspectableObjects()
+     */
+    public List<MaxObject> heapInspectableObjects() {
+        return remoteHeapScheme.inspectableObjects();
     }
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {

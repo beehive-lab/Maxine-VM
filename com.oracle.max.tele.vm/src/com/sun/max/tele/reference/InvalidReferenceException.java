@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,21 +22,20 @@
  */
 package com.sun.max.tele.reference;
 
-import com.sun.max.vm.reference.*;
 
 /**
- * Access to a heap object in the VM was attempted with a {@link Reference}
+ * Access to a heap object in the VM was attempted with a {@link RemoteReference}
  * that did not point to a valid object.
  */
 public class InvalidReferenceException extends RuntimeException {
 
-    private final Reference reference;
+    private final RemoteReference reference;
 
-    public InvalidReferenceException(Reference reference) {
+    public InvalidReferenceException(RemoteReference reference) {
         this.reference = reference;
     }
 
-    public Reference getReference() {
+    public RemoteReference getReference() {
         return reference;
     }
 

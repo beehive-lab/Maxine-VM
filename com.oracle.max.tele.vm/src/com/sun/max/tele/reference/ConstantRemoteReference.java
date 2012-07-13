@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
  *
  * Equality for instances is defined as {@link Address} equality with other instances of the class.
  *
- * @see Reference
+ * @see RemoteReference
  * @see VmReferenceManager
  */
 public abstract class ConstantRemoteReference extends RemoteReference {

@@ -28,9 +28,9 @@ import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a {@link LinearAllocationMemoryRegion} object in the VM,
@@ -59,7 +59,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleMemoryRegion {
         }
     };
 
-    public TeleLinearAllocationMemoryRegion(TeleVM vm, Reference linearAllocationMemoryRegionReference) {
+    public TeleLinearAllocationMemoryRegion(TeleVM vm, RemoteReference linearAllocationMemoryRegionReference) {
         super(vm, linearAllocationMemoryRegionReference);
         // Initialize mark to region end: default 100% utilization
         markCache = super.getRegionEnd();
@@ -97,7 +97,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleMemoryRegion {
      */
     private boolean updateMarkCache() {
         try {
-            final Reference markReference = fields().LinearAllocationMemoryRegion_mark.readReference(reference());
+            final RemoteReference markReference = fields().LinearAllocationMemoryRegion_mark.readReference(reference());
             markCache = markReference.readWord(AtomicWord.valueOffset()).asPointer();
             // This essentially marks the usage cache as dirty.
             usageCache = MaxMemoryRegion.Util.NULL_MEMORY_USAGE;

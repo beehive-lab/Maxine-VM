@@ -30,14 +30,13 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -83,11 +82,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @return the mode in which the inspection is taking place.
      */
     MaxInspectionMode inspectionMode();
-
-    /**
-     * @return object instances that implement the VM's {@linkplain VMScheme schemes}.
-     */
-    List<TeleVMScheme> schemes();
 
     /**
      * @return access to the VM's class registry and related information.
@@ -314,32 +308,39 @@ public interface MaxVM extends MaxEntity<MaxVM> {
 
     /**
      * Creates a remote object reference that can be used for access to a VM object;
-     * returns {@link Reference#zero()} if there is no live object at the location.
+     * returns zero {@link RemoteReference} if there is no live object at the location.
      *
      * @param origin current location (origin) of a live heap object's memory in the VM,
      * subject to relocation by GC.
-     * @return a remote {@link Reference} to the object.
+     * @return a {@link RemoteReference} to the object.
      */
-    Reference makeReference(final Address origin);
+    RemoteReference makeReference(final Address origin);
 
     /**
      * Creates a remote object reference that can be used for access to a VM <em>quasi</em> object;
-     * returns {@link Reference#zero()} if there is no quasi object at the location.
+     * returns zero {@link RemoteReference} if there is no quasi object at the location.
      *
      * @param origin current location (origin) of a quasi object's memory in the VM.
-     * @return a remote {@link Reference} to the quasi object.
+     * @return a {@link RemoteReference} to the quasi object.
      */
-    Reference makeQuasiObjectReference(Address origin);
+    RemoteReference makeQuasiObjectReference(Address origin);
 
     /**
      * Creates a boxed value that acts as a reference to an object in the VM, useful for
      * creating arguments for remote interpretation.
      *
-     * @param reference a {@link Reference} to memory in the VM.
-     * @return a {@link Value} that wraps a {@link Reference} to a memory location in the VM.
+     * @param reference a {@link RemoteReference} to memory in the VM.
+     * @return a {@link Value} that wraps a {@link RemoteReference} to a memory location in the VM.
      * @see #interpretMethod(ClassMethodActor, Value...)
      */
-    ReferenceValue createReferenceValue(Reference reference);
+    ReferenceValue createReferenceValue(RemoteReference reference);
+
+    /**
+     * Interesting, singleton objects in the VM.
+     *
+     * @return possibly interesting, singleton objects.
+     */
+    List<MaxObject> inspectableObjects();
 
     /**
      * Interesting, predefined method entries that might be useful, for example, for setting breakpoints.

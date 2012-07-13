@@ -847,7 +847,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
      * @param delta the number of bytes to grow the heap with
      * @return the effective growth
      */
-    public Size growAfterGC(Size delta) {
+    public Size increaseSize(Size delta) {
         Size adjustedGrowth = committedHeapSpace.adjustGrowth(delta);
         if (adjustedGrowth.isZero()) {
             return Size.zero();
@@ -860,7 +860,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         return adjustedGrowth;
     }
 
-    public Size shrinkAfterGC(Size delta) {
+    public Size decreaseSize(Size delta) {
         // TODO (ld) Can't do much without evacuation or regions apart from freeing the chunk that is at the end of
         // committed heap space. Don't bother with this for now.
         return Size.zero();

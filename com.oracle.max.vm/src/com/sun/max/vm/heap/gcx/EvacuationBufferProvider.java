@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,20 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.field;
+package com.sun.max.vm.heap.gcx;
 
-import com.sun.max.tele.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.unsafe.*;
 
-/**
- */
-public class TeleStaticFloadFieldAccess extends TeleStaticFieldAccess {
 
-    public TeleStaticFloadFieldAccess(Class holder, String name) {
-        super(holder, name, Kind.FLOAT);
-    }
-
-    public float readFloat(MaxVM vm) {
-        return staticTupleReference(vm).readFloat(fieldActor().offset());
-    }
+public interface EvacuationBufferProvider {
+    Address refillEvacuationBuffer();
+    void retireEvacuationBuffer(Address startOfSpaceLeft, Address endOfSpaceLeft);
 }

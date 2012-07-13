@@ -29,6 +29,7 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -66,6 +67,7 @@ public class WordValueLabel extends ValueLabel {
         INTEGER_REGISTER,
         FLAGS_REGISTER,
         FLOATING_POINT,
+        SIZE,
         CALL_ENTRY_POINT,
         ITABLE_ENTRY,
         CALL_RETURN_POINT;
@@ -201,7 +203,10 @@ public class WordValueLabel extends ValueLabel {
          * Display of an extended floating point value.
          */
         DOUBLE,
-
+        /**
+         * Display of an unsigned decimal numeric value representing a Size.
+         */
+        SIZE,
         /**
          * Numeric display of what is expected to be a reference, but which is not checked by reading from the VM.
          */
@@ -421,6 +426,8 @@ public class WordValueLabel extends ValueLabel {
             } else if (displayMode == null) {
                 displayMode = DisplayMode.DOUBLE;
             }
+        } else if (valueMode == ValueMode.SIZE) {
+            displayMode = DisplayMode.SIZE;
         } else if (!preference().investigateWordValues()) {
             if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
                 displayMode = DisplayMode.UNCHECKED_REFERENCE;
@@ -1112,6 +1119,23 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(null);
                 setWrappedText(Integer.toString(value.toInt()));
                 setWrappedToolTipHtmlText("0x" + hexString);
+                break;
+            }
+            case SIZE: {
+                setFont(style.sizeDataFont());
+                setForeground(null);
+                if (value.isZero()) {
+                    setWrappedText("0");
+                    setWrappedToolTipHtmlText("zero");
+                } else {
+                    final long longValue = value.toLong();
+                    setWrappedText(Long.toString(longValue));
+                    if (longValue == Long.MAX_VALUE) {
+                        setWrappedToolTipHtmlText("MAX Size" + " [" + valueToDecimalAndHex(value) + "]");
+                    } else {
+                        setWrappedToolTipHtmlText(Longs.toUnitsString(longValue, false) + " [" + valueToDecimalAndHex(value) + "]");
+                    }
+                }
                 break;
             }
             case FLOAT: {

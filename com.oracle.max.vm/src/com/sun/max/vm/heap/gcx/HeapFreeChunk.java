@@ -212,8 +212,8 @@ public class HeapFreeChunk {
     public static void makeParsable(Address headOfFreeChunkListAddress) {
         Address chunkAddress = headOfFreeChunkListAddress;
         while (!chunkAddress.isZero()) {
-            Pointer start = chunkAddress.asPointer();
-            Pointer end = start.plus(HeapFreeChunk.getFreechunkSize(chunkAddress));
+            Address start = chunkAddress.asPointer();
+            Address end = start.plus(HeapFreeChunk.getFreechunkSize(chunkAddress));
             chunkAddress =  HeapFreeChunk.getFreeChunkNext(chunkAddress);
             HeapSchemeAdaptor.fillWithDeadObject(start, end);
         }

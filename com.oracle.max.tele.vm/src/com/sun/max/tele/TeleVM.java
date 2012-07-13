@@ -71,7 +71,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -237,11 +236,6 @@ public abstract class TeleVM implements MaxVM {
      * The VM object that holds configuration information, including scheme implementations.
      */
     private static TeleVMConfiguration teleVMConfiguration;
-
-    /**
-     * The VM object instances that implement the schemes.
-     */
-    private final List<TeleVMScheme> schemes = new ArrayList<TeleVMScheme>();
 
     /**
      * An abstraction description of the VM's platform, suitable for export.
@@ -1031,32 +1025,6 @@ public abstract class TeleVM implements MaxVM {
         return mode;
     }
 
-    public final List<TeleVMScheme> schemes() {
-        if (schemes.isEmpty()) {
-            TeleHeapScheme heapScheme = teleVMConfiguration.heapScheme();
-            if (heapScheme != null) {
-                schemes.add(heapScheme);
-            }
-            TeleLayoutScheme layoutScheme = teleVMConfiguration.layoutScheme();
-            if (layoutScheme != null) {
-                schemes.add(layoutScheme);
-            }
-            TeleMonitorScheme monitorScheme = teleVMConfiguration.monitorScheme();
-            if (monitorScheme != null) {
-                schemes.add(monitorScheme);
-            }
-            TeleReferenceScheme referenceScheme = teleVMConfiguration.referenceScheme();
-            if (referenceScheme != null) {
-                schemes.add(referenceScheme);
-            }
-            TeleRunScheme runScheme = teleVMConfiguration.runScheme();
-            if (runScheme != null) {
-                schemes.add(runScheme);
-            }
-        }
-        return schemes;
-    }
-
     public final VmClassAccess classes() {
         return classAccess;
     }
@@ -1438,15 +1406,15 @@ public abstract class TeleVM implements MaxVM {
     public final LayoutScheme layoutScheme() {
         return vmConfiguration.layoutScheme();
     }
-    public final Reference makeReference(Address origin) {
+    public final RemoteReference makeReference(Address origin) {
         return referenceManager.makeReference(origin);
     }
 
-    public final Reference makeQuasiObjectReference(Address origin) {
+    public final RemoteReference makeQuasiObjectReference(Address origin) {
         return referenceManager.makeQuasiReference(origin);
     }
 
-    public final ReferenceValue createReferenceValue(Reference reference) {
+    public final ReferenceValue createReferenceValue(RemoteReference reference) {
         return referenceManager.createReferenceValue(reference);
     }
 
@@ -1457,9 +1425,9 @@ public abstract class TeleVM implements MaxVM {
      * @return A local {@link String} duplicating the object's contents.
      * @throws InvalidReferenceException if the argument does not point a valid heap object.
      */
-    public final String getString(Reference stringRef) throws InvalidReferenceException {
+    public final String getString(RemoteReference stringRef) throws InvalidReferenceException {
         referenceManager.checkReference(stringRef);
-        final Reference charArrayRef = fields().String_value.readReference(stringRef);
+        final RemoteReference charArrayRef = fields().String_value.readReference(stringRef);
         if (charArrayRef.isZero()) {
             return null;
         }
@@ -1509,9 +1477,24 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
+    public final List<MaxObject> inspectableObjects() {
+        final List<MaxObject> inspectableObjects = new ArrayList<MaxObject>();
+        inspectableObjects.add(teleMaxineVM);
+        inspectableObjects.add(teleVMConfiguration);
+        try {
+            inspectableObjects.add(objectAccess.vmBootClassRegistry());
+        } catch (MaxVMBusyException e) {
+        }
+        inspectableObjects.addAll(objectAccess.schemes());
+        inspectableObjects.addAll(codeCacheAccess.codeCacheInspectableObjects());
+        inspectableObjects.addAll(heapAccess.heapInspectableObjects());
+        return inspectableObjects;
+    }
+
+
     public final List<MaxCodeLocation> inspectableMethods() {
         final List<MaxCodeLocation> inspectableMethods = new ArrayList<MaxCodeLocation>(methods().clientInspectableMethods());
-        inspectableMethods.addAll(heapAccess.inspectableMethods());
+        inspectableMethods.addAll(heapAccess.heapInspectableMethods());
         return inspectableMethods;
     }
 
@@ -1737,7 +1720,7 @@ public abstract class TeleVM implements MaxVM {
      * @return a JDWP ObjectProvider object or null, if no object is found at
      *         the address specified by the reference
      */
-    private ObjectProvider findObject(Reference reference) {
+    private ObjectProvider findObject(RemoteReference reference) {
         return objects().makeTeleObject(reference);
     }
 
@@ -1822,7 +1805,7 @@ public abstract class TeleVM implements MaxVM {
             case LONG:
                 return jdwpAccess.createLongValue(value.asLong());
             case REFERENCE:
-                return jdwpAccess.createObjectProviderValue(findObject(value.asReference()));
+                return jdwpAccess.createObjectProviderValue(findObject((RemoteReference) value.asReference()));
             case SHORT:
                 return jdwpAccess.createShortValue(value.asShort());
             case VOID:

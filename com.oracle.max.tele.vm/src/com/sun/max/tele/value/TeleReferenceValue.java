@@ -126,7 +126,7 @@ public final class TeleReferenceValue extends ReferenceValue {
     }
 
     @Override
-    public Reference asReference() {
+    public RemoteReference asReference() {
         return reference;
     }
 

@@ -27,9 +27,10 @@ import java.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.vm.tele.*;
 
 /**
  * Implementation details about the dynamic heap in the VM, specialized
@@ -77,10 +78,10 @@ public final class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
      */
     @Override
     public void updateMemoryStatus(long epoch) {
-        final Reference runtimeHeapRegionsArrayReference = fields().InspectableHeapInfo_dynamicHeapMemoryRegions.readReference(vm());
+        final RemoteReference runtimeHeapRegionsArrayReference = fields().InspectableHeapInfo_dynamicHeapMemoryRegions.readReference(vm());
         if (!runtimeHeapRegionsArrayReference.isZero()) {
             final TeleArrayObject teleArrayObject = (TeleArrayObject) objects().makeTeleObject(runtimeHeapRegionsArrayReference);
-            final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
+            final RemoteReference[] heapRegionReferences = (RemoteReference[]) teleArrayObject.shallowCopy();
             for (int i = 0; i < heapRegionReferences.length; i++) {
                 final TeleMemoryRegion dynamicHeapMemoryRegion = (TeleMemoryRegion) objects().makeTeleObject(heapRegionReferences[i]);
                 if (dynamicHeapMemoryRegion != null) {

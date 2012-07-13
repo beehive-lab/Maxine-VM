@@ -31,12 +31,12 @@ import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Base class for custom {@link VMlog.Logger} argument renderers.
@@ -105,7 +105,7 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
         return teleMethodActor;
     }
 
-    protected WordValueLabel getReferenceValueLabel(Reference reference) {
+    protected WordValueLabel getReferenceValueLabel(RemoteReference reference) {
         return new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, reference.toOrigin(), vmLogView.getTable());
     }
 

@@ -31,7 +31,6 @@ import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.direct.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.reference.Reference;
 
 
 /**
@@ -45,7 +44,7 @@ import com.sun.max.vm.reference.Reference;
  * These references are canonical, and their
  * memory status of these references is permanently {@link ObjectStatus#LIVE}.
  *
- * @see Reference
+ * @see RemoteReference
  * @see RemoteReferenceScheme
  * @see TeleInterpreter
  */

@@ -88,6 +88,16 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         return top;
     }
 
+    public final void unsafeSetTop(Address newTop) {
+        FatalError.check(inCurrentContiguousChunk(newTop), "top must be within allocating chunk");
+        top = newTop;
+    }
+
+    public final Address unsafeSetTopToLimit()  {
+        final Address oldTop = top;
+        top = hardLimit();
+        return oldTop;
+    }
     @INLINE
     public boolean inCurrentContiguousChunk(Address address) {
         return address.greaterEqual(start) && address.lessThan(end);
@@ -200,9 +210,9 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      */
     @NO_SAFEPOINT_POLLS("filling linear space allocator must not be subjected to safepoints")
     protected final Pointer atomicSetTopToLimit() {
-        Pointer thisAddress = Reference.fromJava(this).toOrigin();
+        final Pointer thisAddress = Reference.fromJava(this).toOrigin();
+        final Address hardLimit = hardLimit();
         Address cell;
-        Address hardLimit = hardLimit();
         do {
             cell = top;
             if (cell.equals(hardLimit)) {
@@ -221,9 +231,10 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      * @param retiredSize
      * @return true if succeed, false otherwise.
      */
-    public final boolean retireTop(Pointer retiredTop, Size retiredSize) {
-        Pointer thisAddress = Reference.fromJava(this).toOrigin();
-        Address oldTop = retiredTop.plus(retiredSize);
+    @NO_SAFEPOINT_POLLS("retired space may not be formatted")
+    public final boolean retireTop(Address retiredTop, Size retiredSize) {
+        final Pointer thisAddress = Reference.fromJava(this).toOrigin();
+        final Address oldTop = retiredTop.plus(retiredSize);
         Address cell;
         do {
             cell = top;
@@ -254,11 +265,11 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      * This is unsafe and should only be used when non concurrent allocation can take place.
      */
     final void unsafeMakeParsable() {
-        Pointer cell = top.asPointer();
+        final Address cell = top;
         if (cell.isNotZero()) {
-            Pointer hardLimit = hardLimit().asPointer();
+            Address hardLimit = hardLimit();
             if (cell.lessThan(hardLimit)) {
-                HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), hardLimit);
+                HeapSchemeAdaptor.fillWithDeadObject(cell, hardLimit);
             }
         }
     }

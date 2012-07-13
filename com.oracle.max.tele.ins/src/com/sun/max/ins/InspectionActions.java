@@ -1127,43 +1127,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action: create an Object view for the boot {@link ClassRegistry} in the VM.
-     */
-    final class ViewBootClassRegistryAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "View boot class registry";
-
-        ViewBootClassRegistryAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-        }
-
-        @Override
-        protected void procedure() {
-            try {
-                focus().setHeapObject(vm().objects().vmClassRegistry());
-            } catch (MaxVMBusyException maxVMBusyException) {
-                inspection().announceVMBusyFailure(name());
-            }
-        }
-    }
-
-    private final InspectorAction viewBootClassRegistryAction = new ViewBootClassRegistryAction(null);
-
-    /**
-     * @return Singleton action that will create an Object view for the boot {@link ClassRegistry} in the VM.
-     */
-    public final InspectorAction viewBootClassRegistry() {
-        return viewBootClassRegistryAction;
-    }
-
-
-    /**
      * Menu: display a sub-menu of commands to inspect the basic allocation
      * regions of the VM.
      */
-    final class ViewSchemesMenu extends JMenu {
-        public ViewSchemesMenu() {
-            super("View Scheme instances:");
+    final class ViewSingletonMenu extends JMenu {
+        public ViewSingletonMenu() {
+            super("View VM singletons:");
             addMenuListener(new MenuListener() {
 
                 public void menuCanceled(MenuEvent e) {
@@ -1174,8 +1143,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 public void menuSelected(MenuEvent e) {
                     removeAll();
-                    for (TeleVMScheme scheme : vm().schemes()) {
-                        add(views().objects().makeViewAction(scheme, scheme.schemeName()));
+                    for (MaxObject object : vm().inspectableObjects()) {
+                        add(views().objects().makeViewAction(object, object.maxineRole()));
                     }
                 }
             });
@@ -1191,8 +1160,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @return a dynamically populated menu that contains an action to view each currently allocated
      * region of memory in the VM.
      */
-    public final JMenu viewSchemesMenu() {
-        return new ViewSchemesMenu();
+    public final JMenu viewSingletonMenu() {
+        return new ViewSingletonMenu();
     }
 
     /**
@@ -1341,6 +1310,60 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction viewStaticTupleByName() {
         return viewStaticTupleByNameAction;
+    }
+
+    /**
+     * Action:  view the {@link StaticTuple} object for an interactively named class loaded in the VM,
+     * specified by class name.
+     */
+    final class ViewStaticTupleForObjectAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View StaticTuple for object class";
+
+        private final MaxObject object;
+        private TeleStaticTuple staticTuple = null;
+        /**
+         * @param object
+         * @param actionTitle
+         */
+        ViewStaticTupleForObjectAction(MaxObject object, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.object = object;
+            setEnabled(false);
+            ClassActor classActor = object.classActorForObjectType();
+            if (classActor != null) {
+                Class< ? > javaClass = classActor.toJava();
+                if (javaClass != null) {
+                    TeleClassActor teleClassActor = vm().classes().findTeleClassActor(javaClass);
+                    if (teleClassActor != null) {
+                        this.staticTuple = teleClassActor.getTeleStaticTuple();
+                        if (staticTuple != object) {
+                            // Only enable if we find a static tuple, and if the object
+                            // is not itself a static tuple, in which case it is its own static tuple.
+                            setName("View StaticTuple for class " + javaClass.getSimpleName());
+                            setEnabled(true);
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        protected void procedure() {
+            if (staticTuple == null) {
+                gui().errorMessage("StaticTuple for class not available");
+            } else {
+                focus().setHeapObject(staticTuple);
+            }
+        }
+    }
+
+    /**
+     * @return Singleton interactive Action that views the {@link StaticTuple} object for a class loaded in the VM,
+     * specified by class name.
+     */
+    public final InspectorAction viewStaticTupleForObject(MaxObject object) {
+        return new ViewStaticTupleForObjectAction(object, null);
     }
 
     /**
@@ -4738,11 +4761,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 classHubsMenu.add(viewStaticHubByName());
                 menu.add(classHubsMenu);
 
-                menu.add(viewSchemesMenu());
+                menu.add(viewSingletonMenu());
 
                 menu.add(views().objects().viewMenu());
 
-                menu.add(viewBootClassRegistry());
 
             }
         };

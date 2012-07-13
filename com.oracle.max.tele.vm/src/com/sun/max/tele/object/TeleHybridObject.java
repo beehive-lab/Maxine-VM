@@ -26,6 +26,7 @@ import java.lang.reflect.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
@@ -34,7 +35,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -47,7 +47,7 @@ import com.sun.max.vm.value.*;
   */
 public abstract class TeleHybridObject extends TeleObject {
 
-    protected TeleHybridObject(TeleVM vm, Reference reference) {
+    protected TeleHybridObject(TeleVM vm, RemoteReference reference) {
         super(vm, reference, vm.layoutScheme().hybridLayout);
     }
 

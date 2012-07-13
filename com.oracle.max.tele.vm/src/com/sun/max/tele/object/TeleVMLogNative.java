@@ -24,12 +24,12 @@ package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.nat.*;
 import com.sun.max.vm.log.nat.thread.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Access to native implementations the VM's {@linkplain VMLog log}.
@@ -41,7 +41,7 @@ public final class TeleVMLogNative extends TeleVMLog {
     private int defaultNativeRecordSize = 0;
     private int nativeRecordArgsOffset = 0;
 
-    protected TeleVMLogNative(TeleVM vm, Reference vmLogNativeReference) {
+    protected TeleVMLogNative(TeleVM vm, RemoteReference vmLogNativeReference) {
         super(vm, vmLogNativeReference);
     }
 

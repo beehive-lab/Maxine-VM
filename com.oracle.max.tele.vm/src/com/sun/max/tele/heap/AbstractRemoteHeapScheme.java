@@ -101,6 +101,10 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         return Collections.emptyList();
     }
 
+    public List<MaxObject> inspectableObjects() {
+        return Collections.emptyList();
+    }
+
     public MaxMarkBitsInfo markBitInfo() {
         return null;
     }

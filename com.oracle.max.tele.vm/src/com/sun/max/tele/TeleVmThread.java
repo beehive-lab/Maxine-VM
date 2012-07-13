@@ -25,7 +25,6 @@ package com.sun.max.tele;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -40,21 +39,21 @@ public class TeleVmThread extends TeleTupleObject {
     /**
      * Reference to the string object in the VM holding the thread name.
      */
-    private Reference nameReference = vm().referenceManager().zeroReference();
+    private RemoteReference nameReference = vm().referenceManager().zeroReference();
 
     /**
      * Copy of the string representing the name of the thread the last time we checked the VM.
      */
     private String name = "*unset*";
 
-    public TeleVmThread(TeleVM vm, Reference vmThreadReference) {
+    public TeleVmThread(TeleVM vm, RemoteReference vmThreadReference) {
         super(vm, vmThreadReference);
     }
 
     public String name() {
         if (vm().teleProcess().epoch() > lastRefreshedEpoch) {
             try {
-                final Reference nameReference = fields().VmThread_name.readReference(reference());
+                final RemoteReference nameReference = fields().VmThread_name.readReference(reference());
                 if (!nameReference.equals(this.nameReference)) {
                     this.nameReference = nameReference;
                     if (this.nameReference.isZero()) {
