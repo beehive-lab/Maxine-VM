@@ -45,11 +45,22 @@ public final class TeleInstanceReferenceFieldAccess extends TeleInstanceFieldAcc
     }
 
     /**
-     * Reads an object instance reference field from VM memory.
+     * Reads an object instance reference field from VM memory, following a forwarding pointer if present.
      *
-     * @return the value of the field in VM memory interpreted as a reference
+     * @return the value of the field in VM memory interpreted as a reference, unless it is a forwarding pointer in
+     * which case the reference returned refers to the destination of the forwarding pointer.
      */
     public RemoteReference readReference(RemoteReference reference) {
+        final RemoteReference rawReference = readRawReference(reference);
+        return rawReference == null ? null : rawReference.jumpForwarder();
+    }
+
+    /**
+     * Reads an object instance reference field from VM memory.
+     *
+     * @return the value of the field in VM memory interpreted as a reference.
+     */
+    public RemoteReference readRawReference(RemoteReference reference) {
         return (RemoteReference) reference.readReference(fieldActor().offset());
     }
 

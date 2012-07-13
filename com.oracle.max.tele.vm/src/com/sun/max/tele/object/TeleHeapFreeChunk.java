@@ -46,7 +46,7 @@ public class TeleHeapFreeChunk extends TeleTupleObject {
             return false;
         }
         size = fields().HeapFreeChunk_size.readWord(reference()).asSize();
-        nextRef = fields().HeapFreeChunk_next.readReference(reference());
+        nextRef = fields().HeapFreeChunk_next.readRawReference(reference());
         return true;
     }
 

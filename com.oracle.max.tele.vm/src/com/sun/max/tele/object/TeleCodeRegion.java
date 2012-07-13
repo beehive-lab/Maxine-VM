@@ -99,13 +99,13 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     }
 
     /**
-     * Gets a reference to a {@link TargetMethod} from the code cache region.
+     * Gets a reference to a {@link TargetMethod} from the code cache region, following a forwarding pointer if present.
      *
      * @param index identifies the desired target method.  Must be less than {@link #nTargetMethods()}.
      * @return a reference to a {@link TargetMethod} in the VM.
      */
     public final RemoteReference getTargetMethodReference(int index) {
-        return (RemoteReference) objects().unsafeReadArrayElementValue(Kind.REFERENCE, targetMethodsReference, index).asReference();
+        return ((RemoteReference) objects().unsafeReadArrayElementValue(Kind.REFERENCE, targetMethodsReference, index).asReference()).jumpForwarder();
     }
 
     /**
