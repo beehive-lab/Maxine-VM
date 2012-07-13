@@ -25,33 +25,52 @@ package com.sun.max.ins.debug.vmlog;
 import java.awt.*;
 
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.value.*;
+import com.sun.max.ins.value.WordValueLabel.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 import com.sun.max.vm.log.VMLog.*;
 
+/**
+ * Custom argument rendering for the {@link JVMTIEvents} logger.
+ * Since the logger uses the event ordinal as the operation, the normal
+ * default argument decoding does not apply.
+ *
+ */
 public class JVMTIEventsVMLogArgRenderer extends VMLogArgRenderer {
 
     private final PlainLabel DELIVERING;
-    private final PlainLabel SUPPRESSING;
+    private final PlainLabel WRONG_PHASE;
+    private final PlainLabel NO_INTEREST;
 
     public JVMTIEventsVMLogArgRenderer(VMLogView vmLogView) {
         super(vmLogView);
         DELIVERING = new PlainLabel(vmLogView.inspection(), "Delivering");
-        SUPPRESSING = new PlainLabel(vmLogView.inspection(), "Suppressing");
+        WRONG_PHASE = new PlainLabel(vmLogView.inspection(), "Wrong Phase");
+        NO_INTEREST = new PlainLabel(vmLogView.inspection(), "No Interest");
     }
 
     @Override
     protected Component getRenderer(int header, int argNum, long argValue) {
         if (argNum == 1) {
-            if (argValue == JVMTIEventLogger.DELIVERED) {
-                return DELIVERING;
-            } else {
-                return SUPPRESSING;
+            switch ((int) argValue) {
+                case JVMTIEventLogger.DELIVERED:
+                    return DELIVERING;
+                case JVMTIEventLogger.WRONG_PHASE:
+                    return WRONG_PHASE;
+                case JVMTIEventLogger.NO_INTEREST:
+                    return NO_INTEREST;
+                default:
+                    return super.getRenderer(header, argNum, argValue);
             }
+        } else if (argNum == 2) {
+            return new WordValueLabel(vmLogView.inspection(), ValueMode.REFERENCE, Address.fromLong(argValue), vmLogView.getTable());
         }
         int op = Record.getOperation(header);
         switch (E.VALUES[op]) {
             case CLASS_PREPARE:
                 return safeGetReferenceValueLabel(getTeleClassActor(argValue));
+            case SINGLE_STEP:
             case BREAKPOINT:
                 if (argNum == 3) {
                     // methodId

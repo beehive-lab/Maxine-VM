@@ -143,9 +143,14 @@ public class JVMTIEvents {
 
     }
 
+    /**
+     * A logger for JVMTI events.
+     * It does not define an {@code Operation} class but used the {@link JVMTIEvents.E} class directly as the operation.
+     */
     public static class JVMTIEventLogger extends VMLogger {
-        public static final int SUPPRESSED = 1;
         public static final int DELIVERED = 0;
+        public static final int NO_INTEREST = 1;
+        public static final int WRONG_PHASE = 2;
 
         private JVMTIEventLogger() {
             super("JVMTIEvents", E.EVENT_COUNT, "log JVMTI events");
@@ -156,32 +161,29 @@ public class JVMTIEvents {
             return E.VALUES[op].name();
         }
 
-        void logSuppressedEvent(E event) {
-            log(event.ordinal(), intArg(SUPPRESSED));
-        }
-
-        void logEvent(E event, JVMTI.Env env, Object arg) {
+        void logEvent(E event, int status, JVMTI.Env env, Object arg) {
             int ord = event.ordinal();
-            Word envArg = objectArg(env);
-            Word delivered = intArg(DELIVERED);
+            Word statusArg = intArg(status);
+            Word envArg = objectArg(env);  // arg 2
             switch (event) {
                 case CLASS_LOAD:
                 case CLASS_PREPARE: {
-                    log(ord, envArg, delivered, classActorArg((ClassActor) arg));
+                    log(ord, statusArg, envArg, classActorArg((ClassActor) arg));
                     break;
                 }
+                case SINGLE_STEP:
                 case BREAKPOINT: {
                     EventBreakpointID bptId = (EventBreakpointID) arg;
-                    log(ord, envArg, delivered, Address.fromLong(bptId.methodID), intArg(bptId.location));
+                    log(ord, statusArg, envArg, Address.fromLong(bptId.methodID), intArg(bptId.location));
                     break;
                 }
                 case COMPILED_METHOD_LOAD: {
-                    log(ord, envArg, delivered, methodActorArg((MethodActor) arg));
+                    log(ord, statusArg, envArg, methodActorArg((MethodActor) arg));
                     break;
                 }
 
                 default:
-                    log(ord, envArg, delivered);
+                    log(ord, statusArg, envArg);
             }
         }
 
