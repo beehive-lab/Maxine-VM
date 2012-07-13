@@ -172,7 +172,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
                 final int targetMethodCount = teleSemiSpaceCodeRegion.nTargetMethods();
                 int index = compilations.size();
                 while (index < targetMethodCount) {
-                    RemoteReference targetMethodReference = teleSemiSpaceCodeRegion.getTargetMethodReference(index++).jumpForwarder();
+                    RemoteReference targetMethodReference = teleSemiSpaceCodeRegion.getTargetMethodReference(index++);
                     // Have we seen this compilation before, independent of its location in the region?
                     TeleCompilation compilation = getCompilation(targetMethodReference);
                     if (compilation == null) {

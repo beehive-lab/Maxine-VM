@@ -40,11 +40,22 @@ public final class TeleStaticReferenceFieldAccess extends TeleStaticFieldAccess 
     }
 
     /**
+     * Reads a static reference field from VM memory, following a forwarding pointer if present.
+     *
+     * @return the value of the field in VM memory interpreted as a reference, unless it is a forwarding pointer in
+     * which case the reference returned refers to the destination of the forwarding pointer.
+     */
+    public RemoteReference readReference(MaxVM vm) {
+        final RemoteReference rawReference = readRawReference(vm);
+        return rawReference == null ? null : rawReference.jumpForwarder();
+    }
+
+    /**
      * Reads a static reference field from VM memory.
      *
      * @return the value of the field in VM memory interpreted as a reference
      */
-    public RemoteReference readReference(MaxVM vm) {
+    public RemoteReference readRawReference(MaxVM vm) {
         return (RemoteReference) staticTupleReference(vm).readReference(fieldActor().offset());
     }
 

@@ -44,7 +44,7 @@ public abstract class TeleMemberActor extends TeleActor {
      * @return surrogate for the {@link ClassActor} object in the VM that contains this member
      */
     public TeleClassActor getTeleHolder() {
-        final RemoteReference classActorReference =  jumpForwarder(fields().MemberActor_holder.readReference(reference()));
+        final RemoteReference classActorReference =  fields().MemberActor_holder.readReference(reference());
         return (TeleClassActor) objects().makeTeleObject(classActorReference);
     }
 
@@ -55,7 +55,7 @@ public abstract class TeleMemberActor extends TeleActor {
 
     protected final TeleDescriptor getTeleDescriptor() {
         if (descriptor == null) {
-            final RemoteReference reference = jumpForwarder(fields().MemberActor_descriptor.readReference(reference()));
+            final RemoteReference reference = fields().MemberActor_descriptor.readReference(reference());
             descriptor = (TeleDescriptor) objects().makeTeleObject(reference);
         }
         return descriptor;

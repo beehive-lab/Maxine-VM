@@ -42,7 +42,9 @@ public final class TeleStaticHubForwarderQuasi extends TeleStaticHub {
     @Override
     protected TeleHub fetchTeleHub() {
          // final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
-        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(jumpForwarder(reference())).asAddress());
+        // Read the hub reference from the new copy
+        final RemoteReference newStaticHubReference = reference().jumpForwarder();
+        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(newStaticHubReference).asAddress());
     }
 
     @Override

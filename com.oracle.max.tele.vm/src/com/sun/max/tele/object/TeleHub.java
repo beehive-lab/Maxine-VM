@@ -60,7 +60,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * Logic to fetch the tele class actor for this tele hub on cache miss.
      */
     protected TeleClassActor fetchTeleClassActor() {
-        final RemoteReference classActorReference = jumpForwarder(fields().Hub_classActor.readReference(reference()));
+        final RemoteReference classActorReference = fields().Hub_classActor.readReference(reference());
         return (TeleClassActor) objects().makeTeleObject(classActorReference);
     }
 

@@ -46,7 +46,7 @@ public class TeleCodeAttribute extends TeleTupleObject {
      */
     public final byte[] readBytecodes() {
         assert vm().lockHeldByCurrentThread();
-        final RemoteReference byteArrayReference = jumpForwarder(fields().CodeAttribute_code.readReference(reference()));
+        final RemoteReference byteArrayReference = fields().CodeAttribute_code.readReference(reference());
         final TeleArrayObject teleByteArrayObject = (TeleArrayObject) objects().makeTeleObject(byteArrayReference);
         return (byte[]) teleByteArrayObject.shallowCopy();
     }
@@ -55,7 +55,7 @@ public class TeleCodeAttribute extends TeleTupleObject {
      * Gets the local surrogate for the {@link ConstantPool} associated with this code in the VM.
      */
     public final TeleConstantPool getTeleConstantPool() {
-        final RemoteReference constantPoolReference = jumpForwarder(fields().CodeAttribute_cp.readReference(reference()));
+        final RemoteReference constantPoolReference = fields().CodeAttribute_cp.readReference(reference());
         return (TeleConstantPool) objects().makeTeleObject(constantPoolReference);
     }
 

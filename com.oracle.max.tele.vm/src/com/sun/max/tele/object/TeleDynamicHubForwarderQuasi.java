@@ -41,14 +41,17 @@ public final class TeleDynamicHubForwarderQuasi extends TeleDynamicHub {
 
     @Override
     protected TeleClassActor fetchTeleClassActor() {
-        final RemoteReference classActorReference = fields().Hub_classActor.readReference(reference().jumpForwarder()).jumpForwarder();
+        // Read from the new copy
+        final RemoteReference classActorReference = fields().Hub_classActor.readReference(reference().jumpForwarder());
         return (TeleClassActor) objects().makeTeleObject(classActorReference);
     }
 
     @Override
     public TeleHub fetchTeleHub() {
         // final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
-        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(jumpForwarder(reference())).asAddress());
+        // Read the hub reference from the new copy
+        final RemoteReference newDynamicHubReference = reference().jumpForwarder();
+        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(newDynamicHubReference).asAddress());
     }
 
     @Override
