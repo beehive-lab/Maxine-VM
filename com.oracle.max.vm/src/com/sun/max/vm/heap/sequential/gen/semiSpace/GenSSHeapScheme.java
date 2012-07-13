@@ -446,7 +446,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             if (resizingPolicy.resizeAfterFullGC(estimatedEvac, oldSpace.freeSpace())) {
                 resize(youngSpace, resizingPolicy.youngGenSize());
                 resize(oldSpace, resizingPolicy.oldGenSize());
-                oldSpaceEvacuator.setEvacuationBufferSize(oldSpace.fromSpace.committedSize());
             }
             evacTimers.stop(TOTAL);
             lastFullGCTime = System.currentTimeMillis() - lastFullGCTime;
@@ -522,18 +521,22 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             Address startOfOldSpace = youngSpace.space.end().alignUp(pageSize);
             oldSpace.initialize(startOfOldSpace, resizingPolicy.maxOldGenSize(), resizingPolicy.initialOldGenSize());
             /*
-             * FIXME:
-             * We set retireAfterEvacuation parameter to true. We allocate the entire old free space as evacuation allocation buffer (EAB)  when doing a minor evacuation,
-             * and retire the entire left over. This is necessary in order for the oldSpace.freeSpace to report the free space accurately independently
-             * of the youngSpaceEvacuator (otherwise, we'd have to include the evacuator's EAB in the calculation). It is also necessary to
-             * retire the TLAB if we need mutators to allocate directly in the old gen.
-             * This is rather complicated and we need to rethink the APIs here and how to share the evacuator.
-             * An alternative would be to allocate an ELAB of size equal to the expected survivor space minus leftover in the current ELAB, but that isn't satisfying either.
+             * The evacuators include their own local allocation buffer, refilled via the EvacuationBufferProvider interface implemented by the GenSSHeapScheme.
+             * The evacuators are initialized with the retireAfterEvacuation parameter to true. This allows the GenSSHeapScheme to
+             * use the entire old free space as evacuation allocation buffer (EAB)  when doing a minor evacuation,
+             * and retire the entire left over after the evacuation. Setting retireAfterEvacuation guarantees that the evacuators (especially the oldSpaceEvacuators)
+             * doesn't keep it's evacuation buffers across minor collections. This is necessery for two reasons:
+             * (i) so that oldSpace.freeSpace() reports the free space accurately independently
+             * of the youngSpaceEvacuator (otherwise, we'd have to include the evacuator's EAB in the calculation);
+             * (2) if we need mutators to allocate directly in the old gen, then evacuation buffer need to be retired so the old gen doesn't look full (otherwise, we
+             * have to make allocation routine aware of the caching performed by the old space evacuator, which would be really messy and prevent reuse of
+             * allocators across heap scheme.
+             *
+             * We also set the alwaysRefill argument to true: this makes refilling not conditional to space left over in the private evacuation buffer.
+             * Since the evacuation buffer is refilled before evacuation with the entire free space, the first allocation failure correspond to an overflow situation
              */
-            // Set the minRefillThreshold to max size of the generation to never overflow allocate. This forces all allocation failure at GC to
-            // refill the EAB.
-            youngSpaceEvacuator.initialize(2, oldSpace.freeSpace(), true, Size.zero(), true);
-            oldSpaceEvacuator.initialize(2, oldSpace.freeSpace(), true, Size.zero(), true);
+            youngSpaceEvacuator.initialize(2, true, Size.zero(), true);
+            oldSpaceEvacuator.initialize(2, true, Size.zero(), true);
             initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
             cardTableRSet.initializeXirStartupConstants();
 

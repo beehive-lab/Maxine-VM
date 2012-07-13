@@ -70,10 +70,8 @@ public class EvacuatorToCardSpace extends Evacuator {
     private boolean retireAfterEvacuation;
 
     /**
-     * Hint of amount of space to use to refill the promotion allocation buffer.
+     * The provider of the evacuation buffer for this evacuator.
      */
-    private Size evacuationBufferSize;
-
     private final EvacuationBufferProvider evacuationBufferProvider;
 
     /**
@@ -128,6 +126,9 @@ public class EvacuatorToCardSpace extends Evacuator {
      */
     private SurvivorRangesQueue survivorRanges;
 
+    /**
+     * Bounds of the evacuated space. For fast in-bound testing.
+     */
     private EvacuatingSpace.SpaceBounds evacuatedAreaBounds;
 
     public EvacuatorToCardSpace(EvacuatingSpace fromSpace, HeapSpace toSpace, EvacuationBufferProvider evacuationBufferProvider, CardTableRSet rset) {
@@ -139,34 +140,33 @@ public class EvacuatorToCardSpace extends Evacuator {
         this.evacuatedAreaBounds = fromSpace.bounds();
     }
 
-    /**
-     * Set the size of thread-local evacuation buffer, used for allocating space for evacuated object.
-     * @param size
-     */
-    public void setEvacuationBufferSize(Size size) {
-        evacuationBufferSize = size;
-    }
-
     public void setEvacuationSpace(EvacuatingSpace fromSpace,  HeapSpace toSpace) {
         this.fromSpace = fromSpace;
         this.toSpace = toSpace;
         evacuatedAreaBounds = fromSpace.bounds();
     }
 
-    public void initialize(int maxSurvivorRanges, Size evacuationBufferSize, boolean alwaysRefill, Size minRefillThreshold, boolean retireAfterEvacuation) {
+    /**
+     * Initialize the evacuator.
+     *
+     * @param maxSurvivorRanges maximum number of discontinuous range of survivors the evacuator may have to keep track of during evacuation
+     * @param alwaysRefill if true, always refill on allocation failure, no matter what's left over in the current evacuation buffer. Otherwise, use minRefillThreshold to trigger refill
+     * @param minRefillThreshold refill on allocation failure if the amount of space left in evacuation buffer is less than this threshold and alwaysRefill is false
+     * @param retireAfterEvacuation indicate whether evacuation buffer are kept across evacuation. If set to false, the evacuation buffer is retire to its provider after evacuation.
+     */
+    public void initialize(int maxSurvivorRanges, boolean alwaysRefill, Size minRefillThreshold, boolean retireAfterEvacuation) {
         this.survivorRanges = new SurvivorRangesQueue(maxSurvivorRanges);
-        this.evacuationBufferSize = evacuationBufferSize;
         this.alwaysRefill = alwaysRefill;
         this.minRefillThreshold =  alwaysRefill ? Size.fromLong(Long.MAX_VALUE) : minRefillThreshold;
         this.retireAfterEvacuation = retireAfterEvacuation;
     }
 
+    /**
+     * Number of bytes evacuated in the last evacuation.
+     * @return a number of bytes
+     */
     public Size evacuatedBytes() {
         return evacuatedBytes;
-    }
-
-    public Size freeSpace() {
-        return pend.minus(ptop).asSize();
     }
 
     /**

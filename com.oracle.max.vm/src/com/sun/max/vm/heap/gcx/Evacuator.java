@@ -286,27 +286,6 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         Code.visitCells(this, includeBootCode);
     }
 
-  /*  final protected Pointer scanCellForEvacuatees2(Pointer cell) {
-        if (traceEvacVisitedCell()) {
-            Log.print("visitCell "); Log.println(cell);
-        }
-        final Pointer origin = Layout.cellToOrigin(cell);
-        // Update the hub first so that is can be dereferenced to obtain
-        // the reference map needed to find the other references in the object
-        updateEvacuatedRef(origin,  Layout.hubIndex());
-        final Hub hub =  Layout.getHub(origin);
-        if (hub == heapFreeChunkHub()) {
-            return cell.plus(toHeapFreeChunk(origin).size);
-        }
-        // Update the other references in the object
-        final SpecificLayout specificLayout = hub.specificLayout;
-        specificLayout.visitReferences(origin, this);
-        if (hub.isJLRReference) {
-            updateSpecialReference(origin);
-        }
-        return cell.plus(specificLayout.specificSize(origin));
-    }
-*/
     /**
      * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
      * @param cell
