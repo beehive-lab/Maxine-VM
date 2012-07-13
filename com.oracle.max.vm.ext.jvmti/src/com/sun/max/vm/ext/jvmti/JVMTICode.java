@@ -66,9 +66,12 @@ public class JVMTICode {
     }
 
     static void checkDeOptForMethod(ClassMethodActor classMethodActor, long codeEventSettings) {
-        TargetMethod targetMethod = classMethodActor.currentTargetMethod();
+        checkDeOptForTargetMethod(classMethodActor.currentTargetMethod(), codeEventSettings);
+    }
+
+    static void checkDeOptForTargetMethod(TargetMethod targetMethod, long codeEventSettings) {
         // we check here if the code is already adequate for the settings we want
-        if (JVMTI_DependencyProcessor.checkSettings(classMethodActor, codeEventSettings)) {
+        if (JVMTI_DependencyProcessor.checkSettings(targetMethod.classMethodActor, codeEventSettings)) {
             return;
         }
         ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();

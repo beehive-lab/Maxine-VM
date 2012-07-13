@@ -327,7 +327,7 @@ public class CompilationBroker {
      */
     public TargetMethod compileForDeopt(ClassMethodActor cma) {
         TargetMethod tm = cma.currentTargetMethod();
-        if (tm.isBaseline() && tm.invalidated() == null) {
+        if (tm != null && tm.isBaseline() && tm.invalidated() == null) {
             return tm;
         }
         return compile(cma, Nature.BASELINE, true);

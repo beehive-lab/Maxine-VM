@@ -23,7 +23,6 @@
 package com.sun.max.vm.ext.jvmti;
 
 import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIVmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
@@ -115,6 +114,7 @@ public class JVMTIException {
         TargetMethod catchTargetMethod;
         int stackElementSizeAtCatch;
         int throwingBci = -1;
+        long throwingFrameId;
         TargetMethod.CatchExceptionInfo catchInfo = new TargetMethod.CatchExceptionInfo();
 
         @Override
@@ -124,6 +124,7 @@ public class JVMTIException {
                 if (!(methodActorOriginal.holder() == throwClassActor || isThrowImplMethod(methodActor))) {
                     this.throwingMethodActor = methodActorOriginal;
                     this.throwingBci = bci;
+                    this.throwingFrameId = frameId;
                 }
             }
             return super.visitSourceFrame(methodActor, bci, trapped, frameId);
@@ -232,7 +233,7 @@ public class JVMTIException {
         // send if any agent wants it
         return JVMTI.eventNeeded(E.EXCEPTION) || JVMTI.eventNeeded(E.EXCEPTION_CATCH)  ||
                   JVMTI.eventNeeded(E.METHOD_EXIT) ||
-                  JVMTIVmThreadLocal.bitIsSet(VmThread.currentTLA(), JVMTI_FRAME_POP) || vmaHandler != null;
+                  JVMTIThreadFunctions.framePopForException() || vmaHandler != null;
     }
 
     /**
@@ -290,13 +291,14 @@ public class JVMTIException {
                 // send a POP_FRAME unless caught in throwing method
                 if (ctm.classMethodActor != stackAnalyser.throwingMethodActor) {
                     FramePopEventData framePopEventData = JVMTIThreadFunctions.getFramePopEventData(exceptionEventData.methodID, true, null);
-                    if (JVMTIVmThreadLocal.bitIsSet(VmThread.currentTLA(), JVMTI_FRAME_POP)) {
+                    if (JVMTIThreadFunctions.findFramePopId(VmThread.current(), stackAnalyser.throwingFrameId)) {
                         JVMTI.event(E.FRAME_POP, framePopEventData);
                     }
 
                     if (JVMTIEvents.isEventSet(E.METHOD_EXIT)) {
                         JVMTI.event(E.METHOD_EXIT, framePopEventData);
                     }
+
                     if (vmaHandler != null) {
                         vmaHandler.exceptionRaised(stackAnalyser.throwingMethodActor, throwable, stackAnalyser.stackElementSizeAtCatch - 1);
                     }
