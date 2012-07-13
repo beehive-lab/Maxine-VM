@@ -30,7 +30,6 @@ import static com.sun.max.vm.ext.jvmti.JVMTIFieldWatch.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.unsafe.UnsafeCast.*;
 
-import java.lang.reflect.*;
 import java.security.*;
 import java.util.*;
 
@@ -56,7 +55,7 @@ import com.sun.max.vm.ti.*;
 /**
  * The heart of the Maxine JVMTI implementation.
  * Handles environments, event handling.
- * Supports both standard (native) agents and the Java agents written to {@link JJVMTIStd}.
+ * Supports both standard (native) agents and the Java agents written to {@link JJVMTI}.
  */
 public class JVMTI {
     /**
@@ -434,6 +433,7 @@ public class JVMTI {
    /**
      * Support for avoiding unnecessary work in the VM.
      * Returns {@code true} iff at least one agent wants to handle this event.
+     * TODO fix for Java agents
      * @param eventId
      */
     public static synchronized boolean eventNeeded(JVMTIEvents.E event) {
@@ -538,28 +538,6 @@ public class JVMTI {
     }
 
     /**
-     * Very basic check on whether to suppress the event.
-     * N.B. This does <b>not</b> do any checks on agent settings.
-     * @param event
-     * @return
-     */
-    private static boolean suppressEvent(JVMTIEvents.E event) {
-        if (MaxineVM.isHosted()) {
-            return true;
-        }
-        if (activeEnvCount == 0) {
-            // no agents
-            return true;
-        }
-
-        if ((JVMTIEvents.getPhases(event) & phase) == 0) {
-            // wrong phase
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * Invoked from T1X templates, so no inline.
      */
     @NEVER_INLINE
@@ -575,6 +553,12 @@ public class JVMTI {
         event(E.EXCEPTION_CATCH, JVMTIException.getExceptionEventData());
     }
 
+    private static void logEvent(JVMTIEvents.E event, JVMTI.Env env, int status, Object arg1) {
+        if (JVMTIEvents.logger.enabled()) {
+            JVMTIEvents.logger.logEvent(event, status, env, arg1);
+        }
+    }
+
     public static void event(JVMTIEvents.E event) {
         event(event, null);
     }
@@ -586,17 +570,15 @@ public class JVMTI {
      * @param eventId
      */
     public static void event(JVMTIEvents.E event, Object arg1) {
-        boolean suppress = suppressEvent(event);
-
-
-        if (suppress) {
-            if (JVMTIEvents.logger.enabled()) {
-                JVMTIEvents.logger.logSuppressedEvent(event);
-            }
+        if (MaxineVM.isHosted()) {
+            return;
+        }
+        if (phase == JVMTI_PHASE_LIVE && activeEnvCount == 0) {
+            logEvent(event, null, JVMTIEventLogger.NO_INTEREST, arg1);
             return;
         }
 
-        // Regardless of interest in these events there are things that must be done
+        // Regardless of interest in these events we must track the phase.
         switch (event) {
             case VM_START:
                 phase = JVMTI_PHASE_START;
@@ -604,13 +586,37 @@ public class JVMTI {
 
             case VM_INIT:
                 phase = JVMTI_PHASE_LIVE;
-                tfed = new ThreadFieldEventData();
                 break;
 
             default:
         }
 
-        // Check that event is enabled and dispatch it to all interested agents
+        if ((JVMTIEvents.getPhases(event) & phase) == 0) {
+            // VM has sent an event that is not supposed to be delivered in the current phase
+            logEvent(event, null, JVMTIEventLogger.WRONG_PHASE, arg1);
+        } else {
+            // fast check if anyone is interested
+            boolean interest = JVMTIEvents.isEventSet(event);
+            if (interest) {
+                interest = dispatchEvent(event, arg1); // did anyone actually get it?
+            }
+            if (!interest) {
+                logEvent(event, null, JVMTIEventLogger.NO_INTEREST, arg1);
+            }
+
+        }
+
+
+        if (event == E.VM_DEATH) {
+            // Now the event has (possibly) been delivered change the phase.
+            // This will suppress the deliver of any future events as the phase check above will not match.
+            phase = JVMTI_PHASE_DEAD;
+        }
+    }
+
+    private static boolean dispatchEvent(JVMTIEvents.E event, Object arg1) {
+        // Dispatch event to all interested agents
+        boolean interest = false;
         for (int i = 0; i < jvmtiEnvs.length; i++) {
             if (i < MAX_NATIVE_ENVS) {
                 NativeEnv nativeEnv = (NativeEnv) jvmtiEnvs[i];
@@ -618,7 +624,8 @@ public class JVMTI {
                 if (callback.isZero()) {
                     continue;
                 }
-                JVMTIEvents.logger.logEvent(event, nativeEnv, arg1);
+                interest = true;
+                logEvent(event, nativeEnv, JVMTIEventLogger.DELIVERED, arg1);
                 Pointer cstruct = nativeEnv.cstruct;
                 switch (event) {
                     case VM_START:
@@ -674,7 +681,8 @@ public class JVMTI {
                 if (javaEnv == null || !JVMTIEvents.isEventSet(javaEnv, event, VmThread.current())) {
                     continue;
                 }
-                JVMTIEvents.logger.logEvent(event, javaEnv, arg1);
+                interest = true;
+                logEvent(event, javaEnv, JVMTIEventLogger.DELIVERED, arg1);
                 Thread currentThread = Thread.currentThread();
                 switch (event) {
                     case VM_INIT:
@@ -765,19 +773,8 @@ public class JVMTI {
                 }
             }
         }
-        if (event == E.VM_DEATH) {
-            phase = JVMTI_PHASE_DEAD;
-        }
-    }
 
-    private static Member getMethodOrConstructor(MethodActor methodActor) {
-        Member member;
-        if (methodActor.isConstructor()) {
-            member = methodActor.toJavaConstructor();
-        } else {
-            member = methodActor.toJava();
-        }
-        return member;
+        return interest; // at least one agent was (really) interested.
     }
 
     private static class ThreadFieldEventData extends ThreadLocal<FieldEventData> {
@@ -787,17 +784,14 @@ public class JVMTI {
         }
     }
 
-    private static ThreadFieldEventData tfed;
+    private static final ThreadFieldEventData tfed = new ThreadFieldEventData();
 
     @INTRINSIC(UNSAFE_CAST) public static FieldEventData  asFieldEventData(Object object) { return (FieldEventData) object; }
     @INTRINSIC(UNSAFE_CAST) public static FramePopEventData  asFramePopEventData(Object object) { return (FramePopEventData) object; }
     @INTRINSIC(UNSAFE_CAST) public static EventBreakpointID  asEventBreakpointID(Object object) { return (EventBreakpointID) object; }
     @INTRINSIC(UNSAFE_CAST) public static ExceptionEventData  asExceptionEventData(Object object) { return (ExceptionEventData) object; }
 
-    private static FieldEventData checkGetFieldModificationEvent(JVMTIEvents.E event, Object object, int offset, boolean isStatic) {
-        if (suppressEvent(event)) {
-            return null;
-        }
+    private static FieldEventData setFieldEventData(JVMTIEvents.E event, Object object, int offset, boolean isStatic) {
         FieldEventData data = tfed.get();
         data.object = object;
         data.offset = offset;
@@ -809,20 +803,14 @@ public class JVMTI {
 
     @NEVER_INLINE
     public static void fieldAccessEvent(Object object, int offset, boolean isStatic) {
-        FieldEventData data = checkGetFieldModificationEvent(E.FIELD_ACCESS, object, offset, isStatic);
-        if (data == null) {
-            return;
-        }
+        FieldEventData data = setFieldEventData(E.FIELD_ACCESS, object, offset, isStatic);
         data.tag = FieldEventData.DATA_NONE;
         event(E.FIELD_ACCESS, data);
     }
 
     @NEVER_INLINE
     public static void fieldModificationEvent(Object object, int offset, boolean isStatic, long value) {
-        FieldEventData data = checkGetFieldModificationEvent(E.FIELD_MODIFICATION, object, offset, isStatic);
-        if (data == null) {
-            return;
-        }
+        FieldEventData data = setFieldEventData(E.FIELD_MODIFICATION, object, offset, isStatic);
         data.tag = FieldEventData.DATA_LONG;
         data.longValue = value;
         event(E.FIELD_MODIFICATION, data);
@@ -830,10 +818,7 @@ public class JVMTI {
 
     @NEVER_INLINE
     public static void fieldModificationEvent(Object object, int offset, boolean isStatic, float value) {
-        FieldEventData data = checkGetFieldModificationEvent(E.FIELD_MODIFICATION, object, offset, isStatic);
-        if (data == null) {
-            return;
-        }
+        FieldEventData data = setFieldEventData(E.FIELD_MODIFICATION, object, offset, isStatic);
         data.tag = FieldEventData.DATA_FLOAT;
         data.floatValue = value;
         event(E.FIELD_MODIFICATION, data);
@@ -841,10 +826,7 @@ public class JVMTI {
 
     @NEVER_INLINE
     public static void fieldModificationEvent(Object object, int offset, boolean isStatic, double value) {
-        FieldEventData data = checkGetFieldModificationEvent(E.FIELD_MODIFICATION, object, offset, isStatic);
-        if (data == null) {
-            return;
-        }
+        FieldEventData data = setFieldEventData(E.FIELD_MODIFICATION, object, offset, isStatic);
         data.tag = FieldEventData.DATA_DOUBLE;
         data.doubleValue = value;
         event(E.FIELD_MODIFICATION, data);
@@ -852,10 +834,7 @@ public class JVMTI {
 
     @NEVER_INLINE
     public static void fieldModificationEvent(Object object, int offset, boolean isStatic, Object value) {
-        FieldEventData data = checkGetFieldModificationEvent(E.FIELD_MODIFICATION, object, offset, isStatic);
-        if (data == null) {
-            return;
-        }
+        FieldEventData data = setFieldEventData(E.FIELD_MODIFICATION, object, offset, isStatic);
         data.tag = FieldEventData.DATA_OBJECT;
         data.objectValue = value;
         event(E.FIELD_MODIFICATION, data);

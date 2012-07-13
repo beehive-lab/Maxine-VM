@@ -208,7 +208,7 @@ public class JVMTIFunctionsSource {
     private static int SuspendThread(Pointer env, JniHandle thread) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_SUSPEND
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         return JVMTIThreadFunctions.suspendThread(jvmtiEnv, handleAsThread);
     }
 
@@ -216,7 +216,7 @@ public class JVMTIFunctionsSource {
     private static int ResumeThread(Pointer env, JniHandle thread) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_SUSPEND
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         return JVMTIThreadFunctions.resumeThread(jvmtiEnv, handleAsThread);
     }
 
@@ -237,7 +237,7 @@ public class JVMTIFunctionsSource {
     private static int GetThreadInfo(Pointer env, JniHandle thread, Pointer info_ptr) {
         // PHASES: LIVE
         // NULLCHECK: info_ptr
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         return JVMTIThreadFunctions.getThreadInfo(handleAsThread, info_ptr);
     }
 
@@ -286,7 +286,8 @@ public class JVMTIFunctionsSource {
     private static int GetFrameCount(Pointer env, JniHandle thread, Pointer count_ptr) {
         // PHASES: LIVE
         // NULLCHECK: count_ptr
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
+        // LOGARGS: JVMTIFunctionsLogger.threadArg(thread)
         return JVMTIThreadFunctions.getFrameCount(handleAsThread, count_ptr);
     }
 
@@ -294,7 +295,7 @@ public class JVMTIFunctionsSource {
     private static int GetThreadState(Pointer env, JniHandle thread, Pointer thread_state_ptr) {
         // PHASES: LIVE
         // NULLCHECK: thread_state_ptr
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         return JVMTIThreadFunctions.getThreadState(handleAsThread, thread_state_ptr);
     }
 
@@ -309,8 +310,9 @@ public class JVMTIFunctionsSource {
     @VM_ENTRY_POINT
     private static int GetFrameLocation(Pointer env, JniHandle thread, int depth, Pointer method_ptr, Pointer location_ptr) {
         // PHASES: LIVE
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         // NULLCHECK: method_ptr, location_ptr
+        // LOGARGS: JVMTIFunctionsLogger.threadArg(thread)
         return JVMTIThreadFunctions.getFrameLocation(handleAsThread, depth, method_ptr, location_ptr);
     }
 
@@ -326,7 +328,7 @@ public class JVMTIFunctionsSource {
     private static int GetLocalObject(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         // NULLCHECK: value_ptr
         return JVMTIThreadFunctions.getLocalValue(handleAsThread, depth, slot, value_ptr, 'L');
     }
@@ -335,7 +337,7 @@ public class JVMTIFunctionsSource {
     private static int GetLocalInt(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         // NULLCHECK: value_ptr
         return JVMTIThreadFunctions.getLocalValue(handleAsThread, depth, slot, value_ptr, 'I');
     }
@@ -344,7 +346,7 @@ public class JVMTIFunctionsSource {
     private static int GetLocalLong(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         // NULLCHECK: value_ptr
         return JVMTIThreadFunctions.getLocalValue(handleAsThread, depth, slot, value_ptr, 'J');
     }
@@ -353,7 +355,7 @@ public class JVMTIFunctionsSource {
     private static int GetLocalFloat(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         // NULLCHECK: value_ptr
         return JVMTIThreadFunctions.getLocalValue(handleAsThread, depth, slot, value_ptr, 'F');
     }
@@ -362,7 +364,7 @@ public class JVMTIFunctionsSource {
     private static int GetLocalDouble(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         // NULLCHECK: value_ptr
         return JVMTIThreadFunctions.getLocalValue(handleAsThread, depth, slot, value_ptr, 'D');
     }
@@ -371,7 +373,7 @@ public class JVMTIFunctionsSource {
     private static int SetLocalObject(Pointer env, JniHandle thread, int depth, int slot, JniHandle value) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         return JVMTIThreadFunctions.setLocalObject(handleAsThread, depth, slot, value.unhand());
     }
 
@@ -379,7 +381,7 @@ public class JVMTIFunctionsSource {
     private static int SetLocalInt(Pointer env, JniHandle thread, int depth, int slot, int value) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         return JVMTIThreadFunctions.setLocalInt(handleAsThread, depth, slot, value);
     }
 
@@ -387,7 +389,7 @@ public class JVMTIFunctionsSource {
     private static int SetLocalLong(Pointer env, JniHandle thread, int depth, int slot, long value) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         return JVMTIThreadFunctions.setLocalLong(handleAsThread, depth, slot, value);
     }
 
@@ -395,7 +397,7 @@ public class JVMTIFunctionsSource {
     private static int SetLocalFloat(Pointer env, JniHandle thread, int depth, int slot, float value) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         return JVMTIThreadFunctions.setLocalFloat(handleAsThread, depth, slot, value);
     }
 
@@ -403,7 +405,7 @@ public class JVMTIFunctionsSource {
     private static int SetLocalDouble(Pointer env, JniHandle thread, int depth, int slot, double value) {
         // PHASES: LIVE
         // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         return JVMTIThreadFunctions.setLocalDouble(handleAsThread, depth, slot, value);
     }
 
@@ -933,7 +935,7 @@ public class JVMTIFunctionsSource {
     @VM_ENTRY_POINT
     private static int GetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data_ptr) {
         // PHASES: START,LIVE
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         // NULLCHECK: data_ptr
         return JVMTIVmThreadLocal.getThreadLocalStorage(handleAsThread, data_ptr);
     }
@@ -941,7 +943,7 @@ public class JVMTIFunctionsSource {
     @VM_ENTRY_POINT
     private static int SetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data) {
         // PHASES: START,LIVE
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         return JVMTIVmThreadLocal.setThreadLocalStorage(handleAsThread, data);
     }
 
@@ -949,7 +951,7 @@ public class JVMTIFunctionsSource {
     private static int GetStackTrace(Pointer env, JniHandle thread, int start_depth, int max_frame_count, Pointer frame_buffer, Pointer count_ptr) {
         // PHASES: LIVE
         // NULLCHECK: frame_buffer,count_ptr
-        // HANDLECHECK: thread=Thread
+        // HANDLECHECK_NULLOK: thread=Thread
         if (max_frame_count < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }

@@ -31,7 +31,10 @@ import com.sun.max.vm.ext.jvmti.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
 
-
+/**
+ * Custom {@link VMLog} display for {@link JVMTIFunctions}.
+ * Not exhaustive, functions added as needed for debugging.
+ */
 public class JVMTICallsVMLogArgRenderer extends VMLogArgRenderer {
 
     public JVMTICallsVMLogArgRenderer(VMLogView vmLogView) {
@@ -79,6 +82,19 @@ public class JVMTICallsVMLogArgRenderer extends VMLogArgRenderer {
                 case GetSystemProperty:
                     if (argNum == 2) {
                         text = stringFromCString(vm, Address.fromLong(argValue).asPointer());
+                    }
+                    break;
+
+                case GetFrameCount:
+                case GetFrameLocation:
+                    if (argNum == 2) {
+                        if (Address.fromLong(argValue) == Word.zero()) {
+                            text = "current";
+                        } else if (Address.fromLong(argValue) == Word.allOnes()) {
+                            text = "not a thread";
+                        } else {
+                            return VMLogView.ThreadCellRenderer.getThreadRenderer((int) argValue);
+                        }
                     }
                     break;
 
