@@ -221,7 +221,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
                 final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(fields().InspectableClassInfo_classActors.fieldActor().offset());
                 final RemoteReference loadedClassActorsArrayReference = referenceManager().makeReference(memory().readWord(loadedClassActorsPointer).asAddress());
                 while (dynamicallyLoadedClassCount < newLoadedClassCount) {
-                    final RemoteReference classActorReference = (RemoteReference) objects().unsafeReadArrayElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, dynamicallyLoadedClassCount).asReference();
+                    final RemoteReference classActorReference = ((RemoteReference) objects().unsafeReadArrayElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, dynamicallyLoadedClassCount).asReference()).jumpForwarder();
                     try {
                         addToRegistry(classActorReference);
                     } catch (InvalidReferenceException e) {
