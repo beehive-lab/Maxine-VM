@@ -27,6 +27,7 @@ import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.util.*;
 
@@ -42,6 +43,8 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -97,10 +100,8 @@ public class Deoptimization extends VmOperation {
      * A VM option for triggering deoptimization at fixed intervals.
      */
     public static int DeoptimizeALot;
-    public static boolean TraceDeopt;
     static {
         VMOptions.addFieldOption("-XX:", "UseDeopt", "Enable deoptimization.");
-        VMOptions.addFieldOption("-XX:", "TraceDeopt", "Trace deoptimization.");
         VMOptions.addFieldOption("-XX:", "DeoptimizeALot", Deoptimization.class,
             "Invalidate and deoptimize a selection of executing optimized methods every <n> milliseconds. " +
             "A value of 0 disables this mechanism.");
@@ -134,13 +135,13 @@ public class Deoptimization extends VmOperation {
         int i = 0;
         while (i < methods.size()) {
             TargetMethod tm = methods.get(i);
-            if (TraceDeopt) {
-                Log.println("DEOPT: processing " + tm);
+            if (deoptLogger.enabled()) {
+                deoptLogger.logDoIt("processing ", tm, true);
             }
             if (!tm.invalidate(new InvalidationMarker(tm))) {
                 methods.remove(i);
-                if (TraceDeopt) {
-                    Log.println("DEOPT: ignoring previously invalidated method " + tm);
+                if (deoptLogger.enabled()) {
+                    deoptLogger.logDoIt("ignoring previously invalidated method ", tm, true);
                 }
             } else {
 
@@ -152,9 +153,8 @@ public class Deoptimization extends VmOperation {
                 patchDispatchTables(tm);
 
                 tm.redirectTo(staticTrampoline);
-                if (TraceDeopt) {
-                    Log.print("DEOPT: patched entry points of ");
-                    Log.printMethod(tm, true);
+                if (deoptLogger.enabled()) {
+                    deoptLogger.logDoIt("patched entry points of  ", tm, false);
                 }
 
                 i++;
@@ -249,15 +249,6 @@ public class Deoptimization extends VmOperation {
         public abstract void setIP(Info info, Pointer ip);
     }
 
-    static void traceContinuation(Pointer ip) {
-        if (TraceDeopt) {
-            TargetMethod tm = Code.codePointerToTargetMethod(ip);
-            assert tm != null : "cannot deoptimize frame of a VM entry method";
-            Log.print("DEOPT: continuation: ");
-            Log.printLocation(tm, CodePointer.from(ip), true);
-        }
-    }
-
     /**
      * Mechanism for a caller frame reconstruction to specify its execution state when it is returned to.
      */
@@ -290,7 +281,9 @@ public class Deoptimization extends VmOperation {
         public void setIP(Info info, Pointer ip) {
             if (returnAddressIndex >= 0) {
                 info.slots.set(returnAddressIndex, WordUtil.archConstant(ip));
-                traceContinuation(ip);
+                if (deoptLogger.enabled()) {
+                    deoptLogger.logContinuation(ip);
+                }
             }
         }
     }
@@ -316,7 +309,9 @@ public class Deoptimization extends VmOperation {
         @Override
         public void setIP(Info info, Pointer ip) {
             this.ip.derive(ip);
-            traceContinuation(ip);
+            if (deoptLogger.enabled()) {
+                deoptLogger.logContinuation(ip);
+            }
         }
     }
 
@@ -328,7 +323,9 @@ public class Deoptimization extends VmOperation {
     public static void unroll(Info info) {
         ArrayList<CiConstant> slots = info.slots;
         Pointer sp = info.slotsAddr.plus(info.slotsSize() - STACK_SLOT_SIZE);
-        logUnroll(info, slots, sp);
+        if (deoptLogger.enabled()) {
+            deoptLogger.logUnroll(info, slots, sp);
+        }
         for (int i = slots.size() - 1; i >= 0; --i) {
             CiConstant c = slots.get(i);
             if (c.kind.isObject()) {
@@ -351,7 +348,7 @@ public class Deoptimization extends VmOperation {
 
             Stubs.unwind(info.ip.asPointer(), info.sp, info.fp);
         } else {
-            if (StackReferenceMapPreparer.VerifyRefMaps || TraceDeopt || DeoptimizeALot != 0) {
+            if (StackReferenceMapPreparer.VerifyRefMaps || deoptLogger.enabled() || DeoptimizeALot != 0) {
                 StackReferenceMapPreparer.verifyReferenceMaps(VmThread.current(), info.ip.vmIP(), info.sp, info.fp);
             }
 
@@ -368,38 +365,6 @@ public class Deoptimization extends VmOperation {
             }
         }
         // Checkstyle: resume
-    }
-
-    @NEVER_INLINE // makes inspecting easier
-    private static void logUnroll(Info info, ArrayList<CiConstant> slots, Pointer sp) {
-        if (TraceDeopt) {
-            Log.println("DEOPT: Unrolling frames");
-            for (int i = slots.size() - 1; i >= 0; --i) {
-                CiConstant c = slots.get(i);
-                String name = info.slotNames.get(i);
-                Log.print("DEOPT: ");
-                Log.print(sp);
-                Log.print("[" + name);
-                for (int pad = name.length(); pad < 12; pad++) {
-                    Log.print(' ');
-                }
-                Log.print("]: ");
-                Log.println(c);
-                sp = sp.minus(STACK_SLOT_SIZE);
-            }
-
-            Log.print("DEOPT: unrolling: ip=");
-            Log.print(info.ip);
-            Log.print(", sp=");
-            Log.print(info.sp);
-            Log.print(", fp=");
-            Log.print(info.fp);
-            if (info.returnValue != null) {
-                Log.print(", returnValue=");
-                Log.print(info.returnValue);
-            }
-            Log.println();
-        }
     }
 
     /**
@@ -505,7 +470,9 @@ public class Deoptimization extends VmOperation {
                 Pointer patch = tm.returnAddressPointer(callee);
                 CodePointer from = CodePointer.from(patch.readWord(0));
                 assert !to.equals(from);
-                logPatchReturnAddress(tm, "TRAP STUB", stub, to, save, patch, from);
+                if (deoptLogger.enabled()) {
+                    deoptLogger.logPatchReturnAddress(tm, "TRAP STUB", stub, to, save, patch, from);
+                }
                 patch.writeWord(0, to.toAddress());
                 save.writeWord(0, from.toAddress());
             } else {
@@ -577,9 +544,9 @@ public class Deoptimization extends VmOperation {
         final ArrayList<CiConstant> slots = new ArrayList<CiConstant>();
 
         /**
-         * Names of the deoptimized stack slots. Only used if {@link Deoptimization#TraceDeopt} is enabled.
+         * Names of the deoptimized stack slots. Only used if {@link Deoptimization#deoptLogger} is enabled.
          */
-        final ArrayList<String> slotNames = TraceDeopt ? new ArrayList<String>() : null;
+        final ArrayList<String> slotNames = deoptLogger.enabled() ? new ArrayList<String>() : null;
 
         /**
          * Creates a context for deoptimizing a frame executing a given method.
@@ -668,7 +635,9 @@ public class Deoptimization extends VmOperation {
         Pointer patch = callee.targetMethod().returnAddressPointer(callee);
         CodePointer from = CodePointer.from(patch.readWord(0));
         assert !to.equals(from);
-        logPatchReturnAddress(tm, callee.targetMethod(), stub, to, save, patch, from);
+        if (deoptLogger.enabled()) {
+            deoptLogger.logPatchReturnAddress(tm, callee.targetMethod(), stub, to, save, patch, from);
+        }
         patch.writeWord(0, to.toAddress());
         save.writeWord(0, from.toAddress());
     }
@@ -709,13 +678,11 @@ public class Deoptimization extends VmOperation {
         SafepointPoll.disable();
         Info info = new Info(VmThread.current(), ip.toPointer(), sp, fp);
 
-        if (TraceDeopt) {
-            Log.println("DEOPT: Deoptimizing " + info.tm);
-            Throw.stackDump("DEOPT: Raw stack frames:");
-            new Throwable("DEOPT: Bytecode stack frames:").printStackTrace(Log.out);
+        if (deoptLogger.enabled()) {
+            deoptLogger.logStart(info.tm);
         }
 
-        if (StackReferenceMapPreparer.VerifyRefMaps || TraceDeopt || DeoptimizeALot != 0) {
+        if (StackReferenceMapPreparer.VerifyRefMaps || deoptLogger.enabled() || DeoptimizeALot != 0) {
             StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
         }
 
@@ -725,8 +692,8 @@ public class Deoptimization extends VmOperation {
         int safepointIndex = tm.findSafepointIndex(ip);
         assert safepointIndex >= 0 : "no safepoint index for " + tm + "+" + tm.posFor(ip);
 
-        if (TraceDeopt) {
-            Log.println("DEOPT: " + tm + ", safepointIndex=" + safepointIndex + ", pos=" + tm.safepoints().posAt(safepointIndex));
+        if (deoptLogger.enabled()) {
+            deoptLogger.logTmPos(tm, safepointIndex);
         }
 
         FrameAccess fa = new FrameAccess(csl, csa, sp, fp, info.callerSP, info.callerFP);
@@ -740,14 +707,12 @@ public class Deoptimization extends VmOperation {
                                        " thrown at " + tm + "+" + ip.to0xHexString();
         }
 
-        if (TraceDeopt) {
+        if (deoptLogger.enabled()) {
             // Trace the frame states in terms of the locations holding the frame values
-            logFrames(unwindToHandlerFrame(tm.debugInfoAt(safepointIndex, null).frame(), pendingException), "locations");
-        }
+            deoptLogger.logFrames(unwindToHandlerFrame(tm.debugInfoAt(safepointIndex, null).frame(), pendingException), "locations");
 
-        if (TraceDeopt) {
             // Trace the frame states in terms of the frame values
-            logFrames(topFrame, "values");
+            deoptLogger.logFrames(topFrame, "values");
         }
 
         // Construct the deoptimized frames for each frame in the debug info
@@ -871,31 +836,349 @@ public class Deoptimization extends VmOperation {
 
     @NEVER_INLINE // makes inspecting easier
     static void logPatchITable(ClassActor classActor, int iIndex) {
-        if (TraceDeopt) {
-            Log.println("DEOPT:   patched itable[" + iIndex + "] of " + classActor + " with trampoline");
+        if (deoptLogger.enabled()) {
+            deoptLogger.logPatchITable(classActor, iIndex);
         }
     }
 
     @NEVER_INLINE // makes inspecting easier
     static void logPatchVTable(final int vtableIndex, ClassActor classActor) {
-        if (TraceDeopt) {
-            Log.println("DEOPT:   patched vtable[" + vtableIndex + "] of " + classActor + " with trampoline");
+        if (deoptLogger.enabled()) {
+            deoptLogger.logPatchVTable(vtableIndex, classActor);
         }
     }
 
-    @NEVER_INLINE // makes inspecting easier
-    public static void logPatchReturnAddress(TargetMethod tm, Object callee, Stub stub, CodePointer to, Pointer save, Pointer patch, CodePointer from) {
-        if (TraceDeopt) {
-            Log.println("DEOPT: patched return address @ " + patch.to0xHexString() + " of call to " + callee +
+    @HOSTED_ONLY
+    @VMLoggerInterface
+    private interface DeoptLoggerInterface {
+        void start(
+            @VMLogParam(name = "targetMethod") TargetMethod targetMethod);
+
+        void doIt(
+            @VMLogParam(name = "msg") String msg,
+            @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+            @VMLogParam(name = "ts") boolean ts);
+
+        void tmPos(
+            @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+            @VMLogParam(name = "safepointIndex") int safepointIndex);
+
+        void frames(
+            @VMLogParam(name = "topFrame") CiFrame topFrame,
+            @VMLogParam(name = "label") String label);
+
+        void patchVTable(
+            @VMLogParam(name = "vtableIndex") int vtableIndex,
+            @VMLogParam(name = "classActor") ClassActor classActor);
+
+        void patchITable(
+                        @VMLogParam(name = "classActor") ClassActor classActor,
+                        @VMLogParam(name = "iIndex") int iIndex);
+
+        void patchReturnAddress(
+            @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+            @VMLogParam(name = "callee") Object callee,
+            @VMLogParam(name = "stub") Stub stub,
+            @VMLogParam(name = "to") CodePointer to,
+            @VMLogParam(name = "save") Pointer save,
+            @VMLogParam(name = "patch") Pointer patch,
+            @VMLogParam(name = "from") CodePointer from);
+
+        void unroll(
+            @VMLogParam(name = "info") Info info,
+            @VMLogParam(name = "slots") ArrayList<CiConstant> slots,
+            @VMLogParam(name = "sp") Pointer sp);
+
+        void continuation(
+            @VMLogParam(name = "ip") Pointer ip);
+
+        void aLot(
+            @VMLogParam(name = "methods") ArrayList<TargetMethod> methods);
+
+        void catchException(
+             @VMLogParam(name = "thisTargetMethod") TargetMethod thisTargetMethod,
+             @VMLogParam(name = "fromTargetMethod") TargetMethod fromTargetMethod,
+             @VMLogParam(name = "stub") Stub deoptStub,
+             @VMLogParam(name = "sp") Pointer sp,
+             @VMLogParam(name = "fp") Pointer fp);
+    }
+
+    public static final DeoptLogger deoptLogger = new DeoptLogger();
+
+    public static final class DeoptLogger extends DeoptLoggerAuto {
+        DeoptLogger() {
+            super("Deopt", "deoptimzation");
+        }
+
+        private static void deoptPrefix() {
+            Log.print("DEOPT: ");
+        }
+
+        @Override
+        protected void traceStart(TargetMethod targetMethod) {
+            deoptPrefix(); Log.println("Deoptimizing " + targetMethod);
+            Throw.stackDump("DEOPT: Raw stack frames:");
+            new Throwable("DEOPT: Bytecode stack frames:").printStackTrace(Log.out);
+        }
+
+        @Override
+        protected void traceDoIt(String msg, TargetMethod targetMethod, boolean ts) {
+            deoptPrefix();
+            Log.print(msg);
+            if (ts) {
+                Log.println(targetMethod);
+            } else {
+                Log.printMethod(targetMethod, true);
+            }
+        }
+
+        @Override
+        protected void traceTmPos(TargetMethod tm, int safepointIndex) {
+            deoptPrefix();
+            Log.println(tm + ", safepointIndex=" + safepointIndex + ", pos=" + tm.safepoints().posAt(safepointIndex));
+        }
+
+        @Override
+        protected void traceFrames(CiFrame topFrame, String label) {
+            deoptPrefix(); Log.println("--- " + label + " start ---");
+            Log.println(topFrame);
+            deoptPrefix(); Log.println("--- " + label + " end ---");
+        }
+
+        @Override
+        protected void tracePatchITable(ClassActor classActor, int iIndex) {
+            deoptPrefix(); Log.println("  patched itable[" + iIndex + "] of " + classActor + " with trampoline");
+        }
+
+        @Override
+        protected void tracePatchVTable(int vtableIndex, ClassActor classActor) {
+            deoptPrefix(); Log.println("  patched vtable[" + vtableIndex + "] of " + classActor + " with trampoline");
+        }
+
+        @Override
+        protected void tracePatchReturnAddress(TargetMethod tm, Object callee, Stub stub, CodePointer to, Pointer save, Pointer patch, CodePointer from) {
+            deoptPrefix(); Log.println("patched return address @ " + patch.to0xHexString() + " of call to " + callee +
                             ": " + from.to0xHexString() + '[' + tm + '+' + from.minus(tm.codeStart()).toInt() + ']' +
                             " -> " + to.to0xHexString() + '[' + stub + "], saved old value @ " + save.to0xHexString());
         }
+
+        @Override
+        protected void traceUnroll(Info info, ArrayList<CiConstant> slots, Pointer sp) {
+            deoptPrefix(); Log.println("Unrolling frames");
+            for (int i = slots.size() - 1; i >= 0; --i) {
+                CiConstant c = slots.get(i);
+                String name = info.slotNames.get(i);
+                deoptPrefix();
+                Log.print(sp);
+                Log.print("[" + name);
+                for (int pad = name.length(); pad < 12; pad++) {
+                    Log.print(' ');
+                }
+                Log.print("]: ");
+                Log.println(c);
+                sp = sp.minus(STACK_SLOT_SIZE);
+            }
+
+            deoptPrefix(); Log.print("unrolling: ip=");
+            Log.print(info.ip);
+            Log.print(", sp=");
+            Log.print(info.sp);
+            Log.print(", fp=");
+            Log.print(info.fp);
+            if (info.returnValue != null) {
+                Log.print(", returnValue=");
+                Log.print(info.returnValue);
+            }
+            Log.println();
+        }
+
+        @Override
+        protected void traceContinuation(Pointer ip) {
+            TargetMethod tm = Code.codePointerToTargetMethod(ip);
+            assert tm != null : "cannot deoptimize frame of a VM entry method";
+            deoptPrefix(); Log.print("continuation: ");
+            Log.printLocation(tm, CodePointer.from(ip), true);
+        }
+
+        @Override
+        protected void traceALot(ArrayList<TargetMethod> methods) {
+            deoptPrefix(); Log.println("DeoptimizeALot selected methods:");
+            for (TargetMethod tm : methods) {
+                deoptPrefix(); Log.print("  ");
+                Log.printMethod(tm, true);
+            }
+        }
+
+        @Override
+        protected void traceCatchException(TargetMethod thisTargetMethod, TargetMethod fromTargetMethod, Stub stub, Pointer sp, Pointer fp) {
+            deoptPrefix();
+            Log.println("changed exception handler address in " + this + " from " + fromTargetMethod +
+                            " to " + stub + " [sp=" + sp.to0xHexString() + ", fp=" + fp.to0xHexString() + "]");
+        }
     }
 
-    @NEVER_INLINE // makes inspecting easier
-    static void logFrames(CiFrame topFrame, String label) {
-        Log.println("DEOPT: --- " + label + " start ---");
-        Log.println(topFrame);
-        Log.println("DEOPT: --- " + label + " end ---");
+// START GENERATED CODE
+    private static abstract class DeoptLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            ALot, CatchException, Continuation,
+            DoIt, Frames, PatchITable, PatchReturnAddress,
+            PatchVTable, Start, TmPos, Unroll;
+
+            @SuppressWarnings("hiding")
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = new int[] {0x1, 0x7, 0x0, 0x3, 0x3, 0x0, 0x4f, 0x0, 0x1, 0x1, 0x3};
+
+        protected DeoptLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logALot(ArrayList methods) {
+            log(Operation.ALot.ordinal(), objectArg(methods));
+        }
+        protected abstract void traceALot(ArrayList<TargetMethod> methods);
+
+        @INLINE
+        public final void logCatchException(TargetMethod thisTargetMethod, TargetMethod fromTargetMethod, Stub stub, Pointer sp, Pointer fp) {
+            log(Operation.CatchException.ordinal(), objectArg(thisTargetMethod), objectArg(fromTargetMethod), objectArg(stub), sp, fp);
+        }
+        protected abstract void traceCatchException(TargetMethod thisTargetMethod, TargetMethod fromTargetMethod, Stub stub, Pointer sp, Pointer fp);
+
+        @INLINE
+        public final void logContinuation(Pointer ip) {
+            log(Operation.Continuation.ordinal(), ip);
+        }
+        protected abstract void traceContinuation(Pointer ip);
+
+        @INLINE
+        public final void logDoIt(String msg, TargetMethod targetMethod, boolean ts) {
+            log(Operation.DoIt.ordinal(), objectArg(msg), objectArg(targetMethod), booleanArg(ts));
+        }
+        protected abstract void traceDoIt(String msg, TargetMethod targetMethod, boolean ts);
+
+        @INLINE
+        public final void logFrames(CiFrame topFrame, String label) {
+            log(Operation.Frames.ordinal(), objectArg(topFrame), objectArg(label));
+        }
+        protected abstract void traceFrames(CiFrame topFrame, String label);
+
+        @INLINE
+        public final void logPatchITable(ClassActor classActor, int iIndex) {
+            log(Operation.PatchITable.ordinal(), classActorArg(classActor), intArg(iIndex));
+        }
+        protected abstract void tracePatchITable(ClassActor classActor, int iIndex);
+
+        @INLINE
+        public final void logPatchReturnAddress(TargetMethod targetMethod, Object callee, Stub stub, CodePointer to, Pointer save,
+                Pointer patch, CodePointer from) {
+            log(Operation.PatchReturnAddress.ordinal(), objectArg(targetMethod), objectArg(callee), objectArg(stub), codePointerArg(to), save,
+                patch, codePointerArg(from));
+        }
+        protected abstract void tracePatchReturnAddress(TargetMethod targetMethod, Object callee, Stub stub, CodePointer to, Pointer save,
+                Pointer patch, CodePointer from);
+
+        @INLINE
+        public final void logPatchVTable(int vtableIndex, ClassActor classActor) {
+            log(Operation.PatchVTable.ordinal(), intArg(vtableIndex), classActorArg(classActor));
+        }
+        protected abstract void tracePatchVTable(int vtableIndex, ClassActor classActor);
+
+        @INLINE
+        public final void logStart(TargetMethod targetMethod) {
+            log(Operation.Start.ordinal(), objectArg(targetMethod));
+        }
+        protected abstract void traceStart(TargetMethod targetMethod);
+
+        @INLINE
+        public final void logTmPos(TargetMethod targetMethod, int safepointIndex) {
+            log(Operation.TmPos.ordinal(), objectArg(targetMethod), intArg(safepointIndex));
+        }
+        protected abstract void traceTmPos(TargetMethod targetMethod, int safepointIndex);
+
+        @INLINE
+        public final void logUnroll(Info info, ArrayList slots, Pointer sp) {
+            log(Operation.Unroll.ordinal(), objectArg(info), objectArg(slots), sp);
+        }
+        protected abstract void traceUnroll(Info info, ArrayList<CiConstant> slots, Pointer sp);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //ALot
+                    traceALot(toArrayListTargetMethod(r, 1));
+                    break;
+                }
+                case 1: { //CatchException
+                    traceCatchException(toTargetMethod(r, 1), toTargetMethod(r, 2), toStub(r, 3), toPointer(r, 4), toPointer(r, 5));
+                    break;
+                }
+                case 2: { //Continuation
+                    traceContinuation(toPointer(r, 1));
+                    break;
+                }
+                case 3: { //DoIt
+                    traceDoIt(toString(r, 1), toTargetMethod(r, 2), toBoolean(r, 3));
+                    break;
+                }
+                case 4: { //Frames
+                    traceFrames(toCiFrame(r, 1), toString(r, 2));
+                    break;
+                }
+                case 5: { //PatchITable
+                    tracePatchITable(toClassActor(r, 1), toInt(r, 2));
+                    break;
+                }
+                case 6: { //PatchReturnAddress
+                    tracePatchReturnAddress(toTargetMethod(r, 1), toObject(r, 2), toStub(r, 3), toCodePointer(r, 4), toPointer(r, 5), toPointer(r, 6), toCodePointer(r, 7));
+                    break;
+                }
+                case 7: { //PatchVTable
+                    tracePatchVTable(toInt(r, 1), toClassActor(r, 2));
+                    break;
+                }
+                case 8: { //Start
+                    traceStart(toTargetMethod(r, 1));
+                    break;
+                }
+                case 9: { //TmPos
+                    traceTmPos(toTargetMethod(r, 1), toInt(r, 2));
+                    break;
+                }
+                case 10: { //Unroll
+                    traceUnroll(toInfo(r, 1), toArrayListCiConstant(r, 2), toPointer(r, 3));
+                    break;
+                }
+            }
+        }
+        static ArrayList<CiConstant> toArrayListCiConstant(Record r, int argNum) {
+            return asArrayListCiConstant(toObject(r, argNum));
+        }
+        @INTRINSIC(UNSAFE_CAST)
+        private static native ArrayList<CiConstant> asArrayListCiConstant(Object arg);
+        static ArrayList<TargetMethod> toArrayListTargetMethod(Record r, int argNum) {
+            return asArrayListTargetMethod(toObject(r, argNum));
+        }
+        @INTRINSIC(UNSAFE_CAST)
+        private static native ArrayList<TargetMethod> asArrayListTargetMethod(Object arg);
+        static CiFrame toCiFrame(Record r, int argNum) {
+            return asCiFrame(toObject(r, argNum));
+        }
+        @INTRINSIC(UNSAFE_CAST)
+        private static native CiFrame asCiFrame(Object arg);
+        static Info toInfo(Record r, int argNum) {
+            return asInfo(toObject(r, argNum));
+        }
+        @INTRINSIC(UNSAFE_CAST)
+        private static native Info asInfo(Object arg);
     }
+
+// END GENERATED CODE
+
 }
