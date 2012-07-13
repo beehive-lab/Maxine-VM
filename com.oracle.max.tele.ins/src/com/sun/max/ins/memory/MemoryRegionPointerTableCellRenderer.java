@@ -30,6 +30,7 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.vm.value.*;
@@ -52,6 +53,8 @@ public final class MemoryRegionPointerTableCellRenderer extends InspectorTableCe
     /**
      * A renderer that displays the VM's memory region name, if any, into which the word value in the memory represented
      * by the table row points.
+     * <p>
+     * <strong>Note:</strong> Will only investigate if the table row is word-aligned and word-width.
      *
      * @param inspection
      * @param inspectorTable the table holding the cell to be rendered
@@ -67,12 +70,15 @@ public final class MemoryRegionPointerTableCellRenderer extends InspectorTableCe
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
         Value memoryValue = null;
-        try {
-            memoryValue = vm().memoryIO().readWordValue(tableModel.getAddress(row));
-        } catch (InvalidReferenceException invalidReferenceException) {
-            return gui().getUnavailableDataTableCellRenderer();
-        } catch (DataIOError dataIOError) {
-            return gui().getUnavailableDataTableCellRenderer();
+        MaxMemoryRegion rowRegion = tableModel.getMemoryRegion(row);
+        if (rowRegion.start().isWordAligned() && rowRegion.nBytes() == vm().platform().nBytesInWord()) {
+            try {
+                memoryValue = vm().memoryIO().readWordValue(rowRegion.start());
+            } catch (InvalidReferenceException invalidReferenceException) {
+                return gui().getUnavailableDataTableCellRenderer();
+            } catch (DataIOError dataIOError) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
         }
         label.setValue(memoryValue);
         label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");

@@ -25,10 +25,10 @@ package com.sun.max.tele.object;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.heap.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Local mirror of a card table in VM memory.
@@ -56,7 +56,7 @@ public final class TeleCardTableRSet extends TeleTupleObject {
         }
     };
 
-    public TeleCardTableRSet(TeleVM vm, Reference cardTableRSetReference) {
+    public TeleCardTableRSet(TeleVM vm, RemoteReference cardTableRSetReference) {
         super(vm, cardTableRSetReference);
         final TeleMemoryRegion rsetMemory = (TeleMemoryRegion) objects().makeTeleObject(fields().CardTableRSet_cardTableMemory.readReference(reference()));
         vmHeapRegion = new VmHeapRegion(vm, rsetMemory);
@@ -69,7 +69,7 @@ public final class TeleCardTableRSet extends TeleTupleObject {
 
     private boolean updateCardTableCache() {
         try {
-            Reference cardTableReference = fields().CardTableRSet_cardTable.readReference(reference());
+            RemoteReference cardTableReference = fields().CardTableRSet_cardTable.readReference(reference());
             Address tableAddress  = fields().Log2RegionToByteMapTable_tableAddress.readWord(cardTableReference).asAddress();
             final Address oldTableAddress = cardTable.tableAddress();
             if (tableAddress.equals(oldTableAddress)) {

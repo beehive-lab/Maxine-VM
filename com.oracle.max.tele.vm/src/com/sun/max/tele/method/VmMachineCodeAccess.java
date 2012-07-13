@@ -32,11 +32,11 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.value.*;
 
 /**
@@ -184,7 +184,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
             // Not a known method compilation, but in a code cache region.
             // Use the interpreter to see if the code manager in the VM knows about it.
             try {
-                final Reference targetMethodReference = methods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
+                final RemoteReference targetMethodReference = (RemoteReference) methods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
                 // Possible that the address points to an unallocated area of a code region.
                 if (!targetMethodReference.isZero()) {
                     objects().makeTeleObject(targetMethodReference);  // Constructor will register the compiled method if successful

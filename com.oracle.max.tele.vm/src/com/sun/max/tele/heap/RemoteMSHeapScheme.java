@@ -37,14 +37,13 @@ import com.sun.max.tele.TeleVM.InitializationListener;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.reference.ms.*;
-import com.sun.max.tele.reference.ms.MSRemoteReference.*;
+import com.sun.max.tele.reference.ms.MSRemoteReference.RefStateCount;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.ms.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Inspection support specialized for the basic mark-sweep implementation of {@link HeapScheme}
@@ -654,7 +653,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
         private TeleFreeHeapSpaceManager objectSpace;
 
-        public TeleMSHeapScheme(TeleVM vm, Reference reference) {
+        public TeleMSHeapScheme(TeleVM vm, RemoteReference reference) {
             super(vm, reference);
         }
 
@@ -664,7 +663,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 return false;
             }
             if (objectSpace == null) {
-                final Reference freeHeapSpaceManagerRef = fields().MSHeapScheme_objectSpace.readReference(reference());
+                final RemoteReference freeHeapSpaceManagerRef = fields().MSHeapScheme_objectSpace.readReference(reference());
                 objectSpace = (TeleFreeHeapSpaceManager) objects().makeTeleObject(freeHeapSpaceManagerRef);
             }
 

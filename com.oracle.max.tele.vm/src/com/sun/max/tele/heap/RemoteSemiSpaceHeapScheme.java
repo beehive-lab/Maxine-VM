@@ -43,7 +43,6 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 
@@ -785,7 +784,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
      */
     public static class TeleSemiSpaceHeapScheme extends TeleHeapScheme {
 
-        public TeleSemiSpaceHeapScheme(TeleVM vm, Reference reference) {
+        public TeleSemiSpaceHeapScheme(TeleVM vm, RemoteReference reference) {
             super(vm, reference);
         }
 
@@ -793,7 +792,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
          * @return surrogate for the semispace collector's "from" region
          */
         public TeleLinearAllocationMemoryRegion readTeleFromRegion() {
-            final Reference fromReference = fields().SemiSpaceHeapScheme_fromSpace.readReference(reference());
+            final RemoteReference fromReference = fields().SemiSpaceHeapScheme_fromSpace.readReference(reference());
             return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(fromReference);
         }
 
@@ -801,7 +800,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
          * @return surrogate for the semispace collector's "to" region
          */
         public TeleLinearAllocationMemoryRegion readTeleToRegion() {
-            final Reference toReference = fields().SemiSpaceHeapScheme_toSpace.readReference(reference());
+            final RemoteReference toReference = fields().SemiSpaceHeapScheme_toSpace.readReference(reference());
             return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(toReference);
         }
 

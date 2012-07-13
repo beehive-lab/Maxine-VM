@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,17 +22,25 @@
  */
 package com.sun.max.tele.field;
 
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
-public class TeleInstanceWordFieldAccess extends TeleInstanceFieldAccess {
+/**
+ * An accessor for reading object instance word-sized fields as raw words from VM memory, specified by class and field name.
+ */
+public final class TeleInstanceWordFieldAccess extends TeleInstanceFieldAccess {
 
     public TeleInstanceWordFieldAccess(Class holder, String name) {
         super(holder, name, Kind.WORD);
     }
 
-    public Word readWord(Reference reference) {
+    /**
+     * Reads an object instance word-sized field from VM memory.
+     *
+     * @return the value of the field in VM memory as a raw {@link Word}
+     */
+    public Word readWord(RemoteReference reference) {
         return reference.readWord(fieldActor().offset());
     }
 

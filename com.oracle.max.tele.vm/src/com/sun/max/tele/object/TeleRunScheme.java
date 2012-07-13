@@ -23,7 +23,7 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.run.*;
 
 
@@ -34,7 +34,7 @@ import com.sun.max.vm.run.*;
  */
 public class TeleRunScheme extends TeleVMScheme {
 
-    public TeleRunScheme(TeleVM vm, Reference reference) {
+    public TeleRunScheme(TeleVM vm, RemoteReference reference) {
         super(vm, reference);
     }
 

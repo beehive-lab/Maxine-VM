@@ -54,7 +54,7 @@ public final class Machine extends AbstractVmHolder {
         activate(mainThread);
     }
 
-    public ReferenceValue toReferenceValue(Reference reference) {
+    public ReferenceValue toReferenceValue(RemoteReference reference) {
         if (vm() == null) {
             return ObjectReferenceValue.from(reference.toJava());
         } else {
@@ -152,7 +152,7 @@ public final class Machine extends AbstractVmHolder {
         Value constant = currentThread.frame().constantPool().valueAt(cpIndex);
 
         if (constant instanceof ObjectReferenceValue) {
-            constant = toReferenceValue(Reference.fromJava(constant.unboxObject()));
+            constant = toReferenceValue((RemoteReference) Reference.fromJava(constant.unboxObject()));
         }
 
         return widenIfNecessary(constant);
@@ -168,7 +168,7 @@ public final class Machine extends AbstractVmHolder {
     private static Throwable toThrowable(TeleVM vm, ReferenceValue throwableReference) {
         if (throwableReference instanceof TeleReferenceValue) {
             try {
-                return (Throwable) vm.objects().makeTeleObject(throwableReference.asReference()).deepCopy();
+                return (Throwable) vm.objects().makeTeleObject((RemoteReference) throwableReference.asReference()).deepCopy();
             } catch (Exception e1) {
                 throw TeleError.unexpected("Could not make a local copy of a remote Throwable", e1);
             }
@@ -212,7 +212,7 @@ public final class Machine extends AbstractVmHolder {
             final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
             final TeleClassActor teleClassActor = classes().findTeleClassActor(fieldActor.holder().typeDescriptor);
             final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
-            final Reference staticTupleReference = teleStaticTuple.reference();
+            final RemoteReference staticTupleReference = teleStaticTuple.reference();
 
             switch (fieldActor.kind.asEnum) {
                 case BOOLEAN:
@@ -258,7 +258,7 @@ public final class Machine extends AbstractVmHolder {
         }
     }
 
-    public Value getField(Reference instance, int cpIndex) throws TeleInterpreterException {
+    public Value getField(RemoteReference instance, int cpIndex) throws TeleInterpreterException {
         if (instance.isZero()) {
             raiseException(new NullPointerException());
         }
@@ -271,7 +271,7 @@ public final class Machine extends AbstractVmHolder {
             return widenIfNecessary(fieldActor.readValue(instance));
         } else {
             assert kind.isReference;
-            if (instance instanceof RemoteReference && !((RemoteReference) instance).isLocal()) {
+            if (!instance.isLocal()) {
                 final RemoteReference reference = referenceManager().makeReference(instance.readWord(fieldActor.offset()).asAddress());
                 return referenceManager().createReferenceValue(reference);
             } else {
@@ -400,7 +400,7 @@ public final class Machine extends AbstractVmHolder {
 
             if (arguments[i] instanceof TeleReferenceValue) {
                 final TeleReferenceValue inspectorReferenceArgument = (TeleReferenceValue) arguments[i];
-                final RemoteReference reference = (RemoteReference) inspectorReferenceArgument.asReference();
+                final RemoteReference reference = inspectorReferenceArgument.asReference();
                 if (!reference.isLocal()) {
                     arguments[i] = TeleReferenceValue.from(vm(), makeLocalReference(reference));
                 }
@@ -440,7 +440,7 @@ public final class Machine extends AbstractVmHolder {
             try {
                 Value result = method.invoke(arguments);
                 if (result.kind().isReference) {
-                    result = toReferenceValue(Reference.fromJava(result.asObject()));
+                    result = toReferenceValue((RemoteReference) Reference.fromJava(result.asObject()));
                 }
                 push(widenIfNecessary(result));
             } catch (InvocationTargetException e) {

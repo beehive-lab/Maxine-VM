@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,23 +23,61 @@
 package com.sun.max.tele.field;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
+ * An accessor for reading static reference fields from VM memory, specified by class and field name.
  */
-public class TeleStaticReferenceFieldAccess extends TeleStaticFieldAccess {
+public final class TeleStaticReferenceFieldAccess extends TeleStaticFieldAccess {
 
     public TeleStaticReferenceFieldAccess(Class holder, String name, Class type) {
         super(holder, name, Kind.fromJava(type));
         TeleError.check(ClassActor.fromJava(type).isAssignableFrom(fieldActor().descriptor().resolve(fieldActor().holder().classLoader)), "field has wrong type: " + name + " in class: " + holder);
     }
 
-    public Reference readReference(MaxVM vm) {
-        return staticTupleReference(vm).readReference(fieldActor().offset());
+    /**
+     * Reads a static reference field from VM memory,  following a forwarding pointer if necessary, or
+     * {@link RemoteReference#zero()} if no live object can be found.
+     *
+     * @return the value of the field in VM memory interpreted as a reference, unless it is a forwarding pointer in
+     * which case the reference returned refers to the destination of the forwarding pointer.
+     */
+    public RemoteReference readReference(MaxVM maxVM) {
+        final TeleVM vm = (TeleVM) maxVM;
+        final Address origin = staticTupleReference(vm).readWord(fieldActor().offset()).asAddress();
+        final ObjectStatus status = vm.objects().objectStatusAt(origin);
+        if (status.isLive()) {
+            return vm.referenceManager().makeReference(origin);
+        }
+        if (status.isForwarder()) {
+            final RemoteReference forwarderReference = vm.referenceManager().makeQuasiReference(origin);
+            return vm.referenceManager().makeReference(forwarderReference.forwardedTo());
+        }
+        return vm.referenceManager().zeroReference();
+    }
+
+    /**
+     * Reads a static reference field from VM memory either a live reference or quasi reference,
+     * or {@link RemoteReference#zero()} if no live or quasi object can be found.
+     *
+     * @return the value of the field in VM memory interpreted as a reference
+     */
+    public RemoteReference readRawReference(MaxVM maxVM) {
+        final TeleVM vm = (TeleVM) maxVM;
+        final Address origin = staticTupleReference(vm).readWord(fieldActor().offset()).asAddress();
+        final ObjectStatus status = vm.objects().objectStatusAt(origin);
+        if (status.isLive()) {
+            return vm.referenceManager().makeReference(origin);
+        }
+        if (status.isQuasi()) {
+            return vm.referenceManager().makeQuasiReference(origin);
+        }
+        return vm.referenceManager().zeroReference();
     }
 
     /**

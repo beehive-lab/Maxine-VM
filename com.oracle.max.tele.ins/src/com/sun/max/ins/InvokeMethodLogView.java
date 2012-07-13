@@ -56,7 +56,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
     private static final ViewKind VIEW_KIND = ViewKind.INVOKE_METHOD_LOG;
     private static final String SHORT_NAME = "InvokeMethodLog";
     private static final String LONG_NAME = "InvokeMethodLog View";
-    private static final String GEOMETRY_SETTINGS_KEY = "notepadViewGeometry";
+    private static final String GEOMETRY_SETTINGS_KEY = "invokeMethodLogViewGeometry";
 
     // A compiled regular expression pattern that matches hex numbers (with or without prefix) and ordinary
     // integers as well.

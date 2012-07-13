@@ -41,7 +41,7 @@ import com.sun.max.vm.compiler.target.*;
  * <p>
  * Allocated data is stored in the same <em>object format</em> as are objects in the VM's heap.
  * Interaction with objects in the area is delegated to an instance of {@link RemoteObjectReferenceManager}, which permits
- * specialized implementations of {@link Reference} to be created that embody knowledge of how objects are managed in each region.
+ * specialized implementations of {@link RemoteReference} to be created that embody knowledge of how objects are managed in each region.
  *
  * @see CodeRegion
  * @see TargetMethod

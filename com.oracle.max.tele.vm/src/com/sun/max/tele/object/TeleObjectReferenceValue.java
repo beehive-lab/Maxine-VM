@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,8 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.value.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -32,7 +32,7 @@ import com.sun.max.vm.value.*;
  */
 public class TeleObjectReferenceValue extends TeleTupleObject {
 
-    protected TeleObjectReferenceValue(TeleVM vm, Reference teleObjectReferenceValueReference) {
+    protected TeleObjectReferenceValue(TeleVM vm, RemoteReference teleObjectReferenceValueReference) {
         super(vm, teleObjectReferenceValueReference);
     }
 

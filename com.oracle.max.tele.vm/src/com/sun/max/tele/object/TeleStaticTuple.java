@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,9 @@ package com.sun.max.tele.object;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Representation for a {@link StaticTuple} in the VM.
@@ -46,7 +46,7 @@ public class TeleStaticTuple extends TeleTupleObject {
      * @param vm
      * @param reference
      */
-    protected TeleStaticTuple(TeleVM vm, Reference reference) {
+    protected TeleStaticTuple(TeleVM vm, RemoteReference reference) {
         super(vm, reference);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 
 /**
+ * An accessor for reading object fields, either instances or static, from VM memory, specified by class and field name.
  */
 public abstract class TeleFieldAccess {
 
@@ -38,6 +39,9 @@ public abstract class TeleFieldAccess {
 
     private final FieldActor fieldActor;
 
+    /**
+     * @return the local instance of {@link FieldActor} associated with this field accessor.
+     */
     public FieldActor fieldActor() {
         return fieldActor;
     }

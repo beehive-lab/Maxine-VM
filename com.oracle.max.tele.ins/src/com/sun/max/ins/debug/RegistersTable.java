@@ -211,6 +211,9 @@ public final class RegistersTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final RegisterHistory registerHistory = (RegisterHistory) tableModel.getValueAt(row, 0);
+            if (registerHistory == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             final WordValueLabel label = labels[row];
             label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>age=" + registerHistory.age() + " value = ");
             label.setBackground(cellBackgroundColor());
@@ -256,6 +259,9 @@ public final class RegistersTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             final RegisterHistory registerHistory = (RegisterHistory) value;
+            if (registerHistory == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             if (labels[row] == null) {
                 switch(tableModel.getValueMode(row)) {
                     case WORD:

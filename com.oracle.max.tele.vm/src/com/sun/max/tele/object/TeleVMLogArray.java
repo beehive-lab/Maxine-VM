@@ -24,9 +24,9 @@ package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.java.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Access to simple array implementations the VM's {@linkplain VMLog log}.
@@ -37,20 +37,20 @@ public final class TeleVMLogArray extends TeleVMLog {
 
     private TeleArrayObject teleLogArrayBuffer = null;
 
-    protected TeleVMLogArray(TeleVM vm, Reference vmLogArrayReference) {
+    protected TeleVMLogArray(TeleVM vm, RemoteReference vmLogArrayReference) {
         super(vm, vmLogArrayReference);
     }
 
     public TeleHostedLogRecord getLogRecord(int id) {
         if (teleLogArrayBuffer == null) {
-            final Reference logBufferRef = fields().VMLogArray_buffer.readReference(reference());
+            final RemoteReference logBufferRef = fields().VMLogArray_buffer.readReference(reference());
             if (!logBufferRef.isZero()) {
                 teleLogArrayBuffer = (TeleArrayObject) objects().makeTeleObject(logBufferRef);
             }
         }
         if (teleLogArrayBuffer != null) {
             int index = id % logEntries();
-            Reference recordRef = teleLogArrayBuffer.readElementValue(index).asReference();
+            RemoteReference recordRef = (RemoteReference) teleLogArrayBuffer.readElementValue(index).asReference();
             return new TeleHostedLogRecord(
                         id,
                         fields().VMLogArray$Record0_header.readInt(recordRef),

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,13 +26,19 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.type.*;
 
 /**
+ * An accessor for reading static fields of type {@code double} from VM memory, specified by class and field name.
  */
-public class TeleStaticDoubleFieldAccess extends TeleStaticFieldAccess {
+public final class TeleStaticDoubleFieldAccess extends TeleStaticFieldAccess {
 
     public TeleStaticDoubleFieldAccess(Class holder, String name) {
         super(holder, name, Kind.DOUBLE);
     }
 
+    /**
+     * Reads a static field, presumed to be of type {@code double}, from VM memory.
+     *
+     * @return the value of the field in VM memory interpreted as a {@code double}
+     */
     public double readDouble(MaxVM vm) {
         return staticTupleReference(vm).readDouble(fieldActor().offset());
     }

@@ -28,12 +28,12 @@ import java.util.logging.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -51,7 +51,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     private final Kind componentKind;
 
-    protected TeleArrayObject(TeleVM vm, Reference reference, Kind componentKind, SpecificLayout layout) {
+    protected TeleArrayObject(TeleVM vm, RemoteReference reference, Kind componentKind, SpecificLayout layout) {
         super(vm, reference, layout);
         this.componentKind = componentKind;
     }
@@ -139,9 +139,9 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     public Object shallowCopy() {
         final int length = length();
         if (componentKind().isReference) {
-            final Reference[] newRefArray = new Reference[length];
+            final RemoteReference[] newRefArray = new RemoteReference[length];
             for (int index = 0; index < length; index++) {
-                newRefArray[index] = readElementValue(index).asReference();
+                newRefArray[index] = (RemoteReference) readElementValue(index).asReference();
             }
             return newRefArray;
         }
@@ -167,7 +167,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
                 Object[] referenceArray = (Object[]) newArray;
                 for (int index = 0; index < length; index++) {
                     final Value value = readElementValue(index);
-                    final TeleObject teleValueObject = objects().makeTeleObject(value.asReference());
+                    final TeleObject teleValueObject = objects().makeTeleObject((RemoteReference) value.asReference());
                     if (teleValueObject != null) {
                         referenceArray[index] = teleValueObject.makeDeepCopy(context);
                     }

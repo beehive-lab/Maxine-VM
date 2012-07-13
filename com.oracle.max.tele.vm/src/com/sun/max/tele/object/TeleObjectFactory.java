@@ -48,10 +48,9 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.hom.*;
 import com.sun.max.vm.layout.ohm.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.log.java.*;
 import com.sun.max.vm.log.nat.*;
-import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.direct.*;
 import com.sun.max.vm.run.java.*;
 import com.sun.max.vm.thread.*;
@@ -133,9 +132,9 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      * Map: Reference to {@link Object}s in the VM --> canonical local {@link TeleObject} that represents the
      * object in the VM. Relies on References being canonical and GC-safe.
      */
-    private  final Map<Reference, WeakReference<TeleObject>> referenceToTeleObject = new HashMap<Reference, WeakReference<TeleObject>>();
+    private  final Map<RemoteReference, WeakReference<TeleObject>> referenceToTeleObject = new HashMap<RemoteReference, WeakReference<TeleObject>>();
 
-    private  final Map<Reference, WeakReference<TeleObject>> referenceToTeleHeapFreeChunk = new HashMap<Reference, WeakReference<TeleObject>>();
+    private  final Map<RemoteReference, WeakReference<TeleObject>> referenceToTeleHeapFreeChunk = new HashMap<RemoteReference, WeakReference<TeleObject>>();
     private int heapFreeChunksCount = 0;
 
     /**
@@ -358,7 +357,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
      * <p>
-     * Returns {@code null} for the distinguished zero {@link Reference}.
+     * Returns {@code null} for the distinguished zero {@link RemoteReference}.
      * <p>
      * Must be called with current thread holding the VM lock.
      * <p>
@@ -370,49 +369,49 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      * @return canonical local surrogate for the object
      * @throws TeleError if the reference is not live or is an instance of {@link TemporaryUnsafeRemoteReference}
      */
-    public TeleObject make(Reference reference) throws TeleError {
+    public TeleObject make(RemoteReference reference) throws TeleError {
         assert reference != null;
         if (reference.isZero()) {
             return null;
         }
-        final RemoteReference remoteRef = (RemoteReference) reference;
-        if (remoteRef.isTemporary()) {
+
+        if (reference.isTemporary()) {
             // TODO (mlvdv) this should become an error
-            TeleWarning.message("Creating a TeleObject with a temporary Reference" + remoteRef.toString() + " @" + remoteRef.toOrigin().to0xHexString());
+            TeleWarning.message("Creating a TeleObject with a temporary Reference" + reference.toString() + " @" + reference.toOrigin().to0xHexString());
         }
-        if (remoteRef.status().isDead()) {
+        if (reference.status().isDead()) {
             // TODO (mlvdv) This should probably be an error when it all shakes out
-            TeleWarning.message("Attempt to create TeleObject with a DEAD Reference" + remoteRef.toString() + " @" + remoteRef.toOrigin().to0xHexString());
+            TeleWarning.message("Attempt to create TeleObject with a DEAD Reference" + reference.toString() + " @" + reference.toOrigin().to0xHexString());
         }
 
         //assert vm().lockHeldByCurrentThread();
-        TeleObject teleObject = getTeleObject(remoteRef);
+        TeleObject teleObject = getTeleObject(reference);
         if (teleObject != null) {
             return teleObject;
         }
 
-        if (remoteRef.status().isForwarder()) {
+        if (reference.status().isForwarder()) {
             // Quasi objects:  forwarders
             // These have to be created specially.
             // TODO (mlvdv) I'm letting these be put into to the standard map for now; I haven't (yet) found a reason to map them separately.
-            final RemoteReference newCopyReference = referenceManager().makeReference(remoteRef.forwardedTo());
+            final RemoteReference newCopyReference = referenceManager().makeReference(reference.forwardedTo());
             final TeleObject newCopyObject = objects().makeTeleObject(newCopyReference);
             switch (newCopyObject.kind()) {
                 case TUPLE:
-                    teleObject = new TeleTupleForwarderQuasi(vm(), remoteRef);
+                    teleObject = new TeleTupleForwarderQuasi(vm(), reference);
                     break;
                 case ARRAY:
                     final ClassActor classActor = newCopyObject.classActorForObjectType();
                     if (classActor == null) {
                         return null;
                     }
-                    teleObject = new TeleArrayForwarderQuasi(vm(), remoteRef, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
+                    teleObject = new TeleArrayForwarderQuasi(vm(), reference, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
                     break;
                 case HYBRID:
                     if (newCopyObject instanceof TeleDynamicHub) {
-                        teleObject = new TeleDynamicHubForwarderQuasi(vm(), remoteRef);
+                        teleObject = new TeleDynamicHubForwarderQuasi(vm(), reference);
                     } else if (newCopyObject instanceof TeleStaticHub) {
-                        teleObject = new TeleStaticHubForwarderQuasi(vm(), remoteRef);
+                        teleObject = new TeleStaticHubForwarderQuasi(vm(), reference);
                     } else {
                         TeleError.unexpected(tracePrefix() + "unknown hub type");
                     }
@@ -428,10 +427,10 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             // investigation must be done using the lowest level memory reading primitives.
 
             // Location of the {@link Hub} in the VM that describes the layout of the presumed object.
-            Reference hubReference = vm().referenceManager().zeroReference();
+            RemoteReference hubReference = vm().referenceManager().zeroReference();
 
             // Location of the {@link ClassActor} in the VM that describes the type of the presumed object.
-            Reference classActorReference = vm().referenceManager().zeroReference();
+            RemoteReference classActorReference = vm().referenceManager().zeroReference();
 
             // Local copy of the {@link ClassActor} in the VM that describes the type of the presumed object.
             // We presume to have loaded exactly the same classes as in the VM, so we can use this local
@@ -439,49 +438,49 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             ClassActor classActor = null;
 
             try {
-                final Address hubAddress = Layout.readHubReferenceAsWord(remoteRef).asAddress();
+                final Address hubAddress = Layout.readHubReferenceAsWord(reference).asAddress();
                 hubReference = referenceManager().makeReference(hubAddress);
                 classActorReference = fields().Hub_classActor.readReference(hubReference);
                 classActor = classes().makeClassActor(classActorReference);
             } catch (InvalidReferenceException invalidReferenceException) {
-                Log.println("InvalidReferenceException reference: " + remoteRef + "/" + remoteRef.toOrigin() +
+                Log.println("InvalidReferenceException reference: " + reference + "/" + reference.toOrigin() +
                                 " hubReference: " + hubReference + "/" + hubReference.toOrigin() + " classActorReference: " +
                                 classActorReference + "/" + classActorReference.toOrigin() + " classActor: " + classActor);
                 return null;
             }
 
             // Must check for the static tuple case first; it doesn't follow the usual rules
-            final Reference hubhubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(hubReference).asAddress());
-            final Reference hubClassActorReference = fields().Hub_classActor.readReference(hubhubReference);
+            final RemoteReference hubhubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(hubReference).asAddress());
+            final RemoteReference hubClassActorReference = fields().Hub_classActor.readReference(hubhubReference);
             final ClassActor hubClassActor = classes().makeClassActor(hubClassActorReference);
             final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
             if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
-                teleObject = getTeleObject(remoteRef);
+                teleObject = getTeleObject(reference);
                 if (teleObject == null) {
-                    teleObject = new TeleStaticTuple(vm(), remoteRef);
+                    teleObject = new TeleStaticTuple(vm(), reference);
                 }
             } else if (classActor.isArrayClass()) {
                 // Check map again, just in case there's a race
-                teleObject = getTeleObject(remoteRef);
+                teleObject = getTeleObject(reference);
                 if (teleObject == null) {
-                    teleObject = new TeleArrayObject(vm(), remoteRef, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
+                    teleObject = new TeleArrayObject(vm(), reference, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
                 }
             } else if (classActor.isHybridClass()) {
                 final Class javaClass = classActor.toJava();
                 // Check map again, just in case there's a race
-                teleObject = getTeleObject(remoteRef);
+                teleObject = getTeleObject(reference);
                 if (teleObject == null) {
                     if (DynamicHub.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleDynamicHub(vm(), remoteRef);
+                        teleObject = new TeleDynamicHub(vm(), reference);
                     } else if (StaticHub.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleStaticHub(vm(), remoteRef);
+                        teleObject = new TeleStaticHub(vm(), reference);
                     } else {
                         throw TeleError.unexpected(tracePrefix() + "invalid hybrid implementation type");
                     }
                 }
             } else if (classActor.isTupleClass()) {
                 // Check map again, just in case there's a race
-                teleObject = getTeleObject(remoteRef);
+                teleObject = getTeleObject(reference);
                 if (teleObject == null) {
                     // Walk up the type hierarchy for the class, locating the most specific type
                     // for which a constructor is defined.
@@ -496,7 +495,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
                         TeleError.unexpected(tracePrefix() + "failed to find constructor for class" + classActor.toJava());
                     }
                     try {
-                        teleObject = (TeleObject) constructor.newInstance(vm(), remoteRef);
+                        teleObject = (TeleObject) constructor.newInstance(vm(), reference);
                     } catch (InstantiationException e) {
                         TeleError.unexpected();
                     } catch (IllegalAccessException e) {
@@ -507,14 +506,14 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
                 }
             } else {
                 //throw TeleError.unexpected("invalid object implementation type");
-                Trace.line(TRACE_VALUE, tracePrefix() + "failed to create object at apparently valid origin=0x" + remoteRef.toOrigin().toHexString());
+                Trace.line(TRACE_VALUE, tracePrefix() + "failed to create object at apparently valid origin=0x" + reference.toOrigin().toHexString());
                 return null;
             }
         }
         final WeakReference<TeleObject> teleObjectWeakReference = new WeakReference<TeleObject>(teleObject);
-        if (remoteRef.status().isDead()) {
+        if (reference.status().isDead()) {
             if (teleObject.classActorForObjectType().toJava() == HeapFreeChunk.class) {
-                referenceToTeleHeapFreeChunk.put(remoteRef, teleObjectWeakReference);
+                referenceToTeleHeapFreeChunk.put(reference, teleObjectWeakReference);
                 heapFreeChunksCount++;
                 teleObject.updateCache(vm().teleProcess().epoch());
             }
@@ -523,7 +522,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             //Log.println("OID: " + teleObject.getOID() + " ref: " + teleObject.getCurrentOrigin());
             //assert oidToTeleObject.containsKey(teleObject.getOID());
 
-            referenceToTeleObject.put(remoteRef,  teleObjectWeakReference);
+            referenceToTeleObject.put(reference, teleObjectWeakReference);
             teleObject.updateCache(vm().teleProcess().epoch());
 
             objectsCreatedCount++;
@@ -560,35 +559,35 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
     }
 
     /**
-     * @return the number of {@linkplain Reference references} in the table.
+     * @return the number of {@linkplain RemoteReference references} in the table.
      */
     public int referenceCount() {
         return referenceToTeleObject.size();
     }
 
     /**
-     * @return the number of {@linkplain Reference references} in the table that point to live objects.
+     * @return the number of {@linkplain RemoteReference references} in the table that point to live objects.
      */
     public int liveObjectCount() {
         return liveObjectCount;
     }
 
     /**
-     * @return the number of {@linkplain Reference references} in the table that point to <em>quasi</em> objects.
+     * @return the number of {@linkplain RemoteReference references} in the table that point to <em>quasi</em> objects.
      */
     public int quasiObjectCount() {
         return quasiObjectCount();
     }
 
     private Constructor getConstructor(Class clazz) {
-        return Classes.getDeclaredConstructor(clazz, TeleVM.class, Reference.class);
+        return Classes.getDeclaredConstructor(clazz, TeleVM.class, RemoteReference.class);
     }
 
     /**
      * @param reference location of an object in the VM
      * @return the (preferably) canonical instance of {@link TeleObject} corresponding to the VM object
      */
-    private TeleObject getTeleObject(Reference reference) {
+    private TeleObject getTeleObject(RemoteReference reference) {
         TeleObject teleObject = null;
         synchronized (referenceToTeleObject) {
             final WeakReference<TeleObject> teleObjectRef = referenceToTeleObject.get(reference);

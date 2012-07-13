@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,15 +23,15 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Inspector's canonical surrogate for an object of type {@link ClassConstant} in the VM.
  */
 public abstract class TeleClassConstant extends TelePoolConstant {
 
-    protected TeleClassConstant(TeleVM vm, Reference classConstantReference) {
+    protected TeleClassConstant(TeleVM vm, RemoteReference classConstantReference) {
         super(vm, classConstantReference);
     }
 
@@ -41,7 +41,7 @@ public abstract class TeleClassConstant extends TelePoolConstant {
      */
     public static final class Unresolved extends TelePoolConstant {
 
-        public Unresolved(TeleVM vm, Reference unresolvedClassConstantReference) {
+        public Unresolved(TeleVM vm, RemoteReference unresolvedClassConstantReference) {
             super(vm, unresolvedClassConstantReference);
         }
 
@@ -60,7 +60,7 @@ public abstract class TeleClassConstant extends TelePoolConstant {
 
         private TeleClassActor teleClassActor;
 
-        public Resolved(TeleVM vm, Reference resolvedClassConstantReference) {
+        public Resolved(TeleVM vm, RemoteReference resolvedClassConstantReference) {
             super(vm, resolvedClassConstantReference);
         }
 
@@ -73,7 +73,7 @@ public abstract class TeleClassConstant extends TelePoolConstant {
          */
         public TeleClassActor getTeleClassActor() {
             if (teleClassActor == null) {
-                final Reference classActorReference = fields().ClassConstant$Resolved_classActor.readReference(reference());
+                final RemoteReference classActorReference = fields().ClassConstant$Resolved_classActor.readReference(reference());
                 teleClassActor = (TeleClassActor) objects().makeTeleObject(classActorReference);
             }
             return teleClassActor;
