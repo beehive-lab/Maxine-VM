@@ -662,7 +662,7 @@ public class JVMTIFunctions  {
             if (jvmtiEnv == null) {
                 return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
-            return JVMTIThreadFunctions.notifyFramePop(handleAsThread, depth);
+            return JVMTIThreadFunctions.notifyFramePop(jvmtiEnv, handleAsThread, depth);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {

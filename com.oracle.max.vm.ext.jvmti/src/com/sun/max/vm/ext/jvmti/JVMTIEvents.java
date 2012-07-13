@@ -111,7 +111,7 @@ public class JVMTIEvents {
         public final int code;
 
         /**
-         * The zero based bit for bitsets conmtaining this event.
+         * The zero based bit for bitsets containing this event.
          */
         public final long bit;
 
@@ -144,6 +144,9 @@ public class JVMTIEvents {
     }
 
     public static class JVMTIEventLogger extends VMLogger {
+        public static final int SUPPRESSED = 1;
+        public static final int DELIVERED = 0;
+
         private JVMTIEventLogger() {
             super("JVMTIEvents", E.EVENT_COUNT, "log JVMTI events");
         }
@@ -153,25 +156,32 @@ public class JVMTIEvents {
             return E.VALUES[op].name();
         }
 
-        void logEvent(E event, boolean ignoring, Object arg) {
+        void logSuppressedEvent(E event) {
+            log(event.ordinal(), intArg(SUPPRESSED));
+        }
+
+        void logEvent(E event, JVMTI.Env env, Object arg) {
+            int ord = event.ordinal();
+            Word envArg = objectArg(env);
+            Word delivered = intArg(DELIVERED);
             switch (event) {
                 case CLASS_LOAD:
                 case CLASS_PREPARE: {
-                    log(event.ordinal(), booleanArg(ignoring), classActorArg((ClassActor) arg));
+                    log(ord, envArg, delivered, classActorArg((ClassActor) arg));
                     break;
                 }
                 case BREAKPOINT: {
                     EventBreakpointID bptId = (EventBreakpointID) arg;
-                    log(event.ordinal(), booleanArg(ignoring), Address.fromLong(bptId.methodID), intArg(bptId.location));
+                    log(ord, envArg, delivered, Address.fromLong(bptId.methodID), intArg(bptId.location));
                     break;
                 }
                 case COMPILED_METHOD_LOAD: {
-                    log(event.ordinal(), booleanArg(ignoring), methodActorArg((MethodActor) arg));
+                    log(ord, envArg, delivered, methodActorArg((MethodActor) arg));
                     break;
                 }
 
                 default:
-                    log(event.ordinal(), booleanArg(ignoring));
+                    log(ord, envArg, delivered);
             }
         }
 
@@ -276,8 +286,9 @@ public class JVMTIEvents {
     }
 
     /**
-     * Checks whether the given event is set for any agent, either globally or for a given thread.
-     * @param eventType
+     * Checks whether the given event is set for given agent, either globally or for a given thread.
+     * @param env environment to check
+     * @param event
      * @param vmThread thread to check
      */
     static boolean isEventSet(JVMTI.Env env, JVMTIEvents.E event, VmThread vmThread) {

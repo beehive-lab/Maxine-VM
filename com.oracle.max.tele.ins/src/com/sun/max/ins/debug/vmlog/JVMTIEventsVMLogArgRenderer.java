@@ -31,21 +31,21 @@ import com.sun.max.vm.log.VMLog.*;
 public class JVMTIEventsVMLogArgRenderer extends VMLogArgRenderer {
 
     private final PlainLabel DELIVERING;
-    private final PlainLabel IGNORING;
+    private final PlainLabel SUPPRESSING;
 
     public JVMTIEventsVMLogArgRenderer(VMLogView vmLogView) {
         super(vmLogView);
         DELIVERING = new PlainLabel(vmLogView.inspection(), "Delivering");
-        IGNORING = new PlainLabel(vmLogView.inspection(), "Ignoring");
+        SUPPRESSING = new PlainLabel(vmLogView.inspection(), "Suppressing");
     }
 
     @Override
     protected Component getRenderer(int header, int argNum, long argValue) {
         if (argNum == 1) {
-            if (argValue == 0) {
+            if (argValue == JVMTIEventLogger.DELIVERED) {
                 return DELIVERING;
             } else {
-                return IGNORING;
+                return SUPPRESSING;
             }
         }
         int op = Record.getOperation(header);
@@ -53,16 +53,16 @@ public class JVMTIEventsVMLogArgRenderer extends VMLogArgRenderer {
             case CLASS_PREPARE:
                 return safeGetReferenceValueLabel(getTeleClassActor(argValue));
             case BREAKPOINT:
-                if (argNum == 2) {
+                if (argNum == 3) {
                     // methodId
                     return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
-                } else if (argNum == 3) {
+                } else if (argNum == 4) {
                     //location
                     return new PlainLabel(inspection(), Long.toString(argValue));
                 }
                 break;
             case COMPILED_METHOD_LOAD:
-                if (argNum == 2) {
+                if (argNum == 3) {
                     return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
                 }
             default:

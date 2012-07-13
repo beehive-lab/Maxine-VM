@@ -537,7 +537,13 @@ public class JVMTI {
         return JVMTIEvents.isEventSet(jvmtiEnv, event, vmThread);
     }
 
-    private static boolean ignoreEvent(JVMTIEvents.E event) {
+    /**
+     * Very basic check on whether to suppress the event.
+     * N.B. This does <b>not</b> do any checks on agent settings.
+     * @param event
+     * @return
+     */
+    private static boolean suppressEvent(JVMTIEvents.E event) {
         if (MaxineVM.isHosted()) {
             return true;
         }
@@ -580,11 +586,13 @@ public class JVMTI {
      * @param eventId
      */
     public static void event(JVMTIEvents.E event, Object arg1) {
-        boolean ignoring = ignoreEvent(event);
+        boolean suppress = suppressEvent(event);
 
-        JVMTIEvents.logger.logEvent(event, ignoring, arg1);
 
-        if (ignoring) {
+        if (suppress) {
+            if (JVMTIEvents.logger.enabled()) {
+                JVMTIEvents.logger.logSuppressedEvent(event);
+            }
             return;
         }
 
@@ -610,6 +618,7 @@ public class JVMTI {
                 if (callback.isZero()) {
                     continue;
                 }
+                JVMTIEvents.logger.logEvent(event, nativeEnv, arg1);
                 Pointer cstruct = nativeEnv.cstruct;
                 switch (event) {
                     case VM_START:
@@ -665,6 +674,7 @@ public class JVMTI {
                 if (javaEnv == null || !JVMTIEvents.isEventSet(javaEnv, event, VmThread.current())) {
                     continue;
                 }
+                JVMTIEvents.logger.logEvent(event, javaEnv, arg1);
                 Thread currentThread = Thread.currentThread();
                 switch (event) {
                     case VM_INIT:
@@ -785,7 +795,7 @@ public class JVMTI {
     @INTRINSIC(UNSAFE_CAST) public static ExceptionEventData  asExceptionEventData(Object object) { return (ExceptionEventData) object; }
 
     private static FieldEventData checkGetFieldModificationEvent(JVMTIEvents.E event, Object object, int offset, boolean isStatic) {
-        if (ignoreEvent(event)) {
+        if (suppressEvent(event)) {
             return null;
         }
         FieldEventData data = tfed.get();

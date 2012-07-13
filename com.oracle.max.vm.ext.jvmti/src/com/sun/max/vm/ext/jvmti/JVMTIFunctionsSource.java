@@ -319,7 +319,7 @@ public class JVMTIFunctionsSource {
         // PHASES: LIVE
         // HANDLECHECK_NULLOK: thread=Thread
         // LOGARGS: Address.fromInt(depth)
-        return JVMTIThreadFunctions.notifyFramePop(handleAsThread, depth);
+        return JVMTIThreadFunctions.notifyFramePop(jvmtiEnv, handleAsThread, depth);
     }
 
     @VM_ENTRY_POINT
