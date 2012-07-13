@@ -141,6 +141,14 @@ public class VmOperation {
      */
     public static final Word THREAD_IS_FROZEN = Address.fromInt(2);
 
+    private static final String [] mutatorStateNames = {
+        "THREAD_IN_NATIVE", "THREAD_IN_JAVA", "THREAD_IS_FROZEN"
+    };
+
+    public static String mutatorStateName(Word mutatorState) {
+        return mutatorStateNames[mutatorState.asAddress().toInt()];
+    }
+
     /**
      * Link to next node in list of VM operations.
      */
