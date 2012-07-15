@@ -49,6 +49,10 @@ public class SingleThread extends Thread {
 
     private static final boolean disabled = false;
 
+    public static Thread self() {
+        return worker;
+    }
+
     public static <V> V execute(Function<V> function) {
         if (disabled || Thread.currentThread() == worker) {
             try {

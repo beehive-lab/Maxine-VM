@@ -718,10 +718,49 @@ public abstract class TeleVM implements MaxVM {
         return invalidReferencesLogger;
     }
 
+    protected VMLock makeVMLock() {
+        return new ReentrantVMLock();
+    }
+
+    protected VMLock getLock() {
+        return lock;
+    }
+
     /**
      * A lock designed to keep all non-thread-safe client calls from being handled during the VM setup/execute/refresh cycle.
      */
-    private ReentrantLock lock = new ReentrantLock();
+    private VMLock lock;
+
+    protected interface VMLock {
+        void lock();
+        boolean tryLock();
+        void unlock();
+        boolean isHeldByCurrentThread();
+    }
+
+    private static class ReentrantVMLock implements VMLock {
+        private ReentrantLock lock = new ReentrantLock();
+
+        @Override
+        public void lock() {
+            lock.lock();
+        }
+
+        @Override
+        public boolean tryLock() {
+            return lock.tryLock();
+        }
+
+        @Override
+        public void unlock() {
+            lock.unlock();
+        }
+
+        @Override
+        public boolean isHeldByCurrentThread() {
+            return lock.isHeldByCurrentThread();
+        }
+    }
 
     /**
      * The protocol that is being used to communicate with the target VM.
@@ -744,6 +783,7 @@ public abstract class TeleVM implements MaxVM {
      * @throws BootImageException
      */
     protected TeleVM(BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
+        this.lock = makeVMLock();
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
         this.teleVMState = TeleVMState.nullState(mode);
@@ -1208,6 +1248,7 @@ public abstract class TeleVM implements MaxVM {
         }
         return true;
     }
+
 
     /**
      * Determines whether the calling thread holds the VM lock.

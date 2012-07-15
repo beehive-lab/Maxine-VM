@@ -102,9 +102,14 @@ public class LinuxNativeTeleChannelProtocol extends UnixNativeTeleChannelProtoco
         return leaderTask.writeBytes(dst, src.array(), false, src.arrayOffset() + srcOffset, length);
     }
 
+
     @Override
     public boolean gatherThreads(final Object teleDomain, final Object threadList, final long tlaList) {
+        final LinuxTeleVM teleVM = (teleDomain instanceof LinuxTeleProcess) ? (LinuxTeleVM) ((LinuxTeleProcess) teleDomain).vm() : null;
         try {
+            if (teleVM != null) {
+                teleVM.handOverVMLock();
+            }
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws IOException {
                     nativeGatherThreads(leaderTask.tgid(), teleDomain, threadList, tlaList);
@@ -113,6 +118,10 @@ public class LinuxNativeTeleChannelProtocol extends UnixNativeTeleChannelProtoco
             });
         } catch (Exception exception) {
             exception.printStackTrace();
+        } finally {
+            if (teleVM != null) {
+                teleVM.handBackVMLock();
+            }
         }
         return false;
     }
