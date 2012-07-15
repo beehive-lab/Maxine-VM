@@ -512,7 +512,15 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeOptCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
-        final Address  firstUnusedByteAddress = endOfCodeRegion.alignUp(pageSize);
+        final Address immortalStart = endOfCodeRegion.alignUp(pageSize);
+        // Relocate immortal memory immediately after the end of the code region.
+        ImmortalMemoryRegion immortalRegion = ImmortalHeap.getImmortalHeap();
+        FatalError.check(immortalRegion.used().isZero(), "Immortal heap must be unused");
+        VirtualMemory.deallocate(immortalRegion.start(), immortalRegion.size(), VirtualMemory.Type.HEAP);
+        immortalRegion.setStart(immortalStart);
+        immortalRegion.mark.set(immortalStart);
+        final Address firstUnusedByteAddress = immortalRegion.end();
+
         try {
             // Use immortal memory for now.
             Heap.enableImmortalMemoryAllocation();
@@ -520,6 +528,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             youngSpace.initialize(firstUnusedByteAddress, resizingPolicy.maxYoungGenSize(), resizingPolicy.initialYoungGenSize());
             Address startOfOldSpace = youngSpace.space.end().alignUp(pageSize);
             oldSpace.initialize(startOfOldSpace, resizingPolicy.maxOldGenSize(), resizingPolicy.initialOldGenSize());
+            initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
+            cardTableRSet.initializeXirStartupConstants();
+
             /*
              * The evacuators include their own local allocation buffer, refilled via the EvacuationBufferProvider interface implemented by the GenSSHeapScheme.
              * The evacuators are initialized with the retireAfterEvacuation parameter to true. This allows the GenSSHeapScheme to
@@ -537,8 +548,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
              */
             youngSpaceEvacuator.initialize(2, true, Size.zero(), true);
             oldSpaceEvacuator.initialize(2, true, Size.zero(), true);
-            initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
-            cardTableRSet.initializeXirStartupConstants();
 
             Address unusedReservedSpaceStart = cardTableRSet.memory().end().alignUp(pageSize);
             // Free reserved space we will not be using.
