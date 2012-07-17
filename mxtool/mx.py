@@ -57,7 +57,8 @@ The configuration files (i.e. in the 'mx' sub-directory) of a suite are:
 
   env
       A set of environment variable definitions. These override any
-      existing environment variables.
+      existing environment variables. Common properties set here
+      include JAVA_HOME and IGNORED_PROJECTS.
 
 The includes and env files are typically not put under version control
 as they usually contain local file-system paths.
@@ -194,7 +195,11 @@ class Project(Dependency):
                 if includeLibs and not dep in deps:
                     deps.append(dep)
             else:
-                dep = project(name)
+                dep = _projects.get(name, None)
+                if dep is None:
+                    if name in _opts.ignored_projects:
+                        abort('project named ' + name + ' required by ' + self.name + ' is ignored')
+                    abort('dependency named ' + name + ' required by ' + self.name + ' is not found')
                 if not dep in deps:
                     dep.all_deps(deps, includeLibs)
         if not self in deps and includeSelf:
@@ -449,7 +454,8 @@ class Suite:
             existing = _projects.get(p.name)
             if existing is not None:
                 abort('cannot override project  ' + p.name + ' in ' + p.dir + " with project of the same name in  " + existing.dir)
-            _projects[p.name] = p
+            if not p.name in _opts.ignored_projects:
+                _projects[p.name] = p
         for l in self.libs:
             existing = _libs.get(l.name)
             if existing is not None:
@@ -566,6 +572,8 @@ def project(name, fatalIfMissing=True):
     """
     p = _projects.get(name)
     if p is None and fatalIfMissing:
+        if name in _opts.ignored_projects:
+            abort('project named ' + name + ' is ignored')
         abort('project named ' + name + ' not found')
     return p
 
@@ -671,6 +679,7 @@ class ArgParser(ArgumentParser):
         self.add_argument('--Ja', action='append', dest='java_args_sfx', help='suffix Java VM arguments (e.g. --Ja @-dsa)', metavar='@<args>', default=[])
         self.add_argument('--user-home', help='users home directory', metavar='<path>', default=os.path.expanduser('~'))
         self.add_argument('--java-home', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>')
+        self.add_argument('--ignore-project', action='append', dest='ignored_projects', help='name of project to ignore', metavar='<name>', default=[])
         if get_os() != 'windows':
             # Time outs are (currently) implemented with Unix specific functionality
             self.add_argument('--timeout', help='Timeout (in seconds) for command', type=int, default=0, metavar='<secs>')
@@ -702,6 +711,8 @@ class ArgParser(ArgumentParser):
 
         os.environ['JAVA_HOME'] = opts.java_home
         os.environ['HOME'] = opts.user_home
+
+        opts.ignored_projects = opts.ignored_projects + os.environ.get('IGNORED_PROJECTS', '').split(',')
 
         commandAndArgs = opts.__dict__.pop('commandAndArgs')
         return opts, commandAndArgs
@@ -1155,6 +1166,7 @@ def build(args, parser=None):
     parser.add_argument('--no-java', action='store_false', dest='java', help='do not build Java projects')
     parser.add_argument('--no-native', action='store_false', dest='native', help='do not build native projects')
     parser.add_argument('--jdt', help='Eclipse installation or path to ecj.jar for using the Eclipse batch compiler (default: ' + defaultEcjPath + ')', default=defaultEcjPath, metavar='<path>')
+    parser.add_argument('--jdt-warning-as-error', action='store_true', help='convert all Eclipse batch compiler warnings to errors')
 
     if suppliedParser:
         parser.add_argument('remainder', nargs=REMAINDER, metavar='...')
@@ -1285,6 +1297,7 @@ def build(args, parser=None):
         argfile.write('\n'.join(javafilelist))
         argfile.close()
 
+        toBeDeleted = [argfileName]
         try:
             if jdtJar is None:
                 log('Compiling Java sources for {0} with javac...'.format(p.name))
@@ -1305,11 +1318,22 @@ def build(args, parser=None):
                 if not exists(jdtProperties):
                     log('JDT properties file {0} not found'.format(jdtProperties))
                 else:
-                    jdtArgs += ['-properties', jdtProperties]
+                    # convert all warnings to errors
+                    if args.jdt_warning_as_error:
+                        jdtPropertiesTmp = jdtProperties + '.tmp'
+                        with open(jdtProperties) as fp:
+                            content = fp.read().replace('=warning', '=error')
+                        with open(jdtPropertiesTmp, 'w') as fp:
+                            fp.write(content)
+                        toBeDeleted.append(jdtPropertiesTmp)
+                        jdtArgs += ['-properties', jdtPropertiesTmp]
+                    else:
+                        jdtArgs += ['-properties', jdtProperties]
                 jdtArgs.append('@' + argfile.name)
                 run(jdtArgs)
         finally:
-            os.remove(argfileName)
+            for n in toBeDeleted:
+                os.remove(n)
 
     if suppliedParser:
         return args
@@ -2140,6 +2164,7 @@ def site(args):
     parser.add_argument('--name', action='store', help='name of overall documentation', required=True, metavar='<name>')
     parser.add_argument('--overview', action='store', help='path to the overview content for overall documentation', required=True, metavar='<path>')
     parser.add_argument('--projects', action='store', help='comma separated projects to process (omit to process all projects)')
+    parser.add_argument('--jd', action='append', help='extra Javadoc arguments (e.g. --jd @-use)', metavar='@<arg>', default=[])
     parser.add_argument('--exclude-packages', action='store', help='comma separated packages to exclude', metavar='<pkgs>')
     parser.add_argument('--dot-output-base', action='store', help='base file name (relative to <dir>/all) for project dependency graph .svg and .jpg files generated by dot (omit to disable dot generation)', metavar='<path>')
     parser.add_argument('--title', action='store', help='value used for -windowtitle and -doctitle javadoc args for overall documentation (default: "<name>")', metavar='<title>')
@@ -2159,9 +2184,14 @@ def site(args):
         projects_arg = ['--projects', args.projects]
         projects = [project(name) for name in args.projects.split(',')]
 
+    extra_javadoc_args = []
+    for a in args.jd:
+        extra_javadoc_args.append('--arg')
+        extra_javadoc_args.append('@' + a)
+
     try:
         # Create javadoc for each project
-        javadoc(['--base', tmpbase] + exclude_packages_arg + projects_arg)
+        javadoc(['--base', tmpbase] + exclude_packages_arg + projects_arg + extra_javadoc_args)
 
         # Create unified javadoc for all projects
         title = args.title if args.title is not None else args.name
@@ -2169,7 +2199,7 @@ def site(args):
                  '--unified',
                  '--arg', '@-windowtitle', '--arg', '@' + title,
                  '--arg', '@-doctitle', '--arg', '@' + title,
-                 '--arg', '@-overview', '--arg', '@' + args.overview] + exclude_packages_arg + projects_arg)
+                 '--arg', '@-overview', '--arg', '@' + args.overview] + exclude_packages_arg + projects_arg + extra_javadoc_args)
         os.rename(join(tmpbase, 'javadoc'), unified)
 
         # Generate dependency graph with Graphviz
@@ -2390,7 +2420,13 @@ def main():
     command_args = commandAndArgs[1:]
 
     if not commands.has_key(command):
-        abort('mx: unknown command \'{0}\'\n{1}use "mx help" for more options'.format(command, _format_commands()))
+        hits = [c for c in commands.iterkeys() if c.startswith(command)]
+        if len(hits) == 1:
+            command = hits[0]
+        elif len(hits) == 0:
+            abort('mx: unknown command \'{0}\'\n{1}use "mx help" for more options'.format(command, _format_commands()))
+        else:
+            abort('mx: command \'{0}\' is ambiguous\n    {1}'.format(command, ' '.join(hits)))
 
     c, _ = commands[command][:2]
     def term_handler(signum, frame):
