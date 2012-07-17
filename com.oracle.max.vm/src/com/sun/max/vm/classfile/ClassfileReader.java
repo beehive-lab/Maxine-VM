@@ -1478,9 +1478,9 @@ public final class ClassfileReader {
         saveClassfile(name, classfileBytes);
         final ClassfileStream classfileStream = new ClassfileStream(classfileBytes, offset, length);
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
-        final ClassActor classActor = classfileReader.loadClass(name, source, isRemote);
+        ClassActor classActor = classfileReader.loadClass(name, source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
-        ClassRegistry.define(classActor);
+        classActor = ClassRegistry.define(classActor);
 
         if (!MaxineVM.isHosted()) {
             // Maxine is unable to usefully distinguish CLASS_LOAD and CLASS_PREPARE events which, for example, JVMTI distinguishes,
