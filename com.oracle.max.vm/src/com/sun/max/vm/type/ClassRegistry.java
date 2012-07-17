@@ -75,6 +75,11 @@ import com.sun.max.vm.value.*;
 public final class ClassRegistry {
 
     /**
+     * This has to be first to ensure that it is initialized before any classes are defined.
+     */
+    public static final ClassLoadingLogger logger = new ClassLoadingLogger();
+
+    /**
      * The class registry associated with the boot class loader.
      */
     public static final ClassRegistry BOOT_CLASS_REGISTRY = new ClassRegistry(HOSTED_BOOT_CLASS_LOADER);
@@ -130,8 +135,6 @@ public final class ClassRegistry {
     public static final ClassMethodActor VmThread_attach = (ClassMethodActor) findMethod("attach", VmThread.class);
     public static final ClassMethodActor VmThread_detach = (ClassMethodActor) findMethod("detach", VmThread.class);
     public static final ClassMethodActor ClassLoader_findBootstrapClass = (ClassMethodActor) findMethod("findBootstrapClass", ClassLoader.class);
-
-    public static final ClassLoadingLogger logger = new ClassLoadingLogger();
 
     private static int loadCount;        // total loaded
     private static int unloadCount;    // total unloaded
@@ -256,8 +259,8 @@ public final class ClassRegistry {
      * @see <a href="http://download.java.net/jdk7/docs/api/java/lang/ClassLoader.html#registerAsParallelCapable()">registerAsParallelCapable</a>
      */
     private ClassActor define0(ClassActor classActor) {
-        if (!MaxineVM.isHosted() && MaxineVM.isDebug() && logger.enabled()) {
-            // Only trace these when in DEBUG build. Too noisy otherwise
+        if (logger.enabled()) {
+            // Use -XX:LogClassLoadingExclude=ClassRegistration to suppress this
             logger.logClassRegistration(classLoader, classActor.name(), classActor, classActor.id);
         }
         final TypeDescriptor typeDescriptor = classActor.typeDescriptor;
@@ -283,7 +286,7 @@ public final class ClassRegistry {
             bootImageClasses.add(classActor);
         }
 
-        if (!MaxineVM.isHosted() && logger.enabled()) {
+        if (logger.enabled()) {
             logger.logClassDefinition(classLoader, classActor.name(), classActor, classActor.id);
         }
         InspectableClassInfo.notifyClassLoaded(classActor);
