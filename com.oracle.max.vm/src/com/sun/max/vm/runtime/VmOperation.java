@@ -141,6 +141,14 @@ public class VmOperation {
      */
     public static final Word THREAD_IS_FROZEN = Address.fromInt(2);
 
+    private static final String [] mutatorStateNames = {
+        "THREAD_IN_NATIVE", "THREAD_IN_JAVA", "THREAD_IS_FROZEN"
+    };
+
+    public static String mutatorStateName(Word mutatorState) {
+        return mutatorStateNames[mutatorState.asAddress().toInt()];
+    }
+
     /**
      * Link to next node in list of VM operations.
      */
@@ -762,12 +770,14 @@ public class VmOperation {
         if (!frozenByEnclosing(thread)) {
             if (UseCASBasedThreadFreezing) {
                 while (true) {
-                    if (MUTATOR_STATE.load(etla).equals(THREAD_IN_NATIVE)) {
-                        if (etla.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IS_FROZEN).equals(THREAD_IN_NATIVE)) {
+                    Word mutatorState = MUTATOR_STATE.load(etla);
+                    if (mutatorState.equals(THREAD_IN_NATIVE)) {
+                        Word oldMutatorState = etla.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IS_FROZEN);
+                        if (oldMutatorState.equals(THREAD_IN_NATIVE)) {
                             // Transitioned thread into frozen state
                             break;
                         }
-                    } else if (MUTATOR_STATE.load(etla).equals(THREAD_IS_FROZEN)) {
+                    } else if (mutatorState.equals(THREAD_IS_FROZEN)) {
                         FatalError.unexpected("VM operation thread found an already frozen thread");
                     }
                     waitForThreadFreezePause(thread, steps);

@@ -590,10 +590,11 @@ public class Snippets {
     private static void blockWhileFrozen(Pointer etla) {
         if (UseCASBasedThreadFreezing) {
             while (true) {
-                if (etla.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
+                final Word oldMutatorState = etla.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA);
+                if (oldMutatorState.equals(THREAD_IN_NATIVE)) {
                     break;
                 }
-                if (MUTATOR_STATE.load(etla).equals(THREAD_IN_JAVA)) {
+                if (oldMutatorState.equals(THREAD_IN_JAVA)) {
                     throw FatalError.unexpected("Thread transitioned itself from THREAD_IS_FROZEN to THREAD_IN_JAVA -- only the VM operation thread should do that");
                 }
                 nativeBlockOnThreadLock();

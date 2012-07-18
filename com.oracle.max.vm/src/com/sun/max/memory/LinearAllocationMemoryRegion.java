@@ -83,7 +83,7 @@ public class LinearAllocationMemoryRegion extends MemoryRegion {
         return mark.get().asAddress();
     }
 
-    protected Size used() {
+    public Size used() {
         return getAllocationMark().minus(start).asSize();
     }
 

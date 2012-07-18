@@ -22,9 +22,12 @@
  */
 package com.sun.max.tele.debug.linux;
 
+import java.util.concurrent.locks.*;
+
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.hosted.*;
 
 /**
@@ -44,5 +47,68 @@ public final class LinuxTeleVM extends TeleVM {
     @Override
     protected LinuxTeleProcess attachToTeleProcess() throws BootImageException {
         return new LinuxTeleProcess(this, Platform.platform(), programFile(), targetLocation().id);
+    }
+
+    /**
+     * Machinery required to implement transparent hand-over of the TeleVM's lock when running
+     * the SingleThread on behalf of a thread holding the lock.
+     */
+    private static class LinuxReentrantVMLock implements VMLock {
+        private ReentrantLock lock = new ReentrantLock();
+        private Thread effectiveOwner = null;
+
+        @Override
+        public void lock() {
+            if (effectiveOwner != null && effectiveOwner == Thread.currentThread()) {
+                return;
+            }
+            lock.lock();
+        }
+
+        @Override
+        public boolean tryLock() {
+            if (effectiveOwner != null && effectiveOwner == Thread.currentThread()) {
+                return true;
+            }
+            return lock.tryLock();
+        }
+
+        @Override
+        public void unlock() {
+            if (effectiveOwner != null && effectiveOwner == Thread.currentThread()) {
+                return;
+            }
+            lock.unlock();
+        }
+
+        @Override
+        public boolean isHeldByCurrentThread() {
+            return (effectiveOwner != null && effectiveOwner == Thread.currentThread()) ? true : lock.isHeldByCurrentThread();
+        }
+
+        void handOverToSingleThread() {
+            if (lock.isHeldByCurrentThread() && Thread.currentThread() != SingleThread.self()) {
+                effectiveOwner = SingleThread.self();
+            }
+        }
+        void handBack() {
+            if (effectiveOwner != null && lock.isHeldByCurrentThread()) {
+                effectiveOwner = null;
+            }
+        }
+    }
+
+    void handOverVMLock() {
+        LinuxReentrantVMLock vmLock = (LinuxReentrantVMLock) getLock();
+        vmLock.handOverToSingleThread();
+    }
+    void handBackVMLock() {
+        LinuxReentrantVMLock vmLock = (LinuxReentrantVMLock) getLock();
+        vmLock.handBack();
+    }
+
+    @Override
+    protected VMLock makeVMLock() {
+        return new LinuxReentrantVMLock();
     }
 }
