@@ -26,7 +26,6 @@ import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
 import static com.sun.max.vm.hosted.HostedVMClassLoader.*;
 import static com.sun.max.vm.jdk.JDK.*;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.nio.*;
@@ -259,7 +258,7 @@ public final class ClassRegistry {
      * @see <a href="http://download.java.net/jdk7/docs/api/java/lang/ClassLoader.html#registerAsParallelCapable()">registerAsParallelCapable</a>
      */
     private ClassActor define0(ClassActor classActor) {
-        if (logger.enabled()) {
+        if (logger.enabled() && logger.classRegistrationEnabled()) {
             // Use -XX:LogClassLoadingExclude=ClassRegistration to suppress this
             logger.logClassRegistration(classLoader, classActor.name(), classActor, classActor.id);
         }
@@ -692,16 +691,24 @@ public final class ClassRegistry {
 
     public static class ClassLoadingLogger extends ClassLoadingLoggerAuto {
 
+        boolean classRegistrationEnabled() {
+            return opEnabled(Operation.ClassRegistration.ordinal());
+        }
+
         private void traceClass(ClassLoader classLoader, String className, Object actor, int classID) {
             Log.print(className);
             Log.print(" [#");
             Log.print(classID);
-            Log.print(", ");
-            Log.print(Reference.fromJava(actor).toOrigin());
+            if (!MaxineVM.isHosted()) {
+                Log.print(", ");
+                Log.print(Reference.fromJava(actor).toOrigin());
+            }
             Log.print("] < ");
-            Log.print(ClassActor.fromJava(classLoader.getClass()).name());
-            Log.print(" @");
-            Log.print(Reference.fromJava(classLoader).toOrigin());
+            Log.print(classLoader.getClass().getName());
+            if (!MaxineVM.isHosted()) {
+                Log.print(" @");
+                Log.print(Reference.fromJava(classLoader).toOrigin());
+            }
             Log.println(" >");
         }
         @Override
@@ -745,13 +752,13 @@ public final class ClassRegistry {
 
         @INLINE
         public final void logClassDefinition(ClassLoader classLoader, String className, Object actor, int classID) {
-            log(Operation.ClassDefinition.ordinal(), objectArg(classLoader), objectArg(className), objectArg(actor), intArg(classID));
+            log(Operation.ClassDefinition.ordinal(), classLoaderArg(classLoader), objectArg(className), objectArg(actor), intArg(classID));
         }
         protected abstract void traceClassDefinition(ClassLoader classLoader, String className, Object actor, int classID);
 
         @INLINE
         public final void logClassRegistration(ClassLoader classLoader, String className, Object actor, int classID) {
-            log(Operation.ClassRegistration.ordinal(), objectArg(classLoader), objectArg(className), objectArg(actor), intArg(classID));
+            log(Operation.ClassRegistration.ordinal(), classLoaderArg(classLoader), objectArg(className), objectArg(actor), intArg(classID));
         }
         protected abstract void traceClassRegistration(ClassLoader classLoader, String className, Object actor, int classID);
 
@@ -768,11 +775,6 @@ public final class ClassRegistry {
                 }
             }
         }
-        static ClassLoader toClassLoader(Record r, int argNum) {
-            return asClassLoader(toObject(r, argNum));
-        }
-        @INTRINSIC(UNSAFE_CAST)
-        private static native ClassLoader asClassLoader(Object arg);
     }
 
 // END GENERATED CODE

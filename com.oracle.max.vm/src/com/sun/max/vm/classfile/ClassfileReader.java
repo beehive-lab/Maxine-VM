@@ -1445,6 +1445,9 @@ public final class ClassfileReader {
         final Instrumentation instrumentation = InstrumentationManager.getInstrumentation();
         boolean vmtiAgents = MaxineVM.isHosted() ? false : VMTI.handler().classFileLoadHookHandled();
         byte[] classfileBytes = bytes;
+
+        // TODO prevent multiple threads from invoking agents concurrently when trying to define the same class
+
         if (instrumentation != null || vmtiAgents) {
             if (offset != 0 || length != bytes.length) {
                 classfileBytes = new byte[length];

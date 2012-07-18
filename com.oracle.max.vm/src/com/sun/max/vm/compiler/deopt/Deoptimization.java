@@ -32,6 +32,7 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -1158,25 +1159,47 @@ public class Deoptimization extends VmOperation {
             }
         }
         static ArrayList<CiConstant> toArrayListCiConstant(Record r, int argNum) {
-            return asArrayListCiConstant(toObject(r, argNum));
+            if (MaxineVM.isHosted()) {
+                Class<ArrayList<CiConstant>> type = null;
+                return Utils.cast(type, ObjectArg.getArg(r, argNum));
+            } else {
+                return asArrayListCiConstant(toObject(r, argNum));
+            }
         }
         @INTRINSIC(UNSAFE_CAST)
         private static native ArrayList<CiConstant> asArrayListCiConstant(Object arg);
+
         static ArrayList<TargetMethod> toArrayListTargetMethod(Record r, int argNum) {
-            return asArrayListTargetMethod(toObject(r, argNum));
+            if (MaxineVM.isHosted()) {
+                Class<ArrayList<TargetMethod>> type = null;
+                return Utils.cast(type, ObjectArg.getArg(r, argNum));
+            } else {
+                return asArrayListTargetMethod(toObject(r, argNum));
+            }
         }
         @INTRINSIC(UNSAFE_CAST)
         private static native ArrayList<TargetMethod> asArrayListTargetMethod(Object arg);
+
         static CiFrame toCiFrame(Record r, int argNum) {
-            return asCiFrame(toObject(r, argNum));
+            if (MaxineVM.isHosted()) {
+                return (CiFrame) ObjectArg.getArg(r, argNum);
+            } else {
+                return asCiFrame(toObject(r, argNum));
+            }
         }
         @INTRINSIC(UNSAFE_CAST)
         private static native CiFrame asCiFrame(Object arg);
+
         static Info toInfo(Record r, int argNum) {
-            return asInfo(toObject(r, argNum));
+            if (MaxineVM.isHosted()) {
+                return (Info) ObjectArg.getArg(r, argNum);
+            } else {
+                return asInfo(toObject(r, argNum));
+            }
         }
         @INTRINSIC(UNSAFE_CAST)
         private static native Info asInfo(Object arg);
+
     }
 
 // END GENERATED CODE

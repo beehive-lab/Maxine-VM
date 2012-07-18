@@ -235,6 +235,11 @@ public class VMLogger {
         return traceEnabled;
     }
 
+    @INLINE
+    public final boolean opEnabled(int op) {
+        return logOp.get(op);
+    }
+
     public void enable(boolean value) {
         logEnabled = value;
     }
@@ -489,10 +494,16 @@ public class VMLogger {
         }
     }
 
-    // Convenience methods for logging typed arguments as {@link Word values}.
+    /* Convenience methods for logging typed arguments as {@link Word values}.
+     * Where possible these use canonical representations that do not involve
+     * references.
+     */
 
+    /**
+     * For {@link HOSTED_ONLY} logging of arbitrary object types.
+     */
     @HOSTED_ONLY
-    private static class ObjectArg extends Word {
+    public static class ObjectArg extends Word {
         Object arg;
 
         ObjectArg(Object arg) {
@@ -500,7 +511,7 @@ public class VMLogger {
             this.arg = arg;
         }
 
-        static Object getArg(Record r, int argNum) {
+        public static Object getArg(Record r, int argNum) {
             /*
             Class<ObjectArg> type = null;
             ObjectArg objectArg = Utils.cast(type, r.getArg(argNum));
@@ -561,6 +572,11 @@ public class VMLogger {
     @INLINE
     public static Word methodActorArg(MethodActor methodActor) {
         return MethodID.fromMethodActor(methodActor);
+    }
+
+    @INLINE
+    public static Word classLoaderArg(ClassLoader arg) {
+        return objectArg(arg);
     }
 
     @INLINE
@@ -668,6 +684,18 @@ public class VMLogger {
     @INLINE
     public static ClassActor toClassActor(Record r, int argNum) {
         return toClassActor(r.getArg(argNum));
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native ClassLoader asClassLoader(Object arg);
+
+    @INLINE
+    public static ClassLoader toClassLoader(Record r, int argNum) {
+        if (MaxineVM.isHosted()) {
+            return (ClassLoader) ObjectArg.getArg(r, argNum);
+        } else {
+            return asClassLoader(toObject(r, argNum));
+        }
     }
 
     @INLINE
