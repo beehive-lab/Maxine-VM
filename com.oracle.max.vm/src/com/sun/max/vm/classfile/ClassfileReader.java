@@ -1480,14 +1480,17 @@ public final class ClassfileReader {
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
         final ClassActor classActor = classfileReader.loadClass(name, source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
-        ClassRegistry.define(classActor);
+        // Use the value returned by the class registry from now on. The class may be defined concurrently and
+        // we may loose the race, so we cannot trust the classActor we've just constructed to be
+        // the defined class actor.
+        final ClassActor definedClassActor = ClassRegistry.define(classActor);
 
         if (!MaxineVM.isHosted()) {
             // Maxine is unable to usefully distinguish CLASS_LOAD and CLASS_PREPARE events which, for example, JVMTI distinguishes,
             // as we need a ClassActor in order to create a Class object, so we just have the one event.
-            VMTI.handler().classLoad(classActor);
+            VMTI.handler().classLoad(definedClassActor);
         }
-        return classActor;
+        return definedClassActor;
     }
 
     /**
