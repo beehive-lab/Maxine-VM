@@ -68,6 +68,10 @@ public class VMLoggerGenerator {
             this.type = type;
         }
 
+        boolean isGeneric() {
+            return klass != type;
+        }
+
         private String getTypeName() {
             return getTypeName(true);
         }
@@ -270,13 +274,23 @@ public class VMLoggerGenerator {
 
                 // casts
                 for (GClass gclass : customTypes) {
+                    boolean generic = gclass.isGeneric();
                     String typeName = gclass.getTypeName();
                     String methodName = traceMethodName(gclass);
                     out.printf("%sstatic %s to%s(Record r, int argNum) {%n", INDENT8, typeName, methodName);
-                    out.printf("%sreturn as%s(toObject(r, argNum));%n", INDENT12, methodName);
+                    out.printf("%sif (MaxineVM.isHosted()) {%n", INDENT12);
+                    if (generic) {
+                        out.printf("%sClass<%s> type = null;%n", INDENT16, typeName);
+                        out.printf("%sreturn Utils.cast(type, ObjectArg.getArg(r, argNum));%n", INDENT16);
+                    } else {
+                        out.printf("%sreturn (%s) ObjectArg.getArg(r, argNum);%n", INDENT16, typeName);
+                    }
+                    out.printf("%s} else {%n", INDENT12);
+                    out.printf("%sreturn as%s(toObject(r, argNum));%n", INDENT16, methodName);
+                    out.printf("%s}%n", INDENT12);
                     out.printf("%s}%n", INDENT8);
                     out.printf("%s@INTRINSIC(UNSAFE_CAST)%n", INDENT8);
-                    out.printf("%sprivate static native %s as%s(Object arg);%n", INDENT8, typeName, methodName);
+                    out.printf("%sprivate static native %s as%s(Object arg);%n%n", INDENT8, typeName, methodName);
                 }
 
                 // enum args
