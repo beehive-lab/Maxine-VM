@@ -43,7 +43,7 @@ public interface HeapSpace extends ResizableSpace, EvacuatingSpace {
     /**
      * Allocate heap space for a TLAB refill.
      * The space may not be contiguous (e.g., it may be a linked list of {@link HeapFreeChunk}), may only
-     * approximate the requested size, and may not be zero-filled.
+     * approximate the requested size, and is not zero-filled.
      * @param size
      * @return a pointer to a cell formatted as a {@link HeapFreeChunk}
      */

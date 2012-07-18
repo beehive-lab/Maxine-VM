@@ -379,4 +379,10 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         FatalError.check(startOfReservedVirtualSpaceSize.lessThan(codeRegion.start()) && codeRegion.end().lessEqual(endOfReservedVirtualSpaceSize),
                         "Runtime code region should be in virtual space reserved by boot loader");
     }
+
+    public boolean isGcThread(Thread thread) {
+        // Adaptor assume single-threaded GC operating on the VmOperationThread.
+        // Override if not true.
+        return thread instanceof VmOperationThread;
+    }
 }

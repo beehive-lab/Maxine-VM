@@ -147,11 +147,6 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         // Do nothing. Heap schemes using this package have their own way of doing this.
     }
 
-    @Override
-    public boolean isGcThread(Thread thread) {
-        return thread instanceof VmOperationThread;
-    }
-
     @INLINE
     @Override
     public boolean supportsTagging() {

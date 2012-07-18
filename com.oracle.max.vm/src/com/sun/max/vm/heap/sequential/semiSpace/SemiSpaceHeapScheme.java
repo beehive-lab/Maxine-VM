@@ -514,10 +514,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         }
     }
 
-    public boolean isGcThread(Thread thread) {
-        return thread instanceof VmOperationThread;
-    }
-
     private Size immediateFreeSpace() {
         return top.minus(allocationMark()).asSize();
     }
