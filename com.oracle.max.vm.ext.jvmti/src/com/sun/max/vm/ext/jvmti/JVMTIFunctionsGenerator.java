@@ -342,9 +342,9 @@ public class JVMTIFunctionsGenerator {
                 sb.append(", ");
                 sb.append(tag);
             }
-            sb.append(");");
+            sb.append(");\n");
             sb.append(INDENT8);
-            sb.append("}\n");
+            sb.append("}");
             return sb.toString();
         }
 

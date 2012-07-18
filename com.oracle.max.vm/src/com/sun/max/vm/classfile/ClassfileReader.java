@@ -1445,6 +1445,9 @@ public final class ClassfileReader {
         final Instrumentation instrumentation = InstrumentationManager.getInstrumentation();
         boolean vmtiAgents = MaxineVM.isHosted() ? false : VMTI.handler().classFileLoadHookHandled();
         byte[] classfileBytes = bytes;
+
+        // TODO prevent multiple threads from invoking agents concurrently when trying to define the same class
+
         if (instrumentation != null || vmtiAgents) {
             if (offset != 0 || length != bytes.length) {
                 classfileBytes = new byte[length];
@@ -1478,7 +1481,7 @@ public final class ClassfileReader {
         saveClassfile(name, classfileBytes);
         final ClassfileStream classfileStream = new ClassfileStream(classfileBytes, offset, length);
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
-        final ClassActor classActor = classfileReader.loadClass(name, source, isRemote);
+        ClassActor classActor = classfileReader.loadClass(name, source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
         // Use the value returned by the class registry from now on. The class may be defined concurrently and
         // we may loose the race, so we cannot trust the classActor we've just constructed to be

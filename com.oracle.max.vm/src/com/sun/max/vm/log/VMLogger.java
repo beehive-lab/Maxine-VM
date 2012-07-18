@@ -235,6 +235,11 @@ public class VMLogger {
         return traceEnabled;
     }
 
+    @INLINE
+    public final boolean opEnabled(int op) {
+        return logOp.get(op);
+    }
+
     public void enable(boolean value) {
         logEnabled = value;
     }
@@ -489,10 +494,16 @@ public class VMLogger {
         }
     }
 
-    // Convenience methods for logging typed arguments as {@link Word values}.
+    /* Convenience methods for logging typed arguments as {@link Word values}.
+     * Where possible these use canonical representations that do not involve
+     * references.
+     */
 
+    /**
+     * For {@link HOSTED_ONLY} logging of arbitrary object types.
+     */
     @HOSTED_ONLY
-    private static class ObjectArg extends Word {
+    public static class ObjectArg extends Word {
         Object arg;
 
         ObjectArg(Object arg) {
@@ -500,7 +511,7 @@ public class VMLogger {
             this.arg = arg;
         }
 
-        static Object getArg(Record r, int argNum) {
+        public static Object getArg(Record r, int argNum) {
             /*
             Class<ObjectArg> type = null;
             ObjectArg objectArg = Utils.cast(type, r.getArg(argNum));
@@ -564,12 +575,22 @@ public class VMLogger {
     }
 
     @INLINE
+    public static Word classLoaderArg(ClassLoader arg) {
+        return objectArg(arg);
+    }
+
+    @INLINE
     public static Word objectArg(Object object) {
         if (MaxineVM.isHosted()) {
             return ObjectArg.toArg(object);
         } else {
             return Reference.fromJava(object).toOrigin();
         }
+    }
+
+    @INLINE
+    public static Word codePointerArg(CodePointer codePointer) {
+        return Address.fromLong(codePointer.toTaggedLong());
     }
 
     @INLINE
@@ -665,6 +686,18 @@ public class VMLogger {
         return toClassActor(r.getArg(argNum));
     }
 
+    @INTRINSIC(UNSAFE_CAST)
+    private static native ClassLoader asClassLoader(Object arg);
+
+    @INLINE
+    public static ClassLoader toClassLoader(Record r, int argNum) {
+        if (MaxineVM.isHosted()) {
+            return (ClassLoader) ObjectArg.getArg(r, argNum);
+        } else {
+            return asClassLoader(toObject(r, argNum));
+        }
+    }
+
     @INLINE
     public static MethodActor toMethodActor(Word arg) {
         return MethodID.toMethodActor(MethodID.fromWord(arg));
@@ -735,6 +768,22 @@ public class VMLogger {
         return asTargetMethod(toObject(r, argNum));
     }
 
+    @INTRINSIC(UNSAFE_CAST)
+    private static native Stub asStub(Object arg);
+
+    @INLINE
+    public static Stub toStub(Record r, int argNum) {
+        if (MaxineVM.isHosted()) {
+            return (Stub) toObject(r, argNum);
+        }
+        return asStub(toObject(r, argNum));
+    }
+
+    @INLINE
+    public static CodePointer toCodePointer(Record r, int argNum) {
+        return CodePointer.fromTaggedLong(toLong(r, argNum));
+    }
+
     // check that loggers are up to date in VM image
 
     static {
@@ -747,9 +796,14 @@ public class VMLogger {
         @Override
         public void checkGeneratedCode() {
             try {
-                Class< ? > updatedSource = VMLoggerGenerator.generate(true);
-                if (updatedSource != null) {
-                    FatalError.unexpected("VMLogger " + updatedSource + " is out of sync.\n" + "Run 'mx loggen', recompile " + updatedSource.getName() + " (or refresh it in your IDE)" +
+                ArrayList<Class<?>> updatedSources = VMLoggerGenerator.generate(true);
+                StringBuilder sb = new StringBuilder();
+                if (updatedSources != null) {
+                    for (Class<?> source : updatedSources) {
+                        sb.append(source.getSimpleName());
+                        sb.append(' ');
+                    }
+                    FatalError.unexpected("VMLogger(s) " + sb.toString() + " is/are out of sync.\n" + "Run 'mx loggen', recompile (or refresh in your IDE)" +
                                     " and restart the bootstrapping process.\n\n");
                 }
             } catch (Exception exception) {
