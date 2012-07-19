@@ -46,11 +46,7 @@ import com.sun.max.vm.thread.*;
  * @see FreeHeapSpaceManager
  */
 public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
-    /**
-     * Number of heap words covered by a single mark.
-     */
     private static final int WORDS_COVERED_PER_BIT = 1;
-
     /**
      * A marking algorithm for the MSHeapScheme.
      */
@@ -67,6 +63,8 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
     private final Collect collect = new Collect();
 
     final AfterMarkSweepVerifier afterGCVerifier;
+
+    private final AtomicPinCounter pinnedCounter = MaxineVM.isDebug() ? new AtomicPinCounter() : null;
 
     @HOSTED_ONLY
     public MSHeapScheme() {
@@ -170,6 +168,22 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
 
     public Size reportUsedSpace() {
         return objectSpace.usedSpace();
+    }
+
+    @INLINE
+    public boolean pin(Object object) {
+        // Objects never relocate. So this is always safe.
+        if (MaxineVM.isDebug()) {
+            pinnedCounter.increment();
+        }
+        return true;
+    }
+
+    @INLINE
+    public void unpin(Object object) {
+        if (MaxineVM.isDebug()) {
+            pinnedCounter.decrement();
+        }
     }
 
     @INLINE
