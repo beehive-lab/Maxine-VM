@@ -197,6 +197,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      */
     private int liveObjectCount = 0;
     private int quasiObjectCount = 0;
+    private int deadCount = 0;
 
     private long lastUpdateEpoch = -1L;
 
@@ -295,7 +296,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         TimerPerType timePerType = new TimerPerType();
         liveObjectCount = 0;
         quasiObjectCount = 0;
-
+        deadCount = 0;
         // Make a copy to prevent ConcurrentModificationExceptions while iterating
         ArrayList<WeakReference<TeleObject>> teleObjectRefs = new ArrayList<WeakReference<TeleObject>>(referenceToTeleObject.values());
         for (WeakReference<TeleObject> teleObjectRef : teleObjectRefs) {
@@ -307,8 +308,9 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
                             liveObjectCount++;
                             break;
                         case DEAD:
-                            // TODO (mlvdv) should probably remove these from the map
-                            TeleWarning.message(tracePrefix() + "DEAD object in map");
+                            deadCount++;
+                            WeakReference<TeleObject> removed = referenceToTeleObject.remove(teleObject.reference());
+                            assert removed == teleObjectRef;
                             break;
                         default:
                             quasiObjectCount++;
