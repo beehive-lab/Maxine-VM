@@ -93,7 +93,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         @Override
         protected void doBeforeGC() {
         }
-
     }
 
     /**
@@ -473,6 +472,16 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     @Override
     public Size reportUsedSpace() {
         return oldSpace.usedSpace().plus(youngSpace.usedSpace());
+    }
+
+    @Override
+    public boolean pin(Object object) {
+        return false;
+    }
+
+    @Override
+    public void unpin(Object object) {
+        throw new UnsupportedOperationException();
     }
 
     @INLINE

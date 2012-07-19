@@ -87,11 +87,8 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         }
     }
     protected final TLABFiller tlabFiller = new TLABFiller();
-    protected final AtomicPinCounter pinnedCounter;
-
     public HeapSchemeWithTLABAdaptor() {
         super();
-        pinnedCounter = MaxineVM.isDebug() ? new AtomicPinCounter() : null;
     }
 
     /**
@@ -151,22 +148,6 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
     @Override
     public boolean supportsTagging() {
         return false;
-    }
-
-    @INLINE
-    public boolean pin(Object object) {
-        // Objects never relocate. So this is always safe.
-        if (MaxineVM.isDebug()) {
-            pinnedCounter.increment();
-        }
-        return true;
-    }
-
-    @INLINE
-    public void unpin(Object object) {
-        if (MaxineVM.isDebug()) {
-            pinnedCounter.decrement();
-        }
     }
 
 }
