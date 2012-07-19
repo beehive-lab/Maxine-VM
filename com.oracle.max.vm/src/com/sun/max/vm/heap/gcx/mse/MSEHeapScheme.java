@@ -48,9 +48,6 @@ import com.sun.max.vm.ti.*;
  * Used for testing region-based support.
  */
 public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements HeapAccountOwner {
-    /**
-     * Number of heap words covered by a single mark.
-     */
     private static final int WORDS_COVERED_PER_BIT = 1;
     static boolean DumpFragStatsAfterGC = false;
     static boolean DumpFragStatsAtGCFailure = false;
@@ -70,6 +67,8 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
      * Space where objects are allocated from by default.
      */
     private final FirstFitMarkSweepSpace<MSEHeapScheme> markSweepSpace;
+
+    private final AtomicPinCounter pinnedCounter = MaxineVM.isDebug() ? new AtomicPinCounter() : null;
 
     final MarkSweepCollection collect = new MarkSweepCollection();
 
@@ -231,6 +230,22 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
 
     public Size reportUsedSpace() {
         return markSweepSpace.usedSpace();
+    }
+
+    @INLINE
+    public boolean pin(Object object) {
+        // Objects never relocate. So this is always safe.
+        if (MaxineVM.isDebug()) {
+            pinnedCounter.increment();
+        }
+        return true;
+    }
+
+    @INLINE
+    public void unpin(Object object) {
+        if (MaxineVM.isDebug()) {
+            pinnedCounter.decrement();
+        }
     }
 
     @INLINE
@@ -485,5 +500,6 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
     public TimeLogger timeLogger() {
         return HeapSchemeLoggerAdaptor.timeLogger;
     }
+
 }
 

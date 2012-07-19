@@ -153,7 +153,7 @@ public final class Memory {
         }
     }
 
-    @NO_SAFEPOINT_POLLS("speed")
+    @NO_SAFEPOINT_POLLS("speed, and used in code that shouldn't be interrupted by GC")
     public static void clearWords(Pointer start, int length) {
         FatalError.check(start.isWordAligned(), "Can only zero word-aligned region");
         for (int i = 0; i < length; i++) {
