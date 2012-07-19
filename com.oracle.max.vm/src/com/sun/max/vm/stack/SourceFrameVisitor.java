@@ -81,7 +81,9 @@ public class SourceFrameVisitor extends RawStackFrameVisitor implements TargetMe
             return true;
         }
 
+        // TODO this value is not stable in the face of deoptimzation as frames can move.
         frameId = current.sp().toLong() << 16;
+
         trapped = callee.targetMethod() != null && callee.targetMethod().is(TrapStub);
         stopped = false;
         int count = targetMethod.forEachCodePos(this, current.vmIP());
@@ -97,8 +99,9 @@ public class SourceFrameVisitor extends RawStackFrameVisitor implements TargetMe
      * @param method a source method on the stack
      * @param bci the bytecode index of the execution point within the method (or -1 if not available)
      * @param trapped specifies if execution is stopped in {@code method} at a trap
-     * @param frameId a unique identifier for this activation of the method. This value is only valid while the method
-     *            activation is on the stack.
+     * @param frameId a unique identifier for this activation of the method.
+     *                This value is only valid while the method activation is on the stack AND
+     *                its immediate callee (if any) is also on the stack.
      * @return {@code true} if the stack walk should continue
      */
     public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
