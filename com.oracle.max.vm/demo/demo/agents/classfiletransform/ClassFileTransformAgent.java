@@ -24,22 +24,81 @@ package demo.agents.classfiletransform;
 
 import java.lang.instrument.*;
 import java.security.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.regex.*;
 
 /**
  * A test for the basic machinery of bytecode transformation on class loading.
+ * In particular it checks for (incorrect) transformation of the same classloader/classname pair
+ * by different threads.
  */
 public class ClassFileTransformAgent implements ClassFileTransformer {
 
-    private static String[] classNames;
+    private static boolean verbose;
+    private static Pattern classPattern;
+    private static ConcurrentMap<ClClass, ArrayList<Thread>> cclassMap = new ConcurrentHashMap<ClClass, ArrayList<Thread>>();
 
-    public static void premain(String args, Instrumentation instrumentation) {
-        classNames = args.split(",");
+    /**
+     * Uniquely identifies an attempted definition for a given class in a given classloader.
+     */
+    private static class ClClass {
+        final ClassLoader classLoader;
+        final String className;
+
+        ClClass(ClassLoader classLoader, String className) {
+            this.classLoader = classLoader;
+            this.className = className;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            ClClass otherClClass = (ClClass) other;
+            return classLoader == otherClClass.classLoader && className.equals(otherClClass.className);
+        }
+
+        @Override
+        public int hashCode() {
+            return classLoader.hashCode() ^ className.hashCode();
+        }
+    }
+    public static void premain(String arg, Instrumentation instrumentation) {
+        String pattern = ".*";
+        if (arg == null) {
+            System.out.println("arg is null");
+        } else {
+            String[] args = arg.split(",");
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals("verbose")) {
+                    verbose = true;
+                } else {
+                    pattern = args[i];
+                }
+            }
+        }
+        classPattern = Pattern.compile(pattern);
         instrumentation.addTransformer(new ClassFileTransformAgent());
     }
 
     @Override
-    public byte[] transform(ClassLoader loader, String className, Class< ? > classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        System.out.println("ClassTransformAgent.transform: " + className);
+    public byte[] transform(ClassLoader loader, String className, Class< ? > classBeingRedefined,
+                    ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+        ArrayList<Thread> v = cclassMap.putIfAbsent(new ClClass(loader, className), currentThreadList());
+        if (v != null) {
+            v.add(Thread.currentThread());
+            System.out.printf("class %s transformed by %s, also by %s%n", className, v.get(0), v.get(1));
+        }
+        if (classPattern.matcher(className).matches()) {
+            if (verbose) {
+                System.out.printf("%s ClassTransformAgent.transform: %s%n", Thread.currentThread(), className);
+            }
+        }
         return null;
+    }
+
+    private static ArrayList<Thread> currentThreadList() {
+        ArrayList<Thread>  list = new ArrayList<Thread>();
+        list.add(Thread.currentThread());
+        return list;
     }
 }
