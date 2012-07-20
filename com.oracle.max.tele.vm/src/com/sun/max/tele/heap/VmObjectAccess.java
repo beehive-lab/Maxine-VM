@@ -577,8 +577,14 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             case WORD:
                 return new WordValue(Layout.getWord(reference, index));
             case REFERENCE:
-                final Address elementAddress = Layout.getWord(reference, index).asAddress();
-                return TeleReferenceValue.from(vm(), referenceManager().makeReference(elementAddress));
+                try {
+                    final Address elementAddress = Layout.getWord(reference, index).asAddress();
+                    return TeleReferenceValue.from(vm(), referenceManager().makeReference(elementAddress));
+                } catch (DataIOError err) {
+                    final Address elementEntryAddress = reference.toOrigin().plus(Layout.referenceArrayLayout().getElementOffsetInCell(index));
+                    TeleWarning.message("VmObjectAccess.unsafeReadArrayElementValue: Can't access reference array element at " + elementEntryAddress.to0xHexString());
+                    return TeleReferenceValue.from(vm(), referenceManager().makeReference(Address.zero()));
+                }
             default:
                 throw TeleError.unknownCase("unknown array kind");
         }
