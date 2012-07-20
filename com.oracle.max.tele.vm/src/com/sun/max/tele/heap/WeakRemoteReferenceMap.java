@@ -26,6 +26,7 @@ import java.lang.ref.*;
 import java.util.*;
 
 import com.sun.max.tele.reference.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 
@@ -50,7 +51,14 @@ public final class WeakRemoteReferenceMap<Ref_Type extends RemoteReference> {
     public void put(Address origin, Ref_Type ref) {
         assert origin.isNotZero();
         final WeakReference<Ref_Type> oldWeakRef = map.put(origin.toLong(), new WeakReference<Ref_Type>(ref));
-        assert oldWeakRef == null || oldWeakRef.get() == null;
+        if (oldWeakRef == null || oldWeakRef.get() == null) {
+            TeleWarning.message("Replacing reference already in map" + oldWeakRef.get().toOrigin().to0xHexString());
+        }
+        // FIXME: assert oldWeakRef == null || oldWeakRef.get() == null;
+        // This assertion was too strong. In some rare scenario, this can "legally" occur.
+        // For example, the Gen GC may format a free space as a dead object in the toSpace which may result in a remote reference to it being recorded in the
+        // toSpace ref map. The free space may subsequently be re-used to refill an evacuation buffer and the first object to be allocated in that free space
+        // will find its address already recorded in the remote reference map.
     }
 
     /**

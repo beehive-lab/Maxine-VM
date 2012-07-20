@@ -147,6 +147,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     /**
      * Policy for resizing the heap after each GC.
      */
+    @INSPECTED
     private final GenSSHeapSizingPolicy resizingPolicy;
 
     /**
@@ -307,6 +308,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         oldSpace.flipSpaces();
         if (minorEvacuationOverflow) {
             final Address startRange =  oldSpace.allocator.start();
+            resizingPolicy.notifyMinorEvacuationOverflowRange(startRange, oldAllocatorTop);
             oldSpace.allocator.unsafeSetTop(oldAllocatorTop);
             oldSpaceEvacuator.prefillSurvivorRanges(startRange, oldAllocatorTop);
         }

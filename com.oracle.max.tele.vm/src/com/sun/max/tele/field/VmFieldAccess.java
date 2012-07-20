@@ -165,8 +165,10 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceIntFieldAccess GenSSHeapScheme_fullCollectionCount = new TeleInstanceIntFieldAccess(GenSSHeapScheme.class, "fullCollectionCount");
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "oldSpace", ContiguousSemiSpace.class);
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_oldSpaceEvacuator = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "oldSpaceEvacuator", EvacuatorToCardSpace.class);
+    public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_resizingPolicy = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "resizingPolicy", GenSSHeapSizingPolicy.class);
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "youngSpace", ContiguousAllocatingSpace.class);
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_youngSpaceEvacuator = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "youngSpaceEvacuator", NoAgingNurseryEvacuator.class);
+    public final TeleInstanceBooleanFieldAccess GenSSHeapSizingPolicy_minorEvacuationOverflow = new TeleInstanceBooleanFieldAccess(GenSSHeapSizingPolicy.class, "minorEvacuationOverflow");
     public final TeleStaticReferenceFieldAccess Heap_HEAP_BOOT_NAME = new TeleStaticReferenceFieldAccess(Heap.class, "HEAP_BOOT_NAME", String.class);
     public final TeleStaticReferenceFieldAccess Heap_bootHeapRegion = new TeleStaticReferenceFieldAccess(Heap.class, "bootHeapRegion", BootHeapRegion.class);
     public final TeleInstanceReferenceFieldAccess HeapFreeChunk_next = new TeleInstanceReferenceFieldAccess(HeapFreeChunk.class, "next", HeapFreeChunk.class);
