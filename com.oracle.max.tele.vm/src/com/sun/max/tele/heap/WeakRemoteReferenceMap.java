@@ -51,7 +51,7 @@ public final class WeakRemoteReferenceMap<Ref_Type extends RemoteReference> {
     public void put(Address origin, Ref_Type ref) {
         assert origin.isNotZero();
         final WeakReference<Ref_Type> oldWeakRef = map.put(origin.toLong(), new WeakReference<Ref_Type>(ref));
-        if (oldWeakRef == null || oldWeakRef.get() == null) {
+        if (oldWeakRef != null && oldWeakRef.get() != null) {
             TeleWarning.message("Replacing reference already in map" + oldWeakRef.get().toOrigin().to0xHexString());
         }
         // FIXME: assert oldWeakRef == null || oldWeakRef.get() == null;
