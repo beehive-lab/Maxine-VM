@@ -165,7 +165,11 @@ public abstract class TeleNativeThread extends AbstractVmHolder
             final String name = this.entityName + " Locals";
             this.threadLocalsBlock = new TeleThreadLocalsBlock(this, name, params.threadLocalsRegion.start(), params.threadLocalsRegion.nBytes());
         }
-        this.vmLog = new TeleThreadVMLog(teleProcess.vm(), this);
+        if (teleProcess.vm().vmLog() instanceof TeleVMLogNative) {
+            this.vmLog = new TeleThreadVMLog(teleProcess.vm(), this);
+        } else {
+            this.vmLog = null;
+        }
         this.breakpointIsAtInstructionPointer = platform().isa == ISA.SPARC;
         final String stackName = this.entityName + " Stack";
         this.teleStack = new TeleStack(teleProcess.vm(), this, stackName, params.stackRegion.start(), params.stackRegion.nBytes());
@@ -189,7 +193,9 @@ public abstract class TeleNativeThread extends AbstractVmHolder
             if (state.allowsDataAccess()) {
                 refreshBreakpoint();
                 threadLocalsBlock.updateCache(epoch);
-                vmLog.updateCache(epoch);
+                if (vmLog != null) {
+                    vmLog.updateCache(epoch);
+                }
             }
             lastUpdateEpoch = epoch;
         } else {
@@ -218,7 +224,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         if (threadLocalsBlock.memoryRegion() != null) {
             allocations.add(threadLocalsBlock.memoryRegion());
         }
-        if (vmLog.memoryRegion() != null) {
+        if (vmLog != null && vmLog.memoryRegion() != null) {
             allocations.add(vmLog.memoryRegion());
         }
         return allocations;
@@ -579,7 +585,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
             if (isJava()) {
                 sb.append(",stack_start=0x").append(stack().memoryRegion().start().toHexString());
                 sb.append(",stack_size=").append(stack().memoryRegion().nBytes());
-                if (vmLog.memoryRegion() != null) {
+                if (vmLog != null && vmLog.memoryRegion() != null) {
                     sb.append(",vmlog_start=0x").append(vmLog.memoryRegion().start().toHexString());
                     sb.append(",vmlog_size=").append(vmLog.memoryRegion().nBytes());
                 }
