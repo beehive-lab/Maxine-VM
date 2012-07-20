@@ -37,6 +37,7 @@ import com.sun.max.tele.field.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObjectFactory.ClassCount;
+import com.sun.max.tele.object.TeleObjectFactory.ObjectFactoryMapStats;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
@@ -711,10 +712,19 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        final ObjectFactoryMapStats stats = teleObjectFactory.mapStats();
+
+
+
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
-        printStream.print(indentation + "Inspection references: " + formatter.format(teleObjectFactory.referenceCount()) +
-                        " (" + formatter.format(teleObjectFactory.liveObjectCount()) + " live, " + formatter.format(teleObjectFactory.quasiObjectCount()) + "quasi)\n");
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Currently mapped: ").append(formatter.format(stats.mapSize));
+        sb.append(" (live=").append(stats.liveCount);
+        sb.append(", quasi=").append(formatter.format(stats.quasiCount));
+        sb.append(", dead=").append(formatter.format(stats.deadCount));
+        sb.append(", collected=").append(formatter.format(stats.collectedCount)).append(")");
+        printStream.println(indentation + sb.toString());
         final TreeSet<ClassCount> sortedObjectsCreatedPerType = new TreeSet<ClassCount>(new Comparator<ClassCount>() {
             @Override
             public int compare(ClassCount o1, ClassCount o2) {
@@ -722,8 +732,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             }
         });
         sortedObjectsCreatedPerType.addAll(teleObjectFactory.objectsCreatedPerType());
-        printStream.println(indentation + "TeleObjects created: " + formatter.format(teleObjectFactory.objectsCreatedCount()));
-        printStream.println(indentation + "TeleObjects created (top " + STATS_NUM_TYPE_COUNTS + " types)");
+        printStream.println(indentation + "TeleObjects created in session (total): " + formatter.format(teleObjectFactory.objectsCreatedCount()));
+        printStream.println(indentation + "TeleObjects created in session (top " + STATS_NUM_TYPE_COUNTS + " types):");
         int countsPrinted = 0;
         for (ClassCount count : sortedObjectsCreatedPerType) {
             if (countsPrinted++ >= STATS_NUM_TYPE_COUNTS) {
