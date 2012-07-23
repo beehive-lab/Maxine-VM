@@ -94,9 +94,7 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
             if (firstOffset < newNextOffset) {
                 // may need to flush the log, as are just about to step on a live record
                 if (flusher != null) {
-                    flusher.start();
-                    scanOrFlushLog(tla, null, false);
-                    flusher.end();
+                    flush(FLUSHMODE_FULL, VmThread.fromTLA(tla));
                     // reset
                     wrap = 0;
                     firstOffset = 0;
@@ -151,15 +149,6 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         scanOrFlushLog(tla, visitor, true);
     }
 
-    private void flushLog(Pointer tla) {
-        try {
-            flusher.start();
-            scanOrFlushLog(tla, null, false);
-        } finally {
-            flusher.end();
-        }
-    }
-
     private void scanOrFlushLog(Pointer tla, PointerIndexVisitor visitor, boolean scanning) {
         long offsets = vmLogBufferOffsetsTL.load(tla).toLong();
         int nextOffset = nextOffset(offsets);
@@ -171,6 +160,7 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         Pointer buffer = getBuffer(tla);
         NativeRecord r = getNativeRecord();
         int offset = firstOffset(offsets);
+        VmThread vmThread = VmThread.fromTLA(tla);
 
         while (offset != nextOffset) {
             r.address = buffer.plus(offset);
@@ -180,7 +170,7 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
                 if (scanning) {
                     scanArgs(r, r.address.plus(ARGS_OFFSET), visitor);
                 } else {
-                    flusher.flushRecord(r);
+                    flusher.flushRecord(vmThread, r);
                 }
             }
             offset = modLogSize(offset + ARGS_OFFSET + r.getArgCount() * Word.size());
@@ -188,8 +178,8 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
     }
 
     @Override
-    public void flushLog() {
-        flushLog(VmThread.currentTLA());
+    protected void flushRecords(VmThread vmThread) {
+        scanOrFlushLog(vmThread.tla(), null, false);
         // reset the log
         vmLogBufferOffsetsTL.store3(Address.zero());
     }

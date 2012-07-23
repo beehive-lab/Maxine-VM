@@ -70,7 +70,7 @@ public class JVMTISystem {
                 // FatalError.check(javaHome != null, "Environment variable JAVA_HOME not set");
                 if (javaHome.isZero()) {
                     Log.println("Environment variable JAVA_HOME not set");
-                    MaxineVM.native_exit(-1);
+                    MaxineVM.native_exit(1);
                 }
                 // FatalError.check(javaHome != null, "Environment variable JAVA_HOME not set");
 

@@ -26,6 +26,7 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.oracle.max.vm.ext.vma.handlers.log.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
@@ -1203,10 +1204,15 @@ public class VMAVMLogger {
             }
         }
         static int[] toIntArray(Record r, int argNum) {
-            return asIntArray(toObject(r, argNum));
+            if (MaxineVM.isHosted()) {
+                return (int[]) ObjectArg.getArg(r, argNum);
+            } else {
+                return asIntArray(toObject(r, argNum));
+            }
         }
         @INTRINSIC(UNSAFE_CAST)
         private static native int[] asIntArray(Object arg);
+
     }
 
 // END GENERATED CODE

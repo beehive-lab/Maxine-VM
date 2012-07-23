@@ -124,6 +124,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
     /**
      * It seems impossible, experimentally, to identify the primordial thread by it's id or handle.
      * However, the primordial thread is always the first thread gathered on startup.
+     * Need to be careful about ATTACH mode, however; in that case we never see the primordial thread.
      */
     private static boolean seenPrimordial;
     private final boolean isPrimordial;
@@ -148,9 +149,12 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         super(teleProcess.vm());
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating id=" + params.id);
         tracer.begin();
-
-        this.isPrimordial = !seenPrimordial;
-        seenPrimordial = true;
+        if (teleProcess.vm().inspectionMode() == MaxInspectionMode.ATTACH) {
+            this.isPrimordial = false;
+        } else {
+            this.isPrimordial = !seenPrimordial;
+            seenPrimordial = true;
+        }
         this.teleProcess = teleProcess;
         this.id = params.id;
         this.localHandle = params.localHandle;
@@ -165,7 +169,11 @@ public abstract class TeleNativeThread extends AbstractVmHolder
             final String name = this.entityName + " Locals";
             this.threadLocalsBlock = new TeleThreadLocalsBlock(this, name, params.threadLocalsRegion.start(), params.threadLocalsRegion.nBytes());
         }
-        this.vmLog = new TeleThreadVMLog(teleProcess.vm(), this);
+        if (teleProcess.vm().vmLog() instanceof TeleVMLogNative) {
+            this.vmLog = new TeleThreadVMLog(teleProcess.vm(), this);
+        } else {
+            this.vmLog = null;
+        }
         this.breakpointIsAtInstructionPointer = platform().isa == ISA.SPARC;
         final String stackName = this.entityName + " Stack";
         this.teleStack = new TeleStack(teleProcess.vm(), this, stackName, params.stackRegion.start(), params.stackRegion.nBytes());
@@ -189,7 +197,9 @@ public abstract class TeleNativeThread extends AbstractVmHolder
             if (state.allowsDataAccess()) {
                 refreshBreakpoint();
                 threadLocalsBlock.updateCache(epoch);
-                vmLog.updateCache(epoch);
+                if (vmLog != null) {
+                    vmLog.updateCache(epoch);
+                }
             }
             lastUpdateEpoch = epoch;
         } else {
@@ -218,7 +228,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         if (threadLocalsBlock.memoryRegion() != null) {
             allocations.add(threadLocalsBlock.memoryRegion());
         }
-        if (vmLog.memoryRegion() != null) {
+        if (vmLog != null && vmLog.memoryRegion() != null) {
             allocations.add(vmLog.memoryRegion());
         }
         return allocations;
@@ -579,7 +589,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
             if (isJava()) {
                 sb.append(",stack_start=0x").append(stack().memoryRegion().start().toHexString());
                 sb.append(",stack_size=").append(stack().memoryRegion().nBytes());
-                if (vmLog.memoryRegion() != null) {
+                if (vmLog != null && vmLog.memoryRegion() != null) {
                     sb.append(",vmlog_start=0x").append(vmLog.memoryRegion().start().toHexString());
                     sb.append(",vmlog_size=").append(vmLog.memoryRegion().nBytes());
                 }

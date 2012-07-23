@@ -24,6 +24,7 @@ package com.sun.max.vm.log.java.fix;
 
 import com.sun.max.vm.*;
 import com.sun.max.vm.log.java.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Simple space inefficient implementation.
@@ -45,33 +46,33 @@ public class VMLogArrayFixed extends VMLogArray {
     }
 
     @Override
+    protected boolean isPerThread() {
+        return false;
+    }
+
+    @Override
     protected Record getRecord(int argCount) {
         int myId = getUniqueId();
         if (myId - myIdAtLastFlush >= logEntries) {
             // buffer is about to overflow
-            flush(myId);
+            flush(FLUSHMODE_FULL);
         }
         Record r = buffer[myId % logEntries];
         return r;
     }
 
-    private synchronized void flush(int myId) {
-        try {
-            flusher.start();
-            for (int id = myIdAtLastFlush; id < myId; id++) {
-                flusher.flushRecord(buffer[id % logEntries]);
-            }
-            myIdAtLastFlush = myId;
-        } finally {
-            flusher.end();
+    private void flushRecords(int myId) {
+        for (int id = myIdAtLastFlush; id < myId; id++) {
+            flusher.flushRecord(null, buffer[id % logEntries]);
         }
+        myIdAtLastFlush = myId;
     }
 
     @Override
-    public void flushLog() {
+    protected void flushRecords(VmThread vmThread) {
         // The assumption is that we can safely read "nextId" without
         // interference from concurrent activity.
-        flush(nextId);
+        flushRecords(nextId);
     }
 
 }

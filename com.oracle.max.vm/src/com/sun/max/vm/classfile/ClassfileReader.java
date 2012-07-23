@@ -36,6 +36,7 @@ import java.lang.annotation.*;
 import java.lang.instrument.*;
 import java.security.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.jar.*;
 import java.util.zip.*;
 
@@ -1399,6 +1400,161 @@ public final class ClassfileReader {
     }
 
     /**
+     * Records the state of the class transformation process (when agents are active).
+     * Only one thread, {@code definingThread}, handles the transform, other concurrent
+     * requests wait for {@code definingThread} to complete.
+     */
+    private static class ClassTransformState {
+        static final int INFLIGHT = 1;
+        static final int DEFINED = 2;
+        int state;
+        final Thread definingThread;
+        AgentTransformResult transformResult;
+
+        ClassTransformState() {
+            state = INFLIGHT;
+            definingThread = Thread.currentThread();
+        }
+    }
+
+    /**
+     * Uniquely identifies an attempted definition for a given class in a given classloader.
+     */
+    private static class ClClass {
+        final ClassLoader classLoader;
+        final String className;
+
+        ClClass(ClassLoader classLoader, String className) {
+            this.classLoader = classLoader;
+            this.className = className;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            ClClass otherClClass = (ClClass) other;
+            return classLoader == otherClClass.classLoader && className.equals(otherClClass.className);
+        }
+
+        @Override
+        public int hashCode() {
+            return classLoader.hashCode() ^ className.hashCode();
+        }
+    }
+
+    /**
+     * Records the class transformation state (when agents are active).
+     */
+    private static ConcurrentMap<ClClass, ClassTransformState> classTransformStateMap = new ConcurrentHashMap<ClClass, ClassTransformState>();
+
+    /**
+     * Captures changes to the incoming parameters to {@link ClassfileReader#defineClassActor}if a transform occurred.
+     */
+    private static class AgentTransformResult {
+        byte[] bytes;
+        int length;
+        int offset;
+
+        AgentTransformResult(byte[] bytes, int length, int offset) {
+            this.bytes = bytes;
+            this.offset = offset;
+            this.length = length;
+        }
+    }
+
+    /**
+     * Check for bytecode transformation by agents prior to class definition.
+     * @return modified bytecode array or {@code null} if no change
+     */
+    private static AgentTransformResult checkAgentTransform(String name, ClassLoader classLoader, byte[] bytes, ProtectionDomain protectionDomain,
+                    int offset, int length) {
+        final Instrumentation instrumentation = InstrumentationManager.getInstrumentation();
+        boolean vmtiAgents = MaxineVM.isHosted() ? false : VMTI.handler().classFileLoadHookHandled();
+
+        /*
+         * When we have (Java) agents active that might transform the bytecode there are additional concurrency considerations.
+         * First, it isn't ok to call the agents multiple times to transform the same class bytes. Second, we have
+         * to worry about recursion from an agent that happens to use (and therefore tries to recursively define)
+         * the class we are defining here.
+         *
+         * N.B. Although the specification does not discuss this, Hotspot invokes the agent methods whenever the class
+         * is loaded in a distinct classloader. So we use ClClass as the key in the state map.
+         *
+         */
+
+        if (instrumentation != null || vmtiAgents) {
+
+            ClassTransformState proto = new ClassTransformState();
+            ClassTransformState classTransformState = classTransformStateMap.putIfAbsent(new ClClass(classLoader, name), proto);
+
+            if (classTransformState == null) {
+                classTransformState = proto;
+                // no conflict, this thread will now handle this class
+
+                boolean changed = false;
+                // zero base and truncate the input array if necessary
+                if (offset != 0 || length != bytes.length) {
+                    byte[] zeroBase = new byte[length];
+                    System.arraycopy(bytes, offset, zeroBase, 0, length);
+                    bytes = zeroBase;
+                }
+                String iName = name == null ? null : name.replace('.', '/');
+                ClassLoader agentClassLoader = classLoader == BootClassLoader.BOOT_CLASS_LOADER ? null : classLoader;
+                if (vmtiAgents) {
+                    // Call JVMTI agents first and then pass to the javaagent agents
+                    final byte[] tBytes = VMTI.handler().classFileLoadHook(agentClassLoader, iName, protectionDomain, bytes);
+                    if (tBytes != null) {
+                        changed = true;
+                        bytes = tBytes;
+                    }
+
+                }
+                if (instrumentation != null) {
+                    final byte[] tBytes = InstrumentationManager.transform(agentClassLoader, iName, null, protectionDomain, bytes, false);
+                    if (tBytes != null) {
+                        changed = true;
+                        bytes = tBytes;
+                    }
+                }
+
+                synchronized (classTransformState) {
+                    classTransformState.state = ClassTransformState.DEFINED;
+                    if (changed) {
+                        classTransformState.transformResult = new AgentTransformResult(bytes, 0, bytes.length);
+                    }
+                    // notify all the threads that are waiting for us to finish
+                    classTransformState.notifyAll();
+                }
+            } else {
+                // another thread is handling the definition or we have recursion
+                synchronized (classTransformState) {
+                    if (classTransformState.state == ClassTransformState.INFLIGHT) {
+                        if (classTransformState.definingThread == Thread.currentThread()) {
+                            // recursion from the agent itself, we just need to let this continue as a normal define
+                            // as we have already prevented recursive transformation
+                            return null;
+                        } else {
+                            // parallel define, let the other thread handle it
+                        }
+                        while (classTransformState.state == ClassTransformState.INFLIGHT) {
+                            try {
+                                classTransformState.wait();
+                            } catch (InterruptedException ex) {
+
+                            }
+                        }
+                    } else {
+                        // another thread already handled it, so no transform or wait needed
+                    }
+                }
+            }
+            // which ever thread handled it, this is the result
+            return classTransformState.transformResult;
+        } else {
+            return null; // no agents, so no change
+        }
+    }
+
+    /**
      * Converts an array of bytes into a {@code ClassActor}.
      *
      * @param name the name of the class being defined
@@ -1442,47 +1598,28 @@ public final class ClassfileReader {
      *             class specified by {@code bytes}
      */
     public static ClassActor defineClassActor(String name, ClassLoader classLoader, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, Object source, boolean isRemote) {
-        final Instrumentation instrumentation = InstrumentationManager.getInstrumentation();
-        boolean vmtiAgents = MaxineVM.isHosted() ? false : VMTI.handler().classFileLoadHookHandled();
-        byte[] classfileBytes = bytes;
-        if (instrumentation != null || vmtiAgents) {
-            if (offset != 0 || length != bytes.length) {
-                classfileBytes = new byte[length];
-                System.arraycopy(bytes, offset, classfileBytes, 0, length);
-                offset = 0;
-            }
-            byte[] tClassfileBytes = classfileBytes;
-            String iName = name == null ? null : name.replace('.', '/');
-            ClassLoader agentClassLoader = classLoader == BootClassLoader.BOOT_CLASS_LOADER ? null : classLoader;
-            if (vmtiAgents) {
-                // Call JVMTI agents first and then pass to the javaagent agents
-                final byte[] tBytes = VMTI.handler().classFileLoadHook(agentClassLoader, iName, protectionDomain, tClassfileBytes);
-                if (tBytes != null) {
-                    tClassfileBytes = tBytes;
-                }
-
-            }
-            if (instrumentation != null) {
-                final byte[] tBytes = InstrumentationManager.transform(agentClassLoader, iName, null, protectionDomain, tClassfileBytes, false);
-                if (tBytes != null) {
-                    tClassfileBytes = tBytes;
-                }
-            }
-
-            // If any agent changed the bytes update the incoming values
-            if (tClassfileBytes != null) {
-                classfileBytes = tClassfileBytes;
-                length = tClassfileBytes.length;
-            }
+        AgentTransformResult transformResult = checkAgentTransform(name, classLoader, bytes, protectionDomain, offset, length);
+        if (transformResult != null) {
+            bytes = transformResult.bytes;
+            offset = transformResult.offset;
+            length = transformResult.length;
         }
-        saveClassfile(name, classfileBytes);
-        final ClassfileStream classfileStream = new ClassfileStream(classfileBytes, offset, length);
+
+        /*
+         * This code can execute concurrently if the class is being defined by multiple threads.
+         * Some redundant work is done here but ultimately only one thread wins and we get a single
+         * ClassActor created.
+         *
+         * It is very important to return the value generated by ClassRegistry.define, which is where
+         * the resolution of which thread wins the race is handled.
+         */
+
+        saveClassfile(name, bytes);
+        final ClassfileStream classfileStream = new ClassfileStream(bytes, offset, length);
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
-        final ClassActor classActor = classfileReader.loadClass(name, source, isRemote);
+        ClassActor classActor = classfileReader.loadClass(name, source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
-        // Use the value returned by the class registry from now on. The class may be defined concurrently and
-        // we may loose the race, so we cannot trust the classActor we've just constructed to be
-        // the defined class actor.
+
         final ClassActor definedClassActor = ClassRegistry.define(classActor);
 
         if (!MaxineVM.isHosted()) {
