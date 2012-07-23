@@ -691,10 +691,10 @@ def _vm_image():
 
 def wikidoc(args):
     """generate Confluence Wiki format for package-info.java files"""
-    
+
     # Ensure the wiki doclet is up to date
     mx.build(['--projects', 'com.oracle.max.tools'])
-    
+
     # the WikiDoclet cannot see the -classpath argument passed to javadoc so we pass the
     # full list of projects as an explicit argument, thereby enabling it to map classes
     # to projects, which is needed to generate Wiki links to the source code.
@@ -707,8 +707,8 @@ def wikidoc(args):
     for a in ['-docletpath', dp, '-doclet', 'com.oracle.max.tools.javadoc.wiki.WikiDoclet', '-projects', project_list]:
         args.append('--arg')
         args.append('@' + a)
-    
-    mx.javadoc(args, parser=ArgumentParser('mx wikidoc'), docDir='wikidoc', includeDeps=False)
+
+    mx.javadoc(args, parser=ArgumentParser('mx wikidoc'), docDir='wikidoc', includeDeps=False, stdDoclet=False)
 
 def mx_init():
     mx.add_argument('--vmdir', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
