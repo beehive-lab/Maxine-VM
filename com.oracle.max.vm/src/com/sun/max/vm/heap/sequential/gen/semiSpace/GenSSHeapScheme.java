@@ -209,8 +209,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         resizingPolicy = new GenSSHeapSizingPolicy();
         youngSpace = new ContiguousAllocatingSpace<AtomicBumpPointerAllocator<YoungSpaceRefiller>>(nurseryAllocator, "Young Generation");
         oldSpace = new ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>>(tenuredAllocator, "Old Generation");
-        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, this, cardTableRSet);
-        oldSpaceEvacuator = new  EvacuatorToCardSpace(oldSpace.fromSpace, oldSpace, this, cardTableRSet);
+        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, this, cardTableRSet, "Young");
+        oldSpaceEvacuator = new  EvacuatorToCardSpace(oldSpace.fromSpace, oldSpace, this, cardTableRSet, "Old");
         noFromSpaceReferencesVerifiers = new NoEvacuatedSpaceReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();

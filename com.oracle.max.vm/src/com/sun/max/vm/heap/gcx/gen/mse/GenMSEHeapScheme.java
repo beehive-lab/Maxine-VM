@@ -132,7 +132,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             new CardSpaceAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller(cardTableRSet), cardTableRSet);
 
         oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, tlabAllocator, overflowAllocator, true, cardTableRSet, OLD.tag());
-        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, this, cardTableRSet);
+        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, this, cardTableRSet, "Young");
         noYoungReferencesVerifier = new NoEvacuatedSpaceReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
