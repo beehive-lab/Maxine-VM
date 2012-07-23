@@ -33,6 +33,7 @@ import com.sun.max.program.*;
 import com.sun.max.program.ProgramError.Handler;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -235,6 +236,7 @@ public final class FatalError extends Error {
         if (TrapOnError) {
             Intrinsics.breakpointTrap();
         }
+        VMLog.vmLog().flush(VMLog.FLUSHMODE_CRASH);
         if (doTrapExit) {
             MaxineVM.native_trap_exit(11, instructionPointer);
         }

@@ -124,6 +124,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
     /**
      * It seems impossible, experimentally, to identify the primordial thread by it's id or handle.
      * However, the primordial thread is always the first thread gathered on startup.
+     * Need to be careful about ATTACH mode, however; in that case we never see the primordial thread.
      */
     private static boolean seenPrimordial;
     private final boolean isPrimordial;
@@ -148,9 +149,12 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         super(teleProcess.vm());
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating id=" + params.id);
         tracer.begin();
-
-        this.isPrimordial = !seenPrimordial;
-        seenPrimordial = true;
+        if (teleProcess.vm().inspectionMode() == MaxInspectionMode.ATTACH) {
+            this.isPrimordial = false;
+        } else {
+            this.isPrimordial = !seenPrimordial;
+            seenPrimordial = true;
+        }
         this.teleProcess = teleProcess;
         this.id = params.id;
         this.localHandle = params.localHandle;

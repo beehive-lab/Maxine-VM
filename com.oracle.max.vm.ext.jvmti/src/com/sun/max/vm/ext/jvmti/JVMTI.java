@@ -312,7 +312,7 @@ public class JVMTI {
     public static void setJVMTIEnv(Word agentHandle) {
         if (nativeEnvsIndex >= MAX_NATIVE_ENVS) {
             Log.println("too many JVMTI agents");
-            MaxineVM.native_exit(-1);
+            MaxineVM.native_exit(1);
         }
         NativeEnv nativeEnv = (NativeEnv) jvmtiEnvs[nativeEnvsIndex++];
         nativeEnv.cstruct = agentHandle.asPointer();
@@ -332,7 +332,7 @@ public class JVMTI {
             }
         }
         Log.println("too many JVMTI agents");
-        MaxineVM.native_exit(-1);
+        MaxineVM.native_exit(1);
     }
 
     public static synchronized int disposeJVMTIJavaEnv(Env env) {
@@ -427,7 +427,7 @@ public class JVMTI {
         Log.print(s1);
         Log.printCString(path);
         Log.println(s2);
-        MaxineVM.native_exit(-1);
+        MaxineVM.native_exit(1);
     }
 
    /**

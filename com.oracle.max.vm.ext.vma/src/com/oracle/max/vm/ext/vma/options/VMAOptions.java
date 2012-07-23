@@ -342,7 +342,7 @@ public class VMAOptions {
 
     private static void error(String msg) {
         Log.println(msg);
-        MaxineVM.native_exit(-1);
+        MaxineVM.native_exit(1);
     }
 
     @VMLoggerInterface
