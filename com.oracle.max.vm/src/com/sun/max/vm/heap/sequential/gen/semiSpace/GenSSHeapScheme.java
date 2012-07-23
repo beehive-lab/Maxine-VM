@@ -147,6 +147,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     /**
      * Policy for resizing the heap after each GC.
      */
+    @INSPECTED
     private final GenSSHeapSizingPolicy resizingPolicy;
 
     /**
@@ -224,6 +225,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         if (phase == PRISTINE) {
             lastFullGCTime = System.currentTimeMillis();
         }
+        // TEMP CODE
+        if (phase == STARTING) {
+            TLABLog.LogTLABAllocation = true;
+        }
+        // REMOVE ABOVE
         if (phase == TERMINATING) {
             if (Heap.logGCTime()) {
                 timeLogger.logPhaseTimes(-1,
@@ -302,6 +308,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         oldSpace.flipSpaces();
         if (minorEvacuationOverflow) {
             final Address startRange =  oldSpace.allocator.start();
+            resizingPolicy.notifyMinorEvacuationOverflowRange(startRange, oldAllocatorTop);
             oldSpace.allocator.unsafeSetTop(oldAllocatorTop);
             oldSpaceEvacuator.prefillSurvivorRanges(startRange, oldAllocatorTop);
         }
@@ -585,6 +592,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     }
 
+    @Override
+    protected boolean logTLABEvents(Address tlabStart) {
+        return MaxineVM.isDebug() && TLABLog.LogTLABAllocation;
+    }
+
     /**
      * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
      * @param etla the thread whose TLAB will be refilled
@@ -592,6 +604,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      */
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = youngSpace.allocate(tlabSize);
+        if (MaxineVM.isDebug() && logTLABEvents(tlab)) {
+            TLABLog.doOnRefillTLAB(etla, tlabSize, true);
+        }
         Size effectiveSize = tlabSize.minus(tlabHeadroom());
         refillTLAB(etla, tlab, effectiveSize);
     }

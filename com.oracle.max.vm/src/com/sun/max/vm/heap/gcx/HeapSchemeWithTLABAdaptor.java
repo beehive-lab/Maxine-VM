@@ -60,13 +60,7 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
         Pointer hardLimit = tlabEnd.plus(tlabHeadroom());
         if (tlabAllocationMark.greaterThan(tlabEnd)) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("TLAB_MARK = ");
-            Log.print(tlabAllocationMark);
-            Log.print(", TLAB end = ");
-            Log.println(tlabEnd);
             FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
-            Log.unlock(lockDisabledSafepoints);
             return;
         }
         fillWithDeadObject(tlabAllocationMark, hardLimit);
@@ -77,11 +71,6 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         protected void doBeforeReset(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
             if (MaxineVM.isDebug() && logTLABEvents(tlabMark)) {
                 TLABLog.doOnRetireTLAB(etla);
-            }
-
-            if (tlabMark.greaterThan(tlabTop)) {
-                // Already filled-up (mark is at the limit).
-                return;
             }
             fillTLABWithDeadObject(tlabMark, tlabTop);
         }
