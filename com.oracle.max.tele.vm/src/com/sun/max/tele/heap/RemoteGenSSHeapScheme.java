@@ -597,30 +597,44 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                         ref = makeForwardedReference(origin, oldFromSpaceRefMap, oldToSpaceRefMap, false);
                     }
                 } else {
-                    if (oldAllocator.containsInAllocated(origin)) {
-                        /*
-                         *  Minor collection: the object may be a live object, or a freshly promoted one. Check both maps depending of where the origin is.
-                         */
-                        if (origin.lessThan(firstEvacuatedMark)) {
-                            ref = oldToSpaceRefMap.get(origin);
-                            if (ref != null) {
-                                // A reference to the object is already in old-to live map.
-                                TeleError.check(ref.status().isLive() && !ref.status().isForwarder());
-                            } else if (objects().isPlausibleOriginUnsafe(origin)) {
-                                ref = GenSSRemoteReference.createLive(this, origin, false);
-                                oldToSpaceRefMap.put(origin, ref);
-                            }
-                        } else {
-                            ref = promotedRefMap.get(origin);
-                            if (ref != null) {
-                                TeleError.check(ref.status().isLive() && !ref.status().isForwarder());
-                            } else if (objects().isPlausibleOriginUnsafe(origin)) {
-                                ref = GenSSRemoteReference.createOldTo(this, origin, true);
-                                promotedRefMap.put(origin, ref);
-                            }
-                        }
-                    } else if (nursery.containsInAllocated(origin)) {
+                    boolean isPromoted = false;
+                    boolean isOldLive = false;
+                    if (nursery.containsInAllocated(origin)) {
                         ref = makeForwardedReference(origin, nurseryRefMap, promotedRefMap, true);
+                        break;
+                    }
+                    if (minorEvacuationOverflow) {
+                        /*
+                         *  Minor collection with overflow: the object may be in the old to space, in which case it may be live or a freshly promoted one.
+                         *  Check both maps depending of where the origin is with respect to the firstEvacuatedMark; or the object is in the allocator (i.e., the old from space, serving as an overflow area)
+                         *  in which case it is a promoted object (although promoted in from space....).
+                         */
+                        isPromoted = oldAllocator.contains(origin) || (oldTo.containsInAllocated(origin) && origin.greaterEqual(firstEvacuatedMark));
+                        isOldLive = !isPromoted && oldTo.containsInAllocated(origin);
+                    } else if (oldAllocator.containsInAllocated(origin)) {
+                        if (origin.lessThan(firstEvacuatedMark)) {
+                            isOldLive = true;
+                        } else {
+                            isPromoted = true;
+                        }
+                    }
+                    if (isPromoted) {
+                        ref = promotedRefMap.get(origin);
+                        if (ref != null) {
+                            TeleError.check(ref.status().isLive() && !ref.status().isForwarder());
+                        } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                            ref = GenSSRemoteReference.createOldTo(this, origin, true);
+                            promotedRefMap.put(origin, ref);
+                        }
+                    } else if (isOldLive) {
+                        ref = oldToSpaceRefMap.get(origin);
+                        if (ref != null) {
+                            // A reference to the object is already in one of the live map.
+                            TeleError.check(ref.status().isLive());
+                        } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                            ref = GenSSRemoteReference.createLive(this, origin, false);
+                            oldToSpaceRefMap.put(origin, ref);
+                        }
                     }
                 }
                 break;
