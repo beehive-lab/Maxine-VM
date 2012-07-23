@@ -1,0 +1,585 @@
+    @Override
+    public void addCapabilities(EnumSet<E> arg0) {
+    }
+
+    @Override
+    public void addToBootstrapClassLoaderSearch(String arg0) {
+    }
+
+    @Override
+    public void addToSystemClassLoaderSearch(String arg0) {
+    }
+
+    @Override
+    public void clearBreakpoint(ClassMethodActor arg0, long arg1) {
+        checkCap(CAN_GENERATE_BREAKPOINT_EVENTS);
+    }
+
+    @Override
+    public void clearFieldAccessWatch(FieldActor arg0) {
+        checkCap(CAN_GENERATE_FIELD_ACCESS_EVENTS);
+    }
+
+    @Override
+    public void clearFieldModificationWatch(FieldActor arg0) {
+        checkCap(CAN_GENERATE_FIELD_MODIFICATION_EVENTS);
+    }
+
+    @Override
+    public void disposeEnvironment() {
+    }
+
+    @Override
+    public void forceEarlyReturnDouble(Thread arg0, double arg1) {
+        checkCap(CAN_FORCE_EARLY_RETURN);
+    }
+
+    @Override
+    public void forceEarlyReturnFloat(Thread arg0, float arg1) {
+        checkCap(CAN_FORCE_EARLY_RETURN);
+    }
+
+    @Override
+    public void forceEarlyReturnInt(Thread arg0, int arg1) {
+        checkCap(CAN_FORCE_EARLY_RETURN);
+    }
+
+    @Override
+    public void forceEarlyReturnLong(Thread arg0, long arg1) {
+        checkCap(CAN_FORCE_EARLY_RETURN);
+    }
+
+    @Override
+    public void forceEarlyReturnObject(Thread arg0, Object arg1) {
+        checkCap(CAN_FORCE_EARLY_RETURN);
+    }
+
+    @Override
+    public void forceEarlyReturnVoid(Thread arg0) {
+        checkCap(CAN_FORCE_EARLY_RETURN);
+    }
+
+    @Override
+    public void forceGarbageCollection() {
+    }
+
+    @Override
+    public StackInfo[] getAllStackTraces(int arg0) {
+        return null;
+    }
+
+    @Override
+    public Thread[] getAllThreads() {
+        return null;
+    }
+
+    @Override
+    public int getArgumentsSize(ClassMethodActor arg0) {
+        return 0;
+    }
+
+    @Override
+    public int getAvailableProcessors() {
+        return 0;
+    }
+
+    @Override
+    public byte[] getBytecodes(ClassMethodActor arg0) {
+        checkCap(CAN_GET_BYTECODES);
+        return null;
+    }
+
+    @Override
+    public EnumSet<E> getCapabilities() {
+        return null;
+    }
+
+    @Override
+    public FieldActor[] getClassFields(ClassActor arg0) {
+        return null;
+    }
+
+    @Override
+    public ClassLoader getClassLoader(ClassActor arg0) {
+        return null;
+    }
+
+    @Override
+    public ClassActor[] getClassLoaderClasses(ClassLoader arg0) {
+        return null;
+    }
+
+    @Override
+    public MethodActor[] getClassMethods(ClassActor arg0) {
+        return null;
+    }
+
+    @Override
+    public int getClassModifiers(ClassActor arg0) {
+        return 0;
+    }
+
+    @Override
+    public String getClassSignature(ClassActor arg0) {
+        return null;
+    }
+
+    @Override
+    public int getClassStatus(ClassActor arg0) {
+        return 0;
+    }
+
+    @Override
+    public ClassVersionInfo getClassVersionNumbers(ClassActor arg0) {
+        return null;
+    }
+
+    @Override
+    public byte[] getConstantPool(ClassActor arg0) {
+        checkCap(CAN_GET_CONSTANT_POOL);
+        return null;
+    }
+
+    @Override
+    public Object getCurrentContendedMonitor(Thread arg0) {
+        checkCap(CAN_GET_CURRENT_CONTENDED_MONITOR);
+        return null;
+    }
+
+    @Override
+    public Thread getCurrentThread() {
+        return null;
+    }
+
+    @Override
+    public long getCurrentThreadCpuTime() {
+        return 0;
+    }
+
+    @Override
+    public Object getEnvironmentLocalStorage() {
+        return null;
+    }
+
+    @Override
+    public String getErrorName(int arg0) {
+        return null;
+    }
+
+    @Override
+    public ClassActor getFieldDeclaringClass(FieldActor arg0) {
+        return null;
+    }
+
+    @Override
+    public int getFieldModifiers(FieldActor arg0) {
+        return 0;
+    }
+
+    @Override
+    public String getFieldName(FieldActor arg0) {
+        return null;
+    }
+
+    @Override
+    public String getFieldSignature(FieldActor arg0) {
+        return null;
+    }
+
+    @Override
+    public int getFrameCount(Thread arg0) {
+        return 0;
+    }
+
+    @Override
+    public FrameInfo getFrameLocation(Thread arg0, int arg1) {
+        return null;
+    }
+
+    @Override
+    public ClassActor[] getImplementedInterfaces(ClassActor arg0) {
+        return null;
+    }
+
+    @Override
+    public int getJLocationFormat() {
+        return 0;
+    }
+
+    @Override
+    public LineNumberEntry[] getLineNumberTable(ClassMethodActor arg0) {
+        checkCap(CAN_GET_LINE_NUMBERS);
+        return null;
+    }
+
+    @Override
+    public ClassActor[] getLoadedClasses() {
+        return null;
+    }
+
+    @Override
+    public double getLocalDouble(Thread arg0, int arg1, int arg2) {
+        checkCap(CAN_ACCESS_LOCAL_VARIABLES);
+        return 0.0;
+    }
+
+    @Override
+    public float getLocalFloat(Thread arg0, int arg1, int arg2) {
+        checkCap(CAN_ACCESS_LOCAL_VARIABLES);
+        return 0.0F;
+    }
+
+    @Override
+    public int getLocalInt(Thread arg0, int arg1, int arg2) {
+        checkCap(CAN_ACCESS_LOCAL_VARIABLES);
+        return 0;
+    }
+
+    @Override
+    public long getLocalLong(Thread arg0, int arg1, int arg2) {
+        checkCap(CAN_ACCESS_LOCAL_VARIABLES);
+        return 0;
+    }
+
+    @Override
+    public Object getLocalObject(Thread arg0, int arg1, int arg2) {
+        checkCap(CAN_ACCESS_LOCAL_VARIABLES);
+        return null;
+    }
+
+    @Override
+    public LocalVariableEntry[] getLocalVariableTable(ClassMethodActor arg0) {
+        checkCap(CAN_ACCESS_LOCAL_VARIABLES);
+        return null;
+    }
+
+    @Override
+    public int getMaxLocals(ClassMethodActor arg0) {
+        return 0;
+    }
+
+    @Override
+    public ClassActor getMethodDeclaringClass(MethodActor arg0) {
+        return null;
+    }
+
+    @Override
+    public String getMethodGenericSignature(MethodActor arg0) {
+        return null;
+    }
+
+    @Override
+    public MethodLocation getMethodLocation(ClassMethodActor arg0) {
+        return null;
+    }
+
+    @Override
+    public int getMethodModifiers(MethodActor arg0) {
+        return 0;
+    }
+
+    @Override
+    public String getMethodName(MethodActor arg0) {
+        return null;
+    }
+
+    @Override
+    public String getMethodSignature(MethodActor arg0) {
+        return null;
+    }
+
+    @Override
+    public int getObjectHashCode(Object arg0) {
+        return 0;
+    }
+
+    @Override
+    public ObjectMonitorUsage getObjectMonitorUsage(Object arg0) {
+        checkCap(CAN_GET_MONITOR_INFO);
+        return null;
+    }
+
+    @Override
+    public long getObjectSize(Object arg0) {
+        return 0;
+    }
+
+    @Override
+    public void getOwnedMonitorInfo(Thread arg0) {
+        checkCap(CAN_GET_OWNED_MONITOR_INFO);
+    }
+
+    @Override
+    public MonitorStackDepthInfo[] getOwnedMonitorStackDepthInfo(Thread arg0) {
+        checkCap(CAN_GET_OWNED_MONITOR_STACK_DEPTH_INFO);
+        return null;
+    }
+
+    @Override
+    public int getPhase() {
+        return 0;
+    }
+
+    @Override
+    public EnumSet<E> getPotentialCapabilities() {
+        return null;
+    }
+
+    @Override
+    public String getSourceDebugExtension(ClassActor arg0) {
+        return null;
+    }
+
+    @Override
+    public String getSourceFileName(ClassActor arg0) {
+        checkCap(CAN_GET_SOURCE_FILE_NAME);
+        return null;
+    }
+
+    @Override
+    public FrameInfo[] getStackTrace(Thread arg0, int arg1, int arg2) {
+        return null;
+    }
+
+    @Override
+    public Properties getSystemProperties() {
+        return null;
+    }
+
+    @Override
+    public String getSystemProperty(String arg0) {
+        return null;
+    }
+
+    @Override
+    public Object getTag(Object arg0) {
+        checkCap(CAN_TAG_OBJECTS);
+        return null;
+    }
+
+    @Override
+    public long getThreadCpuTime(Thread arg0) {
+        return 0;
+    }
+
+    @Override
+    public ThreadGroupChildrenInfo getThreadGroupChildren(ThreadGroup arg0) {
+        return null;
+    }
+
+    @Override
+    public ThreadGroupInfo getThreadGroupInfo(ThreadGroup arg0) {
+        return null;
+    }
+
+    @Override
+    public ThreadInfo getThreadInfo(Thread arg0) {
+        return null;
+    }
+
+    @Override
+    public StackInfo[] getThreadListStackTraces(Thread[] arg0, int arg1) {
+        return null;
+    }
+
+    @Override
+    public Object getThreadLocalStorage(Thread arg0) {
+        return null;
+    }
+
+    @Override
+    public int getThreadState(Thread arg0) {
+        return 0;
+    }
+
+    @Override
+    public long getTime() {
+        return 0;
+    }
+
+    @Override
+    public ThreadGroup[] getTopThreadGroups() {
+        return null;
+    }
+
+    @Override
+    public int getVersionNumber() {
+        return 0;
+    }
+
+    @Override
+    public void interruptThread(Thread arg0) {
+        checkCap(CAN_SIGNAL_THREAD);
+    }
+
+    @Override
+    public boolean isArrayClass(ClassActor arg0) {
+        return false;
+    }
+
+    @Override
+    public boolean isFieldSynthetic(FieldActor arg0) {
+        checkCap(CAN_GET_SYNTHETIC_ATTRIBUTE);
+        return false;
+    }
+
+    @Override
+    public boolean isInterface(ClassActor arg0) {
+        return false;
+    }
+
+    @Override
+    public boolean isMethodNative(MethodActor arg0) {
+        return false;
+    }
+
+    @Override
+    public boolean isMethodObsolete(MethodActor arg0) {
+        return false;
+    }
+
+    @Override
+    public boolean isMethodSynthetic(MethodActor arg0) {
+        checkCap(CAN_GET_SYNTHETIC_ATTRIBUTE);
+        return false;
+    }
+
+    @Override
+    public boolean isModifiableClass(ClassActor arg0) {
+        return false;
+    }
+
+    @Override
+    public void iterateThroughHeap(int arg0, ClassActor arg1, HeapCallbacks arg2, Object arg3) {
+        checkCap(CAN_TAG_OBJECTS);
+    }
+
+    @Override
+    public void notifyFramePop(Thread arg0, int arg1) {
+        checkCap(CAN_GENERATE_FRAME_POP_EVENTS);
+    }
+
+    @Override
+    public void popFrame(Thread arg0) {
+        checkCap(CAN_POP_FRAME);
+    }
+
+    @Override
+    public void redefineClasses(ClassDefinition[] arg0) {
+        checkCap(CAN_REDEFINE_CLASSES);
+    }
+
+    @Override
+    public void relinquishCapabilities(EnumSet<E> arg0) {
+    }
+
+    @Override
+    public void resumeThread(Thread arg0) {
+        checkCap(CAN_SUSPEND);
+    }
+
+    @Override
+    public int[] resumeThreadList(Thread[] arg0) {
+        checkCap(CAN_SUSPEND);
+        return null;
+    }
+
+    @Override
+    public void retransformClasses(ClassActor[] arg0) {
+    }
+
+    @Override
+    public void runAgentThread(Thread arg0, int arg1) {
+    }
+
+    @Override
+    public void setBreakpoint(ClassMethodActor arg0, long arg1) {
+        checkCap(CAN_GENERATE_BREAKPOINT_EVENTS);
+    }
+
+    @Override
+    public void setEnvironmentLocalStorage(Object arg0) {
+    }
+
+    @Override
+    public void setEventNotificationMode(int arg0, int arg1, Thread arg2) {
+    }
+
+    @Override
+    public void setFieldAccessWatch(FieldActor arg0) {
+        checkCap(CAN_GENERATE_FIELD_ACCESS_EVENTS);
+    }
+
+    @Override
+    public void setFieldModificationWatch(FieldActor arg0) {
+        checkCap(CAN_GENERATE_FIELD_MODIFICATION_EVENTS);
+    }
+
+    @Override
+    public void setLocalDouble(Thread arg0, int arg1, int arg2, double arg3) {
+        checkCap(CAN_ACCESS_LOCAL_VARIABLES);
+    }
+
+    @Override
+    public void setLocalFloat(Thread arg0, int arg1, int arg2, float arg3) {
+        checkCap(CAN_ACCESS_LOCAL_VARIABLES);
+    }
+
+    @Override
+    public void setLocalInt(Thread arg0, int arg1, int arg2, int arg3) {
+        checkCap(CAN_ACCESS_LOCAL_VARIABLES);
+    }
+
+    @Override
+    public void setLocalLong(Thread arg0, int arg1, int arg2, long arg3) {
+        checkCap(CAN_ACCESS_LOCAL_VARIABLES);
+    }
+
+    @Override
+    public void setLocalObject(Thread arg0, int arg1, int arg2, Object arg3) {
+        checkCap(CAN_ACCESS_LOCAL_VARIABLES);
+    }
+
+    @Override
+    public void setNativeMethodPrefix(String arg0) {
+        checkCap(CAN_SET_NATIVE_METHOD_PREFIX);
+    }
+
+    @Override
+    public void setNativeMethodPrefixes(String[] arg0) {
+        checkCap(CAN_SET_NATIVE_METHOD_PREFIX);
+    }
+
+    @Override
+    public void setSystemProperty(String arg0, String arg1) {
+    }
+
+    @Override
+    public void setTag(Object arg0, Object arg1) {
+        checkCap(CAN_TAG_OBJECTS);
+    }
+
+    @Override
+    public void setThreadLocalStorage(Thread arg0, Object arg1) {
+    }
+
+    @Override
+    public void setVerboseFlag(int arg0, boolean arg1) {
+    }
+
+    @Override
+    public void stopThread(Thread arg0, Throwable arg1) {
+        checkCap(CAN_SIGNAL_THREAD);
+    }
+
+    @Override
+    public void suspendThread(Thread arg0) {
+        checkCap(CAN_SUSPEND);
+    }
+
+    @Override
+    public int[] suspendThreadList(Thread[] arg0) {
+        checkCap(CAN_SUSPEND);
+        return null;
+    }
+
