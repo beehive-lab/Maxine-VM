@@ -62,13 +62,13 @@ public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
         boolean firstRecord;
 
         @Override
-        public void start() {
+        public void start(VmThread vmThread) {
             lock.lock();
             firstRecord = true;
         }
 
         @Override
-        public void flushRecord(Record r) {
+        public void flushRecord(VmThread vmThread, Record r) {
             if (firstRecord) {
                 // Indicate the start of a new batch of records for the current thread
                 VMAVMLogger.logger.timeStamp = r.getLongArg(1);
@@ -79,7 +79,7 @@ public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
 
         @Override
-        public void end() {
+        public void end(VmThread vmThread) {
             lock.unlock();
         }
     }
@@ -151,8 +151,7 @@ public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     @Override
     public void adviseBeforeThreadTerminating(VmThread vmThread) {
-        assert VmThread.current() == vmThread;
-        vmaVMLog.flushLog();
+        vmaVMLog.flush(VMLog.FLUSHMODE_FULL, vmThread);
     }
 
 // START GENERATED CODE

@@ -290,7 +290,7 @@ public abstract class TeleVM implements MaxVM {
             "Prompt for native code view when entering native code");
 
         /**
-         * This field is {@code null} if {@link #readOnly} is {@code false}.
+         * An option to explicitly set the boot heap address (maybe useful for core dump).
          */
         public final Option<String> heapOption;
 
@@ -304,7 +304,7 @@ public abstract class TeleVM implements MaxVM {
          * options based on mode.
          */
         public Options() {
-            heapOption = newStringOption("heap", "1024", "Relocation address for the heap and code in the boot image.");
+            heapOption = newStringOption("heap", null, "Relocation address for the heap and code in the boot image.");
             vmArguments = newStringOption("a", "", "Specifies the arguments to the target VM.");
             // We do not want to check the auto generated code for consistency (by default), so change default value
             BootImageGenerator.checkGeneratedCodeOption.setDefaultValue(false);
@@ -360,7 +360,7 @@ public abstract class TeleVM implements MaxVM {
                 if (!vmFile.exists()) {
                     TeleError.unexpected("vm file: " + vmFile + " does not exist or is not accessible");
                 }
-                cons = klass.getDeclaredConstructor(new Class[] {TeleVM.class, File.class, File.class});
+                cons = klass.getDeclaredConstructor(new Class[] {MaxVM.class, File.class, File.class});
                 args = new Object[] {this, vmFile, dumpFile};
             } else {
                 cons = klass.getDeclaredConstructor(new Class[] {});
@@ -477,6 +477,7 @@ public abstract class TeleVM implements MaxVM {
                 break;
 
             case IMAGE:
+                System.setProperty(VmObjectAccess.HEAP_ADDRESS_PROPERTY, "1024");
                 vm = createReadOnly(bootImageFile, sourcepath);
                 vm.updateVMCaches(0L);
         }

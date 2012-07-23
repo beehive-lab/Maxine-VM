@@ -253,7 +253,7 @@ public class VMLogger {
 
     /**
      * Lock the log for the current thread.
-     * Use this if you must to have a sequence on non-interleaved log records.
+     * Use this if you must have a sequence on non-interleaved log records.
      * Implemented using {@link Log#lock}.
      * @return {@code true} if safepoints were disabled by the lock method.
      */
