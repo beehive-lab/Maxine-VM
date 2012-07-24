@@ -607,6 +607,9 @@ public abstract class VMLog implements Heap.GCCallback {
                         return false;
                     }
                 }
+                if (vmLog.flushMode != 0 && vmLog.flusher == null) {
+                    vmLog.flusher = rawDumpFlusher;
+                }
             }
             return true; // not set, no flush
         }
@@ -729,11 +732,11 @@ public abstract class VMLog implements Heap.GCCallback {
             if (!started) {
                 started = true;
                 lockDisabledSafepoints = Log.lock();
+                Log.print("VMLog class: ");
+                Log.println(vmLog.getClass().getSimpleName());
             }
             if (vmThread != null) {
                 Log.print("VMLog contents for thread: "); Log.printThread(vmThread, true);
-            } else {
-                Log.println("VMLog contents");
             }
         }
 

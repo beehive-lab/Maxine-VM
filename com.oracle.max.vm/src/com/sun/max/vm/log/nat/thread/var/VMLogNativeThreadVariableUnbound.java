@@ -179,9 +179,10 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
 
     @Override
     protected void flushRecords(VmThread vmThread) {
-        scanOrFlushLog(vmThread.tla(), null, false);
+        Pointer tla = vmThread.tla();
+        scanOrFlushLog(tla, null, false);
         // reset the log
-        vmLogBufferOffsetsTL.store3(Address.zero());
+        vmLogBufferOffsetsTL.store3(tla, Address.zero());
     }
 
 }
