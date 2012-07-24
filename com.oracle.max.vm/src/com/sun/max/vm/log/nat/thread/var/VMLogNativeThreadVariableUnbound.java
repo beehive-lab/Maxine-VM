@@ -160,6 +160,12 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         }
     }
 
+    // temporary -- to track VMLog bug
+    private int debug_next_offset = -1;
+    private int debug_offset = -1;
+    private int debug_last_offset = -1;
+    private int debug_first_offset = -1;
+
     private void scanOrFlushLog(Pointer tla, PointerIndexVisitor visitor, boolean scanning) {
         long offsets = vmLogBufferOffsetsTL.load(tla).toLong();
         int nextOffset = nextOffset(offsets);
@@ -172,6 +178,11 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         NativeRecord r = getNativeRecord();
         int offset = firstOffset(offsets);
 
+        if (MaxineVM.isDebug()) {
+            debug_next_offset = nextOffset;
+            debug_first_offset = offset;
+            debug_offset = offset;
+        }
         while (offset != nextOffset) {
             r.address = buffer.plus(offset);
             int header = r.getHeader();
@@ -184,6 +195,10 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
                 }
             }
             offset = modLogSize(offset + ARGS_OFFSET + r.getArgCount() * Word.size());
+            if (MaxineVM.isDebug()) {
+                debug_last_offset = debug_offset;
+                debug_offset = offset;
+            }
         }
     }
 
