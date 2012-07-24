@@ -225,11 +225,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         if (phase == PRISTINE) {
             lastFullGCTime = System.currentTimeMillis();
         }
-        // TEMP CODE
-        if (phase == STARTING) {
-            TLABLog.LogTLABAllocation = true;
-        }
-        // REMOVE ABOVE
         if (phase == TERMINATING) {
             if (Heap.logGCTime()) {
                 timeLogger.logPhaseTimes(-1,
@@ -594,7 +589,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     @Override
     protected boolean logTLABEvents(Address tlabStart) {
-        return MaxineVM.isDebug() && TLABLog.LogTLABAllocation;
+        return MaxineVM.isDebug() && TLABLog.TraceTLABAllocation;
     }
 
     /**
