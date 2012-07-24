@@ -120,7 +120,7 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
             regionProvider.retireAllocatingRegion(regionID);
             if (MaxineVM.isDebug() && regionID == DebuggedRegion) {
                 // Not very precise: even if we retire the log, there might still be some Thread using a TLAB allocated from that region.
-                TLABLog.LogTLABAllocation = false;
+                TLABLog.TraceTLABAllocation = false;
             }
         }
     }
@@ -133,7 +133,7 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
                 allocatingRegion = regionProvider.getAllocatingRegion();
                 if (allocatingRegion != INVALID_REGION_ID) {
                     if (allocatingRegion == DebuggedRegion) {
-                        TLABLog.LogTLABAllocation = true;
+                        TLABLog.TraceTLABAllocation = true;
                     }
                     return  fromRegionID(allocatingRegion);
                 }

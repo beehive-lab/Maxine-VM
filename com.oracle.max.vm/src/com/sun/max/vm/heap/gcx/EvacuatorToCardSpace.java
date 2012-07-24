@@ -205,7 +205,7 @@ public class EvacuatorToCardSpace extends Evacuator {
         allocatedRangeStart = ptop;
         if (logger.enabled()) {
             SpaceBounds toSpaceBounds = toSpace.bounds();
-            logger.logBeginEvacuation(evacuatedAreaBounds.lowestAddress(), evacuatedAreaBounds.highestAddress(), toSpaceBounds.lowestAddress(), toSpaceBounds.highestAddress(), logger.instanceName);
+            logger.logBeginEvacuation(evacuatedAreaBounds.lowestAddress(), evacuatedAreaBounds.highestAddress(), toSpaceBounds.lowestAddress(), toSpaceBounds.highestAddress());
         }
     }
 
@@ -215,7 +215,7 @@ public class EvacuatorToCardSpace extends Evacuator {
         fromSpace.doAfterGC();
         Pointer limit = pend.plus(evacuationBufferHeadroom());
         if (logger.enabled()) {
-            logger.logEndEvacuation(limit, logger.instanceName);
+            logger.logEndEvacuation(limit);
         }
         Size spaceLeft = limit.minus(ptop).asSize();
         if ((alwaysRefill && spaceLeft.greaterThan(minObjectSize())) || spaceLeft.greaterEqual(minRefillThreshold)) {
@@ -414,12 +414,10 @@ public class EvacuatorToCardSpace extends Evacuator {
                         @VMLogParam(name = "fromStart") Address fromStart,
                         @VMLogParam(name = "fromEnd")  Address fromEnd,
                         @VMLogParam(name = "toStart")Address toStart,
-                        @VMLogParam(name = "toEnd") Address toEnd,
-                        @VMLogParam(name = "evacuationType") String evacuationType);
+                        @VMLogParam(name = "toEnd") Address toEnd);
 
         void endEvacuation(
-                        @VMLogParam(name = "evacuationLimit") Address evacuationLimit,
-                        @VMLogParam(name = "evacuationType") String evacuationType
+                        @VMLogParam(name = "evacuationLimit") Address evacuationLimit
         );
 
         void evacuateSurvivorRange(
@@ -467,16 +465,16 @@ public class EvacuatorToCardSpace extends Evacuator {
         }
 
         @Override
-        protected void traceBeginEvacuation(Address fromStart, Address fromEnd, Address toStart, Address toEnd, String evacuationType) {
-            Log.print("Begin "); Log.print(evacuationType); Log.print(" evacuation: ");
+        protected void traceBeginEvacuation(Address fromStart, Address fromEnd, Address toStart, Address toEnd) {
+            Log.print("Begin "); Log.print(instanceName); Log.print(" evacuation: ");
             traceRange("from space ", fromStart, fromEnd);
             traceRange("to space,",  toStart, toEnd);
             Log.println();
         }
 
         @Override
-        protected void traceEndEvacuation(Address evacuationLimit, String evacuationType) {
-            Log.print("End "); Log.print(evacuationType); Log.print(" evacuation : "); Log.println(evacuationLimit);
+        protected void traceEndEvacuation(Address evacuationLimit) {
+            Log.print("End "); Log.print(instanceName); Log.print(" evacuation : "); Log.println(evacuationLimit);
         }
 
     }
@@ -490,7 +488,7 @@ public class EvacuatorToCardSpace extends Evacuator {
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x10, 0x2, 0x0, 0x0, 0x0};
+        private static final int[] REFMAPS = null;
 
         protected EvacuationLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -505,16 +503,16 @@ public class EvacuatorToCardSpace extends Evacuator {
         }
 
         @INLINE
-        public final void logBeginEvacuation(Address fromStart, Address fromEnd, Address toStart, Address toEnd, String evacuationType) {
-            log(Operation.BeginEvacuation.ordinal(), fromStart, fromEnd, toStart, toEnd, objectArg(evacuationType));
+        public final void logBeginEvacuation(Address fromStart, Address fromEnd, Address toStart, Address toEnd) {
+            log(Operation.BeginEvacuation.ordinal(), fromStart, fromEnd, toStart, toEnd);
         }
-        protected abstract void traceBeginEvacuation(Address fromStart, Address fromEnd, Address toStart, Address toEnd, String evacuationType);
+        protected abstract void traceBeginEvacuation(Address fromStart, Address fromEnd, Address toStart, Address toEnd);
 
         @INLINE
-        public final void logEndEvacuation(Address evacuationLimit, String evacuationType) {
-            log(Operation.EndEvacuation.ordinal(), evacuationLimit, objectArg(evacuationType));
+        public final void logEndEvacuation(Address evacuationLimit) {
+            log(Operation.EndEvacuation.ordinal(), evacuationLimit);
         }
-        protected abstract void traceEndEvacuation(Address evacuationLimit, String evacuationType);
+        protected abstract void traceEndEvacuation(Address evacuationLimit);
 
         @INLINE
         public final void logEvacuateSurvivorRange(Address start, Address end) {
@@ -538,11 +536,11 @@ public class EvacuatorToCardSpace extends Evacuator {
         protected void trace(Record r) {
             switch (r.getOperation()) {
                 case 0: { //BeginEvacuation
-                    traceBeginEvacuation(toAddress(r, 1), toAddress(r, 2), toAddress(r, 3), toAddress(r, 4), toString(r, 5));
+                    traceBeginEvacuation(toAddress(r, 1), toAddress(r, 2), toAddress(r, 3), toAddress(r, 4));
                     break;
                 }
                 case 1: { //EndEvacuation
-                    traceEndEvacuation(toAddress(r, 1), toString(r, 2));
+                    traceEndEvacuation(toAddress(r, 1));
                     break;
                 }
                 case 2: { //EvacuateSurvivorRange
