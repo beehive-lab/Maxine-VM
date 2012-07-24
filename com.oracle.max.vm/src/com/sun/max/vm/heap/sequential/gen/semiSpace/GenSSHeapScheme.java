@@ -23,7 +23,6 @@
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
 import static com.sun.max.vm.MaxineVM.Phase.*;
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMERS.*;
 
 import com.sun.cri.xir.*;
@@ -38,6 +37,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.Heap.GCCallbackPhase;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
@@ -225,11 +225,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         if (phase == PRISTINE) {
             lastFullGCTime = System.currentTimeMillis();
         }
-        // TEMP CODE
-        if (phase == STARTING) {
-            TLABLog.LogTLABAllocation = true;
-        }
-        // REMOVE ABOVE
         if (phase == TERMINATING) {
             if (Heap.logGCTime()) {
                 timeLogger.logPhaseTimes(-1,
@@ -408,7 +403,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         evacTimers.resetTrackTime();
 
         VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
-        vmConfig().monitorScheme().beforeGarbageCollection();
+        Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
         if (MaxineVM.isDebug() && Heap.verbose()) {
             Log.println("--Begin nursery evacuation");
         }
@@ -467,7 +462,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 timeLogger.logGcTimes(invocationCount, false, evacTimers.get(TOTAL).getLastElapsedTime());
             }
         }
-        vmConfig().monitorScheme().afterGarbageCollection();
+        Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
     }
 
@@ -594,7 +589,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     @Override
     protected boolean logTLABEvents(Address tlabStart) {
-        return MaxineVM.isDebug() && TLABLog.LogTLABAllocation;
+        return MaxineVM.isDebug() && TLABLog.TraceTLABAllocation;
     }
 
     /**
