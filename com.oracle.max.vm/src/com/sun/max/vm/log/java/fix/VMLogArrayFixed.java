@@ -63,7 +63,7 @@ public class VMLogArrayFixed extends VMLogArray {
 
     private void flushRecords(int myId) {
         for (int id = myIdAtLastFlush; id < myId; id++) {
-            flusher.flushRecord(null, buffer[id % logEntries]);
+            flusher.flushRecord(null, buffer[id % logEntries], id);
         }
         myIdAtLastFlush = myId;
     }

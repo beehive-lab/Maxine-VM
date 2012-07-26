@@ -170,7 +170,7 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
                 if (scanning) {
                     scanArgs(r, r.address.plus(ARGS_OFFSET), visitor);
                 } else {
-                    flusher.flushRecord(vmThread, r);
+                    flusher.flushRecord(vmThread, r, r.address.readInt(ID_OFFSET));
                 }
             }
             offset = modLogSize(offset + ARGS_OFFSET + r.getArgCount() * Word.size());
