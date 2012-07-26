@@ -68,7 +68,7 @@ public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
 
         @Override
-        public void flushRecord(VmThread vmThread, Record r) {
+        public void flushRecord(VmThread vmThread, Record r, int uuid) {
             if (firstRecord) {
                 // Indicate the start of a new batch of records for the current thread
                 VMAVMLogger.logger.timeStamp = r.getLongArg(1);

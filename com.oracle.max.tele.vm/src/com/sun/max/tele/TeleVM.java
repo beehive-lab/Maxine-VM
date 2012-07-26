@@ -266,9 +266,6 @@ public abstract class TeleVM implements MaxVM {
      */
     public static class Options extends OptionSet {
 
-        /**
-         * Specifies if these options apply when creating a {@linkplain TeleVM#createReadOnly(File, Classpath) read-only} VM.
-         */
         public final Option<String> modeOption = newStringOption("mode", "create",
             "Mode of operation: create | attach | attachwaiting | image");
         public final Option<String> targetKindOption = newStringOption("target", "local",
@@ -288,6 +285,7 @@ public abstract class TeleVM implements MaxVM {
             "Method entry bytecode breakpoints also stop VM prior to compilation of matching methods.");
         public final Option<Boolean> nativePrompt = newBooleanOption("ncv", false,
             "Prompt for native code view when entering native code");
+        public final Option<String> vmLogFileOption = newStringOption("vmlog", null, "file containg VMLog for mode==image");
 
         /**
          * An option to explicitly set the boot heap address (maybe useful for core dump).
@@ -300,7 +298,7 @@ public abstract class TeleVM implements MaxVM {
         public final Option<String> vmArguments;
 
         /**
-         * Creates command line options that are specific to certain operation modes. No longer tries to customise the
+         * Creates command line options that are specific to certain operation modes. No longer tries to customize the
          * options based on mode.
          */
         public Options() {
@@ -479,6 +477,10 @@ public abstract class TeleVM implements MaxVM {
             case IMAGE:
                 System.setProperty(VmObjectAccess.HEAP_ADDRESS_PROPERTY, "1024");
                 vm = createReadOnly(bootImageFile, sourcepath);
+                String vmLogFileOption = options.vmLogFileOption.getValue();
+                if (vmLogFileOption != null) {
+                    vm.vmLogFile = new File(vmLogFileOption);
+                }
                 vm.updateVMCaches(0L);
         }
 
@@ -607,6 +609,8 @@ public abstract class TeleVM implements MaxVM {
     private final BootImage bootImage;
 
     private final File bootImageFile;
+
+    private File vmLogFile;
 
     final File programFile;
 
@@ -1056,6 +1060,10 @@ public abstract class TeleVM implements MaxVM {
 
     public final File bootImageFile() {
         return bootImageFile;
+    }
+
+    public final File vmLogFile() {
+        return vmLogFile;
     }
 
     public final File programFile() {

@@ -1257,6 +1257,7 @@ public final class Log {
         }
 
         --lockDepth;
+        FatalError.check(lockDepth >= 0, "mismatched lock/unlock");
         FatalError.check(lockOwner == VmThread.current(), "log lock should be owned by current thread");
         if (lockDepth == 0) {
             lockOwner = null;

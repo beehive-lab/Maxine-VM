@@ -125,7 +125,8 @@ public abstract class VMLog implements Heap.GCCallback {
      * {@link VMLog#nextId globally unique id}, that is incremented each time a record
      * is allocated, this value is not stored by default in the log record.
      * The log is typically viewed in the Maxine Inspector, which is capable of
-     * reproducing the id in the log view.
+     * reproducing the id in the log view. The abstract method {@link #getUUId}
+     * exists for access to the id when an implementation does store it in the record.
      *
      */
     public abstract static class Record {
@@ -705,8 +706,9 @@ public abstract class VMLog implements Heap.GCCallback {
          * Called for each record being flushed.
          * @param vmThread thread owning log or {@code null} for a non per-thread log
          * @param r
+         * @param uuid of the record
          */
-        public abstract void flushRecord(VmThread vmThread, Record r);
+        public abstract void flushRecord(VmThread vmThread, Record r, int uuid);
 
         /**
          * Called after all flushes.
@@ -723,7 +725,10 @@ public abstract class VMLog implements Heap.GCCallback {
     /**
      * Flusher used to dump a log to the external world using {@link Log} in raw mode.
      */
-    private static class RawDumpFlusher extends Flusher {
+    public static class RawDumpFlusher extends Flusher {
+        public static final String THREAD_MARKER = "VMLog contents for thread: ";
+        public static final String LOGCLASS_MARKER = "VMLog class: ";
+
         boolean started;
         boolean lockDisabledSafepoints;
 
@@ -741,8 +746,9 @@ public abstract class VMLog implements Heap.GCCallback {
         }
 
         @Override
-        public void flushRecord(VmThread vmThread, Record r) {
+        public void flushRecord(VmThread vmThread, Record r, int uuid) {
             Log.print(r.getHeader()); Log.print(' ');
+            Log.print(uuid); Log.print(' ');
             int argCount = r.getArgCount();
             Log.print(argCount); Log.print(' ');
             for (int i = 1; i <= argCount; i++) {
@@ -766,7 +772,7 @@ public abstract class VMLog implements Heap.GCCallback {
 
     private class TraceDumpFlusher extends RawDumpFlusher {
         @Override
-        public void flushRecord(VmThread vmThread, Record r) {
+        public void flushRecord(VmThread vmThread, Record r, int uuid) {
             VMLogger vmLogger = getLogger(r.getLoggerId());
             vmLogger.trace(r);
         }
