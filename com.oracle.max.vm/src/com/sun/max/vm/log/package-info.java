@@ -301,8 +301,13 @@
  * may be unstable after a VM crash as it may provoke a recursive crash.
  * <p>
  * Note that flushing the log when full, using trace mode output, is essentially equivalent to setting
- * the associated trace options, <i>except</i> for that the data might be "stale" by delaying the
+ * the associated trace options, <i>except</i> that the data might be "stale" by delaying the
  * interpretation until the log is flushed.
+ * <p>
+ * The Maxine Inspector can interpret a file of {@link VMLog} records using {@code mx view -vmlog=file}.
+ * The simplest way to create the file is to redirect the log output to a file by setting
+ * {@code export MAXINE_LOG_FILE=maxine.log} before running the VM, and then copying the file.
+ * The last step is important because the Inspector will overwrite the log file when it executes (meta-circularity!).
  */
 package com.sun.max.vm.log;
 

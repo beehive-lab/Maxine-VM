@@ -261,9 +261,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
     }
 
     /**
-     * Forces a redisplay of every render in a column displaying a specifiedÂ280
-     *
-     * log argument number.
+     * Forces a redisplay of every render in a column displaying a specified log argument number.
      *
      * @param argNum the log argument number whose column is to be redisplayed.
      */
