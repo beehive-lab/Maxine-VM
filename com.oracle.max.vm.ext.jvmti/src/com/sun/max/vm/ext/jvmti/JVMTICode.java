@@ -26,10 +26,13 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deps.*;
@@ -78,6 +81,22 @@ public class JVMTICode {
         targetMethod.finalizeReferenceMaps();
         targetMethods.add(targetMethod);
         compileAndDeopt(targetMethods);
+    }
+
+    static void checkDeOptForInvokeInSingleStep(ClassMethodActor classMethodActor, int bci) {
+        CodeAttribute codeAttribute = classMethodActor.codeAttribute();
+        ConstantPool cp = codeAttribute.cp;
+        int index = Bytes.beU2(codeAttribute.code(), bci + 1);
+        ClassMethodRefConstant calleeClassMethodRef = cp.classMethodAt(index);
+        if (calleeClassMethodRef.isResolvableWithoutClassLoading(cp)) {
+            ClassMethodActor calleeMethodActor = (ClassMethodActor) calleeClassMethodRef.resolve(cp, index);
+            TargetMethod targetMethod = calleeMethodActor.currentTargetMethod();
+            if (targetMethod != null) {
+                checkDeOptForTargetMethod(targetMethod, JVMTIEvents.E.SINGLE_STEP.bit);
+            }
+        }
+        // hasn't been loaded/compiled yet, instrumentation will happen as part of loading/compiling during invoke
+
     }
 
     static void compileAndDeopt(ArrayList<TargetMethod> targetMethods) {
