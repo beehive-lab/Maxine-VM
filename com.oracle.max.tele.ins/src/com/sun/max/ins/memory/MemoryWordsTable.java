@@ -46,16 +46,19 @@ import com.sun.max.vm.value.*;
  */
 public final class MemoryWordsTable extends InspectorTable {
 
+    private InspectorView view;
     private final MemoryWordsTableModel tableModel;
     private final InspectorAction setOriginToSelectionAction;
     private final int nBytesInWord;
 
     MemoryWordsTable(Inspection inspection,
+        InspectorView view,
         MemoryWordRegion memoryWordRegion,
         Address origin,
         TableColumnVisibilityPreferences<MemoryColumnKind> instanceViewPreferences,
         InspectorAction setOriginToSelectionAction) {
         super(inspection);
+        this.view = view;
         this.nBytesInWord = inspection.vm().platform().nBytesInWord();
         this.tableModel = new MemoryWordsTableModel(inspection, memoryWordRegion, origin);
         MemoryWordsColumnModel columnModel = new MemoryWordsColumnModel(this, this.tableModel, instanceViewPreferences);
@@ -152,6 +155,10 @@ public final class MemoryWordsTable extends InspectorTable {
     public boolean isBoundaryRow(int row) {
         // TODO (mlvdv)  this doesn't work when origin != cell, i.e. with layouts other than OHM
         return vm().objects().objectStatusAt(tableModel.getMemoryRegion(row).start()).isLive();
+    }
+
+    public InspectorView getView() {
+        return view;
     }
 
     /**

@@ -42,10 +42,12 @@ import com.sun.max.vm.actor.member.*;
  */
 public final class BreakpointsTable extends InspectorTable {
 
+    private final InspectorView view;
     private final BreakpointsTableModel tableModel;
 
-    public BreakpointsTable(Inspection inspection, BreakpointsViewPreferences viewPreferences) {
+    public BreakpointsTable(Inspection inspection, InspectorView view, BreakpointsViewPreferences viewPreferences) {
         super(inspection);
+        this.view = view;
         tableModel = new BreakpointsTableModel(inspection);
         BreakpointsColumnModel columnModel = new BreakpointsColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);
@@ -134,6 +136,10 @@ public final class BreakpointsTable extends InspectorTable {
     @Override
     public Color cellForegroundColor(int row, int col) {
         return (tableModel.get(row).triggerThread() == null) ? null : preference().style().debugIPTagColor();
+    }
+
+    public InspectorView getView() {
+        return view;
     }
 
     private final class BreakpointsColumnModel extends InspectorTableColumnModel<BreakpointsColumnKind>  {
