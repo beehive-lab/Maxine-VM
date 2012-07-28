@@ -188,7 +188,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     }
 
     @Override
-    protected Rectangle defaultGeometry() {
+    public Rectangle defaultGeometry() {
         return originalFrameGeometry;
     }
 

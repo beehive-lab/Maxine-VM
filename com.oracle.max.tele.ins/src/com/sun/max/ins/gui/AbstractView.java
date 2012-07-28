@@ -56,7 +56,7 @@ import com.sun.max.unsafe.*;
  * methods in interfaces {@link InspectionListener} and {@link ViewFocusListener},
  * for which empty methods are provided in this abstract class.</p>
  */
-public abstract class AbstractView<View_Type extends AbstractView> extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
+public abstract class AbstractView<View_Type extends AbstractView> extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener, InspectorView<View_Type> {
 
     private static final int TRACE_VALUE = 1;
 
@@ -87,14 +87,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
 
     }
 
-    /**
-     * Creates a set of standard menu items for this view which are
-     * appropriate to one of the standard menu kinds.
-     *
-     * @param menuKind the kind of menu for which the standard items are intended
-     * @return a new set of menu items
-     */
-    protected final InspectorMenuItems defaultMenuItems(MenuKind menuKind) {
+    public final InspectorMenuItems defaultMenuItems(MenuKind menuKind) {
         return defaultMenuItems(menuKind, AbstractView.this);
     }
 
@@ -106,7 +99,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
      * @param menuKind the kind of menu for which the standard items are intended
      * @return a new set of menu items
      */
-    protected final InspectorMenuItems defaultMenuItems(MenuKind menuKind, final AbstractView view) {
+    protected final InspectorMenuItems defaultMenuItems(MenuKind menuKind, final InspectorView view) {
 
         switch(menuKind) {
             case DEFAULT_MENU:
@@ -223,59 +216,32 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "refresh");
     }
 
-    /**
-     * Adds a listener for changes in {@link AbstractView} window state.
-     */
     public void addViewEventListener(ViewEventListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + "adding view event listener: " + listener);
         viewEventListeners.add(listener);
     }
 
-    /**
-     * Removes a listener for changes in {@link AbstractView} window state.
-     */
     public void removeViewEventListener(ViewEventListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + "removing view event listener: " + listener);
         viewEventListeners.remove(listener);
     }
 
-    /**
-     * @return the manager for kind of view
-     */
     public final ViewManager viewManager() {
         return viewKind.viewManager();
     }
 
-    /**
-     * @return the component in which the view displays its content.
-     */
     public final JComponent getJComponent() {
         return frame.getJComponent();
     }
 
-    /**
-     * Gets a default location for a view.  For singletons, these tend to be statically defined by the
-     * view geometry preferences.  For other views, the default might be the location at which it
-     * was created originally.
-     *
-     * @return default geometry for this view, to be used if no prior settings; null if no default specified.
-     */
-    protected Rectangle defaultGeometry() {
+    public Rectangle defaultGeometry() {
         return preference().geometry().preferredFrameGeometry(viewKind);
     }
 
-    /**
-     * @return the current geometry for this view in the main frame
-     */
-    protected final Rectangle getGeometry() {
+    public final Rectangle getGeometry() {
         return getJComponent().getBounds();
     }
 
-    /**
-     * Sets the geometry of the view in the main frame.
-     *
-     * @param rectangle the new geometry for the view
-     */
     public final void setGeometry(Rectangle rectangle) {
         getJComponent().setBounds(rectangle);
     }
@@ -285,7 +251,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
      *
      * @param rectangle the new geometry for the view
      */
-    public final void setSize(int width, int height) {
+    protected final void setSize(int width, int height) {
         getJComponent().setSize(width, height);
     }
 
@@ -297,17 +263,10 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     /**
      * @return the string currently appearing in the title or tab of the view's window frame
      */
-    public String getTitle() {
+    protected String getTitle() {
         return frame.getTitle();
     }
 
-    /**
-     * Gets from subclasses the currently appropriate title for this view's display frame.
-     *
-     * @return a short string suitable for appearing in the window frame of an view.
-     * If this text is expected to change dynamically, a call to {@link #setTitle()}
-     * will cause this to be called again and the result assigned to the frame.
-     */
     public abstract String getTextForTitle();
 
     protected final void setTitle(String title) {
@@ -422,7 +381,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     /**
      * Unconditionally forces a full refresh of this view.
      */
-    protected final void forceRefresh() {
+    public final void forceRefresh() {
         refresh(true);
     }
 
@@ -442,31 +401,31 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         frame.validate();
     }
 
-    public void setContentPane(Container contentPane) {
+    protected void setContentPane(Container contentPane) {
         frame.setContentPane(contentPane);
     }
 
-    public Container getContentPane() {
+    protected Container getContentPane() {
         return frame.getContentPane();
     }
 
-    public void setLayeredPane(JLayeredPane layeredPane) {
+    protected void setLayeredPane(JLayeredPane layeredPane) {
         frame.setLayeredPane(layeredPane);
     }
 
-    public JLayeredPane getLayeredPane() {
+    protected JLayeredPane getLayeredPane() {
         return frame.getLayeredPane();
     }
 
-    public void setGlassPane(Component glassPane) {
+    protected void setGlassPane(Component glassPane) {
         frame.setGlassPane(glassPane);
     }
 
-    public Component getGlassPane() {
+    protected Component getGlassPane() {
         return frame.getGlassPane();
     }
 
-    public boolean isVisible() {
+    protected boolean isVisible() {
         return frame.isVisible();
     }
 
@@ -498,9 +457,6 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         frame.flash(preference().style().frameBorderFlashColor());
     }
 
-    /**
-     * Calls this view to the users attention:  move to front, select, and flash.
-     */
     public void highlight() {
         gui().moveToExposeDefaultMenu(this);
         frame.moveToFront();
@@ -519,13 +475,6 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         }
     }
 
-    /**
-     * Explicitly closes a particular view, but
-     * many are closed implicitly by a window system
-     * event on the frame.  Start the closure by
-     * notifying the frame, which will then close
-     * the view.
-     */
     public final void dispose() {
         frame.dispose();
     }
@@ -623,9 +572,6 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     public void heapObjectFocusChanged(MaxObject oldObject, MaxObject object) {
     }
 
-    /**
-     * @return an action that makes visible the view and highlights it.
-     */
     public final InspectorAction getShowViewAction() {
         // Only need one, but maybe not even that one; create lazily.
         if (showViewAction == null) {
@@ -643,7 +589,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     /**
      * @return an action that closes the view.
      */
-    public final InspectorAction getCloseViewAction() {
+    protected final InspectorAction getCloseViewAction() {
         // Only need one, but maybe not even that one; create lazily.
         if (closeViewAction == null) {
             closeViewAction = new InspectorAction(inspection(), "Close") {
@@ -661,7 +607,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
      * @return an action that will present a dialog that enables selection of view options;
      * returns a disabled dummy action if not overridden.
      */
-    public InspectorAction getViewOptionsAction() {
+    protected InspectorAction getViewOptionsAction() {
         final InspectorAction dummyViewOptionsAction = new InspectorAction(inspection(), "View Options") {
             @Override
             protected void procedure() {
@@ -674,7 +620,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     /**
      * @return an action that will refresh any state from the VM.
      */
-    public InspectorAction getRefreshAction() {
+    protected final InspectorAction getRefreshAction() {
         return new InspectorAction(inspection(), "Refresh") {
             @Override
             protected void procedure() {
@@ -708,7 +654,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
      * @return an action that will present a print dialog for printing the contents of the view;
      * returns a disabled dummy action if not overridden.
      */
-    public InspectorAction getPrintAction() {
+    protected InspectorAction getPrintAction() {
         final InspectorAction dummyPrintAction = new InspectorAction(inspection(), "Print") {
             @Override
             protected void procedure() {

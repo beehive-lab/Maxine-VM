@@ -295,7 +295,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
             return null;
         }
 
-        private InspectorAction deactivateAllAction(AbstractView exceptInspector) {
+        private InspectorAction deactivateAllAction(InspectorView exceptInspector) {
             final ViewManager< ? extends AbstractView> viewManager = viewManager();
             return viewManager == null ? null : viewManager.deactivateAllAction(exceptInspector);
         }
@@ -325,7 +325,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
             @Override
             protected void procedure() {
                 // The standard view set has no multi view instances; dispose all
-                for (AbstractView view : activeViews()) {
+                for (InspectorView view : activeViews()) {
                     final ViewKind kind = view.viewManager().viewKind();
                     if (!kind.isSingleton) {
                         view.dispose();
@@ -345,7 +345,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             protected void procedure() {
-                for (AbstractView view : activeViews()) {
+                for (InspectorView view : activeViews()) {
                     view.dispose();
                 }
             }
@@ -422,7 +422,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
      * @param kind the kind of view, must be a singleton.
      * @return a new view
      */
-    public AbstractView activateSingletonView(ViewKind kind) {
+    public InspectorView activateSingletonView(ViewKind kind) {
         assert kind.isSingleton;
         final ViewManager< ? extends AbstractView> viewManager = kind.viewManager();
         if (viewManager != null) {
@@ -479,12 +479,12 @@ public final class InspectionViews extends AbstractInspectionHolder {
      * @param exceptInspector the one view that should not be deactivated
      * @return the action for deactivating
      */
-    public InspectorAction deactivateOtherViewsAction(final AbstractView exceptInspector) {
+    public InspectorAction deactivateOtherViewsAction(final InspectorView exceptInspector) {
         return new InspectorAction(inspection(), "Close other views") {
 
             @Override
             protected void procedure() {
-                for (AbstractView view : activeViews()) {
+                for (InspectorView view : activeViews()) {
                     if (view != exceptInspector) {
                         view.dispose();
                     }
@@ -502,7 +502,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
      * @param exceptInspector the one view that should not be deactivated
      * @return the action for deactivating
      */
-    public InspectorAction deactivateOtherViewsAction(ViewKind kind, AbstractView exceptInspector) {
+    public InspectorAction deactivateOtherViewsAction(ViewKind kind, InspectorView exceptInspector) {
         return kind.deactivateAllAction(exceptInspector);
     }
 

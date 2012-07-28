@@ -239,7 +239,7 @@ public final class MemoryBytesView extends AbstractView<MemoryBytesView> {
     private JPanel contentPane;
 
     @Override
-    protected Rectangle defaultGeometry() {
+    public Rectangle defaultGeometry() {
         return originalFrameGeometry;
     }
 

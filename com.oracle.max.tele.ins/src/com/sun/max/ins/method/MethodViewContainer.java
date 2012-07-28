@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,7 +91,7 @@ public final class MethodViewContainer extends TabbedView<MethodViewContainer> {
 
     @Override
     public String getTextForTitle() {
-        final AbstractView view = getSelected();
+        final InspectorView view = getSelected();
         final MethodView methodView = Utils.cast(methodViewType, view);
         return methodView == null ? viewManager.shortName() : "Method: " + methodView.getToolTip();
     }
@@ -115,7 +115,7 @@ public final class MethodViewContainer extends TabbedView<MethodViewContainer> {
         return new InspectorAction(inspection(), "Print") {
             @Override
             public void procedure() {
-                final AbstractView view = MethodViewContainer.this.getSelected();
+                final InspectorView view = MethodViewContainer.this.getSelected();
                 final MethodView methodView = Utils.cast(methodViewType, view);
                 if (methodView != null) {
                     methodView.print();
@@ -142,7 +142,7 @@ public final class MethodViewContainer extends TabbedView<MethodViewContainer> {
 
     @Override
     public void vmProcessTerminated() {
-        for (AbstractView view : this) {
+        for (InspectorView view : this) {
             view.dispose();
         }
     }
