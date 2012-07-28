@@ -28,9 +28,11 @@ import java.util.List;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.hosted.VMLogHosted.HostedLogRecord;
 
@@ -234,6 +236,12 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
     protected abstract TeleHostedLogRecord getRecordFromVM(int id);
 
     /**
+     * Refresh (create) the state from a list of records gathered offline.
+     * @param records
+     */
+    protected abstract void offLineRefresh(ArrayList<String> records);
+
+    /**
      * Refreshes the display of every renderer in a column displaying a specified
      * log argument number.
      *
@@ -253,8 +261,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
     }
 
     /**
-     * Forces a redisplay of every render in a column displaying a specified
-     * log argument number.
+     * Forces a redisplay of every render in a column displaying a specified log argument number.
      *
      * @param argNum the log argument number whose column is to be redisplayed.
      */
@@ -268,6 +275,88 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
                 prober.redisplay();
             }
         }
+    }
+
+    // Support for offline (file) log processing
+
+    protected static Map<Integer, String> offLineThreadMap = new HashMap<Integer, String>();
+
+    /**
+     * Gets the name of a thread gathered by {@link #offLineRefresh(ArrayList)} from the id.
+     */
+    protected String offLineThreadName(int threadId) {
+        return offLineThreadMap.get(threadId);
+    }
+
+    /**
+     * Process embedded records defining thread name/ids.
+     * @param records
+     * @return array of {@code TeleHostedLogRecord}
+     */
+    protected TeleHostedLogRecord[] processThreadIds(ArrayList<String> records) {
+        int count = 0;
+        for (String record : records) {
+            if (record.startsWith(VMLog.RawDumpFlusher.THREAD_MARKER)) {
+                continue;
+            }
+            count++;
+        }
+        TeleHostedLogRecord[] result = new TeleHostedLogRecord[count];
+
+        count = 0;
+        for (String record : records) {
+            if (record.startsWith(VMLog.RawDumpFlusher.THREAD_MARKER)) {
+                // ...: name[id=N]
+                int colonX = record.indexOf(':');
+                int bracketX = record.indexOf('[');
+                int eqX = record.lastIndexOf('=');
+                String name = record.substring(colonX + 1, bracketX);
+                int id = Integer.parseInt(record.substring(eqX + 1, record.length() - 1));
+                offLineThreadMap.put(id, name);
+                continue;
+            }
+            result[count++] = parseRecord(record);
+        }
+        return result;
+    }
+
+    protected TeleHostedLogRecord parseRecord(String record) {
+        String[] parts = record.split(" ");
+        int header = Integer.parseInt(parts[0]);
+        int uuid = Integer.parseInt(parts[1]);
+        int argc = Integer.parseInt(parts[2]);
+        Word[] args = new Word[argc];
+        for (int i = 0; i < argc; i++) {
+            args[i] = parseWord(parts[i + 3]);
+        }
+        return new TeleHostedLogRecord(uuid, header, args);
+    }
+
+
+    /**
+     * Parse a hex word value in a log records file.
+     * @param s
+     * @return
+     */
+    protected static Word parseWord(String s) {
+        int ix = 0;
+        if (s.startsWith("0x")) {
+            ix = 2;
+        }
+        long value = 0;
+        for (int i = ix; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            int chv = 0;
+            if ('a' <= ch && ch <= 'f') {
+                chv = (ch - 'a') + 10;
+            } else if ('0' <= ch && ch <= '9') {
+                chv = ch - '0';
+            } else {
+                ProgramError.check(false, "malformed value in log entry");
+            }
+            value = (value << 4) | (chv & 0xf);
+        }
+        return Address.fromLong(value);
     }
 
 }

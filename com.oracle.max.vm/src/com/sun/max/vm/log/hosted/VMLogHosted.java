@@ -28,7 +28,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.java.fix.*;
-import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * A {@link VMLog} implementation for {@link MaxineVM#isHosted() hosted} mode. Similar to {@link VMLogArrayFixed}.
@@ -171,8 +171,14 @@ public class VMLogHosted extends VMLog {
     }
 
     @Override
-    public void flushLog() {
-        FatalError.unimplemented();
+    protected boolean isPerThread() {
+        return false;
+    }
+
+    @Override
+    protected void flushRecords(VmThread vmThread) {
+        assert false;
+
     }
 
 }

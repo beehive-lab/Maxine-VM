@@ -29,6 +29,7 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.JVMTIBreakpoints.*;
 import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.log.*;
@@ -110,7 +111,7 @@ public class JVMTIEvents {
         public final int code;
 
         /**
-         * The zero based bit for bitsets conmtaining this event.
+         * The zero based bit for bitsets containing this event.
          */
         public final long bit;
 
@@ -142,7 +143,15 @@ public class JVMTIEvents {
 
     }
 
+    /**
+     * A logger for JVMTI events.
+     * It does not define an {@code Operation} class but used the {@link JVMTIEvents.E} class directly as the operation.
+     */
     public static class JVMTIEventLogger extends VMLogger {
+        public static final int DELIVERED = 0;
+        public static final int NO_INTEREST = 1;
+        public static final int WRONG_PHASE = 2;
+
         private JVMTIEventLogger() {
             super("JVMTIEvents", E.EVENT_COUNT, "log JVMTI events");
         }
@@ -152,21 +161,29 @@ public class JVMTIEvents {
             return E.VALUES[op].name();
         }
 
-        void logEvent(E event, boolean ignoring, Object arg) {
+        void logEvent(E event, int status, JVMTI.Env env, Object arg) {
+            int ord = event.ordinal();
+            Word statusArg = intArg(status);
+            Word envArg = objectArg(env);  // arg 2
             switch (event) {
                 case CLASS_LOAD:
                 case CLASS_PREPARE: {
-                    log(event.ordinal(), booleanArg(ignoring), classActorArg((ClassActor) arg));
+                    log(ord, statusArg, envArg, classActorArg((ClassActor) arg));
                     break;
                 }
+                case SINGLE_STEP:
                 case BREAKPOINT: {
                     EventBreakpointID bptId = (EventBreakpointID) arg;
-                    log(event.ordinal(), booleanArg(ignoring), Address.fromLong(bptId.methodID), intArg(bptId.location));
+                    log(ord, statusArg, envArg, Address.fromLong(bptId.methodID), intArg(bptId.location));
+                    break;
+                }
+                case COMPILED_METHOD_LOAD: {
+                    log(ord, statusArg, envArg, methodActorArg((MethodActor) arg));
                     break;
                 }
 
                 default:
-                    log(event.ordinal(), booleanArg(ignoring));
+                    log(ord, statusArg, envArg);
             }
         }
 
@@ -266,13 +283,14 @@ public class JVMTIEvents {
      * Checks whether the given event is set for any agent, either globally or for any thread.
      * @param eventType
      */
-    static boolean isEventSet(JVMTIEvents.E event) {
+    public static boolean isEventSet(JVMTIEvents.E event) {
         return (event.bit & panAgentEventSettingCache) != 0;
     }
 
     /**
-     * Checks whether the given event is set for any agent, either globally or for a given thread.
-     * @param eventType
+     * Checks whether the given event is set for given agent, either globally or for a given thread.
+     * @param env environment to check
+     * @param event
      * @param vmThread thread to check
      */
     static boolean isEventSet(JVMTI.Env env, JVMTIEvents.E event, VmThread vmThread) {
@@ -353,7 +371,7 @@ public class JVMTIEvents {
      * Implementation of upcall to enable/disable event notification.
      */
     static int setEventNotificationMode(JVMTI.Env jvmtiEnv, int mode, int eventId, Thread thread) {
-        if (eventId == JVMTI_EVENT_GARBAGE_COLLECTION_FINISH) {
+        if (eventId == JVMTI_EVENT_METHOD_ENTRY) {
             debug();
         }
         E event = E.fromEventId(eventId);

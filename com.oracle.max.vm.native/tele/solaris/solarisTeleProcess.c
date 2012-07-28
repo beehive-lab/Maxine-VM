@@ -38,6 +38,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/proc.h>
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readBytes(JNIEnv *env, jobject  this, jlong handle, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
@@ -313,3 +314,20 @@ Java_com_sun_max_tele_debug_solaris_SolarisDumpThreadAccess_lwpId(JNIEnv *env, j
     return lwpstatus->pr_lwpid;
 }
 
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_solaris_SolarisDumpTeleChannelProtocol_numActiveLwps(JNIEnv *env, jclass  class,  jobject bytebuffer) {
+    pstatus_t * pstatus = (pstatus_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer));
+    return pstatus->pr_nlwp;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_solaris_SolarisDumpTeleChannelProtocol_numZombieLwps(JNIEnv *env, jclass  class,  jobject bytebuffer) {
+    pstatus_t * pstatus = (pstatus_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer));
+    return pstatus->pr_nzomb;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_solaris_SolarisDumpTeleChannelProtocol_isZombieLwp(JNIEnv *env, jclass  class,  jobject bytebuffer) {
+    lwpsinfo_t * lwpsinfo = (lwpsinfo_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer));
+    return lwpsinfo->pr_state == SZOMB ? true : false;
+}
