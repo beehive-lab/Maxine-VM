@@ -79,6 +79,11 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     File programFile();
 
     /**
+     * Optional off-line VM log file.
+     */
+    File vmLogFile();
+
+    /**
      * @return the mode in which the inspection is taking place.
      */
     MaxInspectionMode inspectionMode();

@@ -1728,10 +1728,15 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             }
         }
         static MemoryRegion toMemoryRegion(Record r, int argNum) {
-            return asMemoryRegion(toObject(r, argNum));
+            if (MaxineVM.isHosted()) {
+                return (MemoryRegion) ObjectArg.getArg(r, argNum);
+            } else {
+                return asMemoryRegion(toObject(r, argNum));
+            }
         }
         @INTRINSIC(UNSAFE_CAST)
         private static native MemoryRegion asMemoryRegion(Object arg);
+
 
         private static GCCallbackPhase toGCCallbackPhase(Record r, int argNum) {
             return GCCallbackPhase.VALUES[r.getIntArg(argNum)];

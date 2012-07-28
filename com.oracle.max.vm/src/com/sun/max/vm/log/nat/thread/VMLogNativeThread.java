@@ -80,6 +80,11 @@ public abstract class VMLogNativeThread extends VMLogNative {
     @CONSTANT
     protected VmThreadLocal vmLogBufferOffsetsTL;
 
+    @Override
+    protected boolean isPerThread() {
+        return true;
+    }
+
     /**
      * Sets the specific thread locals used to control this log.
      * @param vmLogBufferTL

@@ -372,7 +372,13 @@ static void cleanupCurrentThreadBlockBeforeExit() {
 
 void native_exit(jint code) {
     // TODO: unmap the image
-    cleanupCurrentThreadBlockBeforeExit();
+    // (mjj) It is not clear to me why it is important to clean up
+    // (just) the current thread block since we are exiting anyway,
+    // but it is a bad idea if we crashed because it calls back into the VM,
+    // which can cause a recursive crash.
+    if (code != 11) {
+        cleanupCurrentThreadBlockBeforeExit();
+    }
     exit(code);
 }
 
@@ -390,7 +396,8 @@ void native_trap_exit(int code, Address address) {
     log_print("In ");
     log_print_symbol(address);
     log_print_newline();
-    cleanupCurrentThreadBlockBeforeExit();
+    // See native_exit
+    // cleanupCurrentThreadBlockBeforeExit();
     log_exit(code, "Trap in native code at %p\n", address);
 }
 

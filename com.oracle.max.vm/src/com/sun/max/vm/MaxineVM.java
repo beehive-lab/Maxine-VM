@@ -615,8 +615,8 @@ public final class MaxineVM {
         }
         // TODO: need to revisit this. Likely, we would want to bring all
         // threads to a safepoint before running the terminating phase.
-        vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
         VMLog.vmLog().initialize(MaxineVM.Phase.TERMINATING);
+        vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
         VmOperationThread.terminate();
 
         // Drop back to PRIMORDIAL

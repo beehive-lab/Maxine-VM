@@ -682,7 +682,10 @@ public class VmThread {
             }
             thread.terminationCause = throwable;
         }
+        // inform any VMTI handlers
         VMTI.handler().threadEnd(thread);
+        // possibly flush the log
+        VMLog.vmLog().flush(VMLog.FLUSHMODE_EXIT, thread);
 
         // If this is the main thread terminating, initiate shutdown hooks after waiting for other non-daemons to terminate
         if (thread == mainThread) {

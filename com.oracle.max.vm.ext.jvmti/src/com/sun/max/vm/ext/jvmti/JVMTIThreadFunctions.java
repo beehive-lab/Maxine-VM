@@ -23,7 +23,6 @@
 package com.sun.max.vm.ext.jvmti;
 
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIVmThreadLocal.*;
 import static com.sun.max.vm.intrinsics.Infopoints.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
@@ -249,9 +248,15 @@ public class JVMTIThreadFunctions {
     }
 
     static class StackElement {
-        ClassMethodActor classMethodActor;
-        int bci;
-        FrameAccessWithIP frameAccess;
+        final ClassMethodActor classMethodActor;
+        final int bci;
+        final FrameAccessWithIP frameAccess;
+        /**
+         * The index of this frame, with the base (earliest) frame being zero, and increasing by one up the stack.
+         * This value is stable (unlike {@code frameId}) across different stack
+         * walks, provided the method activation is still active.
+         */
+        int frameIndex;
 
         StackElement(ClassMethodActor classMethodActor, int bci, FrameAccessWithIP frameAccess) {
             this.classMethodActor = classMethodActor;
@@ -297,6 +302,18 @@ public class JVMTIThreadFunctions {
         LinkedList<StackElement> stackElements = new LinkedList<StackElement>();
         StackElement[] stackElementsArray;    // strictly for ease of debugging in the Inspector
         boolean raw;
+        FrameAccessWithIP calleeFrameAccess;  // allows access to the physical frame for a vframe even (when inlined)
+
+        @Override
+        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
+            // This is the physical frame visit
+            // since we walk down, we don't know the caller yet, but update the callee caller info to this frame.
+            if (calleeFrameAccess != null) {
+                calleeFrameAccess.setCallerInfo(current);
+            }
+            calleeFrameAccess = new FrameAccessWithIP(current);
+            return super.visitFrame(current, callee);
+        }
 
         @Override
         public boolean visitSourceFrame(ClassMethodActor methodActor, int bci, boolean trapped, long frameId) {
@@ -306,11 +323,11 @@ public class JVMTIThreadFunctions {
             ClassMethodActor classMethodActor = methodActor.original();
             // check for first visible frame
             if (seenVisibleFrame) {
-                add(classMethodActor, bci);
+                add(classMethodActor, bci, frameId);
             } else {
                 if (JVMTIClassFunctions.isVisibleClass(classMethodActor.holder())) {
                     seenVisibleFrame = true;
-                    add(classMethodActor, bci);
+                    add(classMethodActor, bci, frameId);
                 }
             }
             return true;
@@ -321,14 +338,14 @@ public class JVMTIThreadFunctions {
             return stackElements.get((stackElements.size() - 1) - depth);
         }
 
-        private void add(ClassMethodActor classMethodActor, int bci) {
+        private void add(ClassMethodActor classMethodActor, int bci, long frameId) {
             if (JVMTI.JVMTI_VM || raw || !classMethodActor.holder().isReflectionStub()) {
                 stackElements.addFirst(new StackElement(classMethodActor, bci, getFrameAccessWithIP()));
             }
         }
 
         protected FrameAccessWithIP getFrameAccessWithIP() {
-            return null;
+            return calleeFrameAccess;
         }
 
         /**
@@ -363,6 +380,20 @@ public class JVMTIThreadFunctions {
             if (!raw) {
                 removeVMFrames();
             }
+            numberFrames();
+        }
+
+        /**
+         * Allows the index of the frame to be determined from the {@link StackElement}, without
+         * rescanning the list.
+         */
+        private void numberFrames() {
+            for (int i = 0; i < stackElements.size(); i++) {
+                // Checkstyle: stop
+                stackElements.get(i).frameIndex = i;
+                // Checkstyle: resume
+            }
+
         }
 
         /**
@@ -899,7 +930,88 @@ public class JVMTIThreadFunctions {
         }
     }
 
+    /**
+     * Records {@link #notifyFramePop} requests per thread. Several requests may be
+     * in flight at once. They are recorded using the frame index, which is stable
+     * in the face of deoptimization.
+     */
+    private static final Map<VmThread, int[]> framePopMap = new HashMap<VmThread, int[]>();
+
     private static FramePopEventDataThreadLocal framePopEventDataTL = new FramePopEventDataThreadLocal();
+
+    /**
+     * Add a frame pop request.
+     * N.B. {@code depth} measures from the top of the stack; we record the frame index of the
+     * frame at that depth.
+     * @param env
+     * @param thread
+     * @param depth
+     * @return
+     */
+    static int notifyFramePop(JVMTI.Env env, Thread thread, int depth) {
+        VmThread vmThread = checkVmThread(thread);
+        if (vmThread == null) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        }
+        if (depth < 0) {
+            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
+        if (depth < stackTraceVisitor.stackElements.size()) {
+            StackElement se = stackTraceVisitor.getStackElement(depth);
+            addFramePopId(vmThread, se.frameIndex);
+            return JVMTI_ERROR_NONE;
+        } else {
+            return JVMTI_ERROR_NO_MORE_FRAMES;
+        }
+    }
+
+    static boolean framePopForException() {
+        int[] framePopIds = framePopMap.get(VmThread.current());
+        if (framePopIds == null) {
+            return false;
+        }
+        for (int i = 0; i < framePopIds.length; i++) {
+            if (framePopIds[i] != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void addFramePopId(VmThread vmThread, int frameIndex) {
+        int[] framePopIds = framePopMap.get(vmThread);
+        if (framePopIds == null) {
+            framePopIds = new int[2];
+            framePopMap.put(vmThread, framePopIds);
+        }
+        for (int i = 0; i < framePopIds.length; i++) {
+            if (framePopIds[i] == 0) {
+                framePopIds[i] = frameIndex;
+                return;
+            } else if (framePopIds[i] == frameIndex) {
+                return;
+            }
+        }
+        int[] newFramePopIds = new int[framePopIds.length * 2];
+        System.arraycopy(framePopIds, 0, newFramePopIds, 0, framePopIds.length);
+        newFramePopIds[framePopIds.length] = frameIndex;
+        framePopMap.put(vmThread, newFramePopIds);
+    }
+
+    static boolean findFramePopId(VmThread vmThread, long frameId) {
+        int[] framePopIds = framePopMap.get(vmThread);
+        if (framePopIds != null) {
+            for (int i = 0; i < framePopIds.length; i++) {
+                if (framePopIds[i] == frameId) {
+                    // destructive, we remove the id as it is a one time event
+                    framePopIds[i] = 0;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     @NEVER_INLINE
     public static void framePopEvent(boolean wasPoppedByException, long value) {
@@ -925,29 +1037,38 @@ public class JVMTIThreadFunctions {
     @NEVER_INLINE
     public static void framePopEvent(boolean wasPoppedByException, Object value) {
         VmThread vmThread = VmThread.current();
-        Pointer tla = vmThread.tla();
-        if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP) || JVMTIEvents.isEventSet(JVMTIEvents.E.METHOD_EXIT)) {
+        boolean framePop = !framePopMap.isEmpty(); // fast conservative check
+        boolean methodExitSet = JVMTIEvents.isEventSet(JVMTIEvents.E.METHOD_EXIT);
+        if (framePop || methodExitSet) {
             FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
-            // if we are single stepping, we may need to deopt the method we are returning to
-            if (stackTraceVisitor.stackElements.size() > 1) {
-                long codeEventSettings = JVMTIEvents.codeEventSettings(null, vmThread);
-                if ((codeEventSettings & JVMTIEvents.E.SINGLE_STEP.bit) != 0) {
-                    JVMTICode.checkDeOptForMethod(stackTraceVisitor.getStackElement(1).classMethodActor, codeEventSettings);
+            if (framePop && stackTraceVisitor.stackElements.size() > 1) {
+                framePop = findFramePopId(vmThread, stackTraceVisitor.getStackElement(0).frameIndex); // accurate
+                if (framePop) {
+                    /*
+                     * We may have to deopt the method we are returning to for FRAME_POP. We have to be careful about
+                     * inlined source frames as then we really have to deopt the inlining method, which will then
+                     * implicitly deopt the inlined method.
+                     */
+                    FrameAccessWithIP frameAccess = stackTraceVisitor.getStackElement(1).frameAccess;
+                    TargetMethod targetMethod = frameAccess.ip.toTargetMethod();
+
+                    long codeEventSettings = JVMTIEvents.codeEventSettings(null, vmThread);
+                    JVMTICode.checkDeOptForTargetMethod(targetMethod, codeEventSettings);
                 }
             }
-            // METHOD_EXIT events can cause frame pops from within VM code compiled at run time,
+
+            // METHOD_EXIT events can occur from within JDK code compiled at run time used by the VM
             // which results in an empty stack
             if (stackTraceVisitor.stackElements.size() > 0) {
-                FramePopEventData framePopEventData = getFramePopEventData(
-                                MethodID.fromMethodActor(stackTraceVisitor.getStackElement(0).classMethodActor),
-                                wasPoppedByException,
-                                value);
-                if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP)) {
-                    JVMTI.event(JVMTIEvents.E.FRAME_POP, framePopEventData);
-                }
+                if (framePop || methodExitSet) {
+                    FramePopEventData framePopEventData = getFramePopEventData(MethodID.fromMethodActor(stackTraceVisitor.getStackElement(0).classMethodActor), wasPoppedByException, value);
+                    if (framePop) {
+                        JVMTI.event(JVMTIEvents.E.FRAME_POP, framePopEventData);
+                    }
 
-                if (JVMTIEvents.isEventSet(JVMTIEvents.E.METHOD_EXIT)) {
-                    JVMTI.event(JVMTIEvents.E.METHOD_EXIT, framePopEventData);
+                    if (methodExitSet) {
+                        JVMTI.event(JVMTIEvents.E.METHOD_EXIT, framePopEventData);
+                    }
                 }
             }
         }
@@ -959,29 +1080,6 @@ public class JVMTIThreadFunctions {
         framePopEventData.wasPoppedByException = wasPoppedByException;
         framePopEventData.value = value;
         return framePopEventData;
-    }
-
-    static int notifyFramePop(Thread thread, int depth) {
-        VmThread vmThread = checkVmThread(thread);
-        if (vmThread == null) {
-            return JVMTI_ERROR_THREAD_NOT_ALIVE;
-        }
-        if (depth < 0) {
-            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
-        }
-        if (depth > 0) {
-            // need deopt for frames below us, else we won't get the frame pop events
-            assert false;
-        }
-        FindAppFramesStackTraceVisitor stackTraceVisitor = SingleThreadStackTraceVmOperation.invoke(vmThread);
-        if (depth < stackTraceVisitor.stackElements.size()) {
-            Pointer tla = vmThread.tla();
-            JVMTIVmThreadLocal.setDepth(tla, depth);
-            JVMTIVmThreadLocal.setBit(tla, JVMTI_FRAME_POP);
-            return JVMTI_ERROR_NONE;
-        } else {
-            return JVMTI_ERROR_NO_MORE_FRAMES;
-        }
     }
 
     static int interruptThread(Thread thread) {
@@ -1001,30 +1099,12 @@ public class JVMTIThreadFunctions {
         TypedData typedData;
         boolean isSet;
         int returnCode = JVMTI_ERROR_NONE;
-        FrameAccessWithIP calleeFrameAccess;
 
         GetSetStackTraceVisitor(int depth, int slot, TypedData typedData, boolean isSet) {
             this.depth = depth;
             this.slot = slot;
             this.typedData = typedData;
             this.isSet = isSet;
-        }
-
-        @Override
-        protected FrameAccessWithIP getFrameAccessWithIP() {
-            // this only changes for physical frames
-            return calleeFrameAccess;
-        }
-
-        @Override
-        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
-            // This is the physical frame visit
-            // since we walk down, we don't know the caller yet, but update the callee caller info to this frame.
-            if (calleeFrameAccess != null) {
-                calleeFrameAccess.setCallerInfo(current);
-            }
-            calleeFrameAccess = new FrameAccessWithIP(current);
-            return super.visitFrame(current, callee);
         }
 
         @Override

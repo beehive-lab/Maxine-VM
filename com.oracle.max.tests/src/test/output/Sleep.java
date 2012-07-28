@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,43 +22,21 @@
  */
 package test.output;
 
-import java.util.*;
 
-/**
- * A simple class to allocate a lot of memory and then catch an OutOfMemory exception.
- */
-public class CatchOutOfMemory {
+public class Sleep {
+
     public static void main(String[] args) {
-        System.out.println("starting...");
-        if (test(0) == 0) {
-            System.out.println("ok.");
-            System.out.flush();
-/*            if (test(1) == 0) {
-                System.out.println("ok.");
-                System.out.flush();
-                System.exit(30);
-            }
-*/
-            System.exit(10);
-        } else {
-            System.out.println("failed.");
-            System.out.flush();
-            System.exit(20);
+        long period = 5;
+        if (args.length > 0) {
+            period = Long.parseLong(args[0]);
         }
-    }
-    public static int test(int a) {
-        List<Object[]> leak = new ArrayList<Object[]>();
         try {
-            while (true) {
-                leak.add(new Object[200000]);
-            }
-        } catch (OutOfMemoryError ex) {
-            return 0;
-        } catch (Throwable ex) {
-            System.out.println(ex);
-            return -1;
-        } finally {
-            leak = null;
+            System.out.println("sleeping for " + period + " seconds");
+            Thread.sleep(period * 1000);
+            System.out.println("woke from sleep");
+        } catch (InterruptedException ex) {
+            System.out.println("interrupted");
         }
     }
+
 }
