@@ -316,9 +316,17 @@ public class WordValueLabel extends ValueLabel {
                 //System.out.println("WVL (" + _valueMode.toString() + ", " + _valueKind.toString() + ")");
                 switch (inspection().gui().getButton(mouseEvent)) {
                     case MouseEvent.BUTTON1: {
-                        final InspectorAction inspectAction = getInspectValueAction(value());
-                        if (inspectAction != null) {
-                            inspectAction.perform();
+                        if (mouseEvent.isShiftDown()) {
+                               System.out.println("BINGO");
+                            final InspectorAction viewMemoryAction = getViewMemoryAction(value());
+                            if (viewMemoryAction != null) {
+                                viewMemoryAction.perform();
+                            }
+                        } else {
+                            final InspectorAction inspectAction = getInspectValueAction(value());
+                            if (inspectAction != null) {
+                                inspectAction.perform();
+                            }
                         }
                         break;
                     }
