@@ -217,6 +217,15 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             } else {
                 if (singleStep) {
                     id = JVMTIBreakpoints.createSingleStepId(methodID, currentBCI);
+                    switch (opcode) {
+                        case Bytecodes.INVOKEINTERFACE:
+                        case Bytecodes.INVOKESPECIAL:
+                        case Bytecodes.INVOKESTATIC:
+                        case Bytecodes.INVOKEVIRTUAL:
+                            id |= JVMTIBreakpoints.SINGLE_STEP_AT_INVOKE;
+                            break;
+                        default:
+                    }
                 }
             }
             if (id != 0) {
