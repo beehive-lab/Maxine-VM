@@ -61,6 +61,11 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         }
 
         @Override
+        public ObjectStatus priorStatus() {
+            return null;
+        }
+
+        @Override
         public String toString() {
             return "null Remote Reference";
         }

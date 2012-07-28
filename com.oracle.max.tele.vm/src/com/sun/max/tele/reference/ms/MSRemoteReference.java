@@ -335,6 +335,8 @@ public class MSRemoteReference extends  RemoteReference {
      */
     private Address origin;
 
+    private ObjectStatus priorStatus = null;
+
     /**
      * The current state of the reference with respect to
      * where the object is located, what heap phase we might
@@ -353,6 +355,11 @@ public class MSRemoteReference extends  RemoteReference {
     @Override
     public ObjectStatus status() {
         return refState.status();
+    }
+
+    @Override
+    public ObjectStatus priorStatus() {
+        return priorStatus;
     }
 
     @Override
@@ -389,6 +396,7 @@ public class MSRemoteReference extends  RemoteReference {
      * State transition on an ordinary live reference when an {@link #ANALYZING} phase is discovered to have begun.
      */
     public void analyzingBegins() {
+        priorStatus = refState.status();
         refState.analyzingBegins(this);
     }
 
@@ -396,6 +404,7 @@ public class MSRemoteReference extends  RemoteReference {
      * State transition on an ordinary live object reference during {@link #ANALYZING} when an object is found to be reachable.
      */
     public void discoveredReachable() {
+        priorStatus = refState.status();
         refState.discoveredReachable(this);
     }
 
@@ -403,6 +412,7 @@ public class MSRemoteReference extends  RemoteReference {
      * State transition on an object when {@link #RECLAIMING} starts.
      */
     public void reclaimingBegins() {
+        priorStatus = refState.status();
         refState.reclaimingBegins(this);
     }
 
@@ -410,6 +420,7 @@ public class MSRemoteReference extends  RemoteReference {
      * State transition on an object when {@link #MUTATING} begins.
      */
     public void mutatingBegins() {
+        priorStatus = refState.status();
         refState.mutatingBegins(this);
     }
 
@@ -417,14 +428,15 @@ public class MSRemoteReference extends  RemoteReference {
      * State transition on any kind of object when it has been determined to be unreachable and should be forgotten.
      */
     public void die() {
+        priorStatus = refState.status();
         refState.die(this);
     }
-
 
     /**
      * State transition on any kind of free space when it has been coalesced or allocated and should be forgotten.
      */
     public void release() {
+        priorStatus = refState.status();
         refState.release(this);
     }
 }

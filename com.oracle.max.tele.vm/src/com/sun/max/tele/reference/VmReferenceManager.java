@@ -270,6 +270,11 @@ public final class VmReferenceManager extends AbstractVmHolder {
         public ObjectStatus status() {
             return ObjectStatus.DEAD;
         }
+
+        @Override
+        public ObjectStatus priorStatus() {
+            return null;
+        }
     }
 
     /**
@@ -293,9 +298,11 @@ public final class VmReferenceManager extends AbstractVmHolder {
         public ObjectStatus status() {
             return ObjectStatus.LIVE;
         }
+
+        @Override
+        public ObjectStatus priorStatus() {
+            return null;
+        }
     }
-
-
-
 
 }

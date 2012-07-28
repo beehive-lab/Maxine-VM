@@ -106,6 +106,11 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
         }
 
         @Override
+        public ObjectStatus priorStatus() {
+            return null;
+        }
+
+        @Override
         public Address origin() {
             throw new UnsupportedOperationException();
         }

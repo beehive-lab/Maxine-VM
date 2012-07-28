@@ -204,8 +204,16 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         refreshObjectDescription();
         final ObjectStatus status = object.status();
         if (!status.isLive()) {
-            // Omit the prefix for live objects (the usual case).
-            titleText.append("(").append(status.label()).append(") ");
+            // Add a prefix describing status, but omit for the normal case (LIVE).
+            titleText.append("(").append(status.label());
+            if (status.isDead()) {
+                // If DEAD and was previously a quasi object, note this
+                final ObjectStatus priorStatus = object.reference().priorStatus();
+                if (priorStatus != null && priorStatus.isQuasi()) {
+                    titleText.append("-").append(priorStatus.label());
+                }
+            }
+            titleText.append(") ");
         }
         titleText.append(objectDescription);
         if (isElided()) {
