@@ -630,7 +630,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     @Override
-    protected Rectangle defaultGeometry() {
+    public Rectangle defaultGeometry() {
         return originalFrameGeometry;
     }
 
@@ -919,7 +919,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     private InspectorAction cloneAction = new InspectorAction(inspection(), "Clone") {
         @Override
         protected void procedure() {
-            final AbstractView view = new MemoryView(inspection(), memoryWordRegion, regionName, origin, viewMode(), instanceViewPreferences);
+            final InspectorView view = new MemoryView(inspection(), memoryWordRegion, regionName, origin, viewMode(), instanceViewPreferences);
             view.highlight();
         }
     };

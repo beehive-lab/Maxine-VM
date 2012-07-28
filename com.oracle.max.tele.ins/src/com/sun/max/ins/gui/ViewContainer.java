@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,16 +31,16 @@ public interface ViewContainer extends Iterable<AbstractView> {
 
     int length();
 
-    AbstractView viewAt(int i);
+    InspectorView viewAt(int i);
 
     /**
      * Ensures that the view is visible and selected.
      */
-    void setSelected(AbstractView view);
+    void setSelected(InspectorView view);
 
-    boolean isSelected(AbstractView view);
+    boolean isSelected(InspectorView view);
 
-    AbstractView getSelected();
+    InspectorView getSelected();
 
     int getSelectedIndex();
 }

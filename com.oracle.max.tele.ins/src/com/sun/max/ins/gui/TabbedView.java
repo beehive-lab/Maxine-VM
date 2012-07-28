@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,7 +62,7 @@ public abstract class TabbedView<View_Type extends TabbedView> extends AbstractV
 
         public void stateChanged(ChangeEvent event) {
             // A view tab has become visible that was not visible before.
-            final AbstractView selectedView = getSelected();
+            final InspectorView selectedView = getSelected();
             if (selectedView != null) {
                 // View may not have been getting refreshed while not visible.
                 selectedView.forceRefresh();
@@ -71,7 +71,7 @@ public abstract class TabbedView<View_Type extends TabbedView> extends AbstractV
         }
     };
 
-    public AbstractView viewAt(int i) {
+    public InspectorView viewAt(int i) {
         final Component component = tabbedPane.getComponentAt(i);
         if (component instanceof InspectorInternalFrame) {
             final InspectorFrame inspectorFrame = (InspectorFrame) component;
@@ -90,18 +90,18 @@ public abstract class TabbedView<View_Type extends TabbedView> extends AbstractV
         return tabbedPane.getSelectedIndex();
     }
 
-    public void setSelected(AbstractView view) {
+    public void setSelected(InspectorView view) {
         moveToFront();
         tabbedPane.setSelectedComponent(view.getJComponent());
     }
 
-    public boolean isSelected(AbstractView view) {
+    public boolean isSelected(InspectorView view) {
         return view.getJComponent() ==  tabbedPane.getSelectedComponent();
     }
 
-    public AbstractView getSelected() {
+    public InspectorView getSelected() {
         final Component component =  tabbedPane.getSelectedComponent();
-        for (AbstractView  view : this) {
+        for (InspectorView  view : this) {
             if (view.getJComponent() == component) {
                 return view;
             }
@@ -172,7 +172,7 @@ public abstract class TabbedView<View_Type extends TabbedView> extends AbstractV
      * Initiates disposal of the specified view, presumed to be a tabbed member of this view.
      * If no tabs remain, dispose of the whole thing.
      */
-    public void close(AbstractView view) {
+    public void close(InspectorView view) {
         assert views.size() == length();
         views.remove(view);
         view.dispose();
@@ -181,14 +181,14 @@ public abstract class TabbedView<View_Type extends TabbedView> extends AbstractV
     /**
      * Disposes of all but the specified view, presumed to be a tabbed member of this view.
      */
-    public void closeOthers(AbstractView keepView) {
+    public void closeOthers(InspectorView keepView) {
         final List<AbstractView> toClose = new ArrayList<AbstractView>();
         for (AbstractView view : views) {
             if (view != keepView) {
                 toClose.add(view);
             }
         }
-        for (AbstractView view : toClose) {
+        for (InspectorView view : toClose) {
             close(view);
         }
     }
@@ -199,7 +199,7 @@ public abstract class TabbedView<View_Type extends TabbedView> extends AbstractV
     @Override
     public void viewClosing() {
         removeChangeListener(tabChangeListener);
-        for (AbstractView view : this) {
+        for (InspectorView view : this) {
             view.dispose();
         }
         super.viewClosing();

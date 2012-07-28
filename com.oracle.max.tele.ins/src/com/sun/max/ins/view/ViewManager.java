@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  * The manager is both a source of meta-information about the kind
  * of view, and an implementation that manages the view(s).
  */
-public interface ViewManager<Inspector_Kind extends AbstractView>  {
+public interface ViewManager<Inspector_Kind extends InspectorView>  {
 
     /**
      * @return the kind of view being managed by this manager
@@ -97,6 +97,6 @@ public interface ViewManager<Inspector_Kind extends AbstractView>  {
      * @param exceptInspector a view that should not be deactivated
      * @return the action for deactivating views being managed by this manager
      */
-    InspectorAction deactivateAllAction(AbstractView exceptInspector);
+    InspectorAction deactivateAllAction(InspectorView exceptInspector);
 
 }

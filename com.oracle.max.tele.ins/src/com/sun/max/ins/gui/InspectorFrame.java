@@ -43,7 +43,7 @@ public interface InspectorFrame extends RootPaneContainer, Prober {
      *
      * @return the view that owns this frame
      */
-    AbstractView view();
+    InspectorView view();
 
     /**
      * Returns the Swing component that implements this frame.
