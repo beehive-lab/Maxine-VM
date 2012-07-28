@@ -39,10 +39,12 @@ import com.sun.max.tele.*;
  */
 public final class ThreadsTable extends InspectorTable {
 
+    private final InspectorView view;
     private final ThreadsTableModel tableModel;
 
-    ThreadsTable(Inspection inspection, ThreadsViewPreferences viewPreferences) {
+    ThreadsTable(Inspection inspection, InspectorView view, ThreadsViewPreferences viewPreferences) {
         super(inspection);
+        this.view = view;
         tableModel = new ThreadsTableModel(inspection);
         ThreadsColumnModel columnModel = new ThreadsColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);
@@ -94,6 +96,10 @@ public final class ThreadsTable extends InspectorTable {
             return preference().style().debugIPTagColor();
         }
         return null;
+    }
+
+    public InspectorView getView() {
+        return view;
     }
 
     private final class ThreadsColumnModel extends InspectorTableColumnModel<ThreadsColumnKind> {

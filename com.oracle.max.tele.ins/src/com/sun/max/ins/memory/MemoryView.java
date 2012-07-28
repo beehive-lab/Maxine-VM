@@ -473,7 +473,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     @Override
     protected void createViewContent() {
 
-        table = new MemoryWordsTable(inspection(), memoryWordRegion, origin, instanceViewPreferences, setOriginToSelectionAction);
+        table = new MemoryWordsTable(inspection(), this, memoryWordRegion, origin, instanceViewPreferences, setOriginToSelectionAction);
 
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
 

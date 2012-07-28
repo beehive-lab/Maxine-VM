@@ -58,7 +58,7 @@ import com.sun.max.tele.*;
  * if it is an instance of {@link InspectorLabel}. Subclasses can customize
  * how transferables are created by overriding {@link #getTransferable(int, int)}.
  */
-public abstract class InspectorTable extends JTable implements Prober, InspectionHolder {
+public abstract class InspectorTable extends JTable implements Prober, InspectionHolder, InspectorViewElement {
 
     public static final int MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS = 100;
 

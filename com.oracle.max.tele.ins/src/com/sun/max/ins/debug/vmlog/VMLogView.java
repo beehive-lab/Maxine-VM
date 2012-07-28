@@ -298,6 +298,10 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
             vmLogView.tableModel.setDisplayedRows(displayedRows);
         }
 
+        public InspectorView getView() {
+            return vmLogView;
+        }
+
     }
 
     private static class VMLogColumnModel extends InspectorTableColumnModel<VMLogColumnKind>  {

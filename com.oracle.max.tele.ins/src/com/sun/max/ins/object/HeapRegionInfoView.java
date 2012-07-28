@@ -150,7 +150,7 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
 
         fieldsPane = ObjectScrollPane.createTupleFieldsPane(inspection(), this);
         tabbedPane.add(name, fieldsPane);
-        regionInfoPane =  new HeapRegionInfoTable(inspection(), teleHeapRegionInfo).makeHeapRegionInfoPane();
+        regionInfoPane =  new HeapRegionInfoTable(inspection(), this, teleHeapRegionInfo).makeHeapRegionInfoPane();
         tabbedPane.add("Region #" + teleHeapRegionInfo.regionID() + " info", regionInfoPane);
 
         tabbedPane.setSelectedComponent(alternateDisplay ? regionInfoPane : fieldsPane);

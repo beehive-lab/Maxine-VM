@@ -99,7 +99,7 @@ public final class ThreadsView extends AbstractView<ThreadsView> implements Tabl
     @Override
     public void createViewContent() {
         if (inspection().hasProcess()) {
-            table = new ThreadsTable(inspection(), viewPreferences);
+            table = new ThreadsTable(inspection(), this, viewPreferences);
             final JScrollPane scrollPane = new InspectorScrollPane(inspection(), table);
             setContentPane(scrollPane);
         }
