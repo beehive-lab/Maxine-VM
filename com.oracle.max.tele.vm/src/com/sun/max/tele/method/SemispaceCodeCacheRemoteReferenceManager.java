@@ -94,8 +94,6 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return heapPhase;
     }
 
-
-
     /**
      * {@inheritDoc}
      * <p>
@@ -250,6 +248,11 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
                 status = ObjectStatus.DEAD;
             }
             return status;
+        }
+
+        @Override
+        public ObjectStatus priorStatus() {
+            return status == ObjectStatus.DEAD ? ObjectStatus.LIVE : null;
         }
 
         // TODO (mlvdv) we actually need only check the origin if we can determine that there has
