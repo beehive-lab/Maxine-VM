@@ -317,7 +317,6 @@ public class WordValueLabel extends ValueLabel {
                 switch (inspection().gui().getButton(mouseEvent)) {
                     case MouseEvent.BUTTON1: {
                         if (mouseEvent.isShiftDown()) {
-                               System.out.println("BINGO");
                             final InspectorAction viewMemoryAction = getViewMemoryAction(value());
                             if (viewMemoryAction != null) {
                                 viewMemoryAction.perform();
