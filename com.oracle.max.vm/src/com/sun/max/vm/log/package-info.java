@@ -295,9 +295,9 @@
  * <li>exit: flush the log on normal VM exit</li>
  * <li>full: flush the log whenever it becomes full (i.e., is about to overwrite old records)</li>
  * <li>raw: output the log records as uninterpreted, raw, bits.</li>
- * <li>trace: output the log records using the {@link com.oracle.mac.vm.log.VMLogger#trace} method</li>
+ * <li>trace: output the log records using the {@link com.oracle.max.vm.log.VMLogger#trace} method</li>
  * </ul>
- * The default output mode is raw, which is robust, but requires offline interpretation. Trace mode
+ * The default output mode is raw, which is robust, but requires off-line interpretation. Trace mode
  * may be unstable after a VM crash as it may provoke a recursive crash.
  * <p>
  * Note that flushing the log when full, using trace mode output, is essentially equivalent to setting
