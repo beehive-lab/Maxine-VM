@@ -347,20 +347,20 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
     }
 
-    public void addView(AbstractView view) {
+    public void addView(InspectorView view) {
         final JComponent component = view.getJComponent();
         desktopPane.add(component);
         component.setVisible(true);
         repaint();
     }
 
-    public void removeViews(Predicate<AbstractView> predicate) {
+    public void removeViews(Predicate<InspectorView> predicate) {
         for (int i = desktopPane.getComponentCount() - 1; i >= 0; i--) {
             // Delete backwards so that the indices don't change
             final Component component = desktopPane.getComponent(i);
             if (component instanceof InspectorInternalFrame) {
                 final InspectorFrame inspectorFrame = (InspectorFrame) component;
-                final AbstractView view = inspectorFrame.view();
+                final InspectorView view = inspectorFrame.view();
                 if (predicate.evaluate(view)) {
                     view.dispose();
                 }
@@ -421,7 +421,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return mouseButtonMapper.getButton(mouseEvent);
     }
 
-    public void setLocationRelativeToMouse(AbstractView view, int diagonalOffset) {
+    public void setLocationRelativeToMouse(InspectorView view, int diagonalOffset) {
         setLocationRelativeToMouse(view, diagonalOffset, diagonalOffset);
     }
 
@@ -431,7 +431,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         component.setLocation(newX, newY);
     }
 
-    public void moveToMiddle(AbstractView view) {
+    public void moveToMiddle(InspectorView view) {
         moveToMiddle(view.getJComponent());
     }
 
@@ -440,7 +440,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     }
 
 
-    public InspectorAction moveToMiddleAction(final AbstractView view) {
+    public InspectorAction moveToMiddleAction(final InspectorView view) {
         return new InspectorAction(inspection, "Move to center of frame") {
 
             @Override
@@ -450,7 +450,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         };
     }
 
-    public void moveToFullyVisible(AbstractView view) {
+    public void moveToFullyVisible(InspectorView view) {
         final JComponent component = view.getJComponent();
         if (!isFullyVisible(component)) {
             int x = component.getX();
@@ -473,7 +473,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
-    public void moveToExposeDefaultMenu(AbstractView view) {
+    public void moveToExposeDefaultMenu(InspectorView view) {
         final JComponent component = view.getJComponent();
         final int x = component.getX();
         final int y = component.getY();
@@ -482,7 +482,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
-    public void resizeToFit(AbstractView view) {
+    public void resizeToFit(InspectorView view) {
         final JComponent component = view.getJComponent();
         if (!isFullyVisible(component)) {
             final int x = component.getX();
@@ -495,7 +495,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
-    public InspectorAction resizeToFitAction(final AbstractView view) {
+    public InspectorAction resizeToFitAction(final InspectorView view) {
         return new InspectorAction(inspection, "Resize to fit inside frame") {
 
             @Override
@@ -505,11 +505,11 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         };
     }
 
-    public void resizeToFill(AbstractView view) {
+    public void resizeToFill(InspectorView view) {
         view.getJComponent().setBounds(0, 0, scrollPane.getWidth(), scrollPane.getHeight());
     }
 
-    public InspectorAction resizeToFillAction(final AbstractView view) {
+    public InspectorAction resizeToFillAction(final InspectorView view) {
         return new InspectorAction(inspection, "Resize to fill frame") {
 
             @Override
@@ -519,7 +519,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         };
     }
 
-    public void restoreDefaultGeometry(AbstractView view) {
+    public void restoreDefaultGeometry(InspectorView view) {
         final Rectangle defaultFrameGeometry = view.defaultGeometry();
         if (defaultFrameGeometry != null) {
             view.setGeometry(defaultFrameGeometry);
@@ -528,7 +528,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
-    public InspectorAction restoreDefaultGeometryAction(final AbstractView view) {
+    public InspectorAction restoreDefaultGeometryAction(final InspectorView view) {
         return new InspectorAction(inspection, "Restore size/location to default") {
 
             @Override
@@ -558,7 +558,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     /**
      * Set frame location to a point displaced by specified amount from the most recently known mouse position.
      */
-    private void setLocationRelativeToMouse(AbstractView view, int xOffset, int yOffset) {
+    private void setLocationRelativeToMouse(InspectorView view, int xOffset, int yOffset) {
         final JComponent component = view.getJComponent();
         final int width = component.getWidth();
         final int height = component.getHeight();

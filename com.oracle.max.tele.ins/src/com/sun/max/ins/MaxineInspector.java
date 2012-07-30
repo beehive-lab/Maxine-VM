@@ -23,6 +23,7 @@
 package com.sun.max.ins;
 
 import java.awt.*;
+import java.io.*;
 
 import javax.swing.*;
 
@@ -83,6 +84,11 @@ public final class MaxineInspector {
                     if (maxVM.inspectionMode() == MaxInspectionMode.IMAGE) {
                         // Bring up the boot image info view as a starting point for browsing
                         inspection.views().activateSingletonViewAction(ViewKind.BOOT_IMAGE).perform();
+                        // if an off-line vm log file was specified bring that up also
+                        File vmLogFile = maxVM.vmLogFile();
+                        if (vmLogFile != null) {
+                            inspection.views().activateSingletonViewAction(ViewKind.VMLOG).perform();
+                        }
                     }
                 }
             });

@@ -24,6 +24,7 @@ package com.sun.max.ins.debug.vmlog;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -37,6 +38,7 @@ import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPrefe
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
@@ -77,6 +79,54 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
             return new VMLogView(inspection);
         }
 
+    }
+
+    private void readLogFile(File file) {
+        final ArrayList<String> records = new ArrayList<String>();
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            String logClassMarker = null;
+            while (true) {
+                String line = reader.readLine();
+                if (line == null) {
+                    break;
+                }
+                if (line.length() == 0) {
+                    continue;
+                }
+                if (line.startsWith(VMLog.RawDumpFlusher.LOGCLASS_MARKER)) {
+                    if (logClassMarker == null) {
+                        logClassMarker = line;
+                    }
+                    continue;
+                }
+                records.add(line);
+            }
+            // Check that logClassName matches that discovered in the image.
+            checkLogClassMatch(logClassMarker);
+            tableModel.offLineRefresh(records);
+            table.refresh(true);
+        } catch (IOException ex) {
+            System.err.println("failed to read log file: " + file + ": " + ex);
+            System.exit(1);
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ex) {
+                }
+            }
+        }
+    }
+
+    private void checkLogClassMatch(String logClassMarker) {
+        String logClassName = logClassMarker.substring(VMLog.RawDumpFlusher.LOGCLASS_MARKER.length());
+        String imageLogClassName = tableModel.getClass().getSimpleName();
+        if (!imageLogClassName.startsWith(logClassName)) {
+            System.err.println("VMLog class in boot image: " +  imageLogClassName + " does not match log file: " + logClassName);
+            System.exit(1);
+        }
     }
 
     // Will be non-null before any instances created.
@@ -174,6 +224,13 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
         viewMenu.add(showFilterCheckboxMenuItem);
         viewMenu.addSeparator();
         viewMenu.add(defaultMenuItems(MenuKind.VIEW_MENU));
+
+        if (inspection().vm().inspectionMode() == MaxInspectionMode.IMAGE) {
+            File vmLogFile = inspection().vm().vmLogFile();
+            if (vmLogFile != null) {
+                readLogFile(vmLogFile);
+            }
+        }
     }
 
     @Override
@@ -239,6 +296,10 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
          */
         public void setDisplayedRows(int[] displayedRows) {
             vmLogView.tableModel.setDisplayedRows(displayedRows);
+        }
+
+        public InspectorView getView() {
+            return vmLogView;
         }
 
     }
@@ -356,11 +417,20 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
                 if (threadID == 0) {
                     name = "primordial";
                 } else {
-                    MaxThread thread = singleton.vmLogView.vm().threadManager().getThread(threadID);
-                    if (thread == null) {
-                        return singleton.vmLogView.gui().getUnavailableDataTableCellRenderer();
+                    if (singleton.vmLogView.vm().inspectionMode() == MaxInspectionMode.IMAGE) {
+                        // VM log from a file
+                        name = singleton.vmLogView.tableModel.offLineThreadName(threadID);
+                        if (name == null) {
+                            name = "?id=" + Integer.valueOf(threadID);
+                        }
+                    } else {
+                        MaxThread thread = singleton.vmLogView.vm().threadManager().getThread(threadID);
+                        if (thread == null) {
+                            name = "?id=" + Integer.valueOf(threadID);
+                        } else {
+                            name = thread.vmThreadName();
+                        }
                     }
-                    name = thread.vmThreadName();
                 }
                 renderer = new PlainLabel(singleton.vmLogView.inspection(), name);
                 threadRenderers.put(new Integer(threadID), renderer);

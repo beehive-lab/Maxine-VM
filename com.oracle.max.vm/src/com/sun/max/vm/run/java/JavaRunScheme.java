@@ -491,7 +491,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         for (int i = 0; i < jarFileVMOption.count(); i++) {
             final String jarFileVMOptionString = jarFileVMOption.getValue(i);
             String jarPath = null;
-            String agentArgs = "";
+            String agentArgs = null;  // spec is silent, Hotspot passes null
             final int cIndex = jarFileVMOptionString.indexOf(':');
             if (jarFileVMOptionString.length() > 1 && cIndex >= 0) {
                 final int eIndex = jarFileVMOptionString.indexOf('=', cIndex);

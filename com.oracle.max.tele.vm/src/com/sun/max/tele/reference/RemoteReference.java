@@ -70,6 +70,12 @@ public abstract class RemoteReference extends Reference {
     public abstract ObjectStatus status();
 
     /**
+     * Gets the previous status of the object; this is interesting mainly when the the current {@link #status()} is {@linkplain ObjectStatus#DEAD DEAD}.
+     * @return the status of the object representation prior to the one reported by {@link #status()}, {@code null} if there was none.
+     */
+    public abstract ObjectStatus priorStatus();
+
+    /**
      * Gets the absolute location of the object's <em>origin</em> in VM memory. This may or may not be the same as the
      * beginning of the object's storage, depending on the {@link LayoutScheme} being used.
      * <p>

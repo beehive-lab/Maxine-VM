@@ -283,6 +283,31 @@
  * {@code max.vmlog.class} system property to {@code java.fix.VMLogArrayFixed}. This is an all-Java implementation
  * that uses a global buffer comprising an array of fixed length {@link com.sun.max.vm.log.VMLog.Record} instances.
  * It should be used as a check if there is a suspicion that the default implementation is manifesting a bug.
+ *
+ * <h3>VMLog Flushing</h3>
+ * By default, older log records are overwritten when the circular buffer wraps around. In normal use this is not a problem,
+ * as the Inspector maintains all the log records in its own non-circular buffer. However, in exceptional circumstances,
+ * for example when not running the Inspector, it may be convenient to flush the log, say on a VM crash, rather than tracing
+ * every log operation. This can be enabled with the {@code -XX:VMLogFlush=setting} VM option.
+ * The value of {@code setting} should be a comma separated string contains one of the following:
+ * <ul>
+ * <li>crash: flush the log on a VM crash</li>
+ * <li>exit: flush the log on normal VM exit</li>
+ * <li>full: flush the log whenever it becomes full (i.e., is about to overwrite old records)</li>
+ * <li>raw: output the log records as uninterpreted, raw, bits.</li>
+ * <li>trace: output the log records using the {@link com.oracle.mac.vm.log.VMLogger#trace} method</li>
+ * </ul>
+ * The default output mode is raw, which is robust, but requires offline interpretation. Trace mode
+ * may be unstable after a VM crash as it may provoke a recursive crash.
+ * <p>
+ * Note that flushing the log when full, using trace mode output, is essentially equivalent to setting
+ * the associated trace options, <i>except</i> that the data might be "stale" by delaying the
+ * interpretation until the log is flushed.
+ * <p>
+ * The Maxine Inspector can interpret a file of {@link VMLog} records using {@code mx view -vmlog=file}.
+ * The simplest way to create the file is to redirect the log output to a file by setting
+ * {@code export MAXINE_LOG_FILE=maxine.log} before running the VM, and then copying the file.
+ * The last step is important because the Inspector will overwrite the log file when it executes (meta-circularity!).
  */
 package com.sun.max.vm.log;
 

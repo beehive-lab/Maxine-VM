@@ -205,6 +205,10 @@ public final class ArrayElementsTable extends InspectorTable {
         return objectView.viewPreferences().elideNullArrayElements();
     }
 
+    public ObjectView getView() {
+        return objectView;
+    }
+
     /**
      * A column model for array elements, to be used in an {@link ObjectView}.
      * Column selection is driven by choices in the parent {@link ObjectView}.

@@ -27,7 +27,6 @@ import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import java.util.*;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
@@ -108,12 +107,8 @@ public class DeoptimizeALot extends Thread {
         selector.submit();
         ArrayList<TargetMethod> methods = selector.methods;
         if (!methods.isEmpty()) {
-            if (TraceDeopt) {
-                Log.println("DEOPT: DeoptimizeALot selected methods:");
-                for (TargetMethod tm : methods) {
-                    Log.print("DEOPT:   ");
-                    Log.printMethod(tm, true);
-                }
+            if (deoptLogger.enabled()) {
+                deoptLogger.logALot(methods);
             }
             new Deoptimization(methods).go();
         }

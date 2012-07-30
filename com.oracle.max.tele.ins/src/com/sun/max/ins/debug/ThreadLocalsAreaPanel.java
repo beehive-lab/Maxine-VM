@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,11 +45,11 @@ public final class ThreadLocalsAreaPanel extends InspectorPanel {
     private final ThreadLocalsAreaHeaderPanel tlaHeaderPanel;
     private final ThreadLocalsAreaTable tlaTable;
 
-    ThreadLocalsAreaPanel(Inspection inspection, MaxThread thread, MaxThreadLocalsArea tla, ThreadLocalsViewPreferences preferences) {
+    ThreadLocalsAreaPanel(Inspection inspection, InspectorView view, MaxThread thread, MaxThreadLocalsArea tla, ThreadLocalsViewPreferences preferences) {
         super(inspection);
         this.tla = tla;
         tlaHeaderPanel = new ThreadLocalsAreaHeaderPanel(inspection, tla);
-        tlaTable = new ThreadLocalsAreaTable(inspection, tla, preferences);
+        tlaTable = new ThreadLocalsAreaTable(inspection, view, tla, preferences);
 
         setLayout(new BorderLayout());
         add(tlaHeaderPanel, BorderLayout.NORTH);

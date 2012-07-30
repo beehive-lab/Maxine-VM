@@ -78,6 +78,10 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
     protected static VmHeapAccess vmHeap;
 
+    /**
+     * If the heap address is set explicitly, return it, else leave it to caller ti try to determine it.
+     * @return zero if not set, else the address.
+     */
     public static long heapAddressOption() {
         long heap = 0L;
         String heapValue = System.getProperty(HEAP_ADDRESS_PROPERTY);
@@ -95,7 +99,6 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
                 System.err.println("Error parsing value of " + HEAP_ADDRESS_PROPERTY + " system property: " + heapValue + ": " +  e);
             }
         }
-        TeleError.check(heap != 0L, "Heap cannot start at 0");
         return heap;
     }
 

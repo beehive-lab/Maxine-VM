@@ -63,8 +63,15 @@ import com.sun.max.vm.thread.*;
  * Subclasses should do all their initialization by overriding the {@link #initialize(com.sun.max.vm.MaxineVM.Phase)} method
  * and <b>not</b> in a constructor, as the constructor is called before relevant state, such as registered loggers
  * is available.
+ *
+ * There is support for associating a {@link VMLog.Flusher log flusher} with a log, which will be
+ * called whenever the log is about to overflow or when the {@link #flushLog} method is called.
+ * This is primarily intended for custom loggers as the normal expectation is that the default
+ * log does not need to be preserved in its entirety. However, it is possible to dump the
+ * default log, which can be useful in desperate situations.
  */
 public abstract class VMLog implements Heap.GCCallback {
+
 
     /**
      * Factory class to choose implementation at image build time via property.
@@ -118,7 +125,8 @@ public abstract class VMLog implements Heap.GCCallback {
      * {@link VMLog#nextId globally unique id}, that is incremented each time a record
      * is allocated, this value is not stored by default in the log record.
      * The log is typically viewed in the Maxine Inspector, which is capable of
-     * reproducing the id in the log view.
+     * reproducing the id in the log view. The abstract method {@link #getUUId}
+     * exists for access to the id when an implementation does store it in the record.
      *
      */
     public abstract static class Record {
@@ -343,11 +351,14 @@ public abstract class VMLog implements Heap.GCCallback {
                     logger.setDefaultState();
                 }
             }
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            flush(FLUSHMODE_EXIT);
         }
     }
 
     /**
      * Register a custom {@link VMLog} with a specific, single, {@link VMLogger} and a {@link VMLog.Flusher}.
+     * The {@link #flushMode} is always set to {@link #FLUSHMODE_FULL}.
      * @param logger
      * @param flusher
      */
@@ -356,6 +367,7 @@ public abstract class VMLog implements Heap.GCCallback {
         loggers[0] = logger;
         operationRefMaps = new int[2][];
         operationRefMaps[logger.loggerId] = logger.operationRefMaps;
+        flushMode = FLUSHMODE_FULL;
         logger.setVMLog(this);
         this.flusher = flusher;
         if (customLogs == null) {
@@ -380,11 +392,15 @@ public abstract class VMLog implements Heap.GCCallback {
         loggerList.toArray(loggers);
         operationRefMaps = new int[loggers.length + 1][];
         for (VMLogger logger : loggers) {
-            if (logger != null) {
-                logger.setVMLog(this, hostedVMLog);
-                operationRefMaps[logger.loggerId] = logger.operationRefMaps;
-            }
+            assert logger != null;
+            logger.setVMLog(this, hostedVMLog);
+            operationRefMaps[logger.loggerId] = logger.operationRefMaps;
         }
+        traceDumpFlusher = new TraceDumpFlusher();
+    }
+
+    private VMLogger getLogger(int id) {
+        return loggers[id - 1];
     }
 
     /**
@@ -479,11 +495,17 @@ public abstract class VMLog implements Heap.GCCallback {
     public abstract void scanLog(Pointer tla, PointerIndexVisitor visitor);
 
     /**
-     * Flush the contents of the log, using the {@link #flusher}.
-     * N.B. This method should be called when no concurrent activity is expected on the log.
-     * In the case of per thread logs, this flushes the log for the current thread.
+     * Is the log as per-thread.
+     * @return {@code true} iff the log is per-thread.
      */
-    public abstract void flushLog();
+    protected abstract boolean isPerThread();
+
+    /**
+     * Flush the records of the log using the {@link #flusher}, which is guaranteed not {@code null}.
+     * In the case of per-thread logs, this flushes the log for the given thread.
+     * @param vmThread {@code null} for a non-per thread log, else thread to flush
+     */
+    protected abstract void flushRecords(VmThread vmThread);
 
     /**
      * Scan the default log and any custom logs for references in a GC.
@@ -550,36 +572,209 @@ public abstract class VMLog implements Heap.GCCallback {
         }
     }
 
-    // Log flushing
+    /**
+     * Option to enable flushing the log. The log is never flushed by default, however it can be set to flush on a
+     * crash, on normal exit, or whenever it gets full.
+     *
+     * The default output is "raw", which means no interpretation of the bits, which is left to an offline tool. This is
+     * the most robust approach. The alternative is "trace" which invokes the trace method on the logger, which
+     * may crash, particularly if the log is being flushed on a VM crash.
+     */
+    private static class VMLogFlushOption extends VMStringOption {
+
+        @HOSTED_ONLY
+        public VMLogFlushOption() {
+            super("-XX:VMLogFlush=", false, null, "flush VMLog: mode,output. mode=crash|exit|full, output=raw|trace");
+        }
+
+        @Override
+        public boolean check() {
+            if (isPresent()) {
+                String value = getValue();
+                String[] params = value.split(",");
+                for (int i = 0; i < params.length; i++) {
+                    String param = params[i];
+                    if (param.equals("raw")) {
+                        vmLog.flusher = rawDumpFlusher;
+                    } else if (param.equals("trace")) {
+                        vmLog.flusher = traceDumpFlusher;
+                    } else if (param.equals("exit")) {
+                        vmLog.flushMode |= FLUSHMODE_EXIT;
+                    } else if (param.equals("crash")) {
+                        vmLog.flushMode |= FLUSHMODE_CRASH;
+                    } else if (param.equals("full")) {
+                        vmLog.flushMode |= FLUSHMODE_FULL;
+                    } else {
+                        return false;
+                    }
+                }
+                if (vmLog.flushMode != 0 && vmLog.flusher == null) {
+                    vmLog.flusher = rawDumpFlusher;
+                }
+            }
+            return true; // not set, no flush
+        }
+
+    }
+
+    private static VMStringOption VMLogFlushOption = VMOptions.register(new VMLogFlushOption(), MaxineVM.Phase.STARTING);
+    public static final int FLUSHMODE_CRASH = 1;
+    public static final int FLUSHMODE_EXIT = 2;
+    public static final int FLUSHMODE_FULL = 4;
+    private int flushMode;
+
+    /**
+      * Flush the contents of the log, using the {@link #flusher}, if the mode matches.
+      * N.B. This method should be called when no concurrent activity is expected on the log,
+      * which can be achieved using a {@link VMOperation} if necessary.
+      */
+    public void flush(final int mode) {
+        if (flusher == null || (mode & flushMode) == 0) {
+            return;
+        }
+        if (isPerThread()) {
+            Pointer.Procedure proc = new Pointer.Procedure() {
+                public void run(Pointer tla) {
+                    VmThread vmThread = VmThread.fromTLA(tla);
+                    flush(mode, vmThread);
+                }
+            };
+            synchronized (VmThreadMap.THREAD_LOCK) {
+                VmThreadMap.ACTIVE.forAllThreadLocals(null, proc);
+            }
+
+        } else {
+            try {
+                flusher.start(null);
+                flushRecords(null);
+            } finally {
+                flusher.end(null);
+            }
+        }
+    }
+
+    /**
+     * Flush the log for a single thread (assumes a per-thread log).
+     * @param vmThread
+     */
+    public void flush(int mode, VmThread vmThread) {
+        if (flusher == null || (mode & flushMode) == 0) {
+            return;
+        }
+        try {
+            flusher.start(vmThread);
+            flushRecords(vmThread);
+        } finally {
+            flusher.end(vmThread);
+        }
+    }
 
     /**
      * The flusher for this log, or {@code null} if not set.
      */
-    @CONSTANT
     protected Flusher flusher;
 
     /**
-     * Support for log flushing to some external agent.
+     * Support for log flushing to an external agent.
+     * If a log has an associated {@linkplain Flusher}, it will be called in two situations:
+     * <ul>
+     * <ol>Whenever the circular log bugger is about to overflow.</ol>
+     * <ol>When an explicit call to {@link VMLog#flushLog} is made
+     * </ul>
+     * Flushing begins with a call to {@link #start}, followed by a variable number
+     * of calls to {@link flushRecord}, followed by a call to {@link #end} (even if an exception is thrown}.
+     *
+     * Flushing proceeds slightly differently for logs that implement {@link PerThreadVMLog}.
+     * In this case, each per-thread log is flushed separately, with calls to {@link #start}
+     * and {@link #end} for each per-thread log. The value of the {@ode vmThread} argument
+     * for a per-thread log is the thread owning the log, and will be {@code null} for a non per-thread log.
+     *
+     * It is implementation dependent whether the log is physically "empty" after a flush.
+     * However, it is required to be logically empty in that no duplicate records should
+     * be passed to {@link #flushRecord} on a subsequent flush.
      */
     public abstract static class Flusher {
         /**
          * Called before any flushes.
          * Allows any setup to be done by flusher.
+         * @param vmThread thread owning log or {@code null} for a non per-thread log
          */
-        public void start() {
+        public void start(VmThread vmThread) {
         }
 
         /**
-         * Invoked in response to a call of {@link VMLog#flushLog()} or whenever the log is about to overflow.
+         * Called for each record being flushed.
+         * @param vmThread thread owning log or {@code null} for a non per-thread log
          * @param r
+         * @param uuid of the record
          */
-        public abstract void flushRecord(Record r);
+        public abstract void flushRecord(VmThread vmThread, Record r, int uuid);
 
         /**
          * Called after all flushes.
          * Allows any tear down to be done by flusher.
+         * @param vmThread thread owning log or {@code null} for a non per-thread log
          */
-        public void end() {
+        public void end(VmThread vmThread) {
+        }
+    }
+
+    private static final RawDumpFlusher rawDumpFlusher = new RawDumpFlusher();
+    private static TraceDumpFlusher traceDumpFlusher;
+
+    /**
+     * Flusher used to dump a log to the external world using {@link Log} in raw mode.
+     */
+    public static class RawDumpFlusher extends Flusher {
+        public static final String THREAD_MARKER = "VMLog contents for thread: ";
+        public static final String LOGCLASS_MARKER = "VMLog class: ";
+
+        boolean started;
+        boolean lockDisabledSafepoints;
+
+        @Override
+        public void start(VmThread vmThread) {
+            if (!started) {
+                started = true;
+                lockDisabledSafepoints = Log.lock();
+                Log.print("VMLog class: ");
+                Log.println(vmLog.getClass().getSimpleName());
+            }
+            if (vmThread != null) {
+                Log.print("VMLog contents for thread: "); Log.printThread(vmThread, true);
+            }
+        }
+
+        @Override
+        public void flushRecord(VmThread vmThread, Record r, int uuid) {
+            Log.print(r.getHeader()); Log.print(' ');
+            Log.print(uuid); Log.print(' ');
+            int argCount = r.getArgCount();
+            Log.print(argCount); Log.print(' ');
+            for (int i = 1; i <= argCount; i++) {
+                Log.print(r.getArg(i));
+                if (i == argCount) {
+                    Log.println();
+                } else {
+                    Log.print(' ');
+                }
+            }
+
+        }
+
+        @Override
+        public void end(VmThread vmThread) {
+            Log.unlock(lockDisabledSafepoints);
+            started = false;
+        }
+
+    }
+
+    private class TraceDumpFlusher extends RawDumpFlusher {
+        @Override
+        public void flushRecord(VmThread vmThread, Record r, int uuid) {
+            VMLogger vmLogger = getLogger(r.getLoggerId());
+            vmLogger.trace(r);
         }
     }
 

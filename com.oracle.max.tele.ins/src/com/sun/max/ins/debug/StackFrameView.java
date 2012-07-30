@@ -145,7 +145,7 @@ public final class StackFrameView extends AbstractView<StackFrameView> implement
         stackFrame = inspection().focus().stackFrame();
         if (stackFrame instanceof MaxStackFrame.Compiled) {
             final MaxStackFrame.Compiled compiledStackFrame = (MaxStackFrame.Compiled) stackFrame;
-            compiledStackFramePanel = new DefaultCompiledStackFramePanel(inspection(), compiledStackFrame, viewPreferences);
+            compiledStackFramePanel = new DefaultCompiledStackFramePanel(inspection(), this, compiledStackFrame, viewPreferences);
             setContentPane(compiledStackFramePanel);
         } else if (stackFrame instanceof MaxStackFrame.Native) {
             final InspectorPanel nativeFramePanel = new InspectorPanel(inspection());

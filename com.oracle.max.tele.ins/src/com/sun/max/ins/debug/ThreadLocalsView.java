@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,7 +122,7 @@ public final class ThreadLocalsView extends AbstractView<ThreadLocalsView> imple
             for (SafepointPoll.State state : SafepointPoll.State.CONSTANTS) {
                 final MaxThreadLocalsArea tla = thread.localsBlock().tlaFor(state);
                 if (tla != null) {
-                    final ThreadLocalsAreaPanel panel = new ThreadLocalsAreaPanel(inspection(), thread, tla, viewPreferences);
+                    final ThreadLocalsAreaPanel panel = new ThreadLocalsAreaPanel(inspection(), this, thread, tla, viewPreferences);
                     if (state == initialStateSelection) {
                         initialPanelSelection = panel;
                     }
@@ -183,7 +183,7 @@ public final class ThreadLocalsView extends AbstractView<ThreadLocalsView> imple
                 final MaxThreadLocalsArea tla = thread.localsBlock().tlaFor(state);
                 if (tla != null) {
                     if (panel == null) {
-                        tabbedPane.add(state.toString(), new ThreadLocalsAreaPanel(inspection(), thread, tla, viewPreferences));
+                        tabbedPane.add(state.toString(), new ThreadLocalsAreaPanel(inspection(), this, thread, tla, viewPreferences));
                         panelsAddedOrRemoved = true;
                     }
                 } else {

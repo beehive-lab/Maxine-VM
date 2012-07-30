@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import com.sun.max.unsafe.*;
 
 
 final public class MarkBitsTable extends InspectorTable {
+
     static public enum MarkBitsColumnKind implements ColumnKind {
         BIT_INDEX("bit #", "Index of first bit of the mark"),
         BITMAP_WORD_ADDRESS("@bit", "Address of word containing first bit of mark"),
@@ -189,13 +190,20 @@ final public class MarkBitsTable extends InspectorTable {
         }
     }
 
+    private final InspectorView view;
+
     /**
      * Shortcut to heap markBitsInfo.
      */
     final MaxMarkBitsInfo markBitsInfo;
 
-    public MarkBitsTable(Inspection inspection) {
+    public MarkBitsTable(Inspection inspection, InspectorView view) {
         super(inspection);
+        this.view = view;
         markBitsInfo = inspection.vm().heap().markBitInfo();
+    }
+
+    public InspectorView getView() {
+        return view;
     }
 }

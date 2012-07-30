@@ -35,11 +35,13 @@ import com.sun.max.tele.*;
  */
 public final class DefaultCompiledStackFramePanel extends CompiledStackFramePanel {
 
+    private final InspectorView view;
     private final CompiledStackFrameTable compiledStackFrameTable;
 
-    public DefaultCompiledStackFramePanel(Inspection inspection, MaxStackFrame.Compiled javaStackFrame, CompiledStackFrameViewPreferences preferences) {
+    public DefaultCompiledStackFramePanel(Inspection inspection, InspectorView view, MaxStackFrame.Compiled javaStackFrame, CompiledStackFrameViewPreferences preferences) {
         super(inspection, javaStackFrame);
-        compiledStackFrameTable = new CompiledStackFrameTable(inspection, javaStackFrame, preferences);
+        this.view = view;
+        compiledStackFrameTable = new CompiledStackFrameTable(inspection, view, javaStackFrame, preferences);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), compiledStackFrameTable);
         add(scrollPane, BorderLayout.CENTER);
         refresh(true);
