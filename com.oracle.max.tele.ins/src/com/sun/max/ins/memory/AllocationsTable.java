@@ -45,10 +45,12 @@ import com.sun.max.vm.value.*;
  */
 public final class AllocationsTable extends InspectorTable {
 
+    private final InspectorView view;
     private final AllocationsTableModel tableModel;
 
-    AllocationsTable(Inspection inspection, AllocationsViewPreferences viewPreferences) {
+    AllocationsTable(Inspection inspection, InspectorView view, AllocationsViewPreferences viewPreferences) {
         super(inspection);
+        this.view = view;
         this.tableModel = new AllocationsTableModel(inspection);
         AllocationsColumnModel columnModel = new AllocationsColumnModel(this, this.tableModel, viewPreferences);
         configureDefaultTable(tableModel, columnModel);
@@ -118,6 +120,10 @@ public final class AllocationsTable extends InspectorTable {
             return preference().style().debugIPTagColor();
         }
         return null;
+    }
+
+    public InspectorView getView() {
+        return view;
     }
 
     /**

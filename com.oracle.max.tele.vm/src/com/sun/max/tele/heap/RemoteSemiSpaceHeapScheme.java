@@ -257,7 +257,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         if (scheme == null) {
             return;
         }
-        if (heapRegions.size() < 2) {
+        if (toSpaceMemoryRegion == null || fromSpaceMemoryRegion == null) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "looking for heap regions");
             /*
              * The two heap regions have not yet been discovered. Don't check the epoch, since this check may

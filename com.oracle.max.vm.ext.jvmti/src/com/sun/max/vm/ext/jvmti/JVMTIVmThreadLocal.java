@@ -34,8 +34,7 @@ import com.sun.max.vm.thread.*;
  * Efficient state storage for thread related JVMTI information.
  *
  * In {@link #JVMTI_STATE}:
- * Bits 0-7 are status bits:
- * Bits 8-23 record the depth for frame pop events.
+ * Bits 0-7 are status bits.
  *
  * {@link JVMTI_THREADLOCAL} supports {@link JVMTIFunctions#GetThreadLocalStorage}.
  *
@@ -52,20 +51,11 @@ public class JVMTIVmThreadLocal {
     static final int JVMTI_RAW_NOTIFY = 1;
 
     /**
-     * Bit is set when frame pop event requested.
-     */
-    static final int JVMTI_FRAME_POP = 2;
-
-    /**
      * Bit set while thread is executing a JVMTI/JNI upcall.
      */
     public static final int IN_UPCALL = 4;
 
     private static final int STATUS_BIT_MASK = 0xFF;
-
-    private static final int DEPTH_SHIFT = 8;
-
-    private static final int DEPTH_MASK = 0xFFFF00;
 
     /**
      * Checks if given bit is set in given threadlocals area.
@@ -95,14 +85,6 @@ public class JVMTIVmThreadLocal {
     @INLINE
     public static void unsetBit(Pointer tla, int bit) {
         JVMTI_STATE.store3(tla, JVMTI_STATE.load(tla).and(~bit));
-    }
-
-    static int getDepth(Pointer tla) {
-        return (int) (JVMTI_STATE.load(tla).toLong() & DEPTH_MASK) >> DEPTH_SHIFT;
-    }
-
-    static void setDepth(Pointer tla, int depth) {
-        JVMTI_STATE.store3(tla, JVMTI_STATE.load(tla).or(depth << DEPTH_SHIFT));
     }
 
     static int setThreadLocalStorage(Thread thread, Pointer data) {

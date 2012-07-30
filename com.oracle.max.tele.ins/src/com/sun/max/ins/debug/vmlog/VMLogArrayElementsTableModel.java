@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
+import java.util.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
@@ -31,7 +33,6 @@ import com.sun.max.vm.log.java.fix.*;
 /**
  * Model corresponds to {@link VMLogArrayFixed}.
  * Fixed length records stored in fixed length array (circular buffer).
- * So the {@code id} trivially maps to the array index of the associated record.
  */
 class VMLogArrayElementsTableModel extends VMLogElementsTableModel {
 
@@ -46,5 +47,13 @@ class VMLogArrayElementsTableModel extends VMLogElementsTableModel {
     protected TeleHostedLogRecord getRecordFromVM(int id) {
         return teleVMLogArray.getLogRecord(id);
     }
+
+    @Override
+    protected void offLineRefresh(ArrayList<String> records) {
+        // records are already sorted by uuid, but may contain embedded THREAD_MARKER records for threads that died.
+        TeleHostedLogRecord[] logRecords = processThreadIds(records);
+        logRecordCache = Arrays.asList(logRecords);
+    }
+
 }
 

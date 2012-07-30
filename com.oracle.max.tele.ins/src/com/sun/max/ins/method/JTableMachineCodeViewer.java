@@ -61,6 +61,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     private final MaxPlatform.ISA isa;
     private final Inspection inspection;
+    private final InspectorView view;
     private final MachineCodeTable table;
     private final MachineCodeTableModel tableModel;
     private final MachineCodeViewPreferences instanceViewPreferences;
@@ -73,6 +74,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
     public JTableMachineCodeViewer(Inspection inspection, MethodView parent, MaxMachineCodeRoutine machineCode) {
         super(inspection, parent, machineCode);
         this.inspection = inspection;
+        this.view = parent;
         //inspection.vm().bootImage().header.
         this.isa = inspection.vm().platform().getISA();
         this.operandsRenderer = new OperandsRenderer();
@@ -314,6 +316,11 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             }
             return false;
         }
+
+        public InspectorView getView() {
+            return view;
+        }
+
     }
 
     private final class MachineCodeTableColumnModel extends InspectorTableColumnModel<MachineCodeColumnKind> {

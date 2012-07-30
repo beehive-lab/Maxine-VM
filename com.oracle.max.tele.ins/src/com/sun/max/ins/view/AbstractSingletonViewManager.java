@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  * class.
  * @param <View_Kind> a kind of view that is to be managed as a singleton
  */
-public abstract class AbstractSingletonViewManager<View_Kind extends AbstractView> extends AbstractInspectionHolder implements SingletonViewManager {
+public abstract class AbstractSingletonViewManager<View_Kind extends InspectorView> extends AbstractInspectionHolder implements SingletonViewManager {
 
     private final ViewKind viewKind;
     private final String shortName;
@@ -113,7 +113,7 @@ public abstract class AbstractSingletonViewManager<View_Kind extends AbstractVie
             view.addViewEventListener(new ViewEventListener() {
 
                 @Override
-                public void viewClosing(AbstractView view) {
+                public void viewClosing(InspectorView view) {
                     assert views.remove(view);
                     refresh();
                 }
@@ -133,7 +133,7 @@ public abstract class AbstractSingletonViewManager<View_Kind extends AbstractVie
         return activateViewAction;
     }
 
-    public InspectorAction deactivateAllAction(AbstractView exception) {
+    public InspectorAction deactivateAllAction(InspectorView exception) {
         if (exception == null) {
             return deactivateAllAction;
         }
@@ -206,9 +206,9 @@ public abstract class AbstractSingletonViewManager<View_Kind extends AbstractVie
      */
     private final class DeactivateAllExceptAction extends InspectorAction {
 
-        private final AbstractView exceptInspector;
+        private final InspectorView exceptInspector;
 
-        public DeactivateAllExceptAction(String title, AbstractView exceptInspector) {
+        public DeactivateAllExceptAction(String title, InspectorView exceptInspector) {
             super(inspection(), "Close " + title + " view");
             this.exceptInspector = exceptInspector;
         }

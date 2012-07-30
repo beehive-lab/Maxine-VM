@@ -40,16 +40,22 @@ public final class RegistersTable extends InspectorTable {
 
     private static final Color[] ageColors = {Color.RED, Color.MAGENTA, Color.BLUE};
 
+    private final InspectorView view;
     private final String isaName;
     private final RegistersTableModel tableModel;
 
-    public RegistersTable(Inspection inspection, MaxThread thread, RegistersViewPreferences viewPreferences) {
+    public RegistersTable(Inspection inspection, InspectorView view, MaxThread thread, RegistersViewPreferences viewPreferences) {
         super(inspection);
+        this.view = view;
         this.isaName = inspection.vm().platform().getISA().name();
         tableModel = new RegistersTableModel(inspection, thread);
         RegistersColumnModel columnModel = new RegistersColumnModel(viewPreferences);
         configureMemoryTable(tableModel, columnModel);
         setRowSelectionAllowed(false);
+    }
+
+    public InspectorView getView() {
+        return view;
     }
 
     private final class RegistersColumnModel extends InspectorTableColumnModel<RegistersColumnKind> {

@@ -49,6 +49,7 @@ public final class HubView extends ObjectView<HubView> {
     private boolean showMTables;
     private boolean showRefMaps;
 
+    private JToolBar toolBar;
     private ObjectScrollPane fieldsPane;
     private ObjectScrollPane vTablePane;
     private ObjectScrollPane iTablePane;
@@ -79,7 +80,8 @@ public final class HubView extends ObjectView<HubView> {
         final InspectorStyle style = preference().style();
 
         // Display a tool bar with check boxes to control which panes are displayed.
-        final JToolBar toolBar = new InspectorToolBar(inspection());
+        toolBar = new InspectorToolBar(inspection());
+        toolBar.setBackground(viewBackgroundColor());
         final  InspectorCheckBox showFieldsCheckBox = new InspectorCheckBox(inspection(), "fields", "Display hub fields?", showFields);
         showFieldsCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
@@ -190,6 +192,7 @@ public final class HubView extends ObjectView<HubView> {
     @Override
     protected void refreshState(boolean force) {
         fieldsPane.refresh(force);
+        toolBar.setBackground(viewBackgroundColor());
         if (iTablePane != null) {
             iTablePane.refresh(force);
         }
