@@ -347,6 +347,18 @@ public class VMLogger {
     }
 
     /**
+     * Set a specific operation state to the given value.
+     * @param op operation to set
+     * @param value new value
+     * @return the previous value
+     */
+    public boolean setOperationState(int op, boolean value) {
+        boolean oldValue = logOp.get(op);
+        logOp.set(op, value);
+        return oldValue;
+    }
+
+    /**
      * Set the enabled options of this logger based on those of a dominant logger.
      * @param dominantLogger
      */
