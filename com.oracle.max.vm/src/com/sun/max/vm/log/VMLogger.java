@@ -535,6 +535,16 @@ public class VMLogger {
     }
 
     @INLINE
+    public static Word charArg(char ch) {
+        return Address.fromInt(ch);
+    }
+
+    @INLINE
+    public static Word shortArg(short s) {
+        return Address.fromInt(s);
+    }
+
+    @INLINE
     public static Word intArg(int i) {
         return Address.fromInt(i);
     }
@@ -623,8 +633,23 @@ public class VMLogger {
     }
 
     @INLINE
+    public static Offset toOffset(Record r, int argNum) {
+        return r.getArg(argNum).asOffset();
+    }
+
+    @INLINE
     public static byte toByte(Record r, int argNum) {
         return (byte) r.getIntArg(argNum);
+    }
+
+    @INLINE
+    public static char toChar(Record r, int argNum) {
+        return (char) r.getIntArg(argNum);
+    }
+
+    @INLINE
+    public static int toShort(Record r, int argNum) {
+        return r.getIntArg(argNum);
     }
 
     @INLINE
