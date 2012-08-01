@@ -525,7 +525,7 @@ public final class CodeEviction extends VmOperation {
         ++evictionCount;
 
         if (codeEvictionLogger.enabled()) {
-            codeEvictionLogger.logStart(evictionCount, callingThread());
+            codeEvictionLogger.logRun("starting", evictionCount, callingThread());
         }
 
         // phase 0 (optional): dump before
@@ -591,7 +591,7 @@ public final class CodeEviction extends VmOperation {
         }
 
         if (codeEvictionLogger.enabled()) {
-            codeEvictionLogger.logEnd(evictionCount, callingThread());
+            codeEvictionLogger.logRun("completed", evictionCount, callingThread());
         }
         logTimingResults();
     }
@@ -1366,8 +1366,10 @@ public final class CodeEviction extends VmOperation {
     @VMLoggerInterface
     private interface CodeEvictionLoggerInterface {
         // Control
-        void start(@VMLogParam(name = "evictionCount") int evictionCount, @VMLogParam(name = "callingThread") VmThread callingThread);
-        void end(@VMLogParam(name = "evictionCount") int evictionCount, @VMLogParam(name = "callingThread") VmThread callingThread);
+        void run(
+            @VMLogParam(name = "mode") String mode,
+            @VMLogParam(name = "evictionCount") int evictionCount,
+            @VMLogParam(name = "callingThread") VmThread callingThread);
 
         // Statistics. The data is all stored in the CodeEviction instance, so for now we just log that.
         void stats_DirectCallNumbers(@VMLogParam(name = "codeEviction") CodeEviction codeEviction);
@@ -1486,6 +1488,7 @@ public final class CodeEviction extends VmOperation {
 
         protected CodeEvictionLogger() {
             super("CodeEviction", "Log code eviction after baseline code cache contention. Operation prefixes control logging:, " +
+                            "Run = log each code eviction run (enabled by default)" +
                             "Stat_.* = statistics (count evicted/surviving bytes and methods), " +
                             "Details_.* = give detailed information about what methods and dispatch entries are treated, " +
                             "Move_.* = print details about threads and code motion, " +
@@ -1500,19 +1503,21 @@ public final class CodeEviction extends VmOperation {
             return codeEvictionLogger.opEnabled(Operation.StackDump.ordinal());
         }
 
+        @Override
+        public void checkOptions() {
+            super.checkOptions();
+            // Always enable the Run operation if we are doing any logging.
+            if (enabled()) {
+                setOperationState(Operation.Run.ordinal(), true);
+            }
+        }
+
         // The implementations of the trace* methods (for non-Inspector) usage.
 
         @Override
-        protected void traceStart(int evictionCount, VmThread callingThread) {
-            Log.print("starting code eviction run #");
-            Log.print(evictionCount);
-            Log.print(" triggered by ");
-            Log.printThread(callingThread, true);
-        }
-
-        @Override
-        protected void traceEnd(int evictionCount, VmThread callingThread) {
-            Log.print("completed code eviction run #");
+        protected void traceRun(String mode, int evictionCount, VmThread callingThread) {
+            Log.print(mode);
+            Log.print(" code eviction run #");
             Log.print(evictionCount);
             Log.print(" triggered by ");
             Log.printThread(callingThread, true);
@@ -1871,20 +1876,19 @@ public final class CodeEviction extends VmOperation {
             BootToBaseline, Details_DirectCallReset, Details_DispatchTableReset,
             Details_Mark, Details_MarkLevel, Details_PatchDetails, Details_PatchType,
             Details_RelocateCodePointer, Details_StaleMethod, Details_VisitRefMapBits, Dump,
-            End, Move_CalleeReturnAddress, Move_CodeCacheBoundaries, Move_CodeMotion,
-            Move_DirectCallInfo, Move_FixCall, Move_FixCallForMovedCode, Move_MethodPatch,
-            Move_NotCopying, Move_OptMethod, Move_Progress, Move_ReturnAddressPatch,
-            Move_ToMoved, Move_ToUnmoved, StackDump, Start,
-            Stats_DirectCallNumbers, Stats_Fixed, Stats_Statistics, Stats_Surviving,
-            Stats_TimingResults;
+            Move_CalleeReturnAddress, Move_CodeCacheBoundaries, Move_CodeMotion, Move_DirectCallInfo,
+            Move_FixCall, Move_FixCallForMovedCode, Move_MethodPatch, Move_NotCopying,
+            Move_OptMethod, Move_Progress, Move_ReturnAddressPatch, Move_ToMoved,
+            Move_ToUnmoved, Run, StackDump, Stats_DirectCallNumbers,
+            Stats_Fixed, Stats_Statistics, Stats_Surviving, Stats_TimingResults;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x1, 0x5, 0x2, 0x3, 0x3, 0x1, 0x1, 0xe, 0x2, 0x1, 0x0, 0x0, 0x0, 0x1,
-            0x1, 0xc, 0x5, 0x1, 0x1, 0x1, 0x1, 0x1, 0x7, 0x11, 0x1, 0x0, 0x0, 0x1,
-            0x1, 0x1, 0x0, 0x1};
+        private static final int[] REFMAPS = new int[] {0x1, 0x5, 0x2, 0x3, 0x3, 0x1, 0x1, 0xe, 0x2, 0x1, 0x0, 0x0, 0x1, 0x1,
+            0xc, 0x5, 0x1, 0x1, 0x1, 0x1, 0x1, 0x7, 0x11, 0x1, 0x1, 0x0, 0x1, 0x1,
+            0x1, 0x0, 0x1};
 
         protected CodeEvictionLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -1960,12 +1964,6 @@ public final class CodeEviction extends VmOperation {
             log(Operation.Dump.ordinal());
         }
         protected abstract void traceDump();
-
-        @INLINE
-        public final void logEnd(int evictionCount, VmThread callingThread) {
-            log(Operation.End.ordinal(), intArg(evictionCount), vmThreadArg(callingThread));
-        }
-        protected abstract void traceEnd(int evictionCount, VmThread callingThread);
 
         @INLINE
         public final void logMove_CalleeReturnAddress(Pointer ret) {
@@ -2046,16 +2044,16 @@ public final class CodeEviction extends VmOperation {
         protected abstract void traceMove_ToUnmoved(CodePointer iTarget);
 
         @INLINE
+        public final void logRun(String mode, int evictionCount, VmThread callingThread) {
+            log(Operation.Run.ordinal(), objectArg(mode), intArg(evictionCount), vmThreadArg(callingThread));
+        }
+        protected abstract void traceRun(String mode, int evictionCount, VmThread callingThread);
+
+        @INLINE
         public final void logStackDump() {
             log(Operation.StackDump.ordinal());
         }
         protected abstract void traceStackDump();
-
-        @INLINE
-        public final void logStart(int evictionCount, VmThread callingThread) {
-            log(Operation.Start.ordinal(), intArg(evictionCount), vmThreadArg(callingThread));
-        }
-        protected abstract void traceStart(int evictionCount, VmThread callingThread);
 
         @INLINE
         public final void logStats_DirectCallNumbers(CodeEviction codeEviction) {
@@ -2134,87 +2132,83 @@ public final class CodeEviction extends VmOperation {
                     traceDump();
                     break;
                 }
-                case 11: { //End
-                    traceEnd(toInt(r, 1), toVmThread(r, 2));
-                    break;
-                }
-                case 12: { //Move_CalleeReturnAddress
+                case 11: { //Move_CalleeReturnAddress
                     traceMove_CalleeReturnAddress(toPointer(r, 1));
                     break;
                 }
-                case 13: { //Move_CodeCacheBoundaries
+                case 12: { //Move_CodeCacheBoundaries
                     traceMove_CodeCacheBoundaries(toSemiSpaceCodeRegion(r, 1));
                     break;
                 }
-                case 14: { //Move_CodeMotion
+                case 13: { //Move_CodeMotion
                     traceMove_CodeMotion(toTargetMethod(r, 1), toPointer(r, 2), toPointer(r, 3), toSize(r, 4));
                     break;
                 }
-                case 15: { //Move_DirectCallInfo
+                case 14: { //Move_DirectCallInfo
                     traceMove_DirectCallInfo(toInt(r, 1), toInt(r, 2), toCodePointer(r, 3), toCodePointer(r, 4));
                     break;
                 }
-                case 16: { //Move_FixCall
+                case 15: { //Move_FixCall
                     traceMove_FixCall(toTargetMethod(r, 1), toInt(r, 2), toCodePointer(r, 3));
                     break;
                 }
-                case 17: { //Move_FixCallForMovedCode
+                case 16: { //Move_FixCallForMovedCode
                     traceMove_FixCallForMovedCode(toTargetMethod(r, 1), toOffset(r, 2));
                     break;
                 }
-                case 18: { //Move_MethodPatch
+                case 17: { //Move_MethodPatch
                     traceMove_MethodPatch(toTargetMethod(r, 1), toBoolean(r, 2));
                     break;
                 }
-                case 19: { //Move_NotCopying
+                case 18: { //Move_NotCopying
                     traceMove_NotCopying(toTargetMethod(r, 1));
                     break;
                 }
-                case 20: { //Move_OptMethod
+                case 19: { //Move_OptMethod
                     traceMove_OptMethod(toTargetMethod(r, 1));
                     break;
                 }
-                case 21: { //Move_Progress
+                case 20: { //Move_Progress
                     traceMove_Progress(toString(r, 1));
                     break;
                 }
-                case 22: { //Move_ReturnAddressPatch
+                case 21: { //Move_ReturnAddressPatch
                     traceMove_ReturnAddressPatch(toTargetMethod(r, 1), toCodePointer(r, 2), toCodePointer(r, 3));
                     break;
                 }
-                case 23: { //Move_ToMoved
+                case 22: { //Move_ToMoved
                     traceMove_ToMoved(toTargetMethod(r, 1), toAddress(r, 2), toAddress(r, 3), toAddress(r, 4), toCodePointer(r, 5));
                     break;
                 }
-                case 24: { //Move_ToUnmoved
+                case 23: { //Move_ToUnmoved
                     traceMove_ToUnmoved(toCodePointer(r, 1));
+                    break;
+                }
+                case 24: { //Run
+                    traceRun(toString(r, 1), toInt(r, 2), toVmThread(r, 3));
                     break;
                 }
                 case 25: { //StackDump
                     traceStackDump();
                     break;
                 }
-                case 26: { //Start
-                    traceStart(toInt(r, 1), toVmThread(r, 2));
-                    break;
-                }
-                case 27: { //Stats_DirectCallNumbers
+                case 26: { //Stats_DirectCallNumbers
                     traceStats_DirectCallNumbers(toCodeEviction(r, 1));
                     break;
                 }
-                case 28: { //Stats_Fixed
+                case 27: { //Stats_Fixed
                     traceStats_Fixed(toCodeEviction(r, 1));
                     break;
                 }
-                case 29: { //Stats_Statistics
+                case 28: { //Stats_Statistics
                     traceStats_Statistics(toCodeEviction(r, 1));
                     break;
                 }
-                case 30: { //Stats_Surviving
+                case 29: { //Stats_Surviving
                     traceStats_Surviving(toInt(r, 1), toInt(r, 2));
                     break;
                 }
-                case 31: { //Stats_TimingResults
+                case 30: { //Stats_TimingResults
                     traceStats_TimingResults(toCodeEviction(r, 1));
                     break;
                 }
