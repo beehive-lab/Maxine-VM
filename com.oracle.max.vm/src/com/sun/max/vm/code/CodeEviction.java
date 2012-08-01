@@ -24,6 +24,7 @@ package com.sun.max.vm.code;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.util.*;
 
@@ -37,6 +38,8 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -109,39 +112,6 @@ import com.sun.max.vm.thread.*;
  */
 public final class CodeEviction extends VmOperation {
 
-    public static int TraceCodeEviction;
-
-    public static final int TRACE_NONE = 0;
-    public static final int TRACE_STAT = 1;
-    public static final int TRACE_DETAILS = 2;
-    public static final int TRACE_THREADS_CODE_MOTION = 3;
-    public static final int TRACE_FULL_DUMP = 4;
-
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceCodeEviction", CodeEviction.class,
-            "Trace code eviction after baseline code cache contention with increasing verbosity. Values: 0 = no tracing, " +
-            "1 = statistics (count evicted/surviving bytes and methods), " +
-            "2 = give detailed information about what methods and dispatch entries are treated, " +
-            "3 = print details about threads and code motion, " +
-            "4 = give full dumps of all code addresses before and after eviction",
-            MaxineVM.Phase.STARTING);
-    }
-
-    /**
-     * Start logging upon the n-th eviction cycle.
-     */
-    public static int LogStartEviction;
-
-    static {
-        VMOptions.addFieldOption("-XX:", "LogStartEviction", CodeEviction.class,
-            "Start logging upon the n-th code eviction cycle; all cycles before that are silent.",
-            MaxineVM.Phase.STARTING);
-    }
-
-    protected static boolean logLevel(int level) {
-        return TraceCodeEviction >= level && evictionCount >= LogStartEviction;
-    }
-
     /**
      * Protect baseline methods until the given callee depth.
      */
@@ -151,21 +121,6 @@ public final class CodeEviction extends VmOperation {
         VMOptions.addFieldOption("-XX:", "CodeEvictionProtectCalleeDepth", CodeEviction.class,
             "During code eviction, protect callees of on-stack methods up until the given depth (default: 1).",
             MaxineVM.Phase.STARTING);
-    }
-
-    private final class DumpDispatchTables implements ClassActor.Closure {
-        @Override
-        public boolean doClass(ClassActor classActor) {
-            final DynamicHub dhub = classActor.dynamicHub();
-            if (dhub != null) {
-                dumpHub(dhub, DynamicHub.vTableStartIndex(), true, "DHUB");
-            }
-            final StaticHub shub = classActor.staticHub();
-            if (shub != null) {
-                dumpHub(shub, Hub.vTableStartIndex(), !(classActor.isInterface() || classActor.isPrimitiveClassActor()), "SHUB");
-            }
-            return true;
-        }
     }
 
     /**
@@ -382,38 +337,6 @@ public final class CodeEviction extends VmOperation {
 
     }
 
-    private final class StackDumper extends RawStackFrameVisitor {
-        @Override
-        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
-            final TargetMethod tmCurrent = current.targetMethod();
-            final TargetMethod tmCallee = callee.targetMethod();
-            if (tmCurrent == null || tmCallee == null) {
-                return true;
-            }
-            final Pointer rap = tmCallee.returnAddressPointer(callee);
-            final CodePointer ret = CodePointer.from(rap.readWord(0));
-            dump("STACK", printThreadName, tmCurrent, ret);
-            return true;
-        }
-    }
-
-    final class DumpDirectCalls implements TargetMethod.Closure {
-        @Override
-        public boolean doTargetMethod(TargetMethod targetMethod) {
-            s1 = targetMethod.toString();
-            final Safepoints safepoints = targetMethod.safepoints();
-            for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
-                final int callPos = safepoints.causePosAt(spi);
-                final CodePointer target = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
-                final TargetMethod callee = target.toTargetMethod();
-                assert callee != null : "callee should not be null in " + targetMethod + "@" + callPos + "->" + target.to0xHexString();
-                idx = callPos;
-                dump("DIRECT", printTriple, callee, target);
-            }
-            return true;
-        }
-    }
-
     /**
      * Overwrites a machine code array with an illegal instruction pattern.
      */
@@ -601,15 +524,12 @@ public final class CodeEviction extends VmOperation {
 
         ++evictionCount;
 
-        if (TraceCodeEviction > TRACE_NONE) { // do not use logLevel() here
-            Log.print("starting code eviction run #");
-            Log.print(evictionCount);
-            Log.print(" triggered by ");
-            Log.printThread(callingThread(), true);
+        if (codeEvictionLogger.enabled()) {
+            codeEvictionLogger.logStart(evictionCount, callingThread());
         }
 
         // phase 0 (optional): dump before
-        if (logLevel(TRACE_FULL_DUMP)) {
+        if (logging()) {
             phase = Phase.DUMPING;
             dumpCodeAddresses("before");
         }
@@ -658,23 +578,20 @@ public final class CodeEviction extends VmOperation {
         tPatchStacks = timerEnd();
 
         CodeManager.runtimeBaselineCodeRegion.resetFromSpace();
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.println("FINISHED walking threads");
+        if (logging()) {
+            codeEvictionLogger.logMove_Progress("FINISHED walking threads");
         }
 
         CodeManager.Inspect.notifyEvictionCompleted(CodeManager.runtimeBaselineCodeRegion);
 
         // phase 3 (optional): dump after
-        if (logLevel(TRACE_FULL_DUMP)) {
+        if (logging()) {
             phase = Phase.DUMPING;
             dumpCodeAddresses("after");
         }
 
-        if (TraceCodeEviction > TRACE_NONE) { // do not use logLevel() here
-            Log.print("completed code eviction run #");
-            Log.print(evictionCount);
-            Log.print(" triggered by ");
-            Log.printThread(callingThread(), true);
+        if (codeEvictionLogger.enabled()) {
+            codeEvictionLogger.logEnd(evictionCount, callingThread());
         }
         logTimingResults();
     }
@@ -709,8 +626,8 @@ public final class CodeEviction extends VmOperation {
                 CodeManager.runtimeBaselineCodeRegion.allowFromSpaceLookup = true;
                 walker.inspect(ip, sp, fp, stackPatcher);
                 CodeManager.runtimeBaselineCodeRegion.allowFromSpaceLookup = false;
-                if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-                    Throw.stackDump("dump after patching", ip, sp, fp);
+                if (logging()) {
+                    stackDump(ip, sp, fp);
                 }
                 break;
             default:
@@ -784,8 +701,8 @@ public final class CodeEviction extends VmOperation {
                     if (count) {
                         ++nNonvirtual;
                     }
-                    if (logLevel(TRACE_DETAILS)) {
-                        Log.println("  NONVIRTUAL");
+                    if (logging()) {
+                        codeEvictionLogger.logDetails_PatchType("  NONVIRTUAL");
                     }
                 }
             }
@@ -793,8 +710,8 @@ public final class CodeEviction extends VmOperation {
             if (count) {
                 ++nStatic;
             }
-            if (logLevel(TRACE_DETAILS)) {
-                Log.println("  STATIC");
+            if (logging()) {
+                codeEvictionLogger.logDetails_PatchType("  STATIC");
             }
         } else {
             throw FatalError.unexpected("unexpected target method type: " + cma.getClass().getName() + " for " + cma);
@@ -948,14 +865,14 @@ public final class CodeEviction extends VmOperation {
      */
     private void compact() {
         final SemiSpaceCodeRegion cr = CodeManager.runtimeBaselineCodeRegion;
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.println("compacting code cache: copying starts ...");
+        if (logging()) {
+            codeEvictionLogger.logMove_Progress("compacting code cache: copying starts ...");
         }
         cr.flip();
         logCodeCacheBoundaries(cr);
         cr.doOldTargetMethods(copySurvivors);
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.println("copying done!");
+        if (logging()) {
+            codeEvictionLogger.logMove_Progress("copying done!");
         }
     }
 
@@ -965,9 +882,8 @@ public final class CodeEviction extends VmOperation {
      * Iterate over all methods code caches one last time, fixing direct calls to moved code.
      */
     private void fixCallSitesForMovedCode() {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.println("fixing call sites ...");
-            Log.println("moved code ...");
+        if (logging()) {
+            codeEvictionLogger.logMove_Progress("fixing call sites ...\nmoved code ...");
         }
 
         timerStart();
@@ -976,8 +892,8 @@ public final class CodeEviction extends VmOperation {
         nCallBaseline = baselineFixCalls.fixed;
         tFixCallsBaseline = timerEnd();
 
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.println("optimised code ...");
+        if (logging()) {
+            codeEvictionLogger.logMove_Progress("optimised code ...");
         }
 
         timerStart();
@@ -986,8 +902,8 @@ public final class CodeEviction extends VmOperation {
         nCallOpt = optFixCalls.fixed;
         tFixCallsOpt = timerEnd();
 
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.println("boot code ...");
+        if (logging()) {
+            codeEvictionLogger.logMove_Progress("boot code ...");
         }
 
         timerStart();
@@ -998,8 +914,8 @@ public final class CodeEviction extends VmOperation {
         nCallBoot = optFixCalls.fixed;
         tFixCallsBoot = timerEnd();
 
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.println("fixing done!");
+        if (logging()) {
+            codeEvictionLogger.logMove_Progress("fixing done!");
         }
     }
 
@@ -1079,53 +995,82 @@ public final class CodeEviction extends VmOperation {
         return System.nanoTime() - timer;
     }
 
-    private void printTime(String s, long t) {
-        Log.print(s);
-        Log.print(t);
-        Log.print(" ns (");
-        Log.print(t / 1000000.0);
-        Log.print(" ms, ");
-        Log.print(t * 100.0 / tTotal);
-        Log.println(" %)");
+    /*
+     *  Everything below here is related to logging the behavior of the algorithm, or dumping the state of
+     *  VM that is pertinent to the algorithm.
+     */
+
+    private static void stackDump(Pointer ip, Pointer sp, Pointer fp) {
+        // We have no direct control over this (tracing) output, so we control via the operation enabling.
+        if (CodeEvictionLogger.stackDumpEnabled()) {
+            Throw.stackDump("dump after patching", ip, sp, fp);
+        }
     }
 
-    private void logTimingResults() {
-        if (logLevel(TRACE_STAT)) {
-            Log.println("timing summary");
-            tTotal =
-                tMarking + tMarkProtected +
-                tInvalidateCallsBaseline + tInvalidateCallsOpt + tInvalidateCallsBoot + tInvalidateTables +
-                tCompact + tPatchStacks + tFixCallsBaseline + tFixCallsOpt + tFixCallsBoot;
-            Log.print("total ");
-            Log.print(tTotal / 1000000.0);
-            Log.println(" ms");
-            printTime("  Phase 1 - mark                       ", tMarking);
-            printTime("            mark protected methods     ", tMarkProtected);
-            printTime("            invalidate baseline calls  ", tInvalidateCallsBaseline);
-            printTime("            invalicate opt calls       ", tInvalidateCallsOpt);
-            printTime("            invalidate boot calls      ", tInvalidateCallsBoot);
-            printTime("            invalidate dispatch tables ", tInvalidateTables);
-            printTime("  Phase 2 - compact                    ", tCompact);
-            printTime("            patch stacks               ", tPatchStacks);
-            printTime("            fix baseline calls         ", tFixCallsBaseline);
-            printTime("            fix opt calls              ", tFixCallsOpt);
-            printTime("            fix boot calls             ", tFixCallsBoot);
+    private final class StackDumper extends RawStackFrameVisitor {
+        @Override
+        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
+            final TargetMethod tmCurrent = current.targetMethod();
+            final TargetMethod tmCallee = callee.targetMethod();
+            if (tmCurrent == null || tmCallee == null) {
+                return true;
+            }
+            final Pointer rap = tmCallee.returnAddressPointer(callee);
+            final CodePointer ret = CodePointer.from(rap.readWord(0));
+            dump("STACK", printThreadName, tmCurrent, ret);
+            return true;
+        }
+    }
+
+    final class DumpDirectCalls implements TargetMethod.Closure {
+        @Override
+        public boolean doTargetMethod(TargetMethod targetMethod) {
+            s1 = targetMethod.toString();
+            final Safepoints safepoints = targetMethod.safepoints();
+            for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
+                final int callPos = safepoints.causePosAt(spi);
+                final CodePointer target = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                final TargetMethod callee = target.toTargetMethod();
+                assert callee != null : "callee should not be null in " + targetMethod + "@" + callPos + "->" + target.to0xHexString();
+                idx = callPos;
+                dump("DIRECT", printTriple, callee, target);
+            }
+            return true;
+        }
+    }
+
+    private final class DumpDispatchTables implements ClassActor.Closure {
+        @Override
+        public boolean doClass(ClassActor classActor) {
+            final DynamicHub dhub = classActor.dynamicHub();
+            if (dhub != null) {
+                dumpHub(dhub, DynamicHub.vTableStartIndex(), true, "DHUB");
+            }
+            final StaticHub shub = classActor.staticHub();
+            if (shub != null) {
+                dumpHub(shub, Hub.vTableStartIndex(), !(classActor.isInterface() || classActor.isPrimitiveClassActor()), "SHUB");
+            }
+            return true;
         }
     }
 
     /**
-     * Dump all code addresses from stacks (return addresses), vtables/itables/targetStates, and direct calls.
+     * Dump all code addresses from stacks (return addresses), vtables/itables/targetStates, and direct calls. This
+     * generates a great deal of output and we currently do not store it in the {@link VMLog}. However, it is enabled
+     * through the logging interface.
      */
     private void dumpCodeAddresses(String when) {
-        Log.print("++++++++++ start dump ");
-        Log.print(when);
-        Log.println(" code eviction ++++++++++");
-        doAllThreads();
-        dumpTables();
-        dumpDirectCalls();
-        Log.print("++++++++++ end dump ");
-        Log.print(when);
-        Log.println(" code eviction ++++++++++");
+        if (CodeEvictionLogger.dumpEnabled()) {
+            Log.print("++++++++++ start dump ");
+            Log.print(when);
+            Log.println(" code eviction ++++++++++");
+            doAllThreads();
+            dumpTables();
+            dumpDirectCalls();
+            Log.print("++++++++++ end dump ");
+            Log.print(when);
+            Log.println(" code eviction ++++++++++");
+        }
     }
 
     private String threadName;
@@ -1222,62 +1167,549 @@ public final class CodeEviction extends VmOperation {
 
     private final DumpDirectCalls dumpDirectCalls = new DumpDirectCalls();
 
+    /**
+     * Start logging upon the n-th eviction cycle.
+     */
+    private static int LogStartEviction;
+
+    static {
+        VMOptions.addFieldOption("-XX:", "LogStartEviction", CodeEviction.class,
+            "Start logging upon the n-th code eviction cycle; all cycles before that are silent.",
+            MaxineVM.Phase.STARTING);
+    }
+
+    /**
+     * Checks whether the logger is enabled and if we have reached the evictionCount to start logging.
+     * @return
+     */
+    protected static boolean logging() {
+        return codeEvictionLogger.enabled() && evictionCount >= LogStartEviction;
+    }
+
+    // The following methods are essentially convenience methods that avoid cluttering the algorithm
+    // with checks that logging is enabled, although some do a small amount of additional setup.
+
     @NEVER_INLINE
-    private void logStaleMethod(TargetMethod targetMethod) {
-        if (logLevel(TRACE_DETAILS)) {
-            Log.print(nStale);
-            Log.print(". ");
-            Log.print(targetMethod);
-            Log.print(" - invocations: ");
-            Log.println(MethodInstrumentation.initialEntryCount - targetMethod.profile().entryCount);
+    private void logTimingResults() {
+        if (logging()) {
+            tTotal =
+                tMarking + tMarkProtected +
+                tInvalidateCallsBaseline + tInvalidateCallsOpt + tInvalidateCallsBoot + tInvalidateTables +
+                tCompact + tPatchStacks + tFixCallsBaseline + tFixCallsOpt + tFixCallsBoot;
+            codeEvictionLogger.logStats_TimingResults(this);
         }
     }
 
-    @NEVER_INLINE
+    private void logStaleMethod(TargetMethod tm) {
+        if (logging()) {
+            codeEvictionLogger.logDetails_StaleMethod(nStale, tm);
+        }
+    }
+
     private void logMethodPatch(final TargetMethod tm, final boolean patch) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            if (patch) {
-                Log.print("  P ");
-            } else {
-                Log.print("    ");
-            }
-            Log.println(tm);
+        if (logging()) {
+            codeEvictionLogger.logMove_MethodPatch(tm, patch);
         }
     }
 
     @NEVER_INLINE
     private void logCalleeReturnAddress(StackFrameCursor callee) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION) && callee != null && callee.targetMethod() != null) {
+        if (logging() && callee != null && callee.targetMethod() != null) {
             final Pointer rap = callee.targetMethod().returnAddressPointer(callee);
             final Pointer ret = rap.readWord(0).asPointer();
+            codeEvictionLogger.logMove_CalleeReturnAddress(ret);
+        }
+    }
+
+    private void logReturnAddressPatch(final TargetMethod tm, final CodePointer calleeRet, final CodePointer newCalleeRet) {
+        if (logging()) {
+            codeEvictionLogger.logMove_ReturnAddressPatch(tm, calleeRet, newCalleeRet);
+        }
+    }
+
+    private void logCodeMotion(TargetMethod tm, final Pointer from, final Pointer to, final Size size) {
+        if (logging()) {
+            codeEvictionLogger.logMove_CodeMotion(tm, from, to, size);
+        }
+    }
+
+    private void logNotCopying(TargetMethod tm) {
+        if (logging()) {
+            codeEvictionLogger.logMove_NotCopying(tm);
+        }
+    }
+
+    private void logFixCall(TargetMethod tm, int i, CodePointer callTarget) {
+        if (logging()) {
+            codeEvictionLogger.logMove_FixCall(tm, i, callTarget);
+        }
+    }
+
+    private void logStatistics() {
+        if (logging()) {
+            codeEvictionLogger.logStats_Statistics(this);
+        }
+    }
+
+    private void logPatchDetails() {
+        if (logging()) {
+            codeEvictionLogger.logDetails_PatchDetails(this);
+        }
+    }
+
+    private void logCodeCacheBoundaries(final SemiSpaceCodeRegion cr) {
+        if (logging()) {
+            codeEvictionLogger.logMove_CodeCacheBoundaries(cr);
+        }
+    }
+
+    private void logDirectCallReset(TargetMethod tm, int i, final TargetMethod callee) {
+        if (logging()) {
+            codeEvictionLogger.logDetails_DirectCallReset(tm, i, callee);
+        }
+    }
+
+    private void logDirectCallNumbers() {
+        if (logging()) {
+            codeEvictionLogger.logStats_DirectCallNumbers(this);
+        }
+    }
+
+    private void logDispatchTableReset(char tableKind, Hub hub, int index) {
+        if (logging()) {
+            codeEvictionLogger.logDetails_DispatchTableReset(tableKind, hub, index);
+        }
+    }
+
+    private void logThread(VmThread vmThread) {
+        if (logging()) {
+            Log.print("THREAD ");
+            Log.println(vmThread.getName());
+        }
+    }
+
+    private void logFixCallForMovedCode(TargetMethod tm, Offset d) {
+        if (logging()) {
+            codeEvictionLogger.logMove_FixCallForMovedCode(tm, d);
+        }
+    }
+
+    private void logDirectCallInfo(int i, int callPos, CodePointer target, CodePointer itarget) {
+        if (logging()) {
+            codeEvictionLogger.logMove_DirectCallInfo(i, callPos, target, itarget);
+        }
+    }
+
+    private void logToMoved(TargetMethod callee, Address oldCalleeStart, Address newCalleeStart, Address epoffset, CodePointer newTarget) {
+        if (logging()) {
+            codeEvictionLogger.logMove_ToMoved(callee, oldCalleeStart, newCalleeStart, epoffset, newTarget);
+        }
+    }
+
+    private void logToUnmoved(CodePointer iTarget) {
+        if (logging()) {
+            codeEvictionLogger.logMove_ToUnmoved(iTarget);
+        }
+    }
+
+    private void logOptMethod(TargetMethod tm) {
+        if (logging()) {
+            codeEvictionLogger.logMove_OptMethod(tm);
+        }
+    }
+
+    private void logFixed() {
+        if (logging()) {
+            codeEvictionLogger.logStats_Fixed(this);
+        }
+    }
+
+    private void logMark(String s, TargetMethod tm) {
+        if (logging()) {
+            codeEvictionLogger.logDetails_Mark(s, tm);
+        }
+    }
+
+    private void logMarkLevel(String s, TargetMethod tm, int level) {
+        if (logging()) {
+            codeEvictionLogger.logDetails_MarkLevel(s, tm, level);
+        }
+    }
+
+    private void logVisitRefMapBits(StackFrameCursor cursor, Pointer slotPointer, int refMap, int numBits) {
+        if (logging()) {
+            codeEvictionLogger.logDetails_VisitRefMapBits(cursor, slotPointer, refMap, numBits);
+        }
+    }
+
+    private void logRelocateCodePointer(int bitIndex, CodePointer from, CodePointer to, TargetMethod tm) {
+        if (logging()) {
+            codeEvictionLogger.logDetails_RelocateCodePointer(bitIndex, from, to, tm);
+        }
+    }
+
+    /**
+     * The interface to the {@link CodeEviction logger}. This evolved from a hand-crafted system using {@link Log}. It
+     * has several distinct facets that used to be controlled by an integer level, but are now controlled by pattern
+     * matching on a prefix to the the operation name. To make this clear, the prefix is separated by a '_' character
+     * from the operation name proper.
+     *
+     * An alternate design would be separate loggers for each of the facets.
+     *
+     * Dumping of the VM state pre/post a code eviction and generating a thread stack trace after patching
+     * do not place data in the {@link VMLog}. However, they are defined here as operations so that they
+     * can be enabled/disabled selectively using {@code -XX:LogCodeEvictionInclude/Exclude}. N.B., when
+     * enabled they will generate {@link Log} output regardless of whether {@code TraceCodeEviction} is set.
+     *
+     */
+    @HOSTED_ONLY
+    @VMLoggerInterface
+    private interface CodeEvictionLoggerInterface {
+        // Control
+        void start(@VMLogParam(name = "evictionCount") int evictionCount, @VMLogParam(name = "callingThread") VmThread callingThread);
+        void end(@VMLogParam(name = "evictionCount") int evictionCount, @VMLogParam(name = "callingThread") VmThread callingThread);
+
+        // Statistics. The data is all stored in the CodeEviction instance, so for now we just log that.
+        void stats_DirectCallNumbers(@VMLogParam(name = "codeEviction") CodeEviction codeEviction);
+        void stats_Fixed(@VMLogParam(name = "codeEviction") CodeEviction codeEviction);
+        void stats_Statistics(@VMLogParam(name = "codeEviction") CodeEviction codeEviction);
+        void stats_TimingResults(@VMLogParam(name = "codeEviction") CodeEviction codeEviction);
+        void stats_Surviving(
+            @VMLogParam(name = "lastSurvivorSize") int lastSurvivorSize,
+            @VMLogParam(name = "largestSurvivorSize") int largestSurvivorSize);
+
+        // Details
+        void details_DirectCallReset(
+            @VMLogParam(name = "tm") TargetMethod tm,
+            @VMLogParam(name = "i") int i,
+            @VMLogParam(name = "callee") TargetMethod callee);
+
+        void details_DispatchTableReset(
+            @VMLogParam(name = "tableKind") char tableKind,
+            @VMLogParam(name = "hub") Hub hub,
+            @VMLogParam(name = "index") int index);
+
+        void details_Mark(@VMLogParam(name = "s") String s, @VMLogParam(name = "tm") TargetMethod tm);
+
+        void details_MarkLevel(
+            @VMLogParam(name = "s") String s,
+            @VMLogParam(name = "tm") TargetMethod tm,
+            @VMLogParam(name = "level") int level);
+
+        void details_PatchDetails(@VMLogParam(name = "codeEviction") CodeEviction codeEviction);
+
+        void details_RelocateCodePointer(
+            @VMLogParam(name = "bitIndex") int bitIndex,
+            @VMLogParam(name = "from") CodePointer from,
+            @VMLogParam(name = "to") CodePointer to,
+            @VMLogParam(name = "tm") TargetMethod tm);
+
+        void details_StaleMethod(@VMLogParam(name = "nStale") int nStale, @VMLogParam(name = "tm") TargetMethod tm);
+
+        void details_VisitRefMapBits(
+            @VMLogParam(name = "cursor") StackFrameCursor cursor,
+            @VMLogParam(name = "slotPointer") Pointer slotPointer,
+            @VMLogParam(name = "refMap") int refMap,
+            @VMLogParam(name = "numBits") int numBits);
+
+        void details_PatchType(@VMLogParam(name = "type") String type);
+
+        // Threads/Code Motion
+
+        void move_Progress(@VMLogParam(name = "s") String s);
+
+        void move_CalleeReturnAddress(@VMLogParam(name = "ret") Pointer ret);
+
+        void move_ReturnAddressPatch(
+            @VMLogParam(name = "tm") TargetMethod tm,
+            @VMLogParam(name = "calleeRet") CodePointer calleeRet,
+            @VMLogParam(name = "newCalleeRet") CodePointer newCalleeRet);
+
+        void move_CodeMotion(
+            @VMLogParam(name = "tm") TargetMethod tm,
+            @VMLogParam(name = "from") Pointer from,
+            @VMLogParam(name = "to") Pointer to,
+            @VMLogParam(name = "size") Size size);
+
+        void move_NotCopying(@VMLogParam(name = "tm") TargetMethod tm);
+
+        void move_FixCall(
+            @VMLogParam(name = "tm") TargetMethod tm,
+            @VMLogParam(name = "i") int i,
+            @VMLogParam(name = "callTarget") CodePointer callTarget);
+
+        void move_FixCallForMovedCode(
+            @VMLogParam(name = "tm") TargetMethod tm,
+            @VMLogParam(name = "d") Offset d);
+
+        void move_CodeCacheBoundaries(@VMLogParam(name = "cr") SemiSpaceCodeRegion cr);
+
+        void move_DirectCallInfo(
+            @VMLogParam(name = "i") int i,
+            @VMLogParam(name = "callPos") int callPos,
+            @VMLogParam(name = "target") CodePointer target,
+            @VMLogParam(name = "itarget") CodePointer itarget);
+
+        void move_ToMoved(
+            @VMLogParam(name = "callee") TargetMethod callee,
+            @VMLogParam(name = "oldCalleeStart") Address oldCalleeStart,
+            @VMLogParam(name = "newCalleeStart") Address newCalleeStart,
+            @VMLogParam(name = "epoffset") Address epoffset,
+            @VMLogParam(name = "newTarget") CodePointer newTarget);
+
+        void move_ToUnmoved(@VMLogParam(name = "iTarget") CodePointer itarget);
+
+        void move_OptMethod(@VMLogParam(name = "tm") TargetMethod tm);
+
+        void move_MethodPatch(
+            @VMLogParam(name = "tm") TargetMethod tm,
+            @VMLogParam(name = "patch") boolean patch);
+
+        void bootToBaseline(@VMLogParam(name = "tm") TargetMethod tm);
+
+        /**
+         * This is a placeholder to control this operation which does not go via {@link VMLog}.
+         */
+        void stackDump();
+
+        // Dumping.
+
+        /**
+         * This is a placeholder that serves simply to enable dumping, as the dump info is not stored in the {@link VMLog}.
+         */
+        void dump();
+    }
+
+    static final CodeEvictionLogger codeEvictionLogger = new CodeEvictionLogger();
+
+    static class CodeEvictionLogger extends CodeEvictionLoggerAuto {
+
+        protected CodeEvictionLogger() {
+            super("CodeEviction", "Log code eviction after baseline code cache contention. Operation prefixes control logging:, " +
+                            "Stat_.* = statistics (count evicted/surviving bytes and methods), " +
+                            "Details_.* = give detailed information about what methods and dispatch entries are treated, " +
+                            "Move_.* = print details about threads and code motion, " +
+                            "Dump = give full dumps of all code addresses before and after eviction");
+        }
+
+        static boolean dumpEnabled() {
+            return codeEvictionLogger.opEnabled(Operation.Dump.ordinal());
+        }
+
+        static boolean stackDumpEnabled() {
+            return codeEvictionLogger.opEnabled(Operation.StackDump.ordinal());
+        }
+
+        // The implementations of the trace* methods (for non-Inspector) usage.
+
+        @Override
+        protected void traceStart(int evictionCount, VmThread callingThread) {
+            Log.print("starting code eviction run #");
+            Log.print(evictionCount);
+            Log.print(" triggered by ");
+            Log.printThread(callingThread, true);
+        }
+
+        @Override
+        protected void traceEnd(int evictionCount, VmThread callingThread) {
+            Log.print("completed code eviction run #");
+            Log.print(evictionCount);
+            Log.print(" triggered by ");
+            Log.printThread(callingThread, true);
+        }
+
+        @Override
+        protected void traceStats_DirectCallNumbers(CodeEviction codeEviction) {
+            Log.print("patched direct calls: ");
+            Log.print(codeEviction.nCallBaseline);
+            Log.print(" baseline, ");
+            Log.print(codeEviction.nCallOpt);
+            Log.print(" opt, ");
+            Log.print(codeEviction.nCallBoot);
+            Log.print(" boot; looked at ");
+            Log.print(codeEviction.nBaseDirect);
+            Log.print(" sites in ");
+            Log.print(codeEviction.nBaseMeth);
+            Log.print(" baseline methods, ");
+            Log.print(codeEviction.nOptDirect);
+            Log.print(" sites in ");
+            Log.print(codeEviction.nOptMeth);
+            Log.print(" opt methods, and ");
+            Log.print(codeEviction.nBootDirect);
+            Log.print(" sites in ");
+            Log.print(codeEviction.nBootMeth);
+            Log.println(" boot image methods");
+        }
+
+        @Override
+        protected void traceStats_Fixed(CodeEviction codeEviction) {
+            Log.print("fixed direct calls: ");
+            Log.print(codeEviction.nCallBaseline);
+            Log.print(" baseline, ");
+            Log.print(codeEviction.nCallOpt);
+            Log.println(" opt");
+        }
+
+        @Override
+        protected void traceStats_Statistics(CodeEviction codeEviction) {
+            Log.print("code eviction: ");
+            Log.print(codeEviction.nStale);
+            Log.print(" stale methods (");
+            Log.print(codeEviction.nStaleBytes / 1024);
+            Log.print(" kB); ");
+            Log.print(codeEviction.nSurvivors);
+            Log.print(" survivors (");
+            Log.print(codeEviction.nSurvivingBytes / 1024);
+            Log.print(" kB) - ");
+            final int totalMethods = codeEviction.nSurvivors + codeEviction.nStale;
+            Log.print(codeEviction.nSurvivors * 100 / totalMethods);
+            Log.println(" % of methods survived");
+        }
+
+        @Override
+        protected void traceStats_TimingResults(CodeEviction codeEviction) {
+            Log.println("timing summary");
+            Log.print("total ");
+            Log.print(codeEviction.tTotal / 1000000.0);
+            Log.println(" ms");
+            long tTotal = codeEviction.tTotal;
+            printTime("  Phase 1 - mark                       ", codeEviction.tMarking, tTotal);
+            printTime("            mark protected methods     ", codeEviction.tMarkProtected, tTotal);
+            printTime("            invalidate baseline calls  ", codeEviction.tInvalidateCallsBaseline, tTotal);
+            printTime("            invalicate opt calls       ", codeEviction.tInvalidateCallsOpt, tTotal);
+            printTime("            invalidate boot calls      ", codeEviction.tInvalidateCallsBoot, tTotal);
+            printTime("            invalidate dispatch tables ", codeEviction.tInvalidateTables, tTotal);
+            printTime("  Phase 2 - compact                    ", codeEviction.tCompact, tTotal);
+            printTime("            patch stacks               ", codeEviction.tPatchStacks, tTotal);
+            printTime("            fix baseline calls         ", codeEviction.tFixCallsBaseline, tTotal);
+            printTime("            fix opt calls              ", codeEviction.tFixCallsOpt, tTotal);
+            printTime("            fix boot calls             ", codeEviction.tFixCallsBoot, tTotal);
+        }
+
+        private static void printTime(String s, long t, long tTotal) {
+            Log.print(s);
+            Log.print(t);
+            Log.print(" ns (");
+            Log.print(t / 1000000.0);
+            Log.print(" ms, ");
+            Log.print(t * 100.0 / tTotal);
+            Log.println(" %)");
+        }
+
+        @Override
+        protected void traceDetails_DirectCallReset(TargetMethod tm, int i, TargetMethod callee) {
+            Log.print("DIRECT CALL ");
+            Log.print(tm);
+            Log.print('@');
+            Log.print(i);
+            Log.print(" -> ");
+            Log.println(callee);
+        }
+
+        @Override
+        protected void traceDetails_DispatchTableReset(char tableKind, Hub hub, int index) {
+            Log.print("  ");
+            Log.print(tableKind);
+            Log.print("TABLE ");
+            Log.print(hub);
+            Log.print('@');
+            Log.println(index);
+        }
+
+        @Override
+        protected void traceDetails_Mark(String s, TargetMethod tm) {
+            Log.print("MARKING ");
+            Log.print(s);
+            Log.print(' ');
+            Log.println(tm);
+        }
+
+        @Override
+        protected void traceDetails_PatchDetails(CodeEviction codeEviction) {
+            Log.print("dispatch table / target state summary: patched ");
+            Log.print(codeEviction.nVT);
+            Log.print(" vtable, ");
+            Log.print(codeEviction.nIT);
+            Log.print(" itable entries; ");
+            Log.print(codeEviction.nNonvirtual);
+            Log.print(" nonvirtual (leaves), ");
+            Log.print(codeEviction.nStatic);
+            Log.println(" static methods");
+        }
+
+        @Override
+        protected void traceDetails_PatchType(String type) {
+            Log.println(type);
+        }
+
+        @Override
+        protected void traceDetails_RelocateCodePointer(int bitIndex, CodePointer from, CodePointer to, TargetMethod tm) {
+            Log.print("   bit ");
+            Log.print(bitIndex);
+            Log.print(" from ");
+            Log.print(from);
+            Log.print(" to ");
+            Log.print(to);
+            Log.print(": ");
+            Log.println(tm);
+        }
+
+        @Override
+        protected void traceDetails_StaleMethod(int nStale, TargetMethod tm) {
+            Log.print(nStale);
+            Log.print(". ");
+            Log.print(tm);
+            Log.print(" - invocations: ");
+            Log.println(MethodInstrumentation.initialEntryCount - tm.profile().entryCount);
+        }
+
+        @Override
+        protected void traceDetails_VisitRefMapBits(StackFrameCursor cursor, Pointer slotPointer, int refMap, int numBits) {
+            Log.print("visit ref map bits for code relocation: ");
+            Log.print(cursor.targetMethod());
+            Log.print(" slot pointer ");
+            Log.print(slotPointer);
+            Log.print(" ref map ");
+            Log.print(refMap);
+            Log.print(" num bits ");
+            Log.println(numBits);
+            if (refMap == 0) {
+                Log.println("   empty ref map");
+            }
+        }
+
+        @Override
+        protected void traceDetails_MarkLevel(String s, TargetMethod tm, int level) {
+            Log.print("MARKING (level ");
+            Log.print(CodeEvictionProtectCalleeDepth - level + 1);
+            Log.print(')');
+            Log.print(s);
+            Log.print(' ');
+            Log.println(tm);
+        }
+
+        @Override
+        protected void traceMove_CalleeReturnAddress(Pointer ret) {
             Log.print("    \\---> callee return address ");
             Log.println(ret);
         }
-    }
 
-    @NEVER_INLINE
-    private void logReturnAddressPatch(final TargetMethod tm, final CodePointer calleeRet, final CodePointer newCalleeRet) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.print("   \\---> callee return address (value to patch) ");
-            Log.print(calleeRet);
-            Log.print(" -> ");
-            Log.println(newCalleeRet);
-            if (!(calleeRet.toAddress().greaterEqual(tm.oldStart()) && tm.oldStart().plus(tm.size()).greaterEqual(calleeRet.toAddress()))) {
-                Log.print("    >>> old return address not in old method memory, but in ");
-                Log.println(calleeRet.toTargetMethod());
-            }
-            if (!(newCalleeRet.toAddress().greaterEqual(tm.start()) && tm.start().plus(tm.size()).greaterEqual(newCalleeRet.toAddress()))) {
-                Log.print("    >>> new return address not in new method memory, but in ");
-                Log.println(newCalleeRet.toTargetMethod());
-            }
+        @Override
+        protected void traceMove_CodeCacheBoundaries(SemiSpaceCodeRegion cr) {
+            Log.print("flipped spaces. from: ");
+            Log.print(cr.fromSpace);
+            Log.print("..");
+            Log.print(cr.fromSpace.plus(cr.spaceSize).minus(1));
+            Log.print(", to: ");
+            Log.print(cr.toSpace);
+            Log.print("..");
+            Log.println(cr.toSpace.plus(cr.spaceSize).minus(1));
         }
-    }
 
-    @NEVER_INLINE
-    private void logCodeMotion(TargetMethod targetMethod, final Pointer from, final Pointer to, final Size size) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
+        @Override
+        protected void traceMove_CodeMotion(TargetMethod tm, Pointer from, Pointer to, Size size) {
             Log.print("copying ");
-            Log.print(targetMethod);
+            Log.print(tm);
             Log.print(" [");
             Log.print(from);
             Log.print("..");
@@ -1288,157 +1720,9 @@ public final class CodeEviction extends VmOperation {
             Log.print(to.plus(size).minus(1));
             Log.println(']');
         }
-    }
 
-    @NEVER_INLINE
-    private void logNotCopying(TargetMethod tm) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.print("NOT copying ");
-            Log.print(tm);
-            Log.print(" [");
-            Log.print(tm.start());
-            Log.print("..");
-            Log.print(tm.start().plus(tm.size()).minus(1));
-            Log.println(']');
-        }
-    }
-
-    @NEVER_INLINE
-    private void logFixCall(TargetMethod targetMethod, int i, CodePointer callTarget) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            final TargetMethod callee = callTarget.toTargetMethod();
-            Log.print("direct call ");
-            Log.print(targetMethod);
-            Log.print('@');
-            Log.print(i);
-            Log.print(" -> ");
-            Log.print(callTarget);
-            Log.print("=");
-            Log.print(callee);
-            if (callee == null) {
-                Log.print(" (trampoline)");
-            }
-            Log.println();
-        }
-    }
-
-    @NEVER_INLINE
-    private void logStatistics() {
-        if (logLevel(TRACE_STAT)) {
-            Log.print("code eviction: ");
-            Log.print(nStale);
-            Log.print(" stale methods (");
-            Log.print(nStaleBytes / 1024);
-            Log.print(" kB); ");
-            Log.print(nSurvivors);
-            Log.print(" survivors (");
-            Log.print(nSurvivingBytes / 1024);
-            Log.print(" kB) - ");
-            final int totalMethods = nSurvivors + nStale;
-            Log.print(nSurvivors * 100 / totalMethods);
-            Log.println(" % of methods survived");
-        }
-    }
-
-    @NEVER_INLINE
-    private void logPatchDetails() {
-        if (logLevel(TRACE_DETAILS)) {
-            Log.print("dispatch table / target state summary: patched ");
-            Log.print(nVT);
-            Log.print(" vtable, ");
-            Log.print(nIT);
-            Log.print(" itable entries; ");
-            Log.print(nNonvirtual);
-            Log.print(" nonvirtual (leaves), ");
-            Log.print(nStatic);
-            Log.println(" static methods");
-        }
-    }
-
-    @NEVER_INLINE
-    private void logCodeCacheBoundaries(final SemiSpaceCodeRegion cr) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.print("flipped spaces. from: ");
-            Log.print(cr.fromSpace);
-            Log.print("..");
-            Log.print(cr.fromSpace.plus(cr.spaceSize).minus(1));
-            Log.print(", to: ");
-            Log.print(cr.toSpace);
-            Log.print("..");
-            Log.println(cr.toSpace.plus(cr.spaceSize).minus(1));
-        }
-    }
-
-    @NEVER_INLINE
-    private void logDirectCallReset(TargetMethod tm, int i, final TargetMethod callee) {
-        if (logLevel(TRACE_DETAILS)) {
-            Log.print("DIRECT CALL ");
-            Log.print(tm);
-            Log.print('@');
-            Log.print(i);
-            Log.print(" -> ");
-            Log.println(callee);
-        }
-    }
-
-    @NEVER_INLINE
-    private void logDirectCallNumbers() {
-        if (logLevel(TRACE_STAT)) {
-            Log.print("patched direct calls: ");
-            Log.print(nCallBaseline);
-            Log.print(" baseline, ");
-            Log.print(nCallOpt);
-            Log.print(" opt, ");
-            Log.print(nCallBoot);
-            Log.print(" boot; looked at ");
-            Log.print(nBaseDirect);
-            Log.print(" sites in ");
-            Log.print(nBaseMeth);
-            Log.print(" baseline methods, ");
-            Log.print(nOptDirect);
-            Log.print(" sites in ");
-            Log.print(nOptMeth);
-            Log.print(" opt methods, and ");
-            Log.print(nBootDirect);
-            Log.print(" sites in ");
-            Log.print(nBootMeth);
-            Log.println(" boot image methods");
-        }
-    }
-
-    @NEVER_INLINE
-    private void logDispatchTableReset(char tableKind, Hub hub, int index) {
-        if (logLevel(TRACE_DETAILS)) {
-            Log.print("  ");
-            Log.print(tableKind);
-            Log.print("TABLE ");
-            Log.print(hub);
-            Log.print('@');
-            Log.println(index);
-        }
-    }
-
-    @NEVER_INLINE
-    private void logThread(VmThread vmThread) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.print("THREAD ");
-            Log.println(vmThread.getName());
-        }
-    }
-
-    @NEVER_INLINE
-    private void logFixCallForMovedCode(TargetMethod tm, Offset d) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.print("fixing calls for moved method ");
-            Log.println(tm);
-            Log.print("  moved by ");
-            Log.println(d.toInt());
-        }
-    }
-
-    @NEVER_INLINE
-    private void logDirectCallInfo(int i, int callPos, CodePointer target, CodePointer itarget) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
+        @Override
+        protected void traceMove_DirectCallInfo(int i, int callPos, CodePointer target, CodePointer itarget) {
             Log.print("  ");
             Log.print(i);
             Log.print(". ");
@@ -1452,11 +1736,68 @@ public final class CodeEviction extends VmOperation {
             }
             Log.println();
         }
-    }
 
-    @NEVER_INLINE
-    private void logToMoved(TargetMethod callee, Address oldCalleeStart, Address newCalleeStart, Address epoffset, CodePointer newTarget) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
+        @Override
+        protected void traceMove_FixCall(TargetMethod tm, int i, CodePointer callTarget) {
+            final TargetMethod callee = callTarget.toTargetMethod();
+            Log.print("direct call ");
+            Log.print(tm);
+            Log.print('@');
+            Log.print(i);
+            Log.print(" -> ");
+            Log.print(callTarget);
+            Log.print("=");
+            Log.print(callee);
+            if (callee == null) {
+                Log.print(" (trampoline)");
+            }
+            Log.println();
+
+        }
+
+        @Override
+        protected void traceMove_FixCallForMovedCode(TargetMethod tm, Offset d) {
+            Log.print("fixing calls for moved method ");
+            Log.println(tm);
+            Log.print("  moved by ");
+            Log.println(d.toInt());
+        }
+
+        @Override
+        protected void traceMove_NotCopying(TargetMethod tm) {
+            Log.print("NOT copying ");
+            Log.print(tm);
+            Log.print(" [");
+            Log.print(tm.start());
+            Log.print("..");
+            Log.print(tm.start().plus(tm.size()).minus(1));
+            Log.println(']');
+        }
+
+        @Override
+        protected void traceMove_OptMethod(TargetMethod tm) {
+            Log.print("fixing calls for opt method ");
+            Log.println(tm);
+        }
+
+        @Override
+        protected void traceMove_ReturnAddressPatch(TargetMethod tm, CodePointer calleeRet, CodePointer newCalleeRet) {
+            Log.print("   \\---> callee return address (value to patch) ");
+            Log.print(calleeRet);
+            Log.print(" -> ");
+            Log.println(newCalleeRet);
+            if (!(calleeRet.toAddress().greaterEqual(tm.oldStart()) && tm.oldStart().plus(tm.size()).greaterEqual(calleeRet.toAddress()))) {
+                Log.print("    >>> old return address not in old method memory, but in ");
+                Log.println(calleeRet.toTargetMethod());
+            }
+            if (!(newCalleeRet.toAddress().greaterEqual(tm.start()) && tm.start().plus(tm.size()).greaterEqual(newCalleeRet.toAddress()))) {
+                Log.print("    >>> new return address not in new method memory, but in ");
+                Log.println(newCalleeRet.toTargetMethod());
+            }
+        }
+
+        @Override
+        protected void traceMove_ToMoved(TargetMethod callee, Address oldCalleeStart, Address newCalleeStart, Address epoffset, CodePointer newTarget) {
             Log.print("    TO MOVED ");
             Log.println(callee);
             Log.print("    old start ");
@@ -1475,86 +1816,452 @@ public final class CodeEviction extends VmOperation {
             Log.println(newTarget.toTargetMethod());
             CodeManager.runtimeBaselineCodeRegion.allowFromSpaceLookup = false;
         }
-    }
 
-    @NEVER_INLINE
-    private void logToUnmoved(CodePointer itarget) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
+        @Override
+        protected void traceMove_ToUnmoved(CodePointer iTarget) {
             Log.print("    TO UNMOVED ");
-            Log.println(itarget.toTargetMethod());
+            Log.println(iTarget.toTargetMethod());
         }
-    }
 
-    @NEVER_INLINE
-    private void logOptMethod(TargetMethod tm) {
-        if (logLevel(TRACE_THREADS_CODE_MOTION)) {
-            Log.print("fixing calls for opt method ");
+        @Override
+        protected void traceMove_Progress(String s) {
+            Log.println(s);
+        }
+
+        @Override
+        protected void traceMove_MethodPatch(TargetMethod tm, boolean patch) {
+            if (patch) {
+                Log.print("  P ");
+            } else {
+                Log.print("    ");
+            }
             Log.println(tm);
         }
-    }
 
-    @NEVER_INLINE
-    private void logFixed() {
-        if (logLevel(TRACE_STAT)) {
-            Log.print("fixed direct calls: ");
-            Log.print(nCallBaseline);
-            Log.print(" baseline, ");
-            Log.print(nCallOpt);
-            Log.println(" opt");
+        @Override
+        protected void traceDump() {
+            // The tracing associated with a dump is hand-coded and does not go via the VMLog
         }
-    }
 
-    @NEVER_INLINE
-    private void logMark(String s, TargetMethod tm) {
-        if (logLevel(TRACE_DETAILS)) {
-            Log.print("MARKING ");
-            Log.print(s);
-            Log.print(' ');
+        @Override
+        protected void traceBootToBaseline(TargetMethod tm) {
+            Log.print("boot->baseline ");
             Log.println(tm);
         }
-    }
 
-    @NEVER_INLINE
-    private void logMarkLevel(String s, TargetMethod tm, int level) {
-        if (logLevel(TRACE_DETAILS)) {
-            Log.print("MARKING (level ");
-            Log.print(CodeEvictionProtectCalleeDepth - level + 1);
-            Log.print(')');
-            Log.print(s);
-            Log.print(' ');
-            Log.println(tm);
+        @Override
+        protected void traceStats_Surviving(int lastSurvivorSize, int largestSurvivorSize) {
+            Log.print("amount surviving code eviction: ");
+            Log.print(lastSurvivorSize);
+            Log.print(" bytes, largest so far: ");
+            Log.print(largestSurvivorSize);
+            Log.println(" bytes");
         }
+
+        @Override
+        protected void traceStackDump() {
+            // The tracing associated with a dump is hand-coded and does not go via the VMLog
+        }
+
     }
 
-    @NEVER_INLINE
-    private void logVisitRefMapBits(StackFrameCursor cursor, Pointer slotPointer, int refMap, int numBits) {
-        if (logLevel(TRACE_DETAILS)) {
-            Log.print("visit ref map bits for code relocation: ");
-            Log.print(cursor.targetMethod());
-            Log.print(" slot pointer ");
-            Log.print(slotPointer);
-            Log.print(" ref map ");
-            Log.print(refMap);
-            Log.print(" num bits ");
-            Log.println(numBits);
-            if (refMap == 0) {
-                Log.println("   empty ref map");
+// START GENERATED CODE
+    private static abstract class CodeEvictionLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            BootToBaseline, Details_DirectCallReset, Details_DispatchTableReset,
+            Details_Mark, Details_MarkLevel, Details_PatchDetails, Details_PatchType,
+            Details_RelocateCodePointer, Details_StaleMethod, Details_VisitRefMapBits, Dump,
+            End, Move_CalleeReturnAddress, Move_CodeCacheBoundaries, Move_CodeMotion,
+            Move_DirectCallInfo, Move_FixCall, Move_FixCallForMovedCode, Move_MethodPatch,
+            Move_NotCopying, Move_OptMethod, Move_Progress, Move_ReturnAddressPatch,
+            Move_ToMoved, Move_ToUnmoved, StackDump, Start,
+            Stats_DirectCallNumbers, Stats_Fixed, Stats_Statistics, Stats_Surviving,
+            Stats_TimingResults;
+
+            @SuppressWarnings("hiding")
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = new int[] {0x1, 0x5, 0x2, 0x3, 0x3, 0x1, 0x1, 0xe, 0x2, 0x1, 0x0, 0x0, 0x0, 0x1,
+            0x1, 0xc, 0x5, 0x1, 0x1, 0x1, 0x1, 0x1, 0x7, 0x11, 0x1, 0x0, 0x0, 0x1,
+            0x1, 0x1, 0x0, 0x1};
+
+        protected CodeEvictionLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logBootToBaseline(TargetMethod tm) {
+            log(Operation.BootToBaseline.ordinal(), objectArg(tm));
+        }
+        protected abstract void traceBootToBaseline(TargetMethod tm);
+
+        @INLINE
+        public final void logDetails_DirectCallReset(TargetMethod tm, int i, TargetMethod callee) {
+            log(Operation.Details_DirectCallReset.ordinal(), objectArg(tm), intArg(i), objectArg(callee));
+        }
+        protected abstract void traceDetails_DirectCallReset(TargetMethod tm, int i, TargetMethod callee);
+
+        @INLINE
+        public final void logDetails_DispatchTableReset(char tableKind, Hub hub, int index) {
+            log(Operation.Details_DispatchTableReset.ordinal(), charArg(tableKind), classActorArg(hub.classActor), intArg(index));
+        }
+        protected abstract void traceDetails_DispatchTableReset(char tableKind, Hub hub, int index);
+
+        @INLINE
+        public final void logDetails_Mark(String s, TargetMethod tm) {
+            log(Operation.Details_Mark.ordinal(), objectArg(s), objectArg(tm));
+        }
+        protected abstract void traceDetails_Mark(String s, TargetMethod tm);
+
+        @INLINE
+        public final void logDetails_MarkLevel(String s, TargetMethod tm, int level) {
+            log(Operation.Details_MarkLevel.ordinal(), objectArg(s), objectArg(tm), intArg(level));
+        }
+        protected abstract void traceDetails_MarkLevel(String s, TargetMethod tm, int level);
+
+        @INLINE
+        public final void logDetails_PatchDetails(CodeEviction codeEviction) {
+            log(Operation.Details_PatchDetails.ordinal(), objectArg(codeEviction));
+        }
+        protected abstract void traceDetails_PatchDetails(CodeEviction codeEviction);
+
+        @INLINE
+        public final void logDetails_PatchType(String type) {
+            log(Operation.Details_PatchType.ordinal(), objectArg(type));
+        }
+        protected abstract void traceDetails_PatchType(String type);
+
+        @INLINE
+        public final void logDetails_RelocateCodePointer(int bitIndex, CodePointer from, CodePointer to, TargetMethod tm) {
+            log(Operation.Details_RelocateCodePointer.ordinal(), intArg(bitIndex), codePointerArg(from), codePointerArg(to), objectArg(tm));
+        }
+        protected abstract void traceDetails_RelocateCodePointer(int bitIndex, CodePointer from, CodePointer to, TargetMethod tm);
+
+        @INLINE
+        public final void logDetails_StaleMethod(int nStale, TargetMethod tm) {
+            log(Operation.Details_StaleMethod.ordinal(), intArg(nStale), objectArg(tm));
+        }
+        protected abstract void traceDetails_StaleMethod(int nStale, TargetMethod tm);
+
+        @INLINE
+        public final void logDetails_VisitRefMapBits(StackFrameCursor cursor, Pointer slotPointer, int refMap, int numBits) {
+            log(Operation.Details_VisitRefMapBits.ordinal(), objectArg(cursor), slotPointer, intArg(refMap), intArg(numBits));
+        }
+        protected abstract void traceDetails_VisitRefMapBits(StackFrameCursor cursor, Pointer slotPointer, int refMap, int numBits);
+
+        @INLINE
+        public final void logDump() {
+            log(Operation.Dump.ordinal());
+        }
+        protected abstract void traceDump();
+
+        @INLINE
+        public final void logEnd(int evictionCount, VmThread callingThread) {
+            log(Operation.End.ordinal(), intArg(evictionCount), vmThreadArg(callingThread));
+        }
+        protected abstract void traceEnd(int evictionCount, VmThread callingThread);
+
+        @INLINE
+        public final void logMove_CalleeReturnAddress(Pointer ret) {
+            log(Operation.Move_CalleeReturnAddress.ordinal(), ret);
+        }
+        protected abstract void traceMove_CalleeReturnAddress(Pointer ret);
+
+        @INLINE
+        public final void logMove_CodeCacheBoundaries(SemiSpaceCodeRegion cr) {
+            log(Operation.Move_CodeCacheBoundaries.ordinal(), objectArg(cr));
+        }
+        protected abstract void traceMove_CodeCacheBoundaries(SemiSpaceCodeRegion cr);
+
+        @INLINE
+        public final void logMove_CodeMotion(TargetMethod tm, Pointer from, Pointer to, Size size) {
+            log(Operation.Move_CodeMotion.ordinal(), objectArg(tm), from, to, size);
+        }
+        protected abstract void traceMove_CodeMotion(TargetMethod tm, Pointer from, Pointer to, Size size);
+
+        @INLINE
+        public final void logMove_DirectCallInfo(int i, int callPos, CodePointer target, CodePointer itarget) {
+            log(Operation.Move_DirectCallInfo.ordinal(), intArg(i), intArg(callPos), codePointerArg(target), codePointerArg(itarget));
+        }
+        protected abstract void traceMove_DirectCallInfo(int i, int callPos, CodePointer target, CodePointer itarget);
+
+        @INLINE
+        public final void logMove_FixCall(TargetMethod tm, int i, CodePointer callTarget) {
+            log(Operation.Move_FixCall.ordinal(), objectArg(tm), intArg(i), codePointerArg(callTarget));
+        }
+        protected abstract void traceMove_FixCall(TargetMethod tm, int i, CodePointer callTarget);
+
+        @INLINE
+        public final void logMove_FixCallForMovedCode(TargetMethod tm, Offset d) {
+            log(Operation.Move_FixCallForMovedCode.ordinal(), objectArg(tm), d);
+        }
+        protected abstract void traceMove_FixCallForMovedCode(TargetMethod tm, Offset d);
+
+        @INLINE
+        public final void logMove_MethodPatch(TargetMethod tm, boolean patch) {
+            log(Operation.Move_MethodPatch.ordinal(), objectArg(tm), booleanArg(patch));
+        }
+        protected abstract void traceMove_MethodPatch(TargetMethod tm, boolean patch);
+
+        @INLINE
+        public final void logMove_NotCopying(TargetMethod tm) {
+            log(Operation.Move_NotCopying.ordinal(), objectArg(tm));
+        }
+        protected abstract void traceMove_NotCopying(TargetMethod tm);
+
+        @INLINE
+        public final void logMove_OptMethod(TargetMethod tm) {
+            log(Operation.Move_OptMethod.ordinal(), objectArg(tm));
+        }
+        protected abstract void traceMove_OptMethod(TargetMethod tm);
+
+        @INLINE
+        public final void logMove_Progress(String s) {
+            log(Operation.Move_Progress.ordinal(), objectArg(s));
+        }
+        protected abstract void traceMove_Progress(String s);
+
+        @INLINE
+        public final void logMove_ReturnAddressPatch(TargetMethod tm, CodePointer calleeRet, CodePointer newCalleeRet) {
+            log(Operation.Move_ReturnAddressPatch.ordinal(), objectArg(tm), codePointerArg(calleeRet), codePointerArg(newCalleeRet));
+        }
+        protected abstract void traceMove_ReturnAddressPatch(TargetMethod tm, CodePointer calleeRet, CodePointer newCalleeRet);
+
+        @INLINE
+        public final void logMove_ToMoved(TargetMethod callee, Address oldCalleeStart, Address newCalleeStart, Address epoffset, CodePointer newTarget) {
+            log(Operation.Move_ToMoved.ordinal(), objectArg(callee), oldCalleeStart, newCalleeStart, epoffset, codePointerArg(newTarget));
+        }
+        protected abstract void traceMove_ToMoved(TargetMethod callee, Address oldCalleeStart, Address newCalleeStart, Address epoffset, CodePointer newTarget);
+
+        @INLINE
+        public final void logMove_ToUnmoved(CodePointer iTarget) {
+            log(Operation.Move_ToUnmoved.ordinal(), codePointerArg(iTarget));
+        }
+        protected abstract void traceMove_ToUnmoved(CodePointer iTarget);
+
+        @INLINE
+        public final void logStackDump() {
+            log(Operation.StackDump.ordinal());
+        }
+        protected abstract void traceStackDump();
+
+        @INLINE
+        public final void logStart(int evictionCount, VmThread callingThread) {
+            log(Operation.Start.ordinal(), intArg(evictionCount), vmThreadArg(callingThread));
+        }
+        protected abstract void traceStart(int evictionCount, VmThread callingThread);
+
+        @INLINE
+        public final void logStats_DirectCallNumbers(CodeEviction codeEviction) {
+            log(Operation.Stats_DirectCallNumbers.ordinal(), objectArg(codeEviction));
+        }
+        protected abstract void traceStats_DirectCallNumbers(CodeEviction codeEviction);
+
+        @INLINE
+        public final void logStats_Fixed(CodeEviction codeEviction) {
+            log(Operation.Stats_Fixed.ordinal(), objectArg(codeEviction));
+        }
+        protected abstract void traceStats_Fixed(CodeEviction codeEviction);
+
+        @INLINE
+        public final void logStats_Statistics(CodeEviction codeEviction) {
+            log(Operation.Stats_Statistics.ordinal(), objectArg(codeEviction));
+        }
+        protected abstract void traceStats_Statistics(CodeEviction codeEviction);
+
+        @INLINE
+        public final void logStats_Surviving(int lastSurvivorSize, int largestSurvivorSize) {
+            log(Operation.Stats_Surviving.ordinal(), intArg(lastSurvivorSize), intArg(largestSurvivorSize));
+        }
+        protected abstract void traceStats_Surviving(int lastSurvivorSize, int largestSurvivorSize);
+
+        @INLINE
+        public final void logStats_TimingResults(CodeEviction codeEviction) {
+            log(Operation.Stats_TimingResults.ordinal(), objectArg(codeEviction));
+        }
+        protected abstract void traceStats_TimingResults(CodeEviction codeEviction);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //BootToBaseline
+                    traceBootToBaseline(toTargetMethod(r, 1));
+                    break;
+                }
+                case 1: { //Details_DirectCallReset
+                    traceDetails_DirectCallReset(toTargetMethod(r, 1), toInt(r, 2), toTargetMethod(r, 3));
+                    break;
+                }
+                case 2: { //Details_DispatchTableReset
+                    traceDetails_DispatchTableReset(toChar(r, 1), toHub(r, 2), toInt(r, 3));
+                    break;
+                }
+                case 3: { //Details_Mark
+                    traceDetails_Mark(toString(r, 1), toTargetMethod(r, 2));
+                    break;
+                }
+                case 4: { //Details_MarkLevel
+                    traceDetails_MarkLevel(toString(r, 1), toTargetMethod(r, 2), toInt(r, 3));
+                    break;
+                }
+                case 5: { //Details_PatchDetails
+                    traceDetails_PatchDetails(toCodeEviction(r, 1));
+                    break;
+                }
+                case 6: { //Details_PatchType
+                    traceDetails_PatchType(toString(r, 1));
+                    break;
+                }
+                case 7: { //Details_RelocateCodePointer
+                    traceDetails_RelocateCodePointer(toInt(r, 1), toCodePointer(r, 2), toCodePointer(r, 3), toTargetMethod(r, 4));
+                    break;
+                }
+                case 8: { //Details_StaleMethod
+                    traceDetails_StaleMethod(toInt(r, 1), toTargetMethod(r, 2));
+                    break;
+                }
+                case 9: { //Details_VisitRefMapBits
+                    traceDetails_VisitRefMapBits(toStackFrameCursor(r, 1), toPointer(r, 2), toInt(r, 3), toInt(r, 4));
+                    break;
+                }
+                case 10: { //Dump
+                    traceDump();
+                    break;
+                }
+                case 11: { //End
+                    traceEnd(toInt(r, 1), toVmThread(r, 2));
+                    break;
+                }
+                case 12: { //Move_CalleeReturnAddress
+                    traceMove_CalleeReturnAddress(toPointer(r, 1));
+                    break;
+                }
+                case 13: { //Move_CodeCacheBoundaries
+                    traceMove_CodeCacheBoundaries(toSemiSpaceCodeRegion(r, 1));
+                    break;
+                }
+                case 14: { //Move_CodeMotion
+                    traceMove_CodeMotion(toTargetMethod(r, 1), toPointer(r, 2), toPointer(r, 3), toSize(r, 4));
+                    break;
+                }
+                case 15: { //Move_DirectCallInfo
+                    traceMove_DirectCallInfo(toInt(r, 1), toInt(r, 2), toCodePointer(r, 3), toCodePointer(r, 4));
+                    break;
+                }
+                case 16: { //Move_FixCall
+                    traceMove_FixCall(toTargetMethod(r, 1), toInt(r, 2), toCodePointer(r, 3));
+                    break;
+                }
+                case 17: { //Move_FixCallForMovedCode
+                    traceMove_FixCallForMovedCode(toTargetMethod(r, 1), toOffset(r, 2));
+                    break;
+                }
+                case 18: { //Move_MethodPatch
+                    traceMove_MethodPatch(toTargetMethod(r, 1), toBoolean(r, 2));
+                    break;
+                }
+                case 19: { //Move_NotCopying
+                    traceMove_NotCopying(toTargetMethod(r, 1));
+                    break;
+                }
+                case 20: { //Move_OptMethod
+                    traceMove_OptMethod(toTargetMethod(r, 1));
+                    break;
+                }
+                case 21: { //Move_Progress
+                    traceMove_Progress(toString(r, 1));
+                    break;
+                }
+                case 22: { //Move_ReturnAddressPatch
+                    traceMove_ReturnAddressPatch(toTargetMethod(r, 1), toCodePointer(r, 2), toCodePointer(r, 3));
+                    break;
+                }
+                case 23: { //Move_ToMoved
+                    traceMove_ToMoved(toTargetMethod(r, 1), toAddress(r, 2), toAddress(r, 3), toAddress(r, 4), toCodePointer(r, 5));
+                    break;
+                }
+                case 24: { //Move_ToUnmoved
+                    traceMove_ToUnmoved(toCodePointer(r, 1));
+                    break;
+                }
+                case 25: { //StackDump
+                    traceStackDump();
+                    break;
+                }
+                case 26: { //Start
+                    traceStart(toInt(r, 1), toVmThread(r, 2));
+                    break;
+                }
+                case 27: { //Stats_DirectCallNumbers
+                    traceStats_DirectCallNumbers(toCodeEviction(r, 1));
+                    break;
+                }
+                case 28: { //Stats_Fixed
+                    traceStats_Fixed(toCodeEviction(r, 1));
+                    break;
+                }
+                case 29: { //Stats_Statistics
+                    traceStats_Statistics(toCodeEviction(r, 1));
+                    break;
+                }
+                case 30: { //Stats_Surviving
+                    traceStats_Surviving(toInt(r, 1), toInt(r, 2));
+                    break;
+                }
+                case 31: { //Stats_TimingResults
+                    traceStats_TimingResults(toCodeEviction(r, 1));
+                    break;
+                }
             }
         }
+        static CodeEviction toCodeEviction(Record r, int argNum) {
+            if (MaxineVM.isHosted()) {
+                return (CodeEviction) ObjectArg.getArg(r, argNum);
+            } else {
+                return asCodeEviction(toObject(r, argNum));
+            }
+        }
+        @INTRINSIC(UNSAFE_CAST)
+        private static native CodeEviction asCodeEviction(Object arg);
+
+        static Hub toHub(Record r, int argNum) {
+            if (MaxineVM.isHosted()) {
+                return (Hub) ObjectArg.getArg(r, argNum);
+            } else {
+                return asHub(toObject(r, argNum));
+            }
+        }
+        @INTRINSIC(UNSAFE_CAST)
+        private static native Hub asHub(Object arg);
+
+        static SemiSpaceCodeRegion toSemiSpaceCodeRegion(Record r, int argNum) {
+            if (MaxineVM.isHosted()) {
+                return (SemiSpaceCodeRegion) ObjectArg.getArg(r, argNum);
+            } else {
+                return asSemiSpaceCodeRegion(toObject(r, argNum));
+            }
+        }
+        @INTRINSIC(UNSAFE_CAST)
+        private static native SemiSpaceCodeRegion asSemiSpaceCodeRegion(Object arg);
+
+        static StackFrameCursor toStackFrameCursor(Record r, int argNum) {
+            if (MaxineVM.isHosted()) {
+                return (StackFrameCursor) ObjectArg.getArg(r, argNum);
+            } else {
+                return asStackFrameCursor(toObject(r, argNum));
+            }
+        }
+        @INTRINSIC(UNSAFE_CAST)
+        private static native StackFrameCursor asStackFrameCursor(Object arg);
+
     }
 
-    @NEVER_INLINE
-    private void logRelocateCodePointer(int bitIndex, CodePointer from, CodePointer to, TargetMethod tm) {
-        if (logLevel(TRACE_DETAILS)) {
-            Log.print("   bit ");
-            Log.print(bitIndex);
-            Log.print(" from ");
-            Log.print(from);
-            Log.print(" to ");
-            Log.print(to);
-            Log.print(": ");
-            Log.println(tm);
-        }
-    }
+// END GENERATED CODE
 
 }
