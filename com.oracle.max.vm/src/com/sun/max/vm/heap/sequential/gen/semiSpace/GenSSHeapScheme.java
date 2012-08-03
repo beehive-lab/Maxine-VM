@@ -403,7 +403,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         evacTimers.resetTrackTime();
 
         VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
-        Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
+        Heap.invokeGCCallbacks(GCCallbackPhase.BEFORE);
         if (MaxineVM.isDebug() && Heap.verbose()) {
             Log.println("--Begin nursery evacuation");
         }
