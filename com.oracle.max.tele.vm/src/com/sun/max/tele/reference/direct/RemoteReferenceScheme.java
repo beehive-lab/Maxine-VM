@@ -27,6 +27,7 @@ import java.lang.reflect.*;
 import com.sun.max.annotate.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.reference.LocalObjectRemoteReferenceManager.LocalObjectRemoteReference;
@@ -40,11 +41,45 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.direct.*;
 
 /**
- * A specific implementation of the {@link ReferenceScheme} interface for remote
- * access.
+ * A specific implementation of the {@link ReferenceScheme} interface for remote access to objects in the VM. It
+ * presumes that the VM is built with the {@link DirectReferenceScheme}.
+ * <p>
+ * This implementation is designed to work in the Inspection environment where all of the references are instances of
+ * {@link RemoteReference}, an extension of {@link Reference} that in most cases encapsulates the current address of an
+ * object origin in VM memory. There are exceptions:
+ * <ul>
+ * <li>{@code null} references are implemented as instances of {@link NullReference} that hold {@link Address#zero()}
+ * and may in some situations hold extra information useful for debugging the Inspector.</li>
+ * <li>Instances of {@link LocalObjectRemoteReference}, which allows a local object in the Inspector to masquerade as a
+ * remote object, used mainly in the Inspector's {@link TeleInterpreter}.</li>
+ * </ul>
+ * <p>
+ * Substituting this implementation of {@link ReferenceScheme} in the Inspector's emulation of the VM's static environment
+ * allows reuse of considerable VM code, notably in the {@link Layout} and {@link Reference} classes.  Whenever methods in
+ * those (and related) classes are used, for example {@link Reference#readReference(int)} and {@link Reference#readReference(Offset)}
+ * operations concerning {@link Reference}s are routed through this scheme implementation.
+ * <p>
+ * <strong>Important:</strong> the default behavior of most methods routed through this scheme implementation, in particular those
+ * with return type {@link Reference} is to:
+ * <ul>
+ * <li>return only instances of {@link RemoteReference};</li>
+ * <li>return a {@code null} reference ({@code isZero() == true}) if no {@link ObjectStatus#LIVE} object can be detected
+ * at the encapsulated VM memory address; and </li>
+ * <li>in the event that the encapsulated address is determined to be the origin of a {@link ObjectStatus#FORWARDER} <em>quasi
+ * object</em>, and if the forwarding pointer in the object points at a legitimately {@link ObjectStatus#LIVE} object, then the
+ * result refers to the live object (in other words: the default behavior is to <em>follow forwarding pointers automatically</em>).
+ * Methods that deal <em>explicitly</em> with forwarding pointers do not, for example {@link #marked()}.</li>
+ * </ul>
+ *
+ * <p>
+ * TODO (mlvdv) This should be generalized to work with other {@link ReferenceScheme} implementations.
+ *
+ * @see RemoteReference
+ * @see VmReferenceManager
  */
 public final class RemoteReferenceScheme extends AbstractVMScheme implements ReferenceScheme {
 
+    // TODO (mlvdv) generalize to support ReferenceScheme implementations other than DirectRefer
     /**
      * The default implementation of {@link Reference#zero()}, used as a {@code null} remote reference. It always holds
      * the {@linkplain Address#zero() null address} and always has status {@linkplain ObjectStatus#DEAD DEAD}.
@@ -127,6 +162,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
 
     /**
      * {@inheritDoc}
+     * <p>
      * Gets the origin of a {@link RemoteReference}.
      * <p>
      * @return the origin of an object referred to; {@link Pointer#zero()} if the
@@ -144,8 +180,32 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         return remoteRef.origin().asPointer();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Create a {@link RemoteReference} that refers to a {@linkplain ObjectStatus#LIVE live} object
+     * in VM memory identified by specified origin, although not necessarily located at that origin.
+     * <ul>
+     * <li>If there is a {@linkplain ObjectStatus#LIVE live} object at the origin, then the result
+     * refers directly to that object.</li>
+     * <li>If there is a {@link ObjectStatus#FORWARDER} quasi object at the origin, and the
+     * forwarding pointer is the origin of a new copy that is {@linkplain ObjectStatus#label() live},
+     * then the result refers to the <em>new copy</em>.</li>
+     * <li>If neither of the above is true, then the result is {@link #zero()}.
+     * </ul>
+     * <p>
+     * @param origin address in VM memory
+     * @return a reference to the object identified by the specified origin in VM memory.
+     */
     public RemoteReference fromOrigin(Pointer origin) {
-        return vm.referenceManager().makeReference(origin);
+        switch(vm.objects().objectStatusAt(origin)) {
+            case LIVE:
+                return vm.referenceManager().makeReference(origin);
+            case FORWARDER:
+                final RemoteReference forwarderReference = vm.referenceManager().makeQuasiReference(origin);
+                return vm.referenceManager().makeReference(forwarderReference.forwardedTo());
+        }
+        return vm.referenceManager().zeroReference();
     }
 
     public Reference fromJava(Object object) {
@@ -217,22 +277,8 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Gets a reference to the object pointed to by
-     * a reference that might be a forwarding reference.
-     * This is a no-op if the reference is not a forwarding
-     * address.
-     * <p>
-     * Uses the same marking information forwarding that
-     * the VM does in normal operation.
-     *
-     * @see DirectReferenceScheme#marked
-     */
     public Reference marked(Reference ref) {
-        final Pointer origin = toOrigin(ref).bitSet(0);
-        return fromOrigin(origin);
+        throw new UnsupportedOperationException();
     }
 
     public Reference unmarked(Reference ref) {
