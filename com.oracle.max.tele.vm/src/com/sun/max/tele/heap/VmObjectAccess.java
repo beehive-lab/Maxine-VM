@@ -54,6 +54,10 @@ import com.sun.max.vm.value.*;
  * locating objects by various means.
  * <p>
  * Objects in the VM can appear in memory regions other than the heap proper.
+ * <p>
+ * Assumes use of the {@link DirectReferenceScheme} in the VM.
+ * <p>
+ * TODO (mlvdv) generalize for uses with other implementations of {@link ReferenceScheme}
  *
  * @see VmObjectHoldingRegion
  * @see VmHeapRegion
@@ -607,7 +611,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
     }
 
-    // TODO (mlvdv) use e ReferenceScheme.isMarked() and related methods instead
     /**
      * Converts an address, if it is encoded as a forwarding pointer, into the actual
      * address. This takes no account of the location or the state of memory management
@@ -617,8 +620,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * @return the decoded address, {@link Address#zero()} if not encoded as a forwarding pointer.
      */
     public Address forwardingPointerToOriginUnsafe(Address address) {
-        if (address.and(1).toLong() == 1) {
-            final Address newCellAddress = address.minus(1);
+        if (address.isBitSet(0)) {
+            final Address newCellAddress = address.bitClear(0);
             return Layout.generalLayout().cellToOrigin(newCellAddress.asPointer());
         }
         return Address.zero();
