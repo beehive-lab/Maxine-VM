@@ -62,13 +62,9 @@ import com.sun.max.vm.reference.direct.*;
  * <strong>Important:</strong> the default behavior of most methods routed through this scheme implementation, in particular those
  * with return type {@link Reference} is to:
  * <ul>
- * <li>return only instances of {@link RemoteReference};</li>
+ * <li>return only instances of {@link RemoteReference}; and</li>
  * <li>return a {@code null} reference ({@code isZero() == true}) if no {@link ObjectStatus#LIVE} object can be detected
- * at the encapsulated VM memory address; and </li>
- * <li>in the event that the encapsulated address is determined to be the origin of a {@link ObjectStatus#FORWARDER} <em>quasi
- * object</em>, and if the forwarding pointer in the object points at a legitimately {@link ObjectStatus#LIVE} object, then the
- * result refers to the live object (in other words: the default behavior is to <em>follow forwarding pointers automatically</em>).
- * Methods that deal <em>explicitly</em> with forwarding pointers do not, for example {@link #marked()}.</li>
+ * at the encapsulated VM memory address.</li>
  * </ul>
  *
  * <p>
@@ -128,10 +124,6 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         }
     }
 
-    // TODO (mlvdv) Consider replacing all uses of "instanceof" here with a cast to {@link TeleReference},
-    // followed by a call to {@link TeleReference#isLocal}.  Although cleaner, there may be some performance
-    // issues; I'm not sure.
-
     private TeleVM vm;
     private DataAccess dataAccess;
     private RemoteReference zero;
@@ -183,29 +175,17 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     /**
      * {@inheritDoc}
      * <p>
-     * Create a {@link RemoteReference} that refers to a {@linkplain ObjectStatus#LIVE live} object
-     * in VM memory identified by specified origin, although not necessarily located at that origin.
-     * <ul>
-     * <li>If there is a {@linkplain ObjectStatus#LIVE live} object at the origin, then the result
-     * refers directly to that object.</li>
-     * <li>If there is a {@link ObjectStatus#FORWARDER} quasi object at the origin, and the
-     * forwarding pointer is the origin of a new copy that is {@linkplain ObjectStatus#label() live},
-     * then the result refers to the <em>new copy</em>.</li>
-     * <li>If neither of the above is true, then the result is {@link #zero()}.
-     * </ul>
+     * Create a {@link RemoteReference} that refers to a {@linkplain ObjectStatus#LIVE live} object in VM memory at a
+     * specified origin.
      * <p>
+     * If there is no {@linkplain ObjectStatus#LIVE live} object at the origin, then the result is {@link #zero()}.
+     * <p>
+     *
      * @param origin address in VM memory
      * @return a reference to the object identified by the specified origin in VM memory.
      */
     public RemoteReference fromOrigin(Pointer origin) {
-        switch(vm.objects().objectStatusAt(origin)) {
-            case LIVE:
-                return vm.referenceManager().makeReference(origin);
-            case FORWARDER:
-                final RemoteReference forwarderReference = vm.referenceManager().makeQuasiReference(origin);
-                return vm.referenceManager().makeReference(forwarderReference.forwardedTo());
-        }
-        return vm.referenceManager().zeroReference();
+        return vm.referenceManager().makeReference(origin);
     }
 
     public Reference fromJava(Object object) {
