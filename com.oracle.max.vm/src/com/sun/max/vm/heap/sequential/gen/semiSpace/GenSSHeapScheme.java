@@ -23,7 +23,7 @@
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
 import static com.sun.max.vm.MaxineVM.Phase.*;
-import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMERS.*;
+import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMED_OPERATION.*;
 
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
@@ -42,7 +42,6 @@ import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.log.VMLog.Record;
-import com.sun.max.vm.log.VMLogger.Interval;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -191,7 +190,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     private final TimeLogger timeLogger = new TimeLogger();
 
-    private final PhaseLogger phaseLogger = new PhaseLogger();
+    private final Evacuator.PhaseLogger phaseLogger = new Evacuator.PhaseLogger();
 
     /**
      * Support for {@link #maxObjectInspectionAge()}.
@@ -216,6 +215,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         genCollection = new GenCollection();
         youngSpaceEvacuator.setTimers(evacTimers);
         oldSpaceEvacuator.setTimers(evacTimers);
+        youngSpaceEvacuator.setPhaseLogger(phaseLogger);
+        oldSpaceEvacuator.setPhaseLogger(phaseLogger);
     }
 
     @Override
@@ -309,7 +310,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
         oldSpaceEvacuator.setGCOperation(genCollection);
         oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
-        oldSpaceEvacuator.evacuate();
+        oldSpaceEvacuator.evacuate(Heap.logGCPhases());
         final CardFirstObjectTable fot = cardTableRSet.cfoTable;
         final int startIndex = fot.tableEntryIndex(oldSpace.fromSpace.start());
         final int endIndex = fot.tableEntryIndex(oldSpace.fromSpace.committedEnd());
@@ -409,7 +410,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
         evacTimers.start(TOTAL);
         youngSpaceEvacuator.setGCOperation(genCollection);
-        youngSpaceEvacuator.evacuate();
+        youngSpaceEvacuator.evacuate(Heap.logGCPhases());
         youngSpaceEvacuator.setGCOperation(null);
         if (MaxineVM.isDebug() && Heap.verbose()) {
             Log.println("--End nursery evacuation");
@@ -697,18 +698,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
     @HOSTED_ONLY
-    @VMLoggerInterface(parent = HeapScheme.PhaseLogger.class)
-    private interface PhaseLoggerInterface {
-        void scanningThreadRoots(@VMLogParam(name = "vmThread") VmThread vmThread);
-        void scanningRoots(@VMLogParam(name = "interval") Interval interval);
-        void scanningBootHeap(@VMLogParam(name = "interval") Interval interval);
-        void scanningCode(@VMLogParam(name = "interval") Interval interval);
-        void scanningRSet(@VMLogParam(name = "interval") Interval interval);
-        void evacuating(@VMLogParam(name = "interval") Interval interval);
-        void processingSpecialReferences(@VMLogParam(name = "interval") Interval interval);
-    }
-
-    @HOSTED_ONLY
     @VMLoggerInterface(parent = HeapScheme.TimeLogger.class)
     private interface TimeLoggerInterface {
         void stackReferenceMapPreparationTime(
@@ -730,55 +719,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                         @VMLogParam(name = "weakRefTime") long weakRefTime
         );
     }
-
-    public  static final class PhaseLogger extends PhaseLoggerAuto {
-
-        private static void tracePhase(String description, Interval interval) {
-            Log.print(interval.name()); Log.print(": "); Log.println(description);
-        }
-
-        PhaseLogger() {
-            super(null, null);
-        }
-
-        @Override
-        protected void traceEvacuating(Interval interval) {
-            tracePhase("Evacuating reachables", interval);
-        }
-
-        @Override
-        protected void traceProcessingSpecialReferences(Interval interval) {
-            tracePhase("Processing special references", interval);
-        }
-
-        @Override
-        protected void traceScanningBootHeap(Interval interval) {
-            tracePhase("Scanning boot heap", interval);
-        }
-
-        @Override
-        protected void traceScanningCode(Interval interval) {
-            tracePhase("Scanning code", interval);
-        }
-
-        @Override
-        protected void traceScanningRSet(Interval interval) {
-            tracePhase("Scanning remembered sets", interval);
-        }
-
-        @Override
-        protected void traceScanningRoots(Interval interval) {
-            tracePhase("Scanning roots", interval);
-        }
-
-        @Override
-        protected void traceScanningThreadRoots(VmThread vmThread) {
-            Log.print("Scanning thread local and stack roots for thread ");
-            Log.printThread(vmThread, true);
-        }
-
-    }
-
     public static final class TimeLogger extends TimeLoggerAuto {
         private static final String HZ_SUFFIX = TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK);
         private static final String TIMINGS_LEAD = "Timings (" + HZ_SUFFIX + ") for ";
@@ -835,104 +775,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
 // START GENERATED CODE
-    private static abstract class PhaseLoggerAuto extends com.sun.max.vm.heap.HeapScheme.PhaseLogger {
-        public enum Operation {
-            Evacuating, ProcessingSpecialReferences, ScanningBootHeap,
-            ScanningCode, ScanningRSet, ScanningRoots, ScanningThreadRoots;
-
-            @SuppressWarnings("hiding")
-            public static final Operation[] VALUES = values();
-        }
-
-        private static final int[] REFMAPS = null;
-
-        protected PhaseLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
-        }
-
-        @Override
-        public String operationName(int opCode) {
-            return Operation.VALUES[opCode].name();
-        }
-
-        @INLINE
-        public final void logEvacuating(Interval interval) {
-            log(Operation.Evacuating.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceEvacuating(Interval interval);
-
-        @INLINE
-        public final void logProcessingSpecialReferences(Interval interval) {
-            log(Operation.ProcessingSpecialReferences.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceProcessingSpecialReferences(Interval interval);
-
-        @INLINE
-        public final void logScanningBootHeap(Interval interval) {
-            log(Operation.ScanningBootHeap.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningBootHeap(Interval interval);
-
-        @INLINE
-        public final void logScanningCode(Interval interval) {
-            log(Operation.ScanningCode.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningCode(Interval interval);
-
-        @INLINE
-        public final void logScanningRSet(Interval interval) {
-            log(Operation.ScanningRSet.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningRSet(Interval interval);
-
-        @INLINE
-        public final void logScanningRoots(Interval interval) {
-            log(Operation.ScanningRoots.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningRoots(Interval interval);
-
-        @Override
-        @INLINE
-        public final void logScanningThreadRoots(VmThread vmThread) {
-            log(Operation.ScanningThreadRoots.ordinal(), vmThreadArg(vmThread));
-        }
-        protected abstract void traceScanningThreadRoots(VmThread vmThread);
-
-        @Override
-        protected void trace(Record r) {
-            switch (r.getOperation()) {
-                case 0: { //Evacuating
-                    traceEvacuating(toInterval(r, 1));
-                    break;
-                }
-                case 1: { //ProcessingSpecialReferences
-                    traceProcessingSpecialReferences(toInterval(r, 1));
-                    break;
-                }
-                case 2: { //ScanningBootHeap
-                    traceScanningBootHeap(toInterval(r, 1));
-                    break;
-                }
-                case 3: { //ScanningCode
-                    traceScanningCode(toInterval(r, 1));
-                    break;
-                }
-                case 4: { //ScanningRSet
-                    traceScanningRSet(toInterval(r, 1));
-                    break;
-                }
-                case 5: { //ScanningRoots
-                    traceScanningRoots(toInterval(r, 1));
-                    break;
-                }
-                case 6: { //ScanningThreadRoots
-                    traceScanningThreadRoots(toVmThread(r, 1));
-                    break;
-                }
-            }
-        }
-    }
-
     private static abstract class TimeLoggerAuto extends com.sun.max.vm.heap.HeapScheme.TimeLogger {
         public enum Operation {
             GcTimes, PhaseTimes, StackReferenceMapPreparationTime;
