@@ -223,6 +223,11 @@ public class JVMTI {
         }
 
         @Override
+        public int activeAgents() {
+            return JVMTI.activeEnvCount;
+        }
+
+        @Override
         public void raise(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
             JVMTIException.raiseEvent(throwable, sp, fp, ip);
         }

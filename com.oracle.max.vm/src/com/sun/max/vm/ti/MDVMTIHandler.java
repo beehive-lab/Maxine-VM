@@ -251,4 +251,13 @@ class MDVMTIHandler implements VMTIHandler {
         }
     }
 
+    @Override
+    public int activeAgents() {
+        int count = 0;
+        for (int i = 0; i < eventHandlers.length; i++) {
+            count += eventHandlers[i].activeAgents();
+        }
+        return count;
+    }
+
 }

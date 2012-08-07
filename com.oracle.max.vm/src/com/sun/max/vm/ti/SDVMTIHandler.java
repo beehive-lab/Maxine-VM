@@ -165,4 +165,9 @@ class SDVMTIHandler implements VMTIHandler {
         eventHandler.methodUnloaded(classMethodActor);
     }
 
+    @Override
+    public int activeAgents() {
+        return eventHandler.activeAgents();
+    }
+
 }

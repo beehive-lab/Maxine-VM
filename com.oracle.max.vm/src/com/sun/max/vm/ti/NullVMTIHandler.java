@@ -133,4 +133,9 @@ public class NullVMTIHandler implements VMTIHandler {
     public void methodUnloaded(ClassMethodActor classMethodActor) {
     }
 
+    @Override
+    public int activeAgents() {
+        return 0;
+    }
+
 }
