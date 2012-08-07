@@ -27,6 +27,7 @@ import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.ext.jvmti.JVMTIEvents.E;
 import com.sun.max.vm.jni.*;
@@ -39,6 +40,8 @@ import com.sun.max.vm.jni.*;
  *
  * Single stepping is handled as a pseudo-breakpoint that has bit {@value JVMTIBreakpoints#SINGLE_STEP} set.
  * Single stepping at a breakpoint is denoted by setting bit {@value JVMTIBreakpoints#SINGLE_STEP_AND_BREAK} as well.
+ * Single stepping at an invoke bytecode (which requires extra checks) is denoted by setting bit
+ * {@value JVMTIBreakpoints#SINGLE_STEP_AT_INVOKE}
  */
 public class JVMTIBreakpoints {
 
@@ -62,6 +65,7 @@ public class JVMTIBreakpoints {
     private static final long UNSET = -1;
     private static final long SINGLE_STEP = 1L << 63;
     public static final long SINGLE_STEP_AND_BREAK = 1L << 62;
+    public static final long SINGLE_STEP_AT_INVOKE = 1L << 61;
     private static final long ID_MASK = 0x0000ffffffffffffL;
 
     /**
@@ -94,6 +98,11 @@ public class JVMTIBreakpoints {
 
         // if single step and breakpoint deliver both, single step first (see spec)
         if ((id & SINGLE_STEP) != 0) {
+            if ((id & SINGLE_STEP_AT_INVOKE) != 0) {
+                ClassMethodActor cma = (ClassMethodActor) MethodID.toMethodActor(MethodID.fromWord(Address.fromLong(getMethodID(id))));
+                JVMTICode.checkDeOptForInvokeInSingleStep(cma, getLocation(id));
+            }
+
             event(JVMTI_EVENT_SINGLE_STEP, id);
             if ((id & SINGLE_STEP_AND_BREAK) == 0) {
                 return;
