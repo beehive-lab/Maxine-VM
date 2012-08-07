@@ -47,68 +47,8 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * CodeEviction manages baseline code eviction and code cache compaction.
- * It is implemented as a {@link VmOperation} as it needs to run in stop-the-world fashion.
- *
- * All methods are considered live that are present on any of the executing threads' call stacks
- * at the time baseline code cache contention triggers eviction. All methods not currently being
- * executed in any thread, and methods not holding a type profile, are considered stale and removed.
- * The baseline code cache is organised in a semi-space fashion; i.e., all live methods are moved
- * from from-space to to-space.
- *
- * Note that only baseline methods are subject to eviction. Optimised code as well as code in
- * the boot image code region is not affected.
- *
- * The workflow, controlled from the {@link #doIt()} method, is as follows.
- * <ul>
- * <li><b>Phase 1: Patching.</b>
- * <ol>
- * <li><i>Identify live and stale methods.</i><br>
- * This is done by walking all threads' call stacks and marking all {@linkplain TargetMethod target methods} met on the
- * stacks, and all target methods that are directly called from those. Furthermore, the baseline code cache is traversed,
- * and all protected methods are marked as live as well. Protected methods are to be excluded from eviction due to some
- * reason, e.g., because they are currently being assembled but not yet installed properly, or because they have a type
- * profile and will soon be recompiled by the optimising compiler, or because their invocation counter is within a
- * certain threshold of the value indicating recompilation.</li>
- * <li><i>Invalidate direct calls.</i><br>
- * For methods in baseline, opt, and boot code region, invalidate those direct calls that go to one of the stale baseline
- * methods. Invalidation is done by routing those direct calls through trampolines again.</li>
- * <li><i>Invalidate dispatch tables and target states.</i><br>
- * Invalidation here means that the respective vtable and itable entries are made to point to the corresponding virtual
- * trampoline. This takes place for all subclasses of the class containing a stale method as well.<br>
- * This step also takes care of resetting references to native code in {@linkplain ClassMethodActor method actors}
- * to {@code null}, and of unmarking marked (live) methods. Furthermore, all stale methods are wiped, i.e., their machine
- * code and literal arrays are made to reference empty sentinel arrays.</li>
- * </ol></li>
- * <li><b>Phase 2: Compacting.</b>
- * <li><i>Copy all live methods from from-space to to-space.</i><br>
- * This affects methods that have not been wiped in the previous step. In particular, this involves the following steps for
- * each live method:<ol>
- * <li>Invalidate vtable and itable entries.</li>
- * <li>Copy the method's entire bytes (code and literals arrays) over to to-space.</li>
- * <li>Wipe the machine code and literal arrays as described above.</li>
- * <li>Memoise the old start of the method in from-space, and set new values for its start and end in to-space.</li>
- * <li>Compute and set new values for the code and literals arrays and for the {@linkplain TargetMethod#codeStart codeStart}
- * pointer.</li>
- * <li>Advance the to-space allocation mark by the method's size.</li>
- * </ol></li>
- * <li><i>Fix direct calls in and to moved code.</i><br>
- * Direct call sites are relative calls. Hence, <b>all</b> direct calls <b>in</b> moved code have to be adjusted. This is
- * achieved by iterating over all baseline methods (at this point, only methods surviving eviction are affected) and fixing all
- * direct call sites contained therein.<br>
- * Also, direct calls <b>to</b> moved code have to be adjusted. This is achieved by iterating over the optimised and boot code
- * regions and fixing all direct calls to moved code.</li>
- * <li><i>Compact the baseline code region's {@linkplain SemiSpaceCodeRegion#targetMethods target methods array}</i><br>
- * by removing entries for wiped (stale) methods.</li>
- * <li><i>Fix return addresses on call stacks, and code pointers in local variables.</i><br>
- * Walk all threads' call stacks once more and fix return addresses that point to moved code. Likewise, fix pointers to machine
- * code held in {@link CodePointer}s in the methods' frames. This logic makes use of the saved old code start of moved
- * methods.</li>
- * </ol></li>
- * <li><b>Phase 0/3: Dumping. (Optional.)</b><br>
- * In this phase, all code addresses found in dispatch tables, target states, and direct calls are dumped.
- * This takes place before and after eviction.</li>
- * </ul>
+ * Code garbage collection (eviction).
+ * See <a href="https://wikis.oracle.com/display/MaxineVM/Code+Management">the Wiki page</a> for more details.
  */
 public final class CodeEviction extends VmOperation {
 
@@ -1283,8 +1223,7 @@ public final class CodeEviction extends VmOperation {
 
     private void logThread(VmThread vmThread) {
         if (logging()) {
-            Log.print("THREAD ");
-            Log.println(vmThread.getName());
+            codeEvictionLogger.logMove_ProcessThread(vmThread);
         }
     }
 
@@ -1360,6 +1299,7 @@ public final class CodeEviction extends VmOperation {
      * do not place data in the {@link VMLog}. However, they are defined here as operations so that they
      * can be enabled/disabled selectively using {@code -XX:LogCodeEvictionInclude/Exclude}. N.B., when
      * enabled they will generate {@link Log} output regardless of whether {@code TraceCodeEviction} is set.
+     * By default, they are both disabled unless the operations are explicitly enabled on the VM startup command line.
      *
      */
     @HOSTED_ONLY
@@ -1467,6 +1407,8 @@ public final class CodeEviction extends VmOperation {
             @VMLogParam(name = "tm") TargetMethod tm,
             @VMLogParam(name = "patch") boolean patch);
 
+        void move_ProcessThread(@VMLogParam(name = "vmThread") VmThread vmThread);
+
         void bootToBaseline(@VMLogParam(name = "tm") TargetMethod tm);
 
         /**
@@ -1488,7 +1430,7 @@ public final class CodeEviction extends VmOperation {
 
         protected CodeEvictionLogger() {
             super("CodeEviction", "Log code eviction after baseline code cache contention. Operation prefixes control logging:, " +
-                            "Run = log each code eviction run (enabled by default)" +
+                            "Run = log each code eviction run (enabled when any other ops are enabled)" +
                             "Stat_.* = statistics (count evicted/surviving bytes and methods), " +
                             "Details_.* = give detailed information about what methods and dispatch entries are treated, " +
                             "Move_.* = print details about threads and code motion, " +
@@ -1506,9 +1448,16 @@ public final class CodeEviction extends VmOperation {
         @Override
         public void checkOptions() {
             super.checkOptions();
-            // Always enable the Run operation if we are doing any logging.
             if (enabled()) {
+                // Always enable the Run operation if we are doing any logging.
                 setOperationState(Operation.Run.ordinal(), true);
+                // Unless explicitly set on the command line, disable Dump and StackDump
+                if (!getOperationStateByCLI(Operation.Dump.ordinal())) {
+                    setOperationState(Operation.Dump.ordinal(), false);
+                }
+                if (!getOperationStateByCLI(Operation.StackDump.ordinal())) {
+                    setOperationState(Operation.StackDump.ordinal(), false);
+                }
             }
         }
 
@@ -1868,6 +1817,12 @@ public final class CodeEviction extends VmOperation {
             // The tracing associated with a dump is hand-coded and does not go via the VMLog
         }
 
+        @Override
+        protected void traceMove_ProcessThread(VmThread vmThread) {
+            Log.print("THREAD ");
+            Log.println(vmThread.getName());
+        }
+
     }
 
 // START GENERATED CODE
@@ -1878,17 +1833,18 @@ public final class CodeEviction extends VmOperation {
             Details_RelocateCodePointer, Details_StaleMethod, Details_VisitRefMapBits, Dump,
             Move_CalleeReturnAddress, Move_CodeCacheBoundaries, Move_CodeMotion, Move_DirectCallInfo,
             Move_FixCall, Move_FixCallForMovedCode, Move_MethodPatch, Move_NotCopying,
-            Move_OptMethod, Move_Progress, Move_ReturnAddressPatch, Move_ToMoved,
-            Move_ToUnmoved, Run, StackDump, Stats_DirectCallNumbers,
-            Stats_Fixed, Stats_Statistics, Stats_Surviving, Stats_TimingResults;
+            Move_OptMethod, Move_ProcessThread, Move_Progress, Move_ReturnAddressPatch,
+            Move_ToMoved, Move_ToUnmoved, Run, StackDump,
+            Stats_DirectCallNumbers, Stats_Fixed, Stats_Statistics, Stats_Surviving,
+            Stats_TimingResults;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
         private static final int[] REFMAPS = new int[] {0x1, 0x5, 0x2, 0x3, 0x3, 0x1, 0x1, 0xe, 0x2, 0x1, 0x0, 0x0, 0x1, 0x1,
-            0xc, 0x5, 0x1, 0x1, 0x1, 0x1, 0x1, 0x7, 0x11, 0x1, 0x1, 0x0, 0x1, 0x1,
-            0x1, 0x0, 0x1};
+            0xc, 0x5, 0x1, 0x1, 0x1, 0x1, 0x0, 0x1, 0x7, 0x11, 0x1, 0x1, 0x0, 0x1,
+            0x1, 0x1, 0x0, 0x1};
 
         protected CodeEvictionLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -2018,6 +1974,12 @@ public final class CodeEviction extends VmOperation {
             log(Operation.Move_OptMethod.ordinal(), objectArg(tm));
         }
         protected abstract void traceMove_OptMethod(TargetMethod tm);
+
+        @INLINE
+        public final void logMove_ProcessThread(VmThread vmThread) {
+            log(Operation.Move_ProcessThread.ordinal(), vmThreadArg(vmThread));
+        }
+        protected abstract void traceMove_ProcessThread(VmThread vmThread);
 
         @INLINE
         public final void logMove_Progress(String s) {
@@ -2168,47 +2130,51 @@ public final class CodeEviction extends VmOperation {
                     traceMove_OptMethod(toTargetMethod(r, 1));
                     break;
                 }
-                case 20: { //Move_Progress
+                case 20: { //Move_ProcessThread
+                    traceMove_ProcessThread(toVmThread(r, 1));
+                    break;
+                }
+                case 21: { //Move_Progress
                     traceMove_Progress(toString(r, 1));
                     break;
                 }
-                case 21: { //Move_ReturnAddressPatch
+                case 22: { //Move_ReturnAddressPatch
                     traceMove_ReturnAddressPatch(toTargetMethod(r, 1), toCodePointer(r, 2), toCodePointer(r, 3));
                     break;
                 }
-                case 22: { //Move_ToMoved
+                case 23: { //Move_ToMoved
                     traceMove_ToMoved(toTargetMethod(r, 1), toAddress(r, 2), toAddress(r, 3), toAddress(r, 4), toCodePointer(r, 5));
                     break;
                 }
-                case 23: { //Move_ToUnmoved
+                case 24: { //Move_ToUnmoved
                     traceMove_ToUnmoved(toCodePointer(r, 1));
                     break;
                 }
-                case 24: { //Run
+                case 25: { //Run
                     traceRun(toString(r, 1), toInt(r, 2), toVmThread(r, 3));
                     break;
                 }
-                case 25: { //StackDump
+                case 26: { //StackDump
                     traceStackDump();
                     break;
                 }
-                case 26: { //Stats_DirectCallNumbers
+                case 27: { //Stats_DirectCallNumbers
                     traceStats_DirectCallNumbers(toCodeEviction(r, 1));
                     break;
                 }
-                case 27: { //Stats_Fixed
+                case 28: { //Stats_Fixed
                     traceStats_Fixed(toCodeEviction(r, 1));
                     break;
                 }
-                case 28: { //Stats_Statistics
+                case 29: { //Stats_Statistics
                     traceStats_Statistics(toCodeEviction(r, 1));
                     break;
                 }
-                case 29: { //Stats_Surviving
+                case 30: { //Stats_Surviving
                     traceStats_Surviving(toInt(r, 1), toInt(r, 2));
                     break;
                 }
-                case 30: { //Stats_TimingResults
+                case 31: { //Stats_TimingResults
                     traceStats_TimingResults(toCodeEviction(r, 1));
                     break;
                 }
