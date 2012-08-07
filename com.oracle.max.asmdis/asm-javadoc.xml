@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="javadoc">
+<target name="javadoc">
+<javadoc access="protected"
+         author="true"
+         classpath="../MaxwellBase/bin"
+         destdir="javadoc"
+         nodeprecated="false"
+         nodeprecatedlist="false"
+         noindex="false"
+         nonavbar="false"
+         notree="false"
+         source="1.5"
+         sourcepath="src"
+         splitindex="true"
+         use="true"
+         version="true">
+  <package name="com.sun.max.asm" />
+  <package name="com.sun.max.asm.sparc" />
+  <package name="com.sun.max.asm.x86" />
+  <package name="com.sun.max.asm.ia32" />
+  <package name="com.sun.max.asm.amd64" />
+  <package name="com.sun.max.asm.ppc" />
+</javadoc>
+</target>
+</project>
