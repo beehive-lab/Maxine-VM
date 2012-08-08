@@ -32,13 +32,17 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.reference.LocalObjectRemoteReferenceManager.LocalObjectRemoteReference;
 import com.sun.max.tele.util.*;
+import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.direct.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * A specific implementation of the {@link ReferenceScheme} interface for remote access to objects in the VM. It
@@ -56,7 +60,7 @@ import com.sun.max.vm.reference.direct.*;
  * <p>
  * Substituting this implementation of {@link ReferenceScheme} in the Inspector's emulation of the VM's static environment
  * allows reuse of considerable VM code, notably in the {@link Layout} and {@link Reference} classes.  Whenever methods in
- * those (and related) classes are used, for example {@link Reference#readReference(int)} and {@link Reference#readReference(Offset)}
+ * those (and related) classes are used, for example {@link Reference#readReference(int)},
  * operations concerning {@link Reference}s are routed through this scheme implementation.
  * <p>
  * <strong>Important:</strong> the default behavior of most methods routed through this scheme implementation, in particular those
@@ -188,7 +192,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         return vm.referenceManager().makeReference(origin);
     }
 
-    public Reference fromJava(Object object) {
+    public RemoteReference fromJava(Object object) {
         return localTeleReferenceManager.make(object);
     }
 
@@ -893,6 +897,154 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     @Override
     public byte[] nullAsBytes() {
         throw TeleError.unimplemented();
+    }
+
+    /**
+     * Reads the {@link Hub} word from an object's header field in VM memory.
+     * Return's {@link Word#zero()} if the reference is zero..
+     *
+     * @param remoteRef reference to an object in VM memory
+     * @return contents of the object's hub field
+     */
+    public Word readHubAsWord(RemoteReference remoteRef) {
+        if (remoteRef instanceof LocalObjectRemoteReference) {
+            throw new UnsupportedOperationException();
+        }
+        if (remoteRef.isZero()) {
+            return Word.zero();
+        }
+        return Layout.readHubReferenceAsWord(remoteRef);
+    }
+
+    /**
+     * Reads the {@link Hub} word from an object's header field in VM memory, determines if the word's value
+     * does in fact point at a live object (possibly via a forwarder), and if so create a new
+     * {@link RemoteReference} for the live hub. Return's {@link Reference#zero()} if the word cannot be read or if the
+     * word's value does not point to an object.
+     *
+     * @param remoteRef reference to an object in VM memory
+     * @param offset offset from the object's origin from which to read
+     * @return a reference to the object's hub, traversing a forwarder if needed.
+     */
+    public RemoteReference readHubAsRemoteReference(RemoteReference remoteRef) {
+        if (remoteRef.isZero()) {
+            return zero;
+        }
+        if (remoteRef instanceof LocalObjectRemoteReference) {
+            throw new UnsupportedOperationException();
+        }
+        final Address hubOrigin = Layout.readHubReferenceAsWord(remoteRef).asAddress();
+        if (hubOrigin.isZero()) {
+            return zero;
+        }
+        final ObjectStatus objectStatus = vm.objects().objectStatusAt(hubOrigin);
+        switch(objectStatus) {
+            case LIVE:
+                return fromOrigin(hubOrigin.asPointer());
+            case FORWARDER:
+                final RemoteReference forwarderReference = vm.referenceManager().makeQuasiReference(hubOrigin);
+                return fromOrigin(forwarderReference.forwardedTo().asPointer());
+        }
+        return makeZeroReference("RemoteReferenceScheme.readRemoteReferenceHub() unsupported object status @", hubOrigin);
+    }
+
+    /**
+     * Reads a word from an object field in VM memory that is presumed to hold a reference, determines if the word's
+     * value does in fact point at a live object (possibly via a forwarder), and if so create a new
+     * {@link RemoteReference} for the live object. Return's {@link Reference#zero()} if the word cannot be read or if
+     * the word's value does not point to an object.
+     *
+     * @param remoteRef reference to an object in VM memory
+     * @param fieldActor descriptor of the field from which to read
+     * @return a reference to the object pointed to by the word's value, traversing a forwarder if needed.
+     */
+    public RemoteReference readFieldAsRemoteReference(RemoteReference remoteRef, FieldActor fieldActor) {
+        if (remoteRef.isZero()) {
+            return zero;
+        }
+        if (remoteRef instanceof LocalObjectRemoteReference) {
+            return fromJava(readField(remoteRef, fieldActor.offset()));
+        }
+        final Address fieldValueOrigin = readWord(remoteRef, fieldActor.offset()).asAddress();
+        if (fieldValueOrigin.isZero()) {
+            return zero;
+        }
+        final ObjectStatus objectStatus = vm.objects().objectStatusAt(fieldValueOrigin);
+        switch(objectStatus) {
+            case LIVE:
+                return fromOrigin(fieldValueOrigin.asPointer());
+            case FORWARDER:
+                final RemoteReference forwarderReference = vm.referenceManager().makeQuasiReference(fieldValueOrigin);
+                return fromOrigin(forwarderReference.forwardedTo().asPointer());
+        }
+        return makeZeroReference("RemoteReferenceScheme.readRemoteReferenceField() unsupported object status @", fieldValueOrigin);
+    }
+
+    /**
+     * Reads a word from what is presumed to be an array element in VM memory that holds a reference, determines if the
+     * word's value does in fact point at a live object (possibly via a forwarder), and if so create a new
+     * {@link RemoteReference} for the live object. Return's {@link Reference#zero()} if the word cannot be read or if
+     * the word's value does not point to an object.
+     *
+     * @param remoteRef reference to an array in VM memory
+     * @param index the array element presumed to hold a reference
+     * @return a reference to the object pointed to by the word's value, traversing a forwarder if needed.
+     */
+    public RemoteReference readArrayAsRemoteReference(RemoteReference remoteRef, int index) {
+        if (remoteRef.isZero()) {
+            return zero;
+        }
+        if (remoteRef instanceof LocalObjectRemoteReference) {
+            final Object[] array = (Object[]) toJava(remoteRef);
+            return fromJava(array[index]);
+        }
+        final Address elementValueOrigin = Layout.getWord(remoteRef, index).asAddress();
+        if (elementValueOrigin.isZero()) {
+            return zero;
+        }
+        final ObjectStatus objectStatus = vm.objects().objectStatusAt(elementValueOrigin);
+        switch(objectStatus) {
+            case LIVE:
+                return fromOrigin(elementValueOrigin.asPointer());
+            case FORWARDER:
+                final RemoteReference forwarderReference = vm.referenceManager().makeQuasiReference(elementValueOrigin);
+                return fromOrigin(forwarderReference.forwardedTo().asPointer());
+        }
+        return makeZeroReference("RemoteReferenceScheme.readRemoteReference() unsupported object status @", elementValueOrigin);
+    }
+
+    public Value readArrayAsValue(Kind kind, RemoteReference remoteRef, int index) {
+        switch (kind.asEnum) {
+            case BYTE:
+                return ByteValue.from(Layout.getByte(remoteRef, index));
+            case BOOLEAN:
+                return BooleanValue.from(Layout.getBoolean(remoteRef, index));
+            case SHORT:
+                return ShortValue.from(Layout.getShort(remoteRef, index));
+            case CHAR:
+                return CharValue.from(Layout.getChar(remoteRef, index));
+            case INT:
+                return IntValue.from(Layout.getInt(remoteRef, index));
+            case FLOAT:
+                return FloatValue.from(Layout.getFloat(remoteRef, index));
+            case LONG:
+                return LongValue.from(Layout.getLong(remoteRef, index));
+            case DOUBLE:
+                return DoubleValue.from(Layout.getDouble(remoteRef, index));
+            case WORD:
+                return new WordValue(Layout.getWord(remoteRef, index));
+            case REFERENCE:
+                try {
+                    return TeleReferenceValue.from(vm, readArrayAsRemoteReference(remoteRef, index));
+                } catch (DataIOError err) {
+                    final Address elementEntryAddress = remoteRef.toOrigin().plus(Layout.referenceArrayLayout().getElementOffsetInCell(index));
+                    TeleWarning.message("RemoteReferenceScheme: Can't access reference array element at " + elementEntryAddress.to0xHexString());
+                    return TeleReferenceValue.zero(vm);
+                }
+            default:
+                throw TeleError.unknownCase("unknown array kind");
+        }
+
     }
 
 }

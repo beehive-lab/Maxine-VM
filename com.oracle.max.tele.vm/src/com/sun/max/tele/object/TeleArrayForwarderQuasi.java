@@ -40,13 +40,6 @@ public class TeleArrayForwarderQuasi extends TeleArrayObject {
     }
 
     @Override
-    protected TeleHub fetchTeleHub() {
-        // Read the hub reference from the new copy
-        final RemoteReference newArrayReference = reference().jumpForwarder();
-        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(newArrayReference).asAddress());
-    }
-
-    @Override
     protected Object createDeepCopy(DeepCopier context) {
         return null;
     }

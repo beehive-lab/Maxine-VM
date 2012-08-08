@@ -24,7 +24,6 @@ package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
-import com.sun.max.vm.layout.*;
 
 
 /**
@@ -36,13 +35,6 @@ public class TeleTupleForwarderQuasi extends TeleTupleObject {
     protected TeleTupleForwarderQuasi(TeleVM vm, RemoteReference quasiReference) {
         super(vm, quasiReference);
         assert quasiReference.status().isForwarder();
-    }
-
-    @Override
-    protected TeleHub fetchTeleHub() {
-        // Read the hub reference from the new copy
-        RemoteReference newTupleReference = reference().jumpForwarder();
-        return (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(newTupleReference).asAddress());
     }
 
     @Override

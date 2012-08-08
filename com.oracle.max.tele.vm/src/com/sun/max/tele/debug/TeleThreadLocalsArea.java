@@ -203,7 +203,7 @@ public final class TeleThreadLocalsArea extends AbstractVmHolder implements Tele
         public static List<VmThreadLocal> values(MaxVM vm) {
             if (targetValues == null) {
                 TeleVM teleVM = (TeleVM) vm;
-                targetValues = (List<VmThreadLocal>) VmObjectAccess.make(teleVM).makeTeleObject(teleVM.fields().VmThreadLocal_VALUES.readReference(vm)).deepCopy();
+                targetValues = (List<VmThreadLocal>) VmObjectAccess.make(teleVM).makeTeleObject(teleVM.fields().VmThreadLocal_VALUES.readRemoteReference(vm)).deepCopy();
             }
             return targetValues;
         }

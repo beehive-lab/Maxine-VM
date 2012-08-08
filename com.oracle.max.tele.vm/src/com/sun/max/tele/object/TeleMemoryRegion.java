@@ -97,7 +97,7 @@ public class TeleMemoryRegion extends TeleTupleObject {
         try {
             final long nBytes = fields().MemoryRegion_size.readWord(reference()).asSize().toLong();
 
-            final RemoteReference regionNameStringReference = fields().MemoryRegion_regionName.readReference(reference());
+            final RemoteReference regionNameStringReference = fields().MemoryRegion_regionName.readRemoteReference(reference());
             final TeleString teleString = (TeleString) objects().makeTeleObject(regionNameStringReference);
             final String regionName = teleString == null ? "<null>" : teleString.getString();
 

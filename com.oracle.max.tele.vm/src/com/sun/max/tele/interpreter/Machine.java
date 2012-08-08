@@ -236,7 +236,7 @@ public final class Machine extends AbstractVmHolder {
                     return new WordValue(staticTupleReference.readWord(fieldActor.offset()));
                 }
                 case REFERENCE: {
-                    final RemoteReference reference = referenceManager().makeReference(staticTupleReference.readWord(fieldActor.offset()).asAddress());
+                    final RemoteReference reference = staticTupleReference.readFieldAsRemoteReference(fieldActor);
                     return referenceManager().createReferenceValue(reference);
                 }
             }
@@ -258,8 +258,8 @@ public final class Machine extends AbstractVmHolder {
         }
     }
 
-    public Value getField(RemoteReference instance, int cpIndex) throws TeleInterpreterException {
-        if (instance.isZero()) {
+    public Value getField(RemoteReference instanceRef, int cpIndex) throws TeleInterpreterException {
+        if (instanceRef.isZero()) {
             raiseException(new NullPointerException());
         }
         final ConstantPool constantPool = currentThread.frame().constantPool();
@@ -268,14 +268,14 @@ public final class Machine extends AbstractVmHolder {
         final Kind kind = fieldActor.kind;
 
         if (kind.isExtendedPrimitiveValue()) {
-            return widenIfNecessary(fieldActor.readValue(instance));
+            return widenIfNecessary(fieldActor.readValue(instanceRef));
         } else {
             assert kind.isReference;
-            if (!instance.isLocal()) {
-                final RemoteReference reference = referenceManager().makeReference(instance.readWord(fieldActor.offset()).asAddress());
+            if (!instanceRef.isLocal()) {
+                final RemoteReference reference = instanceRef.readFieldAsRemoteReference(fieldActor);
                 return referenceManager().createReferenceValue(reference);
             } else {
-                return fieldActor.readValue(instance);
+                return fieldActor.readValue(instanceRef);
             }
         }
     }

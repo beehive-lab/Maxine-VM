@@ -43,7 +43,7 @@ public class TeleMethod extends TeleTupleObject {
      */
     public Method toJava() {
         if (method == null) {
-            final RemoteReference methodActorReference = fields().Method_methodActor.readReference(reference());
+            final RemoteReference methodActorReference = fields().Method_methodActor.readRemoteReference(reference());
             final TeleMethodActor teleMethodActor = (TeleMethodActor) objects().makeTeleObject(methodActorReference);
             method = teleMethodActor.methodActor().toJava();
         }

@@ -27,9 +27,13 @@ import java.util.concurrent.atomic.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * Special implementations of VM {@link Reference}s to objects that permit reuse of many VM classes and schemas in the
@@ -91,6 +95,67 @@ public abstract class RemoteReference extends Reference {
     public abstract Address origin();
 
     /**
+     * Reads the {@link Hub} word from the object's header field in VM memory.
+     *
+     * @return contents of the object's hub field
+     */
+    public Word readHubAsWord() {
+        return vm.referenceScheme().readHubAsWord(this);
+    }
+
+    /**
+     * Reads from this object in VM memory the reference to the object's {@link Hub}, traversing a forwarder if
+     * necessary to locate the live Hub; returns {@link RemoteReference#zero()} if the hub field in the object header
+     * does not point at a live object.
+     *
+     * @return the value of the object's hub field in VM memory interpreted as a reference, unless it refers to a forwarder
+     *         in which case the reference returned refers to the destination of the forwarder.
+     */
+    public final RemoteReference readHubAsRemoteReference() {
+        return vm.referenceScheme().readHubAsRemoteReference(this);
+    }
+
+    /**
+     * Reads from this tuple or hybrid object in VM memory the reference presumed to be held in a field at the specified
+     * offset, traversing a forwarder if necessary; returns {@link RemoteReference#zero()} if the field's value does not
+     * point at a live object. No checking is performed to ensure that the offset identifies a reference field, or even
+     * whether the offset is contained within the object.
+     *
+     * @param offset the offset in bytes from the presumed object's origin at which to read the field
+     * @return the value of the instance field in VM memory interpreted as a reference, unless it refers to a forwarder
+     *         in which case the reference returned refers to the destination of the forwarder.
+     */
+    public final RemoteReference readFieldAsRemoteReference(FieldActor fieldActor) {
+        return vm.referenceScheme().readFieldAsRemoteReference(this, fieldActor);
+    }
+
+    /**
+     * Reads from this array in VM memory the reference presumed to be held in an at the specified index, traversing a
+     * forwarder if necessary; returns {@link RemoteReference#zero()} if the element's value does not point at a live
+     * object. No checking is performed to ensure that this is an array or that it hold references or that the index is
+     * within the array bounds.
+     *
+     * @param index the index into the presumed array of references at which to read
+     * @return the value of the array element in VM memory interpreted as a reference, unless it refers to a forwarder
+     *         in which case the reference returned refers to the destination of the forwarder.
+     */
+    public final RemoteReference readArrayAsRemoteReference(int index) {
+        return vm.referenceScheme().readArrayAsRemoteReference(this, index);
+    }
+
+    /**
+     * Read a VM array element as a generic boxed value. Does not check that there is a valid array of the specified
+     * kind at the specified location, or whether the index is in bounds.
+     *
+     * @param kind identifies one of the basic VM value types
+     * @param index offset into the array
+     * @return a generic boxed value based on the contents of the array element in VM memory.
+     */
+    public final Value readArrayAsValue(Kind kind, int index) {
+        return vm.referenceScheme().readArrayAsValue(kind, this, index);
+    }
+
+    /**
      * Returns the location of the <em>old</em> copy of the object in VM memory during any period of time when the
      * object is being <em>forwarded</em>. This is available <em>only</em> when the heap phase is
      * {@linkplain HeapPhase#ANALYZING ANALYZING} <em>and</em> the object has been copied to a new location. In all
@@ -117,13 +182,12 @@ public abstract class RemoteReference extends Reference {
      *
      * @return a reference to the actual location of the object, possibly following a forwarder to a new copy.
      */
-    final public RemoteReference jumpForwarder() {
+    final public RemoteReference followIfForwarded() {
         if (status().isForwarder()) {
             return vm.referenceManager().makeReference(forwardedTo());
         }
         return this;
     }
-
 
     /**
      * Generates a string describing the status of the object in VM memory with respect to memory management, designed

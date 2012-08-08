@@ -29,7 +29,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -190,8 +189,7 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
                 if (enabledThreadLocalsArea != null) {
                     final Word threadLocalValue = enabledThreadLocalsArea.getWord(VmThreadLocal.VM_THREAD);
                     if (threadLocalValue.isNotZero()) {
-                        final RemoteReference vmThreadReference = referenceManager().makeReference(threadLocalValue.asAddress());
-                        teleVmThread = (TeleVmThread) objects().makeTeleObject(vmThreadReference);
+                        teleVmThread = (TeleVmThread) objects().findObjectAt(threadLocalValue.asAddress());
                     }
                 }
                 updatingCache = false;

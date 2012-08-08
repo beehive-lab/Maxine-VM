@@ -58,7 +58,7 @@ public final class TeleCardTableRSet extends TeleTupleObject {
 
     public TeleCardTableRSet(TeleVM vm, RemoteReference cardTableRSetReference) {
         super(vm, cardTableRSetReference);
-        final TeleMemoryRegion rsetMemory = (TeleMemoryRegion) objects().makeTeleObject(fields().CardTableRSet_cardTableMemory.readReference(reference()));
+        final TeleMemoryRegion rsetMemory = (TeleMemoryRegion) objects().makeTeleObject(fields().CardTableRSet_cardTableMemory.readRemoteReference(reference()));
         vmHeapRegion = new VmHeapRegion(vm, rsetMemory);
     }
 
@@ -69,7 +69,7 @@ public final class TeleCardTableRSet extends TeleTupleObject {
 
     private boolean updateCardTableCache() {
         try {
-            RemoteReference cardTableReference = fields().CardTableRSet_cardTable.readReference(reference());
+            RemoteReference cardTableReference = fields().CardTableRSet_cardTable.readRemoteReference(reference());
             Address tableAddress  = fields().Log2RegionToByteMapTable_tableAddress.readWord(cardTableReference).asAddress();
             final Address oldTableAddress = cardTable.tableAddress();
             if (tableAddress.equals(oldTableAddress)) {
