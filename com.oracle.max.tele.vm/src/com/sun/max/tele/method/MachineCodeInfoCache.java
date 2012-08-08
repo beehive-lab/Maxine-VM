@@ -290,7 +290,7 @@ public final class MachineCodeInfoCache extends AbstractVmHolder {
                 } else {
                     Address callEntryAddress = codeStart;
                     if (MaxineVM.vm().compilationBroker.needsAdapters()) {
-                        final RemoteReference callEntryPointReference = fields().TargetMethod_callEntryPoint.readReference(teleTargetMethod.reference());
+                        final RemoteReference callEntryPointReference = fields().TargetMethod_callEntryPoint.readRemoteReference(teleTargetMethod.reference());
                         final TeleObject teleCallEntryPoint = objects().makeTeleObject(callEntryPointReference);
                         if (teleCallEntryPoint != null) {
                             final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();

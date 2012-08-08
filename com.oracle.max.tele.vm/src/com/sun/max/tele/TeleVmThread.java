@@ -53,7 +53,7 @@ public class TeleVmThread extends TeleTupleObject {
     public String name() {
         if (vm().teleProcess().epoch() > lastRefreshedEpoch) {
             try {
-                final RemoteReference nameReference = fields().VmThread_name.readReference(reference());
+                final RemoteReference nameReference = fields().VmThread_name.readRemoteReference(reference());
                 if (!nameReference.equals(this.nameReference)) {
                     this.nameReference = nameReference;
                     if (this.nameReference.isZero()) {

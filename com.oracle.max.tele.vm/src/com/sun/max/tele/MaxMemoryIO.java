@@ -22,9 +22,7 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -39,18 +37,6 @@ public interface MaxMemoryIO {
      * @return a generic boxed value based on the contents of the word in VM memory.
      */
     Value readWordValue(Address address);
-
-    /**
-     * Low-level read of a array element word as a generic boxed value from memory of the VM.
-     * <p>
-     * Does not check that there is a valid array at the specified location.
-     *
-     * @param kind identifies one of the basic VM value types
-     * @param reference location in the VM presumed (but not checked) to be an array origin
-     * @param index offset into the array
-     * @return a generic boxed value based on the contents of the word in VM memory.
-     */
-    Value readArrayElementValue(Kind kind, RemoteReference reference, int index);
 
     /**
      * Uses low level memory access to read an array of bytes from VM memory.

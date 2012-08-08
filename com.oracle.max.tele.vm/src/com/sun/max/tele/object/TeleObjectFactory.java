@@ -34,7 +34,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -45,7 +44,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.hom.*;
 import com.sun.max.vm.layout.ohm.*;
 import com.sun.max.vm.log.*;
@@ -443,11 +441,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         }
 
         if (reference.status().isForwarder()) {
-            // Quasi objects:  forwarders
-            // These have to be created specially.
-            // TODO (mlvdv) I'm letting these be put into to the standard map for now; I haven't (yet) found a reason to map them separately.
-            final RemoteReference newCopyReference = referenceManager().makeReference(reference.forwardedTo());
-            final TeleObject newCopyObject = objects().makeTeleObject(newCopyReference);
+            final TeleObject newCopyObject = objects().makeTeleObject(reference.followIfForwarded());
             switch (newCopyObject.kind()) {
                 case TUPLE:
                     teleObject = new TeleTupleForwarderQuasi(vm(), reference);
@@ -469,7 +463,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
                     }
                     break;
             }
-        } else {
+        } else { // not a Forwarder
             // Most important of the roles played by a {@link TeleObject} is to capture
             // the type of the object at the specified location.  This gets done empirically,
             // by examining the meta-information stored with the presumed object.
@@ -490,9 +484,8 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             ClassActor classActor = null;
 
             try {
-                final Address hubAddress = Layout.readHubReferenceAsWord(reference).asAddress();
-                hubReference = referenceManager().makeReference(hubAddress);
-                classActorReference = fields().Hub_classActor.readReference(hubReference);
+                hubReference = reference.readHubAsRemoteReference();
+                classActorReference = fields().Hub_classActor.readRemoteReference(hubReference);
                 classActor = classes().makeClassActor(classActorReference);
             } catch (InvalidReferenceException invalidReferenceException) {
                 Log.println("InvalidReferenceException reference: " + reference + "/" + reference.toOrigin() +
@@ -502,8 +495,8 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             }
 
             // Must check for the static tuple case first; it doesn't follow the usual rules
-            final RemoteReference hubhubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(hubReference).asAddress());
-            final RemoteReference hubClassActorReference = fields().Hub_classActor.readReference(hubhubReference);
+            final RemoteReference hubhubReference = hubReference.readHubAsRemoteReference();
+            final RemoteReference hubClassActorReference = fields().Hub_classActor.readRemoteReference(hubhubReference);
             final ClassActor hubClassActor = classes().makeClassActor(hubClassActorReference);
             final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
             if (StaticHub.class.isAssignableFrom(hubJavaClass)) {

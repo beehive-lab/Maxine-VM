@@ -120,17 +120,17 @@ public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme im
             }
             if (nursery == null) {
                 // Final in the heap scheme; no need to check once discovered
-                final RemoteReference nurseryRef = fields().GenMSEHeapScheme_youngSpace.readReference(reference());
+                final RemoteReference nurseryRef = fields().GenMSEHeapScheme_youngSpace.readRemoteReference(reference());
                 nursery = (TeleNoAgingNursery) objects().makeTeleObject(nurseryRef);
             }
             if (oldSpace == null) {
                 // Final in the heap scheme; no need to check once discovered
-                final RemoteReference oldSpaceRef = fields().GenMSEHeapScheme_oldSpace.readReference(reference());
+                final RemoteReference oldSpaceRef = fields().GenMSEHeapScheme_oldSpace.readRemoteReference(reference());
                 oldSpace = (TeleFirstFitMarkSweepSpace) objects().makeTeleObject(oldSpaceRef);
             }
             if (cardTableRSet == null) {
                 // Final in the heap scheme; no need to check once discovered
-                final RemoteReference cardTableRSetRef = fields().GenMSEHeapScheme_cardTableRSet.readReference(reference());
+                final RemoteReference cardTableRSetRef = fields().GenMSEHeapScheme_cardTableRSet.readRemoteReference(reference());
                 cardTableRSet = (TeleCardTableRSet) objects().makeTeleObject(cardTableRSetRef);
             }
             return true;

@@ -43,7 +43,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.ms.*;
-import com.sun.max.vm.layout.*;
 
 /**
  * Inspection support specialized for the basic mark-sweep implementation of {@link HeapScheme}
@@ -535,7 +534,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
      * @return whether the reference points at a {@link HeapFreeChunk}
      */
     protected boolean isFreeSpace(RemoteReference ref) {
-        final Address hubOrigin = Layout.readHubReferenceAsWord(ref).asAddress();
+        final Address hubOrigin = ref.readHubAsWord().asAddress();
         return heapFreeChunkHubOrigin.isNotZero() && hubOrigin.equals(heapFreeChunkHubOrigin);
     }
 
@@ -663,7 +662,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 return false;
             }
             if (objectSpace == null) {
-                final RemoteReference freeHeapSpaceManagerRef = fields().MSHeapScheme_objectSpace.readReference(reference());
+                final RemoteReference freeHeapSpaceManagerRef = fields().MSHeapScheme_objectSpace.readRemoteReference(reference());
                 objectSpace = (TeleFreeHeapSpaceManager) objects().makeTeleObject(freeHeapSpaceManagerRef);
             }
 

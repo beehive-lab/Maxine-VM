@@ -722,7 +722,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         }
 
         public TeleCardTableRSet readTeleCardTableRSet() {
-            final RemoteReference cardTableRSetReference = fields().GenSSHeapScheme_cardTableRSet.readReference(reference());
+            final RemoteReference cardTableRSetReference = fields().GenSSHeapScheme_cardTableRSet.readRemoteReference(reference());
             if (cardTableRSetReference.isZero()) {
                 return null;
             }
@@ -730,39 +730,39 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         }
 
         public TeleContiguousHeapSpace readTeleYoungSpace() {
-            final RemoteReference youngSpaceReference = fields().GenSSHeapScheme_youngSpace.readReference(reference());
+            final RemoteReference youngSpaceReference = fields().GenSSHeapScheme_youngSpace.readRemoteReference(reference());
             if (youngSpaceReference.isZero()) {
                 return null;
             }
-            return (TeleContiguousHeapSpace) objects().makeTeleObject(fields().ContiguousAllocatingSpace_space.readReference(youngSpaceReference));
+            return (TeleContiguousHeapSpace) objects().makeTeleObject(fields().ContiguousAllocatingSpace_space.readRemoteReference(youngSpaceReference));
         }
 
         public TeleContiguousHeapSpace readTeleOldToSpace() {
             if (oldSpaceReference.isZero()) {
-                oldSpaceReference = fields().GenSSHeapScheme_oldSpace.readReference(reference());
+                oldSpaceReference = fields().GenSSHeapScheme_oldSpace.readRemoteReference(reference());
                 if (oldSpaceReference.isZero()) {
                     return null;
                 }
             }
-            return (TeleContiguousHeapSpace) objects().makeTeleObject(fields().ContiguousAllocatingSpace_space.readReference(oldSpaceReference));
+            return (TeleContiguousHeapSpace) objects().makeTeleObject(fields().ContiguousAllocatingSpace_space.readRemoteReference(oldSpaceReference));
         }
 
         public TeleContiguousHeapSpace readTeleOldFromSpace() {
             if (oldSpaceReference.isZero()) {
-                oldSpaceReference = fields().GenSSHeapScheme_oldSpace.readReference(reference());
+                oldSpaceReference = fields().GenSSHeapScheme_oldSpace.readRemoteReference(reference());
                 if (oldSpaceReference.isZero()) {
                     return null;
                 }
             }
-            return (TeleContiguousHeapSpace) objects().makeTeleObject(fields().ContiguousSemiSpace_fromSpace.readReference(oldSpaceReference));
+            return (TeleContiguousHeapSpace) objects().makeTeleObject(fields().ContiguousSemiSpace_fromSpace.readRemoteReference(oldSpaceReference));
         }
 
         private TeleBaseAtomicBumpPointerAllocator readTeleBumpAllocator(TeleInstanceReferenceFieldAccess spaceFieldAccess) {
-            RemoteReference spaceReference = spaceFieldAccess.readReference(reference());
+            RemoteReference spaceReference = spaceFieldAccess.readRemoteReference(reference());
             if (spaceReference.isZero()) {
                 return null;
             }
-            return (TeleBaseAtomicBumpPointerAllocator)  objects().makeTeleObject(fields().ContiguousAllocatingSpace_allocator.readReference(spaceReference));
+            return (TeleBaseAtomicBumpPointerAllocator)  objects().makeTeleObject(fields().ContiguousAllocatingSpace_allocator.readRemoteReference(spaceReference));
         }
 
         public TeleBaseAtomicBumpPointerAllocator readOldSpaceAllocator() {
@@ -782,12 +782,12 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
          * @return an address in the To-space of the old generation.
          */
         public Address firstEvacuatedMark() {
-            return  fields().EvacuatorToCardSpace_allocatedRangeStart.readWord(fields().GenSSHeapScheme_youngSpaceEvacuator.readReference(reference())).asAddress();
+            return  fields().EvacuatorToCardSpace_allocatedRangeStart.readWord(fields().GenSSHeapScheme_youngSpaceEvacuator.readRemoteReference(reference())).asAddress();
         }
 
         public boolean minorEvacuationOverflow() {
             if (resizingPolicyReference.isZero()) {
-                resizingPolicyReference = fields().GenSSHeapScheme_resizingPolicy.readReference(reference());
+                resizingPolicyReference = fields().GenSSHeapScheme_resizingPolicy.readRemoteReference(reference());
                 if (resizingPolicyReference.isZero()) {
                     return false;
                 }

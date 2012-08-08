@@ -923,7 +923,7 @@ public abstract class TeleVM implements MaxVM {
                 // Locate the root object in the VM that holds the VM's configuration.
                 // We can determine most things from the local instance, but the remote
                 // object is needed for references to specific objects in the VM.
-                teleMaxineVM = (TeleMaxineVM) objects().makeTeleObject(fields().MaxineVM_vm.readReference(this));
+                teleMaxineVM = (TeleMaxineVM) objects().makeTeleObject(fields().MaxineVM_vm.readRemoteReference(this));
                 teleVMConfiguration = teleMaxineVM.teleVMConfiguration();
 
                 if (isAttaching()) {
@@ -1456,6 +1456,11 @@ public abstract class TeleVM implements MaxVM {
     public final LayoutScheme layoutScheme() {
         return vmConfiguration.layoutScheme();
     }
+
+    public final RemoteReferenceScheme referenceScheme() {
+        return (RemoteReferenceScheme) vmConfiguration.referenceScheme();
+    }
+
     public final RemoteReference makeReference(Address origin) {
         return referenceManager.makeReference(origin);
     }
@@ -1477,7 +1482,7 @@ public abstract class TeleVM implements MaxVM {
      */
     public final String getString(RemoteReference stringRef) throws InvalidReferenceException {
         referenceManager.checkReference(stringRef);
-        final RemoteReference charArrayRef = fields().String_value.readReference(stringRef);
+        final RemoteReference charArrayRef = fields().String_value.readRemoteReference(stringRef);
         if (charArrayRef.isZero()) {
             return null;
         }

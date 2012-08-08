@@ -54,7 +54,7 @@ public class TeleFreeHeapSpaceManager extends TeleTupleObject {
             return false;
         }
         if (committedHeapSpace == null) {
-            final RemoteReference contiguousHeapSpaceRef = fields().FreeHeapSpaceManager_committedHeapSpace.readReference(reference());
+            final RemoteReference contiguousHeapSpaceRef = fields().FreeHeapSpaceManager_committedHeapSpace.readRemoteReference(reference());
             if (!contiguousHeapSpaceRef.isZero()) {
                 committedHeapSpace = (TeleContiguousHeapSpace) objects().makeTeleObject(contiguousHeapSpaceRef);
                 Trace.line(TRACE_VALUE, tracePrefix() + "contiguousHeapSpace now allocated");

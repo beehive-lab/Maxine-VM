@@ -26,7 +26,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Canonical surrogate for an object of type {@link CodeRegion} object in the VM, which describes a VM memory region
@@ -88,7 +87,7 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
         // into a very nasty infinite regress.
         initialize();
         // The target methods array might change if the array is grown, or via eviction.
-        targetMethodsReference = fields().CodeRegion_targetMethods.readReference(reference());
+        targetMethodsReference = fields().CodeRegion_targetMethods.readRemoteReference(reference());
         additionStartedCount = fields().CodeRegion_additionStartedCount.readInt(reference());
         additionCompletedCount = fields().CodeRegion_additionCompletedCount.readInt(reference());
         if (isManaged()) {
@@ -99,13 +98,13 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     }
 
     /**
-     * Gets a reference to a {@link TargetMethod} from the code cache region, following a forwarding pointer if present.
+     * Gets a reference to a {@link TargetMethod} from the code cache region, traversing a forwarder if present.
      *
      * @param index identifies the desired target method.  Must be less than {@link #nTargetMethods()}.
      * @return a reference to a {@link TargetMethod} in the VM.
      */
     public final RemoteReference getTargetMethodReference(int index) {
-        return ((RemoteReference) objects().unsafeReadArrayElementValue(Kind.REFERENCE, targetMethodsReference, index).asReference()).jumpForwarder();
+        return targetMethodsReference.readArrayAsRemoteReference(index);
     }
 
     /**

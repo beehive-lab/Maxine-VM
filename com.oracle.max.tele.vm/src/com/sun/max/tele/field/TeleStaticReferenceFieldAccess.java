@@ -23,7 +23,6 @@
 package com.sun.max.tele.field;
 
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -41,43 +40,16 @@ public final class TeleStaticReferenceFieldAccess extends TeleStaticFieldAccess 
     }
 
     /**
-     * Reads a static reference field from VM memory,  following a forwarding pointer if necessary, or
-     * {@link RemoteReference#zero()} if no live object can be found.
+     * Reads from VM memory the reference held in the class static field encapsulated by this accessor, traversing a
+     * forwarder if necessary; returns {@link RemoteReference#zero()} if the field's value does not point at
+     * a live object.
      *
-     * @return the value of the field in VM memory interpreted as a reference, unless it is a forwarding pointer in
-     * which case the reference returned refers to the destination of the forwarding pointer.
+     * @return the value of the field in VM memory interpreted as a reference, unless it is a forwarder in
+     *         which case the reference returned refers to the destination of the forwarder.
      */
-    public RemoteReference readReference(MaxVM maxVM) {
+    public RemoteReference readRemoteReference(MaxVM maxVM) {
         final TeleVM vm = (TeleVM) maxVM;
-        final Address origin = staticTupleReference(vm).readWord(fieldActor().offset()).asAddress();
-        final ObjectStatus status = vm.objects().objectStatusAt(origin);
-        if (status.isLive()) {
-            return vm.referenceManager().makeReference(origin);
-        }
-        if (status.isForwarder()) {
-            final RemoteReference forwarderReference = vm.referenceManager().makeQuasiReference(origin);
-            return vm.referenceManager().makeReference(forwarderReference.forwardedTo());
-        }
-        return vm.referenceManager().zeroReference();
-    }
-
-    /**
-     * Reads a static reference field from VM memory either a live reference or quasi reference,
-     * or {@link RemoteReference#zero()} if no live or quasi object can be found.
-     *
-     * @return the value of the field in VM memory interpreted as a reference
-     */
-    public RemoteReference readRawReference(MaxVM maxVM) {
-        final TeleVM vm = (TeleVM) maxVM;
-        final Address origin = staticTupleReference(vm).readWord(fieldActor().offset()).asAddress();
-        final ObjectStatus status = vm.objects().objectStatusAt(origin);
-        if (status.isLive()) {
-            return vm.referenceManager().makeReference(origin);
-        }
-        if (status.isQuasi()) {
-            return vm.referenceManager().makeQuasiReference(origin);
-        }
-        return vm.referenceManager().zeroReference();
+        return staticTupleReference(vm).readFieldAsRemoteReference(fieldActor());
     }
 
     /**

@@ -113,11 +113,37 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     /**
+     * Reads an array element from VM memory as a boxed value.
+     *
      * @param index
      * @return the value read from the specified field in this array in the VM
+     * @throws ArrayIndexOutOfBoundsException if the index is out of bounds
      */
     public Value readElementValue(int index) {
-        return objects().unsafeReadArrayElementValue(componentKind(), reference(), index);
+        if (index < 0 || index >= length()) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        return reference().readArrayAsValue(componentKind(), index);
+    }
+
+    /**
+     * From a reference array in VM memory, gets the value of an element interpreted as a
+     * reference, traversing a forwarder if present; returns {@link Reference#zero()} if the
+     * value does not point at a live object.
+     *
+     * @param index the
+     * @return the value of the array element, interpreted as a reference.
+     * @throws UnsupportedOperationException if not a reference array
+     * @throws ArrayIndexOutOfBoundsException if the index is out of bounds
+     */
+    public RemoteReference readRemoteReference(int index) {
+        if (!componentKind().isReference) {
+            throw new UnsupportedOperationException();
+        }
+        if (index < 0 || index >= length()) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        return reference().readArrayAsRemoteReference(index);
     }
 
     @Override

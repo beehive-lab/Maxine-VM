@@ -42,7 +42,7 @@ public class TeleVMLog extends TeleTupleObject {
      */
     public static TeleVMLog getVMLog(TeleVM vm) {
         if (vmLog == null) {
-            final RemoteReference vmLogRef = vm.fields().VMLog_vmLog.readReference(vm);
+            final RemoteReference vmLogRef = vm.fields().VMLog_vmLog.readRemoteReference(vm);
             if (vmLogRef != null) {
                 vmLog = (TeleVMLog) vm.objects().makeTeleObject(vmLogRef);
             }
@@ -116,7 +116,7 @@ public class TeleVMLog extends TeleTupleObject {
 
     private VMLogger[] loggers() {
         if (loggers == null) {
-            RemoteReference loggersRef = fields().VMLog_loggers.readReference(reference());
+            RemoteReference loggersRef = fields().VMLog_loggers.readRemoteReference(reference());
             TeleArrayObject teleLoggersArray = (TeleArrayObject) objects().makeTeleObject(loggersRef);
             loggers = (VMLogger[]) teleLoggersArray.deepCopy();
         }

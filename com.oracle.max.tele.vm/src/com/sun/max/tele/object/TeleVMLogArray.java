@@ -43,14 +43,14 @@ public final class TeleVMLogArray extends TeleVMLog {
 
     public TeleHostedLogRecord getLogRecord(int id) {
         if (teleLogArrayBuffer == null) {
-            final RemoteReference logBufferRef = fields().VMLogArray_buffer.readReference(reference());
+            final RemoteReference logBufferRef = fields().VMLogArray_buffer.readRemoteReference(reference());
             if (!logBufferRef.isZero()) {
                 teleLogArrayBuffer = (TeleArrayObject) objects().makeTeleObject(logBufferRef);
             }
         }
         if (teleLogArrayBuffer != null) {
             int index = id % logEntries();
-            RemoteReference recordRef = (RemoteReference) teleLogArrayBuffer.readElementValue(index).asReference();
+            RemoteReference recordRef = teleLogArrayBuffer.readRemoteReference(index);
             return new TeleHostedLogRecord(
                         id,
                         fields().VMLogArray$Record0_header.readInt(recordRef),
