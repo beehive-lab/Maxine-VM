@@ -74,6 +74,7 @@ public class VMLogger {
      * Bit n is set iff operation n is to be logged.
      */
     private final BitSet logOp;
+    private final BitSet logOpCLI;
 
     public final VMBooleanXXOption logOption;
     public final VMBooleanXXOption traceOption;
@@ -114,6 +115,7 @@ public class VMLogger {
         this.operationRefMaps = operationRefMaps;
         loggerId = nextLoggerId++;
         logOp = new BitSet(numOps);
+        logOpCLI = new BitSet(numOps);
         String logName = "Log" + name;
         String description = optionDescription ==  null ? name : " " + optionDescription;
         logOption = new VMBooleanXXOption("-XX:-" + logName, "Log" + description);
@@ -152,6 +154,7 @@ public class VMLogger {
         logOption = traceOption = null;
         logIncludeOption = logExcludeOption = null;
         logOp = null;
+        logOpCLI = null;
         optionsChecked = true;
     }
 
@@ -172,6 +175,7 @@ public class VMLogger {
         this.numOps = numOps;
         this.operationRefMaps = operationRefMaps;
         logOp = new BitSet(numOps);
+        logOpCLI = null;
         for (int i = 0; i < numOps; i++) {
             logOp.set(i, true);
         }
@@ -308,6 +312,7 @@ public class VMLogger {
     private void setDefaultLogOptionsState(boolean value) {
         for (int i = 0; i < numOps; i++) {
             logOp.set(i, value);
+            logOpCLI.set(i, false);
         }
     }
 
@@ -331,6 +336,7 @@ public class VMLogger {
                 for (int i = 0; i < numOps; i++) {
                     if (inclusionPattern.matcher(operationName(i)).matches()) {
                         logOp.set(i, true);
+                        logOpCLI.set(i, true);
                     }
                 }
             }
@@ -339,11 +345,40 @@ public class VMLogger {
                 for (int i = 0; i < numOps; i++) {
                     if (exclusionPattern.matcher(operationName(i)).matches()) {
                         logOp.set(i, false);
+                        logOpCLI.set(i, false);
                     }
                 }
             }
         }
         optionsChecked = true;
+    }
+
+    /**
+     * Gets the state of the given operation.
+     */
+    public boolean getOperationState(int op) {
+        return logOp.get(op);
+    }
+
+    /**
+     * Gets the state of the operation as set by the command line options.
+     * This differs from {@link #getOperationState(int)} in that no defaults are applied.
+     * Unless the operation is explicitly included the result will be {@code false}.
+     */
+    public boolean getOperationStateByCLI(int op) {
+        return logOpCLI.get(op);
+    }
+
+    /**
+     * Set a specific operation state to the given value.
+     * @param op operation to set
+     * @param value new value
+     * @return the previous value
+     */
+    public boolean setOperationState(int op, boolean value) {
+        boolean oldValue = logOp.get(op);
+        logOp.set(op, value);
+        return oldValue;
     }
 
     /**
@@ -535,6 +570,16 @@ public class VMLogger {
     }
 
     @INLINE
+    public static Word charArg(char ch) {
+        return Address.fromInt(ch);
+    }
+
+    @INLINE
+    public static Word shortArg(short s) {
+        return Address.fromInt(s);
+    }
+
+    @INLINE
     public static Word intArg(int i) {
         return Address.fromInt(i);
     }
@@ -623,8 +668,23 @@ public class VMLogger {
     }
 
     @INLINE
+    public static Offset toOffset(Record r, int argNum) {
+        return r.getArg(argNum).asOffset();
+    }
+
+    @INLINE
     public static byte toByte(Record r, int argNum) {
         return (byte) r.getIntArg(argNum);
+    }
+
+    @INLINE
+    public static char toChar(Record r, int argNum) {
+        return (char) r.getIntArg(argNum);
+    }
+
+    @INLINE
+    public static int toShort(Record r, int argNum) {
+        return r.getIntArg(argNum);
     }
 
     @INLINE

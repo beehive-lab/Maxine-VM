@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMERS.*;
+import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMED_OPERATION.*;
 import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
 
 import com.sun.max.annotate.*;
@@ -33,8 +33,13 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.log.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.VMLogger.Interval;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -69,6 +74,8 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     private GCOperation currentGCOperation;
 
     private EvacuationTimers timers;
+
+    private PhaseLogger phaseLogger;
 
     public void setGCOperation(GCOperation gcOperation) {
         currentGCOperation = gcOperation;
@@ -136,6 +143,16 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
 
     public void setTimers(EvacuationTimers timers) {
         this.timers = timers;
+    }
+
+    /**
+     * Set the phase logger for this evacuator.
+     * HeapScheme using multiple evacuator instances might have to share a single phase logger
+     * as currently the Heap class assume there's a single such phase logger per-heap scheme.
+     * @param phaseLogger
+     */
+    public void setPhaseLogger(PhaseLogger phaseLogger) {
+        this.phaseLogger = phaseLogger;
     }
 
   /**
@@ -408,42 +425,241 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         }
     }
 
-    public void evacuate() {
+    public final void evacuate(boolean logPhases) {
         timers.start(PROLOGUE);
         doBeforeEvacuation();
         timers.stop(PROLOGUE);
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
+        if (logPhases) {
+            phaseLogger.logScanningRoots(VMLogger.Interval.BEGIN);
+        }
         timers.start(ROOT_SCAN);
         evacuateFromRoots();
         timers.stop(ROOT_SCAN);
+        if (logPhases) {
+            phaseLogger.logScanningRoots(VMLogger.Interval.BEGIN);
+        }
 
+        if (logPhases) {
+            phaseLogger.logScanningBootHeap(VMLogger.Interval.BEGIN);
+        }
         timers.start(BOOT_HEAP_SCAN);
         evacuateFromBootHeap();
         timers.stop(BOOT_HEAP_SCAN);
+        if (logPhases) {
+            phaseLogger.logScanningBootHeap(VMLogger.Interval.END);
+        }
 
+        if (logPhases) {
+            phaseLogger.logScanningCode(VMLogger.Interval.BEGIN);
+        }
         timers.start(CODE_SCAN);
         evacuateFromCode();
         timers.stop(CODE_SCAN);
+        if (logPhases) {
+            phaseLogger.logScanningCode(VMLogger.Interval.END);
+        }
 
+        if (logPhases) {
+            phaseLogger.logScanningRSet(VMLogger.Interval.BEGIN);
+        }
         timers.start(RSET_SCAN);
         evacuateFromRSets();
         timers.stop(RSET_SCAN);
+        if (logPhases) {
+            phaseLogger.logScanningRSet(VMLogger.Interval.END);
+        }
 
+        if (logPhases) {
+            phaseLogger.logEvacuating(VMLogger.Interval.BEGIN);
+        }
         timers.start(COPY);
         evacuateReachables();
         timers.stop(COPY);
+        if (logPhases) {
+            phaseLogger.logEvacuating(VMLogger.Interval.END);
+        }
 
+        if (logPhases) {
+            phaseLogger.logProcessingSpecialReferences(VMLogger.Interval.BEGIN);
+        }
         timers.start(WEAK_REF);
         disableSpecialRefDiscovery();
         SpecialReferenceManager.processDiscoveredSpecialReferences(this);
         evacuateReachables();
         enableSpecialRefDiscovery();
         timers.stop(WEAK_REF);
+        if (logPhases) {
+            phaseLogger.logProcessingSpecialReferences(VMLogger.Interval.END);
+        }
 
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
         timers.start(EPILOGUE);
         doAfterEvacuation();
         timers.stop(EPILOGUE);
     }
+
+
+    @HOSTED_ONLY
+    @VMLoggerInterface(parent = HeapScheme.PhaseLogger.class)
+    private interface PhaseLoggerInterface {
+        void scanningThreadRoots(@VMLogParam(name = "vmThread") VmThread vmThread);
+        void scanningRoots(@VMLogParam(name = "interval") Interval interval);
+        void scanningBootHeap(@VMLogParam(name = "interval") Interval interval);
+        void scanningCode(@VMLogParam(name = "interval") Interval interval);
+        void scanningRSet(@VMLogParam(name = "interval") Interval interval);
+        void evacuating(@VMLogParam(name = "interval") Interval interval);
+        void processingSpecialReferences(@VMLogParam(name = "interval") Interval interval);
+    }
+
+    public static final class PhaseLogger extends PhaseLoggerAuto {
+
+        private static void tracePhase(String description, Interval interval) {
+            Log.print(interval.name()); Log.print(": "); Log.println(description);
+        }
+
+        public PhaseLogger() {
+            super(null, null);
+        }
+
+        @Override
+        protected void traceEvacuating(Interval interval) {
+            tracePhase("Evacuating reachables", interval);
+        }
+
+        @Override
+        protected void traceProcessingSpecialReferences(Interval interval) {
+            tracePhase("Processing special references", interval);
+        }
+
+        @Override
+        protected void traceScanningBootHeap(Interval interval) {
+            tracePhase("Scanning boot heap", interval);
+        }
+
+        @Override
+        protected void traceScanningCode(Interval interval) {
+            tracePhase("Scanning code", interval);
+        }
+
+        @Override
+        protected void traceScanningRSet(Interval interval) {
+            tracePhase("Scanning remembered sets", interval);
+        }
+
+        @Override
+        protected void traceScanningRoots(Interval interval) {
+            tracePhase("Scanning roots", interval);
+        }
+
+        @Override
+        protected void traceScanningThreadRoots(VmThread vmThread) {
+            Log.print("Scanning thread local and stack roots for thread ");
+            Log.printThread(vmThread, true);
+        }
+
+    }
+
+// START GENERATED CODE
+    private static abstract class PhaseLoggerAuto extends com.sun.max.vm.heap.HeapScheme.PhaseLogger {
+        public enum Operation {
+            Evacuating, ProcessingSpecialReferences, ScanningBootHeap,
+            ScanningCode, ScanningRSet, ScanningRoots, ScanningThreadRoots;
+
+            @SuppressWarnings("hiding")
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected PhaseLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logEvacuating(Interval interval) {
+            log(Operation.Evacuating.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceEvacuating(Interval interval);
+
+        @INLINE
+        public final void logProcessingSpecialReferences(Interval interval) {
+            log(Operation.ProcessingSpecialReferences.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceProcessingSpecialReferences(Interval interval);
+
+        @INLINE
+        public final void logScanningBootHeap(Interval interval) {
+            log(Operation.ScanningBootHeap.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningBootHeap(Interval interval);
+
+        @INLINE
+        public final void logScanningCode(Interval interval) {
+            log(Operation.ScanningCode.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningCode(Interval interval);
+
+        @INLINE
+        public final void logScanningRSet(Interval interval) {
+            log(Operation.ScanningRSet.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningRSet(Interval interval);
+
+        @INLINE
+        public final void logScanningRoots(Interval interval) {
+            log(Operation.ScanningRoots.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningRoots(Interval interval);
+
+        @Override
+        @INLINE
+        public final void logScanningThreadRoots(VmThread vmThread) {
+            log(Operation.ScanningThreadRoots.ordinal(), vmThreadArg(vmThread));
+        }
+        protected abstract void traceScanningThreadRoots(VmThread vmThread);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //Evacuating
+                    traceEvacuating(toInterval(r, 1));
+                    break;
+                }
+                case 1: { //ProcessingSpecialReferences
+                    traceProcessingSpecialReferences(toInterval(r, 1));
+                    break;
+                }
+                case 2: { //ScanningBootHeap
+                    traceScanningBootHeap(toInterval(r, 1));
+                    break;
+                }
+                case 3: { //ScanningCode
+                    traceScanningCode(toInterval(r, 1));
+                    break;
+                }
+                case 4: { //ScanningRSet
+                    traceScanningRSet(toInterval(r, 1));
+                    break;
+                }
+                case 5: { //ScanningRoots
+                    traceScanningRoots(toInterval(r, 1));
+                    break;
+                }
+                case 6: { //ScanningThreadRoots
+                    traceScanningThreadRoots(toVmThread(r, 1));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
+
 }

@@ -28,7 +28,7 @@ import com.sun.max.vm.heap.*;
 
 
 public final class EvacuationTimers {
-    public enum TIMERS {
+    public enum TIMED_OPERATION {
         TOTAL,
         PROLOGUE,
         ROOT_SCAN,
@@ -37,16 +37,13 @@ public final class EvacuationTimers {
         RSET_SCAN,
         COPY,
         WEAK_REF,
-        EPILOGUE
+        EPILOGUE;
+        public final TimerMetric timer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     }
 
-    final private TimerMetric [] timers = new TimerMetric[TIMERS.values().length];
     private boolean trackTime = false;
 
     public EvacuationTimers() {
-        for (TIMERS timer : TIMERS.values()) {
-            timers[timer.ordinal()] = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
-        }
     }
 
     public void resetTrackTime() {
@@ -54,19 +51,19 @@ public final class EvacuationTimers {
     }
 
     @INLINE
-    public TimerMetric get(TIMERS timer) {
-        return timers[timer.ordinal()];
+    public TimerMetric get(TIMED_OPERATION timedOp) {
+        return timedOp.timer;
     }
 
-    public void start(TIMERS timer) {
+    public void start(TIMED_OPERATION timedOp) {
         if (trackTime) {
-            get(timer).start();
+            timedOp.timer.start();
         }
     }
 
-    public void stop(TIMERS timer) {
+    public void stop(TIMED_OPERATION timedOp) {
         if (trackTime) {
-            get(timer).stop();
+            timedOp.timer.stop();
         }
     }
 }
