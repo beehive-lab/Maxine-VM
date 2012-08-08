@@ -26,9 +26,7 @@
 package com.oracle.max.tools.javadoc.wiki;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import com.sun.max.ide.JavaProject;
 import com.sun.max.program.Classpath;
@@ -59,6 +57,7 @@ public class WikiDoclet extends Doclet {
     private static Map<String, String> validHtmlTags = new HashMap<String, String>();
     private static Map<String, String> classToProject = new HashMap<String, String>();
     private static char[] commentTextArray;
+    private static Stack<HtmlTag> lists = new Stack<HtmlTag>();
 
     static class WikiException extends RuntimeException {
         private static final long serialVersionUID = 1L;
@@ -68,6 +67,9 @@ public class WikiDoclet extends Doclet {
         }
     }
 
+    /**
+     * Records information on an HTML tag, specifically the tag name and any embedded attributes.
+     */
     private static class HtmlTag {
         String tag;
         String attributes;
@@ -96,8 +98,12 @@ public class WikiDoclet extends Doclet {
         }
     }
 
+    /**
+     * Denotes a subrange of a string and provides search operations that are constrained to the range.
+     */
     private static class StringRange {
         final String string;
+        String substring; // lazily created
         final int startIndex;
         final int endIndex;
 
@@ -105,31 +111,70 @@ public class WikiDoclet extends Doclet {
             this.string = string;
             this.startIndex = startIndex;
             this.endIndex = endIndex;
+            assert endIndex >= startIndex;
         }
 
         StringRange(StringRange range, int startIndex, int endIndex) {
             this(range.string, startIndex, endIndex);
         }
 
+        private String makeSubstring() {
+            if (substring == null) {
+                substring = string.substring(startIndex, endIndex);
+            }
+            return substring;
+        }
+
+        String content() {
+            return makeSubstring();
+        }
+
+        /*
+         * Searches that use String.indexOf but handles the range constraints.
+         * The fromIndex argument indexes "string".
+         */
+
+        int indexOf(char ch, int fromIndex) {
+            if (fromIndex >= endIndex) {
+                return -1;
+            }
+            int result = makeSubstring().indexOf(ch, fromIndex - startIndex);
+            return result < 0 ? result : result + startIndex;
+        }
+
+        int indexOf(String s, int fromIndex) {
+            if (fromIndex >= endIndex) {
+                return -1;
+            }
+            int result = makeSubstring().indexOf(s, fromIndex - startIndex);
+            return result < 0 ? result : result + startIndex;
+        }
+
+        int indexOf(char ch) {
+            return indexOf(ch, startIndex);
+        }
+
         @Override
         public String toString() {
-            return "\"" + string.substring(startIndex, endIndex) + "\"\nstart: " + startIndex + ", end: " + endIndex;
+            return "\"" + makeSubstring() + "\"\nstart: " + startIndex + ", end: " + endIndex;
         }
     }
 
-    private static class HtmlTagData {
-        String content;
-        StringRange contentRange;
+    /**
+     * Denotes the the content between an HTML tag and its matching end tag, with
+     * the index of the character after the '>' of the end tag for convenience.
+     */
+    private static class HtmlTagData extends StringRange {
         int tagEndIndex;
-        HtmlTagData(String text, StringRange contentRange, int tagEndIndex) {
-            this.contentRange = contentRange;
-            this.content = text.substring(contentRange.startIndex, contentRange.endIndex);
+
+        HtmlTagData(StringRange range, int startIndex, int endIndex, int tagEndIndex) {
+            super(range, startIndex, endIndex);
             this.tagEndIndex = tagEndIndex;
         }
 
         @Override
         public String toString() {
-            return contentRange.toString() + ", tagEnd: " + tagEndIndex;
+            return super.toString() + ", tagEndIndex: " + tagEndIndex;
         }
     }
 
@@ -147,6 +192,11 @@ public class WikiDoclet extends Doclet {
         }
     }
 
+    /**
+     * An entity is either an HTML tag or an inline javadoc tag.
+     * The {@code index} value is the start of the entity.
+     * In the case of HTML, it is the index of the {@code '<'} character.
+     */
     private static abstract class EntityIndex {
         final int index;
 
@@ -157,6 +207,9 @@ public class WikiDoclet extends Doclet {
     }
 
     private static class InlineTagEntityIndex extends EntityIndex {
+        /**
+         * The {@link InlineTagInfo} associated with this javadoc inline tag.
+         */
         InlineTagInfo inlineTagInfo;
 
         InlineTagEntityIndex(int index, InlineTagInfo inlineTagInfo) {
@@ -237,6 +290,7 @@ public class WikiDoclet extends Doclet {
         addHtmlTag("PRE");
         addHtmlTag("A");
         addHtmlTag("HR");
+        addHtmlTag("BR");
     }
 
     private static void addHtmlTag(String h) {
@@ -311,7 +365,7 @@ public class WikiDoclet extends Doclet {
     }
 
     /**
-     * Convert any embedded HTML tags and inline javadoc tags in {@code s} into Wiki equivalents.
+     * Convert any embedded HTML tags and inline javadoc tags in {@code range} into Wiki equivalents.
      * HTML tag content can contain inline tags, but not vice versa.
      * Transformed text is appended to {@link #sb}.
      * @param range {@code StringRange} to process
@@ -322,15 +376,21 @@ public class WikiDoclet extends Doclet {
     private static void processText(StringRange range, InlineTagInfo[] inlineTagInfo, EntityIndex lastEntityIndex) {
         int lastIndex = range.startIndex;
         while (lastIndex < range.endIndex) {
-            StringRange newRange = new StringRange(range, lastIndex, range.endIndex);
-            EntityIndex entityIndex = nextEntity(newRange, inlineTagInfo);
+            // Create a new subrange starting at lastIndex
+            StringRange subRange = new StringRange(range, lastIndex, range.endIndex);
+            // Find the next entity in newRange
+            EntityIndex entityIndex = nextEntity(subRange, inlineTagInfo);
             if (entityIndex == null) {
-                sb.append(fixLineBreaks(newRange, lastEntityIndex));
+                // no more, copy remaining content and terminate loop
+                sb.append(fixLineBreaks(subRange, lastEntityIndex));
                 break;
             }
+            // copy content from lastIndex to start of new entity
             sb.append(fixLineBreaks(new StringRange(range, lastIndex, entityIndex.index), lastEntityIndex));
+            // save entityIndex for next iteration
             lastEntityIndex = entityIndex;
             if (entityIndex instanceof InlineTagEntityIndex) {
+                // handle inline javadoc tag
                 InlineTagEntityIndex inlineTagEntityIndex = (InlineTagEntityIndex) entityIndex;
                 Tag inlineTag = inlineTagEntityIndex.inlineTagInfo.inlineTag;
                 if (inlineTag.name().equals("@code")) {
@@ -367,69 +427,95 @@ public class WikiDoclet extends Doclet {
                 } else {
                     assert false;
                 }
+                // step lastIndex beyond inline tag
                 lastIndex = inlineTagEntityIndex.inlineTagInfo.range.endIndex;
             } else if (entityIndex instanceof HtmlTagEntityIndex) {
-                int tagEndIndex = range.string.indexOf('>', lastIndex);
+                // process an HTML tag
+                int tagEndIndex = subRange.indexOf('>', entityIndex.index);
+                // check tag is well formed
                 if (tagEndIndex < 0) {
                     throw new WikiException("malformed HTML tag");
                 }
-                HtmlTag htmlTagInfo = HtmlTag.createTag(new StringRange(range.string, entityIndex.index + 1, tagEndIndex));
+                // create a new HTML tag from the tag content minus the <>
+                HtmlTag htmlTagInfo = HtmlTag.createTag(new StringRange(subRange.string, entityIndex.index + 1, tagEndIndex));
                 String htmlTag = htmlTagInfo.tag;
+                // a tag we don't handle (yet)
                 if (validHtmlTags.get(htmlTag) == null) {
                     throw new WikiException("unimplemented HTML tag: " + htmlTag);
                 }
-                HtmlTagData data = findmatchingTag(range.string, htmlTag, tagEndIndex + 1);
+                // HTML is horribly irregular but in "good" HTML, many tags have matching end tags
+                // and we want to process the internal context recursively.
+                HtmlTagData data = findmatchingTag(subRange, htmlTag, tagEndIndex + 1);
                 int hd = isHeader(htmlTag);
                 if (hd > 0) {
                     sb.append('\n');
                     sb.append('h');
                     sb.append(hd);
                     sb.append(". ");
-                    processText(data.contentRange, inlineTagInfo, lastEntityIndex);
+                    processText(data, inlineTagInfo, lastEntityIndex);
                     sb.append('\n');
                 } else if (htmlTag.equals("I")) {
                     sb.append('_');
-                    sb.append(data.content);
+                    sb.append(data.content());
                     sb.append('_');
                 } else if (htmlTag.equals("B")) {
                     sb.append('*');
-                    sb.append(data.content);
+                    sb.append(data.content());
                     sb.append('*');
                 } else if (htmlTag.equals("P")) {
                     // matching tag usually omitted
                     sb.append('\n');
                     if (data != null) {
-                        processText(data.contentRange, inlineTagInfo, lastEntityIndex);
+                        processText(data, inlineTagInfo, lastEntityIndex);
                     } else {
                         lastIndex = tagEndIndex + 1;
                     }
                     sb.append('\n');
                 } else if (htmlTag.equals("UL") | htmlTag.equals("OL")) {
-                    processText(data.contentRange, inlineTagInfo, lastEntityIndex);
+                    lists.push(htmlTagInfo);
+                    processText(data, inlineTagInfo, lastEntityIndex);
+                    lists.pop();
                     sb.append('\n');
                 } else if (htmlTag.equals("PRE")) {
                     // no interpretation of body
                     sb.append("{code}\n");
-                    sb.append(replacePreLeadingSpaces(fixEntityReferences(data.content)));
+                    sb.append(replacePreLeadingSpaces(fixEntityReferences(data.content())));
                     sb.append("{code}\n");
                 } else if (htmlTag.equals("LI")) {
                     sb.append('\n');
-                    sb.append("* ");
-                    processText(data.contentRange, inlineTagInfo, lastEntityIndex);
+                    processLists();
+                    processText(data, inlineTagInfo, lastEntityIndex);
                 } else if (htmlTag.equals("A")) {
                     sb.append('[');
-                    sb.append(data.content);
+                    sb.append(data.content());
                     sb.append('|');
                     sb.append(getHRef(htmlTagInfo.attributes));
                     sb.append(']');
                 } else if (htmlTag.equals("HR")) {
                     sb.append(HRULE);
+                } else if (htmlTag.equals("BR")) {
+                    sb.append("\n");
                 }
                 if (data != null) {
                     lastIndex = data.tagEndIndex;
+                } else {
+                    lastIndex = tagEndIndex + 1;
                 }
             }
         }
+    }
+
+    private static void processLists() {
+        for (HtmlTag htmlTag : lists) {
+            if (htmlTag.tag.equals("UL")) {
+                sb.append('*');
+            } else if (htmlTag.tag.equals("OL")) {
+                sb.append('#');
+            } else {
+                assert false;
+            }
+        }
+        sb.append(' ');
     }
 
     private static String getHRef(String s) {
@@ -475,15 +561,15 @@ public class WikiDoclet extends Doclet {
 
     /**
      * Remove internal line breaks and leading space from the javadoc comment as Wiki will treat them literally.
-     * @param s
-     * @param range of {@code s} to be analysed
+     * Very heuristic unfortunately.
+     * @param range string range to be analyzed
      * @return
      */
     private static String fixLineBreaks(StringRange range, EntityIndex lastEntityIndex) {
         String result = "";
         int index = range.startIndex;
         while (index < range.endIndex) {
-            int breakIndex = range.string.indexOf("\n ", index);
+            int breakIndex = range.indexOf("\n ", index);
             if (breakIndex < 0 || breakIndex >= range.endIndex - 2) {
                 if (breakIndex == range.endIndex - 2) {
                     // if it ends in "\n " we drop the newline but keep the space
@@ -615,14 +701,13 @@ public class WikiDoclet extends Doclet {
 
     /**
      * Finds the index of the next inline tag or HTML tag in {@code s[range]}.
-     * @param s
-     * @param range
+     * @param range string range to search
      * @param inlineTagInfo
      * @return an {@link EntityIndex} or null if not found
      */
     private static EntityIndex nextEntity(StringRange range, InlineTagInfo[] inlineTagInfo) {
-        int htmlTagIndex = range.string.indexOf('<', range.startIndex);
-        if (htmlTagIndex >= range.endIndex) {
+        int htmlTagIndex = range.indexOf('<');
+        if (htmlTagIndex < 0 || (range.string.charAt(htmlTagIndex + 1) == '/')) {
             htmlTagIndex = -1;
         }
         int inlineTagIndex = -1;
@@ -656,41 +741,49 @@ public class WikiDoclet extends Doclet {
     }
 
     /**
-     * Find the tag that matches {@code tag} in {@code s} starting at {@code index}.
-     * TODO Handle nested tags properly
-     * @param s
+     * Find the tag that matches {@code tag} in string {@code range} starting at {@code index}.
+     * @param range string range to be searched
      * @param tag
-     * @param index index of first char after '>'
+     * @param index index of first char after '>', i.e. the start tag
      * @return {@link HtmlTagData} or null if not found
      */
-    private static HtmlTagData findmatchingTag(String s, String tag, final int index) {
+    private static HtmlTagData findmatchingTag(StringRange range, String tag, final int index) {
         int curIndex = index;
+        int nestCount = 0;
         while (true) {
-            int tagIndex = s.indexOf('<', curIndex);
+            int tagIndex = range.indexOf('<', curIndex);
             if (tagIndex < 0) {
+                // no more tags, therefore no matching tag found in the given string range
                 return null;
             }
-            int tagEndIndex = s.indexOf('>', tagIndex);
-            if (s.charAt(tagIndex + 1) == '/') {
-                if (tagEndIndex < 0) {
-                    throw new WikiException("malformed HTML tag");
-                }
-                String endTag = s.substring(tagIndex + 2, tagEndIndex).toUpperCase();
+            // find the end of this tag, which may be the starts of a nested tag or the matching end tag
+            int tagEndIndex = range.indexOf('>', tagIndex);
+            if (tagEndIndex < 0) {
+                throw new WikiException("malformed HTML tag");
+            }
+            // check if this is a closing tag
+            if (range.string.charAt(tagIndex + 1) == '/') {
+                String endTag = range.string.substring(tagIndex + 2, tagEndIndex).toUpperCase(); // skip "</"
                 if (endTag.equals(tag)) {
-                    return new HtmlTagData(s, new StringRange(s, index, tagIndex), tagEndIndex + 1);
+                    if (nestCount == 0) {
+                        return new HtmlTagData(range, index, tagIndex, tagEndIndex + 1);
+                    } else {
+                        nestCount--;
+                    }
                 } else {
-                    // we found the end of a nested tag, just keep going
-                    curIndex = tagEndIndex + 1;
+                    // we found the end of an unmatching nested tag, just keep going
                 }
+                curIndex = tagEndIndex + 1;
             } else {
-                // start of nested tag, skip it unless it matches "tag" in which case treat it as an implicit end.
+                // start of nested tag, stack it if it matches "tag" else skip it.
                 // <P> is special, any nested tag matches (<P> as separator style)
-                String endTag = s.substring(tagIndex + 1, tagEndIndex).toUpperCase();
-                if (endTag.equals(tag) || (tag.equals("P") && endTag.equals("P"))) {
-                    return new HtmlTagData(s, new StringRange(s, index, tagIndex), tagIndex);
-                } else {
-                    curIndex = tagIndex + 1;
+                String endTag = range.string.substring(tagIndex + 1, tagEndIndex).toUpperCase();
+                if (tag.equals("P") && endTag.equals("P")) {
+                    return new HtmlTagData(range, index, tagIndex, tagIndex);
+                } else if (endTag.equals(tag)) {
+                    nestCount++;
                 }
+                curIndex = tagEndIndex + 1;
             }
         }
     }
