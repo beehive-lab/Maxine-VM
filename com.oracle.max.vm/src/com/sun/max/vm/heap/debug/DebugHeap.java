@@ -173,6 +173,37 @@ public class DebugHeap {
         }
     }
 
+    public static final class RefVerifier extends PointerIndexVisitor {
+        private MemoryRegion space1;
+        private MemoryRegion space2;
+
+        public RefVerifier() {
+
+        }
+        public RefVerifier(MemoryRegion space) {
+            this.space1 = space;
+        }
+
+        public RefVerifier(MemoryRegion space1, MemoryRegion space2) {
+            this.space1 = space1;
+            this.space2 = space2;
+        }
+        @Override
+        public void visit(Pointer pointer, int index) {
+            DebugHeap.verifyRefAtIndex(pointer, index, pointer.getReference(index), space1, space2);
+        }
+
+        public void setVerifiedSpace(MemoryRegion space) {
+            this.space1 = space;
+            this.space2 = null;
+        }
+
+        public void setVerifiedSpaces(MemoryRegion space1, MemoryRegion space2) {
+            this.space1 = space1;
+            this.space2 = space2;
+        }
+    }
+
     /**
      * Verifies that a reference value denoted by a given base pointer and index points into a known object address space.
      *
