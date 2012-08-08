@@ -25,8 +25,11 @@ package com.sun.max.vm.heap.sequential.gen.semiSpace;
 import static com.sun.max.vm.MaxineVM.Phase.*;
 import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMED_OPERATION.*;
 
+import java.lang.management.*;
+
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
+import com.sun.management.GarbageCollectorMXBean;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -38,11 +41,13 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.Heap.GCCallbackPhase;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
+import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -182,9 +187,24 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     private final NoEvacuatedSpaceReferenceVerifier noFromSpaceReferencesVerifiers;
 
     /**
-     * Verify that the FOT table is correctly setup.
+     * Support for verifying that the FOT table is correctly setup.
      */
     private final FOTVerifier fotVerifier;
+
+    /**
+     * A verifier that checks that a reference points to memory areas holding live objects.
+     */
+    private final DebugHeap.RefVerifier refVerifier = new DebugHeap.RefVerifier();
+    /**
+     * A verifier that checks that all roots are pointing to memory areas holding live objects.
+     */
+    private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(refVerifier);
+
+    /**
+     * Used to record the prefix of the from space that was overflowed by a minor collection.
+     * Used mostly for verification purposes.
+     */
+    private final MemoryRegion overflowedArea = new MemoryRegion();
 
     private final EvacuationTimers evacTimers = new EvacuationTimers();
 
@@ -197,6 +217,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      * Keeps track of last time a full GC completed.
      */
     private long lastFullGCTime = 0L;
+
 
     @HOSTED_ONLY
     public GenSSHeapScheme() {
@@ -270,11 +291,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
         return result;
     }
+
     private void verifyAfterMinorCollection() {
         // Verify that:
         // 1. offset table is correctly setup
-        // 2. there are no pointer from old to young.
         oldSpace.visit(fotVerifier);
+        // 2. there are no pointer from old to young.
         noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
         if (resizingPolicy.minorEvacuationOverflow()) {
             // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
@@ -282,15 +304,23 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             final BaseAtomicBumpPointerAllocator oldSpaceAllocator = oldSpace.allocator;
             noFromSpaceReferencesVerifiers.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
             noFromSpaceReferencesVerifiers.visitCells(oldSpaceAllocator.start(), oldSpaceAllocator.unsafeTop());
+            overflowedArea.setStart(oldSpaceAllocator.start());
+            overflowedArea.setEnd(oldSpaceAllocator.unsafeTop());
+            refVerifier.setVerifiedSpaces(oldToSpace, overflowedArea);
         } else {
+            refVerifier.setVerifiedSpace(oldSpace.space);
             oldSpace.visit(noFromSpaceReferencesVerifiers);
         }
+        // 3. Roots only point to memory region that contains live objects.
+        gcRootsVerifier.run();
     }
 
     private void verifyAfterFullCollection() {
+        refVerifier.setVerifiedSpace(oldSpace.space);
         oldSpace.visit(fotVerifier);
         noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
         oldSpace.visit(noFromSpaceReferencesVerifiers);
+        gcRootsVerifier.run();
     }
 
     private void doOldGenCollection() {
@@ -408,6 +438,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         if (MaxineVM.isDebug() && Heap.verbose()) {
             Log.println("--Begin nursery evacuation");
         }
+        final long startGCTime = System.currentTimeMillis();
         evacTimers.start(TOTAL);
         youngSpaceEvacuator.setGCOperation(genCollection);
         youngSpaceEvacuator.evacuate(Heap.logGCPhases());
@@ -463,6 +494,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 timeLogger.logGcTimes(invocationCount, false, evacTimers.get(TOTAL).getLastElapsedTime());
             }
         }
+        accumulatedGCTime = System.currentTimeMillis() - startGCTime;
         Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
     }
@@ -695,6 +727,26 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             };
         }
         return XirWriteBarrierSpecification.NULL_WRITE_BARRIER_GEN;
+    }
+
+    @Override
+    public GarbageCollectorMXBean getGarbageCollectorMXBean() {
+        return new GenSSGarbageCollectorMXBean();
+    }
+
+    private final class GenSSGarbageCollectorMXBean extends HeapSchemeAdaptor.GarbageCollectorMXBeanAdaptor {
+        private GenSSGarbageCollectorMXBean() {
+            super("GenSS");
+            add(new GenSSMemoryPoolMXBean(oldSpace.space, this));
+            add(new GenSSMemoryPoolMXBean(oldSpace.fromSpace, this));
+            add(new GenSSMemoryPoolMXBean(youngSpace.space, this));
+        }
+    }
+
+    private final class GenSSMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
+        GenSSMemoryPoolMXBean(MemoryRegion region, MemoryManagerMXBean manager) {
+            super(MemoryType.HEAP, region, manager);
+        }
     }
 
     @HOSTED_ONLY

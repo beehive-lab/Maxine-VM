@@ -30,7 +30,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.management.*;
 
-import com.sun.management.*;
 import com.sun.management.GarbageCollectorMXBean;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -93,10 +92,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      */
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(refUpdater);
 
-    /**
-     * Procedure used to verify a reference.
-     */
-    private final RefVerifier refVerifier = new RefVerifier();
 
     /**
      * A VM option for enabling extra checking of references. This should be disabled when running GC benchmarks.
@@ -108,10 +103,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         VMOptions.addFieldOption("-XX:", "VerifyReferences", SemiSpaceHeapScheme.class, "Do extra verification for each reference scanned by the GC", MaxineVM.Phase.PRISTINE);
     }
 
-    /**
-     * Procedure used to verify GC root reference well-formedness.
-     */
-    private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(refVerifier);
 
     private final CollectHeap collectHeap;
 
@@ -172,8 +163,17 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     private final TimerMetric copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
-    private long accumulatedGCTime;
     private long lastGCTime;
+
+    /**
+     * Procedure used to verify a reference.
+     */
+    private final DebugHeap.RefVerifier refVerifier = new DebugHeap.RefVerifier(toSpace);
+
+    /**
+     * Procedure used to verify GC root reference well-formedness.
+     */
+    private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(refVerifier);
 
     /**
      * A VM option for triggering a GC before every allocation.
@@ -319,13 +319,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             if (newRef != oldRef) {
                 pointer.setReference(wordIndex, newRef);
             }
-        }
-    }
-
-    private final class RefVerifier extends PointerIndexVisitor {
-        @Override
-        public void visit(Pointer pointer, int index) {
-            DebugHeap.verifyRefAtIndex(pointer, index, pointer.getReference(index), toSpace, null);
         }
     }
 
@@ -1192,22 +1185,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             add(new SemiSpaceMemoryPoolMXBean(fromSpace, this));
             add(new SemiSpaceMemoryPoolMXBean(toSpace, this));
         }
-
-        @Override
-        public GcInfo getLastGcInfo() {
-            return null;
-        }
-
-        @Override
-        public long getCollectionCount() {
-            return collectionCount;
-        }
-
-        @Override
-        public long getCollectionTime() {
-            return accumulatedGCTime;
-        }
-
     }
 
     private final class SemiSpaceMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
