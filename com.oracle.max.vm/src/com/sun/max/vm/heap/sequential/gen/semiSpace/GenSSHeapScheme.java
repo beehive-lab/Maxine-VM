@@ -25,8 +25,11 @@ package com.sun.max.vm.heap.sequential.gen.semiSpace;
 import static com.sun.max.vm.MaxineVM.Phase.*;
 import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMED_OPERATION.*;
 
+import java.lang.management.*;
+
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
+import com.sun.management.GarbageCollectorMXBean;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -43,6 +46,7 @@ import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
+import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -695,6 +699,26 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             };
         }
         return XirWriteBarrierSpecification.NULL_WRITE_BARRIER_GEN;
+    }
+
+    @Override
+    public GarbageCollectorMXBean getGarbageCollectorMXBean() {
+      return new GenSSGarbageCollectorMXBean();
+    }
+
+    private final class GenSSGarbageCollectorMXBean extends HeapSchemeAdaptor.GarbageCollectorMXBeanAdaptor {
+        private GenSSGarbageCollectorMXBean() {
+            super("GenSS");
+            add(new GenSSMemoryPoolMXBean(oldSpace.space, this));
+            add(new GenSSMemoryPoolMXBean(oldSpace.fromSpace, this));
+            add(new GenSSMemoryPoolMXBean(youngSpace.space, this));
+        }
+    }
+
+    private final class GenSSMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
+        GenSSMemoryPoolMXBean(MemoryRegion region, MemoryManagerMXBean manager) {
+            super(MemoryType.HEAP, region, manager);
+        }
     }
 
     @HOSTED_ONLY
