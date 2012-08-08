@@ -22,8 +22,11 @@
  */
 package com.sun.max.tele.object;
 
+import java.util.*;
+
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.vm.actor.member.*;
 
 
 /**
@@ -36,6 +39,21 @@ public class TeleTupleForwarderQuasi extends TeleTupleObject {
         super(vm, quasiReference);
         assert quasiReference.status().isForwarder();
     }
+
+    @Override
+    public Set<FieldActor> getFieldActors() {
+        TeleHub teleHub = getTeleHub();
+        if (teleHub instanceof TeleStaticHub) {
+            // Static tuples do not inherit fields; return only the local static fields.
+            final Set<FieldActor> staticFieldActors = new HashSet<FieldActor>();
+            for (FieldActor fieldActor : classActorForObjectType().localStaticFieldActors()) {
+                staticFieldActors.add(fieldActor);
+            }
+            return staticFieldActors;
+        }
+        return super.getFieldActors();
+    }
+
 
     @Override
     protected Object createDeepCopy(DeepCopier context) {
