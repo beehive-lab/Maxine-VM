@@ -114,7 +114,7 @@ public final class SemiSpaceDebugHeap extends DebugHeap {
         }
     }
 
-    public static Pointer skipCellPadding(Pointer cell) {
+    private static Pointer skipCellPadding(Pointer cell) {
         if (MaxineVM.isDebug()) {
             Pointer cellStart = cell;
             while (cell.getWord().equals(DebugHeap.padWord())) {
@@ -128,7 +128,4 @@ public final class SemiSpaceDebugHeap extends DebugHeap {
         }
         return cell;
     }
-
-
-
 }
