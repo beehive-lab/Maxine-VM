@@ -202,6 +202,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      */
     private long lastFullGCTime = 0L;
 
+
     @HOSTED_ONLY
     public GenSSHeapScheme() {
         cardTableRSet = new CardTableRSet();
@@ -412,6 +413,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         if (MaxineVM.isDebug() && Heap.verbose()) {
             Log.println("--Begin nursery evacuation");
         }
+        final long startGCTime = System.currentTimeMillis();
         evacTimers.start(TOTAL);
         youngSpaceEvacuator.setGCOperation(genCollection);
         youngSpaceEvacuator.evacuate(Heap.logGCPhases());
@@ -467,6 +469,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 timeLogger.logGcTimes(invocationCount, false, evacTimers.get(TOTAL).getLastElapsedTime());
             }
         }
+        accumulatedGCTime = System.currentTimeMillis() - startGCTime;
         Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
     }

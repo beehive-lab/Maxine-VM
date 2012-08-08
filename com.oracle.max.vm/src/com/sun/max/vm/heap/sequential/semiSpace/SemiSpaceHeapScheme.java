@@ -30,7 +30,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.management.*;
 
-import com.sun.management.*;
 import com.sun.management.GarbageCollectorMXBean;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -172,7 +171,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     private final TimerMetric copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
-    private long accumulatedGCTime;
     private long lastGCTime;
 
     /**
@@ -1192,22 +1190,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             add(new SemiSpaceMemoryPoolMXBean(fromSpace, this));
             add(new SemiSpaceMemoryPoolMXBean(toSpace, this));
         }
-
-        @Override
-        public GcInfo getLastGcInfo() {
-            return null;
-        }
-
-        @Override
-        public long getCollectionCount() {
-            return collectionCount;
-        }
-
-        @Override
-        public long getCollectionTime() {
-            return accumulatedGCTime;
-        }
-
     }
 
     private final class SemiSpaceMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
