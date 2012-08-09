@@ -266,9 +266,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
             // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
             final MaxCodeLocation newCodeLocation = newStackFrame.codeLocation();
-            if (this.codeLocation == null || !this.codeLocation.isSameAs(newCodeLocation)) {
-                setCodeLocation(newCodeLocation, interactiveForNative);
-            }
+            setCodeLocation(newCodeLocation, interactiveForNative);
         }
     }
 
