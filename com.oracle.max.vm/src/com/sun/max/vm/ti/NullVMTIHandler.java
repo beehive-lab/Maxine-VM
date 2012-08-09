@@ -130,7 +130,7 @@ public class NullVMTIHandler implements VMTIHandler {
     }
 
     @Override
-    public void methodUnloaded(ClassMethodActor classMethodActor) {
+    public void methodUnloaded(ClassMethodActor classMethodActor, Pointer codeAddr) {
     }
 
     @Override
