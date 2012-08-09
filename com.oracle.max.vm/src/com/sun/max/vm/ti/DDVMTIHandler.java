@@ -194,9 +194,9 @@ public class DDVMTIHandler implements VMTIHandler {
     }
 
     @Override
-    public void methodUnloaded(ClassMethodActor classMethodActor) {
-        eventHandler1.methodUnloaded(classMethodActor);
-        eventHandler2.methodUnloaded(classMethodActor);
+    public void methodUnloaded(ClassMethodActor classMethodActor, Pointer codeAddr) {
+        eventHandler1.methodUnloaded(classMethodActor, codeAddr);
+        eventHandler2.methodUnloaded(classMethodActor, codeAddr);
     }
 
     @Override

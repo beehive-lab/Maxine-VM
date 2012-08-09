@@ -161,8 +161,8 @@ class SDVMTIHandler implements VMTIHandler {
     }
 
     @Override
-    public void methodUnloaded(ClassMethodActor classMethodActor) {
-        eventHandler.methodUnloaded(classMethodActor);
+    public void methodUnloaded(ClassMethodActor classMethodActor, Pointer codeAddr) {
+        eventHandler.methodUnloaded(classMethodActor, codeAddr);
     }
 
     @Override

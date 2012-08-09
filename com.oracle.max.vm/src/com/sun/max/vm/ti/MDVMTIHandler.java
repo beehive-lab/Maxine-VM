@@ -245,9 +245,9 @@ class MDVMTIHandler implements VMTIHandler {
     }
 
     @Override
-    public void methodUnloaded(ClassMethodActor classMethodActor) {
+    public void methodUnloaded(ClassMethodActor classMethodActor, Pointer codeAddr) {
         for (int i = 0; i < eventHandlers.length; i++) {
-            eventHandlers[i].methodUnloaded(classMethodActor);
+            eventHandlers[i].methodUnloaded(classMethodActor, codeAddr);
         }
     }
 
