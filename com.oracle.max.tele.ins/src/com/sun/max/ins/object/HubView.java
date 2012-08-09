@@ -191,6 +191,7 @@ public final class HubView extends ObjectView<HubView> {
 
     @Override
     protected void refreshState(boolean force) {
+        super.refreshState(force);
         fieldsPane.refresh(force);
         toolBar.setBackground(viewBackgroundColor());
         if (iTablePane != null) {
@@ -205,7 +206,6 @@ public final class HubView extends ObjectView<HubView> {
         if (refMapPane != null) {
             refMapPane.refresh(force);
         }
-        super.refreshState(force);
     }
 
 }
