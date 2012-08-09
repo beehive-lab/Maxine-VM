@@ -49,7 +49,7 @@ public final class HubView extends ObjectView<HubView> {
     private boolean showMTables;
     private boolean showRefMaps;
 
-    private JToolBar toolBar;
+    private InspectorToolBar toolBar;
     private ObjectScrollPane fieldsPane;
     private ObjectScrollPane vTablePane;
     private ObjectScrollPane iTablePane;
