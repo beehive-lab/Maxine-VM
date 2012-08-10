@@ -34,12 +34,12 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * An agent to test event delivery. With no arguments the agent reports all events, otherwise the argument is
- * interpreted as a regular expression for events to report. Supports both {@link JJVMTIStd} and {@link JJVMTIMax},
- * registers both agents, selects one at runtime, default {@link JJVMTIStd}.
+ * interpreted as a regular expression for events to report.
  *
  * Can be included in the boot image or dynamically loaded as a VM extension.
  */
@@ -126,6 +126,10 @@ public class EventDelivery extends JJVMTIAgentAdapter implements JJVMTI.EventCal
                 }
             }
         }
+
+        // prevents recursion and deadlock when code eviction first occurs (which holds a lock preventing compilation)
+        ClassActor.fromJava(EventDelivery.class).findLocalClassMethodActor(
+                        SymbolTable.makeSymbol("compiledMethodUnload"), null).makeTargetMethod();
 
         Pattern eventsPattern = Pattern.compile(pattern);
 

@@ -135,6 +135,21 @@ Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeExceptionCallback(JNIEnv *env
     }
 }
 
+JNIEXPORT void JNICALL
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeCompiledMethodLoadCallback(JNIEnv *env, jclass c, jvmtiEventCompiledMethodLoad *callback,
+                jvmtiEnv *jvmti_env, jmethodID method, jint code_size, const void* code_addr, jint map_length,
+                const jvmtiAddrLocationMap* map, const void* compile_info) {
+    (*callback)(jvmti_env, method, code_size, code_addr, map_length, map, compile_info);
+
+}
+
+JNIEXPORT void JNICALL
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeCompiledMethodUnloadCallback(JNIEnv *env, jclass c, jvmtiEventCompiledMethodUnload *callback,
+                jvmtiEnv *jvmti_env, jmethodID method, jint code_size, const void* code_addr) {
+    (*callback)(jvmti_env, method, code_addr);
+
+}
+
 void setJVMTIThreadInfo(jvmtiThreadInfo *threadInfo, char *name, jint priority, jboolean is_daemon,
                 jobject thread_group, jobject context_class_loader) {
     threadInfo->name = name;

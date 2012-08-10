@@ -45,6 +45,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 
 /**
  * Code garbage collection (eviction).
@@ -441,6 +442,29 @@ public final class CodeEviction extends VmOperation {
         }
     }
 
+    final class VMTIUnload implements TargetMethod.Closure {
+        @Override
+        public boolean doTargetMethod(TargetMethod targetMethod) {
+            VMTI.handler().methodUnloaded(targetMethod.classMethodActor, targetMethod.codeStart().toPointer());
+            return true;
+        }
+    }
+
+    final class VMTIMove implements TargetMethod.Closure {
+        @Override
+        public boolean doTargetMethod(TargetMethod targetMethod) {
+            VMTI.handler().methodCompiled(targetMethod.classMethodActor);
+            return true;
+        }
+    }
+
+    /*
+     * Pre-allocated closures for VMTI events relating to code unloading/moving.
+     */
+    private final VMTIUnload vmtiUnload = new VMTIUnload();
+    private final VMTIMove vmtiMove = new VMTIMove();
+
+
     private static enum Phase {
         DUMPING,
         PATCHING,
@@ -457,6 +481,15 @@ public final class CodeEviction extends VmOperation {
 
     public static int evictionCount() {
         return evictionCount;
+    }
+
+    private static CodeEviction codeEviction = new CodeEviction();
+
+    /**
+     * Run a code eviction operation.
+     */
+    public static void run() {
+        codeEviction.submit();
     }
 
     @Override
@@ -517,6 +550,11 @@ public final class CodeEviction extends VmOperation {
         doAllThreads();
         tPatchStacks = timerEnd();
 
+        if (/*VMTI.handler().activeAgents() > 0*/true) {
+            CodeManager.runtimeBaselineCodeRegion.doOldTargetMethods(vmtiUnload);
+            CodeManager.runtimeBaselineCodeRegion.doNewTargetMethods(vmtiMove);
+        }
+
         CodeManager.runtimeBaselineCodeRegion.resetFromSpace();
         if (logging()) {
             codeEvictionLogger.logMove_Progress("FINISHED walking threads");
@@ -534,6 +572,7 @@ public final class CodeEviction extends VmOperation {
             codeEvictionLogger.logRun("completed", evictionCount, callingThread());
         }
         logTimingResults();
+
     }
 
     /**
