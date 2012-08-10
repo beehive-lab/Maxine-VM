@@ -178,8 +178,11 @@ public class JVMTI {
         }
 
         @Override
-        public void methodUnloaded(ClassMethodActor classMethodActor) {
-            JVMTI.event(E.COMPILED_METHOD_UNLOAD, classMethodActor);
+        public void methodUnloaded(ClassMethodActor classMethodActor, Pointer codeAddr) {
+            MethodUnloadEventData methodUnloadEventData = threadMethodUnloadEventData.get();
+            methodUnloadEventData.classMethodActor = classMethodActor;
+            methodUnloadEventData.codeAddr = codeAddr;
+            JVMTI.event(E.COMPILED_METHOD_UNLOAD, methodUnloadEventData);
         }
 
         @Override
@@ -220,6 +223,11 @@ public class JVMTI {
         @Override
         public void registerAgent(Word agentHandle) {
             JVMTI.setJVMTIEnv(agentHandle);
+        }
+
+        @Override
+        public int activeAgents() {
+            return JVMTI.activeEnvCount;
         }
 
         @Override
@@ -653,6 +661,22 @@ public class JVMTI {
                         invokeThreadObjectCallback(callback, cstruct, currentThreadHandle(), JniHandles.createLocalHandle(asClassActor(arg1).javaClass()));
                         break;
 
+                    case COMPILED_METHOD_LOAD: {
+                        ClassMethodActor cma = asClassMethodActor(arg1);
+                        TargetMethod tm = cma.currentTargetMethod();
+                        invokeCompiledMethodLoadCallback(callback, cstruct, MethodID.fromMethodActor(cma).value,
+                                        tm.codeLength(), tm.start(), 0, Pointer.zero(), Pointer.zero());
+                        break;
+                    }
+
+                    case COMPILED_METHOD_UNLOAD: {
+                        MethodUnloadEventData methodUnloadEventData = asMethodUnloadEventData(arg1);
+                        invokeCompiledMethodUnloadCallback(callback, cstruct,
+                                        MethodID.fromMethodActor(methodUnloadEventData.classMethodActor).value,
+                                        methodUnloadEventData.codeAddr.asAddress());
+                        break;
+                    }
+
                     case FIELD_ACCESS:
                     case FIELD_MODIFICATION:
                         invokeFieldAccessCallback(callback, cstruct, currentThreadHandle(), asFieldEventData(arg1));
@@ -720,6 +744,12 @@ public class JVMTI {
                         break;
                     }
 
+                    case COMPILED_METHOD_UNLOAD: {
+                        MethodUnloadEventData methodUnloadEventData = asMethodUnloadEventData(arg1);
+                        javaEnv.callbackHandler.compiledMethodUnload(methodUnloadEventData.classMethodActor, methodUnloadEventData.codeAddr);
+                        break;
+                    }
+
                     case METHOD_ENTRY: {
                         javaEnv.callbackHandler.methodEntry(currentThread, asClassMethodActor(arg1));
                         break;
@@ -784,15 +814,29 @@ public class JVMTI {
         }
     }
 
-    private static final ThreadFieldEventData tfed = new ThreadFieldEventData();
+    private static class MethodUnloadEventData  {
+        ClassMethodActor classMethodActor;
+        Pointer codeAddr;
+    }
+
+    private static class ThreadMethodUnloadEventData extends ThreadLocal<MethodUnloadEventData> {
+        @Override
+        public MethodUnloadEventData initialValue() {
+            return new MethodUnloadEventData();
+        }
+    }
+
+    private static final ThreadFieldEventData threadFieldEventData = new ThreadFieldEventData();
+    private static final ThreadMethodUnloadEventData threadMethodUnloadEventData = new ThreadMethodUnloadEventData();
 
     @INTRINSIC(UNSAFE_CAST) public static FieldEventData  asFieldEventData(Object object) { return (FieldEventData) object; }
+    @INTRINSIC(UNSAFE_CAST) public static MethodUnloadEventData  asMethodUnloadEventData(Object object) { return (MethodUnloadEventData) object; }
     @INTRINSIC(UNSAFE_CAST) public static FramePopEventData  asFramePopEventData(Object object) { return (FramePopEventData) object; }
     @INTRINSIC(UNSAFE_CAST) public static EventBreakpointID  asEventBreakpointID(Object object) { return (EventBreakpointID) object; }
     @INTRINSIC(UNSAFE_CAST) public static ExceptionEventData  asExceptionEventData(Object object) { return (ExceptionEventData) object; }
 
     private static FieldEventData setFieldEventData(JVMTIEvents.E event, Object object, int offset, boolean isStatic) {
-        FieldEventData data = tfed.get();
+        FieldEventData data = threadFieldEventData.get();
         data.object = object;
         data.offset = offset;
         data.isStatic = isStatic;

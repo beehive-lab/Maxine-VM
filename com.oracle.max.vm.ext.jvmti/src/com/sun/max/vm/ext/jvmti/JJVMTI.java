@@ -275,7 +275,7 @@ public interface JJVMTI {
                         ProtectionDomain protectionDomain, byte[] classData);
         void classLoad(Thread thread, ClassActor klass);
         void compiledMethodLoad(MethodActor method, int codeSize, Address codeAddr, AddrLocation[] map, Object compileInfo);
-        void compiledMethodUnload(MethodActor method, Address codeAddr); // TODO
+        void compiledMethodUnload(MethodActor method, Address codeAddr);
         void dataDumpRequest(); // TODO
         void dynamicCodeGenerated(String name, Address codeAddr, int length); // TODO
         void exception(Thread thread, MethodActor method, long location, Object exception, MethodActor catchMethod, long catchLocation);

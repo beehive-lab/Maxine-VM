@@ -153,8 +153,6 @@ public abstract class CodeManager {
     void initialize() {
     }
 
-    private static CodeEviction codeEviction = new CodeEviction();
-
     private static int BOOT_TO_BASELINE_INITIAL_SIZE = 10;
 
     /**
@@ -243,7 +241,7 @@ public abstract class CodeManager {
 
             // Allocation in the baseline code region may take another attempt upon contention, after compaction.
             if (start.isZero() && currentCodeRegion == runtimeBaselineCodeRegion) {
-                codeEviction.submit();
+                CodeEviction.run();
                 assert validateCodeCache();
                 start = currentCodeRegion.allocate(allocationSize, false);
                 if (CodeCacheContentionFrequency > 0 && CodeEviction.logging()) {
