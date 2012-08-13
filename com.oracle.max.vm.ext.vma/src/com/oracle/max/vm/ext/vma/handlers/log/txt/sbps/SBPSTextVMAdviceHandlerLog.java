@@ -36,8 +36,6 @@ import com.oracle.max.vm.ext.vma.handlers.log.txt.*;
  * with the {@value BUFSIZE_PROPERTY} system property. The buffer is normally flushed when it is full,
  * but this can be changed to a specific value by setting the {@value FLUSH_PROPERTY} system property.
  *
- * Since the buffer is global to all threads all entry methods are synchronized.
- *
  * N.B. The classloader id associated with a class, cf. {@link ClassNameId} is only output when the
  * short form is defined.
  *
@@ -46,12 +44,19 @@ import com.oracle.max.vm.ext.vma.handlers.log.txt.*;
  * the optimization on classloader id only works with short forms. In any event, for serious
  * use short forms are essential.
  *
+ * This class is unfor use with a single thread. For multiple-threads use
+ * {@link SBPSLockedTextVMHandlerLog} subclass which synchronizes and then invokes the methods
+ * in this class.
+ *
+ * In {@link #PERTHREAD_PROPERTY per-thread mode} each thread has its own buffer and log file.
+ * The log file name is used as a stem and each thread's file is named by suffixing with its id.
  */
 public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
 
     private static final String FLUSH_PROPERTY = "max.vma.flushlogat";
     private static final String BUFSIZE_PROPERTY = "max.vma.logbufsize";
     private static final String ABSTIME_PROPERTY = "max.vma.abstime";
+    private static final String PERTHREAD_PROPERTY = "max.vma.perthread";
     private static final int DEFAULT_BUFSIZE = 1024 * 1024;
     private PrintStream ps;
     private long lastTime;
@@ -59,12 +64,8 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     StringBuilder sb;
     private int flushLogAt;
 
-    SBPSTextVMAdviceHandlerLog() {
-        super();
-    }
-
     @Override
-    public boolean initializeLog(boolean timeOrdered) {
+    public boolean initializeLog(boolean threadBatched) {
         final String logFile = VMAdviceHandlerLogFile.getLogFile();
         try {
             ps = new PrintStream(new FileOutputStream(logFile));
@@ -83,7 +84,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
             appendSpace();
             sb.append(absTime);
             appendSpace();
-            sb.append(timeOrdered);
+            sb.append(threadBatched);
             end();
             return true;
         } catch (IOException ex) {
@@ -93,7 +94,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void finalizeLog() {
+    public void finalizeLog() {
         appendCode(FINALIZE_LOG);
         appendSpace();
         sb.append(timeStampGenerator.getTimeStamp());
@@ -225,13 +226,13 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseAfterGC(String threadName) {
+    public void adviseAfterGC(String threadName) {
         appendTT(ADVISE_AFTER_GC, threadName);
         end();
     }
 
     @Override
-    public synchronized void removal(long id) {
+    public void removal(long id) {
         appendCode(REMOVAL);
         appendSpace();
         sb.append(id);
@@ -239,7 +240,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void unseenObject(String threadName, long objId, String className, long clId) {
+    public void unseenObject(String threadName, long objId, String className, long clId) {
         appendTTId(UNSEEN, objId, threadName);
         sb.append(className);
         // clId elided
@@ -247,7 +248,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void resetTime() {
+    public void resetTime() {
         appendCode(RESET_TIME);
         appendSpace();
         lastTime = timeStampGenerator.getTimeStamp();
@@ -264,7 +265,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeGetStatic(String threadName, String className, long clId, String memberName) {
+    public void adviseBeforeGetStatic(String threadName, String className, long clId, String memberName) {
         appendTT(ADVISE_BEFORE_GET_STATIC, threadName);
         appendSpace();
         appendQualName(className, clId, memberName);
@@ -272,7 +273,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforePutStatic(String threadName, String className, long clId, String memberName, double value) {
+    public void adviseBeforePutStatic(String threadName, String className, long clId, String memberName, double value) {
         appendPutStaticPrefix(className, clId, memberName, threadName);
         sb.append(DOUBLE_VALUE);
         appendSpace();
@@ -281,7 +282,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforePutStatic(String threadName, String className, long clId, String memberName, long value) {
+    public void adviseBeforePutStatic(String threadName, String className, long clId, String memberName, long value) {
         appendPutStaticPrefix(className, clId, memberName, threadName);
         sb.append(LONG_VALUE);
         appendSpace();
@@ -290,7 +291,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforePutStatic(String threadName, String className, long clId, String memberName, float value) {
+    public void adviseBeforePutStatic(String threadName, String className, long clId, String memberName, float value) {
         appendPutStaticPrefix(className, clId, memberName, threadName);
         sb.append(FLOAT_VALUE);
         appendSpace();
@@ -299,7 +300,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforePutStaticObject(String threadName, String className, long clId, String memberName, long valueId) {
+    public void adviseBeforePutStaticObject(String threadName, String className, long clId, String memberName, long valueId) {
         appendPutStaticPrefix(className, clId, memberName, threadName);
         sb.append(OBJ_VALUE);
         appendSpace();
@@ -308,14 +309,14 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeGetField(String threadName, long objId, String className, long clId, String memberName) {
+    public void adviseBeforeGetField(String threadName, long objId, String className, long clId, String memberName) {
         appendTTId(ADVISE_BEFORE_GET_FIELD, objId, threadName);
         appendQualName(className, clId, memberName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforePutField(String threadName, long objId, String className, long clId, String memberName, double value) {
+    public void adviseBeforePutField(String threadName, long objId, String className, long clId, String memberName, double value) {
         appendPutFieldPrefix(objId, className, clId, memberName, threadName);
         sb.append(DOUBLE_VALUE);
         appendSpace();
@@ -324,7 +325,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforePutField(String threadName, long objId, String className, long clId, String memberName, long value) {
+    public void adviseBeforePutField(String threadName, long objId, String className, long clId, String memberName, long value) {
         appendPutFieldPrefix(objId, className, clId, memberName, threadName);
         sb.append(LONG_VALUE);
         appendSpace();
@@ -333,7 +334,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforePutField(String threadName, long objId, String className, long clId, String memberName, float value) {
+    public void adviseBeforePutField(String threadName, long objId, String className, long clId, String memberName, float value) {
         appendPutFieldPrefix(objId, className, clId, memberName, threadName);
         sb.append(FLOAT_VALUE);
         appendSpace();
@@ -342,7 +343,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforePutFieldObject(String threadName, long objId, String className, long clId, String memberName, long valueId) {
+    public void adviseBeforePutFieldObject(String threadName, long objId, String className, long clId, String memberName, long valueId) {
         appendPutFieldPrefix(objId, className, clId, memberName, threadName);
         sb.append(OBJ_VALUE);
         appendSpace();
@@ -351,13 +352,13 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeArrayLoad(String threadName, long objId, int index) {
+    public void adviseBeforeArrayLoad(String threadName, long objId, int index) {
         appendTTIdIndex(ADVISE_BEFORE_ARRAY_LOAD, objId, threadName, index);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeArrayStore(String threadName, long objId, int index, float value) {
+    public void adviseBeforeArrayStore(String threadName, long objId, int index, float value) {
         appendTTIdIndex(ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
         sb.append(FLOAT_VALUE);
         appendSpace();
@@ -366,7 +367,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeArrayStore(String threadName, long objId, int index, long value) {
+    public void adviseBeforeArrayStore(String threadName, long objId, int index, long value) {
         appendTTIdIndex(ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
         sb.append(LONG_VALUE);
         appendSpace();
@@ -375,7 +376,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeArrayStore(String threadName, long objId, int index, double value) {
+    public void adviseBeforeArrayStore(String threadName, long objId, int index, double value) {
         appendTTIdIndex(ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
         sb.append(DOUBLE_VALUE);
         appendSpace();
@@ -384,7 +385,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeArrayStoreObject(String threadName, long objId, int index, long valueId) {
+    public void adviseBeforeArrayStoreObject(String threadName, long objId, int index, long valueId) {
         appendTTIdIndex(ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
         sb.append(OBJ_VALUE);
         appendSpace();
@@ -393,14 +394,14 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseAfterNew(String threadName, long objId, String className, long clId) {
+    public void adviseAfterNew(String threadName, long objId, String className, long clId) {
         appendTTId(ADVISE_AFTER_NEW, objId, threadName);
         sb.append(className);
         end();
     }
 
     @Override
-    public synchronized void adviseAfterNewArray(String threadName, long objId, String className, long clId, int length) {
+    public void adviseAfterNewArray(String threadName, long objId, String className, long clId, int length) {
         appendTTId(ADVISE_AFTER_NEW_ARRAY, objId, threadName);
         sb.append(className);
         appendSpace();
@@ -409,20 +410,20 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseAfterMultiNewArray(String threadName, long objId, String className, long clId, int length) {
+    public void adviseAfterMultiNewArray(String threadName, long objId, String className, long clId, int length) {
         // MultiArrays are explicitly handled by multiple calls to adviseAfterNewArray so we just
         // log the top level array.
         adviseAfterNewArray(threadName, objId, className, clId, length);
     }
 
     @Override
-    public synchronized void adviseBeforeGC(String threadName) {
+    public void adviseBeforeGC(String threadName) {
         appendTT(ADVISE_BEFORE_GC, threadName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeConstLoad(String threadName, long value) {
+    public void adviseBeforeConstLoad(String threadName, long value) {
         appendTT(ADVISE_BEFORE_CONST_LOAD, threadName);
         appendSpace();
         sb.append(LONG_VALUE);
@@ -432,7 +433,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeConstLoadObject(String threadName, long value) {
+    public void adviseBeforeConstLoadObject(String threadName, long value) {
         appendTT(ADVISE_BEFORE_CONST_LOAD, threadName);
         appendSpace();
         sb.append(OBJ_VALUE);
@@ -442,7 +443,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeConstLoad(String threadName, float value) {
+    public void adviseBeforeConstLoad(String threadName, float value) {
         appendTT(ADVISE_BEFORE_CONST_LOAD, threadName);
         appendSpace();
         sb.append(FLOAT_VALUE);
@@ -452,7 +453,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeConstLoad(String threadName, double value) {
+    public void adviseBeforeConstLoad(String threadName, double value) {
         appendTT(ADVISE_BEFORE_CONST_LOAD, threadName);
         appendSpace();
         sb.append(DOUBLE_VALUE);
@@ -462,7 +463,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeLoad(String threadName, int arg1) {
+    public void adviseBeforeLoad(String threadName, int arg1) {
         appendTT(ADVISE_BEFORE_LOAD, threadName);
         appendSpace();
         sb.append(arg1);
@@ -470,7 +471,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeStore(String threadName, int dispToLocalSlot, long value) {
+    public void adviseBeforeStore(String threadName, int dispToLocalSlot, long value) {
         appendTT(ADVISE_BEFORE_STORE, threadName);
         appendSpace();
         sb.append(dispToLocalSlot);
@@ -482,7 +483,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeStore(String threadName, int dispToLocalSlot, float value) {
+    public void adviseBeforeStore(String threadName, int dispToLocalSlot, float value) {
         appendTT(ADVISE_BEFORE_STORE, threadName);
         appendSpace();
         sb.append(dispToLocalSlot);
@@ -494,7 +495,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeStore(String threadName, int dispToLocalSlot, double value) {
+    public void adviseBeforeStore(String threadName, int dispToLocalSlot, double value) {
         appendTT(ADVISE_BEFORE_STORE, threadName);
         appendSpace();
         sb.append(dispToLocalSlot);
@@ -506,7 +507,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeStoreObject(String threadName, int dispToLocalSlot, long value) {
+    public void adviseBeforeStoreObject(String threadName, int dispToLocalSlot, long value) {
         appendTT(ADVISE_BEFORE_STORE, threadName);
         appendSpace();
         sb.append(dispToLocalSlot);
@@ -518,7 +519,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeStackAdjust(String threadName, int arg1) {
+    public void adviseBeforeStackAdjust(String threadName, int arg1) {
         appendTT(ADVISE_BEFORE_STACK_ADJUST, threadName);
         appendSpace();
         sb.append(arg1);
@@ -526,7 +527,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeOperation(String threadName, int arg1, long arg2, long arg3) {
+    public void adviseBeforeOperation(String threadName, int arg1, long arg2, long arg3) {
         prefixAdviseBeforeOperation(threadName, arg1);
         sb.append(LONG_VALUE);
         appendSpace();
@@ -537,7 +538,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeOperation(String threadName, int arg1, float arg2, float arg3) {
+    public void adviseBeforeOperation(String threadName, int arg1, float arg2, float arg3) {
         prefixAdviseBeforeOperation(threadName, arg1);
         sb.append(FLOAT_VALUE);
         appendSpace();
@@ -548,7 +549,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeOperation(String threadName, int arg1, double arg2, double arg3) {
+    public void adviseBeforeOperation(String threadName, int arg1, double arg2, double arg3) {
         prefixAdviseBeforeOperation(threadName, arg1);
         sb.append(DOUBLE_VALUE);
         appendSpace();
@@ -559,7 +560,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeConversion(String threadName, int arg1, long arg2) {
+    public void adviseBeforeConversion(String threadName, int arg1, long arg2) {
         appendTT(ADVISE_BEFORE_CONVERSION, threadName);
         appendSpace();
         sb.append(arg1);
@@ -572,7 +573,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeConversion(String threadName, int arg1, float arg2) {
+    public void adviseBeforeConversion(String threadName, int arg1, float arg2) {
         appendTT(ADVISE_BEFORE_CONVERSION, threadName);
         appendSpace();
         sb.append(arg1);
@@ -585,7 +586,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeConversion(String threadName, int arg1, double arg2) {
+    public void adviseBeforeConversion(String threadName, int arg1, double arg2) {
         appendTT(ADVISE_BEFORE_CONVERSION, threadName);
         appendSpace();
         sb.append(arg1);
@@ -598,7 +599,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeIf(String threadName, int opcode, int op1, int op2) {
+    public void adviseBeforeIf(String threadName, int opcode, int op1, int op2) {
         appendTT(ADVISE_BEFORE_IF, threadName);
         appendSpace();
         sb.append(opcode);
@@ -613,7 +614,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeIfObject(String threadName, int opcode, long objId1, long objId2) {
+    public void adviseBeforeIfObject(String threadName, int opcode, long objId1, long objId2) {
         appendTT(ADVISE_BEFORE_IF, threadName);
         appendSpace();
         sb.append(opcode);
@@ -628,7 +629,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeReturnObject(String threadName, long value) {
+    public void adviseBeforeReturnObject(String threadName, long value) {
         appendTT(ADVISE_BEFORE_RETURN, threadName);
         appendSpace();
         sb.append(OBJ_VALUE);
@@ -638,7 +639,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeReturn(String threadName, long value) {
+    public void adviseBeforeReturn(String threadName, long value) {
         appendTT(ADVISE_BEFORE_RETURN, threadName);
         appendSpace();
         sb.append(LONG_VALUE);
@@ -648,7 +649,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeReturn(String threadName, float value) {
+    public void adviseBeforeReturn(String threadName, float value) {
         appendTT(ADVISE_BEFORE_RETURN, threadName);
         appendSpace();
         sb.append(FLOAT_VALUE);
@@ -658,7 +659,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeReturn(String threadName, double value) {
+    public void adviseBeforeReturn(String threadName, double value) {
         appendTT(ADVISE_BEFORE_RETURN, threadName);
         appendSpace();
         sb.append(DOUBLE_VALUE);
@@ -668,68 +669,68 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeReturn(String threadName) {
+    public void adviseBeforeReturn(String threadName) {
         appendTT(ADVISE_BEFORE_RETURN, threadName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeInvokeVirtual(String threadName, long objId, String className, long clId, String memberName) {
+    public void adviseBeforeInvokeVirtual(String threadName, long objId, String className, long clId, String memberName) {
         appendTTId(ADVISE_BEFORE_INVOKE_VIRTUAL, objId, threadName);
         appendQualName(className, clId, memberName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeInvokeSpecial(String threadName, long objId, String className, long clId, String memberName) {
+    public void adviseBeforeInvokeSpecial(String threadName, long objId, String className, long clId, String memberName) {
         appendTTId(ADVISE_BEFORE_INVOKE_SPECIAL, objId, threadName);
         appendQualName(className, clId, memberName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeInvokeStatic(String threadName, long objId, String className, long clId, String memberName) {
+    public void adviseBeforeInvokeStatic(String threadName, long objId, String className, long clId, String memberName) {
         appendTTId(ADVISE_BEFORE_INVOKE_STATIC, objId, threadName);
         appendQualName(className, clId, memberName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeInvokeInterface(String threadName, long objId, String className, long clId, String memberName) {
+    public void adviseBeforeInvokeInterface(String threadName, long objId, String className, long clId, String memberName) {
         appendTTId(ADVISE_BEFORE_INVOKE_INTERFACE, objId, threadName);
         appendQualName(className, clId, memberName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeArrayLength(String threadName, long objId, int length) {
+    public void adviseBeforeArrayLength(String threadName, long objId, int length) {
         appendTTId(ADVISE_BEFORE_ARRAY_LENGTH, objId, threadName);
         sb.append(length);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeThrow(String threadName, long objId) {
+    public void adviseBeforeThrow(String threadName, long objId) {
         appendTTId(ADVISE_BEFORE_THROW, objId, threadName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeCheckCast(String threadName, long objId, String className, long clId) {
+    public void adviseBeforeCheckCast(String threadName, long objId, String className, long clId) {
         appendTTId(ADVISE_BEFORE_CHECK_CAST, objId, threadName);
         sb.append(className);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeInstanceOf(String threadName, long objId, String className, long clId) {
+    public void adviseBeforeInstanceOf(String threadName, long objId, String className, long clId) {
         appendTTId(ADVISE_BEFORE_INSTANCE_OF, objId, threadName);
         sb.append(className);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeBytecode(String threadName, int arg1) {
+    public void adviseBeforeBytecode(String threadName, int arg1) {
         appendTT(ADVISE_BEFORE_BYTECODE, threadName);
         appendSpace();
         sb.append(arg1);
@@ -737,47 +738,47 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeMonitorEnter(String threadName, long objId) {
+    public void adviseBeforeMonitorEnter(String threadName, long objId) {
         appendTTId(ADVISE_BEFORE_MONITOR_ENTER, objId, threadName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeMonitorExit(String threadName, long objId) {
+    public void adviseBeforeMonitorExit(String threadName, long objId) {
         appendTTId(ADVISE_BEFORE_MONITOR_EXIT, objId, threadName);
         end();
     }
 
     @Override
-    public synchronized void adviseAfterInvokeVirtual(String threadName, long objId, String className, long clId, String memberName) {
+    public void adviseAfterInvokeVirtual(String threadName, long objId, String className, long clId, String memberName) {
         appendTTId(ADVISE_AFTER_INVOKE_VIRTUAL, objId, threadName);
         appendQualName(className, clId, memberName);
         end();
     }
 
     @Override
-    public synchronized void adviseAfterInvokeStatic(String threadName, long objId, String className, long clId, String memberName) {
+    public void adviseAfterInvokeStatic(String threadName, long objId, String className, long clId, String memberName) {
         appendTTId(ADVISE_AFTER_INVOKE_STATIC, objId, threadName);
         appendQualName(className, clId, memberName);
         end();
     }
 
     @Override
-    public synchronized void adviseAfterInvokeInterface(String threadName, long objId, String className, long clId, String memberName) {
+    public void adviseAfterInvokeInterface(String threadName, long objId, String className, long clId, String memberName) {
         appendTTId(ADVISE_AFTER_INVOKE_INTERFACE, objId, threadName);
         appendQualName(className, clId, memberName);
         end();
     }
 
     @Override
-    public synchronized void adviseAfterInvokeSpecial(String threadName, long objId, String className, long clId, String memberName) {
+    public void adviseAfterInvokeSpecial(String threadName, long objId, String className, long clId, String memberName) {
         appendTTId(ADVISE_AFTER_INVOKE_SPECIAL, objId, threadName);
         appendQualName(className, clId, memberName);
         end();
     }
 
     @Override
-    public synchronized void adviseAfterMethodEntry(String threadName, long objId, String className, long clId, String memberName) {
+    public void adviseAfterMethodEntry(String threadName, long objId, String className, long clId, String memberName) {
         appendTTId(ADVISE_AFTER_METHOD_ENTRY, objId, threadName);
         appendQualName(className, clId, memberName);
         end();

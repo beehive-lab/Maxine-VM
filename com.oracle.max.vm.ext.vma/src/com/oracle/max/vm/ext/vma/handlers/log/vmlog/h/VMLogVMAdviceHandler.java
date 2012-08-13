@@ -103,6 +103,7 @@ public class VMLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
                 vmaVMLog.registerCustom(VMAVMLogger.logger, new VMLogFlusher());
             }
             VMAdviceHandlerLogAdapter handler = new VMAdviceHandlerLogAdapter();
+            handler.setThreadBatched(true);
             handler.initialise(phase);
             super.setRemovalTracker(handler.getRemovalTracker(state));
             VMAVMLogger.VMAVMLoggerImpl.setLogHandler(handler);

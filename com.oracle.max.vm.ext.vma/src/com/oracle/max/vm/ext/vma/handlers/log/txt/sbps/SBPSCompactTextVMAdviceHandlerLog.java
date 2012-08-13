@@ -32,8 +32,12 @@ public class SBPSCompactTextVMAdviceHandlerLog extends CompactTextVMAdviceHandle
     private final SBPSTextVMAdviceHandlerLog jdel;
 
     public SBPSCompactTextVMAdviceHandlerLog() {
-        super(new SBPSTextVMAdviceHandlerLog());
-        this.jdel = (SBPSTextVMAdviceHandlerLog) del;
+        this(new SBPSTextVMAdviceHandlerLog());
+    }
+
+    protected SBPSCompactTextVMAdviceHandlerLog(SBPSTextVMAdviceHandlerLog del) {
+        super(del);
+        this.jdel = del;
     }
 
     @Override

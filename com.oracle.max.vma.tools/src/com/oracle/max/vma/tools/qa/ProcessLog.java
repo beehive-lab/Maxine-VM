@@ -424,7 +424,7 @@ public class ProcessLog {
         setArgs(reader.readLine());
         reader.close();
         assert commandMap.get(recordParts[0]) == Key.INITIALIZE_LOG;
-        if (!Boolean.parseBoolean(recordParts[3])) {
+        if (Boolean.parseBoolean(recordParts[3])) {
             // not time ordered, run the converter to a temp file
             if (verbose) {
                 System.out.println("creating time ordered log from per-thread batched log");

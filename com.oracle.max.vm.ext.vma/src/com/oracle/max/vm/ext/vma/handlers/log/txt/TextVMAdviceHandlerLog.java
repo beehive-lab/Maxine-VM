@@ -32,9 +32,12 @@ import com.oracle.max.vm.ext.vma.handlers.log.*;
  * There is an explicit assumption that log records are ordered in time to support
  * the relative time optimization. However, an embedded resetTimeLog record can be
  * used to "reset" the time for logs that are created from, say, a set of records for a set
- * of threads. Normally the log uses relative time, recording the offset from the previous
+ * of threads. Such "batched" logs are also indicated by the second argument to
+ * the {@link Key#INITIALIZE_LOG} record bing {@code true}.
+ *
+ * Normally the log uses relative time, recording the offset from the previous
  * record for that thread. However, it is possible to use absolute time and this is
- * indicated by a boolean value to the {@link Key#INITIALIZE_LOG} record.
+ * indicated by a {@code true} value to first argument of the {@link Key#INITIALIZE_LOG} record.
  *
  * Each log record occupies one line starting with the string code for the {@link Key}.
  * The key is followed by the time (either absolute or relative) and then, for most records,

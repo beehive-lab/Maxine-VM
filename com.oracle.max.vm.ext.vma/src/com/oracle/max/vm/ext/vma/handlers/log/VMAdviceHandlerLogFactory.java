@@ -27,7 +27,7 @@ import com.oracle.max.vm.ext.vma.handlers.log.txt.sbps.*;
 /**
  * Factory for controlling which subclass of {@link VMAdviceHandlerLog} is used.
  *
- * The default choice is {@link SBPSCompactTextVMAdviceHandlerLog} but this
+ * The default choice is {@link SBPSLockedCompactTextVMAdviceHandlerLog} but this
  * can be changed with the {@value LOGCLASS_PROPERTY} system property,
  * which should be the fully qualified name of the class.
  */
@@ -39,7 +39,7 @@ public class VMAdviceHandlerLogFactory {
         VMAdviceHandlerLog result = null;
         final String logClass = System.getProperty(LOGCLASS_PROPERTY);
         if (logClass == null) {
-            result = new SBPSCompactTextVMAdviceHandlerLog();
+            result = new SBPSLockedCompactTextVMAdviceHandlerLog();
         } else {
             try {
                 result = (VMAdviceHandlerLog) Class.forName(logClass).newInstance();

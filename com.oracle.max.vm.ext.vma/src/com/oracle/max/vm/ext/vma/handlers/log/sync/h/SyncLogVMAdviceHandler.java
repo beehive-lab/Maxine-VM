@@ -69,7 +69,7 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
         super.initialise(phase);
         if (phase == MaxineVM.Phase.RUNNING) {
             logHandler = new VMAdviceHandlerLogAdapter();
-            logHandler.setTimeOrdered(true);
+            logHandler.setThreadBatched(false);
             logHandler.initialise(phase);
             super.setRemovalTracker(logHandler.getRemovalTracker(state));
         } else if (phase == MaxineVM.Phase.TERMINATING) {

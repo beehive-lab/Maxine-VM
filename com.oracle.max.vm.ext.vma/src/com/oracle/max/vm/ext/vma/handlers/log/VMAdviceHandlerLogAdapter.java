@@ -86,17 +86,17 @@ public class VMAdviceHandlerLogAdapter extends VMAdviceHandler {
     private ObjectStateHandler state;
 
     /**
-     * Denotes whether the log records are time ordered.
-     * Default is true, but can be changed by {@link #setTimeOrdered(boolean)}.
+     * Denotes whether the log records are batched per thread.
+     * Default is {@code false}, but can be changed by {@link #setThreadBatched(boolean)}.
      */
-    private boolean timeOrdered;
+    private boolean threadBatched;
 
     public VMAdviceHandlerLog getLog() {
         return log;
     }
 
-    public void setTimeOrdered(boolean timeOrdered) {
-        this.timeOrdered = timeOrdered;
+    public void setThreadBatched(boolean threadBatched) {
+        this.threadBatched = threadBatched;
     }
 
     protected void setThreadNameGenerator(ThreadNameGenerator tng) {
@@ -118,7 +118,7 @@ public class VMAdviceHandlerLogAdapter extends VMAdviceHandler {
 
             log = VMAdviceHandlerLogFactory.create();
 
-            if (log == null || !log.initializeLog(timeOrdered)) {
+            if (log == null || !log.initializeLog(threadBatched)) {
                 throw new RuntimeException("log creation failed");
             }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
