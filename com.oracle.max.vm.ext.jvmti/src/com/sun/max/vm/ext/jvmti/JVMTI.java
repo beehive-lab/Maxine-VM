@@ -441,7 +441,6 @@ public class JVMTI {
    /**
      * Support for avoiding unnecessary work in the VM.
      * Returns {@code true} iff at least one agent wants to handle this event.
-     * TODO fix for Java agents
      * @param eventId
      */
     public static synchronized boolean eventNeeded(JVMTIEvents.E event) {
@@ -664,7 +663,7 @@ public class JVMTI {
                     case COMPILED_METHOD_LOAD: {
                         ClassMethodActor cma = asClassMethodActor(arg1);
                         TargetMethod tm = cma.currentTargetMethod();
-                        invokeCompiledMethodLoadCallback(callback, cstruct, MethodID.fromMethodActor(cma).value,
+                        invokeCompiledMethodLoadCallback(callback, cstruct, MethodID.fromMethodActor(cma),
                                         tm.codeLength(), tm.start(), 0, Pointer.zero(), Pointer.zero());
                         break;
                     }
@@ -672,7 +671,7 @@ public class JVMTI {
                     case COMPILED_METHOD_UNLOAD: {
                         MethodUnloadEventData methodUnloadEventData = asMethodUnloadEventData(arg1);
                         invokeCompiledMethodUnloadCallback(callback, cstruct,
-                                        MethodID.fromMethodActor(methodUnloadEventData.classMethodActor).value,
+                                        MethodID.fromMethodActor(methodUnloadEventData.classMethodActor),
                                         methodUnloadEventData.codeAddr.asAddress());
                         break;
                     }
