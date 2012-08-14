@@ -66,9 +66,9 @@ public class JVMTICallbacks {
 
     static native void invokeBreakpointCallback(Pointer callback, Pointer jvmtiEnv, Word thread, long methodId, int location);
 
-    static native void invokeCompiledMethodLoadCallback(Pointer callback, Pointer jvmtiEnv, long methodId, int codeSize,
+    static native void invokeCompiledMethodLoadCallback(Pointer callback, Pointer jvmtiEnv, Word methodId, int codeSize,
                     Address codeAddr, int mapLength, Pointer mapPtr, Pointer compileInfo);
 
-    static native void invokeCompiledMethodUnloadCallback(Pointer callback, Pointer jvmtiEnv, long methodId, Address codeAddr);
+    static native void invokeCompiledMethodUnloadCallback(Pointer callback, Pointer jvmtiEnv, Word methodId, Address codeAddr);
 
 }
