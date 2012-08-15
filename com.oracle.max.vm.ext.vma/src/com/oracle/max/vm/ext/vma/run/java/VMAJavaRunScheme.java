@@ -24,7 +24,7 @@ package com.oracle.max.vm.ext.vma.run.java;
 
 import com.oracle.max.vm.ext.t1x.vma.*;
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.log.vmlog.h.*;
+import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.ProgramError;
@@ -188,9 +188,6 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
                 if (adviceHandler != null) {
                     adviceHandler.initialise(phase);
                     advising = true;
-                    // we make this call because when the VM originally called VMTIHandler.threadStart
-                    // advising was not enabled
-                    threadStarting();
                 } else {
                     Log.println("no VMA handler defined");
                     MaxineVM.exit(-1);

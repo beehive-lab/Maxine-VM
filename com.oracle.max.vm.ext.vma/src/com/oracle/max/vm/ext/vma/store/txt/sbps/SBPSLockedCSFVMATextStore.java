@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,21 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.objstate;
-
-import com.oracle.max.vm.ext.vma.handlers.store.sync.h.*;
-import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
-import com.oracle.max.vm.ext.vma.run.java.*;
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
+package com.oracle.max.vm.ext.vma.store.txt.sbps;
 
 
-public class Package extends BootImagePackage {
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
-            (VMAJavaRunScheme.isHandlerClass(SyncStoreVMAdviceHandler.class) ||
-             VMAJavaRunScheme.isHandlerClass(VMLogStoreVMAdviceHandler.class));
+/**
+ * Variant of {@link SBPSCSFVMATextStore} that uses {@link SBPSLockedVMATextStore}.
+ */
+public class SBPSLockedCSFVMATextStore extends SBPSCSFVMATextStore {
+
+    public SBPSLockedCSFVMATextStore() {
+        super(new SBPSLockedVMATextStore());
     }
 
 }

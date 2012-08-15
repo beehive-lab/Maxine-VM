@@ -40,8 +40,8 @@ public abstract class ObjectStateHandler {
      * An instance of this class is used to inform about dead objects, in response to invoking the {@link #gc} method.
      *
      */
-    public static abstract class RemovalTracker {
-        public abstract void removed(long id);
+    public interface RemovalTracker {
+        void removed(long id);
     }
 
     /**
