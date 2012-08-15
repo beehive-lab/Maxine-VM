@@ -20,21 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.objstate;
+package com.oracle.max.vm.ext.vma.handlers.store.vmlog.h;
 
-import com.oracle.max.vm.ext.vma.handlers.store.sync.h.*;
-import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 
-
 public class Package extends BootImagePackage {
+    public Package() {
+        if (isPartOfMaxineVM()) {
+            registerThreadLocal(VMLogNativeThreadVariableVMA.class, VMLogNativeThreadVariableVMA.VMA_RECORD_NAME);
+            registerThreadLocal(VMLogNativeThreadVariableVMA.class, VMLogNativeThreadVariableVMA.VMA_BUFFER_NAME);
+            registerThreadLocal(VMLogNativeThreadVariableVMA.class, VMLogNativeThreadVariableVMA.VMA_BUFFER_OFFSETS_NAME);
+        }
+    }
+
+    private boolean isPartOfMaxineVM() {
+        return isPartOfMaxineVM(VMConfiguration.activeConfig());
+    }
+
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
         return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
-            (VMAJavaRunScheme.isHandlerClass(SyncStoreVMAdviceHandler.class) ||
-             VMAJavaRunScheme.isHandlerClass(VMLogStoreVMAdviceHandler.class));
+            VMAJavaRunScheme.isHandlerClass(VMLogStoreVMAdviceHandler.class);
     }
+
 
 }

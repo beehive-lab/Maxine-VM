@@ -24,12 +24,10 @@ package com.oracle.max.vma.tools.gen;
 
 import java.lang.reflect.*;
 
+import com.oracle.max.vma.tools.gen.store.txt.*;
 import com.oracle.max.vma.tools.gen.t1x.*;
 import com.oracle.max.vma.tools.gen.vma.*;
-import com.oracle.max.vma.tools.gen.vma.log.*;
 import com.oracle.max.vma.tools.gen.vma.log.debug.*;
-import com.oracle.max.vma.tools.gen.vma.log.dup.*;
-import com.oracle.max.vma.tools.gen.vma.log.txt.*;
 import com.oracle.max.vma.tools.gen.vma.runtime.*;
 
 /**
@@ -43,15 +41,14 @@ public class RunGenerators {
         VMAStaticBytecodeAdviceGenerator.class,
         NullVMAdviceHandlerGenerator.class,
         ObjectStateHandlerAdaptorGenerator.class,
-        SyncLogVMAdviceHandlerGenerator.class,
+        SyncStoreVMAdviceHandlerGenerator.class,
         CBCVMAdviceHandlerGenerator.class,
-        VMAdviceHandlerLogGenerator.class,
-        VMAdviceHandlerLogAdaptorGenerator.class,
+        VMATextStoreGenerator.class,
+        VMAdviceHandlerTextStoreAdaptorGenerator.class,
         TransientVMAdviceHandlerTypesGenerator.class,
         GCTestAdviceHandlerLogGenerator.class,
-        DupVMAdviceHandlerLogGenerator.class,
-        TextVMAdviceHandlerLogGenerator.class,
-        CompactTextVMAdviceHandlerLogGenerator.class,
+        CVMATextStoreGenerator.class,
+        CSFVMATextStoreGenerator.class,
         VMAdviceTemplateGenerator.class
     };
 

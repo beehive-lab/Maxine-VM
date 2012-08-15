@@ -1,2 +1,0 @@
-Manifest-Version: 1.0
-VMExtension-Class: com.oracle.max.vm.ext.vma.handlers.log.sync.h.SyncLogVMAdviceHandler

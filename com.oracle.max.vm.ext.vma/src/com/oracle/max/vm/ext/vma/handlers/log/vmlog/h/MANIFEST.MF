@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-VMExtension-Class: com.oracle.max.vm.ext.vma.handlers.log.vmlog.h.VMLogVMAdviceHandler
-VM-Class-Path: foo  /bar

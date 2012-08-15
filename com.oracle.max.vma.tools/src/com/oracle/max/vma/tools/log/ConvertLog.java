@@ -23,14 +23,14 @@
 
 package com.oracle.max.vma.tools.log;
 
-import static com.oracle.max.vm.ext.vma.handlers.log.txt.TextVMAdviceHandlerLog.*;
+import static com.oracle.max.vm.ext.vma.store.txt.CVMATextStore.*;
 
 import java.io.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.log.*;
-import com.oracle.max.vm.ext.vma.handlers.log.txt.*;
+import com.oracle.max.vm.ext.vma.store.txt.*;
+import com.oracle.max.vm.ext.vma.store.*;
 import com.oracle.max.vma.tools.qa.*;
 import com.sun.max.program.*;
 
@@ -79,10 +79,29 @@ public class ConvertLog {
         }
         // Checkstyle: resume modified control variable check
 
+        String logFileDir = null;
         if (logFileIn == null) {
-            logFileIn = VMAdviceHandlerLogFile.DEFAULT_LOGFILE;
+            logFileIn = VMAStoreFile.DEFAULT_STOREFILE;
+        } else {
+            File f = new File(logFileIn);
+            if (f.isDirectory()) {
+                logFileDir = logFileIn;
+                logFileIn = new File(f, VMAStoreFile.GLOBAL_STORE).getPath();
+            }
         }
-        processLogFile(logFileIn, logFileOut, command);
+        File f = new File(logFileIn);
+        if (f.exists()) {
+            processLogFiles(new File[] {new File(logFileIn)}, logFileOut, command);
+        } else {
+            // maybe per-thread
+            if (logFileDir != null) {
+                File[] files = new File(logFileDir).listFiles();
+                processLogFiles(files, logFileOut, command);
+            } else {
+                usage();
+            }
+        }
+
     }
 
     private static void usage() {
@@ -90,32 +109,36 @@ public class ConvertLog {
         System.exit(1);
     }
 
-    private static void processLogFile(String inFile, String outFile, Command command) throws IOException {
-        BufferedReader r = null;
+    private static void processLogFiles(File[] inFiles, String outFile, Command command) throws IOException {
         try {
-            r = new BufferedReader(new FileReader(inFile));
-            out = outFile == null ? System.out : new PrintStream(
-                    new FileOutputStream(outFile));
+            out = outFile == null ? System.out : new PrintStream(new FileOutputStream(outFile));
+            for (File inFile : inFiles) {
+                BufferedReader r = null;
+                try {
+                    r = new BufferedReader(new FileReader(inFile));
 
-            while (true) {
-                final String line = r.readLine();
-                if (line == null) {
-                    break;
-                }
-                if (line.length() == 0) {
-                    continue;
-                }
+                    while (true) {
+                        final String line = r.readLine();
+                        if (line == null) {
+                            break;
+                        }
+                        if (line.length() == 0) {
+                            continue;
+                        }
 
-                command.visitLine(line);
+                        command.visitLine(line);
+                    }
+                } finally {
+                    if (r != null) {
+                        try {
+                            r.close();
+                        } catch (IOException ex) {
+                        }
+                    }
+                }
             }
             command.finish();
         } finally {
-            if (r != null) {
-                try {
-                    r.close();
-                } catch (IOException ex) {
-                }
-            }
             if (outFile != null && out != null) {
                 out.close();
             }
@@ -140,10 +163,10 @@ public class ConvertLog {
 
         void visitLine(String line) {
             setCommand(line);
-            if (TextVMAdviceHandlerLog.hasTime(command)) {
+            if (CVMATextStore.hasTime(command)) {
                 lineTime = Long.parseLong(lineParts[1]);
                 lineAbsTime = logUsesAbsTime ? lineTime : lineAbsTime + lineTime;
-            } else if (command == Key.INITIALIZE_LOG || command == Key.RESET_TIME || command == Key.FINALIZE_LOG) {
+            } else if (command == Key.INITIALIZE_LOG || command == Key.THREAD_SWITCH || command == Key.FINALIZE_LOG) {
                 checkTimeFormat();
             }
         }
@@ -171,6 +194,8 @@ public class ConvertLog {
      */
 
     private static class UnBatchCommand extends Command {
+        private boolean seenIL;
+
         private static class TimedLine implements Comparable<TimedLine> {
             long time;
             String[] lineParts;
@@ -202,9 +227,15 @@ public class ConvertLog {
         @Override
         void visitLine(String line) {
             super.visitLine(line);
-            if (command == Key.RESET_TIME) {
+            if (command == Key.THREAD_SWITCH) {
                 // drop these records
                 return;
+            } else if (command == Key.INITIALIZE_LOG) {
+                if (seenIL) {
+                    return;
+                } else {
+                    seenIL = true;
+                }
             }
             lines.add(new TimedLine(lineAbsTime, lineParts));
         }
@@ -217,7 +248,7 @@ public class ConvertLog {
             for (int i = 0; i < linesArray.length; i++) {
                 String line;
                 String[] lineParts = linesArray[i].lineParts;
-                if (TextVMAdviceHandlerLog.hasTime(commandMap.get(lineParts[0]))) {
+                if (CVMATextStore.hasTime(commandMap.get(lineParts[0]))) {
                     line = fixupTime(linesArray[i], lastTime);
                     lastTime = linesArray[i].time;
                 } else {
@@ -246,7 +277,7 @@ public class ConvertLog {
     }
     /**
      *
-     * Command to transform into batch (pre-thread) style.
+     * Command to transform into batch (per-thread) style.
      * Sanity checking for unbatch command.
      *
      */
@@ -257,7 +288,7 @@ public class ConvertLog {
 
             BatchData(long startTime) {
                 lastTime = startTime;
-                lines.add(new StringBuilder().append(Key.RESET_TIME).append(' ').append(startTime).toString());
+                lines.add(new StringBuilder().append(Key.THREAD_SWITCH).append(' ').append(startTime).toString());
             }
         }
 
@@ -270,8 +301,8 @@ public class ConvertLog {
         @Override
         void visitLine(String line) {
             super.visitLine(line);
-            if (TextVMAdviceHandlerLog.hasTime(command)) {
-                if (TextVMAdviceHandlerLog.hasTimeAndThread(command)) {
+            if (CVMATextStore.hasTime(command)) {
+                if (CVMATextStore.hasTimeAndThread(command)) {
                     // thread is in lineParts[2]
                     BatchData batch = batchMap.get(lineParts[2]);
                     if (batch == null) {
@@ -286,7 +317,7 @@ public class ConvertLog {
                 initialize = line;
                 initialBatch = new BatchData(lineAbsTime);
                 currentBatch = initialBatch;
-            } else if (command == Key.RESET_TIME) {
+            } else if (command == Key.THREAD_SWITCH) {
                 // ignore existing resets
             } else if (command == Key.FINALIZE_LOG) {
                 finalize = line;
@@ -343,7 +374,7 @@ public class ConvertLog {
                 // no change
                 out.println(line);
             } else {
-                if (TextVMAdviceHandlerLog.hasTime(command)) {
+                if (CVMATextStore.hasTime(command)) {
                     if (logUsesAbsTime) {
                         // to relative
                         ProgramError.unexpected("abs to rel not implemented");
@@ -483,14 +514,14 @@ public class ConvertLog {
             String threadArg = arg2;
             String objIdArg = "???";
 
-            if (TextVMAdviceHandlerLog.hasTime(command)) {
+            if (CVMATextStore.hasTime(command)) {
                 String atTime = "@" + logTimeArg;
                 out.printf("%-10s ", atTime);
             } else {
                 out.printf("%-11c", ' ');
             }
 
-            if (TextVMAdviceHandlerLog.hasId(command)) {
+            if (CVMATextStore.hasId(command)) {
                 if (arg3.charAt(0) == REPEAT_ID) {
                     objIdArg = lastId.get(threadArg);
                 } else {
@@ -500,11 +531,11 @@ public class ConvertLog {
             }
             out.printf("%s ", command);
 
-            if (TextVMAdviceHandlerLog.hasTimeAndThread(command)) {
+            if (CVMATextStore.hasTimeAndThread(command)) {
                 printThreadId(threadArg);
             }
 
-            if (TextVMAdviceHandlerLog.hasId(command)) {
+            if (CVMATextStore.hasId(command)) {
                 printObjId(objIdArg);
             }
 
@@ -514,7 +545,7 @@ public class ConvertLog {
                     out.printf("%s %s", logTimeArg, arg2);
                     break;
 
-                case RESET_TIME:
+                case THREAD_SWITCH:
                 case FINALIZE_LOG:
                     out.printf("%s", logTimeArg);
                     break;

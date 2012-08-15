@@ -27,8 +27,8 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.log.vmlog.h.*;
 import com.oracle.max.vm.ext.vma.handlers.objstate.*;
+import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
 /**
@@ -92,9 +92,8 @@ public class VMAVMLoggerGenerator {
         out.println("@Override");
         int argCount = generateSignature(INDENT8, "protected", new MyMethodNameOverride(m), null, argumentsPrefix);
         out.println(" {");
-        out.printf("%stimeStamp = arg1;%n", INDENT12);
         out.printf("%shandler.%s(", INDENT12, m.getName());
-        generateInvokeArgs(argCount, 2);
+        generateInvokeArgs(argCount);
         out.printf("%s}%n", INDENT8);
     }
 
