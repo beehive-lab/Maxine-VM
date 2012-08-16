@@ -46,6 +46,11 @@ import com.sun.max.vm.thread.*;
  *
  * By default the current system time is logged for each piece of advice, but this
  * can be suppressed by setting {@value TIME_PROPERTY} to {@code false}.
+ *
+ * The expectation is that a per-thread {@link VMLog}, e.g. {@link VMLogNativeThreadVariableVMA}
+ * is used to avoid synchronization. Consistent with that, per-thread instances of the
+ * {@link VMAdviceHandlerTextStoreAdapter} are also created so that logs can be flushed
+ * all the way to the store without synchronization.
  */
 public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
@@ -54,7 +59,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     /**
      * The custom {@link VMLog} used to store VMA advice records.
-     * This is a per-thread log.
+     * This is expected to be a per-thread log.
      */
     @CONSTANT_WHEN_NOT_ZERO
     private VMLog vmaVMLog;
@@ -119,11 +124,11 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
                 vmaVMLog = VMAJavaRunScheme.vmaVMLog();
                 vmaVMLog.registerCustom(VMAVMLogger.logger, new VMLogFlusher());
             }
-            VMAdviceHandlerTextStoreAdapter handler = new VMAdviceHandlerTextStoreAdapter();
-            handler.setThreadMode(true, getPerThread());
-            handler.initialise(phase);
-            super.setRemovalTracker(handler.getRemovalTracker(state));
-            VMAVMLogger.VMAVMLoggerImpl.setStoreAdaptor(handler);
+            VMAdviceHandlerTextStoreAdapter storeAdaptor = new VMAdviceHandlerTextStoreAdapter();
+            storeAdaptor.setThreadMode(true, getPerThread());
+            storeAdaptor.initialise(phase);
+            super.setRemovalTracker(storeAdaptor.getRemovalTracker(state));
+            VMAVMLogger.VMAVMLoggerImpl.setStoreAdaptor(storeAdaptor);
             VMAVMLogger.logger.enable(true);
             String ltp = System.getProperty(TIME_PROPERTY);
             if (ltp != null) {

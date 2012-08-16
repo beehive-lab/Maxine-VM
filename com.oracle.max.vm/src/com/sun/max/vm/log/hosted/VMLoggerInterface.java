@@ -49,4 +49,9 @@ public @interface VMLoggerInterface {
      */
     boolean hidden() default false;
 
+    /**
+     * Includes the thread id as an argument to the generated trace method.
+     */
+    boolean traceThread() default false;
+
 }

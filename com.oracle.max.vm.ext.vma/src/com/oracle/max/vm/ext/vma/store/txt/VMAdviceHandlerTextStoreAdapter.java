@@ -38,7 +38,7 @@ import com.sun.max.vm.thread.*;
 
 /**
  * An adapter that handles the conversion from the signatures of {@link VMAdviceHandler} that
- * use VM internal types to the external representation types used by {@link AbsVMATextStore}.
+ * use VM internal types to the external representation types used by {@link VMATextStore}.
  *
  * There are no "smarts" in this adaptor; it just logs and assumes that object id assignment
  * has already been done and that it can access the id using the provided implementation
@@ -113,7 +113,7 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
             store = VMAStoreFactory.create(perThread);
 
             if (store == null || !store.initializeStore(threadBatched, perThread)) {
-                throw new RuntimeException("log creation failed");
+                throw new RuntimeException("VMA store initialization failed");
             }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (store != null) {
