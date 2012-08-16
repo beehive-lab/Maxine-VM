@@ -25,11 +25,11 @@ package com.oracle.max.vm.ext.vma.store.txt.sbps;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 
 /**
- * A compact variant of {@link SBPSTextVMAdviceHandlerLog} using {@link CompactTextVMAdviceHandlerLog}.
+ * A compact variant of {@link SBPSVMATextStore} using {@link CSFVMATextStore}.
  */
 public class SBPSCSFVMATextStore extends CSFVMATextStore {
 
-    private final SBPSVMATextStore jdel;
+    protected final SBPSVMATextStore jdel;
 
     public SBPSCSFVMATextStore() {
         this(new SBPSVMATextStore());
@@ -43,31 +43,28 @@ public class SBPSCSFVMATextStore extends CSFVMATextStore {
     @Override
     public void defineShortForm(CSFVMATextStore.ShortForm type, Object key, String shortForm, String classShortForm) {
         ClassNameId className = null;
-        synchronized (jdel) {
-            if (type == ShortForm.T) {
-                jdel.defineThread(shortForm);
-            }
-            jdel.sb().append(type.code);
-            jdel.sb().append(' ');
-            if (type == ShortForm.C) {
-                className = (ClassNameId) key;
-                jdel.sb().append(className.name);
-                jdel.sb().append(' ');
-                jdel.sb().append(className.clId);
-            } else if (type == ShortForm.T) {
-                jdel.sb().append(key);
-            } else {
-                // F/M
-                QualName qualName = (QualName) key;
-                // guaranteed to have already created the short form for the class name
-                jdel.sb().append(classShortForm);
-                jdel.sb().append(' ');
-                jdel.sb().append(qualName.name);
-            }
-            jdel.sb().append(' ');
-            jdel.sb().append(shortForm);
-            jdel.end();
+        if (type == ShortForm.T) {
+            jdel.defineThread(shortForm);
         }
+        jdel.sb().append(type.code);
+        jdel.sb().append(' ');
+        if (type == ShortForm.C) {
+            className = (ClassNameId) key;
+            jdel.sb().append(className.name);
+            jdel.sb().append(' ');
+            jdel.sb().append(className.clId);
+        } else if (type == ShortForm.T) {
+            jdel.sb().append(key);
+        } else {
+            // F/M
+            QualName qualName = (QualName) key;
+            // guaranteed to have already created the short form for the class name
+            jdel.sb().append(classShortForm);
+            jdel.sb().append(' ');
+            jdel.sb().append(qualName.name);
+        }
+        jdel.sb().append(' ');
+        jdel.sb().append(shortForm);
+        jdel.end();
     }
-
 }

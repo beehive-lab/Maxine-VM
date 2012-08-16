@@ -68,6 +68,7 @@ public class VMAVMLogger {
             storeAdaptor = h;
         }
 
+        @NEVER_INLINE
         private VMAdviceHandlerTextStoreAdapter storeAdaptor(int threadId) {
             return storeAdaptor;
         }

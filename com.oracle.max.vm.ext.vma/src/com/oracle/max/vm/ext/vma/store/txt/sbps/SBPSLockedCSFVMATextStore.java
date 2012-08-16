@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.vma.store.txt.sbps;
 
+import com.oracle.max.vm.ext.vma.store.txt.*;
+
 
 /**
  * Variant of {@link SBPSCSFVMATextStore} that uses {@link SBPSLockedVMATextStore}.
@@ -32,4 +34,10 @@ public class SBPSLockedCSFVMATextStore extends SBPSCSFVMATextStore {
         super(new SBPSLockedVMATextStore());
     }
 
+    @Override
+    public void defineShortForm(CSFVMATextStore.ShortForm type, Object key, String shortForm, String classShortForm) {
+        synchronized (jdel) {
+            super.defineShortForm(type, key, shortForm, classShortForm);
+        }
+    }
 }

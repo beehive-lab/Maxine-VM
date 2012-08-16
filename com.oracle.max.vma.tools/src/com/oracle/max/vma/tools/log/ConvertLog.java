@@ -82,6 +82,7 @@ public class ConvertLog {
         String logFileDir = null;
         if (logFileIn == null) {
             logFileIn = VMAStoreFile.DEFAULT_STOREFILE;
+            logFileDir = VMAStoreFile.DEFAULT_STOREDIR;
         } else {
             File f = new File(logFileIn);
             if (f.isDirectory()) {

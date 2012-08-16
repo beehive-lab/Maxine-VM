@@ -23,7 +23,6 @@
 package com.oracle.max.vm.ext.vma.store.txt.sbps;
 
 import java.io.*;
-import java.util.*;
 import java.util.concurrent.*;
 
 import static com.oracle.max.vm.ext.vma.store.txt.CVMATextStore.Key.*;
@@ -31,7 +30,7 @@ import static com.oracle.max.vm.ext.vma.store.txt.CVMATextStore.Key.*;
 import com.oracle.max.vm.ext.vma.store.*;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * An implementation of {@link CVMATextStore} using a {@link PrintStream} and {@link StringBuilder}.
@@ -48,81 +47,85 @@ import com.sun.max.vm.*;
  * the optimization on classloader id only works with short forms. In any event, for serious
  * use short forms are essential.
  *
- * This class is unsynchronized for use with a single thread. For multiple-threads use
- * {@link SBPSLockedVMATextStore} subclass which synchronizes and then invokes the methods
+ * This class is unsynchronized for use in per-thread mode. For a shared store accessed by multiple-threads use
+ * the {@link SBPSLockedVMATextStore} subclass which synchronizes and then invokes the methods
  * in this class.
  *
  * In per-thread mode each thread has its own buffer and log file.
  * The log file name is used as a stem and each thread's file is named by suffixing with its id, which
  * will be the short form created by {@link SBPSCSFVMATextStore}. The file/stream/buffer
- * is created in {@link #defineThread}.
+ * is created in {@link #defineThread} which may, due to the use of short forms, be called
+ * before {@link #adviseBeforeThreadStarting(long, String)}.
  */
 public class SBPSVMATextStore extends CVMATextStore {
 
     /**
-     * Records per-thread output info.
+     * Subclass used for per-thread mode.
      */
-    static class PSBuilder {
-        final PrintStream ps;
-        final StringBuilder sb;
-        long lastTime;
-        PSBuilder(PrintStream ps, StringBuilder sb) {
-            this.ps = ps;
-            this.sb = sb;
-            this.lastTime = System.nanoTime();
+    private static class ThreadSBPSVMATextStore extends SBPSVMATextStore {
+        final String threadName;
+        ThreadSBPSVMATextStore(String threadName) {
+            this.threadName = threadName;
         }
-
     }
 
-    private static final String FLUSH_PROPERTY = "max.vma.flushbufat";
+    private static final String FLUSH_PROPERTY = "max.vma.storeflush";
     private static final String BUFSIZE_PROPERTY = "max.vma.storebufsize";
     private static final String ABSTIME_PROPERTY = "max.vma.abstime";
     private static final int DEFAULT_BUFSIZE = 1024 * 1024;
 
-    private boolean absTimeFlag;
-    private int flushLogAt;
-    private int bufSize = DEFAULT_BUFSIZE;
-    private boolean threadBatched;
-    private boolean perThread;
+    /**
+     * {@code true} iff storing absolute time.
+     */
     @CONSTANT_WHEN_NOT_ZERO
-    private File storeFileDir;
-    private Map<String, PSBuilder> psBuilderMap;
+    private static boolean absTimeFlag;
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private static File storeFileDir;
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private static int globalBufSize = DEFAULT_BUFSIZE;
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private static String flushProperty;
+
+    private static ConcurrentMap<String, ThreadSBPSVMATextStore> storeMap;
 
     /**
-     * In per-thread mode, the output for the "current" thread, set in {@link #threadSwitch}, else the global stream.
+     * Buffer size at which the buffer is flushed to the output stream.
+     * Zero flushes every record (testing).
      */
-    PSBuilder psb;
+    private int flushLogAt;
 
-    @Override
-    public boolean initializeStore(boolean threadBatched, boolean perThread) {
-        this.threadBatched = threadBatched;
-        this.perThread = perThread;
-        final String logSizeProp = System.getProperty(BUFSIZE_PROPERTY);
-        if (logSizeProp != null) {
-            bufSize = Integer.parseInt(logSizeProp);
-        }
-        flushLogAt = System.getProperty(FLUSH_PROPERTY) != null ? 0 : bufSize - 80;
-        absTimeFlag = System.getProperty(ABSTIME_PROPERTY) != null;
+    /**
+     * Size of the {@link StringBuilder} buffer.
+     */
+    private int bufSize = DEFAULT_BUFSIZE;
 
-        storeFileDir = new File(VMAStoreFile.getStoreDir());
-        cleanOutputDir();
+    private boolean threadBatched;
+    private boolean perThread;
 
-        if (!perThread) {
-            psb = createPSBuilder(VMAStoreFile.GLOBAL_STORE);
-            return psb != null;
-        } else {
-            // threads setup in defineThread
-            // N.B. main thread does get that call (soon after this)
-            psBuilderMap = new ConcurrentHashMap<String, PSBuilder>();
-            return true;
+    private PrintStream ps;
+    private StringBuilder sb;
+    private long lastTime;
+
+    private static void initStaticProperties(boolean perThread) {
+        if (storeFileDir != null) {
+            absTimeFlag = System.getProperty(ABSTIME_PROPERTY) != null;
+            final String bsp = System.getProperty(BUFSIZE_PROPERTY);
+            if (bsp != null) {
+                globalBufSize = Integer.parseInt(bsp);
+            }
+            flushProperty = System.getProperty(FLUSH_PROPERTY);
+            storeFileDir = new File(VMAStoreFile.getStoreDir());
+            cleanOutputDir();
+            if (perThread) {
+                storeMap = new ConcurrentHashMap<String, ThreadSBPSVMATextStore>();
+            }
         }
     }
 
-    StringBuilder sb() {
-        return psb.sb;
-    }
-
-    private void cleanOutputDir() {
+    private static void cleanOutputDir() {
         if (storeFileDir.exists()) {
             for (String fn : storeFileDir.list()) {
                 if (!new File(storeFileDir, fn).delete()) {
@@ -134,30 +137,54 @@ public class SBPSVMATextStore extends CVMATextStore {
         }
     }
 
+    StringBuilder sb() {
+        return sb;
+    }
+
+    @Override
+    public boolean initializeStore(boolean threadBatched, boolean perThread) {
+        this.threadBatched = threadBatched;
+        this.perThread = perThread;
+        initStaticProperties(perThread);
+        bufSize = globalBufSize;
+        flushLogAt = flushProperty != null ? 0 : bufSize - 80;
+        if (!perThread) {
+            return createPersistentStore(this, VMAStoreFile.GLOBAL_STORE);
+        } else {
+            // per-thread stores setup in defineThread
+            // N.B. the main thread does get that call (soon after this)
+            return true;
+        }
+    }
+
     /**
      * Creates a {@link PrintStream} and a {@link StringBuilder}.
-     * @param fileName
-     * @return
+     * @param fileName to use for store
+     * @return {@code true} iff the persistent store was created ok
      */
-    PSBuilder createPSBuilder(String fileName) {
+    private static boolean createPersistentStore(SBPSVMATextStore store, String fileName) {
         File file = new File(storeFileDir, fileName);
         try {
-            PrintStream ps = new PrintStream(new FileOutputStream(file));
-            psb = new PSBuilder(ps, new StringBuilder(bufSize));
+            store.ps = new PrintStream(new FileOutputStream(file));
+            store.sb = new StringBuilder(store.bufSize);
             // Format log buffer with header information
-            appendCode(INITIALIZE_LOG);
-            appendSpace();
-            psb.sb.append(psb.lastTime);
-            appendSpace();
-            psb.sb.append(absTimeFlag);
-            appendSpace();
-            psb.sb.append(threadBatched);
-            end();
-            return psb;
+            store.appendStoreHeader();
+            return true;
         } catch (IOException ex) {
             System.err.println("failed to open store file " + file + ": " + ex);
-            return null;
+            return false;
         }
+    }
+
+    private void appendStoreHeader() {
+        appendCode(INITIALIZE_LOG);
+        appendSpace();
+        sb.append(lastTime);
+        appendSpace();
+        sb.append(absTimeFlag);
+        appendSpace();
+        sb.append(threadBatched);
+        end();
     }
 
     /**
@@ -165,20 +192,24 @@ public class SBPSVMATextStore extends CVMATextStore {
      * @param threadName
      */
     @NEVER_INLINE
-    void defineThread(String threadName) {
-        Log.printCurrentThread(false); Log.print(": defineThread: "); Log.println(threadName);
+    SBPSVMATextStore defineThread(String threadName) {
         if (perThread) {
-            psb = createPSBuilder(threadName);
-            psBuilderMap.put(threadName, psb);
+            ThreadSBPSVMATextStore store = new ThreadSBPSVMATextStore(threadName);
+            store.initializeStore(threadBatched, perThread);
+            if (!createPersistentStore(store, threadName)) {
+                FatalError.unexpected("failed to create per-thread VMA store");
+            }
+            return store;
+        } else {
+            return this;
         }
     }
 
     @Override
     public void finalizeStore() {
         if (perThread) {
-            for (PSBuilder psBuilder : psBuilderMap.values()) {
-                psb = psBuilder;
-                finalizeLogBuffer();
+            for (SBPSVMATextStore store : storeMap.values()) {
+                store.finalizeLogBuffer();
             }
         } else {
             finalizeLogBuffer();
@@ -188,44 +219,44 @@ public class SBPSVMATextStore extends CVMATextStore {
     private void finalizeLogBuffer() {
         appendCode(FINALIZE_LOG);
         appendSpace();
-        psb.sb.append(System.nanoTime());
+        sb.append(System.nanoTime());
         flushLogAt = 0;
         end();
-        psb.ps.close();
+        ps.close();
     }
 
     void end() {
-        psb.sb.append('\n');
-        if (psb.sb.length()  >= flushLogAt) {
-            psb.ps.print(psb.sb);
-            psb.ps.flush();
-            psb.sb.setLength(0);
+        sb.append('\n');
+        if (sb.length()  >= flushLogAt) {
+            ps.print(sb);
+            ps.flush();
+            sb.setLength(0);
         }
     }
 
     private void appendCheckRepeatId(long objId) {
         if (objId == REPEAT_ID_VALUE) {
-            psb.sb.append('*');
+            sb.append('*');
         } else {
-            psb.sb.append(objId);
+            sb.append(objId);
         }
     }
 
     private void appendTime(long time) {
         if (absTimeFlag) {
-            psb.sb.append(time);
+            sb.append(time);
         } else {
-            psb.sb.append(time - psb.lastTime);
-            psb.lastTime = time;
+            sb.append(time - lastTime);
+            lastTime = time;
         }
     }
 
     private void appendSpace() {
-        psb.sb.append(' ');
+        sb.append(' ');
     }
 
     private void appendCode(Key key) {
-        psb.sb.append(key.code);
+        sb.append(key.code);
     }
 
     /**
@@ -239,7 +270,7 @@ public class SBPSVMATextStore extends CVMATextStore {
         appendSpace();
         appendTime(time);
         appendSpace();
-        psb.sb.append(threadName);
+        sb.append(threadName);
     }
 
     /**
@@ -269,7 +300,7 @@ public class SBPSVMATextStore extends CVMATextStore {
         appendSpace();
         appendCheckRepeatId(objId);
         appendSpace();
-        psb.sb.append(index);
+        sb.append(index);
         appendSpace();
     }
 
@@ -279,10 +310,10 @@ public class SBPSVMATextStore extends CVMATextStore {
      * @param qualName
      */
     private void appendQualName(String className, long clId, String memberName) {
-        psb.sb.append(className);
+        sb.append(className);
         appendSpace();
         // clId elided as in short form of className
-        psb.sb.append(memberName);
+        sb.append(memberName);
     }
 
     /**
@@ -295,7 +326,7 @@ public class SBPSVMATextStore extends CVMATextStore {
     private void appendTTC(long time, Key key, String className, String threadName) {
         appendTT(time, key, threadName);
         appendSpace();
-        psb.sb.append(className);
+        sb.append(className);
         appendSpace();
     }
 
@@ -315,7 +346,7 @@ public class SBPSVMATextStore extends CVMATextStore {
     private void prefixAdviseBeforeOperation(long time, String threadName, int arg1) {
         appendTT(time, ADVISE_BEFORE_OPERATION, threadName);
         appendSpace();
-        psb.sb.append(arg1);
+        sb.append(arg1);
         appendSpace();
     }
 
@@ -329,14 +360,14 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void removal(long id) {
         appendCode(REMOVAL);
         appendSpace();
-        psb.sb.append(id);
+        sb.append(id);
         end();
     }
 
     @Override
     public void unseenObject(long time, String threadName, long objId, String className, long clId) {
         appendTTId(time, UNSEEN, objId, threadName);
-        psb.sb.append(className);
+        sb.append(className);
         // clId elided
         end();
     }
@@ -344,13 +375,12 @@ public class SBPSVMATextStore extends CVMATextStore {
     @Override
     public void threadSwitch(long time, String threadName) {
         if (perThread) {
-            psb = psBuilderMap.get(threadName);
-            assert psb != null;
+            // TODO
         } else {
             appendCode(THREAD_SWITCH);
             appendSpace();
-            psb.lastTime = time;
-            psb.sb.append(psb.lastTime);
+            lastTime = time;
+            sb.append(lastTime);
             end();
         }
     }
@@ -374,36 +404,36 @@ public class SBPSVMATextStore extends CVMATextStore {
     @Override
     public void adviseBeforePutStatic(long time, String threadName, String className, long clId, String memberName, double value) {
         appendPutStaticPrefix(time, className, clId, memberName, threadName);
-        psb.sb.append(DOUBLE_VALUE);
+        sb.append(DOUBLE_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
     @Override
     public void adviseBeforePutStatic(long time, String threadName, String className, long clId, String memberName, long value) {
         appendPutStaticPrefix(time, className, clId, memberName, threadName);
-        psb.sb.append(LONG_VALUE);
+        sb.append(LONG_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
     @Override
     public void adviseBeforePutStatic(long time, String threadName, String className, long clId, String memberName, float value) {
         appendPutStaticPrefix(time, className, clId, memberName, threadName);
-        psb.sb.append(FLOAT_VALUE);
+        sb.append(FLOAT_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
     @Override
     public void adviseBeforePutStaticObject(long time, String threadName, String className, long clId, String memberName, long valueId) {
         appendPutStaticPrefix(time, className, clId, memberName, threadName);
-        psb.sb.append(OBJ_VALUE);
+        sb.append(OBJ_VALUE);
         appendSpace();
-        psb.sb.append(valueId);
+        sb.append(valueId);
         end();
     }
 
@@ -417,36 +447,36 @@ public class SBPSVMATextStore extends CVMATextStore {
     @Override
     public void adviseBeforePutField(long time, String threadName, long objId, String className, long clId, String memberName, double value) {
         appendPutFieldPrefix(time, objId, className, clId, memberName, threadName);
-        psb.sb.append(DOUBLE_VALUE);
+        sb.append(DOUBLE_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
     @Override
     public void adviseBeforePutField(long time, String threadName, long objId, String className, long clId, String memberName, long value) {
         appendPutFieldPrefix(time, objId, className, clId, memberName, threadName);
-        psb.sb.append(LONG_VALUE);
+        sb.append(LONG_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
     @Override
     public void adviseBeforePutField(long time, String threadName, long objId, String className, long clId, String memberName, float value) {
         appendPutFieldPrefix(time, objId, className, clId, memberName, threadName);
-        psb.sb.append(FLOAT_VALUE);
+        sb.append(FLOAT_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
     @Override
     public void adviseBeforePutFieldObject(long time, String threadName, long objId, String className, long clId, String memberName, long valueId) {
         appendPutFieldPrefix(time, objId, className, clId, memberName, threadName);
-        psb.sb.append(OBJ_VALUE);
+        sb.append(OBJ_VALUE);
         appendSpace();
-        psb.sb.append(valueId);
+        sb.append(valueId);
         end();
     }
 
@@ -459,52 +489,52 @@ public class SBPSVMATextStore extends CVMATextStore {
     @Override
     public void adviseBeforeArrayStore(long time, String threadName, long objId, int index, float value) {
         appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
-        psb.sb.append(FLOAT_VALUE);
+        sb.append(FLOAT_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
     @Override
     public void adviseBeforeArrayStore(long time, String threadName, long objId, int index, long value) {
         appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
-        psb.sb.append(LONG_VALUE);
+        sb.append(LONG_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
     @Override
     public void adviseBeforeArrayStore(long time, String threadName, long objId, int index, double value) {
         appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
-        psb.sb.append(DOUBLE_VALUE);
+        sb.append(DOUBLE_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
     @Override
     public void adviseBeforeArrayStoreObject(long time, String threadName, long objId, int index, long valueId) {
         appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
-        psb.sb.append(OBJ_VALUE);
+        sb.append(OBJ_VALUE);
         appendSpace();
-        psb.sb.append(valueId);
+        sb.append(valueId);
         end();
     }
 
     @Override
     public void adviseAfterNew(long time, String threadName, long objId, String className, long clId) {
         appendTTId(time, ADVISE_AFTER_NEW, objId, threadName);
-        psb.sb.append(className);
+        sb.append(className);
         end();
     }
 
     @Override
     public void adviseAfterNewArray(long time, String threadName, long objId, String className, long clId, int length) {
         appendTTId(time, ADVISE_AFTER_NEW_ARRAY, objId, threadName);
-        psb.sb.append(className);
+        sb.append(className);
         appendSpace();
-        psb.sb.append(length);
+        sb.append(length);
         end();
     }
 
@@ -525,9 +555,9 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeConstLoad(long time, String threadName, long value) {
         appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName);
         appendSpace();
-        psb.sb.append(LONG_VALUE);
+        sb.append(LONG_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -535,9 +565,9 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeConstLoadObject(long time, String threadName, long value) {
         appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName);
         appendSpace();
-        psb.sb.append(OBJ_VALUE);
+        sb.append(OBJ_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -545,9 +575,9 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeConstLoad(long time, String threadName, float value) {
         appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName);
         appendSpace();
-        psb.sb.append(FLOAT_VALUE);
+        sb.append(FLOAT_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -555,9 +585,9 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeConstLoad(long time, String threadName, double value) {
         appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName);
         appendSpace();
-        psb.sb.append(DOUBLE_VALUE);
+        sb.append(DOUBLE_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -565,7 +595,7 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeLoad(long time, String threadName, int arg1) {
         appendTT(time, ADVISE_BEFORE_LOAD, threadName);
         appendSpace();
-        psb.sb.append(arg1);
+        sb.append(arg1);
         end();
     }
 
@@ -573,11 +603,11 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeStore(long time, String threadName, int dispToLocalSlot, long value) {
         appendTT(time, ADVISE_BEFORE_STORE, threadName);
         appendSpace();
-        psb.sb.append(dispToLocalSlot);
+        sb.append(dispToLocalSlot);
         appendSpace();
-        psb.sb.append(LONG_VALUE);
+        sb.append(LONG_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -585,11 +615,11 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeStore(long time, String threadName, int dispToLocalSlot, float value) {
         appendTT(time, ADVISE_BEFORE_STORE, threadName);
         appendSpace();
-        psb.sb.append(dispToLocalSlot);
+        sb.append(dispToLocalSlot);
         appendSpace();
-        psb.sb.append(FLOAT_VALUE);
+        sb.append(FLOAT_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -597,11 +627,11 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeStore(long time, String threadName, int dispToLocalSlot, double value) {
         appendTT(time, ADVISE_BEFORE_STORE, threadName);
         appendSpace();
-        psb.sb.append(dispToLocalSlot);
+        sb.append(dispToLocalSlot);
         appendSpace();
-        psb.sb.append(DOUBLE_VALUE);
+        sb.append(DOUBLE_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -609,11 +639,11 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeStoreObject(long time, String threadName, int dispToLocalSlot, long value) {
         appendTT(time, ADVISE_BEFORE_STORE, threadName);
         appendSpace();
-        psb.sb.append(dispToLocalSlot);
+        sb.append(dispToLocalSlot);
         appendSpace();
-        psb.sb.append(OBJ_VALUE);
+        sb.append(OBJ_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -621,40 +651,40 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeStackAdjust(long time, String threadName, int arg1) {
         appendTT(time, ADVISE_BEFORE_STACK_ADJUST, threadName);
         appendSpace();
-        psb.sb.append(arg1);
+        sb.append(arg1);
         end();
     }
 
     @Override
     public void adviseBeforeOperation(long time, String threadName, int arg1, long arg2, long arg3) {
         prefixAdviseBeforeOperation(time, threadName, arg1);
-        psb.sb.append(LONG_VALUE);
+        sb.append(LONG_VALUE);
         appendSpace();
-        psb.sb.append(arg2);
+        sb.append(arg2);
         appendSpace();
-        psb.sb.append(arg3);
+        sb.append(arg3);
         end();
     }
 
     @Override
     public void adviseBeforeOperation(long time, String threadName, int arg1, float arg2, float arg3) {
         prefixAdviseBeforeOperation(time, threadName, arg1);
-        psb.sb.append(FLOAT_VALUE);
+        sb.append(FLOAT_VALUE);
         appendSpace();
-        psb.sb.append(arg2);
+        sb.append(arg2);
         appendSpace();
-        psb.sb.append(arg3);
+        sb.append(arg3);
         end();
     }
 
     @Override
     public void adviseBeforeOperation(long time, String threadName, int arg1, double arg2, double arg3) {
         prefixAdviseBeforeOperation(time, threadName, arg1);
-        psb.sb.append(DOUBLE_VALUE);
+        sb.append(DOUBLE_VALUE);
         appendSpace();
-        psb.sb.append(arg2);
+        sb.append(arg2);
         appendSpace();
-        psb.sb.append(arg3);
+        sb.append(arg3);
         end();
     }
 
@@ -662,11 +692,11 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeConversion(long time, String threadName, int arg1, long arg2) {
         appendTT(time, ADVISE_BEFORE_CONVERSION, threadName);
         appendSpace();
-        psb.sb.append(arg1);
+        sb.append(arg1);
         appendSpace();
-        psb.sb.append(LONG_VALUE);
+        sb.append(LONG_VALUE);
         appendSpace();
-        psb.sb.append(arg2);
+        sb.append(arg2);
         appendSpace();
         end();
     }
@@ -675,11 +705,11 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeConversion(long time, String threadName, int arg1, float arg2) {
         appendTT(time, ADVISE_BEFORE_CONVERSION, threadName);
         appendSpace();
-        psb.sb.append(arg1);
+        sb.append(arg1);
         appendSpace();
-        psb.sb.append(FLOAT_VALUE);
+        sb.append(FLOAT_VALUE);
         appendSpace();
-        psb.sb.append(arg2);
+        sb.append(arg2);
         appendSpace();
         end();
     }
@@ -688,11 +718,11 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeConversion(long time, String threadName, int arg1, double arg2) {
         appendTT(time, ADVISE_BEFORE_CONVERSION, threadName);
         appendSpace();
-        psb.sb.append(arg1);
+        sb.append(arg1);
         appendSpace();
-        psb.sb.append(DOUBLE_VALUE);
+        sb.append(DOUBLE_VALUE);
         appendSpace();
-        psb.sb.append(arg2);
+        sb.append(arg2);
         appendSpace();
         end();
     }
@@ -701,13 +731,13 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeIf(long time, String threadName, int opcode, int op1, int op2) {
         appendTT(time, ADVISE_BEFORE_IF, threadName);
         appendSpace();
-        psb.sb.append(opcode);
+        sb.append(opcode);
         appendSpace();
-        psb.sb.append(LONG_VALUE);
+        sb.append(LONG_VALUE);
         appendSpace();
-        psb.sb.append(op1);
+        sb.append(op1);
         appendSpace();
-        psb.sb.append(op2);
+        sb.append(op2);
         appendSpace();
         end();
     }
@@ -716,13 +746,13 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeIfObject(long time, String threadName, int opcode, long objId1, long objId2) {
         appendTT(time, ADVISE_BEFORE_IF, threadName);
         appendSpace();
-        psb.sb.append(opcode);
+        sb.append(opcode);
         appendSpace();
-        psb.sb.append(OBJ_VALUE);
+        sb.append(OBJ_VALUE);
         appendSpace();
-        psb.sb.append(objId1);
+        sb.append(objId1);
         appendSpace();
-        psb.sb.append(objId2);
+        sb.append(objId2);
         appendSpace();
         end();
     }
@@ -731,9 +761,9 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeReturnObject(long time, String threadName, long value) {
         appendTT(time, ADVISE_BEFORE_RETURN, threadName);
         appendSpace();
-        psb.sb.append(OBJ_VALUE);
+        sb.append(OBJ_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -741,9 +771,9 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeReturn(long time, String threadName, long value) {
         appendTT(time, ADVISE_BEFORE_RETURN, threadName);
         appendSpace();
-        psb.sb.append(LONG_VALUE);
+        sb.append(LONG_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -751,9 +781,9 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeReturn(long time, String threadName, float value) {
         appendTT(time, ADVISE_BEFORE_RETURN, threadName);
         appendSpace();
-        psb.sb.append(FLOAT_VALUE);
+        sb.append(FLOAT_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -761,9 +791,9 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeReturn(long time, String threadName, double value) {
         appendTT(time, ADVISE_BEFORE_RETURN, threadName);
         appendSpace();
-        psb.sb.append(DOUBLE_VALUE);
+        sb.append(DOUBLE_VALUE);
         appendSpace();
-        psb.sb.append(value);
+        sb.append(value);
         end();
     }
 
@@ -804,7 +834,7 @@ public class SBPSVMATextStore extends CVMATextStore {
     @Override
     public void adviseBeforeArrayLength(long time, String threadName, long objId, int length) {
         appendTTId(time, ADVISE_BEFORE_ARRAY_LENGTH, objId, threadName);
-        psb.sb.append(length);
+        sb.append(length);
         end();
     }
 
@@ -817,14 +847,14 @@ public class SBPSVMATextStore extends CVMATextStore {
     @Override
     public void adviseBeforeCheckCast(long time, String threadName, long objId, String className, long clId) {
         appendTTId(time, ADVISE_BEFORE_CHECK_CAST, objId, threadName);
-        psb.sb.append(className);
+        sb.append(className);
         end();
     }
 
     @Override
     public void adviseBeforeInstanceOf(long time, String threadName, long objId, String className, long clId) {
         appendTTId(time, ADVISE_BEFORE_INSTANCE_OF, objId, threadName);
-        psb.sb.append(className);
+        sb.append(className);
         end();
     }
 
@@ -832,7 +862,7 @@ public class SBPSVMATextStore extends CVMATextStore {
     public void adviseBeforeBytecode(long time, String threadName, int arg1) {
         appendTT(time, ADVISE_BEFORE_BYTECODE, threadName);
         appendSpace();
-        psb.sb.append(arg1);
+        sb.append(arg1);
         end();
     }
 
@@ -886,7 +916,7 @@ public class SBPSVMATextStore extends CVMATextStore {
     @Override
     public void adviseBeforeReturnByThrow(long time, String threadName, long objId, int poppedFrames) {
         appendTTId(time, ADVISE_BEFORE_RETURN_BY_THROW, objId, threadName);
-        psb.sb.append(poppedFrames);
+        sb.append(poppedFrames);
         end();
 
     }
