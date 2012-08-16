@@ -22,7 +22,8 @@
  */
 package com.oracle.max.vm.ext.vma.store.txt;
 
-import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 import com.sun.max.program.*;
 
@@ -50,19 +51,25 @@ import com.sun.max.program.*;
  * other threads.
  *
  * The short form maps are (necessarily) global to all threads and must be thread-safe.
- * The repeated id handling uses a thread-local as it operates across multiple
- * methods and is thread-specific.
+ * The values used to represent short forms are immutable when stored in the map.
+ * However, the class definitions do not define the fields as {@code final} because
+ * mutable, thread-local, instances are used to do the initial lookup in the map
+ * to avoid unnecessary allocation.
+ *
+ * The class implements all the {@link VMATextStore} methods and, after handling the compression
+ * based on the arguments, invokes the same method with the possibly transformed arguments,
+ * on a {#link {@link #del delegate instance}. A concrete subclass must implement the
+ * {@link #defineShortForm(ShortForm, Object, String, String)} method, which is called
+ * whenever a new short form is created.
  */
 
 public abstract class CSFVMATextStore extends CVMATextStore {
 
+    /**
+     * Delegate that implements the real store.
+     */
     protected final CVMATextStore del;
 
-    private static Map<String, LastId> repeatedIds;
-    private static int classInt;
-    private static int fieldInt;
-    private static int threadInt;
-    private static int methodInt;
     private static final String NO_REPEATS_PROPERTY = "max.vma.norepeatids";
     private static final String PREFIX_PROPERTY = "max.vma.shortprefix";
     private static boolean doRepeats;
@@ -123,26 +130,26 @@ public abstract class CSFVMATextStore extends CVMATextStore {
     /**
      * Per-thread value that is used to check the map for existence.
      */
-    private class ClassNameIdTL extends ThreadLocal<ClassNameId> {
+    private static class ClassNameIdTL extends ThreadLocal<ClassNameId> {
         @Override
         public ClassNameId initialValue() {
             return new ClassNameId(null, 0);
         }
     }
 
-    private final ClassNameIdTL classNameIdTL = new ClassNameIdTL();
+    private static final ClassNameIdTL classNameIdTL = new ClassNameIdTL();
 
     /**
      * Per-thread value that is used to check the map for existence.
      */
-    private class QualNameTL extends ThreadLocal<QualName> {
+    private static class QualNameTL extends ThreadLocal<QualName> {
         @Override
         public QualName initialValue() {
             return new QualName(classNameIdTL.get(), null);
         }
     }
 
-    private final QualNameTL qualNameTL = new QualNameTL();
+    private static final QualNameTL qualNameTL = new QualNameTL();
 
     public static enum ShortForm {
         C("C"),
@@ -152,37 +159,39 @@ public abstract class CSFVMATextStore extends CVMATextStore {
 
         public final String code;
 
-        private Map<Object, String> shortForms = new HashMap<Object, String>();
-        private int nextId;
+        private ConcurrentMap<Object, String> shortForms = new ConcurrentHashMap<Object, String>();
+        private AtomicInteger nextIdA = new AtomicInteger();
 
         String createShortForm(CSFVMATextStore handler, Object key) {
-            synchronized (shortForms) {
-                String shortForm = shortForms.get(key);
-                String classShortForm = null;
-                if (shortForm == null) {
-                    Object newKey = key;
-                    shortForm = doPrefix ? (code + nextId) : Integer.toString(nextId);
-                    nextId++;
-                    switch (this) {
-                        case T:
-                            break;
-                        case C:
-                            ClassNameId tlKey = (ClassNameId) key;
-                            newKey = new ClassNameId(tlKey.name, tlKey.clId);
-                            break;
-                        case F:
-                        case M:
-                            QualName tlQualName = (QualName) key;
-                            newKey = new QualName(new ClassNameId(tlQualName.className.name, tlQualName.className.clId), tlQualName.name);
-                            classShortForm = ShortForm.C.createShortForm(handler, tlQualName.className);
-                            break;
-                    }
-                    shortForms.put(newKey, shortForm);
+            String shortForm = shortForms.get(key);
+            String classShortForm = null;
+            if (shortForm == null) {
+                Object newKey = key;
+                int nextId = nextIdA.incrementAndGet();
+                shortForm = doPrefix ? (code + nextId) : Integer.toString(nextId);
+                switch (this) {
+                    case T:
+                        break;
+                    case C:
+                        ClassNameId tlKey = (ClassNameId) key;
+                        newKey = new ClassNameId(tlKey.name, tlKey.clId);
+                        break;
+                    case F:
+                    case M:
+                        QualName tlQualName = (QualName) key;
+                        newKey = new QualName(new ClassNameId(tlQualName.className.name, tlQualName.className.clId), tlQualName.name);
+                        classShortForm = ShortForm.C.createShortForm(handler, tlQualName.className);
+                        break;
+                }
+                String winner = shortForms.putIfAbsent(newKey, shortForm);
+                // Another thread may have beaten us to it.
+                if (winner != null) {
+                    shortForm = winner;
+                } else {
                     handler.defineShortForm(this, key, shortForm, classShortForm);
                 }
-                return shortForm;
             }
-
+            return shortForm;
         }
 
         ShortForm(String code) {
@@ -190,9 +199,17 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         }
     }
 
-    static class LastId {
+    /**
+     * Mutable "long" for recording last object id used by a thread.
+     */
+    private static class LastId {
         long id = REPEAT_ID_VALUE;
     }
+
+    /**
+     * Maintains the last id for the set of threads in the trace.
+     */
+    private static ConcurrentMap<String, LastId> repeatedIds;
 
     protected CSFVMATextStore(CVMATextStore del) {
         super();
@@ -220,19 +237,21 @@ public abstract class CSFVMATextStore extends CVMATextStore {
     }
 
     private static LastId getLastId(String threadName) {
-        synchronized (repeatedIds) {
-            LastId lastId = repeatedIds.get(threadName);
-            if (lastId == null) {
-                lastId = new LastId();
-                repeatedIds.put(threadName, lastId);
+        LastId lastId = repeatedIds.get(threadName);
+        if (lastId == null) {
+            lastId = new LastId();
+            LastId winner = repeatedIds.putIfAbsent(threadName, lastId);
+            // Another thread may have beaten us to it.
+            if (winner != null) {
+                lastId = winner;
             }
-            return lastId;
         }
+        return lastId;
     }
 
     @Override
     public boolean initializeStore(boolean timeOrdered, boolean perThread) {
-        repeatedIds = new HashMap<String, LastId>();
+        repeatedIds = new ConcurrentHashMap<String, LastId>();
         doRepeats = System.getProperty(NO_REPEATS_PROPERTY) == null;
         doPrefix = System.getProperty(PREFIX_PROPERTY) != null;
         return del.initializeStore(timeOrdered, perThread);

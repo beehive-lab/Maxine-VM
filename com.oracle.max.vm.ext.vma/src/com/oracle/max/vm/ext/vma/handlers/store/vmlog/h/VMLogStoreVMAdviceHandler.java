@@ -124,10 +124,9 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
                 vmaVMLog = VMAJavaRunScheme.vmaVMLog();
                 vmaVMLog.registerCustom(VMAVMLogger.logger, new VMLogFlusher());
             }
-            VMAdviceHandlerTextStoreAdapter storeAdaptor = new VMAdviceHandlerTextStoreAdapter();
-            storeAdaptor.setThreadMode(true, getPerThread());
+            VMAdviceHandlerTextStoreAdapter storeAdaptor = new VMAdviceHandlerTextStoreAdapter(state, true, getPerThread());
             storeAdaptor.initialise(phase);
-            super.setRemovalTracker(storeAdaptor.getRemovalTracker(state));
+            super.setRemovalTracker(storeAdaptor.getRemovalTracker());
             VMAVMLogger.VMAVMLoggerImpl.setStoreAdaptor(storeAdaptor);
             VMAVMLogger.logger.enable(true);
             String ltp = System.getProperty(TIME_PROPERTY);

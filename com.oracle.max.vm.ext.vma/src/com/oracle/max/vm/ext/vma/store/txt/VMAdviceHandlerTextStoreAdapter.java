@@ -40,10 +40,10 @@ import com.sun.max.vm.thread.*;
  * An adapter that handles the conversion from the signatures of {@link VMAdviceHandler} that
  * use VM internal types to the external representation types used by {@link VMATextStore}.
  *
- * There are no "smarts" in this adaptor; it just logs and assumes that object id assignment
+ * There are no "smarts" in this adaptor; it just assumes that object id assignment
  * has already been done and that it can access the id using the provided implementation
  * of {@link ObjectStateHandler} passed in {@link #getRemovalTracker(ObjectStateHandler),
- * which <b>must</b> called by the adapter client before any logging takes place..
+ * which <b>must</b> called by the adapter client before any advice calls occur.
  *
  */
 public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.RemovalTracker {
@@ -74,34 +74,34 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
 
     /**
      * Handles the mapping from internal object references to external ids and
-     * object death callbacks. Must be set by caller using {@link #getRemovalTracker(ObjectStateHandler)}.
+     * object death callbacks. Must be set by caller using {@link #getRemovalTracker()}.
      */
-    private ObjectStateHandler state;
+    private final ObjectStateHandler state;
 
     /**
      * Denotes whether the log records are batched per thread.
      * Default is {@code false}, but can be changed by {@link #setThreadMode(boolean, boolean)}.
      */
-    private boolean threadBatched;
+    private final boolean threadBatched;
 
-    private boolean perThread;
+    private final boolean perThread;
 
     public VMATextStore getStore() {
         return store;
-    }
-
-    public void setThreadMode(boolean threadBatched, boolean perThread) {
-        this.threadBatched = threadBatched;
-        this.perThread = perThread;
     }
 
     protected void setThreadNameGenerator(ThreadNameGenerator tng) {
         this.tng = tng;
     }
 
-    public ObjectStateHandler.RemovalTracker getRemovalTracker(ObjectStateHandler state) {
-        this.state = state;
+    public ObjectStateHandler.RemovalTracker getRemovalTracker() {
         return this;
+    }
+
+    public VMAdviceHandlerTextStoreAdapter(ObjectStateHandler state, boolean threadBatched, boolean perThread) {
+        this.state = state;
+        this.threadBatched = threadBatched;
+        this.perThread = perThread;
     }
 
     public void initialise(MaxineVM.Phase phase) {

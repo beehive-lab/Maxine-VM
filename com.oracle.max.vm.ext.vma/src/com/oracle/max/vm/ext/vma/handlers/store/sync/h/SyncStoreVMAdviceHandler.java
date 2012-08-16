@@ -67,10 +67,9 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void initialise(MaxineVM.Phase phase) {
         super.initialise(phase);
         if (phase == MaxineVM.Phase.RUNNING) {
-            storeAdaptor = new VMAdviceHandlerTextStoreAdapter();
-            storeAdaptor.setThreadMode(false, false);
+            storeAdaptor = new VMAdviceHandlerTextStoreAdapter(state, false, false);
             storeAdaptor.initialise(phase);
-            super.setRemovalTracker(storeAdaptor.getRemovalTracker(state));
+            super.setRemovalTracker(storeAdaptor.getRemovalTracker());
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             storeAdaptor.initialise(phase);
         }
