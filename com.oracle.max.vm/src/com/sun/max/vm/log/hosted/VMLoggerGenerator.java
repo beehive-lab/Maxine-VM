@@ -232,12 +232,16 @@ public class VMLoggerGenerator {
                 if (!vmLoggerInterface.noTrace()) {
                     // trace call in case body
                     int indx = 4;
+                    boolean includeThread = vmLoggerInterface.traceThread();
                     StringBuilder caseBody = new StringBuilder(INDENTS[indx]).append("case ");
                     caseBody.append(enumMap[i].ordinal).append(':').append(" { //").append(uEnumName).append('\n');
                     caseBody.append(INDENTS[indx + 1]).append("trace").append(uMethodName).append('(');
+                    if (includeThread) {
+                        caseBody.append("threadId");
+                    }
                     argIndex = 1;
                     for (Class< ? > parameter : parameters) {
-                        if (argIndex > 1) {
+                        if (argIndex > 1 || includeThread) {
                             caseBody.append(", ");
                         }
                         caseBody.append(wrapTraceArg(customTypes, source, new GClass(parameter, genericParams[argIndex - 1]), argIndex));
@@ -250,10 +254,13 @@ public class VMLoggerGenerator {
 
                     // trace method
                     out.printf("%sprotected abstract void trace%s(", INDENT8, uMethodName);
+                    if (includeThread) {
+                        out.print("int threadId");
+                    }
                     argIndex = 1;
                     for (Class< ? > parameter : parameters) {
                         Annotation[] paramAnnotations = parameterAnnotations[argIndex - 1];
-                        if (argIndex > 1) {
+                        if (argIndex > 1 || includeThread) {
                             out.print(",");
                             if (argIndex % 6 == 0) {
                                 out.printf("%n%s", INDENT16);
@@ -270,7 +277,7 @@ public class VMLoggerGenerator {
             }
 
             if (!vmLoggerInterface.noTrace()) {
-                outTraceMethod(out, traceCaseBodies);
+                outTraceMethod(out, traceCaseBodies, vmLoggerInterface.traceThread());
 
                 // casts
                 for (GClass gclass : customTypes) {
@@ -577,9 +584,12 @@ public class VMLoggerGenerator {
         return result;
     }
 
-    private static void outTraceMethod(PrintWriter out, ArrayList<String> caseBodies) {
+    private static void outTraceMethod(PrintWriter out, ArrayList<String> caseBodies, boolean includeThread) {
         out.printf("%s@Override%n", INDENT8);
         out.printf("%sprotected void trace(Record r) {%n", INDENT8);
+        if (includeThread) {
+            out.printf("%sint threadId = r.getThreadId();%n", INDENT12);
+        }
         out.printf("%sswitch (r.getOperation()) {%n", INDENT12);
         for (String caseBody : caseBodies) {
             out.print(caseBody);

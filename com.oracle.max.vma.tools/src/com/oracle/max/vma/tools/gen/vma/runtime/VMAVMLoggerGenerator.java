@@ -53,7 +53,7 @@ public class VMAVMLoggerGenerator {
 
 
         out.printf("%s@HOSTED_ONLY%n", INDENT4);
-        out.printf("%s@VMLoggerInterface(hidden = true)%n", INDENT4);
+        out.printf("%s@VMLoggerInterface(hidden = true, traceThread = true)%n", INDENT4);
         out.printf("%sprivate interface VMAVMLoggerInterface {%n", INDENT4);
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
@@ -77,7 +77,7 @@ public class VMAVMLoggerGenerator {
         }
     }
 
-    private static class MyArgumentsPrefix extends ArgumentsPrefix {
+    private static class IntfArgumentsPrefix extends ArgumentsPrefix {
         @Override
         public int prefixArguments() {
             out.print("long arg1");
@@ -85,20 +85,29 @@ public class VMAVMLoggerGenerator {
         }
     }
 
-    private static final MyArgumentsPrefix argumentsPrefix = new MyArgumentsPrefix();
+    private static class ImplArgumentsPrefix extends ArgumentsPrefix {
+        @Override
+        public int prefixArguments() {
+            out.print("int threadId, long arg1");
+            return 1;
+        }
+    }
+
+    private static final IntfArgumentsPrefix intfArgumentsPrefix = new IntfArgumentsPrefix();
+    private static final ImplArgumentsPrefix implArgumentsPrefix = new ImplArgumentsPrefix();
 
     private static void generateImpl(Method m) {
         out.print(INDENT8);
         out.println("@Override");
-        int argCount = generateSignature(INDENT8, "protected", new MyMethodNameOverride(m), null, argumentsPrefix);
+        int argCount = generateSignature(INDENT8, "protected", new MyMethodNameOverride(m), null, implArgumentsPrefix);
         out.println(" {");
-        out.printf("%shandler.%s(", INDENT12, m.getName());
+        out.printf("%sstoreAdaptor(threadId).%s(", INDENT12, m.getName());
         generateInvokeArgs(argCount);
         out.printf("%s}%n", INDENT8);
     }
 
     private static void generateInterface(Method m) {
-        generateSignature(INDENT8, null, new MethodNameOverride(m), null, argumentsPrefix);
+        generateSignature(INDENT8, null, new MethodNameOverride(m), null, intfArgumentsPrefix);
         out.printf(";%n%n");
     }
 }

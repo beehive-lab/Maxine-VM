@@ -81,11 +81,11 @@ public class SBPSVMATextStore extends CVMATextStore {
 
     private boolean absTimeFlag;
     private int flushLogAt;
-    private int logSize = DEFAULT_BUFSIZE;
+    private int bufSize = DEFAULT_BUFSIZE;
     private boolean threadBatched;
     private boolean perThread;
     @CONSTANT_WHEN_NOT_ZERO
-    private File logFileDir;
+    private File storeFileDir;
     private Map<String, PSBuilder> psBuilderMap;
 
     /**
@@ -99,12 +99,12 @@ public class SBPSVMATextStore extends CVMATextStore {
         this.perThread = perThread;
         final String logSizeProp = System.getProperty(BUFSIZE_PROPERTY);
         if (logSizeProp != null) {
-            logSize = Integer.parseInt(logSizeProp);
+            bufSize = Integer.parseInt(logSizeProp);
         }
-        flushLogAt = System.getProperty(FLUSH_PROPERTY) != null ? 0 : logSize - 80;
+        flushLogAt = System.getProperty(FLUSH_PROPERTY) != null ? 0 : bufSize - 80;
         absTimeFlag = System.getProperty(ABSTIME_PROPERTY) != null;
 
-        logFileDir = new File(VMAStoreFile.getStoreDir());
+        storeFileDir = new File(VMAStoreFile.getStoreDir());
         cleanOutputDir();
 
         if (!perThread) {
@@ -123,14 +123,14 @@ public class SBPSVMATextStore extends CVMATextStore {
     }
 
     private void cleanOutputDir() {
-        if (logFileDir.exists()) {
-            for (String fn : logFileDir.list()) {
-                if (!new File(logFileDir, fn).delete()) {
+        if (storeFileDir.exists()) {
+            for (String fn : storeFileDir.list()) {
+                if (!new File(storeFileDir, fn).delete()) {
                     System.err.println("failed to delete VMA output file: " + fn);
                 }
             }
         } else {
-            logFileDir.mkdir();
+            storeFileDir.mkdir();
         }
     }
 
@@ -140,10 +140,10 @@ public class SBPSVMATextStore extends CVMATextStore {
      * @return
      */
     PSBuilder createPSBuilder(String fileName) {
-        File file = new File(logFileDir, fileName);
+        File file = new File(storeFileDir, fileName);
         try {
             PrintStream ps = new PrintStream(new FileOutputStream(file));
-            psb = new PSBuilder(ps, new StringBuilder(logSize));
+            psb = new PSBuilder(ps, new StringBuilder(bufSize));
             // Format log buffer with header information
             appendCode(INITIALIZE_LOG);
             appendSpace();
@@ -155,7 +155,7 @@ public class SBPSVMATextStore extends CVMATextStore {
             end();
             return psb;
         } catch (IOException ex) {
-            System.err.println("failed to open log file " + file + ": " + ex);
+            System.err.println("failed to open store file " + file + ": " + ex);
             return null;
         }
     }
