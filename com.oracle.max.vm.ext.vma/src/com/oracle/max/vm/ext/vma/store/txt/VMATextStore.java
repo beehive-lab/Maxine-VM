@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.vma.store.txt;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * An interface that is derived from {@link VMAdviceHandler} but is suitable for persistent textual storage. I.e., object
@@ -69,11 +70,20 @@ public abstract class VMATextStore {
     public abstract void unseenObject(long time, String threadName, long objId, String className, long clId);
 
     /**
-     * Indicates that subsequent records are for the given thread in the case
-     * where threads batch records before outputting them.
-     * @param time TODO
+     * In per-thread mode must be called notify the start of a new thread, typically
+     * from {@code adviseBeforeThreadStarting}, but certainly before any {@code adviseXXX} methods
+     * of this called are called.
+     * For per-thread stores may return a per-thread specific store that should be
+     * used instead of {@code this}.
      */
-    public abstract void threadSwitch(long time, String threadName);
+    public abstract VMATextStore newThread(VmThread vmThread);
+
+    /**
+     * Must be called in {@link #threadBatched} mode to indicate records now for given thread.
+     * For per-thread stores may return a per-thread specific store that should be
+     * used instead of {@code this}.
+     */
+    public abstract VMATextStore threadSwitch(long time, VmThread vmThread);
 
 // START GENERATED CODE
 // EDIT AND RUN VMATextStoreGenerator.main() TO MODIFY

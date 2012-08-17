@@ -66,6 +66,8 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     private static boolean logTime = true;
 
+    private static VMAdviceHandlerTextStoreAdapter storeAdaptor;
+
     /**
      * Handles the flushing of the per-thread log when it fills or when it is explicitly flushed.
      * A lock is held while the records are flushed to ensure that records are batched together.
@@ -85,7 +87,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
         public void flushRecord(VmThread vmThread, Record r, int uuid) {
             if (firstRecord) {
                 // Indicate the start of a new batch of records for the current thread
-                VMAVMLogger.storeAdaptor.getStore().threadSwitch(r.getLongArg(1), vmThread.getName());
+                storeAdaptor.threadSwitch(r.getLongArg(1), vmThread);
                 firstRecord = false;
             }
             VMAVMLogger.logger.trace(r);
@@ -124,10 +126,11 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
                 vmaVMLog = VMAJavaRunScheme.vmaVMLog();
                 vmaVMLog.registerCustom(VMAVMLogger.logger, new VMLogFlusher());
             }
-            VMAdviceHandlerTextStoreAdapter storeAdaptor = new VMAdviceHandlerTextStoreAdapter(state, true, getPerThread());
+            final boolean perThread = getPerThread();
+            storeAdaptor = new VMAdviceHandlerTextStoreAdapter(state, true, perThread);
             storeAdaptor.initialise(phase);
             super.setRemovalTracker(storeAdaptor.getRemovalTracker());
-            VMAVMLogger.VMAVMLoggerImpl.setStoreAdaptor(storeAdaptor);
+            VMAVMLogger.logger.storeAdaptor = storeAdaptor;
             VMAVMLogger.logger.enable(true);
             String ltp = System.getProperty(TIME_PROPERTY);
             if (ltp != null) {
@@ -136,7 +139,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             // the VMA log for the main thread is flushed by adviseBeforeThreadTerminating
             // so we just need to flush the external log
-            VMAVMLogger.storeAdaptor.initialise(phase);
+            storeAdaptor.initialise(phase);
         }
 
     }
@@ -168,13 +171,14 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseBeforeThreadStarting(VmThread vmThread) {
         // Need to inform the adapter, no need to log
-        VMAVMLogger.storeAdaptor.adviseBeforeThreadStarting(getTime(), vmThread);
+        // In case of per-thread case, possible create a per-thread adaptor
+        storeAdaptor.newThread(vmThread).adviseBeforeThreadStarting(getTime(), vmThread);
     }
 
     @Override
     public void adviseBeforeThreadTerminating(VmThread vmThread) {
         // Need to inform the adapter, no need to log
-        VMAVMLogger.storeAdaptor.adviseBeforeThreadTerminating(getTime(), vmThread);
+        storeAdaptor.adviseBeforeThreadTerminating(getTime(), vmThread);
         // Now flush the log buffer
         vmaVMLog.flush(VMLog.FLUSHMODE_FULL, vmThread);
     }

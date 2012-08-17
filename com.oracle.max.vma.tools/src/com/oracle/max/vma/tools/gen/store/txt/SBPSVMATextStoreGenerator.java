@@ -27,19 +27,20 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.store.txt.*;
+import com.oracle.max.vm.ext.vma.store.txt.sbps.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
-public class CSFVMATextStoreGenerator {
+public class SBPSVMATextStoreGenerator {
 
     public static void main(String[] args) throws Exception {
-        createGenerator(CSFVMATextStoreGenerator.class);
+        createGenerator(SBPSVMATextStoreGenerator.class);
         generateAutoComment();
         for (Method m : VMATextStore.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generate(m);
             }
         }
-        AdviceGeneratorHelper.updateSource(CSFVMATextStore.class, null, false);
+        AdviceGeneratorHelper.updateSource(SBPSVMATextStore.class, null, false);
     }
 
     private static void generate(Method m) {
@@ -52,7 +53,7 @@ public class CSFVMATextStoreGenerator {
             out.printf("    }%n%n");
             return;
         }
-        out.printf("        del.%s(", m.getName());
+        out.printf("        store_%s(", m.getName());
         out.print("arg1, getThreadShortForm(arg2)");
         if (name.contains("GetField") || name.contains("PutField")) {
             out.print(", checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6)");

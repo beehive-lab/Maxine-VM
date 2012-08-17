@@ -48,7 +48,7 @@ public class RunGenerators {
         TransientVMAdviceHandlerTypesGenerator.class,
         GCTestAdviceHandlerLogGenerator.class,
         CVMATextStoreGenerator.class,
-        CSFVMATextStoreGenerator.class,
+        SBPSVMATextStoreGenerator.class,
         VMAdviceTemplateGenerator.class
     };
 

@@ -25,7 +25,7 @@ package com.oracle.max.vm.ext.vma.store.txt;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
-import com.sun.max.program.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Defines a compact textual format that uses short forms for class, field and thread names.
@@ -64,11 +64,6 @@ import com.sun.max.program.*;
  */
 
 public abstract class CSFVMATextStore extends CVMATextStore {
-
-    /**
-     * Delegate that implements the real store.
-     */
-    protected final CVMATextStore del;
 
     private static final String NO_REPEATS_PROPERTY = "max.vma.norepeatids";
     private static final String PREFIX_PROPERTY = "max.vma.shortprefix";
@@ -163,6 +158,13 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         private AtomicInteger nextIdA = new AtomicInteger();
 
         String createShortForm(CSFVMATextStore handler, Object key) {
+            VmThread vmThread = null;
+            if (this == T) {
+                if (key instanceof VmThread) {
+                    vmThread = (VmThread) key;
+                    key = vmThread.getName();
+                }
+            }
             String shortForm = shortForms.get(key);
             String classShortForm = null;
             if (shortForm == null) {
@@ -171,6 +173,9 @@ public abstract class CSFVMATextStore extends CVMATextStore {
                 shortForm = doPrefix ? (code + nextId) : Integer.toString(nextId);
                 switch (this) {
                     case T:
+                        if (vmThread != null) {
+                            key = vmThread;
+                        }
                         break;
                     case C:
                         ClassNameId tlKey = (ClassNameId) key;
@@ -211,11 +216,6 @@ public abstract class CSFVMATextStore extends CVMATextStore {
      */
     private static ConcurrentMap<String, LastId> repeatedIds;
 
-    protected CSFVMATextStore(CVMATextStore del) {
-        super();
-        this.del = del;
-    }
-
     /**
      * Check if this {@code objId} is the same as the previous one.
      * Note that all traces that start with an {@code objId} must call this method!
@@ -223,7 +223,7 @@ public abstract class CSFVMATextStore extends CVMATextStore {
      * @param threadName
      * @return {@link TextVMAdviceHandlerLog#REPEAT_ID_VALUE} for a match, {@code id} otherwise
      */
-    private static long checkRepeatId(long id, String threadName) {
+    protected static long checkRepeatId(long id, String threadName) {
         LastId lastId;
         if (doRepeats) {
             lastId = getLastId(threadName);
@@ -249,34 +249,11 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         return lastId;
     }
 
-    @Override
-    public boolean initializeStore(boolean timeOrdered, boolean perThread) {
+    protected void initStaticState(boolean perThread) {
         repeatedIds = new ConcurrentHashMap<String, LastId>();
         doRepeats = System.getProperty(NO_REPEATS_PROPERTY) == null;
         doPrefix = System.getProperty(PREFIX_PROPERTY) != null;
-        return del.initializeStore(timeOrdered, perThread);
     }
-
-    @Override
-    public void finalizeStore() {
-        del.finalizeStore();
-    }
-
-    @Override
-    public void removal(long id) {
-        del.removal(id);
-    }
-
-    @Override
-    public void unseenObject(long time, String threadName, long objId, String className, long clId) {
-        del.unseenObject(time, getThreadShortForm(threadName), checkRepeatId(objId, threadName), getClassShortForm(className, clId), clId);
-    }
-
-    @Override
-    public void threadSwitch(long time, String threadName) {
-        del.threadSwitch(time, getThreadShortForm(threadName));
-    }
-
 
     protected String getClassShortForm(String className, long clId) {
         ClassNameId classNameId = classNameIdTL.get();
@@ -291,6 +268,10 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         qualNameId.className.clId = clId;
         qualNameId.name = fieldName;
         return ShortForm.F.createShortForm(this, qualNameId);
+    }
+
+    protected String getThreadShortForm(VmThread vmThread) {
+        return ShortForm.T.createShortForm(this, vmThread);
     }
 
     protected String getThreadShortForm(String threadName) {
@@ -313,321 +294,7 @@ public abstract class CSFVMATextStore extends CVMATextStore {
      * @param shortForm
      * @param classShortForm only for fields and methods
      */
-    public abstract void defineShortForm(ShortForm type, Object key, String shortForm, String classShortForm);
+    protected abstract void defineShortForm(ShortForm type, Object key, String shortForm, String classShortForm);
 
-// START GENERATED CODE
-// EDIT AND RUN CSFVMATextStoreGenerator.main() TO MODIFY
-
-    @Override
-    public void adviseAfterMultiNewArray(long arg1, String arg2, long arg3, String arg4, long arg5, int arg6) {
-        ProgramError.unexpected("adviseAfterMultiNewArray");
-    }
-
-    @Override
-    public void adviseBeforeGC(long arg1, String arg2) {
-        del.adviseBeforeGC(arg1, getThreadShortForm(arg2));
-    }
-
-    @Override
-    public void adviseAfterGC(long arg1, String arg2) {
-        del.adviseAfterGC(arg1, getThreadShortForm(arg2));
-    }
-
-    @Override
-    public void adviseBeforeThreadStarting(long arg1, String arg2) {
-        del.adviseBeforeThreadStarting(arg1, getThreadShortForm(arg2));
-    }
-
-    @Override
-    public void adviseBeforeThreadTerminating(long arg1, String arg2) {
-        del.adviseBeforeThreadTerminating(arg1, getThreadShortForm(arg2));
-    }
-
-    @Override
-    public void adviseBeforeReturnByThrow(long arg1, String arg2, long arg3, int arg4) {
-        del.adviseBeforeReturnByThrow(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), arg4);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(long arg1, String arg2, long arg3) {
-        del.adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(long arg1, String arg2, float arg3) {
-        del.adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(long arg1, String arg2, double arg3) {
-        del.adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeConstLoadObject(long arg1, String arg2, long arg3) {
-        del.adviseBeforeConstLoadObject(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeLoad(long arg1, String arg2, int arg3) {
-        del.adviseBeforeLoad(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeArrayLoad(long arg1, String arg2, long arg3, int arg4) {
-        del.adviseBeforeArrayLoad(arg1, getThreadShortForm(arg2),  checkRepeatId(arg3, arg2), arg4);
-    }
-
-    @Override
-    public void adviseBeforeStore(long arg1, String arg2, int arg3, float arg4) {
-        del.adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeStore(long arg1, String arg2, int arg3, double arg4) {
-        del.adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeStore(long arg1, String arg2, int arg3, long arg4) {
-        del.adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeStoreObject(long arg1, String arg2, int arg3, long arg4) {
-        del.adviseBeforeStoreObject(arg1, getThreadShortForm(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(long arg1, String arg2, long arg3, int arg4, long arg5) {
-        del.adviseBeforeArrayStore(arg1, getThreadShortForm(arg2),  checkRepeatId(arg3, arg2), arg4, arg5);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(long arg1, String arg2, long arg3, int arg4, double arg5) {
-        del.adviseBeforeArrayStore(arg1, getThreadShortForm(arg2),  checkRepeatId(arg3, arg2), arg4, arg5);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(long arg1, String arg2, long arg3, int arg4, float arg5) {
-        del.adviseBeforeArrayStore(arg1, getThreadShortForm(arg2),  checkRepeatId(arg3, arg2), arg4, arg5);
-    }
-
-    @Override
-    public void adviseBeforeArrayStoreObject(long arg1, String arg2, long arg3, int arg4, long arg5) {
-        del.adviseBeforeArrayStoreObject(arg1, getThreadShortForm(arg2),  checkRepeatId(arg3, arg2), arg4, arg5);
-    }
-
-    @Override
-    public void adviseBeforeStackAdjust(long arg1, String arg2, int arg3) {
-        del.adviseBeforeStackAdjust(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeOperation(long arg1, String arg2, int arg3, float arg4, float arg5) {
-        del.adviseBeforeOperation(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
-    }
-
-    @Override
-    public void adviseBeforeOperation(long arg1, String arg2, int arg3, long arg4, long arg5) {
-        del.adviseBeforeOperation(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
-    }
-
-    @Override
-    public void adviseBeforeOperation(long arg1, String arg2, int arg3, double arg4, double arg5) {
-        del.adviseBeforeOperation(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
-    }
-
-    @Override
-    public void adviseBeforeConversion(long arg1, String arg2, int arg3, float arg4) {
-        del.adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeConversion(long arg1, String arg2, int arg3, double arg4) {
-        del.adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeConversion(long arg1, String arg2, int arg3, long arg4) {
-        del.adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeIf(long arg1, String arg2, int arg3, int arg4, int arg5) {
-        del.adviseBeforeIf(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
-    }
-
-    @Override
-    public void adviseBeforeIfObject(long arg1, String arg2, int arg3, long arg4, long arg5) {
-        del.adviseBeforeIfObject(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
-    }
-
-    @Override
-    public void adviseBeforeBytecode(long arg1, String arg2, int arg3) {
-        del.adviseBeforeBytecode(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeReturn(long arg1, String arg2) {
-        del.adviseBeforeReturn(arg1, getThreadShortForm(arg2));
-    }
-
-    @Override
-    public void adviseBeforeReturn(long arg1, String arg2, float arg3) {
-        del.adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeReturn(long arg1, String arg2, double arg3) {
-        del.adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeReturn(long arg1, String arg2, long arg3) {
-        del.adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeReturnObject(long arg1, String arg2, long arg3) {
-        del.adviseBeforeReturnObject(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeGetStatic(long arg1, String arg2, String arg3, long arg4, String arg5) {
-        del.adviseBeforeGetStatic(arg1, getThreadShortForm(arg2), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5));
-    }
-
-    @Override
-    public void adviseBeforePutStaticObject(long arg1, String arg2, String arg3, long arg4, String arg5, long arg6) {
-        del.adviseBeforePutStaticObject(arg1, getThreadShortForm(arg2), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(long arg1, String arg2, String arg3, long arg4, String arg5, double arg6) {
-        del.adviseBeforePutStatic(arg1, getThreadShortForm(arg2), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(long arg1, String arg2, String arg3, long arg4, String arg5, long arg6) {
-        del.adviseBeforePutStatic(arg1, getThreadShortForm(arg2), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(long arg1, String arg2, String arg3, long arg4, String arg5, float arg6) {
-        del.adviseBeforePutStatic(arg1, getThreadShortForm(arg2), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
-    }
-
-    @Override
-    public void adviseBeforeGetField(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        del.adviseBeforeGetField(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseBeforePutFieldObject(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6, long arg7) {
-        del.adviseBeforePutFieldObject(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
-    }
-
-    @Override
-    public void adviseBeforePutField(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6, double arg7) {
-        del.adviseBeforePutField(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
-    }
-
-    @Override
-    public void adviseBeforePutField(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6, long arg7) {
-        del.adviseBeforePutField(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
-    }
-
-    @Override
-    public void adviseBeforePutField(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6, float arg7) {
-        del.adviseBeforePutField(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
-    }
-
-    @Override
-    public void adviseBeforeInvokeVirtual(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        del.adviseBeforeInvokeVirtual(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseBeforeInvokeSpecial(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        del.adviseBeforeInvokeSpecial(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseBeforeInvokeStatic(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        del.adviseBeforeInvokeStatic(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseBeforeInvokeInterface(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        del.adviseBeforeInvokeInterface(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseBeforeArrayLength(long arg1, String arg2, long arg3, int arg4) {
-        del.adviseBeforeArrayLength(arg1, getThreadShortForm(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeThrow(long arg1, String arg2, long arg3) {
-        del.adviseBeforeThrow(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2));
-    }
-
-    @Override
-    public void adviseBeforeCheckCast(long arg1, String arg2, long arg3, String arg4, long arg5) {
-        del.adviseBeforeCheckCast(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5);
-    }
-
-    @Override
-    public void adviseBeforeInstanceOf(long arg1, String arg2, long arg3, String arg4, long arg5) {
-        del.adviseBeforeInstanceOf(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5);
-    }
-
-    @Override
-    public void adviseBeforeMonitorEnter(long arg1, String arg2, long arg3) {
-        del.adviseBeforeMonitorEnter(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2));
-    }
-
-    @Override
-    public void adviseBeforeMonitorExit(long arg1, String arg2, long arg3) {
-        del.adviseBeforeMonitorExit(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2));
-    }
-
-    @Override
-    public void adviseAfterInvokeVirtual(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        del.adviseAfterInvokeVirtual(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseAfterInvokeSpecial(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        del.adviseAfterInvokeSpecial(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseAfterInvokeStatic(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        del.adviseAfterInvokeStatic(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseAfterInvokeInterface(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        del.adviseAfterInvokeInterface(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseAfterNew(long arg1, String arg2, long arg3, String arg4, long arg5) {
-        del.adviseAfterNew(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5);
-    }
-
-    @Override
-    public void adviseAfterNewArray(long arg1, String arg2, long arg3, String arg4, long arg5, int arg6) {
-        del.adviseAfterNewArray(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, arg6);
-    }
-
-    @Override
-    public void adviseAfterMethodEntry(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        del.adviseAfterMethodEntry(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-// END GENERATED CODE
 
 }

@@ -47,6 +47,9 @@ import com.sun.max.vm.thread.*;
  * the expectation is that the {@code trace} method is called which invokes the
  * correct {@link VMAdviceHandlerTextStoreAdapter} to flush the log records to the store.
  * To avoid unnecessary synchronization, per-thread store adaptors are supported.
+ * The {@link VMLoggerInterface#traceThread} option is set to cause the
+ * thread id (which is always stored in the log record) to be passed to the
+ * {@code traceXXX} methods, allowing the correct adaptor to be quickly found.
  *
  * A "time" argument is prefixed to the normal handler arguments so that a handler may associate an
  * accurate time with each record.
@@ -56,21 +59,17 @@ public class VMAVMLogger {
 
     static final VMAVMLoggerImpl logger = new VMAVMLoggerImpl();
 
-    static VMAdviceHandlerTextStoreAdapter storeAdaptor;
-
     public static class VMAVMLoggerImpl extends VMAVMLoggerAuto {
 
         protected VMAVMLoggerImpl() {
             super("VMAdvice");
         }
 
-        public static void setStoreAdaptor(VMAdviceHandlerTextStoreAdapter h) {
-            storeAdaptor = h;
-        }
+        VMAdviceHandlerTextStoreAdapter storeAdaptor;
 
         @NEVER_INLINE
         private VMAdviceHandlerTextStoreAdapter storeAdaptor(int threadId) {
-            return storeAdaptor;
+            return storeAdaptor.getStoreAdaptorForThread(threadId);
         }
 
 // START GENERATED INTERFACE
