@@ -22,10 +22,17 @@
  */
 package com.oracle.max.vm.ext.vma.store.txt.sbps;
 
+import com.oracle.max.vm.ext.vma.store.txt.*;
+
 /**
  * A synchronizing/locked version of {@link SBPSTextVMAdviceHandlerLog}.
  */
 public class SBPSLockedVMATextStore extends SBPSVMATextStore {
+
+    @Override
+    protected synchronized void defineShortForm(CSFVMATextStore.ShortForm type, Object key, String shortForm, String classShortForm) {
+        super.defineShortForm(type, key, shortForm, classShortForm);
+    }
 
 // START GENERATED CODE
 // EDIT AND RUN SBPSLockedVMATextStoreGenerator.main() TO MODIFY

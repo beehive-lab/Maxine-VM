@@ -25,7 +25,6 @@ package com.oracle.max.vm.ext.vma.store.txt;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.oracle.max.vm.ext.vma.store.*;
-import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -45,32 +44,54 @@ import com.sun.max.vm.thread.*;
  * of {@link ObjectStateHandler} passed in {@link #getRemovalTracker(ObjectStateHandler),
  * which <b>must</b> called by the adapter client before any advice calls occur.
  *
+ * {@link VMATextStore} methods require the name of the generating thread, whereas
+ * {@link VMAdviceHandler} methods do not, as it is implicit. However, it is possible
+ * that intermediate threads are used in the logging, so this class provides a mechanism
+ * for mapping to the actual thread that created a record, via a callback object.
+ * The default implementation assumes the current thread.
+ *
  */
 public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.RemovalTracker {
 
-    static abstract class ThreadNameGenerator {
-        abstract String getThreadName();
+    interface ThreadNameGenerator {
+        String getThreadName();
     }
 
-    protected static class CurrentThreadNameGenerator extends ThreadNameGenerator {
-        @INLINE
+    protected static class CurrentThreadNameGenerator implements ThreadNameGenerator {
         @Override
-        final String getThreadName() {
+        public final String getThreadName() {
             return VmThread.current().getName();
         }
     }
 
+    private static class ThreadVMAdviceHandlerTextStoreAdapter extends VMAdviceHandlerTextStoreAdapter implements ThreadNameGenerator {
+        private final String threadName;
+
+        public ThreadVMAdviceHandlerTextStoreAdapter(VmThread vmThread, ObjectStateHandler state, boolean threadBatched, boolean perThread) {
+            super(state, threadBatched, perThread);
+            this.threadName = vmThread.getName();
+        }
+
+        @Override
+        public String getThreadName() {
+            return threadName;
+        }
+
+    }
+
+    private static VMAdviceHandlerTextStoreAdapter[] storeAdaptors = new VMAdviceHandlerTextStoreAdapter[16];
+
     /**
      * Handle to the store instance.
      */
-    private VMATextStore store;
+    protected VMATextStore store;
 
     /**
      * Mechanism for generating the thread name.
      * Default used the current thread invoking the log method, which
      * is appropriate for synchronous logging.
      */
-    private ThreadNameGenerator tng;
+    protected ThreadNameGenerator tng;
 
     /**
      * Handles the mapping from internal object references to external ids and
@@ -120,6 +141,55 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
                 store.finalizeStore();
             }
         }
+    }
+
+    public VMAdviceHandlerTextStoreAdapter getStoreAdaptorForThread(int vmThreadId) {
+        if (perThread) {
+            return storeAdaptors[vmThreadId];
+        } else {
+            return this;
+        }
+    }
+
+    /**
+     * In per-thread mode must be called to notify the start of a new thread, typically
+     * from {@code adviseBeforeThreadStarting}, but certainly before any {@code adviseXXX} methods
+     * of this called are called.
+     * @param vmThread
+     * @return in per-thread mode a per-thread adaptor, else {@code this}.
+     */
+    public VMAdviceHandlerTextStoreAdapter newThread(VmThread vmThread) {
+        if (perThread) {
+            int id = vmThread.id();
+            if (id >= storeAdaptors.length) {
+                VMAdviceHandlerTextStoreAdapter[] newStoreAdaptors = new VMAdviceHandlerTextStoreAdapter[2 * storeAdaptors.length];
+                System.arraycopy(storeAdaptors, 0, newStoreAdaptors, 0, storeAdaptors.length);
+                storeAdaptors = newStoreAdaptors;
+            }
+            ThreadVMAdviceHandlerTextStoreAdapter sa = new ThreadVMAdviceHandlerTextStoreAdapter(vmThread, state, true, true);
+            sa.store = store.newThread(vmThread);
+            sa.tng = sa;
+            storeAdaptors[id] = sa;
+            return sa;
+        } else {
+            return this;
+        }
+    }
+
+    /**
+     * Must be called in {@link #threadBatched} mode to indicate records now for given thread.
+     * @param time
+     * @param vmThread
+     */
+    public VMAdviceHandlerTextStoreAdapter threadSwitch(long time, VmThread vmThread) {
+        VMAdviceHandlerTextStoreAdapter result;
+        if (perThread) {
+            result = storeAdaptors[vmThread.id()];
+        } else {
+            result = this;
+        }
+        result.store.threadSwitch(time, vmThread);
+        return result;
     }
 
     public void unseenObject(long time, Object obj) {

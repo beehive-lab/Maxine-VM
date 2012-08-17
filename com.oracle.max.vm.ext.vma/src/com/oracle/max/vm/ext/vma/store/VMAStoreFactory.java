@@ -28,7 +28,8 @@ import com.oracle.max.vm.ext.vma.store.txt.sbps.*;
 /**
  * Factory for controlling which subclass of {@link VMATextStore} is used.
  *
- * The default choice is {@link SBPSLockedCompactTextVMATextStore} but this
+ * The default choice is the appropriate variant of {@link SBPSVMATextStore}, based
+ * on whether per-thread stores are in ooeration, but the choice
  * can be changed with the {@link LOGCLASS_PROPERTY} system property,
  * which should be the fully qualified name of the class.
  */
@@ -40,7 +41,7 @@ public class VMAStoreFactory {
         VMATextStore result = null;
         final String logClass = System.getProperty(STORECLASS_PROPERTY);
         if (logClass == null) {
-            result = perThread ? new SBPSCSFVMATextStore() : new SBPSLockedCSFVMATextStore();
+            result = perThread ? new SBPSVMATextStore() : new SBPSLockedVMATextStore();
         } else {
             try {
                 result = (CVMATextStore) Class.forName(logClass).newInstance();
