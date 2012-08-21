@@ -34,7 +34,6 @@ import com.oracle.max.vm.ext.vma.store.txt.CSFVMATextStore.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * An implementation of {@link CVMATextStore} using a {@link PrintStream} and {@link StringBuilder}.
@@ -47,7 +46,7 @@ import com.sun.max.vm.thread.*;
  * short form is defined.
  *
  * At one time this class could be used directly as an implementation of {@link CVMATextStore}.
- * However, it is now dependent on {@link SBPSCSFVMATextStore}. For example
+ * However, it is now dependent on {@link CSFVMATextStore} and subclasses it. For example
  * the optimization on classloader id only works with short forms. In any event, for serious
  * use short forms are essential.
  *
@@ -57,7 +56,7 @@ import com.sun.max.vm.thread.*;
  *
  * In per-thread mode each thread has its own buffer and log file.
  * The log file name is used as a stem and each thread's file is named by suffixing with its id, which
- * will be the short form created by {@link SBPSCSFVMATextStore}. The file/stream/buffer
+ * will be the short form created by {@link CSFVMATextStore}. The file/stream/buffer
  * is created in {@link #defineThread} which may, due to the use of short forms, be called
  * before {@link #adviseBeforeThreadStarting(long, String)}.
  */
@@ -68,9 +67,7 @@ public class SBPSVMATextStore extends CSFVMATextStore {
      */
     private static class ThreadSBPSVMATextStore extends SBPSVMATextStore {
         final String shortThreadName;
-        final VmThread vmThread;
-        ThreadSBPSVMATextStore(VmThread vmThread, String shortThreadName) {
-            this.vmThread = vmThread;
+        ThreadSBPSVMATextStore(String shortThreadName) {
             this.shortThreadName = shortThreadName;
         }
     }
@@ -95,7 +92,10 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     @CONSTANT_WHEN_NOT_ZERO
     private static String flushProperty;
 
-    private static ConcurrentMap<VmThread, ThreadSBPSVMATextStore> storeMap;
+    /**
+     * Map from thread short form names to associated store; only when {@link #perThread}.
+     */
+    private static ConcurrentMap<String, ThreadSBPSVMATextStore> storeMap;
 
     private static volatile boolean finalizing;
 
@@ -145,7 +145,7 @@ public class SBPSVMATextStore extends CSFVMATextStore {
             cleanOutputDir();
             daemonLock.lock();
             if (perThread) {
-                storeMap = new ConcurrentHashMap<VmThread, ThreadSBPSVMATextStore>();
+                storeMap = new ConcurrentHashMap<String, ThreadSBPSVMATextStore>();
             }
         }
     }
@@ -173,6 +173,7 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         initStaticState(perThread);
         bufSize = globalBufSize;
         flushLogAt = flushProperty != null ? 0 : bufSize - 80;
+        lastTime = System.nanoTime();
         if (!perThread) {
             return createPersistentStore(this, VMAStoreFile.GLOBAL_STORE);
         } else {
@@ -213,11 +214,11 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     @Override
-    public VMATextStore newThread(VmThread vmThread) {
+    public VMATextStore newThread(String threadName) {
         // causes a call to defineThread
-        getThreadShortForm(vmThread);
+        String shortThreadName = getThreadShortForm(threadName);
         if (perThread) {
-            ThreadSBPSVMATextStore result = storeMap.get(vmThread);
+            ThreadSBPSVMATextStore result = storeMap.get(shortThreadName);
             return result;
         } else {
             return this;
@@ -226,16 +227,16 @@ public class SBPSVMATextStore extends CSFVMATextStore {
 
     /**
      * Must create the per-thread buffer before the short form for a thread is defined.
-     * @param threadName
+     * @param shortThreadName
      */
-    private SBPSVMATextStore defineThread(VmThread vmThread, String shortThreadName) {
+    private SBPSVMATextStore defineThread(String shortThreadName) {
         if (perThread) {
-            ThreadSBPSVMATextStore store = new ThreadSBPSVMATextStore(vmThread, shortThreadName);
+            ThreadSBPSVMATextStore store = new ThreadSBPSVMATextStore(shortThreadName);
             store.initializeStore(true, true);
             if (!createPersistentStore(store, shortThreadName)) {
                 FatalError.unexpected("failed to create per-thread VMA store");
             }
-            assert storeMap.put(vmThread, store) == null;
+            assert storeMap.put(shortThreadName, store) == null;
             return store;
         } else {
             return this;
@@ -249,13 +250,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
 
         if (type == ShortForm.T) {
             // This is where we first find out about a new thread, when creating the short form in adviseBeoreThreadStarting.
-            // If we are in per-thread mode, we continue with the thread-specific store.
-            if (key instanceof VmThread) {
-                store = defineThread((VmThread) key, shortForm);
-            } else {
-                String threadName = (String) key;
-
-            }
+            // If we are in per-thread mode, we continue with the returned thread-specific store.
+            store = defineThread(shortForm);
         }
         store.sb.append(type.code);
         store.sb.append(' ');
@@ -287,10 +283,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         finalizing = true;
         // However, there may be daemon threads part way through a record
         if (perThread) {
-            for (ThreadSBPSVMATextStore store : storeMap.values()) {
-                if (store.vmThread.javaThread().isDaemon()) {
-                    store.waitForDaemon();
-                }
+            for (SBPSVMATextStore store : storeMap.values()) {
+                store.waitForDaemon();
                 store.finalizeLogBuffer();
             }
         } else {
@@ -473,16 +467,13 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     @Override
-    public VMATextStore threadSwitch(long time, VmThread vmThread) {
-        if (perThread) {
-            return storeMap.get(vmThread);
-        } else {
+    public void threadSwitch(long time, String threadName) {
+        if (!perThread) {
             appendCode(THREAD_SWITCH);
             appendSpace();
             lastTime = time;
             sb.append(lastTime);
             end();
-            return this;
         }
     }
 
@@ -502,6 +493,7 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     private void store_adviseBeforeThreadTerminating(long time, String threadName) {
+        // TODO finalizeLogBuffer?
     }
 
     private void store_adviseBeforeGetStatic(long time, String threadName, String className, long clId, String memberName) {

@@ -25,7 +25,7 @@ package com.oracle.max.vm.ext.vma.store.txt.sbps;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 
 /**
- * A synchronizing/locked version of {@link SBPSTextVMAdviceHandlerLog}.
+ * A synchronizing/locked version of {@link SBPSTextVMATextStore}.
  */
 public class SBPSLockedVMATextStore extends SBPSVMATextStore {
 

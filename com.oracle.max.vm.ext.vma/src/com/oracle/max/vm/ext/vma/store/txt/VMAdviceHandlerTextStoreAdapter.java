@@ -88,7 +88,7 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
 
     /**
      * Mechanism for generating the thread name.
-     * Default used the current thread invoking the log method, which
+     * Default uses the current thread invoking the log method, which
      * is appropriate for synchronous logging.
      */
     protected ThreadNameGenerator tng;
@@ -152,22 +152,24 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
     }
 
     /**
-     * In per-thread mode must be called to notify the start of a new thread, typically
-     * from {@code adviseBeforeThreadStarting}, but certainly before any {@code adviseXXX} methods
-     * of this called are called.
+     * In per-thread mode must be called to notify the start of a new thread, typically from
+     * {@code adviseBeforeThreadStarting}, but certainly before any {@code adviseXXX} methods of this class are called.
+     *
      * @param vmThread
      * @return in per-thread mode a per-thread adaptor, else {@code this}.
      */
     public VMAdviceHandlerTextStoreAdapter newThread(VmThread vmThread) {
         if (perThread) {
             int id = vmThread.id();
-            if (id >= storeAdaptors.length) {
-                VMAdviceHandlerTextStoreAdapter[] newStoreAdaptors = new VMAdviceHandlerTextStoreAdapter[2 * storeAdaptors.length];
-                System.arraycopy(storeAdaptors, 0, newStoreAdaptors, 0, storeAdaptors.length);
-                storeAdaptors = newStoreAdaptors;
+            synchronized (storeAdaptors) {
+                if (id >= storeAdaptors.length) {
+                    VMAdviceHandlerTextStoreAdapter[] newStoreAdaptors = new VMAdviceHandlerTextStoreAdapter[2 * storeAdaptors.length];
+                    System.arraycopy(storeAdaptors, 0, newStoreAdaptors, 0, storeAdaptors.length);
+                    storeAdaptors = newStoreAdaptors;
+                }
             }
             ThreadVMAdviceHandlerTextStoreAdapter sa = new ThreadVMAdviceHandlerTextStoreAdapter(vmThread, state, true, true);
-            sa.store = store.newThread(vmThread);
+            sa.store = store.newThread(vmThread.getName());
             sa.tng = sa;
             storeAdaptors[id] = sa;
             return sa;
@@ -181,15 +183,10 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
      * @param time
      * @param vmThread
      */
-    public VMAdviceHandlerTextStoreAdapter threadSwitch(long time, VmThread vmThread) {
-        VMAdviceHandlerTextStoreAdapter result;
-        if (perThread) {
-            result = storeAdaptors[vmThread.id()];
-        } else {
-            result = this;
+    public void threadSwitch(long time, VmThread vmThread) {
+        if (!perThread) {
+            store.threadSwitch(time, vmThread.getName());
         }
-        result.store.threadSwitch(time, vmThread);
-        return result;
     }
 
     public void unseenObject(long time, Object obj) {

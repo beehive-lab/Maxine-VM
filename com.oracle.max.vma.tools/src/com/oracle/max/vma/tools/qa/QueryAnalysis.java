@@ -173,6 +173,11 @@ public class QueryAnalysis {
                         }
                         break;
 
+                    case 'h':
+                    case '?':
+                        QueryBase.listQueries();
+                        break;
+
                     case 'q':
                     case 'x':
                         System.exit(0);
