@@ -27,7 +27,7 @@ import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
 import java.util.regex.*;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.*;
 
 /**
@@ -80,6 +80,23 @@ public abstract class QueryBase {
             return query;
         } catch (Exception e) {
             throw new RuntimeException("failed to load query class " + queryName);
+        }
+    }
+
+    /**
+     * TODO find all the class files rooted at queryClassURLs.
+     */
+    public static void listQueries() {
+        for (URL url : queryClassURLs) {
+            String[] files = new File(url.getPath()).list();
+            for (String file : files) {
+                if (!file.contains("Helper")) {
+                    int ix = file.indexOf("Query");
+                    if (ix > 0) {
+                        System.out.println(file.substring(0, ix));
+                    }
+                }
+            }
         }
     }
 

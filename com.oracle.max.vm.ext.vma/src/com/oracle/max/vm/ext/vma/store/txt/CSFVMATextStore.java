@@ -25,8 +25,6 @@ package com.oracle.max.vm.ext.vma.store.txt;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
-import com.sun.max.vm.thread.*;
-
 /**
  * Defines a compact textual format that uses short forms for class, field and thread names.
  * In addition, a repeated id (but not when used as a value) is, by default, passed as
@@ -158,13 +156,6 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         private AtomicInteger nextIdA = new AtomicInteger();
 
         String createShortForm(CSFVMATextStore handler, Object key) {
-            VmThread vmThread = null;
-            if (this == T) {
-                if (key instanceof VmThread) {
-                    vmThread = (VmThread) key;
-                    key = vmThread.getName();
-                }
-            }
             String shortForm = shortForms.get(key);
             String classShortForm = null;
             if (shortForm == null) {
@@ -173,9 +164,6 @@ public abstract class CSFVMATextStore extends CVMATextStore {
                 shortForm = doPrefix ? (code + nextId) : Integer.toString(nextId);
                 switch (this) {
                     case T:
-                        if (vmThread != null) {
-                            key = vmThread;
-                        }
                         break;
                     case C:
                         ClassNameId tlKey = (ClassNameId) key;
@@ -268,10 +256,6 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         qualNameId.className.clId = clId;
         qualNameId.name = fieldName;
         return ShortForm.F.createShortForm(this, qualNameId);
-    }
-
-    protected String getThreadShortForm(VmThread vmThread) {
-        return ShortForm.T.createShortForm(this, vmThread);
     }
 
     protected String getThreadShortForm(String threadName) {

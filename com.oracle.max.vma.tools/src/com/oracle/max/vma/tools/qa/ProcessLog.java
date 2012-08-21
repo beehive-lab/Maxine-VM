@@ -34,6 +34,7 @@ import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.store.*;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.oracle.max.vma.tools.log.*;
+import com.oracle.max.vma.tools.log.ConvertLog.MergeCommand.PushRecord;
 import com.sun.max.program.*;
 
 /**
@@ -60,6 +61,82 @@ public class ProcessLog {
         TraceException(String s) {
             super(s);
         }
+    }
+
+    public static abstract class RecordReader {
+        public abstract String readLine() throws IOException;
+        public abstract void close() throws IOException;
+    }
+
+    private static class BufferedRecordReader extends RecordReader {
+        private BufferedReader reader;
+
+        BufferedRecordReader(BufferedReader reader) {
+            this.reader = reader;
+        }
+
+        @Override
+        public String readLine() throws IOException {
+            return reader.readLine();
+        }
+
+        @Override
+        public void close() throws IOException {
+            reader.close();
+        }
+    }
+
+    private static class PushReader extends RecordReader implements PushRecord {
+        private String line;
+        private boolean empty = true;
+
+        @Override
+        public synchronized String readLine() throws IOException {
+            while (empty) {
+                try {
+                    wait();
+                } catch (InterruptedException ex) {
+                }
+            }
+            empty = true;
+            notify();
+            return line;
+        }
+
+        @Override
+        public void close() throws IOException {
+        }
+
+        @Override
+        public synchronized void pushRecord(String record) {
+            while (!empty) {
+                try {
+                    wait();
+                } catch (InterruptedException ex) {
+                }
+            }
+            line = record;
+            empty = false;
+            notify();
+        }
+
+    }
+
+    private static class PushReaderThread extends Thread {
+        File[] files;
+        PushReader pushReader;
+
+        PushReaderThread(File[] files, PushReader pushReader) {
+            this.pushReader = pushReader;
+            this.files = files;
+        }
+
+        @Override
+        public void run() {
+            ConvertLog.MergeCommand command = new ConvertLog.MergeCommand(pushReader);
+            command.execute(files, null);
+        }
+
     }
 
     static class ClassNameId implements Comparable {
@@ -372,18 +449,23 @@ public class ProcessLog {
         }
 
         int adviceRecordListCountEstimate = 0;
+        RecordReader reader = null;
 
         if (dataFile.exists()) {
             adviceRecordListCountEstimate = estimateRecordCount(new File[] {dataFile});
+            reader = checkTimeOrdered(dataFile);
         } else {
+            // either a per-thread store or an error
             if (dataDir.isDirectory()) {
                 adviceRecordListCountEstimate = estimateRecordCount(dataDir.listFiles());
+                PushReader pushReader = new PushReader();
+                reader = pushReader;
+                new PushReaderThread(dataDir.listFiles(), pushReader).start();
             } else {
                 throw new FileNotFoundException(dataDirName);
             }
         }
 
-        BufferedReader reader = checkTimeOrdered(dataFile);
 
         if (verbose) {
             System.out.println("processing trace file " + dataDirName + " starting");
@@ -445,7 +527,7 @@ public class ProcessLog {
         return result;
     }
 
-    private BufferedReader checkTimeOrdered(File file) throws IOException {
+    private RecordReader checkTimeOrdered(File file) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         setArgs(reader.readLine());
         reader.close();
@@ -465,7 +547,7 @@ public class ProcessLog {
             }
             file = tempFile;
         }
-        return new BufferedReader(new FileReader(file));
+        return new BufferedRecordReader(new BufferedReader(new FileReader(file)));
     }
 
     /**

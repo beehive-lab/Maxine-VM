@@ -69,11 +69,11 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     private static VMAdviceHandlerTextStoreAdapter storeAdaptor;
 
     /**
-     * Handles the flushing of the per-thread log when it fills or when it is explicitly flushed.
-     * A lock is held while the records are flushed to ensure that records are batched together.
-     * TODO fix this for per-thread mode.
+     * Handles the flushing of the per-thread {@link VMLog} when it fills or when it is explicitly flushed,
+     * and we are not in per-thread mode, that is, we are using a single shared store.
+     * A lock is held while the records are flushed to ensure that records are batched together in the store.
      */
-    private static class VMLogFlusher extends VMLog.Flusher {
+    private static class SharedStoreVMLogFlusher extends VMLog.Flusher {
         private Lock lock = new ReentrantLock();
         boolean firstRecord;
 
@@ -87,6 +87,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
         public void flushRecord(VmThread vmThread, Record r, int uuid) {
             if (firstRecord) {
                 // Indicate the start of a new batch of records for the current thread
+                // Need the time associated with first record, so can't call this in start
                 storeAdaptor.threadSwitch(r.getLongArg(1), vmThread);
                 firstRecord = false;
             }
@@ -97,6 +98,21 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
         public void end(VmThread vmThread) {
             lock.unlock();
         }
+    }
+
+    /**
+     * Per-thread {@link VMLog} flusher. No locking necessary as every thread has its own adaptor/store.
+     */
+    private static class PerThreadVMLogFlusher extends VMLog.Flusher {
+
+        @Override
+        public void flushRecord(VmThread vmThread, Record r, int uuid) {
+            VMAVMLogger.logger.trace(r);
+        }
+    }
+
+    private static VMLog.Flusher createFlusher(boolean perThread) {
+        return perThread ? new PerThreadVMLogFlusher() : new SharedStoreVMLogFlusher();
     }
 
     public static void onLoad(String args) {
@@ -119,14 +135,14 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
         super.initialise(phase);
         if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
             vmaVMLog = VMAJavaRunScheme.vmaVMLog();
-            vmaVMLog.registerCustom(VMAVMLogger.logger, new VMLogFlusher());
+            vmaVMLog.registerCustom(VMAVMLogger.logger, createFlusher(getPerThread()));
         } else if (phase == MaxineVM.Phase.RUNNING) {
+            final boolean perThread = getPerThread();
             if (vmaVMLog == null) {
                 // dynamically loaded
                 vmaVMLog = VMAJavaRunScheme.vmaVMLog();
-                vmaVMLog.registerCustom(VMAVMLogger.logger, new VMLogFlusher());
+                vmaVMLog.registerCustom(VMAVMLogger.logger, createFlusher(perThread));
             }
-            final boolean perThread = getPerThread();
             storeAdaptor = new VMAdviceHandlerTextStoreAdapter(state, true, perThread);
             storeAdaptor.initialise(phase);
             super.setRemovalTracker(storeAdaptor.getRemovalTracker());
