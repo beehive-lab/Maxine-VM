@@ -2093,6 +2093,12 @@ public class VMAdviceBeforeTemplateSource {
         Monitor.exit(object);
     }
 
+    @T1X_TEMPLATE(LOAD_EXCEPTION)
+    public static Object loadException() {
+        Object exception = VmThread.current().loadExceptionForHandler();
+        return exception;
+    }
+
     @T1X_TEMPLATE(POP)
     public static void pop() {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {

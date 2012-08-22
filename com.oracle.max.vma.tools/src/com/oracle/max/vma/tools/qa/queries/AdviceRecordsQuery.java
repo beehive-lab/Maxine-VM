@@ -129,7 +129,7 @@ public class AdviceRecordsQuery extends QueryBase {
                 case PutStaticLong:
                 case PutStaticFloat:
                 case PutStaticObject:
-                    ps.print(getClassRecord(ar).getName());
+                    ps.print(getField(ar).getQualName());
                     break;
 
                 case GetField:

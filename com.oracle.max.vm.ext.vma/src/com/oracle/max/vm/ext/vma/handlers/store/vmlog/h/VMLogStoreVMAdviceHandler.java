@@ -122,10 +122,10 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     private static boolean getPerThread() {
         String perThreadProp = System.getProperty(PERTHREAD_PROPERTY);
-        if (perThreadProp ==  null) {
-            return false;
+        if (perThreadProp == null) {
+            return true;
         } else {
-            return perThreadProp.toLowerCase().equals("true");
+            return !perThreadProp.toLowerCase().equals("false");
         }
     }
 

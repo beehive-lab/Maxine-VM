@@ -662,6 +662,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
                 // No special treatment for the following codes
                 case RETURN$registerFinalizer:
+                case LOAD_EXCEPTION:
                     break;
 
                 case TRACE_METHOD_ENTRY:
@@ -791,28 +792,24 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
     private void generateInvokeVirtual() {
         startGuardAdvice();
-        out.printf(INDENT12_PREFIX + "VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);%n");
         out.printf(INDENT12_ADVISE_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private void generateInvokeInterface() {
         startGuardAdvice();
-        out.printf(INDENT12_PREFIX + "VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);%n");
         out.printf(INDENT12_ADVISE_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private void generateInvokeSpecial() {
         startGuardAdvice();
-        out.printf(INDENT12_PREFIX + "VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);%n");
         out.printf(INDENT12_ADVISE_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private void generateInvokeStatic() {
         startGuardAdvice();
-        out.printf(INDENT12_PREFIX + "VMAJavaRunScheme.saveMethodActor(methodActor);%n");
         out.printf(INDENT12_ADVISE_PREFIX + "(null, methodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
@@ -1344,7 +1341,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateIfTemplates();
         generateIfCmpTemplates();
         generateGotoTemplates();
-        generateInvokeAfterTemplates();
+//        generateInvokeAfterTemplates();
     }
 
     /**

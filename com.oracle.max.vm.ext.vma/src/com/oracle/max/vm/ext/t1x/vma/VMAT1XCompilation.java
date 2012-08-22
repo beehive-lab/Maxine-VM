@@ -65,12 +65,6 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
      * The templates in use by the default T1X compiler.
      */
     private final T1XTemplate[] defaultTemplates;
-    /**
-     * If non-null, this denotes the tag for AFTER advice for an INVOKE.
-     * The after advice is actually prefixed to the code for the bytecode
-     * after the invoke.
-     */
-    private T1XTemplateTag invokeAfterTag;
 
     public VMAT1XCompilation(T1X t1x) {
         super(t1x);
@@ -98,11 +92,6 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     @Override
     protected void beginBytecode(int opcode) {
         super.beginBytecode(opcode);
-        if (invokeAfterTag != null) {
-            start(invokeAfterTag);
-            finish();
-            invokeAfterTag = null;
-        }
         // Based on the option settings for this bytecode, we choose the correct templates
         selectTemplates(opcode);
     }
@@ -167,14 +156,6 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
         }
     }
 
-    @Override
-    protected void finishCall(T1XTemplateTag tag, Kind returnKind, int safepoint, ClassMethodActor directCallee) {
-        super.finishCall(tag, returnKind, safepoint, directCallee);
-        // check if after advice required and if so, set invokeAfterTag
-        if (templates == vmaT1X.templates || templates == vmaT1X.afterTemplates) {
-            invokeAfterTag = invokeAfterTagMap.get(tag);
-        }
-    }
     @Override
     protected void do_methodTraceEntry() {
         // We turn this into advice if we are advising
