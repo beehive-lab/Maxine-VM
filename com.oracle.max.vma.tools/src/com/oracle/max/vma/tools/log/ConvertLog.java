@@ -23,14 +23,14 @@
 
 package com.oracle.max.vma.tools.log;
 
-import static com.oracle.max.vm.ext.vma.handlers.log.txt.TextVMAdviceHandlerLog.*;
+import static com.oracle.max.vm.ext.vma.store.txt.CVMATextStore.*;
 
 import java.io.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.log.*;
-import com.oracle.max.vm.ext.vma.handlers.log.txt.*;
+import com.oracle.max.vm.ext.vma.store.txt.*;
+import com.oracle.max.vm.ext.vma.store.*;
 import com.oracle.max.vma.tools.qa.*;
 import com.sun.max.program.*;
 
@@ -48,6 +48,7 @@ public class ConvertLog {
 
     private static boolean toAbsTime;
     private static boolean toRelTime;
+    private static boolean verbose = false;
     private static PrintStream out;
 
     public static void main(String[] args) throws Exception {
@@ -61,6 +62,8 @@ public class ConvertLog {
                 logFileIn = args[++i];
             } else if (arg.equals("-o")) {
                 logFileOut = args[++i];
+            } else if (arg.equals("-v")) {
+                verbose = true;
             } else if (arg.equals("-abstime")) {
                 toAbsTime = true;
             } else if (arg.equals("-reltime")) {
@@ -73,16 +76,42 @@ public class ConvertLog {
                 command = new AJcommand();
             } else if (arg.equals("-readable")) {
                 command = new ReadableCommand();
+            } else if (arg.equals("-merge")) {
+                command = new MergeCommand();
             } else {
                 usage();
             }
         }
         // Checkstyle: resume modified control variable check
 
+        String logFileDir = null;
         if (logFileIn == null) {
-            logFileIn = VMAdviceHandlerLogFile.DEFAULT_LOGFILE;
+            logFileIn = VMAStoreFile.DEFAULT_STOREFILE;
+            logFileDir = VMAStoreFile.DEFAULT_STOREDIR;
+        } else {
+            File f = new File(logFileIn);
+            if (f.isDirectory()) {
+                logFileDir = logFileIn;
+                logFileIn = new File(f, VMAStoreFile.GLOBAL_STORE).getPath();
+            }
         }
-        processLogFile(logFileIn, logFileOut, command);
+        File f = new File(logFileIn);
+        if (f.exists()) {
+            processLogFiles(new File[] {new File(logFileIn)}, logFileOut, command);
+        } else {
+            // maybe per-thread
+            if (logFileDir != null) {
+                File[] files = new File(logFileDir).listFiles();
+                if (command instanceof MergeCommand) {
+                    command.execute(files, logFileOut);
+                } else {
+                    processLogFiles(files, logFileOut, command);
+                }
+            } else {
+                usage();
+            }
+        }
+
     }
 
     private static void usage() {
@@ -90,32 +119,36 @@ public class ConvertLog {
         System.exit(1);
     }
 
-    private static void processLogFile(String inFile, String outFile, Command command) throws IOException {
-        BufferedReader r = null;
+    private static void processLogFiles(File[] inFiles, String outFile, Command command) throws IOException {
         try {
-            r = new BufferedReader(new FileReader(inFile));
-            out = outFile == null ? System.out : new PrintStream(
-                    new FileOutputStream(outFile));
+            out = outFile == null ? System.out : new PrintStream(new FileOutputStream(outFile));
+            for (File inFile : inFiles) {
+                BufferedReader r = null;
+                try {
+                    r = new BufferedReader(new FileReader(inFile));
 
-            while (true) {
-                final String line = r.readLine();
-                if (line == null) {
-                    break;
-                }
-                if (line.length() == 0) {
-                    continue;
-                }
+                    while (true) {
+                        final String line = r.readLine();
+                        if (line == null) {
+                            break;
+                        }
+                        if (line.length() == 0) {
+                            continue;
+                        }
 
-                command.visitLine(line);
+                        command.visitLine(line);
+                    }
+                } finally {
+                    if (r != null) {
+                        try {
+                            r.close();
+                        } catch (IOException ex) {
+                        }
+                    }
+                }
             }
             command.finish();
         } finally {
-            if (r != null) {
-                try {
-                    r.close();
-                } catch (IOException ex) {
-                }
-            }
             if (outFile != null && out != null) {
                 out.close();
             }
@@ -132,24 +165,34 @@ public class ConvertLog {
     }
 
     private static abstract class Command {
+        void execute(File[] files, String logFileOut) {
+
+        }
+
+        void visitLine(String line) {
+        }
+
+        void finish() {
+        }
+
+    }
+
+    private static abstract class BasicCommand extends Command {
         boolean logUsesAbsTime; // constant once assigned
         long lineTime; // time field of last line visited
         long lineAbsTime; // absolute time of last line visited
         Key command;
         String[] lineParts;
 
+        @Override
         void visitLine(String line) {
             setCommand(line);
-            if (TextVMAdviceHandlerLog.hasTime(command)) {
+            if (CVMATextStore.hasTime(command)) {
                 lineTime = Long.parseLong(lineParts[1]);
                 lineAbsTime = logUsesAbsTime ? lineTime : lineAbsTime + lineTime;
-            } else if (command == Key.INITIALIZE_LOG || command == Key.RESET_TIME || command == Key.FINALIZE_LOG) {
+            } else if (command == Key.INITIALIZE_LOG || command == Key.THREAD_SWITCH || command == Key.FINALIZE_LOG) {
                 checkTimeFormat();
             }
-        }
-
-        void finish() {
-
         }
 
         void setCommand(String line) {
@@ -166,45 +209,53 @@ public class ConvertLog {
         }
     }
 
+    private static class TimedLine implements Comparable<TimedLine> {
+        long time;
+        String[] lineParts;
+
+        TimedLine(long time, String[] lineParts) {
+            this.time = time;
+            this.lineParts = lineParts;
+        }
+
+        public int compareTo(TimedLine t) {
+            if (time < t.time) {
+                return -1;
+            } else if (time > t.time) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "time: " + time + " [" + concat(lineParts) + "]";
+        }
+
+    }
     /**
      * Command to transform a batched (non-time-ordered) log into a time-ordered log.
      */
 
-    private static class UnBatchCommand extends Command {
-        private static class TimedLine implements Comparable<TimedLine> {
-            long time;
-            String[] lineParts;
+    private static class UnBatchCommand extends BasicCommand {
+        private boolean seenIL;
 
-            TimedLine(long time, String[] lineParts) {
-                this.time = time;
-                this.lineParts = lineParts;
-            }
-
-            public int compareTo(TimedLine t) {
-                if (time < t.time) {
-                    return -1;
-                } else if (time > t.time) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            }
-
-            @Override
-            public String toString() {
-                return "time: " + time + " [" + concat(lineParts) + "]";
-            }
-
-        }
 
         private ArrayList<TimedLine> lines = new ArrayList<TimedLine>();
 
         @Override
         void visitLine(String line) {
             super.visitLine(line);
-            if (command == Key.RESET_TIME) {
+            if (command == Key.THREAD_SWITCH) {
                 // drop these records
                 return;
+            } else if (command == Key.INITIALIZE_LOG) {
+                if (seenIL) {
+                    return;
+                } else {
+                    seenIL = true;
+                }
             }
             lines.add(new TimedLine(lineAbsTime, lineParts));
         }
@@ -217,7 +268,7 @@ public class ConvertLog {
             for (int i = 0; i < linesArray.length; i++) {
                 String line;
                 String[] lineParts = linesArray[i].lineParts;
-                if (TextVMAdviceHandlerLog.hasTime(commandMap.get(lineParts[0]))) {
+                if (CVMATextStore.hasTime(commandMap.get(lineParts[0]))) {
                     line = fixupTime(linesArray[i], lastTime);
                     lastTime = linesArray[i].time;
                 } else {
@@ -246,18 +297,18 @@ public class ConvertLog {
     }
     /**
      *
-     * Command to transform into batch (pre-thread) style.
+     * Command to transform into batch (per-thread) style.
      * Sanity checking for unbatch command.
      *
      */
-    private static class BatchCommand extends Command {
+    private static class BatchCommand extends BasicCommand {
         private static class BatchData {
             ArrayList<String> lines = new ArrayList<String>();
             long lastTime;
 
             BatchData(long startTime) {
                 lastTime = startTime;
-                lines.add(new StringBuilder().append(Key.RESET_TIME).append(' ').append(startTime).toString());
+                lines.add(new StringBuilder().append(Key.THREAD_SWITCH).append(' ').append(startTime).toString());
             }
         }
 
@@ -270,8 +321,8 @@ public class ConvertLog {
         @Override
         void visitLine(String line) {
             super.visitLine(line);
-            if (TextVMAdviceHandlerLog.hasTime(command)) {
-                if (TextVMAdviceHandlerLog.hasTimeAndThread(command)) {
+            if (CVMATextStore.hasTime(command)) {
+                if (CVMATextStore.hasTimeAndThread(command)) {
                     // thread is in lineParts[2]
                     BatchData batch = batchMap.get(lineParts[2]);
                     if (batch == null) {
@@ -286,7 +337,7 @@ public class ConvertLog {
                 initialize = line;
                 initialBatch = new BatchData(lineAbsTime);
                 currentBatch = initialBatch;
-            } else if (command == Key.RESET_TIME) {
+            } else if (command == Key.THREAD_SWITCH) {
                 // ignore existing resets
             } else if (command == Key.FINALIZE_LOG) {
                 finalize = line;
@@ -332,10 +383,251 @@ public class ConvertLog {
     }
 
     /**
+     * Merges per-thread files into a single file with a merge sort.
+     */
+    public static class MergeCommand extends Command {
+
+        private PushRecord pushRecord;
+
+        public interface PushRecord {
+            void pushRecord(String record);
+        }
+
+        /**
+         * Default constructor for file output mode.
+         */
+        MergeCommand() {
+        }
+
+        /**
+         * Constructor for push mode directly to registered callback.
+         * @param push
+         */
+        public MergeCommand(PushRecord pushRecord) {
+            this.pushRecord = pushRecord;
+        }
+
+        void miscOut(String record) {
+            if (pushRecord != null) {
+                pushRecord.pushRecord(record);
+            } else {
+                out.println(record);
+            }
+
+        }
+
+        private class FileInfo implements Comparable<FileInfo> {
+            final File file;
+            BufferedReader reader;
+            boolean logUsesAbsTime; // constant once assigned
+            long lastAbsTime; // absolute time of last line visited
+            Record record;
+            int lineNumber;
+
+            FileInfo(File file) throws IOException {
+                this.file = file;
+                this.reader = new BufferedReader(new FileReader(file));
+            }
+
+            @Override
+            public String toString() {
+                return file.getName() + ": " + lastAbsTime;
+            }
+
+            String readRecord() throws IOException {
+                String line = reader.readLine();
+                record = new Record(line);
+                lineNumber++;
+                return line;
+            }
+
+            long outputRecordAndNext(long previousTime) throws IOException {
+                if (CVMATextStore.hasTime(record.command)) {
+                    record.adjustRelTime(previousTime);
+                }
+                miscOut(record.concat());
+                previousTime = record.time();
+                readRecord();
+                return previousTime;
+            }
+
+            /**
+             * Partially decoded record, contains command as a {@link Key}, absolute time, and record components.
+             */
+            private class Record {
+                final TimedLine timedLine;
+                final Key command;
+
+                Record(String line) {
+                    String[] parts = line.split(" ");
+                    command = commandMap.get(parts[0]);
+                    if (CVMATextStore.hasTime(command)) {
+                        long thisTime = Long.parseLong(parts[1]);
+                        lastAbsTime = logUsesAbsTime ? thisTime : lastAbsTime + thisTime;
+                    } else if (command == Key.INITIALIZE_LOG || command == Key.FINALIZE_LOG) {
+                        long thisTime = Long.parseLong(parts[1]);
+                        lastAbsTime = thisTime;
+                        if (command == Key.INITIALIZE_LOG) {
+                            logUsesAbsTime = parts[2].equals("true");
+                        }
+                    } else {
+                        // a definition; give it the same time as the last record
+                    }
+                    timedLine = new TimedLine(lastAbsTime, parts);
+                }
+
+                @Override
+                public String toString() {
+                    return command + ", " + timedLine.toString();
+                }
+
+                long time() {
+                    return timedLine.time;
+                }
+
+                /**
+                 * If file uses relative time, adjust the time in the record to {@code baseTime}.
+                 * @param baseTime
+                 */
+                private void adjustRelTime(long baseTime) {
+                    if (!logUsesAbsTime) {
+                        long rel = timedLine.time - baseTime;
+                        if (rel < 0) {
+                            throw new IllegalArgumentException("negative relative time!");
+                        }
+                        timedLine.lineParts[1] = Long.toString(rel);
+                    }
+                }
+
+                private String concat() {
+                    return ConvertLog.concat(timedLine.lineParts);
+                }
+
+            }
+
+            @Override
+            public int compareTo(FileInfo arg0) {
+                return record.time() < arg0.record.time() ? -1 : (record.time() > arg0.record.time() ? 1 : 0);
+            }
+        }
+
+        @Override
+        public void execute(File[] files, String logFileOut) {
+            ArrayList<File> fileList = new ArrayList<File>();
+            for (int i = 0; i < files.length; i++) {
+                if (files[i].length() != 0) {
+                    fileList.add(files[i]);
+                }
+            }
+            FileInfo[] fileInfos = new FileInfo[fileList.size()];
+            for (int i = 0; i < fileList.size(); i++) {
+                File file = fileList.get(i);
+                try {
+                    fileInfos[i] = new FileInfo(file);
+                } catch (IOException ex) {
+                    System.err.println(ex);
+                    System.exit(1);
+                }
+            }
+
+            // Ok, all files open, now read first record (INITIALIZE_LOG)
+
+            try {
+                // Read INITIALIZE_LOG and sort
+                for (FileInfo fileInfo : fileInfos) {
+                    fileInfo.readRecord();
+                }
+                Arrays.sort(fileInfos);
+
+                if (pushRecord == null) {
+                    out = logFileOut == null ? System.out : new PrintStream(new FileOutputStream(logFileOut));
+                }
+
+                // Earliest is the INITIALIZE_LOG for the merged file
+                long previousTime = fileInfos[0].record.timedLine.time;
+                miscOut("IL " + previousTime + " false false");  // new INITIALIZE_LOG
+
+                // Read first real record and sort
+                for (FileInfo fileInfo : fileInfos) {
+                    fileInfo.readRecord();
+                }
+                Arrays.sort(fileInfos);
+
+                LinkedList<FileInfo> fileInfoList = new LinkedList<FileInfo>();
+                for (FileInfo fileInfo : fileInfos) {
+                    fileInfoList.add(fileInfo);
+                }
+
+                // Starting with file containing earliest record, copy records to the output
+                // until we reach one that is older than the earliest record in next youngest file.
+                // Then sort file into correct place in the list and repeat.
+
+            outer:
+                while (fileInfoList.size() > 1) {
+                    FileInfo youngest = fileInfoList.get(0);
+                    FileInfo nextYoungest = fileInfoList.get(1);
+                    while (youngest.record.time() <= nextYoungest.record.time()) {
+                        if (youngest.record.command == Key.FINALIZE_LOG) {
+                            // end of this file
+                            if (verbose) {
+                                System.out.printf("finished %s%n", youngest.file);
+                            }
+                            fileInfoList.remove();
+                            continue outer;
+                        }
+                        previousTime = youngest.outputRecordAndNext(previousTime);
+                    }
+                    // sort file
+                    if (verbose) {
+                        System.out.printf("sort %d %d: ", youngest.record.time(), nextYoungest.record.time());
+                    }
+                    fileInfoList.remove();
+                    boolean inserted = false;
+                    for (int i = 1; i < fileInfoList.size(); i++) {
+                        if (youngest.record.time() < fileInfoList.get(i).record.time()) {
+                            fileInfoList.add(i, youngest);
+                            if (verbose) {
+                                System.out.printf("inserted at %d%n", i);
+                            }
+                            inserted = true;
+                            break;
+                        }
+                    }
+                    if (!inserted) {
+                        if (verbose) {
+                            System.out.printf("inserted at end%n");
+                        }
+                        fileInfoList.add(fileInfoList.size(), youngest);
+                    }
+                }
+                // copy remaining records in last file
+                FileInfo last = fileInfoList.get(0);
+                long lastRecordAbsTime = last.record.time();
+                while (last.record.command != Key.FINALIZE_LOG) {
+                    previousTime = last.outputRecordAndNext(previousTime);
+                    lastRecordAbsTime = last.record.time();
+                }
+                miscOut("FL " + lastRecordAbsTime);
+
+            } catch (IOException ex) {
+                System.err.println(ex);
+                System.exit(1);
+            } finally {
+                if (logFileOut != null && out != null) {
+                    out.close();
+                }
+                if (pushRecord != null) {
+                    pushRecord.pushRecord(null);
+                }
+            }
+        }
+
+    }
+    /**
      * Clones a log. Used to convert from rel/abs time and vice-versa.
      *
      */
-    private static class CloneCommand extends Command {
+    private static class CloneCommand extends BasicCommand {
         @Override
         void visitLine(String line) {
             super.visitLine(line);
@@ -343,7 +635,7 @@ public class ConvertLog {
                 // no change
                 out.println(line);
             } else {
-                if (TextVMAdviceHandlerLog.hasTime(command)) {
+                if (CVMATextStore.hasTime(command)) {
                     if (logUsesAbsTime) {
                         // to relative
                         ProgramError.unexpected("abs to rel not implemented");
@@ -371,7 +663,7 @@ public class ConvertLog {
      * This is based on {@code METHOD_ENTRY} and {@code RETURN} advice. The commented out code
      * also interprets {@code INVOKE} before/after, but does not properly handle the case where both are present.
      */
-    private static class AJcommand extends Command {
+    private static class AJcommand extends BasicCommand {
 
         /*
         private static EnumSet<Key> INVOKE_BEFORE_SET = EnumSet.of(
@@ -467,7 +759,7 @@ public class ConvertLog {
     /**
      * Converts to a readable format from the compressed form.
      */
-    private static class ReadableCommand extends Command {
+    private static class ReadableCommand extends BasicCommand {
         private Map<String, String> lastId = new HashMap<String, String>();
 
         @Override
@@ -483,14 +775,14 @@ public class ConvertLog {
             String threadArg = arg2;
             String objIdArg = "???";
 
-            if (TextVMAdviceHandlerLog.hasTime(command)) {
+            if (CVMATextStore.hasTime(command)) {
                 String atTime = "@" + logTimeArg;
                 out.printf("%-10s ", atTime);
             } else {
                 out.printf("%-11c", ' ');
             }
 
-            if (TextVMAdviceHandlerLog.hasId(command)) {
+            if (CVMATextStore.hasId(command)) {
                 if (arg3.charAt(0) == REPEAT_ID) {
                     objIdArg = lastId.get(threadArg);
                 } else {
@@ -500,11 +792,11 @@ public class ConvertLog {
             }
             out.printf("%s ", command);
 
-            if (TextVMAdviceHandlerLog.hasTimeAndThread(command)) {
+            if (CVMATextStore.hasTimeAndThread(command)) {
                 printThreadId(threadArg);
             }
 
-            if (TextVMAdviceHandlerLog.hasId(command)) {
+            if (CVMATextStore.hasId(command)) {
                 printObjId(objIdArg);
             }
 
@@ -514,7 +806,7 @@ public class ConvertLog {
                     out.printf("%s %s", logTimeArg, arg2);
                     break;
 
-                case RESET_TIME:
+                case THREAD_SWITCH:
                 case FINALIZE_LOG:
                     out.printf("%s", logTimeArg);
                     break;
@@ -733,5 +1025,6 @@ public class ConvertLog {
         }
 
     }
+
 
 }

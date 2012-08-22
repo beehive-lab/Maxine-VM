@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,21 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.objstate;
+package com.oracle.max.vm.ext.vma.store;
 
-import com.oracle.max.vm.ext.vma.handlers.store.sync.h.*;
-import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
-import com.oracle.max.vm.ext.vma.run.java.*;
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
+import java.io.*;
 
+/**
+ * Specification of the directory to be used for a persistent logs.
+ * The default file name is {@value DEFAULT_LOGDIR} but this
+ * can be changed using the {@value LOGDIR_PROPERTY} system property.
+ *
+ */
+public class VMAStoreFile {
+    public static final String STOREDIR_PROPERTY = "max.vma.storedir";
+    public static final String DEFAULT_STOREDIR = "output.vma";
+    public static final String GLOBAL_STORE = "vm";
+    public static final String DEFAULT_STOREFILE = DEFAULT_STOREDIR + File.separator + GLOBAL_STORE;
 
-public class Package extends BootImagePackage {
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
-            (VMAJavaRunScheme.isHandlerClass(SyncStoreVMAdviceHandler.class) ||
-             VMAJavaRunScheme.isHandlerClass(VMLogStoreVMAdviceHandler.class));
+    public static String getStoreDir() {
+        String logDir = System.getProperty(STOREDIR_PROPERTY);
+        if (logDir == null) {
+            logDir = DEFAULT_STOREDIR;
+        }
+        return logDir;
     }
-
 }

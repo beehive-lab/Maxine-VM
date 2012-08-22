@@ -20,38 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.hosted;
+package com.oracle.max.vm.ext.vma.handlers.store.sync.h;
 
-import java.lang.annotation.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
-import com.sun.max.vm.log.*;
-
-
-/**
- * Identifies an interface as a {@link VMLogger} for auto-generation.
- */
-@Retention(RetentionPolicy.RUNTIME)
-public @interface VMLoggerInterface {
-    /**
-     * Identifies the parent class for the auto-generated implementation.
-     */
-    Class parent() default VMLogger.class;
-    /**
-     * If {@code true} creates a default no-arg constructor that can be used to completely hide and disable the logger.
-     */
-    boolean defaultConstructor() default false;
-    /**
-     * Suppresses all tracing aspects when {@code true}.
-     */
-    boolean noTrace() default false;
-    /**
-     * Special logger that is hidden to the user and controlled by VM code.
-     */
-    boolean hidden() default false;
-
-    /**
-     * Includes the thread id as an argument to the generated trace method.
-     */
-    boolean traceThread() default false;
+public class Package extends BootImagePackage {
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
+            VMAJavaRunScheme.isHandlerClass(SyncStoreVMAdviceHandler.class);
+    }
 
 }

@@ -136,7 +136,7 @@ Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeExceptionCallback(JNIEnv *env
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeCompiledMethodLoadCallback(JNIEnv *env, jclass c, jvmtiEventCompiledMethodLoad *callback,
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeCompiledMethodLoadCallback(JNIEnv *env, jclass c, jvmtiEventCompiledMethodLoad callback,
                 jvmtiEnv *jvmti_env, jmethodID method, jint code_size, const void* code_addr, jint map_length,
                 const jvmtiAddrLocationMap* map, const void* compile_info) {
     (*callback)(jvmti_env, method, code_size, code_addr, map_length, map, compile_info);
@@ -144,8 +144,8 @@ Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeCompiledMethodLoadCallback(JN
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeCompiledMethodUnloadCallback(JNIEnv *env, jclass c, jvmtiEventCompiledMethodUnload *callback,
-                jvmtiEnv *jvmti_env, jmethodID method, jint code_size, const void* code_addr) {
+Java_com_sun_max_vm_ext_jvmti_JVMTICallbacks_invokeCompiledMethodUnloadCallback(JNIEnv *env, jclass c, jvmtiEventCompiledMethodUnload callback,
+                jvmtiEnv *jvmti_env, jmethodID method, const void* code_addr) {
     (*callback)(jvmti_env, method, code_addr);
 
 }
