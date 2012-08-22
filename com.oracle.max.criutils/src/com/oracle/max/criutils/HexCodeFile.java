@@ -319,10 +319,6 @@ public class HexCodeFile {
             assert input != null;
             int lineStart = input.lastIndexOf(HexCodeFile.NEW_LINE, index) + 1;
 
-            String l = input.substring(lineStart, lineStart + 10);
-            System.out.println("YYY" + input.substring(index, index + 10) + "...");
-            System.out.println("XXX" + l + "...");
-
             int pos = input.indexOf(HexCodeFile.NEW_LINE, 0);
             int line = 1;
             while (pos > 0 && pos < index) {
