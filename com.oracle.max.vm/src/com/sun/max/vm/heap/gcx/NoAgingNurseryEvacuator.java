@@ -102,8 +102,8 @@ public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
     private final DirtyCardEvacuationClosure heapSpaceDirtyCardClosure;
     private final BootRegionDirtyCardEvacuationClosure bootRegionDirtyCardClosure;
 
-    public NoAgingNurseryEvacuator(EvacuatingSpace fromSpace, HeapSpace toSpace, EvacuationBufferProvider evacuationBufferProvider, CardTableRSet rset) {
-        super(fromSpace, toSpace, evacuationBufferProvider, rset);
+    public NoAgingNurseryEvacuator(EvacuatingSpace fromSpace, HeapSpace toSpace, EvacuationBufferProvider evacuationBufferProvider, CardTableRSet rset, String name) {
+        super(fromSpace, toSpace, evacuationBufferProvider, rset, name);
         this.heapSpaceDirtyCardClosure = new DirtyCardEvacuationClosure();
         this.bootRegionDirtyCardClosure = new BootRegionDirtyCardEvacuationClosure();
     }

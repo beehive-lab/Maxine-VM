@@ -30,7 +30,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Provides access to native functions defined in shared libraries loaded into the VM.
@@ -98,11 +97,11 @@ public class TeleNativeLibraries {
      */
     public static void update(TeleVM vm) throws Exception {
         int length = vm.fields().DynamicLinker_libInfoIndex.readInt(vm);
-        RemoteReference libInfoArrayReference = vm.fields().DynamicLinker_libInfoArray.readReference(vm);
+        RemoteReference libInfoArrayReference = vm.fields().DynamicLinker_libInfoArray.readRemoteReference(vm);
         for (int index = 0; index < length; index++) {
             boolean newLib = index >= libs.size();
             if (newLib || libs.get(index).base().isZero()) {
-                RemoteReference libInfoReference = (RemoteReference) vm.memoryIO().readArrayElementValue(Kind.REFERENCE, libInfoArrayReference, index).asReference();
+                RemoteReference libInfoReference = libInfoArrayReference.readArrayAsRemoteReference(index);
                 TargetVMLibInfo targetVMLibInfo = new TargetVMLibInfo(vm, libInfoReference);
                 TeleNativeLibrary teleNativeLibrary = processLibrary(targetVMLibInfo, newLib ? null : libs.get(index));
                 if (index >= libs.size()) {

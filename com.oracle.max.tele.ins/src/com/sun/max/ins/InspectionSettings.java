@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -132,7 +132,7 @@ public class InspectionSettings {
          * {@linkplain ComponentListener#componentShown(ComponentEvent) visible}, its bounds are updated from the
          * settings.
          */
-        AbstractView view();
+        InspectorView view();
 
         /**
          * @return geometry to apply to a newly shown component when there have been no geometry settings saved.
@@ -145,16 +145,16 @@ public class InspectionSettings {
      */
     public abstract static class AbstractSaveSettingsListener implements SaveSettingsListener {
         protected final String name;
-        protected final AbstractView view;
+        protected final InspectorView view;
         protected final Rectangle defaultGeometry;
 
-        private AbstractSaveSettingsListener(String name, AbstractView view, Rectangle defaultGeometry) {
+        private AbstractSaveSettingsListener(String name, InspectorView view, Rectangle defaultGeometry) {
             this.name = name;
             this.view = view;
             this.defaultGeometry = defaultGeometry;
         }
 
-        public AbstractSaveSettingsListener(String name, AbstractView view) {
+        public AbstractSaveSettingsListener(String name, InspectorView view) {
             this(name, view, null);
         }
 
@@ -162,7 +162,7 @@ public class InspectionSettings {
             this (name, null, null);
         }
 
-        public AbstractView view() {
+        public InspectorView view() {
             return view;
         }
 
@@ -258,7 +258,7 @@ public class InspectionSettings {
         final SaveSettingsListener oldClient = clients.put(saveSettingsListener.name(), saveSettingsListener);
         assert oldClient == null || oldClient == saveSettingsListener;
 
-        final AbstractView view = saveSettingsListener.view();
+        final InspectorView view = saveSettingsListener.view();
         if (view != null) {
             view.getJComponent().addComponentListener(new ComponentListener() {
                 public void componentHidden(ComponentEvent e) {
@@ -288,7 +288,7 @@ public class InspectionSettings {
      * @param saveSettingsListener a listener that has an associated view
      */
     private void repositionInspectorFromSettings(SaveSettingsListener saveSettingsListener) {
-        final AbstractView view = saveSettingsListener.view();
+        final InspectorView view = saveSettingsListener.view();
         final Rectangle oldGeometry = view.getJComponent().getBounds();
         Rectangle newGeometry = saveSettingsListener.defaultGeometry();
         // Check to see if we have geometry settings for this component.
@@ -421,7 +421,7 @@ public class InspectionSettings {
         for (SaveSettingsListener saveSettingsListener : clients.values()) {
             final SaveSettingsEvent saveSettingsEvent = new SaveSettingsEvent(saveSettingsListener, newProperties);
             saveSettingsListener.saveSettings(saveSettingsEvent);
-            final AbstractView view = saveSettingsListener.view();
+            final InspectorView view = saveSettingsListener.view();
             if (view != null) {
 
                 final Rectangle geometry = view.getJComponent().getBounds();

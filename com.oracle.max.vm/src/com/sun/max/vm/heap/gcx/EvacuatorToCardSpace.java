@@ -28,11 +28,14 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.heap.gcx.EvacuatingSpace.SpaceBounds;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.runtime.*;
 /**
- * A heap space evacuator that evacuate objects from one space to a card-table covered space.
+ * A heap space evacuator that evacuates objects from one space to a card-table covered space.
  * Locations of references to evacuatees from other heap spaces are provided by a card table.
  *
  * TODO: replace direct cfotable updates with proper use of the DeadSpaceListener interface implemented by the card table.
@@ -131,13 +134,16 @@ public class EvacuatorToCardSpace extends Evacuator {
      */
     private EvacuatingSpace.SpaceBounds evacuatedAreaBounds;
 
-    public EvacuatorToCardSpace(EvacuatingSpace fromSpace, HeapSpace toSpace, EvacuationBufferProvider evacuationBufferProvider, CardTableRSet rset) {
+    private final EvacuationLogger logger;
+
+    public EvacuatorToCardSpace(EvacuatingSpace fromSpace, HeapSpace toSpace, EvacuationBufferProvider evacuationBufferProvider, CardTableRSet rset, String name) {
         this.fromSpace = fromSpace;
         this.toSpace = toSpace;
         this.rset = rset;
         this.cfoTable = rset.cfoTable;
         this.evacuationBufferProvider = evacuationBufferProvider;
         this.evacuatedAreaBounds = fromSpace.bounds();
+        this.logger = new EvacuationLogger(name);
     }
 
     public void setEvacuationSpace(EvacuatingSpace fromSpace,  HeapSpace toSpace) {
@@ -197,6 +203,10 @@ public class EvacuatorToCardSpace extends Evacuator {
             pend = chunk.plus(chunkSize.minus(evacuationBufferHeadroom())).asPointer();
         }
         allocatedRangeStart = ptop;
+        if (logger.enabled()) {
+            SpaceBounds toSpaceBounds = toSpace.bounds();
+            logger.logBeginEvacuation(evacuatedAreaBounds.lowestAddress(), evacuatedAreaBounds.highestAddress(), toSpaceBounds.lowestAddress(), toSpaceBounds.highestAddress());
+        }
     }
 
     @Override
@@ -204,6 +214,9 @@ public class EvacuatorToCardSpace extends Evacuator {
         survivorRanges.clear();
         fromSpace.doAfterGC();
         Pointer limit = pend.plus(evacuationBufferHeadroom());
+        if (logger.enabled()) {
+            logger.logEndEvacuation(limit);
+        }
         Size spaceLeft = limit.minus(ptop).asSize();
         if ((alwaysRefill && spaceLeft.greaterThan(minObjectSize())) || spaceLeft.greaterEqual(minRefillThreshold)) {
             // Leave remaining space in an iterable format.
@@ -231,6 +244,9 @@ public class EvacuatorToCardSpace extends Evacuator {
     private void recordRange(Address start, Address end) {
         evacuatedBytes = evacuatedBytes.plus(end.minus(start));
         survivorRanges.add(start, end);
+        if (logger.enabled()) {
+            logger.logUpdateSurvivorRange(start, end);
+        }
     }
 
     private void updateSurvivorRanges() {
@@ -256,6 +272,9 @@ public class EvacuatorToCardSpace extends Evacuator {
     public void prefillSurvivorRanges(Address start, Address end) {
         FatalError.check(toSpace.contains(start) && toSpace.contains(end), "Range must be in to-space");
         survivorRanges.add(start, end);
+        if (logger.enabled()) {
+            logger.logPrefillSurvivorRanges(start, end);
+        }
     }
 
     private Address debugRetired_ptop = Address.zero(); // FIXME: just for debugging for now
@@ -370,14 +389,175 @@ public class EvacuatorToCardSpace extends Evacuator {
     }
 
     @Override
-    protected void evacuateReachables() {
+    final protected void evacuateReachables() {
         updateSurvivorRanges();
         while (!survivorRanges.isEmpty()) {
             final Pointer start = survivorRanges.start();
             final Pointer end = survivorRanges.end();
             survivorRanges.remove();
+            if (logger.enabled()) {
+                logger.logEvacuateSurvivorRange(start, end);
+            }
             evacuateRange(start, end);
             updateSurvivorRanges();
         }
     }
+
+    /*
+     * Interface for logging evacuation ranges.
+     * The interface uses long instead of Size to improve human-readability from the inspector's log views.
+     */
+    @HOSTED_ONLY
+    @VMLoggerInterface(defaultConstructor = true)
+    private interface EvacuationLoggerInterface {
+        void beginEvacuation(
+                        @VMLogParam(name = "fromStart") Address fromStart,
+                        @VMLogParam(name = "fromEnd")  Address fromEnd,
+                        @VMLogParam(name = "toStart")Address toStart,
+                        @VMLogParam(name = "toEnd") Address toEnd);
+
+        void endEvacuation(
+                        @VMLogParam(name = "evacuationLimit") Address evacuationLimit
+        );
+
+        void evacuateSurvivorRange(
+                        @VMLogParam(name = "start") Address start,
+                        @VMLogParam(name = "end") Address end
+        );
+        void updateSurvivorRange(
+                        @VMLogParam(name = "start") Address start,
+                        @VMLogParam(name = "end") Address end
+        );
+        void prefillSurvivorRanges(
+                        @VMLogParam(name = "start") Address start,
+                        @VMLogParam(name = "end") Address end
+        );
+    }
+
+    static final class EvacuationLogger extends EvacuationLoggerAuto {
+        final String instanceName;
+        EvacuationLogger(String instanceName) {
+            super(instanceName + "Evacuation", "Log evacuation scanning ranges in to-space");
+            this.instanceName = instanceName;
+        }
+
+        private void traceRange(String title, Address start, Address end) {
+            Log.print(title);
+            Log.print("["); Log.print(start); Log.print(", "); Log.print(end); Log.print("]");
+        }
+
+        @Override
+        protected void traceEvacuateSurvivorRange(Address start, Address end) {
+            traceRange("Evacuated range ", start, end);
+            Log.println();
+        }
+
+        @Override
+        protected void tracePrefillSurvivorRanges(Address start, Address end) {
+            traceRange("Prefill with range ", start, end);
+            Log.println();
+        }
+
+        @Override
+        protected void traceUpdateSurvivorRange(Address start, Address end) {
+            traceRange("Add range", start, end);
+            Log.println();
+        }
+
+        @Override
+        protected void traceBeginEvacuation(Address fromStart, Address fromEnd, Address toStart, Address toEnd) {
+            Log.print("Begin "); Log.print(instanceName); Log.print(" evacuation: ");
+            traceRange("from space ", fromStart, fromEnd);
+            traceRange("to space,",  toStart, toEnd);
+            Log.println();
+        }
+
+        @Override
+        protected void traceEndEvacuation(Address evacuationLimit) {
+            Log.print("End "); Log.print(instanceName); Log.print(" evacuation : "); Log.println(evacuationLimit);
+        }
+
+    }
+// START GENERATED CODE
+    private static abstract class EvacuationLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            BeginEvacuation, EndEvacuation, EvacuateSurvivorRange,
+            PrefillSurvivorRanges, UpdateSurvivorRange;
+
+            @SuppressWarnings("hiding")
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected EvacuationLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        protected EvacuationLoggerAuto() {
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logBeginEvacuation(Address fromStart, Address fromEnd, Address toStart, Address toEnd) {
+            log(Operation.BeginEvacuation.ordinal(), fromStart, fromEnd, toStart, toEnd);
+        }
+        protected abstract void traceBeginEvacuation(Address fromStart, Address fromEnd, Address toStart, Address toEnd);
+
+        @INLINE
+        public final void logEndEvacuation(Address evacuationLimit) {
+            log(Operation.EndEvacuation.ordinal(), evacuationLimit);
+        }
+        protected abstract void traceEndEvacuation(Address evacuationLimit);
+
+        @INLINE
+        public final void logEvacuateSurvivorRange(Address start, Address end) {
+            log(Operation.EvacuateSurvivorRange.ordinal(), start, end);
+        }
+        protected abstract void traceEvacuateSurvivorRange(Address start, Address end);
+
+        @INLINE
+        public final void logPrefillSurvivorRanges(Address start, Address end) {
+            log(Operation.PrefillSurvivorRanges.ordinal(), start, end);
+        }
+        protected abstract void tracePrefillSurvivorRanges(Address start, Address end);
+
+        @INLINE
+        public final void logUpdateSurvivorRange(Address start, Address end) {
+            log(Operation.UpdateSurvivorRange.ordinal(), start, end);
+        }
+        protected abstract void traceUpdateSurvivorRange(Address start, Address end);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //BeginEvacuation
+                    traceBeginEvacuation(toAddress(r, 1), toAddress(r, 2), toAddress(r, 3), toAddress(r, 4));
+                    break;
+                }
+                case 1: { //EndEvacuation
+                    traceEndEvacuation(toAddress(r, 1));
+                    break;
+                }
+                case 2: { //EvacuateSurvivorRange
+                    traceEvacuateSurvivorRange(toAddress(r, 1), toAddress(r, 2));
+                    break;
+                }
+                case 3: { //PrefillSurvivorRanges
+                    tracePrefillSurvivorRanges(toAddress(r, 1), toAddress(r, 2));
+                    break;
+                }
+                case 4: { //UpdateSurvivorRange
+                    traceUpdateSurvivorRange(toAddress(r, 1), toAddress(r, 2));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,7 +74,7 @@ public final class JavaSourceView extends FileView<JavaSourceView> {
                 view.addViewEventListener(new ViewEventListener() {
 
                     @Override
-                    public void viewClosing(AbstractView view) {
+                    public void viewClosing(InspectorView view) {
                         final JavaSourceView javaSourceView = (JavaSourceView) view;
                         assert views.remove(javaSourceView.file()) != null;
                     }

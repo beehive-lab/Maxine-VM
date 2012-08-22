@@ -78,6 +78,10 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
     protected static VmHeapAccess vmHeap;
 
+    /**
+     * If the heap address is set explicitly, return it, else leave it to caller ti try to determine it.
+     * @return zero if not set, else the address.
+     */
     public static long heapAddressOption() {
         long heap = 0L;
         String heapValue = System.getProperty(HEAP_ADDRESS_PROPERTY);
@@ -95,7 +99,6 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
                 System.err.println("Error parsing value of " + HEAP_ADDRESS_PROPERTY + " system property: " + heapValue + ": " +  e);
             }
         }
-        TeleError.check(heap != 0L, "Heap cannot start at 0");
         return heap;
     }
 
@@ -239,11 +242,11 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         tracer.begin();
 
         // Get a copy of the string in the VM that holds the name of the boot heap
-        final RemoteReference nameReference = fields().Heap_HEAP_BOOT_NAME.readReference(vm());
+        final RemoteReference nameReference = fields().Heap_HEAP_BOOT_NAME.readRemoteReference(vm());
         this.bootHeapRegionName = vm().getString(nameReference);
 
         // Get a local surrogate for the instance of {@link MemoryRegion} in the VM that describes the boot heap
-        final RemoteReference bootHeapRegionReference = fields().Heap_bootHeapRegion.readReference(vm());
+        final RemoteReference bootHeapRegionReference = fields().Heap_bootHeapRegion.readRemoteReference(vm());
         this.teleBootHeapMemoryRegion = (TeleMemoryRegion) objects().makeTeleObject(bootHeapRegionReference);
 
         // Replace the faked representation of the boot heap with one represented uniformly via reference to the VM object
@@ -296,7 +299,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
             // Check for the {@link ImmortalHeap} description
             if (teleImmortalHeapRegion == null) {
-                final RemoteReference immortalHeapReference = fields().ImmortalHeap_immortalHeap.readReference(vm());
+                final RemoteReference immortalHeapReference = fields().ImmortalHeap_immortalHeap.readRemoteReference(vm());
                 if (!immortalHeapReference.isZero()) {
                     teleImmortalHeapRegion = (TeleMemoryRegion) objects().makeTeleObject(immortalHeapReference);
                     immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion);

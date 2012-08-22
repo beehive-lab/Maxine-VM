@@ -39,12 +39,12 @@ public interface InspectorGUI {
      * Adds an {@link AbstractView} to the GUI display, brings it to the front, and makes it visible.
      * Its frame must already have been created.
      */
-    void addView(AbstractView view);
+    void addView(InspectorView view);
 
     /**
      * Removes and disposes all instances of {@link AbstractView} currently in the GUI display that match a predicate.
      */
-    void removeViews(Predicate<AbstractView> predicate);
+    void removeViews(Predicate<InspectorView> predicate);
 
     /**
      * Shows a visual indication of the Inspector state with regard to accepting user inputs.
@@ -150,7 +150,7 @@ public interface InspectorGUI {
      * Sets view frame location to a point displayed by specified diagonal amount from the most recently known mouse position.
      * @param diagonalOffset number of pixels down and to right for new location
      */
-    void setLocationRelativeToMouse(AbstractView view, int diagonalOffset);
+    void setLocationRelativeToMouse(InspectorView view, int diagonalOffset);
 
     /**
      * Sets a window component location to middle of Inspection display.
@@ -160,56 +160,56 @@ public interface InspectorGUI {
     /**
      * Sets view frame location to middle of Inspection display.
      */
-    void moveToMiddle(AbstractView view);
+    void moveToMiddle(InspectorView view);
 
     /**
      * Gets an action that sets a view frame location to middle of Inspection display.
      */
-    InspectorAction moveToMiddleAction(AbstractView view);
+    InspectorAction moveToMiddleAction(InspectorView view);
 
     /**
      * Moves a view frame location as little as possible to make it fully visible.
      */
-    void moveToFullyVisible(AbstractView view);
+    void moveToFullyVisible(InspectorView view);
 
     /**
      * If the view is moved out of the frame, either up or to the left, so that the default
      * menu in the upper left corner of the view is not visible, move it down and to the left
      * enough to make the menu visible.
      */
-    void moveToExposeDefaultMenu(AbstractView view);
+    void moveToExposeDefaultMenu(InspectorView view);
 
     /**
      * Shrink a view in each dimension, without changing location,
      * to make it fit within the view's frame.
      */
-    void resizeToFit(AbstractView view);
+    void resizeToFit(InspectorView view);
 
     /**
      * Gets an action that will shrink a view in each dimension, without
      * changing location, to make it fit within the view's frame.
      */
-    InspectorAction resizeToFitAction(AbstractView view);
+    InspectorAction resizeToFitAction(InspectorView view);
 
     /**
      * Grow an view in each dimension to make it fill the view's frame.
      */
-    void resizeToFill(AbstractView view);
+    void resizeToFill(InspectorView view);
 
     /**
      * Gets an action that will grow an view in each dimension to make it fill the view's frame.
      */
-    InspectorAction resizeToFillAction(AbstractView view);
+    InspectorAction resizeToFillAction(InspectorView view);
 
     /**
      * Restores the default size and location of a view.
      */
-    void restoreDefaultGeometry(AbstractView view);
+    void restoreDefaultGeometry(InspectorView view);
 
     /**
      * Gets an action that restores the default size and location of a view.
      */
-    InspectorAction restoreDefaultGeometryAction(AbstractView view);
+    InspectorAction restoreDefaultGeometryAction(InspectorView view);
 
     /**
      * Moves a {@link JDialog} frame down and to the right of the current mouse location.

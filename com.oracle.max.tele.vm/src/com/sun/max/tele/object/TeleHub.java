@@ -51,17 +51,11 @@ public abstract class TeleHub extends TeleHybridObject {
      */
     public final TeleClassActor getTeleClassActor() {
         if (teleClassActor == null) {
-            teleClassActor = fetchTeleClassActor();
+            // Read from the new copy if this is a forwarder.
+            final RemoteReference classActorReference = fields().Hub_classActor.readRemoteReference(reference().followIfForwarded());
+            teleClassActor = (TeleClassActor) objects().makeTeleObject(classActorReference);
         }
         return teleClassActor;
-    }
-
-    /**
-     * Logic to fetch the tele class actor for this tele hub on cache miss.
-     */
-    protected TeleClassActor fetchTeleClassActor() {
-        final RemoteReference classActorReference = fields().Hub_classActor.readReference(reference());
-        return (TeleClassActor) objects().makeTeleObject(classActorReference);
     }
 
     /**

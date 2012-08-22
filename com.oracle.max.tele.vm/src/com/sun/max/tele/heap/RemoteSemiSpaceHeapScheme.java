@@ -257,7 +257,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         if (scheme == null) {
             return;
         }
-        if (heapRegions.size() < 2) {
+        if (toSpaceMemoryRegion == null || fromSpaceMemoryRegion == null) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "looking for heap regions");
             /*
              * The two heap regions have not yet been discovered. Don't check the epoch, since this check may
@@ -792,7 +792,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
          * @return surrogate for the semispace collector's "from" region
          */
         public TeleLinearAllocationMemoryRegion readTeleFromRegion() {
-            final RemoteReference fromReference = fields().SemiSpaceHeapScheme_fromSpace.readReference(reference());
+            final RemoteReference fromReference = fields().SemiSpaceHeapScheme_fromSpace.readRemoteReference(reference());
             return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(fromReference);
         }
 
@@ -800,7 +800,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
          * @return surrogate for the semispace collector's "to" region
          */
         public TeleLinearAllocationMemoryRegion readTeleToRegion() {
-            final RemoteReference toReference = fields().SemiSpaceHeapScheme_toSpace.readReference(reference());
+            final RemoteReference toReference = fields().SemiSpaceHeapScheme_toSpace.readRemoteReference(reference());
             return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(toReference);
         }
 

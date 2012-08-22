@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,10 +46,17 @@ import com.sun.max.vm.hosted.*;
  */
 public final class BootImageTable extends InspectorTable {
 
-    public BootImageTable(Inspection inspection, BootImageViewPreferences viewPreferences) {
+    private final InspectorView view;
+
+    public BootImageTable(Inspection inspection, InspectorView view, BootImageViewPreferences viewPreferences) {
         super(inspection);
+        this.view = view;
         configureMemoryTable(new BootImageTableModel(inspection), new BootImageColumnModel(viewPreferences));
         setRowSelectionAllowed(false);
+    }
+
+    public InspectorView getView() {
+        return view;
     }
 
     /**

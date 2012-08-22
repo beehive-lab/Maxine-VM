@@ -236,14 +236,21 @@ final class HeapRegionInfoTable extends InspectorTable {
         }
     }
 
+    private final InspectorView view;
     private final HeapRegionInfoTableModel tableModel;
     final TeleHeapRegionInfo teleHeapRegionInfo;
-    public HeapRegionInfoTable(Inspection inspection, TeleHeapRegionInfo teleHeapRegionInfo) {
+
+    public HeapRegionInfoTable(Inspection inspection, InspectorView view, TeleHeapRegionInfo teleHeapRegionInfo) {
         super(inspection);
+        this.view = view;
         this.teleHeapRegionInfo = teleHeapRegionInfo;
         tableModel = new HeapRegionInfoTableModel(inspection);
         HeapRegionInfoColumnModel columnModel = new HeapRegionInfoColumnModel(tableModel, HeapRegionInfoViewPreferences.globalPreferences(inspection));
         configureMemoryTable(tableModel, columnModel);
+    }
+
+    public InspectorView getView() {
+        return view;
     }
 
     public InspectorScrollPane makeHeapRegionInfoPane() {

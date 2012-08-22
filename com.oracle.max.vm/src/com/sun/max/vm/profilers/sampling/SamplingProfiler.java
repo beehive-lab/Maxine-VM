@@ -216,7 +216,7 @@ public final class SamplingProfiler extends Thread {
 
     private static void usage() {
         System.err.println("usage: -Xprof:frequency=f,depth=d,systhreads,dump=t,sort[=t],flat[=t]");
-        MaxineVM.native_exit(-1);
+        MaxineVM.native_exit(1);
     }
 
     private static boolean getBoolOption(String s) {

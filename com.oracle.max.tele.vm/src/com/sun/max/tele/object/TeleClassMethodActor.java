@@ -109,7 +109,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
             return false;
         }
         try {
-            final RemoteReference compiledStateReference = fields().ClassMethodActor_compiledState.readReference(reference());
+            final RemoteReference compiledStateReference = fields().ClassMethodActor_compiledState.readRemoteReference(reference());
             if (compiledStateReference.isZero()) {
                 clearCompiledState();
             } else if (updatingCompiledState) {
@@ -167,7 +167,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     public TeleCodeAttribute getTeleCodeAttribute() {
         if (vm().tryLock()) {
             try {
-                final RemoteReference codeAttributeReference = fields().ClassMethodActor_codeAttribute.readReference(reference());
+                final RemoteReference codeAttributeReference = fields().ClassMethodActor_codeAttribute.readRemoteReference(reference());
                 return (TeleCodeAttribute) objects().makeTeleObject(codeAttributeReference);
             } finally {
                 vm().unlock();
@@ -195,8 +195,8 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         if (compiledState == null) {
             clearCompiledState();
         } else if (compiledState.classActorForObjectType().javaClass() == Compilations.class) {
-            RemoteReference optimizedReference = fields().Compilations_optimized.readReference(compiledState.reference());
-            RemoteReference baselineReference = fields().Compilations_baseline.readReference(compiledState.reference());
+            RemoteReference optimizedReference = fields().Compilations_optimized.readRemoteReference(compiledState.reference());
+            RemoteReference baselineReference = fields().Compilations_baseline.readRemoteReference(compiledState.reference());
             compilations = new ArrayList<TeleTargetMethod>(2);
             if (optimizedReference.isZero()) {
                 optimizedTargetMethod = null;
@@ -212,7 +212,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
             }
         } else if (compiledState.classActorForObjectType().javaClass() == Compilation.class) {
             // this is a compilation that is currently underway, get the previous compiled state from it
-            RemoteReference prevCompilationsReference = fields().Compilation_prevCompilations.readReference(compiledState.reference());
+            RemoteReference prevCompilationsReference = fields().Compilation_prevCompilations.readRemoteReference(compiledState.reference());
             if (!prevCompilationsReference.isZero()) {
                 translateCompiledState(objects().makeTeleObject(prevCompilationsReference));
             }  else {

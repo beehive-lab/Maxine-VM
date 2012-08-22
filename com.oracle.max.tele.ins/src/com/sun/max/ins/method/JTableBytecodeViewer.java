@@ -57,6 +57,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     public static final int MAX_BYTECODE_OPERAND_DISPLAY = 15;
 
     private final Inspection inspection;
+    private final InspectorView view;
     private final BytecodeTable table;
     private final BytecodeTableModel tableModel;
     private final BytecodeViewPreferences instanceViewPreferences;
@@ -64,6 +65,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     public JTableBytecodeViewer(Inspection inspection, MethodView parent, TeleClassMethodActor teleClassMethodActor, MaxCompilation compilation) {
         super(inspection, parent, teleClassMethodActor, compilation);
         this.inspection = inspection;
+        this.view = parent;
         tableModel = new BytecodeTableModel(inspection, bytecodeInstructions());
         instanceViewPreferences = new BytecodeViewPreferences(BytecodeViewPreferences.globalPreferences(inspection())) {
             @Override
@@ -216,6 +218,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         repaint();
     }
 
+    public InspectorView getView() {
+        return view;
+    }
+
     // TODO (mlvdv) Extract the table class from the viewer
     private final class BytecodeTable extends InspectorTable {
 
@@ -317,6 +323,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             }
             return false;
         }
+
+        public InspectorView getView() {
+            return view;
+        }
+
     }
 
     private final class BytecodeTableColumnModel extends InspectorTableColumnModel<BytecodeColumnKind> {

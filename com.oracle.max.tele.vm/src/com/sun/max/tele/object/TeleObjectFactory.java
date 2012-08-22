@@ -25,6 +25,7 @@ package com.sun.max.tele.object;
 import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
@@ -33,7 +34,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -44,7 +44,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.hom.*;
 import com.sun.max.vm.layout.ohm.*;
 import com.sun.max.vm.log.*;
@@ -116,6 +115,54 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         }
     }
 
+    public final class ObjectFactoryMapStats {
+
+        public int mapSize;
+        public int liveCount = 0;
+        public int quasiCount = 0;
+        public int deadCount = 0;
+        public int collectedCount = 0;
+
+        public ObjectFactoryMapStats() {
+            int live = 0;
+            int quasi = 0;
+            int dead = 0;
+            int collected = 0;
+
+            for (WeakReference<TeleObject> weakRef : referenceToTeleObject.values()) {
+                final TeleObject teleObject = weakRef.get();
+                if (teleObject == null) {
+                    collected++;
+                } else {
+                    switch(teleObject.reference().status()) {
+                        case LIVE:
+                            live++;
+                            break;
+                        case DEAD:
+                            dead++;
+                            break;
+                        default:
+                            quasi++;
+                            break;
+                    }
+                }
+            }
+            this.mapSize = referenceToTeleObject.size();
+            this.liveCount = live;
+            this.quasiCount = quasi;
+            this.deadCount = dead;
+            this.collectedCount = collected;
+        }
+
+        public ObjectFactoryMapStats(int mapSize, int liveCount, int quasiCount, int deadCount, int collectedCount) {
+            this.mapSize = mapSize;
+            this.liveCount = liveCount;
+            this.quasiCount = quasiCount;
+            this.deadCount = deadCount;
+            this.collectedCount = collectedCount;
+        }
+    }
+
     private static TeleObjectFactory teleObjectFactory;
 
     /**
@@ -132,7 +179,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      * Map: Reference to {@link Object}s in the VM --> canonical local {@link TeleObject} that represents the
      * object in the VM. Relies on References being canonical and GC-safe.
      */
-    private  final Map<RemoteReference, WeakReference<TeleObject>> referenceToTeleObject = new HashMap<RemoteReference, WeakReference<TeleObject>>();
+    private  final Map<RemoteReference, WeakReference<TeleObject>> referenceToTeleObject = new ConcurrentHashMap<RemoteReference, WeakReference<TeleObject>>();
 
     private  final Map<RemoteReference, WeakReference<TeleObject>> referenceToTeleHeapFreeChunk = new HashMap<RemoteReference, WeakReference<TeleObject>>();
     private int heapFreeChunksCount = 0;
@@ -158,15 +205,13 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      * A printer for statistics concerning a cache update.
      */
     private final Object statsPrinter = new Object() {
-        private int previousTeleObjectCount = 0;
 
         @Override
         public String toString() {
-            final int currentTeleObjectCount = referenceToTeleObject.size();
+            final ObjectFactoryMapStats stats = lastUpdateMapStats;
             final StringBuilder msg = new StringBuilder();
-            msg.append("#objects=(").append(currentTeleObjectCount);
-            msg.append(", new=").append(currentTeleObjectCount - previousTeleObjectCount).append(")");
-            previousTeleObjectCount = currentTeleObjectCount;
+            msg.append("#mapped=(live=").append(stats.liveCount).append(", quasi=").append(stats.quasiCount).append("), ");
+            msg.append("#removed=(dead=").append(stats.deadCount).append(", collected=").append(stats.collectedCount).append(")");
             return msg.toString();
         }
     };
@@ -193,10 +238,9 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
     };
 
     /**
-     * The number of references in the table that point to an object.
+     * The census of the map's content, as determined by the most recent refresh.
      */
-    private int liveObjectCount = 0;
-    private int quasiObjectCount = 0;
+    private ObjectFactoryMapStats lastUpdateMapStats = new ObjectFactoryMapStats(0, 0, 0, 0, 0);
 
     private long lastUpdateEpoch = -1L;
 
@@ -293,36 +337,42 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         updateTracer.begin();
         assert vm().lockHeldByCurrentThread();
         TimerPerType timePerType = new TimerPerType();
-        liveObjectCount = 0;
-        quasiObjectCount = 0;
-
-        // Make a copy to prevent ConcurrentModificationExceptions while iterating
-        ArrayList<WeakReference<TeleObject>> teleObjectRefs = new ArrayList<WeakReference<TeleObject>>(referenceToTeleObject.values());
-        for (WeakReference<TeleObject> teleObjectRef : teleObjectRefs) {
-            if (teleObjectRef != null) {
-                TeleObject teleObject = teleObjectRef.get();
-                if (teleObject != null) {
-                    switch(teleObject.reference().status()) {
-                        case LIVE:
-                            liveObjectCount++;
-                            break;
-                        case DEAD:
-                            // TODO (mlvdv) should probably remove these from the map
-                            TeleWarning.message(tracePrefix() + "DEAD object in map");
-                            break;
-                        default:
-                            quasiObjectCount++;
-                            break;
-                    }
-                    Class type = teleObject.getClass();
-                    long[] stats = timePerType.get(type);
-                    long s = System.currentTimeMillis();
-                    teleObject.updateCache(epoch);
-                    stats[1] += System.currentTimeMillis() - s;
-                    stats[0]++;
+        int liveCount = 0;
+        int quasiCount = 0;
+        int deadCount = 0;
+        int collectedCount = 0;
+        final Iterator<RemoteReference> iterator = referenceToTeleObject.keySet().iterator();
+        while (iterator.hasNext()) {
+            final RemoteReference remoteRef = iterator.next();
+            final WeakReference<TeleObject> weakRef = referenceToTeleObject.get(remoteRef);
+            TeleObject teleObject = weakRef.get();
+            if (teleObject == null) {
+                collectedCount++;
+                iterator.remove();
+            } else {
+                switch(teleObject.reference().status()) {
+                    case LIVE:
+                        liveCount++;
+                        break;
+                    case DEAD:
+                        deadCount++;
+                        iterator.remove();
+                        Trace.line(TRACE_VALUE, tracePrefix() + ": DEAD reference removed from map " + teleObject.reference().toString() +
+                                        " gc=\"" + remoteRef.gcDescription() + "\"");
+                        break;
+                    default:
+                        quasiCount++;
+                        break;
                 }
+                Class type = teleObject.getClass();
+                long[] stats = timePerType.get(type);
+                long s = System.currentTimeMillis();
+                teleObject.updateCache(epoch);
+                stats[1] += System.currentTimeMillis() - s;
+                stats[0]++;
             }
         }
+        lastUpdateMapStats = new ObjectFactoryMapStats(referenceToTeleObject.size(), liveCount, quasiCount, deadCount, collectedCount);
         lastUpdateEpoch = epoch;
         updateTracer.end(statsPrinter);
 
@@ -391,11 +441,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         }
 
         if (reference.status().isForwarder()) {
-            // Quasi objects:  forwarders
-            // These have to be created specially.
-            // TODO (mlvdv) I'm letting these be put into to the standard map for now; I haven't (yet) found a reason to map them separately.
-            final RemoteReference newCopyReference = referenceManager().makeReference(reference.forwardedTo());
-            final TeleObject newCopyObject = objects().makeTeleObject(newCopyReference);
+            final TeleObject newCopyObject = objects().makeTeleObject(reference.followIfForwarded());
             switch (newCopyObject.kind()) {
                 case TUPLE:
                     teleObject = new TeleTupleForwarderQuasi(vm(), reference);
@@ -417,7 +463,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
                     }
                     break;
             }
-        } else {
+        } else { // not a Forwarder
             // Most important of the roles played by a {@link TeleObject} is to capture
             // the type of the object at the specified location.  This gets done empirically,
             // by examining the meta-information stored with the presumed object.
@@ -438,9 +484,8 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             ClassActor classActor = null;
 
             try {
-                final Address hubAddress = Layout.readHubReferenceAsWord(reference).asAddress();
-                hubReference = referenceManager().makeReference(hubAddress);
-                classActorReference = fields().Hub_classActor.readReference(hubReference);
+                hubReference = reference.readHubAsRemoteReference();
+                classActorReference = fields().Hub_classActor.readRemoteReference(hubReference);
                 classActor = classes().makeClassActor(classActorReference);
             } catch (InvalidReferenceException invalidReferenceException) {
                 Log.println("InvalidReferenceException reference: " + reference + "/" + reference.toOrigin() +
@@ -450,8 +495,8 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             }
 
             // Must check for the static tuple case first; it doesn't follow the usual rules
-            final RemoteReference hubhubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(hubReference).asAddress());
-            final RemoteReference hubClassActorReference = fields().Hub_classActor.readReference(hubhubReference);
+            final RemoteReference hubhubReference = hubReference.readHubAsRemoteReference();
+            final RemoteReference hubClassActorReference = fields().Hub_classActor.readRemoteReference(hubhubReference);
             final ClassActor hubClassActor = classes().makeClassActor(hubClassActorReference);
             final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
             if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
@@ -545,7 +590,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
     }
 
     /**
-     * @return the number of {@link TeleObject} instances created during the session.
+     * @return the total number of {@link TeleObject} instances created during the session.
      */
     public int objectsCreatedCount() {
         return objectsCreatedCount;
@@ -559,24 +604,10 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
     }
 
     /**
-     * @return the number of {@linkplain RemoteReference references} in the table.
+     * @return census of the map's current contents, not necessarily the same as the census during the refresh.
      */
-    public int referenceCount() {
-        return referenceToTeleObject.size();
-    }
-
-    /**
-     * @return the number of {@linkplain RemoteReference references} in the table that point to live objects.
-     */
-    public int liveObjectCount() {
-        return liveObjectCount;
-    }
-
-    /**
-     * @return the number of {@linkplain RemoteReference references} in the table that point to <em>quasi</em> objects.
-     */
-    public int quasiObjectCount() {
-        return quasiObjectCount();
+    public ObjectFactoryMapStats mapStats() {
+        return new ObjectFactoryMapStats();
     }
 
     private Constructor getConstructor(Class clazz) {

@@ -43,7 +43,7 @@ public final class TeleStringConstant extends TelePoolConstant {
      */
     public String getString() {
         if (value == null) {
-            final RemoteReference stringReference = fields().StringConstant_value.readReference(reference());
+            final RemoteReference stringReference = fields().StringConstant_value.readRemoteReference(reference());
             final TeleString teleString = (TeleString) objects().makeTeleObject(stringReference);
             value = teleString.getString();
         }

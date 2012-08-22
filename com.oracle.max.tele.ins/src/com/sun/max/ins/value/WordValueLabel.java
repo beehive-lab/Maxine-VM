@@ -29,6 +29,7 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
+import com.sun.max.ins.object.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -316,9 +317,24 @@ public class WordValueLabel extends ValueLabel {
                 //System.out.println("WVL (" + _valueMode.toString() + ", " + _valueKind.toString() + ")");
                 switch (inspection().gui().getButton(mouseEvent)) {
                     case MouseEvent.BUTTON1: {
-                        final InspectorAction inspectAction = getInspectValueAction(value());
-                        if (inspectAction != null) {
-                            inspectAction.perform();
+                        if (mouseEvent.isShiftDown()) {
+                            final InspectorAction viewMemoryAction = getViewMemoryAction(value());
+                            if (viewMemoryAction != null) {
+                                viewMemoryAction.perform();
+                            }
+                        } else if (mouseEvent.isMetaDown()) {
+                            InspectorAction inspectAction = getCloseAndViewObjectAction(value());
+                            if (inspectAction == null) {
+                                inspectAction = getInspectValueAction(value());
+                            }
+                            if (inspectAction != null) {
+                                inspectAction.perform();
+                            }
+                        } else {
+                            final InspectorAction inspectAction = getInspectValueAction(value());
+                            if (inspectAction != null) {
+                                inspectAction.perform();
+                            }
                         }
                         break;
                     }
@@ -1333,6 +1349,51 @@ public class WordValueLabel extends ValueLabel {
         return null;
     }
 
+    private InspectorAction getCloseAndViewObjectAction(Value value) {
+        InspectorAction action = null;
+        final Address valueAsAddress = value.toWord().asAddress();
+        switch (displayMode) {
+            case OBJECT_REFERENCE:
+            case OBJECT_REFERENCE_TEXT:
+            case HUB_REFERENCE:
+            case HUB_REFERENCE_TEXT:
+            case QUASI_OBJECT_REFERENCE:
+            case QUASI_OBJECT_REFERENCE_TEXT:
+            case UNCHECKED_REFERENCE:
+                if (parent instanceof InspectorViewElement) {
+                    final InspectorViewElement viewElement = (InspectorViewElement) parent;
+                    final InspectorView oldView = viewElement.getView();
+                    if (oldView instanceof ObjectView) {
+                        MaxObject newObject = vm().objects().findAnyObjectAt(valueAsAddress);
+                        if (newObject == null) {
+                            newObject = vm().objects().findForwardedObjectAt(valueAsAddress);
+                        }
+                        if (newObject != null) {
+                            final MaxObject finalObject = newObject;
+                            action = new InspectorAction(inspection(), null) {
+
+                                @Override
+                                protected void procedure() {
+                                    final ObjectView newView = views().objects().makeView(finalObject);
+                                    if (newView != null) {
+                                        if (newView == oldView) {
+                                            newView.highlight();
+                                        } else {
+                                            oldView.dispose();
+                                        }
+                                    }
+                                }
+                            };
+                        }
+                    }
+                }
+                break;
+            default:
+                action = null;
+        }
+        return action;
+    }
+
     private InspectorAction getInspectValueAction(Value value) {
         InspectorAction action = null;
         final Address valueAsAddress = value.toWord().asAddress();
@@ -1436,7 +1497,7 @@ public class WordValueLabel extends ValueLabel {
                 case HUB_REFERENCE:
                 case HUB_REFERENCE_TEXT: {
                     if (object != null) {
-                        action = views().memory().makeViewAction(object, "View memory for " + inspection().nameDisplay().referenceLabelText(object));
+                        action = views().memory().makeViewAction(object, "View memory for Object (Shift-Left-Button)");
                     } else {
                         action = views().memory().makeViewAction(address, null);
                     }
@@ -1555,6 +1616,22 @@ public class WordValueLabel extends ValueLabel {
             }
         }
 
+        private final class MenuCloseAndViewObjectAction extends InspectorAction {
+
+            private InspectorAction inspectAction;
+
+            private MenuCloseAndViewObjectAction(Value value) {
+                super(inspection(), "Close and View Object (Meta-Left-Button)");
+                inspectAction = getCloseAndViewObjectAction(value);
+                setEnabled(inspectAction != null);
+            }
+
+            @Override
+            public void procedure() {
+                inspectAction.perform();
+            }
+        }
+
         private final class MenuCycleDisplayAction extends InspectorAction {
 
             private final InspectorAction cycleAction;
@@ -1616,8 +1693,9 @@ public class WordValueLabel extends ValueLabel {
         public WordValueMenuItems(Inspection inspection, Value value) {
             add(actions().copyValue(value, "Copy value to clipboard"));
             add(new MenuViewObjectAction(value));
-            add(new MenuCycleDisplayAction());
             add(new MenuViewMemoryAction(value));
+            add(new MenuCloseAndViewObjectAction(value));
+            add(new MenuCycleDisplayAction());
             add(new MenuShowMemoryRegionAction(value));
         }
     }

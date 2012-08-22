@@ -43,7 +43,7 @@ public class TeleNoAgingNursery extends TeleTupleObject {
             return false;
         }
         if (allocator == null) {
-            final RemoteReference nurseryAllocatorRef = fields().NoAgingRegionalizedNursery_allocator.readReference(reference());
+            final RemoteReference nurseryAllocatorRef = fields().NoAgingRegionalizedNursery_allocator.readRemoteReference(reference());
             allocator = (TeleBaseAtomicBumpPointerAllocator) objects().makeTeleObject(nurseryAllocatorRef);
         }
         return true;

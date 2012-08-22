@@ -385,17 +385,10 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
 
     public final TeleHub getTeleHub() {
         if (teleHub == null) {
-                   // final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
-            teleHub = fetchTeleHub();
+            // If this object is a forwarder then get the hub of the new copy
+            teleHub = (TeleHub) objects().makeTeleObject(reference.followIfForwarded().readHubAsRemoteReference());
         }
         return teleHub;
-    }
-
-    /**
-     * Logic to fetch the hub for this TeleObject when not already cached.
-     */
-    protected TeleHub fetchTeleHub() {
-        return  (TeleHub) objects().findObjectAt(Layout.readHubReferenceAsWord(reference).asAddress());
     }
 
     public Word readMiscWord() {

@@ -52,11 +52,19 @@ import com.sun.max.vm.value.*;
  */
 public final class TeleReferenceValue extends ReferenceValue {
 
+    private static TeleReferenceValue zero = null;
     private final TeleVM vm;
     public final RemoteReference reference;
 
     public static TeleReferenceValue from(TeleVM vm, Reference reference) {
         return new TeleReferenceValue(vm, reference);
+    }
+
+    public static TeleReferenceValue zero(TeleVM vm) {
+        if (zero == null) {
+            zero = new TeleReferenceValue(vm, Reference.zero());
+        }
+        return zero;
     }
 
     private TeleReferenceValue(TeleVM vm, Reference reference) {

@@ -29,6 +29,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.nat.thread.*;
 
@@ -111,6 +112,18 @@ class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel 
     protected Pointer getRecordAddress(long id) {
         return recordAddress;
     }
+
+    /**
+     * Batches of records per-thread, see {@link VMLog.RawDumpFlusher}.
+     */
+    @Override
+    protected void offLineRefresh(ArrayList<String> records) {
+        sortedCache = processThreadIds(records);
+        Arrays.sort(sortedCache);
+        recordAddress = Pointer.zero();
+        logRecordCache = Arrays.asList(sortedCache);
+    }
+
 
 }
 

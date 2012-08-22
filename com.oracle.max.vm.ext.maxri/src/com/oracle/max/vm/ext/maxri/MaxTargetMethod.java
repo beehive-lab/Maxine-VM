@@ -557,9 +557,8 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
                     "the return address of a method that was on the stack when marked for deoptimization should have been patched with a deopt stub";
 
                 Stub voidDeoptStub = vm().stubs.deoptStub(CiKind.Void, callee.targetMethod().is(CompilerStub));
-                if (TraceDeopt) {
-                    Log.println("DEOPT: changed exception handler address in " + this + " from " + Code.codePointerToTargetMethod(returnAddress) +
-                                    " to " + voidDeoptStub + " [sp=" + sp.to0xHexString() + ", fp=" + fp.to0xHexString() + "]");
+                if (deoptLogger.enabled()) {
+                    deoptLogger.logCatchException(this, Code.codePointerToTargetMethod(returnAddress), voidDeoptStub, sp, fp);
                 }
 
                 catchAddress = voidDeoptStub.codeStart();

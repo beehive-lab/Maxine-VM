@@ -117,6 +117,7 @@ public class MaxineTesterConfiguration {
         output(Classes.forName("test.output.WeakReferenceTest03_01"),               RAND_ALL);
         output(Classes.forName("test.output.WeakReferenceTest04"),                  RAND_ALL);
         output(Classes.forName("test.output.GCTest8"),                              RAND_ALL);
+        output(Classes.forName("test.output.CatchOutOfMemory"),                     RAND_ALL);
 
         vmoutput(findOutputTests("test.vm.output."));
 

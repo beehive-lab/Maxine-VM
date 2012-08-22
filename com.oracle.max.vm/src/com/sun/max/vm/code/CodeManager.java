@@ -153,8 +153,6 @@ public abstract class CodeManager {
     void initialize() {
     }
 
-    private static CodeEviction codeEviction = new CodeEviction();
-
     private static int BOOT_TO_BASELINE_INITIAL_SIZE = 10;
 
     /**
@@ -169,9 +167,8 @@ public abstract class CodeManager {
     }
 
     public static synchronized void recordBootToBaselineCaller(final TargetMethod tm) {
-        if (CodeEviction.logLevel(CodeEviction.TRACE_THREADS_CODE_MOTION)) {
-            Log.print("boot->baseline ");
-            Log.println(tm);
+        if (CodeEviction.logging()) {
+            CodeEviction.codeEvictionLogger.logBootToBaseline(tm);
         }
         if (nBootToBaseline == bootToBaseline.length) {
             bootToBaseline = Arrays.copyOf(bootToBaseline, bootToBaseline.length * 2);
@@ -244,15 +241,11 @@ public abstract class CodeManager {
 
             // Allocation in the baseline code region may take another attempt upon contention, after compaction.
             if (start.isZero() && currentCodeRegion == runtimeBaselineCodeRegion) {
-                codeEviction.submit();
+                CodeEviction.run();
                 assert validateCodeCache();
                 start = currentCodeRegion.allocate(allocationSize, false);
-                if (CodeCacheContentionFrequency > 0 && CodeEviction.logLevel(CodeEviction.TRACE_STAT)) {
-                    Log.print("amount surviving code eviction: ");
-                    Log.print(lastSurvivorSize);
-                    Log.print(" bytes, largest so far: ");
-                    Log.print(largestSurvivorSize);
-                    Log.println(" bytes");
+                if (CodeCacheContentionFrequency > 0 && CodeEviction.logging()) {
+                    CodeEviction.codeEvictionLogger.logStats_Surviving(lastSurvivorSize, largestSurvivorSize);
                 }
             }
         }

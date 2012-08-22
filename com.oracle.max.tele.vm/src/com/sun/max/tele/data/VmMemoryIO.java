@@ -24,9 +24,7 @@ package com.sun.max.tele.data;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -60,10 +58,6 @@ public final class VmMemoryIO extends AbstractVmHolder implements MaxMemoryIO {
         } catch (DataIOError e) {
             return VoidValue.VOID;
         }
-    }
-
-    public Value readArrayElementValue(Kind kind, RemoteReference reference, int index) {
-        return objects().unsafeReadArrayElementValue(kind, reference, index);
     }
 
     public void readBytes(Address address, byte[] bytes) {

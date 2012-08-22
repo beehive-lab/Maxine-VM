@@ -210,7 +210,7 @@ public abstract class TeleActor extends TeleTupleObject {
         if (actorName == null) {
             // Have to read the name using low level operations, because the name needed
             // to create the local instance of the Actor.
-            RemoteReference utf8ConstantReference = fields().Actor_name.readReference(reference());
+            RemoteReference utf8ConstantReference = fields().Actor_name.readRemoteReference(reference());
             TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) objects().makeTeleObject(utf8ConstantReference);
             actorName = teleUtf8Constant.utf8Constant();
         }

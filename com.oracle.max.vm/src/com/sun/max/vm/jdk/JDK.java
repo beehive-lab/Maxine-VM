@@ -88,6 +88,9 @@ public class JDK {
 
     public static final ClassRef java_util_EnumMap                   = new ClassRef(java.util.EnumMap.class);
     public static final ClassRef java_util_Random                    = new ClassRef(java.util.Random.class);
+    public static final ClassRef java_util_Hashtable                 = new ClassRef(java.util.Hashtable.class);
+    public static final ClassRef java_util_HashMap                   = new ClassRef(java.util.HashMap.class);
+    public static final ClassRef java_util_HashMap_Holder            = new ClassRef("java.util.HashMap$Holder", true);
 
     public static final ClassRef java_math_BigInteger                = new LazyClassRef(java.math.BigInteger.class);
 

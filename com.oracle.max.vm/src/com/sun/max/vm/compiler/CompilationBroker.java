@@ -319,10 +319,17 @@ public class CompilationBroker {
     }
 
     /**
-     * Deopt compilation.
+     * Deopt compilation, if necessary.
+     * The method is only recompiled if the current target method has been invalidated, which is the normal deopt case.
+     * However, a VMTI handler may already have compiled the method before the deoptimzation step happened.
      * @param cma
+     * @param force always compile iff {@code true}.
      */
     public TargetMethod compileForDeopt(ClassMethodActor cma) {
+        TargetMethod tm = cma.currentTargetMethod();
+        if (tm != null && tm.isBaseline() && tm.invalidated() == null) {
+            return tm;
+        }
         return compile(cma, Nature.BASELINE, true);
     }
 

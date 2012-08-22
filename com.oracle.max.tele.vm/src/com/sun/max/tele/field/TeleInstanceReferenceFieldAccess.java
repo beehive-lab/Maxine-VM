@@ -22,11 +22,8 @@
  */
 package com.sun.max.tele.field;
 
-import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
@@ -48,42 +45,15 @@ public final class TeleInstanceReferenceFieldAccess extends TeleInstanceFieldAcc
     }
 
     /**
-     * Reads a live object instance reference field from VM memory, following a forwarding pointer if necessary, or
-     * {@link RemoteReference#zero()} if no live object can be found.
+     * Reads from the specified object in VM memory the reference held in the field encapsulated by this accessor,
+     * traversing a forwarder if necessary; returns {@link RemoteReference#zero()} if the field's value does not point
+     * at a live object.
      *
-     * @return the value of the field in VM memory interpreted as a reference, unless it is a forwarding pointer in
-     * which case the reference returned refers to the destination of the forwarding pointer.
+     * @return the value of the instance field in VM memory interpreted as a reference, unless it is a forwarder in
+     *         which case the reference returned refers to the destination of the forwarder.
      */
-    public RemoteReference readReference(RemoteReference reference) {
-        final TeleVM vm = reference.vm();
-        final Address origin = reference.readWord(fieldActor().offset()).asAddress();
-        final ObjectStatus status = vm.objects().objectStatusAt(origin);
-        if (status.isLive()) {
-            return vm.referenceManager().makeReference(origin);
-        } else if (status.isForwarder()) {
-            final RemoteReference forwarderReference = vm.referenceManager().makeQuasiReference(origin);
-            return vm.referenceManager().makeReference(forwarderReference.forwardedTo());
-        }
-        return vm.referenceManager().zeroReference();
-    }
-
-    /**
-     * Reads an object instance reference field from VM memory, either a live reference or quasi reference,
-     * or {@link RemoteReference#zero()} if no live or quasi object can be found.
-     *
-     * @return the value of the field in VM memory interpreted as a reference.
-     */
-    public RemoteReference readRawReference(RemoteReference reference) {
-        final TeleVM vm = reference.vm();
-        final Address origin = reference.readWord(fieldActor().offset()).asAddress();
-        final ObjectStatus status = vm.objects().objectStatusAt(origin);
-        if (status.isLive()) {
-            return vm.referenceManager().makeReference(origin);
-        }
-        if (status.isQuasi()) {
-            return vm.referenceManager().makeQuasiReference(origin);
-        }
-        return vm.referenceManager().zeroReference();
+    public RemoteReference readRemoteReference(RemoteReference remoteRef) {
+        return remoteRef.readFieldAsRemoteReference(fieldActor());
     }
 
     public static RemoteReference readPath(RemoteReference reference, TeleInstanceReferenceFieldAccess... fields) {
@@ -92,7 +62,7 @@ public final class TeleInstanceReferenceFieldAccess extends TeleInstanceFieldAcc
             if (r.isZero()) {
                 return r;
             }
-            r = field.readReference(r);
+            r = field.readRemoteReference(r);
         }
         return r;
     }

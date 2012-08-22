@@ -90,10 +90,16 @@ public class TeleTupleObject extends TeleObject {
         return fieldActor.kind.width.numberOfBytes;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * When the field is a reference, this does <em>not</em> follow forwarding pointers.
+     */
     @Override
     public Value readFieldValue(FieldActor fieldActor) {
         if (fieldActor.kind.isReference) {
-            return TeleReferenceValue.from(vm(), referenceManager().makeReference(reference().readWord(fieldActor.offset()).asAddress()));
+            // Does not follow forwarding pointers
+            return TeleReferenceValue.from(vm(), reference().readReference(fieldActor.offset()));
         }
         return fieldActor.readValue(reference());
     }
@@ -102,7 +108,7 @@ public class TeleTupleObject extends TeleObject {
     public TeleClassMethodActor getTeleClassMethodActorForObject() {
         final Class<?> javaClass = classActorForObjectType().toJava();
         if (TargetMethod.class.isAssignableFrom(javaClass)) {
-            final RemoteReference classMethodActorReference = fields().TargetMethod_classMethodActor.readReference(reference());
+            final RemoteReference classMethodActorReference = fields().TargetMethod_classMethodActor.readRemoteReference(reference());
             return (TeleClassMethodActor) objects().makeTeleObject(classMethodActorReference);
         }
         return null;

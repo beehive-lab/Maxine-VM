@@ -73,7 +73,7 @@ public class TeleRegionTable extends AbstractVmHolder {
             return;
         }
         initializing = true;
-        RemoteReference theRegionTableReference =  vm().fields().RegionTable_theRegionTable.readReference(vm());
+        RemoteReference theRegionTableReference =  vm().fields().RegionTable_theRegionTable.readRemoteReference(vm());
         if (theRegionTableReference.isZero()) {
             return;
         }

@@ -97,7 +97,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleMemoryRegion {
      */
     private boolean updateMarkCache() {
         try {
-            final RemoteReference markReference = fields().LinearAllocationMemoryRegion_mark.readReference(reference());
+            final RemoteReference markReference = fields().LinearAllocationMemoryRegion_mark.readRemoteReference(reference());
             markCache = markReference.readWord(AtomicWord.valueOffset()).asPointer();
             // This essentially marks the usage cache as dirty.
             usageCache = MaxMemoryRegion.Util.NULL_MEMORY_USAGE;

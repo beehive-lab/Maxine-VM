@@ -30,7 +30,6 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Canonical surrogate for an object of type {@link ConstantPool} in the VM .
@@ -68,7 +67,7 @@ public final class TeleConstantPool extends TeleTupleObject {
 
     private RemoteReference constantsArrayReference() {
         if (constantsArrayReference.isZero()) {
-            constantsArrayReference = fields().ConstantPool_constants.readReference(reference());
+            constantsArrayReference = fields().ConstantPool_constants.readRemoteReference(reference());
         }
         return constantsArrayReference;
     }
@@ -84,7 +83,7 @@ public final class TeleConstantPool extends TeleTupleObject {
             throw new MaxVMBusyException();
         }
         try {
-            final RemoteReference poolConstantReference = ((RemoteReference) objects().unsafeReadArrayElementValue(Kind.REFERENCE, constantsArrayReference(), index).asReference()).jumpForwarder();
+            final RemoteReference poolConstantReference = constantsArrayReference().readArrayAsRemoteReference(index);
             final TeleObject teleObject = objects().makeTeleObject(poolConstantReference);
             if (!(teleObject instanceof TelePoolConstant)) {
                 return null;
@@ -99,7 +98,7 @@ public final class TeleConstantPool extends TeleTupleObject {
      * @return surrogate for the {@link ClassActor} object in the VM  that includes this pool
      */
     public TeleClassActor getTeleHolder() {
-        final RemoteReference classActorReference = fields().ConstantPool_holder.readReference(reference());
+        final RemoteReference classActorReference = fields().ConstantPool_holder.readRemoteReference(reference());
         return (TeleClassActor) objects().makeTeleObject(classActorReference);
     }
 

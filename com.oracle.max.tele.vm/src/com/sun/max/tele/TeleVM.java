@@ -266,9 +266,6 @@ public abstract class TeleVM implements MaxVM {
      */
     public static class Options extends OptionSet {
 
-        /**
-         * Specifies if these options apply when creating a {@linkplain TeleVM#createReadOnly(File, Classpath) read-only} VM.
-         */
         public final Option<String> modeOption = newStringOption("mode", "create",
             "Mode of operation: create | attach | attachwaiting | image");
         public final Option<String> targetKindOption = newStringOption("target", "local",
@@ -288,9 +285,10 @@ public abstract class TeleVM implements MaxVM {
             "Method entry bytecode breakpoints also stop VM prior to compilation of matching methods.");
         public final Option<Boolean> nativePrompt = newBooleanOption("ncv", false,
             "Prompt for native code view when entering native code");
+        public final Option<String> vmLogFileOption = newStringOption("vmlog", null, "file containg VMLog for mode==image");
 
         /**
-         * This field is {@code null} if {@link #readOnly} is {@code false}.
+         * An option to explicitly set the boot heap address (maybe useful for core dump).
          */
         public final Option<String> heapOption;
 
@@ -300,11 +298,11 @@ public abstract class TeleVM implements MaxVM {
         public final Option<String> vmArguments;
 
         /**
-         * Creates command line options that are specific to certain operation modes. No longer tries to customise the
+         * Creates command line options that are specific to certain operation modes. No longer tries to customize the
          * options based on mode.
          */
         public Options() {
-            heapOption = newStringOption("heap", "1024", "Relocation address for the heap and code in the boot image.");
+            heapOption = newStringOption("heap", null, "Relocation address for the heap and code in the boot image.");
             vmArguments = newStringOption("a", "", "Specifies the arguments to the target VM.");
             // We do not want to check the auto generated code for consistency (by default), so change default value
             BootImageGenerator.checkGeneratedCodeOption.setDefaultValue(false);
@@ -360,7 +358,7 @@ public abstract class TeleVM implements MaxVM {
                 if (!vmFile.exists()) {
                     TeleError.unexpected("vm file: " + vmFile + " does not exist or is not accessible");
                 }
-                cons = klass.getDeclaredConstructor(new Class[] {TeleVM.class, File.class, File.class});
+                cons = klass.getDeclaredConstructor(new Class[] {MaxVM.class, File.class, File.class});
                 args = new Object[] {this, vmFile, dumpFile};
             } else {
                 cons = klass.getDeclaredConstructor(new Class[] {});
@@ -477,7 +475,12 @@ public abstract class TeleVM implements MaxVM {
                 break;
 
             case IMAGE:
+                System.setProperty(VmObjectAccess.HEAP_ADDRESS_PROPERTY, "1024");
                 vm = createReadOnly(bootImageFile, sourcepath);
+                String vmLogFileOption = options.vmLogFileOption.getValue();
+                if (vmLogFileOption != null) {
+                    vm.vmLogFile = new File(vmLogFileOption);
+                }
                 vm.updateVMCaches(0L);
         }
 
@@ -606,6 +609,8 @@ public abstract class TeleVM implements MaxVM {
     private final BootImage bootImage;
 
     private final File bootImageFile;
+
+    private File vmLogFile;
 
     final File programFile;
 
@@ -918,7 +923,7 @@ public abstract class TeleVM implements MaxVM {
                 // Locate the root object in the VM that holds the VM's configuration.
                 // We can determine most things from the local instance, but the remote
                 // object is needed for references to specific objects in the VM.
-                teleMaxineVM = (TeleMaxineVM) objects().makeTeleObject(fields().MaxineVM_vm.readReference(this));
+                teleMaxineVM = (TeleMaxineVM) objects().makeTeleObject(fields().MaxineVM_vm.readRemoteReference(this));
                 teleVMConfiguration = teleMaxineVM.teleVMConfiguration();
 
                 if (isAttaching()) {
@@ -1055,6 +1060,10 @@ public abstract class TeleVM implements MaxVM {
 
     public final File bootImageFile() {
         return bootImageFile;
+    }
+
+    public final File vmLogFile() {
+        return vmLogFile;
     }
 
     public final File programFile() {
@@ -1447,6 +1456,11 @@ public abstract class TeleVM implements MaxVM {
     public final LayoutScheme layoutScheme() {
         return vmConfiguration.layoutScheme();
     }
+
+    public final RemoteReferenceScheme referenceScheme() {
+        return (RemoteReferenceScheme) vmConfiguration.referenceScheme();
+    }
+
     public final RemoteReference makeReference(Address origin) {
         return referenceManager.makeReference(origin);
     }
@@ -1468,7 +1482,7 @@ public abstract class TeleVM implements MaxVM {
      */
     public final String getString(RemoteReference stringRef) throws InvalidReferenceException {
         referenceManager.checkReference(stringRef);
-        final RemoteReference charArrayRef = fields().String_value.readReference(stringRef);
+        final RemoteReference charArrayRef = fields().String_value.readRemoteReference(stringRef);
         if (charArrayRef.isZero()) {
             return null;
         }

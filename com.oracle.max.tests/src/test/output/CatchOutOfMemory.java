@@ -55,6 +55,7 @@ public class CatchOutOfMemory {
         } catch (OutOfMemoryError ex) {
             return 0;
         } catch (Throwable ex) {
+            System.out.println(ex);
             return -1;
         } finally {
             leak = null;

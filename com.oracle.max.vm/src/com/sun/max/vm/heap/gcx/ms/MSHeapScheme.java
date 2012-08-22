@@ -46,14 +46,11 @@ import com.sun.max.vm.thread.*;
  * @see FreeHeapSpaceManager
  */
 public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
-    /**
-     * Number of heap words covered by a single mark.
-     */
     private static final int WORDS_COVERED_PER_BIT = 1;
-
     /**
      * A marking algorithm for the MSHeapScheme.
      */
+    @INSPECTED
     final TricolorHeapMarker heapMarker;
 
     /**
@@ -67,6 +64,8 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
     private final Collect collect = new Collect();
 
     final AfterMarkSweepVerifier afterGCVerifier;
+
+    private final AtomicPinCounter pinnedCounter = MaxineVM.isDebug() ? new AtomicPinCounter() : null;
 
     @HOSTED_ONLY
     public MSHeapScheme() {
@@ -103,42 +102,57 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
 
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeOptCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
+        final Address immortalStart = endOfCodeRegion.alignUp(pageSize);
+        // Relocate immortal memory immediately after the end of the code region.
+        ImmortalMemoryRegion immortalRegion = ImmortalHeap.getImmortalHeap();
+        FatalError.check(immortalRegion.used().isZero(), "Immortal heap must be unused");
+        VirtualMemory.deallocate(immortalRegion.start(), immortalRegion.size(), VirtualMemory.Type.HEAP);
+        immortalRegion.setStart(immortalStart);
+        immortalRegion.mark.set(immortalStart);
+        final Address firstUnusedByteAddress = immortalRegion.end();
 
-        final Address  heapLowerBound = endOfCodeRegion;
+        if (firstUnusedByteAddress.greaterThan(endOfReservedSpace)) {
+            MaxineVM.reportPristineMemoryFailure("immortalRegion.end", "allocateHeapAndGCStorage", immortalRegion.size());
+        }
+
+        final Address heapStart = firstUnusedByteAddress.roundedUpBy(pageSize);
         final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
-
-        final Address heapStart = heapLowerBound.roundedUpBy(pageSize);
         final Address heapMarkerDataStart = heapStart.plus(maxSize).roundedUpBy(pageSize);
         final Address leftoverStart = heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
 
-        objectSpace.initialize(this, heapStart, initSize, maxSize);
-        ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace;
+        try {
+            // Use immortal memory for now.
+            Heap.enableImmortalMemoryAllocation();
+            objectSpace.initialize(this, heapStart, initSize, maxSize, true);
+            ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace;
 
-        // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
+            // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
+            if (!Heap.AvoidsAnonOperations) {
+                if (!VirtualMemory.commitMemory(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
+                    MaxineVM.reportPristineMemoryFailure("heapMarkerDataStart", "commit", heapMarkerDatasize);
+                }
+            }
+            heapMarker.initialize(markedSpace.start(), markedSpace.committedEnd(), heapMarkerDataStart, heapMarkerDatasize);
 
-        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
-            MaxineVM.reportPristineMemoryFailure("heap marker data", "allocate", heapMarkerDatasize);
+            // Free reserved space we will not be using.
+            Size leftoverSize = endOfReservedSpace.minus(leftoverStart).asSize();
+            // First, uncommit range we want to free (this will create a new mapping that can then be deallocated)
+            if (!Heap.AvoidsAnonOperations) {
+                if (!VirtualMemory.uncommitMemory(leftoverStart, leftoverSize,  VirtualMemory.Type.DATA)) {
+                    MaxineVM.reportPristineMemoryFailure("reserved space leftover", "uncommit", leftoverSize);
+                }
+            }
+            if (VirtualMemory.deallocate(leftoverStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
+                MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
+            }
+
+            // From now on, we can allocate.
+            // Make the heap (and mark bitmap) inspectable
+            HeapScheme.Inspect.init(true);
+            HeapScheme.Inspect.notifyHeapRegions(markedSpace, heapMarker.memory());
+        } finally {
+            Heap.disableImmortalMemoryAllocation();
         }
-
-        heapMarker.initialize(markedSpace.start(), markedSpace.committedEnd(), heapMarkerDataStart, heapMarkerDatasize);
-
-        // Free reserved space we will not be using.
-        Size leftoverSize = endOfReservedSpace.minus(leftoverStart).asSize();
-
-        // First, uncommit range we want to free (this will create a new mapping that can then be deallocated)
-        if (!VirtualMemory.uncommitMemory(leftoverStart, leftoverSize,  VirtualMemory.Type.DATA)) {
-            MaxineVM.reportPristineMemoryFailure("reserved space leftover", "uncommit", leftoverSize);
-        }
-
-        if (VirtualMemory.deallocate(leftoverStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
-            MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
-        }
-
-        // From now on, we can allocate.
-
-        // Make the heap inspectable
-        HeapScheme.Inspect.init(true);
-        HeapScheme.Inspect.notifyHeapRegions(markedSpace);
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {
@@ -170,6 +184,22 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
 
     public Size reportUsedSpace() {
         return objectSpace.usedSpace();
+    }
+
+    @INLINE
+    public boolean pin(Object object) {
+        // Objects never relocate. So this is always safe.
+        if (MaxineVM.isDebug()) {
+            pinnedCounter.increment();
+        }
+        return true;
+    }
+
+    @INLINE
+    public void unpin(Object object) {
+        if (MaxineVM.isDebug()) {
+            pinnedCounter.decrement();
+        }
     }
 
     @INLINE

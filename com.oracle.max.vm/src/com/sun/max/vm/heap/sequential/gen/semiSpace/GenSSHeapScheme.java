@@ -23,11 +23,13 @@
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
 import static com.sun.max.vm.MaxineVM.Phase.*;
-import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMERS.*;
+import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMED_OPERATION.*;
+
+import java.lang.management.*;
 
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
+import com.sun.management.GarbageCollectorMXBean;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -38,12 +40,14 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.Heap.GCCallbackPhase;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.log.VMLog.Record;
-import com.sun.max.vm.log.VMLogger.Interval;
 import com.sun.max.vm.log.hosted.*;
+import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -93,7 +97,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         @Override
         protected void doBeforeGC() {
         }
-
     }
 
     /**
@@ -148,6 +151,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     /**
      * Policy for resizing the heap after each GC.
      */
+    @INSPECTED
     private final GenSSHeapSizingPolicy resizingPolicy;
 
     /**
@@ -183,21 +187,37 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     private final NoEvacuatedSpaceReferenceVerifier noFromSpaceReferencesVerifiers;
 
     /**
-     * Verify that the FOT table is correctly setup.
+     * Support for verifying that the FOT table is correctly setup.
      */
     private final FOTVerifier fotVerifier;
+
+    /**
+     * A verifier that checks that a reference points to memory areas holding live objects.
+     */
+    private final DebugHeap.RefVerifier refVerifier = new DebugHeap.RefVerifier();
+    /**
+     * A verifier that checks that all roots are pointing to memory areas holding live objects.
+     */
+    private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(refVerifier);
+
+    /**
+     * Used to record the prefix of the from space that was overflowed by a minor collection.
+     * Used mostly for verification purposes.
+     */
+    private final MemoryRegion overflowedArea = new MemoryRegion();
 
     private final EvacuationTimers evacTimers = new EvacuationTimers();
 
     private final TimeLogger timeLogger = new TimeLogger();
 
-    private final PhaseLogger phaseLogger = new PhaseLogger();
+    private final Evacuator.PhaseLogger phaseLogger = new Evacuator.PhaseLogger();
 
     /**
      * Support for {@link #maxObjectInspectionAge()}.
      * Keeps track of last time a full GC completed.
      */
     private long lastFullGCTime = 0L;
+
 
     @HOSTED_ONLY
     public GenSSHeapScheme() {
@@ -209,13 +229,15 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         resizingPolicy = new GenSSHeapSizingPolicy();
         youngSpace = new ContiguousAllocatingSpace<AtomicBumpPointerAllocator<YoungSpaceRefiller>>(nurseryAllocator, "Young Generation");
         oldSpace = new ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>>(tenuredAllocator, "Old Generation");
-        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, this, cardTableRSet);
-        oldSpaceEvacuator = new  EvacuatorToCardSpace(oldSpace.fromSpace, oldSpace, this, cardTableRSet);
+        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, this, cardTableRSet, "Young");
+        oldSpaceEvacuator = new  EvacuatorToCardSpace(oldSpace.fromSpace, oldSpace, this, cardTableRSet, "Old");
         noFromSpaceReferencesVerifiers = new NoEvacuatedSpaceReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
         youngSpaceEvacuator.setTimers(evacTimers);
         oldSpaceEvacuator.setTimers(evacTimers);
+        youngSpaceEvacuator.setPhaseLogger(phaseLogger);
+        oldSpaceEvacuator.setPhaseLogger(phaseLogger);
     }
 
     @Override
@@ -269,11 +291,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
         return result;
     }
+
     private void verifyAfterMinorCollection() {
         // Verify that:
         // 1. offset table is correctly setup
-        // 2. there are no pointer from old to young.
         oldSpace.visit(fotVerifier);
+        // 2. there are no pointer from old to young.
         noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
         if (resizingPolicy.minorEvacuationOverflow()) {
             // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
@@ -281,15 +304,23 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             final BaseAtomicBumpPointerAllocator oldSpaceAllocator = oldSpace.allocator;
             noFromSpaceReferencesVerifiers.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
             noFromSpaceReferencesVerifiers.visitCells(oldSpaceAllocator.start(), oldSpaceAllocator.unsafeTop());
+            overflowedArea.setStart(oldSpaceAllocator.start());
+            overflowedArea.setEnd(oldSpaceAllocator.unsafeTop());
+            refVerifier.setVerifiedSpaces(oldToSpace, overflowedArea);
         } else {
+            refVerifier.setVerifiedSpace(oldSpace.space);
             oldSpace.visit(noFromSpaceReferencesVerifiers);
         }
+        // 3. Roots only point to memory region that contains live objects.
+        gcRootsVerifier.run();
     }
 
     private void verifyAfterFullCollection() {
+        refVerifier.setVerifiedSpace(oldSpace.space);
         oldSpace.visit(fotVerifier);
         noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
         oldSpace.visit(noFromSpaceReferencesVerifiers);
+        gcRootsVerifier.run();
     }
 
     private void doOldGenCollection() {
@@ -303,12 +334,13 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         oldSpace.flipSpaces();
         if (minorEvacuationOverflow) {
             final Address startRange =  oldSpace.allocator.start();
+            resizingPolicy.notifyMinorEvacuationOverflowRange(startRange, oldAllocatorTop);
             oldSpace.allocator.unsafeSetTop(oldAllocatorTop);
             oldSpaceEvacuator.prefillSurvivorRanges(startRange, oldAllocatorTop);
         }
         oldSpaceEvacuator.setGCOperation(genCollection);
         oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
-        oldSpaceEvacuator.evacuate();
+        oldSpaceEvacuator.evacuate(Heap.logGCPhases());
         final CardFirstObjectTable fot = cardTableRSet.cfoTable;
         final int startIndex = fot.tableEntryIndex(oldSpace.fromSpace.start());
         final int endIndex = fot.tableEntryIndex(oldSpace.fromSpace.committedEnd());
@@ -402,13 +434,14 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         evacTimers.resetTrackTime();
 
         VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
-        vmConfig().monitorScheme().beforeGarbageCollection();
+        Heap.invokeGCCallbacks(GCCallbackPhase.BEFORE);
         if (MaxineVM.isDebug() && Heap.verbose()) {
             Log.println("--Begin nursery evacuation");
         }
+        final long startGCTime = System.currentTimeMillis();
         evacTimers.start(TOTAL);
         youngSpaceEvacuator.setGCOperation(genCollection);
-        youngSpaceEvacuator.evacuate();
+        youngSpaceEvacuator.evacuate(Heap.logGCPhases());
         youngSpaceEvacuator.setGCOperation(null);
         if (MaxineVM.isDebug() && Heap.verbose()) {
             Log.println("--End nursery evacuation");
@@ -461,7 +494,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 timeLogger.logGcTimes(invocationCount, false, evacTimers.get(TOTAL).getLastElapsedTime());
             }
         }
-        vmConfig().monitorScheme().afterGarbageCollection();
+        accumulatedGCTime = System.currentTimeMillis() - startGCTime;
+        Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
     }
 
@@ -473,6 +507,16 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     @Override
     public Size reportUsedSpace() {
         return oldSpace.usedSpace().plus(youngSpace.usedSpace());
+    }
+
+    @Override
+    public boolean pin(Object object) {
+        return false;
+    }
+
+    @Override
+    public void unpin(Object object) {
+        throw new UnsupportedOperationException();
     }
 
     @INLINE
@@ -576,6 +620,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     }
 
+    @Override
+    protected boolean logTLABEvents(Address tlabStart) {
+        return MaxineVM.isDebug() && TLABLog.TraceTLABAllocation;
+    }
+
     /**
      * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
      * @param etla the thread whose TLAB will be refilled
@@ -583,6 +632,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      */
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = youngSpace.allocate(tlabSize);
+        if (MaxineVM.isDebug() && logTLABEvents(tlab)) {
+            TLABLog.doOnRefillTLAB(etla, tlabSize, true);
+        }
         Size effectiveSize = tlabSize.minus(tlabHeadroom());
         refillTLAB(etla, tlab, effectiveSize);
     }
@@ -677,16 +729,24 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         return XirWriteBarrierSpecification.NULL_WRITE_BARRIER_GEN;
     }
 
-    @HOSTED_ONLY
-    @VMLoggerInterface(parent = HeapScheme.PhaseLogger.class)
-    private interface PhaseLoggerInterface {
-        void scanningThreadRoots(@VMLogParam(name = "vmThread") VmThread vmThread);
-        void scanningRoots(@VMLogParam(name = "interval") Interval interval);
-        void scanningBootHeap(@VMLogParam(name = "interval") Interval interval);
-        void scanningCode(@VMLogParam(name = "interval") Interval interval);
-        void scanningRSet(@VMLogParam(name = "interval") Interval interval);
-        void evacuating(@VMLogParam(name = "interval") Interval interval);
-        void processingSpecialReferences(@VMLogParam(name = "interval") Interval interval);
+    @Override
+    public GarbageCollectorMXBean getGarbageCollectorMXBean() {
+        return new GenSSGarbageCollectorMXBean();
+    }
+
+    private final class GenSSGarbageCollectorMXBean extends HeapSchemeAdaptor.GarbageCollectorMXBeanAdaptor {
+        private GenSSGarbageCollectorMXBean() {
+            super("GenSS");
+            add(new GenSSMemoryPoolMXBean(oldSpace.space, this));
+            add(new GenSSMemoryPoolMXBean(oldSpace.fromSpace, this));
+            add(new GenSSMemoryPoolMXBean(youngSpace.space, this));
+        }
+    }
+
+    private final class GenSSMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
+        GenSSMemoryPoolMXBean(MemoryRegion region, MemoryManagerMXBean manager) {
+            super(MemoryType.HEAP, region, manager);
+        }
     }
 
     @HOSTED_ONLY
@@ -711,55 +771,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                         @VMLogParam(name = "weakRefTime") long weakRefTime
         );
     }
-
-    public  static final class PhaseLogger extends PhaseLoggerAuto {
-
-        private static void tracePhase(String description, Interval interval) {
-            Log.print(interval.name()); Log.print(": "); Log.println(description);
-        }
-
-        PhaseLogger() {
-            super(null, null);
-        }
-
-        @Override
-        protected void traceEvacuating(Interval interval) {
-            tracePhase("Evacuating reachables", interval);
-        }
-
-        @Override
-        protected void traceProcessingSpecialReferences(Interval interval) {
-            tracePhase("Processing special references", interval);
-        }
-
-        @Override
-        protected void traceScanningBootHeap(Interval interval) {
-            tracePhase("Scanning boot heap", interval);
-        }
-
-        @Override
-        protected void traceScanningCode(Interval interval) {
-            tracePhase("Scanning code", interval);
-        }
-
-        @Override
-        protected void traceScanningRSet(Interval interval) {
-            tracePhase("Scanning remembered sets", interval);
-        }
-
-        @Override
-        protected void traceScanningRoots(Interval interval) {
-            tracePhase("Scanning roots", interval);
-        }
-
-        @Override
-        protected void traceScanningThreadRoots(VmThread vmThread) {
-            Log.print("Scanning thread local and stack roots for thread ");
-            Log.printThread(vmThread, true);
-        }
-
-    }
-
     public static final class TimeLogger extends TimeLoggerAuto {
         private static final String HZ_SUFFIX = TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK);
         private static final String TIMINGS_LEAD = "Timings (" + HZ_SUFFIX + ") for ";
@@ -816,104 +827,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
 // START GENERATED CODE
-    private static abstract class PhaseLoggerAuto extends com.sun.max.vm.heap.HeapScheme.PhaseLogger {
-        public enum Operation {
-            Evacuating, ProcessingSpecialReferences, ScanningBootHeap,
-            ScanningCode, ScanningRSet, ScanningRoots, ScanningThreadRoots;
-
-            @SuppressWarnings("hiding")
-            public static final Operation[] VALUES = values();
-        }
-
-        private static final int[] REFMAPS = null;
-
-        protected PhaseLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
-        }
-
-        @Override
-        public String operationName(int opCode) {
-            return Operation.VALUES[opCode].name();
-        }
-
-        @INLINE
-        public final void logEvacuating(Interval interval) {
-            log(Operation.Evacuating.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceEvacuating(Interval interval);
-
-        @INLINE
-        public final void logProcessingSpecialReferences(Interval interval) {
-            log(Operation.ProcessingSpecialReferences.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceProcessingSpecialReferences(Interval interval);
-
-        @INLINE
-        public final void logScanningBootHeap(Interval interval) {
-            log(Operation.ScanningBootHeap.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningBootHeap(Interval interval);
-
-        @INLINE
-        public final void logScanningCode(Interval interval) {
-            log(Operation.ScanningCode.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningCode(Interval interval);
-
-        @INLINE
-        public final void logScanningRSet(Interval interval) {
-            log(Operation.ScanningRSet.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningRSet(Interval interval);
-
-        @INLINE
-        public final void logScanningRoots(Interval interval) {
-            log(Operation.ScanningRoots.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningRoots(Interval interval);
-
-        @Override
-        @INLINE
-        public final void logScanningThreadRoots(VmThread vmThread) {
-            log(Operation.ScanningThreadRoots.ordinal(), vmThreadArg(vmThread));
-        }
-        protected abstract void traceScanningThreadRoots(VmThread vmThread);
-
-        @Override
-        protected void trace(Record r) {
-            switch (r.getOperation()) {
-                case 0: { //Evacuating
-                    traceEvacuating(toInterval(r, 1));
-                    break;
-                }
-                case 1: { //ProcessingSpecialReferences
-                    traceProcessingSpecialReferences(toInterval(r, 1));
-                    break;
-                }
-                case 2: { //ScanningBootHeap
-                    traceScanningBootHeap(toInterval(r, 1));
-                    break;
-                }
-                case 3: { //ScanningCode
-                    traceScanningCode(toInterval(r, 1));
-                    break;
-                }
-                case 4: { //ScanningRSet
-                    traceScanningRSet(toInterval(r, 1));
-                    break;
-                }
-                case 5: { //ScanningRoots
-                    traceScanningRoots(toInterval(r, 1));
-                    break;
-                }
-                case 6: { //ScanningThreadRoots
-                    traceScanningThreadRoots(toVmThread(r, 1));
-                    break;
-                }
-            }
-        }
-    }
-
     private static abstract class TimeLoggerAuto extends com.sun.max.vm.heap.HeapScheme.TimeLogger {
         public enum Operation {
             GcTimes, PhaseTimes, StackReferenceMapPreparationTime;

@@ -42,6 +42,7 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
         super();
     }
 
+    @Override
     public boolean isGcThread(Thread thread) {
         return false;
     }

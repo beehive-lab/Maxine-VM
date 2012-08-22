@@ -114,7 +114,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
 //     * <li>If the address is the valid origin of an object in a dynamic heap region, but the object
 //     * is known <strong>not</strong> to be live, then return an unsafe, temporary reference that
 //     * wraps the address.</li>
-//     * <li>If the address does not point an an object origin,  then return an unsafe, temporary reference that
+//     * <li>If the address does not point an an object origin, then return an unsafe, temporary reference that
 //     * wraps the address.</li>
 //     * </ol>
 //     *
@@ -270,6 +270,11 @@ public final class VmReferenceManager extends AbstractVmHolder {
         public ObjectStatus status() {
             return ObjectStatus.DEAD;
         }
+
+        @Override
+        public ObjectStatus priorStatus() {
+            return null;
+        }
     }
 
     /**
@@ -293,9 +298,11 @@ public final class VmReferenceManager extends AbstractVmHolder {
         public ObjectStatus status() {
             return ObjectStatus.LIVE;
         }
+
+        @Override
+        public ObjectStatus priorStatus() {
+            return null;
+        }
     }
-
-
-
 
 }

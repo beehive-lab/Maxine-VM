@@ -123,7 +123,7 @@ public final class AllocationsView extends AbstractView<AllocationsView> impleme
             table = null;
             contentPane = new InspectorPanel(inspection());
         } else {
-            table = new AllocationsTable(inspection(), viewPreferences);
+            table = new AllocationsTable(inspection(), this, viewPreferences);
             final InspectorScrollPane memoryAllocationsScrollPane = new InspectorScrollPane(inspection(), table);
             contentPane = new InspectorPanel(inspection(), new BorderLayout());
             contentPane.add(memoryAllocationsScrollPane, BorderLayout.CENTER);

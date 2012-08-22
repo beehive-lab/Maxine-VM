@@ -375,6 +375,8 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      */
     private Address origin;
 
+    private ObjectStatus priorStatus;
+
     /**
      * During ANALYZING, when the object is known to have been forwarded, the location of the <em>other</em> copy of the object.
      */
@@ -404,6 +406,11 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     @Override
     public ObjectStatus status() {
         return refState.status();
+    }
+
+    @Override
+    public ObjectStatus priorStatus() {
+        return priorStatus;
     }
 
     @Override
@@ -439,6 +446,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * an {@link HeapPhase#ANALYZING} heap phase in which the object's reachability has not yet been determined.
      */
     public void beginAnalyzing() {
+        priorStatus = refState.status();
         refState.beginAnalyzing(this);
     }
 
@@ -456,6 +464,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * @param oldOrigin newly discovered old copy in From-Space of a forwarded object
      */
     public void discoverOldOrigin(Address oldOrigin) {
+        priorStatus = refState.status();
         refState.discoverOldOrigin(this, oldOrigin);
     }
 
@@ -471,6 +480,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * @param newOrigin location of the new copy of the forwarded object in To-Space
      */
     public void discoverForwarded(Address newOrigin) {
+        priorStatus = refState.status();
         refState.discoverForwarded(this, newOrigin);
     }
 
@@ -484,6 +494,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * depending on its reachability discovered during {@link HeapPhase#ANALYZING}
      */
     public void endAnalyzing() {
+        priorStatus = refState.status();
         refState.endAnalyzing(this);
     }
 

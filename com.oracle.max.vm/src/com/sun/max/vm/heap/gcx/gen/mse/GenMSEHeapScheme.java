@@ -50,11 +50,7 @@ import com.sun.max.vm.thread.*;
  * Generational Heap Scheme with a mark-sweep old generation and a simple copying collector nursery.
  */
 final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification, RSetCoverage, EvacuationBufferProvider {
-    /**
-     * Number of heap words covered by a single mark.
-     */
     private static final int WORDS_COVERED_PER_BIT = 1;
-
     /**
      * Knob for the fixed ratio resizing policy.
      */
@@ -123,7 +119,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     private final NoEvacuatedSpaceReferenceVerifier noYoungReferencesVerifier;
     private final FOTVerifier fotVerifier;
 
-
     @HOSTED_ONLY
     public GenMSEHeapScheme() {
         heapAccount = new HeapAccount<GenMSEHeapScheme>(this);
@@ -137,7 +132,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             new CardSpaceAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller(cardTableRSet), cardTableRSet);
 
         oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, tlabAllocator, overflowAllocator, true, cardTableRSet, OLD.tag());
-        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, this, cardTableRSet);
+        youngSpaceEvacuator = new NoAgingNurseryEvacuator(youngSpace, oldSpace, this, cardTableRSet, "Young");
         noYoungReferencesVerifier = new NoEvacuatedSpaceReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
@@ -320,7 +315,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
                 Log.println("--Begin nursery evacuation");
             }
             youngSpaceEvacuator.setGCOperation(this);
-            youngSpaceEvacuator.evacuate();
+            youngSpaceEvacuator.evacuate(Heap.logGCPhases());
             youngSpaceEvacuator.setGCOperation(null);
             if (Heap.verbose()) {
                 Log.println("--End nursery evacuation");
@@ -370,6 +365,16 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     @Override
     public Size reportUsedSpace() {
         return oldSpace.usedSpace().plus(youngSpace.usedSpace());
+    }
+
+    @Override
+    public boolean pin(Object object) {
+        return false;
+    }
+
+    @Override
+    public void unpin(Object object) {
+        throw new UnsupportedOperationException();
     }
 
     @INLINE
