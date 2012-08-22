@@ -89,24 +89,10 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
 
     /**
      * A thread local variable that is used to support VM advising, in
-     * particular to indicate whether tracking is currently enabled.
+     * particular to indicate whether advising is currently enabled.
      */
     public static final VmThreadLocal VM_ADVISING = new VmThreadLocal(
             "VM_ADVISING", false, "For use by VM advising framework");
-
-    /**
-     * When after-INVOKE advice is requested, this thread local saves the
-     * method actor that was computed prior to the call.
-     */
-    public static final VmThreadLocal VMA_METHODACTOR = new VmThreadLocal(
-            "VMA_METHODACTOR", true, "Saved MethodActor value for VMA");
-
-    /**
-     * When after-INVOKE advice is requested, this thread local saves the
-     * receiver object that was used in the call.
-     */
-    public static final VmThreadLocal VMA_METHODRECEIVER = new VmThreadLocal(
-                    "VMA_METHODRECEIVER", true, "Saved method receiver value for VMA");
 
     /**
      * Set to true when {@link VMAOptions.VMA} is set AND the VM is in a state to start advising.
@@ -258,33 +244,6 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
     @INLINE
     public static boolean isAdvising() {
         return VmThread.currentTLA().getWord(VM_ADVISING.index) != Word.zero();
-    }
-
-    @INLINE
-    public static void saveMethodActor(MethodActor methodActor) {
-        VmThread.currentTLA().setReference(VMA_METHODACTOR.index, Reference.fromJava(methodActor));
-    }
-
-    @INLINE
-    public static void saveReceiver(Reference receiver) {
-        VmThread.currentTLA().setReference(VMA_METHODRECEIVER.index, receiver);
-    }
-
-    @INLINE
-    public static void saveMethodActorAndReceiver(Reference receiver, MethodActor methodActor) {
-        Pointer tla = VmThread.currentTLA();
-        tla.setReference(VMA_METHODACTOR.index, Reference.fromJava(methodActor));
-        tla.setReference(VMA_METHODRECEIVER.index, receiver);
-    }
-
-    @INLINE
-    public static MethodActor loadMethodActor() {
-        return UnsafeCast.asClassMethodActor(VmThread.currentTLA().getReference(VMA_METHODACTOR.index).toJava());
-    }
-
-    @INLINE
-    public static Object loadReceiver() {
-        return VmThread.currentTLA().getReference(VMA_METHODRECEIVER.index).toJava();
     }
 
     @Override

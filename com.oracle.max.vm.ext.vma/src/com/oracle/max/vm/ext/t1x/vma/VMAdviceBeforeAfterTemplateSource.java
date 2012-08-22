@@ -41,6 +41,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.oracle.max.vm.ext.t1x.*;
 
 /**
@@ -1135,7 +1136,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokevirtualFloat(ResolutionGuard.InPool guard, Reference receiver) {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
@@ -1146,7 +1146,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualFloat(VirtualMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
@@ -1157,7 +1156,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualFloat(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
@@ -1169,7 +1167,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokeinterfaceFloat(ResolutionGuard.InPool guard, Reference receiver) {
         final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -1180,7 +1177,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceFloat(InterfaceMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -1191,7 +1187,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceFloat(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
@@ -1204,7 +1199,6 @@ public class VMAdviceBeforeAfterTemplateSource {
         nullCheck(receiver.toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         return VMAT1XRuntime.initializeSpecialMethod(methodActor);
@@ -1214,7 +1208,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialFloat(VirtualMethodActor methodActor, Reference receiver) {
         nullCheck(receiver.toOrigin());
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
     }
@@ -1224,7 +1217,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokestaticFloat(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         return VMAT1XRuntime.initializeStaticMethod(methodActor);
@@ -1233,7 +1225,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$float$init)
     public static void invokestaticFloat(StaticMethodActor methodActor) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
     }
@@ -1524,7 +1515,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokevirtualLong(ResolutionGuard.InPool guard, Reference receiver) {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
@@ -1535,7 +1525,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualLong(VirtualMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
@@ -1546,7 +1535,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualLong(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
@@ -1558,7 +1546,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokeinterfaceLong(ResolutionGuard.InPool guard, Reference receiver) {
         final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -1569,7 +1556,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceLong(InterfaceMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -1580,7 +1566,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceLong(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
@@ -1593,7 +1578,6 @@ public class VMAdviceBeforeAfterTemplateSource {
         nullCheck(receiver.toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         return VMAT1XRuntime.initializeSpecialMethod(methodActor);
@@ -1603,7 +1587,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialLong(VirtualMethodActor methodActor, Reference receiver) {
         nullCheck(receiver.toOrigin());
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
     }
@@ -1613,7 +1596,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokestaticLong(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         return VMAT1XRuntime.initializeStaticMethod(methodActor);
@@ -1622,7 +1604,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$long$init)
     public static void invokestaticLong(StaticMethodActor methodActor) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
     }
@@ -1871,7 +1852,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokevirtualDouble(ResolutionGuard.InPool guard, Reference receiver) {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
@@ -1882,7 +1862,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualDouble(VirtualMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
@@ -1893,7 +1872,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualDouble(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
@@ -1905,7 +1883,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokeinterfaceDouble(ResolutionGuard.InPool guard, Reference receiver) {
         final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -1916,7 +1893,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceDouble(InterfaceMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -1927,7 +1903,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceDouble(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
@@ -1940,7 +1915,6 @@ public class VMAdviceBeforeAfterTemplateSource {
         nullCheck(receiver.toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         return VMAT1XRuntime.initializeSpecialMethod(methodActor);
@@ -1950,7 +1924,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialDouble(VirtualMethodActor methodActor, Reference receiver) {
         nullCheck(receiver.toOrigin());
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
     }
@@ -1960,7 +1933,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokestaticDouble(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         return VMAT1XRuntime.initializeStaticMethod(methodActor);
@@ -1969,7 +1941,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$double$init)
     public static void invokestaticDouble(StaticMethodActor methodActor) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
     }
@@ -2141,7 +2112,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokevirtualObject(ResolutionGuard.InPool guard, Reference receiver) {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
@@ -2152,7 +2122,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualObject(VirtualMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
@@ -2163,7 +2132,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualObject(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
@@ -2175,7 +2143,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokeinterfaceObject(ResolutionGuard.InPool guard, Reference receiver) {
         final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -2186,7 +2153,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceObject(InterfaceMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -2197,7 +2163,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceObject(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
@@ -2210,7 +2175,6 @@ public class VMAdviceBeforeAfterTemplateSource {
         nullCheck(receiver.toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         return VMAT1XRuntime.initializeSpecialMethod(methodActor);
@@ -2220,7 +2184,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialObject(VirtualMethodActor methodActor, Reference receiver) {
         nullCheck(receiver.toOrigin());
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
     }
@@ -2230,7 +2193,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokestaticObject(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         return VMAT1XRuntime.initializeStaticMethod(methodActor);
@@ -2239,7 +2201,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$reference$init)
     public static void invokestaticObject(StaticMethodActor methodActor) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
     }
@@ -2369,7 +2330,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokevirtualWord(ResolutionGuard.InPool guard, Reference receiver) {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
@@ -2380,7 +2340,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualWord(VirtualMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
@@ -2391,7 +2350,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualWord(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
@@ -2403,7 +2361,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokeinterfaceWord(ResolutionGuard.InPool guard, Reference receiver) {
         final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -2414,7 +2371,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceWord(InterfaceMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -2425,7 +2381,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceWord(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
@@ -2438,7 +2393,6 @@ public class VMAdviceBeforeAfterTemplateSource {
         nullCheck(receiver.toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         return VMAT1XRuntime.initializeSpecialMethod(methodActor);
@@ -2448,7 +2402,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialWord(VirtualMethodActor methodActor, Reference receiver) {
         nullCheck(receiver.toOrigin());
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
     }
@@ -2458,7 +2411,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokestaticWord(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         return VMAT1XRuntime.initializeStaticMethod(methodActor);
@@ -2467,7 +2419,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$word$init)
     public static void invokestaticWord(StaticMethodActor methodActor) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
     }
@@ -2497,7 +2448,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokevirtualVoid(ResolutionGuard.InPool guard, Reference receiver) {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
@@ -2508,7 +2458,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualVoid(VirtualMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
@@ -2519,7 +2468,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokevirtualVoid(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
@@ -2531,7 +2479,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokeinterfaceVoid(ResolutionGuard.InPool guard, Reference receiver) {
         final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -2542,7 +2489,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceVoid(InterfaceMethodActor methodActor, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
@@ -2553,7 +2499,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @Slot(-1)
     public static Address invokeinterfaceVoid(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, methodActor);
         }
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
@@ -2566,7 +2511,6 @@ public class VMAdviceBeforeAfterTemplateSource {
         nullCheck(receiver.toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         return VMAT1XRuntime.initializeSpecialMethod(methodActor);
@@ -2576,7 +2520,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialVoid(VirtualMethodActor methodActor, Reference receiver) {
         nullCheck(receiver.toOrigin());
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
     }
@@ -2586,7 +2529,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Address invokestaticVoid(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         return VMAT1XRuntime.initializeStaticMethod(methodActor);
@@ -2595,7 +2537,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$void$init)
     public static void invokestaticVoid(StaticMethodActor methodActor) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAJavaRunScheme.saveMethodActor(methodActor);
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
     }
@@ -2823,6 +2764,12 @@ public class VMAdviceBeforeAfterTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterMethodEntry(receiver, methodActor);
         }
+    }
+
+    @T1X_TEMPLATE(LOAD_EXCEPTION)
+    public static Object loadException() {
+        Object exception = VmThread.current().loadExceptionForHandler();
+        return exception;
     }
 
     @T1X_TEMPLATE(POP)
@@ -3167,34 +3114,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void goto_w() {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(200);
-        }
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$adviseafter)
-    public static void adviseAfterInvokeVirtual() {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
-        }
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$adviseafter)
-    public static void adviseAfterInvokeInterface() {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
-        }
-    }
-
-    @T1X_TEMPLATE(INVOKESPECIAL$adviseafter)
-    public static void adviseAfterInvokeSpecial() {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
-        }
-    }
-
-    @T1X_TEMPLATE(INVOKESTATIC$adviseafter)
-    public static void adviseAfterInvokeStatic() {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
         }
     }
 

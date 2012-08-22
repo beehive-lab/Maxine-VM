@@ -813,6 +813,7 @@ public class ProcessLog {
                 objectRecord = getTraceRecord(objIdArg);
                 ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
                 objectAdviceRecord.value = objectRecord;
+                objectRecord.addTraceElement(objectAdviceRecord);
                 adviceRecord = objectAdviceRecord;
                 break;
             }
@@ -951,6 +952,7 @@ public class ProcessLog {
                 adviceRecord.setPackedValue(Integer.parseInt(arg3));
                 break;
             }
+
             case ADVISE_BEFORE_OPERATION: {
                 adviceRecord = createAdviceRecordAndSetTimeThreadValue("Operation", AdviceMode.BEFORE, arg4, arg5);
                 adviceRecord.setPackedValue(Integer.parseInt(arg3));
@@ -1041,6 +1043,9 @@ public class ProcessLog {
                     objectAdviceRecord.value = classRecord;
                 } else {
                     objectAdviceRecord.value = objectRecord;
+                    if (objectRecord != null) {
+                        objectRecord.addTraceElement(objectAdviceRecord);
+                    }
                 }
                 objectAdviceRecord.value2 = methodRecord;
                 if (key == Key.ADVISE_AFTER_INVOKE_SPECIAL) {
