@@ -26,10 +26,14 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
@@ -65,9 +69,12 @@ public class JVMTICode {
     }
 
     static void checkDeOptForMethod(ClassMethodActor classMethodActor, long codeEventSettings) {
-        TargetMethod targetMethod = classMethodActor.currentTargetMethod();
+        checkDeOptForTargetMethod(classMethodActor.currentTargetMethod(), codeEventSettings);
+    }
+
+    static void checkDeOptForTargetMethod(TargetMethod targetMethod, long codeEventSettings) {
         // we check here if the code is already adequate for the settings we want
-        if (JVMTI_DependencyProcessor.checkSettings(classMethodActor, codeEventSettings)) {
+        if (JVMTI_DependencyProcessor.checkSettings(targetMethod.classMethodActor, codeEventSettings)) {
             return;
         }
         ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
@@ -76,16 +83,34 @@ public class JVMTICode {
         compileAndDeopt(targetMethods);
     }
 
+    static void checkDeOptForInvokeInSingleStep(ClassMethodActor classMethodActor, int bci) {
+        CodeAttribute codeAttribute = classMethodActor.codeAttribute();
+        ConstantPool cp = codeAttribute.cp;
+        int index = Bytes.beU2(codeAttribute.code(), bci + 1);
+        ClassMethodRefConstant calleeClassMethodRef = cp.classMethodAt(index);
+        if (calleeClassMethodRef.isResolvableWithoutClassLoading(cp)) {
+            ClassMethodActor calleeMethodActor = (ClassMethodActor) calleeClassMethodRef.resolve(cp, index);
+            TargetMethod targetMethod = calleeMethodActor.currentTargetMethod();
+            if (targetMethod != null) {
+                checkDeOptForTargetMethod(targetMethod, JVMTIEvents.E.SINGLE_STEP.bit);
+            }
+        }
+        // hasn't been loaded/compiled yet, instrumentation will happen as part of loading/compiling during invoke
+
+    }
+
     static void compileAndDeopt(ArrayList<TargetMethod> targetMethods) {
         // compile the methods first, in case of a method used by the compilation system (VM debugging)
         for (TargetMethod targetMethod : targetMethods) {
             if (logger.enabled()) {
                 logger.logCompileForDeopt(targetMethod.classMethodActor);
             }
-            vm().compilationBroker.compileForDeopt(targetMethod.classMethodActor);
+            // This forces the compilation
+            vm().compilationBroker.compile(targetMethod.classMethodActor, Nature.BASELINE, true);
         }
         // Calling this multiple times for different threads is harmless as it takes care to
-        // filter out already invalidated methods.
+        // filter out already invalidated methods. This may also think it needs to recompile
+        // the method we just compiled but the new TM won't be invalidated so it will just use it.
         new Deoptimization(targetMethods).go();
     }
 

@@ -45,13 +45,15 @@ import com.sun.max.vm.value.*;
   */
 public final class ThreadLocalsAreaTable extends InspectorTable {
 
+    private final InspectorView view;
     private final ThreadLocalsAreaTableModel tableModel;
 
     /**
      * A table specialized to display thread local fields.
      */
-    public ThreadLocalsAreaTable(Inspection inspection, final MaxThreadLocalsArea tla, ThreadLocalsViewPreferences viewPreferences) {
+    public ThreadLocalsAreaTable(Inspection inspection, InspectorView view, final MaxThreadLocalsArea tla, ThreadLocalsViewPreferences viewPreferences) {
         super(inspection);
+        this.view = view;
         this.tableModel = new ThreadLocalsAreaTableModel(inspection, tla);
         ThreadLocalsAreaTableColumnModel columnModel = new ThreadLocalsAreaTableColumnModel(this, this.tableModel, viewPreferences);
         configureMemoryTable(tableModel, columnModel);
@@ -132,6 +134,10 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
             return preference().style().debugIPTagColor();
         }
         return null;
+    }
+
+    public InspectorView getView() {
+        return view;
     }
 
     /**

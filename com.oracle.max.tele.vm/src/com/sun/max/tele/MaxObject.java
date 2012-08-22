@@ -177,6 +177,9 @@ public interface MaxObject {
     TeleFixedMemoryRegion fieldMemoryRegion(FieldActor fieldActor);
 
     /**
+     * Reads a field from the object in VM memory.  For reference fields, the result does <em>not</em>
+     * follow forwarding pointers.
+     *
      * @param fieldActor local {@link FieldActor}, part of the
      * {@link ClassActor} for the type of this object, that
      * describes a field in this object in the VM

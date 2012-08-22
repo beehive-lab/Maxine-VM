@@ -25,11 +25,12 @@ package com.oracle.max.hcfdis;
 import static com.oracle.max.criutils.HexCodeFile.*;
 
 import java.io.*;
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.criutils.*;
-import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
+import com.sun.cri.ci.CiTargetMethod.JumpTable;
+import com.sun.cri.ci.CiTargetMethod.LookupTable;
 import com.sun.max.asm.*;
 import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
 import com.sun.max.asm.InlineDataDescriptor.LookupTable32;
@@ -51,16 +52,6 @@ public class HexCodeFileDis extends DisassemblyPrinter {
     public static final Option<Boolean> copyDelimitersOption = options.newBooleanOption("copy-delimiters", false, "Copy delimiters to output.");
     public static final Option<String> dirOption = options.newStringOption("d", null, "Output directory (input files are overwritten if not specified).");
     public static final Option<Boolean> verboseOption = options.newBooleanOption("v", true, "Verbose operation.");
-
-    private static final Field offsetField;
-    static {
-        try {
-            offsetField = String.class.getDeclaredField("offset");
-        } catch (Exception e) {
-            throw new Error("Could not get reflective access to field " + String.class.getName() + ".offset");
-        }
-        offsetField.setAccessible(true);
-    }
 
     /**
      * Prefix prepended to each instruction comment line in the disassembly.
@@ -105,7 +96,7 @@ public class HexCodeFileDis extends DisassemblyPrinter {
         }
         source = source.substring(EMBEDDED_HCF_OPEN.length(), source.length() - EMBEDDED_HCF_CLOSE.length());
         HexCodeFileDis dis = new HexCodeFileDis(false);
-        HexCodeFile hcf = HexCodeFile.parse(source, "");
+        HexCodeFile hcf = HexCodeFile.parse(source, 0, source, "");
         return dis.process(hcf, null);
     }
 
@@ -143,7 +134,7 @@ public class HexCodeFileDis extends DisassemblyPrinter {
 
             String source = input.substring(codeStart, endIndex);
 
-            HexCodeFile hcf = HexCodeFile.parse(source, inputName);
+            HexCodeFile hcf = HexCodeFile.parse(input, codeStart, source, inputName);
             process(hcf, out);
 
             if (verbose) {

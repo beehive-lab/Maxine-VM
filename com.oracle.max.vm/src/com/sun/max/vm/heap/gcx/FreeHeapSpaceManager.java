@@ -723,8 +723,10 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         smallObjectAllocator = new ChunkListAllocator<LinearSpaceRefillManager>(new LinearSpaceRefillManager());
     }
 
-    public void initialize(HeapScheme heapScheme, Address start, Size initSize, Size maxSize) {
-        if (!committedHeapSpace.reserve(start, maxSize)) {
+    public void initialize(HeapScheme heapScheme, Address start, Size initSize, Size maxSize, boolean reserved) {
+        if (reserved) {
+            committedHeapSpace.setReserved(start, maxSize);
+        } else if (!committedHeapSpace.reserve(start, maxSize)) {
             MaxineVM.reportPristineMemoryFailure("object heap", "reserve", maxSize);
         }
         if (!committedHeapSpace.growCommittedSpace(initSize)) {

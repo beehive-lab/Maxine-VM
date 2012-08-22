@@ -45,7 +45,7 @@ public final class TeleMaxineVM extends TeleTupleObject {
      */
     public TeleVMConfiguration teleVMConfiguration() {
         if (teleVMConfiguration == null) {
-            final RemoteReference configReference = fields().MaxineVM_config.readReference(reference());
+            final RemoteReference configReference = fields().MaxineVM_config.readRemoteReference(reference());
             teleVMConfiguration = (TeleVMConfiguration) objects().makeTeleObject(configReference);
         }
         return teleVMConfiguration;

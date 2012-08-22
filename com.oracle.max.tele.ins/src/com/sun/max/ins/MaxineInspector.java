@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.sun.max.ins;
 
 import java.awt.*;
+import java.io.*;
 
 import javax.swing.*;
 
@@ -83,6 +84,11 @@ public final class MaxineInspector {
                     if (maxVM.inspectionMode() == MaxInspectionMode.IMAGE) {
                         // Bring up the boot image info view as a starting point for browsing
                         inspection.views().activateSingletonViewAction(ViewKind.BOOT_IMAGE).perform();
+                        // if an off-line vm log file was specified bring that up also
+                        File vmLogFile = maxVM.vmLogFile();
+                        if (vmLogFile != null) {
+                            inspection.views().activateSingletonViewAction(ViewKind.VMLOG).perform();
+                        }
                     }
                 }
             });

@@ -183,6 +183,11 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
         public ObjectStatus status() {
             return ObjectStatus.LIVE;
         }
+
+        @Override
+        public ObjectStatus priorStatus() {
+            return null;
+        }
     }
 
 }

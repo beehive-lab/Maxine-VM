@@ -121,7 +121,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements MaxCode
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "creating");
         tracer.begin();
         this.entityDescription = "Storage managment in the " + vm().entityName() + " for method compilations";
-        this.bootCodeCacheRegionName = vm().getString(fields().Code_CODE_BOOT_NAME.readReference(vm()));
+        this.bootCodeCacheRegionName = vm().getString(fields().Code_CODE_BOOT_NAME.readRemoteReference(vm()));
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating");
         tracer.end(null);
     }
@@ -135,7 +135,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements MaxCode
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "initializing");
         tracer.begin();
 
-        teleCodeManager = (TeleCodeManager) objects().makeTeleObject(fields().Code_codeManager.readReference(vm()));
+        teleCodeManager = (TeleCodeManager) objects().makeTeleObject(fields().Code_codeManager.readRemoteReference(vm()));
         bootCodeCacheRegion = new VmBootCodeCacheRegion(vm(), teleCodeManager.teleBootCodeRegion(), this);
         vm().addressSpace().add(bootCodeCacheRegion.memoryRegion());
         dynamicBaselineCodeCacheRegion = new VmSemiSpaceCodeCacheRegion(vm(), teleCodeManager.teleRuntimeBaselineCodeRegion(), this);

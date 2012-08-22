@@ -78,10 +78,16 @@ public abstract class TeleHybridObject extends TeleObject {
         return fieldActor.kind.width.numberOfBytes;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * When the field is a reference, this does <em>not</em> follow forwarding pointers.
+     */
     @Override
     public Value readFieldValue(FieldActor fieldActor) {
         if (fieldActor.kind.isReference) {
-            return TeleReferenceValue.from(vm(), referenceManager().makeReference(reference().readWord(fieldActor.offset()).asAddress()));
+            // Does not follow forwarding pointers
+            return TeleReferenceValue.from(vm(), reference().readReference(fieldActor.offset()));
         }
         return fieldActor.readValue(reference());
     }

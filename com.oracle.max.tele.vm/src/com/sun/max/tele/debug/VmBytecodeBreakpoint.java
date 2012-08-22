@@ -359,16 +359,17 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
                             return true;
                         }
                         // Match; must set a target breakpoint on the method just compiled; is is acceptable to incur some overhead now.
-                        final RemoteReference targetMethodReference = referenceManager().makeReference(teleIntegerRegisters.getValue(parameter3));
-                        if (targetMethodReference.isZero()) {
+                        final TeleObject teleObject = objects().findObjectAt(teleIntegerRegisters.getValue(parameter3));
+                        if (teleObject != null && teleObject instanceof TeleTargetMethod) {
+                            final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleObject;
+                            try {
+                                bytecodeBreakpoint.handleNewCompilation(teleTargetMethod);
+                            } catch (MaxVMBusyException maxVMBusyException) {
+                                TeleError.unexpected("Unable to create target breakpoint for new compilation of " + bytecodeBreakpoint);
+                            }
+                        } else {
                             TeleWarning.message("targetMethod parameter to post-compilation trigger method was null");
                             continue;
-                        }
-                        TeleTargetMethod teleTargetMethod = (TeleTargetMethod) objects().makeTeleObject(targetMethodReference);
-                        try {
-                            bytecodeBreakpoint.handleNewCompilation(teleTargetMethod);
-                        } catch (MaxVMBusyException maxVMBusyException) {
-                            TeleError.unexpected("Unable to create target breakpoint for new compilation of " + bytecodeBreakpoint);
                         }
                     }
                 }
@@ -710,7 +711,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             Trace.line(TRACE_VALUE, tracePrefix + "Writing to VM type descriptors for breakpoint classes =\"" + breakpointClassDescriptorsString + "\"");
             // Write the string into the designated region in the VM, along with length and incremented epoch counter
             final int charsLength = breakpointClassDescriptorsString.length();
-            final RemoteReference charArrayReference = fields().InspectableCompilationInfo_breakpointClassDescriptorCharArray.readReference(vm());
+            final RemoteReference charArrayReference = fields().InspectableCompilationInfo_breakpointClassDescriptorCharArray.readRemoteReference(vm());
             TeleError.check(!charArrayReference.isZero(), "Can't locate inspectable code array for breakpoint classes");
             for (int index = 0; index < charsLength; index++) {
                 Layout.setChar(charArrayReference, index, breakpointClassDescriptorsString.charAt(index));

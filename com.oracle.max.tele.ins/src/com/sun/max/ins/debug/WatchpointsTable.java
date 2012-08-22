@@ -45,10 +45,12 @@ import com.sun.max.vm.value.*;
  */
 public final class WatchpointsTable extends InspectorTable {
 
+    private final InspectorView view;
     private final WatchpointsTableModel tableModel;
 
-    WatchpointsTable(Inspection inspection, WatchpointsViewPreferences viewPreferences) {
+    WatchpointsTable(Inspection inspection, InspectorView view, WatchpointsViewPreferences viewPreferences) {
         super(inspection);
+        this.view = view;
         tableModel = new WatchpointsTableModel(inspection);
         WatchpointsColumnModel columnModel = new WatchpointsColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);
@@ -106,6 +108,10 @@ public final class WatchpointsTable extends InspectorTable {
             return preference().style().debugIPTagColor();
         }
         return null;
+    }
+
+    public InspectorView getView() {
+        return view;
     }
 
     private final class WatchpointsColumnModel extends InspectorTableColumnModel<WatchpointsColumnKind> {

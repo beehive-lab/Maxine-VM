@@ -37,15 +37,16 @@ import com.sun.max.tele.field.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObjectFactory.ClassCount;
+import com.sun.max.tele.object.TeleObjectFactory.ObjectFactoryMapStats;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
-import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.reference.direct.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * Singleton cache of information about objects in the VM, including a factory for creating
@@ -53,6 +54,10 @@ import com.sun.max.vm.value.*;
  * locating objects by various means.
  * <p>
  * Objects in the VM can appear in memory regions other than the heap proper.
+ * <p>
+ * Assumes use of the {@link DirectReferenceScheme} in the VM.
+ * <p>
+ * TODO (mlvdv) generalize for uses with other implementations of {@link ReferenceScheme}
  *
  * @see VmObjectHoldingRegion
  * @see VmHeapRegion
@@ -115,11 +120,11 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             return;
         }
         initializingHubHubCaches = true;
-        final RemoteReference hubRef = (RemoteReference) Layout.readHubReference(vm().classes().vmBootClassRegistryReference());
-        RemoteReference cachedDynamicHubHubReference = (RemoteReference) Layout.readHubReference(hubRef);
-        assert cachedDynamicHubHubReference.equals(Layout.readHubReference(cachedDynamicHubHubReference));
+        final RemoteReference hubRef = vm().classes().vmBootClassRegistryReference().readHubAsRemoteReference();
+        RemoteReference cachedDynamicHubHubReference = hubRef.readHubAsRemoteReference();
+        assert cachedDynamicHubHubReference.equals(cachedDynamicHubHubReference.readHubAsRemoteReference());
         cachedDynamicHubHubWord = cachedDynamicHubHubReference.toOrigin();
-        RemoteReference cachedStaticHubHubReference = (RemoteReference) Layout.readHubReference(TeleInstanceReferenceFieldAccess.readPath(hubRef, vm().fields().Hub_classActor, vm().fields().ClassActor_staticHub));
+        RemoteReference cachedStaticHubHubReference = TeleInstanceReferenceFieldAccess.readPath(hubRef, vm().fields().Hub_classActor, vm().fields().ClassActor_staticHub).readHubAsRemoteReference();
         cachedStaticHubHubWord = cachedStaticHubHubReference.toOrigin();
     }
 
@@ -279,21 +284,15 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         if (maxSearchExtent > 0) {
             wordSearchExtent = maxSearchExtent / wordSize;
         }
+        TeleObject foundObject = null;
+        Address origin = cellAddress.plus(wordSize);
         try {
-            Pointer origin = cellAddress.asPointer();
-            for (long count = 0; count < wordSearchExtent; count++) {
-                origin = origin.plus(wordSize);
-                TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
-                if (teleObject == null) {
-                    teleObject =  makeTeleObject(referenceManager().makeQuasiReference(origin));
-                }
-                if (teleObject != null) {
-                    return teleObject;
-                }
+            for (long count = 0; count < wordSearchExtent && foundObject == null; count++, origin = origin.plus(wordSize)) {
+                foundObject = findAnyObjectAt(origin);
             }
         } catch (Throwable throwable) {
         }
-        return null;
+        return foundObject;
     }
 
     public TeleObject findAnyObjectPreceding(Address cellAddress, long maxSearchExtent) {
@@ -304,21 +303,15 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         if (maxSearchExtent > 0) {
             wordSearchExtent = maxSearchExtent / wordSize;
         }
+        TeleObject foundObject = null;
+        Address origin = cellAddress.minus(wordSize);
         try {
-            Pointer origin = cellAddress.asPointer();
-            for (long count = 0; count < wordSearchExtent; count++) {
-                origin = origin.minus(wordSize);
-                TeleObject teleObject =  makeTeleObject(referenceManager().makeReference(origin));
-                if (teleObject == null) {
-                    teleObject =  makeTeleObject(referenceManager().makeQuasiReference(origin));
-                }
-                if (teleObject != null) {
-                    return teleObject;
-                }
+            for (long count = 0; count < wordSearchExtent && foundObject == null; count++, origin = origin.minus(wordSize)) {
+                foundObject = findAnyObjectAt(origin);
             }
         } catch (Throwable throwable) {
         }
-        return null;
+        return foundObject;
     }
 
     public TeleObject vmBootClassRegistry() throws MaxVMBusyException {
@@ -384,7 +377,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         //
         //  Typical pattern:    tuple --> dynamicHub of the tuple's class --> dynamicHub of the DynamicHub class
         try {
-            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(possibleOrigin));
+            Word hubWord = referenceManager().makeTemporaryRemoteReference(possibleOrigin).readHubAsWord();
             for (int i = 0; i < 3; i++) {
                 if (hubWord.isZero() || hubWord.asAddress().equals(zappedMarker)) {
                     return false;
@@ -396,7 +389,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
                     return false;
                 }
                 // Presume that we have a valid location of a Hub object.
-                final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);
+                final Word nextHubWord = hubRef.readHubAsWord();
                 // Does the Hub reference in this object point back to the object itself?
                 if (nextHubWord.equals(hubWord)) {
                     // We arrived at a DynamicHub for the class DynamicHub
@@ -423,7 +416,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     private boolean fastIsPlausibleOriginUnsafe(Address possibleOrigin) {
         final Word hubHubWord = dynamicHubHubWord();
         try {
-            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(possibleOrigin));
+            Word hubWord = referenceManager().makeTemporaryRemoteReference(possibleOrigin).readHubAsWord();
             if (hubWord.equals(hubHubWord)) {
                 // We already arrived at the DynamicHub for the class DynamicHub. This is a possible origin for a dynamic hub.
                 return true;
@@ -438,7 +431,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
                 return false;
             }
             // Presume that we have a valid location of a Hub object.
-            final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);
+            final Word nextHubWord = hubRef.readHubAsWord();
             if (nextHubWord.equals(hubHubWord)) {
                 // We arrived at the DynamicHub for the class DynamicHub
                 return true;
@@ -546,44 +539,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     }
 
     /**
-     * Low-level read of a VM array element word as a generic boxed value.
-     * <p>
-     * <strong>Unsafe:</strong> does not check that there is a valid array of the specified kind at the specified location.
-     *
-     * @param kind identifies one of the basic VM value types
-     * @param reference location in the VM presumed (but not checked) to be an array origin of the specified kind
-     * @param index offset into the array
-     * @return a generic boxed value based on the contents of the word in VM memory.
-     */
-    public Value unsafeReadArrayElementValue(Kind kind, RemoteReference reference, int index) {
-        switch (kind.asEnum) {
-            case BYTE:
-                return ByteValue.from(Layout.getByte(reference, index));
-            case BOOLEAN:
-                return BooleanValue.from(Layout.getBoolean(reference, index));
-            case SHORT:
-                return ShortValue.from(Layout.getShort(reference, index));
-            case CHAR:
-                return CharValue.from(Layout.getChar(reference, index));
-            case INT:
-                return IntValue.from(Layout.getInt(reference, index));
-            case FLOAT:
-                return FloatValue.from(Layout.getFloat(reference, index));
-            case LONG:
-                return LongValue.from(Layout.getLong(reference, index));
-            case DOUBLE:
-                return DoubleValue.from(Layout.getDouble(reference, index));
-            case WORD:
-                return new WordValue(Layout.getWord(reference, index));
-            case REFERENCE:
-                final Address elementAddress = Layout.getWord(reference, index).asAddress();
-                return TeleReferenceValue.from(vm(), referenceManager().makeReference(elementAddress));
-            default:
-                throw TeleError.unknownCase("unknown array kind");
-        }
-    }
-
-    /**
      * Low level copying of array elements from the VM into a local object.
      * <p>
      * <strong>Unsafe:</strong> does not check that there is a valid array of the specified kind at the specified location.
@@ -600,7 +555,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
     }
 
-    // TODO (mlvdv) use e ReferenceScheme.isMarked() and related methods instead
     /**
      * Converts an address, if it is encoded as a forwarding pointer, into the actual
      * address. This takes no account of the location or the state of memory management
@@ -610,8 +564,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * @return the decoded address, {@link Address#zero()} if not encoded as a forwarding pointer.
      */
     public Address forwardingPointerToOriginUnsafe(Address address) {
-        if (address.and(1).toLong() == 1) {
-            final Address newCellAddress = address.minus(1);
+        if (address.isBitSet(0)) {
+            final Address newCellAddress = address.bitClear(0);
             return Layout.generalLayout().cellToOrigin(newCellAddress.asPointer());
         }
         return Address.zero();
@@ -686,7 +640,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      */
     private boolean isStaticTuple(Address origin) {
         // If this is a {@link StaticTuple} then a field in the header points at a {@link StaticHub}
-        Word staticHubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(origin));
+        Word staticHubWord = referenceManager().makeTemporaryRemoteReference(origin).readHubAsWord();
         final RemoteReference staticHubRef = referenceManager().makeTemporaryRemoteReference(staticHubWord.asAddress());
         final Pointer staticHubOrigin = staticHubRef.toOrigin();
         if (!heap().contains(staticHubOrigin) && !codeCache().contains(staticHubOrigin)) {
@@ -711,10 +665,19 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        final ObjectFactoryMapStats stats = teleObjectFactory.mapStats();
+
+
+
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
-        printStream.print(indentation + "Inspection references: " + formatter.format(teleObjectFactory.referenceCount()) +
-                        " (" + formatter.format(teleObjectFactory.liveObjectCount()) + " live, " + formatter.format(teleObjectFactory.quasiObjectCount()) + "quasi)\n");
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Currently mapped: ").append(formatter.format(stats.mapSize));
+        sb.append(" (live=").append(stats.liveCount);
+        sb.append(", quasi=").append(formatter.format(stats.quasiCount));
+        sb.append(", dead=").append(formatter.format(stats.deadCount));
+        sb.append(", collected=").append(formatter.format(stats.collectedCount)).append(")");
+        printStream.println(indentation + sb.toString());
         final TreeSet<ClassCount> sortedObjectsCreatedPerType = new TreeSet<ClassCount>(new Comparator<ClassCount>() {
             @Override
             public int compare(ClassCount o1, ClassCount o2) {
@@ -722,8 +685,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             }
         });
         sortedObjectsCreatedPerType.addAll(teleObjectFactory.objectsCreatedPerType());
-        printStream.println(indentation + "TeleObjects created: " + formatter.format(teleObjectFactory.objectsCreatedCount()));
-        printStream.println(indentation + "TeleObjects created (top " + STATS_NUM_TYPE_COUNTS + " types)");
+        printStream.println(indentation + "TeleObjects created in session (total): " + formatter.format(teleObjectFactory.objectsCreatedCount()));
+        printStream.println(indentation + "TeleObjects created in session (top " + STATS_NUM_TYPE_COUNTS + " types):");
         int countsPrinted = 0;
         for (ClassCount count : sortedObjectsCreatedPerType) {
             if (countsPrinted++ >= STATS_NUM_TYPE_COUNTS) {

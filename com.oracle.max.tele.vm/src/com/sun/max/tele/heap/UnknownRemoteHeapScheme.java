@@ -78,7 +78,7 @@ public final class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
      */
     @Override
     public void updateMemoryStatus(long epoch) {
-        final RemoteReference runtimeHeapRegionsArrayReference = fields().InspectableHeapInfo_dynamicHeapMemoryRegions.readReference(vm());
+        final RemoteReference runtimeHeapRegionsArrayReference = fields().InspectableHeapInfo_dynamicHeapMemoryRegions.readRemoteReference(vm());
         if (!runtimeHeapRegionsArrayReference.isZero()) {
             final TeleArrayObject teleArrayObject = (TeleArrayObject) objects().makeTeleObject(runtimeHeapRegionsArrayReference);
             final RemoteReference[] heapRegionReferences = (RemoteReference[]) teleArrayObject.shallowCopy();

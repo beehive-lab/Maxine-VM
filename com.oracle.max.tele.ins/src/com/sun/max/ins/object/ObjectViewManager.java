@@ -193,7 +193,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
                 objectView.addViewEventListener(new ViewEventListener() {
 
                     @Override
-                    public void viewClosing(AbstractView view) {
+                    public void viewClosing(InspectorView view) {
                         final ObjectView objectView = (ObjectView) view;
                         assert objectToView.remove(objectView.object()) != null;
                     }

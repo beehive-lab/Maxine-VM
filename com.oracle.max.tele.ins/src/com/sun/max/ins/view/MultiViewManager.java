@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@ import com.sun.max.ins.gui.*;
  * Manager for a kind of Inspector view that may have an arbitrary
  * number of instances active.
  */
-public interface MultiViewManager<Inspector_Kind extends AbstractView> extends ViewManager<Inspector_Kind> {
+public interface MultiViewManager<Inspector_Kind extends InspectorView> extends ViewManager<Inspector_Kind> {
 
     /**
      * Disposes all existing views of this kind.

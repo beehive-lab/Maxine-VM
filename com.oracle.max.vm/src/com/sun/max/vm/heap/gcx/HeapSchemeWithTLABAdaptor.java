@@ -60,13 +60,7 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
         Pointer hardLimit = tlabEnd.plus(tlabHeadroom());
         if (tlabAllocationMark.greaterThan(tlabEnd)) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("TLAB_MARK = ");
-            Log.print(tlabAllocationMark);
-            Log.print(", TLAB end = ");
-            Log.println(tlabEnd);
             FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
-            Log.unlock(lockDisabledSafepoints);
             return;
         }
         fillWithDeadObject(tlabAllocationMark, hardLimit);
@@ -78,20 +72,12 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
             if (MaxineVM.isDebug() && logTLABEvents(tlabMark)) {
                 TLABLog.doOnRetireTLAB(etla);
             }
-
-            if (tlabMark.greaterThan(tlabTop)) {
-                // Already filled-up (mark is at the limit).
-                return;
-            }
             fillTLABWithDeadObject(tlabMark, tlabTop);
         }
     }
     protected final TLABFiller tlabFiller = new TLABFiller();
-    protected final AtomicPinCounter pinnedCounter;
-
     public HeapSchemeWithTLABAdaptor() {
         super();
-        pinnedCounter = MaxineVM.isDebug() ? new AtomicPinCounter() : null;
     }
 
     /**
@@ -147,31 +133,10 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         // Do nothing. Heap schemes using this package have their own way of doing this.
     }
 
-    @Override
-    public boolean isGcThread(Thread thread) {
-        return thread instanceof VmOperationThread;
-    }
-
     @INLINE
     @Override
     public boolean supportsTagging() {
         return false;
-    }
-
-    @INLINE
-    public boolean pin(Object object) {
-        // Objects never relocate. So this is always safe.
-        if (MaxineVM.isDebug()) {
-            pinnedCounter.increment();
-        }
-        return true;
-    }
-
-    @INLINE
-    public void unpin(Object object) {
-        if (MaxineVM.isDebug()) {
-            pinnedCounter.decrement();
-        }
     }
 
 }

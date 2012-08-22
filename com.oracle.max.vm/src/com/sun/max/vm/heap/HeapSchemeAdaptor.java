@@ -59,7 +59,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
 
-    public static class GarbageCollectorMXBeanAdaptor extends MemoryManagerMXBeanAdaptor implements GarbageCollectorMXBean  {
+    public class GarbageCollectorMXBeanAdaptor extends MemoryManagerMXBeanAdaptor implements GarbageCollectorMXBean  {
         public GarbageCollectorMXBeanAdaptor(String name) {
             super(name);
         }
@@ -69,11 +69,11 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         }
 
         public long getCollectionCount() {
-            return 0;
+            return collectionCount;
         }
 
         public long getCollectionTime() {
-            return 0;
+            return accumulatedGCTime;
         }
 
         @Override
@@ -190,6 +190,11 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
      * Count of garbage collection performed.
      */
     protected int collectionCount;
+
+    /**
+     * Support for {@link GarbageCollectorMXBean#getCollectionTime()}.
+     */
+    protected long accumulatedGCTime;
 
     /**
      * Per thread count of request for disabling GC. It allows to fail-fast if a thread pinning an object request garbage collection (which create a deadlock).
@@ -378,5 +383,11 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     private void checkRuntimeCodeRegion(Address startOfReservedVirtualSpaceSize, Address endOfReservedVirtualSpaceSize, MemoryRegion codeRegion) {
         FatalError.check(startOfReservedVirtualSpaceSize.lessThan(codeRegion.start()) && codeRegion.end().lessEqual(endOfReservedVirtualSpaceSize),
                         "Runtime code region should be in virtual space reserved by boot loader");
+    }
+
+    public boolean isGcThread(Thread thread) {
+        // Adaptor assume single-threaded GC operating on the VmOperationThread.
+        // Override if not true.
+        return thread instanceof VmOperationThread;
     }
 }

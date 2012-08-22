@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ import java.io.*;
 public class ClassLoaders {
 
     private static String classpath;
+    private static boolean verbose;
 
     static class CLA extends ClassLoader {
         @Override
@@ -51,9 +52,22 @@ public class ClassLoaders {
                 int size = (int) file.length();
                 byte[] data = new byte[size];
                 is = new FileInputStream(file);
-                assert is.read(data) == size;
+                if (verbose) {
+                    System.out.printf("reading %s, size %d%n", file, size);
+                }
+                int readSize = is.read(data);
+                assert readSize == size;
+                if (verbose) {
+                    for (int i = 0; i < 10; i++) {
+                        System.out.printf("%x ", data[i] & 0xFF);
+                    }
+                    System.out.println("...");
+                }
                 return defineClass(name, data, 0, size);
             } catch (Exception ex) {
+                if (verbose) {
+                    System.out.println(ex);
+                }
                 throw new ClassNotFoundException(name);
             }
         }
@@ -89,6 +103,8 @@ public class ClassLoaders {
             final String arg = args[i];
             if (arg.equals("-cp")) {
                 classpath = args[++i];
+            } else if (arg.equals("-verbose")) {
+                verbose = true;
             }
         }
         // Checkstyle: resume modified control variable check
@@ -98,14 +114,31 @@ public class ClassLoaders {
         }
         CLA cla = new CLA();
         CLB clb = new CLB();
+        if (verbose) {
+            System.out.println("loading test.New0 with CLA");
+        }
         Class<?> claAclass = cla.loadClass("test.New0");
         assert claAclass.getClassLoader() == cla;
+        if (verbose) {
+            System.out.println("loaded");
+        }
+
+        if (verbose) {
+            System.out.println("loading test.New0 with CLB");
+        }
         Class<?> clbAclass = clb.loadClass("test.New0");
         assert clbAclass.getClassLoader() == clb;
+        if (verbose) {
+            System.out.println("loaded");
+        }
         @SuppressWarnings("unused")
         Object claA = claAclass.getDeclaredConstructor(int.class).newInstance(5);
         @SuppressWarnings("unused")
         Object clbA = clbAclass.getDeclaredConstructor(int.class).newInstance(5);
+        if (verbose) {
+            System.out.println("done");
+        }
+
     }
 
 }

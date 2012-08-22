@@ -194,6 +194,10 @@ public final class ObjectFieldsTable extends InspectorTable {
         return cellBackgroundColor();
     }
 
+    public ObjectView getView() {
+        return objectView;
+    }
+
     /**
      * A column model for object headers, to be used in an {@link ObjectView}.
      * Column selection is driven by choices in the parent {@link ObjectView}.

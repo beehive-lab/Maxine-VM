@@ -47,6 +47,7 @@ import com.sun.max.vm.value.*;
  */
 public class CompiledStackFrameTable extends InspectorTable {
 
+    private final InspectorView view;
     private final MaxStackFrame.Compiled compiledStackFrame;
     private final CompiledStackFrameViewPreferences viewPreferences;
     private final CompiledStackFrameTableModel tableModel;
@@ -58,8 +59,9 @@ public class CompiledStackFrameTable extends InspectorTable {
      *
      * @param thread the thread that owns the stack
      */
-    public CompiledStackFrameTable(Inspection inspection, MaxStackFrame.Compiled compiledStackFrame, CompiledStackFrameViewPreferences viewPreferences) {
+    public CompiledStackFrameTable(Inspection inspection, InspectorView view, MaxStackFrame.Compiled compiledStackFrame, CompiledStackFrameViewPreferences viewPreferences) {
         super(inspection);
+        this.view = view;
         this.compiledStackFrame = compiledStackFrame;
         this.viewPreferences = viewPreferences;
         this.tableModel = new CompiledStackFrameTableModel(inspection, compiledStackFrame);
@@ -148,6 +150,10 @@ public class CompiledStackFrameTable extends InspectorTable {
             return preference().style().debugIPTagColor();
         }
         return null;
+    }
+
+    public InspectorView getView() {
+        return view;
     }
 
     /**

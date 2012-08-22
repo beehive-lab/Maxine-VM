@@ -264,7 +264,7 @@ public class JVMTIRawMonitor {
             }
         }
         Log.println("JVMTIRawMonitor too many waiting threads");
-        MaxineVM.native_exit(-1);
+        MaxineVM.native_exit(1);
     }
 
     static int wait(Word rawMonitor, long millis) {

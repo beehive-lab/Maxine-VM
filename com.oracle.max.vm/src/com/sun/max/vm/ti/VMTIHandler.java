@@ -39,7 +39,11 @@ import com.sun.max.vm.thread.*;
  * a VM independent interface for the tooling system.
  *
  * The tooling system must implement and {@link VMTI#registerEventHandler register} an instance
- * of this class to handle events and queries from Maxine.
+ * of this class during the boot image build to handle events and queries from Maxine.
+ * A tooling system implementation is assumed to support a number of <i>agents</i>
+ * that are {@link #registerAgent(Word) registered} through the handler. In a given execution
+ * there may be no active agents and this can be determined by the {@link activeAgents} method,
+ * allowing some optimization on event delivery in the VM.
  */
 public interface VMTIHandler {
     /**
@@ -100,16 +104,21 @@ public interface VMTIHandler {
     void classLoad(ClassActor classActor);
 
     /**
-     * The given method was compiled and the code loaded into memory.
+     * The given method was compiled and the code loaded into memory, or relocated.
+     * The code can be accessed through {@link ClassMethodActor#currentTargetMethod()}.
      * @param classMethodActor
      */
     void methodCompiled(ClassMethodActor classMethodActor);
 
     /**
      * The code for the given method was unloaded (garbage collected).
+     * The {@code codeAddr} value can be used to tie the code to a previous
+     * call of {@link #methodCompiled(ClassMethodActor)}.
+     *
      * @param classMethodActor
+     * @param codeAddr address of the code that was unloaded
      */
-    void methodUnloaded(ClassMethodActor classMethodActor);
+    void methodUnloaded(ClassMethodActor classMethodActor, Pointer codeAddr);
 
     /**
      * A GC is about to begin.
@@ -183,6 +192,11 @@ public interface VMTIHandler {
      * @param agentHandle
      */
     void registerAgent(Word agentHandle);
+
+    /**
+     * Return the total number of active agents associated with this handler.
+     */
+    int activeAgents();
 
     /**
      * Check if given native method needs special compilation treatment.

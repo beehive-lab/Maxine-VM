@@ -147,7 +147,7 @@ project@com.oracle.max.vm.ext.t1x@dependencies=com.oracle.max.vm.ext.maxri
 project@com.oracle.max.vm.ext.t1x@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.t1x@javaCompliance=1.6
 
-project@com.oracle.max.vm.ext.jvmti@sourceDirs=src
+project@com.oracle.max.vm.ext.jvmti@sourceDirs=src,demo
 project@com.oracle.max.vm.ext.jvmti@dependencies=com.oracle.max.vm.ext.t1x
 project@com.oracle.max.vm.ext.jvmti@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.jvmti@javaCompliance=1.6

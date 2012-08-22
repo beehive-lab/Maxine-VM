@@ -40,7 +40,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -158,7 +157,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         try {
             cachedVmBootClassRegistryReference = referenceManager().makeReference(vm().bootImageStart().plus(vm().bootImage().header.classRegistryOffset));
             count = processClassRegistry(cachedVmBootClassRegistryReference);
-            count += processClassRegistry(fields().ClassRegistry_bootClassRegistry.readReference(cachedVmBootClassRegistryReference));
+            count += processClassRegistry(fields().ClassRegistry_bootClassRegistry.readRemoteReference(cachedVmBootClassRegistryReference));
             ClassID.setMapping(classIDMapping);
         } catch (Throwable throwable) {
             TeleError.unexpected("could not build inspector type registry", throwable);
@@ -170,30 +169,30 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     private int processClassRegistry(RemoteReference classRegistryRef) {
         int count = 0;
         VmFieldAccess f = fields();
-        final RemoteReference hashMapRef = f.ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryRef);
-        RemoteReference segmentArrayRef = f.ConcurrentHashMap_segments.readReference(hashMapRef);
+        final RemoteReference hashMapRef = f.ClassRegistry_typeDescriptorToClassActor.readRemoteReference(classRegistryRef);
+        RemoteReference segmentArrayRef = f.ConcurrentHashMap_segments.readRemoteReference(hashMapRef);
         int segmentArrayLength = objects().unsafeReadArrayLength(segmentArrayRef);
         for (int i = 0; i < segmentArrayLength; i++) {
-            final RemoteReference segmentRef = referenceManager().makeReference(Layout.getWord(segmentArrayRef, i).asAddress());
+            final RemoteReference segmentRef = segmentArrayRef.readArrayAsRemoteReference(i);
             if (!segmentRef.isZero()) {
-                RemoteReference entryArrayRef = f.ConcurrentHashMap$Segment_table.readReference(segmentRef);
+                RemoteReference entryArrayRef = f.ConcurrentHashMap$Segment_table.readRemoteReference(segmentRef);
                 if (!entryArrayRef.isZero()) {
                     int entryArrayLength = objects().unsafeReadArrayLength(entryArrayRef);
                     for (int j = 0; j != entryArrayLength; j++) {
-                        RemoteReference entryRef = referenceManager().makeReference(Layout.getWord(entryArrayRef, j).asAddress());
+                        RemoteReference entryRef = entryArrayRef.readArrayAsRemoteReference(j);
                         while (!entryRef.isZero()) {
                             if (entryRef.isProvisional() && vm().isAttaching()) {
                                 // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not
                                 // fully initialized yet so we add it to a fix-up list and handle it later
                                 attachFixupList.add(entryRef);
                             } else {
-                                RemoteReference classActorRef = f.ConcurrentHashMap$HashEntry_value.readReference(entryRef);
+                                RemoteReference classActorRef = f.ConcurrentHashMap$HashEntry_value.readRemoteReference(entryRef);
                                 if (!classActorRef.isZero()) {
                                     addToRegistry(classActorRef);
                                     count++;
                                 }
                             }
-                            entryRef = f.ConcurrentHashMap$HashEntry_next.readReference(entryRef);
+                            entryRef = f.ConcurrentHashMap$HashEntry_next.readRemoteReference(entryRef);
                         }
                     }
                 }
@@ -211,19 +210,16 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      */
     public void updateCache(long epoch) {
         if (epoch > lastUpdateEpoch) {
-            // Adds information to the registry about any newly loaded classes in the VM.
+            // Add information to the registry about any dynamically loaded classes in the VM that have been loaded since the last check.
             updateTracer.begin();
             assert vm().lockHeldByCurrentThread();
-            final RemoteReference teleClassInfoStaticTupleReference = fields().InspectableClassInfo_classActorCount.staticTupleReference(vm());
-            final Pointer loadedClassCountPointer = teleClassInfoStaticTupleReference.toOrigin().plus(fields().InspectableClassInfo_classActorCount.fieldActor().offset());
-            final int newLoadedClassCount = memory().readInt(loadedClassCountPointer);
-            if (dynamicallyLoadedClassCount < newLoadedClassCount) {
-                final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(fields().InspectableClassInfo_classActors.fieldActor().offset());
-                final RemoteReference loadedClassActorsArrayReference = referenceManager().makeReference(memory().readWord(loadedClassActorsPointer).asAddress());
-                while (dynamicallyLoadedClassCount < newLoadedClassCount) {
-                    final RemoteReference classActorReference = ((RemoteReference) objects().unsafeReadArrayElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, dynamicallyLoadedClassCount).asReference()).jumpForwarder();
+            final int classActorCount = fields().InspectableClassInfo_classActorCount.readInt(vm());
+            if (dynamicallyLoadedClassCount < classActorCount) {
+                final RemoteReference classActorArrayRef = fields().InspectableClassInfo_classActors.readRemoteReference(vm());
+                while (dynamicallyLoadedClassCount < classActorCount) {
+                    final RemoteReference classActorRef = classActorArrayRef.readArrayAsRemoteReference(dynamicallyLoadedClassCount);
                     try {
-                        addToRegistry(classActorReference);
+                        addToRegistry(classActorRef);
                     } catch (InvalidReferenceException e) {
                         e.printStackTrace();
                     }
@@ -338,7 +334,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
             timedTrace.begin();
             for (RemoteReference entry : attachFixupList) {
                 if (!entry.isZero()) {
-                    RemoteReference classActorReference = fields().ConcurrentHashMap$HashEntry_value.readReference(entry);
+                    RemoteReference classActorReference = fields().ConcurrentHashMap$HashEntry_value.readRemoteReference(entry);
                     if (!classActorReference.isZero()) {
                         addToRegistry(classActorReference);
                     }
@@ -376,9 +372,9 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      */
     public ClassActor makeClassActor(RemoteReference classActorReference) throws InvalidReferenceException {
         referenceManager().checkReference(classActorReference);
-        final RemoteReference utf8ConstantReference = fields().Actor_name.readReference(classActorReference);
+        final RemoteReference utf8ConstantReference = fields().Actor_name.readRemoteReference(classActorReference);
         referenceManager().checkReference(utf8ConstantReference);
-        final RemoteReference stringReference = fields().Utf8Constant_string.readReference(utf8ConstantReference);
+        final RemoteReference stringReference = fields().Utf8Constant_string.readRemoteReference(utf8ConstantReference);
         if (stringReference.isZero()) {
             // TODO (mlvdv) call this an error for now; should perhaps be a silent failure eventually.
             TeleError.unexpected("ClassActor.makeClassActor(" + classActorReference.toOrigin().to0xHexString() + ": string Reference=zero");
@@ -388,7 +384,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
             return makeClassActor(name);
         } catch (ClassNotFoundException classNotFoundException) {
             // Not loaded and not available on local classpath; load by copying classfile from the VM
-            final RemoteReference byteArrayReference = fields().ClassActor_classfile.readReference(classActorReference);
+            final RemoteReference byteArrayReference = fields().ClassActor_classfile.readRemoteReference(classActorReference);
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) objects().makeTeleObject(byteArrayReference);
             if (teleByteArrayObject == null) {
                 throw new NoClassDefFoundError(String.format("Could not retrieve class file from VM for %s%nTry using '%s' VM option to access generated class files.",
@@ -428,8 +424,8 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      */
     public ClassActor makeClassActorForTypeOf(RemoteReference objectReference)  throws InvalidReferenceException {
         referenceManager().checkReference(objectReference);
-        final RemoteReference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(objectReference).asAddress());
-        final RemoteReference classActorReference = fields().Hub_classActor.readReference(hubReference);
+        final RemoteReference hubReference = objectReference.readHubAsRemoteReference();
+        final RemoteReference classActorReference = fields().Hub_classActor.readRemoteReference(hubReference);
         return makeClassActor(classActorReference);
     }
 
@@ -442,8 +438,8 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     private void addToRegistry(final RemoteReference classActorReference) throws ClassFormatError {
         final int id = fields().ClassActor_id.readInt(classActorReference);
         idToClassActorReference.put(id, classActorReference);
-        final RemoteReference typeDescriptorReference = fields().ClassActor_typeDescriptor.readReference(classActorReference);
-        final RemoteReference stringReference = fields().Descriptor_string.readReference(typeDescriptorReference);
+        final RemoteReference typeDescriptorReference = fields().ClassActor_typeDescriptor.readRemoteReference(classActorReference);
+        final RemoteReference stringReference = fields().Descriptor_string.readRemoteReference(typeDescriptorReference);
         String typeDescriptorString = null;
         try {
             typeDescriptorString = vm().getString(stringReference);

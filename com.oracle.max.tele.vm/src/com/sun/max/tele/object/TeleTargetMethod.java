@@ -306,7 +306,7 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
             // Start with some basic attributes we need to capture.
             if (teleClassMethodActor == null) {
                 // Assumed not to change, once set.
-                final RemoteReference classMethodActorReference = fields().TargetMethod_classMethodActor.readReference(reference());
+                final RemoteReference classMethodActorReference = fields().TargetMethod_classMethodActor.readRemoteReference(reference());
                 teleClassMethodActor = (TeleClassMethodActor) objects().makeTeleObject(classMethodActorReference);
             }
             if (codeWipedSentinelAddress.isZero()) {
@@ -363,7 +363,7 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
         }
         try {
             // Test for a patch to the target code since the last time we looked.
-            final RemoteReference byteArrayReference = fields().TargetMethod_code.readReference(reference());
+            final RemoteReference byteArrayReference = fields().TargetMethod_code.readRemoteReference(reference());
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) objects().makeTeleObject(byteArrayReference);
             final byte[] codeInVM = (byte[]) teleByteArrayObject.shallowCopy();
             if (!Arrays.equals(codeInVM, machineCodeInfoCache.machineCodeInfo().code())) {

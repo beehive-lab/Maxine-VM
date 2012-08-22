@@ -167,7 +167,7 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         if (heapFreeChunkHubOrigin.isZero()) {
             return false;
         }
-        final Address hubOrigin = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(origin)).asAddress();
+        final Address hubOrigin = referenceManager().makeTemporaryRemoteReference(origin).readHubAsWord().asAddress();
         return hubOrigin.equals(heapFreeChunkHubOrigin);
     }
 

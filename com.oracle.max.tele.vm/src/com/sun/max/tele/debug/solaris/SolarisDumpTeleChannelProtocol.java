@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,8 +35,9 @@ import com.sun.max.tele.debug.dump.*;
  */
 public class SolarisDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAdaptor implements SolarisTeleChannelProtocol {
 
-    private List<LwpData> lwpDataList;
+    private List<LwpData> lwpDataList = new ArrayList<LwpData>();
     private SolarisDumpThreadAccess solarisDumpThreadAccess;
+    private ByteBuffer pStatus;
 
     static class LwpData {
         // direct buffers
@@ -52,7 +53,6 @@ public class SolarisDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAd
         super(teleVM, vm, dumpFile);
         SolarisNoteEntryHandler noteEntryHandler = new SolarisNoteEntryHandler();
         processNoteSection(noteEntryHandler);
-        lwpDataList = Arrays.asList(noteEntryHandler.lwpDataArray);
     }
 
     @Override
@@ -64,36 +64,46 @@ public class SolarisDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAd
     }
 
     class SolarisNoteEntryHandler extends NoteEntryHandler {
-        LwpData[] lwpDataArray = null;
-        int lwpDataArrayIndex = 0;
+        LwpData lwpData;
 
         @Override
         protected void processNoteEntry(int type, String name, byte[] desc) {
             final NoteType noteType = NoteType.get(type);
             switch (noteType) {
                 case NT_PSTATUS:
-                    final int numLwps = readInt(desc, 4);
-                    lwpDataArray = new LwpData[numLwps];
+                    pStatus = ByteBuffer.allocateDirect(desc.length);
+                    pStatus.put(desc);
+                    @SuppressWarnings("unused")
+                    final int numActiveLwps = numActiveLwps(pStatus);
+                    @SuppressWarnings("unused")
+                    final int numZombieLwps = numZombieLwps(pStatus);
                     break;
 
                 case NT_LWPSINFO: {
                     // this comes before NT_LWPSTATUS
                     ByteBuffer lwpInfo = ByteBuffer.allocateDirect(desc.length);
                     lwpInfo.put(desc);
-                    lwpDataArray[lwpDataArrayIndex] = new LwpData(lwpInfo);
+                    if (!isZombieLwp(lwpInfo)) {
+                        lwpData = new LwpData(lwpInfo);
+                        lwpDataList.add(lwpData);
+                    }
                     break;
                 }
 
                 case NT_LWPSTATUS: {
                     ByteBuffer lwpStatus = ByteBuffer.allocateDirect(desc.length);
                     lwpStatus.put(desc);
-                    lwpDataArray[lwpDataArrayIndex].lwpStatus = lwpStatus;
-                    lwpDataArrayIndex++;
+                    lwpData.lwpStatus = lwpStatus;
+                    lwpData = null;
                     break;
                 }
             }
         }
     }
+
+    private static native int numActiveLwps(ByteBuffer pStatus);
+    private static native int numZombieLwps(ByteBuffer pStatus);
+    private static native boolean isZombieLwp(ByteBuffer lwpInfo);
 
     private int readInt(byte[] data, int index) {
         final ByteBuffer byteBuffer = ByteBuffer.wrap(data).order(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);

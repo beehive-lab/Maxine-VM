@@ -33,7 +33,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Dispatch to two VMTI event handlers,i.e. JVMTI and VMA.
+ * Dispatch to two VMTI event handlers, e.g., JVMTI and VMA.
  * Thanks to concrete type/method optimizations in the boot image, the indirect calls
  * below are replaced by direct calls to the actual VMTI implementation methods.
  * I.e., the code for these methods does not actually exist in the boot image.
@@ -194,9 +194,14 @@ public class DDVMTIHandler implements VMTIHandler {
     }
 
     @Override
-    public void methodUnloaded(ClassMethodActor classMethodActor) {
-        eventHandler1.methodUnloaded(classMethodActor);
-        eventHandler2.methodUnloaded(classMethodActor);
+    public void methodUnloaded(ClassMethodActor classMethodActor, Pointer codeAddr) {
+        eventHandler1.methodUnloaded(classMethodActor, codeAddr);
+        eventHandler2.methodUnloaded(classMethodActor, codeAddr);
+    }
+
+    @Override
+    public int activeAgents() {
+        return eventHandler1.activeAgents() + eventHandler2.activeAgents();
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.thread.VmThreadLocal.Nature;
 
@@ -44,13 +45,17 @@ import com.sun.max.vm.thread.VmThreadLocal.Nature;
 public final class TLABLog {
     public static final String TLAB_LOG_TAIL_THREAD_LOCAL_NAME = "TLAB_LOG_TAIL";
 
+    public static boolean TraceTLABAllocation = false;
+
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceTLABAllocation", TLABLog.class, "Trace every allocation from TLABs when in DEBUG mode", Phase.STARTING);
+    }
+
     /**
      * Tail of the thread-local log buffer of a thread. If zero, logging is disabled,or the thread wasn't allocated a log yet.
      */
     public static final VmThreadLocal TLAB_LOG_TAIL
         = new VmThreadLocal(TLAB_LOG_TAIL_THREAD_LOCAL_NAME, false, "TLABLog: tail of TLAB allocation log, zero if logging disabled", Nature.Single);
-
-    public static boolean LogTLABAllocation = false;
 
     static HeapScheme heapScheme;
     static Address logBufferAllocator;
@@ -83,7 +88,7 @@ public final class TLABLog {
         if (!logTail.isZero()) {
             // were logging TLAB allocation. Flush them out.
             flush(logTail);
-            if (!LogTLABAllocation) {
+            if (!TraceTLABAllocation) {
                 TLAB_LOG_TAIL.store(etla, Pointer.zero());
                 release(logHead(logTail));
             } else {
@@ -93,7 +98,7 @@ public final class TLABLog {
     }
 
     public static void doOnRefillTLAB(Pointer etla, Size tlabSize, boolean force) {
-        if (!(LogTLABAllocation || force)) {
+        if (!(TraceTLABAllocation || force)) {
             return;
         }
         Pointer logTail = TLAB_LOG_TAIL.load(etla);

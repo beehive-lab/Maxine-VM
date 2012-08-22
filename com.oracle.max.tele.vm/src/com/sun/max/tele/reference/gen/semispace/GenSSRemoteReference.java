@@ -52,6 +52,8 @@ public class GenSSRemoteReference extends RemoteReference {
      */
     private RefState refState = null;
 
+    private ObjectStatus priorStatus = null;
+
     private final AbstractRemoteHeapScheme remoteScheme;
 
     /**
@@ -546,6 +548,11 @@ public class GenSSRemoteReference extends RemoteReference {
     }
 
     @Override
+    public ObjectStatus priorStatus() {
+        return priorStatus;
+    }
+
+    @Override
     public Address origin() {
         return refState.origin(this);
     }
@@ -566,18 +573,22 @@ public class GenSSRemoteReference extends RemoteReference {
     }
 
     public void beginAnalyzing(boolean minorCollection) {
+        priorStatus = refState.status();
         refState.analysisBegins(this, minorCollection);
     }
 
     public void endAnalyzing(boolean minorCollection) {
+        priorStatus = refState.status();
         refState.analysisEnds(this, minorCollection);
     }
 
     public void discoverForwarder(Address fromOrigin, boolean minorCollection) {
+        priorStatus = refState.status();
         refState.discoverForwarder(this, fromOrigin, minorCollection);
     }
 
     public void discoverForwarded(Address toOrigin, boolean minorCollection) {
+        priorStatus = refState.status();
         refState.discoverForwarded(this, toOrigin, minorCollection);
     }
 
