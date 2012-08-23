@@ -599,9 +599,9 @@ public final class Log {
         static class StringAlias {
             @ALIAS(declaringClass = String.class)
             char[] value;
-            @ALIAS(declaringClass = String.class)
+            @ALIAS(declaringClass = String.class, optional = true)
             int offset;
-            @ALIAS(declaringClass = String.class)
+            @ALIAS(declaringClass = String.class, optional = true)
             int count;
         }
 
@@ -609,12 +609,31 @@ public final class Log {
         public static native StringAlias asStringAlias(String s);
 
         /**
+         * Starting with JDK 7 update 6, the String class no longer has the offset and count fields.
+         * We want to support both String variants (this is necessary until we drop support for JDK 6).
+         */
+        @FOLD
+        private static boolean stringHasOffset() {
+            try {
+                String.class.getDeclaredField("offset");
+            } catch (NoSuchFieldException e) {
+                return false;
+            }
+            return true;
+        }
+
+        /**
          * Prints a given string to the log stream. The log {@linkplain Log#lock() lock}
          * must be held by the caller.
          */
         private void printString(String string) {
             final StringAlias s = asStringAlias(string == null ? "null" : string);
-            log_print_chars(Reference.fromJava(s.value).toOrigin().plus(CHAR_ARRAY_BASE_OFFSET), s.offset, s.count);
+
+            if (stringHasOffset()) {
+                log_print_chars(Reference.fromJava(s.value).toOrigin().plus(CHAR_ARRAY_BASE_OFFSET), s.offset, s.count);
+            } else {
+                log_print_chars(Reference.fromJava(s.value).toOrigin().plus(CHAR_ARRAY_BASE_OFFSET), 0, s.value.length);
+            }
         }
 
         /**
