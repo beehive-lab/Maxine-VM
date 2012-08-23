@@ -193,10 +193,8 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     @Override
     public void adviseBeforeThreadTerminating(VmThread vmThread) {
-        // Need to inform the adapter, no need to log
-        storeAdaptor.adviseBeforeThreadTerminating(getTime(), vmThread);
-        // Now flush the log buffer
         vmaVMLog.flush(VMLog.FLUSHMODE_FULL, vmThread);
+        storeAdaptor.adviseBeforeThreadTerminating(getTime(), vmThread);
     }
 
 // START GENERATED CODE

@@ -105,6 +105,17 @@ public class VMAOptions {
     private static final BM[] INVOKE_BM = compose(BEFOREINVOKE_BM, AFTERINVOKE_BM);
     private static final BM[] METHOD_ENTRY_EXIT_BM = compose(METHOD_ENTRY_BM, METHOD_EXIT_BM);
 
+    private static final BM[] ARRAYLOAD_BM = new BM[] {new BM(IALOAD, B), new BM(LALOAD, B), new BM(FALOAD, B),
+        new BM(DALOAD, B), new BM(AALOAD, B), new BM(BALOAD, B), new BM(CALOAD, B), new BM(SALOAD, B)};
+    private static final BM[] ARRAYSTORE_BM = new BM[] {new BM(IASTORE, B), new BM(LASTORE, B), new BM(FASTORE, B),
+        new BM(DASTORE, B), new BM(AASTORE, B), new BM(BASTORE, B), new BM(CASTORE, B), new BM(SASTORE, B)};
+    private static final BM[] CAST_BM = new BM[] {new BM(INSTANCEOF, B), new BM(CHECKCAST, B)};
+    private static final BM[] GETPUTFIELD_BM = new BM[] {new BM(GETFIELD, B), new BM(PUTFIELD, B)};
+    private static final BM[] IFOBJECT_BM = new BM[] {new BM(IF_ACMPNE, B), new BM(IF_ACMPEQ, B), new BM(IFNULL, B), new BM(IFNONNULL, B)};
+//    private static final BM[] SWITCH_BM = new BM[] {new BM(TABLESWITCH, B), new BM(LOOKUPSWITCH, B)};
+    private static final BM[] THREADLOCAL_BM = compose(LIFETIME_BM, MONITOR_BM, BEFOREINVOKE_BM, GETPUTFIELD_BM, CAST_BM,
+                              IFOBJECT_BM, ARRAYLOAD_BM, ARRAYSTORE_BM);
+
     enum StdConfig {
         NULL("null", new BM[0]),
         LIFETIME("lifetime", LIFETIME_BM),
@@ -112,11 +123,12 @@ public class VMAOptions {
         WRITE("write", WRITE_BM),
         MONITOR("monitor", MONITOR_BM),
         BEFOREINVOKE("beforeinvoke", BEFOREINVOKE_BM),
-        AFTERINVOKE("afterinvoke", AFTERINVOKE_BM),
+//        AFTERINVOKE("afterinvoke", AFTERINVOKE_BM),
         INVOKE("invoke", INVOKE_BM),
         ENTRY("entry", METHOD_ENTRY_BM),
         EXIT("exit", METHOD_EXIT_BM),
-        ENTRYEXIT("entryexit", METHOD_ENTRY_EXIT_BM);
+        ENTRYEXIT("entryexit", METHOD_ENTRY_EXIT_BM),
+        THREADLOCAL("threadlocal", THREADLOCAL_BM);
 
         private String name;
         private BM[] bytecodesToApply;
@@ -127,10 +139,18 @@ public class VMAOptions {
         }
     }
 
-    private static BM[] compose(BM[] a, BM[] b) {
-        BM[] result = new BM[a.length + b.length];
-        System.arraycopy(a, 0, result, 0, a.length);
-        System.arraycopy(b, 0, result, a.length, b.length);
+    private static BM[] compose(BM[] ... bms) {
+        int length = 0;
+        for (BM[] bm : bms) {
+            length += bm.length;
+        }
+        BM[] result = new BM[length];
+
+        length = 0;
+        for (BM[] bm : bms) {
+            System.arraycopy(bm, 0, result, length, bm.length);
+            length += bm.length;
+        }
         return result;
     }
 

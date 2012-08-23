@@ -178,6 +178,14 @@ public abstract class QueryBase {
         return result;
     }
 
+    public long timeValue(TraceRun traceRun, long time) {
+        if (absTime) {
+            return time;
+        } else {
+            return traceRun.relTime(time);
+        }
+    }
+
     public static double ms(long t) {
         return  ((double) t) / 1000000;
     }

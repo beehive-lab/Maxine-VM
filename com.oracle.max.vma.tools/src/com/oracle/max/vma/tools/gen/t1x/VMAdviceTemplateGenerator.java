@@ -74,6 +74,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
      */
     private static boolean[][] tagAdviceCapabilities = new boolean[T1XTemplateTag.values().length][AdviceType.values().length];
 
+    /**
+     * This hook is used in an initial pass to discover which templates have before/after advice,
+     * which it records in {@link VMAdviceTemplateGenerator#tagAdviceCapabilities}.
+     */
     private static class DiscoverCapabilitiesHook implements AdviceHook {
 
         public void startMethodGeneration() {
@@ -196,8 +200,11 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         }
 
         private boolean generateTag(T1XTemplateTag tag, AdviceType at) {
-            // otherwise we only generate if the tag (a) has the capability for the requested advice type
+            // We only generate if the tag (a) has the capability for the requested advice type
             // and (b) the program is being run to generate that kind of advice.
+            // TODO There is a bug in this logic for tags that generate both before/after advice
+            // as the at==AFTER call causes the BEFORE advice to be thrown away when generating(AFTER) is true.
+            // Not currently an issue as no tags generate before and after advice.
             return tagAdviceCapabilities[tag.ordinal()][at.ordinal()] && generating[at.ordinal()];
         }
 
@@ -962,7 +969,8 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         out.printf("    }%n");
         newLine();
         // for record keeping only, no output
-        generateAfterAdvice(k, variant, tag);
+        // currently disabled
+        // generateAfterAdvice(k, variant, tag);
     }
 
 
@@ -1007,7 +1015,8 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         out.printf("    }%n");
         newLine();
         // for record keeping only, no output
-        generateAfterAdvice(k, variant, tag);
+        // currently disabled
+        // generateAfterAdvice(k, variant, tag);
     }
 
 
