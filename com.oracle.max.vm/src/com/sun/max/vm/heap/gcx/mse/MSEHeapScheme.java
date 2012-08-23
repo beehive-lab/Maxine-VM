@@ -168,7 +168,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
             if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
-            // Make the heap inspectable
+            //  Make the heap (and mark bitmap) inspectable
             HeapScheme.Inspect.init(false);
             HeapScheme.Inspect.notifyHeapRegions(heapBounds, heapMarker.memory());
 
