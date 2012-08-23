@@ -78,7 +78,7 @@ public final class ObjectHeaderTable extends InspectorTable {
     /**
      * A {@link JTable} specialized to display object header fields.
      *
-     * @param objectInspector parent that contains this panel
+     * @param objectView parent that contains this panel
      */
     public ObjectHeaderTable(Inspection inspection, ObjectView objectView) {
         super(inspection);

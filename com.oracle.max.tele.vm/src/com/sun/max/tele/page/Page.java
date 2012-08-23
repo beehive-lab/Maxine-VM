@@ -86,7 +86,7 @@ public class Page extends AbstractVmHolder {
     private static ByteBuffer globalBuffer;
 
     /**
-     * Allocates the buffer for a page according to whether or not {@linkplain Page#noDirectBuffers direct buffers}
+     * Allocates the buffer for a page according to whether or not {@linkplain #useDirectBuffers direct buffers}
      * are being used.
      */
     private static synchronized ByteBuffer allocate(TeleIO teleIO, ByteOrder byteOrder, long index) {

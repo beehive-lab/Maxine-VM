@@ -30,7 +30,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.heap.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
@@ -68,7 +67,7 @@ import com.sun.max.vm.value.*;
  * subtype of {@link TeleObject} that applies to a VM object.
  * <p>
  * Each subclass implementation is expected to either avoid caching any values read from the VM, or to override
- * {@link #updateCache()} and refresh the cache(s) when that method is called.
+ * {@link #updateCache(long)} and refresh the cache(s) when that method is called.
  * <p>
  * There is an ongoing danger of circularity in the creation of {@link TeleObject} instances for VM objects that have
  * two-way (or circular) references to other objects; this can lead to infinite regress and stack overflow. The general
@@ -270,7 +269,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * halt the update if there is an updating failure.
      *
      * @param epoch the process epoch at the time of this update.
-     * @param statsPrinters list of objects that report statistics for updates performed on this object so far (with no
+     * @param statsPrinter list of objects that report statistics for updates performed on this object so far (with no
      *            newlines)
      * @return whether the object's cache was successfully updated.
      */
@@ -539,7 +538,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
          * the field is annotated with {@link INSPECTED} and {@link INSPECTED#deepCopied()} returns {@code false}.
          *
          * @param teleObject surrogate for a tuple in the VM. This will be a static tuple if the field is static.
-         * @param tuple the local object to be updated in the host VM. This value is ignored if the field is static.
+         * @param newTuple the local object to be updated in the host VM. This value is ignored if the field is static.
          * @param fieldActor the field to be copied/updated
          */
         protected void copyField(TeleObject teleObject, Object newTuple, FieldActor fieldActor) {
@@ -622,7 +621,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * Creates a local copy of the remote VM object.  Deep copying is truncated at reference fields
      * marked with the {@link INSPECTED} annotation specifying the value {@code false} for {@link INSPECTED#deepCopied()}.
      *
-     * @param enclosing copier context of {@code null} is none.
+     * @param copier copier context of {@code null} is none.
      * @return a best effort deep copy, truncated at reference fields for which {@link INSPECTED#deepCopied()} returns {@code false}.
      * @see INSPECTED#deepCopied()
      */

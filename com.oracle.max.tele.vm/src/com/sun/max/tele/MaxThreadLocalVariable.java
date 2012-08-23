@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ public interface MaxThreadLocalVariable extends MaxEntity<MaxThreadLocalVariable
     MaxThread thread();
 
     /**
-     * Gets the {@linkplain SafePoint.State safepoint state} with which this thread local variable is associated in the VM.
+     * Gets the {@linkplain SafepointPoll.State#compareTo(com.sun.max.vm.runtime.SafepointPoll.State) safepoint state} with which this thread local variable is associated in the VM.
      * <br>
      * Thread-safe
      *
@@ -92,7 +92,7 @@ public interface MaxThreadLocalVariable extends MaxEntity<MaxThreadLocalVariable
     /**
      * Gets the most recently cached value of the thread local variable in the VM.
      *
-     * @return the cached value, {@link VoidValue.VOID}  if not valid.
+     * @return the cached value, {@link VoidValue#VOID}  if not valid.
      */
     Value value();
 

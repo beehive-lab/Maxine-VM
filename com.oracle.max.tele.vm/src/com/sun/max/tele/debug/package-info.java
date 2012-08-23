@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,8 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 /**
- * Facilities for remote debugging of the VM.
+ * Facilities for remote debugging of the Maxine VM, including:
+ * <ul>
+ * <li>extraction of thread, register, stack, thread local blocks, and native library state;</li>
+ * <li>basic process controls;</li>
+ * <li>"target breakpoint (machine-level) creation and management;</li>
+ * <li>"bytecode" breakpoint (deferred, set on unloaded methods) creation and management;</li>
+ * <li>worker thread for dequeuing process execution requests; and</li>
+ * <li>watchpoints, both "native" (on a fixed memory location) and "object" (on a field in a specific object instance,
+ * following object relocation).</li>
+ * </ul>
+ * <p>
+ * Depends partially on the VM class {@link com.sun.max.vm.tele.InspectableCompilationInfo}.
+ * <p>
+ * The abstract class {@link com.sun.max.tele.debug.TeleProcess} manages most of these services, with platform-specific
+ * concrete classes supplying very minor specializations.
  */
 package com.sun.max.tele.debug;

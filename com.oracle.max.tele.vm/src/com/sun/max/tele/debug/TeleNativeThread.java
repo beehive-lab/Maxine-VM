@@ -86,7 +86,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
 
     /**
      * Only if this value is less than the {@linkplain TeleProcess#epoch() epoch} of this thread's tele process, does
-     * the {@link #refreshFrames(boolean)} method do anything.
+     * the {@link #frames(int)} method do anything.
      */
     private long framesRefreshedEpoch;
 
@@ -268,7 +268,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
 
     /**
      * Determines if this thread is associated with a {@link VmThread} instance. Note that even if this method returns
-     * {@code true}, the {@link #maxVMThread()} method will return {@code null} if the thread has not reached the
+     * {@code true}, the {@link #teleVmThread()} method will return {@code null} if the thread has not reached the
      * execution point in {@link VmThread#run} where the {@linkplain VmThreadLocal#VM_THREAD reference} to the
      * {@link VmThread} object has been initialized.
      */
@@ -416,9 +416,9 @@ public abstract class TeleNativeThread extends AbstractVmHolder
     /**
      * Updates this thread with the information information made available while
      * {@linkplain TeleProcess#gatherThreads(List) gathering} threads. This information is made available
-     * by the native tele layer as threads are discovered. Subsequent refreshing of cached thread state (such a
-     * {@linkplain TeleRegisterSet#updateCache() registers}, {@linkplain #refreshFrames(boolean) stack frames} and
-     * {@linkplain #refreshThreadLocals() VM thread locals}) depends on this information being available and up to date.
+     * by the native tele layer as threads are discovered. Subsequent refreshing of cached thread state (such as
+     * {@linkplain TeleRegisterSet#updateCache(long) registers}, {@linkplain #frames(int) stack frames} and
+     * thread locals) depends on this information being available and up to date.
      *
      * @param state the state of the thread
      * @param instructionPointer the current value of the instruction pointer for the thread

@@ -64,7 +64,7 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
      *
      * @param address valid address entered
      * @param nBytes valid size in bytes entered
-     * @param title description entered
+     * @param description description entered
      */
     public void entered(Address address, long nBytes, String description) {
     }
@@ -74,7 +74,7 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
      * results when the dialog is complete and if all field values are valid.
      *
      * @param address valid address entered
-     * @param title description entered
+     * @param description description entered
      */
     public void entered(Address address, String description) {
     }

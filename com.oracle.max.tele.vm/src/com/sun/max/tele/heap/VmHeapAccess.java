@@ -47,7 +47,7 @@ import com.sun.max.vm.tele.*;
  * Initialization between this class and {@link VmClassAccess} are mutually
  * dependent.  The cycle is broken by creating this class in a partially initialized
  * state that only considers the boot heap region; this class is only made fully functional
- * with a call to {@link #initialize()}, which requires that {@link VmClassAccess} be
+ * with a call to {@link #initialize(long)}, which requires that {@link VmClassAccess} be
  * fully initialized.
  * <p>
  * Interesting heap state includes the list of memory regions allocated.
@@ -106,7 +106,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
      * Returns the singleton manager of cached information about the heap in the VM,
      * specialized for the particular implementation of {@link HeapScheme} in the VM.
      * <p>
-     * This manager is not fully functional until after a call to {@link #initialize()}.
+     * This manager is not fully functional until after a call to {@link #initialize(long)}.
      * However, {@link #initialize(long)} must be called only
      * after the {@link VmClassAccess} is fully initialized; otherwise, a circular
      * dependency will cause breakage.

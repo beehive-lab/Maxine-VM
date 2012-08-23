@@ -352,7 +352,10 @@ public class WordValueLabel extends ValueLabel {
                             case OBJECT_REFERENCE:
                             case OBJECT_REFERENCE_TEXT: {
                                 MaxObject object = null;
-                                object = vm().objects().findObjectAt(value().toWord().asAddress());
+                                try {
+                                    object = vm().objects().findObjectAt(value().toWord().asAddress());
+                                } catch (MaxVMBusyException e) {
+                                }
                                 if (object != null) {
                                     final TeleClassMethodActor teleClassMethodActor = object.getTeleClassMethodActorForObject();
                                     if (teleClassMethodActor != null) {
@@ -691,7 +694,13 @@ public class WordValueLabel extends ValueLabel {
             }
             case HUB_REFERENCE: {
                 final Address address = value.toWord().asAddress();
-                final String forward = vm().objects().findForwardedObjectAt(address) == null ? "" : "=> ";
+                String forward = "";
+                try {
+                    if (vm().objects().findForwardedObjectAt(address) != null) {
+                        forward = "=> ";
+                    }
+                } catch (MaxVMBusyException e) {
+                }
                 setFont(wordDataFont);
                 setForeground(style.wordValidObjectReferenceDataColor());
                 setWrappedText(forward + hexString);
@@ -1364,9 +1373,13 @@ public class WordValueLabel extends ValueLabel {
                     final InspectorViewElement viewElement = (InspectorViewElement) parent;
                     final InspectorView oldView = viewElement.getView();
                     if (oldView instanceof ObjectView) {
-                        MaxObject newObject = vm().objects().findAnyObjectAt(valueAsAddress);
-                        if (newObject == null) {
-                            newObject = vm().objects().findForwardedObjectAt(valueAsAddress);
+                        MaxObject newObject = null;
+                        try {
+                            newObject = vm().objects().findAnyObjectAt(valueAsAddress);
+                            if (newObject == null) {
+                                newObject = vm().objects().findForwardedObjectAt(valueAsAddress);
+                            }
+                        } catch (MaxVMBusyException e) {
                         }
                         if (newObject != null) {
                             final MaxObject finalObject = newObject;
@@ -1404,7 +1417,10 @@ public class WordValueLabel extends ValueLabel {
             case QUASI_OBJECT_REFERENCE_TEXT:
             case UNCHECKED_REFERENCE: {
                 MaxObject object = null;
-                object = vm().objects().findAnyObjectAt(valueAsAddress);
+                try {
+                    object = vm().objects().findAnyObjectAt(valueAsAddress);
+                } catch (MaxVMBusyException e) {
+                }
                 if (object != null) {
                     action = views().objects().makeViewAction(object, null);
                 }
@@ -1412,9 +1428,13 @@ public class WordValueLabel extends ValueLabel {
             }
             case HUB_REFERENCE:
             case HUB_REFERENCE_TEXT:
-                MaxObject object = vm().objects().findAnyObjectAt(valueAsAddress);
-                if (object == null) {
-                    object = vm().objects().findForwardedObjectAt(valueAsAddress);
+                MaxObject object = null;
+                try {
+                    object = vm().objects().findAnyObjectAt(valueAsAddress);
+                    if (object == null) {
+                        object = vm().objects().findForwardedObjectAt(valueAsAddress);
+                    }
+                } catch (MaxVMBusyException e) {
                 }
                 if (object != null) {
                     action = views().objects().makeViewAction(object, null);

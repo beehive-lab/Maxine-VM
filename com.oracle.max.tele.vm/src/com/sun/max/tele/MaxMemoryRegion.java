@@ -107,7 +107,7 @@ public interface MaxMemoryRegion {
 
     /**
      * @return does the region have the same bounds as another region.
-     * @see Util#equal(MemoryRegion, MemoryRegion)
+     * @see Util#equal(MaxMemoryRegion, MaxMemoryRegion)
      */
     boolean sameAs(MaxMemoryRegion memoryRegion);
 

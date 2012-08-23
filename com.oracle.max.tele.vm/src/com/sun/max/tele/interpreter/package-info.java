@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,12 @@
  */
 /**
  * An interpreter for running queries on remote objects in the VM.
+ * <p>
+ * The interpreter runs in the inspection process, but operates on
+ * {@linkplain com.sun.max.tele.reference.RemoteReference remote references} to objects in the VM for the data context
+ * of the interpretation.
  *
- * Derived from the JavaInJava interpreter by Antero Taivalsaari.
- * See Sun Labs tech report TR-98-64:
+ * Derived from the JavaInJava interpreter by Antero Taivalsaari. See Sun Labs tech report TR-98-64:
  * http://research.sun.com/techrep/1998/abstract-64.html
  */
 package com.sun.max.tele.interpreter;

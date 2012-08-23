@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,12 @@
  * questions.
  */
 /**
- * Direct references.
+ * An implementation of the Maxine VM {@link com.sun.max.vm.reference.ReferenceScheme} that can
+ * be used for creating and managing remote object references (concrete subclasses of
+ * {@link com.sun.max.tele.reference.RemoteReference}) that permit effective reuse of
+ * VM code for managing object layout and references.  This implementation corresponds to
+ * the specific VM scheme implementation {@link com.sun.max.vm.reference.direct.DirectReferenceScheme}.
+ *
+ * @see com.sun.max.tele.reference
  */
 package com.sun.max.tele.reference.direct;

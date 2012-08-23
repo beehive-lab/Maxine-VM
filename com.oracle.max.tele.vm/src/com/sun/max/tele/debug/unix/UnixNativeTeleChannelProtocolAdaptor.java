@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.hosted.*;
 
 /**
- * Provides default implementations of the methods in {@link UnixAgentTeleChannelProtocol}.
+ * Provides default implementations of the methods in {@link TeleChannelDataIOProtocol}.
  *
  * Makes use of {@link TeleChannelNatives} to invoke the corresponding native code.
  *

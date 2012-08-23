@@ -291,7 +291,11 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
              * policy, we want this view to stick on the old location, so find the "forwarder" object that represents
              * the old copy and reset this view to display that object.
              */
-            final MaxObject forwarderObject = vm().objects().findQuasiObjectAt(object.reference().forwardedFrom());
+            MaxObject forwarderObject = null;
+            try {
+                forwarderObject = vm().objects().findQuasiObjectAt(object.reference().forwardedFrom());
+            } catch (MaxVMBusyException e) {
+            }
             if (forwarderObject != null) {
                 final MaxObject oldObject = object;
                 object = forwarderObject;
@@ -375,7 +379,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
 
     /**
-     * Gets any view-specific actions that should appear on the {@link MenuKind#VIEW_MENU}.
+     * Gets any view-specific actions that should appear on the {@link AbstractView.MenuKind#VIEW_MENU}.
      */
     protected List<InspectorAction> extraViewMenuActions() {
         return Collections.emptyList();
@@ -408,7 +412,11 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             forwardedToObject = null;
             final Address toAddress = object.reference().forwardedTo();
             if (toAddress.isNotZero()) {
-                forwardedToObject = vm().objects().findObjectAt(toAddress);
+                try {
+                    forwardedToObject = vm().objects().findObjectAt(toAddress);
+                } catch (MaxVMBusyException e) {
+                    forwardedToObject = null;
+                }
             }
             setEnabled(forwardedToObject != null);
         }
@@ -434,7 +442,11 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             forwardedFromObject = null;
             final Address fromAddress = object.reference().forwardedFrom();
             if (fromAddress.isNotZero()) {
-                forwardedFromObject = vm().objects().findQuasiObjectAt(fromAddress);
+                try {
+                    forwardedFromObject = vm().objects().findQuasiObjectAt(fromAddress);
+                } catch (MaxVMBusyException e) {
+                    forwardedFromObject = null;
+                }
             }
             setEnabled(forwardedFromObject != null);
         }

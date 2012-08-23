@@ -39,7 +39,7 @@ public interface MaxCodeLocationManager {
      * is bytecode instruction 0, the method entry. When requested, attempts will be made to locate the surrogate
      * for the {@link ClassMethodActor} in the VM that identifies the method, once the class has been loaded.
      * <p>
-     * Important: this location will always have {@link #bci()} = -1, which in any machine code
+     * Important: this location will always have {@code bci() = -1}, which in any machine code
      * compilation is understood to mean the beginning of the method prologue, which comes before the machine
      * code deriving from bytecode instruction 0;
      * <p>

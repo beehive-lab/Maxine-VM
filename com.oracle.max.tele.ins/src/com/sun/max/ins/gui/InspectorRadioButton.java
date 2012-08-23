@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ public final class InspectorRadioButton extends JRadioButton {
      *
      * @param inspection
      * @param text the text to appear in the label
-     * @param selected whether the check box is currently selected.
+     * @param toolTipText text to display with mouse roll-over
      */
     public InspectorRadioButton(Inspection inspection, String text, String toolTipText) {
         super(text);

@@ -115,7 +115,7 @@ public class TeleNativeLibraries {
     /**
      * Read the symbols from the library using OS-specific object format.
      * If we know the sentinel symbol's address, then gather all the native functions.
-     * @param TargetVMLibInfo
+     * @param targetVMLibInfo
      * @param oldTeleNativeLibrary null if new library else existing TeleNativeLibrary
      * @return associated TeleNativeLibrary
      * @throws Exception

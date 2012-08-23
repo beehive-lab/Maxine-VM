@@ -101,7 +101,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
      *
      * @param vm the VM
      * @param kind the kind of breakpoint to create
-     * @param key an abstract description of the location for this breakpoint, expressed in terms of the method and bytecode offset.
+     * @param methodPositionKey an abstract description of the location for this breakpoint, expressed in terms of the method and bytecode offset.
      */
     private VmBytecodeBreakpoint(TeleVM vm, CodeLocation codeLocation, BreakpointKind kind, MethodPositionKey methodPositionKey) {
         super(vm, codeLocation, kind);

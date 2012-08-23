@@ -88,7 +88,7 @@ public final class Watchpoints {
     /**
      *  Creates a menu entry for removing a possibly empty collection of VM memory watchpoints.
      *
-     * @return either a single {@link InspectorActoin} or a {@link JMenu} to be used as a sub-menu.
+     * @return either a single {@link InspectorAction} or a {@link JMenu} to be used as a sub-menu.
      */
     public static Object createRemoveActionOrMenu(Inspection inspection, final List<MaxWatchpoint> watchpoints) {
         if (watchpoints.isEmpty()) {

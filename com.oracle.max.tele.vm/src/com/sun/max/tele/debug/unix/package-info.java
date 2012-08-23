@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,20 +21,18 @@
  * questions.
  */
 /**
- *
  * Common code for the Unix-specific implementations of process/thread machinery of the Inspector.
- *
+ * <p>
  * Information needed by the Inspector, critically the location of the boot heap, is garnered from
  * a {@link com.sun.max.tele.TeleVMAgent} that communicates back to the Inspector on a socket.
- *
- * {@link com.sun.max.tele.debug.unix.UnixAgentTeleChannelProtocol} reflects this by
- * extending {@link com.sun.max.tele.TeleChannelProtocol} with a new {@code create} method
+ * <p>
+ * {@link com.sun.max.tele.debug.unix.UnixNativeTeleChannelProtocolAdaptor} reflects this by
+ * extending {@link com.sun.max.tele.channel.TeleChannelProtocol} with a new {@code create} method
  * that takes the {@code TeleVMAgent} as an extra parameter.
- *
+ * <p>
  * Much of the implementation of {@link com.sun.max.tele.debug.TeleProcess} is common to
  * all the Unix implementations and is captured in {@link com.sun.max.tele.debug.unix.UnixTeleProcessAdaptor}.
  * Similarly, the access to the native methods that implement the process control is common and
  * captured in {@link com.sun.max.tele.debug.unix.UnixNativeTeleChannelProtocolAdaptor}.
- *
  */
 package com.sun.max.tele.debug.unix;

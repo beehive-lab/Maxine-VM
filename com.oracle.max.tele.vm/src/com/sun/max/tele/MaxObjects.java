@@ -77,7 +77,7 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      * @return surrogate for a VM object, {@code null} if none found or if the VM is busy
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
-    MaxObject findObjectAt(Address origin);
+    MaxObject findObjectAt(Address origin) throws MaxVMBusyException;
 
     /**
      * Finds a quasi object whose origin is at the specified address, if one exists.
@@ -86,7 +86,7 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      * @return surrogate for a VM quasi object, {@code null} if none found or if the VM is busy
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
-    MaxObject findQuasiObjectAt(Address origin);
+    MaxObject findQuasiObjectAt(Address origin) throws MaxVMBusyException;
 
     /**
      * Finds a live or quasi object whose origin is at the specified address, if one exists.
@@ -95,16 +95,16 @@ public interface MaxObjects extends MaxEntity<MaxObjects> {
      * @return surrogate for a VM live or quasi object, {@code null} if none found or if the VM is busy
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
-    MaxObject findAnyObjectAt(Address origin);
+    MaxObject findAnyObjectAt(Address origin) throws MaxVMBusyException;
 
     /**
      * Finds a live object whose location is encoded as a forwarding address.
      *
-     * @param possibly encoded origin of a newly forwarded object in the VM
+     * @param forwardingAddress possibly encoded origin of a newly forwarded object in the VM
      * @return surrogate for a VM object, {@code null} if none found or if the VM is busy
      * @throws MaxVMBusyException if data cannot be read from the VM at this time
      */
-    MaxObject findForwardedObjectAt(Address forwardingAddress);
+    MaxObject findForwardedObjectAt(Address forwardingAddress) throws MaxVMBusyException;
 
     /**
      * Scans VM memory backwards (smaller address) for a live or quasi object whose cell begins at the specified address.

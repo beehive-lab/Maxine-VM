@@ -64,63 +64,6 @@ import com.sun.max.vm.runtime.*;
  * that has been created by this manager and whose origin is that address.</li>
  * </ul>
  * <p>
- * References in the maps in general are either {@link #LIVE} or {@link #UNKNOWN}, but the latter
- * is possible only when the heap phase is {@link #ANALYZING}.
- * References are removed from the maps as soon as they are discovered to be {@link #DEAD}.
- * Any reference whose origin is in the regions but which is not in the maps is {@link #DEAD}.
- * <p>
- * The two regions are allocated linearly; the well-defined area that is currently allocated in each
- * region is defined as the "live area"; no references in the maps point outside a live area.
- * <p>
- * When the heap phase is either {@link #MUTATING} or {@link #RECLAIMING}:
- * <ul>
- * <li>For every reference in the To-Space map:
- * <ul>
- * <li> {@link RemoteReference#origin()} is the object's origin in To-Space</li>
- * <li> {@link RemoteReference#status()} is {@link #LIVE} </li>
- * <li> {@link RemoteReference#isForwarded()} is {@code false}</li>
- * <li> {@link RemoteReference#forwardedFrom()} is {@link Address#zero()}</li>
- * </ul></li>
- * <li>The From-Space map is empty.</li>
- * </ul>
- * <p>
- * When the heap phase is {@link #ANALYZING}:
- * <ul>
- * <li>For every reference in the To-Space map:
- * <ul>
- * <li> {@link RemoteReference#origin()} is the origin in To-Space of the new
- * copy of a forwarded object</li>
- * <li> {@link RemoteReference#status()} is {@link #LIVE}</li>
- * <li> {@link RemoteReference#isForwarded()} is {@code true}</li>
- * <li> {@link RemoteReference#forwardedFrom()} is either:
- * <ul>
- * <li> the origin of the old copy in From-Space, in which case this reference
- * is <em>also</em> present in the From-Space map, keyed by the old origin in From-Space</li>
- * <li> {@link Address#zero()} if the origin of the old copy in From-Space has not been discovered,
- * in which case this reference is <em>not</em> present in the From-Space map</li>
- * </ul></li>
- * </ul></li>
- * <li>For every reference in the From-Space map, {@link RemoteReference#status()} is either:
- * <ul>
- * <li> {@link #UNKNOWN} meaning that the collector has not yet determined whether the object
- * in From-Space is reachable, in which case:
- * <ul>
- * <li> {@link RemoteReference#origin()} is the object's origin in From-Space</li>
- * <li> {@link RemoteReference#isForwarded()} is {@code false}</li>
- * <li> {@link RemoteReference#forwardedFrom()} is {@link Address#zero()}</li>
- * <li> this reference is <em>not</em> present in the To-Space map
- * </ul></li>
- * <li> {@link #LIVE} meaning that the collector has created a copy of the object in To-Space and
- * installed a <em>forwarding pointer</em>, in which case:
- * <ul>
- * <li> {@link RemoteReference#origin()} is the object's origin in To-Space</li>
- * <li> {@link RemoteReference#isForwarded()} is {@code true}</li>
- * <li> {@link RemoteReference#forwardedFrom()} is the object's origin in From-Space</li>
- * <li> this reference is in the Old-Space map, keyed by the object's origin in From-Space</li>
- * <li> this reference is <em>also</em> present in the To-Space map, keyed by the origin of the new copy</li>
- * </ul></li>
- * </ul></li>
- * </ul>
  *
  * @see SemiSpaceHeapScheme
  */
@@ -682,9 +625,8 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
     }
 
     /**
-     * Is the address in an area where an object could be either
-     * {@linkplain ObjectStatus#LIVE LIVE} or
-     * {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.
+     * Is the address in an area where an object could be
+     * {@linkplain ObjectStatus#LIVE LIVE}.
      */
     private boolean inLiveArea(Address address) {
         switch(phase()) {

@@ -85,7 +85,7 @@ public class TeleVMLog extends TeleTupleObject {
     }
 
     /**
-     * The value of {@link VMLog#logEntries}, which is set at image build time.
+     * The value of {@link VMLog} {@code logEntries}, which is set at image build time.
      * For implementations with a shared global buffer and fixed size log records
      * this value is the largest number of records that can be in existence.
      * However, for per-thread buffers and/or variable size log records,
@@ -97,7 +97,7 @@ public class TeleVMLog extends TeleTupleObject {
 
     /**
      * Monotonically increasing global unique id for a log record.
-     * Incremented every time {@link #getRecord(int)} is invoked.
+     * Incremented every time {@link VMLog}{@code .getRecord()} is invoked.
      *
      * @see VMLog
      */

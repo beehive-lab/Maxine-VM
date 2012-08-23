@@ -37,9 +37,10 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.log.*;
 
 /**
- * Base class for custom {@link VMlog.Logger} argument renderers.
+ * Base class for custom {@link VMLog} argument renderers.
  */
 public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
 

@@ -24,13 +24,14 @@ package com.sun.max.ins;
 
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
 import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
+import com.sun.max.ins.NotepadView.NotepadViewManager;
 import com.sun.max.ins.util.*;
 import com.sun.max.program.option.*;
 
 /**
  * Singleton manager for the Inspector's method invocation log.
  * <br>
- * TODO This was cloned from {@link NotePadManager} and should be refactored.
+ * TODO This was cloned from {@link NotepadViewManager} and should be refactored.
  */
 public final class InvokeMethodLogManager extends AbstractInspectionHolder {
 

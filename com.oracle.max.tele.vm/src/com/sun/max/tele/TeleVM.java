@@ -223,7 +223,7 @@ public abstract class TeleVM implements MaxVM {
     private static TargetLocation targetLocation;
 
     /**
-     * Where the meta-data associated with the target VM is located {@see #vmDirectoryOption}.
+     * Where the meta-data associated with the target VM is located {link #vmDirectoryOption}.
      */
     private static File vmDirectory;
 
@@ -262,7 +262,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * The options controlling how a VM instance is {@linkplain #newAllocator(String...) created}.
+     * The options controlling how a VM instance is created}.
      */
     public static class Options extends OptionSet {
 
@@ -293,7 +293,7 @@ public abstract class TeleVM implements MaxVM {
         public final Option<String> heapOption;
 
         /**
-         * This field is {@code null} if {@link #readOnly} is {@code true}.
+         * This field is {@code null} if inspecting read-only.
          */
         public final Option<String> vmArguments;
 
@@ -562,7 +562,6 @@ public abstract class TeleVM implements MaxVM {
      * @param bootImageFile the file containing the boot image
      * @param sourcepath the source code path to search for class or interface definitions
      * @throws BootImageException
-     * @throws IOException
      */
     private static TeleVM createReadOnly(File bootImageFile, Classpath sourcepath) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
@@ -775,16 +774,10 @@ public abstract class TeleVM implements MaxVM {
     /**
      * Creates a VM instance by creating or attaching to a Maxine VM process.
      *
-     * @param bootImageFile path to the boot image file loaded by the VM
      * @param bootImage the metadata describing the contents in the boot image
      * @param sourcepath path used to search for Java source files
      * @param commandLineArguments the command line arguments to be used when creating a new VM process. If this value
      *            is {@code null}, then an attempt is made to attach to the process whose id is {@code processID}.
-     * @param processID the process ID of an existing VM instance to which this debugger should be attached. This
-     *            argument is ignored if {@code commandLineArguments != null}.
-     * @param agent the agent that opens a socket for the VM to communicate the address of the boot image once it has
-     *            been loaded and relocated. This parameter may be null if {@link #loadBootImage(TeleVMAgent)} is
-     *            overridden by this object to use a different mechanism for discovering the boot image address.
      * @throws BootImageException
      */
     protected TeleVM(BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
@@ -1313,7 +1306,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * Sets or clears some bits of the {@link Inspectable#flags} field in the VM process.
+     * Sets or clears some bits of the {@link Inspectable} field in the VM process.
      * <p>
      * Must be called in a thread holding the VM lock.
      *
@@ -1656,7 +1649,6 @@ public abstract class TeleVM implements MaxVM {
 
     /**
      * @return access to the VM for the JDWP server.
-     * @see com.sun.max.jdwp.maxine.Main
      */
     public final VMAccess vmAccess() {
         return jdwpAccess;

@@ -86,7 +86,7 @@ public interface InspectorView<View_Type extends InspectorView> {
      * Gets from subclasses the currently appropriate title for this view's display frame.
      *
      * @return a short string suitable for appearing in the window frame of an view.
-     * If this text is expected to change dynamically, a call to {@link #setTitle()}
+     * If this text is expected to change dynamically, a call to {@link AbstractView#setTitle()}
      * will cause this to be called again and the result assigned to the frame.
      */
     String getTextForTitle();

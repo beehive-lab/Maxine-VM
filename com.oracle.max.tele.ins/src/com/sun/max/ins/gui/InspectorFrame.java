@@ -130,7 +130,7 @@ public interface InspectorFrame extends RootPaneContainer, Prober {
      * Returns the size of this component.
      *
      * @return an object that indicates the size of the component.
-     * @see Component#getSize();
+     * @see Component#getSize()
      */
     Dimension getSize();
 
@@ -152,7 +152,7 @@ public interface InspectorFrame extends RootPaneContainer, Prober {
      * has been displayed; it should be
      * called whenever a member is added or deleted.
      *
-     * @see {@link Container#validate()}
+     * @see Container#validate()
      */
     void validate();
 

@@ -88,7 +88,7 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
 
     /**
      * A per-instance set of view preferences, initialized to the global preferences.
-     * @param defaultPreferences the global defaults for this kind of view
+     * @param globalPreferences the global defaults for this kind of view
      */
     public ObjectViewPreferences(ObjectViewPreferences globalPreferences) {
         super(globalPreferences);
@@ -120,7 +120,7 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
 
     /**
      * Sets preference to new value; subclass and override to receive notification.
-     * @param showHeader should object headers be displayed
+     * @param elideNullArrayElements should null elements be hidden from view
      */
     protected void setElideNullArrayElements(boolean elideNullArrayElements) {
         this.elideNullArrayElements = elideNullArrayElements;
