@@ -92,8 +92,11 @@ deoptimized
 deprecate
 deprecated
 disassembly
+dumbed
 editable
 emitting
+endian
+endianness
 entrypoint
 enum
 epilogue
@@ -113,6 +116,7 @@ iconified
 idiom
 idiomatic
 iff
+illegitimate
 initialize
 initialized
 initializer
@@ -157,6 +161,7 @@ nop
 nops
 notepad
 notepads
+offline
 op
 outbound
 payload
@@ -235,6 +240,7 @@ upcall
 upcalls
 viewport
 vm
+vs
 vtable
 vtables
 watchpoint
