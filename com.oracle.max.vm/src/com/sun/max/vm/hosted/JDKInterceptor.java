@@ -371,6 +371,11 @@ public final class JDKInterceptor {
         JDK.java_lang_invoke_MethodType,
             new FieldOffsetRecomputation("ptypesOffset", "ptypes"),
             new FieldOffsetRecomputation("rtypeOffset", "rtype"),
+        // The following fields have been added in JDK 7 update 6
+        JDK.java_util_Hashtable,
+            new FieldOffsetRecomputation("HASHSEED_OFFSET", "hashSeed").makeOptional(),
+        JDK.java_util_HashMap_Holder,
+            new FieldOffsetRecomputation("HASHSEED_OFFSET", JDK.java_util_HashMap, "hashSeed").makeOptional(),
     };
     // Checkstyle: resume
 
@@ -508,7 +513,7 @@ public final class JDKInterceptor {
     public abstract static class InterceptedField {
         private final String name;
         protected ClassRef classRef;
-        private boolean verifyFieldExists = true;
+        protected boolean verifyFieldExists = true;
 
         public FieldActor fieldActor;
         private boolean mutabilityOverride = false;
@@ -679,7 +684,9 @@ public final class JDKInterceptor {
         @Override
         protected void verify(ClassRef holder) {
             super.verify(holder);
-            ensureFieldExists(classRef, fieldName);
+            if (verifyFieldExists) {
+                ensureFieldExists(classRef, fieldName);
+            }
         }
     }
 
