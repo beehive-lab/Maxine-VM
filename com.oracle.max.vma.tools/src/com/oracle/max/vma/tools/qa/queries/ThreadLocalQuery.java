@@ -20,7 +20,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.oracle.max.vma.tools.qa.queries;
 
 import static com.oracle.max.vma.tools.qa.AdviceRecordHelper.*;
@@ -35,6 +34,11 @@ import java.util.*;
 import com.oracle.max.vma.tools.qa.*;
 import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
+/**
+ * Checks whether objects allocated by one thread are ever accessed by another thread.
+ * Note this detects actual access in the sense of using the object (e.g., invokinmg a method, checking its type,
+ * accessing a field) and not just acquiring a reference (direct or indirect) to the object.
+ */
 public class ThreadLocalQuery extends QueryBase {
 
     @Override
@@ -43,13 +47,15 @@ public class ThreadLocalQuery extends QueryBase {
         Map<String, ArrayList<ObjectRecord>> threadMap = DataByThreadQueryHelper.getObjectsByThread(traceRun);
 
         for (Map.Entry<String, ArrayList<ObjectRecord>> me : threadMap.entrySet()) {
-            ps.println("Check objects allocated by thread " + me.getKey());
-            ArrayList<ObjectRecord> thObjects = me.getValue();
-            for (ObjectRecord obj : thObjects) {
-                final Set<ThreadRecord> threads = accessedByAnotherThread(obj);
-                if (threads != null) {
-                    for (ThreadRecord thread : threads) {
-                        ps.printf("object %s created by '%s' is accessed by '%s'%n", obj.getId(), obj.thread, thread);
+            if (thread == null || thread.equals(me.getKey())) {
+                ps.println("Check objects allocated by thread " + me.getKey());
+                ArrayList<ObjectRecord> thObjects = me.getValue();
+                for (ObjectRecord obj : thObjects) {
+                    final Set<ThreadRecord> threads = accessedByAnotherThread(obj);
+                    if (threads != null) {
+                        for (ThreadRecord thread : threads) {
+                            ps.printf("object %s created by '%s' is accessed by '%s'%n", obj, obj.thread, thread);
+                        }
                     }
                 }
             }

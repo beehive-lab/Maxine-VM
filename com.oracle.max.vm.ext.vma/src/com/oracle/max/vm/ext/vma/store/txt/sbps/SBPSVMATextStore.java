@@ -490,9 +490,13 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     private void store_adviseBeforeThreadStarting(long time, String threadName) {
+        appendTT(time, ADVISE_BEFORE_THREAD_STARTING, threadName);
+        end();
     }
 
     private void store_adviseBeforeThreadTerminating(long time, String threadName) {
+        appendTT(time, ADVISE_BEFORE_THREAD_TERMINATING, threadName);
+        end();
         // TODO finalizeLogBuffer?
     }
 

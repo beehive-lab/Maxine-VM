@@ -945,8 +945,16 @@ public class ProcessLog {
                     adviceRecord = longLongAdviceRecord;
                 } else {
                     ObjectObjectAdviceRecord objectObjectAdviceRecord = (ObjectObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(IfObject, AdviceMode.BEFORE);
-                    objectObjectAdviceRecord.value = getTraceRecord(arg5);
-                    objectObjectAdviceRecord.value2 = getTraceRecord(arg6);
+                    ObjectRecord object1 = getTraceRecord(arg5);
+                    ObjectRecord object2 = getTraceRecord(arg6);
+                    objectObjectAdviceRecord.value = object1;
+                    objectObjectAdviceRecord.value2 = object2;
+                    if (object1 != null) {
+                        object1.addTraceElement(objectObjectAdviceRecord);
+                    }
+                    if (object2 != null) {
+                        object2.addTraceElement(objectObjectAdviceRecord);
+                    }
                     adviceRecord = objectObjectAdviceRecord;
                 }
                 adviceRecord.setPackedValue(Integer.parseInt(arg3));
@@ -1083,7 +1091,12 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_THREAD_TERMINATING:
             case ADVISE_BEFORE_THREAD_STARTING:
-                // nothing else
+                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+                if (key == Key.ADVISE_BEFORE_THREAD_STARTING) {
+                    threadRecord.startTime = lastTime;
+                } else {
+                    threadRecord.endTime = lastTime;
+                }
                 break;
 
             case ADVISE_AFTER_MULTI_NEW_ARRAY:
@@ -1307,9 +1320,9 @@ public class ProcessLog {
             case ADVISE_BEFORE_GC:
                 return GC;
             case ADVISE_BEFORE_THREAD_TERMINATING:
+                return ThreadTerminating;
             case ADVISE_BEFORE_THREAD_STARTING:
-            case ADVISE_BEFORE_CONST_LOAD:
-                break;
+                return ThreadStarting;
 
             case ADVISE_BEFORE_ARRAY_LOAD:
                 return ArrayLoad;
@@ -1340,6 +1353,7 @@ public class ProcessLog {
             case ADVISE_BEFORE_OPERATION:
             case ADVISE_BEFORE_LOAD:
             case ADVISE_BEFORE_STORE:
+            case ADVISE_BEFORE_CONST_LOAD:
 
         }
         throw new TraceException("unimplemented case");

@@ -32,7 +32,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.java.JavaRunScheme;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.thread.VmThreadLocal;
