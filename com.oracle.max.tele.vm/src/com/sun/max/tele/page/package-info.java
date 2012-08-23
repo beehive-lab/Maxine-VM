@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,7 @@
  * questions.
  */
 /**
- * Page-based memory buffer for reads and writes to tele process memory.
+ * Page-based memory buffer for reads and writes to VM process memory, or
+ * (depending on the Inspection mode) reads from a binary image or core dump.
  */
 package com.sun.max.tele.page;

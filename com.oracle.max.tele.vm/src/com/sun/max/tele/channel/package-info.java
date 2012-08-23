@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +23,9 @@
 
 /**
  * The Inspector communicates with the target VM using the method-based protocol defined by
- * {@link com.sun.max.tele.TeleChannelProtocol}. To simplify an architecture where the Inspector runs on one (client)
+ * {@link com.sun.max.tele.channel.TeleChannelProtocol}. To simplify an architecture where the Inspector runs on one (client)
  * machine and the VM runs on a separate (target) machine a minimal variant of the protocol,
- * {@link com.sun.max.tele.TeleChannelDataIOProtocol}, that is capable of being implemented using
+ * {@link com.sun.max.tele.channel.TeleChannelDataIOProtocol}, that is capable of being implemented using
  * {@link java.io.DataInputStream} and {@link java.io.DataOutputStream} is also defined.
  */
 package com.sun.max.tele.channel;

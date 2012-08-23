@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@
  *
  * The generic part of the remote method communication implementation is  in {@link com.sun.max.tele.channel.agent.RemoteInvocationProtocolAdaptor}.
  * {@link com.sun.max.tele.channel.agent.AgentProtocolAdaptor} subclasses this to provide specific support for the
- * actual {@link TeleChannelProtocol} adaptors, specifically to specify the handling of arrays, and implement the
+ * actual {@link com.sun.max.tele.channel.TeleChannelProtocol} adaptors, specifically to specify the handling of arrays, and implement the
  * interface by delegating to a specific target protocol implementation. Note that the delegated-to implementation is
  * exactly the one that is used in the non-separate configuration.
  */

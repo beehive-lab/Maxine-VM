@@ -66,7 +66,7 @@ public final class TeleVMState implements MaxVMState {
      * @param threadsDied threads died since the previous state
      * @param breakpointEvents information about threads currently at breakpoints, empty if none
      * @param watchpointEvent information about a thread currently at a watchpoint, null if none
-     * @param isInGC is the VM, when paused, in a GC
+     * @param heapPhase is possible heap phases in the VM
      * @param isInEviction is the VM, when paused, in a code eviction
      * @param previous previous state
      */

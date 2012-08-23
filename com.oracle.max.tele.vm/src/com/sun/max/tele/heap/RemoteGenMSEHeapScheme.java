@@ -103,7 +103,7 @@ public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme im
      */
     public static class TeleGenMSEHeapScheme extends TeleHeapScheme {
 
-        private TeleNoAgingNursery nursery;
+        private TeleNoAgingRegionalizedNursery nursery;
 
         private TeleFirstFitMarkSweepSpace oldSpace;
 
@@ -121,7 +121,7 @@ public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme im
             if (nursery == null) {
                 // Final in the heap scheme; no need to check once discovered
                 final RemoteReference nurseryRef = fields().GenMSEHeapScheme_youngSpace.readRemoteReference(reference());
-                nursery = (TeleNoAgingNursery) objects().makeTeleObject(nurseryRef);
+                nursery = (TeleNoAgingRegionalizedNursery) objects().makeTeleObject(nurseryRef);
             }
             if (oldSpace == null) {
                 // Final in the heap scheme; no need to check once discovered

@@ -73,7 +73,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
      * we assume that most additions to the array in {@link CodeRegion} are appended, making update
      * here easier.
      *
-     * @see {@link CodeRegion}
+     * @see CodeRegion
      */
     private final List<MaxCompilation> compilations = new ArrayList<MaxCompilation>();
 
@@ -259,7 +259,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
      * Finds an existing instance of {@link TeleCompilation} that wraps a specific instance of
      * {@link TeleTargetMethod}, corresponding to a method compilation in the VM.
      *
-     * @param teleTargetMethod local surrogate for a {@link TargetMethod} in the VM.
+     * @param reference remote reference to a {@link TargetMethod} in the VM.
      * @return the existing instance of {@link TeleCompilation} that wraps the target method, null if none.
      */
     private TeleCompilation getCompilation(RemoteReference reference) {

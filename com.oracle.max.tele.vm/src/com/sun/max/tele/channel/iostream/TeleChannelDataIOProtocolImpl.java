@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,10 +30,10 @@ import com.sun.max.tele.channel.agent.*;
 import com.sun.max.tele.util.*;
 
 /**
- * An implementation of {@link TeleChannelDataIOProtocol} that communicates using {@link DataInputStream} and {@link DataOutputStream) and is
+ * An implementation of {@link TeleChannelDataIOProtocol} that communicates using {@link DataInputStream} and {@link DataOutputStream} and is
  * essentially a custom remote method invocation system.
  *
- * Byte arrays are supported and, obviously, require special treatment. Arrays are tagged as {@link ArrayMode.#IN in}, {@link ArrayMode#OUT out}
+ * Byte arrays are supported and, obviously, require special treatment. Arrays are tagged as {@link ArrayMode#IN in}, {@link ArrayMode#OUT out}
  * or {@link ArrayMode#INOUT inout}. That is, when an array is passed as parameter, the ordinal value of the {@link ArrayMode} is written first,
  * followed by the length of the array, followed by the bytes of the array, except in the case of {@link ArrayMode#OUT}, where no bytes are sent.
  * The contents of the array are "returned" as an auxiliary result if the mode is {@link ArrayMode#OUT} or {@link ArrayMode#INOUT}; the bytes

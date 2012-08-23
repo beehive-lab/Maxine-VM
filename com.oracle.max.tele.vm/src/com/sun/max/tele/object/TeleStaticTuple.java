@@ -40,7 +40,7 @@ import com.sun.max.vm.actor.member.*;
 public class TeleStaticTuple extends TeleTupleObject {
 
     /**
-     * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
+     * This constructor follows no {@linkplain RemoteReference references}. This avoids the infinite regress that can occur when the VM
      * object and another are mutually referential.
      *
      * @param vm

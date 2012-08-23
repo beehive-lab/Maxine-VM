@@ -30,7 +30,7 @@ import com.sun.max.vm.thread.*;
 
 /**
  * Access to the {@linkplain VmThreadLocal thread local variables} related to a particular
- * {@linkplain SafePoint.State safepoint state} for {@linkplain MaxThread thread} in the VM.
+ * {@linkplain SafepointPoll.State safepoint state} for {@linkplain MaxThread thread} in the VM.
  * The variables are stored in a region of VM memory local to the thread that does not move.
  * Variables are word sized, stored in index-order, and are accessible by either name or index.
  * If the region starts at {@link Address#zero()} then the {@linkplain VmThreadLocal thread local variables}
@@ -48,7 +48,7 @@ public interface MaxThreadLocalsArea extends MaxEntity<MaxThreadLocalsArea> {
     MaxThread thread();
 
     /**
-     * Gets the {@linkplain SafePoint.State safepoint state} with which this thread locals area is associated in the VM.
+     * Gets the {@linkplain SafepointPoll.State safepoint state} with which this thread locals area is associated in the VM.
      * <br>
      * Thread-safe
      *

@@ -32,7 +32,7 @@ import com.sun.max.tele.object.*;
 
 /**
  * Visual view and debugger for code discovered in the VM that is not compiled Java.
- * It is runtime assembled code such as a {@linkplain RuntimeStub stub} or
+ * It is runtime assembled code such as a stub or
  * is other native code about which little is known.
  */
 public final class NativeMethodView extends MethodView<NativeMethodView> {

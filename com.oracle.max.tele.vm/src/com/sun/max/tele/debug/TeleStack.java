@@ -127,9 +127,10 @@ public class TeleStack extends AbstractVmHolder implements MaxStack {
     /**
      * Creates an object that models a teleStack in the VM.
      *
-     * @param vm the VM
      * @param teleNativeThread the thread that owns the teleStack
-     * @param teleFixedMemoryRegion description of the memory occupied by the teleStack
+     * @param name name of the stack
+     * @param start starting location in VM memory
+     * @param nBytes size of the stack region in bytes
      */
     public TeleStack(TeleVM vm, TeleNativeThread teleNativeThread, String name, Address start, long nBytes) {
         super(vm);

@@ -306,7 +306,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     /**
      * Sets tracing threshold in the VM.
      *
-     * @param newLevel
+     * @param newThreshold
      * @see com.sun.max.program.Trace
      */
     void setVMTraceThreshold(long newThreshold);
@@ -381,8 +381,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     int transportDebugLevel();
 
     /**
-     * Relocates the boot image, assuming that the inspector was invoked
-     * with the option {@link MaxineInspector#suspendingBeforeRelocating()} set.
+     * Relocates the boot image.
      *
      * @throws IOException
      */
@@ -416,7 +415,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void singleStepThread(final MaxThread maxThread, boolean synchronous) throws InvalidVMRequestException, OSExecutionRequestException;
+    void singleStepThread(final MaxThread thread, boolean synchronous) throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
      * Single steps a thread in the VM; if the instruction is a call, then resume VM execution until call returns.
@@ -427,7 +426,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException;
+    void stepOver(final MaxThread thread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
      * Resumes execution of the VM with a temporary breakpoint set.

@@ -59,7 +59,7 @@ public interface MaxMemoryIO {
      * Reads an {@code int} from VM memory.
      *
      * @param address a location in VM memory
-     * @param offset from the location at which to read
+     * @param idOffset from the location at which to read
      * @return the current contents of VM memory at that location as an int
      */
     int readInt(Address address, int idOffset);

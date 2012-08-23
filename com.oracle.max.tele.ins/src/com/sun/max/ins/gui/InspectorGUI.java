@@ -56,7 +56,7 @@ public interface InspectorGUI {
     /**
      * Displays an information message in a modal dialog with specified frame title.
      *
-     * @param message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @param message a {@link String}, {@link String} array, or {@link Object} to be converted to text
      * @param title a title to display on the dialog frame
      * @see JOptionPane#showMessageDialog(Component, Object)
      */
@@ -65,7 +65,7 @@ public interface InspectorGUI {
     /**
      * Displays an information message in a modal dialog with default frame title.
      *
-     * @param message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @param message a {@link String}, {@link String} array, or {@link Object} to be converted to text
      * @see JOptionPane#showMessageDialog(Component, Object)
      */
     void informationMessage(Object message);
@@ -73,7 +73,7 @@ public interface InspectorGUI {
     /**
      * Displays a warning message in a modal dialog with specified frame title.
      *
-     * @param message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @param message a {@link String}, {@link String} array, or {@link Object} to be converted to text
      * @param title a title to display on the dialog frame
      * @see JOptionPane#showMessageDialog(Component, Object)
      */
@@ -82,7 +82,7 @@ public interface InspectorGUI {
     /**
      * Displays a warning message in a modal dialog with default frame title.
      *
-     * @param message message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @param message message a {@link String}, {@link String} array, or {@link Object} to be converted to text
      * @see JOptionPane#showMessageDialog(Component, Object)
      */
     void warningMessage(Object message);
@@ -90,7 +90,7 @@ public interface InspectorGUI {
     /**
      * Displays an error message in a modal dialog with specified frame title.
      *
-     * @param message message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @param message message a {@link String}, {@link String} array, or {@link Object} to be converted to text
      * @param title a title to display on the dialog frame
      * @see JOptionPane#showMessageDialog(Component, Object)
      */
@@ -99,7 +99,7 @@ public interface InspectorGUI {
     /**
      * Displays an error message in a modal dialog with default frame title.
      *
-     * @param message message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @param message message a {@link String}, {@link String} array, or {@link Object} to be converted to text
      * @see JOptionPane#showMessageDialog(Component, Object)
      */
     void errorMessage(Object message);

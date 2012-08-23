@@ -99,6 +99,8 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
                         }
                     } catch (NumberFormatException numberFormatException) {
                         gui().errorMessage("Not a region ID: " + input);
+                    } catch (MaxVMBusyException e) {
+                        gui().errorMessage("VM Busy");
                     }
                 }
             };

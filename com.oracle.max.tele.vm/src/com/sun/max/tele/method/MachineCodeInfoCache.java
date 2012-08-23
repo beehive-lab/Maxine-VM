@@ -182,8 +182,6 @@ public final class MachineCodeInfoCache extends AbstractVmHolder {
 
         /**
          *  For decoding inline data in this target method's code.
-         *
-         *  @see TargetMethod#inlineDataDecoder()
          */
         private final InlineDataDecoder inlineDataDecoder;
 

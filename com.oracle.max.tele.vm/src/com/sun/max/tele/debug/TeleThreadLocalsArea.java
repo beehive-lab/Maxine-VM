@@ -27,7 +27,6 @@ import java.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
-import com.sun.max.tele.heap.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
@@ -39,14 +38,13 @@ import com.sun.max.vm.value.*;
 
 /**
  * Access to the {@linkplain VmThreadLocal thread local variables} related to a particular
- * {@linkplain SafePoint.State safepoint state} for {@linkplain TeleNativeThread thread} in the VM.
+ * {@linkplain SafepointPoll.State safepoint state} for {@linkplain TeleNativeThread thread} in the VM.
  * The variables are stored in a region of VM memory local to the thread that does not move.
  * Variables are word sized, stored in index-order, and are accessible by either name or index.
  * If the region starts at {@link Address#zero()} then the {@linkplain VmThreadLocal thread local variables}
  * are assumed to be invalid.
- * <br>
- * This class maintains a <strong>cache</strong> of the values of the variables, which it rereads from
- * VM memory every time {@link #refresh(DataAccess)} is called.
+ * <p>
+ * This class maintains a <strong>cache</strong> of the values of the variables.
  * <p>
  * N.B. Owing to the fact that the exact set and order (index value) of the target VM {@linkplain VmThreadLocal thread local variables}
  * is dependent on the VM configuration, it is <b>not</b> ok to assume that the value of {@link VmThreadLocal#values()}
@@ -115,7 +113,6 @@ public final class TeleThreadLocalsArea extends AbstractVmHolder implements Tele
      * @param teleNativeThread the thread in the VM with which these {@linkplain VmThreadLocal thread local variables} are associated.
      * @param safepointState the particular state with which these {@linkplain VmThreadLocal thread local variables} are associated.
      * @param start memory location in the VM where the variables are stored, {@link Address#zero()} if the variables are invalid.
-     * @param description a readable description of the area
      */
     public TeleThreadLocalsArea(MaxVM vm, TeleNativeThread teleNativeThread, SafepointPoll.State safepointState, Pointer start) {
         super(teleNativeThread.vm());

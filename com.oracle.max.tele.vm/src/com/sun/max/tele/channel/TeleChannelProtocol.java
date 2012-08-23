@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@ public interface TeleChannelProtocol extends TeleChannelDataIOProtocol {
      * Gathers the set of active threads in the target VM.
      * This avoids explicit types so that different versions of the Inspector types can be used on the two sides
      * of the communication channel.
-     * @param teleDomain a {@link MaxVETeleDomain} object
+     * @param teleDomain
      * @param threadList a {@link List} of {@link TeleNativeThread} objects
      * @param tlaList address of the thread locals list in the target VM
      * @return {@code true} if the gather was successful, {@code false} otherwise.

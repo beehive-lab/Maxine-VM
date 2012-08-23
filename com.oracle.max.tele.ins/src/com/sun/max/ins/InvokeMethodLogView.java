@@ -48,7 +48,7 @@ import com.sun.max.unsafe.*;
  * @see InspectorInvokeMethodLog
  * @see InvokeMethodLogManager
 
- * TODO This was cloned from {@link NotePadView} and should be refactored.
+ * TODO This was cloned from {@link NotepadView} and should be refactored.
 */
 public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView> {
 
@@ -435,8 +435,12 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
 
         public void setSelectedAddress(Address address) {
             this.address = address;
-            this.object = vm().objects().findAnyObjectAt(address);
-            setEnabled(object != null);
+            try {
+                this.object = vm().objects().findAnyObjectAt(address);
+                setEnabled(object != null);
+            } catch (MaxVMBusyException e) {
+                gui().errorMessage("VM Busy");
+            }
         }
     }
 

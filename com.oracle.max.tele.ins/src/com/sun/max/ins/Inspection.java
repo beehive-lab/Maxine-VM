@@ -545,7 +545,7 @@ public final class Inspection implements InspectionHolder {
     }
 
     /**
-     * If an external viewer has been {@linkplain #setExternalViewer(ExternalViewerType) configured}, attempt to view a
+     * If an external viewer has been {@linkplain InspectionPreferences#setExternalViewer(ExternalViewerType) configured}, attempt to view a
      * source file location corresponding to a given bytecode location. The view attempt is only made if an existing
      * source file and source line number can be derived from the given bytecode location.
      *
@@ -566,7 +566,7 @@ public final class Inspection implements InspectionHolder {
     }
 
     /**
-     * If an external viewer has been {@linkplain #setExternalViewer(ExternalViewerType) configured}, attempt to view a
+     * If an external viewer has been {@linkplain InspectionPreferences#setExternalViewer(ExternalViewerType) configured}, attempt to view a
      * source file location corresponding to a given class actor and line number. The view attempt is only made if an
      * existing source file and source line number can be derived from the given bytecode location.
      *

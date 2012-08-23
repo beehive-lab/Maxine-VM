@@ -45,6 +45,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
 import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
+import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -85,7 +86,7 @@ import com.sun.max.vm.value.*;
  * {@code _refreshableActions.append(this);} in the constructor.</li>
  * <li> Alternately, if state updates depend on a more specific kind of event, register
  * in the constructor explicitly for that event with a listener, for example
- * {@code focus().addListener(new InspectionFocusAdapter() { .... });}
+ * {@code focus().addListener(new InspectionFocusAdapter()  .... );}
  * The body of the listener should call {@code refresh}.</li>
  * <li>Override {@code protected void procedure()} with a method that does what
  * needs to be done.</li>
@@ -286,8 +287,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  relocates the boot image, assuming that the Inspector was invoked
-     * with the option {@link MaxineInspector#suspendingBeforeRelocating()} set.
+     * Action:  relocates the boot image.
      */
     final class RelocateBootImageAction extends InspectorAction {
 
@@ -311,8 +311,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction relocateBootImageAction = new RelocateBootImageAction(null);
 
     /**
-     * @return Singleton Action that relocates the boot image, assuming that the Inspector was invoked
-     * with the option {@link MaxineInspector#suspendingBeforeRelocating()} set.
+     * @return Singleton Action that relocates the boot image.
      */
     public final InspectorAction relocateBootImage() {
         return relocateBootImageAction;
@@ -360,7 +359,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * Action:  changes the threshold determining when the Inspectors uses its
-     * {@linkplain InspectorInterpeter interpreter} for access to VM state.
+     * {@linkplain TeleInterpreter interpreter} for access to VM state.
      */
     final class ChangeInterpreterUseLevelAction extends InspectorAction {
 
@@ -482,7 +481,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  updates the {@linkplain MaxVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
+     * Action:  updates the {@linkplain MaxClasses#updateLoadableTypeDescriptorsFromClasspath() types available} on
      * the VM's class path by rescanning the complete class path for types.
      */
     final class UpdateClasspathTypesAction extends InspectorAction {
@@ -502,7 +501,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction updateClasspathTypesAction = new UpdateClasspathTypesAction(null);
 
     /**
-     * @return Singleton Action that updates the {@linkplain MaxVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
+     * @return Singleton Action that updates the {@linkplain MaxClasses#updateLoadableTypeDescriptorsFromClasspath() types available} on
      * the VM's class path by rescanning the complete class path for types.
      */
     public final InspectorAction updateClasspathTypes() {
@@ -621,7 +620,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param a {@link Word} from the VM.
+     * @param word a {@link Word} from the VM.
      * @param actionTitle a string to use as the title of the action, uses default name if null.
      * @return an Action that copies the word's text value in hex to the system clipboard
      */
@@ -654,7 +653,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param a {@link Word} wrapped as a {@link Value} from the VM.
+     * @param value a {@link Word} wrapped as a {@link Value} from the VM.
      * @param actionTitle a string to use as the title of the action, uses default name if null.
      * @return an Action that copies the word's text value in hex to the system clipboard,
      * null if not a word.
@@ -2032,7 +2031,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @return an Action that displays in the {@link MethodView} the code of
-     * the {@link MaxineVM#run()} method in the boot image.
+     * the {@link MaxineVM} run method in the boot image.
      */
     public final InspectorAction viewRunMethodCodeInBootImage() {
         return viewRunMethodCodeInBootImageAction;
@@ -2043,12 +2042,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @return an Action that displays in the {@link MethodView} the code of
-     * the {@link VmThread#run()} method in the boot image.
+     * the {@link VmThread} run method in the boot image.
      */
     public final InspectorAction viewThreadRunMethodCodeInBootImage() {
         return viewThreadRunMethodCodeInBootImageAction;
     }
-
 
     /**
      * Action:  copies to the system clipboard a textual representation of the
@@ -2212,7 +2210,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param surrogate for a breakpoint in the VM.
+     * @param breakpoint surrogate for a breakpoint in the VM.
      * @param actionTitle a string name for the Action, uses default name if null.
      * @return an Action that will remove the breakpoint
      */

@@ -21,6 +21,27 @@
  * questions.
  */
 /**
- * Access to heap state in the VM.
+ * Access to the state of the VM's heap, which consists of:
+ * <ul>
+ * </li>specialized heaps, such as the <em>boot heap</em> that is part of the VM's binary image and the
+ * <em>immortal heap</em>, and </li>
+ * <li>the <em>dynamic heap</em>, which is implemented by the particular implementation of the VM's
+ * {@link com.sun.max.vm.heap.HeapScheme} interface.
+ * <p>
+ * Depends partially on the VM class {@link com.sun.max.vm.tele.InspectableHeapInfo}.
+ * <p>
+ * Extracting detailed information about the dynamic heap requires specialized knowledge of the specific
+ * {@link com.sun.max.vm.heap.HeapScheme} implementation included with a particular binary image build. This knowledge
+ * is embedded in implementations of the interface {@link com.sun.max.tele.heap.RemoteHeapScheme}, which are selected
+ * via a naming convention in which the local implementation class is named after the heap implementation class with the
+ * string "Remote" prepended. Thus, the class {@link com.sun.max.tele.heap.RemoteSemiSpaceHeapScheme} contains the
+ * specialized design knowledge needed to extract detailed heap information from a VM running with the
+ * {@link com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme}.
+ * <p>
+ * Among the responsibilities of each remote heap scheme support class is to report the regions of memory allocated by
+ * the OS that comprise the dynamic heap. Each is represented by an implementation of the interface
+ * {@link com.sun.max.tele.heap.VmHeapRegion}, through which the memory location and extent is reported, and which can
+ * provide an instance of the interface {@link com.sun.max.tele.object.RemoteObjectReferenceManager} for managing
+ * {@linkplain com.sun.max.tele.reference.RemoteReference remote references} to objects in the region.
  */
 package com.sun.max.tele.heap;

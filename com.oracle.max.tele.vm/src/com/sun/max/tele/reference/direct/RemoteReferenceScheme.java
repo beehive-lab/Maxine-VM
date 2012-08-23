@@ -923,7 +923,6 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
      * word's value does not point to an object.
      *
      * @param remoteRef reference to an object in VM memory
-     * @param offset offset from the object's origin from which to read
      * @return a reference to the object's hub, traversing a forwarder if needed.
      */
     public RemoteReference readHubAsRemoteReference(RemoteReference remoteRef) {

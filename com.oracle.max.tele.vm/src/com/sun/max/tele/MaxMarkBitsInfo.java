@@ -75,21 +75,21 @@ public interface MaxMarkBitsInfo {
 
     /**
      * Address of the word containing the first bit of the mark at the specified bit index.
-     * @param a bit index
+     * @param bitIndex a bit index
      * @return address to bitmap word.
      */
     Address bitmapWord(int bitIndex);
 
     /**
      * Color of the mark at the specified bit index.
-     * @param a bit index
+     * @param bitIndex a bit index
      * @return color
      */
     Color color(int bitIndex);
 
     /**
      * Color of the mark corresponding to the specified the heap address.
-     * @param address
+     * @param heapAddress
      */
     Color color(Address heapAddress);
 

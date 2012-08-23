@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,9 +64,8 @@ public class TableRowFilterToolBar extends InspectorToolBar {
     /**
      * Creates a toolbar with controls for performing regular expression filtering over a row-based view.
      *
-     * @param inspection
      * @param parent where to send search outcomes and user requests
-     * @param rowTextMatcher a regular expression search session wrapped around some row-based data
+     * @param jTable the table to be filtered
      */
     public TableRowFilterToolBar(Inspection inspection, RowMatchListener parent, JTable jTable) {
         super(inspection);

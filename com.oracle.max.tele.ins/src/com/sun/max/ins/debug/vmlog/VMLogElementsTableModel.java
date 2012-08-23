@@ -61,7 +61,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
     protected List<TeleHostedLogRecord> logRecordCache;
 
     /**
-     * During {@link #refresh}, this holds the new value of the {@link VMLog#nextId} field,
+     * During {@link #refresh}, this holds the new value of the {@link VMLog} {@code nextID} field,
      * which is the id of the next record that will be written.
      */
     private int nextId;
@@ -203,7 +203,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
 
     /**
      * Responsible for any model-specific refresh before the main refresh happens.
-     * E.g., collecting together the thread-specific records in {@link NativeThreadFixedLogElementsTableModel per-thread buffer model}.
+     * E.g., collecting together the thread-specific records in {@link VMLogNativeElementsTableModel per-thread buffer model}.
      */
     protected void modelSpecificRefresh() {
         int id = firstId();
@@ -335,8 +335,8 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
 
     /**
      * Parse a hex word value in a log records file.
-     * @param s
-     * @return
+     * @param s a string in the file describing a hex word
+     * @return the value of the string as a Word type
      */
     protected static Word parseWord(String s) {
         int ix = 0;

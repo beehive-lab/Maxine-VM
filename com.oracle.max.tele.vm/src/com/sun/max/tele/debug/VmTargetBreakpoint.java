@@ -93,8 +93,8 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
      * @param codeLocation  the location at which the breakpoint is to be created
      * @param originalCode the machine code at the breakpoint location that will be overwritten by the breakpoint
      *            instruction. If this value is null, then the code will be read from the current code location.
+     * @param kind the kind of breakpoint
      * @param owner the bytecode breakpoint for which this is being created, null if none.
-     * @param the kind of breakpoint
      */
     private VmTargetBreakpoint(TeleVM vm, CodeLocation codeLocation, byte[] originalCode, BreakpointKind kind, VmBytecodeBreakpoint owner) {
         super(vm, codeLocation, kind);
@@ -145,7 +145,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
     }
 
     /**
-     * Determines if the target code in the VM is currently patched at this breakpoint's {@linkplain #origin() address} with the
+     * Determines if the target code in the VM is currently patched at this breakpoint's address with the
      * platform-dependent target instructions implementing a breakpoint.
      */
     boolean isActive() {

@@ -490,7 +490,6 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
          * these location instances can be created without any other VM-related services, early in the
          * startup cycle.
          *
-         * @param vm the VM
          * @param teleMethodAccess a statically defined accessor for a specially marked method in VM code
          * @param description a human-readable description, suitable for a menu or for debugging
          * @return a new location

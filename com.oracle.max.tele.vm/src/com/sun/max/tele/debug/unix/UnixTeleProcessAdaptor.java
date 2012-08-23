@@ -152,7 +152,6 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
     /**
      * Reads the address which triggered a watchpoint signal.
      *
-     * @param processHandle
      * @return address
      */
     @Override
@@ -163,7 +162,6 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
     /**
      * Reads the access code of the watchpoint which triggered a signal.
      *
-     * @param processHandle
      * @return access code
      */
     @Override

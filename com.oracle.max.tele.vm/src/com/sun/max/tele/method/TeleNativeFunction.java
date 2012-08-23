@@ -222,7 +222,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
      * @param lib associated native library.
      * @throws MaxInvalidAddressException
      */
-    public TeleNativeFunction(TeleVM vm, String name, Address offset, TeleNativeLibrary lib) {
+    public TeleNativeFunction(TeleVM vm, String name, Address offset, TeleNativeLibrary lib) throws MaxInvalidAddressException {
         this(vm, name, offset);
         this.lib = lib;
     }

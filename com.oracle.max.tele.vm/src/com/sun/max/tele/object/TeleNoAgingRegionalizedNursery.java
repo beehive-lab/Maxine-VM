@@ -24,16 +24,17 @@ package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.vm.heap.gcx.*;
 
 
 /**
- * @see NoAgingNursery
+ * @see NoAgingRegionalizedNursery
  */
-public class TeleNoAgingNursery extends TeleTupleObject {
+public class TeleNoAgingRegionalizedNursery extends TeleTupleObject {
 
     private TeleBaseAtomicBumpPointerAllocator allocator;
 
-    public TeleNoAgingNursery(TeleVM vm, RemoteReference reference) {
+    public TeleNoAgingRegionalizedNursery(TeleVM vm, RemoteReference reference) {
         super(vm, reference);
     }
 

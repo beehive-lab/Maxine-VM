@@ -259,11 +259,15 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
                 @Override
                 public void entered(Address address) {
-                    final MaxObject object = vm().objects().findAnyObjectAt(address);
-                    if (object != null) {
-                        focus().setHeapObject(object);
-                    } else {
-                        gui().errorMessage("object not found at "  + address.to0xHexString());
+                    try {
+                        final MaxObject object = vm().objects().findAnyObjectAt(address);
+                        if (object != null) {
+                            focus().setHeapObject(object);
+                        } else {
+                            gui().errorMessage("object not found at "  + address.to0xHexString());
+                        }
+                    } catch (MaxVMBusyException e) {
+                        gui().errorMessage("VM Busy");
                     }
                 }
             };

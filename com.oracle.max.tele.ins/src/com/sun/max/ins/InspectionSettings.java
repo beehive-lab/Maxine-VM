@@ -393,7 +393,7 @@ public class InspectionSettings {
 
     /**
      * Indicates that the persistent settings represented by this object have changed
-     * and should be saved to a {@linkplain #settingsFile() file}. The actual writing
+     * and should be saved to a {@linkplain #settingsFile file}. The actual writing
      * to the file happens asynchronously.
      */
     public void save() {
@@ -401,7 +401,7 @@ public class InspectionSettings {
     }
 
     /**
-     * Writes the persistent settings represented by this object to a {@linkplain #settingsFile() file}.
+     * Writes the persistent settings represented by this object to a {@linkplain #settingsFile file}.
      */
     private synchronized void doSave() {
         updateSettings();

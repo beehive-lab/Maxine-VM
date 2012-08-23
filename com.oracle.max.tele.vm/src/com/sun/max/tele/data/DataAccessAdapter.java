@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,8 @@ package com.sun.max.tele.data;
 import java.nio.*;
 
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -180,7 +179,7 @@ public abstract class DataAccessAdapter implements DataAccess {
             case BITS_64:
                 return Offset.fromLong(readLong(address));
             default:
-                throw ProgramError.unexpected();
+                throw TeleError.unexpected();
         }
     }
 
@@ -332,7 +331,7 @@ public abstract class DataAccessAdapter implements DataAccess {
                 writeLong(address, value.asOffset().toLong());
                 break;
             default:
-                throw ProgramError.unexpected();
+                throw TeleError.unexpected();
         }
     }
 
@@ -385,12 +384,12 @@ public abstract class DataAccessAdapter implements DataAccess {
                         WordArray.set(arr, dstIndex + i, Offset.fromLong(longBuffer.get()));
                     }
                 } else {
-                    throw ProgramError.unexpected();
+                    throw TeleError.unexpected();
                 }
                 break;
             }
             default:
-                throw FatalError.unexpected("invalid type");
+                throw TeleError.unexpected("invalid type");
         }
     }
     // Checkstyle: resume

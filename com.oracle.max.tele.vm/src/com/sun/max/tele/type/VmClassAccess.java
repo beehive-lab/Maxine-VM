@@ -32,7 +32,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
-import com.sun.max.tele.heap.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
@@ -47,12 +46,12 @@ import com.sun.max.vm.type.*;
  * The singleton cache of information that identifies all classes known to
  * be loaded in the VM.
  * <p>
- * The registry identifies each loaded class with a {@link TeleReference} that points at the {@link ClassActor} for the
+ * The registry identifies each loaded class with a {@link RemoteReference} that points at the {@link ClassActor} for the
  * class in the VM. The registry does <em>not</em> created any instances of {@link TeleClassActor} for them, however, in
  * order to avoid unnecessary overhead.
  * <p>
  * At the start of an session the registry is initialized with all classes loaded into the boot image. Dynamically
- * loaded classes are discovered and added by inspection during each {@link #updateCache()}.
+ * loaded classes are discovered and added by inspection during each {@link #updateCache(long)}.
  * <p>
  * The registry is necessarily constructed using information obtained by low level data reading and knowledge of the VM
  * implementation, because the registry is itself required before type-based access can be supported.

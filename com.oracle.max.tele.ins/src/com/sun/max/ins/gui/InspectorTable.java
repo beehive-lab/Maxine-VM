@@ -163,8 +163,8 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * Used only at this time by the two code viewers, all of which is
      * subject to further refactoring.
      *
-     * @param model a model for the table
-     * @param tableColumnModel a column model for the table
+     * @param inspectorTableModel  a model for the table
+     * @param inspectorTableColumnModel a column model for the table
      */
     protected InspectorTable(Inspection inspection, InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
         super(inspectorTableModel, inspectorTableColumnModel);

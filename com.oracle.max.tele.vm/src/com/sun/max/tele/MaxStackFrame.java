@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,7 +66,6 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
      * Thread-safe
      *
      * @return the address of the next instruction to be executed in this frame.
-     * @see Cursor#ip()
      */
     Pointer ip();
 
@@ -96,7 +95,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
      * This typically would be a method compilation, but it could also be a region of native
      * that has previously been registered during the session.
      *
-     * @see VmCodeCacheAccess#register(TeleExternalCode)
+     * @see VmCodeCacheAccess
      */
     MaxMachineCodeRoutine machineCode();
 

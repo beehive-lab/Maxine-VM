@@ -68,8 +68,8 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     }
 
     /**
-     * @param name a menu name
-     * @return the menu in the menu bar with that name, or
+     * @param menuKind a kind of menu
+     * @return the menu in the menu bar of that kind, or
      * a new empty one if it doesn't already exist.
      */
     public InspectorMenu makeMenu(MenuKind menuKind) {

@@ -70,9 +70,9 @@ public final class ObjectFieldsTable extends InspectorTable {
     /**
      * A table specialized to display object fields.
      *
+     * @param objectView the view holding this table
      * @param fieldKindPrefix information prefix to identify the kind of field, e.g. "Hub" or "Object"
      * @param fieldActors description of the fields to be displayed
-     * @param object the VM object that holds the fields
      */
     public ObjectFieldsTable(Inspection inspection, ObjectView objectView, String fieldKindPrefix, Collection<FieldActor> fieldActors) {
         super(inspection);

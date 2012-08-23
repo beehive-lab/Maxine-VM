@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,14 @@
  */
 package com.sun.max.tele.channel.natives;
 
+import com.sun.max.tele.channel.*;
+import com.sun.max.tele.debug.*;
+
 
 /**
  * Defines a set of native methods that must be implemented for any Maxine VM implementation to support the Inspector.
  * These derive originally from two classes in the Inspector, {@link TeleProcess} and {@link TeleNativeThread}, although
- * in the current architecture they are invoked by {@link TeleNativeChannelProtocol}.
+ * in the current architecture they are invoked by {@link TeleChannelProtocol}.
  *
  * These methods are not static to allow the native code to distinguish between multiple implementations that may co-exist.
  *

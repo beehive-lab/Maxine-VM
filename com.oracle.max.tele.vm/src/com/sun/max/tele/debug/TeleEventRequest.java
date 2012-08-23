@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.sun.max.tele.debug;
 /**
  * A tele event request encapsulates some action that {@linkplain #execute() modifies} the execution
  * {@linkplain TeleProcess#processState() state} of the tele process as well as some
- * {@linkplain TeleEventRequest#afterExecution(WaitResult) action} to take when the tele process next stops after the
+ * action to take when the tele process next stops after the
  * request has been issued.
  */
 public abstract class TeleEventRequest {

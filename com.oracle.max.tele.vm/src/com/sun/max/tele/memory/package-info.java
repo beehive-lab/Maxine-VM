@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,12 @@
  * questions.
  */
 /**
- * Access to memory state in the VM.
+ * Access to the top-level view of memory allocations in the VM.
+ * <p>
+ * The class {@link com.sun.max.tele.memory.VmAddressSpace} maintains a sorted list of
+ * memory regions known to have been allocated from the OS, both by the running VM itself
+ * and by the OS, for example for dynamically loaded libraries.  Other areas of inspection
+ * are expected to report all such allocations, as soon as they become known, using method
+ * {@link com.sun.max.tele.memory.VmAddressSpace#add(com.sun.max.tele.MaxEntityMemoryRegion)}.
  */
 package com.sun.max.tele.memory;

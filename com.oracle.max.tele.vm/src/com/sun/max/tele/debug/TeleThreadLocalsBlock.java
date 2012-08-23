@@ -126,7 +126,6 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
      * @param regionName descriptive name for this thread locals block in the VM
      * @param start starting location of the memory associated with this entity in the VM.
      * @param nBytes length of the memory associated with this entity in the VM.
-     * @return access to thread local information
      */
     public TeleThreadLocalsBlock(TeleNativeThread teleNativeThread, String regionName, Address start, long nBytes) {
         super(teleNativeThread.vm());
@@ -152,7 +151,6 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
      *
      * @param teleNativeThread the thread owning the thread local information
      * @param name a descriptive name for the area, in the absence of one associated with a memory region
-     * @return access to thread local information
      */
     public TeleThreadLocalsBlock(TeleNativeThread teleNativeThread, String name) {
         super(teleNativeThread.vm());

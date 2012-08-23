@@ -249,7 +249,8 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     /**
      * Sets the size of the view in the main frame.
      *
-     * @param rectangle the new geometry for the view
+     * @param width the new width
+     * @param height the new height
      */
     protected final void setSize(int width, int height) {
         getJComponent().setSize(width, height);
@@ -297,7 +298,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     /**
      * Creates a simple frame for the view and:
      * <ul>
-     * <li>calls {@link createView()} to populate it;</li>
+     * <li>calls {@link #createViewContent()} to populate it;</li>
      * <li>adds this view to the collection of update listeners; and</li>
      * <li>makes it all visible in the window system.</li>
      * </ul>
@@ -336,7 +337,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
      * Note that these frames only exist in side a tabbed container, and thus
      * persistent geometry is not supported for them.
      *
-     * @param addMenuBar should a menu bar be added to the frame.
+     * @param parent the tabbed frame
      */
     protected InspectorFrame createTabFrame(TabbedView parent) {
         frame = new InspectorRootPane(this, parent, true);

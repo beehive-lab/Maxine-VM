@@ -69,7 +69,7 @@ import com.sun.max.vm.type.*;
  * A method compilation is loaded by (restricted) deep copying the {@link TargetMethod} from the VM, and caching the
  * local instance.
  * <p>
- * Clients of target method information should operate with the single thread-safe instance of {@link MachineCodeInfo}
+ * Clients of target method information should operate with the single thread-safe instance of {@link MaxMachineCodeInfo}
  * provided by this object, since the information is guaranteed to represent a consistent snapshot of some version of
  * the compilation. That snapshot should not be cached by clients, however, because the compilation is subject to
  * change.
@@ -232,14 +232,14 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
     private Address codeEndAddress = null;
 
     /**
-     * A representation of the the part of the VM's code cache (a code cache region) in which this {@link TargetMetod}'s
+     * A representation of the the part of the VM's code cache (a code cache region) in which this {@link TargetMethod}'s
      * compilation data is allocated and possibly managed.
      */
     private VmCodeCacheRegion codeCacheRegion = null;
 
     /**
      * The cache holding the compiled code associated with this {@link TargetMethod}, which can produce a single
-     * immutable summary for thread safety. That summary object (an {@link MachineCodeInfo}) encapsulates a local copy of
+     * immutable summary for thread safety. That summary object (a {@link MaxMachineCodeInfo}) encapsulates a local copy of
      * the {@link TargetMethod} along with a collection of derived information.
      * <p>
      * A version number of the cache is kept. The initial state of the cache is version 0, contains no
