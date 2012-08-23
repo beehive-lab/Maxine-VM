@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,16 +20,42 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vma.tools.qa;
+package test;
 
 /**
- * Denotes a thread encountered in a trace.
+ * Test for instanceof access to a non-local object.
  */
-public class ThreadRecord extends NamedRecord {
-    public long startTime;
-    public long endTime;
+public class ThreadLocal02 extends Thread {
+    private static Object object;
 
-    public ThreadRecord(String name) {
-        super(name);
+    private static class Data {
     }
+
+    private int id;
+
+    ThreadLocal02(int id) {
+        this.id = id;
+        setName("ThreadLocal-" + id);
+    }
+
+    public static void main(String[] args) throws Exception {
+        Thread writer = new ThreadLocal02(0);
+        writer.start();
+        writer.join();
+        Thread reader = new ThreadLocal02(1);
+        reader.start();
+        reader.join();
+    }
+
+    @Override
+    public void run() {
+        if (id == 0) {
+            object = new Data();
+        } else {
+            if (!(object instanceof Data)) {
+                throw new ClassCastException();
+            }
+        }
+    }
+
 }

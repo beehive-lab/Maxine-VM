@@ -74,6 +74,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
      */
     private static boolean[][] tagAdviceCapabilities = new boolean[T1XTemplateTag.values().length][AdviceType.values().length];
 
+    /**
+     * This hook is used in an initial pass to discover which templates have before/after advice,
+     * which it records in {@link VMAdviceTemplateGenerator#tagAdviceCapabilities}.
+     */
     private static class DiscoverCapabilitiesHook implements AdviceHook {
 
         public void startMethodGeneration() {
@@ -196,8 +200,11 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         }
 
         private boolean generateTag(T1XTemplateTag tag, AdviceType at) {
-            // otherwise we only generate if the tag (a) has the capability for the requested advice type
+            // We only generate if the tag (a) has the capability for the requested advice type
             // and (b) the program is being run to generate that kind of advice.
+            // TODO There is a bug in this logic for tags that generate both before/after advice
+            // as the at==AFTER call causes the BEFORE advice to be thrown away when generating(AFTER) is true.
+            // Not currently an issue as no tags generate before and after advice.
             return tagAdviceCapabilities[tag.ordinal()][at.ordinal()] && generating[at.ordinal()];
         }
 
@@ -662,6 +669,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
                 // No special treatment for the following codes
                 case RETURN$registerFinalizer:
+                case LOAD_EXCEPTION:
                     break;
 
                 case TRACE_METHOD_ENTRY:
@@ -791,28 +799,24 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
     private void generateInvokeVirtual() {
         startGuardAdvice();
-        out.printf(INDENT12_PREFIX + "VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);%n");
         out.printf(INDENT12_ADVISE_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private void generateInvokeInterface() {
         startGuardAdvice();
-        out.printf(INDENT12_PREFIX + "VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);%n");
         out.printf(INDENT12_ADVISE_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private void generateInvokeSpecial() {
         startGuardAdvice();
-        out.printf(INDENT12_PREFIX + "VMAJavaRunScheme.saveMethodActorAndReceiver(receiver, methodActor);%n");
         out.printf(INDENT12_ADVISE_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private void generateInvokeStatic() {
         startGuardAdvice();
-        out.printf(INDENT12_PREFIX + "VMAJavaRunScheme.saveMethodActor(methodActor);%n");
         out.printf(INDENT12_ADVISE_PREFIX + "(null, methodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
@@ -965,7 +969,8 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         out.printf("    }%n");
         newLine();
         // for record keeping only, no output
-        generateAfterAdvice(k, variant, tag);
+        // currently disabled
+        // generateAfterAdvice(k, variant, tag);
     }
 
 
@@ -1010,7 +1015,8 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         out.printf("    }%n");
         newLine();
         // for record keeping only, no output
-        generateAfterAdvice(k, variant, tag);
+        // currently disabled
+        // generateAfterAdvice(k, variant, tag);
     }
 
 
@@ -1344,7 +1350,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateIfTemplates();
         generateIfCmpTemplates();
         generateGotoTemplates();
-        generateInvokeAfterTemplates();
+//        generateInvokeAfterTemplates();
     }
 
     /**

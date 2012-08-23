@@ -216,7 +216,11 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
     }
 
     public void adviseBeforeThreadTerminating(long time, VmThread arg1) {
-        store.adviseBeforeThreadTerminating(time, tng.getThreadName());
+        VMAdviceHandlerTextStoreAdapter storeAdaptor = getStoreAdaptorForThread(arg1.id());
+        // We may not have seen this thread's start (VM internal thread)
+        if (storeAdaptor != null) {
+            storeAdaptor.store.adviseBeforeThreadTerminating(time, tng.getThreadName());
+        }
     }
 
     public void adviseBeforeReturnByThrow(long time, Throwable arg1, int arg2) {

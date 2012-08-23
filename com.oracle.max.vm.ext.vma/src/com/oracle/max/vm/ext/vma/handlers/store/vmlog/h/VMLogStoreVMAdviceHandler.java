@@ -122,10 +122,10 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     private static boolean getPerThread() {
         String perThreadProp = System.getProperty(PERTHREAD_PROPERTY);
-        if (perThreadProp ==  null) {
-            return false;
+        if (perThreadProp == null) {
+            return true;
         } else {
-            return perThreadProp.toLowerCase().equals("true");
+            return !perThreadProp.toLowerCase().equals("false");
         }
     }
 
@@ -193,10 +193,8 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     @Override
     public void adviseBeforeThreadTerminating(VmThread vmThread) {
-        // Need to inform the adapter, no need to log
-        storeAdaptor.adviseBeforeThreadTerminating(getTime(), vmThread);
-        // Now flush the log buffer
         vmaVMLog.flush(VMLog.FLUSHMODE_FULL, vmThread);
+        storeAdaptor.adviseBeforeThreadTerminating(getTime(), vmThread);
     }
 
 // START GENERATED CODE
