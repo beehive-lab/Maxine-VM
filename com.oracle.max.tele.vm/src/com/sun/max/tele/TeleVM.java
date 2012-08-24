@@ -1474,20 +1474,7 @@ public abstract class TeleVM implements MaxVM {
      * @throws InvalidReferenceException if the argument does not point a valid heap object.
      */
     public final String getString(RemoteReference stringRef) throws InvalidReferenceException {
-        referenceManager.checkReference(stringRef);
-        final RemoteReference charArrayRef = fields().String_value.readRemoteReference(stringRef);
-        if (charArrayRef.isZero()) {
-            return null;
-        }
-        referenceManager.checkReference(charArrayRef);
-        int offset = fields().String_offset.readInt(stringRef);
-        final int charArrayCount = fields().String_count.readInt(stringRef);
-        final char[] chars = new char[charArrayCount];
-        for (int i = 0; i < charArrayCount; i++) {
-            chars[i] = Layout.getChar(charArrayRef, offset);
-            offset++;
-        }
-        return new String(chars);
+        return TeleString.getString(this, stringRef);
     }
 
     /**
@@ -1505,24 +1492,8 @@ public abstract class TeleVM implements MaxVM {
      * @param origin a {@link String} object in the VM
      * @return A local {@link String} duplicating the remote object's contents, null if it can't be read.
      */
-    public final String getStringUnsafe(Address origin) {
-        // Work only with temporary references that are unsafe across GC
-        // Do no testing to determine if the reference points to a valid String object in live memory.
-        try {
-            final RemoteReference stringRef = referenceManager().makeTemporaryRemoteReference(origin);
-            final Address charArrayAddress = stringRef.readWord(fields().String_value.fieldActor().offset()).asAddress();
-            final RemoteReference charArrayRef = referenceManager().makeTemporaryRemoteReference(charArrayAddress);
-            int offset = stringRef.readInt(fieldAccess.String_offset.fieldActor().offset());
-            final int charArrayCount = stringRef.readInt(fieldAccess.String_count.fieldActor().offset());
-            final char[] chars = new char[charArrayCount];
-            for (int i = 0; i < charArrayCount; i++) {
-                chars[i] = Layout.getChar(charArrayRef, offset);
-                offset++;
-            }
-            return new String(chars);
-        } catch (DataIOError dataIOError) {
-            return null;
-        }
+    public String getStringUnsafe(Address origin) {
+        return TeleString.getStringUnsafe(this, origin);
     }
 
     public final List<MaxObject> inspectableObjects() {
