@@ -352,7 +352,7 @@ public abstract class DataAccessAdapter implements DataAccess {
         Kind kind = Kind.fromJava(dst.getClass().getComponentType());
         int size = length * kind.width.numberOfBytes;
         ByteBuffer byteBuffer = ByteBuffer.allocate(size);
-        Static.readFully(this, address.plus(displacement), byteBuffer);
+        Static.readFully(this, address.plus(displacement + srcIndex * kind.width.numberOfBytes), byteBuffer);
         byteBuffer.order(byteOrder);
         byteBuffer.position(0);
         switch (kind.asEnum) {
