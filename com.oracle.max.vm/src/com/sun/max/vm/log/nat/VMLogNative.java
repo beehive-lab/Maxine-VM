@@ -219,8 +219,8 @@ public abstract class VMLogNative extends VMLog {
     }
 
     @INLINE
-    protected final NativeRecord getNativeRecord() {
-        Reference nativeRecordRef = vmLogNativeRecordTL.loadRef(VmThread.currentTLA());
+    protected final NativeRecord getNativeRecord(Pointer tla) {
+        Reference nativeRecordRef = vmLogNativeRecordTL.loadRef(tla);
         if (nativeRecordRef.isZero()) {
             nativeRecordRef = allocateNativeRecord();
         }
