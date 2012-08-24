@@ -2107,7 +2107,7 @@ def javadoc(args, parser=None, docDir='javadoc', includeDeps=True, stdDoclet=Tru
 
             windowTitle = []
             if stdDoclet:
-                windowTitle = '-windowtitle', p.name + ' javadoc'
+                windowTitle = ['-windowtitle', p.name + ' javadoc']
             try:
                 log('Generating {2} for {0} in {1}'.format(p.name, out, docDir))
                 run([java().javadoc, memory,
