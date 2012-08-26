@@ -190,6 +190,15 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
         public void startMethodGeneration() {
         }
 
+        @Override
+        public String suffixParams(boolean comma) {
+            return "";
+        }
+
+        @Override
+        public String suffixArgs(boolean comma) {
+            return "";
+        }
     }
 
     private static final String INDENT8_PREFIX = "        ";

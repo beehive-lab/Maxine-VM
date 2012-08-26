@@ -75,6 +75,10 @@ public class AdviceGeneratorHelper {
 
     }
 
+    public static boolean isBytecodeAdviceMethod(Method m) {
+        return m.getDeclaringClass() == BytecodeAdvice.class;
+    }
+
     /**
      * Default generator that assumes {@code com.oracle.max.vm.ext.vma} project.
      */

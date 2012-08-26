@@ -43,84 +43,84 @@ public class VMAdviceAfterTemplateSource {
 
 // START GENERATED CODE
     @T1X_TEMPLATE(NEW)
-    public static Object new_(ResolutionGuard guard) {
+    public static Object new_(ResolutionGuard guard, int bci) {
         Object object = resolveClassForNewAndCreate(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNew(object);
+            VMAStaticBytecodeAdvice.adviseAfterNew(bci, object);
         }
         return object;
     }
 
     @T1X_TEMPLATE(NEW$init)
-    public static Object new_(DynamicHub hub) {
+    public static Object new_(DynamicHub hub, int bci) {
         Object object = Heap.createTuple(hub);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNew(object);
+            VMAStaticBytecodeAdvice.adviseAfterNew(bci, object);
         }
         return object;
     }
 
     @T1X_TEMPLATE(NEW_HYBRID)
-    public static Object new_hybrid(DynamicHub hub) {
+    public static Object new_hybrid(DynamicHub hub, int bci) {
         Object object = Heap.createHybrid(hub);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNew(object);
+            VMAStaticBytecodeAdvice.adviseAfterNew(bci, object);
         }
         return object;
     }
 
     @T1X_TEMPLATE(NEWARRAY)
-    public static Object newarray(ClassActor arrayClass, @Slot(0) int length) {
+    public static Object newarray(ClassActor arrayClass, @Slot(0) int length, int bci) {
         Object array = Snippets.createArray(arrayClass, length);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
+            VMAStaticBytecodeAdvice.adviseAfterNewArray(bci, array, length);
         }
         return array;
     }
 
     @T1X_TEMPLATE(ANEWARRAY)
-    public static Object anewarray(ResolutionGuard arrayType, @Slot(0) int length) {
+    public static Object anewarray(ResolutionGuard arrayType, @Slot(0) int length, int bci) {
         ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(arrayType));
         Object array = Snippets.createArray(arrayClassActor, length);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
+            VMAStaticBytecodeAdvice.adviseAfterNewArray(bci, array, length);
         }
         return array;
     }
 
     @T1X_TEMPLATE(ANEWARRAY$resolved)
-    public static Object anewarray(ArrayClassActor<?> arrayType, @Slot(0) int length) {
+    public static Object anewarray(ArrayClassActor<?> arrayType, @Slot(0) int length, int bci) {
         ArrayClassActor<?> arrayClassActor = arrayType;
         Object array = Snippets.createArray(arrayClassActor, length);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
+            VMAStaticBytecodeAdvice.adviseAfterNewArray(bci, array, length);
         }
         return array;
     }
 
     @T1X_TEMPLATE(MULTIANEWARRAY)
-    public static Reference multianewarray(ResolutionGuard guard, int[] lengths) {
+    public static Reference multianewarray(ResolutionGuard guard, int[] lengths, int bci) {
         ClassActor arrayClassActor = Snippets.resolveClass(guard);
         Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(array, lengths);
+            VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(bci, array, lengths);
         }
         return Reference.fromJava(array);
     }
 
     @T1X_TEMPLATE(MULTIANEWARRAY$resolved)
-    public static Reference multianewarray(ArrayClassActor<?> arrayClassActor, int[] lengths) {
+    public static Reference multianewarray(ArrayClassActor<?> arrayClassActor, int[] lengths, int bci) {
         Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(array, lengths);
+            VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(bci, array, lengths);
         }
         return Reference.fromJava(array);
     }
 
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
-    public static void traceMethodEntry(MethodActor methodActor, Object receiver) {
+    public static void traceMethodEntry(MethodActor methodActor, Object receiver, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterMethodEntry(receiver, methodActor);
+            VMAStaticBytecodeAdvice.adviseAfterMethodEntry(bci, receiver, methodActor);
         }
     }
 
