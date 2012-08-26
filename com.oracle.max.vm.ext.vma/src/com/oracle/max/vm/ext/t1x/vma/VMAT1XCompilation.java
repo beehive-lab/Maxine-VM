@@ -118,6 +118,13 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
         return templates[tag.ordinal()];
     }
 
+    @Override
+    protected void finish() {
+        // assign the bci value as the last argument
+        assignInt(template.sig.in.length - 1, "bci", stream.currentBCI());
+        super.finish();
+    }
+
     /*
      * If and, only if, we are advising the relevant invoke bytecode, we override the default parameter assignment
      * to always pass the MethodActor.

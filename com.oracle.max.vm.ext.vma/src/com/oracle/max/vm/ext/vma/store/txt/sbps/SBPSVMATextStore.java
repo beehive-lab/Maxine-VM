@@ -203,7 +203,7 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     private void appendStoreHeader() {
-        appendCode(INITIALIZE_LOG);
+        appendCode(INITIALIZE_STORE);
         appendSpace();
         sb.append(lastTime);
         appendSpace();
@@ -261,7 +261,10 @@ public class SBPSVMATextStore extends CSFVMATextStore {
             store.sb.append(' ');
             store.sb.append(className.clId);
         } else if (type == ShortForm.T) {
+            // quote because name may contain a space
+            store.sb.append('"');
             store.sb.append(key);
+            store.sb.append('"');
         } else {
             // F/M
             QualName qualName = (QualName) key;
@@ -309,7 +312,7 @@ public class SBPSVMATextStore extends CSFVMATextStore {
 
     protected void finalizeLogBuffer() {
         // Must not call appendCode else will block!
-        sb.append(FINALIZE_LOG.code);
+        sb.append(FINALIZE_STORE.code);
         appendSpace();
         sb.append(System.nanoTime());
         flushLogAt = 0; // force ps.flush
@@ -367,13 +370,18 @@ public class SBPSVMATextStore extends CSFVMATextStore {
      * @param time time record generated
      * @param key
      * @param threadName
+     * @param bci TODO
      */
-    private void appendTT(long time, Key key, String threadName) {
+    private void appendTT(long time, Key key, String threadName, int bci) {
         appendCode(key);
         appendSpace();
         appendTime(time);
         appendSpace();
         sb.append(threadName);
+        if (bci >= 0) {
+            appendSpace();
+            sb.append(bci);
+        }
     }
 
     /**
@@ -382,9 +390,10 @@ public class SBPSVMATextStore extends CSFVMATextStore {
      * @param key
      * @param objId
      * @param threadName
+     * @param bci TODO
      */
-    private void appendTTId(long time, Key key, long objId, String threadName) {
-        appendTT(time, key, threadName);
+    private void appendTTId(long time, Key key, long objId, String threadName, int bci) {
+        appendTT(time, key, threadName, bci);
         appendSpace();
         appendCheckRepeatId(objId);
         appendSpace();
@@ -398,8 +407,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
      * @param threadName
      * @param index
      */
-    private void appendTTIdIndex(long time, Key key, long objId, String threadName, int index) {
-        appendTT(time, key, threadName);
+    private void appendTTIdIndex(long time, Key key, long objId, String threadName, int bci, int index) {
+        appendTT(time, key, threadName, bci);
         appendSpace();
         appendCheckRepeatId(objId);
         appendSpace();
@@ -425,29 +434,30 @@ public class SBPSVMATextStore extends CSFVMATextStore {
      * @param key
      * @param className
      * @param threadName
+     * @param bci TODO
      */
-    private void appendTTC(long time, Key key, String className, String threadName) {
-        appendTT(time, key, threadName);
+    private void appendTTC(long time, Key key, String className, String threadName, int bci) {
+        appendTT(time, key, threadName, bci);
         appendSpace();
         sb.append(className);
         appendSpace();
     }
 
-    private void appendPutFieldPrefix(long time, long objId, String className, long clId, String memberName, String threadName) {
-        appendTTId(time, ADVISE_BEFORE_PUT_FIELD, objId, threadName);
+    private void appendPutFieldPrefix(long time, long objId, String className, long clId, String memberName, String threadName, int bci) {
+        appendTTId(time, ADVISE_BEFORE_PUT_FIELD, objId, threadName, bci);
         appendQualName(className, clId, memberName);
         appendSpace();
     }
 
-    private void appendPutStaticPrefix(long time, String className, long clId, String memberName, String threadName) {
-        appendTT(time, ADVISE_BEFORE_PUT_STATIC, threadName);
+    private void appendPutStaticPrefix(long time, String className, long clId, String memberName, String threadName, int bci) {
+        appendTT(time, ADVISE_BEFORE_PUT_STATIC, threadName, bci);
         appendSpace();
         appendQualName(className, clId, memberName);
         appendSpace();
     }
 
-    private void prefixAdviseBeforeOperation(long time, String threadName, int arg1) {
-        appendTT(time, ADVISE_BEFORE_OPERATION, threadName);
+    private void prefixAdviseBeforeOperation(long time, String threadName, int bci, int arg1) {
+        appendTT(time, ADVISE_BEFORE_OPERATION, threadName, bci);
         appendSpace();
         sb.append(arg1);
         appendSpace();
@@ -478,169 +488,171 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     public void store_unseenObject(long time, String threadName, long objId, String className, long clId) {
-        appendTTId(time, UNSEEN, objId, threadName);
+        // There is no "bci" field for this, but we pass zero so that the format of the record is
+        // the same as that for a NEW etc.
+        appendTTId(time, UNSEEN, objId, threadName, 0);
         sb.append(className);
         // clId elided
         end();
     }
 
     private void store_adviseAfterGC(long time, String threadName) {
-        appendTT(time, ADVISE_AFTER_GC, threadName);
+        appendTT(time, ADVISE_AFTER_GC, threadName, -1);
         end();
     }
 
     private void store_adviseBeforeThreadStarting(long time, String threadName) {
-        appendTT(time, ADVISE_BEFORE_THREAD_STARTING, threadName);
+        appendTT(time, ADVISE_BEFORE_THREAD_STARTING, threadName, -1);
         end();
     }
 
     private void store_adviseBeforeThreadTerminating(long time, String threadName) {
-        appendTT(time, ADVISE_BEFORE_THREAD_TERMINATING, threadName);
+        appendTT(time, ADVISE_BEFORE_THREAD_TERMINATING, threadName, -1);
         end();
         // TODO finalizeLogBuffer?
     }
 
-    private void store_adviseBeforeGetStatic(long time, String threadName, String className, long clId, String memberName) {
-        appendTT(time, ADVISE_BEFORE_GET_STATIC, threadName);
+    private void store_adviseBeforeGetStatic(long time, String threadName, int bci, String className, long clId, String memberName) {
+        appendTT(time, ADVISE_BEFORE_GET_STATIC, threadName, bci);
         appendSpace();
         appendQualName(className, clId, memberName);
         end();
     }
 
-    private void store_adviseBeforePutStatic(long time, String threadName, String className, long clId, String memberName, double value) {
-        appendPutStaticPrefix(time, className, clId, memberName, threadName);
+    private void store_adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String memberName, double value) {
+        appendPutStaticPrefix(time, className, clId, memberName, threadName, bci);
         sb.append(DOUBLE_VALUE);
         appendSpace();
         sb.append(value);
         end();
     }
 
-    private void store_adviseBeforePutStatic(long time, String threadName, String className, long clId, String memberName, long value) {
-        appendPutStaticPrefix(time, className, clId, memberName, threadName);
+    private void store_adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String memberName, long value) {
+        appendPutStaticPrefix(time, className, clId, memberName, threadName, bci);
         sb.append(LONG_VALUE);
         appendSpace();
         sb.append(value);
         end();
     }
 
-    private void store_adviseBeforePutStatic(long time, String threadName, String className, long clId, String memberName, float value) {
-        appendPutStaticPrefix(time, className, clId, memberName, threadName);
+    private void store_adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String memberName, float value) {
+        appendPutStaticPrefix(time, className, clId, memberName, threadName, bci);
         sb.append(FLOAT_VALUE);
         appendSpace();
         sb.append(value);
         end();
     }
 
-    private void store_adviseBeforePutStaticObject(long time, String threadName, String className, long clId, String memberName, long valueId) {
-        appendPutStaticPrefix(time, className, clId, memberName, threadName);
+    private void store_adviseBeforePutStaticObject(long time, String threadName, int bci, String className, long clId, String memberName, long valueId) {
+        appendPutStaticPrefix(time, className, clId, memberName, threadName, bci);
         sb.append(OBJ_VALUE);
         appendSpace();
         sb.append(valueId);
         end();
     }
 
-    private void store_adviseBeforeGetField(long time, String threadName, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_BEFORE_GET_FIELD, objId, threadName);
+    private void store_adviseBeforeGetField(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+        appendTTId(time, ADVISE_BEFORE_GET_FIELD, objId, threadName, bci);
         appendQualName(className, clId, memberName);
         end();
     }
 
-    private void store_adviseBeforePutField(long time, String threadName, long objId, String className, long clId, String memberName, double value) {
-        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName);
+    private void store_adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String memberName, double value) {
+        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName, bci);
         sb.append(DOUBLE_VALUE);
         appendSpace();
         sb.append(value);
         end();
     }
 
-    private void store_adviseBeforePutField(long time, String threadName, long objId, String className, long clId, String memberName, long value) {
-        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName);
+    private void store_adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String memberName, long value) {
+        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName, bci);
         sb.append(LONG_VALUE);
         appendSpace();
         sb.append(value);
         end();
     }
 
-    private void store_adviseBeforePutField(long time, String threadName, long objId, String className, long clId, String memberName, float value) {
-        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName);
+    private void store_adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String memberName, float value) {
+        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName, bci);
         sb.append(FLOAT_VALUE);
         appendSpace();
         sb.append(value);
         end();
     }
 
-    private void store_adviseBeforePutFieldObject(long time, String threadName, long objId, String className, long clId, String memberName, long valueId) {
-        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName);
+    private void store_adviseBeforePutFieldObject(long time, String threadName, int bci, long objId, String className, long clId, String memberName, long valueId) {
+        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName, bci);
         sb.append(OBJ_VALUE);
         appendSpace();
         sb.append(valueId);
         end();
     }
 
-    private void store_adviseBeforeArrayLoad(long time, String threadName, long objId, int index) {
-        appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_LOAD, objId, threadName, index);
+    private void store_adviseBeforeArrayLoad(long time, String threadName, int bci, long objId, int index) {
+        appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_LOAD, objId, threadName, bci, index);
         end();
     }
 
-    private void store_adviseBeforeArrayStore(long time, String threadName, long objId, int index, float value) {
-        appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
+    private void store_adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, float value) {
+        appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, bci, index);
         sb.append(FLOAT_VALUE);
         appendSpace();
         sb.append(value);
         end();
     }
 
-    private void store_adviseBeforeArrayStore(long time, String threadName, long objId, int index, long value) {
-        appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
+    private void store_adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, long value) {
+        appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, bci, index);
         sb.append(LONG_VALUE);
         appendSpace();
         sb.append(value);
         end();
     }
 
-    private void store_adviseBeforeArrayStore(long time, String threadName, long objId, int index, double value) {
-        appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
+    private void store_adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, double value) {
+        appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, bci, index);
         sb.append(DOUBLE_VALUE);
         appendSpace();
         sb.append(value);
         end();
     }
 
-    private void store_adviseBeforeArrayStoreObject(long time, String threadName, long objId, int index, long valueId) {
-        appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
+    private void store_adviseBeforeArrayStoreObject(long time, String threadName, int bci, long objId, int index, long valueId) {
+        appendTTIdIndex(time, ADVISE_BEFORE_ARRAY_STORE, objId, threadName, bci, index);
         sb.append(OBJ_VALUE);
         appendSpace();
         sb.append(valueId);
         end();
     }
 
-    private void store_adviseAfterNew(long time, String threadName, long objId, String className, long clId) {
-        appendTTId(time, ADVISE_AFTER_NEW, objId, threadName);
+    private void store_adviseAfterNew(long time, String threadName, int bci, long objId, String className, long clId) {
+        appendTTId(time, ADVISE_AFTER_NEW, objId, threadName, bci);
         sb.append(className);
         end();
     }
 
-    private void store_adviseAfterNewArray(long time, String threadName, long objId, String className, long clId, int length) {
-        appendTTId(time, ADVISE_AFTER_NEW_ARRAY, objId, threadName);
+    private void store_adviseAfterNewArray(long time, String threadName, int bci, long objId, String className, long clId, int length) {
+        appendTTId(time, ADVISE_AFTER_NEW_ARRAY, objId, threadName, bci);
         sb.append(className);
         appendSpace();
         sb.append(length);
         end();
     }
 
-    private void store_adviseAfterMultiNewArray(long time, String threadName, long objId, String className, long clId, int length) {
+    private void store_adviseAfterMultiNewArray(long time, String threadName, int bci, long objId, String className, long clId, int length) {
         // MultiArrays are explicitly handled by multiple calls to adviseAfterNewArray so we just
         // log the top level array.
-        adviseAfterNewArray(time, threadName, objId, className, clId, length);
+        adviseAfterNewArray(time, threadName, bci, objId, className, clId, length);
     }
 
     private void store_adviseBeforeGC(long time, String threadName) {
-        appendTT(time, ADVISE_BEFORE_GC, threadName);
+        appendTT(time, ADVISE_BEFORE_GC, threadName, -1);
         end();
     }
 
-    private void store_adviseBeforeConstLoad(long time, String threadName, long value) {
-        appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName);
+    private void store_adviseBeforeConstLoad(long time, String threadName, int bci, long value) {
+        appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName, bci);
         appendSpace();
         sb.append(LONG_VALUE);
         appendSpace();
@@ -648,8 +660,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeConstLoadObject(long time, String threadName, long value) {
-        appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName);
+    private void store_adviseBeforeConstLoadObject(long time, String threadName, int bci, long value) {
+        appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName, bci);
         appendSpace();
         sb.append(OBJ_VALUE);
         appendSpace();
@@ -657,8 +669,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeConstLoad(long time, String threadName, float value) {
-        appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName);
+    private void store_adviseBeforeConstLoad(long time, String threadName, int bci, float value) {
+        appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName, bci);
         appendSpace();
         sb.append(FLOAT_VALUE);
         appendSpace();
@@ -666,8 +678,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeConstLoad(long time, String threadName, double value) {
-        appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName);
+    private void store_adviseBeforeConstLoad(long time, String threadName, int bci, double value) {
+        appendTT(time, ADVISE_BEFORE_CONST_LOAD, threadName, bci);
         appendSpace();
         sb.append(DOUBLE_VALUE);
         appendSpace();
@@ -675,15 +687,17 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeLoad(long time, String threadName, int arg1) {
-        appendTT(time, ADVISE_BEFORE_LOAD, threadName);
+    private void store_adviseBeforeLoad(long time, String threadName, int bci, int arg1) {
+        appendTT(time, ADVISE_BEFORE_LOAD, threadName, bci);
+        appendSpace();
+        sb.append(bci);
         appendSpace();
         sb.append(arg1);
         end();
     }
 
-    private void store_adviseBeforeStore(long time, String threadName, int dispToLocalSlot, long value) {
-        appendTT(time, ADVISE_BEFORE_STORE, threadName);
+    private void store_adviseBeforeStore(long time, String threadName, int bci, int dispToLocalSlot, long value) {
+        appendTT(time, ADVISE_BEFORE_STORE, threadName, bci);
         appendSpace();
         sb.append(dispToLocalSlot);
         appendSpace();
@@ -693,8 +707,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeStore(long time, String threadName, int dispToLocalSlot, float value) {
-        appendTT(time, ADVISE_BEFORE_STORE, threadName);
+    private void store_adviseBeforeStore(long time, String threadName, int bci, int dispToLocalSlot, float value) {
+        appendTT(time, ADVISE_BEFORE_STORE, threadName, bci);
         appendSpace();
         sb.append(dispToLocalSlot);
         appendSpace();
@@ -704,8 +718,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeStore(long time, String threadName, int dispToLocalSlot, double value) {
-        appendTT(time, ADVISE_BEFORE_STORE, threadName);
+    private void store_adviseBeforeStore(long time, String threadName, int bci, int dispToLocalSlot, double value) {
+        appendTT(time, ADVISE_BEFORE_STORE, threadName, bci);
         appendSpace();
         sb.append(dispToLocalSlot);
         appendSpace();
@@ -715,8 +729,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeStoreObject(long time, String threadName, int dispToLocalSlot, long value) {
-        appendTT(time, ADVISE_BEFORE_STORE, threadName);
+    private void store_adviseBeforeStoreObject(long time, String threadName, int bci, int dispToLocalSlot, long value) {
+        appendTT(time, ADVISE_BEFORE_STORE, threadName, bci);
         appendSpace();
         sb.append(dispToLocalSlot);
         appendSpace();
@@ -726,15 +740,15 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeStackAdjust(long time, String threadName, int arg1) {
-        appendTT(time, ADVISE_BEFORE_STACK_ADJUST, threadName);
+    private void store_adviseBeforeStackAdjust(long time, String threadName, int bci, int arg1) {
+        appendTT(time, ADVISE_BEFORE_STACK_ADJUST, threadName, bci);
         appendSpace();
         sb.append(arg1);
         end();
     }
 
-    private void store_adviseBeforeOperation(long time, String threadName, int arg1, long arg2, long arg3) {
-        prefixAdviseBeforeOperation(time, threadName, arg1);
+    private void store_adviseBeforeOperation(long time, String threadName, int bci, int arg1, long arg2, long arg3) {
+        prefixAdviseBeforeOperation(time, threadName, bci, arg1);
         sb.append(LONG_VALUE);
         appendSpace();
         sb.append(arg2);
@@ -743,8 +757,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeOperation(long time, String threadName, int arg1, float arg2, float arg3) {
-        prefixAdviseBeforeOperation(time, threadName, arg1);
+    private void store_adviseBeforeOperation(long time, String threadName, int bci, int arg1, float arg2, float arg3) {
+        prefixAdviseBeforeOperation(time, threadName, bci, arg1);
         sb.append(FLOAT_VALUE);
         appendSpace();
         sb.append(arg2);
@@ -753,8 +767,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeOperation(long time, String threadName, int arg1, double arg2, double arg3) {
-        prefixAdviseBeforeOperation(time, threadName, arg1);
+    private void store_adviseBeforeOperation(long time, String threadName, int bci, int arg1, double arg2, double arg3) {
+        prefixAdviseBeforeOperation(time, threadName, bci, arg1);
         sb.append(DOUBLE_VALUE);
         appendSpace();
         sb.append(arg2);
@@ -763,8 +777,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeConversion(long time, String threadName, int arg1, long arg2) {
-        appendTT(time, ADVISE_BEFORE_CONVERSION, threadName);
+    private void store_adviseBeforeConversion(long time, String threadName, int bci, int arg1, long arg2) {
+        appendTT(time, ADVISE_BEFORE_CONVERSION, threadName, bci);
         appendSpace();
         sb.append(arg1);
         appendSpace();
@@ -775,8 +789,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeConversion(long time, String threadName, int arg1, float arg2) {
-        appendTT(time, ADVISE_BEFORE_CONVERSION, threadName);
+    private void store_adviseBeforeConversion(long time, String threadName, int bci, int arg1, float arg2) {
+        appendTT(time, ADVISE_BEFORE_CONVERSION, threadName, bci);
         appendSpace();
         sb.append(arg1);
         appendSpace();
@@ -787,8 +801,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeConversion(long time, String threadName, int arg1, double arg2) {
-        appendTT(time, ADVISE_BEFORE_CONVERSION, threadName);
+    private void store_adviseBeforeConversion(long time, String threadName, int bci, int arg1, double arg2) {
+        appendTT(time, ADVISE_BEFORE_CONVERSION, threadName, bci);
         appendSpace();
         sb.append(arg1);
         appendSpace();
@@ -799,8 +813,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeIf(long time, String threadName, int opcode, int op1, int op2) {
-        appendTT(time, ADVISE_BEFORE_IF, threadName);
+    private void store_adviseBeforeIf(long time, String threadName, int bci, int opcode, int op1, int op2) {
+        appendTT(time, ADVISE_BEFORE_IF, threadName, bci);
         appendSpace();
         sb.append(opcode);
         appendSpace();
@@ -813,8 +827,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeIfObject(long time, String threadName, int opcode, long objId1, long objId2) {
-        appendTT(time, ADVISE_BEFORE_IF, threadName);
+    private void store_adviseBeforeIfObject(long time, String threadName, int bci, int opcode, long objId1, long objId2) {
+        appendTT(time, ADVISE_BEFORE_IF, threadName, bci);
         appendSpace();
         sb.append(opcode);
         appendSpace();
@@ -827,8 +841,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeReturnObject(long time, String threadName, long value) {
-        appendTT(time, ADVISE_BEFORE_RETURN, threadName);
+    private void store_adviseBeforeReturnObject(long time, String threadName, int bci, long value) {
+        appendTT(time, ADVISE_BEFORE_RETURN, threadName, bci);
         appendSpace();
         sb.append(OBJ_VALUE);
         appendSpace();
@@ -836,8 +850,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeReturn(long time, String threadName, long value) {
-        appendTT(time, ADVISE_BEFORE_RETURN, threadName);
+    private void store_adviseBeforeReturn(long time, String threadName, int bci, long value) {
+        appendTT(time, ADVISE_BEFORE_RETURN, threadName, bci);
         appendSpace();
         sb.append(LONG_VALUE);
         appendSpace();
@@ -845,8 +859,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeReturn(long time, String threadName, float value) {
-        appendTT(time, ADVISE_BEFORE_RETURN, threadName);
+    private void store_adviseBeforeReturn(long time, String threadName, int bci, float value) {
+        appendTT(time, ADVISE_BEFORE_RETURN, threadName, bci);
         appendSpace();
         sb.append(FLOAT_VALUE);
         appendSpace();
@@ -854,8 +868,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeReturn(long time, String threadName, double value) {
-        appendTT(time, ADVISE_BEFORE_RETURN, threadName);
+    private void store_adviseBeforeReturn(long time, String threadName, int bci, double value) {
+        appendTT(time, ADVISE_BEFORE_RETURN, threadName, bci);
         appendSpace();
         sb.append(DOUBLE_VALUE);
         appendSpace();
@@ -863,117 +877,119 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeReturn(long time, String threadName) {
-        appendTT(time, ADVISE_BEFORE_RETURN, threadName);
+    private void store_adviseBeforeReturn(long time, String threadName, int bci) {
+        appendTT(time, ADVISE_BEFORE_RETURN, threadName, bci);
         end();
     }
 
-    private void store_adviseBeforeInvokeVirtual(long time, String threadName, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_BEFORE_INVOKE_VIRTUAL, objId, threadName);
+    private void store_adviseBeforeInvokeVirtual(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+        appendTTId(time, ADVISE_BEFORE_INVOKE_VIRTUAL, objId, threadName, bci);
         appendQualName(className, clId, memberName);
         end();
     }
 
-    private void store_adviseBeforeInvokeSpecial(long time, String threadName, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_BEFORE_INVOKE_SPECIAL, objId, threadName);
+    private void store_adviseBeforeInvokeSpecial(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+        appendTTId(time, ADVISE_BEFORE_INVOKE_SPECIAL, objId, threadName, bci);
         appendQualName(className, clId, memberName);
         end();
     }
 
-    private void store_adviseBeforeInvokeStatic(long time, String threadName, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_BEFORE_INVOKE_STATIC, objId, threadName);
+    private void store_adviseBeforeInvokeStatic(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+        appendTTId(time, ADVISE_BEFORE_INVOKE_STATIC, objId, threadName, bci);
         appendQualName(className, clId, memberName);
         end();
     }
 
-    private void store_adviseBeforeInvokeInterface(long time, String threadName, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_BEFORE_INVOKE_INTERFACE, objId, threadName);
+    private void store_adviseBeforeInvokeInterface(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+        appendTTId(time, ADVISE_BEFORE_INVOKE_INTERFACE, objId, threadName, bci);
         appendQualName(className, clId, memberName);
         end();
     }
 
-    private void store_adviseBeforeArrayLength(long time, String threadName, long objId, int length) {
-        appendTTId(time, ADVISE_BEFORE_ARRAY_LENGTH, objId, threadName);
+    private void store_adviseBeforeArrayLength(long time, String threadName, int bci, long objId, int length) {
+        appendTTId(time, ADVISE_BEFORE_ARRAY_LENGTH, objId, threadName, bci);
         sb.append(length);
         end();
     }
 
-    private void store_adviseBeforeThrow(long time, String threadName, long objId) {
-        appendTTId(time, ADVISE_BEFORE_THROW, objId, threadName);
+    private void store_adviseBeforeThrow(long time, String threadName, int bci, long objId) {
+        appendTTId(time, ADVISE_BEFORE_THROW, objId, threadName, bci);
         end();
     }
 
-    private void store_adviseBeforeCheckCast(long time, String threadName, long objId, String className, long clId) {
-        appendTTId(time, ADVISE_BEFORE_CHECK_CAST, objId, threadName);
+    private void store_adviseBeforeCheckCast(long time, String threadName, int bci, long objId, String className, long clId) {
+        appendTTId(time, ADVISE_BEFORE_CHECK_CAST, objId, threadName, bci);
         sb.append(className);
         end();
     }
 
-    private void store_adviseBeforeInstanceOf(long time, String threadName, long objId, String className, long clId) {
-        appendTTId(time, ADVISE_BEFORE_INSTANCE_OF, objId, threadName);
+    private void store_adviseBeforeInstanceOf(long time, String threadName, int bci, long objId, String className, long clId) {
+        appendTTId(time, ADVISE_BEFORE_INSTANCE_OF, objId, threadName, bci);
         sb.append(className);
         end();
     }
 
-    private void store_adviseBeforeBytecode(long time, String threadName, int arg1) {
-        appendTT(time, ADVISE_BEFORE_BYTECODE, threadName);
+    private void store_adviseBeforeBytecode(long time, String threadName, int bci, int arg1) {
+        appendTT(time, ADVISE_BEFORE_BYTECODE, threadName, bci);
         appendSpace();
         sb.append(arg1);
         end();
     }
 
-    private void store_adviseBeforeMonitorEnter(long time, String threadName, long objId) {
-        appendTTId(time, ADVISE_BEFORE_MONITOR_ENTER, objId, threadName);
+    private void store_adviseBeforeMonitorEnter(long time, String threadName, int bci, long objId) {
+        appendTTId(time, ADVISE_BEFORE_MONITOR_ENTER, objId, threadName, bci);
         end();
     }
 
-    private void store_adviseBeforeMonitorExit(long time, String threadName, long objId) {
-        appendTTId(time, ADVISE_BEFORE_MONITOR_EXIT, objId, threadName);
+    private void store_adviseBeforeMonitorExit(long time, String threadName, int bci, long objId) {
+        appendTTId(time, ADVISE_BEFORE_MONITOR_EXIT, objId, threadName, bci);
         end();
     }
 
-    private void store_adviseAfterInvokeVirtual(long time, String threadName, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_AFTER_INVOKE_VIRTUAL, objId, threadName);
+    /*
+    private void store_adviseAfterInvokeVirtual(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+        appendTTId(time, ADVISE_AFTER_INVOKE_VIRTUAL, objId, threadName, bci);
         appendQualName(className, clId, memberName);
         end();
     }
 
-    private void store_adviseAfterInvokeStatic(long time, String threadName, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_AFTER_INVOKE_STATIC, objId, threadName);
+    private void store_adviseAfterInvokeStatic(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+        appendTTId(time, ADVISE_AFTER_INVOKE_STATIC, objId, threadName, bci);
         appendQualName(className, clId, memberName);
         end();
     }
 
-    private void store_adviseAfterInvokeInterface(long time, String threadName, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_AFTER_INVOKE_INTERFACE, objId, threadName);
+    private void store_adviseAfterInvokeInterface(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+        appendTTId(time, ADVISE_AFTER_INVOKE_INTERFACE, objId, threadName, bci);
         appendQualName(className, clId, memberName);
         end();
     }
 
-    private void store_adviseAfterInvokeSpecial(long time, String threadName, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_AFTER_INVOKE_SPECIAL, objId, threadName);
+    private void store_adviseAfterInvokeSpecial(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+        appendTTId(time, ADVISE_AFTER_INVOKE_SPECIAL, objId, threadName, bci);
+        appendQualName(className, clId, memberName);
+        end();
+    }
+    */
+
+    private void store_adviseAfterMethodEntry(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+        appendTTId(time, ADVISE_AFTER_METHOD_ENTRY, objId, threadName, bci);
         appendQualName(className, clId, memberName);
         end();
     }
 
-    private void store_adviseAfterMethodEntry(long time, String threadName, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_AFTER_METHOD_ENTRY, objId, threadName);
-        appendQualName(className, clId, memberName);
-        end();
-    }
-
-    private void store_adviseBeforeReturnByThrow(long time, String threadName, long objId, int poppedFrames) {
-        appendTTId(time, ADVISE_BEFORE_RETURN_BY_THROW, objId, threadName);
+    private void store_adviseBeforeReturnByThrow(long time, String threadName, int bci, long objId, int poppedFrames) {
+        appendTTId(time, ADVISE_BEFORE_RETURN_BY_THROW, objId, threadName, bci);
         sb.append(poppedFrames);
         end();
 
     }
 
 // START GENERATED CODE
-// EDIT AND RUN SBPSCSFVMATextStoreGenerator.main() TO MODIFY
+// EDIT AND RUN SBPSVMATextStoreGenerator.main() TO MODIFY
 
     @Override
-    public void adviseAfterMultiNewArray(long arg1, String arg2, long arg3, String arg4, long arg5, int arg6) {
+    public void adviseAfterMultiNewArray(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, int arg7) {
         ProgramError.unexpected("adviseAfterMultiNewArray");
     }
 
@@ -998,288 +1014,268 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     @Override
-    public void adviseBeforeReturnByThrow(long arg1, String arg2, long arg3, int arg4) {
-        store_adviseBeforeReturnByThrow(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), arg4);
+    public void adviseBeforeReturnByThrow(long arg1, String arg2, int arg3, long arg4, int arg5) {
+        store_adviseBeforeReturnByThrow(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), arg5);
     }
 
     @Override
-    public void adviseBeforeConstLoad(long arg1, String arg2, long arg3) {
-        store_adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3);
+    public void adviseBeforeConstLoad(long arg1, String arg2, int arg3, float arg4) {
+        store_adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeConstLoad(long arg1, String arg2, float arg3) {
-        store_adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3);
+    public void adviseBeforeConstLoad(long arg1, String arg2, int arg3, double arg4) {
+        store_adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeConstLoad(long arg1, String arg2, double arg3) {
-        store_adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3);
+    public void adviseBeforeConstLoad(long arg1, String arg2, int arg3, long arg4) {
+        store_adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeConstLoadObject(long arg1, String arg2, long arg3) {
-        store_adviseBeforeConstLoadObject(arg1, getThreadShortForm(arg2), arg3);
+    public void adviseBeforeConstLoadObject(long arg1, String arg2, int arg3, long arg4) {
+        store_adviseBeforeConstLoadObject(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeLoad(long arg1, String arg2, int arg3) {
-        store_adviseBeforeLoad(arg1, getThreadShortForm(arg2), arg3);
+    public void adviseBeforeLoad(long arg1, String arg2, int arg3, int arg4) {
+        store_adviseBeforeLoad(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeArrayLoad(long arg1, String arg2, long arg3, int arg4) {
-        store_adviseBeforeArrayLoad(arg1, getThreadShortForm(arg2),  checkRepeatId(arg3, arg2), arg4);
+    public void adviseBeforeArrayLoad(long arg1, String arg2, int arg3, long arg4, int arg5) {
+        store_adviseBeforeArrayLoad(arg1, getThreadShortForm(arg2), arg3,  checkRepeatId(arg4, arg2), arg5);
     }
 
     @Override
-    public void adviseBeforeStore(long arg1, String arg2, int arg3, float arg4) {
-        store_adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4);
+    public void adviseBeforeStore(long arg1, String arg2, int arg3, int arg4, float arg5) {
+        store_adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeStore(long arg1, String arg2, int arg3, double arg4) {
-        store_adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4);
+    public void adviseBeforeStore(long arg1, String arg2, int arg3, int arg4, double arg5) {
+        store_adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeStore(long arg1, String arg2, int arg3, long arg4) {
-        store_adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4);
+    public void adviseBeforeStore(long arg1, String arg2, int arg3, int arg4, long arg5) {
+        store_adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeStoreObject(long arg1, String arg2, int arg3, long arg4) {
-        store_adviseBeforeStoreObject(arg1, getThreadShortForm(arg2), arg3, arg4);
+    public void adviseBeforeStoreObject(long arg1, String arg2, int arg3, int arg4, long arg5) {
+        store_adviseBeforeStoreObject(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeArrayStore(long arg1, String arg2, long arg3, int arg4, long arg5) {
-        store_adviseBeforeArrayStore(arg1, getThreadShortForm(arg2),  checkRepeatId(arg3, arg2), arg4, arg5);
+    public void adviseBeforeArrayStore(long arg1, String arg2, int arg3, long arg4, int arg5, long arg6) {
+        store_adviseBeforeArrayStore(arg1, getThreadShortForm(arg2), arg3,  checkRepeatId(arg4, arg2), arg5, arg6);
     }
 
     @Override
-    public void adviseBeforeArrayStore(long arg1, String arg2, long arg3, int arg4, double arg5) {
-        store_adviseBeforeArrayStore(arg1, getThreadShortForm(arg2),  checkRepeatId(arg3, arg2), arg4, arg5);
+    public void adviseBeforeArrayStore(long arg1, String arg2, int arg3, long arg4, int arg5, double arg6) {
+        store_adviseBeforeArrayStore(arg1, getThreadShortForm(arg2), arg3,  checkRepeatId(arg4, arg2), arg5, arg6);
     }
 
     @Override
-    public void adviseBeforeArrayStore(long arg1, String arg2, long arg3, int arg4, float arg5) {
-        store_adviseBeforeArrayStore(arg1, getThreadShortForm(arg2),  checkRepeatId(arg3, arg2), arg4, arg5);
+    public void adviseBeforeArrayStore(long arg1, String arg2, int arg3, long arg4, int arg5, float arg6) {
+        store_adviseBeforeArrayStore(arg1, getThreadShortForm(arg2), arg3,  checkRepeatId(arg4, arg2), arg5, arg6);
     }
 
     @Override
-    public void adviseBeforeArrayStoreObject(long arg1, String arg2, long arg3, int arg4, long arg5) {
-        store_adviseBeforeArrayStoreObject(arg1, getThreadShortForm(arg2),  checkRepeatId(arg3, arg2), arg4, arg5);
+    public void adviseBeforeArrayStoreObject(long arg1, String arg2, int arg3, long arg4, int arg5, long arg6) {
+        store_adviseBeforeArrayStoreObject(arg1, getThreadShortForm(arg2), arg3,  checkRepeatId(arg4, arg2), arg5, arg6);
     }
 
     @Override
-    public void adviseBeforeStackAdjust(long arg1, String arg2, int arg3) {
-        store_adviseBeforeStackAdjust(arg1, getThreadShortForm(arg2), arg3);
+    public void adviseBeforeStackAdjust(long arg1, String arg2, int arg3, int arg4) {
+        store_adviseBeforeStackAdjust(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeOperation(long arg1, String arg2, int arg3, float arg4, float arg5) {
-        store_adviseBeforeOperation(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
+    public void adviseBeforeOperation(long arg1, String arg2, int arg3, int arg4, long arg5, long arg6) {
+        store_adviseBeforeOperation(arg1, getThreadShortForm(arg2), arg3, arg4, arg5, arg6);
     }
 
     @Override
-    public void adviseBeforeOperation(long arg1, String arg2, int arg3, long arg4, long arg5) {
-        store_adviseBeforeOperation(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
+    public void adviseBeforeOperation(long arg1, String arg2, int arg3, int arg4, float arg5, float arg6) {
+        store_adviseBeforeOperation(arg1, getThreadShortForm(arg2), arg3, arg4, arg5, arg6);
     }
 
     @Override
-    public void adviseBeforeOperation(long arg1, String arg2, int arg3, double arg4, double arg5) {
-        store_adviseBeforeOperation(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
+    public void adviseBeforeOperation(long arg1, String arg2, int arg3, int arg4, double arg5, double arg6) {
+        store_adviseBeforeOperation(arg1, getThreadShortForm(arg2), arg3, arg4, arg5, arg6);
     }
 
     @Override
-    public void adviseBeforeConversion(long arg1, String arg2, int arg3, float arg4) {
-        store_adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4);
+    public void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, double arg5) {
+        store_adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeConversion(long arg1, String arg2, int arg3, double arg4) {
-        store_adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4);
+    public void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, float arg5) {
+        store_adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeConversion(long arg1, String arg2, int arg3, long arg4) {
-        store_adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4);
+    public void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, long arg5) {
+        store_adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeIf(long arg1, String arg2, int arg3, int arg4, int arg5) {
-        store_adviseBeforeIf(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
+    public void adviseBeforeIf(long arg1, String arg2, int arg3, int arg4, int arg5, int arg6) {
+        store_adviseBeforeIf(arg1, getThreadShortForm(arg2), arg3, arg4, arg5, arg6);
     }
 
     @Override
-    public void adviseBeforeIfObject(long arg1, String arg2, int arg3, long arg4, long arg5) {
-        store_adviseBeforeIfObject(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
+    public void adviseBeforeIfObject(long arg1, String arg2, int arg3, int arg4, long arg5, long arg6) {
+        store_adviseBeforeIfObject(arg1, getThreadShortForm(arg2), arg3, arg4, arg5, arg6);
     }
 
     @Override
-    public void adviseBeforeBytecode(long arg1, String arg2, int arg3) {
-        store_adviseBeforeBytecode(arg1, getThreadShortForm(arg2), arg3);
+    public void adviseBeforeBytecode(long arg1, String arg2, int arg3, int arg4) {
+        store_adviseBeforeBytecode(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeReturn(long arg1, String arg2) {
-        store_adviseBeforeReturn(arg1, getThreadShortForm(arg2));
+    public void adviseBeforeReturn(long arg1, String arg2, int arg3, long arg4) {
+        store_adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeReturn(long arg1, String arg2, float arg3) {
+    public void adviseBeforeReturn(long arg1, String arg2, int arg3, float arg4) {
+        store_adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeReturn(long arg1, String arg2, int arg3) {
         store_adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3);
     }
 
     @Override
-    public void adviseBeforeReturn(long arg1, String arg2, double arg3) {
-        store_adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3);
+    public void adviseBeforeReturn(long arg1, String arg2, int arg3, double arg4) {
+        store_adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeReturn(long arg1, String arg2, long arg3) {
-        store_adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3);
+    public void adviseBeforeReturnObject(long arg1, String arg2, int arg3, long arg4) {
+        store_adviseBeforeReturnObject(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeReturnObject(long arg1, String arg2, long arg3) {
-        store_adviseBeforeReturnObject(arg1, getThreadShortForm(arg2), arg3);
+    public void adviseBeforeGetStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6) {
+        store_adviseBeforeGetStatic(arg1, getThreadShortForm(arg2), arg3, getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6));
     }
 
     @Override
-    public void adviseBeforeGetStatic(long arg1, String arg2, String arg3, long arg4, String arg5) {
-        store_adviseBeforeGetStatic(arg1, getThreadShortForm(arg2), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5));
+    public void adviseBeforePutStaticObject(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, long arg7) {
+        store_adviseBeforePutStaticObject(arg1, getThreadShortForm(arg2), arg3, getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
     }
 
     @Override
-    public void adviseBeforePutStaticObject(long arg1, String arg2, String arg3, long arg4, String arg5, long arg6) {
-        store_adviseBeforePutStaticObject(arg1, getThreadShortForm(arg2), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
+    public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, float arg7) {
+        store_adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
     }
 
     @Override
-    public void adviseBeforePutStatic(long arg1, String arg2, String arg3, long arg4, String arg5, double arg6) {
-        store_adviseBeforePutStatic(arg1, getThreadShortForm(arg2), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
+    public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, double arg7) {
+        store_adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
     }
 
     @Override
-    public void adviseBeforePutStatic(long arg1, String arg2, String arg3, long arg4, String arg5, long arg6) {
-        store_adviseBeforePutStatic(arg1, getThreadShortForm(arg2), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
+    public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, long arg7) {
+        store_adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
     }
 
     @Override
-    public void adviseBeforePutStatic(long arg1, String arg2, String arg3, long arg4, String arg5, float arg6) {
-        store_adviseBeforePutStatic(arg1, getThreadShortForm(arg2), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
+    public void adviseBeforeGetField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
+        store_adviseBeforeGetField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getFieldShortForm(arg5, arg6, arg7));
     }
 
     @Override
-    public void adviseBeforeGetField(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        store_adviseBeforeGetField(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6));
+    public void adviseBeforePutFieldObject(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, long arg8) {
+        store_adviseBeforePutFieldObject(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getFieldShortForm(arg5, arg6, arg7), arg8);
     }
 
     @Override
-    public void adviseBeforePutFieldObject(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6, long arg7) {
-        store_adviseBeforePutFieldObject(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
+    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, long arg8) {
+        store_adviseBeforePutField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getFieldShortForm(arg5, arg6, arg7), arg8);
     }
 
     @Override
-    public void adviseBeforePutField(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6, double arg7) {
-        store_adviseBeforePutField(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
+    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, double arg8) {
+        store_adviseBeforePutField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getFieldShortForm(arg5, arg6, arg7), arg8);
     }
 
     @Override
-    public void adviseBeforePutField(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6, long arg7) {
-        store_adviseBeforePutField(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
+    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, float arg8) {
+        store_adviseBeforePutField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getFieldShortForm(arg5, arg6, arg7), arg8);
     }
 
     @Override
-    public void adviseBeforePutField(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6, float arg7) {
-        store_adviseBeforePutField(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
+    public void adviseBeforeInvokeVirtual(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
+        store_adviseBeforeInvokeVirtual(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getMethodShortForm(arg5, arg6, arg7));
     }
 
     @Override
-    public void adviseBeforeInvokeVirtual(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        store_adviseBeforeInvokeVirtual(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
+    public void adviseBeforeInvokeSpecial(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
+        store_adviseBeforeInvokeSpecial(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getMethodShortForm(arg5, arg6, arg7));
     }
 
     @Override
-    public void adviseBeforeInvokeSpecial(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        store_adviseBeforeInvokeSpecial(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
+    public void adviseBeforeInvokeStatic(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
+        store_adviseBeforeInvokeStatic(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getMethodShortForm(arg5, arg6, arg7));
     }
 
     @Override
-    public void adviseBeforeInvokeStatic(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        store_adviseBeforeInvokeStatic(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
+    public void adviseBeforeInvokeInterface(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
+        store_adviseBeforeInvokeInterface(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getMethodShortForm(arg5, arg6, arg7));
     }
 
     @Override
-    public void adviseBeforeInvokeInterface(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        store_adviseBeforeInvokeInterface(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
+    public void adviseBeforeArrayLength(long arg1, String arg2, int arg3, long arg4, int arg5) {
+        store_adviseBeforeArrayLength(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeArrayLength(long arg1, String arg2, long arg3, int arg4) {
-        store_adviseBeforeArrayLength(arg1, getThreadShortForm(arg2), arg3, arg4);
+    public void adviseBeforeThrow(long arg1, String arg2, int arg3, long arg4) {
+        store_adviseBeforeThrow(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2));
     }
 
     @Override
-    public void adviseBeforeThrow(long arg1, String arg2, long arg3) {
-        store_adviseBeforeThrow(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2));
+    public void adviseBeforeCheckCast(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6) {
+        store_adviseBeforeCheckCast(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6);
     }
 
     @Override
-    public void adviseBeforeCheckCast(long arg1, String arg2, long arg3, String arg4, long arg5) {
-        store_adviseBeforeCheckCast(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5);
+    public void adviseBeforeInstanceOf(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6) {
+        store_adviseBeforeInstanceOf(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6);
     }
 
     @Override
-    public void adviseBeforeInstanceOf(long arg1, String arg2, long arg3, String arg4, long arg5) {
-        store_adviseBeforeInstanceOf(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5);
+    public void adviseBeforeMonitorEnter(long arg1, String arg2, int arg3, long arg4) {
+        store_adviseBeforeMonitorEnter(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2));
     }
 
     @Override
-    public void adviseBeforeMonitorEnter(long arg1, String arg2, long arg3) {
-        store_adviseBeforeMonitorEnter(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2));
+    public void adviseBeforeMonitorExit(long arg1, String arg2, int arg3, long arg4) {
+        store_adviseBeforeMonitorExit(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2));
     }
 
     @Override
-    public void adviseBeforeMonitorExit(long arg1, String arg2, long arg3) {
-        store_adviseBeforeMonitorExit(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2));
+    public void adviseAfterNew(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6) {
+        store_adviseAfterNew(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6);
     }
 
     @Override
-    public void adviseAfterInvokeVirtual(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        store_adviseAfterInvokeVirtual(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
+    public void adviseAfterNewArray(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, int arg7) {
+        store_adviseAfterNewArray(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, arg7);
     }
 
     @Override
-    public void adviseAfterInvokeSpecial(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        store_adviseAfterInvokeSpecial(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseAfterInvokeStatic(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        store_adviseAfterInvokeStatic(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseAfterInvokeInterface(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        store_adviseAfterInvokeInterface(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseAfterNew(long arg1, String arg2, long arg3, String arg4, long arg5) {
-        store_adviseAfterNew(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5);
-    }
-
-    @Override
-    public void adviseAfterNewArray(long arg1, String arg2, long arg3, String arg4, long arg5, int arg6) {
-        store_adviseAfterNewArray(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, arg6);
-    }
-
-    @Override
-    public void adviseAfterMethodEntry(long arg1, String arg2, long arg3, String arg4, long arg5, String arg6) {
-        store_adviseAfterMethodEntry(arg1, getThreadShortForm(arg2), checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6));
+    public void adviseAfterMethodEntry(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
+        store_adviseAfterMethodEntry(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getMethodShortForm(arg5, arg6, arg7));
     }
 
 // END GENERATED CODE

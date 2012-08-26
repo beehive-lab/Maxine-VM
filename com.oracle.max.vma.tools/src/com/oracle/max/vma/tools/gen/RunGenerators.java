@@ -41,14 +41,14 @@ public class RunGenerators {
         VMAStaticBytecodeAdviceGenerator.class,
         NullVMAdviceHandlerGenerator.class,
         ObjectStateHandlerAdaptorGenerator.class,
-        SyncStoreVMAdviceHandlerGenerator.class,
-        CBCVMAdviceHandlerGenerator.class,
         VMATextStoreGenerator.class,
-        VMAdviceHandlerTextStoreAdaptorGenerator.class,
-        TransientVMAdviceHandlerTypesGenerator.class,
-        GCTestAdviceHandlerLogGenerator.class,
         CVMATextStoreGenerator.class,
         SBPSVMATextStoreGenerator.class,
+        VMAdviceHandlerTextStoreAdaptorGenerator.class,
+        SyncStoreVMAdviceHandlerGenerator.class,
+        CBCVMAdviceHandlerGenerator.class,
+        TransientVMAdviceHandlerTypesGenerator.class,
+        GCTestAdviceHandlerLogGenerator.class,
         VMAdviceTemplateGenerator.class
     };
 

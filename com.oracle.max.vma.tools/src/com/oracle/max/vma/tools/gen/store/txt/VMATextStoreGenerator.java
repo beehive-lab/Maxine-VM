@@ -71,7 +71,8 @@ public class VMATextStoreGenerator {
 
     private static void generate(Method m) {
         final String name = m.getName();
-        out.printf("    public abstract void %s(long time, String threadName", getMethodNameRenamingObject(m));
+        out.printf("    public abstract void %s(long time, String threadName%s", getMethodNameRenamingObject(m),
+                        AdviceGeneratorHelper.isBytecodeAdviceMethod(m) || m.getName().contains("ReturnByThrow") ? ", int bci" : "");
         if (name.endsWith("ConstLoad")) {
             out.printf(", %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("GetField")) {
@@ -107,7 +108,7 @@ public class VMATextStoreGenerator {
         } else if (name.endsWith("ReturnByThrow")) {
             out.print(", long objId, int poppedFrames");
         } else if (name.endsWith("Return")) {
-            if (m.getParameterTypes().length > 0) {
+            if (m.getParameterTypes().length > 1) {
                 out.printf(", %s value", getLastParameterNameHandlingObject(m));
             }
         } else if (name.contains("Invoke") || name.contains("MethodEntry")) {
@@ -122,10 +123,10 @@ public class VMATextStoreGenerator {
             // drop VmThread arg
         } else {
             Class<?>[] params = m.getParameterTypes();
-            int argc = 1;
-            for (Class<?> param : params) {
-                out.printf(", %s %s", param.getSimpleName(), "arg" + argc);
-                argc++;
+            // skip bci
+            for (int i = 1; i < params.length; i++) {
+                Class<?> param = params[i];
+                out.printf(", %s %s", param.getSimpleName(), "arg" + i);
             }
         }
         out.printf(");%n%n");
