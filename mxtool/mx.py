@@ -87,6 +87,13 @@ Built-in library properties (* = required):
         If "true" then this library will be omitted from a class path
         if it doesn't exist on the file system and no URLs are specified.
 
+    sourcePath
+        The file system path for a jar file containing the library sources.
+
+    sourceUrls
+        A comma separated list of URLs from which the library source jar can
+        be downloaded and saved in the location specified by 'sourcePath'.
+
 Project specification format:
 
     project@<name>@<prop>=<value>
@@ -307,21 +314,33 @@ class Project(Dependency):
 
 
 class Library(Dependency):
-    def __init__(self, suite, name, path, mustExist, urls):
+    def __init__(self, suite, name, path, mustExist, urls, sourcePath, sourceUrls):
         Dependency.__init__(self, suite, name)
         self.path = path.replace('/', os.sep)
         self.urls = urls
         self.mustExist = mustExist
+        self.sourcePath = sourcePath
+        self.sourceUrls = sourceUrls
 
     def get_path(self, resolve):
         path = self.path
         if not isabs(path):
             path = join(self.suite.dir, path)
         if resolve and self.mustExist and not exists(path):
-            assert not len(self.urls) == 0, 'cannot find required library  ' + self.name + " " + path;
+            assert not len(self.urls) == 0, 'cannot find required library ' + self.name + ' ' + path;
             print('Downloading ' + self.name + ' from ' + str(self.urls))
             download(path, self.urls)
+        return path
 
+    def get_source_path(self, resolve):
+        path = self.sourcePath
+        if path is None:
+            return None
+        if not isabs(path):
+            path = join(self.suite.dir, path)
+        if resolve and len(self.sourceUrls) != 0 and not exists(path):
+            print('Downloading sources for ' + self.name + ' from ' + str(self.sourceUrls))
+            download(path, self.sourceUrls)
         return path
 
     def append_to_classpath(self, cp, resolve):
@@ -384,6 +403,8 @@ class Suite:
         for name, attrs in projsMap.iteritems():
             srcDirs = pop_list(attrs, 'sourceDirs')
             deps = pop_list(attrs, 'dependencies')
+            ap = pop_list(attrs, 'annotationProcessors')
+            deps += ap
             javaCompliance = attrs.pop('javaCompliance', None)
             subDir = attrs.pop('subDir', None);
             if subDir is None:
@@ -395,6 +416,11 @@ class Suite:
             p.native = attrs.pop('native', '') == 'true'
             if not p.native and p.javaCompliance is None:
                 abort('javaCompliance property required for non-native project ' + name)
+            if len(ap) > 0:
+                p.annotationProcessors = ap
+            apc = pop_list(attrs, 'annotationProcessorClasses')
+            if len(apc) > 0:
+                p.annotationProcessorClasses = apc
             p.__dict__.update(attrs)
             self.projects.append(p)
 
@@ -402,7 +428,9 @@ class Suite:
             path = attrs.pop('path')
             mustExist = attrs.pop('optional', 'false') != 'true'
             urls = pop_list(attrs, 'urls')
-            l = Library(self, name, path, mustExist, urls)
+            sourcePath = attrs.pop('sourcePath', None)
+            sourceUrls = pop_list(attrs, 'sourceUrls')
+            l = Library(self, name, path, mustExist, urls, sourcePath, sourceUrls)
             l.__dict__.update(attrs)
             self.libs.append(l)
 
@@ -921,7 +949,8 @@ class JavaConfig:
     def __init__(self, opts):
         self.jdk = opts.java_home
         self.debug_port = opts.java_dbg_port
-        self.java =  exe_suffix(join(self.jdk, 'bin', 'java'))
+        self.jar   = exe_suffix(join(self.jdk, 'bin', 'jar'))
+        self.java  = exe_suffix(join(self.jdk, 'bin', 'java'))
         self.javac = exe_suffix(join(self.jdk, 'bin', 'javac'))
         self.javap = exe_suffix(join(self.jdk, 'bin', 'javap'))
         self.javadoc = exe_suffix(join(self.jdk, 'bin', 'javadoc'))
@@ -1206,6 +1235,8 @@ def build(args, parser=None):
         else:
             if not args.java:
                 continue
+            if exists(join(p.dir, 'plugin.xml')): # eclipse plugin project
+                continue
 
         # skip building this Java project if its Java compliance level is "higher" than the configured JDK
         if javaCompliance < p.javaCompliance:
@@ -1297,11 +1328,23 @@ def build(args, parser=None):
         argfile.write('\n'.join(javafilelist))
         argfile.close()
 
+        if hasattr(p, 'annotationProcessors') and len(p.annotationProcessors) > 0:
+            annotationProcessors = []
+            for apProject in p.annotationProcessors:
+                apClasses = project(apProject).annotationProcessorClasses
+                if len(apClasses) == 0:
+                    abort("Project " + p + " specifies " + apProject + " as an annotation processor but " + apProject + " does not specifiy any annotation processor class")
+                annotationProcessors += apClasses
+            
+            apArgs = ['-processor', ",".join(annotationProcessors)]
+        else:
+            apArgs = []
+
         toBeDeleted = [argfileName]
         try:
             if jdtJar is None:
                 log('Compiling Java sources for {0} with javac...'.format(p.name))
-                javacCmd = [java().javac, '-g', '-J-Xmx1g', '-source', args.compliance, '-classpath', cp, '-d', outputDir, '@' + argfile.name]
+                javacCmd = [java().javac, '-g', '-J-Xmx1g', '-source', args.compliance, '-classpath', cp, '-d', outputDir] + apArgs + ['@' + argfile.name]
                 if not args.warnAPI:
                     javacCmd.append('-XDignore.symbol.file')
                 run(javacCmd)
@@ -1310,7 +1353,7 @@ def build(args, parser=None):
                 jdtArgs = [java().java, '-Xmx1g', '-jar', jdtJar,
                          '-' + args.compliance,
                          '-cp', cp, '-g', '-enableJavadoc',
-                         '-d', outputDir]
+                         '-d', outputDir] + apArgs
                 jdtProperties = join(p.dir, '.settings', 'org.eclipse.jdt.core.prefs')
                 if not exists(jdtProperties):
                     # Try to fix a missing properties file by running eclipseinit
@@ -1338,6 +1381,37 @@ def build(args, parser=None):
     if suppliedParser:
         return args
     return None
+
+def processorjars(args):
+    hasProcessorJars = []
+    
+    for p in sorted_deps():
+        if hasattr(p, 'annotationProcessorClasses') and len(p.annotationProcessorClasses) > 0:
+            hasProcessorJars.append(p)
+            
+    if len(hasProcessorJars) <= 0:
+        return
+    
+    build(['--projects', ",".join(map(lambda p: p.name, hasProcessorJars))])
+
+    for p in hasProcessorJars:
+        spDir = join(p.output_dir(), 'META-INF', 'services')
+        if not exists(spDir):
+            os.makedirs(spDir)
+        spFile = join(spDir, 'javax.annotation.processing.Processor')
+        with open(spFile, 'w') as fp:
+            fp.writelines(p.annotationProcessorClasses)
+        created = False
+        for dep in p.all_deps([], False):
+            if created:
+                cmd = 'uf'
+            else:
+                cmd = 'cf'
+                created = True
+            jarCmd = [java().jar, cmd, join(p.dir, p.name + 'AnnotationProcessor.jar'), '-C', dep.output_dir(), '.']
+            subprocess.check_call(jarCmd)
+            log('added ' + dep.name + ' to ' + p.name + '.jar');
+            
 
 def canonicalizeprojects(args):
     """process all project files to canonicalize the dependencies
@@ -1369,9 +1443,7 @@ def checkstyle(args):
     """run Checkstyle on the Java sources
 
    Run Checkstyle over the Java sources. Any errors or warnings
-   produced by Checkstyle result in a non-zero exit code.
-
-If no projects are given, then all Java projects are checked."""
+   produced by Checkstyle result in a non-zero exit code."""
 
     for p in sorted_deps():
         if p.native:
@@ -1527,7 +1599,13 @@ Given a command name, print help for that command."""
 
     name = args[0]
     if not commands.has_key(name):
-        _argParser.error('unknown command: ' + name)
+        hits = [c for c in commands.iterkeys() if c.startswith(name)]
+        if len(hits) == 1:
+            name = hits[0]
+        elif len(hits) == 0:
+            abort('mx: unknown command \'{0}\'\n{1}use "mx help" for more options'.format(name, _format_commands()))
+        else:
+            abort('mx: command \'{0}\' is ambiguous\n    {1}'.format(name, ' '.join(hits)))
 
     value = commands[name]
     (func, usage) = value[:2]
@@ -1672,6 +1750,8 @@ def eclipseinit(args, suite=None):
 
     if suite is None:
         suite = _mainSuite
+        
+    processorjars([])
 
     for p in projects():
         if p.native:
@@ -1692,6 +1772,9 @@ def eclipseinit(args, suite=None):
         # Every Java program depends on the JRE
         out.element('classpathentry', {'kind' : 'con', 'path' : 'org.eclipse.jdt.launching.JRE_CONTAINER'})
 
+        if exists(join(p.dir, 'plugin.xml')): # eclipse plugin project
+            out.element('classpathentry', {'kind' : 'con', 'path' : 'org.eclipse.pde.core.requiredPlugins'})
+
         for dep in p.all_deps([], True):
             if dep == p:
                 continue;
@@ -1705,13 +1788,18 @@ def eclipseinit(args, suite=None):
                     path = dep.path
                     if dep.mustExist:
                         dep.get_path(resolve=True)
-                        if isabs(path):
-                            out.element('classpathentry', {'exported' : 'true', 'kind' : 'lib', 'path' : path})
-                        else:
+                        if not isabs(path):
                             # Relative paths for "lib" class path entries have various semantics depending on the Eclipse
                             # version being used (e.g. see https://bugs.eclipse.org/bugs/show_bug.cgi?id=274737) so it's
                             # safest to simply use absolute paths.
-                            out.element('classpathentry', {'exported' : 'true', 'kind' : 'lib', 'path' : join(suite.dir, path)})
+                            path = join(suite.dir, path)
+
+                        attributes = {'exported' : 'true', 'kind' : 'lib', 'path' : path}
+
+                        sourcePath = dep.get_source_path(resolve=True)
+                        if sourcePath is not None:
+                            attributes['sourcepath'] = sourcePath
+                        out.element('classpathentry', attributes)
             else:
                 out.element('classpathentry', {'combineaccessrules' : 'false', 'exported' : 'true', 'kind' : 'src', 'path' : '/' + dep.name})
 
@@ -1766,11 +1854,19 @@ def eclipseinit(args, suite=None):
             out.element('name', data='net.sf.eclipsecs.core.CheckstyleBuilder')
             out.element('arguments', data='')
             out.close('buildCommand')
+        if exists(join(p.dir, 'plugin.xml')): # eclipse plugin project
+            for buildCommand in ['org.eclipse.pde.ManifestBuilder', 'org.eclipse.pde.SchemaBuilder']:
+                out.open('buildCommand')
+                out.element('name', data=buildCommand)
+                out.element('arguments', data='')
+                out.close('buildCommand')
         out.close('buildSpec')
         out.open('natures')
         out.element('nature', data='org.eclipse.jdt.core.javanature')
         if exists(csConfig):
             out.element('nature', data='net.sf.eclipsecs.core.CheckstyleNature')
+        if exists(join(p.dir, 'plugin.xml')): # eclipse plugin project
+            out.element('nature', data='org.eclipse.pde.PluginNature')
         out.close('natures')
         out.close('projectDescription')
         update_file(join(p.dir, '.project'), out.xml(indent='\t', newl='\n'))
@@ -1782,12 +1878,35 @@ def eclipseinit(args, suite=None):
         eclipseSettingsDir = join(suite.dir, 'mx', 'eclipse-settings')
         if exists(eclipseSettingsDir):
             for name in os.listdir(eclipseSettingsDir):
+                if name == "org.eclipse.jdt.apt.core.prefs" and not (hasattr(p, 'annotationProcessors') and len(p.annotationProcessors) > 0):
+                    continue
                 path = join(eclipseSettingsDir, name)
                 if isfile(path):
                     with open(join(eclipseSettingsDir, name)) as f:
                         content = f.read()
                     content = content.replace('${javaCompliance}', str(p.javaCompliance))
                     update_file(join(settingsDir, name), content)
+        
+        if hasattr(p, 'annotationProcessors') and len(p.annotationProcessors) > 0:
+            out = XMLDoc()
+            out.open('factorypath')
+            out.element('factorypathentry', {'kind' : 'PLUGIN', 'id' : 'org.eclipse.jst.ws.annotations.core', 'enabled' : 'true', 'runInBatchMode' : 'false'})
+            for ap in p.annotationProcessors:
+                apProject = project(ap)
+                out.element('factorypathentry', {'kind' : 'WKSPJAR', 'id' : '/' + apProject.name + '/' + apProject.name + 'AnnotationProcessor.jar', 'enabled' : 'true', 'runInBatchMode' : 'false'})
+                for dep in apProject.all_deps([], True):
+                    if dep.isLibrary():
+                        if not hasattr(dep, 'eclipse.container') and not hasattr(dep, 'eclipse.project'):
+                            if dep.mustExist:
+                                path = dep.get_path(resolve=True)
+                                if not isabs(path):
+                                    # Relative paths for "lib" class path entries have various semantics depending on the Eclipse
+                                    # version being used (e.g. see https://bugs.eclipse.org/bugs/show_bug.cgi?id=274737) so it's
+                                    # safest to simply use absolute paths.
+                                    path = join(suite.dir, path)
+                                out.element('factorypathentry', {'kind' : 'EXTJAR', 'id' : path, 'enabled' : 'true', 'runInBatchMode' : 'false'})
+            out.close('factorypath')
+            update_file(join(p.dir, '.factorypath'), out.xml(indent='\t', newl='\n'))
 
     make_eclipse_attach('localhost', '8000', deps=projects())
 
@@ -1803,6 +1922,9 @@ def netbeansinit(args, suite=None):
     updated = False
     for p in projects():
         if p.native:
+            continue
+
+        if exists(join(p.dir, 'plugin.xml')): # eclipse plugin project
             continue
 
         if not exists(join(p.dir, 'nbproject')):
@@ -2111,6 +2233,7 @@ def javadoc(args, parser=None, docDir='javadoc', includeDeps=True, stdDoclet=Tru
             try:
                 log('Generating {2} for {0} in {1}'.format(p.name, out, docDir))
                 run([java().javadoc, memory,
+                     '-XDignore.symbol.file',
                      '-d64',
                      '-classpath', cp,
                      '-quiet',
@@ -2211,6 +2334,7 @@ def site(args):
             dot = join(tmpbase, 'all', str(args.dot_output_base) + '.dot')
             svg = join(tmpbase, 'all', str(args.dot_output_base) + '.svg')
             jpg = join(tmpbase, 'all', str(args.dot_output_base) + '.jpg')
+            html = join(tmpbase, 'all', str(args.dot_output_base) + '.html')
             with open(dot, 'w') as fp:
                 dim = len(projects)
                 print >> fp, 'digraph projects {'
@@ -2240,8 +2364,11 @@ def site(args):
         with open(svg, 'w') as fp:
             fp.write(content)
 
-        # Post-process generated overview-summary.html files
+        # Create HTML that embeds the svg file in an <object> frame
+        with open(html, 'w') as fp:
+            print >> fp, '<html><body><object data="modules.svg" type="image/svg+xml"></object></body></html>'
 
+        # Post-process generated overview-summary.html files
         def fix_overview_summary(path, topLink):
             """
             Processes an "overview-summary.html" generated by javadoc to put the complete
