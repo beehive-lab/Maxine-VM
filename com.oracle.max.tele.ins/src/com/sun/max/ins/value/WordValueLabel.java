@@ -234,9 +234,9 @@ public class WordValueLabel extends ValueLabel {
         UNAVAILABLE;
     }
 
-    private DisplayMode displayMode;
+    private DisplayMode displayMode = null;
 
-    private final boolean forceTxt;
+    private final boolean preferTextInitially;
 
     private Font wordDataFont;
 
@@ -258,6 +258,27 @@ public class WordValueLabel extends ValueLabel {
      */
     public WordValueLabel(Inspection inspection, ValueMode valueMode, Component parent) {
         this(inspection, valueMode, Word.zero(), parent);
+    }
+
+    /**
+     * Creates a display label for a word of machine data, initially set to null.
+     * <p>
+     * Content of label is supplied by override {@link ValueLabel#fetchValue()}, which
+     * gets called initially and when the label is refreshed.
+     * <br>
+     * Display state can be cycled among alternate presentations in some situations.
+     * <p>
+     * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
+     * when the display state is cycled; this will be done automatically if the table is passed in
+     * as the parent component.
+     *
+     * @param inspection
+     * @param valueMode presumed type of value for the word, influences display modes
+     * @param parent a component that should be repainted when the display state is cycled;
+     * @param preferTextInitially if {@code true} causes any possible alternate (textual) display to be used initially.
+     */
+    public WordValueLabel(Inspection inspection, ValueMode valueMode, Component parent, boolean preferTextInitially) {
+        this(inspection, valueMode, Word.zero(), parent, preferTextInitially);
     }
 
     /**
@@ -298,14 +319,14 @@ public class WordValueLabel extends ValueLabel {
      * @param valueMode presumed type of value for the word, influences display modes
      * @param word initial value for content.
      * @param parent a component that should be repainted when the display state is cycled;
-     * @param forceText if {@code true} causes any possible alternate (textual) display to be used initially.
+     * @param preferTextInitially if {@code true} causes any possible alternate (textual) display to be used initially.
      */
-    public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent, boolean forceText) {
+    public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent, boolean preferTextInitially) {
         super(inspection, null);
         this.parent = parent;
         this.valueMode = valueMode;
         this.wordDataFont = inspection.preference().style().defaultWordDataFont();
-        this.forceTxt = forceText;
+        this.preferTextInitially = preferTextInitially;
         initializeValue();
         if (value() == null) {
             setValue(new WordValue(word));
@@ -431,6 +452,17 @@ public class WordValueLabel extends ValueLabel {
         stack = null;
         threadLocalsBlock = null;
 
+        /**
+         * The previous display mode, null initially, which will supersede the default and be reused if appropriate
+         */
+        final DisplayMode oldDisplayMode = displayMode;
+
+        /**
+         * {@code true} only the first time the value gets set <em>and</em> there is a preference for initial text.
+         * After the first time, the mode previously in effect, as selected by the user, prevails if appropriate to the value.
+         */
+        final boolean forceText = oldDisplayMode == null && preferTextInitially;
+
         if (newValue == VoidValue.VOID) {
             displayMode = DisplayMode.INVALID;
         } else if (valueMode == ValueMode.FLAGS_REGISTER) {
@@ -463,35 +495,26 @@ public class WordValueLabel extends ValueLabel {
                     thread = vm().threadManager().findThread(address);
                     // From here on, we need to try reading from the VM, if it is available
                     if (newValue == null || newValue.isZero()) {
-                        if (valueMode == ValueMode.REFERENCE || forceTxt) {
+                        if (valueMode == ValueMode.REFERENCE || preferTextInitially) {
                             displayMode = DisplayMode.NULL_WORD;
                         }
                     } else if ((object = vm().objects().findObjectAt(address)) != null) {
+                        // Value is the address of an object origin; select display mode, keeping previous one if relevant.
                         switch(valueMode) {
-                            case REFERENCE:
-                            case LITERAL_REFERENCE:
-                                displayMode = DisplayMode.OBJECT_REFERENCE_TEXT;
-                                break;
                             case HUB_REFERENCE:
-                                displayMode = DisplayMode.HUB_REFERENCE_TEXT;
+                                displayMode = (oldDisplayMode == DisplayMode.HUB_REFERENCE_TEXT || forceText) ? DisplayMode.HUB_REFERENCE_TEXT : DisplayMode.HUB_REFERENCE;
                                 break;
                             default:
-                                displayMode = forceTxt ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
+                                displayMode = (oldDisplayMode == DisplayMode.OBJECT_REFERENCE_TEXT || forceText) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
                         }
                     } else if ((object = vm().objects().findQuasiObjectAt(address)) != null) {
-                        switch(valueMode) {
-                            case REFERENCE:
-                                displayMode = DisplayMode.QUASI_OBJECT_REFERENCE_TEXT;
-                                break;
-                            default:
-                                displayMode = forceTxt ? DisplayMode.QUASI_OBJECT_REFERENCE_TEXT : DisplayMode.QUASI_OBJECT_REFERENCE;
-                        }
+                        displayMode = (oldDisplayMode == DisplayMode.QUASI_OBJECT_REFERENCE_TEXT || forceText) ? DisplayMode.QUASI_OBJECT_REFERENCE_TEXT : DisplayMode.QUASI_OBJECT_REFERENCE;
                     } else if (thread != null && thread.stack().memoryRegion().contains(address)) {
                         stack = thread.stack();
-                        displayMode = (valueMode == ValueMode.REFERENCE || forceTxt) ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
+                        displayMode = (oldDisplayMode == DisplayMode.STACK_LOCATION_TEXT || forceText) ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
                     } else if (thread != null && thread.localsBlock().memoryRegion() != null && thread.localsBlock().memoryRegion().contains(address)) {
                         threadLocalsBlock = thread.localsBlock();
-                        displayMode = (valueMode == ValueMode.REFERENCE || forceTxt) ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
+                        displayMode = (oldDisplayMode == DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT || forceText) ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                     } else if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
                         displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                     } else if (valueMode == ValueMode.HUB_REFERENCE) {
@@ -517,15 +540,15 @@ public class WordValueLabel extends ValueLabel {
                             final Word jitEntryPoint = codeStart.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset());
                             final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset());
                             if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
-                                displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT || forceTxt) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
+                                displayMode = (oldDisplayMode == DisplayMode.CALL_ENTRY_POINT_TEXT || forceText) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
                             } else {
-                                displayMode = (valueMode == ValueMode.CALL_RETURN_POINT || forceTxt) ? DisplayMode.CALL_RETURN_POINT_TEXT : DisplayMode.CALL_RETURN_POINT;
+                                displayMode = (oldDisplayMode == DisplayMode.CALL_RETURN_POINT_TEXT || forceText) ? DisplayMode.CALL_RETURN_POINT_TEXT : DisplayMode.CALL_RETURN_POINT;
                             }
                         } else {
                             nativeFunction = vm().machineCode().findNativeFunction(address);
                             if (nativeFunction != null) {
                                 // The word points into a native function
-                                displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT || forceTxt) ? DisplayMode.NATIVE_FUNCTION_TEXT : DisplayMode.NATIVE_FUNCTION;
+                                displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT || oldDisplayMode == DisplayMode.NATIVE_FUNCTION_TEXT || forceText) ? DisplayMode.NATIVE_FUNCTION_TEXT : DisplayMode.NATIVE_FUNCTION;
                             } else if (valueMode == ValueMode.ITABLE_ENTRY) {
                                 final TeleClassActor teleClassActor = vm().classes().findTeleClassActor(address.toInt());
                                 if (teleClassActor != null) {

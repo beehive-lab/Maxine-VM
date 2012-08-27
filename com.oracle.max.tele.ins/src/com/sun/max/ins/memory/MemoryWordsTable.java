@@ -326,8 +326,7 @@ public final class MemoryWordsTable extends InspectorTable {
             final Address address = tableModel.getAddress(row);
             WordValueLabel label = addressToLabelMap.get(address.toLong());
             if (label == null) {
-                final ValueMode labelValueMode = vm().objects().objectStatusAt(address).isLive() ? ValueMode.REFERENCE : ValueMode.WORD;
-                label = new WordValueLabel(inspection, labelValueMode, address, MemoryWordsTable.this);
+                label = new WordValueLabel(inspection, ValueMode.WORD, address, MemoryWordsTable.this, true);
                 label.setToolTipPrefix("Memory word location<br>Address=");
                 label.setOpaque(true);
                 addressToLabelMap.put(address.toLong(), label);
