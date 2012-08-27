@@ -52,14 +52,14 @@ public class VMLogStoreVMAdviceHandlerGenerator {
         int argCount = generateSignature(m, null);
         out.printf(" {%n");
         if (m.getName().contains("MultiNewArray")) {
-            out.printf("        adviseAfterNewArray(arg1, arg2[0]);%n");
+            out.printf("        adviseAfterNewArray(arg1, arg2, arg3[0]);%n");
         } else {
             out.printf("        super.%s(", m.getName());
             generateInvokeArgs(argCount);
             out.printf("        VMAVMLogger.logger.log%s(getTime()%s", toFirstUpper(m.getName()), argCount > 0 ? ", " : "");
             generateInvokeArgs(argCount);
             if (m.getName().contains("NewArray")) {
-                out.printf("        MultiNewArrayHelper.handleMultiArray(this, arg1);%n");
+                out.printf("        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);%n");
             }
         }
         out.printf("    }%n%n");

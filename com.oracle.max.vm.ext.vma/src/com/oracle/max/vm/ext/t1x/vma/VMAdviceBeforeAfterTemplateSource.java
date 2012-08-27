@@ -2992,128 +2992,128 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(IFEQ)
-    public static void ifeq(int value1, int bci) {
+    public static void ifeq(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 153, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 153, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFNE)
-    public static void ifne(int value1, int bci) {
+    public static void ifne(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 154, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 154, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFLT)
-    public static void iflt(int value1, int bci) {
+    public static void iflt(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 155, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 155, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFGE)
-    public static void ifge(int value1, int bci) {
+    public static void ifge(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 156, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 156, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFGT)
-    public static void ifgt(int value1, int bci) {
+    public static void ifgt(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 157, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 157, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFLE)
-    public static void ifle(int value1, int bci) {
+    public static void ifle(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 158, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 158, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFNULL)
-    public static void ifnull(Object value1, int bci) {
+    public static void ifnull(Object value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 198, value1, null);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 198, value1, null, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFNONNULL)
-    public static void ifnonnull(Object value1, int bci) {
+    public static void ifnonnull(Object value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 199, value1, null);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 199, value1, null, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPEQ)
-    public static void if_icmpeq(int value1, int value2, int bci) {
+    public static void if_icmpeq(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 159, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 159, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPNE)
-    public static void if_icmpne(int value1, int value2, int bci) {
+    public static void if_icmpne(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 160, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 160, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPLT)
-    public static void if_icmplt(int value1, int value2, int bci) {
+    public static void if_icmplt(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 161, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 161, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPGE)
-    public static void if_icmpge(int value1, int value2, int bci) {
+    public static void if_icmpge(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 162, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 162, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPGT)
-    public static void if_icmpgt(int value1, int value2, int bci) {
+    public static void if_icmpgt(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 163, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 163, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPLE)
-    public static void if_icmple(int value1, int value2, int bci) {
+    public static void if_icmple(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 164, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 164, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ACMPEQ)
-    public static void if_acmpeq(Object value1, Object value2, int bci) {
+    public static void if_acmpeq(Object value1, Object value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 165, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 165, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ACMPNE)
-    public static void if_acmpne(Object value1, Object value2, int bci) {
+    public static void if_acmpne(Object value1, Object value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 166, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 166, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(GOTO)
-    public static void goto_s(int bci) {
+    public static void goto_s(int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeBytecode(bci, 167);
+            VMAStaticBytecodeAdvice.adviseBeforeGoto(bci, targetBci);
         }
     }
 
     @T1X_TEMPLATE(GOTO_W)
-    public static void goto_w(int bci) {
+    public static void goto_w(int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeBytecode(bci, 200);
+            VMAStaticBytecodeAdvice.adviseBeforeGoto(bci, targetBci);
         }
     }
 

@@ -178,18 +178,18 @@ public class SBPSLockedVMATextStore extends SBPSVMATextStore {
     }
 
     @Override
-    public synchronized void adviseBeforeIf(long arg1, String arg2, int arg3, int arg4, int arg5, int arg6) {
-        super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5, arg6);
+    public synchronized void adviseBeforeIf(long arg1, String arg2, int arg3, int arg4, int arg5, int arg6, int arg7) {
+        super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     }
 
     @Override
-    public synchronized void adviseBeforeIfObject(long arg1, String arg2, int arg3, int arg4, long arg5, long arg6) {
-        super.adviseBeforeIfObject(arg1, arg2, arg3, arg4, arg5, arg6);
+    public synchronized void adviseBeforeIfObject(long arg1, String arg2, int arg3, int arg4, long arg5, long arg6, int arg7) {
+        super.adviseBeforeIfObject(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     }
 
     @Override
-    public synchronized void adviseBeforeBytecode(long arg1, String arg2, int arg3, int arg4) {
-        super.adviseBeforeBytecode(arg1, arg2, arg3, arg4);
+    public synchronized void adviseBeforeGoto(long arg1, String arg2, int arg3, int arg4) {
+        super.adviseBeforeGoto(arg1, arg2, arg3, arg4);
     }
 
     @Override

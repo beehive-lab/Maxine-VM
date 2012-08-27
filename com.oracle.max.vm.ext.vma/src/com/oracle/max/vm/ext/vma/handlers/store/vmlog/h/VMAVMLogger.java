@@ -180,16 +180,16 @@ public class VMAVMLogger {
             storeAdaptor(threadId).adviseBeforeConversion(arg1, arg2, arg3, arg4);
         }
         @Override
-        protected void traceAdviseBeforeIf(int threadId, long arg1, int arg2, int arg3, int arg4, int arg5) {
-            storeAdaptor(threadId).adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+        protected void traceAdviseBeforeIf(int threadId, long arg1, int arg2, int arg3, int arg4, int arg5, int arg6) {
+            storeAdaptor(threadId).adviseBeforeIf(arg1, arg2, arg3, arg4, arg5, arg6);
         }
         @Override
-        protected void traceAdviseBeforeIf(int threadId, long arg1, int arg2, int arg3, Object arg4, Object arg5) {
-            storeAdaptor(threadId).adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+        protected void traceAdviseBeforeIf(int threadId, long arg1, int arg2, int arg3, Object arg4, Object arg5, int arg6) {
+            storeAdaptor(threadId).adviseBeforeIf(arg1, arg2, arg3, arg4, arg5, arg6);
         }
         @Override
-        protected void traceAdviseBeforeBytecode(int threadId, long arg1, int arg2, int arg3) {
-            storeAdaptor(threadId).adviseBeforeBytecode(arg1, arg2, arg3);
+        protected void traceAdviseBeforeGoto(int threadId, long arg1, int arg2, int arg3) {
+            storeAdaptor(threadId).adviseBeforeGoto(arg1, arg2, arg3);
         }
         @Override
         protected void traceAdviseBeforeReturn(int threadId, long arg1, int arg2, double arg3) {
@@ -368,11 +368,11 @@ public class VMAVMLogger {
 
         void adviseBeforeConversion(long arg1, int arg2, int arg3, double arg4);
 
-        void adviseBeforeIf(long arg1, int arg2, int arg3, int arg4, int arg5);
+        void adviseBeforeIf(long arg1, int arg2, int arg3, int arg4, int arg5, int arg6);
 
-        void adviseBeforeIf(long arg1, int arg2, int arg3, Object arg4, Object arg5);
+        void adviseBeforeIf(long arg1, int arg2, int arg3, Object arg4, Object arg5, int arg6);
 
-        void adviseBeforeBytecode(long arg1, int arg2, int arg3);
+        void adviseBeforeGoto(long arg1, int arg2, int arg3);
 
         void adviseBeforeReturn(long arg1, int arg2, double arg3);
 
@@ -443,9 +443,9 @@ public class VMAVMLogger {
             AdviseAfterGC, AdviseAfterMethodEntry, AdviseAfterMultiNewArray,
             AdviseAfterNew, AdviseAfterNewArray, AdviseBeforeArrayLength, AdviseBeforeArrayLoad,
             AdviseBeforeArrayStore, AdviseBeforeArrayStore2, AdviseBeforeArrayStore3, AdviseBeforeArrayStore4,
-            AdviseBeforeBytecode, AdviseBeforeCheckCast, AdviseBeforeConstLoad, AdviseBeforeConstLoad2,
-            AdviseBeforeConstLoad3, AdviseBeforeConstLoad4, AdviseBeforeConversion, AdviseBeforeConversion2,
-            AdviseBeforeConversion3, AdviseBeforeGC, AdviseBeforeGetField, AdviseBeforeGetStatic,
+            AdviseBeforeCheckCast, AdviseBeforeConstLoad, AdviseBeforeConstLoad2, AdviseBeforeConstLoad3,
+            AdviseBeforeConstLoad4, AdviseBeforeConversion, AdviseBeforeConversion2, AdviseBeforeConversion3,
+            AdviseBeforeGC, AdviseBeforeGetField, AdviseBeforeGetStatic, AdviseBeforeGoto,
             AdviseBeforeIf, AdviseBeforeIf2, AdviseBeforeInstanceOf, AdviseBeforeInvokeInterface,
             AdviseBeforeInvokeSpecial, AdviseBeforeInvokeStatic, AdviseBeforeInvokeVirtual, AdviseBeforeLoad,
             AdviseBeforeMonitorEnter, AdviseBeforeMonitorExit, AdviseBeforeOperation, AdviseBeforeOperation2,
@@ -460,8 +460,8 @@ public class VMAVMLogger {
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x0, 0x4, 0xc, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x14, 0x4, 0x0, 0xc, 0x0,
-            0x0, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4, 0x4, 0x0, 0x18, 0xc, 0x4, 0x4,
+        private static final int[] REFMAPS = new int[] {0x0, 0x4, 0xc, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x14, 0x4, 0xc, 0x0, 0x0,
+            0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4, 0x4, 0x0, 0x0, 0x18, 0xc, 0x4, 0x4,
             0x4, 0x4, 0x0, 0x4, 0x4, 0x0, 0x0, 0x0, 0x4, 0x4, 0x14, 0x4, 0x4,
             0x4, 0x14, 0x4, 0x0, 0x0, 0x0, 0x4, 0x0, 0x4, 0x0, 0x0, 0x0, 0x8,
             0x0, 0x0, 0x0, 0x4, 0x2};
@@ -542,12 +542,6 @@ public class VMAVMLogger {
         protected abstract void traceAdviseBeforeArrayStore(int threadId, long arg1, int arg2, Object arg3, int arg4, long arg5);
 
         @INLINE
-        public final void logAdviseBeforeBytecode(long arg1, int arg2, int arg3) {
-            log(Operation.AdviseBeforeBytecode.ordinal(), longArg(arg1), intArg(arg2), intArg(arg3));
-        }
-        protected abstract void traceAdviseBeforeBytecode(int threadId, long arg1, int arg2, int arg3);
-
-        @INLINE
         public final void logAdviseBeforeCheckCast(long arg1, int arg2, Object arg3, Object arg4) {
             log(Operation.AdviseBeforeCheckCast.ordinal(), longArg(arg1), intArg(arg2), objectArg(arg3), objectArg(arg4));
         }
@@ -614,16 +608,28 @@ public class VMAVMLogger {
         protected abstract void traceAdviseBeforeGetStatic(int threadId, long arg1, int arg2, Object arg3, int arg4);
 
         @INLINE
-        public final void logAdviseBeforeIf(long arg1, int arg2, int arg3, int arg4, int arg5) {
-            log(Operation.AdviseBeforeIf.ordinal(), longArg(arg1), intArg(arg2), intArg(arg3), intArg(arg4), intArg(arg5));
+        public final void logAdviseBeforeGoto(long arg1, int arg2, int arg3) {
+            log(Operation.AdviseBeforeGoto.ordinal(), longArg(arg1), intArg(arg2), intArg(arg3));
         }
-        protected abstract void traceAdviseBeforeIf(int threadId, long arg1, int arg2, int arg3, int arg4, int arg5);
+        protected abstract void traceAdviseBeforeGoto(int threadId, long arg1, int arg2, int arg3);
 
         @INLINE
-        public final void logAdviseBeforeIf(long arg1, int arg2, int arg3, Object arg4, Object arg5) {
-            log(Operation.AdviseBeforeIf2.ordinal(), longArg(arg1), intArg(arg2), intArg(arg3), objectArg(arg4), objectArg(arg5));
+        public final void logAdviseBeforeIf(long arg1, int arg2, int arg3, int arg4, int arg5,
+                int arg6) {
+            log(Operation.AdviseBeforeIf.ordinal(), longArg(arg1), intArg(arg2), intArg(arg3), intArg(arg4), intArg(arg5),
+                intArg(arg6));
         }
-        protected abstract void traceAdviseBeforeIf(int threadId, long arg1, int arg2, int arg3, Object arg4, Object arg5);
+        protected abstract void traceAdviseBeforeIf(int threadId, long arg1, int arg2, int arg3, int arg4, int arg5,
+                int arg6);
+
+        @INLINE
+        public final void logAdviseBeforeIf(long arg1, int arg2, int arg3, Object arg4, Object arg5,
+                int arg6) {
+            log(Operation.AdviseBeforeIf2.ordinal(), longArg(arg1), intArg(arg2), intArg(arg3), objectArg(arg4), objectArg(arg5),
+                intArg(arg6));
+        }
+        protected abstract void traceAdviseBeforeIf(int threadId, long arg1, int arg2, int arg3, Object arg4, Object arg5,
+                int arg6);
 
         @INLINE
         public final void logAdviseBeforeInstanceOf(long arg1, int arg2, Object arg3, Object arg4) {
@@ -877,60 +883,60 @@ public class VMAVMLogger {
                     traceAdviseBeforeArrayStore(threadId, toLong(r, 1), toInt(r, 2), toObject(r, 3), toInt(r, 4), toLong(r, 5));
                     break;
                 }
-                case 11: { //AdviseBeforeBytecode
-                    traceAdviseBeforeBytecode(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3));
-                    break;
-                }
-                case 12: { //AdviseBeforeCheckCast
+                case 11: { //AdviseBeforeCheckCast
                     traceAdviseBeforeCheckCast(threadId, toLong(r, 1), toInt(r, 2), toObject(r, 3), toObject(r, 4));
                     break;
                 }
-                case 13: { //AdviseBeforeConstLoad
+                case 12: { //AdviseBeforeConstLoad
                     traceAdviseBeforeConstLoad(threadId, toLong(r, 1), toInt(r, 2), toDouble(r, 3));
                     break;
                 }
-                case 14: { //AdviseBeforeConstLoad2
+                case 13: { //AdviseBeforeConstLoad2
                     traceAdviseBeforeConstLoad(threadId, toLong(r, 1), toInt(r, 2), toFloat(r, 3));
                     break;
                 }
-                case 15: { //AdviseBeforeConstLoad3
+                case 14: { //AdviseBeforeConstLoad3
                     traceAdviseBeforeConstLoad(threadId, toLong(r, 1), toInt(r, 2), toObject(r, 3));
                     break;
                 }
-                case 16: { //AdviseBeforeConstLoad4
+                case 15: { //AdviseBeforeConstLoad4
                     traceAdviseBeforeConstLoad(threadId, toLong(r, 1), toInt(r, 2), toLong(r, 3));
                     break;
                 }
-                case 17: { //AdviseBeforeConversion
+                case 16: { //AdviseBeforeConversion
                     traceAdviseBeforeConversion(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3), toDouble(r, 4));
                     break;
                 }
-                case 18: { //AdviseBeforeConversion2
+                case 17: { //AdviseBeforeConversion2
                     traceAdviseBeforeConversion(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3), toFloat(r, 4));
                     break;
                 }
-                case 19: { //AdviseBeforeConversion3
+                case 18: { //AdviseBeforeConversion3
                     traceAdviseBeforeConversion(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3), toLong(r, 4));
                     break;
                 }
-                case 20: { //AdviseBeforeGC
+                case 19: { //AdviseBeforeGC
                     traceAdviseBeforeGC(threadId, toLong(r, 1));
                     break;
                 }
-                case 21: { //AdviseBeforeGetField
+                case 20: { //AdviseBeforeGetField
                     traceAdviseBeforeGetField(threadId, toLong(r, 1), toInt(r, 2), toObject(r, 3), toInt(r, 4));
                     break;
                 }
-                case 22: { //AdviseBeforeGetStatic
+                case 21: { //AdviseBeforeGetStatic
                     traceAdviseBeforeGetStatic(threadId, toLong(r, 1), toInt(r, 2), toObject(r, 3), toInt(r, 4));
                     break;
                 }
+                case 22: { //AdviseBeforeGoto
+                    traceAdviseBeforeGoto(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3));
+                    break;
+                }
                 case 23: { //AdviseBeforeIf
-                    traceAdviseBeforeIf(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3), toInt(r, 4), toInt(r, 5));
+                    traceAdviseBeforeIf(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3), toInt(r, 4), toInt(r, 5), toInt(r, 6));
                     break;
                 }
                 case 24: { //AdviseBeforeIf2
-                    traceAdviseBeforeIf(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3), toObject(r, 4), toObject(r, 5));
+                    traceAdviseBeforeIf(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3), toObject(r, 4), toObject(r, 5), toInt(r, 6));
                     break;
                 }
                 case 25: { //AdviseBeforeInstanceOf

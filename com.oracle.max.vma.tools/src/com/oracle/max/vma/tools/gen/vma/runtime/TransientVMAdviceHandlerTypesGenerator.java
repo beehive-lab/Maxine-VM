@@ -38,11 +38,11 @@ public class TransientVMAdviceHandlerTypesGenerator {
     private static final String ADVISE_BEFORE = "adviseBefore";
     private static final String ADVISE_AFTER = "adviseAfter";
     private static final String ADVICE_RECORD = "AdviceRecord";
-    private static boolean first = true;
     public static SortedMap<String, Method> enumtoMethod = new TreeMap<String, Method>();
     public static Map<Method, String> methodToEnum = new HashMap<Method, String>();
     public static Map<String, String> enumToRecordName = new HashMap<String, String>();
     public static Map<String, ArrayList<String>> recordToEnumList = new HashMap<String, ArrayList<String>>();
+    private static ArrayList<String> enumArrayList = new ArrayList<String>();
 
     public static void main(String[] args) throws Exception {
         createGenerator(TransientVMAdviceHandlerTypesGenerator.class);
@@ -50,8 +50,17 @@ public class TransientVMAdviceHandlerTypesGenerator {
         for (Method m : VMAdviceHandler.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generateEnum(m);
-                first = false;
             }
+        }
+        String[] enumArray = new String[enumArrayList.size()];
+        enumArrayList.toArray(enumArray);
+        Arrays.sort(enumArray);
+        for (int i = 0; i < enumArray.length; i++) {
+            String name = enumArray[i];
+            if (i > 0) {
+                out.printf(",%n");
+            }
+            out.printf("        %s", name);
         }
         out.printf(";%n%n");
         generateNewAdviceRecord();
@@ -75,15 +84,15 @@ public class TransientVMAdviceHandlerTypesGenerator {
         } else if (name.equals("ConstLoad") || name.endsWith("Store") || name.endsWith("Conversion") ||
                         name.contains("Return") ||  name.contains("PutField") ||
                         name.contains("PutStatic") || name.contains("Operation")) {
-            if (lastParam != null) {
+            if (m.getParameterTypes().length > 1) {
                 name += toFirstUpper(lastParam);
             }
         } else if (name.contains("GetField") || name.contains("GetStatic")) {
-            if (m.getParameterTypes().length > 2) {
+            if (m.getParameterTypes().length > 3) {
                 name += toFirstUpper(lastParam);
             }
         } else if (name.endsWith("If")) {
-            name += toFirstUpper(lastParam);
+            name += toFirstUpper(getNextToLastParameterName(m));
         }
         methodToEnum.put(m, name);
         if (enumtoMethod.get(name) != null) {
@@ -98,10 +107,7 @@ public class TransientVMAdviceHandlerTypesGenerator {
         if (name == null) {
             return;
         }
-        if (!first) {
-            out.printf(",%n");
-        }
-        out.printf("        %s", name);
+        enumArrayList.add(name);
     }
 
     public static void generateRecordToEnumList() {
@@ -114,9 +120,14 @@ public class TransientVMAdviceHandlerTypesGenerator {
             String adviceRecordName = "";
             if (name.equals("ReturnByThrow")) {
                 adviceRecordName = "ObjectLong";
-            } else if (name.contains("ConstLoad") || name.startsWith("Store") || name.contains("Conversion") ||
-                            name.contains("Return")) {
+            } else if (name.contains("ConstLoad") || name.startsWith("Store") || name.contains("Conversion")) {
                 adviceRecordName = uLastParam;
+            } else if (name.contains("Return")) {
+                if (m.getParameterTypes().length > 1) {
+                    adviceRecordName = uLastParam;
+                } else {
+                    adviceRecordName = "";
+                }
             } else if (name.contains("GetField") || name.contains("GetStatic")) {
                 adviceRecordName = "Object";
             } else if (name.contains("PutField") || name.contains("PutStatic") ||

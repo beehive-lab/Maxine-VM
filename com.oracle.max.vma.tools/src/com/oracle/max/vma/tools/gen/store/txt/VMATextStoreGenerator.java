@@ -99,12 +99,13 @@ public class VMATextStoreGenerator {
             }
         } else if (name.endsWith("If")) {
             out.print(", int opcode, ");
-            String lastParam = getLastParameterName(m);
+            String lastParam = getNextToLastParameterName(m);
             if (lastParam.equals("Object")) {
                 out.print("long objId1, long objId2");
             } else {
                 out.print("int op1, int op2");
             }
+            out.print(", int targetBci");
         } else if (name.endsWith("ReturnByThrow")) {
             out.print(", long objId, int poppedFrames");
         } else if (name.endsWith("Return")) {
@@ -145,7 +146,7 @@ public class VMATextStoreGenerator {
         if (result.contains("PutStatic") || result.contains("PutField") ||
             result.contains("GetStatic") || result.contains("GetField") ||
             result.endsWith("Load") || result.endsWith("Store") || result.endsWith("Return") || result.endsWith("If")) {
-            String lastParam = getLastParameterName(m);
+            String lastParam = result.endsWith("If") ? getNextToLastParameterName(m) : getLastParameterName(m);
             if (lastParam != null && lastParam.equals("Object")) {
                 result += "Object";
             }

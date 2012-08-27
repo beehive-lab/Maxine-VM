@@ -203,7 +203,7 @@ public class ProcessLog {
     /**
      * bytecode index of associated bytecode instruction.
      */
-    private int bci;
+    private short bci;
 
     private AllocationEpoch allocationEpoch;
     private AllocationEpoch prevAllocationEpoch;
@@ -777,7 +777,7 @@ public class ProcessLog {
         }
 
         if (CVMATextStore.hasBci(key)) {
-            bci = Integer.parseInt(bciArg);
+            bci = (short) Integer.parseInt(bciArg);
         }
 
         if (CVMATextStore.hasId(key)) {
@@ -835,7 +835,7 @@ public class ProcessLog {
             case ADVISE_BEFORE_MONITOR_ENTER:
             case ADVISE_BEFORE_MONITOR_EXIT: {
                 objectRecord = getTraceRecord(objIdArg);
-                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE, bci);
                 objectAdviceRecord.value = objectRecord;
                 objectRecord.addTraceElement(objectAdviceRecord);
                 adviceRecord = objectAdviceRecord;
@@ -845,7 +845,7 @@ public class ProcessLog {
             case UNSEEN:
             case ADVISE_AFTER_NEW_ARRAY:
             case ADVISE_AFTER_NEW: {
-                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.AFTER);
+                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.AFTER, bci);
                 getClassRecord(recordParts[ID_CLASSNAME_INDEX]);
                 objectRecord = new ObjectRecord(objIdArg, allocationEpoch.epoch, classRecord, threadRecord, objectAdviceRecord);
                 classRecord.addObject(objectRecord);
@@ -875,7 +875,7 @@ public class ProcessLog {
             }
 
             case ADVISE_BEFORE_LOAD: {
-                adviceRecord = createAdviceRecordAndSetTimeAndThread(Load, AdviceMode.BEFORE);
+                adviceRecord = createAdviceRecordAndSetTimeAndThread(Load, AdviceMode.BEFORE, bci);
                 adviceRecord.setPackedValue(Integer.parseInt(arg4));
                 break;
             }
@@ -889,7 +889,7 @@ public class ProcessLog {
             case ADVISE_BEFORE_ARRAY_LOAD: {
                 objectRecord = getTraceRecord(objIdArg);
                 int arrayIndex = (int) expectNumber(recordParts[ARRAY_INDEX_INDEX]);
-                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE, bci);
                 objectAdviceRecord.value = objectRecord;
                 objectAdviceRecord.setPackedValue(arrayIndex);
                 objectRecord.addTraceElement(objectAdviceRecord);
@@ -910,7 +910,7 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_ARRAY_LENGTH: {
                 objectRecord = getTraceRecord(objIdArg);
-                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(ArrayLength, AdviceMode.BEFORE);
+                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(ArrayLength, AdviceMode.BEFORE, bci);
                 objectAdviceRecord.value = objectRecord;
                 objectAdviceRecord.setPackedValue(Integer.parseInt(arg5));
                 objectRecord.addTraceElement(objectAdviceRecord);
@@ -921,7 +921,7 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_GET_STATIC: {
                 getFieldRecord(recordParts[STATIC_CLASSNAME_INDEX], recordParts[STATIC_CLASSNAME_INDEX + 1]);
-                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeAndThread(GetStatic, AdviceMode.BEFORE);
+                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeAndThread(GetStatic, AdviceMode.BEFORE, bci);
                 objectFieldAdviceRecord.value = classRecord;
                 objectFieldAdviceRecord.field = fieldRecord;
                 classRecord.addTraceElement(objectFieldAdviceRecord);
@@ -942,7 +942,7 @@ public class ProcessLog {
             case ADVISE_BEFORE_GET_FIELD: {
                 objectRecord = getTraceRecord(objIdArg);
                 getFieldRecord(recordParts[ID_CLASSNAME_INDEX], recordParts[ID_CLASSNAME_INDEX + 1]);
-                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeAndThread(GetField, AdviceMode.BEFORE);
+                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeAndThread(GetField, AdviceMode.BEFORE, bci);
                 objectFieldAdviceRecord.value = objectRecord;
                 objectFieldAdviceRecord.field = fieldRecord;
                 objectRecord.addTraceElement(objectFieldAdviceRecord);
@@ -963,12 +963,12 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_IF: {
                 if (arg5.equals("J")) {
-                    LongLongAdviceRecord longLongAdviceRecord = (LongLongAdviceRecord) createAdviceRecordAndSetTimeAndThread(IfInt, AdviceMode.BEFORE);
+                    LongLongAdviceRecord longLongAdviceRecord = (LongLongAdviceRecord) createAdviceRecordAndSetTimeAndThread(IfInt, AdviceMode.BEFORE, bci);
                     longLongAdviceRecord.value = Long.parseLong(arg6);
                     longLongAdviceRecord.value2 = Long.parseLong(arg7);
                     adviceRecord = longLongAdviceRecord;
                 } else {
-                    ObjectObjectAdviceRecord objectObjectAdviceRecord = (ObjectObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(IfObject, AdviceMode.BEFORE);
+                    ObjectObjectAdviceRecord objectObjectAdviceRecord = (ObjectObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(IfObject, AdviceMode.BEFORE, bci);
                     ObjectRecord object1 = getTraceRecord(arg6);
                     ObjectRecord object2 = getTraceRecord(arg7);
                     objectObjectAdviceRecord.value = object1;
@@ -1007,7 +1007,7 @@ public class ProcessLog {
             case ADVISE_BEFORE_INSTANCE_OF:
             case ADVISE_BEFORE_CHECK_CAST:  {
                 objectRecord = getTraceRecord(objIdArg);
-                ObjectObjectAdviceRecord objectObjectAdviceRecord = (ObjectObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+                ObjectObjectAdviceRecord objectObjectAdviceRecord = (ObjectObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE, bci);
                 objectObjectAdviceRecord.value = objectRecord;
                 objectObjectAdviceRecord.value = classRecord;
                 if (objectRecord != null) {
@@ -1025,7 +1025,7 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_GC: {
                 allocationEpoch.setEndTime(lastTime);
-                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE, bci);
                 break;
             }
 
@@ -1033,7 +1033,7 @@ public class ProcessLog {
                 prevAllocationEpoch = allocationEpoch;
                 allocationEpoch = new AllocationEpoch(lastTime);
                 allocationEpochs.add(allocationEpoch);
-                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.AFTER);
+                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.AFTER, bci);
                 break;
             }
 
@@ -1046,7 +1046,7 @@ public class ProcessLog {
                 // This object may have been created in some earlier epoch, so can't use current.
                 // It must be the death of id recorded by maxAllocationEpoch
                 objectRecord = objects.get(ObjectRecord.getMapId(objIdArg, maxAllocationEpoch.get(objIdArg)));
-                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(Removal, AdviceMode.AFTER);
+                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(Removal, AdviceMode.AFTER, bci);
                 objectAdviceRecord.value = objectRecord;
                 objectRecord.setRemovalRecord(objectAdviceRecord);
                 adviceRecord = objectAdviceRecord;
@@ -1072,7 +1072,7 @@ public class ProcessLog {
                 }
                 objectRecord = getTraceRecord(objIdArg);
                 getMethodRecord(recordParts[ID_CLASSNAME_INDEX], recordParts[ID_CLASSNAME_INDEX + 1]);
-                ObjectMethodAdviceRecord objectAdviceRecord = (ObjectMethodAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.values()[adviceModeInt]);
+                ObjectMethodAdviceRecord objectAdviceRecord = (ObjectMethodAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.values()[adviceModeInt], bci);
                 if (key == Key.ADVISE_BEFORE_INVOKE_STATIC /*|| key == Key.ADVISE_AFTER_INVOKE_STATIC*/) {
                     objectAdviceRecord.value = classRecord;
                 } else {
@@ -1097,14 +1097,14 @@ public class ProcessLog {
                 if (arg4 != null) {
                     adviceRecord = createAdviceRecordAndSetTimeThreadValue("Return", AdviceMode.BEFORE, arg4, arg5);
                 } else {
-                    adviceRecord = createAdviceRecordAndSetTimeAndThread(Return, AdviceMode.BEFORE);
+                    adviceRecord = createAdviceRecordAndSetTimeAndThread(Return, AdviceMode.BEFORE, bci);
                 }
                 break;
             }
 
             case ADVISE_BEFORE_RETURN_BY_THROW: {
                 objectRecord = getTraceRecord(objIdArg);
-                ObjectLongAdviceRecord objectAdviceRecord = (ObjectLongAdviceRecord) createAdviceRecordAndSetTimeAndThread(ReturnByThrow, AdviceMode.BEFORE);
+                ObjectLongAdviceRecord objectAdviceRecord = (ObjectLongAdviceRecord) createAdviceRecordAndSetTimeAndThread(ReturnByThrow, AdviceMode.BEFORE, bci);
                 objectAdviceRecord.setPackedValue(Integer.parseInt(arg5));
                 objectAdviceRecord.value = objectRecord;
                 adviceRecord = objectAdviceRecord;
@@ -1112,14 +1112,14 @@ public class ProcessLog {
             }
 
             case ADVISE_BEFORE_STACK_ADJUST: {
-                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE, bci);
                 adviceRecord.setPackedValue(Integer.parseInt(arg4));
                 break;
             }
 
             case ADVISE_BEFORE_THREAD_TERMINATING:
             case ADVISE_BEFORE_THREAD_STARTING:
-                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE, bci);
                 if (key == Key.ADVISE_BEFORE_THREAD_STARTING) {
                     threadRecord.startTime = lastTime;
                 } else {
@@ -1131,8 +1131,8 @@ public class ProcessLog {
                 assert false : key + " unexpected";
                 break;
 
-            case ADVISE_BEFORE_BYTECODE:
-                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
+            case ADVISE_BEFORE_GOTO:
+                adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE, bci);
                 adviceRecord.setPackedValue(Integer.parseInt(arg4));
                 break;
 
@@ -1151,7 +1151,7 @@ public class ProcessLog {
 
     private AdviceRecord createAdviceRecordAndSetTimeThreadValue(String rtPrefix, AdviceMode adviceMode, String valueKey, String value) throws TraceException {
         RecordType rt = getRecordTypeForValue(rtPrefix, valueKey);
-        AdviceRecord adviceRecord = createAdviceRecordAndSetTimeAndThread(rt, adviceMode);
+        AdviceRecord adviceRecord = createAdviceRecordAndSetTimeAndThread(rt, adviceMode, bci);
         switch (valueKey.charAt(0)) {
             case OBJ_VALUE: {
                 ObjectRecord or = getTraceRecord(value);
@@ -1244,7 +1244,7 @@ public class ProcessLog {
         return adviceRecord;
     }
 
-    private AdviceRecord createAdviceRecordAndSetTimeAndThread(RecordType rt, AdviceMode adviceMode) {
+    private AdviceRecord createAdviceRecordAndSetTimeAndThread(RecordType rt, AdviceMode adviceMode, short bci) {
         AdviceRecord adviceRecord;
         // Handle the change of record type for PUT/GET/FIELD/STATIC and REMOVAL types
         switch (rt) {
@@ -1278,7 +1278,7 @@ public class ProcessLog {
             default:
                 adviceRecord = rt.newAdviceRecord();
         }
-        adviceRecord.setCodeAndMode(rt, adviceMode.ordinal());
+        adviceRecord.setCodeModeBci(rt, adviceMode, bci);
         adviceRecord.time = lastTime;
         adviceRecord.thread = threadRecord;
         return adviceRecord;
@@ -1368,8 +1368,8 @@ public class ProcessLog {
             case ADVISE_BEFORE_RETURN:
                 return Return;
 
-            case ADVISE_BEFORE_BYTECODE:
-                return Bytecode;
+            case ADVISE_BEFORE_GOTO:
+                return Goto;
 
             case ADVISE_AFTER_MULTI_NEW_ARRAY:
                 // These are all value based so do not have a simple static mapping

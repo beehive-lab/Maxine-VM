@@ -325,16 +325,16 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
         store.adviseBeforeConversion(time, tng.getThreadName(), arg1, arg2, arg3);
     }
 
-    public void adviseBeforeIf(long time, int arg1, int arg2, int arg3, int arg4) {
-        store.adviseBeforeIf(time, tng.getThreadName(), arg1, arg2, arg3, arg4);
+    public void adviseBeforeIf(long time, int arg1, int arg2, int arg3, int arg4, int arg5) {
+        store.adviseBeforeIf(time, tng.getThreadName(), arg1, arg2, arg3, arg4, arg5);
     }
 
-    public void adviseBeforeIf(long time, int arg1, int arg2, Object arg3, Object arg4) {
-        store.adviseBeforeIfObject(time, tng.getThreadName(), arg1, arg2, state.readId(arg3), state.readId(arg4));
+    public void adviseBeforeIf(long time, int arg1, int arg2, Object arg3, Object arg4, int arg5) {
+        store.adviseBeforeIfObject(time, tng.getThreadName(), arg1, arg2, state.readId(arg3), state.readId(arg4), arg5);
     }
 
-    public void adviseBeforeBytecode(long time, int arg1, int arg2) {
-        store.adviseBeforeBytecode(time, tng.getThreadName(), arg1, arg2);
+    public void adviseBeforeGoto(long time, int arg1, int arg2) {
+        store.adviseBeforeGoto(time, tng.getThreadName(), arg1, arg2);
     }
 
     public void adviseBeforeReturn(long time, int arg1, double arg2) {
