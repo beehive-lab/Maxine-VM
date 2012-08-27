@@ -78,11 +78,11 @@ public abstract class BytecodeAdvice {
 
     public abstract void adviseBeforeConversion(int bci, int opcode, double op);
 
-    public abstract void adviseBeforeIf(int bci, int opcode, int op1, int op2);
+    public abstract void adviseBeforeIf(int bci, int opcode, int op1, int op2, int targetBci);
 
-    public abstract void adviseBeforeIf(int bci, int opcode, Object op1, Object op2);
+    public abstract void adviseBeforeIf(int bci, int opcode, Object op1, Object op2, int targetBci);
 
-    public abstract void adviseBeforeBytecode(int bci, int opcode);
+    public abstract void adviseBeforeGoto(int bci, int targetBci);
 
     public abstract void adviseBeforeReturn(int bci, long value);
 

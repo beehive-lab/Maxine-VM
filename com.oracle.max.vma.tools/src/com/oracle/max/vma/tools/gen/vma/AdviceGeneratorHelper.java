@@ -193,6 +193,14 @@ public class AdviceGeneratorHelper {
         return types[types.length - 1].getSimpleName();
     }
 
+    public static String getNextToLastParameterName(Method m) {
+        Class<?>[] types = m.getParameterTypes();
+        if (types.length == 0) {
+            return null;
+        }
+        return types[types.length - 2].getSimpleName();
+    }
+
     public static String getNthParameterName(Method m, int argc) {
         Class<?>[] types = m.getParameterTypes();
         if (types.length == 0 || argc > types.length) {

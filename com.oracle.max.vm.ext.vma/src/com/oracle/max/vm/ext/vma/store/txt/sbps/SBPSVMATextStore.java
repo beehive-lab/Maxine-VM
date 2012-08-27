@@ -785,7 +785,6 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         sb.append(LONG_VALUE);
         appendSpace();
         sb.append(arg2);
-        appendSpace();
         end();
     }
 
@@ -797,7 +796,6 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         sb.append(FLOAT_VALUE);
         appendSpace();
         sb.append(arg2);
-        appendSpace();
         end();
     }
 
@@ -809,11 +807,10 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         sb.append(DOUBLE_VALUE);
         appendSpace();
         sb.append(arg2);
-        appendSpace();
         end();
     }
 
-    private void store_adviseBeforeIf(long time, String threadName, int bci, int opcode, int op1, int op2) {
+    private void store_adviseBeforeIf(long time, String threadName, int bci, int opcode, int op1, int op2, int branchOffset) {
         appendTT(time, ADVISE_BEFORE_IF, threadName, bci);
         appendSpace();
         sb.append(opcode);
@@ -824,10 +821,11 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         appendSpace();
         sb.append(op2);
         appendSpace();
+        sb.append(branchOffset);
         end();
     }
 
-    private void store_adviseBeforeIfObject(long time, String threadName, int bci, int opcode, long objId1, long objId2) {
+    private void store_adviseBeforeIfObject(long time, String threadName, int bci, int opcode, long objId1, long objId2, int branchOffset) {
         appendTT(time, ADVISE_BEFORE_IF, threadName, bci);
         appendSpace();
         sb.append(opcode);
@@ -838,6 +836,14 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         appendSpace();
         sb.append(objId2);
         appendSpace();
+        sb.append(branchOffset);
+        end();
+    }
+
+    private void store_adviseBeforeGoto(long time, String threadName, int bci, int branchOffset) {
+        appendTT(time, ADVISE_BEFORE_GOTO, threadName, bci);
+        appendSpace();
+        sb.append(branchOffset);
         end();
     }
 
@@ -929,12 +935,14 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
+    /*
     private void store_adviseBeforeBytecode(long time, String threadName, int bci, int arg1) {
         appendTT(time, ADVISE_BEFORE_BYTECODE, threadName, bci);
         appendSpace();
         sb.append(arg1);
         end();
     }
+    */
 
     private void store_adviseBeforeMonitorEnter(long time, String threadName, int bci, long objId) {
         appendTTId(time, ADVISE_BEFORE_MONITOR_ENTER, objId, threadName, bci);
@@ -1124,18 +1132,18 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     @Override
-    public void adviseBeforeIf(long arg1, String arg2, int arg3, int arg4, int arg5, int arg6) {
-        store_adviseBeforeIf(arg1, getThreadShortForm(arg2), arg3, arg4, arg5, arg6);
+    public void adviseBeforeIf(long arg1, String arg2, int arg3, int arg4, int arg5, int arg6, int arg7) {
+        store_adviseBeforeIf(arg1, getThreadShortForm(arg2), arg3, arg4, arg5, arg6, arg7);
     }
 
     @Override
-    public void adviseBeforeIfObject(long arg1, String arg2, int arg3, int arg4, long arg5, long arg6) {
-        store_adviseBeforeIfObject(arg1, getThreadShortForm(arg2), arg3, arg4, arg5, arg6);
+    public void adviseBeforeIfObject(long arg1, String arg2, int arg3, int arg4, long arg5, long arg6, int arg7) {
+        store_adviseBeforeIfObject(arg1, getThreadShortForm(arg2), arg3, arg4, arg5, arg6, arg7);
     }
 
     @Override
-    public void adviseBeforeBytecode(long arg1, String arg2, int arg3, int arg4) {
-        store_adviseBeforeBytecode(arg1, getThreadShortForm(arg2), arg3, arg4);
+    public void adviseBeforeGoto(long arg1, String arg2, int arg3, int arg4) {
+        store_adviseBeforeGoto(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override

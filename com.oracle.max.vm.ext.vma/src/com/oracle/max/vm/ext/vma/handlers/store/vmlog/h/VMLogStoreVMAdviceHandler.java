@@ -340,21 +340,21 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4) {
-        super.adviseBeforeIf(arg1, arg2, arg3, arg4);
-        VMAVMLogger.logger.logAdviseBeforeIf(getTime(), arg1, arg2, arg3, arg4);
+    public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
+        super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+        VMAVMLogger.logger.logAdviseBeforeIf(getTime(), arg1, arg2, arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4) {
-        super.adviseBeforeIf(arg1, arg2, arg3, arg4);
-        VMAVMLogger.logger.logAdviseBeforeIf(getTime(), arg1, arg2, arg3, arg4);
+    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
+        super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+        VMAVMLogger.logger.logAdviseBeforeIf(getTime(), arg1, arg2, arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeBytecode(int arg1, int arg2) {
-        super.adviseBeforeBytecode(arg1, arg2);
-        VMAVMLogger.logger.logAdviseBeforeBytecode(getTime(), arg1, arg2);
+    public void adviseBeforeGoto(int arg1, int arg2) {
+        super.adviseBeforeGoto(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeGoto(getTime(), arg1, arg2);
     }
 
     @Override

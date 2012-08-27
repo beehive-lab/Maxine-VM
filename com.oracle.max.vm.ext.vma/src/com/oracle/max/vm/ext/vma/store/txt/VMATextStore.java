@@ -146,11 +146,11 @@ public abstract class VMATextStore {
 
     public abstract void adviseBeforeConversion(long time, String threadName, int bci, int arg1, double arg2);
 
-    public abstract void adviseBeforeIf(long time, String threadName, int bci, int opcode, int op1, int op2);
+    public abstract void adviseBeforeIf(long time, String threadName, int bci, int opcode, int op1, int op2, int targetBci);
 
-    public abstract void adviseBeforeIfObject(long time, String threadName, int bci, int opcode, long objId1, long objId2);
+    public abstract void adviseBeforeIfObject(long time, String threadName, int bci, int opcode, long objId1, long objId2, int targetBci);
 
-    public abstract void adviseBeforeBytecode(long time, String threadName, int bci, int arg1);
+    public abstract void adviseBeforeGoto(long time, String threadName, int bci, int arg1);
 
     public abstract void adviseBeforeReturn(long time, String threadName, int bci, double value);
 

@@ -515,7 +515,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case GOTO:
                 case GOTO_W:
                     assert adviceType == AdviceType.BEFORE;
-                    generateDefault(tag);
+                    generateGoto(tag);
                     break;
 
                 case CHECKCAST:
@@ -851,11 +851,17 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         endGuardAdvice();
     }
 
+    private void generateGoto(T1XTemplateTag tag) {
+        startGuardAdvice();
+        out.printf(INDENT12_ADVISE_PREFIX + "targetBci);%n", adviceType.methodNameComponent, methodName);
+        endGuardAdvice();
+    }
+
     private void generateIf(T1XTemplateTag tag) {
         boolean isNull = tag == T1XTemplateTag.IFNULL || tag == T1XTemplateTag.IFNONNULL;
         String value2 = isNull ? "null" : (IF_TEMPLATE_TAGS.contains(tag) ? "0" : "value2");
         startGuardAdvice();
-        out.printf(INDENT12_ADVISE_PREFIX + "%d, value1, %s);%n", adviceType.methodNameComponent, methodName, tag.opcode, value2);
+        out.printf(INDENT12_ADVISE_PREFIX + "%d, value1, %s, targetBci);%n", adviceType.methodNameComponent, methodName, tag.opcode, value2);
         endGuardAdvice();
     }
 
@@ -1310,7 +1316,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         String fixer = tag == GOTO ? "_s" : "";
         startMethodGeneration();
         generateTemplateTag("%s", tag);
-        out.printf("    public static void %s%s(%s) {%n", tag.name().toLowerCase(), fixer, suffixParams(false));
+        out.printf("    public static void %s%s(int targetBci, int bci) {%n", tag.name().toLowerCase(), fixer);
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();
@@ -1325,7 +1331,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     private void generateIfCmpTemplate(Kind k, String op) {
         startMethodGeneration();
         generateTemplateTag("IF_%sCMP%s", tagPrefix(k), op.toUpperCase());
-        out.printf("    public static void if_%scmp%s(%s value1, %s value2%s) {%n", opPrefix(k), op, j(k), j(k), suffixParams(true));
+        out.printf("    public static void if_%scmp%s(%s value1, %s value2, int targetBci, int bci) {%n", opPrefix(k), op, j(k), j(k));
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();
@@ -1354,7 +1360,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     private void generateIfTemplate(Kind k, String op) {
         startMethodGeneration();
         generateTemplateTag("IF%s", op.toUpperCase());
-        out.printf("    public static void if%s(%s value1%s) {%n", op, j(k), suffixParams(true));
+        out.printf("    public static void if%s(%s value1, int targetBci, int bci) {%n", op, j(k));
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();

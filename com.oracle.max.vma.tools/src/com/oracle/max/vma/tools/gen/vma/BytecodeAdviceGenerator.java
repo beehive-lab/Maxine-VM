@@ -350,7 +350,7 @@ public class BytecodeAdviceGenerator {
         assert adviceMode == BEFORE;
         String type = bytecode.name().charAt(3) == 'A' ? "Object" : "int";
         if (!scalarIfSet.contains(bytecode.methodName + type)) {
-            out.printf(METHOD_PREFIX + "int opcode, %s op1, %s op2, int branchOffset);%n%n", adviceModeString, bytecode.methodName, type, type);
+            out.printf(METHOD_PREFIX + "int opcode, %s op1, %s op2, int targetBci);%n%n", adviceModeString, bytecode.methodName, type, type);
             scalarIfSet.add(bytecode.methodName + type);
         }
     }
@@ -360,7 +360,7 @@ public class BytecodeAdviceGenerator {
         if (bytecode == GOTO_W) {
             return;
         }
-        out.println(METHOD_PREFIX + "int branchOffset);\n");
+        out.printf(METHOD_PREFIX + "int targetBci);%n%n", adviceModeString, bytecode.methodName);
     }
 
     private static void generateTypeCheck(VMABytecodes bytecode) {

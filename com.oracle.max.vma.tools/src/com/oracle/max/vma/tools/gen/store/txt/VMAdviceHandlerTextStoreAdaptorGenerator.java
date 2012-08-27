@@ -121,6 +121,7 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
             generateValueArg(m, 2);
             generateValueArg(m, 3);
             generateValueArg(m, 4);
+            generateValueArg(m, 5);
             out.printf(");%n");
         } else if (name.contains("ReturnByThrow")) {
             generateStoreCallPrefix(oname, true);

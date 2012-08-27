@@ -361,18 +361,21 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     }
 
     @Override
-    protected void do_branch(int opcode, int targetBCI) {
+    protected void do_branch(int opcode, int targetBci) {
         if (templates != defaultTemplates) {
             T1XTemplateTag tag = branchTagMap.get(opcode);
             switch (tag) {
                 case GOTO:
                 case GOTO_W:
-                    emit(tag);
+                    start(tag);
+                    assignTargetBci(targetBci);
+                    finish();
                     break;
                 case IFNULL: case IFNONNULL: {
                     start(tag);
                     CiRegister reg = reg(0, "value1", Kind.REFERENCE);
                     peekObject(reg, 0);
+                    assignTargetBci(targetBci);
                     finish();
                     break;
                 }
@@ -381,6 +384,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                     start(tag);
                     CiRegister reg = reg(0, "value1", Kind.INT);
                     peekInt(reg, 0);
+                    assignTargetBci(targetBci);
                     finish();
                     break;
                 }
@@ -392,6 +396,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                     CiRegister reg2 = reg(1, "value2", Kind.INT);
                     peekInt(reg1, 1);
                     peekInt(reg2, 0);
+                    assignTargetBci(targetBci);
                     finish();
                     break;
                 }
@@ -402,13 +407,18 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                     CiRegister reg2 = reg(1, "value2", Kind.REFERENCE);
                     peekObject(reg1, 1);
                     peekObject(reg2, 0);
+                    assignTargetBci(targetBci);
                     finish();
                     break;
                 }
 
             }
         }
-        super.do_branch(opcode, targetBCI);
+        super.do_branch(opcode, targetBci);
+    }
+
+    private void assignTargetBci(int targetBci) {
+        assignInt(template.sig.in.length - 2, "targetBci", targetBci);
     }
 
     @HOSTED_ONLY

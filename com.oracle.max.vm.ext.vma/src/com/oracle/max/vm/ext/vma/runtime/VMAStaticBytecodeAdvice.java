@@ -191,23 +191,23 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4) {
+    public static void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
         disableAdvising();
-        adviceHandler().adviseBeforeIf(arg1, arg2, arg3, arg4);
+        adviceHandler().adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4) {
+    public static void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
         disableAdvising();
-        adviceHandler().adviseBeforeIf(arg1, arg2, arg3, arg4);
+        adviceHandler().adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeBytecode(int arg1, int arg2) {
+    public static void adviseBeforeGoto(int arg1, int arg2) {
         disableAdvising();
-        adviceHandler().adviseBeforeBytecode(arg1, arg2);
+        adviceHandler().adviseBeforeGoto(arg1, arg2);
         enableAdvising();
     }
 
