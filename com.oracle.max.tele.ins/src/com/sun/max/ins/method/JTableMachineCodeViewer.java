@@ -664,7 +664,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     static final LiteralRenderer AMD64_LITERAL_RENDERER = new LiteralRenderer() {
         public WordValueLabel render(Inspection inspection, String literalLoadText, final Address literalAddress) {
-            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
+            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null, true) {
                 @Override
                 public Value fetchValue() {
                     return vm().memoryIO().readWordValue(literalAddress);
@@ -680,7 +680,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     static final LiteralRenderer SPARC_LITERAL_RENDERER = new LiteralRenderer() {
         public WordValueLabel render(Inspection inspection, String literalLoadText, final Address literalAddress) {
-            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
+            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null, true) {
                 @Override
                 public Value fetchValue() {
                     return vm().memoryIO().readWordValue(literalAddress);
@@ -809,7 +809,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 final TargetCodeInstruction machineCodeInstruction = tableModel.rowToInstruction(row);
                 final String text = machineCodeInstruction.operands;
                 if (machineCodeInstruction.targetAddress != null && !machineCode().contains(machineCodeInstruction.targetAddress)) {
-                    final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, machineCodeInstruction.targetAddress, table);
+                    final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, machineCodeInstruction.targetAddress, table, true);
                     wordValueLabel.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
                     wordValueLabel.setWordDataFont(inspection.preference().style().defaultBoldFont());
                     renderer = wordValueLabel;

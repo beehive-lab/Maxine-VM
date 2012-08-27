@@ -133,13 +133,17 @@ public final class BootImageTable extends InspectorTable {
             addRow("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeEnd, toolTipPrefix));
 
             final Address runMethodPointer = bootImageStart.plus(header.vmRunMethodOffset);
-            addRow("MaxineVM.run():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runMethodPointer, toolTipPrefix));
+            addRow("MaxineVM.run():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer, BootImageTable.this, true),
+                            new MemoryRegionValueLabel(inspection(), runMethodPointer, toolTipPrefix));
             final Address threadRunMethodPointer = bootImageStart.plus(header.vmThreadRunMethodOffset);
-            addRow("VmThread.run():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadRunMethodPointer, toolTipPrefix));
+            addRow("VmThread.run():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadRunMethodPointer, BootImageTable.this, true),
+                            new MemoryRegionValueLabel(inspection(), threadRunMethodPointer, toolTipPrefix));
             final Address threadAttachMethodPointer = bootImageStart.plus(header.vmThreadAttachMethodOffset);
-            addRow("VmThread.attach():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadAttachMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadAttachMethodPointer, toolTipPrefix));
+            addRow("VmThread.attach():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadAttachMethodPointer, BootImageTable.this, true),
+                            new MemoryRegionValueLabel(inspection(), threadAttachMethodPointer, toolTipPrefix));
             final Address threadDetachMethodPointer = bootImageStart.plus(header.vmThreadDetachMethodOffset);
-            addRow("VmThread.detach():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadDetachMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadDetachMethodPointer, toolTipPrefix));
+            addRow("VmThread.detach():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadDetachMethodPointer, BootImageTable.this, true),
+                            new MemoryRegionValueLabel(inspection(), threadDetachMethodPointer, toolTipPrefix));
 
             final Address classRegistryPointer = bootHeapStart.plus(header.classRegistryOffset);
             addRow("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, classRegistryPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), classRegistryPointer, toolTipPrefix));
