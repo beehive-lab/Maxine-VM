@@ -155,11 +155,39 @@ public class ConvertLog {
         }
     }
 
+    public static String[] split(String line) {
+        int ix = line.indexOf('"');
+        if (ix > 0) {
+            // T "name" id, because thread names can have spaces
+            int iy = line.indexOf('"', ix + 1);
+            String[] lineParts = new String[3];
+            lineParts[0] = "T";
+            lineParts[1] = line.substring(ix + 1, iy);
+            lineParts[2] = line.substring(iy + 2);
+            return lineParts;
+        } else {
+            return line.split(" ");
+        }
+    }
+
     private static String concat(String[] lineParts) {
+        return concat(lineParts, null, 0);
+    }
+
+    private static String concat(String[] lineParts, String insert, int insertBefore) {
         final StringBuilder sb = new StringBuilder(lineParts[0]);
         for (int i = 1; i < lineParts.length; i++) {
+            if (insert != null && insertBefore == i) {
+                sb.append(' ');
+                sb.append(insert);
+                insert = null;
+            }
             sb.append(' ');
             sb.append(lineParts[i]);
+        }
+        if (insert != null) {
+            sb.append(' ');
+            sb.append(insert);
         }
         return sb.toString();
     }
@@ -390,7 +418,7 @@ public class ConvertLog {
         private PushRecord pushRecord;
 
         public interface PushRecord {
-            void pushRecord(String record);
+            void pushRecord(String[] recordParts);
         }
 
         /**
@@ -407,11 +435,11 @@ public class ConvertLog {
             this.pushRecord = pushRecord;
         }
 
-        void miscOut(String record) {
+        void miscOut(String[] recordParts) {
             if (pushRecord != null) {
-                pushRecord.pushRecord(record);
+                pushRecord.pushRecord(recordParts);
             } else {
-                out.println(record);
+                out.println(ConvertLog.concat(recordParts));
             }
 
         }
@@ -423,6 +451,7 @@ public class ConvertLog {
             long lastAbsTime; // absolute time of last line visited
             Record record;
             int lineNumber;
+            String threadShortForm;
 
             FileInfo(File file) throws IOException {
                 this.file = file;
@@ -444,8 +473,13 @@ public class ConvertLog {
             long outputRecordAndNext(long previousTime) throws IOException {
                 if (CVMATextStore.hasTime(record.command)) {
                     record.adjustRelTime(previousTime);
+                    if (CVMATextStore.hasTimeAndThread(record.command)) {
+                        // need to insert the thread at slot 2
+                        assert record.timedLine.lineParts[2] == null;
+                        record.timedLine.lineParts[2] = threadShortForm;
+                    }
                 }
-                miscOut(record.concat());
+                miscOut(record.timedLine.lineParts);
                 previousTime = record.time();
                 readRecord();
                 return previousTime;
@@ -459,7 +493,7 @@ public class ConvertLog {
                 final Key command;
 
                 Record(String line) {
-                    String[] parts = line.split(" ");
+                    String[] parts = split(line);
                     command = commandMap.get(parts[0]);
                     if (CVMATextStore.hasTime(command)) {
                         long thisTime = Long.parseLong(parts[1]);
@@ -472,8 +506,51 @@ public class ConvertLog {
                         }
                     } else {
                         // a definition; give it the same time as the last record
+                        if (command == Key.THREAD_DEFINITION) {
+                            threadShortForm = parts[2];
+                        }
                     }
                     timedLine = new TimedLine(lastAbsTime, parts);
+                }
+
+                /**
+                 * Splits the record into space separated components and leaves an empty slot for the thread short form
+                 * to be inserted on output.
+                 */
+                private String[] split(String line) {
+                    int count = 2; // 1 extra for the to-be-inserted thread field
+                    for (int i = 0; i < line.length(); i++) {
+                        if (line.charAt(i) == ' ') {
+                            count++;
+                        }
+                    }
+                    String[] result = new String[count];
+                    int ix = line.indexOf(' ');
+                    int iy = 0;
+                    count = 0;
+                    boolean hasThread = false;
+                    while (ix > 0) {
+                        result[count] = line.substring(iy, ix);
+                        count++;
+                        if (count == 1) {
+                            CVMATextStore.Key key = CVMATextStore.commandMap.get(result[0]);
+                            if (key == Key.THREAD_DEFINITION) {
+                                // handle quoted thread names with spaces
+                                iy = line.indexOf('"', 3);
+                                result[1] = line.substring(3, iy);
+                                result[2] = line.substring(iy + 2);
+                                return result;
+                            } else {
+                                hasThread = CVMATextStore.hasTimeAndThread(key);
+                            }
+                        } else if (hasThread && count == 2) {
+                            count++;
+                        }
+                        iy = ix + 1;
+                        ix = line.indexOf(' ', iy);
+                    }
+                    result[count] = line.substring(iy);
+                    return result;
                 }
 
                 @Override
@@ -497,10 +574,6 @@ public class ConvertLog {
                         }
                         timedLine.lineParts[1] = Long.toString(rel);
                     }
-                }
-
-                private String concat() {
-                    return ConvertLog.concat(timedLine.lineParts);
                 }
 
             }
@@ -544,8 +617,9 @@ public class ConvertLog {
                 }
 
                 // Earliest is the INITIALIZE_STORE for the merged file
+                // The resulting merge file is not per thread, nor batched
                 long previousTime = fileInfos[0].record.timedLine.time;
-                miscOut("IL " + previousTime + " false false");  // new INITIALIZE_STORE
+                miscOut(new String[] {"IL", Long.toString(previousTime), "false", "0"});  // new INITIALIZE_STORE
 
                 // Read first real record and sort
                 for (FileInfo fileInfo : fileInfos) {
@@ -607,7 +681,7 @@ public class ConvertLog {
                     previousTime = last.outputRecordAndNext(previousTime);
                     lastRecordAbsTime = last.record.time();
                 }
-                miscOut("FL " + lastRecordAbsTime);
+                miscOut(new String[] {"FL", Long.toString(lastRecordAbsTime)});
 
             } catch (IOException ex) {
                 System.err.println(ex);

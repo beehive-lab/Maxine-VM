@@ -42,7 +42,8 @@ import com.oracle.max.vm.ext.vma.*;
  * a call to {@link #threadSwitch}. If {@code perThread} is {@code true}, which implies that {@code threadBatched}
  * is {@code true}, then the store implementation is expected to support per-thread stores. The caller
  * must announce new threads via the {@link #newThread} method and subsequently use the returned {@VMATextStore}
- * instance when storing records for that thread.
+ * instance when storing records for that thread. Since the thread is implicit in per-thread or batched mode,
+ * it is permissible to pass {@code null} for the {@code threadName} argument in the advice methods.
  *
  */
 public abstract class VMATextStore {
