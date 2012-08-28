@@ -49,8 +49,6 @@ public class ThreadLocal03 extends Thread {
 
     /**
      * Poor man's enum to avoid object clutter in run.
-     * @author Mick Jordan
-     *
      */
     private static class ThreadType {
         static final int CREATE = 0;
