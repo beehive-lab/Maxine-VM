@@ -82,6 +82,20 @@ public class T1XTemplateGenerator {
          * generated methods are template tag implementations.
          */
         void startMethodGeneration();
+
+        /**
+         * Ability to add additional arguments to a template signature.
+         * @param comma {@code true} iff a comma should precede additional params
+         * @return string defining the additional parameters
+         */
+        String suffixParams(boolean comma);
+
+        /**
+         * Companion method to {@link #suffixParams(boolean) for forwarding extra params to nested calls.
+         * @param comma {@code true} iff a comma should precede additional params
+         * @returnstring defining the additional arguments
+         */
+        String suffixArgs(boolean comma);
     }
 
     @HOSTED_ONLY
@@ -343,16 +357,6 @@ public class T1XTemplateGenerator {
         adviceHook = hook;
     }
 
-    /**
-     * Notify advice hook that a new method is being generated.
-     * N.B. This may be a support method for a {@link T1X_TEMPLATE} method.
-     */
-    public void startMethodGeneration() {
-        if (adviceHook != null) {
-            adviceHook.startMethodGeneration();
-        }
-    }
-
     public void newLine() {
         out.println();
     }
@@ -373,6 +377,30 @@ public class T1XTemplateGenerator {
         String tagString =  tagSB.toString();
         currentTemplateTag = T1XTemplateTag.valueOf(tagString);
         out.printf("    @T1X_TEMPLATE(%s)%n", tagString);
+    }
+
+    /**
+     * Notify advice hook that a new method is being generated.
+     * N.B. This may be a support method for a {@link T1X_TEMPLATE} method.
+     */
+    public void startMethodGeneration() {
+        if (adviceHook != null) {
+            adviceHook.startMethodGeneration();
+        }
+    }
+
+    public String suffixParams(boolean comma) {
+        if (adviceHook != null) {
+            return adviceHook.suffixParams(comma);
+        }
+        return "";
+    }
+
+    public String suffixArgs(boolean comma) {
+        if (adviceHook != null) {
+            return adviceHook.suffixArgs(comma);
+        }
+        return "";
     }
 
     private void generateBeforeAdvice(T1XTemplateTag tag, Object ... args) {
@@ -398,7 +426,7 @@ public class T1XTemplateGenerator {
     public void generateTraceMethodEntryTemplate() {
         startMethodGeneration();
         generateTemplateTag("%s", TRACE_METHOD_ENTRY);
-        out.printf("    public static void traceMethodEntry(String method) {%n");
+        out.printf("    public static void traceMethodEntry(String method%s) {%n", suffixParams(true));
         out.printf("        Log.println(method);%n");
         generateAfterAdvice();
         out.printf("    }%n");
@@ -408,7 +436,7 @@ public class T1XTemplateGenerator {
     public void generateLoadExceptionTemplate() {
         startMethodGeneration();
         generateTemplateTag("%s", LOAD_EXCEPTION);
-        out.println("    public static Object loadException() {");
+        out.printf("    public static Object loadException(%s) {%n", suffixParams(false));
         out.println("        Object exception = VmThread.current().loadExceptionForHandler();");
         generateBeforeAdvice();
         out.println("        return exception;");
@@ -437,7 +465,7 @@ public class T1XTemplateGenerator {
         final String m = k == REFERENCE ? "noninlineW" : "w";
         startMethodGeneration();
         generateTemplateTag("PUTFIELD$%s$resolved", lr(k));
-        out.printf("    public static void putfield%s(@Slot(%d) Object object, int offset, @Slot(0) %s value) {%n", ur(k), objectSlot, rs(k));
+        out.printf("    public static void putfield%s(@Slot(%d) Object object, int offset, @Slot(0) %s value%s) {%n", ur(k), objectSlot, rs(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        TupleAccess.%srite%s(object, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
         out.printf("    }%n");
@@ -445,14 +473,14 @@ public class T1XTemplateGenerator {
 
         startMethodGeneration();
         generateTemplateTag("PUTFIELD$%s", lr(k));
-        out.printf("    public static void putfield%s(ResolutionGuard.InPool guard, @Slot(%d) Object object, @Slot(0) %s value) {%n", ur(k), objectSlot, rs(k));
-        out.printf("        resolveAndPutField%s(guard, object, value);%n", ur(k));
+        out.printf("    public static void putfield%s(ResolutionGuard.InPool guard, @Slot(%d) Object object, @Slot(0) %s value%s) {%n", ur(k), objectSlot, rs(k), suffixParams(true));
+        out.printf("        resolveAndPutField%s(guard, object, value%s);%n", ur(k), suffixArgs(true));
         out.printf("    }%n");
         newLine();
 
         startMethodGeneration();
         out.printf("    @NEVER_INLINE%n");
-        out.printf("    public static void resolveAndPutField%s(ResolutionGuard.InPool guard, Object object, %s value) {%n", ur(k), rs(k));
+        out.printf("    public static void resolveAndPutField%s(ResolutionGuard.InPool guard, Object object, %s value%s) {%n", ur(k), rs(k), suffixParams(true));
         out.printf("        FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);%n");
         generateBeforeAdvice(k);
         out.printf("        if (f.isVolatile()) {%n");
@@ -486,7 +514,7 @@ public class T1XTemplateGenerator {
         final String m = k == REFERENCE ? "noninlineW" : "w";
         startMethodGeneration();
         generateTemplateTag("PUTSTATIC$%s$init", lr(k));
-        out.printf("    public static void putstatic%s(Object staticTuple, int offset, @Slot(0) %s value) {%n", ur(k), rs(k));
+        out.printf("    public static void putstatic%s(Object staticTuple, int offset, @Slot(0) %s value%s) {%n", ur(k), rs(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        TupleAccess.%srite%s(staticTuple, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
         out.printf("    }%n");
@@ -494,14 +522,14 @@ public class T1XTemplateGenerator {
 
         startMethodGeneration();
         generateTemplateTag("PUTSTATIC$%s", lr(k));
-        out.printf("    public static void putstatic%s(ResolutionGuard.InPool guard, @Slot(0) %s value) {%n", ur(k), rs(k));
-        out.printf("        resolveAndPutStatic%s(guard, value);%n", ur(k));
+        out.printf("    public static void putstatic%s(ResolutionGuard.InPool guard, @Slot(0) %s value%s) {%n", ur(k), rs(k), suffixParams(true));
+        out.printf("        resolveAndPutStatic%s(guard, value%s);%n", ur(k), suffixArgs(true));
         out.printf("    }%n");
         newLine();
 
         startMethodGeneration();
         out.printf("    @NEVER_INLINE%n");
-        out.printf("    public static void resolveAndPutStatic%s(ResolutionGuard.InPool guard, %s value) {%n", ur(k), rs(k));
+        out.printf("    public static void resolveAndPutStatic%s(ResolutionGuard.InPool guard, %s value%s) {%n", ur(k), rs(k), suffixParams(true));
         out.printf("        FieldActor f = Snippets.resolveStaticFieldForWriting(guard);%n");
         generateBeforeAdvice(k);
         out.printf("        Snippets.makeHolderInitialized(f);%n");
@@ -536,7 +564,7 @@ public class T1XTemplateGenerator {
     public void generateGetFieldTemplate(Kind k) {
         startMethodGeneration();
         generateTemplateTag("GETFIELD$%s$resolved", lr(k));
-        out.printf("    public static %s getfield%s(@Slot(0) Object object, int offset) {%n", rs(k), u(k));
+        out.printf("    public static %s getfield%s(@Slot(0) Object object, int offset%s) {%n", rs(k), u(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        %s result = TupleAccess.read%s(object, offset);%n", j(k), u(k));
         out.printf("        return %s;%n", toStackKindCast(k, "result"));
@@ -545,14 +573,14 @@ public class T1XTemplateGenerator {
 
         startMethodGeneration();
         generateTemplateTag("GETFIELD$%s", lr(k));
-        out.printf("    public static %s getfield%s(ResolutionGuard.InPool guard, @Slot(0) Object object) {%n", rs(k), ur(k));
-        out.printf("        return resolveAndGetField%s(guard, object);%n", ur(k), u(k));
+        out.printf("    public static %s getfield%s(ResolutionGuard.InPool guard, @Slot(0) Object object%s) {%n", rs(k), ur(k), suffixParams(true));
+        out.printf("        return resolveAndGetField%s(guard, object%s);%n", ur(k), suffixArgs(true));
         out.printf("    }%n");
         newLine();
 
         startMethodGeneration();
         out.printf("    @NEVER_INLINE%n");
-        out.printf("    public static %s resolveAndGetField%s(ResolutionGuard.InPool guard, Object object) {%n", rs(k), ur(k));
+        out.printf("    public static %s resolveAndGetField%s(ResolutionGuard.InPool guard, Object object%s) {%n", rs(k), ur(k), suffixParams(true));
         out.printf("        FieldActor f = Snippets.resolveInstanceFieldForReading(guard);%n");
         generateBeforeAdvice(k);
         out.printf("        if (f.isVolatile()) {%n");
@@ -588,14 +616,14 @@ public class T1XTemplateGenerator {
     public void generateGetStaticTemplate(Kind k) {
         startMethodGeneration();
         generateTemplateTag("GETSTATIC$%s", lr(k));
-        out.printf("    public static %s getstatic%s(ResolutionGuard.InPool guard) {%n", rs(k), ur(k));
-        out.printf("        return resolveAndGetStatic%s(guard);%n", ur(k), u(k));
+        out.printf("    public static %s getstatic%s(ResolutionGuard.InPool guard%s) {%n", rs(k), ur(k), suffixParams(true));
+        out.printf("        return resolveAndGetStatic%s(guard%s);%n", ur(k), suffixArgs(true));
         out.printf("    }%n");
         newLine();
 
         startMethodGeneration();
         out.printf("    @NEVER_INLINE%n");
-        out.printf("    public static %s resolveAndGetStatic%s(ResolutionGuard.InPool guard) {%n", rs(k), ur(k));
+        out.printf("    public static %s resolveAndGetStatic%s(ResolutionGuard.InPool guard%s) {%n", rs(k), ur(k), suffixParams(true));
         out.printf("        FieldActor f = Snippets.resolveStaticFieldForReading(guard);%n");
         out.printf("        Snippets.makeHolderInitialized(f);%n");
         generateBeforeAdvice(k);
@@ -613,7 +641,7 @@ public class T1XTemplateGenerator {
 
         startMethodGeneration();
         generateTemplateTag("GETSTATIC$%s$init", lr(k));
-        out.printf("    public static %s getstatic%s(Object staticTuple, int offset) {%n", rs(k), u(k));
+        out.printf("    public static %s getstatic%s(Object staticTuple, int offset%s) {%n", rs(k), u(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        %s result = TupleAccess.read%s(staticTuple, offset);%n", j(k), u(k));
         out.printf("        return %s;%n", toStackKindCast(k, "result"));
@@ -640,7 +668,7 @@ public class T1XTemplateGenerator {
     public void generateArrayLoadTemplate(Kind k) {
         startMethodGeneration();
         generateTemplateTag("%sALOAD", tagPrefix(k));
-        out.printf("    public static %s %saload(@Slot(1) Object array, @Slot(0) int index) {%n", rs(k), opPrefix(k));
+        out.printf("    public static %s %saload(@Slot(1) Object array, @Slot(0) int index%s) {%n", rs(k), opPrefix(k), suffixParams(true));
         out.printf("        ArrayAccess.checkIndex(array, index);%n");
         generateBeforeAdvice(k);
         out.printf("        %s result = ArrayAccess.get%s(array, index);%n", j(k), u(k));
@@ -671,7 +699,7 @@ public class T1XTemplateGenerator {
         final int indexSlot = k.stackSlots;
         startMethodGeneration();
         generateTemplateTag("%sASTORE", tagPrefix(k));
-        out.printf("    public static void %sastore(@Slot(%d) Object array, @Slot(%d) int index, @Slot(0) %s value) {%n", opPrefix(k), arraySlot, indexSlot, rs(k));
+        out.printf("    public static void %sastore(@Slot(%d) Object array, @Slot(%d) int index, @Slot(0) %s value%s) {%n", opPrefix(k), arraySlot, indexSlot, rs(k), suffixParams(true));
         out.printf("        ArrayAccess.checkIndex(array, index);%n");
         generateBeforeAdvice(k);
         if (k == REFERENCE) {
@@ -700,7 +728,7 @@ public class T1XTemplateGenerator {
         if (tag == T1XTemplateTag.NEW) {
             startMethodGeneration();
             generateTemplateTag(tag.name());
-            out.printf("    public static Object new_(ResolutionGuard guard) {%n");
+            out.printf("    public static Object new_(ResolutionGuard guard%s) {%n", suffixParams(true));
             out.printf("        Object object = resolveClassForNewAndCreate(guard);%n");
             generateAfterAdvice(NULL_ARGS);
             out.printf("        return object;%n");
@@ -709,7 +737,7 @@ public class T1XTemplateGenerator {
         } else {
             startMethodGeneration();
             generateTemplateTag(tag.name());
-            out.printf("    public static Object %s(DynamicHub hub) {%n", tag == T1XTemplateTag.NEW$init ? "new_" : "new_hybrid");
+            out.printf("    public static Object %s(DynamicHub hub%s) {%n", tag == T1XTemplateTag.NEW$init ? "new_" : "new_hybrid", suffixParams(true));
             out.printf("        Object object = Heap.create%s(hub);%n", tag == T1XTemplateTag.NEW$init ? "Tuple" : "Hybrid");
             generateAfterAdvice(NULL_ARGS);
             out.printf("        return object;%n");
@@ -723,7 +751,7 @@ public class T1XTemplateGenerator {
     public void generateNewArrayTemplate() {
         startMethodGeneration();
         generateTemplateTag("NEWARRAY");
-        out.printf("    public static Object newarray(ClassActor arrayClass, @Slot(0) int length) {%n");
+        out.printf("    public static Object newarray(ClassActor arrayClass, @Slot(0) int length%s) {%n", suffixParams(true));
         out.printf("        Object array = Snippets.createArray(arrayClass, length);%n");
         generateAfterAdvice(NULL_ARGS);
         out.printf("        return array;%n");
@@ -757,7 +785,7 @@ public class T1XTemplateGenerator {
         }
         startMethodGeneration();
         generateTemplateTag("ANEWARRAY%s", prefixDollar(resolved));
-        out.printf("    public static Object anewarray(%s %s, @Slot(0) int length) {%n", t, v);
+        out.printf("    public static Object anewarray(%s %s, @Slot(0) int length%s) {%n", t, v, suffixParams(true));
         if (resolved.equals("")) {
             out.printf("        ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(arrayType));%n");
         } else {
@@ -796,7 +824,7 @@ public class T1XTemplateGenerator {
         }
         startMethodGeneration();
         generateTemplateTag("MULTIANEWARRAY%s", prefixDollar(resolved));
-        out.printf("    public static Reference multianewarray(%s %s, int[] lengths) {%n", t, v);
+        out.printf("    public static Reference multianewarray(%s %s, int[] lengths%s) {%n", t, v, suffixParams(true));
         if (resolved.equals("")) {
             out.printf("        ClassActor arrayClassActor = Snippets.resolveClass(guard);%n");
         }
@@ -837,11 +865,11 @@ public class T1XTemplateGenerator {
         }
         startMethodGeneration();
         generateTemplateTag("CHECKCAST%s", prefixDollar(resolved));
-        out.printf("    public static Object checkcast(%s %s, @Slot(0) Object object) {%n", t, arg);
+        out.printf("    public static Object checkcast(%s %s, @Slot(0) Object object%s) {%n", t, arg, suffixParams(true));
         if (isResolved) {
             generateBeforeAdvice(NULL_ARGS);
         }
-        out.printf("        %s(%s, object);%n", m, arg);
+        out.printf("        %s(%s, object%s);%n", m, arg, !isResolved ? suffixArgs(true) : "");
         out.printf("        return object;%n", m, arg);
         out.printf("    }%n");
         newLine();
@@ -850,7 +878,7 @@ public class T1XTemplateGenerator {
     public void generateResolveAndCheckCast() {
         startMethodGeneration();
         out.printf("    @NEVER_INLINE%n");
-        out.printf("    private static void resolveAndCheckcast(ResolutionGuard guard, final Object object) {%n");
+        out.printf("    private static void resolveAndCheckcast(ResolutionGuard guard, final Object object%s) {%n", suffixParams(true));
         out.printf("        ClassActor classActor = Snippets.resolveClass(guard);%n");
         generateBeforeAdvice();
         out.printf("        Snippets.checkCast(classActor, object);%n");
@@ -884,7 +912,7 @@ public class T1XTemplateGenerator {
         }
         startMethodGeneration();
         generateTemplateTag("INSTANCEOF%s", prefixDollar(resolved));
-        out.printf("    public static int instanceof_(%s %s, @Slot(0) Object object) {%n", t, v);
+        out.printf("    public static int instanceof_(%s %s, @Slot(0) Object object%s) {%n", t, v, suffixParams(true));
         if (resolved.equals("")) {
             out.printf("        ClassActor classActor = Snippets.resolveClass(guard);%n");
         }
@@ -897,7 +925,7 @@ public class T1XTemplateGenerator {
     public void generateArraylengthTemplate() {
         startMethodGeneration();
         generateTemplateTag("ARRAYLENGTH");
-        out.printf("    public static int arraylength(@Slot(0) Object array) {%n");
+        out.printf("    public static int arraylength(@Slot(0) Object array%s) {%n", suffixParams(true));
         out.printf("        int length = ArrayAccess.readArrayLength(array);%n");
         generateBeforeAdvice(NULL_ARGS);
         out.printf("        return length;%n");
@@ -908,7 +936,7 @@ public class T1XTemplateGenerator {
     public void generateAThrowTemplate() {
         startMethodGeneration();
         generateTemplateTag("ATHROW");
-        out.printf("    public static void athrow(@Slot(0) Object object) {%n");
+        out.printf("    public static void athrow(@Slot(0) Object object%s) {%n", suffixParams(true));
         generateBeforeAdvice(NULL_ARGS);
         out.printf("        Throw.raise(object);%n");
         out.printf("    }%n");
@@ -932,7 +960,7 @@ public class T1XTemplateGenerator {
     public void generateMonitorTemplate(String tag) {
         startMethodGeneration();
         generateTemplateTag("MONITOR%s", tag.toUpperCase());
-        out.printf("    public static void monitor%s(@Slot(0) Object object) {%n", tag);
+        out.printf("    public static void monitor%s(@Slot(0) Object object%s) {%n", tag, suffixParams(true));
         generateBeforeAdvice(NULL_ARGS);
         out.printf("        Monitor.%s(object);%n", tag);
         out.printf("    }%n");
@@ -950,7 +978,7 @@ public class T1XTemplateGenerator {
     public void generateLockTemplate(T1XTemplateTag tag) {
         startMethodGeneration();
         generateTemplateTag("%s", tag);
-        out.printf("    public static void %s(Object object) {%n", tag.name().toLowerCase());
+        out.printf("    public static void %s(Object object%s) {%n", tag.name().toLowerCase(), suffixParams(true));
         generateBeforeAdvice();
         out.printf("        Monitor.%s(object);%n", tag == LOCK ? "enter" : "exit");
         out.printf("    }%n");
@@ -1013,7 +1041,7 @@ public class T1XTemplateGenerator {
         out.printf("     */%n");
         generateTemplateTag("INVOKE%s$%s", variant.toUpperCase(), lr(k));
         out.printf("    @Slot(-1)%n");
-        out.printf("    public static Address invoke%s%s(ResolutionGuard.InPool guard, Reference receiver) {%n", variant, u(k));
+        out.printf("    public static Address invoke%s%s(ResolutionGuard.InPool guard, Reference receiver%s) {%n", variant, u(k), suffixParams(true));
         generateBeforeAdvice(k, variant);
         if (variant.equals("interface")) {
             out.printf("        return resolveAndSelectInterfaceMethod(guard, receiver);%n");
@@ -1052,7 +1080,7 @@ public class T1XTemplateGenerator {
         out.printf("     */%n");
         generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), lr(k), instrumented ? "$instrumented" : "$resolved");
         out.printf("    @Slot(-1)%n");
-        out.printf("    public static Address invoke%s%s(%s, Reference receiver) {%n", variant, u(k), params);
+        out.printf("    public static Address invoke%s%s(%s, Reference receiver%s) {%n", variant, u(k), params, suffixParams(true));
         generateBeforeAdvice(k, variant);
         if (variant.equals("interface")) {
             if (!instrumented) {
@@ -1121,7 +1149,7 @@ public class T1XTemplateGenerator {
         out.printf("     */%n");
         generateTemplateTag("INVOKE%s$%s", variant.toUpperCase(), lr(k));
         out.printf("    @Slot(-1)%n");
-        out.printf("    public static Address invoke%s%s(%s) {%n", variant, u(k), params);
+        out.printf("    public static Address invoke%s%s(%s%s) {%n", variant, u(k), params, suffixParams(true));
         if (variant.equals("special")) {
             out.printf("        nullCheck(receiver.toOrigin());%n");
         }
@@ -1152,7 +1180,7 @@ public class T1XTemplateGenerator {
     public void generateI2Template(Kind k) {
         startMethodGeneration();
         generateTemplateTag("I2%c", u(k).charAt(0));
-        out.printf("    public static %s i2%s(@Slot(0) int value) {%n", rs(k), opPrefix(k));
+        out.printf("    public static %s i2%s(@Slot(0) int value%s) {%n", rs(k), opPrefix(k), suffixParams(true));
         String cast = k == CHAR || k == BYTE || k == SHORT ? "(" + k + ") " : "";
         generateBeforeAdvice(k);
         out.printf("        return %svalue;%n", cast);
@@ -1181,7 +1209,7 @@ public class T1XTemplateGenerator {
     public void generateL2Template(Kind k) {
         startMethodGeneration();
         generateTemplateTag("L2%c", u(k).charAt(0));
-        out.printf("    public static %s l2%s(@Slot(0) long value) {%n", rs(k), opPrefix(k));
+        out.printf("    public static %s l2%s(@Slot(0) long value%s) {%n", rs(k), opPrefix(k), suffixParams(true));
         generateBeforeAdvice(k);
         String cast = k == INT ? "(int) " : "";
         out.printf("        return %svalue;%n", cast);
@@ -1210,7 +1238,7 @@ public class T1XTemplateGenerator {
     public void generateD2Template(Kind k) {
         startMethodGeneration();
         generateTemplateTag("D2%c", u(k).charAt(0));
-        out.printf("    public static %s d2%s(@Slot(0) double value) {%n", rs(k), opPrefix(k));
+        out.printf("    public static %s d2%s(@Slot(0) double value%s) {%n", rs(k), opPrefix(k), suffixParams(true));
         generateBeforeAdvice(k);
         String arg2 = k == FLOAT ? "(float) value" : "T1XRuntime.d2" + opPrefix(k) + "(value)";
         out.printf("        return %s;%n", arg2);
@@ -1239,7 +1267,7 @@ public class T1XTemplateGenerator {
     public void generateF2Template(Kind k) {
         startMethodGeneration();
         generateTemplateTag("F2%c", u(k).charAt(0));
-        out.printf("    public static %s f2%s(@Slot(0) float value) {%n", rs(k), opPrefix(k));
+        out.printf("    public static %s f2%s(@Slot(0) float value%s) {%n", rs(k), opPrefix(k), suffixParams(true));
         generateBeforeAdvice(k);
         String arg2 = k == DOUBLE ? "value" : "T1XRuntime.f2" + opPrefix(k) + "(value)";
         out.printf("        return %s;%n", arg2);
@@ -1268,7 +1296,7 @@ public class T1XTemplateGenerator {
         final String op = "neg";
         startMethodGeneration();
         generateTemplateTag("%s%s", tagPrefix(k), op.toUpperCase());
-        out.printf("    public static %s %s%s(@Slot(0) %s value, %s zero) {%n", k, opPrefix(k), op, k, k);
+        out.printf("    public static %s %s%s(@Slot(0) %s value, %s zero%s) {%n", k, opPrefix(k), op, k, k, suffixParams(true));
         generateBeforeAdvice(k);
         if (k == DOUBLE) {
             out.printf("        double res;%n");
@@ -1327,7 +1355,7 @@ public class T1XTemplateGenerator {
         final int arg1Slot = isShift(op) || k.stackSlots == 1 ? 1 : 2;
         startMethodGeneration();
         generateTemplateTag("%s%s", tagPrefix(k), op.toUpperCase());
-        out.printf("    public static %s %s%s(@Slot(%d) %s value1, @Slot(0) %s value2) {%n", s(k), opPrefix(k), op, arg1Slot, s(k), arg2IsInt ? "int" : s(k));
+        out.printf("    public static %s %s%s(@Slot(%d) %s value1, @Slot(0) %s value2%s) {%n", s(k), opPrefix(k), op, arg1Slot, s(k), arg2IsInt ? "int" : s(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        return value1 %s value2;%n", algOp(op));
         out.printf("    }%n");
@@ -1356,7 +1384,7 @@ public class T1XTemplateGenerator {
         startMethodGeneration();
         generateTemplateTag("%sRETURN%s", tagPrefix(k), prefixDollar(unlock));
         out.printf("    @Slot(-1)%n");
-        out.printf("    public static %s %sreturn%s(%s%s%s) {%n", rs(k), opPrefix(k), toFirstUpper(unlock), arg1, sep, arg2);
+        out.printf("    public static %s %sreturn%s(%s%s%s%s) {%n", rs(k), opPrefix(k), toFirstUpper(unlock), arg1, sep, arg2, suffixParams(!arg1.isEmpty() || !arg2.isEmpty()));
         if (unlock.equals("registerFinalizer")) {
             out.printf("        if (ObjectAccess.readClassActor(object).hasFinalizer()) {%n");
             out.printf("            SpecialReferenceManager.registerFinalizee(object);%n");
@@ -1399,7 +1427,7 @@ public class T1XTemplateGenerator {
     public void generateCmpTemplate(Kind k, String opcode) {
         startMethodGeneration();
         generateTemplateTag(opcode);
-        out.printf("    public static int %s(@Slot(%d) %s value1, @Slot(0) %s value2) {%n", opcode.toLowerCase(), k.stackSlots, s(k), s(k));
+        out.printf("    public static int %s(@Slot(%d) %s value1, @Slot(0) %s value2%s) {%n", opcode.toLowerCase(), k.stackSlots, s(k), s(k), suffixParams(true));
         out.printf("        int result = rawCompare(Bytecodes.%s, value1, value2);%n", opcode);
         generateBeforeAdvice(k);
         out.printf("        return result;%n");

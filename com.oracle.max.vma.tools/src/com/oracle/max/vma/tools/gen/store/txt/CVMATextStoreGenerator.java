@@ -52,10 +52,10 @@ public class CVMATextStoreGenerator {
             if (ix > 0) {
                 name = name.substring(0, ix);
             }
-            if (name.equals("initializeLog")) {
+            if (name.equals("initializeStore")) {
                 codeMap.put(name, "IL");
                 reverseCodeMap.put("IL", name);
-            } else if (name.equals("finalizeLog")) {
+            } else if (name.equals("finalizeStore")) {
                 codeMap.put(name, "FL");
                 reverseCodeMap.put("FL", name);
             } else if (name.equals("unseen")) {
@@ -67,6 +67,8 @@ public class CVMATextStoreGenerator {
             } else if (name.equals("threadSwitch")) {
                 codeMap.put(name, "ZT");
                 reverseCodeMap.put("ZT", name);
+            } else if (name.equals("newThread")) {
+                // ignore
             } else {
                 if (codeMap.get(name) == null) {
                     String code = extractCode(name);
@@ -107,6 +109,8 @@ public class CVMATextStoreGenerator {
             out.printf("        }%n");
             out.printf("    }%n%n");
             generateHasIdSet();
+            out.println();
+            generateHasBciSet();
             AdviceGeneratorHelper.updateSource(CVMATextStore.class, null, false);
         }
     }
@@ -119,7 +123,7 @@ public class CVMATextStoreGenerator {
             String name = m.getName();
             if (name.startsWith("advise") && !doneSet.contains(name) &&
                             !(name.endsWith("Return") || name.endsWith("PutStatic") || name.endsWith("GetStatic"))) {
-                String p = getNthParameterName(m, 1);
+                String p = getNthParameterName(m, 2);
                 if (p != null && (p.equals("Object") || p.equals("Throwable"))) {
                     if (first) {
                         first = false;
@@ -132,6 +136,28 @@ public class CVMATextStoreGenerator {
             }
         }
         out.println(");");
+    }
+
+    private static void generateHasBciSet() {
+        out.printf("    public static final EnumSet<Key> hasBciSet = EnumSet.of(%n");
+        HashSet<String> doneSet = new HashSet<String>();
+        boolean first = true;
+        for (Method m : VMAdviceHandler.class.getMethods()) {
+            if (AdviceGeneratorHelper.isBytecodeAdviceMethod(m)) {
+                String name = m.getName();
+                if (!doneSet.contains(name)) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        out.println(",");
+                    }
+                    out.printf("        Key.%s", declMap.get(m.getName()));
+                }
+                doneSet.add(name);
+            }
+        }
+        out.println(");");
+
     }
 
     private static String extractCode(String name) {

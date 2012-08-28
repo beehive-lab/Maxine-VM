@@ -66,96 +66,98 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
     private static void generate(Method m) {
         String name = m.getName();
         String oname = VMATextStoreGenerator.getMethodNameRenamingObject(m);
+        boolean isBytecodeAdviceMethod = AdviceGeneratorHelper.isBytecodeAdviceMethod(m);
         prefixArgs.argCount = m.getParameterTypes().length;
         generateSignature(INDENT4, "public", new MethodNameOverride(m), null, prefixArgs);
         out.printf(" {%n");
         if (name.endsWith("ConstLoad")) {
-            generateStoreCallPrefix(oname);
-            generateValueArg(m, 1);
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
+            generateValueArg(m, 2);
             out.printf(");%n");
         } else if (name.endsWith("GetField")  || name.endsWith("PutField")) {
-            out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg1);%n");
-            out.printf("        FieldActor fa = ca.findInstanceFieldActor(arg2);%n");
-            generateStoreCallPrefix(oname);
-            out.printf(", state.readId(arg1), fa.holder().name(), state.readId(ca.classLoader), fa.name()");
+            out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg2);%n");
+            out.printf("        FieldActor fa = ca.findInstanceFieldActor(arg3);%n");
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
+            out.printf(", state.readId(arg2), fa.holder().name(), state.readId(ca.classLoader), fa.name()");
             if (name.endsWith("PutField")) {
-                generateValueArg(m, 3);
+                generateValueArg(m, 4);
             }
             out.printf(");%n");
         } else if (name.endsWith("GetStatic")  || name.endsWith("PutStatic")) {
-            out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg1);%n");
-            generateStoreCallPrefix(oname);
-            out.printf(", ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name()");
+            out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg2);%n");
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
+            out.printf(", ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg3).name()");
             if (name.endsWith("PutStatic")) {
                 if (name.endsWith("PutStatic")) {
-                    generateValueArg(m, 3);
+                    generateValueArg(m, 4);
                 }
             }
             out.printf(");%n");
         } else if (name.endsWith("ArrayLoad") || name.endsWith("ArrayStore")) {
-            generateStoreCallPrefix(oname);
-            out.printf(", state.readId(arg1), arg2");
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
+            out.printf(", state.readId(arg2), arg3");
             if (name.endsWith("ArrayStore")) {
-                generateValueArg(m, 3);
+                generateValueArg(m, 4);
             }
             out.printf(");%n");
         } else if (name.endsWith("Store")) {
-            generateStoreCallPrefix(oname);
-            generateValueArg(m, 1);
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
             generateValueArg(m, 2);
+            generateValueArg(m, 3);
             out.printf(");%n");
         } else if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
-            out.printf("        final Reference objRef = Reference.fromJava(arg1);%n");
+            out.printf("        final Reference objRef = Reference.fromJava(arg2);%n");
             out.printf("        final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));%n");
-            generateStoreCallPrefix(oname);
-            out.printf(", state.readId(arg1), hub.classActor.name(), state.readId(hub.classActor.classLoader)");
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
+            out.printf(", state.readId(arg2), hub.classActor.name(), state.readId(hub.classActor.classLoader)");
             if (name.endsWith("NewArray")) {
-                out.print(", arg2");
+                out.print(", arg3");
             }
             out.printf(");%n");
         } else if (name.equals("adviseAfterMultiNewArray")) {
             out.printf("        ProgramError.unexpected(\"adviseAfterMultiNewArray\");%n");
         } else if (name.endsWith("If")) {
-            generateStoreCallPrefix(oname);
-            generateValueArg(m, 1);
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
             generateValueArg(m, 2);
             generateValueArg(m, 3);
+            generateValueArg(m, 4);
+            generateValueArg(m, 5);
             out.printf(");%n");
         } else if (name.contains("ReturnByThrow")) {
-            generateStoreCallPrefix(oname);
-            out.print(", state.readId(arg1), arg2);\n");
+            generateStoreCallPrefix(oname, true);
+            out.print(", state.readId(arg2), arg3);\n");
         } else if (name.contains("Return")) {
-            generateStoreCallPrefix(oname);
-            if (m.getParameterTypes().length > 0) {
-                generateValueArg(m, 1);
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
+            if (m.getParameterTypes().length > 1) {
+                generateValueArg(m, 2);
             }
             out.printf(");%n");
         } else if (name.contains("Invoke") || name.contains("MethodEntry")) {
-            generateStoreCallPrefix(oname);
-            String arg1 = name.contains("Static") ? "0" : "state.readId(arg1)";
-            out.printf(", %s, arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()", arg1);
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
+            String arg1 = name.contains("Static") ? "0" : "state.readId(arg2)";
+            out.printf(", %s, arg3.holder().name(), state.readId(arg3.holder().classLoader), arg3.name()", arg1);
             out.printf(");%n");
         } else if (name.endsWith("ArrayLength")) {
-            generateStoreCallPrefix(oname);
-            out.print(", state.readId(arg1), arg2");
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
+            out.print(", state.readId(arg2), arg3");
             out.printf(");%n");
         } else if (name.contains("Monitor") || name.contains("Throw")) {
-            generateStoreCallPrefix(oname);
-            out.print(", state.readId(arg1)");
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
+            out.print(", state.readId(arg2)");
             out.printf(");%n");
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
-            out.printf("        ClassActor ca = (ClassActor) arg2;%n");
-            generateStoreCallPrefix(oname);
+            out.printf("        ClassActor ca = (ClassActor) arg3;%n");
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
             out.print(", state.readId(arg1), ca.name(), state.readId(ca.classLoader)");
             out.printf(");%n");
         } else if (name.contains("Thread")) {
             // drop VmThread arg
-            generateStoreCallPrefix(oname);
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
             out.printf(");%n");
         } else {
-            generateStoreCallPrefix(oname);
+            generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
             Class<?>[] params = m.getParameterTypes();
-            for (int argc = 1; argc <= params.length; argc++) {
+            for (int argc = isBytecodeAdviceMethod ? 2 : 1; argc <= params.length; argc++) {
                 out.printf(", %s", "arg" + argc);
             }
             out.printf(");%n");
@@ -164,8 +166,12 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
 
     }
 
-    private static void generateStoreCallPrefix(String name) {
+    private static void generateStoreCallPrefix(String name, boolean isBytecodeAdviceMethod) {
+        // Every bytecode advice method has arg1, as it's the bci value
         out.printf("        store.%s(time, tng.getThreadName()", name);
+        if (isBytecodeAdviceMethod) {
+            out.print(", arg1");
+        }
     }
 
     private static void generateValueArg(Method m, int argc) {

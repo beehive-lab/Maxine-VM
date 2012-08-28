@@ -58,13 +58,16 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
     }
 
 // START GENERATED CODE
-// EDIT AND RUN CountsVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN CBCVMAdviceHandlerGenerator.main() TO MODIFY
 
     enum AdviceMethod {
         GC,
         ThreadStarting,
         ThreadTerminating,
         ReturnByThrow,
+        New,
+        NewArray,
+        MultiNewArray,
         ConstLoad,
         Load,
         ArrayLoad,
@@ -74,7 +77,7 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
         Operation,
         Conversion,
         If,
-        Bytecode,
+        Goto,
         Return,
         GetStatic,
         PutStatic,
@@ -90,9 +93,6 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
         InstanceOf,
         MonitorEnter,
         MonitorExit,
-        New,
-        NewArray,
-        MultiNewArray,
         MethodEntry;
     }
 
@@ -119,292 +119,272 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeReturnByThrow(Throwable arg1, int arg2) {
+    public void adviseBeforeReturnByThrow(int arg1, Throwable arg2, int arg3) {
         counts[3][0]++;
     }
 
     @Override
-    public void adviseBeforeConstLoad(long arg1) {
-        counts[4][0]++;
+    public void adviseAfterNew(int arg1, Object arg2) {
+        counts[4][1]++;
     }
 
     @Override
-    public void adviseBeforeConstLoad(Object arg1) {
-        counts[4][0]++;
+    public void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
+        counts[5][1]++;
     }
 
     @Override
-    public void adviseBeforeConstLoad(float arg1) {
-        counts[4][0]++;
+    public void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
+        counts[6][1]++;
     }
 
     @Override
-    public void adviseBeforeConstLoad(double arg1) {
-        counts[4][0]++;
-    }
-
-    @Override
-    public void adviseBeforeLoad(int arg1) {
-        counts[5][0]++;
-    }
-
-    @Override
-    public void adviseBeforeArrayLoad(Object arg1, int arg2) {
-        counts[6][0]++;
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, long arg2) {
+    public void adviseBeforeConstLoad(int arg1, float arg2) {
         counts[7][0]++;
     }
 
     @Override
-    public void adviseBeforeStore(int arg1, float arg2) {
+    public void adviseBeforeConstLoad(int arg1, double arg2) {
         counts[7][0]++;
     }
 
     @Override
-    public void adviseBeforeStore(int arg1, double arg2) {
+    public void adviseBeforeConstLoad(int arg1, Object arg2) {
         counts[7][0]++;
     }
 
     @Override
-    public void adviseBeforeStore(int arg1, Object arg2) {
+    public void adviseBeforeConstLoad(int arg1, long arg2) {
         counts[7][0]++;
     }
 
     @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, float arg3) {
+    public void adviseBeforeLoad(int arg1, int arg2) {
         counts[8][0]++;
     }
 
     @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, long arg3) {
-        counts[8][0]++;
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, double arg3) {
-        counts[8][0]++;
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, Object arg3) {
-        counts[8][0]++;
-    }
-
-    @Override
-    public void adviseBeforeStackAdjust(int arg1) {
+    public void adviseBeforeArrayLoad(int arg1, Object arg2, int arg3) {
         counts[9][0]++;
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, long arg2, long arg3) {
+    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
         counts[10][0]++;
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, float arg2, float arg3) {
+    public void adviseBeforeStore(int arg1, int arg2, float arg3) {
         counts[10][0]++;
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, double arg2, double arg3) {
+    public void adviseBeforeStore(int arg1, int arg2, double arg3) {
         counts[10][0]++;
     }
 
     @Override
-    public void adviseBeforeConversion(int arg1, float arg2) {
+    public void adviseBeforeStore(int arg1, int arg2, long arg3) {
+        counts[10][0]++;
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
         counts[11][0]++;
     }
 
     @Override
-    public void adviseBeforeConversion(int arg1, long arg2) {
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
         counts[11][0]++;
     }
 
     @Override
-    public void adviseBeforeConversion(int arg1, double arg2) {
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, long arg4) {
         counts[11][0]++;
     }
 
     @Override
-    public void adviseBeforeIf(int arg1, int arg2, int arg3) {
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
+        counts[11][0]++;
+    }
+
+    @Override
+    public void adviseBeforeStackAdjust(int arg1, int arg2) {
         counts[12][0]++;
     }
 
     @Override
-    public void adviseBeforeIf(int arg1, Object arg2, Object arg3) {
-        counts[12][0]++;
-    }
-
-    @Override
-    public void adviseBeforeBytecode(int arg1) {
+    public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
         counts[13][0]++;
     }
 
     @Override
-    public void adviseBeforeReturn() {
+    public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
+        counts[13][0]++;
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
+        counts[13][0]++;
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, int arg2, long arg3) {
         counts[14][0]++;
     }
 
     @Override
-    public void adviseBeforeReturn(long arg1) {
+    public void adviseBeforeConversion(int arg1, int arg2, float arg3) {
         counts[14][0]++;
     }
 
     @Override
-    public void adviseBeforeReturn(float arg1) {
+    public void adviseBeforeConversion(int arg1, int arg2, double arg3) {
         counts[14][0]++;
     }
 
     @Override
-    public void adviseBeforeReturn(double arg1) {
-        counts[14][0]++;
-    }
-
-    @Override
-    public void adviseBeforeReturn(Object arg1) {
-        counts[14][0]++;
-    }
-
-    @Override
-    public void adviseBeforeGetStatic(Object arg1, int arg2) {
+    public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
         counts[15][0]++;
     }
 
     @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
+    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
+        counts[15][0]++;
+    }
+
+    @Override
+    public void adviseBeforeGoto(int arg1, int arg2) {
         counts[16][0]++;
     }
 
     @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
-        counts[16][0]++;
-    }
-
-    @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
-        counts[16][0]++;
-    }
-
-    @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
-        counts[16][0]++;
-    }
-
-    @Override
-    public void adviseBeforeGetField(Object arg1, int arg2) {
+    public void adviseBeforeReturn(int arg1, double arg2) {
         counts[17][0]++;
     }
 
     @Override
-    public void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
+    public void adviseBeforeReturn(int arg1, long arg2) {
+        counts[17][0]++;
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1, float arg2) {
+        counts[17][0]++;
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1, Object arg2) {
+        counts[17][0]++;
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1) {
+        counts[17][0]++;
+    }
+
+    @Override
+    public void adviseBeforeGetStatic(int arg1, Object arg2, int arg3) {
         counts[18][0]++;
     }
 
     @Override
-    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
-        counts[18][0]++;
-    }
-
-    @Override
-    public void adviseBeforePutField(Object arg1, int arg2, double arg3) {
-        counts[18][0]++;
-    }
-
-    @Override
-    public void adviseBeforePutField(Object arg1, int arg2, long arg3) {
-        counts[18][0]++;
-    }
-
-    @Override
-    public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
+    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, float arg4) {
         counts[19][0]++;
     }
 
     @Override
-    public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
+    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, double arg4) {
+        counts[19][0]++;
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, long arg4) {
+        counts[19][0]++;
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, Object arg4) {
+        counts[19][0]++;
+    }
+
+    @Override
+    public void adviseBeforeGetField(int arg1, Object arg2, int arg3) {
         counts[20][0]++;
     }
 
     @Override
-    public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
+    public void adviseBeforePutField(int arg1, Object arg2, int arg3, float arg4) {
         counts[21][0]++;
     }
 
     @Override
-    public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
+    public void adviseBeforePutField(int arg1, Object arg2, int arg3, long arg4) {
+        counts[21][0]++;
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, int arg3, Object arg4) {
+        counts[21][0]++;
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, int arg3, double arg4) {
+        counts[21][0]++;
+    }
+
+    @Override
+    public void adviseBeforeInvokeVirtual(int arg1, Object arg2, MethodActor arg3) {
         counts[22][0]++;
     }
 
     @Override
-    public void adviseBeforeArrayLength(Object arg1, int arg2) {
+    public void adviseBeforeInvokeSpecial(int arg1, Object arg2, MethodActor arg3) {
         counts[23][0]++;
     }
 
     @Override
-    public void adviseBeforeThrow(Object arg1) {
+    public void adviseBeforeInvokeStatic(int arg1, Object arg2, MethodActor arg3) {
         counts[24][0]++;
     }
 
     @Override
-    public void adviseBeforeCheckCast(Object arg1, Object arg2) {
+    public void adviseBeforeInvokeInterface(int arg1, Object arg2, MethodActor arg3) {
         counts[25][0]++;
     }
 
     @Override
-    public void adviseBeforeInstanceOf(Object arg1, Object arg2) {
+    public void adviseBeforeArrayLength(int arg1, Object arg2, int arg3) {
         counts[26][0]++;
     }
 
     @Override
-    public void adviseBeforeMonitorEnter(Object arg1) {
+    public void adviseBeforeThrow(int arg1, Object arg2) {
         counts[27][0]++;
     }
 
     @Override
-    public void adviseBeforeMonitorExit(Object arg1) {
+    public void adviseBeforeCheckCast(int arg1, Object arg2, Object arg3) {
         counts[28][0]++;
     }
 
     @Override
-    public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
-        counts[19][1]++;
+    public void adviseBeforeInstanceOf(int arg1, Object arg2, Object arg3) {
+        counts[29][0]++;
     }
 
     @Override
-    public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
-        counts[20][1]++;
+    public void adviseBeforeMonitorEnter(int arg1, Object arg2) {
+        counts[30][0]++;
     }
 
     @Override
-    public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
-        counts[21][1]++;
+    public void adviseBeforeMonitorExit(int arg1, Object arg2) {
+        counts[31][0]++;
     }
 
     @Override
-    public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
-        counts[22][1]++;
-    }
-
-    @Override
-    public void adviseAfterNew(Object arg1) {
-        counts[29][1]++;
-    }
-
-    @Override
-    public void adviseAfterNewArray(Object arg1, int arg2) {
-        counts[30][1]++;
-    }
-
-    @Override
-    public void adviseAfterMultiNewArray(Object arg1, int[] arg2) {
-        counts[31][1]++;
-    }
-
-    @Override
-    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
+    public void adviseAfterMethodEntry(int arg1, Object arg2, MethodActor arg3) {
         counts[32][1]++;
     }
 

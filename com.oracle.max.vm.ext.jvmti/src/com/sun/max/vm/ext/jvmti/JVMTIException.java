@@ -300,7 +300,7 @@ public class JVMTIException {
                     }
 
                     if (vmaHandler != null) {
-                        vmaHandler.exceptionRaised(stackAnalyser.throwingMethodActor, throwable, stackAnalyser.stackElementSizeAtCatch - 1);
+                        vmaHandler.exceptionRaised(stackAnalyser.throwingMethodActor, throwable, stackAnalyser.throwingBci, stackAnalyser.stackElementSizeAtCatch - 1);
                     }
                 }
                 // if an agent wants the exception catch event, we need to ensure that the compiled code for the catch method
@@ -317,7 +317,7 @@ public class JVMTIException {
     // VMA support
 
     public interface VMAHandler {
-        void exceptionRaised(ClassMethodActor throwingActor, Throwable throwable, int poppedFrameCount);
+        void exceptionRaised(ClassMethodActor throwingActor, Throwable throwable, int bci, int poppedFrameCount);
     }
 
     private static VMAHandler vmaHandler;

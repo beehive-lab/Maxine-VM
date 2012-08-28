@@ -70,7 +70,8 @@ import com.sun.max.vm.type.*;
 @HOSTED_ONLY
 public class BytecodeAdviceGenerator {
 
-    private static final String METHOD_PREFIX = "    public abstract void advise%s%s(";
+    private static final String METHOD_PREFIX = "    public abstract void advise%s%s(int bci, ";
+    private static final String METHOD_PREFIX_NOARG = "    public abstract void advise%s%s(int bci";
 
     private static final Set<Kind> getPutTypes = new HashSet<Kind>();
 
@@ -130,6 +131,17 @@ public class BytecodeAdviceGenerator {
             if (tag.opcode >= 0 || tag == T1XTemplateTag.TRACE_METHOD_ENTRY) {
                 checks[codeMap.get(tag.opcode).ordinal()][adviceType.ordinal()] = true;
             }
+        }
+
+        @Override
+        public String suffixParams(boolean comma) {
+            return "";
+        }
+
+        @Override
+        public String suffixArgs(boolean comma) {
+            // TODO Auto-generated method stub
+            return null;
         }
     }
 
@@ -195,6 +207,8 @@ public class BytecodeAdviceGenerator {
             // handled as an Conversion
         } else if (name.equals("IINC")) {
             // handled as an operation
+        } else if (bytecode == GOTO || bytecode == GOTO_W) {
+            generateGoto(bytecode);
         } else {
             if (logNotGenerated && checks[bytecode.ordinal()][adviceMode.ordinal()]) {
                 logOutput.printf("%s(%s) not generated%n", name, adviceModeString);
@@ -218,7 +232,7 @@ public class BytecodeAdviceGenerator {
         assert adviceMode == BEFORE;
         for (Kind k : getPutTypes) {
             if (hasGetPutTemplates(k)) {
-                out.printf(METHOD_PREFIX + "Object object, int offset, %s value);%n%n", adviceModeString, bytecode.methodName, k);
+                out.printf(METHOD_PREFIX + "Object object, int offset, %s value);%n%n", adviceModeString, bytecode.methodName, j(k));
             }
         }
     }
@@ -228,7 +242,7 @@ public class BytecodeAdviceGenerator {
         for (Kind k : getPutTypes) {
             if (hasGetPutTemplates(k)) {
                 // StaticTuple but ClassActor.staticTuple returns Object
-                out.printf(METHOD_PREFIX + "Object staticTuple, int offset, %s value);%n%n", adviceModeString, bytecode.methodName, k);
+                out.printf(METHOD_PREFIX + "Object staticTuple, int offset, %s value);%n%n", adviceModeString, bytecode.methodName, j(k));
             }
         }
     }
@@ -336,9 +350,17 @@ public class BytecodeAdviceGenerator {
         assert adviceMode == BEFORE;
         String type = bytecode.name().charAt(3) == 'A' ? "Object" : "int";
         if (!scalarIfSet.contains(bytecode.methodName + type)) {
-            out.printf(METHOD_PREFIX + "int opcode, %s op1, %s op2);%n%n", adviceModeString, bytecode.methodName, type, type);
+            out.printf(METHOD_PREFIX + "int opcode, %s op1, %s op2, int targetBci);%n%n", adviceModeString, bytecode.methodName, type, type);
             scalarIfSet.add(bytecode.methodName + type);
         }
+    }
+
+    private static void generateGoto(VMABytecodes bytecode) {
+        assert adviceMode == BEFORE;
+        if (bytecode == GOTO_W) {
+            return;
+        }
+        out.printf(METHOD_PREFIX + "int targetBci);%n%n", adviceModeString, bytecode.methodName);
     }
 
     private static void generateTypeCheck(VMABytecodes bytecode) {
@@ -368,7 +390,7 @@ public class BytecodeAdviceGenerator {
     private static void generateReturn(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
         if (bytecode == RETURN) {
-            out.printf(METHOD_PREFIX + ");%n%n", adviceModeString, bytecode.methodName);
+            out.printf(METHOD_PREFIX_NOARG + ");%n%n", adviceModeString, bytecode.methodName);
             return;
         }
         String type = typeFor(bytecode.name().charAt(0));

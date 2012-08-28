@@ -31,7 +31,9 @@ import java.util.*;
  * the relative time optimization. However, an embedded {@link Key#THREAD_SWITCH} record can be
  * used to "reset" the time for stores that are created from a set of records for a set
  * of threads. Such "batched" stores are also indicated by the second argument to
- * the {@link Key#INITIALIZE_LOG} record being {@code true}.
+ * the {@link Key#INITIALIZE_LOG} record having the {@link BATCHED} bit set.
+ * A per-thread store contains only records from one thread and is indicated
+ * by the second argument to the {@link Key#INITIALIZE_LOG} record having the {@link PER_THREAD} bit set.
  *
  * Normally the store uses relative time, recording the offset from the previous
  * record for that thread. However, it is possible to use absolute time and this is
@@ -39,7 +41,8 @@ import java.util.*;
  *
  * Each store record occupies one line starting with the string code for the {@link Key}.
  * The key is followed by the time (either absolute or relative) and then, for most records,
- * the thread that created the record. This is then followed by arguments that are specific
+ * the thread that created the record, and the bytecode index of the associated instruction.
+ * This is then followed by arguments that are specific
  * to the record, generally in same order as the parameters to the methods in {@link VMATextStore}.
  *
  */
@@ -48,6 +51,8 @@ public abstract class CVMATextStore extends VMATextStore {
 
     public static final long REPEAT_ID_VALUE = Long.MIN_VALUE;
     public static final char REPEAT_ID = '*';
+    public static final int BATCHED = 1;
+    public static final int PER_THREAD = 2;
 
     /**
      * Log records that do not have a time component.
@@ -55,7 +60,7 @@ public abstract class CVMATextStore extends VMATextStore {
      * are in this set because their time component is always absolute.
      */
     public static final EnumSet<Key> noTimeSet = EnumSet.of(
-                    Key.INITIALIZE_LOG, Key.FINALIZE_LOG, Key.THREAD_SWITCH,
+                    Key.INITIALIZE_STORE, Key.FINALIZE_STORE, Key.THREAD_SWITCH,
                     Key.CLASS_DEFINITION, Key.FIELD_DEFINITION,
                     Key.THREAD_DEFINITION, Key.METHOD_DEFINITION,
                     Key.REMOVAL);
@@ -77,11 +82,12 @@ public abstract class CVMATextStore extends VMATextStore {
     public static final int KEY_INDEX = 0;
     public static final int TIME_INDEX = 1;
     public static final int THREAD_INDEX = 2;
-    public static final int OBJ_ID_INDEX = 3;
-    public static final int STATIC_CLASSNAME_INDEX = 3;
-    public static final int ID_CLASSNAME_INDEX = 4;
-    public static final int ARRAY_INDEX_INDEX = 4;
-    public static final int FIRST_ARG_INDEX = 1;
+    public static final int BCI_INDEX = 3;
+    public static final int OBJ_ID_INDEX = 4;
+    public static final int STATIC_CLASSNAME_INDEX = 4;
+    public static final int ID_CLASSNAME_INDEX = 5;
+    public static final int ARRAY_INDEX_INDEX = 5;
+    public static final int DEFINE_ARG_INDEX = 1;
 
     public static boolean hasId(Key code) {
         return code == Key.UNSEEN || hasIdSet.contains(code);
@@ -95,6 +101,10 @@ public abstract class CVMATextStore extends VMATextStore {
         return hasTime(key);
     }
 
+    public static boolean hasBci(Key key) {
+        return hasBciSet.contains(key);
+    }
+
 // START GENERATED CODE
 // EDIT AND RUN CVMATextStoreGenerator.main() TO MODIFY
 
@@ -106,7 +116,6 @@ public abstract class CVMATextStore extends VMATextStore {
         ADVISE_BEFORE_THROW("BT"),
         ADVISE_BEFORE_IF("BI"),
         ADVISE_BEFORE_LOAD("BL"),
-        ADVISE_BEFORE_BYTECODE("BB"),
         ADVISE_AFTER_MULTI_NEW_ARRAY("AMNA"),
         ADVISE_BEFORE_RETURN_BY_THROW("BRBT"),
         ADVISE_BEFORE_INVOKE_INTERFACE("BII"),
@@ -115,10 +124,8 @@ public abstract class CVMATextStore extends VMATextStore {
         ADVISE_BEFORE_ARRAY_STORE("BAS"),
         ADVISE_BEFORE_GET_STATIC("BGS"),
         ADVISE_BEFORE_PUT_FIELD("BPF"),
-        ADVISE_AFTER_INVOKE_INTERFACE("AII"),
         ADVISE_BEFORE_INVOKE_STATIC("BIS"),
         ADVISE_BEFORE_PUT_STATIC("BPS"),
-        ADVISE_AFTER_INVOKE_VIRTUAL("AIV"),
         ADVISE_BEFORE_MONITOR_EXIT("BMX"),
         ADVISE_BEFORE_ARRAY_LENGTH("BAG"),
         REMOVAL("D"),
@@ -126,22 +133,21 @@ public abstract class CVMATextStore extends VMATextStore {
         ADVISE_AFTER_GC("AGC"),
         ADVISE_BEFORE_GET_FIELD("BGF"),
         ADVISE_BEFORE_OPERATION("BO"),
-        ADVISE_AFTER_INVOKE_SPECIAL("AIZ"),
+        INITIALIZE_STORE("IL"),
         ADVISE_BEFORE_INVOKE_SPECIAL("BIZ"),
         ADVISE_BEFORE_STACK_ADJUST("BSA"),
         ADVISE_BEFORE_GC("BGC"),
-        ADVISE_AFTER_INVOKE_STATIC("AIS"),
         ADVISE_BEFORE_RETURN("BR"),
         ADVISE_BEFORE_ARRAY_LOAD("BAL"),
         ADVISE_BEFORE_CONVERSION("BC"),
         THREAD_SWITCH("ZT"),
         ADVISE_BEFORE_MONITOR_ENTER("BME"),
         ADVISE_BEFORE_THREAD_TERMINATING("BTT"),
-        INITIALIZE_LOG("IL"),
+        ADVISE_BEFORE_GOTO("BG"),
+        FINALIZE_STORE("FL"),
         ADVISE_BEFORE_THREAD_STARTING("BTS"),
         ADVISE_AFTER_METHOD_ENTRY("AME"),
         ADVISE_BEFORE_CONST_LOAD("BCL"),
-        FINALIZE_LOG("FL"),
         ADVISE_AFTER_NEW("AN"),
         ADVISE_AFTER_NEW_ARRAY("ANA"),
         ADVISE_BEFORE_INVOKE_VIRTUAL("BIV"),
@@ -168,10 +174,37 @@ public abstract class CVMATextStore extends VMATextStore {
         Key.ADVISE_BEFORE_INSTANCE_OF,
         Key.ADVISE_BEFORE_MONITOR_ENTER,
         Key.ADVISE_BEFORE_MONITOR_EXIT,
-        Key.ADVISE_AFTER_INVOKE_VIRTUAL,
-        Key.ADVISE_AFTER_INVOKE_SPECIAL,
-        Key.ADVISE_AFTER_INVOKE_STATIC,
-        Key.ADVISE_AFTER_INVOKE_INTERFACE,
+        Key.ADVISE_AFTER_NEW,
+        Key.ADVISE_AFTER_NEW_ARRAY,
+        Key.ADVISE_AFTER_MULTI_NEW_ARRAY,
+        Key.ADVISE_AFTER_METHOD_ENTRY);
+
+    public static final EnumSet<Key> hasBciSet = EnumSet.of(
+        Key.ADVISE_BEFORE_CONST_LOAD,
+        Key.ADVISE_BEFORE_LOAD,
+        Key.ADVISE_BEFORE_ARRAY_LOAD,
+        Key.ADVISE_BEFORE_STORE,
+        Key.ADVISE_BEFORE_ARRAY_STORE,
+        Key.ADVISE_BEFORE_STACK_ADJUST,
+        Key.ADVISE_BEFORE_OPERATION,
+        Key.ADVISE_BEFORE_CONVERSION,
+        Key.ADVISE_BEFORE_IF,
+        Key.ADVISE_BEFORE_GOTO,
+        Key.ADVISE_BEFORE_RETURN,
+        Key.ADVISE_BEFORE_GET_STATIC,
+        Key.ADVISE_BEFORE_PUT_STATIC,
+        Key.ADVISE_BEFORE_GET_FIELD,
+        Key.ADVISE_BEFORE_PUT_FIELD,
+        Key.ADVISE_BEFORE_INVOKE_VIRTUAL,
+        Key.ADVISE_BEFORE_INVOKE_SPECIAL,
+        Key.ADVISE_BEFORE_INVOKE_STATIC,
+        Key.ADVISE_BEFORE_INVOKE_INTERFACE,
+        Key.ADVISE_BEFORE_ARRAY_LENGTH,
+        Key.ADVISE_BEFORE_THROW,
+        Key.ADVISE_BEFORE_CHECK_CAST,
+        Key.ADVISE_BEFORE_INSTANCE_OF,
+        Key.ADVISE_BEFORE_MONITOR_ENTER,
+        Key.ADVISE_BEFORE_MONITOR_EXIT,
         Key.ADVISE_AFTER_NEW,
         Key.ADVISE_AFTER_NEW_ARRAY,
         Key.ADVISE_AFTER_MULTI_NEW_ARRAY,
