@@ -71,9 +71,10 @@ public abstract class RuntimeAdvice extends BytecodeAdvice {
     /**
      * Captures the case where a THROW bytecode is not handled in the throwing method,
      * causing a return to a method further down the stack.
-     * @param throwable the {@link Throwable} causing the return.
+     * @param bci location of throw
      * @param poppedFrames the number of stack frames being popped. Zero denotes that the exception was not handled.
+     * @param throwable the {@link Throwable} causing the return.
      *
      */
-    public abstract void adviseBeforeReturnByThrow(Throwable throwAble, int poppedFrames);
+    public abstract void adviseBeforeReturnByThrow(int bci, Throwable throwAble, int poppedFrames);
 }

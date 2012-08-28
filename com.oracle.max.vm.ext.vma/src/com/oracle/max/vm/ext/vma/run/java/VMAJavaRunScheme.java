@@ -246,10 +246,10 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
     }
 
     @Override
-    public void exceptionRaised(ClassMethodActor throwingActor, Throwable throwable, int poppedFrames) {
+    public void exceptionRaised(ClassMethodActor throwingActor, Throwable throwable, int bci, int poppedFrames) {
         if (isAdvising() && isInstrumented(throwingActor)) {
             disableAdvising();
-            adviceHandler.adviseBeforeReturnByThrow(throwable, poppedFrames);
+            adviceHandler.adviseBeforeReturnByThrow(bci, throwable, poppedFrames);
             enableAdvising();
         }
     }

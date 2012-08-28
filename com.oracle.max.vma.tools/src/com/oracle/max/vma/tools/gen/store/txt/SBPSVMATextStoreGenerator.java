@@ -43,6 +43,14 @@ public class SBPSVMATextStoreGenerator {
         AdviceGeneratorHelper.updateSource(SBPSVMATextStore.class, null, false);
     }
 
+    private static boolean hasBci(String name) {
+        if (name.contains("Thread") || name.contains("GC")) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     private static void generate(Method m) {
         final String name = m.getName();
         out.printf("    @Override%n");
@@ -54,46 +62,46 @@ public class SBPSVMATextStoreGenerator {
             return;
         }
         out.printf("        store_%s(", m.getName());
-        out.print("arg1, getThreadShortForm(arg2)");
+        out.printf("arg1, getThreadShortForm(arg2)%s", hasBci(name) ? ", arg3" : "");
         if (name.contains("GetField") || name.contains("PutField")) {
-            out.print(", checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6)");
+            out.print(", checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getFieldShortForm(arg5, arg6, arg7)");
             if (name.contains("PutField")) {
-                out.print(", arg7");
+                out.print(", arg8");
             }
             out.printf(");%n");
         } else if (name.contains("GetStatic") || name.contains("PutStatic")) {
-            out.print(", getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5)");
+            out.print(", getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6)");
             if (name.contains("PutStatic")) {
-                out.print(", arg6");
+                out.print(", arg7");
             }
             out.printf(");%n");
         } else if (name.contains("ArrayLoad") || name.contains("ArrayStore")) {
-            out.print(",  checkRepeatId(arg3, arg2), arg4");
+            out.print(",  checkRepeatId(arg4, arg2), arg5");
             if (name.contains("ArrayStore")) {
-                out.print(", arg5");
-            }
-            out.printf(");%n");
-        } else if (name.contains("New")) {
-            out.print(", checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5");
-            if (name.contains("NewArray")) {
                 out.print(", arg6");
             }
             out.printf(");%n");
+        } else if (name.contains("New")) {
+            out.print(", checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6");
+            if (name.contains("NewArray")) {
+                out.print(", arg7");
+            }
+            out.printf(");%n");
         } else if (name.contains("Invoke") || name.contains("MethodEntry")) {
-            out.print(", checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5, getMethodShortForm(arg4, arg5, arg6)");
+            out.print(", checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getMethodShortForm(arg5, arg6, arg7)");
             out.printf(");%n");
         } else if (name.contains("Monitor") || name.contains("Throw")) {
-            out.print(", checkRepeatId(arg3, arg2)");
+            out.print(", checkRepeatId(arg4, arg2)");
             if (name.contains("ReturnByThrow")) {
-                out.print(", arg4");
+                out.print(", arg5");
             }
             out.printf(");%n");
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
-            out.print(", checkRepeatId(arg3, arg2), getClassShortForm(arg4, arg5), arg5");
+            out.print(", checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6");
             out.printf(");%n");
         } else {
             Class<?>[] params = m.getParameterTypes();
-            for (int argc = 3; argc <= params.length; argc++) {
+            for (int argc = 4; argc <= params.length; argc++) {
                 out.printf(", %s", "arg" + argc);
             }
             out.printf(");%n");

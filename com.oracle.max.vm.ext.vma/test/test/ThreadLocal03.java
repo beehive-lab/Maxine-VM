@@ -43,7 +43,8 @@ public class ThreadLocal03 extends Thread {
     }
 
     private static enum AnEnum {
-        VALUE
+        VALUE1,
+        VALUE2
     }
 
     /**
@@ -134,7 +135,7 @@ public class ThreadLocal03 extends Thread {
                 data = new Data(100);
                 object = data;
                 intArray = new int[1];
-                anEnum = AnEnum.VALUE;
+                anEnum = AnEnum.VALUE2;
                 break;
 
             case ThreadType.SYNC:
@@ -192,7 +193,9 @@ public class ThreadLocal03 extends Thread {
 
             case ThreadType.SWITCH: {
                 switch (anEnum) {
-                    case VALUE:
+                    case VALUE2:
+                        @SuppressWarnings("unused")
+                        int x = anEnum.ordinal();
                         break;
                 }
                 break;

@@ -75,6 +75,10 @@ public class AdviceGeneratorHelper {
 
     }
 
+    public static boolean isBytecodeAdviceMethod(Method m) {
+        return m.getDeclaringClass() == BytecodeAdvice.class;
+    }
+
     /**
      * Default generator that assumes {@code com.oracle.max.vm.ext.vma} project.
      */
@@ -187,6 +191,14 @@ public class AdviceGeneratorHelper {
             return null;
         }
         return types[types.length - 1].getSimpleName();
+    }
+
+    public static String getNextToLastParameterName(Method m) {
+        Class<?>[] types = m.getParameterTypes();
+        if (types.length == 0) {
+            return null;
+        }
+        return types[types.length - 2].getSimpleName();
     }
 
     public static String getNthParameterName(Method m, int argc) {

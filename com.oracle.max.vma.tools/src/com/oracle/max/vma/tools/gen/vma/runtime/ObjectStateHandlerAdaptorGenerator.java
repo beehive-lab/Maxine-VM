@@ -64,19 +64,19 @@ public class ObjectStateHandlerAdaptorGenerator {
         generateSignature(m, null);
         out.printf(" {%n");
         if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
-            out.printf("        final Reference objRef = Reference.fromJava(arg1);%n");
+            out.printf("        final Reference objRef = Reference.fromJava(arg2);%n");
             out.printf("        final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));%n");
             out.printf("        state.assignId(objRef);%n");
             out.printf("        checkId(hub.classActor.classLoader);%n");
         } else {
-            boolean arg1CheckClId = name.contains("PutStatic") || name.contains("GetStatic");
-            boolean arg2NotChecked = name.contains("CheckCast") || name.contains("InstanceOf"); // arg2 is a ClassActor
+            boolean arg2CheckClId = name.contains("PutStatic") || name.contains("GetStatic");
+            boolean arg3NotChecked = name.contains("CheckCast") || name.contains("InstanceOf"); // arg3 is a ClassActor
             int i = 1;
             Class<?>[] params = m.getParameterTypes();
             for (Class<?> param : params) {
-                boolean check = i == 2 ? !arg2NotChecked : true;
+                boolean check = i == 3 ? !arg3NotChecked : true;
                 if (param == Object.class && check) {
-                    String mm = i == 1 && arg1CheckClId ? "ClassLoader" : "";
+                    String mm = i == 2 && arg2CheckClId ? "ClassLoader" : "";
                     out.printf("        check%sId(arg%d);%n", mm, i);
                 }
                 i++;
