@@ -48,7 +48,7 @@
  * data. In this case, the decision to log or not is made by the processing thread.
  * <p>
  * Logging to an instance of {@link com.oracle.max.vm.ext.vma.handlers.log.VMAdviceHandlerLog}
- * is actually factored out into{@link com.oracle.max.vm.ext.vma.handlers.log.VMAdviceHandlerLogAdapter},
+ * is actually factored out into{@link com.oracle.max.vm.ext.vma.store.txt.VMAdviceHandlerLogAdapter},
  * so that it can be used by both the synchronous and asynchronous implementations.
  * <p>
  * The other component of the runtime that is necessary for persistent recording of the advice

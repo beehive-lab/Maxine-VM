@@ -36,119 +36,111 @@ public abstract class BytecodeAdvice {
 // START GENERATED CODE
 // EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
 
-    public abstract void adviseBeforeConstLoad(Object value);
+    public abstract void adviseBeforeConstLoad(int bci, Object value);
 
-    public abstract void adviseBeforeConstLoad(long value);
+    public abstract void adviseBeforeConstLoad(int bci, long value);
 
-    public abstract void adviseBeforeConstLoad(float value);
+    public abstract void adviseBeforeConstLoad(int bci, float value);
 
-    public abstract void adviseBeforeConstLoad(double value);
+    public abstract void adviseBeforeConstLoad(int bci, double value);
 
-    public abstract void adviseBeforeLoad(int dispToLocalSlot);
+    public abstract void adviseBeforeLoad(int bci, int dispToLocalSlot);
 
-    public abstract void adviseBeforeArrayLoad(Object array, int index);
+    public abstract void adviseBeforeArrayLoad(int bci, Object array, int index);
 
-    public abstract void adviseBeforeStore(int dispToLocalSlot, long value);
+    public abstract void adviseBeforeStore(int bci, int dispToLocalSlot, long value);
 
-    public abstract void adviseBeforeStore(int dispToLocalSlot, float value);
+    public abstract void adviseBeforeStore(int bci, int dispToLocalSlot, float value);
 
-    public abstract void adviseBeforeStore(int dispToLocalSlot, double value);
+    public abstract void adviseBeforeStore(int bci, int dispToLocalSlot, double value);
 
-    public abstract void adviseBeforeStore(int dispToLocalSlot, Object value);
+    public abstract void adviseBeforeStore(int bci, int dispToLocalSlot, Object value);
 
-    public abstract void adviseBeforeArrayStore(Object array, int index, long value);
+    public abstract void adviseBeforeArrayStore(int bci, Object array, int index, long value);
 
-    public abstract void adviseBeforeArrayStore(Object array, int index, float value);
+    public abstract void adviseBeforeArrayStore(int bci, Object array, int index, float value);
 
-    public abstract void adviseBeforeArrayStore(Object array, int index, double value);
+    public abstract void adviseBeforeArrayStore(int bci, Object array, int index, double value);
 
-    public abstract void adviseBeforeArrayStore(Object array, int index, Object value);
+    public abstract void adviseBeforeArrayStore(int bci, Object array, int index, Object value);
 
-    public abstract void adviseBeforeStackAdjust(int opcode);
+    public abstract void adviseBeforeStackAdjust(int bci, int opcode);
 
-    public abstract void adviseBeforeOperation(int opcode, long op1, long op2);
+    public abstract void adviseBeforeOperation(int bci, int opcode, long op1, long op2);
 
-    public abstract void adviseBeforeOperation(int opcode, float op1, float op2);
+    public abstract void adviseBeforeOperation(int bci, int opcode, float op1, float op2);
 
-    public abstract void adviseBeforeOperation(int opcode, double op1, double op2);
+    public abstract void adviseBeforeOperation(int bci, int opcode, double op1, double op2);
 
-    public abstract void adviseBeforeConversion(int opcode, long op);
+    public abstract void adviseBeforeConversion(int bci, int opcode, long op);
 
-    public abstract void adviseBeforeConversion(int opcode, float op);
+    public abstract void adviseBeforeConversion(int bci, int opcode, float op);
 
-    public abstract void adviseBeforeConversion(int opcode, double op);
+    public abstract void adviseBeforeConversion(int bci, int opcode, double op);
 
-    public abstract void adviseBeforeIf(int opcode, int op1, int op2);
+    public abstract void adviseBeforeIf(int bci, int opcode, int op1, int op2, int targetBci);
 
-    public abstract void adviseBeforeIf(int opcode, Object op1, Object op2);
+    public abstract void adviseBeforeIf(int bci, int opcode, Object op1, Object op2, int targetBci);
 
-    public abstract void adviseBeforeBytecode(int opcode);
+    public abstract void adviseBeforeGoto(int bci, int targetBci);
 
-    public abstract void adviseBeforeReturn(long value);
+    public abstract void adviseBeforeReturn(int bci, long value);
 
-    public abstract void adviseBeforeReturn(float value);
+    public abstract void adviseBeforeReturn(int bci, float value);
 
-    public abstract void adviseBeforeReturn(double value);
+    public abstract void adviseBeforeReturn(int bci, double value);
 
-    public abstract void adviseBeforeReturn(Object value);
+    public abstract void adviseBeforeReturn(int bci, Object value);
 
-    public abstract void adviseBeforeReturn();
+    public abstract void adviseBeforeReturn(int bci);
 
-    public abstract void adviseBeforeGetStatic(Object staticTuple, int offset);
+    public abstract void adviseBeforeGetStatic(int bci, Object staticTuple, int offset);
 
-    public abstract void adviseBeforePutStatic(Object staticTuple, int offset, Object value);
+    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, int offset, Object value);
 
-    public abstract void adviseBeforePutStatic(Object staticTuple, int offset, float value);
+    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, int offset, double value);
 
-    public abstract void adviseBeforePutStatic(Object staticTuple, int offset, double value);
+    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, int offset, long value);
 
-    public abstract void adviseBeforePutStatic(Object staticTuple, int offset, long value);
+    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, int offset, float value);
 
-    public abstract void adviseBeforeGetField(Object object, int offset);
+    public abstract void adviseBeforeGetField(int bci, Object object, int offset);
 
-    public abstract void adviseBeforePutField(Object object, int offset, Object value);
+    public abstract void adviseBeforePutField(int bci, Object object, int offset, Object value);
 
-    public abstract void adviseBeforePutField(Object object, int offset, float value);
+    public abstract void adviseBeforePutField(int bci, Object object, int offset, double value);
 
-    public abstract void adviseBeforePutField(Object object, int offset, double value);
+    public abstract void adviseBeforePutField(int bci, Object object, int offset, long value);
 
-    public abstract void adviseBeforePutField(Object object, int offset, long value);
+    public abstract void adviseBeforePutField(int bci, Object object, int offset, float value);
 
-    public abstract void adviseBeforeInvokeVirtual(Object object, MethodActor methodActor);
+    public abstract void adviseBeforeInvokeVirtual(int bci, Object object, MethodActor methodActor);
 
-    public abstract void adviseBeforeInvokeSpecial(Object object, MethodActor methodActor);
+    public abstract void adviseBeforeInvokeSpecial(int bci, Object object, MethodActor methodActor);
 
-    public abstract void adviseBeforeInvokeStatic(Object object, MethodActor methodActor);
+    public abstract void adviseBeforeInvokeStatic(int bci, Object object, MethodActor methodActor);
 
-    public abstract void adviseBeforeInvokeInterface(Object object, MethodActor methodActor);
+    public abstract void adviseBeforeInvokeInterface(int bci, Object object, MethodActor methodActor);
 
-    public abstract void adviseBeforeArrayLength(Object array, int length);
+    public abstract void adviseBeforeArrayLength(int bci, Object array, int length);
 
-    public abstract void adviseBeforeThrow(Object object);
+    public abstract void adviseBeforeThrow(int bci, Object object);
 
-    public abstract void adviseBeforeCheckCast(Object object, Object classActor);
+    public abstract void adviseBeforeCheckCast(int bci, Object object, Object classActor);
 
-    public abstract void adviseBeforeInstanceOf(Object object, Object classActor);
+    public abstract void adviseBeforeInstanceOf(int bci, Object object, Object classActor);
 
-    public abstract void adviseBeforeMonitorEnter(Object object);
+    public abstract void adviseBeforeMonitorEnter(int bci, Object object);
 
-    public abstract void adviseBeforeMonitorExit(Object object);
+    public abstract void adviseBeforeMonitorExit(int bci, Object object);
 
-    public abstract void adviseAfterInvokeVirtual(Object object, MethodActor methodActor);
+    public abstract void adviseAfterNew(int bci, Object object);
 
-    public abstract void adviseAfterInvokeSpecial(Object object, MethodActor methodActor);
+    public abstract void adviseAfterNewArray(int bci, Object object, int length);
 
-    public abstract void adviseAfterInvokeStatic(Object object, MethodActor methodActor);
+    public abstract void adviseAfterMultiNewArray(int bci, Object object, int[] lengths);
 
-    public abstract void adviseAfterInvokeInterface(Object object, MethodActor methodActor);
-
-    public abstract void adviseAfterNew(Object object);
-
-    public abstract void adviseAfterNewArray(Object object, int length);
-
-    public abstract void adviseAfterMultiNewArray(Object object, int[] lengths);
-
-    public abstract void adviseAfterMethodEntry(Object object, MethodActor methodActor);
+    public abstract void adviseAfterMethodEntry(int bci, Object object, MethodActor methodActor);
 
 // END GENERATED CODE
 }

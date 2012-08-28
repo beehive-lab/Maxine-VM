@@ -60,7 +60,7 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         // we want to allocate the NativeRecord early;
         // crucial for the VMOperation thread, otherwise GC logging will fail
         if (!MaxineVM.isPrimordialOrPristine()) {
-            getNativeRecord();
+            getNativeRecord(VmThread.currentTLA());
         }
     }
 
@@ -121,7 +121,7 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         vmLogBufferOffsetsTL.store3(Address.fromLong(firstOffsetAndWrap | modLogSize(newNextOffset)));
 
         recordAddress.writeInt(ID_OFFSET, uuid);
-        NativeRecord record = getNativeRecord();
+        NativeRecord record = getNativeRecord(tla);
         record.address = recordAddress;
 
         return record;
@@ -164,7 +164,7 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         }
 
         Pointer buffer = getBuffer(tla);
-        NativeRecord r = getNativeRecord();
+        NativeRecord r = getNativeRecord(tla);
         int offset = firstOffset(offsets);
         VmThread vmThread = VmThread.fromTLA(tla);
 

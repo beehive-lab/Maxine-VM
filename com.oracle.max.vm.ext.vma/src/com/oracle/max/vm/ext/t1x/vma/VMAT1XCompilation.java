@@ -65,12 +65,6 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
      * The templates in use by the default T1X compiler.
      */
     private final T1XTemplate[] defaultTemplates;
-    /**
-     * If non-null, this denotes the tag for AFTER advice for an INVOKE.
-     * The after advice is actually prefixed to the code for the bytecode
-     * after the invoke.
-     */
-    private T1XTemplateTag invokeAfterTag;
 
     public VMAT1XCompilation(T1X t1x) {
         super(t1x);
@@ -98,11 +92,6 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     @Override
     protected void beginBytecode(int opcode) {
         super.beginBytecode(opcode);
-        if (invokeAfterTag != null) {
-            start(invokeAfterTag);
-            finish();
-            invokeAfterTag = null;
-        }
         // Based on the option settings for this bytecode, we choose the correct templates
         selectTemplates(opcode);
     }
@@ -127,6 +116,13 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     @Override
     protected T1XTemplate getTemplate(T1XTemplateTag tag) {
         return templates[tag.ordinal()];
+    }
+
+    @Override
+    protected void finish() {
+        // assign the bci value as the last argument
+        assignInt(template.sig.in.length - 1, "bci", stream.currentBCI());
+        super.finish();
     }
 
     /*
@@ -167,14 +163,6 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
         }
     }
 
-    @Override
-    protected void finishCall(T1XTemplateTag tag, Kind returnKind, int safepoint, ClassMethodActor directCallee) {
-        super.finishCall(tag, returnKind, safepoint, directCallee);
-        // check if after advice required and if so, set invokeAfterTag
-        if (templates == vmaT1X.templates || templates == vmaT1X.afterTemplates) {
-            invokeAfterTag = invokeAfterTagMap.get(tag);
-        }
-    }
     @Override
     protected void do_methodTraceEntry() {
         // We turn this into advice if we are advising
@@ -373,18 +361,21 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     }
 
     @Override
-    protected void do_branch(int opcode, int targetBCI) {
+    protected void do_branch(int opcode, int targetBci) {
         if (templates != defaultTemplates) {
             T1XTemplateTag tag = branchTagMap.get(opcode);
             switch (tag) {
                 case GOTO:
                 case GOTO_W:
-                    emit(tag);
+                    start(tag);
+                    assignTargetBci(targetBci);
+                    finish();
                     break;
                 case IFNULL: case IFNONNULL: {
                     start(tag);
                     CiRegister reg = reg(0, "value1", Kind.REFERENCE);
                     peekObject(reg, 0);
+                    assignTargetBci(targetBci);
                     finish();
                     break;
                 }
@@ -393,6 +384,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                     start(tag);
                     CiRegister reg = reg(0, "value1", Kind.INT);
                     peekInt(reg, 0);
+                    assignTargetBci(targetBci);
                     finish();
                     break;
                 }
@@ -404,6 +396,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                     CiRegister reg2 = reg(1, "value2", Kind.INT);
                     peekInt(reg1, 1);
                     peekInt(reg2, 0);
+                    assignTargetBci(targetBci);
                     finish();
                     break;
                 }
@@ -414,13 +407,18 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                     CiRegister reg2 = reg(1, "value2", Kind.REFERENCE);
                     peekObject(reg1, 1);
                     peekObject(reg2, 0);
+                    assignTargetBci(targetBci);
                     finish();
                     break;
                 }
 
             }
         }
-        super.do_branch(opcode, targetBCI);
+        super.do_branch(opcode, targetBci);
+    }
+
+    private void assignTargetBci(int targetBci) {
+        assignInt(template.sig.in.length - 2, "targetBci", targetBci);
     }
 
     @HOSTED_ONLY

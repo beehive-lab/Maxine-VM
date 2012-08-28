@@ -42,7 +42,7 @@ public class AdviceRecordsQuery extends QueryBase {
         long count = 0;
         for (AdviceRecord ar : traceRun.adviceRecordList) {
             RecordType rt = ar.getRecordType();
-            ps.printf("%-10d %s %c %s ", absTime ? ar.time : traceRun.relTime(ar.time), ar.thread, adviceId(ar), rt);
+            ps.printf("%-10d %s %c %s %s ", timeValue(traceRun, ar.time), ar.thread, adviceId(ar), toBci(ar), rt);
             switch (rt) {
                 case GC:
                 case ThreadStarting:
@@ -129,7 +129,7 @@ public class AdviceRecordsQuery extends QueryBase {
                 case PutStaticLong:
                 case PutStaticFloat:
                 case PutStaticObject:
-                    ps.print(getClassRecord(ar).getName());
+                    ps.print(getField(ar).getQualName());
                     break;
 
                 case GetField:
@@ -280,5 +280,18 @@ public class AdviceRecordsQuery extends QueryBase {
 
     private static char adviceId(AdviceRecord ar) {
         return AdviceMode.values()[ar.getAdviceMode()].name().charAt(0);
+    }
+
+    private static String toBci(AdviceRecord ar) {
+        switch (ar.getRecordType()) {
+            case GC:
+            case ThreadStarting:
+            case ThreadTerminating:
+            case Removal:
+                return "";
+
+            default:
+                return Short.toString(ar.getBci());
+        }
     }
 }

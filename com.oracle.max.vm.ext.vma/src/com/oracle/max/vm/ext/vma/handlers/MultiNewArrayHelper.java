@@ -34,7 +34,7 @@ import com.sun.max.vm.reference.*;
  * treat them as if they had been allocated as single-dimensional arrays.
  */
 public class MultiNewArrayHelper {
-    public static void handleMultiArray(VMAdviceHandler handler, Object array) {
+    public static void handleMultiArray(VMAdviceHandler handler, int bci, Object array) {
         final Reference objRef = Reference.fromJava(array);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
         if (hub.classActor.componentClassActor().isArrayClass()) {
@@ -42,7 +42,7 @@ public class MultiNewArrayHelper {
             for (int i = 0; i < length; i++) {
                 Reference subRef = Layout.getReference(objRef, i);
                 if (!subRef.isZero()) {
-                    handler.adviseAfterNewArray(subRef.toJava(), Layout.readArrayLength(subRef));
+                    handler.adviseAfterNewArray(bci, subRef.toJava(), Layout.readArrayLength(subRef));
                 }
             }
         }

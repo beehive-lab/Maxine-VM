@@ -22,8 +22,8 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.objstate;
 
-import com.oracle.max.vm.ext.vma.handlers.log.sync.h.*;
-import com.oracle.max.vm.ext.vma.handlers.log.vmlog.h.*;
+import com.oracle.max.vm.ext.vma.handlers.store.sync.h.*;
+import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
@@ -33,8 +33,8 @@ public class Package extends BootImagePackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
         return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
-            (VMAJavaRunScheme.isHandlerClass(SyncLogVMAdviceHandler.class) ||
-             VMAJavaRunScheme.isHandlerClass(VMLogVMAdviceHandler.class));
+            (VMAJavaRunScheme.isHandlerClass(SyncStoreVMAdviceHandler.class) ||
+             VMAJavaRunScheme.isHandlerClass(VMLogStoreVMAdviceHandler.class));
     }
 
 }

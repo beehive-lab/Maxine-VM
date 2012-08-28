@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.t1x.vma;
 import static com.oracle.max.vm.ext.t1x.T1XRuntime.*;
 import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 import static com.oracle.max.vm.ext.t1x.T1XTemplateSource.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.oracle.max.vm.ext.vma.runtime.*;
@@ -37,8 +38,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.oracle.max.vm.ext.t1x.*;
 
 /**
@@ -48,24 +51,24 @@ public class VMAdviceBeforeTemplateSource {
 
 // START GENERATED CODE
     @T1X_TEMPLATE(GETFIELD$boolean$resolved)
-    public static int getfieldBoolean(@Slot(0) Object object, int offset) {
+    public static int getfieldBoolean(@Slot(0) Object object, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
         }
         boolean result = TupleAccess.readBoolean(object, offset);
         return UnsafeCast.asByte(result);
     }
 
     @T1X_TEMPLATE(GETFIELD$boolean)
-    public static int getfieldBoolean(ResolutionGuard.InPool guard, @Slot(0) Object object) {
-        return resolveAndGetFieldBoolean(guard, object);
+    public static int getfieldBoolean(ResolutionGuard.InPool guard, @Slot(0) Object object, int bci) {
+        return resolveAndGetFieldBoolean(guard, object, bci);
     }
 
     @NEVER_INLINE
-    public static int resolveAndGetFieldBoolean(ResolutionGuard.InPool guard, Object object) {
+    public static int resolveAndGetFieldBoolean(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -79,16 +82,16 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$boolean)
-    public static int getstaticBoolean(ResolutionGuard.InPool guard) {
-        return resolveAndGetStaticBoolean(guard);
+    public static int getstaticBoolean(ResolutionGuard.InPool guard, int bci) {
+        return resolveAndGetStaticBoolean(guard, bci);
     }
 
     @NEVER_INLINE
-    public static int resolveAndGetStaticBoolean(ResolutionGuard.InPool guard) {
+    public static int resolveAndGetStaticBoolean(ResolutionGuard.InPool guard, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -102,32 +105,32 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$boolean$init)
-    public static int getstaticBoolean(Object staticTuple, int offset) {
+    public static int getstaticBoolean(Object staticTuple, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
         }
         boolean result = TupleAccess.readBoolean(staticTuple, offset);
         return UnsafeCast.asByte(result);
     }
 
     @T1X_TEMPLATE(PUTFIELD$boolean$resolved)
-    public static void putfieldBoolean(@Slot(1) Object object, int offset, @Slot(0) int value) {
+    public static void putfieldBoolean(@Slot(1) Object object, int offset, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
         }
         TupleAccess.writeBoolean(object, offset, UnsafeCast.asBoolean((byte) value));
     }
 
     @T1X_TEMPLATE(PUTFIELD$boolean)
-    public static void putfieldBoolean(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) int value) {
-        resolveAndPutFieldBoolean(guard, object, value);
+    public static void putfieldBoolean(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) int value, int bci) {
+        resolveAndPutFieldBoolean(guard, object, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutFieldBoolean(ResolutionGuard.InPool guard, Object object, int value) {
+    public static void resolveAndPutFieldBoolean(ResolutionGuard.InPool guard, Object object, int value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -139,23 +142,23 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$boolean$init)
-    public static void putstaticBoolean(Object staticTuple, int offset, @Slot(0) int value) {
+    public static void putstaticBoolean(Object staticTuple, int offset, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
         }
         TupleAccess.writeBoolean(staticTuple, offset, UnsafeCast.asBoolean((byte) value));
     }
 
     @T1X_TEMPLATE(PUTSTATIC$boolean)
-    public static void putstaticBoolean(ResolutionGuard.InPool guard, @Slot(0) int value) {
-        resolveAndPutStaticBoolean(guard, value);
+    public static void putstaticBoolean(ResolutionGuard.InPool guard, @Slot(0) int value, int bci) {
+        resolveAndPutStaticBoolean(guard, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutStaticBoolean(ResolutionGuard.InPool guard, int value) {
+    public static void resolveAndPutStaticBoolean(ResolutionGuard.InPool guard, int value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -168,24 +171,24 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETFIELD$byte$resolved)
-    public static int getfieldByte(@Slot(0) Object object, int offset) {
+    public static int getfieldByte(@Slot(0) Object object, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
         }
         byte result = TupleAccess.readByte(object, offset);
         return result;
     }
 
     @T1X_TEMPLATE(GETFIELD$byte)
-    public static int getfieldByte(ResolutionGuard.InPool guard, @Slot(0) Object object) {
-        return resolveAndGetFieldByte(guard, object);
+    public static int getfieldByte(ResolutionGuard.InPool guard, @Slot(0) Object object, int bci) {
+        return resolveAndGetFieldByte(guard, object, bci);
     }
 
     @NEVER_INLINE
-    public static int resolveAndGetFieldByte(ResolutionGuard.InPool guard, Object object) {
+    public static int resolveAndGetFieldByte(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -199,16 +202,16 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$byte)
-    public static int getstaticByte(ResolutionGuard.InPool guard) {
-        return resolveAndGetStaticByte(guard);
+    public static int getstaticByte(ResolutionGuard.InPool guard, int bci) {
+        return resolveAndGetStaticByte(guard, bci);
     }
 
     @NEVER_INLINE
-    public static int resolveAndGetStaticByte(ResolutionGuard.InPool guard) {
+    public static int resolveAndGetStaticByte(ResolutionGuard.InPool guard, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -222,32 +225,32 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$byte$init)
-    public static int getstaticByte(Object staticTuple, int offset) {
+    public static int getstaticByte(Object staticTuple, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
         }
         byte result = TupleAccess.readByte(staticTuple, offset);
         return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$byte$resolved)
-    public static void putfieldByte(@Slot(1) Object object, int offset, @Slot(0) int value) {
+    public static void putfieldByte(@Slot(1) Object object, int offset, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
         }
         TupleAccess.writeByte(object, offset, (byte) value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$byte)
-    public static void putfieldByte(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) int value) {
-        resolveAndPutFieldByte(guard, object, value);
+    public static void putfieldByte(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) int value, int bci) {
+        resolveAndPutFieldByte(guard, object, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutFieldByte(ResolutionGuard.InPool guard, Object object, int value) {
+    public static void resolveAndPutFieldByte(ResolutionGuard.InPool guard, Object object, int value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -259,23 +262,23 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$byte$init)
-    public static void putstaticByte(Object staticTuple, int offset, @Slot(0) int value) {
+    public static void putstaticByte(Object staticTuple, int offset, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
         }
         TupleAccess.writeByte(staticTuple, offset, (byte) value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$byte)
-    public static void putstaticByte(ResolutionGuard.InPool guard, @Slot(0) int value) {
-        resolveAndPutStaticByte(guard, value);
+    public static void putstaticByte(ResolutionGuard.InPool guard, @Slot(0) int value, int bci) {
+        resolveAndPutStaticByte(guard, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutStaticByte(ResolutionGuard.InPool guard, int value) {
+    public static void resolveAndPutStaticByte(ResolutionGuard.InPool guard, int value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -288,51 +291,51 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(I2B)
-    public static int i2b(@Slot(0) int value) {
+    public static int i2b(@Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(145, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 145, value);
         }
         return (byte) value;
     }
 
     @T1X_TEMPLATE(BALOAD)
-    public static int baload(@Slot(1) Object array, @Slot(0) int index) {
+    public static int baload(@Slot(1) Object array, @Slot(0) int index, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(bci, array, index);
         }
         byte result = ArrayAccess.getByte(array, index);
         return result;
     }
 
     @T1X_TEMPLATE(BASTORE)
-    public static void bastore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) int value) {
+    public static void bastore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) int value, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(bci, array, index, value);
         }
         ArrayAccess.setByte(array, index, (byte) value);
     }
 
     @T1X_TEMPLATE(GETFIELD$char$resolved)
-    public static int getfieldChar(@Slot(0) Object object, int offset) {
+    public static int getfieldChar(@Slot(0) Object object, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
         }
         char result = TupleAccess.readChar(object, offset);
         return result;
     }
 
     @T1X_TEMPLATE(GETFIELD$char)
-    public static int getfieldChar(ResolutionGuard.InPool guard, @Slot(0) Object object) {
-        return resolveAndGetFieldChar(guard, object);
+    public static int getfieldChar(ResolutionGuard.InPool guard, @Slot(0) Object object, int bci) {
+        return resolveAndGetFieldChar(guard, object, bci);
     }
 
     @NEVER_INLINE
-    public static int resolveAndGetFieldChar(ResolutionGuard.InPool guard, Object object) {
+    public static int resolveAndGetFieldChar(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -346,16 +349,16 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$char)
-    public static int getstaticChar(ResolutionGuard.InPool guard) {
-        return resolveAndGetStaticChar(guard);
+    public static int getstaticChar(ResolutionGuard.InPool guard, int bci) {
+        return resolveAndGetStaticChar(guard, bci);
     }
 
     @NEVER_INLINE
-    public static int resolveAndGetStaticChar(ResolutionGuard.InPool guard) {
+    public static int resolveAndGetStaticChar(ResolutionGuard.InPool guard, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -369,32 +372,32 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$char$init)
-    public static int getstaticChar(Object staticTuple, int offset) {
+    public static int getstaticChar(Object staticTuple, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
         }
         char result = TupleAccess.readChar(staticTuple, offset);
         return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$char$resolved)
-    public static void putfieldChar(@Slot(1) Object object, int offset, @Slot(0) int value) {
+    public static void putfieldChar(@Slot(1) Object object, int offset, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
         }
         TupleAccess.writeChar(object, offset, (char) value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$char)
-    public static void putfieldChar(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) int value) {
-        resolveAndPutFieldChar(guard, object, value);
+    public static void putfieldChar(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) int value, int bci) {
+        resolveAndPutFieldChar(guard, object, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutFieldChar(ResolutionGuard.InPool guard, Object object, int value) {
+    public static void resolveAndPutFieldChar(ResolutionGuard.InPool guard, Object object, int value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -406,23 +409,23 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$char$init)
-    public static void putstaticChar(Object staticTuple, int offset, @Slot(0) int value) {
+    public static void putstaticChar(Object staticTuple, int offset, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
         }
         TupleAccess.writeChar(staticTuple, offset, (char) value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$char)
-    public static void putstaticChar(ResolutionGuard.InPool guard, @Slot(0) int value) {
-        resolveAndPutStaticChar(guard, value);
+    public static void putstaticChar(ResolutionGuard.InPool guard, @Slot(0) int value, int bci) {
+        resolveAndPutStaticChar(guard, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutStaticChar(ResolutionGuard.InPool guard, int value) {
+    public static void resolveAndPutStaticChar(ResolutionGuard.InPool guard, int value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -435,51 +438,51 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(I2C)
-    public static int i2c(@Slot(0) int value) {
+    public static int i2c(@Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(146, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 146, value);
         }
         return (char) value;
     }
 
     @T1X_TEMPLATE(CALOAD)
-    public static int caload(@Slot(1) Object array, @Slot(0) int index) {
+    public static int caload(@Slot(1) Object array, @Slot(0) int index, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(bci, array, index);
         }
         char result = ArrayAccess.getChar(array, index);
         return result;
     }
 
     @T1X_TEMPLATE(CASTORE)
-    public static void castore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) int value) {
+    public static void castore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) int value, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(bci, array, index, value);
         }
         ArrayAccess.setChar(array, index, (char) value);
     }
 
     @T1X_TEMPLATE(GETFIELD$short$resolved)
-    public static int getfieldShort(@Slot(0) Object object, int offset) {
+    public static int getfieldShort(@Slot(0) Object object, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
         }
         short result = TupleAccess.readShort(object, offset);
         return result;
     }
 
     @T1X_TEMPLATE(GETFIELD$short)
-    public static int getfieldShort(ResolutionGuard.InPool guard, @Slot(0) Object object) {
-        return resolveAndGetFieldShort(guard, object);
+    public static int getfieldShort(ResolutionGuard.InPool guard, @Slot(0) Object object, int bci) {
+        return resolveAndGetFieldShort(guard, object, bci);
     }
 
     @NEVER_INLINE
-    public static int resolveAndGetFieldShort(ResolutionGuard.InPool guard, Object object) {
+    public static int resolveAndGetFieldShort(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -493,16 +496,16 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$short)
-    public static int getstaticShort(ResolutionGuard.InPool guard) {
-        return resolveAndGetStaticShort(guard);
+    public static int getstaticShort(ResolutionGuard.InPool guard, int bci) {
+        return resolveAndGetStaticShort(guard, bci);
     }
 
     @NEVER_INLINE
-    public static int resolveAndGetStaticShort(ResolutionGuard.InPool guard) {
+    public static int resolveAndGetStaticShort(ResolutionGuard.InPool guard, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -516,32 +519,32 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$short$init)
-    public static int getstaticShort(Object staticTuple, int offset) {
+    public static int getstaticShort(Object staticTuple, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
         }
         short result = TupleAccess.readShort(staticTuple, offset);
         return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$short$resolved)
-    public static void putfieldShort(@Slot(1) Object object, int offset, @Slot(0) int value) {
+    public static void putfieldShort(@Slot(1) Object object, int offset, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
         }
         TupleAccess.writeShort(object, offset, (short) value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$short)
-    public static void putfieldShort(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) int value) {
-        resolveAndPutFieldShort(guard, object, value);
+    public static void putfieldShort(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) int value, int bci) {
+        resolveAndPutFieldShort(guard, object, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutFieldShort(ResolutionGuard.InPool guard, Object object, int value) {
+    public static void resolveAndPutFieldShort(ResolutionGuard.InPool guard, Object object, int value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -553,23 +556,23 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$short$init)
-    public static void putstaticShort(Object staticTuple, int offset, @Slot(0) int value) {
+    public static void putstaticShort(Object staticTuple, int offset, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
         }
         TupleAccess.writeShort(staticTuple, offset, (short) value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$short)
-    public static void putstaticShort(ResolutionGuard.InPool guard, @Slot(0) int value) {
-        resolveAndPutStaticShort(guard, value);
+    public static void putstaticShort(ResolutionGuard.InPool guard, @Slot(0) int value, int bci) {
+        resolveAndPutStaticShort(guard, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutStaticShort(ResolutionGuard.InPool guard, int value) {
+    public static void resolveAndPutStaticShort(ResolutionGuard.InPool guard, int value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -582,51 +585,51 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(I2S)
-    public static int i2s(@Slot(0) int value) {
+    public static int i2s(@Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(147, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 147, value);
         }
         return (short) value;
     }
 
     @T1X_TEMPLATE(SALOAD)
-    public static int saload(@Slot(1) Object array, @Slot(0) int index) {
+    public static int saload(@Slot(1) Object array, @Slot(0) int index, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(bci, array, index);
         }
         short result = ArrayAccess.getShort(array, index);
         return result;
     }
 
     @T1X_TEMPLATE(SASTORE)
-    public static void sastore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) int value) {
+    public static void sastore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) int value, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(bci, array, index, value);
         }
         ArrayAccess.setShort(array, index, (short) value);
     }
 
     @T1X_TEMPLATE(GETFIELD$int$resolved)
-    public static int getfieldInt(@Slot(0) Object object, int offset) {
+    public static int getfieldInt(@Slot(0) Object object, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
         }
         int result = TupleAccess.readInt(object, offset);
         return result;
     }
 
     @T1X_TEMPLATE(GETFIELD$int)
-    public static int getfieldInt(ResolutionGuard.InPool guard, @Slot(0) Object object) {
-        return resolveAndGetFieldInt(guard, object);
+    public static int getfieldInt(ResolutionGuard.InPool guard, @Slot(0) Object object, int bci) {
+        return resolveAndGetFieldInt(guard, object, bci);
     }
 
     @NEVER_INLINE
-    public static int resolveAndGetFieldInt(ResolutionGuard.InPool guard, Object object) {
+    public static int resolveAndGetFieldInt(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -640,16 +643,16 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$int)
-    public static int getstaticInt(ResolutionGuard.InPool guard) {
-        return resolveAndGetStaticInt(guard);
+    public static int getstaticInt(ResolutionGuard.InPool guard, int bci) {
+        return resolveAndGetStaticInt(guard, bci);
     }
 
     @NEVER_INLINE
-    public static int resolveAndGetStaticInt(ResolutionGuard.InPool guard) {
+    public static int resolveAndGetStaticInt(ResolutionGuard.InPool guard, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -663,32 +666,32 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$int$init)
-    public static int getstaticInt(Object staticTuple, int offset) {
+    public static int getstaticInt(Object staticTuple, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
         }
         int result = TupleAccess.readInt(staticTuple, offset);
         return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$int$resolved)
-    public static void putfieldInt(@Slot(1) Object object, int offset, @Slot(0) int value) {
+    public static void putfieldInt(@Slot(1) Object object, int offset, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
         }
         TupleAccess.writeInt(object, offset, value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$int)
-    public static void putfieldInt(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) int value) {
-        resolveAndPutFieldInt(guard, object, value);
+    public static void putfieldInt(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) int value, int bci) {
+        resolveAndPutFieldInt(guard, object, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutFieldInt(ResolutionGuard.InPool guard, Object object, int value) {
+    public static void resolveAndPutFieldInt(ResolutionGuard.InPool guard, Object object, int value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -700,23 +703,23 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$int$init)
-    public static void putstaticInt(Object staticTuple, int offset, @Slot(0) int value) {
+    public static void putstaticInt(Object staticTuple, int offset, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
         }
         TupleAccess.writeInt(staticTuple, offset, value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$int)
-    public static void putstaticInt(ResolutionGuard.InPool guard, @Slot(0) int value) {
-        resolveAndPutStaticInt(guard, value);
+    public static void putstaticInt(ResolutionGuard.InPool guard, @Slot(0) int value, int bci) {
+        resolveAndPutStaticInt(guard, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutStaticInt(ResolutionGuard.InPool guard, int value) {
+    public static void resolveAndPutStaticInt(ResolutionGuard.InPool guard, int value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -729,185 +732,185 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(L2I)
-    public static int l2i(@Slot(0) long value) {
+    public static int l2i(@Slot(0) long value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(136, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 136, value);
         }
         return (int) value;
     }
 
     @T1X_TEMPLATE(F2I)
-    public static int f2i(@Slot(0) float value) {
+    public static int f2i(@Slot(0) float value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(139, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 139, value);
         }
         return T1XRuntime.f2i(value);
     }
 
     @T1X_TEMPLATE(D2I)
-    public static int d2i(@Slot(0) double value) {
+    public static int d2i(@Slot(0) double value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(142, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 142, value);
         }
         return T1XRuntime.d2i(value);
     }
 
     @T1X_TEMPLATE(IADD)
-    public static int iadd(@Slot(1) int value1, @Slot(0) int value2) {
+    public static int iadd(@Slot(1) int value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(96, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 96, value1, value2);
         }
         return value1 + value2;
     }
 
     @T1X_TEMPLATE(ISUB)
-    public static int isub(@Slot(1) int value1, @Slot(0) int value2) {
+    public static int isub(@Slot(1) int value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(100, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 100, value1, value2);
         }
         return value1 - value2;
     }
 
     @T1X_TEMPLATE(IMUL)
-    public static int imul(@Slot(1) int value1, @Slot(0) int value2) {
+    public static int imul(@Slot(1) int value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(104, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 104, value1, value2);
         }
         return value1 * value2;
     }
 
     @T1X_TEMPLATE(IDIV)
-    public static int idiv(@Slot(1) int value1, @Slot(0) int value2) {
+    public static int idiv(@Slot(1) int value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(108, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 108, value1, value2);
         }
         return value1 / value2;
     }
 
     @T1X_TEMPLATE(IREM)
-    public static int irem(@Slot(1) int value1, @Slot(0) int value2) {
+    public static int irem(@Slot(1) int value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(112, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 112, value1, value2);
         }
         return value1 % value2;
     }
 
     @T1X_TEMPLATE(INEG)
-    public static int ineg(@Slot(0) int value, int zero) {
+    public static int ineg(@Slot(0) int value, int zero, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(116, value, zero);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 116, value, zero);
         }
         return zero - value;
     }
 
     @T1X_TEMPLATE(IOR)
-    public static int ior(@Slot(1) int value1, @Slot(0) int value2) {
+    public static int ior(@Slot(1) int value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(128, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 128, value1, value2);
         }
         return value1 | value2;
     }
 
     @T1X_TEMPLATE(IAND)
-    public static int iand(@Slot(1) int value1, @Slot(0) int value2) {
+    public static int iand(@Slot(1) int value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(126, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 126, value1, value2);
         }
         return value1 & value2;
     }
 
     @T1X_TEMPLATE(IXOR)
-    public static int ixor(@Slot(1) int value1, @Slot(0) int value2) {
+    public static int ixor(@Slot(1) int value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(130, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 130, value1, value2);
         }
         return value1 ^ value2;
     }
 
     @T1X_TEMPLATE(ISHL)
-    public static int ishl(@Slot(1) int value1, @Slot(0) int value2) {
+    public static int ishl(@Slot(1) int value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(120, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 120, value1, value2);
         }
         return value1 << value2;
     }
 
     @T1X_TEMPLATE(ISHR)
-    public static int ishr(@Slot(1) int value1, @Slot(0) int value2) {
+    public static int ishr(@Slot(1) int value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(122, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 122, value1, value2);
         }
         return value1 >> value2;
     }
 
     @T1X_TEMPLATE(IUSHR)
-    public static int iushr(@Slot(1) int value1, @Slot(0) int value2) {
+    public static int iushr(@Slot(1) int value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(124, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 124, value1, value2);
         }
         return value1 >>> value2;
     }
 
     @T1X_TEMPLATE(IRETURN)
     @Slot(-1)
-    public static int ireturn(@Slot(0) int value) {
+    public static int ireturn(@Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value);
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(IRETURN$unlock)
     @Slot(-1)
-    public static int ireturnUnlock(Reference object, @Slot(0) int value) {
+    public static int ireturnUnlock(Reference object, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
+            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(bci, object);
         }
         Monitor.noninlineExit(object);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value);
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(IALOAD)
-    public static int iaload(@Slot(1) Object array, @Slot(0) int index) {
+    public static int iaload(@Slot(1) Object array, @Slot(0) int index, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(bci, array, index);
         }
         int result = ArrayAccess.getInt(array, index);
         return result;
     }
 
     @T1X_TEMPLATE(IASTORE)
-    public static void iastore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) int value) {
+    public static void iastore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) int value, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(bci, array, index, value);
         }
         ArrayAccess.setInt(array, index, value);
     }
 
     @T1X_TEMPLATE(GETFIELD$float$resolved)
-    public static float getfieldFloat(@Slot(0) Object object, int offset) {
+    public static float getfieldFloat(@Slot(0) Object object, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
         }
         float result = TupleAccess.readFloat(object, offset);
         return result;
     }
 
     @T1X_TEMPLATE(GETFIELD$float)
-    public static float getfieldFloat(ResolutionGuard.InPool guard, @Slot(0) Object object) {
-        return resolveAndGetFieldFloat(guard, object);
+    public static float getfieldFloat(ResolutionGuard.InPool guard, @Slot(0) Object object, int bci) {
+        return resolveAndGetFieldFloat(guard, object, bci);
     }
 
     @NEVER_INLINE
-    public static float resolveAndGetFieldFloat(ResolutionGuard.InPool guard, Object object) {
+    public static float resolveAndGetFieldFloat(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -921,16 +924,16 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$float)
-    public static float getstaticFloat(ResolutionGuard.InPool guard) {
-        return resolveAndGetStaticFloat(guard);
+    public static float getstaticFloat(ResolutionGuard.InPool guard, int bci) {
+        return resolveAndGetStaticFloat(guard, bci);
     }
 
     @NEVER_INLINE
-    public static float resolveAndGetStaticFloat(ResolutionGuard.InPool guard) {
+    public static float resolveAndGetStaticFloat(ResolutionGuard.InPool guard, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -944,32 +947,32 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$float$init)
-    public static float getstaticFloat(Object staticTuple, int offset) {
+    public static float getstaticFloat(Object staticTuple, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
         }
         float result = TupleAccess.readFloat(staticTuple, offset);
         return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$float$resolved)
-    public static void putfieldFloat(@Slot(1) Object object, int offset, @Slot(0) float value) {
+    public static void putfieldFloat(@Slot(1) Object object, int offset, @Slot(0) float value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
         }
         TupleAccess.writeFloat(object, offset, value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$float)
-    public static void putfieldFloat(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) float value) {
-        resolveAndPutFieldFloat(guard, object, value);
+    public static void putfieldFloat(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) float value, int bci) {
+        resolveAndPutFieldFloat(guard, object, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutFieldFloat(ResolutionGuard.InPool guard, Object object, float value) {
+    public static void resolveAndPutFieldFloat(ResolutionGuard.InPool guard, Object object, float value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -981,23 +984,23 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$float$init)
-    public static void putstaticFloat(Object staticTuple, int offset, @Slot(0) float value) {
+    public static void putstaticFloat(Object staticTuple, int offset, @Slot(0) float value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
         }
         TupleAccess.writeFloat(staticTuple, offset, value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$float)
-    public static void putstaticFloat(ResolutionGuard.InPool guard, @Slot(0) float value) {
-        resolveAndPutStaticFloat(guard, value);
+    public static void putstaticFloat(ResolutionGuard.InPool guard, @Slot(0) float value, int bci) {
+        resolveAndPutStaticFloat(guard, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutStaticFloat(ResolutionGuard.InPool guard, float value) {
+    public static void resolveAndPutStaticFloat(ResolutionGuard.InPool guard, float value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -1010,73 +1013,73 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(I2F)
-    public static float i2f(@Slot(0) int value) {
+    public static float i2f(@Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(134, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 134, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(L2F)
-    public static float l2f(@Slot(0) long value) {
+    public static float l2f(@Slot(0) long value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(137, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 137, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(D2F)
-    public static float d2f(@Slot(0) double value) {
+    public static float d2f(@Slot(0) double value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(144, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 144, value);
         }
         return (float) value;
     }
 
     @T1X_TEMPLATE(FADD)
-    public static float fadd(@Slot(1) float value1, @Slot(0) float value2) {
+    public static float fadd(@Slot(1) float value1, @Slot(0) float value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(98, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 98, value1, value2);
         }
         return value1 + value2;
     }
 
     @T1X_TEMPLATE(FSUB)
-    public static float fsub(@Slot(1) float value1, @Slot(0) float value2) {
+    public static float fsub(@Slot(1) float value1, @Slot(0) float value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(102, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 102, value1, value2);
         }
         return value1 - value2;
     }
 
     @T1X_TEMPLATE(FMUL)
-    public static float fmul(@Slot(1) float value1, @Slot(0) float value2) {
+    public static float fmul(@Slot(1) float value1, @Slot(0) float value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(106, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 106, value1, value2);
         }
         return value1 * value2;
     }
 
     @T1X_TEMPLATE(FDIV)
-    public static float fdiv(@Slot(1) float value1, @Slot(0) float value2) {
+    public static float fdiv(@Slot(1) float value1, @Slot(0) float value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(110, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 110, value1, value2);
         }
         return value1 / value2;
     }
 
     @T1X_TEMPLATE(FREM)
-    public static float frem(@Slot(1) float value1, @Slot(0) float value2) {
+    public static float frem(@Slot(1) float value1, @Slot(0) float value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(114, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 114, value1, value2);
         }
         return value1 % value2;
     }
 
     @T1X_TEMPLATE(FNEG)
-    public static float fneg(@Slot(0) float value, float zero) {
+    public static float fneg(@Slot(0) float value, float zero, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(118, value, zero);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 118, value, zero);
         }
         float res;
         if (Float.floatToRawIntBits(value) == Float.floatToRawIntBits(zero)) {
@@ -1089,64 +1092,162 @@ public class VMAdviceBeforeTemplateSource {
 
     @T1X_TEMPLATE(FRETURN)
     @Slot(-1)
-    public static float freturn(@Slot(0) float value) {
+    public static float freturn(@Slot(0) float value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value);
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(FRETURN$unlock)
     @Slot(-1)
-    public static float freturnUnlock(Reference object, @Slot(0) float value) {
+    public static float freturnUnlock(Reference object, @Slot(0) float value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
+            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(bci, object);
         }
         Monitor.noninlineExit(object);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value);
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(FALOAD)
-    public static float faload(@Slot(1) Object array, @Slot(0) int index) {
+    public static float faload(@Slot(1) Object array, @Slot(0) int index, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(bci, array, index);
         }
         float result = ArrayAccess.getFloat(array, index);
         return result;
     }
 
     @T1X_TEMPLATE(FASTORE)
-    public static void fastore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) float value) {
+    public static void fastore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) float value, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(bci, array, index, value);
         }
         ArrayAccess.setFloat(array, index, value);
     }
 
-    @T1X_TEMPLATE(GETFIELD$long$resolved)
-    public static long getfieldLong(@Slot(0) Object object, int offset) {
+    @T1X_TEMPLATE(INVOKEVIRTUAL$float)
+    @Slot(-1)
+    public static Address invokevirtualFloat(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$float$resolved)
+    @Slot(-1)
+    public static Address invokevirtualFloat(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$float$instrumented)
+    @Slot(-1)
+    public static Address invokevirtualFloat(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$float)
+    @Slot(-1)
+    public static Address invokeinterfaceFloat(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$float$resolved)
+    @Slot(-1)
+    public static Address invokeinterfaceFloat(InterfaceMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$float$instrumented)
+    @Slot(-1)
+    public static Address invokeinterfaceFloat(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$float)
+    @Slot(-1)
+    public static Address invokespecialFloat(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.initializeSpecialMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$float$resolved)
+    public static void invokespecialFloat(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$float)
+    @Slot(-1)
+    public static Address invokestaticFloat(ResolutionGuard.InPool guard, int bci) {
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
+        }
+        return VMAT1XRuntime.initializeStaticMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$float$init)
+    public static void invokestaticFloat(StaticMethodActor methodActor, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
+        }
+    }
+
+    @T1X_TEMPLATE(GETFIELD$long$resolved)
+    public static long getfieldLong(@Slot(0) Object object, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
         }
         long result = TupleAccess.readLong(object, offset);
         return result;
     }
 
     @T1X_TEMPLATE(GETFIELD$long)
-    public static long getfieldLong(ResolutionGuard.InPool guard, @Slot(0) Object object) {
-        return resolveAndGetFieldLong(guard, object);
+    public static long getfieldLong(ResolutionGuard.InPool guard, @Slot(0) Object object, int bci) {
+        return resolveAndGetFieldLong(guard, object, bci);
     }
 
     @NEVER_INLINE
-    public static long resolveAndGetFieldLong(ResolutionGuard.InPool guard, Object object) {
+    public static long resolveAndGetFieldLong(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1160,16 +1261,16 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$long)
-    public static long getstaticLong(ResolutionGuard.InPool guard) {
-        return resolveAndGetStaticLong(guard);
+    public static long getstaticLong(ResolutionGuard.InPool guard, int bci) {
+        return resolveAndGetStaticLong(guard, bci);
     }
 
     @NEVER_INLINE
-    public static long resolveAndGetStaticLong(ResolutionGuard.InPool guard) {
+    public static long resolveAndGetStaticLong(ResolutionGuard.InPool guard, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1183,32 +1284,32 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$long$init)
-    public static long getstaticLong(Object staticTuple, int offset) {
+    public static long getstaticLong(Object staticTuple, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
         }
         long result = TupleAccess.readLong(staticTuple, offset);
         return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$long$resolved)
-    public static void putfieldLong(@Slot(2) Object object, int offset, @Slot(0) long value) {
+    public static void putfieldLong(@Slot(2) Object object, int offset, @Slot(0) long value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
         }
         TupleAccess.writeLong(object, offset, value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$long)
-    public static void putfieldLong(ResolutionGuard.InPool guard, @Slot(2) Object object, @Slot(0) long value) {
-        resolveAndPutFieldLong(guard, object, value);
+    public static void putfieldLong(ResolutionGuard.InPool guard, @Slot(2) Object object, @Slot(0) long value, int bci) {
+        resolveAndPutFieldLong(guard, object, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutFieldLong(ResolutionGuard.InPool guard, Object object, long value) {
+    public static void resolveAndPutFieldLong(ResolutionGuard.InPool guard, Object object, long value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -1220,23 +1321,23 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$long$init)
-    public static void putstaticLong(Object staticTuple, int offset, @Slot(0) long value) {
+    public static void putstaticLong(Object staticTuple, int offset, @Slot(0) long value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
         }
         TupleAccess.writeLong(staticTuple, offset, value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$long)
-    public static void putstaticLong(ResolutionGuard.InPool guard, @Slot(0) long value) {
-        resolveAndPutStaticLong(guard, value);
+    public static void putstaticLong(ResolutionGuard.InPool guard, @Slot(0) long value, int bci) {
+        resolveAndPutStaticLong(guard, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutStaticLong(ResolutionGuard.InPool guard, long value) {
+    public static void resolveAndPutStaticLong(ResolutionGuard.InPool guard, long value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -1249,185 +1350,283 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(I2L)
-    public static long i2l(@Slot(0) int value) {
+    public static long i2l(@Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(133, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 133, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(F2L)
-    public static long f2l(@Slot(0) float value) {
+    public static long f2l(@Slot(0) float value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(140, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 140, value);
         }
         return T1XRuntime.f2l(value);
     }
 
     @T1X_TEMPLATE(D2L)
-    public static long d2l(@Slot(0) double value) {
+    public static long d2l(@Slot(0) double value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(143, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 143, value);
         }
         return T1XRuntime.d2l(value);
     }
 
     @T1X_TEMPLATE(LADD)
-    public static long ladd(@Slot(2) long value1, @Slot(0) long value2) {
+    public static long ladd(@Slot(2) long value1, @Slot(0) long value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(97, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 97, value1, value2);
         }
         return value1 + value2;
     }
 
     @T1X_TEMPLATE(LSUB)
-    public static long lsub(@Slot(2) long value1, @Slot(0) long value2) {
+    public static long lsub(@Slot(2) long value1, @Slot(0) long value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(101, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 101, value1, value2);
         }
         return value1 - value2;
     }
 
     @T1X_TEMPLATE(LMUL)
-    public static long lmul(@Slot(2) long value1, @Slot(0) long value2) {
+    public static long lmul(@Slot(2) long value1, @Slot(0) long value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(105, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 105, value1, value2);
         }
         return value1 * value2;
     }
 
     @T1X_TEMPLATE(LDIV)
-    public static long ldiv(@Slot(2) long value1, @Slot(0) long value2) {
+    public static long ldiv(@Slot(2) long value1, @Slot(0) long value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(109, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 109, value1, value2);
         }
         return value1 / value2;
     }
 
     @T1X_TEMPLATE(LREM)
-    public static long lrem(@Slot(2) long value1, @Slot(0) long value2) {
+    public static long lrem(@Slot(2) long value1, @Slot(0) long value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(113, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 113, value1, value2);
         }
         return value1 % value2;
     }
 
     @T1X_TEMPLATE(LNEG)
-    public static long lneg(@Slot(0) long value, long zero) {
+    public static long lneg(@Slot(0) long value, long zero, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(117, value, zero);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 117, value, zero);
         }
         return zero - value;
     }
 
     @T1X_TEMPLATE(LOR)
-    public static long lor(@Slot(2) long value1, @Slot(0) long value2) {
+    public static long lor(@Slot(2) long value1, @Slot(0) long value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(129, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 129, value1, value2);
         }
         return value1 | value2;
     }
 
     @T1X_TEMPLATE(LAND)
-    public static long land(@Slot(2) long value1, @Slot(0) long value2) {
+    public static long land(@Slot(2) long value1, @Slot(0) long value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(127, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 127, value1, value2);
         }
         return value1 & value2;
     }
 
     @T1X_TEMPLATE(LXOR)
-    public static long lxor(@Slot(2) long value1, @Slot(0) long value2) {
+    public static long lxor(@Slot(2) long value1, @Slot(0) long value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(131, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 131, value1, value2);
         }
         return value1 ^ value2;
     }
 
     @T1X_TEMPLATE(LSHL)
-    public static long lshl(@Slot(1) long value1, @Slot(0) int value2) {
+    public static long lshl(@Slot(1) long value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(121, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 121, value1, value2);
         }
         return value1 << value2;
     }
 
     @T1X_TEMPLATE(LSHR)
-    public static long lshr(@Slot(1) long value1, @Slot(0) int value2) {
+    public static long lshr(@Slot(1) long value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(123, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 123, value1, value2);
         }
         return value1 >> value2;
     }
 
     @T1X_TEMPLATE(LUSHR)
-    public static long lushr(@Slot(1) long value1, @Slot(0) int value2) {
+    public static long lushr(@Slot(1) long value1, @Slot(0) int value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(125, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 125, value1, value2);
         }
         return value1 >>> value2;
     }
 
     @T1X_TEMPLATE(LRETURN)
     @Slot(-1)
-    public static long lreturn(@Slot(0) long value) {
+    public static long lreturn(@Slot(0) long value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value);
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(LRETURN$unlock)
     @Slot(-1)
-    public static long lreturnUnlock(Reference object, @Slot(0) long value) {
+    public static long lreturnUnlock(Reference object, @Slot(0) long value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
+            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(bci, object);
         }
         Monitor.noninlineExit(object);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value);
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(LALOAD)
-    public static long laload(@Slot(1) Object array, @Slot(0) int index) {
+    public static long laload(@Slot(1) Object array, @Slot(0) int index, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(bci, array, index);
         }
         long result = ArrayAccess.getLong(array, index);
         return result;
     }
 
     @T1X_TEMPLATE(LASTORE)
-    public static void lastore(@Slot(3) Object array, @Slot(2) int index, @Slot(0) long value) {
+    public static void lastore(@Slot(3) Object array, @Slot(2) int index, @Slot(0) long value, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(bci, array, index, value);
         }
         ArrayAccess.setLong(array, index, value);
     }
 
-    @T1X_TEMPLATE(GETFIELD$double$resolved)
-    public static double getfieldDouble(@Slot(0) Object object, int offset) {
+    @T1X_TEMPLATE(INVOKEVIRTUAL$long)
+    @Slot(-1)
+    public static Address invokevirtualLong(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$long$resolved)
+    @Slot(-1)
+    public static Address invokevirtualLong(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$long$instrumented)
+    @Slot(-1)
+    public static Address invokevirtualLong(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$long)
+    @Slot(-1)
+    public static Address invokeinterfaceLong(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$long$resolved)
+    @Slot(-1)
+    public static Address invokeinterfaceLong(InterfaceMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$long$instrumented)
+    @Slot(-1)
+    public static Address invokeinterfaceLong(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$long)
+    @Slot(-1)
+    public static Address invokespecialLong(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.initializeSpecialMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$long$resolved)
+    public static void invokespecialLong(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$long)
+    @Slot(-1)
+    public static Address invokestaticLong(ResolutionGuard.InPool guard, int bci) {
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
+        }
+        return VMAT1XRuntime.initializeStaticMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$long$init)
+    public static void invokestaticLong(StaticMethodActor methodActor, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
+        }
+    }
+
+    @T1X_TEMPLATE(GETFIELD$double$resolved)
+    public static double getfieldDouble(@Slot(0) Object object, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
         }
         double result = TupleAccess.readDouble(object, offset);
         return result;
     }
 
     @T1X_TEMPLATE(GETFIELD$double)
-    public static double getfieldDouble(ResolutionGuard.InPool guard, @Slot(0) Object object) {
-        return resolveAndGetFieldDouble(guard, object);
+    public static double getfieldDouble(ResolutionGuard.InPool guard, @Slot(0) Object object, int bci) {
+        return resolveAndGetFieldDouble(guard, object, bci);
     }
 
     @NEVER_INLINE
-    public static double resolveAndGetFieldDouble(ResolutionGuard.InPool guard, Object object) {
+    public static double resolveAndGetFieldDouble(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1441,16 +1640,16 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$double)
-    public static double getstaticDouble(ResolutionGuard.InPool guard) {
-        return resolveAndGetStaticDouble(guard);
+    public static double getstaticDouble(ResolutionGuard.InPool guard, int bci) {
+        return resolveAndGetStaticDouble(guard, bci);
     }
 
     @NEVER_INLINE
-    public static double resolveAndGetStaticDouble(ResolutionGuard.InPool guard) {
+    public static double resolveAndGetStaticDouble(ResolutionGuard.InPool guard, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1464,32 +1663,32 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$double$init)
-    public static double getstaticDouble(Object staticTuple, int offset) {
+    public static double getstaticDouble(Object staticTuple, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
         }
         double result = TupleAccess.readDouble(staticTuple, offset);
         return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$double$resolved)
-    public static void putfieldDouble(@Slot(2) Object object, int offset, @Slot(0) double value) {
+    public static void putfieldDouble(@Slot(2) Object object, int offset, @Slot(0) double value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
         }
         TupleAccess.writeDouble(object, offset, value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$double)
-    public static void putfieldDouble(ResolutionGuard.InPool guard, @Slot(2) Object object, @Slot(0) double value) {
-        resolveAndPutFieldDouble(guard, object, value);
+    public static void putfieldDouble(ResolutionGuard.InPool guard, @Slot(2) Object object, @Slot(0) double value, int bci) {
+        resolveAndPutFieldDouble(guard, object, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutFieldDouble(ResolutionGuard.InPool guard, Object object, double value) {
+    public static void resolveAndPutFieldDouble(ResolutionGuard.InPool guard, Object object, double value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -1501,23 +1700,23 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$double$init)
-    public static void putstaticDouble(Object staticTuple, int offset, @Slot(0) double value) {
+    public static void putstaticDouble(Object staticTuple, int offset, @Slot(0) double value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
         }
         TupleAccess.writeDouble(staticTuple, offset, value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$double)
-    public static void putstaticDouble(ResolutionGuard.InPool guard, @Slot(0) double value) {
-        resolveAndPutStaticDouble(guard, value);
+    public static void putstaticDouble(ResolutionGuard.InPool guard, @Slot(0) double value, int bci) {
+        resolveAndPutStaticDouble(guard, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutStaticDouble(ResolutionGuard.InPool guard, double value) {
+    public static void resolveAndPutStaticDouble(ResolutionGuard.InPool guard, double value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -1530,73 +1729,73 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(I2D)
-    public static double i2d(@Slot(0) int value) {
+    public static double i2d(@Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(135, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 135, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(L2D)
-    public static double l2d(@Slot(0) long value) {
+    public static double l2d(@Slot(0) long value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(138, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 138, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(F2D)
-    public static double f2d(@Slot(0) float value) {
+    public static double f2d(@Slot(0) float value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConversion(141, value);
+            VMAStaticBytecodeAdvice.adviseBeforeConversion(bci, 141, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(DADD)
-    public static double dadd(@Slot(2) double value1, @Slot(0) double value2) {
+    public static double dadd(@Slot(2) double value1, @Slot(0) double value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(99, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 99, value1, value2);
         }
         return value1 + value2;
     }
 
     @T1X_TEMPLATE(DSUB)
-    public static double dsub(@Slot(2) double value1, @Slot(0) double value2) {
+    public static double dsub(@Slot(2) double value1, @Slot(0) double value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(103, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 103, value1, value2);
         }
         return value1 - value2;
     }
 
     @T1X_TEMPLATE(DMUL)
-    public static double dmul(@Slot(2) double value1, @Slot(0) double value2) {
+    public static double dmul(@Slot(2) double value1, @Slot(0) double value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(107, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 107, value1, value2);
         }
         return value1 * value2;
     }
 
     @T1X_TEMPLATE(DDIV)
-    public static double ddiv(@Slot(2) double value1, @Slot(0) double value2) {
+    public static double ddiv(@Slot(2) double value1, @Slot(0) double value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(111, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 111, value1, value2);
         }
         return value1 / value2;
     }
 
     @T1X_TEMPLATE(DREM)
-    public static double drem(@Slot(2) double value1, @Slot(0) double value2) {
+    public static double drem(@Slot(2) double value1, @Slot(0) double value2, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(115, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 115, value1, value2);
         }
         return value1 % value2;
     }
 
     @T1X_TEMPLATE(DNEG)
-    public static double dneg(@Slot(0) double value, double zero) {
+    public static double dneg(@Slot(0) double value, double zero, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(119, value, zero);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 119, value, zero);
         }
         double res;
         if (Double.doubleToRawLongBits(value) == Double.doubleToRawLongBits(zero)) {
@@ -1609,64 +1808,162 @@ public class VMAdviceBeforeTemplateSource {
 
     @T1X_TEMPLATE(DRETURN)
     @Slot(-1)
-    public static double dreturn(@Slot(0) double value) {
+    public static double dreturn(@Slot(0) double value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value);
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(DRETURN$unlock)
     @Slot(-1)
-    public static double dreturnUnlock(Reference object, @Slot(0) double value) {
+    public static double dreturnUnlock(Reference object, @Slot(0) double value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
+            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(bci, object);
         }
         Monitor.noninlineExit(object);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value);
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(DALOAD)
-    public static double daload(@Slot(1) Object array, @Slot(0) int index) {
+    public static double daload(@Slot(1) Object array, @Slot(0) int index, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(bci, array, index);
         }
         double result = ArrayAccess.getDouble(array, index);
         return result;
     }
 
     @T1X_TEMPLATE(DASTORE)
-    public static void dastore(@Slot(3) Object array, @Slot(2) int index, @Slot(0) double value) {
+    public static void dastore(@Slot(3) Object array, @Slot(2) int index, @Slot(0) double value, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(bci, array, index, value);
         }
         ArrayAccess.setDouble(array, index, value);
     }
 
-    @T1X_TEMPLATE(GETFIELD$reference$resolved)
-    public static Reference getfieldObject(@Slot(0) Object object, int offset) {
+    @T1X_TEMPLATE(INVOKEVIRTUAL$double)
+    @Slot(-1)
+    public static Address invokevirtualDouble(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$double$resolved)
+    @Slot(-1)
+    public static Address invokevirtualDouble(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$double$instrumented)
+    @Slot(-1)
+    public static Address invokevirtualDouble(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$double)
+    @Slot(-1)
+    public static Address invokeinterfaceDouble(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$double$resolved)
+    @Slot(-1)
+    public static Address invokeinterfaceDouble(InterfaceMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$double$instrumented)
+    @Slot(-1)
+    public static Address invokeinterfaceDouble(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$double)
+    @Slot(-1)
+    public static Address invokespecialDouble(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.initializeSpecialMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$double$resolved)
+    public static void invokespecialDouble(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$double)
+    @Slot(-1)
+    public static Address invokestaticDouble(ResolutionGuard.InPool guard, int bci) {
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
+        }
+        return VMAT1XRuntime.initializeStaticMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$double$init)
+    public static void invokestaticDouble(StaticMethodActor methodActor, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
+        }
+    }
+
+    @T1X_TEMPLATE(GETFIELD$reference$resolved)
+    public static Reference getfieldObject(@Slot(0) Object object, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
         }
         Object result = TupleAccess.readObject(object, offset);
         return Reference.fromJava(result);
     }
 
     @T1X_TEMPLATE(GETFIELD$reference)
-    public static Reference getfieldReference(ResolutionGuard.InPool guard, @Slot(0) Object object) {
-        return resolveAndGetFieldReference(guard, object);
+    public static Reference getfieldReference(ResolutionGuard.InPool guard, @Slot(0) Object object, int bci) {
+        return resolveAndGetFieldReference(guard, object, bci);
     }
 
     @NEVER_INLINE
-    public static Reference resolveAndGetFieldReference(ResolutionGuard.InPool guard, Object object) {
+    public static Reference resolveAndGetFieldReference(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1680,16 +1977,16 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$reference)
-    public static Reference getstaticReference(ResolutionGuard.InPool guard) {
-        return resolveAndGetStaticReference(guard);
+    public static Reference getstaticReference(ResolutionGuard.InPool guard, int bci) {
+        return resolveAndGetStaticReference(guard, bci);
     }
 
     @NEVER_INLINE
-    public static Reference resolveAndGetStaticReference(ResolutionGuard.InPool guard) {
+    public static Reference resolveAndGetStaticReference(ResolutionGuard.InPool guard, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1703,32 +2000,32 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$reference$init)
-    public static Reference getstaticObject(Object staticTuple, int offset) {
+    public static Reference getstaticObject(Object staticTuple, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
         }
         Object result = TupleAccess.readObject(staticTuple, offset);
         return Reference.fromJava(result);
     }
 
     @T1X_TEMPLATE(PUTFIELD$reference$resolved)
-    public static void putfieldReference(@Slot(1) Object object, int offset, @Slot(0) Reference value) {
+    public static void putfieldReference(@Slot(1) Object object, int offset, @Slot(0) Reference value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
         }
         TupleAccess.noninlineWriteObject(object, offset, value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$reference)
-    public static void putfieldReference(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) Reference value) {
-        resolveAndPutFieldReference(guard, object, value);
+    public static void putfieldReference(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) Reference value, int bci) {
+        resolveAndPutFieldReference(guard, object, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutFieldReference(ResolutionGuard.InPool guard, Object object, Reference value) {
+    public static void resolveAndPutFieldReference(ResolutionGuard.InPool guard, Object object, Reference value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -1740,23 +2037,23 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$reference$init)
-    public static void putstaticReference(Object staticTuple, int offset, @Slot(0) Reference value) {
+    public static void putstaticReference(Object staticTuple, int offset, @Slot(0) Reference value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
         }
         TupleAccess.noninlineWriteObject(staticTuple, offset, value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$reference)
-    public static void putstaticReference(ResolutionGuard.InPool guard, @Slot(0) Reference value) {
-        resolveAndPutStaticReference(guard, value);
+    public static void putstaticReference(ResolutionGuard.InPool guard, @Slot(0) Reference value, int bci) {
+        resolveAndPutStaticReference(guard, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutStaticReference(ResolutionGuard.InPool guard, Reference value) {
+    public static void resolveAndPutStaticReference(ResolutionGuard.InPool guard, Reference value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -1770,65 +2067,163 @@ public class VMAdviceBeforeTemplateSource {
 
     @T1X_TEMPLATE(ARETURN)
     @Slot(-1)
-    public static Reference areturn(@Slot(0) Reference value) {
+    public static Reference areturn(@Slot(0) Reference value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value);
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(ARETURN$unlock)
     @Slot(-1)
-    public static Reference areturnUnlock(Reference object, @Slot(0) Reference value) {
+    public static Reference areturnUnlock(Reference object, @Slot(0) Reference value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
+            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(bci, object);
         }
         Monitor.noninlineExit(object);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value);
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci, value);
         }
         return value;
     }
 
     @T1X_TEMPLATE(AALOAD)
-    public static Reference aaload(@Slot(1) Object array, @Slot(0) int index) {
+    public static Reference aaload(@Slot(1) Object array, @Slot(0) int index, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(bci, array, index);
         }
         Object result = ArrayAccess.getObject(array, index);
         return Reference.fromJava(result);
     }
 
     @T1X_TEMPLATE(AASTORE)
-    public static void aastore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) Reference value) {
+    public static void aastore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) Reference value, int bci) {
         ArrayAccess.checkIndex(array, index);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayStore(bci, array, index, value);
         }
         ArrayAccess.checkSetObject(array, value);
         ArrayAccess.setObject(array, index, value);
     }
 
-    @T1X_TEMPLATE(GETFIELD$word$resolved)
-    public static Word getfieldWord(@Slot(0) Object object, int offset) {
+    @T1X_TEMPLATE(INVOKEVIRTUAL$reference)
+    @Slot(-1)
+    public static Address invokevirtualObject(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$reference$resolved)
+    @Slot(-1)
+    public static Address invokevirtualObject(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$reference$instrumented)
+    @Slot(-1)
+    public static Address invokevirtualObject(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$reference)
+    @Slot(-1)
+    public static Address invokeinterfaceObject(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$reference$resolved)
+    @Slot(-1)
+    public static Address invokeinterfaceObject(InterfaceMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$reference$instrumented)
+    @Slot(-1)
+    public static Address invokeinterfaceObject(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$reference)
+    @Slot(-1)
+    public static Address invokespecialObject(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.initializeSpecialMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$reference$resolved)
+    public static void invokespecialObject(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$reference)
+    @Slot(-1)
+    public static Address invokestaticObject(ResolutionGuard.InPool guard, int bci) {
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
+        }
+        return VMAT1XRuntime.initializeStaticMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$reference$init)
+    public static void invokestaticObject(StaticMethodActor methodActor, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
+        }
+    }
+
+    @T1X_TEMPLATE(GETFIELD$word$resolved)
+    public static Word getfieldWord(@Slot(0) Object object, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
         }
         Word result = TupleAccess.readWord(object, offset);
         return result;
     }
 
     @T1X_TEMPLATE(GETFIELD$word)
-    public static Word getfieldWord(ResolutionGuard.InPool guard, @Slot(0) Object object) {
-        return resolveAndGetFieldWord(guard, object);
+    public static Word getfieldWord(ResolutionGuard.InPool guard, @Slot(0) Object object, int bci) {
+        return resolveAndGetFieldWord(guard, object, bci);
     }
 
     @NEVER_INLINE
-    public static Word resolveAndGetFieldWord(ResolutionGuard.InPool guard, Object object) {
+    public static Word resolveAndGetFieldWord(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1842,16 +2237,16 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$word)
-    public static Word getstaticWord(ResolutionGuard.InPool guard) {
-        return resolveAndGetStaticWord(guard);
+    public static Word getstaticWord(ResolutionGuard.InPool guard, int bci) {
+        return resolveAndGetStaticWord(guard, bci);
     }
 
     @NEVER_INLINE
-    public static Word resolveAndGetStaticWord(ResolutionGuard.InPool guard) {
+    public static Word resolveAndGetStaticWord(ResolutionGuard.InPool guard, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1865,32 +2260,32 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$word$init)
-    public static Word getstaticWord(Object staticTuple, int offset) {
+    public static Word getstaticWord(Object staticTuple, int offset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
         }
         Word result = TupleAccess.readWord(staticTuple, offset);
         return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$word$resolved)
-    public static void putfieldWord(@Slot(1) Object object, int offset, @Slot(0) Word value) {
+    public static void putfieldWord(@Slot(1) Object object, int offset, @Slot(0) Word value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value.asAddress().toLong());
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value.asAddress().toLong());
         }
         TupleAccess.writeWord(object, offset, value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$word)
-    public static void putfieldWord(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) Word value) {
-        resolveAndPutFieldWord(guard, object, value);
+    public static void putfieldWord(ResolutionGuard.InPool guard, @Slot(1) Object object, @Slot(0) Word value, int bci) {
+        resolveAndPutFieldWord(guard, object, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutFieldWord(ResolutionGuard.InPool guard, Object object, Word value) {
+    public static void resolveAndPutFieldWord(ResolutionGuard.InPool guard, Object object, Word value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value.asAddress().toLong());
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value.asAddress().toLong());
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -1902,23 +2297,23 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$word$init)
-    public static void putstaticWord(Object staticTuple, int offset, @Slot(0) Word value) {
+    public static void putstaticWord(Object staticTuple, int offset, @Slot(0) Word value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value.asAddress().toLong());
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value.asAddress().toLong());
         }
         TupleAccess.writeWord(staticTuple, offset, value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$word)
-    public static void putstaticWord(ResolutionGuard.InPool guard, @Slot(0) Word value) {
-        resolveAndPutStaticWord(guard, value);
+    public static void putstaticWord(ResolutionGuard.InPool guard, @Slot(0) Word value, int bci) {
+        resolveAndPutStaticWord(guard, value, bci);
     }
 
     @NEVER_INLINE
-    public static void resolveAndPutStaticWord(ResolutionGuard.InPool guard, Word value) {
+    public static void resolveAndPutStaticWord(ResolutionGuard.InPool guard, Word value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value.asAddress().toLong());
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value.asAddress().toLong());
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -1930,511 +2325,713 @@ public class VMAdviceBeforeTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(INVOKEVIRTUAL$word)
+    @Slot(-1)
+    public static Address invokevirtualWord(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$word$resolved)
+    @Slot(-1)
+    public static Address invokevirtualWord(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$word$instrumented)
+    @Slot(-1)
+    public static Address invokevirtualWord(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$word)
+    @Slot(-1)
+    public static Address invokeinterfaceWord(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$word$resolved)
+    @Slot(-1)
+    public static Address invokeinterfaceWord(InterfaceMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$word$instrumented)
+    @Slot(-1)
+    public static Address invokeinterfaceWord(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$word)
+    @Slot(-1)
+    public static Address invokespecialWord(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.initializeSpecialMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$word$resolved)
+    public static void invokespecialWord(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$word)
+    @Slot(-1)
+    public static Address invokestaticWord(ResolutionGuard.InPool guard, int bci) {
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
+        }
+        return VMAT1XRuntime.initializeStaticMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$word$init)
+    public static void invokestaticWord(StaticMethodActor methodActor, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
+        }
+    }
+
     @T1X_TEMPLATE(RETURN)
     @Slot(-1)
-    public static void vreturn() {
+    public static void vreturn(int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn();
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci);
         }
     }
 
     @T1X_TEMPLATE(RETURN$unlock)
     @Slot(-1)
-    public static void vreturnUnlock(Reference object) {
+    public static void vreturnUnlock(Reference object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
+            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(bci, object);
         }
         Monitor.noninlineExit(object);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn();
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci);
+        }
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$void)
+    @Slot(-1)
+    public static Address invokevirtualVoid(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$void$resolved)
+    @Slot(-1)
+    public static Address invokevirtualVoid(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$void$instrumented)
+    @Slot(-1)
+    public static Address invokevirtualVoid(VirtualMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
+        }
+        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$void)
+    @Slot(-1)
+    public static Address invokeinterfaceVoid(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        final InterfaceMethodActor methodActor = Snippets.resolveInterfaceMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$void$resolved)
+    @Slot(-1)
+    public static Address invokeinterfaceVoid(InterfaceMethodActor methodActor, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.selectInterfaceMethod(receiver, methodActor).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$void$instrumented)
+    @Slot(-1)
+    public static Address invokeinterfaceVoid(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(bci, receiver, methodActor);
+        }
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
+            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$void)
+    @Slot(-1)
+    public static Address invokespecialVoid(ResolutionGuard.InPool guard, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+        return VMAT1XRuntime.initializeSpecialMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$void$resolved)
+    public static void invokespecialVoid(VirtualMethodActor methodActor, Reference receiver, int bci) {
+        nullCheck(receiver.toOrigin());
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(bci, receiver, methodActor);
+        }
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$void)
+    @Slot(-1)
+    public static Address invokestaticVoid(ResolutionGuard.InPool guard, int bci) {
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
+        }
+        return VMAT1XRuntime.initializeStaticMethod(methodActor);
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$void$init)
+    public static void invokestaticVoid(StaticMethodActor methodActor, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(bci, null, methodActor);
         }
     }
 
     @T1X_TEMPLATE(LCMP)
-    public static int lcmp(@Slot(2) long value1, @Slot(0) long value2) {
+    public static int lcmp(@Slot(2) long value1, @Slot(0) long value2, int bci) {
         int result = rawCompare(Bytecodes.LCMP, value1, value2);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(148, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 148, value1, value2);
         }
         return result;
     }
 
     @T1X_TEMPLATE(FCMPL)
-    public static int fcmpl(@Slot(1) float value1, @Slot(0) float value2) {
+    public static int fcmpl(@Slot(1) float value1, @Slot(0) float value2, int bci) {
         int result = rawCompare(Bytecodes.FCMPL, value1, value2);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(149, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 149, value1, value2);
         }
         return result;
     }
 
     @T1X_TEMPLATE(FCMPG)
-    public static int fcmpg(@Slot(1) float value1, @Slot(0) float value2) {
+    public static int fcmpg(@Slot(1) float value1, @Slot(0) float value2, int bci) {
         int result = rawCompare(Bytecodes.FCMPG, value1, value2);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(150, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 150, value1, value2);
         }
         return result;
     }
 
     @T1X_TEMPLATE(DCMPL)
-    public static int dcmpl(@Slot(2) double value1, @Slot(0) double value2) {
+    public static int dcmpl(@Slot(2) double value1, @Slot(0) double value2, int bci) {
         int result = rawCompare(Bytecodes.DCMPL, value1, value2);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(151, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 151, value1, value2);
         }
         return result;
     }
 
     @T1X_TEMPLATE(DCMPG)
-    public static int dcmpg(@Slot(2) double value1, @Slot(0) double value2) {
+    public static int dcmpg(@Slot(2) double value1, @Slot(0) double value2, int bci) {
         int result = rawCompare(Bytecodes.DCMPG, value1, value2);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(152, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 152, value1, value2);
         }
         return result;
     }
 
     @T1X_TEMPLATE(CHECKCAST)
-    public static Object checkcast(ResolutionGuard guard, @Slot(0) Object object) {
-        resolveAndCheckcast(guard, object);
+    public static Object checkcast(ResolutionGuard guard, @Slot(0) Object object, int bci) {
+        resolveAndCheckcast(guard, object, bci);
         return object;
     }
 
     @T1X_TEMPLATE(CHECKCAST$resolved)
-    public static Object checkcast(ClassActor classActor, @Slot(0) Object object) {
+    public static Object checkcast(ClassActor classActor, @Slot(0) Object object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeCheckCast(object, classActor);
+            VMAStaticBytecodeAdvice.adviseBeforeCheckCast(bci, object, classActor);
         }
         Snippets.checkCast(classActor, object);
         return object;
     }
 
     @NEVER_INLINE
-    private static void resolveAndCheckcast(ResolutionGuard guard, final Object object) {
+    private static void resolveAndCheckcast(ResolutionGuard guard, final Object object, int bci) {
         ClassActor classActor = Snippets.resolveClass(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeCheckCast(object, classActor);
+            VMAStaticBytecodeAdvice.adviseBeforeCheckCast(bci, object, classActor);
         }
         Snippets.checkCast(classActor, object);
     }
 
     @T1X_TEMPLATE(ARRAYLENGTH)
-    public static int arraylength(@Slot(0) Object array) {
+    public static int arraylength(@Slot(0) Object array, int bci) {
         int length = ArrayAccess.readArrayLength(array);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayLength(array, length);
+            VMAStaticBytecodeAdvice.adviseBeforeArrayLength(bci, array, length);
         }
         return length;
     }
 
     @T1X_TEMPLATE(ATHROW)
-    public static void athrow(@Slot(0) Object object) {
+    public static void athrow(@Slot(0) Object object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeThrow(object);
+            VMAStaticBytecodeAdvice.adviseBeforeThrow(bci, object);
         }
         Throw.raise(object);
     }
 
     @T1X_TEMPLATE(MONITORENTER)
-    public static void monitorenter(@Slot(0) Object object) {
+    public static void monitorenter(@Slot(0) Object object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeMonitorEnter(object);
+            VMAStaticBytecodeAdvice.adviseBeforeMonitorEnter(bci, object);
         }
         Monitor.enter(object);
     }
 
     @T1X_TEMPLATE(MONITOREXIT)
-    public static void monitorexit(@Slot(0) Object object) {
+    public static void monitorexit(@Slot(0) Object object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
+            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(bci, object);
         }
         Monitor.exit(object);
     }
 
     @T1X_TEMPLATE(INSTANCEOF)
-    public static int instanceof_(ResolutionGuard guard, @Slot(0) Object object) {
+    public static int instanceof_(ResolutionGuard guard, @Slot(0) Object object, int bci) {
         ClassActor classActor = Snippets.resolveClass(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeInstanceOf(object, classActor);
+            VMAStaticBytecodeAdvice.adviseBeforeInstanceOf(bci, object, classActor);
         }
         return UnsafeCast.asByte(Snippets.instanceOf(classActor, object));
     }
 
     @T1X_TEMPLATE(INSTANCEOF$resolved)
-    public static int instanceof_(ClassActor classActor, @Slot(0) Object object) {
+    public static int instanceof_(ClassActor classActor, @Slot(0) Object object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeInstanceOf(object, classActor);
+            VMAStaticBytecodeAdvice.adviseBeforeInstanceOf(bci, object, classActor);
         }
         return UnsafeCast.asByte(Snippets.instanceOf(classActor, object));
     }
 
     @T1X_TEMPLATE(RETURN$registerFinalizer)
     @Slot(-1)
-    public static void vreturnRegisterFinalizer(Reference object) {
+    public static void vreturnRegisterFinalizer(Reference object, int bci) {
         if (ObjectAccess.readClassActor(object).hasFinalizer()) {
             SpecialReferenceManager.registerFinalizee(object);
         }
     }
 
     @T1X_TEMPLATE(LOCK)
-    public static void lock(Object object) {
+    public static void lock(Object object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeMonitorEnter(object);
+            VMAStaticBytecodeAdvice.adviseBeforeMonitorEnter(bci, object);
         }
         Monitor.enter(object);
     }
 
     @T1X_TEMPLATE(UNLOCK)
-    public static void unlock(Object object) {
+    public static void unlock(Object object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
+            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(bci, object);
         }
         Monitor.exit(object);
     }
 
+    @T1X_TEMPLATE(LOAD_EXCEPTION)
+    public static Object loadException(int bci) {
+        Object exception = VmThread.current().loadExceptionForHandler();
+        return exception;
+    }
+
     @T1X_TEMPLATE(POP)
-    public static void pop() {
+    public static void pop(int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(87);
+            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(bci, 87);
         }
     }
 
     @T1X_TEMPLATE(POP2)
-    public static void pop2() {
+    public static void pop2(int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(88);
+            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(bci, 88);
         }
     }
 
     @T1X_TEMPLATE(DUP)
-    public static void dup() {
+    public static void dup(int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(89);
+            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(bci, 89);
         }
     }
 
     @T1X_TEMPLATE(DUP_X1)
-    public static void dup_x1() {
+    public static void dup_x1(int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(90);
+            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(bci, 90);
         }
     }
 
     @T1X_TEMPLATE(DUP_X2)
-    public static void dup_x2() {
+    public static void dup_x2(int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(91);
+            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(bci, 91);
         }
     }
 
     @T1X_TEMPLATE(DUP2)
-    public static void dup2() {
+    public static void dup2(int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(92);
+            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(bci, 92);
         }
     }
 
     @T1X_TEMPLATE(DUP2_X1)
-    public static void dup2_x1() {
+    public static void dup2_x1(int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(93);
+            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(bci, 93);
         }
     }
 
     @T1X_TEMPLATE(DUP2_X2)
-    public static void dup2_x2() {
+    public static void dup2_x2(int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(94);
+            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(bci, 94);
         }
     }
 
     @T1X_TEMPLATE(SWAP)
-    public static void swap() {
+    public static void swap(int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(95);
+            VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(bci, 95);
         }
     }
 
     @T1X_TEMPLATE(ACONST_NULL)
-    public static void aconst_null() {
+    public static void aconst_null(int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(null);
+            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, null);
         }
     }
 
     @T1X_TEMPLATE(ICONST)
-    public static void iconst(int constant) {
+    public static void iconst(int constant, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
+            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
     }
 
     @T1X_TEMPLATE(LCONST)
-    public static void lconst(long constant) {
+    public static void lconst(long constant, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
+            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
     }
 
     @T1X_TEMPLATE(FCONST)
-    public static void fconst(float constant) {
+    public static void fconst(float constant, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
+            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
     }
 
     @T1X_TEMPLATE(DCONST)
-    public static void dconst(double constant) {
+    public static void dconst(double constant, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
+            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
     }
 
     @T1X_TEMPLATE(LDC$int)
-    public static void ildc(int constant) {
+    public static void ildc(int constant, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
+            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
     }
 
     @T1X_TEMPLATE(LDC$long)
-    public static void lldc(long constant) {
+    public static void lldc(long constant, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
+            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
     }
 
     @T1X_TEMPLATE(LDC$float)
-    public static void fldc(float constant) {
+    public static void fldc(float constant, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
+            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
     }
 
     @T1X_TEMPLATE(LDC$double)
-    public static void dldc(double constant) {
+    public static void dldc(double constant, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
+            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
     }
 
     @T1X_TEMPLATE(LDC$reference)
-    public static void uoldc(ResolutionGuard guard) {
+    public static void uoldc(ResolutionGuard guard, int bci) {
         ClassActor classActor = Snippets.resolveClass(guard);
         Object constant = classActor.javaClass();
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
+            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
     }
 
     @T1X_TEMPLATE(LDC$reference$resolved)
-    public static void oldc(Object constant) {
+    public static void oldc(Object constant, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
+            VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
     }
 
     @T1X_TEMPLATE(ILOAD)
-    public static void iload(int index) {
+    public static void iload(int index, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeLoad(index);
+            VMAStaticBytecodeAdvice.adviseBeforeLoad(bci, index);
         }
     }
 
     @T1X_TEMPLATE(LLOAD)
-    public static void lload(int index) {
+    public static void lload(int index, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeLoad(index);
+            VMAStaticBytecodeAdvice.adviseBeforeLoad(bci, index);
         }
     }
 
     @T1X_TEMPLATE(FLOAD)
-    public static void fload(int index) {
+    public static void fload(int index, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeLoad(index);
+            VMAStaticBytecodeAdvice.adviseBeforeLoad(bci, index);
         }
     }
 
     @T1X_TEMPLATE(DLOAD)
-    public static void dload(int index) {
+    public static void dload(int index, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeLoad(index);
+            VMAStaticBytecodeAdvice.adviseBeforeLoad(bci, index);
         }
     }
 
     @T1X_TEMPLATE(ALOAD)
-    public static void oload(int index) {
+    public static void oload(int index, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeLoad(index);
+            VMAStaticBytecodeAdvice.adviseBeforeLoad(bci, index);
         }
     }
 
     @T1X_TEMPLATE(ISTORE)
-    public static void istore(int index, int value) {
+    public static void istore(int index, int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStore(index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeStore(bci, index, value);
         }
     }
 
     @T1X_TEMPLATE(LSTORE)
-    public static void lstore(int index, long value) {
+    public static void lstore(int index, long value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStore(index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeStore(bci, index, value);
         }
     }
 
     @T1X_TEMPLATE(FSTORE)
-    public static void fstore(int index, float value) {
+    public static void fstore(int index, float value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStore(index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeStore(bci, index, value);
         }
     }
 
     @T1X_TEMPLATE(DSTORE)
-    public static void dstore(int index, double value) {
+    public static void dstore(int index, double value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStore(index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeStore(bci, index, value);
         }
     }
 
     @T1X_TEMPLATE(ASTORE)
-    public static void ostore(int index, Object value) {
+    public static void ostore(int index, Object value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStore(index, value);
+            VMAStaticBytecodeAdvice.adviseBeforeStore(bci, index, value);
         }
     }
 
     @T1X_TEMPLATE(IINC)
-    public static void iinc(int index, int increment) {
+    public static void iinc(int index, int increment, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeOperation(132, index, increment);
+            VMAStaticBytecodeAdvice.adviseBeforeOperation(bci, 132, index, increment);
         }
     }
 
     @T1X_TEMPLATE(IFEQ)
-    public static void ifeq(int value1) {
+    public static void ifeq(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(153, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 153, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFNE)
-    public static void ifne(int value1) {
+    public static void ifne(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(154, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 154, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFLT)
-    public static void iflt(int value1) {
+    public static void iflt(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(155, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 155, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFGE)
-    public static void ifge(int value1) {
+    public static void ifge(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(156, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 156, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFGT)
-    public static void ifgt(int value1) {
+    public static void ifgt(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(157, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 157, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFLE)
-    public static void ifle(int value1) {
+    public static void ifle(int value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(158, value1, 0);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 158, value1, 0, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFNULL)
-    public static void ifnull(Object value1) {
+    public static void ifnull(Object value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(198, value1, null);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 198, value1, null, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IFNONNULL)
-    public static void ifnonnull(Object value1) {
+    public static void ifnonnull(Object value1, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(199, value1, null);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 199, value1, null, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPEQ)
-    public static void if_icmpeq(int value1, int value2) {
+    public static void if_icmpeq(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(159, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 159, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPNE)
-    public static void if_icmpne(int value1, int value2) {
+    public static void if_icmpne(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(160, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 160, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPLT)
-    public static void if_icmplt(int value1, int value2) {
+    public static void if_icmplt(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(161, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 161, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPGE)
-    public static void if_icmpge(int value1, int value2) {
+    public static void if_icmpge(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(162, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 162, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPGT)
-    public static void if_icmpgt(int value1, int value2) {
+    public static void if_icmpgt(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(163, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 163, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPLE)
-    public static void if_icmple(int value1, int value2) {
+    public static void if_icmple(int value1, int value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(164, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 164, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ACMPEQ)
-    public static void if_acmpeq(Object value1, Object value2) {
+    public static void if_acmpeq(Object value1, Object value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(165, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 165, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(IF_ACMPNE)
-    public static void if_acmpne(Object value1, Object value2) {
+    public static void if_acmpne(Object value1, Object value2, int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeIf(166, value1, value2);
+            VMAStaticBytecodeAdvice.adviseBeforeIf(bci, 166, value1, value2, targetBci);
         }
     }
 
     @T1X_TEMPLATE(GOTO)
-    public static void goto_s() {
+    public static void goto_s(int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeBytecode(167);
+            VMAStaticBytecodeAdvice.adviseBeforeGoto(bci, targetBci);
         }
     }
 
     @T1X_TEMPLATE(GOTO_W)
-    public static void goto_w() {
+    public static void goto_w(int targetBci, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeBytecode(200);
+            VMAStaticBytecodeAdvice.adviseBeforeGoto(bci, targetBci);
         }
     }
 
