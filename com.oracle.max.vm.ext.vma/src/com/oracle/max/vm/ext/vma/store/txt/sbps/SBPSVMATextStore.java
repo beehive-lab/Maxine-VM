@@ -116,9 +116,6 @@ public class SBPSVMATextStore extends CSFVMATextStore {
      */
     private int bufSize = DEFAULT_BUFSIZE;
 
-    private boolean threadBatched;
-    private boolean perThread;
-
     private PrintStream ps;
     private StringBuilder sb;
     /**
@@ -134,7 +131,6 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     @Override
     protected void initStaticState(boolean perThread) {
         if (storeFileDir == null) {
-            super.initStaticState(perThread);
             absTimeFlag = System.getProperty(ABSTIME_PROPERTY) != null;
             final String bsp = System.getProperty(BUFSIZE_PROPERTY);
             if (bsp != null) {
@@ -168,8 +164,7 @@ public class SBPSVMATextStore extends CSFVMATextStore {
 
     @Override
     public boolean initializeStore(boolean threadBatched, boolean perThread) {
-        this.threadBatched = threadBatched;
-        this.perThread = perThread;
+        super.initializeStore(threadBatched, perThread);
         initStaticState(perThread);
         bufSize = globalBufSize;
         flushLogAt = flushProperty != null ? 0 : bufSize - 80;
@@ -209,7 +204,7 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         appendSpace();
         sb.append(absTimeFlag);
         appendSpace();
-        sb.append(threadBatched);
+        sb.append((threadBatched ? BATCHED : 0) | (perThread ? PER_THREAD : 0));
         end();
     }
 
@@ -369,15 +364,19 @@ public class SBPSVMATextStore extends CSFVMATextStore {
      * Append the log entry key code, then the time associated with the entry, followed by the thread.
      * @param time time record generated
      * @param key
-     * @param threadName
-     * @param bci TODO
+     * @param threadName (maybe null for per-thread stores)
+     * @param bci byte code index
      */
     private void appendTT(long time, Key key, String threadName, int bci) {
         appendCode(key);
         appendSpace();
         appendTime(time);
-        appendSpace();
-        sb.append(threadName);
+        if (threadName != null) {
+            appendSpace();
+            sb.append(threadName);
+        } else {
+            assert perThread;
+        }
         if (bci >= 0) {
             appendSpace();
             sb.append(bci);

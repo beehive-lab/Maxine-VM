@@ -31,7 +31,9 @@ import java.util.*;
  * the relative time optimization. However, an embedded {@link Key#THREAD_SWITCH} record can be
  * used to "reset" the time for stores that are created from a set of records for a set
  * of threads. Such "batched" stores are also indicated by the second argument to
- * the {@link Key#INITIALIZE_LOG} record being {@code true}.
+ * the {@link Key#INITIALIZE_LOG} record having the {@link BATCHED} bit set.
+ * A per-thread store contains only records from one thread and is indicated
+ * by the second argument to the {@link Key#INITIALIZE_LOG} record having the {@link PER_THREAD} bit set.
  *
  * Normally the store uses relative time, recording the offset from the previous
  * record for that thread. However, it is possible to use absolute time and this is
@@ -49,6 +51,8 @@ public abstract class CVMATextStore extends VMATextStore {
 
     public static final long REPEAT_ID_VALUE = Long.MIN_VALUE;
     public static final char REPEAT_ID = '*';
+    public static final int BATCHED = 1;
+    public static final int PER_THREAD = 2;
 
     /**
      * Log records that do not have a time component.

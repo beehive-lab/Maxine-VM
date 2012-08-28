@@ -199,10 +199,34 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         long id = REPEAT_ID_VALUE;
     }
 
+    protected boolean threadBatched;
+    protected boolean perThread;
+
     /**
-     * Maintains the last id for the set of threads in the trace.
+     * Maintains the last id for the set of threads in the trace, when not in {@link #perThread} mode.
      */
     private static ConcurrentMap<String, LastId> repeatedIds;
+
+    /**
+     * Per-thread last id.
+     */
+    protected LastId perThreadLastId = new LastId();
+
+    @Override
+    public boolean initializeStore(boolean threadBatched, boolean perThread) {
+        this.threadBatched = threadBatched;
+        this.perThread = perThread;
+        initStaticState(perThread);
+        return true;
+    }
+
+    protected void initStaticState(boolean perThread) {
+        if (!perThread) {
+            repeatedIds = new ConcurrentHashMap<String, LastId>();
+        }
+        doRepeats = System.getProperty(NO_REPEATS_PROPERTY) == null;
+        doPrefix = System.getProperty(PREFIX_PROPERTY) != null;
+    }
 
     /**
      * Check if this {@code objId} is the same as the previous one.
@@ -211,7 +235,7 @@ public abstract class CSFVMATextStore extends CVMATextStore {
      * @param threadName
      * @return {@link TextVMAdviceHandlerLog#REPEAT_ID_VALUE} for a match, {@code id} otherwise
      */
-    protected static long checkRepeatId(long id, String threadName) {
+    protected long checkRepeatId(long id, String threadName) {
         LastId lastId;
         if (doRepeats) {
             lastId = getLastId(threadName);
@@ -224,7 +248,10 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         return id;
     }
 
-    private static LastId getLastId(String threadName) {
+    private LastId getLastId(String threadName) {
+        if (perThread) {
+            return perThreadLastId;
+        }
         LastId lastId = repeatedIds.get(threadName);
         if (lastId == null) {
             lastId = new LastId();
@@ -235,12 +262,6 @@ public abstract class CSFVMATextStore extends CVMATextStore {
             }
         }
         return lastId;
-    }
-
-    protected void initStaticState(boolean perThread) {
-        repeatedIds = new ConcurrentHashMap<String, LastId>();
-        doRepeats = System.getProperty(NO_REPEATS_PROPERTY) == null;
-        doPrefix = System.getProperty(PREFIX_PROPERTY) != null;
     }
 
     protected String getClassShortForm(String className, long clId) {
@@ -259,6 +280,10 @@ public abstract class CSFVMATextStore extends CVMATextStore {
     }
 
     protected String getThreadShortForm(String threadName) {
+        // per thread store, thread implicit
+        if (threadName == null) {
+            return null;
+        }
         return ShortForm.T.createShortForm(this, threadName);
     }
 

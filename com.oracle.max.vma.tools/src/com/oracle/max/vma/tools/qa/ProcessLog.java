@@ -64,7 +64,7 @@ public class ProcessLog {
     }
 
     public static abstract class RecordReader {
-        public abstract String readLine() throws IOException;
+        public abstract String[] readLine() throws IOException;
         public abstract void close() throws IOException;
     }
 
@@ -76,8 +76,12 @@ public class ProcessLog {
         }
 
         @Override
-        public String readLine() throws IOException {
-            return reader.readLine();
+        public String[] readLine() throws IOException {
+            String line = reader.readLine();
+            if (line == null) {
+                return null;
+            }
+            return ConvertLog.split(line);
         }
 
         @Override
@@ -87,11 +91,11 @@ public class ProcessLog {
     }
 
     private static class PushReader extends RecordReader implements PushRecord {
-        private String line;
+        private String[] lineParts;
         private boolean empty = true;
 
         @Override
-        public synchronized String readLine() throws IOException {
+        public synchronized String[] readLine() throws IOException {
             while (empty) {
                 try {
                     wait();
@@ -100,7 +104,7 @@ public class ProcessLog {
             }
             empty = true;
             notify();
-            return line;
+            return lineParts;
         }
 
         @Override
@@ -108,14 +112,14 @@ public class ProcessLog {
         }
 
         @Override
-        public synchronized void pushRecord(String record) {
+        public synchronized void pushRecord(String[] lineParts) {
             while (!empty) {
                 try {
                     wait();
                 } catch (InterruptedException ex) {
                 }
             }
-            line = record;
+            this.lineParts = lineParts;
             empty = false;
             notify();
         }
@@ -481,14 +485,13 @@ public class ProcessLog {
         lineNumber = 1;
         try {
             while (true) {
-                String line = reader.readLine();
-                if (line == null) {
+                recordParts = reader.readLine();
+                if (recordParts == null) {
                     break;
                 }
-                if (line.length() == 0 || line.charAt(0) == '#') {
+                if (recordParts.length == 0 || recordParts[0].charAt(0) == '#') {
                     continue;
                 }
-                setArgs(line);
                 try {
                     processTraceRecord();
                 } catch (TraceException e) {
@@ -533,11 +536,12 @@ public class ProcessLog {
     }
 
     private RecordReader checkTimeOrdered(File file) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        setArgs(reader.readLine());
+        BufferedRecordReader reader = new BufferedRecordReader(new BufferedReader(new FileReader(file)));
+        recordParts = reader.readLine();
         reader.close();
         assert commandMap.get(recordParts[0]) == Key.INITIALIZE_STORE;
-        if (Boolean.parseBoolean(recordParts[3])) {
+        int mode = Integer.parseInt(recordParts[3]);
+        if ((mode & BATCHED) != 0) {
             // not time ordered, run the converter to a temp file
             if (verbose) {
                 System.out.println("creating time ordered log from per-thread batched log");
@@ -576,20 +580,6 @@ public class ProcessLog {
                     }
                 }
             }
-        }
-    }
-
-    private void setArgs(String line) {
-        int ix = line.indexOf('"');
-        if (ix > 0) {
-            // T "name" id, because thread names can have spaces
-            int iy = line.indexOf('"', ix + 1);
-            recordParts = new String[3];
-            recordParts[0] = "T";
-            recordParts[1] = line.substring(ix + 1, iy);
-            recordParts[2] = line.substring(iy + 2);
-        } else {
-            recordParts = line.split(" ");
         }
     }
 

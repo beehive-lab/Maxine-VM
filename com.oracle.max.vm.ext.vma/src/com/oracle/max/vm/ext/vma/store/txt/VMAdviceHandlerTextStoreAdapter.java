@@ -36,19 +36,27 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * An adapter that handles the conversion from the signatures of {@link VMAdviceHandler} that
- * use VM internal types to the external representation types used by {@link VMATextStore}.
+ * An adapter that handles the conversion from the signatures of {@link VMAdviceHandler} that use VM internal types to
+ * the external representation types used by {@link VMATextStore}.
  *
- * There are no "smarts" in this adaptor; it just assumes that object id assignment
- * has already been done and that it can access the id using the provided implementation
- * of {@link ObjectStateHandler} passed in {@link #getRemovalTracker(ObjectStateHandler),
- * which <b>must</b> called by the adapter client before any advice calls occur.
+ * There are no conversion smarts in this adaptor; it just assumes that object id assignment has already been done and
+ * that it can access the id using the provided implementation of {@link ObjectStateHandler} passed in the constructor.
  *
- * {@link VMATextStore} methods require the name of the generating thread, whereas
- * {@link VMAdviceHandler} methods do not, as it is implicit. However, it is possible
- * that intermediate threads are used in the logging, so this class provides a mechanism
- * for mapping to the actual thread that created a record, via a callback object.
- * The default implementation assumes the current thread.
+ * {@link VMATextStore} methods require the name of the generating thread, whereas {@link VMAdviceHandler} methods do
+ * not, as it is implicit, so one task of the adaptor is to associate a thread name with an advice call, which is
+ * handled by an instance of the {@link ThreadNameGenerator} class. The default implementation assumes the current
+ * thread. However, it is possible that intermediate threads are used in the logging, so a different instance
+ * can be registered with {@link #setThreadNameGenerator(ThreadNameGenerator).
+ *
+ * Per-thread adaptors are supported in {@link #perThread per-thread} mode. In this case each adaptor has its
+ * own {@link VMATextStore} instance, avoiding any synchronization in the storing process. The caller
+ * must announce new threads via the {@link #newThread} method  and subsequently use the returned
+ * {@link ThreadVMAdviceHandlerTextStoreAdapter} when adapting records for that thread.
+ *
+ *
+ * The majority of the advice methods are automatically generated as the conversion from VM types to external,
+ * string-based, types is a rote process.
+ *
  *
  */
 public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.RemovalTracker {
@@ -74,7 +82,8 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
 
         @Override
         public String getThreadName() {
-            return threadName;
+            // return threadName;
+            return null;
         }
 
     }
@@ -95,16 +104,18 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
 
     /**
      * Handles the mapping from internal object references to external ids and
-     * object death callbacks. Must be set by caller using {@link #getRemovalTracker()}.
+     * object death callbacks.
      */
     private final ObjectStateHandler state;
 
     /**
      * Denotes whether the log records are batched per thread.
-     * Default is {@code false}, but can be changed by {@link #setThreadMode(boolean, boolean)}.
      */
     private final boolean threadBatched;
 
+    /**
+     * {@code true} when there are per thread adaptors.
+     */
     private final boolean perThread;
 
     public VMATextStore getStore() {
