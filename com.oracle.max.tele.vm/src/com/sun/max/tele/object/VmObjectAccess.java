@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.heap;
+package com.sun.max.tele.object;
 
 import static com.sun.max.tele.object.ObjectStatus.*;
 
@@ -34,8 +34,8 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.field.*;
+import com.sun.max.tele.heap.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObjectFactory.ClassCount;
 import com.sun.max.tele.object.TeleObjectFactory.ObjectFactoryMapStats;
 import com.sun.max.tele.reference.*;
@@ -448,8 +448,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * The local object must be a concrete subtype of {@link TeleTupleObject} and must have
      * a constructor that takes two arguments:  {@link TeleVM}, {@link RemoteReference}.
      *
-     * @param clazz the VM class for which a specialized representation is desired
-     * @param constructor constructor for the local representation to be constructed
+     * @param vmClass the VM class for which a specialized representation is desired
+     * @param localClass the local representation to be constructed
      */
     public void registerTeleObjectType(Class vmClass, Class localClass) {
         teleObjectFactory.register(vmClass, localClass);
@@ -531,8 +531,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      *
      * @param kind identifies one of the basic VM value types
      * @param origin location in VM memory presumed (but not checked) to be an array origin of the specified kind
-     * @param id identifies a specific array element
-     * @return address of the array element in VM memory
+     * @param address location of a specific array element
+     * @return index of the array element in VM memory
      */
     public int unsafeArrayElementAddressToIndex(Kind kind, Address origin, Address address) {
         return address.minus(origin.plus(arrayLayout(kind).getElementOffsetFromOrigin(0))).dividedBy(kind.width.numberOfBytes).toInt();

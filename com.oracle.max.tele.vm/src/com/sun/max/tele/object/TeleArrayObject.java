@@ -128,7 +128,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     /**
      * From a reference array in VM memory, gets the value of an element interpreted as a
-     * reference, traversing a forwarder if present; returns {@link Reference#zero()} if the
+     * reference, traversing a forwarder if present; returns {@linkplain RemoteReference#zero()} if the
      * value does not point at a live object.
      *
      * @param index the

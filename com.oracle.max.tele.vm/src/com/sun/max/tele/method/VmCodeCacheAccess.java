@@ -48,7 +48,7 @@ import com.sun.max.vm.compiler.target.*;
  * by various concrete subclasses of {@link VmCodeCacheRegion}, each of which specializes in one of the
  * code cache implementations in the VM.  At refresh time, each of those classes interrogates the VM
  * object that manages that code cache region in the VM, and loads summary information about any new
- * compilations instances of {@link TeleTargetMethod}.  Each newly created instance of {@link TeleTargetRegion}
+ * compilations instances of {@link TeleTargetMethod}.  Each newly created instance of {@link TeleTargetMethod}
  * registers itself here, so that it can be looked up by address.
  * <p>
  * Not every instance may be created in the usual way. There might be cases where we are inspecting an
@@ -113,7 +113,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements MaxCode
     /**
      * Creates the object that models the cache of machine code in the VM.
      * <p>
-     * A subsequent call to {@link #initialize()} is required before this object is functional.
+     * A subsequent call to {@link #initialize(long)} is required before this object is functional.
      */
     public VmCodeCacheAccess(TeleVM vm) {
         super(vm);

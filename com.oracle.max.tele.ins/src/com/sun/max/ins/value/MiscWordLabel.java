@@ -128,7 +128,10 @@ public final class MiscWordLabel extends ValueLabel {
                 final boolean isBound = inflatedLockword.isBound();
                 if (isBound) {
                     // JavaMonitor is a proper object, not just a Word.
-                    javaMonitor = vm().objects().findObjectAt(inflatedLockword.getBoundMonitorReferenceAsWord().asAddress());
+                    try {
+                        javaMonitor = vm().objects().findObjectAt(inflatedLockword.getBoundMonitorReferenceAsWord().asAddress());
+                    } catch (MaxVMBusyException e) {
+                    }
                     if (javaMonitor == null) {
                         setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + inspection().nameDisplay().unavailableDataLongText());
                     } else {

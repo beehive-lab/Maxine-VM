@@ -303,13 +303,13 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
 
         /**
          * Accepts a tele process execution request and schedules it for execution on the
-         * {@linkplain #requestHandlingThread() request handling thread}. The request is executed immediately if the
+         * {@linkplain #requestHandlingThread request handling thread}. The request is executed immediately if the
          * {@linkplain Thread#currentThread() current} thread is the request handling thread. Otherwise, it will be executed
          * once any pending request has completed.
          *
          * @param request an execution request to schedule
-         * @param synchronous if this value is true or the {@linkplain Thread#currentThread() current thread} is the
-         *            {@linkplain #requestHandlingThread() request handling thread}, this method will block until the
+         * @param isSynchronous if this value is true or the {@linkplain Thread#currentThread() current thread} is the
+         *            {@linkplain #requestHandlingThread request handling thread}, this method will block until the
          *            request's post execution action has
          *            completed. Otherwise, this method returns after scheduling the request and notifying the request
          *            handling thread.
@@ -977,7 +977,7 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
      * @param id the {@link VmThread#id() id} of the thread. If {@code id > 0}, then this thread corresponds to a
      *            {@link VmThread Java thread}. If {@code id == 0}, then this is the primordial thread. Otherwise, this
      *            is a native thread or a Java thread that has not yet executed past the point in
-     *            {@link VmThread#run()} where it is added to the active thread list.
+     *            {@link VmThread#run} where it is added to the active thread list.
      * @param localHandle the platform-specific process control library handle to this thread
      * @param handle the native thread library {@linkplain TeleNativeThread#handle() handle} to this thread
      * @param state
@@ -1041,11 +1041,11 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
      * Precondition:
      * {@code buffer != null && offset >= 0 && offset < buffer.capacity() && length >= 0 && offset + length <= buffer.capacity()}
      *
-     * @param src the address from which reading should start
-     * @param dst the buffer into which the bytes are read
-     * @param dstOffset the offset in {@code dst} at which the bytes are read
+     * @param address the address from which reading should start
+     * @param buffer the buffer into which the bytes are read
+     * @param offset the offset in {@code buffer} at which the bytes are read
      * @param length the maximum number of bytes to be read
-     * @return the number of bytes read into {@code dst}
+     * @return the number of bytes read into {@code buffer}
      *
      * @throws DataIOError if some IO error occurs
      * @throws IndexOutOfBoundsException if {@code offset} is negative, {@code length} is negative, or
@@ -1061,11 +1061,11 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
      * Precondition:
      * {@code buffer != null && offset >= 0 && offset < buffer.capacity() && length >= 0 && offset + length <= buffer.capacity()}
      *
-     * @param src the buffer from which the bytes are written
-     * @param srcOffset the offset in {@code src} from which the bytes are written
+     * @param buffer the buffer from which the bytes are written
+     * @param offset the offset in {@code buffer} from which the bytes are written
      * @param length the maximum number of bytes to be written
-     * @param dst the address at which writing should start
-     * @return the number of bytes written to {@code dst}
+     * @param address the address at which writing should start
+     * @return the number of bytes written to {@code address}
      *
      * @throws DataIOError if some IO error occurs
      * @throws IndexOutOfBoundsException if {@code srcOffset} is negative, {@code length} is negative, or

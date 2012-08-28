@@ -40,7 +40,7 @@ public abstract class TeleActor extends TeleTupleObject {
     private Utf8Constant actorName;
 
     /**
-     * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
+     * This constructor follows no {@linkplain RemoteReference references}. This avoids the infinite regress that can occur when the VM
      * object and another are mutually referential.
      */
     protected TeleActor(TeleVM vm, RemoteReference actorReference) {
@@ -48,7 +48,7 @@ public abstract class TeleActor extends TeleTupleObject {
     }
 
     /**
-     * @return contents of the {@link #flags} field, read from this
+     * @return contents of the {@code flags} field, read from this
      *         {@link Actor} in the VM.
      */
     public final int getFlags() {

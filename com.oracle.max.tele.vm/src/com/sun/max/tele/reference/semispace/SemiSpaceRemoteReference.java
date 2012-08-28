@@ -269,14 +269,14 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         }
 
         /**
-         * @see SemiSpaceRemoteReference#addFromOrigin()
+         * @see SemiSpaceRemoteReference#forwardedFrom()
          */
         void discoverOldOrigin(SemiSpaceRemoteReference ref, Address fromOrigin) {
             TeleError.unexpected("Illegal state transition");
         }
 
         /**
-         * @see SemiSpaceRemoteReference#forward()
+         * @see SemiSpaceRemoteReference#forwardedTo()
          */
         void discoverForwarded(SemiSpaceRemoteReference ref, Address toOrigin) {
             TeleError.unexpected("Illegal state transition");
@@ -440,9 +440,9 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * live reference immediately after the spaces are swapped.
      * <p>
      * <strong>Pre:</strong> An ordinary {@link #LIVE} object in To-Space, not forwarded, with the heap phase
-     * {@link #MUTATING} (or possibly in the latter part of {@link #RECLAIMING}).
+     * {@link HeapPhase#MUTATING} (or possibly in the latter part of {@link HeapPhase#RECLAIMING}).
      * <p>
-     * <strong>Post:</strong> An object whose origin is in From-Space and presumed to be {@link lIVE} during
+     * <strong>Post:</strong> An object whose origin is in From-Space and presumed to be {@link #LIVE} during
      * an {@link HeapPhase#ANALYZING} heap phase in which the object's reachability has not yet been determined.
      */
     public void beginAnalyzing() {

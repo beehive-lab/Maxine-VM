@@ -307,7 +307,7 @@ public final class LinuxTask {
     /**
      * The file in /proc through which the memory of this task can be read. As Linux does not
      * support writing to the memory of a process via /proc, it's still necessary to use
-     * ptrace for {@linkplain #writeBytes(Address, ByteBuffer, int, int) writing}.
+     * ptrace for {@linkplain #writeBytes(long, Object, boolean, int, int) writing}.
      */
     private RandomAccessFile memory;
 

@@ -65,7 +65,7 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * between object and reference to be overlooked for brevity in the following description.</p>
  * <p>
  * <b>Implementation note:</b> the division of the references into two maps is purely conceptual for the purpose
- * of this description.  Since the reference {@linkplain MSRemoteReference.RefState states} are all distinct,
+ * of this description.  Since the reference {@linkplain MSRemoteReference states} are all distinct,
  * they could be kept in a single map, two maps, or even a separate map for each reference state.
  * <p>
  *

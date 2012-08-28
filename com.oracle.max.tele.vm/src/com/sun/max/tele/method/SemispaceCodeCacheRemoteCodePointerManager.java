@@ -41,7 +41,7 @@ import com.sun.max.vm.type.*;
  * <ul>
  * <li>assumes that machine code allocated can be relocated and eventually collected/evicted.</li>
  * <li>assumes that there can only be code in the region of the kind managed and described by
- * (heap) object instances of {@link TeleMethocActor}.</li>
+ * (heap) object instances of {@link TeleMethodActor}.</li>
  * <li>creates <em>canonical pointers</em>.
  * </ul>
  * This implementation depends on knowledge of the internal workings of {@link TargetMethod}.

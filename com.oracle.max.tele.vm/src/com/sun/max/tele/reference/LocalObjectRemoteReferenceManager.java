@@ -85,7 +85,7 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
      * <p>
      * The memory status is permanently {@link ObjectStatus#LIVE}.
      *
-     * @see {@link TeleInterpreter}
+     * @see TeleInterpreter
      */
     public final class LocalObjectRemoteReference extends RemoteReference {
 

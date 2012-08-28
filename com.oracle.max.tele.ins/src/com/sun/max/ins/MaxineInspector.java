@@ -107,7 +107,7 @@ public final class MaxineInspector {
     /**
      * Initializes the Java Swing UI system to a specified Look and Feel (L&F).
      *
-     * @see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
+     * @see "http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html"
      */
     private static void initializeSwing() {
         // Default L&F

@@ -66,7 +66,6 @@ public final class TeleWarning {
      * Reports the occurrence of a non-fatal error condition.
      *
      * @param throwable an exception given more detail on the cause of the condition. This value may be {@code null}.
-     * @throws TeleWarning unconditionally
      */
     public static void message(Throwable throwable) {
         warn(null, throwable);

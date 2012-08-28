@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 /**
  *
- * Use the class {@link Main} to start the Maxine JDWP server. This class bridges between the JDWP implementation and the Tele layer.
+ * Use the class {@link com.sun.max.jdwp.maxine.Main} to start the Maxine JDWP server. This class bridges between the JDWP implementation and the Tele layer.
  */
 package com.sun.max.jdwp.maxine;
 

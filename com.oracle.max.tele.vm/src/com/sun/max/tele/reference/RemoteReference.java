@@ -69,7 +69,7 @@ public abstract class RemoteReference extends Reference {
 
     /**
      * @return the status of the object representation in memory to which this instance refers:
-     *         {@linkplain ObjectStatus#LIVE LIVE}, {@linkplain ObjectStatus#DEAD DEAD}, or ({@linkplain ObjectStatus#QUASI QUASI}.
+     *         {@linkplain ObjectStatus#LIVE LIVE}, {@linkplain ObjectStatus#DEAD DEAD}, or one of the {@linkplain ObjectStatus#isQuasi() quasi states}.
      */
     public abstract ObjectStatus status();
 
@@ -121,7 +121,7 @@ public abstract class RemoteReference extends Reference {
      * point at a live object. No checking is performed to ensure that the offset identifies a reference field, or even
      * whether the offset is contained within the object.
      *
-     * @param offset the offset in bytes from the presumed object's origin at which to read the field
+     * @param fieldActor field description, including the offset in bytes from the presumed object's origin at which to read the field
      * @return the value of the instance field in VM memory interpreted as a reference, unless it refers to a forwarder
      *         in which case the reference returned refers to the destination of the forwarder.
      */

@@ -26,7 +26,8 @@ import com.sun.max.unsafe.*;
 
 /**
  * Denotes a native (dynamically loaded) library in the target VM.
- * See {@link System#loadLibrary(String).
+ *
+ * See {@link System#loadLibrary(String)}
  */
 public interface MaxNativeLibrary extends MaxEntity<MaxNativeLibrary> {
     /**

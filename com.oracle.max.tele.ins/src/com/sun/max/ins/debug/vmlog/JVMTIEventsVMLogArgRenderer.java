@@ -28,6 +28,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.ext.jvmti.*;
 import com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 import com.sun.max.vm.log.VMLog.*;
 

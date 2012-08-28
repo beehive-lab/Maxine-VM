@@ -35,7 +35,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A table specialized for displaying aspects of the current {@link InspectorFocus}.
+ * A table specialized for displaying aspects of the current {@link InspectionFocus}.
  * Intended for Inspector testing.
  */
 public final class FocusTable extends InspectorTable implements ViewFocusListener {

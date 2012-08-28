@@ -106,13 +106,13 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
         return selectedObjects;
     }
 
-    /**
-     * A subclass overwrites this method to convert a selected item from the list to the
-     * {@linkplain #selectedObject() selected object}.
-     *
-     * @param listItem
-     *                the item currently selected when the user pressed the "Select" button that closed the dialog
-     */
+//    /**
+//     * A subclass overwrites this method to convert a selected item from the list to the
+//     * {@linkplain #selectedObject() selected object}.
+//     *
+//     * @param listItem
+//     *                the item currently selected when the user pressed the "Select" button that closed the dialog
+//     */
          ///protected abstract T convertSelectedItem(Object listItem);
 
     private final class SelectAction extends InspectorAction {

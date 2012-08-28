@@ -295,8 +295,6 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess ConcurrentHashMap$HashEntry_next = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$HashEntry, "next", ConcurrentHashMap$HashEntry);
     public final TeleInstanceReferenceFieldAccess ConcurrentHashMap$HashEntry_value = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$HashEntry, "value", Object.class);
     public final TeleInstanceIntFieldAccess Enum_ordinal = new TeleInstanceIntFieldAccess(Enum.class, "ordinal");
-    public final TeleInstanceIntFieldAccess String_count = new TeleInstanceIntFieldAccess(String.class, "count");
-    public final TeleInstanceIntFieldAccess String_offset = new TeleInstanceIntFieldAccess(String.class, "offset");
     public final TeleInstanceReferenceFieldAccess String_value = new TeleInstanceReferenceFieldAccess(String.class, "value", char[].class);
 
     // Other fields:

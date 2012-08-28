@@ -22,6 +22,7 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -71,7 +72,7 @@ public interface MaxThread extends MaxEntity<MaxThread> {
 
     /**
      * Determines if this thread is associated with a {@link VmThread} instance. Note that even if this method returns
-     * {@code true}, the {@link #vThreadObject()} method will return {@code null} if the thread has not reached the
+     * {@code true}, the {@link #teleVmThread()} method will return {@code null} if the thread has not reached the
      * execution point in {@link VmThread#run} where the {@linkplain VmThreadLocal#VM_THREAD reference} to the
      * {@link VmThread} object has been initialized.
      * <br>
@@ -144,7 +145,7 @@ public interface MaxThread extends MaxEntity<MaxThread> {
      * Gets the name for this thread in the VM, if it is a Java thread and is ready to run.
      *
      * @return the name of the associated VM thread, null if none.
-     * @see vmThreadObject
+     * @see TeleVmThread
      */
     String vmThreadName();
 

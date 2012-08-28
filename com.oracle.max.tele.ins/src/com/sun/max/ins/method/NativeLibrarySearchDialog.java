@@ -26,6 +26,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
+import com.sun.max.vm.jni.*;
 
 
 public class NativeLibrarySearchDialog extends FilteredListDialog<MaxNativeLibrary> {
@@ -71,8 +72,7 @@ public class NativeLibrarySearchDialog extends FilteredListDialog<MaxNativeLibra
      *
      * @param title for dialog window
      * @param actionName name to appear on button
-     * @param multi allow multiple selections if true
-     * @return references to the selected instances of {@link TeleNativeCLibraries.LibInfo}, null if user canceled.
+     * @return references to the selected instances of {@link DynamicLinker.LibInfo}, null if user canceled.
      */
     public static MaxNativeLibrary show(Inspection inspection, String title, String actionName) {
         final NativeLibrarySearchDialog dialog = new NativeLibrarySearchDialog(inspection, title, actionName);

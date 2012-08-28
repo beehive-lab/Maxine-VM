@@ -291,7 +291,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         classToTeleTupleObjectConstructor.put(FirstFitMarkSweepSpace.class, getConstructor(TeleFirstFitMarkSweepSpace.class));
         classToTeleTupleObjectConstructor.put(FreeHeapSpaceManager.class, getConstructor(TeleFreeHeapSpaceManager.class));
         classToTeleTupleObjectConstructor.put(HeapFreeChunk.class, getConstructor(TeleHeapFreeChunk.class));
-        classToTeleTupleObjectConstructor.put(NoAgingRegionalizedNursery.class, getConstructor(TeleNoAgingNursery.class));
+        classToTeleTupleObjectConstructor.put(NoAgingRegionalizedNursery.class, getConstructor(TeleNoAgingRegionalizedNursery.class));
         // Other Maxine support
         classToTeleTupleObjectConstructor.put(MaxineVM.class, getConstructor(TeleMaxineVM.class));
         classToTeleTupleObjectConstructor.put(VMConfiguration.class, getConstructor(TeleVMConfiguration.class));
@@ -392,7 +392,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
 
     /**
      * Registers a type of surrogate object to be created for a specific VM object type.
-     * The local object must be a concrete subtype of {@link TeleTuple Object} and must have
+     * The local object must be a concrete subtype of {@link TeleTupleObject} and must have
      * a constructor that takes two arguments:  {@link TeleVM}, {@link RemoteReference}.
      *
      * @param vmClass the VM class for which a specialized representation is desired
@@ -415,9 +415,9 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      * exception to this for {@link TeleTargetMethod}, which can lead to infinite regress if the constructors for
      * mutually referential objects (notably {@link TeleClassMethodActor}) also create {@link TeleObject}s.
      *
-     * @param remoteRef non-null location of a Java object in the VM
+     * @param reference non-null location of a Java object in the VM
      * @return canonical local surrogate for the object
-     * @throws TeleError if the reference is not live or is an instance of {@link TemporaryUnsafeRemoteReference}
+     * @throws TeleError if the reference is not live or otherwise illegitimate
      */
     public TeleObject make(RemoteReference reference) throws TeleError {
         assert reference != null;

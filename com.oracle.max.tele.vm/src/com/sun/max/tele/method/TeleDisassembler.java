@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,10 +73,10 @@ public final class TeleDisassembler {
     /**
      * Disassembles a segment of compiled code.
      *
-     * @param processorKind the kind of processor for which the code was compiled.
+     * @param platform the hardware, including the kind of processor for which the code was compiled.
      * @param codeStart start location of the code in VM memory.
      * @param code the compiled code as bytes
-     * @param encodedInlineDataDescriptors
+     * @param inlineDataDecoder
      *
      * @return the code disassembled into instructions.
      */
@@ -112,7 +112,6 @@ public final class TeleDisassembler {
         /**
          * Gets the address of the literal value loaded by an instruction.
          *
-         * @param codeStart start of the code that contains the instruction that loads the literal value
          * @param disassembledInstruction the disassembled form of the instruction
          * @return the address where the literal value is stored
          */

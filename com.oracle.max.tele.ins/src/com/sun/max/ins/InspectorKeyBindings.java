@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import javax.swing.*;
 import com.sun.max.ins.InspectionActions.*;
 
 /**
- * Support for binding {@link KeyStroke}s to {@link InspectorActions}s.
+ * Support for binding {@link KeyStroke}s to {@link InspectionActions}s.
  */
 public class InspectorKeyBindings {
 
@@ -67,7 +67,7 @@ public class InspectorKeyBindings {
     ));
 
     /**
-     * A map from {@linkplain InspectorAction#KEY_BINDABLE_ACTIONS bindable} Inspector actions to the key strokes to
+     * A map from {@linkplain InspectorAction actions} to the key strokes to
      * which they are bound. Each key binding map has a {@linkplain #name() name} which must be unique across all
      * key binding maps.
      */

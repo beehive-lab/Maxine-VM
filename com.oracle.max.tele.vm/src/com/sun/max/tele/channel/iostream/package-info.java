@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,13 @@
  */
 
 /**
- * {@link com.sun.max.tele.TeleChannelDataIOProtocolImpl} is an implementation of the
- * method-based protocol defined by {@link TeleChannelProtocol} that uses
+ * {@link com.sun.max.tele.channel.iostream.TeleChannelDataIOProtocolImpl} is an implementation of the
+ * method-based protocol defined by {@link com.sun.max.tele.channel.TeleChannelProtocol} that uses
  * {@link java.io.DataInputStream} and {@link java.io.DataOutputStream}.
  *
- * {@link com.sun.max.tele.TeleChannelDataIOProtocolAdaptor} is a subclass
+ * {@link com.sun.max.tele.channel.iostream.TeleChannelDataIOProtocolAdaptor} is a subclass
  * that handles the methods containing object types, translating them into simple
- * types that can be handled by {@link com.sun.max.tele.TeleChannelDataIOProtocolImpl}.
+ * types that can be handled by {@link com.sun.max.tele.channel.iostream.TeleChannelDataIOProtocolImpl}.
  */
 package com.sun.max.tele.channel.iostream;
 

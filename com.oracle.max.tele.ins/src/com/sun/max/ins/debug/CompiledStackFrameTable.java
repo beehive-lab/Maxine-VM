@@ -57,7 +57,9 @@ public class CompiledStackFrameTable extends InspectorTable {
      * <br>
      * Each slot is assumed to occupy one word in memory.
      *
-     * @param thread the thread that owns the stack
+     * @param view the view that owns the table
+     * @param compiledStackFrame a stack frame to display
+     * @param viewPreferences preferences for this view
      */
     public CompiledStackFrameTable(Inspection inspection, InspectorView view, MaxStackFrame.Compiled compiledStackFrame, CompiledStackFrameViewPreferences viewPreferences) {
         super(inspection);

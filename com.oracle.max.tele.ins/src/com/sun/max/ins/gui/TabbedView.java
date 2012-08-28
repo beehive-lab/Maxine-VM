@@ -144,7 +144,7 @@ public abstract class TabbedView<View_Type extends TabbedView> extends AbstractV
      * Removes a component that was added as a tab.
      * <br>
      * Note that this happens automatically for a
-     * {@link JInternalFrame} when {@JInternalFrame#dispose()}
+     * {@link JInternalFrame} when {@link JInternalFrame#dispose()}
      * is called, but not for other kinds of components that
      * might be put into a tab.
      *

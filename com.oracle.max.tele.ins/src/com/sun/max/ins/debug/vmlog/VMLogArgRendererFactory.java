@@ -29,7 +29,7 @@ import com.sun.max.program.*;
 import com.sun.max.vm.log.*;
 
 /**
- * Factory for custom renderers for {@link VMLog.Logger} arguments.
+ * Factory for custom renderers for {@link VMLogger} arguments.
  * A custom renderer must extend the {@link VMLogArgRenderer} class.
  * Custom render classes must be defined in this package and
  * have name of the form {@code XXXVMLogArgRenderer}, where {@code XXX}

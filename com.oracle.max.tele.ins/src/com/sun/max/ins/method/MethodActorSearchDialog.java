@@ -116,11 +116,9 @@ public final class MethodActorSearchDialog extends ObjectSearchDialog<TeleMethod
      * Displays a dialog to let the user select a method defined by a given class actor.
      *
      * @param inspection
-     * @param classActorReference
-     * @param title
-     *                title string for the dialog frame, "Select Method" if null
-     * @param actionName
-     *                name of the action, appears on on the button to activate
+     * @param teleClassActor
+     * @param title title string for the dialog frame, "Select Method" if null
+     * @param actionName name of the action, appears on on the button to activate
      * @return local surrogate for the selected method actor or null if the user canceled the dialog
      */
     public static TeleMethodActor show(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName) {

@@ -27,11 +27,12 @@ import java.util.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.type.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may not have yet
- * been loaded into the {@linkplain VmClassRegistry Inspector class registry}.
+ * A dialog for selecting a type available via the {@linkplain MaxClasses#loadableTypeDescriptors()} including those that may not have yet
+ * been loaded into the {@linkplain VmClassAccess Inspector class registry}.
  */
 public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
 
@@ -87,8 +88,8 @@ public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
     private final Iterable<TypeDescriptorItem> typeItems;
 
     /**
-     * Displays a dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may
-     * not have yet been loaded into the {@linkplain VmClassRegistry Inspector class registry}.
+     * Displays a dialog for selecting a type available via the {@linkplain MaxClasses#loadableTypeDescriptors()} including those that may
+     * not have yet been loaded into the {@linkplain VmClassAccess Inspector class registry}.
      *
      * @return the type or null if the user canceled the dialog
      */
@@ -99,8 +100,8 @@ public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
     }
 
     /**
-     * Displays a dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may
-     * not have yet been loaded into the {@linkplain VmClassRegistry Inspector class registry}.
+     * Displays a dialog for selecting a type available via the {@linkplain MaxClasses#loadableTypeDescriptors()} including those that may
+     * not have yet been loaded into the {@linkplain VmClassAccess Inspector class registry}.
      *
      * @param inspection
      * @param title Title string for the dialog frame.

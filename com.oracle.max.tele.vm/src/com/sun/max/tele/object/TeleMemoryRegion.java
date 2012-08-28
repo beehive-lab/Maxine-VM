@@ -163,7 +163,7 @@ public class TeleMemoryRegion extends TeleTupleObject {
      * The default is to assume 100% utilized,
      * but specific subclasses may have more refined information available.
      * <br>
-     * Returns {@link MaxMemoryRegion.Util.NULL_MEMORY_USAGE} if no information available.
+     * Returns {@link MaxMemoryRegion.Util#NULL_MEMORY_USAGE} if no information available.
      */
     public MemoryUsage getUsage() {
         return memoryUsageCache;

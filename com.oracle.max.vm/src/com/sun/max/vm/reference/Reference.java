@@ -465,6 +465,6 @@ public abstract class Reference implements Accessor {
 
     @HOSTED_ONLY
     public final void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
-        referenceScheme().copyElements(displacement, this, displacement, dst, dstIndex, length);
+        referenceScheme().copyElements(displacement, this, srcIndex, dst, dstIndex, length);
     }
 }

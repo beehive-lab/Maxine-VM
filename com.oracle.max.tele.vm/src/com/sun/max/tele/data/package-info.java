@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,8 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 /**
- * Page-based memory buffer for reads and writes to VM process memory, or
- * (depending on the Inspection mode) reads from a binary image or core dump.
+ * Support for reading/writing bytes and other primitive Maxine data {@linkplain com.sun.max.vm.type.Kind kinds} from/to
+ * a source/destination that can be identified by an {@link com.sun.max.unsafe.Address}.
+ * <p>
+ * The source of the data reading can be any implementation of the {@link com.sun.max.tele.data.DataIO} interface, which
+ * provides low level byte reading/writing.
  */
-package com.sun.max.tele.page;
+package com.sun.max.tele.data;

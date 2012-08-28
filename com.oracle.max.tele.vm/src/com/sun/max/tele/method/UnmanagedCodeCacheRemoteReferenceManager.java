@@ -42,7 +42,7 @@ import com.sun.max.vm.heap.*;
  * <ul>
  * <li>This manager assumes that objects in this region, once created, neither move nor are collected.</li>
  * <li>This manager assumes that there can only
- * be objects in the region of the kinds enumerated by {@link CodeCacheReferenceKiknd}, which
+ * be objects in the region of the kinds enumerated by {@link CodeCacheReferenceKind}, which
  * are pointed to by corresponding fields in a (heap) instance of {@link TeleMethodActor}.</li>
  * <li>This manager creates <em>canonical references</em>.</li>
  * </ul>

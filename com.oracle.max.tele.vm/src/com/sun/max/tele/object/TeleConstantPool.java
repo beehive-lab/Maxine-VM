@@ -25,7 +25,6 @@ package com.sun.max.tele.object;
 import java.lang.reflect.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.tele.heap.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;

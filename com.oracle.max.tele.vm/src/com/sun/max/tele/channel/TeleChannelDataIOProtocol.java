@@ -22,7 +22,10 @@
  */
 package com.sun.max.tele.channel;
 
-import java.io.Serializable;
+import java.io.*;
+
+import com.sun.max.tele.channel.iostream.TeleChannelDataIOProtocolImpl.ArrayMode;
+import com.sun.max.tele.debug.*;
 
 /**
  * Subset of the interface used by the Maxine Inspector to access information from a target Maxine VM, that is defined
@@ -107,7 +110,7 @@ public interface TeleChannelDataIOProtocol {
                     byte[] stateRegisters, int stateRegistersSize);
 
     /**
-     * The data passed as arguments to {@link TeleProcess.jniGatherThread}.
+     * The data passed as arguments to {@link TeleProcess#jniGatherThread}.
      * It is manually serialized and passed as a byte array.
      */
     public static class GatherThreadData implements Serializable {

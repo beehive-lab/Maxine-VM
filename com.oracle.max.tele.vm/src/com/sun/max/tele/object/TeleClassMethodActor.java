@@ -83,9 +83,9 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
     /**
      * Constructs a {@link TeleObject} specialized for dealing with the information stored in a VM
-     * {@link ClassMetholdActor}.
+     * {@link ClassMethodActor}.
      * <p>
-     * This constructor follows no {@link References} and in particular does not attempt to decode the compilation state
+     * This constructor follows no {@linkplain RemoteReference references} and in particular does not attempt to decode the compilation state
      * of the method. This avoids the infinite regress that can occur when the constructor for a mutually referential
      * object such as a {@link TeleTargetMethod} attempts to do the same thing.
      *

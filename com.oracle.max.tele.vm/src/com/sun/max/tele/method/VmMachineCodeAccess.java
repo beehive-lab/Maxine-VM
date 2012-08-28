@@ -248,7 +248,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
      * This should only be called from a constructor of a {@link TeleTargetMethod} subclass.
      *
      * @param teleTargetMethod the compiled method whose memory region is to be added to this registry
-     * @throws IllegalArgumentException when the memory region of {@link teleTargetMethod} overlaps one already in this registry.
+     * @throws IllegalArgumentException when the memory region of {@link TeleTargetMethod} overlaps one already in this registry.
      */
     public void registerCompilation(TeleTargetMethod teleTargetMethod) {
         if (teleTargetMethod.getRegionStart().isZero() || teleTargetMethod.getRegionNBytes() == 0) {

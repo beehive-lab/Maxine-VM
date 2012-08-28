@@ -39,6 +39,7 @@ import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;

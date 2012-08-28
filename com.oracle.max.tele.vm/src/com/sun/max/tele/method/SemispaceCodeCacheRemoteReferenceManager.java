@@ -43,7 +43,7 @@ import com.sun.max.vm.heap.*;
  * <ul>
  * <li>assumes that objects can be relocated and eventually collected/evicted.</li>
  * <li>assumes that there can only
- * be objects in the region of the kinds enumerated by {@link CodeCacheReferenceKiknd}, which
+ * be objects in the region of the kinds enumerated by {@link CodeCacheReferenceKind}, which
  * are pointed to by corresponding fields in a {@link TeleMethodActor}.</li>
  * <li>creates <em>canonical references</em>.</li>
  * </ul>

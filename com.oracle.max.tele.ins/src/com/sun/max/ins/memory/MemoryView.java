@@ -272,7 +272,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
 
         /**
          * A per-instance set of view preferences, initialized to the global preferences.
-         * @param defaultPreferences the global defaults for this kind of view
+         * @param globalPreferences the global defaults for this kind of view
+         * @param memoryView the view
          */
         public MemoryViewPreferences(MemoryViewPreferences globalPreferences, MemoryView memoryView) {
             super(globalPreferences);
@@ -649,7 +650,10 @@ public final class MemoryView extends AbstractView<MemoryView> {
         switch(viewMode()) {
             case OBJECT:
                 MaxObject object = null;
-                object = vm().objects().findAnyObjectAt(origin);
+                try {
+                    object = vm().objects().findAnyObjectAt(origin);
+                } catch (MaxVMBusyException e) {
+                }
                 if (object == null) {
                     titleBuilder.append("Memory object: ").append(memoryWordRegion.start().toHexString());
                 } else {
@@ -788,7 +792,10 @@ public final class MemoryView extends AbstractView<MemoryView> {
 
     private void moveToCurrentObject() {
         MaxObject object = null;
-        object = vm().objects().findAnyObjectAt(origin);
+        try {
+            object = vm().objects().findAnyObjectAt(origin);
+        } catch (MaxVMBusyException e) {
+        }
         if (object != null) {
             MaxMemoryRegion objectMemoryRegion = object.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().alignUp(nBytesInWord);

@@ -34,8 +34,8 @@ import com.sun.max.vm.heap.*;
  * A (mostly) immutable summary of the Maxine VM state at some point in time, thread-safe and suitable for safe sharing between GUI and execution threads.</p>
  * <p>
  * The typical progression of process states is
- * { {@linkplain MaxProcessState.STOPPED STOPPED} -> {@linkplain MaxProcessState.RUNNING RUNNING} }* -> {@linkplain MaxProcessState.TERMINATED TERMINATED}.
- * When there is no live process being used, then the state is always {@linkplain MaxProcessState.NONE NONE}.</p>
+ * { {@linkplain MaxProcessState#STOPPED STOPPED} -> {@linkplain MaxProcessState#RUNNING RUNNING} }* -> {@linkplain MaxProcessState#TERMINATED TERMINATED}.
+ * When there is no live process being used, then the state is always {@linkplain MaxProcessState#NONE NONE}.</p>
  * <p>
  * The serial id counter is at 0 for the first state in the history; it has no predecessor.
  * States are linked backwards; a new summary is prepended (and the serial id incremented) each time a new state instance is created.</p>

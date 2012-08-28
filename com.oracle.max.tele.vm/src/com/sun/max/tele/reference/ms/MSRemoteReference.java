@@ -31,12 +31,13 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 
 /**
  * Representation of a remote object reference in a heap region managed by a mark sweep GC. The states of the reference
  * represent what can be known about the object at any given time, especially those relevant during the
- * {@link #ANALYZING} phase of the heap.
+ * {@link HeapPhase#ANALYZING} phase of the heap.
  *
  * @see <a href="http://en.wikipedia.org/wiki/State_pattern">"State" design pattern</a>
  */
@@ -79,7 +80,7 @@ public class MSRemoteReference extends  RemoteReference {
         },
 
         /**
-         * Reference to an object whose reachability is unknown, heap {@link #ANALYZING}.
+         * Reference to an object whose reachability is unknown, heap {@link HeapPhase#ANALYZING}.
          */
         OBJ_UNKNOWN ("UNKNOWN object (Analyzing)") {
 
@@ -105,7 +106,7 @@ public class MSRemoteReference extends  RemoteReference {
         },
 
         /**
-         * Reference to an object found unreachable, heap {@link #RECLAIMING}, modeling
+         * Reference to an object found unreachable, heap {@link HeapPhase#RECLAIMING}, modeling
          * the state where the GC has not yet reclaimed the space.
          */
         OBJ_UNREACHABLE ("UNREACHABLE object (Reclaiming)") {
@@ -259,7 +260,7 @@ public class MSRemoteReference extends  RemoteReference {
         }
 
         /**
-         * @see MSRemoteReference#addFromOrigin()
+         * @see MSRemoteReference#discoveredReachable()
          */
         void discoveredReachable(MSRemoteReference ref) {
             TeleError.unexpected("Illegal state transition");
@@ -393,7 +394,7 @@ public class MSRemoteReference extends  RemoteReference {
     }
 
     /**
-     * State transition on an ordinary live reference when an {@link #ANALYZING} phase is discovered to have begun.
+     * State transition on an ordinary live reference when an {@link HeapPhase#ANALYZING} phase is discovered to have begun.
      */
     public void analyzingBegins() {
         priorStatus = refState.status();
@@ -401,7 +402,7 @@ public class MSRemoteReference extends  RemoteReference {
     }
 
     /**
-     * State transition on an ordinary live object reference during {@link #ANALYZING} when an object is found to be reachable.
+     * State transition on an ordinary live object reference during {@link HeapPhase#ANALYZING} when an object is found to be reachable.
      */
     public void discoveredReachable() {
         priorStatus = refState.status();
@@ -409,7 +410,7 @@ public class MSRemoteReference extends  RemoteReference {
     }
 
     /**
-     * State transition on an object when {@link #RECLAIMING} starts.
+     * State transition on an object when {@link HeapPhase#RECLAIMING} starts.
      */
     public void reclaimingBegins() {
         priorStatus = refState.status();
@@ -417,7 +418,7 @@ public class MSRemoteReference extends  RemoteReference {
     }
 
     /**
-     * State transition on an object when {@link #MUTATING} begins.
+     * State transition on an object when {@link HeapPhase#MUTATING} begins.
      */
     public void mutatingBegins() {
         priorStatus = refState.status();

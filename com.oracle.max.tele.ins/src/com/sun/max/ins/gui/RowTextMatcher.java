@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import java.util.regex.*;
 
 /**
  * Regular expression pattern matcher; identifies by number the rows that match a pattern.
- * @see {@link java.util.regex.Pattern}
+ * @see java.util.regex.Pattern
  */
 public interface RowTextMatcher {
 

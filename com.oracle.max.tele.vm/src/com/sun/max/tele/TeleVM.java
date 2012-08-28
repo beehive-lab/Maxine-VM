@@ -223,7 +223,7 @@ public abstract class TeleVM implements MaxVM {
     private static TargetLocation targetLocation;
 
     /**
-     * Where the meta-data associated with the target VM is located {@see #vmDirectoryOption}.
+     * Where the meta-data associated with the target VM is located {link #vmDirectoryOption}.
      */
     private static File vmDirectory;
 
@@ -262,7 +262,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * The options controlling how a VM instance is {@linkplain #newAllocator(String...) created}.
+     * The options controlling how a VM instance is created}.
      */
     public static class Options extends OptionSet {
 
@@ -293,7 +293,7 @@ public abstract class TeleVM implements MaxVM {
         public final Option<String> heapOption;
 
         /**
-         * This field is {@code null} if {@link #readOnly} is {@code true}.
+         * This field is {@code null} if inspecting read-only.
          */
         public final Option<String> vmArguments;
 
@@ -562,7 +562,6 @@ public abstract class TeleVM implements MaxVM {
      * @param bootImageFile the file containing the boot image
      * @param sourcepath the source code path to search for class or interface definitions
      * @throws BootImageException
-     * @throws IOException
      */
     private static TeleVM createReadOnly(File bootImageFile, Classpath sourcepath) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
@@ -775,16 +774,10 @@ public abstract class TeleVM implements MaxVM {
     /**
      * Creates a VM instance by creating or attaching to a Maxine VM process.
      *
-     * @param bootImageFile path to the boot image file loaded by the VM
      * @param bootImage the metadata describing the contents in the boot image
      * @param sourcepath path used to search for Java source files
      * @param commandLineArguments the command line arguments to be used when creating a new VM process. If this value
      *            is {@code null}, then an attempt is made to attach to the process whose id is {@code processID}.
-     * @param processID the process ID of an existing VM instance to which this debugger should be attached. This
-     *            argument is ignored if {@code commandLineArguments != null}.
-     * @param agent the agent that opens a socket for the VM to communicate the address of the boot image once it has
-     *            been loaded and relocated. This parameter may be null if {@link #loadBootImage(TeleVMAgent)} is
-     *            overridden by this object to use a different mechanism for discovering the boot image address.
      * @throws BootImageException
      */
     protected TeleVM(BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
@@ -1313,7 +1306,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * Sets or clears some bits of the {@link Inspectable#flags} field in the VM process.
+     * Sets or clears some bits of the {@link Inspectable} field in the VM process.
      * <p>
      * Must be called in a thread holding the VM lock.
      *
@@ -1481,20 +1474,7 @@ public abstract class TeleVM implements MaxVM {
      * @throws InvalidReferenceException if the argument does not point a valid heap object.
      */
     public final String getString(RemoteReference stringRef) throws InvalidReferenceException {
-        referenceManager.checkReference(stringRef);
-        final RemoteReference charArrayRef = fields().String_value.readRemoteReference(stringRef);
-        if (charArrayRef.isZero()) {
-            return null;
-        }
-        referenceManager.checkReference(charArrayRef);
-        int offset = fields().String_offset.readInt(stringRef);
-        final int charArrayCount = fields().String_count.readInt(stringRef);
-        final char[] chars = new char[charArrayCount];
-        for (int i = 0; i < charArrayCount; i++) {
-            chars[i] = Layout.getChar(charArrayRef, offset);
-            offset++;
-        }
-        return new String(chars);
+        return TeleString.getString(this, stringRef);
     }
 
     /**
@@ -1512,24 +1492,8 @@ public abstract class TeleVM implements MaxVM {
      * @param origin a {@link String} object in the VM
      * @return A local {@link String} duplicating the remote object's contents, null if it can't be read.
      */
-    public final String getStringUnsafe(Address origin) {
-        // Work only with temporary references that are unsafe across GC
-        // Do no testing to determine if the reference points to a valid String object in live memory.
-        try {
-            final RemoteReference stringRef = referenceManager().makeTemporaryRemoteReference(origin);
-            final Address charArrayAddress = stringRef.readWord(fields().String_value.fieldActor().offset()).asAddress();
-            final RemoteReference charArrayRef = referenceManager().makeTemporaryRemoteReference(charArrayAddress);
-            int offset = stringRef.readInt(fieldAccess.String_offset.fieldActor().offset());
-            final int charArrayCount = stringRef.readInt(fieldAccess.String_count.fieldActor().offset());
-            final char[] chars = new char[charArrayCount];
-            for (int i = 0; i < charArrayCount; i++) {
-                chars[i] = Layout.getChar(charArrayRef, offset);
-                offset++;
-            }
-            return new String(chars);
-        } catch (DataIOError dataIOError) {
-            return null;
-        }
+    public String getStringUnsafe(Address origin) {
+        return TeleString.getStringUnsafe(this, origin);
     }
 
     public final List<MaxObject> inspectableObjects() {
@@ -1656,7 +1620,6 @@ public abstract class TeleVM implements MaxVM {
 
     /**
      * @return access to the VM for the JDWP server.
-     * @see com.sun.max.jdwp.maxine.Main
      */
     public final VMAccess vmAccess() {
         return jdwpAccess;

@@ -32,7 +32,7 @@ import com.sun.max.vm.actor.member.*;
 public final class TeleStaticMethodActor extends TeleClassMethodActor {
 
     /**
-     * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
+     * This constructor follows no {@linkplain RemoteReference references}. This avoids the infinite regress that can occur when the VM
      * object and another are mutually referential.
      */
     TeleStaticMethodActor(TeleVM vm, RemoteReference staticMethodActorReference) {

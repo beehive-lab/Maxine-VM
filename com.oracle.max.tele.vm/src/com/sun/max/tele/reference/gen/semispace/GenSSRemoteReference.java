@@ -66,7 +66,7 @@ public class GenSSRemoteReference extends RemoteReference {
     private static enum RefState {
         /**
          * Live young reference.
-         * Valid only during the {@link #MUTATING} phase.
+         * Valid only during the {@link HeapPhase#MUTATING} phase.
          */
         YOUNG_REF_LIVE("LIVE(young)") {
             // Properties
@@ -97,7 +97,7 @@ public class GenSSRemoteReference extends RemoteReference {
        },
         /**
          * Young reference, not forwarded.
-         * Valid only during the {@link #ANALYZING} phase.
+         * Valid only during the {@link HeapPhase#ANALYZING} phase.
          */
         YOUNG_REF_FROM("LIVE(young+Analyzing)") {
 
@@ -286,7 +286,7 @@ public class GenSSRemoteReference extends RemoteReference {
 
         /**
          * Live old object.
-         * Valid during the {@link #MUTATING}, and {@link HeapPhase#ANALYZING} of minor collections.
+         * Valid during the {@link HeapPhase#MUTATING}, and {@link HeapPhase#ANALYZING} of minor collections.
          */
         OLD_REF_LIVE("LIVE(old)") {
 
@@ -403,7 +403,7 @@ public class GenSSRemoteReference extends RemoteReference {
        },
 
         /**
-         * Reference in from space of old generation (not in promotion space). Must only be seen during full collection's {@link #ANALYZING} phase.
+         * Reference in from space of old generation (not in promotion space). Must only be seen during full collection's {@link HeapPhase#ANALYZING} phase.
          */
         OLD_REF_FROM_TO("LIVE (Analyzing: old from+to)") {
             @Override
@@ -593,7 +593,7 @@ public class GenSSRemoteReference extends RemoteReference {
     }
 
     /**
-     * Creates a reference to a live object, discovered when the heap is <em>not</em> {@link #ANALYZING}.
+     * Creates a reference to a live object, discovered when the heap is <em>not</em> {@link HeapPhase#ANALYZING}.
      * @param remoteScheme
      * @param toOrigin the physical location of the object in virtual memory.
      * @param isYoung true if the object is located in the nursery. Otherwise the object is in the old To-space.
