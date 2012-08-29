@@ -123,11 +123,9 @@ public final class TimedTrace {
      * @param messageSuffix an object whose string value is appended to the message prefix
      */
     public void end(int traceValue, Object messageSuffix) {
-        assert startTimeMillis > -1;
         final String message = (messageSuffix == null) ? description :
             description + ", " + messageSuffix.toString();
         Trace.end(traceValue, message, startTimeMillis);
-        startTimeMillis = -1;
     }
 
     /**
