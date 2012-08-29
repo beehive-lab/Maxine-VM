@@ -31,8 +31,12 @@ import com.sun.max.unsafe.*;
 /**
  * Representation of a span of memory in the VM where the description of the memory
  * is held by a object in the VM and might change.
+ * <p>
+ * Implements {@link TeleVMCache} so that the refresh of the VM object's state can be triggered early,
+ * before all of the remote objects are updated; this can be necessary when information about the memory
+ * region is needed early in the refresh cycle, for example descriptions of active heap regions.
  */
-public abstract class TeleDelegatedMemoryRegion extends VmMemoryRegion {
+public abstract class TeleDelegatedMemoryRegion extends VmMemoryRegion implements TeleVMCache {
 
     private final TeleMemoryRegion teleRuntimeMemoryRegion;
 
@@ -70,6 +74,10 @@ public abstract class TeleDelegatedMemoryRegion extends VmMemoryRegion {
     @Override
     public boolean isAllocated() {
         return teleRuntimeMemoryRegion.isAllocated();
+    }
+
+    public void updateCache(long epoch) {
+        teleRuntimeMemoryRegion.updateCacheIfNeeded();
     }
 
 }
