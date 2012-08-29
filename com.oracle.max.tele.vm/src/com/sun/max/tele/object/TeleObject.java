@@ -217,22 +217,20 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         // TODO (mlvdv) restore thread-lock assertion here for all updates??
 
         final StatsPrinter statsPrinter = new StatsPrinter();
-
         if (status().isNotDead()) {
             // Do some specialized tracing here, since there are subclasses that we
             // want to contribute to the tracing statistics, and since we want to
             // selectively trace certain subclasses.
-            tracer().begin(getObjectUpdateTraceValue(epoch));
-
             if (epoch > lastUpdateEpoch) {
+                tracer().begin(getObjectUpdateTraceValue(epoch));
                 if (updateObjectCache(epoch, statsPrinter)) {
                     lastUpdateEpoch = epoch;
                 }
+                tracer().end(getObjectUpdateTraceValue(epoch), statsPrinter);
             } else {
                 statsPrinter.addStat("Redundant update skipped");
                 Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + " redundant update epoch=" + epoch + ": " + this);
             }
-            tracer().end(getObjectUpdateTraceValue(epoch), statsPrinter);
         }
     }
 
@@ -242,10 +240,10 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      */
     public final void updateCacheIfNeeded() {
         final long currentEpoch = vm().teleProcess().epoch();
-        if (currentEpoch > lastUpdateEpoch) {
+        if (currentEpoch > lastUpdateEpoch && status().isNotDead()) {
             Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + "out of order update at " + reference.origin().to0xHexString());
+            updateCache(currentEpoch);
         }
-        updateCache(currentEpoch);
     }
 
     /**
