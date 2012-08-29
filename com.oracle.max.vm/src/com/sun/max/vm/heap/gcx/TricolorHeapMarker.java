@@ -565,7 +565,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         colorMap.setSize(bitmapSize);
         // Format the mark bitmap as an byte array
         Pointer origin = bitmapStorage.asPointer();
-        Layout.writeArrayLength(origin, bitmapSize.minus(markBitmapHeaderSize().unsignedShiftedRight(Kind.LONG.width.log2numberOfBytes)).toInt());
+        Layout.writeArrayLength(origin, bitmapSize.minus(markBitmapHeaderSize()).unsignedShiftedRight(Kind.LONG.width.log2numberOfBytes).toInt());
         Layout.writeHubReference(origin, Reference.fromJava(ClassRegistry.LONG_ARRAY.dynamicHub()));
 
         base = bitmapStorage.plus(markBitmapHeaderSize());
