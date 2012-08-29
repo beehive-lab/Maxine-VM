@@ -28,7 +28,8 @@ import com.sun.max.unsafe.*;
  * An interface for Heap Scheme implementations that uses a mark bitmap and can provide the inspector with information for
  * debugging mark bitmap state.
  */
-public interface MaxMarkBitsInfo {
+public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
+
     public static class Color {
         public final int id;
         public final String name;

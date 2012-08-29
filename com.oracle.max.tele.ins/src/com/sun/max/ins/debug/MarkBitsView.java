@@ -49,7 +49,7 @@ public class MarkBitsView extends AbstractView<MarkBitsView> {
 
         @Override
         public boolean isSupported() {
-            return vm().heap().markBitInfo() != null;
+            return vm().heap().markBitMap() != null;
         }
     }
 

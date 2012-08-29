@@ -195,12 +195,12 @@ final public class MarkBitsTable extends InspectorTable {
     /**
      * Shortcut to heap markBitsInfo.
      */
-    final MaxMarkBitsInfo markBitsInfo;
+    final MaxMarkBitmap markBitsInfo;
 
     public MarkBitsTable(Inspection inspection, InspectorView view) {
         super(inspection);
         this.view = view;
-        markBitsInfo = inspection.vm().heap().markBitInfo();
+        markBitsInfo = inspection.vm().heap().markBitMap();
     }
 
     public InspectorView getView() {

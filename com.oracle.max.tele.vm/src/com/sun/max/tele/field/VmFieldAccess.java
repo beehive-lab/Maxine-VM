@@ -205,6 +205,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_coveredAreaEnd = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "coveredAreaEnd");
     public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_coveredAreaStart = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "coveredAreaStart");
     public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_tableAddress = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "tableAddress");
+    public final TeleInstanceReferenceFieldAccess MSHeapScheme_heapMarker = new TeleInstanceReferenceFieldAccess(MSHeapScheme.class, "heapMarker", TricolorHeapMarker.class);
     public final TeleInstanceReferenceFieldAccess MSHeapScheme_objectSpace = new TeleInstanceReferenceFieldAccess(MSHeapScheme.class, "objectSpace", FreeHeapSpaceManager.class);
     public final TeleInstanceReferenceFieldAccess MaxineVM_config = new TeleInstanceReferenceFieldAccess(MaxineVM.class, "config", VMConfiguration.class);
     public final TeleStaticWordFieldAccess MaxineVM_primordialTLBlock = new TeleStaticWordFieldAccess(MaxineVM.class, "primordialTLBlock");
@@ -256,6 +257,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleStaticIntFieldAccess Trace_level = new TeleStaticIntFieldAccess(Trace.class, "level");
     public final TeleStaticLongFieldAccess Trace_threshold = new TeleStaticLongFieldAccess(Trace.class, "threshold");
     public final TeleInstanceWordFieldAccess TricolorHeapMarker_base = new TeleInstanceWordFieldAccess(TricolorHeapMarker.class, "base");
+    public final TeleInstanceReferenceFieldAccess TricolorHeapMarker_colorMap = new TeleInstanceReferenceFieldAccess(TricolorHeapMarker.class, "colorMap", MemoryRegion.class);
     public final TeleInstanceWordFieldAccess TricolorHeapMarker_coveredAreaEnd = new TeleInstanceWordFieldAccess(TricolorHeapMarker.class, "coveredAreaEnd");
     public final TeleInstanceWordFieldAccess TricolorHeapMarker_coveredAreaStart = new TeleInstanceWordFieldAccess(TricolorHeapMarker.class, "coveredAreaStart");
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "constantPool", ConstantPool.class);
