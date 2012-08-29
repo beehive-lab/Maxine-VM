@@ -297,6 +297,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     /**
      * Memory where the color map is stored. Formatted as a byte array.
      */
+    @INSPECTED
     public final MemoryRegion colorMap;
 
     /**
