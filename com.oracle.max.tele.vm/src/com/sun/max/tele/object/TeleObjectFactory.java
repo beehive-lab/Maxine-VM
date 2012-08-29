@@ -292,6 +292,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         classToTeleTupleObjectConstructor.put(FreeHeapSpaceManager.class, getConstructor(TeleFreeHeapSpaceManager.class));
         classToTeleTupleObjectConstructor.put(HeapFreeChunk.class, getConstructor(TeleHeapFreeChunk.class));
         classToTeleTupleObjectConstructor.put(NoAgingRegionalizedNursery.class, getConstructor(TeleNoAgingRegionalizedNursery.class));
+        classToTeleTupleObjectConstructor.put(TricolorHeapMarker.class, getConstructor(TeleTricolorHeapMarker.class));
         // Other Maxine support
         classToTeleTupleObjectConstructor.put(MaxineVM.class, getConstructor(TeleMaxineVM.class));
         classToTeleTupleObjectConstructor.put(VMConfiguration.class, getConstructor(TeleVMConfiguration.class));

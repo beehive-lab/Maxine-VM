@@ -34,6 +34,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.InitializationListener;
+import com.sun.max.tele.heap.region.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.reference.ms.*;
@@ -225,6 +226,24 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         return MSHeapScheme.class;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Include the array of longs that holds the mark bitmap data.
+     */
+    @Override
+    public List<MaxObject> inspectableObjects() {
+        List<MaxObject> inspectableObjects = new ArrayList<MaxObject>();
+        inspectableObjects.addAll(super.inspectableObjects());
+        if (scheme.markBitmap != null) {
+            final MaxObject representation = scheme.markBitmap.representation();
+            if (representation != null) {
+                inspectableObjects.add(representation);
+            }
+        }
+        return inspectableObjects;
+    }
+
     public void initialize(long epoch) {
         vm().addInitializationListener(new InitializationListener() {
 
@@ -285,6 +304,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             // Can't do anything until we have the VM object that represents the scheme implementation
             return;
         }
+        scheme.updateCacheIfNeeded();
         if (objectSpaceMemoryRegion == null) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "looking for heap region");
             /*
@@ -413,6 +433,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         }
     }
 
+
     // TODO (mlvdv)  fix
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
         return new MaxMemoryManagementInfo() {
@@ -454,6 +475,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 return null;
             }
         };
+    }
+
+    @Override
+    public MaxMarkBitmap markBitMap() {
+        return scheme.markBitmap;
     }
 
     // TODO (mlvdv) refine
@@ -644,13 +670,15 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         }
     }
 
-
     /**
      * Surrogate object for the scheme instance in the VM.
      */
     public static class TeleMSHeapScheme extends TeleHeapScheme {
 
         private TeleFreeHeapSpaceManager objectSpace;
+        private TeleTricolorHeapMarker heapMarker;
+
+        private VmMarkBitmap markBitmap = null;
 
         public TeleMSHeapScheme(TeleVM vm, RemoteReference reference) {
             super(vm, reference);
@@ -664,11 +692,20 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             if (objectSpace == null) {
                 final RemoteReference freeHeapSpaceManagerRef = fields().MSHeapScheme_objectSpace.readRemoteReference(reference());
                 objectSpace = (TeleFreeHeapSpaceManager) objects().makeTeleObject(freeHeapSpaceManagerRef);
+            } else {
+                objectSpace.updateCacheIfNeeded();
             }
-
+            if (heapMarker == null) {
+                final RemoteReference heapMarkerRef = fields().MSHeapScheme_heapMarker.readRemoteReference(reference());
+                heapMarker = (TeleTricolorHeapMarker) objects().makeTeleObject(heapMarkerRef);
+                markBitmap = new VmMarkBitmap(vm(), heapMarker);
+                vm().addressSpace().add(markBitmap.memoryRegion());
+            } else {
+                heapMarker.updateCacheIfNeeded();
+                markBitmap.updateCache(epoch);
+            }
             return true;
         }
-
     }
 
 }

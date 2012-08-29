@@ -3697,7 +3697,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             new AddressInputDialog(inspection(), Address.zero(), "View Mark Bit for word at address...", "View") {
                 @Override
                 public void entered(Address address) {
-                    MaxMarkBitsInfo m = vm().heap().markBitInfo();
+                    MaxMarkBitmap m = vm().heap().markBitMap();
                     assert m != null;
                     if (!m.isCovered(address)) {
                         gui().errorMessage("Address " + address + " is not covered with a mark bit");
