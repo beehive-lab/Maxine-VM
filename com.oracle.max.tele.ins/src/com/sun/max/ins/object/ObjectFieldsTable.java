@@ -347,7 +347,7 @@ public final class ObjectFieldsTable extends InspectorTable {
                 final MaxObject object = objectView.object();
                 final FieldActor fieldActor = (FieldActor) value;
                 if (fieldActor.kind.isReference) {
-                    labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this) {
+                    labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this, true) {
                         @Override
                         public Value fetchValue() {
                             final RemoteReference reference = object.reference();
