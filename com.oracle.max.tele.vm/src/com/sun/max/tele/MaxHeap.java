@@ -95,10 +95,16 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
     MaxMemoryManagementInfo getMemoryManagementInfo(Address address);
 
     /**
+     * @return whether the current heap implementation uses a {@link MaxBitMarkmap}.
+     */
+    boolean hasMarkBitmap();
+
+    /**
      * Return heap-specific implementation of {@link MaxMarkBitmap} that the inspector can use to display mark-bit information for heap
-     * scheme using a mark-bitmap for trace-based collection.
+     * scheme using a mark-bitmap for trace-based collection, if {@link #hasMarkBitmap()} {@code == true} and if the bitmap has been
+     * created.  {@code null} otherwise
      *
-     * @return {@code null} if no implementation being used.
+     * @return the heap's {@link MaxMarkBitmap}, if one is available, {@code null} otherwiese.
      */
     MaxMarkBitmap markBitMap();
 
