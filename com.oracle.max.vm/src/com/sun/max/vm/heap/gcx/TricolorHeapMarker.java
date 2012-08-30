@@ -563,20 +563,23 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         setCoveredArea(start, end);
         colorMap.setStart(bitmapStorage);
         colorMap.setSize(bitmapSize);
-        // Format the mark bitmap as an byte array
-        Pointer origin = bitmapStorage.asPointer();
-        Layout.writeArrayLength(origin, bitmapSize.minus(markBitmapHeaderSize()).unsignedShiftedRight(Kind.LONG.width.log2numberOfBytes).toInt());
-        Layout.writeHubReference(origin, Reference.fromJava(ClassRegistry.LONG_ARRAY.dynamicHub()));
-
+        if (!MaxineVM.isHosted()) {
+            // Format the mark bitmap as an byte array
+            Pointer origin = bitmapStorage.asPointer();
+            Layout.writeArrayLength(origin, bitmapSize.minus(markBitmapHeaderSize()).unsignedShiftedRight(Kind.LONG.width.log2numberOfBytes).toInt());
+            Layout.writeHubReference(origin, Reference.fromJava(ClassRegistry.LONG_ARRAY.dynamicHub()));
+        }
         base = bitmapStorage.plus(markBitmapHeaderSize());
         final int baseBias = start.unsignedShiftedRight(log2BitmapWord).toInt();
         biasedBitmapBase = colorMap.start().minus(baseBias);
-        if (UseRescanMap) {
-            overflowScanState = overflowScanWithRescanMapState;
-        } else {
-            overflowScanState = overflowLinearScanState;
+        if (!MaxineVM.isHosted()) {
+            if (UseRescanMap) {
+                overflowScanState = overflowScanWithRescanMapState;
+            } else {
+                overflowScanState = overflowLinearScanState;
+            }
+            overflowScanState.initialize();
         }
-        overflowScanState.initialize();
     }
 
     // Address to bitmap word / bit index operations.
