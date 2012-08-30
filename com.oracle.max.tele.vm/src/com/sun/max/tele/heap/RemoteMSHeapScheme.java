@@ -478,6 +478,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     }
 
     @Override
+    public boolean hasMarkBitmap() {
+        return true;
+    }
+
+    @Override
     public MaxMarkBitmap markBitMap() {
         return scheme.markBitmap;
     }
