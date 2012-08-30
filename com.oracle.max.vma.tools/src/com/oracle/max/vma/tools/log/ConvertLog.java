@@ -122,6 +122,10 @@ public class ConvertLog {
     private static void processLogFiles(File[] inFiles, String outFile, Command command) throws IOException {
         try {
             out = outFile == null ? System.out : new PrintStream(new FileOutputStream(outFile));
+            long chunkStartTime = System.currentTimeMillis();
+            long processStartTime = chunkStartTime;
+            command.convertLineNumber = 1;
+
             for (File inFile : inFiles) {
                 BufferedReader r = null;
                 try {
@@ -137,6 +141,12 @@ public class ConvertLog {
                         }
 
                         command.visitLine(line);
+                        command.convertLineNumber++;
+                        if (verbose && ((command.convertLineNumber % 100000) == 0)) {
+                            long endTime = System.currentTimeMillis();
+                            System.out.printf("processed %d traces in %d ms (%d)%n", command.convertLineNumber, endTime - processStartTime, endTime - chunkStartTime);
+                            chunkStartTime = endTime;
+                        }
                     }
                 } finally {
                     if (r != null) {
@@ -193,6 +203,8 @@ public class ConvertLog {
     }
 
     private static abstract class Command {
+        int convertLineNumber;
+
         void execute(File[] files, String logFileOut) {
 
         }
@@ -835,36 +847,55 @@ public class ConvertLog {
      */
     private static class ReadableCommand extends BasicCommand {
         private Map<String, String> lastId = new HashMap<String, String>();
+        private boolean perThread;
+        private String perThreadString;
+
+        private String linePart(int slot) {
+            if (slot < lineParts.length) {
+                return lineParts[slot];
+            } else {
+                return null;
+            }
+        }
+
+        private String arg(int slot) {
+            if (slot < 2) {
+                return linePart(slot);
+            } else {
+                return perThread ? linePart(slot - 1) : linePart(slot);
+            }
+        }
 
         @Override
         void visitLine(String line) {
             super.visitLine(line);
             String arg1 = lineParts[1];
-            String arg2 = lineParts.length > 2 ? lineParts[2] : null;
-            String arg3 = lineParts.length > 3 ? lineParts[3] : null;
-            String arg4 = lineParts.length > 4 ? lineParts[4] : null;
-            String arg5 = lineParts.length > 5 ? lineParts[5] : null;
-            String arg6 = lineParts.length > 6 ? lineParts[6] : null;
-            String logTimeArg = arg1;
-            String threadArg = arg2;
+            String arg2 = linePart(2);
+            String bciArg = arg(3);
+            String timeArg = arg1;
+            String threadArg = perThread ? perThreadString : arg2;
             String objIdArg = "???";
 
             if (CVMATextStore.hasTime(command)) {
-                String atTime = "@" + logTimeArg;
+                String atTime = "@" + timeArg;
                 out.printf("%-10s ", atTime);
             } else {
                 out.printf("%-11c", ' ');
             }
 
             if (CVMATextStore.hasId(command)) {
-                if (arg3.charAt(0) == REPEAT_ID) {
+                if (arg(OBJ_ID_INDEX).charAt(0) == REPEAT_ID) {
                     objIdArg = lastId.get(threadArg);
                 } else {
-                    objIdArg = arg3;
+                    objIdArg = arg(OBJ_ID_INDEX);
                     lastId.put(threadArg, objIdArg);
                 }
             }
             out.printf("%s ", command);
+
+            if (CVMATextStore.hasBci(command)) {
+                out.printf("%s ", bciArg);
+            }
 
             if (CVMATextStore.hasTimeAndThread(command)) {
                 printThreadId(threadArg);
@@ -877,113 +908,117 @@ public class ConvertLog {
 
             switch (command) {
                 case INITIALIZE_STORE:
-                    out.printf("%s %s", logTimeArg, arg2);
+                    int mode = Integer.parseInt(linePart(3));
+                    perThread = (mode & PER_THREAD) != 0;
+                    out.printf("%s %s %s,%s", timeArg, Boolean.parseBoolean(linePart(2)) ? "abs time" : "rel time", (mode & BATCHED) != 0 ? "Batched" : "Unbatched", (mode & PER_THREAD) != 0 ? "Per Thread" : "Shared");
                     break;
 
                 case THREAD_SWITCH:
                 case FINALIZE_STORE:
-                    out.printf("%s", logTimeArg);
+                    out.printf("%s", timeArg);
                     break;
 
                 case CLASS_DEFINITION:
-                    printClassId(arg3);
-                    out.printf(" %s", arg1);
-                    printClId(arg2);
+                    printClassId(lineParts[DEFINE_ARG_INDEX + 2]);
+                    out.printf(" %s", lineParts[DEFINE_ARG_INDEX]);
+                    printClId(lineParts[DEFINE_ARG_INDEX + 1]);
                     break;
 
                 case THREAD_DEFINITION:
-                    printThreadId(arg2);
-                    out.printf(" %s", arg1);
+                    printThreadId(lineParts[DEFINE_ARG_INDEX + 1]);
+                    out.printf(" %s", lineParts[DEFINE_ARG_INDEX]);
+                    perThreadString = lineParts[DEFINE_ARG_INDEX + 1];
                     break;
 
                 case METHOD_DEFINITION:
-                    printMethodId(arg3);
-                    printClassId(arg1);
-                    out.printf(" %s", arg2);
+                    printMethodId(lineParts[DEFINE_ARG_INDEX + 2]);
+                    printClassId(lineParts[DEFINE_ARG_INDEX]);
+                    out.printf(" %s", lineParts[DEFINE_ARG_INDEX + 1]);
                     break;
 
                 case FIELD_DEFINITION:
-                    printFieldId(arg3);
-                    printClassId(arg1);
-                    out.printf(" %s", arg2);
+                    printFieldId(lineParts[DEFINE_ARG_INDEX + 2]);
+                    printClassId(lineParts[DEFINE_ARG_INDEX]);
+                    out.printf(" %s", lineParts[DEFINE_ARG_INDEX + 1]);
                     break;
 
                 case ADVISE_AFTER_NEW:
                 case ADVISE_AFTER_NEW_ARRAY:
-                    printClassId(lineParts[ID_CLASSNAME_INDEX]);
+                    printClassId(arg(ID_CLASSNAME_INDEX));
                     if (command == Key.ADVISE_AFTER_NEW_ARRAY) {
-                        out.printf(" %s", lineParts[ID_CLASSNAME_INDEX + 1]);
+                        out.printf(" %s", arg(NEW_ARRAY_LENGTH_INDEX));
                     }
                     break;
 
                 case UNSEEN:
-                    printClassId(lineParts[ID_CLASSNAME_INDEX]);
+                    printClassId(arg(ID_CLASSNAME_INDEX));
                     break;
 
                 case ADVISE_BEFORE_CONST_LOAD:
-                    printValue(arg3, arg4);
+                    printValue(arg(CONST_LOAD_VALUE_INDEX), arg(CONST_LOAD_VALUE_INDEX + 1));
                     break;
 
                 case ADVISE_BEFORE_LOAD:
                 case ADVISE_BEFORE_STORE:
-                    out.printf(" %s", arg3);
+                    out.printf(" %s", arg(LOADSTORE_DISP_INDEX));
                     if (command == Key.ADVISE_BEFORE_STORE) {
-                        printValue(arg4, lineParts[5]);
+                        printValue(arg(LOADSTORE_DISP_INDEX + 1), arg(LOADSTORE_DISP_INDEX + 2));
                     }
                     break;
 
                 case ADVISE_BEFORE_ARRAY_LOAD:
                 case ADVISE_BEFORE_ARRAY_STORE:
-                    out.printf(" %s", threadArg, objIdArg, lineParts[ARRAY_INDEX_INDEX]);
+                    out.printf(" %s", threadArg, objIdArg, arg(ARRAY_INDEX_INDEX));
                     if (command == Key.ADVISE_BEFORE_ARRAY_STORE) {
-                        printValue(lineParts[ARRAY_INDEX_INDEX + 1], lineParts[ARRAY_INDEX_INDEX + 2]);
+                        printValue(arg(ARRAY_INDEX_INDEX + 1), arg(ARRAY_INDEX_INDEX + 2));
                     }
                     break;
 
                 case ADVISE_BEFORE_ARRAY_LENGTH:
-                    out.printf(" %s", arg4);
+                    out.printf(" %s", arg(ARRAY_LENGTH_INDEX));
                     break;
 
                 case ADVISE_BEFORE_GET_STATIC:
                 case ADVISE_BEFORE_PUT_STATIC:
-                    printClassIdAndFieldId(lineParts[STATIC_CLASSNAME_INDEX], lineParts[STATIC_CLASSNAME_INDEX + 1]);
+                    printClassIdAndFieldId(arg(STATIC_CLASSNAME_INDEX), arg(STATIC_CLASSNAME_INDEX + 1));
                     if (command == Key.ADVISE_BEFORE_PUT_STATIC) {
-                        printValue(lineParts[STATIC_CLASSNAME_INDEX + 2], lineParts[STATIC_CLASSNAME_INDEX + 3]);
+                        printValue(arg(STATIC_CLASSNAME_INDEX + 2), arg(STATIC_CLASSNAME_INDEX + 3));
                     }
                     break;
 
                 case ADVISE_BEFORE_GET_FIELD:
                 case ADVISE_BEFORE_PUT_FIELD:
-                    printClassIdAndFieldId(lineParts[ID_CLASSNAME_INDEX], lineParts[ID_CLASSNAME_INDEX + 1]);
+                    printClassIdAndFieldId(arg(ID_CLASSNAME_INDEX), arg(ID_CLASSNAME_INDEX + 1));
                     if (command == Key.ADVISE_BEFORE_PUT_FIELD) {
-                        printValue(lineParts[ID_CLASSNAME_INDEX + 2], lineParts[ID_CLASSNAME_INDEX + 3]);
+                        printValue(arg(ID_CLASSNAME_INDEX + 2), arg(ID_CLASSNAME_INDEX + 3));
                     }
                     break;
 
                 case ADVISE_BEFORE_IF:
-                    printIfOpcode(arg3);
-                    if (arg4.equals("J")) {
-                        out.printf(" %s %s", arg5, arg6);
+                    printIfOpcode(arg(IF_OPCODE_INDEX));
+                    if (arg(IF_OPCODE_INDEX + 1).equals("J")) {
+                        out.printf(" %s %s", arg(IF_OPCODE_INDEX + 2), arg(IF_OPCODE_INDEX + 3));
                     } else {
-                        printObjId(arg5);
-                        printObjId(arg6);
+                        printObjId(arg(IF_OPCODE_INDEX + 2));
+                        printObjId(arg(IF_OPCODE_INDEX + 3));
                     }
+                    out.printf(" -> %s", arg(IF_OPCODE_INDEX + 4));
                     break;
 
                 case ADVISE_BEFORE_OPERATION:
-                    printOperation(arg3);
-                    printValue(arg4, arg5);
-                    printValue(arg4, arg6);
+                    printOperation(arg(OP_OPCODE_INDEX));
+                    printValue(arg(OP_VALUES_INDEX), arg(OP_VALUES_INDEX + 1));
+                    printValue(arg(OP_VALUES_INDEX), arg(OP_VALUES_INDEX + 2));
                     break;
 
                 case ADVISE_BEFORE_INSTANCE_OF:
                 case ADVISE_BEFORE_CHECK_CAST:
-                    printClassId(arg4);
+                    printClassId(arg(ID_CLASSNAME_INDEX));
                     break;
 
                 case ADVISE_BEFORE_CONVERSION:
-                    printOperation(arg3);
-                    printValue(arg4, arg5);
+                    printOperation(arg(CONV_OPCODE_INDEX));
+                    printValue(arg(CONV_OPCODE_INDEX + 1), arg(CONV_OPCODE_INDEX + 2));
                     break;
 
                 case REMOVAL:
@@ -1000,18 +1035,18 @@ public class ConvertLog {
                 case ADVISE_BEFORE_INVOKE_STATIC:
                 case ADVISE_BEFORE_INVOKE_VIRTUAL:
                 case ADVISE_BEFORE_INVOKE_SPECIAL:
-                    printClassIdAndMethodId(lineParts[ID_CLASSNAME_INDEX], lineParts[ID_CLASSNAME_INDEX + 1]);
+                    printClassIdAndMethodId(arg(ID_CLASSNAME_INDEX), arg(ID_CLASSNAME_INDEX + 1));
                     break;
 
 
                 case ADVISE_BEFORE_RETURN:
-                    if (arg3 != null) {
-                        printValue(arg3, arg4);
+                    if (arg(RETURN_VALUE_INDEX) != null) {
+                        printValue(arg(RETURN_VALUE_INDEX), arg(RETURN_VALUE_INDEX + 1));
                     }
                     break;
 
                 case ADVISE_BEFORE_STACK_ADJUST:
-                    out.printf(" %s", VMABytecodes.values()[Integer.parseInt(arg3)]);
+                    out.printf(" %s", VMABytecodes.values()[Integer.parseInt(arg(STACK_ADJUST_INDEX))]);
                     break;
 
                 case ADVISE_AFTER_GC:

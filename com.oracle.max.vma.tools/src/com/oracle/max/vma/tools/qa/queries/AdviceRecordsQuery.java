@@ -42,7 +42,7 @@ public class AdviceRecordsQuery extends QueryBase {
         long count = 0;
         for (AdviceRecord ar : traceRun.adviceRecordList) {
             RecordType rt = ar.getRecordType();
-            ps.printf("%-10d %s %c %s %s ", timeValue(traceRun, ar.time), ar.thread, adviceId(ar), toBci(ar), rt);
+            ps.printf("%-10d %s %c%s %s ", timeValue(traceRun, ar.time), ar.thread, adviceId(ar), toBci(ar), rt);
             switch (rt) {
                 case GC:
                 case ThreadStarting:
@@ -56,6 +56,7 @@ public class AdviceRecordsQuery extends QueryBase {
                     break;
 
                 case Load:
+                    ps.print(ar.getPackedValue());
                     break;
 
                 case StoreLong:
@@ -104,14 +105,20 @@ public class AdviceRecordsQuery extends QueryBase {
                     break;
 
                 case IfInt: {
-                    LongLongAdviceRecord llar = (LongLongAdviceRecord) ar;
-                    ps.printf("%s %d %d", VMABytecodes.values()[llar.getPackedValue()], llar.value, llar.value2);
+                    LongLongTBciAdviceRecord llar = (LongLongTBciAdviceRecord) ar;
+                    ps.printf("%s %d %d -> %d", VMABytecodes.values()[llar.getPackedValue()], llar.value, llar.value2,
+                                    llar.targetBci);
                     break;
                 }
 
                 case IfObject: {
                     ObjectObjectAdviceRecord ooar = (ObjectObjectAdviceRecord) ar;
                     ps.printf("%s %s %s", VMABytecodes.values()[ooar.getPackedValue()], ooar.value, ooar.value2);
+                    break;
+                }
+
+                case Goto: {
+                    ps.printf("-> %d", ar.getPackedValue());
                     break;
                 }
 
@@ -160,7 +167,6 @@ public class AdviceRecordsQuery extends QueryBase {
                     break;
                 }
 
-
                 case StackAdjust:
                     ps.printf("%s", VMABytecodes.values()[ar.getPackedValue()]);
                     break;
@@ -171,7 +177,8 @@ public class AdviceRecordsQuery extends QueryBase {
 
                 case CheckCast:
                 case InstanceOf:
-                    //TODO
+                    ObjectObjectAdviceRecord ooar = (ObjectObjectAdviceRecord) ar;
+                    ps.printf("%s %s", ooar.value, ooar.value2);
                     break;
 
                 case Throw:
@@ -291,7 +298,7 @@ public class AdviceRecordsQuery extends QueryBase {
                 return "";
 
             default:
-                return Short.toString(ar.getBci());
+                return " " + Short.toString(ar.getBci());
         }
     }
 }

@@ -136,8 +136,10 @@ public class TransientVMAdviceHandlerTypesGenerator {
             } else if (name.contains("Operation")) {
                 adviceRecordName = uLastParam + uLastParam;
             } else if (name.equals("IfInt")) {
-                adviceRecordName = "LongLong";
-            } else if (name.equals("IfObject") || name.equals("CheckCast") || name.equals("InstanceOf") ||
+                adviceRecordName = "LongLongTBci";
+            } else if (name.equals("IfObject")) {
+                adviceRecordName = "ObjectObjectTBci";
+            } else if (name.equals("CheckCast") || name.equals("InstanceOf") ||
                             name.endsWith("MultiNewArray")) {
                 adviceRecordName = "ObjectObject";
             } else if (name.endsWith("ArrayLength") || name.endsWith("Throw") ||
