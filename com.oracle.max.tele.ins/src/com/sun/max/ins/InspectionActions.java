@@ -3717,41 +3717,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return removeAllWatchpoints;
     }
 
-    private InspectorAction setMarkBitAtIndex;
-
-    /**
-     * @return an Action that will add a mark bit from a specified bit index to the mark bits view.
-     */
-    public final InspectorAction setMarkBitAtIndex() {
-        return setMarkBitAtIndex;
-    }
-
-    private InspectorAction setMarkBitAtAddress;
-
-    /**
-     * @return an Action that will add a mark bit from a specified heap address to the mark bits view.
-     */
-    public final InspectorAction setMarkBitAtAddress() {
-        return setMarkBitAtAddress;
-    }
-
-    private InspectorAction removeSelectedMarkBit;
-
-    /**
-     * @return an Action that will remove the currently selected mark bit from the mark bits view.
-     */
-    public final InspectorAction removeSelectedMarkBit() {
-        return removeSelectedMarkBit;
-    }
-
-    private InspectorAction removeAllMarkBits;
-    /**
-     * @return an Action that will remove all mark bits from the mark bits view.
-     */
-    public final InspectorAction removeAllMarkBits() {
-        return removeAllMarkBits;
-    }
-
      /**
      * Action:  pause the running VM.
      */

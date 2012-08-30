@@ -34,7 +34,7 @@ import com.sun.max.ins.UserFocusView.UserFocusViewManager;
 import com.sun.max.ins.InvokeMethodLogView.InvokeMethodLogViewManager;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.debug.BreakpointsView.BreakpointsViewManager;
-import com.sun.max.ins.debug.MarkBitsView.*;
+import com.sun.max.ins.debug.MarkBitmapView.*;
 import com.sun.max.ins.debug.RegistersView.RegistersViewManager;
 import com.sun.max.ins.debug.StackFrameView.StackFrameViewManager;
 import com.sun.max.ins.debug.StackView.StackViewManager;
@@ -114,20 +114,19 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        MARK_BITS_INFO(true, false, "Mark Bits for selected heap addresses") {
-            @Override
-            public MarkBitsViewManager viewManager() {
-                final MarkBitsViewManager viewManager = MarkBitsView.makeViewManager(inspection);
-
-                assert viewManager.viewKind() == this;
-                return viewManager;
-            }
-        },
         JAVA_SOURCE(false, false, "The contents of a Java source file") {
 
             @Override
             public JavaSourceViewManager viewManager() {
                 final JavaSourceViewManager viewManager = JavaSourceView.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
+        MARK_BITMAP(true, false, "The heap's Mark Bitmap") {
+            @Override
+            public MarkBitmapViewManager viewManager() {
+                final MarkBitmapViewManager viewManager = MarkBitmapView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
