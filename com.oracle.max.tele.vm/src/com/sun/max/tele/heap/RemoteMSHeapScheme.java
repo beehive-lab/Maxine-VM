@@ -681,7 +681,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     public static class TeleMSHeapScheme extends TeleHeapScheme {
 
         private TeleFreeHeapSpaceManager objectSpace;
-        private TeleTricolorHeapMarker heapMarker;
+        private TeleTricolorHeapMarker remoteHeapMarker;
 
         private VmMarkBitmap markBitmap = null;
 
@@ -694,20 +694,25 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             if (!super.updateObjectCache(epoch, statsPrinter)) {
                 return false;
             }
+
             if (objectSpace == null) {
                 final RemoteReference freeHeapSpaceManagerRef = fields().MSHeapScheme_objectSpace.readRemoteReference(reference());
                 objectSpace = (TeleFreeHeapSpaceManager) objects().makeTeleObject(freeHeapSpaceManagerRef);
             } else {
                 objectSpace.updateCacheIfNeeded();
             }
-            if (heapMarker == null) {
+
+            if (remoteHeapMarker == null) {
+                // Allocated in boot heap, so it exists the first time we check.
                 final RemoteReference heapMarkerRef = fields().MSHeapScheme_heapMarker.readRemoteReference(reference());
-                heapMarker = (TeleTricolorHeapMarker) objects().makeTeleObject(heapMarkerRef);
-                markBitmap = new VmMarkBitmap(vm(), heapMarker);
-                vm().addressSpace().add(markBitmap.memoryRegion());
+                remoteHeapMarker = (TeleTricolorHeapMarker) objects().makeTeleObject(heapMarkerRef);
             } else {
-                heapMarker.updateCacheIfNeeded();
-                markBitmap.updateCache(epoch);
+                remoteHeapMarker.updateCacheIfNeeded();
+            }
+            // assert remoteHeapmarker != null
+            if (markBitmap == null && remoteHeapMarker.isAllocated()) {
+                markBitmap = new VmMarkBitmap(vm(), remoteHeapMarker);
+                vm().addressSpace().add(markBitmap.memoryRegion());
             }
             return true;
         }
