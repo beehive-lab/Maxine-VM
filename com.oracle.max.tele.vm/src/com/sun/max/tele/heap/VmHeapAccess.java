@@ -402,8 +402,12 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         return remoteHeapScheme.getMemoryManagementInfo(address);
     }
 
-    public MaxMarkBitsInfo markBitInfo() {
-        return remoteHeapScheme.markBitInfo();
+    public boolean hasMarkBitmap() {
+        return remoteHeapScheme.hasMarkBitmap();
+    }
+
+    public MaxMarkBitmap markBitMap() {
+        return remoteHeapScheme.markBitMap();
     }
 
     public List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations() {

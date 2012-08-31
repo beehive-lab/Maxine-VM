@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,98 +83,103 @@ public class PrimitiveValueLabel extends ValueLabel {
         assert value() != null;
         setModeFont();
 
-        final String asString = value().toString();
+        try {
+            final String asString = value().toString();
 
-        if (kind == Kind.BOOLEAN) {
-            final int asInt = value().toInt();
-            final String asHex = intTo0xHex(asInt);
-            if (textDisplayMode) {
-                displayText = asString;
-            } else {
-                displayText = asHex;
-            }
-            setText(displayText);
-            setWrappedToolTipHtmlText("boolean '" + asString + "' <br>as int: " + Integer.toString(asInt) + ", " + asHex);
+            if (kind == Kind.BOOLEAN) {
+                final int asInt = value().toInt();
+                final String asHex = intTo0xHex(asInt);
+                if (textDisplayMode) {
+                    displayText = asString;
+                } else {
+                    displayText = asHex;
+                }
+                setText(displayText);
+                setWrappedToolTipHtmlText("boolean '" + asString + "' <br>as int: " + Integer.toString(asInt) + ", " + asHex);
 
-        } else if (kind == Kind.BYTE) {
-            final short asShort = value().toShort();
-            final String asHex = intTo0xHex(asShort);
-            if (textDisplayMode) {
-                displayText = asString;
-            } else {
-                displayText = asHex;
-            }
-            setText(displayText);
-            setWrappedToolTipHtmlText("byte '" + asString + "' <br>as int: " + Short.toString(asShort) + ", " + asHex);
+            } else if (kind == Kind.BYTE) {
+                final short asShort = value().toShort();
+                final String asHex = intTo0xHex(asShort);
+                if (textDisplayMode) {
+                    displayText = asString;
+                } else {
+                    displayText = asHex;
+                }
+                setText(displayText);
+                setWrappedToolTipHtmlText("byte '" + asString + "' <br>as int: " + Short.toString(asShort) + ", " + asHex);
 
-        } else if (kind == Kind.CHAR) {
-            final short asShort = value().toShort();
-            final String asHex = intTo0xHex(asShort);
-            if (textDisplayMode) {
-                displayText = "'" + asString + "'";
-            } else {
-                displayText = asHex;
-            }
-            setText(displayText);
-            setWrappedToolTipHtmlText("char '" + asString + "' <br>as int: " + Short.toString(asShort) + ", " + asHex);
+            } else if (kind == Kind.CHAR) {
+                final short asShort = value().toShort();
+                final String asHex = intTo0xHex(asShort);
+                if (textDisplayMode) {
+                    displayText = "'" + asString + "'";
+                } else {
+                    displayText = asHex;
+                }
+                setText(displayText);
+                setWrappedToolTipHtmlText("char '" + asString + "' <br>as int: " + Short.toString(asShort) + ", " + asHex);
 
-        } else if (kind == Kind.DOUBLE) {
-            final long asLong = value().toLong();
-            final String asHex = longTo0xHex(asLong);
-            if (textDisplayMode) {
-                displayText = asString;
-            } else {
-                displayText = asHex;
-            }
-            setText(displayText);
-            setWrappedToolTipHtmlText("double '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
+            } else if (kind == Kind.DOUBLE) {
+                final long asLong = value().toLong();
+                final String asHex = longTo0xHex(asLong);
+                if (textDisplayMode) {
+                    displayText = asString;
+                } else {
+                    displayText = asHex;
+                }
+                setText(displayText);
+                setWrappedToolTipHtmlText("double '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
 
-        } else if (kind == Kind.FLOAT) {
-            final long asLong = value().toLong();
-            final String asHex = longTo0xHex(asLong);
-            if (textDisplayMode) {
-                displayText = asString;
-            } else {
-                displayText = asHex;
-            }
-            setText(displayText);
-            setWrappedToolTipHtmlText("float '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
+            } else if (kind == Kind.FLOAT) {
+                final long asLong = value().toLong();
+                final String asHex = longTo0xHex(asLong);
+                if (textDisplayMode) {
+                    displayText = asString;
+                } else {
+                    displayText = asHex;
+                }
+                setText(displayText);
+                setWrappedToolTipHtmlText("float '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
 
-        } else if (kind == Kind.INT) {
-            final int asInt = value().toInt();
-            final String asHex = intTo0xHex(asInt);
-            if (textDisplayMode) {
-                displayText = asString;
-            } else {
-                displayText = asHex;
-            }
-            setText(displayText);
-            setWrappedToolTipHtmlText("int '" + asString + "' <br>as int: " + Integer.toString(asInt) + ", " + asHex);
+            } else if (kind == Kind.INT) {
+                final int asInt = value().toInt();
+                final String asHex = intTo0xHex(asInt);
+                if (textDisplayMode) {
+                    displayText = asString;
+                } else {
+                    displayText = asHex;
+                }
+                setText(displayText);
+                setWrappedToolTipHtmlText("int '" + asString + "' <br>as int: " + Integer.toString(asInt) + ", " + asHex);
 
-        } else if (kind == Kind.LONG) {
-            final long asLong = value().toLong();
-            final String asHex = longTo0xHex(asLong);
-            if (textDisplayMode) {
-                displayText = asString;
-            } else {
-                displayText = asHex;
-            }
-            setText(displayText);
-            setWrappedToolTipHtmlText("long '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
+            } else if (kind == Kind.LONG) {
+                final long asLong = value().toLong();
+                final String asHex = longTo0xHex(asLong);
+                if (textDisplayMode) {
+                    displayText = asString;
+                } else {
+                    displayText = asHex;
+                }
+                setText(displayText);
+                setWrappedToolTipHtmlText("long '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
 
-        } else if (kind == Kind.SHORT) {
-            final short asShort = value().toShort();
-            final String asHex = intTo0xHex(asShort);
-            if (textDisplayMode) {
-                displayText = "'" + asString + "'";
+            } else if (kind == Kind.SHORT) {
+                final short asShort = value().toShort();
+                final String asHex = intTo0xHex(asShort);
+                if (textDisplayMode) {
+                    displayText = "'" + asString + "'";
+                } else {
+                    displayText = asHex;
+                }
+                setText(displayText);
+                setWrappedToolTipHtmlText("short '" + asString + "' <br>as int: " + Short.toString(asShort) + ", " + asHex);
             } else {
-                displayText = asHex;
+                setText(asString);
+                setWrappedToolTipHtmlText(asString);
             }
-            setText(displayText);
-            setWrappedToolTipHtmlText("short '" + asString + "' <br>as int: " + Short.toString(asShort) + ", " + asHex);
-        } else {
-            setText(asString);
-            setWrappedToolTipHtmlText(asString);
+        } catch (IllegalArgumentException e) {
+            setText(inspection().nameDisplay().unavailableDataShortText());
+            setToolTipText(inspection().nameDisplay().unavailableDataLongText());
         }
     }
 

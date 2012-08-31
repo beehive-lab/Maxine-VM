@@ -74,6 +74,7 @@ public class InspectorMenu extends JMenu implements Prober {
     }
 
     public void add(InspectorAction action) {
+        assert action != null;
         actions.add(action);
         super.add(action);
     }

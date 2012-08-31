@@ -113,19 +113,19 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     /**
      * 2-bit mark for white object (00).
      */
-    static final long WHITE = 0L;
+    protected static final long WHITE = 0L;
     /**
      * 2-bit mark for black object (01).
      */
-    static final long BLACK = 1L;
+    protected static final long BLACK = 1L;
     /**
      * 2-bit mark for grey objects (11).
      */
-    static final long GREY = 3L;
+    protected static final long GREY = 3L;
     /**
      * Invalid 2-bit mark pattern (10).
      */
-    static final long INVALID = 2L;
+    protected static final long INVALID = 2L;
 
     static final long COLOR_MASK = 3L;
 
@@ -297,6 +297,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     /**
      * Memory where the color map is stored. Formatted as a byte array.
      */
+    @INSPECTED
     public final MemoryRegion colorMap;
 
     /**
@@ -371,7 +372,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         traceMark(cell, color, bitIndexOf(cell), msg);
     }
 
-    final long color(int bitIndex) {
+    protected final long color(int bitIndex) {
         if (isWhite(bitIndex)) {
             FatalError.check(isClear(bitIndex + 1), "Invalid mark in mark bitmap");
             return WHITE;
@@ -475,7 +476,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         return numberOfBytesNeeded.alignUp(Word.size()).plus(Word.size());
     }
 
-
     /**
      * Returns max amount of memory needed to cover a contiguous range of address of the specified size.
      * Let the HeapScheme decide where to allocate.
@@ -562,20 +562,23 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         setCoveredArea(start, end);
         colorMap.setStart(bitmapStorage);
         colorMap.setSize(bitmapSize);
-        // Format the mark bitmap as an byte array
-        Pointer origin = bitmapStorage.asPointer();
-        Layout.writeArrayLength(origin, bitmapSize.minus(markBitmapHeaderSize().unsignedShiftedRight(Kind.LONG.width.log2numberOfBytes)).toInt());
-        Layout.writeHubReference(origin, Reference.fromJava(ClassRegistry.LONG_ARRAY.dynamicHub()));
-
+        if (!MaxineVM.isHosted()) {
+            // Format the mark bitmap as an byte array
+            Pointer origin = bitmapStorage.asPointer();
+            Layout.writeArrayLength(origin, bitmapSize.minus(markBitmapHeaderSize()).unsignedShiftedRight(Kind.LONG.width.log2numberOfBytes).toInt());
+            Layout.writeHubReference(origin, Reference.fromJava(ClassRegistry.LONG_ARRAY.dynamicHub()));
+        }
         base = bitmapStorage.plus(markBitmapHeaderSize());
         final int baseBias = start.unsignedShiftedRight(log2BitmapWord).toInt();
         biasedBitmapBase = colorMap.start().minus(baseBias);
-        if (UseRescanMap) {
-            overflowScanState = overflowScanWithRescanMapState;
-        } else {
-            overflowScanState = overflowLinearScanState;
+        if (!MaxineVM.isHosted()) {
+            if (UseRescanMap) {
+                overflowScanState = overflowScanWithRescanMapState;
+            } else {
+                overflowScanState = overflowLinearScanState;
+            }
+            overflowScanState.initialize();
         }
-        overflowScanState.initialize();
     }
 
     // Address to bitmap word / bit index operations.
@@ -629,7 +632,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return an index to a word of the color map.
      */
     @INLINE
-    final int bitmapWordIndex(Address address) {
+    protected final int bitmapWordIndex(Address address) {
         return address.minus(coveredAreaStart).unsignedShiftedRight(log2BitmapWord).toInt();
     }
 
@@ -644,6 +647,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return a pointer to a word of the color map
   */
     @INLINE
+    protected
     final Pointer bitmapWordPointerAt(int bitIndex) {
         return base.asPointer().plus(bitmapWordIndex(bitIndex) << Word.widthValue().log2numberOfBytes);
     }
@@ -652,11 +656,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      *  Bit index in the bitmap for the address into the covered area.
      */
     @INLINE
+    protected
     final int bitIndexOf(Address address) {
         return address.minus(coveredAreaStart).unsignedShiftedRight(log2BytesCoveredPerBit).toInt();
     }
 
     @INLINE
+    protected
     final Address addressOf(int bitIndex) {
         return coveredAreaStart.plus(Address.fromInt(bitIndex).shiftedLeft(log2BytesCoveredPerBit));
     }

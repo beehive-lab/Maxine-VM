@@ -105,7 +105,11 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         return Collections.emptyList();
     }
 
-    public MaxMarkBitsInfo markBitInfo() {
+    public boolean hasMarkBitmap() {
+        return true;
+    }
+
+    public MaxMarkBitmap markBitMap() {
         return null;
     }
 

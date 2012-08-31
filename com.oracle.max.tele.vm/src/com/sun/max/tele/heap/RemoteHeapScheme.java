@@ -81,9 +81,15 @@ public interface RemoteHeapScheme extends RemoteScheme {
     MaxMemoryManagementInfo getMemoryManagementInfo(Address address);
 
     /**
-     * Return heap-specific implementation of {@link MaxMarkBitsInfo} that the inspector can use to display mark-bit information for heap
-     * scheme using a mark-bitmap for trace-based collection.
-     * @return an implementation of MaxMarBitsInfo or null
+     * @return {@code true} if the heap implementation uses a {@link MaxMarkBitmap}, even if not yet created.
      */
-    MaxMarkBitsInfo markBitInfo();
+    boolean hasMarkBitmap();
+
+    /**
+     * Return heap-specific implementation of {@link MaxMarkBitmap} that the inspector can use to display mark-bit information for heap
+     * scheme using a mark-bitmap for trace-based collection.
+     * @return null if no implementation in use or if not yet created.
+     */
+    MaxMarkBitmap markBitMap();
+
 }

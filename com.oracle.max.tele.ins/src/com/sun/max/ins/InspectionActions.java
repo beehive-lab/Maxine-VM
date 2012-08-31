@@ -3697,7 +3697,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             new AddressInputDialog(inspection(), Address.zero(), "View Mark Bit for word at address...", "View") {
                 @Override
                 public void entered(Address address) {
-                    MaxMarkBitsInfo m = vm().heap().markBitInfo();
+                    MaxMarkBitmap m = vm().heap().markBitMap();
                     assert m != null;
                     if (!m.isCovered(address)) {
                         gui().errorMessage("Address " + address + " is not covered with a mark bit");
@@ -3715,41 +3715,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction removeAllWatchpoints() {
         return removeAllWatchpoints;
-    }
-
-    private InspectorAction setMarkBitAtIndex;
-
-    /**
-     * @return an Action that will add a mark bit from a specified bit index to the mark bits view.
-     */
-    public final InspectorAction setMarkBitAtIndex() {
-        return setMarkBitAtIndex;
-    }
-
-    private InspectorAction setMarkBitAtAddress;
-
-    /**
-     * @return an Action that will add a mark bit from a specified heap address to the mark bits view.
-     */
-    public final InspectorAction setMarkBitAtAddress() {
-        return setMarkBitAtAddress;
-    }
-
-    private InspectorAction removeSelectedMarkBit;
-
-    /**
-     * @return an Action that will remove the currently selected mark bit from the mark bits view.
-     */
-    public final InspectorAction removeSelectedMarkBit() {
-        return removeSelectedMarkBit;
-    }
-
-    private InspectorAction removeAllMarkBits;
-    /**
-     * @return an Action that will remove all mark bits from the mark bits view.
-     */
-    public final InspectorAction removeAllMarkBits() {
-        return removeAllMarkBits;
     }
 
      /**

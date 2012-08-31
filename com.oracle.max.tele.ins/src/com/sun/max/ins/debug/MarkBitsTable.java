@@ -82,13 +82,13 @@ final public class MarkBitsTable extends InspectorTable {
         final int bitIndex;
 
         MarkBitColor(Inspection inspection, int bitIndex) {
-            super(inspection, markBitsInfo.color(bitIndex).name);
+            super(inspection, markBitsInfo.getColor(bitIndex).name);
             this.bitIndex = bitIndex;
         }
 
         @Override
         public void refresh(boolean force) {
-            setValue(markBitsInfo.color(bitIndex).name);
+            setValue(markBitsInfo.getColor(bitIndex).name);
         }
     }
 
@@ -99,7 +99,7 @@ final public class MarkBitsTable extends InspectorTable {
         final MarkBitColor color;
 
         MarkBit(Inspection inspection, Address address) {
-            final int bitIndex = markBitsInfo.bitIndex(address);
+            final int bitIndex = markBitsInfo.getBitIndexOf(address);
             bitIndexLabel = new PlainLabel(inspection, bitIndex);
             heapAddress = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE,  address, MarkBitsTable.this);
             bitmapWordAddress = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE,  markBitsInfo.bitmapWord(bitIndex), MarkBitsTable.this);
@@ -117,7 +117,7 @@ final public class MarkBitsTable extends InspectorTable {
         List<MarkBit> markBits;
 
         public int findRow(Address address) {
-            final int bitIndex = markBitsInfo.bitIndex(address);
+            final int bitIndex = markBitsInfo.getBitIndexOf(address);
             int row = 0;
             for (MarkBit m : markBits) {
                 if (m.color.bitIndex == bitIndex) {
@@ -195,12 +195,12 @@ final public class MarkBitsTable extends InspectorTable {
     /**
      * Shortcut to heap markBitsInfo.
      */
-    final MaxMarkBitsInfo markBitsInfo;
+    final MaxMarkBitmap markBitsInfo;
 
     public MarkBitsTable(Inspection inspection, InspectorView view) {
         super(inspection);
         this.view = view;
-        markBitsInfo = inspection.vm().heap().markBitInfo();
+        markBitsInfo = inspection.vm().heap().markBitMap();
     }
 
     public InspectorView getView() {
