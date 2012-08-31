@@ -40,6 +40,11 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
     }
 
     /**
+     * Describes the memory region covered by the bitmap.
+     */
+    MaxMemoryRegion coveredMemoryRegion();
+
+    /**
      * Indicate whether the heap address is covered by the mark bitmap (i.e., if a mark in the mark bitmap is associated with this address).
      * @param heapAddress
      * @return true if the address is covered

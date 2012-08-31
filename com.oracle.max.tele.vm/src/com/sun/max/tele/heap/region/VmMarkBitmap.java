@@ -54,7 +54,8 @@ public class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, V
     private static Color GREY = new Color(2, "Grey");
     @SuppressWarnings("hiding")
     private static Color INVALID = new Color(3, "Invalid");
-    private static Color[] colors = {WHITE, BLACK, GREY, INVALID};
+    private static Color UNAVAILABLE = new Color(4, "<?>");
+    private static Color[] colors = {WHITE, BLACK, GREY, INVALID, UNAVAILABLE};
 
     /**
      * Representation of a VM memory region used to hold a MarkBitmap.  The MarkBitmap is implemented as a single long array that
@@ -94,6 +95,7 @@ public class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, V
 
     private final TeleVM vm;
     private final TeleTricolorHeapMarker remoteHeapMarker;
+    private final TeleFixedMemoryRegion coveredMemoryRegion;
     private final MarkBitmapMemoryRegion markBitmapMemoryRegion;
     private final TeleArrayObject markBitmapArray;
     private final MarkBitmapObjectReferenceManager objectReferenceManager;
@@ -106,9 +108,12 @@ public class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, V
                         Size.fromLong(remoteHeapMarker.bitmapSize()));
         this.vm = vm;
         this.remoteHeapMarker = remoteHeapMarker;
-        final Address regionStart = remoteHeapMarker.colorMapDataRegion().getRegionStart();
-        this.markBitmapMemoryRegion = new MarkBitmapMemoryRegion(vm, this, ENTITY_NAME, regionStart, remoteHeapMarker.colorMapDataRegion().getRegionNBytes());
-        this.objectReferenceManager = new MarkBitmapObjectReferenceManager(vm, regionStart);
+        final long coveredSize = remoteHeapMarker.coveredAreaEnd().minus(remoteHeapMarker.coveredAreaStart()).toLong();
+        this.coveredMemoryRegion = new TeleFixedMemoryRegion(vm, ENTITY_NAME, remoteHeapMarker.coveredAreaStart(), coveredSize);
+        final Address dataRegionStart = remoteHeapMarker.colorMapDataRegion().getRegionStart();
+        final long dataRegionSize = remoteHeapMarker.colorMapDataRegion().getRegionNBytes();
+        this.markBitmapMemoryRegion = new MarkBitmapMemoryRegion(vm, this, ENTITY_NAME, dataRegionStart, dataRegionSize);
+        this.objectReferenceManager = new MarkBitmapObjectReferenceManager(vm, dataRegionStart);
         this.markBitmapArray = (TeleArrayObject) vm.objects().makeTeleObject(objectReferenceManager.longArrayRef);
         this.markBitmapArray.setMaxineRole(ENTITY_NAME);
     }
@@ -142,6 +147,11 @@ public class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, V
         return markBitmapArray;
     }
 
+    @Override
+    public MaxMemoryRegion coveredMemoryRegion() {
+        return coveredMemoryRegion;
+    }
+
     public int getBitIndexOf(Address heapAddress) {
         return bitIndexOf(heapAddress);
     }
@@ -164,21 +174,8 @@ public class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, V
 
     @Override
     public MaxMarkBitmap.Color getColor(int bitIndex) {
-        final long colorIndex = color(bitIndex);
-        if (colorIndex == TricolorHeapMarker.WHITE) {
-            return WHITE;
-        }
-        if (colorIndex == TricolorHeapMarker.BLACK) {
-            return BLACK;
-        }
-        if (colorIndex == TricolorHeapMarker.GREY) {
-            return GREY;
-        }
-        if (colorIndex == TricolorHeapMarker.INVALID) {
-            return INVALID;
-        }
-        TeleError.unexpected("unknown color in mark bitmamp");
-        return null;
+        // TODO (mlvdv) figure out how to reuse TricolorHeapMarker methods, with remote memory reads
+        return UNAVAILABLE;
     }
 
     public MaxMarkBitmap.Color getColor(Address heapAddress) {

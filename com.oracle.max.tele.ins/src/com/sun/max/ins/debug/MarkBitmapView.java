@@ -22,16 +22,19 @@
  */
 package com.sun.max.ins.debug;
 
+import static com.sun.max.tele.MaxProcessState.*;
+
 import java.awt.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 
-public class MarkBitmapView extends AbstractView<MarkBitmapView> {
+public class MarkBitmapView extends AbstractView<MarkBitmapView> implements TableColumnViewPreferenceListener {
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.MARK_BITMAP;
     private static final String SHORT_NAME = "Mark Bitmap";
@@ -72,12 +75,18 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> {
 
     private MaxMarkBitmap markBitmap;
     private MaxObject markBitmapData = null;
-    private MarkBitsTable table;
+    private MemoryColoringTable table;
 
     private final InspectorPanel nullPanel;
 
+    // This is a singleton viewer, so only use a single level of view preferences.
+    private final MarkBitmapViewPreferences viewPreferences;
+
     protected MarkBitmapView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
+
+        viewPreferences = MarkBitmapViewPreferences.globalPreferences(inspection());
+        viewPreferences.addListener(this);
         this.viewBitmapMemoryAction = new ViewBitmapMemoryAction(inspection);
         this.viewBitmapDataAction = new ViewBitmapDataAction(inspection);
         this.setMarkBitAtIndexAction = new SetMarkBitAtIndexAction(inspection);
@@ -95,12 +104,22 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> {
     }
 
     @Override
+    public String getTextForTitle() {
+        return viewManager.shortName();
+    }
+
+    @Override
+    protected InspectorTable getTable() {
+        return table;
+    }
+
+    @Override
     protected void createViewContent() {
         if (markBitmap == null) {
             setContentPane(nullPanel);
         } else {
             markBitmapData = markBitmap.representation();
-            table = new MarkBitsTable(inspection(), this);
+            table = new MemoryColoringTable(inspection(), this, markBitmap, viewPreferences);
             setContentPane(new InspectorScrollPane(inspection(), table));
         }
 
@@ -134,7 +153,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> {
             // Has been allocated since we last check;  assume it won't change now.
             markBitmap = vm().heap().markBitMap();
             markBitmapData = markBitmap.representation();
-            table = new MarkBitsTable(inspection(), this);
+            table = new MemoryColoringTable(inspection(), this, markBitmap, viewPreferences);
             setContentPane(new InspectorScrollPane(inspection(), table));
         }
         refreshAllActions(force);
@@ -150,9 +169,26 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> {
         removeAllMarkBitsAction.refresh(force);
     }
 
+
     @Override
-    public String getTextForTitle() {
-        return viewManager.shortName();
+    public void watchpointSetChanged() {
+        if (vm().state().processState() != TERMINATED) {
+            forceRefresh();
+        }
+    }
+
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MarkBitmapColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
+            }
+        };
+    }
+
+    public void tableColumnViewPreferencesChanged() {
+        reconstructView();
     }
 
     private final class ViewBitmapDataAction extends InspectorAction {
