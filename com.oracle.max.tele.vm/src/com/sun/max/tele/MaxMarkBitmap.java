@@ -33,7 +33,7 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
     public static class Color {
         public final int id;
         public final String name;
-        Color(int id, String name) {
+        public Color(int id, String name) {
             this.id = id;
             this.name = name;
         }
@@ -51,14 +51,14 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
      * @param heapAddress an address in the heap area covered by the mark bitmap
      * @return a bit index
      */
-    int bitIndex(Address heapAddress);
+    int getBitIndexOf(Address heapAddress);
 
     /**
      * Index to the word holding the first bit in the mark bitmap encoding the color corresponding to the specified heap address.
      * @param heapAddress an address in the heap area covered by the mark bitmap
      * @return an address to a word of the mark bitmap
      */
-    int bitmapWordIndex(Address heapAddress);
+    int getBitmapWordIndex(Address heapAddress);
 
     /**
      * Address of the word holding the first bit in the mark bitmap encoding the color corresponding to the specified heap address.
@@ -86,13 +86,13 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
      * @param bitIndex a bit index
      * @return color
      */
-    Color color(int bitIndex);
+    Color getColor(int bitIndex);
 
     /**
      * Color of the mark corresponding to the specified the heap address.
      * @param heapAddress
      */
-    Color color(Address heapAddress);
+    Color getColor(Address heapAddress);
 
     /**
      * Colors that the mark bitmap can encode. Typical implementation only encode 2 colors (white and black). Exotic

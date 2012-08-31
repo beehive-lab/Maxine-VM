@@ -32,16 +32,29 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
-
+import com.sun.max.vm.heap.gcx.*;
 
 /**
- * Access to the Mark Bitmap used by some GC implementations.
+ * A specialized subclass of the Mark Bitmap used by some GC implementations. The singleton instance, corresponding to
+ * the one used in the VM, is not created until the VM heap scheme has allocated the bit map data and initialized
+ * everything, so no refreshing is needed.
  * <p>
- * The Mark Bitmap is stored in a region separate from the heap, allocated from the OS.
- * The region is filled with a single array (in standard Maxine format) of longs.
+ * The Mark Bitmap's data is stored in a region separate from the heap, allocated from the OS. The region is filled with
+ * a single array (in standard Maxine format) of longs.
  */
-public class VmMarkBitmap extends AbstractVmHolder
-    implements TeleVMCache, MaxMarkBitmap, VmObjectHoldingRegion<MaxMarkBitmap> {
+public class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, VmObjectHoldingRegion<MaxMarkBitmap> {
+
+    private static final String ENTITY_NAME = "Heap-Mark Bitmap data";
+
+    @SuppressWarnings("hiding")
+    private static Color WHITE = new Color(0, "White");
+    @SuppressWarnings("hiding")
+    private static Color BLACK = new Color(1, "Black");
+    @SuppressWarnings("hiding")
+    private static Color GREY = new Color(2, "Grey");
+    @SuppressWarnings("hiding")
+    private static Color INVALID = new Color(3, "Invalid");
+    private static Color[] colors = {WHITE, BLACK, GREY, INVALID};
 
     /**
      * Representation of a VM memory region used to hold a MarkBitmap.  The MarkBitmap is implemented as a single long array that
@@ -51,15 +64,14 @@ public class VmMarkBitmap extends AbstractVmHolder
      * <p>
      * This region has no children.
      */
-    private static final class MarkBitmapMemoryRegion extends TeleDelegatedMemoryRegion
-        implements MaxEntityMemoryRegion<MaxMarkBitmap> {
+    private static final class MarkBitmapMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxMarkBitmap> {
 
         private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY = Collections.emptyList();
 
         private final MaxMarkBitmap owner;
 
-        protected MarkBitmapMemoryRegion(MaxVM vm, MaxMarkBitmap owner, TeleMemoryRegion teleMemoryRegion) {
-            super(vm, teleMemoryRegion);
+        protected MarkBitmapMemoryRegion(MaxVM vm, MaxMarkBitmap owner, String regionName, Address start, long nBytes) {
+            super(vm, regionName, start, nBytes);
             this.owner = owner;
         }
 
@@ -80,25 +92,29 @@ public class VmMarkBitmap extends AbstractVmHolder
         }
     }
 
-    private final TeleTricolorHeapMarker heapMarker;
+    private final TeleVM vm;
+    private final TeleTricolorHeapMarker remoteHeapMarker;
     private final MarkBitmapMemoryRegion markBitmapMemoryRegion;
-    private TeleArrayObject markBitmapArray;
-
+    private final TeleArrayObject markBitmapArray;
     private final MarkBitmapObjectReferenceManager objectReferenceManager;
 
-    public VmMarkBitmap(TeleVM vm, TeleTricolorHeapMarker heapMarker) {
-        super(vm);
-        this.heapMarker = heapMarker;
-        this.markBitmapMemoryRegion = new MarkBitmapMemoryRegion(vm, this, heapMarker.colorMap());
-        this.objectReferenceManager = new MarkBitmapObjectReferenceManager(vm);
+    public VmMarkBitmap(TeleVM vm, TeleTricolorHeapMarker remoteHeapMarker) {
+        super(remoteHeapMarker.wordsCoveredPerBit(),
+                        remoteHeapMarker.coveredAreaStart(),
+                        remoteHeapMarker.coveredAreaEnd(),
+                        remoteHeapMarker.bitmapStorage(),
+                        Size.fromLong(remoteHeapMarker.bitmapSize()));
+        this.vm = vm;
+        this.remoteHeapMarker = remoteHeapMarker;
+        final Address regionStart = remoteHeapMarker.colorMapDataRegion().getRegionStart();
+        this.markBitmapMemoryRegion = new MarkBitmapMemoryRegion(vm, this, ENTITY_NAME, regionStart, remoteHeapMarker.colorMapDataRegion().getRegionNBytes());
+        this.objectReferenceManager = new MarkBitmapObjectReferenceManager(vm, regionStart);
+        this.markBitmapArray = (TeleArrayObject) vm.objects().makeTeleObject(objectReferenceManager.longArrayRef);
+        this.markBitmapArray.setMaxineRole(ENTITY_NAME);
     }
 
-    public void updateCache(long epoch) {
-        objectReferenceManager.updateCache(epoch);
-        if (markBitmapArray == null && objectReferenceManager.longArrayRef != null) {
-            markBitmapArray = (TeleArrayObject) objects().makeTeleObject(objectReferenceManager.longArrayRef);
-            markBitmapArray.setMaxineRole("Heap-Mark Bitmap data");
-        }
+    public MaxVM vm() {
+        return vm;
     }
 
     public String entityName() {
@@ -113,6 +129,11 @@ public class VmMarkBitmap extends AbstractVmHolder
         return markBitmapMemoryRegion;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This the allocation holding the mark bitmap.
+     */
     public boolean contains(Address address) {
         return markBitmapMemoryRegion.contains(address);
     }
@@ -121,49 +142,51 @@ public class VmMarkBitmap extends AbstractVmHolder
         return markBitmapArray;
     }
 
-    public boolean isCovered(Address heapAddress) {
-        // TODO Auto-generated method stub
-        return false;
+    public int getBitIndexOf(Address heapAddress) {
+        return bitIndexOf(heapAddress);
     }
 
-    public int bitIndex(Address heapAddress) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public int bitmapWordIndex(Address heapAddress) {
-        // TODO Auto-generated method stub
-        return 0;
+    public int getBitmapWordIndex(Address heapAddress) {
+        return bitmapWordIndex(heapAddress);
     }
 
     public Address bitmapWord(Address heapAddress) {
-        // TODO Auto-generated method stub
-        return null;
+        return bitmapWordPointerAt(bitmapWordIndex(heapAddress));
     }
 
     public Address heapAddress(int bitIndex) {
-        // TODO Auto-generated method stub
-        return null;
+        return addressOf(bitIndex);
     }
 
     public Address bitmapWord(int bitIndex) {
-        // TODO Auto-generated method stub
+        return bitmapWordPointerAt(bitIndex);
+    }
+
+    @Override
+    public MaxMarkBitmap.Color getColor(int bitIndex) {
+        final long colorIndex = color(bitIndex);
+        if (colorIndex == TricolorHeapMarker.WHITE) {
+            return WHITE;
+        }
+        if (colorIndex == TricolorHeapMarker.BLACK) {
+            return BLACK;
+        }
+        if (colorIndex == TricolorHeapMarker.GREY) {
+            return GREY;
+        }
+        if (colorIndex == TricolorHeapMarker.INVALID) {
+            return INVALID;
+        }
+        TeleError.unexpected("unknown color in mark bitmamp");
         return null;
     }
 
-    public Color color(int bitIndex) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Color color(Address heapAddress) {
-        // TODO Auto-generated method stub
-        return null;
+    public MaxMarkBitmap.Color getColor(Address heapAddress) {
+        return getColor(bitIndexOf(heapAddress));
     }
 
     public Color[] colors() {
-        // TODO Auto-generated method stub
-        return null;
+        return colors;
     }
 
     public RemoteObjectReferenceManager objectReferenceManager() {
@@ -178,13 +201,26 @@ public class VmMarkBitmap extends AbstractVmHolder
      * Manager for object references for the unmanaged mark bitmap region, which contains,
      * once initialized, a singleton long array.
      */
-    private class MarkBitmapObjectReferenceManager extends AbstractVmHolder implements RemoteObjectReferenceManager, TeleVMCache {
+    private class MarkBitmapObjectReferenceManager extends AbstractVmHolder implements RemoteObjectReferenceManager {
 
-        private Address longArrayOrigin = Address.zero();
-        private ConstantRemoteReference longArrayRef = null;
+        private final Address longArrayOrigin;
+        private final ConstantRemoteReference longArrayRef;
 
-        protected MarkBitmapObjectReferenceManager(TeleVM vm) {
+        protected MarkBitmapObjectReferenceManager(TeleVM vm, Address start) {
             super(vm);
+            longArrayOrigin = objects().layoutScheme().generalLayout.cellToOrigin(start.asPointer());
+            longArrayRef = new ConstantRemoteReference(vm(), longArrayOrigin) {
+
+                @Override
+                public ObjectStatus status() {
+                    return ObjectStatus.LIVE;
+                }
+
+                @Override
+                public ObjectStatus priorStatus() {
+                    return null;
+                }
+            };
         }
 
         /**
@@ -197,10 +233,6 @@ public class VmMarkBitmap extends AbstractVmHolder
         }
 
         public ObjectStatus objectStatusAt(Address origin) {
-
-            if (longArrayOrigin.isZero()) {
-                return ObjectStatus.DEAD;
-            }
             TeleError.check(memoryRegion().contains(origin), "Location is outside region");
             return origin.equals(longArrayOrigin) ? ObjectStatus.LIVE : ObjectStatus.DEAD;
         }
@@ -221,29 +253,6 @@ public class VmMarkBitmap extends AbstractVmHolder
             TeleWarning.unimplemented();
         }
 
-        public void updateCache(long epoch) {
-            // Force cached information from remote object describing the memory region to be updated now,
-            // rather than waiting until later in the update cycle, so we'll have this information about the
-            // array right away.
-            markBitmapMemoryRegion.updateCache(epoch);
-            if (longArrayOrigin.isZero() && memoryRegion().isAllocated()) {
-                final Pointer start = memoryRegion().start().asPointer();
-                longArrayOrigin = objects().layoutScheme().generalLayout.cellToOrigin(start);
-                longArrayRef = new ConstantRemoteReference(vm(), longArrayOrigin) {
-
-                    @Override
-                    public ObjectStatus status() {
-                        return ObjectStatus.LIVE;
-                    }
-
-                    @Override
-                    public ObjectStatus priorStatus() {
-                        return null;
-                    }
-                };
-            }
-
-        }
     }
 
 

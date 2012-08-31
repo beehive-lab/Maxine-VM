@@ -24,11 +24,13 @@ package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.gcx.*;
 
 
 public class TeleTricolorHeapMarker extends TeleTupleObject {
 
-    private TeleMemoryRegion colorMap;
+    private TeleMemoryRegion colorMapDataRegion;
 
     public TeleTricolorHeapMarker(TeleVM vm, RemoteReference heapMarkerReference) {
         super(vm, heapMarkerReference);
@@ -39,21 +41,68 @@ public class TeleTricolorHeapMarker extends TeleTupleObject {
         if (!super.updateObjectCache(epoch, statsPrinter)) {
             return false;
         }
-        if (colorMap == null) {
+        if (colorMapDataRegion == null) {
             final RemoteReference colorMapRef = fields().TricolorHeapMarker_colorMap.readRemoteReference(reference());
             if (!colorMapRef.isZero()) {
-                colorMap = (TeleMemoryRegion) objects().makeTeleObject(colorMapRef);
+                colorMapDataRegion = (TeleMemoryRegion) objects().makeTeleObject(colorMapRef);
             }
         }
         return true;
     }
 
-    /**
-     * @return the memory region, allocated from the OS, in which the MS GC stores
-     * the mark bitmap as a byte array.
-     */
-    public TeleMemoryRegion colorMap() {
-        return colorMap;
+    public boolean isAllocated() {
+        if (colorMapDataRegion == null) {
+            return false;
+        }
+        colorMapDataRegion.updateCacheIfNeeded();
+        return colorMapDataRegion.isAllocated();
     }
+
+    /**
+     * Gets the VM object (allocated in the boot heap) that describes the memory region, allocated dynamically
+     * from the OS, in which the heap marker stores the bitmap data.  The memory region exists, but is
+     * <em>unallocated</em> until the VM's heap marker is initialized and allocates the memory.
+     *
+     * @return the VM memory region object that describes the bitmap data allocation
+     */
+    public TeleMemoryRegion colorMapDataRegion() {
+        return colorMapDataRegion;
+    }
+
+    /**
+     * Number of bytes covered by each bit of the bitmaps. Must be a power of 2 of a number of words.
+     *
+     * @see TricolorHeapMarker#wordsCoveredPerBit
+     */
+    public int wordsCoveredPerBit() {
+        return isAllocated() ? fields().TricolorHeapMarker_wordsCoveredPerBit.readInt(reference()) : 0;
+    }
+
+    /**
+     * Start of the contiguous range of addresses covered by the mark bitmap.
+     *
+     * @see TricolorHeapMarker#coveredAreaStart
+     */
+    public Address coveredAreaStart() {
+        return isAllocated() ? fields().TricolorHeapMarker_coveredAreaStart.readWord(reference()).asAddress() : Address.zero();
+    }
+
+    /**
+     * End of the contiguous range of addresses  covered by the mark bitmap.
+     *
+     * @see TricolorHeapMark#coveredAreaEnd
+     */
+    public Address coveredAreaEnd() {
+        return isAllocated() ? fields().TricolorHeapMarker_coveredAreaEnd.readWord(reference()).asAddress() : Address.zero();
+    }
+
+    public Address bitmapStorage() {
+        return isAllocated() ? colorMapDataRegion.getRegionStart() : Address.zero();
+    }
+
+    public long bitmapSize() {
+        return isAllocated() ? colorMapDataRegion.getRegionNBytes() : 0L;
+    }
+
 
 }

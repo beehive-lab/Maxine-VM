@@ -260,6 +260,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess TricolorHeapMarker_colorMap = new TeleInstanceReferenceFieldAccess(TricolorHeapMarker.class, "colorMap", MemoryRegion.class);
     public final TeleInstanceWordFieldAccess TricolorHeapMarker_coveredAreaEnd = new TeleInstanceWordFieldAccess(TricolorHeapMarker.class, "coveredAreaEnd");
     public final TeleInstanceWordFieldAccess TricolorHeapMarker_coveredAreaStart = new TeleInstanceWordFieldAccess(TricolorHeapMarker.class, "coveredAreaStart");
+    public final TeleInstanceIntFieldAccess TricolorHeapMarker_wordsCoveredPerBit = new TeleInstanceIntFieldAccess(TricolorHeapMarker.class, "wordsCoveredPerBit");
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "constantPool", ConstantPool.class);
     public final TeleInstanceReferenceFieldAccess Utf8Constant_string = new TeleInstanceReferenceFieldAccess(Utf8Constant.class, "string", String.class);
     public final TeleInstanceReferenceFieldAccess VMConfiguration_heapScheme = new TeleInstanceReferenceFieldAccess(VMConfiguration.class, "heapScheme", HeapScheme.class);

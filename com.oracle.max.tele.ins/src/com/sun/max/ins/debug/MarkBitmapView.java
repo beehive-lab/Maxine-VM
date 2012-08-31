@@ -70,9 +70,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> {
     private MarkBitmapAction removeSelectedMarkBitAction;
     private MarkBitmapAction removeAllMarkBitsAction;
 
-    private final MaxMarkBitmap markBitmap;
+    private MaxMarkBitmap markBitmap;
     private MaxObject markBitmapData = null;
-    private boolean allocated = false;
     private MarkBitsTable table;
 
     private final InspectorPanel nullPanel;
@@ -90,7 +89,6 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> {
         nullPanel.add(new PlainLabel(inspection(), inspection().nameDisplay().unavailableDataShortText()), BorderLayout.PAGE_START);
 
         markBitmap = vm().heap().markBitMap();
-        assert markBitmap != null;
 
         createFrame(true);
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
@@ -98,10 +96,9 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> {
 
     @Override
     protected void createViewContent() {
-        if (!markBitmap.memoryRegion().isAllocated()) {
+        if (markBitmap == null) {
             setContentPane(nullPanel);
         } else {
-            allocated = true;
             markBitmapData = markBitmap.representation();
             table = new MarkBitsTable(inspection(), this);
             setContentPane(new InspectorScrollPane(inspection(), table));
@@ -133,16 +130,12 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> {
 
     @Override
     protected void refreshState(boolean force) {
-
-        if (!allocated && markBitmap.memoryRegion().isAllocated()) {
+        if (markBitmap == null && vm().heap().markBitMap() != null) {
             // Has been allocated since we last check;  assume it won't change now.
-            allocated = true;
+            markBitmap = vm().heap().markBitMap();
             markBitmapData = markBitmap.representation();
             table = new MarkBitsTable(inspection(), this);
             setContentPane(new InspectorScrollPane(inspection(), table));
-        } else if (allocated && markBitmapData == null) {
-            // The region has been allocated, but the array in it may not have been initiailized yet; keep checking.
-            markBitmapData = markBitmap.representation();
         }
         refreshAllActions(force);
                     // table.refresh(force);
