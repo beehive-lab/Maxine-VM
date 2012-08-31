@@ -53,7 +53,7 @@ public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
     }
 
     @Override
-    public void adviseAfterMethodEntry(Object arg1, MethodActor methodActor) {
+    public void adviseAfterMethodEntry(int bci, Object arg1, MethodActor methodActor) {
         callStack.push(methodActor);
         // Don't report synthetic methods (not clear we should even get the event)
         if (jjvmti.isMethodSynthetic(methodActor)) {
@@ -90,32 +90,32 @@ public class JVMTITestVMAdviceHandler extends NullVMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeReturn(long value) {
+    public void adviseBeforeReturn(int bci, long value) {
         methodExit(false, value);
     }
 
     @Override
-    public void adviseBeforeReturn(float value) {
+    public void adviseBeforeReturn(int bci, float value) {
         methodExit(false, value);
     }
 
     @Override
-    public void adviseBeforeReturn(double value) {
+    public void adviseBeforeReturn(int bci, double value) {
         methodExit(false, value);
     }
 
     @Override
-    public void adviseBeforeReturn(Object value) {
+    public void adviseBeforeReturn(int bci, Object value) {
         methodExit(false, value);
     }
 
     @Override
-    public void adviseBeforeReturn() {
+    public void adviseBeforeReturn(int bci) {
         methodExit(false, null);
     }
 
     @Override
-    public void adviseBeforeReturnByThrow(Throwable throwable, int poppedFrames) {
+    public void adviseBeforeReturnByThrow(int bci, Throwable throwable, int poppedFrames) {
         methodExit(true, throwable);
         // May need to pop more frames
         while (poppedFrames > 1) {

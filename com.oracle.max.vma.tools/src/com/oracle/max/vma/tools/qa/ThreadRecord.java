@@ -26,6 +26,9 @@ package com.oracle.max.vma.tools.qa;
  * Denotes a thread encountered in a trace.
  */
 public class ThreadRecord extends NamedRecord {
+    public long startTime;
+    public long endTime;
+
     public ThreadRecord(String name) {
         super(name);
     }

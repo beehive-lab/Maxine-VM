@@ -24,6 +24,8 @@ package com.oracle.max.vma.tools.qa;
 
 import java.util.*;
 
+import com.oracle.max.vm.ext.vma.*;
+
 /**
  * Definitions of the types used by {@link TransientVMAdviceHandler} to record advice events.
  *
@@ -41,63 +43,63 @@ public class TransientVMAdviceHandlerTypes {
 // START GENERATED CODE
 // EDIT AND RUN TransientVMAdviceHandlerTypesGenerator.main() TO MODIFY
 
-        GC,
-        ThreadStarting,
-        ThreadTerminating,
-        ReturnByThrow,
-        ConstLoadLong,
-        ConstLoadObject,
-        ConstLoadFloat,
-        ConstLoadDouble,
-        Load,
+        ArrayLength,
         ArrayLoad,
-        StoreLong,
-        StoreFloat,
-        StoreDouble,
-        StoreObject,
+        ArrayStoreDouble,
         ArrayStoreFloat,
         ArrayStoreLong,
-        ArrayStoreDouble,
         ArrayStoreObject,
-        StackAdjust,
-        OperationLong,
-        OperationFloat,
-        OperationDouble,
+        CheckCast,
+        ConstLoadDouble,
+        ConstLoadFloat,
+        ConstLoadLong,
+        ConstLoadObject,
+        ConversionDouble,
         ConversionFloat,
         ConversionLong,
-        ConversionDouble,
+        GC,
+        GetField,
+        GetStatic,
+        Goto,
         IfInt,
         IfObject,
-        Bytecode,
-        Return,
-        ReturnLong,
-        ReturnFloat,
-        ReturnDouble,
-        ReturnObject,
-        GetStatic,
-        PutStaticObject,
-        PutStaticFloat,
-        PutStaticDouble,
-        PutStaticLong,
-        GetField,
-        PutFieldObject,
-        PutFieldFloat,
-        PutFieldDouble,
-        PutFieldLong,
-        InvokeVirtual,
+        InstanceOf,
+        InvokeInterface,
         InvokeSpecial,
         InvokeStatic,
-        InvokeInterface,
-        ArrayLength,
-        Throw,
-        CheckCast,
-        InstanceOf,
+        InvokeVirtual,
+        Load,
+        MethodEntry,
         MonitorEnter,
         MonitorExit,
+        MultiNewArray,
         New,
         NewArray,
-        MultiNewArray,
-        MethodEntry;
+        OperationDouble,
+        OperationFloat,
+        OperationLong,
+        PutFieldDouble,
+        PutFieldFloat,
+        PutFieldLong,
+        PutFieldObject,
+        PutStaticDouble,
+        PutStaticFloat,
+        PutStaticLong,
+        PutStaticObject,
+        Return,
+        ReturnByThrow,
+        ReturnDouble,
+        ReturnFloat,
+        ReturnLong,
+        ReturnObject,
+        StackAdjust,
+        StoreDouble,
+        StoreFloat,
+        StoreLong,
+        StoreObject,
+        ThreadStarting,
+        ThreadTerminating,
+        Throw;
 
         public AdviceRecord newAdviceRecord() {
             switch (this) {
@@ -106,8 +108,8 @@ public class TransientVMAdviceHandlerTypes {
                 case ReturnLong:
                 case StoreLong:
                     return new LongAdviceRecord();
-                case Bytecode:
                 case GC:
+                case Goto:
                 case Load:
                 case Return:
                 case StackAdjust:
@@ -194,28 +196,36 @@ public class TransientVMAdviceHandlerTypes {
     }
 
     public static class AdviceRecord {
-        private static final int ADVICE_MODE_SHIFT = 8;
-        private static final int VALUE_SHIFT = 16;
+        private static final int CODE_SHIFT = 1;
+        private static final int VALUE_SHIFT = 32;
+        private static final int BCI_SHIFT = 8;
 
         public volatile Object thread; // a class that denotes a thread
         public long time;
+        /**
+         * Stores the advice mode (bit 0), ordinal value of record type (bits 1-7), bci (bits 8-31) and a record-specific int (bits 32-63).
+         */
         private long codeAndValue;
 
-        public void setCodeAndMode(RecordType rt, int adviceMode) {
-            codeAndValue = rt.ordinal() | (adviceMode << AdviceRecord.ADVICE_MODE_SHIFT);
+        public void setCodeModeBci(RecordType rt, AdviceMode adviceMode, short bci) {
+            codeAndValue = adviceMode.ordinal() | (rt.ordinal() << AdviceRecord.CODE_SHIFT) | (bci << BCI_SHIFT);
+            assert getRecordType() == rt;
+            assert adviceMode.ordinal() == getAdviceMode();
+            assert bci == getBci();
         }
 
         public void setPackedValue(int value) {
-            codeAndValue |= value << AdviceRecord.VALUE_SHIFT;
+            long lvalue = value;
+            codeAndValue |= lvalue << AdviceRecord.VALUE_SHIFT;
         }
 
         public RecordType getRecordType() {
-            int recordOrd = (int) (codeAndValue & 0xFF);
+            int recordOrd = (int) ((codeAndValue >> CODE_SHIFT) & 0x7F);
             return RecordType.RECORD_TYPE_VALUES[recordOrd];
         }
 
         public int getAdviceMode() {
-            return (int) ((codeAndValue >> AdviceRecord.ADVICE_MODE_SHIFT) & 0xFF);
+            return (int) (codeAndValue & 1);
         }
 
         public int getPackedValue() {
@@ -224,6 +234,19 @@ public class TransientVMAdviceHandlerTypes {
 
         public int getArrayIndex() {
             return getPackedValue();
+        }
+
+        public void setBci(short bci) {
+            codeAndValue |= bci << BCI_SHIFT;
+        }
+
+        public short getBci() {
+            return (short) ((codeAndValue >> BCI_SHIFT) & 0xFFFF);
+        }
+
+        @Override
+        public String toString() {
+            return getRecordType() + ": " + getAdviceMode() + "bci: " + getBci() + "pv: " + getPackedValue();
         }
     }
 
