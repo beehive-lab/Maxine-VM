@@ -212,6 +212,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     private final Evacuator.PhaseLogger phaseLogger = new Evacuator.PhaseLogger();
 
+    private final DebugHeap.DetailLogger detailLogger = new DebugHeap.DetailLogger();
+
     /**
      * Support for {@link #maxObjectInspectionAge()}.
      * Keeps track of last time a full GC completed.
@@ -292,6 +294,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         return result;
     }
 
+    private void verifyCodeRegion(CodeRegion cr) {
+        if (!cr.size().isZero()) {
+            DebugHeap.verifyRegion(cr, cr.start().asPointer(), cr.getAllocationMark(), refVerifier, detailLogger);
+        }
+    }
+
     private void verifyAfterMinorCollection() {
         // Verify that:
         // 1. offset table is correctly setup
@@ -313,6 +321,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
         // 3. Roots only point to memory region that contains live objects.
         gcRootsVerifier.run();
+
+        // Code only point to memory region that contains live objects
+        verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
+        verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
     }
 
     private void verifyAfterFullCollection() {
@@ -321,6 +333,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
         oldSpace.visit(noFromSpaceReferencesVerifiers);
         gcRootsVerifier.run();
+
+        verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
+        verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
     }
 
     private void doOldGenCollection() {

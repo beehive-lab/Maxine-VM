@@ -279,6 +279,11 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     @INLINE
+    public boolean supportsPadding() {
+        return true;
+    }
+
+    @INLINE
     public void trackLifetime(Pointer cell) {
     }
 
