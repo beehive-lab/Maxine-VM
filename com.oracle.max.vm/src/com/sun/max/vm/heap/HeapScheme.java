@@ -372,6 +372,12 @@ public interface HeapScheme extends VMScheme {
     boolean supportsTagging();
 
     /**
+     * Indicates whether this heap scheme supports padding of unallocated space for debugging purposes.
+     * @return true if padding is supported
+     */
+    boolean supportsPadding();
+
+    /**
      * Encapsulates the structure of the heap from a tool (e.g. JVMTI) that want to visit every object
      * in the heap.
      *

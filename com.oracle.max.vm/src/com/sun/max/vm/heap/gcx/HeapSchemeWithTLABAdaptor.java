@@ -135,8 +135,13 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
 
     @INLINE
     @Override
-    public boolean supportsTagging() {
+    public final boolean supportsTagging() {
         return false;
     }
 
+    @INLINE
+    @Override
+    public final boolean supportsPadding() {
+        return false;
+    }
 }
