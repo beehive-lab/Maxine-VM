@@ -636,8 +636,16 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         return address.minus(coveredAreaStart).unsignedShiftedRight(log2BitmapWord).toInt();
     }
 
+    @HOSTED_ONLY
+    protected long hostedBitmapWordAt(int bitIndex) {
+        return base.asPointer().getLong(bitmapWordIndex(bitIndex));
+    }
+
     @INLINE
     final long bitmapWordAt(int bitIndex) {
+        if (MaxineVM.isHosted()) {
+            return hostedBitmapWordAt(bitIndex);
+        }
         return base.asPointer().getLong(bitmapWordIndex(bitIndex));
     }
 

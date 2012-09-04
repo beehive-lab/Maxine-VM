@@ -173,6 +173,11 @@ public class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, V
     }
 
     @Override
+    protected final long hostedBitmapWordAt(int bitIndex) {
+        return vm().memoryIO().readWordValue(addressOf(bitIndex)).asLong();
+    }
+
+    @Override
     public MaxMarkBitmap.Color getColor(int bitIndex) {
         // TODO (mlvdv) figure out how to reuse TricolorHeapMarker methods, with remote memory reads
         return UNAVAILABLE;
