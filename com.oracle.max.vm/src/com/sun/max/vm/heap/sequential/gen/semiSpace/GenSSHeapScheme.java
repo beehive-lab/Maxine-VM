@@ -240,6 +240,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         oldSpaceEvacuator.setTimers(evacTimers);
         youngSpaceEvacuator.setPhaseLogger(phaseLogger);
         oldSpaceEvacuator.setPhaseLogger(phaseLogger);
+        if (MaxineVM.isDebug()) {
+            youngSpaceEvacuator.setDetailLogger(detailLogger);
+            oldSpaceEvacuator.setDetailLogger(detailLogger);
+        }
     }
 
     @Override
