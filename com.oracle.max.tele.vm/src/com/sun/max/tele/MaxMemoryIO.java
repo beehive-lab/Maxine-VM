@@ -64,4 +64,21 @@ public interface MaxMemoryIO {
      */
     int readInt(Address address, int idOffset);
 
+    /**
+     * Low level memory read of a {@code long} from VM memory.
+     *
+     * @param address  a location in VM memory
+     * @return the long value the memory location.
+     */
+    long readLong(Address address);
+
+    /**
+     * Reads an {@code long} from VM memory.
+     *
+     * @param address a location in VM memory
+     * @param idOffset from the location at which to read
+     * @return the current contents of VM memory at that location as a long
+     */
+    long readLong(Address address, int idOffset);
+
 }
