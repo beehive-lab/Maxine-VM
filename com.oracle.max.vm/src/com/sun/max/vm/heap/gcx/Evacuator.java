@@ -32,9 +32,10 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.debug.DebugHeap.DetailLogger;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLogger.Interval;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
@@ -63,8 +64,8 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     }
 
     @INLINE
-    protected static boolean traceEvacVisitedCell() {
-        return MaxineVM.isDebug() && traceEvacVisitedCellEnabled;
+    protected final boolean traceEvacVisitedCell() {
+        return MaxineVM.isDebug() && traceEvacVisitedCellEnabled && detailLogger.enabled();
     }
 
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
@@ -75,7 +76,9 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
 
     private EvacuationTimers timers;
 
-    private PhaseLogger phaseLogger;
+    protected PhaseLogger phaseLogger;
+
+    protected DetailLogger detailLogger;
 
     public void setGCOperation(GCOperation gcOperation) {
         currentGCOperation = gcOperation;
@@ -149,10 +152,18 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * Set the phase logger for this evacuator.
      * HeapScheme using multiple evacuator instances might have to share a single phase logger
      * as currently the Heap class assume there's a single such phase logger per-heap scheme.
-     * @param phaseLogger
+     * @param phaseLogger a phase logger
      */
     public void setPhaseLogger(PhaseLogger phaseLogger) {
         this.phaseLogger = phaseLogger;
+    }
+
+    /**
+     * Set the detail logger for this evacuator.
+      * @param detailLogger a detail logger
+    */
+    public void setDetailLogger(DetailLogger detailLogger) {
+        this.detailLogger = detailLogger;
     }
 
   /**
@@ -175,7 +186,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * Default is to do nothing.
      *
      * @param refHolderOrigin origin of the reference holder
-     * @param wordIndex
+     * @param wordIndex word index relative to the reference holder's origin where the reference to the evacuated cell is stored.
      * @param ref reference to an evacuated cell
      */
     void updateRSet(Pointer refHolderOrigin, int wordIndex, Reference ref) {
@@ -195,6 +206,10 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
             final Pointer toOrigin = evacuate(origin);
             forwardRef = Reference.fromOrigin(toOrigin);
             Layout.writeForwardRef(origin, forwardRef);
+            if (MaxineVM.isDebug() && detailLogger.enabled()) {
+                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(Reference.fromOrigin(origin)).toJava());
+                detailLogger.logForward(hub.classActor, origin, toOrigin, Layout.size(origin).toInt());
+            }
         }
         return forwardRef;
     }
@@ -309,7 +324,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      */
     final protected Pointer scanCellForEvacuatees(Pointer cell) {
         if (traceEvacVisitedCell()) {
-            Log.print("visitCell "); Log.println(cell);
+            detailLogger.logVisitCell(cell);
         }
         final Pointer origin = Layout.cellToOrigin(cell);
         // Update the hub first so that is can be dereferenced to obtain
