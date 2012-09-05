@@ -207,8 +207,8 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
             forwardRef = Reference.fromOrigin(toOrigin);
             Layout.writeForwardRef(origin, forwardRef);
             if (MaxineVM.isDebug() && detailLogger.enabled()) {
-                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(Reference.fromOrigin(origin)).toJava());
-                detailLogger.logForward(hub.classActor, origin, toOrigin, Layout.size(origin).toInt());
+                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(forwardRef).toJava());
+                detailLogger.logForward(hub.classActor, origin, toOrigin, Layout.size(toOrigin).toInt());
             }
         }
         return forwardRef;
