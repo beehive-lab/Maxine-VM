@@ -60,6 +60,11 @@ public class DebugHeap {
         return MaxineVM.isDebug() && vmConfig().heapScheme().supportsPadding();
     }
 
+    @FOLD
+    private static int hubIndex() {
+        return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
+    }
+
     /**
      * Increments a given allocation mark to reserve space for a {@linkplain #writeCellTag(Pointer) debug tag} if
      * this is a {@linkplain MaxineVM#isDebug() debug} VM.
@@ -261,8 +266,7 @@ public class DebugHeap {
     protected static Hub checkHub(Pointer origin, RefVerifier refVerifier) {
         final Reference hubRef = Layout.readHubReference(origin);
         FatalError.check(!hubRef.isZero(), "null hub");
-        final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
-        verifyRefAtIndex(origin, hubIndex, hubRef, refVerifier.space1, refVerifier.space2);
+        verifyRefAtIndex(origin, hubIndex(), hubRef, refVerifier.space1, refVerifier.space2);
         final Hub hub = UnsafeCast.asHub(hubRef.toJava());
 
         Hub h = hub;
