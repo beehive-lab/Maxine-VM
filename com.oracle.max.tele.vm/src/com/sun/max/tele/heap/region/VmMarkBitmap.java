@@ -161,7 +161,7 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
     }
 
     public Address bitmapWord(Address heapAddress) {
-        return bitmapWordPointerAt(bitmapWordIndex(heapAddress));
+        return bitmapWordPointerAt(bitIndexOf(heapAddress));
     }
 
     public Address heapAddress(int bitIndex) {
@@ -170,6 +170,10 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
 
     public Address bitmapWord(int bitIndex) {
         return bitmapWordPointerAt(bitIndex);
+    }
+
+    public int getBitIndexInWord(int bitIndex) {
+        return bitIndexInWord(bitIndex);
     }
 
     public boolean isBitSet(int bitIndex) {

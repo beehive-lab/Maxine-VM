@@ -236,7 +236,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return a bit position within a word.
      */
     @INLINE
-    static int bitIndexInWord(int bitIndex) {
+    protected static int bitIndexInWord(int bitIndex) {
         return bitIndex & bitIndexInWordMask;
     }
 
