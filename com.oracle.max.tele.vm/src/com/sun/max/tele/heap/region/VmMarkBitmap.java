@@ -172,6 +172,14 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
         return bitmapWordPointerAt(bitIndex);
     }
 
+    public boolean isBitSet(int bitIndex) {
+        return isSet(bitIndex);
+    }
+
+    public void setBit(int bitIndex) {
+        TeleError.unimplemented();
+    }
+
     /**
      * {@inheritDoc}
      * <p>
@@ -274,7 +282,6 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
         }
 
     }
-
 
 
 }

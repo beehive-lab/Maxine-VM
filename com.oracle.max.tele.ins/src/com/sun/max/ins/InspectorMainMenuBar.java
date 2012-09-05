@@ -111,8 +111,8 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
 
     private InspectorMenu createMemoryMenu() {
         final InspectorMenu menu = new InspectorMenu("Memory");
-        menu.add(actions.genericMemoryMenuItems());
         menu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+        menu.add(actions.genericMemoryMenuItems());
         return menu;
     }
 

@@ -753,7 +753,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param bitIndex a bit index.
      * @return a boolean indicating whether the bit at the specified index is set.
      */
-    final boolean isSet(int bitIndex) {
+    protected final boolean isSet(int bitIndex) {
         return (bitmapWordAt(bitIndex) & bitmaskFor(bitIndex)) != 0;
     }
 
