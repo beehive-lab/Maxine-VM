@@ -87,6 +87,19 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
     Address bitmapWord(int bitIndex);
 
     /**
+     * Return a boolean indicating whether a bit is set in the color map (regardless of color logic).
+     * @param bitIndex a bit index.
+     * @return a boolean indicating whether the bit at the specified index is set.
+     */
+    boolean isBitSet(int bitIndex);
+
+    /**
+     * Sets a bit in the color map (regardless of color logic).
+     * @param bitIndex a bit index.
+     */
+    void setBit(int bitIndex);
+
+    /**
      * Color of the mark at the specified bit index.
      * @param bitIndex a bit index
      * @return color
