@@ -72,6 +72,28 @@ public final class VmMemoryIO extends AbstractVmHolder implements MaxMemoryIO {
         return access.readInt(address, offset);
     }
 
+    public long readLong(Address address) {
+        return access.readLong(address);
+    }
+
+    public long readLong(Address address, int offset) {
+        return access.readLong(address, offset);
+    }
+
+    /**
+     * Reads a {@code long} value from Vm memory at an indexed location.  Performs no check on the contents of
+     * memory.
+     *
+     * @param address a location in VM memory
+     * @param displacement offset in bytes from the memory location of element {@code index = 0}.
+     * @param index the index of the long to be read
+     * @return a long value from memory at the specified location
+     */
+    public long getLong(Address address, int displacement, int index) {
+        return access.getLong(address, displacement, index);
+    }
+
+
     /**
      * @return extended access to low-level reading and writing of memory in the VM.
      */
@@ -130,16 +152,6 @@ public final class VmMemoryIO extends AbstractVmHolder implements MaxMemoryIO {
      */
     public byte readByte(Address address, int offset) {
         return access.readByte(address, offset);
-    }
-
-    /**
-     * Reads a {@code long} from VM memory.
-     *
-     * @param address a location in VM memory
-     * @return the current contents of VM memory at that location as a long
-     */
-    public long readLong(Address address) {
-        return access.readLong(address);
     }
 
     /**
