@@ -211,6 +211,7 @@ public final class MemoryWordsTable extends InspectorTable {
             addColumn(MemoryColumnKind.UNICODE, new UnicodeRenderer(inspection()), null);
             addColumn(MemoryColumnKind.FLOAT, new FloatRenderer(inspection()), null);
             addColumn(MemoryColumnKind.DOUBLE, new DoubleRenderer(inspection()), null);
+            addColumn(MemoryColumnKind.MARK_BITS, new MemoryMarkBitsTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(MemoryColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
     }
