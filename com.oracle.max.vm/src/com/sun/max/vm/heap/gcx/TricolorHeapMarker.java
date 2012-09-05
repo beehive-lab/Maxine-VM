@@ -303,7 +303,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     /**
      * Shortcut to colorMap.start() for fast bitmap operation.
      */
-    @INSPECTED Address base;
+    @INSPECTED
+    protected Address base;
 
     /**
      * The marking stack.
@@ -622,7 +623,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return an index to a word of the color map.
      */
     @INLINE
-    final int bitmapWordIndex(int bitIndex) {
+    protected final int bitmapWordIndex(int bitIndex) {
         return bitIndex >> Word.widthValue().log2numberOfBits;
     }
 
@@ -755,6 +756,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     final boolean isSet(int bitIndex) {
         return (bitmapWordAt(bitIndex) & bitmaskFor(bitIndex)) != 0;
     }
+
     /**
      * Return a boolean indicating whether a bit is clear in the color map (regardless of color logic).
      * @param bitIndex a bit index.

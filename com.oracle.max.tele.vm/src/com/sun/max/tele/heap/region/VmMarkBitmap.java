@@ -42,7 +42,7 @@ import com.sun.max.vm.heap.gcx.*;
  * The Mark Bitmap's data is stored in a region separate from the heap, allocated from the OS. The region is filled with
  * a single array (in standard Maxine format) of longs.
  */
-public class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, VmObjectHoldingRegion<MaxMarkBitmap> {
+public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, VmObjectHoldingRegion<MaxMarkBitmap> {
 
     private static final String ENTITY_NAME = "Heap-Mark Bitmap data";
 
@@ -118,7 +118,7 @@ public class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, V
         this.markBitmapArray.setMaxineRole(ENTITY_NAME);
     }
 
-    public MaxVM vm() {
+    public TeleVM vm() {
         return vm;
     }
 
@@ -172,14 +172,32 @@ public class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, V
         return bitmapWordPointerAt(bitIndex);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Override the standard method in {@link TricolorHeapMarker} for reading a word out of the bitmap table with one
+     * that reads the memory remotely from the VM.
+     */
     @Override
-    protected final long hostedBitmapWordAt(int bitIndex) {
-        return vm().memoryIO().readWordValue(addressOf(bitIndex)).asLong();
+    protected long hostedBitmapWordAt(int bitIndex) {
+        return vm().memoryIO().getLong(base, 0, bitmapWordIndex(bitIndex));
     }
 
     @Override
     public MaxMarkBitmap.Color getColor(int bitIndex) {
-        // TODO (mlvdv) figure out how to reuse TricolorHeapMarker methods, with remote memory reads
+        final long color = color(bitIndex);
+        if (color == TricolorHeapMarker.WHITE) {
+            return WHITE;
+        }
+        if (color == TricolorHeapMarker.BLACK) {
+            return BLACK;
+        }
+        if (color == TricolorHeapMarker.GREY) {
+            return GREY;
+        }
+        if (color == TricolorHeapMarker.INVALID) {
+            return INVALID;
+        }
         return UNAVAILABLE;
     }
 

@@ -428,8 +428,8 @@ public final class MemoryColoringTable extends InspectorTable {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            //final com.sun.max.tele.MaxMarkBitmap.Color color = markBitmap.getColor(row);
-            setText(inspection.nameDisplay().unavailableDataShortText());
+            final com.sun.max.tele.MaxMarkBitmap.Color color = markBitmap.getColor(row);
+            setText(color.name);
             if (isBoundaryRow(row)) {
                 setBorder(preference().style().defaultPaneTopBorder());
             } else {
@@ -440,8 +440,6 @@ public final class MemoryColoringTable extends InspectorTable {
             setFont(preference().style().defaultFont());
             return this;
         }
-
-
     }
 
     /**
