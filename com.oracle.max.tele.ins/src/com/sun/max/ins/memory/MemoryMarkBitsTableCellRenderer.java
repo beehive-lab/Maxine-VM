@@ -77,7 +77,9 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-
+        if (row == 64) {
+            System.out.println("second word");
+        }
         InspectorLabel renderer = label;
         final MaxMarkBitmap markBitmap = vm().heap().markBitMap();
         final Address memoryAddress = tableModel.getAddress(row);
@@ -106,21 +108,22 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
 
 
             final StringBuilder result = new StringBuilder(100);
-            String prefix = "[";
+            String prefix = "";
             for (int index = 0; index < nBytes; index++) {
                 byte b = bytes[index];
                 result.append(prefix);
+                final StringBuffer str = new StringBuffer();
                 if (index == byteIndexInWord) {
-                    final StringBuffer str = new StringBuffer(String.format("%8s", Integer.toBinaryString(b)).replace(" ", "0"));
+                    for (short mask = 0x80; mask != 0; mask >>>= 1) {
+                        str.append((b & mask) == 0 ? "0" : "1");
+                    }
                     str.insert(bitIndexInByte + 1, '>').insert(bitIndexInByte, '<');
                     result.append("|").append(str).append("|");
-                    //result.append(String.format("|%02X|", b));
                 } else {
                     result.append(String.format("%02X", b));
                 }
                 prefix = " ";
             }
-            result.append("]");
             renderer.setText(result.toString());
             renderer.setToolTipText("Mark Bitmap word@" + bitmapWordAddress.to0xHexString());
         }
