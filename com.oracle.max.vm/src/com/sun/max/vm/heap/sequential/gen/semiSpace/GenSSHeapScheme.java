@@ -332,6 +332,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
     private void verifyAfterFullCollection() {
+        if (MaxineVM.isDebug()) {
+            Memory.zapRegion(oldSpace.fromSpace);
+        }
         refVerifier.setVerifiedSpace(oldSpace.space);
         oldSpace.visit(fotVerifier);
         noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
@@ -624,6 +627,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             }
             if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
+            }
+            if (MaxineVM.isDebug()) {
+                Memory.zapRegion(oldSpace.fromSpace);
             }
             // Make the heap inspectable
             HeapScheme.Inspect.init(true);

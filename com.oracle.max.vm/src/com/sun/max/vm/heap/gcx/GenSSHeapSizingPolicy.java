@@ -247,10 +247,11 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
     }
 
     public boolean shouldPerformFullGC(Size estimatedEvacuation, Size oldGenFreeSpace) {
+        final boolean needsFullGC = minorEvacuationOverflow || estimatedEvacuation.greaterThan(oldGenFreeSpace);
         if (logger.enabled()) {
-            logger.logShouldPerformFullGC(estimatedEvacuation.toLong(), oldGenFreeSpace.toLong(), minorEvacuationOverflow);
+            logger.logShouldPerformFullGC(estimatedEvacuation.toLong(), oldGenFreeSpace.toLong(), minorEvacuationOverflow, needsFullGC);
         }
-        return minorEvacuationOverflow || estimatedEvacuation.greaterThan(oldGenFreeSpace);
+        return needsFullGC;
     }
 
     public void notifyMinorEvacuationOverflow() {
@@ -422,8 +423,9 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         void shouldPerformFullGC(
                         @VMLogParam(name = "estimatedEvacuation") long estimatedEvacuation,
                         @VMLogParam(name = "freeOldSpace") long freeOldSpace,
-                        @VMLogParam(name = "minorEvacuationOverflow") boolean minorEvacuationOverflow
-                        );
+                        @VMLogParam(name = "minorEvacuationOverflow") boolean minorEvacuationOverflow,
+                        @VMLogParam(name = "shouldPerformGC") boolean shouldPerformGC
+                       );
         void minorOverflowEvacuation(
                         @VMLogParam(name = "start") Address start,
                         @VMLogParam(name = "end") Address end
@@ -493,13 +495,15 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         }
 
         @Override
-        protected void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow) {
+        protected void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean shouldPerformGC) {
             Log.print("Estimated next evacuation: ");
             Log.printToPowerOfTwoUnits(Size.fromLong(estimatedEvacuation));
             Log.print(", Free old space: ");
             Log.printToPowerOfTwoUnits(Size.fromLong(freeOldSpace));
             Log.print(", minorEvacuationOverflow = ");
-            Log.println(minorEvacuationOverflow);
+            Log.print(minorEvacuationOverflow);
+            Log.print(", shouldPerformGC = ");
+            Log.println(shouldPerformGC);
         }
 
         @Override
@@ -576,10 +580,10 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         protected abstract void traceMinorOverflowEvacuation(Address start, Address end);
 
         @INLINE
-        public final void logShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow) {
-            log(Operation.ShouldPerformFullGC.ordinal(), longArg(estimatedEvacuation), longArg(freeOldSpace), booleanArg(minorEvacuationOverflow));
+        public final void logShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean shouldPerformGC) {
+            log(Operation.ShouldPerformFullGC.ordinal(), longArg(estimatedEvacuation), longArg(freeOldSpace), booleanArg(minorEvacuationOverflow), booleanArg(shouldPerformGC));
         }
-        protected abstract void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow);
+        protected abstract void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean shouldPerformGC);
 
         @INLINE
         public final void logShrinkHeap(long heapSize, long youngSize, long oldSize, long delta) {
@@ -607,7 +611,7 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
                     break;
                 }
                 case 4: { //ShouldPerformFullGC
-                    traceShouldPerformFullGC(toLong(r, 1), toLong(r, 2), toBoolean(r, 3));
+                    traceShouldPerformFullGC(toLong(r, 1), toLong(r, 2), toBoolean(r, 3), toBoolean(r, 4));
                     break;
                 }
                 case 5: { //ShrinkHeap
