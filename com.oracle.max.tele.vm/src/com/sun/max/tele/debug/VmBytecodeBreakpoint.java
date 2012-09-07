@@ -162,7 +162,12 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
 
     @Override
     public void setEnabled(boolean enabled) throws MaxVMBusyException {
-        assert this.enabled != enabled;
+        if (this.enabled == enabled) {
+            final StringBuffer sb = new StringBuffer();
+            sb.append("VmBytecodeBreakpoint operation failed: attempt to ").append(enabled ? "set" : "unset");
+            sb.append("the ").append(this.enabled ? "set" : "unset").append(" breakpoint=").append(this);
+            TeleError.unexpected(sb.toString());
+        }
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
