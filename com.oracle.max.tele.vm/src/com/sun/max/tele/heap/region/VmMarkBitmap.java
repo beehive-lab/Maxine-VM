@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
@@ -195,22 +196,25 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
         return vm().memoryIO().getLong(base, 0, bitmapWordIndex(bitIndex));
     }
 
-    @Override
     public MaxMarkBitmap.Color getColor(int bitIndex) {
-        final long color = color(bitIndex);
-        if (color == TricolorHeapMarker.WHITE) {
-            return WHITE;
+        try {
+            if (isWhite(bitIndex)) {
+                if (isClear(bitIndex + 1)) {
+                    return WHITE;
+                }
+                TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
+                return INVALID;
+            } else if (isGreyWhenNotWhite(bitIndex)) {
+                return GREY;
+            }
+            if (isClear(bitIndex + 1)) {
+                return BLACK;
+            }
+            TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
+        } catch (DataIOError e) {
+            return UNAVAILABLE;
         }
-        if (color == TricolorHeapMarker.BLACK) {
-            return BLACK;
-        }
-        if (color == TricolorHeapMarker.GREY) {
-            return GREY;
-        }
-        if (color == TricolorHeapMarker.INVALID) {
-            return INVALID;
-        }
-        return UNAVAILABLE;
+        return INVALID;
     }
 
     public MaxMarkBitmap.Color getColor(Address heapAddress) {
