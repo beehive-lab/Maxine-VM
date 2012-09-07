@@ -762,7 +762,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param bitIndex a bit index.
      * @return a boolean indicating whether the bit at the specified index is clear.
      */
-    final boolean isClear(int bitIndex) {
+    protected final boolean isClear(int bitIndex) {
         return (bitmapWordAt(bitIndex) & bitmaskFor(bitIndex)) == 0;
     }
 
@@ -775,6 +775,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return true if the object is white.
      */
     @INLINE
+    protected
     final boolean isWhite(int bitIndex) {
         return isClear(bitIndex);
     }
@@ -784,7 +785,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         return isWhite(bitIndexOf(cell));
     }
 
-    final boolean isGreyWhenNotWhite(int bitIndex) {
+    protected final boolean isGreyWhenNotWhite(int bitIndex) {
         return isSet(bitIndex + 1);
     }
 
