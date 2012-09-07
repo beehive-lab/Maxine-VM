@@ -120,7 +120,10 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         } else {
             markBitmapData = markBitmap.representation();
             table = new MemoryColoringTable(inspection(), this, markBitmap, viewPreferences);
-            setContentPane(new InspectorScrollPane(inspection(), table));
+            final InspectorScrollPane markBitmapScrollPane = new InspectorScrollPane(inspection(), table);
+            final InspectorPanel contentPane = new InspectorPanel(inspection(), new BorderLayout());
+            contentPane.add(markBitmapScrollPane, BorderLayout.CENTER);
+            setContentPane(contentPane);
         }
 
         // Populate menu bar
