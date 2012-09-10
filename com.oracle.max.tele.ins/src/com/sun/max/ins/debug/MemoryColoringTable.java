@@ -462,8 +462,6 @@ public final class MemoryColoringTable extends InspectorTable {
 
         public void refresh(boolean force) {
         }
-
-
     }
 
     private final class AddressRenderer extends DefaultTableCellRenderer implements Prober{

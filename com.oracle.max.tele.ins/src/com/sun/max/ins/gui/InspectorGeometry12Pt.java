@@ -46,7 +46,7 @@ public final class InspectorGeometry12Pt implements InspectorGeometry {
         preferredFrameGeometry.put(ViewKind.DEBUG_INFO, new Rectangle(10, 500, 400, 400));
         preferredFrameGeometry.put(ViewKind.STACK_FRAME, new Rectangle(1225, 400, 375, 500));
         preferredFrameGeometry.put(ViewKind.JAVA_SOURCE, new Rectangle(1270, 0, 605, 400));
-        preferredFrameGeometry.put(ViewKind.MARK_BITMAP, new Rectangle(275, 125, 300, 600));
+        preferredFrameGeometry.put(ViewKind.MARK_BITMAP, new Rectangle(275, 125, 300, 300));
         preferredFrameGeometry.put(ViewKind.METHODS, new Rectangle(375, 0, 850, 900));
         preferredFrameGeometry.put(ViewKind.NOTEPAD, new Rectangle(200, 200, 400, 400));
         preferredFrameGeometry.put(ViewKind.REGISTERS, new Rectangle(1225, 0, 375, 400));

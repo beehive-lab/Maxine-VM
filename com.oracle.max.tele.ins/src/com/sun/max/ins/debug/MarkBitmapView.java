@@ -323,6 +323,11 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         return firstVisibleRow() <= row && row <= lastVisibleRow();
     }
 
+    private void scrollToRowCentered(int row) {
+        final int nRows = lastVisibleRow() - firstVisibleRow();
+        table.scrollToRows(row - nRows / 3, row + 2 * nRows / 3);
+    }
+
     /**
      * Modal navigation; the kind of move depends on the currently selected view mode.
      */
@@ -355,7 +360,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
             this.highlight();
         } else {
             focus().setAddress(markBitmap.heapAddress(goalIndex));
-            table.scrollToRows(goalIndex, goalIndex);
+            scrollToRowCentered(goalIndex);
         }
     }
 
@@ -365,7 +370,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     private void moveBack() {
         int startIndex = table.getSelectedRow();
         if (!rowIsVible(startIndex)) {
-            startIndex = firstVisibleRow();
+            startIndex = lastVisibleRow();
         }
         int goalIndex = -1;
         switch (viewMode()) {
@@ -391,7 +396,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
             this.highlight();
         } else {
             focus().setAddress(markBitmap.heapAddress(goalIndex));
-            table.scrollToRows(goalIndex, goalIndex);
+            scrollToRowCentered(goalIndex);
         }
     }
 
