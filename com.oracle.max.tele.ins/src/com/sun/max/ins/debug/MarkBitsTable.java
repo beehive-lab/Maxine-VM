@@ -82,13 +82,13 @@ final public class MarkBitsTable extends InspectorTable {
         final int bitIndex;
 
         MarkBitColor(Inspection inspection, int bitIndex) {
-            super(inspection, markBitsInfo.getColor(bitIndex).name);
+            super(inspection, markBitsInfo.getMarkColor(bitIndex).name);
             this.bitIndex = bitIndex;
         }
 
         @Override
         public void refresh(boolean force) {
-            setValue(markBitsInfo.getColor(bitIndex).name);
+            setValue(markBitsInfo.getMarkColor(bitIndex).name);
         }
     }
 

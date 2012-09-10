@@ -25,14 +25,19 @@ package com.sun.max.ins.debug;
 import static com.sun.max.tele.MaxProcessState.*;
 
 import java.awt.*;
+import java.awt.event.*;
+
+import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
+import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
 
 public class MarkBitmapView extends AbstractView<MarkBitmapView> implements TableColumnViewPreferenceListener {
     private static final int TRACE_VALUE = 1;
@@ -66,18 +71,67 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         return viewManager;
     }
 
+    public static enum ViewMode {
+        SET_BIT("Set Mark Bit", "Scroll to next/previous set mark bit",
+            "Scroll to previous set mark bit", "Scroll to next set mark bit"),
+        BLACK("Black Mark", "Scroll to next/previous object marked BLACK",
+            "Scroll to previous object marked BLACK", "Scroll to next object marked BLACK"),
+        GRAY("Gray Mark", "Scroll to next/previous object marked GRAY",
+            "Scroll to previous object marked GRAY", "Scroll to next object marked GRAY"),
+        WHITE("White Mark", "Scroll to next/previous object marked WHITE",
+            "Scroll to previous object marked WHITE", "Scroll to next object marked WHITE"),
+        INVALID("Invalid Mark", "Scroll to next/previous INVALID object mark",
+            "Scroll to previous INVALID object mark", "Scroll to next INVALID object mark");
+
+        private final String label;
+        private final String description;
+        private final String previousToolTip;
+        private final String nextToolTip;
+
+        /**
+         * @param label the label that identifies the mode
+         * @param description description of the mode
+         * @param previousToolTip description of the move backwards action in this mode
+         * @param nextToolTip description of the move forward action in this mode
+         */
+        private ViewMode(String label, String description, String previousToolTip, String nextToolTip) {
+            this.label = label;
+            this.description = description;
+            this.previousToolTip = previousToolTip;
+            this.nextToolTip = nextToolTip;
+        }
+
+        public String label() {
+            return label;
+        }
+
+        public String description() {
+            return description;
+        }
+
+        public String previousToolTip() {
+            return previousToolTip;
+        }
+
+        public String nextToolTip() {
+            return nextToolTip;
+        }
+
+    }
+
     private InspectorAction viewBitmapMemoryAction;
     private InspectorAction viewBitmapDataAction;
-    private MarkBitmapAction setMarkBitAtIndexAction;
-    private MarkBitmapAction setMarkBitAtAddressAction;
-    private MarkBitmapAction removeSelectedMarkBitAction;
-    private MarkBitmapAction removeAllMarkBitsAction;
 
-    private MaxMarkBitmap markBitmap;
     private MaxObject markBitmapData = null;
     private MemoryColoringTable table;
-
+    private InspectorScrollPane scrollPane;
     private final InspectorPanel nullPanel;
+    private JToolBar toolBar;
+    private final InspectorComboBox viewModeComboBox;  // TODO (mlvdv) generic in Java 7
+    private final JLabel viewModeComboBoxRenderer;  // Holds current view mode, even across view reconstructions.
+    private final InspectorButton previousButton;
+    private final InspectorButton nextButton;
+    private final InspectorButton prefsButton;
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final MarkBitmapViewPreferences viewPreferences;
@@ -87,19 +141,74 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
         viewPreferences = MarkBitmapViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
-        this.viewBitmapMemoryAction = new ViewBitmapMemoryAction(inspection);
-        this.viewBitmapDataAction = new ViewBitmapDataAction(inspection);
-        this.setMarkBitAtIndexAction = new SetMarkBitAtIndexAction(inspection);
-        this.setMarkBitAtAddressAction = new SetMarkBitAtAddressAction(inspection);
-        this.removeSelectedMarkBitAction = new RemoveSelectedMarkBitAction(inspection);
-        this.removeAllMarkBitsAction = new RemoveAllMarkBitsAction(inspection);
-
         nullPanel = new InspectorPanel(inspection(), new BorderLayout());
         nullPanel.add(new PlainLabel(inspection(), inspection().nameDisplay().unavailableDataShortText()), BorderLayout.PAGE_START);
 
-        markBitmap = vm().heap().markBitMap();
+        // The combo box holds the current view mode
+        viewModeComboBox = new InspectorComboBox(inspection, ViewMode.values());
+        viewModeComboBox.setSelectedItem(ViewMode.SET_BIT);
+        // Add the listener after the initial selection is set; we're not ready for an update yet.
+        viewModeComboBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateViewMode();
+            }
+        });
+        viewModeComboBoxRenderer = new JLabel();
+        // TODO (mlvdv) can't change to the generic form here until we drop support for jdk6 and earlier
+        viewModeComboBox.setRenderer(new ListCellRenderer() {
+            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                final ViewMode viewMode = (ViewMode) value;
+                viewModeComboBoxRenderer.setText(viewMode.label());
+                return viewModeComboBoxRenderer;
+            }
+        });
+
+        previousButton = new InspectorButton(inspection(), new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                moveBack();
+            }
+        });
+        final InspectorStyle style = preference().style();
+        previousButton.setIcon(style.navigationBackIcon());
+
+        nextButton = new InspectorButton(inspection(), new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                moveForward();
+            }
+        });
+        nextButton.setIcon(style.navigationForwardIcon());
+
+        prefsButton = new InspectorButton(inspection(), new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                new SimpleDialog(inspection(), viewPreferences.getPanel(), "View Preferences", true);
+            }
+        });
+        prefsButton.setText(null);
+        prefsButton.setToolTipText("Column view options");
+        prefsButton.setIcon(style.generalPreferencesIcon());
+
+
+
+        viewBitmapMemoryAction = new ViewBitmapMemoryAction(inspection);
+        viewBitmapDataAction = new ViewBitmapDataAction(inspection);
 
         createFrame(true);
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(viewBitmapMemoryAction);
+        memoryMenu.add(actions().viewSelectedMemoryWatchpointAction());
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+
+        final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
+        objectMenu.add(viewBitmapDataAction);
+        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
+        refreshAllActions(true);
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
 
@@ -115,63 +224,171 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
     @Override
     protected void createViewContent() {
-        if (markBitmap == null) {
-            setContentPane(nullPanel);
+        if (vm().heap().markBitMap() == null) {
+            createNullContent();
         } else {
-            markBitmapData = markBitmap.representation();
-            table = new MemoryColoringTable(inspection(), this, markBitmap, viewPreferences);
-            final InspectorScrollPane markBitmapScrollPane = new InspectorScrollPane(inspection(), table);
-            final InspectorPanel contentPane = new InspectorPanel(inspection(), new BorderLayout());
-            contentPane.add(markBitmapScrollPane, BorderLayout.CENTER);
-            setContentPane(contentPane);
+            createTableContent();
         }
-
-        // Populate menu bar
-        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        final InspectorMenu editMenu = makeMenu(MenuKind.EDIT_MENU);
-        editMenu.add(setMarkBitAtAddressAction);
-        editMenu.add(setMarkBitAtIndexAction);
-        editMenu.addSeparator();
-        editMenu.add(removeSelectedMarkBitAction);
-        editMenu.add(removeAllMarkBitsAction);
-
-        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(viewBitmapMemoryAction);
-        memoryMenu.add(actions().viewSelectedMemoryWatchpointAction());
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-
-        final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(viewBitmapDataAction);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
-
-        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-
-        refreshAllActions(true);
     }
+
+    private void createTableContent() {
+        final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
+        assert markBitMap != null;
+        markBitmapData = markBitMap.representation();
+        table = new MemoryColoringTable(inspection(), this, markBitMap, viewPreferences);
+        final InspectorPanel panel = new InspectorPanel(inspection(), new BorderLayout());
+        toolBar = new InspectorToolBar(inspection());
+        toolBar.setBorder(preference().style().defaultPaneBorder());
+        toolBar.setFloatable(false);
+        toolBar.setRollover(true);
+        toolBar.add(Box.createHorizontalGlue());
+        toolBar.add(previousButton);
+        toolBar.add(viewModeComboBox);
+        toolBar.add(nextButton);
+        toolBar.add(prefsButton);
+        toolBar.add(Box.createHorizontalGlue());
+        panel.add(toolBar, BorderLayout.NORTH);
+
+        scrollPane = new InspectorScrollPane(inspection(), table);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        setContentPane(panel);
+        // Force everything into consistency with the current view mode.
+        updateViewMode();
+    }
+
+    private void createNullContent() {
+        setContentPane(nullPanel);
+    }
+
+    /**
+     * Gets current view mode.
+     */
+    private ViewMode viewMode() {
+        return (ViewMode) viewModeComboBox.getSelectedItem();
+    }
+
+    /**
+     * Sets current view mode and updates related state.
+     */
+    private void setViewMode(ViewMode viewMode) {
+        viewModeComboBox.setSelectedItem(viewMode);
+        updateViewMode();
+    }
+
+    /**
+     * Sets the current view parameters to the default state.
+     */
+    private void clearViewMode() {
+        setViewMode(ViewMode.SET_BIT);
+    }
+
+    /**
+     * Updates state related to current view mode.
+     */
+    private void updateViewMode() {
+        previousButton.setToolTipText(viewMode().previousToolTip());
+        nextButton.setToolTipText(viewMode().nextToolTip());
+        setTitle();
+    }
+
 
     @Override
     protected void refreshState(boolean force) {
-        if (markBitmap == null && vm().heap().markBitMap() != null) {
-            // Has been allocated since we last check;  assume it won't change now.
-            markBitmap = vm().heap().markBitMap();
-            markBitmapData = markBitmap.representation();
-            table = new MemoryColoringTable(inspection(), this, markBitmap, viewPreferences);
-            setContentPane(new InspectorScrollPane(inspection(), table));
+        if (table == null && vm().heap().markBitMap() != null) {
+            createTableContent();
+        }
+        if (table != null) {
+            table.refresh(force);
         }
         refreshAllActions(force);
-                    // table.refresh(force);
     }
 
     private void refreshAllActions(boolean force) {
         viewBitmapMemoryAction.refresh(force);
         viewBitmapDataAction.refresh(force);
-        setMarkBitAtIndexAction.refresh(force);
-        setMarkBitAtAddressAction.refresh(force);
-        removeSelectedMarkBitAction.refresh(force);
-        removeAllMarkBitsAction.refresh(force);
     }
 
+    private int firstVisibleRow() {
+        return table.rowAtPoint(new Point(0, scrollPane.getViewport().getViewRect().y));
+    }
+
+    private int lastVisibleRow() {
+        final Rectangle visible = scrollPane.getViewport().getViewRect();
+        return table.rowAtPoint(new Point(0, visible.y + visible.height - 10));
+    }
+
+    private boolean rowIsVible(int row) {
+        return firstVisibleRow() <= row && row <= lastVisibleRow();
+    }
+
+    // TODO (mlvdv) implement these
+    /**
+     * Modal navigation; the kind of move depends on the currently selected view mode.
+     */
+    private void moveBack() {
+        switch (viewMode()) {
+            case SET_BIT:
+                InspectorWarning.unimplemented(inspection(), "Move to next set bit in map");
+                break;
+            case BLACK:
+                InspectorWarning.unimplemented(inspection(), "Move to next black mark in map");
+                break;
+            case GRAY:
+                InspectorWarning.unimplemented(inspection(), "Move to next black mark in map");
+                break;
+            case WHITE:
+                InspectorWarning.unimplemented(inspection(), "Move to next white mark in map");
+                break;
+            case INVALID:
+                InspectorWarning.unimplemented(inspection(), "Move to next invalid mark in map");
+                break;
+            default:
+                InspectorError.unknownCase();
+        }
+    }
+
+    // TODO (mlvdv) implement these
+    /**
+     * Modal navigation; the kind of move depends on the currently selected view mode.
+     */
+    private void moveForward() {
+
+        int startRow = table.getSelectedRow();
+        if (!rowIsVible(startRow)) {
+            startRow = firstVisibleRow();
+        }
+
+        switch (viewMode()) {
+            case SET_BIT:
+                InspectorWarning.unimplemented(inspection(), "Move to next set bit in map");
+                break;
+            case BLACK:
+                InspectorWarning.unimplemented(inspection(), "Move to next black mark in map");
+                break;
+            case GRAY:
+                InspectorWarning.unimplemented(inspection(), "Move to next black mark in map");
+                break;
+            case WHITE:
+                InspectorWarning.unimplemented(inspection(), "Move to next white mark in map");
+                break;
+            case INVALID:
+                InspectorWarning.unimplemented(inspection(), "Move to next invalid mark in map");
+                break;
+            default:
+                InspectorError.unknownCase();
+        }
+    }
+
+    @Override
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
+        // Memory view displays are sensitive to the current thread selection (for register values)
+        forceRefresh();
+    }
+
+    @Override
+    public void addressFocusChanged(Address oldAddress, Address newAddress) {
+        forceRefresh();
+    }
 
     @Override
     public void watchpointSetChanged() {
@@ -227,7 +444,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
         @Override
         protected void procedure() {
-            final MaxEntityMemoryRegion<MaxMarkBitmap> memoryRegion = markBitmap.memoryRegion();
+            final MaxEntityMemoryRegion<MaxMarkBitmap> memoryRegion = vm().heap().markBitMap().memoryRegion();
             if (memoryRegion.isAllocated()) {
                 views().memory().makeView(memoryRegion, null);
             }
@@ -235,77 +452,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(markBitmap != null && markBitmap.memoryRegion().isAllocated());
-        }
-    }
-
-
-    private abstract class MarkBitmapAction extends InspectorAction {
-
-        public MarkBitmapAction(Inspection inspection, String title) {
-            super(inspection, title);
-            refresh(true);
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(markBitmap != null);
-        }
-    }
-
-    private final class SetMarkBitAtIndexAction extends MarkBitmapAction {
-
-        private static final String TITLE = "SetMarkBitAtIndex";
-
-        public SetMarkBitAtIndexAction(Inspection inspection) {
-            super(inspection, TITLE);
-        }
-
-        @Override
-        protected void procedure() {
-            gui().errorMessage(TITLE + " not implemented yet");
-        }
-    }
-
-    private final class SetMarkBitAtAddressAction extends MarkBitmapAction {
-
-        private static final String TITLE = "SetMarkBitAtAddress";
-
-        public SetMarkBitAtAddressAction(Inspection inspection) {
-            super(inspection, TITLE);
-        }
-
-        @Override
-        protected void procedure() {
-            gui().errorMessage(TITLE + " not implemented yet");
-        }
-    }
-
-    private final class RemoveSelectedMarkBitAction extends MarkBitmapAction {
-
-        private static final String TITLE = "RemoveSelectedMarkBit";
-
-        public RemoveSelectedMarkBitAction(Inspection inspection) {
-            super(inspection, TITLE);
-        }
-
-        @Override
-        protected void procedure() {
-            gui().errorMessage(TITLE + " not implemented yet");
-        }
-    }
-
-    private final class RemoveAllMarkBitsAction extends MarkBitmapAction {
-
-        private static final String TITLE = "RemoveAllMarkBits";
-
-        public RemoveAllMarkBitsAction(Inspection inspection) {
-            super(inspection, TITLE);
-        }
-
-        @Override
-        protected void procedure() {
-            gui().errorMessage(TITLE + " not implemented yet");
+            final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
+            setEnabled(markBitMap != null && markBitMap.memoryRegion().isAllocated());
         }
     }
 

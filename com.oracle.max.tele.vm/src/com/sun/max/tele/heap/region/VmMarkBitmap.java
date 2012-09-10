@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele.heap.region;
 
+import static com.sun.max.tele.MaxMarkBitmap.MarkColor.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -46,17 +48,6 @@ import com.sun.max.vm.heap.gcx.*;
 public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, VmObjectHoldingRegion<MaxMarkBitmap> {
 
     private static final String ENTITY_NAME = "Heap-Mark Bitmap data";
-
-    @SuppressWarnings("hiding")
-    private static Color WHITE = new Color(0, "White");
-    @SuppressWarnings("hiding")
-    private static Color BLACK = new Color(1, "Black");
-    @SuppressWarnings("hiding")
-    private static Color GREY = new Color(2, "Grey");
-    @SuppressWarnings("hiding")
-    private static Color INVALID = new Color(3, "Invalid");
-    private static Color UNAVAILABLE = new Color(4, "<?>");
-    private static Color[] colors = {WHITE, BLACK, GREY, INVALID, UNAVAILABLE};
 
     /**
      * Representation of a VM memory region used to hold a MarkBitmap.  The MarkBitmap is implemented as a single long array that
@@ -154,7 +145,7 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
     }
 
     public int getBitIndexOf(Address heapAddress) {
-        return bitIndexOf(heapAddress);
+        return coveredMemoryRegion.contains(heapAddress) ? bitIndexOf(heapAddress) : -1;
     }
 
     public int getBitmapWordIndex(Address heapAddress) {
@@ -196,33 +187,29 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
         return vm().memoryIO().getLong(base, 0, bitmapWordIndex(bitIndex));
     }
 
-    public MaxMarkBitmap.Color getColor(int bitIndex) {
+    public MarkColor getMarkColor(int bitIndex) {
         try {
             if (isWhite(bitIndex)) {
                 if (isClear(bitIndex + 1)) {
-                    return WHITE;
+                    return MARK_WHITE;
                 }
                 TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
-                return INVALID;
+                return MARK_INVALID;
             } else if (isGreyWhenNotWhite(bitIndex)) {
-                return GREY;
+                return MARK_GRAY;
             }
             if (isClear(bitIndex + 1)) {
-                return BLACK;
+                return MARK_BLACK;
             }
             TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
         } catch (DataIOError e) {
-            return UNAVAILABLE;
+            return MARK_UNAVAILABLE;
         }
-        return INVALID;
+        return MARK_INVALID;
     }
 
-    public MaxMarkBitmap.Color getColor(Address heapAddress) {
-        return getColor(bitIndexOf(heapAddress));
-    }
-
-    public Color[] colors() {
-        return colors;
+    public MaxMarkBitmap.MarkColor getMarkColor(Address heapAddress) {
+        return getMarkColor(bitIndexOf(heapAddress));
     }
 
     public RemoteObjectReferenceManager objectReferenceManager() {

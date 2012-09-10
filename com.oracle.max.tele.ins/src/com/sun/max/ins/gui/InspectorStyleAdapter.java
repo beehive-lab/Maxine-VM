@@ -387,9 +387,20 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Border memoryDisabledWatchpointTagBorder() {
         return debugDisabledMachineCodeBreakpointTagBorder();
     }
-
     public Color memoryWatchpointTextColor() {
         return debugIPTextColor();
+    }
+    public Color markedWhiteBackgroundColor() {
+        return Color.WHITE;
+    }
+    public Color markedGrayBackgroundColor() {
+        return CoolGray2;
+    }
+    public Color markedBlackBackgroundColor() {
+        return Color.BLACK;
+    }
+    public Color markInvalidBackgroundColor() {
+        return Color.RED;
     }
 
     // Search related
