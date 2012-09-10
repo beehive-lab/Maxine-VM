@@ -305,6 +305,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
     private void verifyAfterMinorCollection() {
+        if (MaxineVM.isDebug()) {
+            Memory.zapRegion(youngSpace.space);
+        }
         // Verify that:
         // 1. offset table is correctly setup
         oldSpace.visit(fotVerifier);
@@ -340,7 +343,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
         oldSpace.visit(noFromSpaceReferencesVerifiers);
         gcRootsVerifier.run();
-
+        DebugHeap.verifyRegion(oldSpace.space, oldSpace.allocator.start(), oldSpace.allocator.unsafeTop(), refVerifier, detailLogger);
         verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
         verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
     }
@@ -529,6 +532,15 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     @Override
     public Size reportUsedSpace() {
         return oldSpace.usedSpace().plus(youngSpace.usedSpace());
+    }
+
+    @Override
+    public void walkHeap(CallbackCellVisitor visitor) {
+        ImmortalHeap.visitCells(visitor);
+        Heap.bootHeapRegion.visitCells(visitor);
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
+        oldSpace.visitAllocatedCells(visitor);
+        youngSpace.visitAllocatedCells(visitor);
     }
 
     @Override
