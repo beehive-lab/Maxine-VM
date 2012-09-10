@@ -25,11 +25,12 @@ package com.sun.max.ins.debug;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
 
 /**
  * Persistent preferences for viewing memory regions that the VM has allocated from the OS.
   */
-public final class MarkBitmapViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<MarkBitmapColumnKind> {
+public final class MarkBitmapViewPreferences extends TableColumnVisibilityPreferences<MarkBitmapColumnKind> {
 
     private static MarkBitmapViewPreferences globalPreferences;
 

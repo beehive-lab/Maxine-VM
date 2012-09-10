@@ -30,12 +30,23 @@ import com.sun.max.unsafe.*;
  */
 public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
 
-    public static class Color {
+    public enum MarkColor {
+        MARK_WHITE(0, "White"),
+        MARK_BLACK(1, "Black"),
+        MARK_GRAY(2, "Gray"),
+        MARK_INVALID(3, "Invalid"),
+        MARK_UNAVAILABLE(4, "<?>");
+
         public final int id;
         public final String name;
-        public Color(int id, String name) {
+        private MarkColor(int id, String name) {
             this.id = id;
             this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
         }
     }
 
@@ -53,8 +64,9 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
 
     /**
      * Index to the first bit in the mark bitmap encoding the color corresponding to the specified heap address.
+     *
      * @param heapAddress an address in the heap area covered by the mark bitmap
-     * @return a bit index
+     * @return a bit index in the map, {@code -1} if the address is not covered by the map.
      */
     int getBitIndexOf(Address heapAddress);
 
@@ -112,19 +124,11 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
      * @param bitIndex a bit index
      * @return color
      */
-    Color getColor(int bitIndex);
+    MarkColor getMarkColor(int bitIndex);
 
     /**
      * Color of the mark corresponding to the specified the heap address.
      * @param heapAddress
      */
-    Color getColor(Address heapAddress);
-
-    /**
-     * Colors that the mark bitmap can encode. Typical implementation only encode 2 colors (white and black). Exotic
-     * implementation may implement three or four color per objects. This let the heap scheme implementation specify what
-     * color it supports.
-     * @return an array enumerating all the color supported by the heap scheme.
-     */
-    Color [] colors();
+    MarkColor getMarkColor(Address heapAddress);
 }
