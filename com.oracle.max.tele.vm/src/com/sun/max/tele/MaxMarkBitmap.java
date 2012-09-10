@@ -120,15 +120,55 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
     void setBit(int bitIndex);
 
     /**
-     * Color of the mark at the specified bit index.
+     * Gets the color of the marking at the covered address, if there is an object at the address covered by the
+     * specified bit in the map; {@code null} if there is no object at the covered address.
+     *
      * @param bitIndex a bit index
-     * @return color
+     * @return color color of the mark covering an address; {@code null} if no object at address
      */
     MarkColor getMarkColor(int bitIndex);
 
     /**
-     * Color of the mark corresponding to the specified the heap address.
-     * @param heapAddress
+     * Gets the color of the marking at the address, if there is an object at the address covered by the specified bit
+     * in the map; {@code null} if there is no object at the address.
+     *
+     * @param an address, presumed to be in the heap covered by the bitmap
+     * @return color color of the mark covering the address; {@code null} if no object at address
      */
     MarkColor getMarkColor(Address heapAddress);
+
+    /**
+     * Scans forward in the bitmap, locating the closest bit <em>after</em> a specified starting location that is set.
+     *
+     * @param startBitIndex Where the scan should start
+     * @return the index of the closest set bit after the starting index, -1 if none.
+     */
+    int nextSetBitAfter(int startBitIndex);
+
+    /**
+     * Scans backward in the bitmap, locating the closest bit <em>before</em> a specified starting location that is set.
+     *
+     * @param startBitIndex Where the scan should start
+     * @return the index of the closest set bit before the starting index, -1 if none.
+     */
+    int previousSetBitBefore(int startBitIndex);
+
+    /**
+     * Scans forward in the bitmap, locating the closest bit <em>before</em> a specified starting location that begins a
+     * mark of the specified color.
+     *
+     * @param startBitIndex Where the scan should start
+     * @return the index of the closest mark before the starting index, -1 if none.
+     */
+    int nextMarkAfter(int startBitIndex, MarkColor color);
+
+    /**
+     * Scans forward in the bitmap, locating the closest bit <em>after</em> a specified starting location that begins a
+     * mark of the specified color.
+     *
+     * @param startBitIndex Where the scan should start
+     * @return the index of the closest mark after the starting index, -1 if none.
+     */
+    int previousMarkBefore(int startBitIndex, MarkColor color);
+
 }

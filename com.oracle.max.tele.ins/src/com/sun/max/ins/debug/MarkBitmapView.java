@@ -37,6 +37,7 @@ import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.MaxMarkBitmap.MarkColor;
 import com.sun.max.unsafe.*;
 
 public class MarkBitmapView extends AbstractView<MarkBitmapView> implements TableColumnViewPreferenceListener {
@@ -122,6 +123,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     private InspectorAction viewBitmapMemoryAction;
     private InspectorAction viewBitmapDataAction;
 
+    private MaxMarkBitmap markBitmap = null;
     private MaxObject markBitmapData = null;
     private MemoryColoringTable table;
     private InspectorScrollPane scrollPane;
@@ -232,10 +234,10 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     }
 
     private void createTableContent() {
-        final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
-        assert markBitMap != null;
-        markBitmapData = markBitMap.representation();
-        table = new MemoryColoringTable(inspection(), this, markBitMap, viewPreferences);
+        markBitmap = vm().heap().markBitMap();
+        assert markBitmap != null;
+        markBitmapData = markBitmap.representation();
+        table = new MemoryColoringTable(inspection(), this, markBitmap, viewPreferences);
         final InspectorPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         toolBar = new InspectorToolBar(inspection());
         toolBar.setBorder(preference().style().defaultPaneBorder());
@@ -321,61 +323,75 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         return firstVisibleRow() <= row && row <= lastVisibleRow();
     }
 
-    // TODO (mlvdv) implement these
-    /**
-     * Modal navigation; the kind of move depends on the currently selected view mode.
-     */
-    private void moveBack() {
-        switch (viewMode()) {
-            case SET_BIT:
-                InspectorWarning.unimplemented(inspection(), "Move to next set bit in map");
-                break;
-            case BLACK:
-                InspectorWarning.unimplemented(inspection(), "Move to next black mark in map");
-                break;
-            case GRAY:
-                InspectorWarning.unimplemented(inspection(), "Move to next black mark in map");
-                break;
-            case WHITE:
-                InspectorWarning.unimplemented(inspection(), "Move to next white mark in map");
-                break;
-            case INVALID:
-                InspectorWarning.unimplemented(inspection(), "Move to next invalid mark in map");
-                break;
-            default:
-                InspectorError.unknownCase();
-        }
-    }
-
-    // TODO (mlvdv) implement these
     /**
      * Modal navigation; the kind of move depends on the currently selected view mode.
      */
     private void moveForward() {
-
-        int startRow = table.getSelectedRow();
-        if (!rowIsVible(startRow)) {
-            startRow = firstVisibleRow();
+        int startIndex = table.getSelectedRow();
+        if (!rowIsVible(startIndex)) {
+            startIndex = firstVisibleRow();
         }
-
+        int goalIndex = -1;
         switch (viewMode()) {
             case SET_BIT:
-                InspectorWarning.unimplemented(inspection(), "Move to next set bit in map");
+                goalIndex = markBitmap.nextSetBitAfter(startIndex);
                 break;
             case BLACK:
-                InspectorWarning.unimplemented(inspection(), "Move to next black mark in map");
+                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_BLACK);
                 break;
             case GRAY:
-                InspectorWarning.unimplemented(inspection(), "Move to next black mark in map");
+                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_GRAY);
                 break;
             case WHITE:
-                InspectorWarning.unimplemented(inspection(), "Move to next white mark in map");
+                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_WHITE);
                 break;
             case INVALID:
-                InspectorWarning.unimplemented(inspection(), "Move to next invalid mark in map");
+                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_INVALID);
                 break;
             default:
                 InspectorError.unknownCase();
+        }
+        if (goalIndex < 0) {
+            this.highlight();
+        } else {
+            focus().setAddress(markBitmap.heapAddress(goalIndex));
+            table.scrollToRows(goalIndex, goalIndex);
+        }
+    }
+
+    /**
+     * Modal navigation; the kind of move depends on the currently selected view mode.
+     */
+    private void moveBack() {
+        int startIndex = table.getSelectedRow();
+        if (!rowIsVible(startIndex)) {
+            startIndex = firstVisibleRow();
+        }
+        int goalIndex = -1;
+        switch (viewMode()) {
+            case SET_BIT:
+                goalIndex = markBitmap.previousSetBitBefore(startIndex);
+                break;
+            case BLACK:
+                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_BLACK);
+                break;
+            case GRAY:
+                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_GRAY);
+                break;
+            case WHITE:
+                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_WHITE);
+                break;
+            case INVALID:
+                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_INVALID);
+                break;
+            default:
+                InspectorError.unknownCase();
+        }
+        if (goalIndex < 0) {
+            this.highlight();
+        } else {
+            focus().setAddress(markBitmap.heapAddress(goalIndex));
+            table.scrollToRows(goalIndex, goalIndex);
         }
     }
 

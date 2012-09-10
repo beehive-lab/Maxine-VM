@@ -188,28 +188,107 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
     }
 
     public MarkColor getMarkColor(int bitIndex) {
-        try {
-            if (isWhite(bitIndex)) {
+        final Address address = addressOf(bitIndex);
+        if (vm().objects().objectStatusAt(address).isLive()) {
+            try {
+                if (isWhite(bitIndex)) {
+                    if (isClear(bitIndex + 1)) {
+                        return MARK_WHITE;
+                    }
+                    TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
+                    return MARK_INVALID;
+                } else if (isGreyWhenNotWhite(bitIndex)) {
+                    return MARK_GRAY;
+                }
                 if (isClear(bitIndex + 1)) {
-                    return MARK_WHITE;
+                    return MARK_BLACK;
                 }
                 TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
                 return MARK_INVALID;
-            } else if (isGreyWhenNotWhite(bitIndex)) {
-                return MARK_GRAY;
+            } catch (DataIOError e) {
+                return MARK_UNAVAILABLE;
             }
-            if (isClear(bitIndex + 1)) {
-                return MARK_BLACK;
-            }
-            TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
-        } catch (DataIOError e) {
-            return MARK_UNAVAILABLE;
         }
-        return MARK_INVALID;
+        return null;
     }
 
     public MaxMarkBitmap.MarkColor getMarkColor(Address heapAddress) {
         return getMarkColor(bitIndexOf(heapAddress));
+    }
+
+    /**
+     * @return bitmap index one past the last covered heap address
+     */
+    private int endBitIndex() {
+        return bitIndexOf(coveredMemoryRegion.end());
+    }
+
+    public int nextSetBitAfter(int startBitIndex) {
+        for (int bitIndex = startBitIndex + 1; bitIndex < endBitIndex(); bitIndex++) {
+            if (isSet(bitIndex)) {
+                return bitIndex;
+            }
+        }
+        return -1;
+    }
+
+    public int previousSetBitBefore(int startBitIndex) {
+        for (int bitIndex = startBitIndex - 1; bitIndex >= 0; bitIndex--) {
+            if (isSet(bitIndex)) {
+                return bitIndex;
+            }
+        }
+        return -1;
+    }
+
+    public int nextMarkAfter(int startBitIndex, MarkColor color) {
+        switch(color) {
+            case MARK_BLACK:
+            case MARK_GRAY:
+                for (int bitIndex = startBitIndex + 1; bitIndex < endBitIndex(); bitIndex++) {
+                    // For BLACK and GRAY marks, we only have to check at locations where the first bit is set
+                    if (isSet(bitIndex) && getMarkColor(bitIndex) == color) {
+                        return bitIndex;
+                    }
+                }
+                return -1;
+            case MARK_WHITE:
+            case MARK_INVALID:
+                for (int bitIndex = startBitIndex + 1; bitIndex < endBitIndex(); bitIndex++) {
+                    if (getMarkColor(bitIndex) == color) {
+                        return bitIndex;
+                    }
+                }
+                return -1;
+            case MARK_UNAVAILABLE:
+                return -1;
+        }
+        return -1;
+    }
+
+    public int previousMarkBefore(int startBitIndex, MarkColor color) {
+        switch(color) {
+            case MARK_BLACK:
+            case MARK_GRAY:
+                for (int bitIndex = startBitIndex - 1; bitIndex >= 0; bitIndex--) {
+                    // For BLACK and GRAY marks, we only have to check at locations where the first bit is set
+                    if (isSet(bitIndex) && getMarkColor(bitIndex) == color) {
+                        return bitIndex;
+                    }
+                }
+                return -1;
+            case MARK_WHITE:
+            case MARK_INVALID:
+                for (int bitIndex = startBitIndex - 1; bitIndex >= 0; bitIndex--) {
+                    if (getMarkColor(bitIndex) == color) {
+                        return bitIndex;
+                    }
+                }
+                return -1;
+            case MARK_UNAVAILABLE:
+                return -1;
+        }
+        return -1;
     }
 
     public RemoteObjectReferenceManager objectReferenceManager() {
