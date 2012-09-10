@@ -362,47 +362,22 @@ public final class MemoryColoringTable extends InspectorTable {
             final Address address = tableModel.getAddress(row);
             Color backgroundColor = cellBackgroundColor();
             Color foregroundColor = cellForegroundColor(row, column);
-            final boolean bitSet = markBitmap.isBitSet(row);
-            final String bitValueText = bitSet ? "1" : "0";
+            final String bitValueText = markBitmap.isBitSet(row) ? "1" : "0";
             String labelText = bitValueText;
-            MarkColor markColor = null;
-            MaxObject object = null;
+            MaxObject coveredObject = null;
             final InspectorStyle style = inspection().preference().style();
-            if (vm().objects().objectStatusAt(address).isLive()) {
-                // Mark bit covers the first word of an object
-                markColor = markBitmap.getMarkColor(row);
-                try {
-                    object = vm().objects().findObjectAt(address);
-                } catch (MaxVMBusyException e) {
-                }
-                switch(markColor) {
-                    case MARK_WHITE:
-                        backgroundColor = style.markedWhiteBackgroundColor();
-                        foregroundColor = Color.BLACK;
-                        break;
-                    case MARK_GRAY:
-                        backgroundColor = style.markedGrayBackgroundColor();
-                        foregroundColor = Color.WHITE;
-                        break;
-                    case MARK_BLACK:
-                        backgroundColor = style.markedBlackBackgroundColor();
-                        foregroundColor = Color.WHITE;
-                        break;
-                    case MARK_INVALID:
-                        backgroundColor = style.markInvalidBackgroundColor();
-                        foregroundColor = Color.WHITE;
-                        break;
-                    case MARK_UNAVAILABLE:
-                        labelText = inspection().nameDisplay().unavailableDataShortText();
-                        break;
-                }
-            } else if (row > 0 && vm().objects().objectStatusAt(tableModel.getAddress(row - 1)).isLive()) {
-                // Mark bit covers the second word of an object
+            // Everything now set to default; i.e. where there is no mark
+            try {
+                coveredObject = vm().objects().findObjectAt(address);
+            } catch (MaxVMBusyException e) {
+            }
+            // Is this the first bit of a mark?
+            MarkColor markColor = markBitmap.getMarkColor(row);
+            if (markColor == null && row > 0) {
+                // Is this the second bit of a mark?  If so, render the cell with the same style as as the first bit
                 markColor = markBitmap.getMarkColor(row - 1);
-                try {
-                    object = vm().objects().findObjectAt(tableModel.getAddress(row - 1));
-                } catch (MaxVMBusyException e) {
-                }
+            }
+            if (markColor != null) {
                 switch(markColor) {
                     case MARK_WHITE:
                         backgroundColor = style.markedWhiteBackgroundColor();
@@ -424,7 +399,7 @@ public final class MemoryColoringTable extends InspectorTable {
                         labelText = inspection().nameDisplay().unavailableDataShortText();
                         break;
                 }
-            } else if (bitSet) {
+            } else if (markBitmap.isBitSet(row)) {
                 // Not a valid location for a mark bit; shouldn't be set
                 backgroundColor = style.markInvalidBackgroundColor();
                 foregroundColor = Color.WHITE;
@@ -446,9 +421,9 @@ public final class MemoryColoringTable extends InspectorTable {
             if (markColor != null) {
                 ttBuilder.append(", object mark=").append(markColor);
             }
-            if (object != null) {
+            if (coveredObject != null) {
                 ttBuilder.append("<br>Covered object:  ");
-                ttBuilder.append(htmlify(inspection().nameDisplay().referenceToolTipText(object)));
+                ttBuilder.append(htmlify(inspection().nameDisplay().referenceToolTipText(coveredObject)));
             }
             setWrappedToolTipHtmlText(ttBuilder.toString());
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
@@ -530,11 +505,6 @@ public final class MemoryColoringTable extends InspectorTable {
         }
 
         public void refresh(boolean force) {
-            for (WordValueLabel label : addressToLabelMap.values()) {
-                if (label != null) {
-                    label.refresh(force);
-                }
-            }
         }
     }
 
