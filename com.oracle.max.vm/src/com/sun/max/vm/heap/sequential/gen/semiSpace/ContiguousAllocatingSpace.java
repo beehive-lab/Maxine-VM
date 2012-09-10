@@ -135,6 +135,14 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         visitor.visitCells(space.start(), allocator.unsafeTop());
     }
 
+    public void visitAllocatedCells(CellVisitor visitor) {
+        final Address top = allocator.unsafeTop();
+        Pointer cell = space.start().asPointer();
+        do {
+            cell = visitor.visitCell(cell);
+        } while (cell.lessThan(top));
+    }
+
     @Override
     public SpaceBounds bounds() {
         return space.bounds();
