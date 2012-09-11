@@ -1221,7 +1221,10 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
         XirOperand tlabEnd = asm.createTemp("tlabEnd", WordUtil.archKind());
         XirOperand newMark = asm.createTemp("newMark", WordUtil.archKind());
-
+        XirOperand debugTemp = null;
+        if (MaxineVM.isDebug()) {
+            debugTemp = asm.createTemp("debugTemp",  WordUtil.archKind());
+        }
         XirConstant offsetToTLABMark = asm.i(HeapSchemeWithTLAB.TLAB_MARK.offset);
         XirConstant offsetToTLABEnd = asm.i(HeapSchemeWithTLAB.TLAB_TOP.offset);
         asm.pload(WordUtil.archKind(), etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
@@ -1234,6 +1237,10 @@ public class MaxXirGenerator implements RiXirGenerator {
             buildTLABLogging(etla, tupleSize, cell);
         }
         asm.bindInline(done);
+        if (MaxineVM.isDebug()) {
+            asm.pload(WordUtil.archKind(), debugTemp, hub, false);
+            asm.pload(WordUtil.archKind(), debugTemp, debugTemp, false);
+        }
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
         if (isHybrid) {

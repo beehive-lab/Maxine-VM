@@ -42,13 +42,6 @@ public abstract class RefillManager extends Refiller {
     public abstract Address allocateOverflow(Size size);
 
     /**
-     * Called directly by the allocator if the requested size is larger than its maximum size limit.
-     * @param size number of bytes requested
-     * @return the address to a contiguous region of the requested size
-     */
-    public abstract Address allocateLarge(Size size);
-
-    /**
      * Tell whether the amount of space left warrants a refill.
      * @param requestedSpace initial space requested
      * @param spaceLeft space left in the allocator requesting refill

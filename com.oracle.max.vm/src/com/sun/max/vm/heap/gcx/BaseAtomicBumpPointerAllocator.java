@@ -53,6 +53,12 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
 
     protected final T refillManager;
 
+    /**
+     * Maximum size one can allocate with this allocator. Request for size larger than this
+     * are delegated to @link {@link RefillManager#allocateLargeRaw(Size)}.
+     */
+    protected Size sizeLimit;
+
     @FOLD
     public static int topOffset() {
         return ClassActor.fromJava(BaseAtomicBumpPointerAllocator.class).findLocalInstanceFieldActor("top").offset();
@@ -68,8 +74,12 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         return this;
     }
 
+    public final boolean holdsRefillLock() {
+        return Thread.holdsLock(refillLock());
+    }
+
     @INLINE
-    final T refillManager() {
+    public final T refillManager() {
         return refillManager;
     }
 
@@ -131,12 +141,17 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         zap(top);
     }
 
-    void initialize(Address initialChunk, Size initialChunkSize) {
+    public void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit) {
+        this.sizeLimit = sizeLimit;
         if (initialChunk.isZero()) {
             clear();
         } else {
             refill(initialChunk, initialChunkSize);
         }
+    }
+
+    public final void setSizeLimit(Size sizeLimit) {
+        this.sizeLimit = sizeLimit;
     }
 
     public final void reset() {
@@ -285,6 +300,9 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
 
             Pointer cell = top.asPointer();
             if (cell.plus(size).greaterThan(end)) {
+                if (isLarge(size)) {
+                    return refillManager.allocateLargeRaw(size).asPointer();
+                }
                 // end isn't the hard limit of the space.
                 // Here we atomically fill up the linear space.
                 // Atomically set top to the limit as we may be racing with
@@ -299,7 +317,10 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 if (cell.equals(startOfSpaceLeft) && cell.plus(size).equals(hardLimit)) {
                     return cell;
                 }
-
+                if (MaxineVM.isDebug()) {
+                    Log.print("Refill after failed attempt to allocate ");
+                    Log.printlnToPowerOfTwoUnits(size);
+                }
                 Address chunk = refillManager.allocateRefill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
                 if (chunk.isNotZero()) {
                     refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
@@ -365,6 +386,11 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
             }
         } while (thisAddress.compareAndSwapWord(topOffset(), cell, newTop) != cell);
         return cell;
+    }
+
+    @INLINE
+    protected final boolean isLarge(Size size) {
+        return size.greaterThan(sizeLimit);
     }
 
     /**

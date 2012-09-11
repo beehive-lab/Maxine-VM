@@ -453,7 +453,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         evacuateFromRoots();
         timers.stop(ROOT_SCAN);
         if (logPhases) {
-            phaseLogger.logScanningRoots(VMLogger.Interval.BEGIN);
+            phaseLogger.logScanningRoots(VMLogger.Interval.END);
         }
 
         if (logPhases) {

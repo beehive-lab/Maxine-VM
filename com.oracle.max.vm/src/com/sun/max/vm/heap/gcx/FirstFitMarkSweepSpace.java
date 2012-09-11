@@ -408,7 +408,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         refillManager.setMinChunkSize(minReclaimableSpace);
         // Initialize the tlab allocator with a first region.
         tlabAllocator.initialize(regionSize, regionSize);
-        overflowAllocator.initialize(Address.zero(), Size.zero());
+        overflowAllocator.initialize(Address.zero(), Size.zero(), Size.zero());
     }
 
     public Pointer allocate(Size size) {
