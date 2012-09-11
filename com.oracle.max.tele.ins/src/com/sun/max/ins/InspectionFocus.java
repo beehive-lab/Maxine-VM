@@ -498,4 +498,41 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
     }
 
+    private int markBitIndex;
+
+    private final Object markBitIndexFocusTracer = new Object() {
+        @Override
+        public String toString() {
+            return tracePrefix() + "Focus(Heap mark bit index):  " + markBitIndex;
+        }
+    };
+
+    /**
+     * Currently selected bit index in the VM's heap mark bitmap, -1 if none.
+     */
+    public int markBitIndex() {
+        return markBitIndex;
+    }
+
+    /**
+     * Whether there is a currently selected mark bit index.
+     */
+    public boolean hasMarkBitIndex() {
+        return markBitIndex >= 0;
+    }
+
+    /**
+     * Shifts the focus of the Inspection to a particular bit in the heap's mark bitmap.
+     * This is a view state change that can happen when there is no change to VM state.
+     */
+    public void setMarkBitIndex(int heapMarkBit) {
+        final int oldMarkBitIndex = this.markBitIndex;
+        this.markBitIndex = heapMarkBit;
+        Trace.line(TRACE_VALUE, markBitIndexFocusTracer);
+        for (ViewFocusListener listener : copyListeners()) {
+            listener.markBitIndexFocusChanged(oldMarkBitIndex, heapMarkBit);
+        }
+
+    }
+
 }

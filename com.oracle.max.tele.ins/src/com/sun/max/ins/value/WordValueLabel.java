@@ -33,6 +33,7 @@ import com.sun.max.ins.object.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.MaxMarkBitmap.MarkColor;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -1580,6 +1581,37 @@ public class WordValueLabel extends ValueLabel {
         return action;
     }
 
+    private InspectorAction getShowHeapMarkAction(Value value) {
+        InspectorAction action = null;
+        final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
+        if (value != VoidValue.VOID && markBitMap != null) {
+            final Address address = value.toWord().asAddress();
+            if (markBitMap.isCovered(address)) {
+                final int bitIndex = markBitMap.getBitIndexOf(address);
+                final MarkColor markColor = markBitMap.getMarkColor(bitIndex);
+
+                final StringBuilder sb = new StringBuilder();
+                sb.append("Show heap mark bit(");
+                sb.append(bitIndex);
+                sb.append(")=");
+                sb.append(markBitMap.isBitSet(bitIndex) ? "1" : "0");
+                sb.append(", color=");
+                sb.append(markColor);
+                action = new InspectorAction(inspection(), sb.toString()) {
+
+                    @Override
+                    protected void procedure() {
+                        focus().setMarkBitIndex(bitIndex);
+                        focus().setAddress(address);
+                    }
+
+                };
+            }
+        }
+        return action;
+    }
+
+
     @Override
     public Transferable getTransferable() {
         Transferable transferable = null;
@@ -1733,12 +1765,34 @@ public class WordValueLabel extends ValueLabel {
             }
         }
 
+        private final class MenuShowHeapMarkAction extends InspectorAction {
+
+            private final InspectorAction showHeapMarkAction;
+
+            private MenuShowHeapMarkAction(Value value) {
+                super(inspection(), "Show heap bitmap mark for location");
+                showHeapMarkAction = getShowHeapMarkAction(value);
+                if (showHeapMarkAction == null) {
+                    setEnabled(false);
+                } else {
+                    setEnabled(true);
+                    setName(showHeapMarkAction.name());
+                }
+            }
+
+            @Override
+            public void procedure() {
+                showHeapMarkAction.perform();
+            }
+        }
+
         public WordValueMenuItems(Inspection inspection, Value value) {
             add(actions().copyValue(value, "Copy value to clipboard"));
             add(new MenuViewObjectAction(value));
             add(new MenuViewMemoryAction(value));
             add(new MenuCloseAndViewObjectAction(value));
             add(new MenuCycleDisplayAction());
+            add(new MenuShowHeapMarkAction(value));
             add(new MenuShowMemoryRegionAction(value));
         }
     }

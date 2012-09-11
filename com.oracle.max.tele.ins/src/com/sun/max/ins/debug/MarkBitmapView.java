@@ -50,6 +50,16 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     public static final class MarkBitmapViewManager extends AbstractSingletonViewManager<MarkBitmapView> {
         protected MarkBitmapViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
+            focus().addListener(new InspectionFocusAdapter() {
+
+                @Override
+                public void markBitIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit) {
+                    if (heapMarkBit >= 0) {
+                        final MarkBitmapView view = MarkBitmapViewManager.this.activateView();
+                        view.scrollToRowCentered(heapMarkBit);
+                    }
+                }
+            });
         }
 
         @Override

@@ -577,6 +577,9 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     public void heapObjectFocusChanged(MaxObject oldObject, MaxObject object) {
     }
 
+    public void markBitIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit) {
+    }
+
     public final InspectorAction getShowViewAction() {
         // Only need one, but maybe not even that one; create lazily.
         if (showViewAction == null) {
