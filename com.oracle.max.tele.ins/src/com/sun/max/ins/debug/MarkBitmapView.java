@@ -127,7 +127,6 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     private MaxObject markBitmapData = null;
     private MemoryColoringTable table;
     private InspectorScrollPane scrollPane;
-    private final InspectorPanel nullPanel;
     private JToolBar toolBar;
     private final InspectorComboBox viewModeComboBox;  // TODO (mlvdv) generic in Java 7
     private final JLabel viewModeComboBoxRenderer;  // Holds current view mode, even across view reconstructions.
@@ -143,8 +142,6 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
         viewPreferences = MarkBitmapViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
-        nullPanel = new InspectorPanel(inspection(), new BorderLayout());
-        nullPanel.add(new PlainLabel(inspection(), inspection().nameDisplay().unavailableDataShortText()), BorderLayout.PAGE_START);
 
         // The combo box holds the current view mode
         viewModeComboBox = new InspectorComboBox(inspection, ViewMode.values());
@@ -189,28 +186,12 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         prefsButton.setToolTipText("Column view options");
         prefsButton.setIcon(style.generalPreferencesIcon());
 
-
-
         viewBitmapMemoryAction = new ViewBitmapMemoryAction(inspection);
         viewBitmapDataAction = new ViewBitmapDataAction(inspection);
+        refreshAllActions(true);
 
         createFrame(true);
 
-        // Populate menu bar
-        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(viewBitmapMemoryAction);
-        memoryMenu.add(actions().viewSelectedMemoryWatchpointAction());
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-
-        final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(viewBitmapDataAction);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
-
-        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-
-        refreshAllActions(true);
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
 
@@ -226,6 +207,20 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
     @Override
     protected void createViewContent() {
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(viewBitmapMemoryAction);
+        memoryMenu.add(actions().viewSelectedMemoryWatchpointAction());
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+
+        final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
+        objectMenu.add(viewBitmapDataAction);
+        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
         if (vm().heap().markBitMap() == null) {
             createNullContent();
         } else {
@@ -233,6 +228,29 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         }
     }
 
+    @Override
+    protected void refreshState(boolean force) {
+        if (table == null && vm().heap().markBitMap() != null) {
+            reconstructView();
+        }
+        if (table != null) {
+            table.refresh(force);
+        }
+        refreshAllActions(force);
+    }
+
+    /**
+     * Creates a placeholder content pane, to be used until we discover that the mark bitmap has been allocated.
+     */
+    private void createNullContent() {
+        final InspectorPanel nullPanel = new InspectorPanel(inspection(), new BorderLayout());
+        nullPanel.add(new PlainLabel(inspection(), "<Mark Bitmap not yet allocated>"), BorderLayout.PAGE_START);
+        setContentPane(nullPanel);
+    }
+
+    /**
+     * Creates a pane that displays and permits interaction with the mark bitmap, assumes that the bitmap has been allocated in VM memory.
+     */
     private void createTableContent() {
         markBitmap = vm().heap().markBitMap();
         assert markBitmap != null;
@@ -256,10 +274,6 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         setContentPane(panel);
         // Force everything into consistency with the current view mode.
         updateViewMode();
-    }
-
-    private void createNullContent() {
-        setContentPane(nullPanel);
     }
 
     /**
@@ -293,17 +307,6 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         setTitle();
     }
 
-
-    @Override
-    protected void refreshState(boolean force) {
-        if (table == null && vm().heap().markBitMap() != null) {
-            createTableContent();
-        }
-        if (table != null) {
-            table.refresh(force);
-        }
-        refreshAllActions(force);
-    }
 
     private void refreshAllActions(boolean force) {
         viewBitmapMemoryAction.refresh(force);
@@ -357,6 +360,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
                 InspectorError.unknownCase();
         }
         if (goalIndex < 0) {
+            this.highlight();
             this.highlight();
         } else {
             focus().setAddress(markBitmap.heapAddress(goalIndex));
