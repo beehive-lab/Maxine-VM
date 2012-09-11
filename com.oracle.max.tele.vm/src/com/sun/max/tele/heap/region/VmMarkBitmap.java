@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele.heap.region;
 
+import static com.sun.max.tele.MaxMarkBitmap.MarkColor.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -46,17 +48,6 @@ import com.sun.max.vm.heap.gcx.*;
 public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBitmap, VmObjectHoldingRegion<MaxMarkBitmap> {
 
     private static final String ENTITY_NAME = "Heap-Mark Bitmap data";
-
-    @SuppressWarnings("hiding")
-    private static Color WHITE = new Color(0, "White");
-    @SuppressWarnings("hiding")
-    private static Color BLACK = new Color(1, "Black");
-    @SuppressWarnings("hiding")
-    private static Color GREY = new Color(2, "Grey");
-    @SuppressWarnings("hiding")
-    private static Color INVALID = new Color(3, "Invalid");
-    private static Color UNAVAILABLE = new Color(4, "<?>");
-    private static Color[] colors = {WHITE, BLACK, GREY, INVALID, UNAVAILABLE};
 
     /**
      * Representation of a VM memory region used to hold a MarkBitmap.  The MarkBitmap is implemented as a single long array that
@@ -154,7 +145,7 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
     }
 
     public int getBitIndexOf(Address heapAddress) {
-        return bitIndexOf(heapAddress);
+        return coveredMemoryRegion.contains(heapAddress) ? bitIndexOf(heapAddress) : -1;
     }
 
     public int getBitmapWordIndex(Address heapAddress) {
@@ -196,33 +187,108 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
         return vm().memoryIO().getLong(base, 0, bitmapWordIndex(bitIndex));
     }
 
-    public MaxMarkBitmap.Color getColor(int bitIndex) {
-        try {
-            if (isWhite(bitIndex)) {
+    public MarkColor getMarkColor(int bitIndex) {
+        final Address address = addressOf(bitIndex);
+        if (vm().objects().objectStatusAt(address).isLive()) {
+            try {
+                if (isWhite(bitIndex)) {
+                    if (isClear(bitIndex + 1)) {
+                        return MARK_WHITE;
+                    }
+                    TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
+                    return MARK_INVALID;
+                } else if (isGreyWhenNotWhite(bitIndex)) {
+                    return MARK_GRAY;
+                }
                 if (isClear(bitIndex + 1)) {
-                    return WHITE;
+                    return MARK_BLACK;
                 }
                 TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
-                return INVALID;
-            } else if (isGreyWhenNotWhite(bitIndex)) {
-                return GREY;
+                return MARK_INVALID;
+            } catch (DataIOError e) {
+                return MARK_UNAVAILABLE;
             }
-            if (isClear(bitIndex + 1)) {
-                return BLACK;
-            }
-            TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
-        } catch (DataIOError e) {
-            return UNAVAILABLE;
         }
-        return INVALID;
+        return null;
     }
 
-    public MaxMarkBitmap.Color getColor(Address heapAddress) {
-        return getColor(bitIndexOf(heapAddress));
+    public MaxMarkBitmap.MarkColor getMarkColor(Address heapAddress) {
+        return getMarkColor(bitIndexOf(heapAddress));
     }
 
-    public Color[] colors() {
-        return colors;
+    /**
+     * @return bitmap index one past the last covered heap address
+     */
+    private int endBitIndex() {
+        return bitIndexOf(coveredMemoryRegion.end());
+    }
+
+    public int nextSetBitAfter(int startBitIndex) {
+        for (int bitIndex = startBitIndex + 1; bitIndex < endBitIndex(); bitIndex++) {
+            if (isSet(bitIndex)) {
+                return bitIndex;
+            }
+        }
+        return -1;
+    }
+
+    public int previousSetBitBefore(int startBitIndex) {
+        for (int bitIndex = startBitIndex - 1; bitIndex >= 0; bitIndex--) {
+            if (isSet(bitIndex)) {
+                return bitIndex;
+            }
+        }
+        return -1;
+    }
+
+    public int nextMarkAfter(int startBitIndex, MarkColor color) {
+        switch(color) {
+            case MARK_BLACK:
+            case MARK_GRAY:
+                for (int bitIndex = startBitIndex + 1; bitIndex < endBitIndex(); bitIndex++) {
+                    // For BLACK and GRAY marks, we only have to check at locations where the first bit is set
+                    if (isSet(bitIndex) && getMarkColor(bitIndex) == color) {
+                        return bitIndex;
+                    }
+                }
+                return -1;
+            case MARK_WHITE:
+            case MARK_INVALID:
+                for (int bitIndex = startBitIndex + 1; bitIndex < endBitIndex(); bitIndex++) {
+                    if (getMarkColor(bitIndex) == color) {
+                        return bitIndex;
+                    }
+                }
+                return -1;
+            case MARK_UNAVAILABLE:
+                return -1;
+        }
+        return -1;
+    }
+
+    public int previousMarkBefore(int startBitIndex, MarkColor color) {
+        switch(color) {
+            case MARK_BLACK:
+            case MARK_GRAY:
+                for (int bitIndex = startBitIndex - 1; bitIndex >= 0; bitIndex--) {
+                    // For BLACK and GRAY marks, we only have to check at locations where the first bit is set
+                    if (isSet(bitIndex) && getMarkColor(bitIndex) == color) {
+                        return bitIndex;
+                    }
+                }
+                return -1;
+            case MARK_WHITE:
+            case MARK_INVALID:
+                for (int bitIndex = startBitIndex - 1; bitIndex >= 0; bitIndex--) {
+                    if (getMarkColor(bitIndex) == color) {
+                        return bitIndex;
+                    }
+                }
+                return -1;
+            case MARK_UNAVAILABLE:
+                return -1;
+        }
+        return -1;
     }
 
     public RemoteObjectReferenceManager objectReferenceManager() {

@@ -944,7 +944,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
         }
     };
 
-    private InspectorAction scrollToFocusAction = new InspectorAction(inspection(), "Scroll to selected memorylocation") {
+    private InspectorAction scrollToFocusAction = new InspectorAction(inspection(), "Scroll to selected memory location") {
         @Override
         protected void procedure() {
             table.scrollToAddress(focus().address());

@@ -30,11 +30,15 @@ import com.sun.max.tele.*;
  */
 public enum MarkBitmapColumnKind implements ColumnKind {
 
-    TAG("Tag", "Additional information", true, -1),
-    BIT_INDEX("bit #", "Index of first bit of the mark", true, -1),
-    BITMAP_WORD_ADDRESS("@bit", "Address of word containing first bit of mark", true, -1),
-    HEAP_ADDRESS("Address", "Heap address associated to this the mark", true, -1),
-    COLOR("Color", "Color of the mark", true, -1);
+    MARK("Mark", "The mark bit covering this word and the color of the object's mark", true, 16),
+    BIT_INDEX("bit #", "Index of first bit of the mark", true, 12) {
+        @Override
+        public boolean canBeMadeInvisible() {
+            return false;
+        }
+    },
+    BITMAP_WORD_ADDRESS("@bit", "Address of word containing first bit of mark", true, 20),
+    HEAP_ADDRESS("Covered Address", "Heap address covered by this bitmap position", true, 20);
 
     private final String label;
     private final String toolTipText;
@@ -59,7 +63,7 @@ public enum MarkBitmapColumnKind implements ColumnKind {
 
     @Override
     public boolean canBeMadeInvisible() {
-        return false;
+        return true;
     }
 
     @Override
