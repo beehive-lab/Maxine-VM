@@ -74,4 +74,9 @@ public interface ViewFocusListener {
      */
     void heapObjectFocusChanged(MaxObject oldObject, MaxObject object);
 
+    /**
+     * Notifies that the heap mark bit focus has changed (view state only), possibly to -1 meaning <em>none</em>.
+     */
+    void markBitIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit);
+
 }
