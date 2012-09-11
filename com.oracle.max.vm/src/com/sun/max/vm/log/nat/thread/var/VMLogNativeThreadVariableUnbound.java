@@ -186,6 +186,10 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         long offsets = vmLogBufferOffsetsTL.load(tla).toLong();
         int offset = firstOffset(offsets);
         Pointer buffer = getBuffer(tla);
+        boolean lockDisabledSafepoints = Log.lock();
+        Log.print("VMLog contents for thread: "); Log.printThread(vmThread, true);
+        Log.unlock(lockDisabledSafepoints);
+
         flusher.start(vmThread);
         while (offset != corruptedOffset) {
             r.address = buffer.plus(offset);
