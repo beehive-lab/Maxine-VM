@@ -561,6 +561,18 @@ public class WordValueLabel extends ValueLabel {
                             }
                         }
                     }
+                    final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
+                    if (markBitMap != null && markBitMap.isCovered(address)) {
+                        final int bitIndex = markBitMap.getBitIndexOf(address);
+                        final StringBuilder sb = new StringBuilder();
+                        sb.append("<br>Heap mark bit(");
+                        sb.append(bitIndex);
+                        sb.append(")=");
+                        sb.append(markBitMap.isBitSet(bitIndex) ? "1" : "0");
+                        sb.append(", color=");
+                        sb.append(markBitMap.getMarkColor(bitIndex));
+                        this.setToolTipSuffix(sb.toString());
+                    }
                 } catch (TerminatedProcessIOException terminatedProcessIOException) {
                     object = null;
                     teleClassActor = null;
