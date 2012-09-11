@@ -167,7 +167,7 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         return size.times(percentage).dividedBy(100);
     }
 
-    private Size minYoungGenSize() {
+    public Size minYoungGenSize() {
         Size size =  percent(maxHeapSize, MinYoungGenPercent);
         return alignUp(size.lessThan(MinYoungGenSize) ? MinYoungGenSize : size);
     }
@@ -246,10 +246,10 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         return heapSize.minus(youngGenSize());
     }
 
-    public boolean shouldPerformFullGC(Size estimatedEvacuation, Size oldGenFreeSpace) {
-        final boolean needsFullGC = minorEvacuationOverflow || estimatedEvacuation.greaterThan(oldGenFreeSpace);
+    public boolean shouldPerformFullGC(Size estimatedEvacuation, Size oldGenFreeSpace, boolean oldSpaceMutatorOverflow) {
+        final boolean needsFullGC = minorEvacuationOverflow || oldSpaceMutatorOverflow || estimatedEvacuation.greaterThan(oldGenFreeSpace);
         if (logger.enabled()) {
-            logger.logShouldPerformFullGC(estimatedEvacuation.toLong(), oldGenFreeSpace.toLong(), minorEvacuationOverflow, needsFullGC);
+            logger.logShouldPerformFullGC(estimatedEvacuation.toLong(), oldGenFreeSpace.toLong(), minorEvacuationOverflow, oldSpaceMutatorOverflow, needsFullGC);
         }
         return needsFullGC;
     }
@@ -384,13 +384,15 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      * @param oldGenFreeSpace
      * @return true if the policy requires changes of generation and heap sizes.
      */
-    public boolean resizeAfterFullGC(Size estimatedEvacuation, Size oldGenFreeSpace) {
+    public boolean resizeAfterFullGC(Size estimatedEvacuation, Size oldGenFreeSpace, boolean oldGenMutatorOverflow) {
         minorEvacuationOverflow = false;
         final Size usedSpace = oldGenSize().minus(oldGenFreeSpace);
         Size freeHeapSpace = heapSize.minus(usedSpace);
         Size maxFreeHeapSpace = percent(heapSize, maxFreePercent);
         // Should we shrink ?
-        if (freeHeapSpace.greaterThan(maxFreeHeapSpace) && maxFreeHeapSpace.greaterEqual(estimatedEvacuation)) {
+        // For simplicity, we don't if the full GC was trigger because of a mutator overflow, otherwise we risk shrinking below what the mutator was requesting.
+        // Trying to be smarter requires providing here the actual size requested by the mutator.
+        if (!oldGenMutatorOverflow && freeHeapSpace.greaterThan(maxFreeHeapSpace) && maxFreeHeapSpace.greaterEqual(estimatedEvacuation)) {
             if (normalMode) {
                 Size newHeapSize = alignUp(usedSpace.plus(maxFreeHeapSpace));
                 Size delta = newHeapSize.minus(heapSize);
@@ -424,8 +426,9 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
                         @VMLogParam(name = "estimatedEvacuation") long estimatedEvacuation,
                         @VMLogParam(name = "freeOldSpace") long freeOldSpace,
                         @VMLogParam(name = "minorEvacuationOverflow") boolean minorEvacuationOverflow,
+                        @VMLogParam(name = "oldSpaceMutatorOverflow") boolean oldSpaceMutatorOverflow,
                         @VMLogParam(name = "shouldPerformGC") boolean shouldPerformGC
-                       );
+        );
         void minorOverflowEvacuation(
                         @VMLogParam(name = "start") Address start,
                         @VMLogParam(name = "end") Address end
@@ -434,8 +437,8 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
                         @VMLogParam(name = "heapSize") long heapSize,
                         @VMLogParam(name = "youngSize") long youngSize,
                         @VMLogParam(name = "oldSize") long oldSize,
-                        @VMLogParam(name = "youngGenHeapPercentage") int youngGenHeapPercentage);
-
+                        @VMLogParam(name = "youngGenHeapPercentage") int youngGenHeapPercentage
+        );
         void growHeap(
                         @VMLogParam(name = "heapSize") long heapSize,
                         @VMLogParam(name = "youngSize") long youngSize,
@@ -495,13 +498,15 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         }
 
         @Override
-        protected void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean shouldPerformGC) {
+        protected void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean oldSpaceMutatorOverflow, boolean shouldPerformGC) {
             Log.print("Estimated next evacuation: ");
             Log.printToPowerOfTwoUnits(Size.fromLong(estimatedEvacuation));
             Log.print(", Free old space: ");
             Log.printToPowerOfTwoUnits(Size.fromLong(freeOldSpace));
             Log.print(", minorEvacuationOverflow = ");
             Log.print(minorEvacuationOverflow);
+            Log.print(", oldSpaceMutatorOverflow = ");
+            Log.print(oldSpaceMutatorOverflow);
             Log.print(", shouldPerformGC = ");
             Log.println(shouldPerformGC);
         }
@@ -580,10 +585,10 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         protected abstract void traceMinorOverflowEvacuation(Address start, Address end);
 
         @INLINE
-        public final void logShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean shouldPerformGC) {
-            log(Operation.ShouldPerformFullGC.ordinal(), longArg(estimatedEvacuation), longArg(freeOldSpace), booleanArg(minorEvacuationOverflow), booleanArg(shouldPerformGC));
+        public final void logShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean oldSpaceMutatorOverflow, boolean shouldPerformGC) {
+            log(Operation.ShouldPerformFullGC.ordinal(), longArg(estimatedEvacuation), longArg(freeOldSpace), booleanArg(minorEvacuationOverflow), booleanArg(oldSpaceMutatorOverflow), booleanArg(shouldPerformGC));
         }
-        protected abstract void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean shouldPerformGC);
+        protected abstract void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean oldSpaceMutatorOverflow, boolean shouldPerformGC);
 
         @INLINE
         public final void logShrinkHeap(long heapSize, long youngSize, long oldSize, long delta) {
@@ -611,7 +616,7 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
                     break;
                 }
                 case 4: { //ShouldPerformFullGC
-                    traceShouldPerformFullGC(toLong(r, 1), toLong(r, 2), toBoolean(r, 3), toBoolean(r, 4));
+                    traceShouldPerformFullGC(toLong(r, 1), toLong(r, 2), toBoolean(r, 3), toBoolean(r, 4), toBoolean(r, 5));
                     break;
                 }
                 case 5: { //ShrinkHeap

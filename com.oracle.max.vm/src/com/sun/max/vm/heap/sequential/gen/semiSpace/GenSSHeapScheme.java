@@ -57,6 +57,8 @@ import com.sun.max.vm.ti.*;
  *
  */
 public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements XirWriteBarrierSpecification, RSetCoverage, EvacuationBufferProvider {
+    static boolean AlwaysFullGC = false;
+
     /**
      * Knob for the fixed ratio resizing policy.
      */
@@ -69,6 +71,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     static {
         VMOptions.addFieldOption("-XX:", "YoungGenHeapPercent", GenSSHeapScheme.class, "Fixed percentage of heap size that must be used by young gen", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "AlwaysFullGC", GenSSHeapScheme.class, "Always do full GC when true", Phase.PRISTINE);
     }
 
     /**
@@ -86,16 +89,43 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      *
      */
     final class OldSpaceRefiller extends Refiller {
+        Pointer startOfSpaceLeft = Pointer.zero();
+        Size spaceLeft = Size.zero();
+
         @Override
         public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+            this.startOfSpaceLeft = startOfSpaceLeft;
+            this.spaceLeft = spaceLeft;
+
             // Force full collection.
             Heap.collectGarbage(Size.zero());
             // The current thread hold the refill lock and will do the refill of the allocator.
             return Address.zero();
         }
 
+        /**
+         * Must be called once per GC request to determine whether the GC was caused by overflow of the old space allocator because of some direct allocation by the mutator,
+         * and to restore the state of the allocator prior to the overflowing request.
+         * @return a boolean indicating whether a mutator allocation caused overflow of the old space.
+         */
+        boolean mutatorOverflow() {
+            if (startOfSpaceLeft.isNotZero()) {
+                oldSpace.allocator.refill(startOfSpaceLeft, spaceLeft);
+                startOfSpaceLeft = Pointer.zero();
+                spaceLeft = Size.zero();
+                return true;
+            }
+            return false;
+        }
+
         @Override
         protected void doBeforeGC() {
+        }
+
+        @Override
+        public Address allocateLargeRaw(Size size) {
+            FatalError.unexpected("Should never be called");
+            return Address.zero();
         }
     }
 
@@ -117,6 +147,22 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         @Override
         protected void doBeforeGC() {
             // Nothing to do.
+        }
+
+        @Override
+        public Address allocateLargeRaw(Size size) {
+            // FIXME: for now, we rely on:
+            // 1. Mutators can only allocate in the old generation via the young space refiller; concurrent operation are synchronized with the young space refill lock.
+            //  This protect both allocation and modification of the cfoTable.
+            // 2. All other allocations against the old generation are made directly by the collector, at safepoint.
+            //
+            // We may want separate refill lock and provide old generation allocation with it's own lock mutators can synchronize on.
+            if (MaxineVM.isDebug()) {
+                // We should be synchronizing on the young generation's refill lock.
+                FatalError.check(youngSpace.allocator().holdsRefillLock(), "must hold young space refiller's lock to allocate into old gen directly");
+            }
+            // Always allocate raw. The caller is responsible for clear allocation.
+            return oldSpace.allocator().allocateRaw(size);
         }
     }
 
@@ -456,6 +502,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      * This is caught by the refiller of the old generation allocator, which in this case allocate space directly in the second semi-space.
      */
     private void doCollect(int invocationCount) {
+        final boolean oldSpaceMutatorOverflow = oldSpace.allocator.refillManager().mutatorOverflow();
         evacTimers.resetTrackTime();
 
         VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
@@ -486,7 +533,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                             evacTimers.get(WEAK_REF).getLastElapsedTime());
             timeLogger.logGcTimes(invocationCount, true, evacTimers.get(TOTAL).getLastElapsedTime());
         }
-        if (resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace())) {
+        if (resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace(), oldSpaceMutatorOverflow) || AlwaysFullGC) {
             // Force a temporary transition to MUTATING state.
             // This simplifies the inspector's maintenance of references state and GC counters.
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
@@ -501,7 +548,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             if (VerifyAfterGC) {
                 verifyAfterFullCollection();
             }
-            if (resizingPolicy.resizeAfterFullGC(estimatedEvac, oldSpace.freeSpace())) {
+            if (resizingPolicy.resizeAfterFullGC(estimatedEvac, oldSpace.freeSpace(), oldSpaceMutatorOverflow)) {
                 resize(youngSpace, resizingPolicy.youngGenSize());
                 resize(oldSpace, resizingPolicy.oldGenSize());
             }
@@ -576,6 +623,17 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         return lastFullGCTime;
     }
 
+    /**
+     * Size threshold for considering an object as "large" and allocating it specially.
+     *
+     * @return a size in bytes.
+     */
+    private Size largeObjectSizeThreshold() {
+        final Size threshold = resizingPolicy.minYoungGenSize().unsignedShiftedRight(1);
+        final Size defaultThreshold = Size.K.times(512);
+        return defaultThreshold.greaterThan(threshold) ? threshold : defaultThreshold;
+    }
+
     @Override
     protected void allocateHeapAndGCStorage() {
         final Size reservedSpace = Size.K.times(reservedVirtualSpaceKB());
@@ -604,8 +662,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             Heap.enableImmortalMemoryAllocation();
             resizingPolicy.initialize(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
             youngSpace.initialize(firstUnusedByteAddress, resizingPolicy.maxYoungGenSize(), resizingPolicy.initialYoungGenSize());
+            youngSpace.allocator().initialize(youngSpace.space.start(), youngSpace.space.committedSize(), largeObjectSizeThreshold());
             Address startOfOldSpace = youngSpace.space.end().alignUp(pageSize);
             oldSpace.initialize(startOfOldSpace, resizingPolicy.maxOldGenSize(), resizingPolicy.initialOldGenSize());
+            // Set old space's allocator size limit to the max old space size  to never call allocate large, but always refill instead.
+            oldSpace.allocator.setSizeLimit(resizingPolicy.maxOldGenSize());
             initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
             cardTableRSet.initializeXirStartupConstants();
 
