@@ -360,8 +360,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
                 InspectorError.unknownCase();
         }
         if (goalIndex < 0) {
-            this.highlight();
-            this.highlight();
+            flash(3);
         } else {
             focus().setAddress(markBitmap.heapAddress(goalIndex));
             scrollToRowCentered(goalIndex);
@@ -397,7 +396,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
                 InspectorError.unknownCase();
         }
         if (goalIndex < 0) {
-            this.highlight();
+            flash(3);
         } else {
             focus().setAddress(markBitmap.heapAddress(goalIndex));
             scrollToRowCentered(goalIndex);

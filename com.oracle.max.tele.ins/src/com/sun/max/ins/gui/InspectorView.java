@@ -100,6 +100,8 @@ public interface InspectorView<View_Type extends InspectorView> {
 
     void flash();
 
+    void flash(int n);
+
     /**
      * Calls this view to the users attention:  move to front, select, and flash.
      */
