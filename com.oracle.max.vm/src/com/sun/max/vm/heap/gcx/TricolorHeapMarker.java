@@ -853,7 +853,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * Clear the color map, i.e., turn all bits to white.
      */
     private void clearColorMap() {
-        Memory.clearWords(colorMap.start().asPointer(), colorMap.size().toInt() >> Word.widthValue().log2numberOfBytes);
+        Memory.clearWords(colorMapBase(), colorMap.size().minus(markBitmapHeaderSize()).toInt() >> Word.widthValue().log2numberOfBytes);
     }
 
     private final RootCellVisitor rootCellVisitor;
