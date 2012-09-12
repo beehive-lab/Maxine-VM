@@ -143,19 +143,19 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
             for (int index = 0; index < 8; index++) {
                 byte b = bytes[index];
                 result.append(prefix);
-                final StringBuffer str = new StringBuffer();
+                final StringBuffer bitString = new StringBuffer();
                 if (index == byteIndexInWord) {
                     for (short mask = 0x80; mask != 0; mask >>>= 1) {
-                        str.append((b & mask) == 0 ? "0" : "1");
+                        bitString.append((b & mask) == 0 ? "0" : "1");
                     }
-                    str.insert(bitIndexInByte + 1, '>').insert(bitIndexInByte, '<');
-                    result.append("|").append(str).append("|");
+                    bitString.insert(bitIndexInByte + 1, '>').insert(bitIndexInByte, '<');
+                    result.append("|").append(bitString).append("|");
                 } else {
                     result.append(String.format("%02X", b));
                 }
                 prefix = " ";
             }
-            renderer.setWrappedHtmlText(result.toString());
+            renderer.setWrappedHtmlText(InspectorLabel.htmlify(result.toString()));
             renderer.setToolTipPrefix(tableModel.getRowDescription(row));
             // renderer.setToolTipText("Mark Bitmap word@" + markBitmap.bitmapWordAddress(bitIndex).to0xHexString());
             // Is this the first bit of a mark?
