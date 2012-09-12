@@ -325,7 +325,7 @@ public final class MemoryColoringTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setText("+" + row);
+            setText(Integer.toString(row));
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipHtmlText("bit index = " + intTo0xHex(row));
             setForeground(cellForegroundColor(row, col));
@@ -357,7 +357,7 @@ public final class MemoryColoringTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setText("+" + markBitmap.bitmapWordIndex(row));
+            setText(Integer.toString(markBitmap.bitmapWordIndex(row)));
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipHtmlText("bit index = " + intTo0xHex(row));
             setForeground(cellForegroundColor(row, col));
@@ -422,7 +422,7 @@ public final class MemoryColoringTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setText("+" + markBitmap.getBitIndexInWord(row));
+            setText(Integer.toString(markBitmap.getBitIndexInWord(row)));
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipHtmlText("bit index = " + intTo0xHex(row));
             setForeground(cellForegroundColor(row, col));
