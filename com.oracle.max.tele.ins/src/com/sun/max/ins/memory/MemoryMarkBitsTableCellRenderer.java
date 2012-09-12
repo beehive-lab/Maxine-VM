@@ -160,9 +160,9 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
             // renderer.setToolTipText("Mark Bitmap word@" + markBitmap.bitmapWordAddress(bitIndex).to0xHexString());
             // Is this the first bit of a mark?
             MarkColor markColor = markBitmap.getMarkColor(bitIndex);
-            if (markColor == null && row > 0) {
+            if (markColor == null && bitIndex > 0) {
                 // Is this the second bit of a mark?  If so, render the cell with the same style as as the first bit
-                markColor = markBitmap.getMarkColor(row - 1);
+                markColor = markBitmap.getMarkColor(bitIndex - 1);
             }
             if (markColor != null) {
                 switch(markColor) {
@@ -185,7 +185,7 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
                     case MARK_UNAVAILABLE:
                         break;
                 }
-            } else if (markBitmap.isBitSet(row)) {
+            } else if (markBitmap.isBitSet(bitIndex)) {
                 // Not a valid location for a mark bit; shouldn't be set
                 backgroundColor = style.markInvalidBackgroundColor();
                 foregroundColor = Color.WHITE;
