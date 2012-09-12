@@ -258,6 +258,7 @@ public final class MemoryColoringTable extends InspectorTable {
             addColumn(MarkBitmapColumnKind.WORD_INDEX, new WordIndexRenderer(inspection()), null);
             addColumn(MarkBitmapColumnKind.BITMAP_WORD_ADDRESS, new BitmapWordAddressRenderer(inspection()), null);
             addColumn(MarkBitmapColumnKind.WORD_BIT_INDEX, new WordBitIndexRenderer(inspection()), null);
+            addColumn(MarkBitmapColumnKind.WORD_BITS, new MemoryMarkBitsTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(MarkBitmapColumnKind.MARK_BIT, new MarkBitRenderer(inspection()), null);
             addColumn(MarkBitmapColumnKind.HEAP_ADDRESS, new CoveredAddressRenderer(inspection()), null);
         }
@@ -566,7 +567,7 @@ public final class MemoryColoringTable extends InspectorTable {
                 ttBuilder.append("<br>Covered object:  ");
                 ttBuilder.append(htmlify(inspection().nameDisplay().referenceToolTipText(coveredObject)));
             }
-            setWrappedToolTipHtmlText(ttBuilder.toString());
+            setWrappedToolTipHtmlText(tableModel.getDetailedRowDescription(row) + "<br>" + ttBuilder.toString());
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             return this;
         }
