@@ -135,7 +135,8 @@ public final class MemoryColoringTable extends InspectorTable {
     /**
      * {@inheritDoc}.
      * <br>
-     * Color the text specially in the row where a watchpoint is triggered
+     * Color the text specially in the row where a watchpoint is triggered, and if that's not the case
+     * then color the text specially depending on the mark that may be present; default is {@code null}.
      */
     @Override
     public Color cellForegroundColor(int row, int col) {
@@ -143,16 +144,61 @@ public final class MemoryColoringTable extends InspectorTable {
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return preference().style().debugIPTagColor();
         }
+        // Is this the first bit of a mark?
+        MarkColor markColor = markBitmap.getMarkColor(row);
+        if (markColor == null && row > 0) {
+            // Is this the second bit of a mark?  If so, render the cell with the same style as as the first bit
+            markColor = markBitmap.getMarkColor(row - 1);
+        }
+        if (markColor != null) {
+            switch(markColor) {
+                case MARK_WHITE:
+                    return Color.BLACK;
+                case MARK_GRAY:
+                case MARK_BLACK:
+                case MARK_INVALID:
+                    return Color.WHITE;
+                case MARK_UNAVAILABLE:
+                    break;
+            }
+        } else if (markBitmap.isBitSet(row)) {
+            // Not a valid location for a mark bit; shouldn't be set
+            return Color.WHITE;
+        }
         return null;
     }
 
-    @Override
-    public Color cellBackgroundColor(int row, int col) {
-
+    /**
+     * Color the background specially, depending on the mark that may be present; default is {@code null}.
+     */
+    public Color rowBackgroundColor(int row) {
+        final InspectorStyle style = inspection().preference().style();
+        // Is this the first bit of a mark?
+        MarkColor markColor = markBitmap.getMarkColor(row);
+        if (markColor == null && row > 0) {
+            // Is this the second bit of a mark?  If so, render the cell with the same style as as the first bit
+            markColor = markBitmap.getMarkColor(row - 1);
+        }
+        if (markColor != null) {
+            switch(markColor) {
+                case MARK_WHITE:
+                    return style.markedWhiteBackgroundColor();
+                case MARK_GRAY:
+                    return style.markedGrayBackgroundColor();
+                case MARK_BLACK:
+                    return style.markedBlackBackgroundColor();
+                case MARK_INVALID:
+                    return style.markInvalidBackgroundColor();
+                case MARK_UNAVAILABLE:
+                    break;
+            }
+        } else if (markBitmap.isBitSet(row)) {
+            // Not a valid location for a mark bit; shouldn't be set
+            return style.markInvalidBackgroundColor();
+        }
 
         return null;
     }
-
 
     /**
      * {@inheritDoc}.
@@ -350,7 +396,7 @@ public final class MemoryColoringTable extends InspectorTable {
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipHtmlText(tableModel.getDetailedRowDescription(row));
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor());
+            setBackground(rowBackgroundColor(row));
             if (isBoundaryRow(row)) {
                 setBorder(preference().style().defaultPaneTopBorder());
             } else {
@@ -382,7 +428,7 @@ public final class MemoryColoringTable extends InspectorTable {
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipHtmlText(tableModel.getDetailedRowDescription(row));
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor());
+            setBackground(rowBackgroundColor(row));
             if (isBoundaryRow(row)) {
                 setBorder(preference().style().defaultPaneTopBorder());
             } else {
@@ -415,7 +461,7 @@ public final class MemoryColoringTable extends InspectorTable {
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipHtmlText(tableModel.getDetailedRowDescription(row));
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor());
+            setBackground(rowBackgroundColor(row));
             if (isBoundaryRow(row)) {
                 setBorder(preference().style().defaultPaneTopBorder());
             } else {
@@ -447,7 +493,7 @@ public final class MemoryColoringTable extends InspectorTable {
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipHtmlText(tableModel.getDetailedRowDescription(row));
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor());
+            setBackground(rowBackgroundColor(row));
             if (isBoundaryRow(row)) {
                 setBorder(preference().style().defaultPaneTopBorder());
             } else {
@@ -479,13 +525,9 @@ public final class MemoryColoringTable extends InspectorTable {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final Address address = tableModel.getAddress(row);
-            Color backgroundColor = cellBackgroundColor();
-            Color foregroundColor = cellForegroundColor(row, column);
             final String bitValueText = markBitmap.isBitSet(row) ? "1" : "0";
             String labelText = bitValueText;
             MaxObject coveredObject = null;
-            final InspectorStyle style = inspection().preference().style();
-            // Everything now set to default; i.e. where there is no mark
             try {
                 coveredObject = vm().objects().findObjectAt(address);
             } catch (MaxVMBusyException e) {
@@ -497,36 +539,16 @@ public final class MemoryColoringTable extends InspectorTable {
                 markColor = markBitmap.getMarkColor(row - 1);
             }
             if (markColor != null) {
-                switch(markColor) {
-                    case MARK_WHITE:
-                        backgroundColor = style.markedWhiteBackgroundColor();
-                        foregroundColor = Color.BLACK;
-                        break;
-                    case MARK_GRAY:
-                        backgroundColor = style.markedGrayBackgroundColor();
-                        foregroundColor = Color.WHITE;
-                        break;
-                    case MARK_BLACK:
-                        backgroundColor = style.markedBlackBackgroundColor();
-                        foregroundColor = Color.WHITE;
-                        break;
-                    case MARK_INVALID:
-                        backgroundColor = style.markInvalidBackgroundColor();
-                        foregroundColor = Color.WHITE;
-                        break;
-                    case MARK_UNAVAILABLE:
-                        labelText = inspection().nameDisplay().unavailableDataShortText();
-                        break;
+                if (markColor == MARK_UNAVAILABLE) {
+                    labelText = inspection().nameDisplay().unavailableDataShortText();
                 }
             } else if (markBitmap.isBitSet(row)) {
                 // Not a valid location for a mark bit; shouldn't be set
-                backgroundColor = style.markInvalidBackgroundColor();
-                foregroundColor = Color.WHITE;
                 markColor = MARK_INVALID;
             }
             setText(labelText);
-            setForeground(foregroundColor);
-            setBackground(backgroundColor);
+            setForeground(cellForegroundColor(row, column));
+            setBackground(rowBackgroundColor(row));
 
             if (isBoundaryRow(row)) {
                 setBorder(preference().style().defaultPaneTopBorder());
