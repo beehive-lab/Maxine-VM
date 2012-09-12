@@ -442,7 +442,7 @@ public final class MemoryColoringTable extends InspectorTable {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Address address = markBitmap.bitmapWord(row);
+            final Address address = markBitmap.bitmapWordAddress(row);
             setText(address.toPaddedHexString('0'));
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipHtmlText("Bitmap word@" + address.to0xHexString() + " contains mark bit");

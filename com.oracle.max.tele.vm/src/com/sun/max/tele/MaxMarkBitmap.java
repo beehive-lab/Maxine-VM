@@ -71,20 +71,6 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
     int getBitIndexOf(Address heapAddress);
 
     /**
-     * Index to the word holding the first bit in the mark bitmap encoding the color corresponding to the specified heap address.
-     * @param heapAddress an address in the heap area covered by the mark bitmap
-     * @return an address to a word of the mark bitmap
-     */
-    int getBitmapWordIndex(Address heapAddress);
-
-    /**
-     * Address of the word holding the first bit in the mark bitmap encoding the color corresponding to the specified heap address.
-     * @param heapAddress an address in the heap area covered by the mark bitmap
-     * @return an address to a word of the mark bitmap
-     */
-    Address bitmapWord(Address heapAddress);
-
-    /**
      * Address in the heap corresponding to a bit index of the mark bitmap.
      * @param bitIndex a bit index
      * @return an address in the heap area covered by the mark bitmap
@@ -96,7 +82,15 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
      * @param bitIndex a bit index
      * @return address to bitmap word.
      */
-    Address bitmapWord(int bitIndex);
+    Address bitmapWordAddress(int bitIndex);
+
+    /**
+     * Reads from VM memory the word in the map that includes the specified bit index.
+     *
+     * @param bitIndex a bit index
+     * @return current contents of the bitmap word for the index
+     */
+    long readBitmapWord(int bitIndex);
 
     /**
      * The position of the bit identified by a bit index within the bitmap word holding that bit.
