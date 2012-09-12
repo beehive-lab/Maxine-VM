@@ -511,12 +511,13 @@ public final class MemoryView extends AbstractView<MemoryView> {
         final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
         setOriginToSelectionAction.refresh(true);
         memoryMenu.add(setOriginToSelectionAction);
-        memoryMenu.add(scrollToFocusAction);
         memoryMenu.add(inspectBytesAction);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
-        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        final InspectorMenu viewMenu = makeMenu(MenuKind.VIEW_MENU);
+        viewMenu.add(scrollToFocusAction);
+        viewMenu.add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         // When user grows window height beyond table size, expand region being viewed.
         final JViewport viewport = scrollPane.getViewport();
@@ -724,6 +725,19 @@ public final class MemoryView extends AbstractView<MemoryView> {
         wordCountField.setValue(Address.fromLong(memoryWordRegion.nWords()));
         table.setMemoryRegion(memoryWordRegion);
 
+    }
+    private int firstVisibleRow() {
+        return table.rowAtPoint(new Point(0, scrollPane.getViewport().getViewRect().y));
+    }
+
+    private int lastVisibleRow() {
+        final Rectangle visible = scrollPane.getViewport().getViewRect();
+        return table.rowAtPoint(new Point(0, visible.y + visible.height - 10));
+    }
+
+    private void scrollToRowCentered(int row) {
+        final int nRows = lastVisibleRow() - firstVisibleRow();
+        table.scrollToRows(row - nRows / 3, row + 2 * nRows / 3);
     }
 
     /**
@@ -947,7 +961,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     private InspectorAction scrollToFocusAction = new InspectorAction(inspection(), "Scroll to selected memory location") {
         @Override
         protected void procedure() {
-            table.scrollToAddress(focus().address());
+            scrollToRowCentered(table.findRow(focus().address()));
             MemoryView.this.forceRefresh();
         }
 
