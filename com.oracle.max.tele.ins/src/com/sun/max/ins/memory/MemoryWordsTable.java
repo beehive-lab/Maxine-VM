@@ -162,6 +162,13 @@ public final class MemoryWordsTable extends InspectorTable {
     }
 
     /**
+     * Gets the row that displays memory at a particular address, -1 if none.
+     */
+    public int findRow(Address address) {
+        return tableModel.findRow(address);
+    }
+
+    /**
      * Changes the area of memory being displayed.
      */
     void setMemoryRegion(MemoryWordRegion memoryWordRegion) {
