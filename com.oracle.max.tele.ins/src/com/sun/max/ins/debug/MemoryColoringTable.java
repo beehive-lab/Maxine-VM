@@ -146,6 +146,14 @@ public final class MemoryColoringTable extends InspectorTable {
         return null;
     }
 
+    @Override
+    public Color cellBackgroundColor(int row, int col) {
+
+
+        return null;
+    }
+
+
     /**
      * {@inheritDoc}.
      * <br>
@@ -299,7 +307,20 @@ public final class MemoryColoringTable extends InspectorTable {
         public String getRowDescription(int row) {
             // Don't try to cache these at creation, as we sometimes do with other tables, so that
             // we can view arbitrarily large regions.
-            return "Mark bit index=" + row + ", covers heap word@" + getAddress(row).to0xHexString();
+            return "Mark bit #" + row + ", covers heap word@" + getAddress(row).to0xHexString();
+        }
+
+        public String getDetailedRowDescription(int row) {
+            final StringBuilder sb = new StringBuilder();
+            final int wordBitIndex = markBitmap.getBitIndexInWord(row);
+            final int mapWordIndex = markBitmap.bitmapWordIndex(row);
+            sb.append("map bit #").append(row);
+            sb.append("(").append(InspectorLabel.intTo0xHex(row)).append("): ");
+            sb.append("in word #").append(mapWordIndex);
+            sb.append("(").append(InspectorLabel.intTo0xHex(mapWordIndex)).append(") ");
+            sb.append("@ bit #").append(wordBitIndex);
+            sb.append("(").append(InspectorLabel.intTo0xHex(wordBitIndex)).append(") ");
+            return sb.toString();
         }
 
         /**
@@ -327,7 +348,7 @@ public final class MemoryColoringTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setText(Integer.toString(row));
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
-            setWrappedToolTipHtmlText("bit index = " + intTo0xHex(row));
+            setWrappedToolTipHtmlText(tableModel.getDetailedRowDescription(row));
             setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor());
             if (isBoundaryRow(row)) {
@@ -359,7 +380,7 @@ public final class MemoryColoringTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setText(Integer.toString(markBitmap.bitmapWordIndex(row)));
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
-            setWrappedToolTipHtmlText("bit index = " + intTo0xHex(row));
+            setWrappedToolTipHtmlText(tableModel.getDetailedRowDescription(row));
             setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor());
             if (isBoundaryRow(row)) {
@@ -392,7 +413,7 @@ public final class MemoryColoringTable extends InspectorTable {
             final Address address = markBitmap.bitmapWordAddress(row);
             setText(address.toPaddedHexString('0'));
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
-            setWrappedToolTipHtmlText("Bitmap word@" + address.to0xHexString() + " contains mark bit");
+            setWrappedToolTipHtmlText(tableModel.getDetailedRowDescription(row));
             setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor());
             if (isBoundaryRow(row)) {
@@ -424,7 +445,7 @@ public final class MemoryColoringTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setText(Integer.toString(markBitmap.getBitIndexInWord(row)));
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
-            setWrappedToolTipHtmlText("bit index = " + intTo0xHex(row));
+            setWrappedToolTipHtmlText(tableModel.getDetailedRowDescription(row));
             setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor());
             if (isBoundaryRow(row)) {
