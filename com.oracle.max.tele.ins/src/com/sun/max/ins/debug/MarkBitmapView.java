@@ -147,6 +147,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     // This is a singleton viewer, so only use a single level of view preferences.
     private final MarkBitmapViewPreferences viewPreferences;
 
+    // TODO (mlvdv) generify the combo box when abandon Java 6
+    @SuppressWarnings("unchecked")
     protected MarkBitmapView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
 
