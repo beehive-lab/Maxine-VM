@@ -26,13 +26,14 @@ package com.sun.max.ins.memory;
 import static com.sun.max.tele.MaxMarkBitmap.MarkColor.*;
 
 import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMarkBitmap.*;
+import com.sun.max.tele.MaxMarkBitmap.MarkColor;
 import com.sun.max.tele.data.*;
 import com.sun.max.unsafe.*;
 
@@ -65,13 +66,39 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
      * @param inspectorTable the table holding the cell to be rendered
      * @param tableModel a table model in which rows represent memory regions
      */
-    public MemoryMarkBitsTableCellRenderer(Inspection inspection, InspectorTable inspectorTable, InspectorMemoryTableModel tableModel) {
+    public MemoryMarkBitsTableCellRenderer(Inspection inspection, final InspectorTable inspectorTable, InspectorMemoryTableModel tableModel) {
         super(inspection);
         this.inspectorTable = inspectorTable;
         this.tableModel = tableModel;
         this.label = new TextLabel(inspection, "");
         this.label.setOpaque(true);
         this.labels[0] = this.label;
+        label.addMouseListener(new InspectorMouseClickAdapter(inspection()) {
+            @Override
+            public void procedure(final MouseEvent mouseEvent) {
+                switch (inspection().gui().getButton(mouseEvent)) {
+                    case MouseEvent.BUTTON1: {
+                        break;
+                    }
+                    case MouseEvent.BUTTON2: {
+                        break;
+                    }
+                    case MouseEvent.BUTTON3: {
+                        final Point p = mouseEvent.getPoint();
+                        final int col = inspectorTable.columnAtPoint(p);
+                        final int row = inspectorTable.rowAtPoint(p);
+                        if ((col != -1) && (row != -1) && inspection().gui().getButton(mouseEvent) == MouseEvent.BUTTON3) {
+                            final InspectorAction showHeapMarkAction = getShowHeapMarkAction(row);
+                            if (showHeapMarkAction != null) {
+                                final InspectorPopupMenu menu = new InspectorPopupMenu();
+                                menu.add(showHeapMarkAction);
+                                menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                            }
+                        }
+                    }
+                }
+            }
+        });
         redisplay();
     }
 
@@ -186,6 +213,33 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
     @Override
     protected InspectorLabel[] getLabels() {
         return labels;
+    }
+
+    private InspectorAction getShowHeapMarkAction(final int bitIndex) {
+
+        final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
+        if (bitIndex >= 0 && markBitMap != null) {
+            final Address address = markBitMap.heapAddress(bitIndex);
+            if (markBitMap.isCovered(address)) {
+                final MarkColor markColor = markBitMap.getMarkColor(bitIndex);
+                final StringBuilder sb = new StringBuilder();
+                sb.append("Show heap mark bit(");
+                sb.append(bitIndex);
+                sb.append(")=");
+                sb.append(markBitMap.isBitSet(bitIndex) ? "1" : "0");
+                sb.append(", color=");
+                sb.append(markColor);
+                return new InspectorAction(inspection(), sb.toString()) {
+
+                    @Override
+                    protected void procedure() {
+                        focus().setMarkBitIndex(bitIndex);
+                        focus().setAddress(address);
+                    }
+                };
+            }
+        }
+        return null;
     }
 
 }
