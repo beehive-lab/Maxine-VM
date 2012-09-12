@@ -362,9 +362,5 @@ public final class HeapRegionManager implements HeapAccountOwner {
     public boolean isGcThread(Thread thread) {
         return false;
     }
-
-    public Address allocateLarge(Size size) {
-        return null;
-    }
 }
 
