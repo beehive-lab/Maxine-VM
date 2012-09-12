@@ -130,7 +130,7 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
             }
             renderer.setWrappedHtmlText(result.toString());
             renderer.setToolTipPrefix(tableModel.getRowDescription(row));
-            renderer.setToolTipText("Mark Bitmap word@" + markBitmap.bitmapWordAddress(bitIndex).to0xHexString());
+            // renderer.setToolTipText("Mark Bitmap word@" + markBitmap.bitmapWordAddress(bitIndex).to0xHexString());
             // Is this the first bit of a mark?
             MarkColor markColor = markBitmap.getMarkColor(bitIndex);
             if (markColor == null && row > 0) {
@@ -171,7 +171,7 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
             sb.append(markBitmap.isBitSet(bitIndex) ? "1" : "0");
             sb.append(", color=");
             sb.append(markBitmap.getMarkColor(bitIndex));
-            renderer.setToolTipSuffix(sb.toString());
+            renderer.setWrappedToolTipHtmlText(sb.toString());
         }
         renderer.setBackground(backgroundColor);
         renderer.setForeground(foregroundColor);
