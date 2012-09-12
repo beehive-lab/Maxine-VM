@@ -23,6 +23,8 @@
 
 package com.sun.max.ins.memory;
 
+import static com.sun.max.tele.MaxMarkBitmap.MarkColor.*;
+
 import java.awt.*;
 
 import javax.swing.*;
@@ -30,6 +32,7 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.MaxMarkBitmap.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.unsafe.*;
 
@@ -51,7 +54,7 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
     private final InspectorMemoryTableModel tableModel;
 
     // This kind of label has no interaction state, so we only need one, which we set up on demand.
-    private final PlainLabel label;
+    private final InspectorLabel label;
     private final InspectorLabel[] labels = new InspectorLabel[1];
 
     /**
@@ -66,7 +69,8 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
         super(inspection);
         this.inspectorTable = inspectorTable;
         this.tableModel = tableModel;
-        this.label = new PlainLabel(inspection, null);
+        this.label = new TextLabel(inspection, "");
+        this.label.setOpaque(true);
         this.labels[0] = this.label;
         redisplay();
     }
@@ -77,9 +81,10 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-        if (row == 64) {
-            System.out.println("second word");
-        }
+        final InspectorStyle style = inspection().preference().style();
+        Color backgroundColor = inspectorTable.cellBackgroundColor();
+        Color foregroundColor = inspectorTable.cellForegroundColor(row, column);
+
         InspectorLabel renderer = label;
         final MaxMarkBitmap markBitmap = vm().heap().markBitMap();
         final Address memoryAddress = tableModel.getAddress(row);
@@ -88,28 +93,27 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
             renderer = inspection().gui().getUnavailableDataTableCellRenderer();
             renderer.setToolTipPrefix(tableModel.getRowDescription(row));
         } else {
-            final Address bitmapWordAddress = markBitmap.bitmapWord(memoryAddress);
-            final int nBytes = vm().platform().nBytesInWord();
-            final byte[] bytes = new byte[nBytes];
+            final int bitIndex = markBitmap.getBitIndexOf(memoryAddress);
+            final int bitIndexInWord = markBitmap.getBitIndexInWord(bitIndex);
+            final int byteIndexInWord = 7 - (bitIndexInWord / 8);
+            final int bitIndexInByte = 7 - (bitIndexInWord % 8);
+            byte[] bytes = new byte[8];
             try {
-                vm().memoryIO().readBytes(bitmapWordAddress, bytes);
+                final long bitmapWord = markBitmap.readBitmapWord(bitIndex);
+                bytes[0] = (byte) (bitmapWord >>> 56);
+                bytes[1] = (byte) (bitmapWord >>> 48);
+                bytes[2] = (byte) (bitmapWord >>> 40);
+                bytes[3] = (byte) (bitmapWord >>> 32);
+                bytes[4] = (byte) (bitmapWord >>> 24);
+                bytes[5] = (byte) (bitmapWord >>> 16);
+                bytes[6] = (byte) (bitmapWord >>>  8);
+                bytes[7] = (byte) (bitmapWord >>>  0);
             } catch (DataIOError dataIOError) {
-                renderer = inspection().gui().getUnavailableDataTableCellRenderer();
+                return inspection().gui().getUnavailableDataTableCellRenderer();
             }
-            if (bytes.length == 0) {
-                final InspectorLabel unavailableLabel = gui().getUnavailableDataTableCellRenderer();
-                return unavailableLabel;
-            }
-            // renderer.setToolTipPrefix(tableModel.getRowDescription(row));
-
-            final int bitIndexInWord = markBitmap.getBitIndexInWord(markBitmap.getBitIndexOf(memoryAddress));
-            final int byteIndexInWord = bitIndexInWord / 8;
-            final int bitIndexInByte = bitIndexInWord % 8;
-
-
             final StringBuilder result = new StringBuilder(100);
             String prefix = "";
-            for (int index = 0; index < nBytes; index++) {
+            for (int index = 0; index < 8; index++) {
                 byte b = bytes[index];
                 result.append(prefix);
                 final StringBuffer str = new StringBuffer();
@@ -124,16 +128,58 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
                 }
                 prefix = " ";
             }
-            renderer.setText(result.toString());
-            renderer.setToolTipText("Mark Bitmap word@" + bitmapWordAddress.to0xHexString());
+            renderer.setWrappedHtmlText(result.toString());
+            renderer.setToolTipPrefix(tableModel.getRowDescription(row));
+            renderer.setToolTipText("Mark Bitmap word@" + markBitmap.bitmapWordAddress(bitIndex).to0xHexString());
+            // Is this the first bit of a mark?
+            MarkColor markColor = markBitmap.getMarkColor(bitIndex);
+            if (markColor == null && row > 0) {
+                // Is this the second bit of a mark?  If so, render the cell with the same style as as the first bit
+                markColor = markBitmap.getMarkColor(row - 1);
+            }
+            if (markColor != null) {
+                switch(markColor) {
+                    case MARK_WHITE:
+                        backgroundColor = style.markedWhiteBackgroundColor();
+                        foregroundColor = Color.BLACK;
+                        break;
+                    case MARK_GRAY:
+                        backgroundColor = style.markedGrayBackgroundColor();
+                        foregroundColor = Color.WHITE;
+                        break;
+                    case MARK_BLACK:
+                        backgroundColor = style.markedBlackBackgroundColor();
+                        foregroundColor = Color.WHITE;
+                        break;
+                    case MARK_INVALID:
+                        backgroundColor = style.markInvalidBackgroundColor();
+                        foregroundColor = Color.WHITE;
+                        break;
+                    case MARK_UNAVAILABLE:
+                        break;
+                }
+            } else if (markBitmap.isBitSet(row)) {
+                // Not a valid location for a mark bit; shouldn't be set
+                backgroundColor = style.markInvalidBackgroundColor();
+                foregroundColor = Color.WHITE;
+                markColor = MARK_INVALID;
+            }
+            final StringBuilder sb = new StringBuilder();
+            sb.append("<br>Heap mark bit(");
+            sb.append(bitIndex);
+            sb.append(")=");
+            sb.append(markBitmap.isBitSet(bitIndex) ? "1" : "0");
+            sb.append(", color=");
+            sb.append(markBitmap.getMarkColor(bitIndex));
+            renderer.setToolTipSuffix(sb.toString());
         }
+        renderer.setBackground(backgroundColor);
+        renderer.setForeground(foregroundColor);
         if (inspectorTable.isBoundaryRow(row)) {
             renderer.setBorder(preference().style().defaultPaneTopBorder());
         } else {
             renderer.setBorder(null);
         }
-        renderer.setBackground(inspectorTable.cellBackgroundColor());
-        renderer.setForeground(inspectorTable.cellForegroundColor(row, column));
         return renderer;
     }
 
