@@ -200,10 +200,12 @@ public final class MemoryColoringTable extends InspectorTable {
 
         private MemoryColoringColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, TableColumnVisibilityPreferences<MarkBitmapColumnKind> instanceViewPreferences) {
             super(MarkBitmapColumnKind.values().length,  instanceViewPreferences);
-            addColumn(MarkBitmapColumnKind.BIT_INDEX, new BitIndexRenderer(inspection()), null);
-            addColumn(MarkBitmapColumnKind.MARK, new ColorRenderer(inspection()), null);
+            addColumn(MarkBitmapColumnKind.MAP_BIT_INDEX, new MapBitIndexRenderer(inspection()), null);
+            addColumn(MarkBitmapColumnKind.WORD_INDEX, new WordIndexRenderer(inspection()), null);
             addColumn(MarkBitmapColumnKind.BITMAP_WORD_ADDRESS, new BitmapWordAddressRenderer(inspection()), null);
-            addColumn(MarkBitmapColumnKind.HEAP_ADDRESS, new AddressRenderer(inspection()), null);
+            addColumn(MarkBitmapColumnKind.WORD_BIT_INDEX, new WordBitIndexRenderer(inspection()), null);
+            addColumn(MarkBitmapColumnKind.MARK_BIT, new MarkBitRenderer(inspection()), null);
+            addColumn(MarkBitmapColumnKind.HEAP_ADDRESS, new CoveredAddressRenderer(inspection()), null);
         }
     }
 
@@ -312,18 +314,18 @@ public final class MemoryColoringTable extends InspectorTable {
 
     }
 
-    private final class BitIndexRenderer extends InspectorLabel implements TableCellRenderer {
+    private final class MapBitIndexRenderer extends InspectorLabel implements TableCellRenderer {
 
         private int n;
 
-        public BitIndexRenderer(Inspection inspection) {
+        public MapBitIndexRenderer(Inspection inspection) {
             super(inspection);
             setOpaque(true);
             redisplay();
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setText("+" + Integer.toString(row));
+            setText("+" + row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipHtmlText("bit index = " + intTo0xHex(row));
             setForeground(cellForegroundColor(row, col));
@@ -342,15 +344,111 @@ public final class MemoryColoringTable extends InspectorTable {
         public void redisplay() {
             setFont(preference().style().decimalDataFont());
         }
-
-
     }
 
-    private final class ColorRenderer extends PlainLabel implements TableCellRenderer  {
+    private final class WordIndexRenderer extends InspectorLabel implements TableCellRenderer {
+
+        private int n;
+
+        public WordIndexRenderer(Inspection inspection) {
+            super(inspection);
+            setOpaque(true);
+            redisplay();
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            setText("+" + markBitmap.bitmapWordIndex(row));
+            setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
+            setWrappedToolTipHtmlText("bit index = " + intTo0xHex(row));
+            setForeground(cellForegroundColor(row, col));
+            setBackground(cellBackgroundColor());
+            if (isBoundaryRow(row)) {
+                setBorder(preference().style().defaultPaneTopBorder());
+            } else {
+                setBorder(null);
+            }
+            return this;
+        }
+
+        public void refresh(boolean force) {
+        }
+
+        public void redisplay() {
+            setFont(preference().style().decimalDataFont());
+        }
+    }
+
+    private final class BitmapWordAddressRenderer extends InspectorLabel implements TableCellRenderer {
+
+
+        public BitmapWordAddressRenderer(Inspection inspection) {
+            super(inspection);
+            setOpaque(true);
+            redisplay();
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final Address address = markBitmap.bitmapWordAddress(row);
+            setText(address.toPaddedHexString('0'));
+            setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
+            setWrappedToolTipHtmlText("Bitmap word@" + address.to0xHexString() + " contains mark bit");
+            setForeground(cellForegroundColor(row, col));
+            setBackground(cellBackgroundColor());
+            if (isBoundaryRow(row)) {
+                setBorder(preference().style().defaultPaneTopBorder());
+            } else {
+                setBorder(null);
+            }
+            return this;
+        }
+
+        public void redisplay() {
+            setFont(preference().style().hexDataFont());
+        }
+
+        public void refresh(boolean force) {
+        }
+    }
+
+    private final class WordBitIndexRenderer extends InspectorLabel implements TableCellRenderer {
+
+        private int n;
+
+        public WordBitIndexRenderer(Inspection inspection) {
+            super(inspection);
+            setOpaque(true);
+            redisplay();
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            setText("+" + markBitmap.getBitIndexInWord(row));
+            setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
+            setWrappedToolTipHtmlText("bit index = " + intTo0xHex(row));
+            setForeground(cellForegroundColor(row, col));
+            setBackground(cellBackgroundColor());
+            if (isBoundaryRow(row)) {
+                setBorder(preference().style().defaultPaneTopBorder());
+            } else {
+                setBorder(null);
+            }
+            return this;
+        }
+
+        public void refresh(boolean force) {
+        }
+
+        public void redisplay() {
+            setFont(preference().style().decimalDataFont());
+        }
+    }
+
+
+    private final class MarkBitRenderer extends PlainLabel implements TableCellRenderer  {
 
         private final Inspection inspection;
 
-        ColorRenderer(Inspection inspection) {
+        MarkBitRenderer(Inspection inspection) {
             super(inspection, "x");
             this.inspection = inspection;
             setOpaque(true);
@@ -431,47 +529,14 @@ public final class MemoryColoringTable extends InspectorTable {
         }
     }
 
-    private final class BitmapWordAddressRenderer extends InspectorLabel implements TableCellRenderer {
-
-
-        public BitmapWordAddressRenderer(Inspection inspection) {
-            super(inspection);
-            setOpaque(true);
-            redisplay();
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Address address = markBitmap.bitmapWordAddress(row);
-            setText(address.toPaddedHexString('0'));
-            setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
-            setWrappedToolTipHtmlText("Bitmap word@" + address.to0xHexString() + " contains mark bit");
-            setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor());
-            if (isBoundaryRow(row)) {
-                setBorder(preference().style().defaultPaneTopBorder());
-            } else {
-                setBorder(null);
-            }
-            return this;
-        }
-
-        public void redisplay() {
-            setFont(preference().style().hexDataFont());
-        }
-
-        public void refresh(boolean force) {
-        }
-    }
-
-    private final class AddressRenderer extends DefaultTableCellRenderer implements Prober{
+    private final class CoveredAddressRenderer extends DefaultTableCellRenderer implements Prober{
 
         private final Inspection inspection;
         // WordValueLabels have important user interaction state, so create one per memory location and keep them around,
         // even though they may not always appear in the same row.
         private final Map<Long, WordValueLabel> addressToLabelMap = new HashMap<Long, WordValueLabel>();
 
-        public AddressRenderer(Inspection inspection) {
+        public CoveredAddressRenderer(Inspection inspection) {
             this.inspection = inspection;
         }
 

@@ -78,6 +78,14 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
     Address heapAddress(int bitIndex);
 
     /**
+     * Gets the (word-based) index of the bitmap word that contains a specific bit index.
+     *
+     * @param bitIndex index of a bit in the map
+     * @return index of a word in the map
+     */
+    int bitmapWordIndex(int bitIndex);
+
+    /**
      * Address of the word containing the first bit of the mark at the specified bit index.
      * @param bitIndex a bit index
      * @return address to bitmap word.
