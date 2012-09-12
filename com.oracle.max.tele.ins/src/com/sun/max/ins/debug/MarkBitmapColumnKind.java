@@ -39,6 +39,7 @@ public enum MarkBitmapColumnKind implements ColumnKind {
     WORD_INDEX("word #", "Word-based index of the word containing the mark bit", false, 8),
     BITMAP_WORD_ADDRESS("Word address", "Address of word in the map containing the mark bit", false, 20),
     WORD_BIT_INDEX("bit/word #", "index of the mark bit in the map word containing the bit", false, 8),
+    WORD_BITS("word bits", "contents of the map word, with the mark bit bracketed", false, 16),
     MARK_BIT("Mark", "The mark bit covering this word and the color of the object's mark", true, 16),
     HEAP_ADDRESS("Covered Address", "Heap address covered by this bitmap position", true, 20);
 
