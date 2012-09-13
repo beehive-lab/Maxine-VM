@@ -353,34 +353,44 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
     }
 
+    private void verifyCommon() {
+        gcRootsVerifier.run();
+
+        // Check immortal memory
+        DebugHeap.verifyRegion(ImmortalHeap.getImmortalHeap(), ImmortalHeap.getImmortalHeap().start(), ImmortalHeap.getImmortalHeap().mark(), refVerifier, detailLogger);
+
+        // Code only point to memory region that contains live objects
+        verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
+        verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
+        oldSpace.visit(fotVerifier);
+
+    }
     private void verifyAfterMinorCollection() {
         if (MaxineVM.isDebug()) {
             Memory.zapRegion(youngSpace.space);
         }
-        // Verify that:
-        // 1. offset table is correctly setup
-        oldSpace.visit(fotVerifier);
-        // 2. there are no pointer from old to young.
-        noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
+        final ContiguousHeapSpace oldToSpace = oldSpace.space;
+        final BaseAtomicBumpPointerAllocator oldSpaceAllocator = oldSpace.allocator;
+
+        // Setup ref verifier appropriately.
         if (resizingPolicy.minorEvacuationOverflow()) {
             // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
-            final ContiguousHeapSpace oldToSpace = oldSpace.space;
-            final BaseAtomicBumpPointerAllocator oldSpaceAllocator = oldSpace.allocator;
-            noFromSpaceReferencesVerifiers.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
-            noFromSpaceReferencesVerifiers.visitCells(oldSpaceAllocator.start(), oldSpaceAllocator.unsafeTop());
             overflowedArea.setStart(oldSpaceAllocator.start());
             overflowedArea.setEnd(oldSpaceAllocator.unsafeTop());
             refVerifier.setVerifiedSpaces(oldToSpace, overflowedArea);
         } else {
             refVerifier.setVerifiedSpace(oldSpace.space);
+        }
+        verifyCommon();
+        // there are no pointer from old to young.
+        noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
+        if (resizingPolicy.minorEvacuationOverflow()) {
+            // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
+            noFromSpaceReferencesVerifiers.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
+            noFromSpaceReferencesVerifiers.visitCells(oldSpaceAllocator.start(), oldSpaceAllocator.unsafeTop());
+        } else {
             oldSpace.visit(noFromSpaceReferencesVerifiers);
         }
-        // 3. Roots only point to memory region that contains live objects.
-        gcRootsVerifier.run();
-
-        // Code only point to memory region that contains live objects
-        verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
-        verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
     }
 
     private void verifyAfterFullCollection() {
@@ -388,13 +398,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             Memory.zapRegion(oldSpace.fromSpace);
         }
         refVerifier.setVerifiedSpace(oldSpace.space);
-        oldSpace.visit(fotVerifier);
+        verifyCommon();
         noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
         oldSpace.visit(noFromSpaceReferencesVerifiers);
-        gcRootsVerifier.run();
-        DebugHeap.verifyRegion(oldSpace.space, oldSpace.allocator.start(), oldSpace.allocator.unsafeTop(), refVerifier, detailLogger);
-        verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
-        verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
     }
 
     private void doOldGenCollection() {
