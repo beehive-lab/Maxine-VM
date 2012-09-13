@@ -130,8 +130,9 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
     }
 
-    private InspectorAction viewBitmapMemoryAction;
-    private InspectorAction viewBitmapDataAction;
+    private final InspectorAction scrollToFocusAction;
+    private final InspectorAction viewBitmapMemoryAction;
+    private final InspectorAction viewBitmapDataAction;
 
     private MaxMarkBitmap markBitmap = null;
     private MaxObject markBitmapData = null;
@@ -198,6 +199,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         prefsButton.setToolTipText("Column view options");
         prefsButton.setIcon(style.generalPreferencesIcon());
 
+        scrollToFocusAction = new ScrollToFocusAction(inspection);
         viewBitmapMemoryAction = new ViewBitmapMemoryAction(inspection);
         viewBitmapDataAction = new ViewBitmapDataAction(inspection);
         refreshAllActions(true);
@@ -231,7 +233,9 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         objectMenu.add(viewBitmapDataAction);
         objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
 
-        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        final InspectorMenu viewMenu = makeMenu(MenuKind.VIEW_MENU);
+        viewMenu.add(scrollToFocusAction);
+        viewMenu.add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         if (vm().heap().markBitMap() == null) {
             createNullContent();
@@ -447,6 +451,25 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         reconstructView();
     }
 
+    private final class ScrollToFocusAction extends InspectorAction {
+
+        public ScrollToFocusAction(Inspection inspection) {
+            super(inspection(), "Scroll to selected (covered) memory location");
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            scrollToRowCentered(table.findCoveringRow(focus().address()));
+            MarkBitmapView.this.forceRefresh();
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(markBitmap != null && markBitmap.isCovered(focus().address()));
+        }
+    }
+
     private final class ViewBitmapDataAction extends InspectorAction {
 
         private static final String TITLE = "View Bitmap Data as Array";
@@ -492,5 +515,6 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
             setEnabled(markBitMap != null && markBitMap.memoryRegion().isAllocated());
         }
     }
+
 
 }
