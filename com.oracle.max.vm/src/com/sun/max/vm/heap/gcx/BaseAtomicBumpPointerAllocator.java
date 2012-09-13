@@ -317,10 +317,6 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 if (cell.equals(startOfSpaceLeft) && cell.plus(size).equals(hardLimit)) {
                     return cell;
                 }
-                if (MaxineVM.isDebug()) {
-                    Log.print("Refill after failed attempt to allocate ");
-                    Log.printlnToPowerOfTwoUnits(size);
-                }
                 Address chunk = refillManager.allocateRefill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
                 if (chunk.isNotZero()) {
                     refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));

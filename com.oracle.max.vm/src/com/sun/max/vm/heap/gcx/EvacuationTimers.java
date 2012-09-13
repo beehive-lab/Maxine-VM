@@ -34,6 +34,7 @@ public final class EvacuationTimers {
         ROOT_SCAN,
         BOOT_HEAP_SCAN,
         CODE_SCAN,
+        IMMORTAL_SCAN,
         RSET_SCAN,
         COPY,
         WEAK_REF,

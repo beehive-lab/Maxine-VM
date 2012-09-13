@@ -324,20 +324,20 @@ public class MaxineTesterConfiguration {
         imageConfig("c1x2",  opt_c1x, "--C1X:OptLevel=2");
         imageConfig("c1x3",  opt_c1x, "--C1X:OptLevel=3");
 
-        // Alternate GC configs
+        // Alias to default configuration
+        imageConfig("gss",  opt_c1x,   "-run=java", "-heap=sequential.gen.semiSpace");
+       // Alternate GC configurations
+        imageConfig("gssd",  opt_c1x,   "-run=java", "-heap=sequential.gen.semiSpace", "-build=DEBUG");
+        imageConfig("ss",  opt_c1x,   "-run=java", "-heap=sequential.semiSpace");
+        imageConfig("ssd",  opt_c1x,   "-run=java", "-heap=sequential.semiSpace", "-build=DEBUG");
         imageConfig("ms",   opt_c1x,      "-run=java", "-heap=gcx.ms");
         imageConfig("msd",  opt_c1x,     "-run=java", "-heap=gcx.ms", "-build=DEBUG");
         imageConfig("msed",  opt_c1x,     "-run=java", "-heap=gcx.mse", "-build=DEBUG");
         imageConfig("mse",  opt_c1x,   "-run=java", "-heap=gcx.mse");
-        imageConfig("msc1x",      "-run=java", "-heap=gcx.ms", opt_c1x);
-        imageConfig("msec1x",     "-run=java", "-heap=gcx.mse", opt_c1x);
-        imageConfig("gss",  opt_c1x,   "-run=java", "-heap=sequential.gen.semiSpace");
-        imageConfig("gssd",  opt_c1x,   "-run=java", "-heap=sequential.gen.semiSpace", "-build=DEBUG");
-
         imageConfig("gmse",  opt_c1x,   "-run=java", "-heap=gcx.gen.mse");
         imageConfig("gmsed",  opt_c1x,   "-run=java", "-heap=gcx.gen.mse", "-build=DEBUG");
 
-      // VMA configs - the -vma option is interpreted by the mx tool to set additional system properties
+      // VMA configurations - the -vma option is interpreted by the mx tool to set additional system properties
         final String vmaT1X = "com.oracle.max.vm.ext.t1x.vma.VMAT1X";
         final String vmaC1X = "com.oracle.max.vm.ext.c1x.vma.VMAC1X";
         final String vmaBaseline = "-baseline=" + vmaT1X;
