@@ -151,13 +151,16 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
         @Override
         public Address allocateLargeRaw(Size size) {
-            // FIXME: for now, we rely on:
-            // 1. Mutators can only allocate in the old generation via the young space refiller; concurrent operation are synchronized with the young space refill lock.
-            //  This protect both allocation and modification of the cfoTable.
-            // 2. All other allocations against the old generation are made directly by the collector, at safepoint.
-            //
-            // We may want separate refill lock and provide old generation allocation with it's own lock mutators can synchronize on.
             if (MaxineVM.isDebug()) {
+                // For now, we rely on:
+                // 1. Mutators can only allocate in the old generation via this method,as a result of an allocation request that overflow the young space's bump pointer allocator.
+                //  Concurrent call to this methods are already synchronized with the refill lock of the young space's bump pointer allocator.
+                //  The refill lock protect both allocation and modification of the cfoTable.
+                // 2. All other allocations and or modification of the cfoTable against the old generation are made directly by the collector, at safepoint, which is already synchronized with
+                // the refillLock (safepoint are mutual exclusive with ALL monitors).
+                //
+                // We may want to separate the refill lock and provide old generation allocation with its own lock to avoid contention between mutators that allocate in the old generation and
+                // those that just refill the young space allocator, and to separate old and young space more cleanly.
                 // We should be synchronizing on the young generation's refill lock.
                 FatalError.check(youngSpace.allocator().holdsRefillLock(), "must hold young space refiller's lock to allocate into old gen directly");
             }
