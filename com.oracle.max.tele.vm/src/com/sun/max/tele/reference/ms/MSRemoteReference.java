@@ -158,7 +158,7 @@ public class MSRemoteReference extends  RemoteReference {
             // Properties;
             @Override
             ObjectStatus status() {
-                return LIVE;
+                return FREE;
             }
 
             @Override
@@ -375,8 +375,7 @@ public class MSRemoteReference extends  RemoteReference {
 
     @Override
     public Address forwardedTo() {
-        // TODO Auto-generated method stub
-        return null;
+        return Address.zero();
     }
 
     @Override

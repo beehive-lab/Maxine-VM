@@ -132,25 +132,27 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
         }
     }
 
-    public void flash(Color borderFlashColor) {
+    public void flash(Color borderFlashColor, int n) {
         Component pane = getContentPane();
         if (pane instanceof JScrollPane) {
             final JScrollPane scrollPane = (JScrollPane) pane;
             pane = scrollPane.getViewport();
         }
-        final Graphics g = pane.getGraphics();
-        g.setPaintMode();
-        g.setColor(borderFlashColor);
-        for (int i = 0; i < 5; i++) {
-            g.drawRect(i, i, pane.getWidth() - (i * 2), pane.getHeight() - (i * 2));
+        for (int i = 0; i < n; i++) {
+            final Graphics g = pane.getGraphics();
+            g.setPaintMode();
+            g.setColor(borderFlashColor);
+            for (int r = 0; r < 5; r++) {
+                g.drawRect(r, r, pane.getWidth() - (r * 2), pane.getHeight() - (r * 2));
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+            g.dispose();
+            invalidate();
+            repaint();
         }
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-        }
-        g.dispose();
-        invalidate();
-        repaint();
     }
 
     public void setStateColor(Color color) {

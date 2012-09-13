@@ -625,7 +625,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return an index to a word of the color map.
      */
     @INLINE
-    protected final int bitmapWordIndex(int bitIndex) {
+    public final int bitmapWordIndex(int bitIndex) {
         return bitIndex >> Word.widthValue().log2numberOfBits;
     }
 

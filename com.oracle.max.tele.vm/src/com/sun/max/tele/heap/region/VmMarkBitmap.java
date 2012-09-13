@@ -148,20 +148,17 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
         return coveredMemoryRegion.contains(heapAddress) ? bitIndexOf(heapAddress) : -1;
     }
 
-    public int getBitmapWordIndex(Address heapAddress) {
-        return bitmapWordIndex(heapAddress);
-    }
-
-    public Address bitmapWord(Address heapAddress) {
-        return bitmapWordPointerAt(bitIndexOf(heapAddress));
-    }
 
     public Address heapAddress(int bitIndex) {
         return addressOf(bitIndex);
     }
 
-    public Address bitmapWord(int bitIndex) {
+    public Address bitmapWordAddress(int bitIndex) {
         return bitmapWordPointerAt(bitIndex);
+    }
+
+    public long readBitmapWord(int bitIndex) {
+        return hostedBitmapWordAt(bitIndex);
     }
 
     public int getBitIndexInWord(int bitIndex) {

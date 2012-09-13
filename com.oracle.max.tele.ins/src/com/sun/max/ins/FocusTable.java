@@ -125,6 +125,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         WATCHPOINT("Watchpoint", "Current watchpoint of interest in the Inspector"),
         ADDRESS("Memory Address", "Current memory address of interest in the Inspector"),
         OBJECT("Heap Object", "Current heap object of interest in the Inspector"),
+        HEAP_MARK_BIT("Heap mark bit", "Current bit in the Mark Bitmap of interest in the Inspector"),
         REGION("Memory Region", "Current memory region of interest in the Inspector");
 
         private final String label;
@@ -344,6 +345,15 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                             }
                         };
                         break;
+                    case HEAP_MARK_BIT:
+                        label = new PlainLabel(inspection, "") {
+                            @Override
+                            public void refresh(boolean force) {
+                                final int heapMarkBit = focus().markBitIndex();
+                                setValue(heapMarkBit);
+                            }
+                        };
+                        break;
                     case REGION:
                         label = new PlainLabel(inspection, "") {
                             @Override
@@ -416,6 +426,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
     }
 
     public void heapObjectFocusChanged(MaxObject oldObject, MaxObject object) {
+        refresh(true);
+    }
+
+
+    public void markBitIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit) {
         refresh(true);
     }
 
