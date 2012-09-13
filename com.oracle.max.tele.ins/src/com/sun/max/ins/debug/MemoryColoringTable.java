@@ -250,6 +250,10 @@ public final class MemoryColoringTable extends InspectorTable {
         scrollToRows(tableModel.findRow(first), tableModel.findRow(last));
     }
 
+    int findCoveringRow(Address address) {
+        return  tableModel.findCoveringRow(address);
+    }
+
     private final class MemoryColoringColumnModel extends InspectorTableColumnModel<MarkBitmapColumnKind> {
 
         private MemoryColoringColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, TableColumnVisibilityPreferences<MarkBitmapColumnKind> instanceViewPreferences) {
