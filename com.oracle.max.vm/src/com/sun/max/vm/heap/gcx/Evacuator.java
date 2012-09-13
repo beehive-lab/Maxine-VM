@@ -311,6 +311,13 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         Heap.bootHeapRegion.visitReferences(this);
     }
 
+    /**
+     * Evacuate all objects of the evacuated area directly reachable from the immortal heap.
+     */
+    final protected void evacuateFromImmortalHeap() {
+        ImmortalHeap.visitCells(this);
+    }
+
     void evacuateFromCode() {
         // References in the boot code region are immutable and only ever refer
         // to objects in the boot heap region.
@@ -476,6 +483,16 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
             phaseLogger.logScanningCode(VMLogger.Interval.END);
         }
 
+        if (Heap.logGCPhases()) {
+            phaseLogger.logScanningImmortalHeap(VMLogger.Interval.BEGIN);
+        }
+        timers.start(IMMORTAL_SCAN);
+        evacuateFromImmortalHeap();
+        timers.stop(IMMORTAL_SCAN);
+        if (Heap.logGCPhases()) {
+            phaseLogger.logScanningImmortalHeap(VMLogger.Interval.END);
+        }
+
         if (logPhases) {
             phaseLogger.logScanningRSet(VMLogger.Interval.BEGIN);
         }
@@ -523,6 +540,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         void scanningRoots(@VMLogParam(name = "interval") Interval interval);
         void scanningBootHeap(@VMLogParam(name = "interval") Interval interval);
         void scanningCode(@VMLogParam(name = "interval") Interval interval);
+        void scanningImmortalHeap(@VMLogParam(name = "interval") Interval interval);
         void scanningRSet(@VMLogParam(name = "interval") Interval interval);
         void evacuating(@VMLogParam(name = "interval") Interval interval);
         void processingSpecialReferences(@VMLogParam(name = "interval") Interval interval);
@@ -559,6 +577,11 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         }
 
         @Override
+        protected void traceScanningImmortalHeap(Interval interval) {
+            tracePhase("Scanning immortal heap", interval);
+        }
+
+        @Override
         protected void traceScanningRSet(Interval interval) {
             tracePhase("Scanning remembered sets", interval);
         }
@@ -580,7 +603,8 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     private static abstract class PhaseLoggerAuto extends com.sun.max.vm.heap.HeapScheme.PhaseLogger {
         public enum Operation {
             Evacuating, ProcessingSpecialReferences, ScanningBootHeap,
-            ScanningCode, ScanningRSet, ScanningRoots, ScanningThreadRoots;
+            ScanningCode, ScanningImmortalHeap, ScanningRSet, ScanningRoots,
+            ScanningThreadRoots;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
@@ -622,6 +646,12 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         protected abstract void traceScanningCode(Interval interval);
 
         @INLINE
+        public final void logScanningImmortalHeap(Interval interval) {
+            log(Operation.ScanningImmortalHeap.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningImmortalHeap(Interval interval);
+
+        @INLINE
         public final void logScanningRSet(Interval interval) {
             log(Operation.ScanningRSet.ordinal(), intervalArg(interval));
         }
@@ -659,15 +689,19 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
                     traceScanningCode(toInterval(r, 1));
                     break;
                 }
-                case 4: { //ScanningRSet
+                case 4: { //ScanningImmortalHeap
+                    traceScanningImmortalHeap(toInterval(r, 1));
+                    break;
+                }
+                case 5: { //ScanningRSet
                     traceScanningRSet(toInterval(r, 1));
                     break;
                 }
-                case 5: { //ScanningRoots
+                case 6: { //ScanningRoots
                     traceScanningRoots(toInterval(r, 1));
                     break;
                 }
-                case 6: { //ScanningThreadRoots
+                case 7: { //ScanningThreadRoots
                     traceScanningThreadRoots(toVmThread(r, 1));
                     break;
                 }
