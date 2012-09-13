@@ -355,7 +355,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     private void verifyCommon() {
         gcRootsVerifier.run();
-
+        // Debug boot heap
+        noFromSpaceReferencesVerifiers.visitCells(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.mark());
         // Check immortal memory
         DebugHeap.verifyRegion(ImmortalHeap.getImmortalHeap(), ImmortalHeap.getImmortalHeap().start(), ImmortalHeap.getImmortalHeap().mark(), refVerifier, detailLogger);
 
@@ -363,8 +364,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
         verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
         oldSpace.visit(fotVerifier);
-
     }
+
     private void verifyAfterMinorCollection() {
         if (MaxineVM.isDebug()) {
             Memory.zapRegion(youngSpace.space);
@@ -373,6 +374,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final BaseAtomicBumpPointerAllocator oldSpaceAllocator = oldSpace.allocator;
 
         // Setup ref verifier appropriately.
+        noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
         if (resizingPolicy.minorEvacuationOverflow()) {
             // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
             overflowedArea.setStart(oldSpaceAllocator.start());
@@ -383,7 +385,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
         verifyCommon();
         // there are no pointer from old to young.
-        noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
         if (resizingPolicy.minorEvacuationOverflow()) {
             // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
             noFromSpaceReferencesVerifiers.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
@@ -397,9 +398,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         if (MaxineVM.isDebug()) {
             Memory.zapRegion(oldSpace.fromSpace);
         }
+        noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
         refVerifier.setVerifiedSpace(oldSpace.space);
         verifyCommon();
-        noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
         oldSpace.visit(noFromSpaceReferencesVerifiers);
     }
 

@@ -117,6 +117,8 @@ public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
     }
     @Override
     protected void evacuateFromBootHeap() {
+        // NOTE: if immortal region happens to grow very large, it may be sensible to also scan it using the
+        // card table, instead of just letting super-class Evacuator iterate over entire immortal memory.
         final BootHeapRegion bootHeapRegion = Heap.bootHeapRegion;
         rset.cleanAndVisitCards(bootHeapRegion.start(), bootHeapRegion.end(), bootRegionDirtyCardClosure);
         bootHeapRegion.discoverSpecialReference();
