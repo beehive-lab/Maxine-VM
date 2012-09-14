@@ -430,6 +430,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         youngSpaceEvacuator.doAfterGC();
         oldSpaceEvacuator.setGCOperation(null);
         if (resizingPolicy.fullEvacuationOverflow()) {
+            FatalError.breakpoint();
             // Re-establish the allocators.
             FatalError.check(oldSpace.allocator.start().equals(youngSpace.space.start()), "invariant violated for full evacuation overflow");
             final Address top = oldSpace.allocator.unsafeTop();
@@ -485,11 +486,14 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             //  overflow + live(old) > old-semi-space.  However, note that  overflow + live(old) <= old-semi-space + young space.
             // In this case, we just want to have enough to (1) complete the GC and (2) let the mutator catch the OOM.
             // So we just overflow back to the young space by refilling with the evacuation buffer with the young gen,  and we'll resume after GC with a non empty young generation and a full old generation.
-            //
-            // Need to refill old gen allocator with young gen space.
+            FatalError.breakpoint();
+            HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
+           // Need to refill old gen allocator with young gen space.
             resizingPolicy.notifyOutOfMemory();
             resizingPolicy.notifyFullEvacuationOverflow();
             allocator.refill(youngSpace.space.start(), youngSpace.space.committedSize());
+            startOfSpaceLeft = allocator.unsafeSetTopToLimit();
+            return startOfSpaceLeft;
         } else {
             FatalError.unexpected("Shouldn't refill evacuation buffer outside of GC operations");
         }
