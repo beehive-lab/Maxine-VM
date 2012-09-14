@@ -102,7 +102,7 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
             remoteReference = new UnmanagedCanonicalTeleReference(vm(), origin);
             originToReference.put(origin.toLong(), new WeakReference<RemoteReference>(remoteReference));
         }
-        return remoteReference == null ? vm().referenceManager().zeroReference() : remoteReference;
+        return remoteReference;
     }
 
     /**

@@ -66,7 +66,7 @@ public interface RemoteObjectReferenceManager {
 
     /**
      * Creates a canonical remote reference to a live object whose origin
-     * in VM memory is at a specified address, the zero {@link RemoteReference} if there is no
+     * in VM memory is at a specified address, {@code null} if there is no
      * live object at that origin.
      * <p>
      * The origin of the object may change over time, for example if
@@ -75,14 +75,14 @@ public interface RemoteObjectReferenceManager {
      * The state of the object may change over time
      *
      * @param origin an absolute memory location in the VM.
-     * @return a remote reference to an object in the VM
+     * @return a remote reference to an object in the VM, {@code null} if no object
      * @throws TeleError if the origin is not in the memory regions being managed.
      */
     RemoteReference makeReference(Address origin) throws TeleError;
 
     /**
      * Creates a canonical remote reference to a <em>quasi</em> object whose origin
-     * in VM memory is at a specified address, the zero {@link RemoteReference} if there is no
+     * in VM memory is at a specified address, {@code null} if there is no
      * <em>quasi</em> object at that origin.
      * <p>
      * The origin of the object may change over time, for example if
