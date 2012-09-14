@@ -355,7 +355,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     private void verifyCommon() {
         gcRootsVerifier.run();
-        // Debug boot heap
+        // Check boot heap
         noFromSpaceReferencesVerifiers.visitCells(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.mark());
         // Check immortal memory
         DebugHeap.verifyRegion(ImmortalHeap.getImmortalHeap(), ImmortalHeap.getImmortalHeap().start(), ImmortalHeap.getImmortalHeap().mark(), refVerifier, detailLogger);
