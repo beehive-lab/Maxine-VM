@@ -427,7 +427,7 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
                         @VMLogParam(name = "freeOldSpace") long freeOldSpace,
                         @VMLogParam(name = "minorEvacuationOverflow") boolean minorEvacuationOverflow,
                         @VMLogParam(name = "oldSpaceMutatorOverflow") boolean oldSpaceMutatorOverflow,
-                        @VMLogParam(name = "shouldPerformGC") boolean shouldPerformGC
+                        @VMLogParam(name = "shouldPerformFullGC") boolean shouldPerformFullGC
         );
         void minorOverflowEvacuation(
                         @VMLogParam(name = "start") Address start,
@@ -498,7 +498,7 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         }
 
         @Override
-        protected void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean oldSpaceMutatorOverflow, boolean shouldPerformGC) {
+        protected void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean oldSpaceMutatorOverflow, boolean shouldPerformFullGC) {
             Log.print("Estimated next evacuation: ");
             Log.printToPowerOfTwoUnits(Size.fromLong(estimatedEvacuation));
             Log.print(", Free old space: ");
@@ -507,8 +507,8 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
             Log.print(minorEvacuationOverflow);
             Log.print(", oldSpaceMutatorOverflow = ");
             Log.print(oldSpaceMutatorOverflow);
-            Log.print(", shouldPerformGC = ");
-            Log.println(shouldPerformGC);
+            Log.print(", shouldPerformFullGC = ");
+            Log.println(shouldPerformFullGC);
         }
 
         @Override
@@ -585,10 +585,10 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         protected abstract void traceMinorOverflowEvacuation(Address start, Address end);
 
         @INLINE
-        public final void logShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean oldSpaceMutatorOverflow, boolean shouldPerformGC) {
-            log(Operation.ShouldPerformFullGC.ordinal(), longArg(estimatedEvacuation), longArg(freeOldSpace), booleanArg(minorEvacuationOverflow), booleanArg(oldSpaceMutatorOverflow), booleanArg(shouldPerformGC));
+        public final void logShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean oldSpaceMutatorOverflow, boolean shouldPerformFullGC) {
+            log(Operation.ShouldPerformFullGC.ordinal(), longArg(estimatedEvacuation), longArg(freeOldSpace), booleanArg(minorEvacuationOverflow), booleanArg(oldSpaceMutatorOverflow), booleanArg(shouldPerformFullGC));
         }
-        protected abstract void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean oldSpaceMutatorOverflow, boolean shouldPerformGC);
+        protected abstract void traceShouldPerformFullGC(long estimatedEvacuation, long freeOldSpace, boolean minorEvacuationOverflow, boolean oldSpaceMutatorOverflow, boolean shouldPerformFullGC);
 
         @INLINE
         public final void logShrinkHeap(long heapSize, long youngSize, long oldSize, long delta) {
