@@ -429,6 +429,15 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         cardTableRSet.cardTable.clean(startIndex, endIndex);
         youngSpaceEvacuator.doAfterGC();
         oldSpaceEvacuator.setGCOperation(null);
+        if (resizingPolicy.fullEvacuationOverflow()) {
+            // Re-establish the allocators.
+            FatalError.check(oldSpace.allocator.start().equals(youngSpace.space.start()), "invariant violated for full evacuation overflow");
+            final Address top = oldSpace.allocator.unsafeTop();
+            youngSpace.allocator.unsafeSetTop(top);
+            oldSpace.allocator.refill(oldSpace.space.start(), oldSpace.space.committedSize());
+            oldSpace.allocator.unsafeSetTop(oldSpace.allocator.hardLimit());
+            resizingPolicy.notifyFullEvacuationOverflowRange(youngSpace.allocator.start(), top);
+        }
     }
 
     @Override
@@ -472,10 +481,15 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 HeapFreeChunk.format(startOfSpaceLeft, endOfRefill.minus(startOfSpaceLeft).asSize());
                 return startOfSpaceLeft;
             }
+            // The GC has run out of old space to evacuate live objects. This happens when the previous minor collection has already overflowed into the from space and
+            //  overflow + live(old) > old-semi-space.  However, note that  overflow + live(old) <= old-semi-space + young space.
+            // In this case, we just want to have enough to (1) complete the GC and (2) let the mutator catch the OOM.
+            // So we just overflow back to the young space by refilling with the evacuation buffer with the young gen,  and we'll resume after GC with a non empty young generation and a full old generation.
+            //
             // Need to refill old gen allocator with young gen space.
             resizingPolicy.notifyOutOfMemory();
-            oldSpace.allocator.refill(youngSpace.space.start(), youngSpace.space.committedSize());
-            FatalError.unimplemented();
+            resizingPolicy.notifyFullEvacuationOverflow();
+            allocator.refill(youngSpace.space.start(), youngSpace.space.committedSize());
         } else {
             FatalError.unexpected("Shouldn't refill evacuation buffer outside of GC operations");
         }
