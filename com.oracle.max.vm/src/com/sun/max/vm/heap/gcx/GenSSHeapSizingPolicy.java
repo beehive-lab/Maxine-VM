@@ -153,7 +153,7 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      * (2) YS = YP  H
      * (3)   M = 2 OS + YS
      * From these, we can derive H, the effective heap size H =  M / ( 2 - YP)
-     * Note that the larger YP, the larger the effective the heap size.
+     * Note that the larger YP, the larger the effective heap size.
      * However, in practice, YP must not be such that the young generation is larger
      * than a old generation semi-space, or the worst case evacuation for a minor collection cannot be supported.
      *
