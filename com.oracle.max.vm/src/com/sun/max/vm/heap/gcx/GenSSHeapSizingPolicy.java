@@ -288,6 +288,12 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         return fullEvacuationOverflow;
     }
 
+    public void clearNotifications() {
+        outOfMemory = false;
+        fullEvacuationOverflow = false;
+        minorEvacuationOverflow = false;
+    }
+
     private boolean sizeDownYoungGen(Size estimatedEvacuation, Size oldGenFreeSpace) {
         Size ys =  youngGenSize();
         Size minYS = minYoungGenSize();
