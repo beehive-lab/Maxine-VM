@@ -436,7 +436,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             final Address top = oldSpace.allocator.unsafeTop();
             youngSpace.allocator.unsafeSetTop(top);
             oldSpace.allocator.refill(oldSpace.space.start(), oldSpace.space.committedSize());
-            oldSpace.allocator.unsafeSetTop(oldSpace.allocator.hardLimit());
+            oldSpace.allocator.unsafeSetTopToLimit();
             resizingPolicy.notifyFullEvacuationOverflowRange(youngSpace.allocator.start(), top);
         }
     }
@@ -455,7 +455,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 // Refill using the from space.
                 final ContiguousHeapSpace fromSpace = oldSpace.fromSpace;
                 // Left-over in allocator is not formated.
-                fillWithDeadObject(startOfSpaceLeft, allocator.hardLimit());
+                Address endOfSpaceLeft = allocator.hardLimit();
+                if (endOfSpaceLeft.greaterThan(startOfSpaceLeft)) {
+                    fillWithDeadObject(startOfSpaceLeft, allocator.hardLimit());
+                }
                 // Notify that we need to run a full GC immediately after this overflowing minor collection.
                 resizingPolicy.notifyMinorEvacuationOverflow();
                 // Refill the allocator with the old from space.
@@ -487,12 +490,16 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             // In this case, we just want to have enough to (1) complete the GC and (2) let the mutator catch the OOM.
             // So we just overflow back to the young space by refilling with the evacuation buffer with the young gen,  and we'll resume after GC with a non empty young generation and a full old generation.
             FatalError.breakpoint();
-            HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
-           // Need to refill old gen allocator with young gen space.
+            Address endOfSpaceLeft = allocator.hardLimit();
+            if (endOfSpaceLeft.greaterThan(startOfSpaceLeft)) {
+                fillWithDeadObject(startOfSpaceLeft, endOfSpaceLeft);
+            }
+            // Need to refill old gen allocator with young gen space.
             resizingPolicy.notifyOutOfMemory();
             resizingPolicy.notifyFullEvacuationOverflow();
             allocator.refill(youngSpace.space.start(), youngSpace.space.committedSize());
             startOfSpaceLeft = allocator.unsafeSetTopToLimit();
+            HeapFreeChunk.format(startOfSpaceLeft,  youngSpace.space.committedSize());
             return startOfSpaceLeft;
         } else {
             FatalError.unexpected("Shouldn't refill evacuation buffer outside of GC operations");
@@ -531,6 +538,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      */
     private void doCollect(int invocationCount) {
         final boolean oldSpaceMutatorOverflow = oldSpace.allocator.refillManager().mutatorOverflow();
+        resizingPolicy.clearNotifications();
         evacTimers.resetTrackTime();
 
         VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
