@@ -150,7 +150,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         @INLINE
         @Override
         protected void retireDeadSpace(Pointer deadSpace, Size size) {
-            HeapSchemeAdaptor.fillWithDeadObject(deadSpace, deadSpace.plus(size));
+            DarkMatter.format(deadSpace, size);
         }
 
         @INLINE
@@ -673,9 +673,8 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
         if (deadSpace.greaterThan(minReclaimableSpace)) {
             recordFreeSpace(endOfLastVisitedObject, deadSpace);
-        } else if (MaxineVM.isDebug()) {
-            // Helping the inspector.
-            DarkMatterDebugHelper.setDarkMatter(endOfLastVisitedObject, deadSpace);
+        } else {
+            DarkMatter.format(endOfLastVisitedObject, deadSpace);
         }
         endOfLastVisitedObject = liveObject.plus(Layout.size(Layout.cellToOrigin(liveObject)));
         return endOfLastVisitedObject;
@@ -690,9 +689,8 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(endOfLeftObject, numDeadBytes);
-        } else if (MaxineVM.isDebug()) {
-            // Helping the inspector.
-            DarkMatterDebugHelper.setDarkMatter(endOfLeftObject, numDeadBytes);
+        } else {
+            DarkMatter.format(endOfLeftObject, numDeadBytes);
         }
         return rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
     }

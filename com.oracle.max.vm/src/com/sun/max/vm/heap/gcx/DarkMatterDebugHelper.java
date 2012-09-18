@@ -30,11 +30,10 @@ import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
 /**
  * Helper class to specially mark objects identified as dark-matter.
  * This is useful only in debug mode, to help the Inspector.
- *
  */
 public final class DarkMatterDebugHelper {
     // FIXME: this is designed to not interfere with misc word bit use for thin/biased lock word and hash code.
-    // Management of misc word usage must be revisited so it can be centralized so anyone can check what
+    // Usage of bits in the misc word should be revisited and centralized to ease figuring out what
     // bits are being reserved and whether there is any conflicting use.
     // The DARK MATTER flag set all bits to zero (so it looks like an unlocked, un-hashed header), except for  the bits used for counting recursive lock requests,
     // namely, the highest 5 bits.

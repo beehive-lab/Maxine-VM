@@ -116,6 +116,8 @@ public final class ClassRegistry {
     public static final ArrayClassActor<LongValue> LONG_ARRAY = createPrimitiveArrayClass(LONG);
     public static final ArrayClassActor<DoubleValue> DOUBLE_ARRAY = createPrimitiveArrayClass(DOUBLE);
 
+    public static final ArrayClassActor<LongValue> SYSTEM_LONG_ARRAY = new ArrayClassActor<LongValue>(LONG);
+
     public static final FieldActor ClassActor_javaClass = findField(ClassActor.class, "javaClass");
     public static final FieldActor Buffer_address = findField(Buffer.class, "address");
     public static final FieldActor JLRReference_referent = findField(java.lang.ref.Reference.class, "referent");

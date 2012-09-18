@@ -46,7 +46,7 @@ public final class ClassActorFactory {
         return ClassRegistry.define(new ArrayClassActor(componentClassActor));
     }
 
-    /**
+   /**
      * Creates a ClassActor for an interface.
      */
     public static InterfaceActor createInterfaceActor(

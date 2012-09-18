@@ -31,7 +31,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -110,7 +109,7 @@ public class HeapFreeChunk {
     }
 
     public static boolean isHeapFreeChunkOrigin(Pointer origin) {
-        return Reference.fromJava(heapFreeChunkHub()).toOrigin().equals(origin.readWord(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt()));
+        return Reference.fromJava(heapFreeChunkHub()).toOrigin().equals(origin.readWord(Layout.hubIndex()));
     }
     /**
      * Return true if the specified area is formated as a tail chunk (i.e., chunk with a null next field).
