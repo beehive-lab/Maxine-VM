@@ -52,6 +52,12 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
         protected void doBeforeGC() {
             // Nothing to do.
         }
+
+        @Override
+        public Address allocateLargeRaw(Size size) {
+            FatalError.unimplemented();
+            return Address.zero();
+        }
     }
 
     /**
@@ -119,7 +125,7 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
         while (nurseryRegionsList.tail() != lastCommittedRegion) {
             uncommitedNurseryRegionsList.prepend(nurseryRegionsList.removeTail());
         }
-        allocator.initialize(RegionTable.theRegionTable().regionAddress(nurseryRegionsList.head()), genSizingPolicy.initialYoungGenSize());
+        allocator.initialize(RegionTable.theRegionTable().regionAddress(nurseryRegionsList.head()), genSizingPolicy.initialYoungGenSize(), Size.fromInt(HeapRegionConstants.regionSizeInBytes));
     }
 
     public Pointer allocate(Size size) {

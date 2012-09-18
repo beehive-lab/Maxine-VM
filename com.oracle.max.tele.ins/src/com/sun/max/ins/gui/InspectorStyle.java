@@ -223,6 +223,19 @@ public interface InspectorStyle {
     /** Color for the background of any display of memory belonging to a quasi object. */
     Color quasiObjectBackgroundColor();
 
+    /** Color for the background of a cell indicating that the bitmap marking color is white. */
+    Color markedWhiteBackgroundColor();
+
+    /** Color for the background of a cell indicating that the bitmap marking color is grey. */
+    Color markedGrayBackgroundColor();
+
+    /** Color for the background of a cell indicating that the bitmap marking color is black. */
+    Color markedBlackBackgroundColor();
+
+    /** Color for the background of a cell indicating that the bitmap marking is invalid. */
+    Color markInvalidBackgroundColor();
+
+
     // Search related
     /** Icon for the search button that selects the next match moving forward.  */
     Icon searchNextMatchButtonIcon();

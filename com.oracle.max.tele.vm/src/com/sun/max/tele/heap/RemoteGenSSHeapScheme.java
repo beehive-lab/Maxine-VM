@@ -420,13 +420,56 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     }
 
     @Override
-    public MaxMemoryManagementInfo getMemoryManagementInfo(Address address) {
-        // TODO Auto-generated method stub
-        return null;
+    public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
+        return new MaxMemoryManagementInfo() {
+            @Override
+            public MaxMemoryStatus status() {
+                if (address == null || address.isZero()) {
+                    return MaxMemoryStatus.UNKNOWN;
+                }
+                final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
+                if (heapRegion == null) {
+                    return MaxMemoryStatus.UNKNOWN;
+                }
+                if (contains(address)) {
+                    switch(objectStatusAt(address)) {
+                        case LIVE:
+                            return MaxMemoryStatus.LIVE;
+                        case FORWARDER:
+                            return MaxMemoryStatus.LIVE;
+                        case DEAD:
+                            return MaxMemoryStatus.DEAD;
+                        case FREE:
+                            return MaxMemoryStatus.FREE;
+                    }
+                }
+                return MaxMemoryStatus.LIVE;
+            }
+
+            @Override
+            public String terseInfo() {
+                return "";
+            }
+
+            @Override
+            public String shortDescription() {
+                return vm().heapScheme().name();
+            }
+
+            @Override
+            public Address address() {
+                return address;
+            }
+
+            @Override
+            public MaxObject tele() {
+                return null;
+            }
+        };
     }
 
     public ObjectStatus objectStatusAt(Address origin) {
-        TeleError.check(contains(origin), "Location is outside GenSSHeapScheme regions");
+        TeleError.check(contains(origin), "Location is outside GenSSHeapScheme dynamic heap regions");
         if (isHeapFreeChunkOrigin(origin)) {
             return ObjectStatus.FREE;
         }

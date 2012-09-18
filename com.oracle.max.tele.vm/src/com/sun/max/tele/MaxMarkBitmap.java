@@ -30,12 +30,23 @@ import com.sun.max.unsafe.*;
  */
 public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
 
-    public static class Color {
+    public enum MarkColor {
+        MARK_WHITE(0, "White"),
+        MARK_BLACK(1, "Black"),
+        MARK_GRAY(2, "Gray"),
+        MARK_INVALID(3, "Invalid"),
+        MARK_UNAVAILABLE(4, "<?>");
+
         public final int id;
         public final String name;
-        public Color(int id, String name) {
+        private MarkColor(int id, String name) {
             this.id = id;
             this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
         }
     }
 
@@ -53,24 +64,11 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
 
     /**
      * Index to the first bit in the mark bitmap encoding the color corresponding to the specified heap address.
+     *
      * @param heapAddress an address in the heap area covered by the mark bitmap
-     * @return a bit index
+     * @return a bit index in the map, {@code -1} if the address is not covered by the map.
      */
     int getBitIndexOf(Address heapAddress);
-
-    /**
-     * Index to the word holding the first bit in the mark bitmap encoding the color corresponding to the specified heap address.
-     * @param heapAddress an address in the heap area covered by the mark bitmap
-     * @return an address to a word of the mark bitmap
-     */
-    int getBitmapWordIndex(Address heapAddress);
-
-    /**
-     * Address of the word holding the first bit in the mark bitmap encoding the color corresponding to the specified heap address.
-     * @param heapAddress an address in the heap area covered by the mark bitmap
-     * @return an address to a word of the mark bitmap
-     */
-    Address bitmapWord(Address heapAddress);
 
     /**
      * Address in the heap corresponding to a bit index of the mark bitmap.
@@ -80,11 +78,27 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
     Address heapAddress(int bitIndex);
 
     /**
+     * Gets the (word-based) index of the bitmap word that contains a specific bit index.
+     *
+     * @param bitIndex index of a bit in the map
+     * @return index of a word in the map
+     */
+    int bitmapWordIndex(int bitIndex);
+
+    /**
      * Address of the word containing the first bit of the mark at the specified bit index.
      * @param bitIndex a bit index
      * @return address to bitmap word.
      */
-    Address bitmapWord(int bitIndex);
+    Address bitmapWordAddress(int bitIndex);
+
+    /**
+     * Reads from VM memory the word in the map that includes the specified bit index.
+     *
+     * @param bitIndex a bit index
+     * @return current contents of the bitmap word for the index
+     */
+    long readBitmapWord(int bitIndex);
 
     /**
      * The position of the bit identified by a bit index within the bitmap word holding that bit.
@@ -108,23 +122,55 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
     void setBit(int bitIndex);
 
     /**
-     * Color of the mark at the specified bit index.
+     * Gets the color of the marking at the covered address, if there is an object at the address covered by the
+     * specified bit in the map; {@code null} if there is no object at the covered address.
+     *
      * @param bitIndex a bit index
-     * @return color
+     * @return color color of the mark covering an address; {@code null} if no object at address
      */
-    Color getColor(int bitIndex);
+    MarkColor getMarkColor(int bitIndex);
 
     /**
-     * Color of the mark corresponding to the specified the heap address.
-     * @param heapAddress
+     * Gets the color of the marking at the address, if there is an object at the address covered by the specified bit
+     * in the map; {@code null} if there is no object at the address.
+     *
+     * @param an address, presumed to be in the heap covered by the bitmap
+     * @return color color of the mark covering the address; {@code null} if no object at address
      */
-    Color getColor(Address heapAddress);
+    MarkColor getMarkColor(Address heapAddress);
 
     /**
-     * Colors that the mark bitmap can encode. Typical implementation only encode 2 colors (white and black). Exotic
-     * implementation may implement three or four color per objects. This let the heap scheme implementation specify what
-     * color it supports.
-     * @return an array enumerating all the color supported by the heap scheme.
+     * Scans forward in the bitmap, locating the closest bit <em>after</em> a specified starting location that is set.
+     *
+     * @param startBitIndex Where the scan should start
+     * @return the index of the closest set bit after the starting index, -1 if none.
      */
-    Color [] colors();
+    int nextSetBitAfter(int startBitIndex);
+
+    /**
+     * Scans backward in the bitmap, locating the closest bit <em>before</em> a specified starting location that is set.
+     *
+     * @param startBitIndex Where the scan should start
+     * @return the index of the closest set bit before the starting index, -1 if none.
+     */
+    int previousSetBitBefore(int startBitIndex);
+
+    /**
+     * Scans forward in the bitmap, locating the closest bit <em>before</em> a specified starting location that begins a
+     * mark of the specified color.
+     *
+     * @param startBitIndex Where the scan should start
+     * @return the index of the closest mark before the starting index, -1 if none.
+     */
+    int nextMarkAfter(int startBitIndex, MarkColor color);
+
+    /**
+     * Scans forward in the bitmap, locating the closest bit <em>after</em> a specified starting location that begins a
+     * mark of the specified color.
+     *
+     * @param startBitIndex Where the scan should start
+     * @return the index of the closest mark after the starting index, -1 if none.
+     */
+    int previousMarkBefore(int startBitIndex, MarkColor color);
+
 }

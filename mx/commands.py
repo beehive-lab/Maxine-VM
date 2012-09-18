@@ -93,7 +93,7 @@ def gate(args):
 
     If this commands exits with a 0 exit code, then the source code is in
     a state that would be accepted for integration into the main repository."""
-
+   
     if mx.checkstyle([]):
         mx.abort('Checkstyle warnings were found')
 
@@ -128,6 +128,7 @@ def gate(args):
     mx.log('Running MaxineTester...')
 
     test(['-image-configs=java', '-fail-fast'] + args)
+    test(['-image-configs=ss', '-tests=output:Hello+Catch+GC+WeakRef+Final', '-fail-fast'] + args)
 
 def gssgate(args):
     """run the tests used to validate a push to the stable Maxine repository with GenSSHeapScheme

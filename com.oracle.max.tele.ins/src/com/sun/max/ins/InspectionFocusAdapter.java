@@ -54,4 +54,6 @@ public class InspectionFocusAdapter implements ViewFocusListener {
     public void heapObjectFocusChanged(MaxObject oldObject, MaxObject newObject) {
     }
 
+    public void markBitIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit) {
+    }
 }

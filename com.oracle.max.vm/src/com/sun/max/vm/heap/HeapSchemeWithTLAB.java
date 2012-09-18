@@ -481,8 +481,13 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     public final Object createTuple(Hub hub) {
         Pointer cell = tlabAllocate(hub.tupleSize);
-
-        return Cell.plantTuple(cell, hub);
+        if (MaxineVM.isDebug()) {
+            Reference.fromJava(hub).toOrigin().getReference().toOrigin().getReference().toOrigin();
+            Object result = Cell.plantTuple(cell, hub);
+            return result;
+        } else {
+            return Cell.plantTuple(cell, hub);
+        }
     }
 
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")

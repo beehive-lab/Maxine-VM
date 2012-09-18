@@ -37,11 +37,6 @@ import com.sun.max.vm.runtime.*;
  */
 public class ChunkListAllocator<T extends ChunkListRefillManager> extends BaseAtomicBumpPointerAllocator<T> {
     /**
-     * Maximum size one can allocate with this allocator. Request for size larger than this
-     * are delegated to @link {@link RefillManager#allocateLarge(Size)}.
-     */
-    protected Size sizeLimit;
-    /**
      * Flags for enabling/disabling traces for this allocator.
      */
     boolean debugTrace = false;
@@ -56,8 +51,7 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends BaseAt
      * @param sizeLimit
      */
     void initialize(Size initialRefillSize, Size sizeLimit) {
-        this.sizeLimit = sizeLimit;
-        super.initialize(Address.zero(), Size.zero());
+        super.initialize(Address.zero(), Size.zero(), sizeLimit);
         Address chunk = refillManager.allocateChunkListOrRefill(this, initialRefillSize, Pointer.zero(), Size.zero());
         // A zero chunk means the allocator is refilled -- see allocateChunkListOrRefill for details.
         FatalError.check(chunk.isZero() && start().isNotZero() && top.equals(start()) && end().greaterThan(top), "allocator must be refilled");
@@ -131,16 +125,6 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends BaseAt
         return cell;
     }
 
-    void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit) {
-        this.sizeLimit = sizeLimit;
-        super.initialize(initialChunk, initialChunkSize);
-    }
-
-    @INLINE
-    final boolean isLarge(Size size) {
-        return size.greaterThan(sizeLimit);
-    }
-
     @Override
     protected Pointer refillOrAllocate(Size size) {
         synchronized (refillLock()) {
@@ -149,7 +133,7 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends BaseAt
             // what's left in the allocator (and succeed!).
             if (isLarge(size)) {
                 // FIXME(ld) does this really need to be done under the refillLock() ?
-                return refillManager.allocateLarge(size).asPointer();
+                return refillManager.allocateLargeRaw(size).asPointer();
             }
             // We may have raced with another concurrent thread which may have
             // refilled the allocator.
