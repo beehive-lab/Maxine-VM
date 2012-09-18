@@ -102,7 +102,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         }
 
         @Override
-        public Address allocateLarge(Size size) {
+        public Address allocateLargeRaw(Size size) {
             return binAllocate(size);
         }
 

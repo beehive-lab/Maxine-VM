@@ -455,7 +455,11 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     }
 
     public void flash() {
-        frame.flash(preference().style().frameBorderFlashColor());
+        flash(1);
+    }
+
+    public void flash(int n) {
+        frame.flash(preference().style().frameBorderFlashColor(), n);
     }
 
     public void highlight() {
@@ -472,7 +476,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         frame.moveToFront();
         if (!isSelected()) {
             setSelected();
-            frame.flash(preference().style().frameBorderFlashColor());
+            flash();
         }
     }
 
@@ -571,6 +575,9 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     }
 
     public void heapObjectFocusChanged(MaxObject oldObject, MaxObject object) {
+    }
+
+    public void markBitIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit) {
     }
 
     public final InspectorAction getShowViewAction() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,7 @@ public class InspectorGeometry10Pt implements InspectorGeometry {
         preferredFrameGeometry.put(ViewKind.DEBUG_INFO, new Rectangle(10, 350, 300, 300));
         preferredFrameGeometry.put(ViewKind.STACK_FRAME, new Rectangle(1175, 450, 275, 450));
         preferredFrameGeometry.put(ViewKind.JAVA_SOURCE, new Rectangle(100, 100, 500, 500));
+        preferredFrameGeometry.put(ViewKind.MARK_BITMAP, new Rectangle(250, 200,  250, 250));
         preferredFrameGeometry.put(ViewKind.METHODS, new Rectangle(275, 0, 800, 800));
         preferredFrameGeometry.put(ViewKind.NOTEPAD, new Rectangle(150, 150, 300, 300));
         preferredFrameGeometry.put(ViewKind.REGISTERS, new Rectangle(1175, 0, 275, 350));

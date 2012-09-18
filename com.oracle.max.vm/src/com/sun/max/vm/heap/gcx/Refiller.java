@@ -56,4 +56,13 @@ public abstract class Refiller {
      */
     protected abstract void doBeforeGC();
 
+    /**
+     * Called directly by the allocator if the requested size is larger than its maximum size limit.
+     * The allocated chunk is left raw. Clearing (i.e., zero-fill) is the responsibility of the caller.
+     *
+     * @param size number of bytes requested
+     * @return the address to a contiguous region of the requested size
+     */
+    public abstract Address allocateLargeRaw(Size size);
+
 }

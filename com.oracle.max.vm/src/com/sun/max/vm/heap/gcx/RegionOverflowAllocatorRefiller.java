@@ -217,4 +217,10 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
         // Not enough freed memory.
         throw outOfMemoryError;
     }
+
+    @Override
+    public Address allocateLargeRaw(Size size) {
+        FatalError.unexpected("Overflow allocator must never be requested large size");
+        return Address.zero();
+    }
 }

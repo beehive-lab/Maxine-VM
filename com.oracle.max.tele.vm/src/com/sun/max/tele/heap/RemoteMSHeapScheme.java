@@ -61,7 +61,7 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * These maps contain no {@linkplain ObjectStatus#DEAD DEAD} references except during a
  * GC {@linkplain HeapPhase#RECLAIMING RECLAIMING} phase.</p>
  * <p>
- * A reference encapsulates the <em>identity</em> of an object (whether legitimate or pseudo-), so there may be
+ * A reference encapsulates the <em>identity</em> of an object (whether legitimate or quasi-), so there may be
  * no more than one reference in the maps at any memory location.  This identity relation permits the distinction
  * between object and reference to be overlooked for brevity in the following description.</p>
  * <p>
@@ -490,11 +490,15 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     // TODO (mlvdv) refine
     public ObjectStatus objectStatusAt(Address origin) throws TeleError {
         TeleError.check(contains(origin), "Location is outside MS heap region");
+
         switch(phase()) {
             case MUTATING:
             case RECLAIMING:
             case ANALYZING:
                 if (objectSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin)) {
+                    if (isHeapFreeChunkOrigin(origin)) {
+                        return ObjectStatus.FREE;
+                    }
                     return ObjectStatus.LIVE;
                 }
                 break;
@@ -523,7 +527,9 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 if (remoteReference != null) {
                     // A reference to the object is already in the Object-Space map.
                     TeleError.check(remoteReference.status().isLive());
-                } else if (objectSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin)) {
+                } else if (objectSpaceMemoryRegion.containsInAllocated(origin)
+                                && objects().isPlausibleOriginUnsafe(origin)
+                                && !isHeapFreeChunkOrigin(origin)) {
                     // A newly discovered object in the allocated area of To-Space; add a new reference to the To-Space map.
                     remoteReference = MSRemoteReference.createLive(this, origin);
                     objectRefMap.put(origin, remoteReference);
@@ -537,7 +543,30 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
     // TODO (mlvdv) refine, e.g. for HeapFreeChunks and possibly others.
     public RemoteReference makeQuasiReference(Address origin) throws TeleError {
-        return null;
+        assert vm().lockHeldByCurrentThread();
+        // It is an error to attempt creating a reference if the address is completely outside the managed region(s).
+        TeleError.check(contains(origin), "Location is outside MS heap region");
+        MSRemoteReference remoteReference = null;
+        switch(phase()) {
+            case MUTATING:
+            case RECLAIMING:
+            case ANALYZING:
+                remoteReference = objectRefMap.get(origin);
+                if (remoteReference != null) {
+                    // A reference to the object is already in the Object-Space map.
+                    TeleError.check(remoteReference.status().isQuasi());
+                } else if (objectSpaceMemoryRegion.containsInAllocated(origin)
+                                && objects().isPlausibleOriginUnsafe(origin)
+                                && isHeapFreeChunkOrigin(origin)) {
+                    // A newly discovered object in the allocated area of To-Space; add a new reference to the To-Space map.
+                    remoteReference = MSRemoteReference.createFree(this, origin);
+                    objectRefMap.put(origin, remoteReference);
+                }
+                break;
+            default:
+                TeleError.unknownCase();
+        }
+        return remoteReference;
     }
 
     /**

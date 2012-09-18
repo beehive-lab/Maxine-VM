@@ -123,8 +123,9 @@ public interface InspectorFrame extends RootPaneContainer, Prober {
      * for a short time.
      *
      * @param borderFlashColor a color to show briefly around the border of the frame.
+     * @param n the number of times to flash
      */
-    void flash(Color borderFlashColor);
+    void flash(Color borderFlashColor, int n);
 
     /**
      * Returns the size of this component.

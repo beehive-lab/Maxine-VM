@@ -40,7 +40,7 @@ import com.sun.max.vm.type.*;
  * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size marking stack, an (optional) rescan map.
  * The marking algorithm follows a strategy similar to Detlef & Printezis ISMM 2000 (see {@link ForwardScanState}
  * for details).
- *
+ * <p>
  * The tricolor mark-bitmap encodes three colors using two consecutive bits but consumes as much space overhead as
  * a single-bit mark bitmap, thanks to padding rare tiny objects to guarantee two color bits for every objects.
  * Tracing algorithm uses a single-bit mark bitmap and a fairly large marking stack (from several thousands of references, up to
@@ -49,39 +49,41 @@ import com.sun.max.vm.type.*;
  * thus revisiting all marked objects. The cost of rescan is so overwhelming that a very large marking stack is used to avoid
  * this possibility. The reason for the blind rescan is that with a single bit, one cannot distinguish visited (black) objects from
  * unvisited but live (grey) objects.
- *
+ * <p>
  * Every bit maps to a fixed chunk of heap such that every object's first words coincide with one fixed chunk.
  *  Almost all objects have a size larger than the size of a single chunk covered by one bit. Those that don't
  *  (called tiny objects) are segregated or padded (i.e., the heap allocate them the required space to cover 2 bits of the mark bitmap).
  *  Maxine currently aligns objects on a 8-byte word boundary, uses 8-bytes words, and uses a two-words header.
  *
  * The following choices are considered:
- * - each bit corresponds to a single word of the heap; Every object is thus guaranteed two-bit; the mark bitmap consumes 16 Kb
- * per Mb of heap.
- * - each bit corresponds to two words of the heap; Every object larger that 3 words occupies 2 chunks. With this design,
+ * <ul>
+ * <li>each bit corresponds to a single word of the heap; Every object is thus guaranteed two-bit; the mark bitmap consumes 16 Kb
+ * per Mb of heap.</li>
+ * <li>each bit corresponds to two words of the heap; Every object larger that 3 words occupies 2 chunks. With this design,
  * the smallest objects can only be allocated 1 bit. Since such objects are generally rare they can be treated
  * specially: e.g., padded to be associated with two bits, or segregated to be allocated in an area covered by a one bit
  * bitmap. Padding is simpler as it allows a unique bitmaps. Maxine's current 8-byte alignment raises another problem
  * with this approach: a chunk can be shared by two objects. This complicates finding the "origin" of an object. The solution
  * is to require objects to be chunk-aligned (i.e., 16-byte aligned) potentially wasting heap space. This would make the
- * mark bitmap consumes 8 Kb / Mb of heap.
- *
+ * mark bitmap consumes 8 Kb / Mb of heap.</li>
+ * </ul>
+ * <p>
  * Which solution is best depends on the amount of space wasted by the 2-words alignment requirement, compared to bitmap
  * space saved. A larger grain also means less time to scan the bitmap. We leave this choice to the heap implementation
  * / collector, which is responsible for aligning object and dealing with small object. For simplicity, we begin here
  * with the first alternative (1 bit per word).
- *
+ * <p>
  * Finally, note that when a bit of the color map covers X bytes and objects are X byte-aligned (for X = 8 or 16),
  * the first bit of a color may be either an odd or an even bit, and a color may span
  * two bitmap words. This complicates color search/update operation. A heap allocator may arrange for guaranteeing that
  * an object marks never span a bitmap word by padding a dead object before (Dead objects are special instance of Object
  * whose size is strictly 2 words, regardless of other rules for dealing with tiny objects).
- *
+ * <p>
  * An other alternative is to exploit location of an object with respect to the current cursor on the mark bitmap:
  * since object located after the cursor aren't visited yet, we can use the black mark for marking these grey
  * (i.e., an object with the black mark set is black only if located before the finger). In this case, the grey mark is really only used
  * on overflow of the mark stack.
- *
+ * <p>
  * This class enables both designs, and provides generic bitmap manipulation that understands color coding and
  * color-oriented operations (i.e., searching grey or black mark, etc.). It provides fast and slow variant of
  * operations, wherein the fast variant assumes that a color never span a bitmap word. The GC is responsible for
@@ -623,7 +625,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return an index to a word of the color map.
      */
     @INLINE
-    protected final int bitmapWordIndex(int bitIndex) {
+    public final int bitmapWordIndex(int bitIndex) {
         return bitIndex >> Word.widthValue().log2numberOfBits;
     }
 
@@ -851,7 +853,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * Clear the color map, i.e., turn all bits to white.
      */
     private void clearColorMap() {
-        Memory.clearWords(colorMap.start().asPointer(), colorMap.size().toInt() >> Word.widthValue().log2numberOfBytes);
+        Memory.clearWords(colorMapBase(), colorMap.size().minus(markBitmapHeaderSize()).toInt() >> Word.widthValue().log2numberOfBytes);
     }
 
     private final RootCellVisitor rootCellVisitor;
