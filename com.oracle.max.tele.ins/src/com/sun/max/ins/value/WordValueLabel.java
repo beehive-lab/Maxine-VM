@@ -899,22 +899,27 @@ public class WordValueLabel extends ValueLabel {
                 final long offset = address.minus(stack.memoryRegion().start()).toLong();
                 final StringBuilder ttBuilder = new StringBuilder();
                 ttBuilder.append(value.toWord().to0xHexString());
-                final MaxStackFrame stackFrame = stack.findStackFrame(address);
-                String methodName = null;
-                if (stackFrame instanceof MaxStackFrame.Compiled) {
-                    methodName = inspection().nameDisplay().veryShortName(stackFrame.compilation());
-                }
-                if (stackFrame == null) {
+                try {
+                    final MaxStackFrame stackFrame = stack.findStackFrame(address);
+                    String methodName = null;
+                    if (stackFrame instanceof MaxStackFrame.Compiled) {
+                        methodName = inspection().nameDisplay().veryShortName(stackFrame.compilation());
+                    }
+                    if (stackFrame == null) {
+                        ttBuilder.append("<br>Points into stack for thread ").append(threadName);
+                        ttBuilder.append("<br>").append(longToDecimalAndHex(offset)).append(" bytes from beginning");
+                    } else {
+                        ttBuilder.append("<br>Points at stack frame for thread ").append(threadName);
+                        final String positionString = Integer.toString(stackFrame.position());
+                        if (methodName == null) {
+                            ttBuilder.append("<br>  position=").append(positionString);
+                        } else {
+                            ttBuilder.append("<br>  ").append(positionString).append(": ").append(methodName);
+                        }
+                    }
+                } catch (NullPointerException enull) {
                     ttBuilder.append("<br>Points into stack for thread ").append(threadName);
                     ttBuilder.append("<br>").append(longToDecimalAndHex(offset)).append(" bytes from beginning");
-                } else {
-                    ttBuilder.append("<br>Points at stack frame for thread ").append(threadName);
-                    final String positionString = Integer.toString(stackFrame.position());
-                    if (methodName == null) {
-                        ttBuilder.append("<br>  position=").append(positionString);
-                    } else {
-                        ttBuilder.append("<br>  ").append(positionString).append(": ").append(methodName);
-                    }
                 }
                 setWrappedToolTipHtmlText(ttBuilder.toString());
                 break;
