@@ -123,7 +123,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     /**
-     * Plants a dead instance of java.lang.Object at the specified pointer.
+     * Plants an instance of java.lang.Object at the specified pointer.
      */
     private static void plantDeadObject(Pointer cell) {
         DebugHeap.writeCellTag(cell);
@@ -133,7 +133,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     /**
-     * Plants a dead byte array at the specified cell.
+     * Plants a byte array at the specified cell.
      */
     private static void plantDeadByteArray(Pointer cell, Size size) {
         DebugHeap.writeCellTag(cell);

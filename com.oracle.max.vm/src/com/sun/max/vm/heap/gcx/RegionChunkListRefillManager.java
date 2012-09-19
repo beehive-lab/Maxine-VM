@@ -320,7 +320,7 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
 
     @Override
     protected void retireDeadSpace(Pointer deadSpace, Size size) {
-        HeapSchemeAdaptor.fillWithDeadObject(deadSpace, deadSpace.plus(size));
+        DarkMatter.format(deadSpace, size);
         deadSpaceListener.notifyRetireDeadSpace(deadSpace, size);
     }
 

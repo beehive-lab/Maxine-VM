@@ -232,7 +232,7 @@ public class EvacuatorToCardSpace extends Evacuator {
             }
         } else {
             if (!spaceLeft.isZero()) {
-                fillWithDeadObject(ptop, limit);
+                DarkMatter.format(ptop, spaceLeft);
                 rset.notifyRetireDeadSpace(ptop, spaceLeft);
             }
             // Will trigger refill in doBeforeEvacution on next GC
