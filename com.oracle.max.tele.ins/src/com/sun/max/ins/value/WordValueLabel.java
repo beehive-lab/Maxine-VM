@@ -225,6 +225,11 @@ public class WordValueLabel extends ValueLabel {
         UNCHECKED_WORD,
 
         /**
+         * Special display of a word that has been filled with the special "Zapped" value.
+         */
+        ZAPPED,
+
+        /**
          * Numeric display of a word whose value is invalid relative to expectations for it.
          */
         INVALID,
@@ -466,6 +471,8 @@ public class WordValueLabel extends ValueLabel {
 
         if (newValue == VoidValue.VOID) {
             displayMode = DisplayMode.INVALID;
+        } else if (vm().memoryIO().isZappedValue(newValue)) {
+            displayMode = DisplayMode.ZAPPED;
         } else if (valueMode == ValueMode.FLAGS_REGISTER) {
             if (newValue == null) {
                 displayMode = DisplayMode.INVALID;
@@ -1215,6 +1222,13 @@ public class WordValueLabel extends ValueLabel {
                 final String doubleText = valueToDoubleText(value);
                 setWrappedText(doubleText);
                 setWrappedToolTipHtmlText("0x" + hexString + "<br>As float = " + floatText + "<br>As double = " + doubleText);
+                break;
+            }
+            case ZAPPED: {
+                setFont(wordDataFont);
+                setForeground(null);
+                setWrappedText(nameDisplay.zappedDataShortText());
+                setWrappedToolTipHtmlText(nameDisplay.zappedDataLongText());
                 break;
             }
             case UNAVAILABLE: {
