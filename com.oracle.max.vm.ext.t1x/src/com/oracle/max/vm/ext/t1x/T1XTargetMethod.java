@@ -332,8 +332,8 @@ public class T1XTargetMethod extends TargetMethod {
             CiExceptionHandler[] handlers = comp.handlers;
             CiExceptionHandler[] newHandlers = Arrays.copyOf(handlers, handlers.length + 1);
             CiExceptionHandler syncMethodHandler =
-                new CiExceptionHandler(comp.syncMethodStartPos,
-                                       comp.syncMethodEndPos,
+                new CiExceptionHandler(comp.syncHandlerStartPos,
+                                       comp.syncHandlerEndPos,
                                        comp.syncMethodHandlerPos,
                                        SYNC_METHOD_CATCH_TYPE_CPI,
                                        null);
@@ -343,7 +343,7 @@ public class T1XTargetMethod extends TargetMethod {
             if (comp.synchronizedReceiver != -1) {
                 for (int safepointIndex = 0; safepointIndex < safepoints.size(); safepointIndex++) {
                     int pos = safepoints.posAt(safepointIndex);
-                    if (pos >= comp.syncMethodStartPos && pos < comp.syncMethodEndPos) {
+                    if (pos >= comp.syncRefMapStartPos && pos < comp.syncRefMapEndPos) {
                         final int offset = safepointIndex * refMapSize();
                         final int refMapBit = frame.localVariableReferenceMapIndex(comp.synchronizedReceiver);
                         ByteArrayBitMap.set(refMaps, offset, frameRefMapSize, refMapBit);
