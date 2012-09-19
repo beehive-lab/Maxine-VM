@@ -284,7 +284,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         if (cell.isNotZero()) {
             Address hardLimit = hardLimit();
             if (cell.lessThan(hardLimit)) {
-                HeapSchemeAdaptor.fillWithDeadObject(cell, hardLimit);
+                DarkMatter.format(cell, hardLimit);
             }
         }
     }

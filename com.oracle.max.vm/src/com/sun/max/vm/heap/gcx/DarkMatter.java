@@ -29,28 +29,42 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * An helper class to fill free space that cannot be allocated with instances of distinguishable "dark matter" object types, so that:
  * <ul>
- * <li>a GC walking a memory region including dark-matter objects doesn't pay extra cost for jumping over the dark matter. </li>
- * <li> the inspector can easily, and unambiguously distinguish dark matter object.</li>
+ * <li>Memory management related operations that walk over a memory regions comprising dark matter don't pay extra cost for skipping the dark matter (for example,
+ * sweep operations of  mark-sweep collector, or dirty card scanning in a generational GC with a card-table based remembered set). </li>
+ * <li> The inspector can easily and unambiguously distinguish dark matter.</li>
  * <ul>
- *
+ * To achieve the above, dark matter is formatted as special objects that cannot be allocated nor reference directly by application code.
+ * Because dark matter can be of arbitrary size, it is formatted as an instance of the special dark matter scalar array type represented by the
+ *  {@linkplain DarkMatter#DARK_MATTER_ARRAY} array class actor.
+ * This type has no symbolic definition, cannot be named in Java nor instantiated via reflection. In particular, it isn't registered in the class registry.
+ * It is otherwise equivalent in layout to an long array, and as any array can have a length of 0. Thus, the minimum size for a dark matter array is
+ * three-words, and it cannot be used to format the smallest pieces of heap space which are only two-words wide. These are instead formatted as
+ * instance of the class SmallestDarkMatter.
  */
 public final class DarkMatter {
+    private static final ArrayClassActor<LongValue> DARK_MATTER_ARRAY =
+        new ArrayClassActor<LongValue>(ClassRegistry.LONG, SymbolTable.makeSymbol("dark matter []"));
 
+    /**
+     * Variable-less class used to format the smallest possible dark-matter (i.e., two-words space).
+     */
     private static class SmallestDarkMatter {
 
         @INTRINSIC(UNSAFE_CAST)
-        private static native SmallestDarkMatter asDarkMatterTag(Object darkMatter);
+        private static native SmallestDarkMatter asSmallestDarkMatter(Object darkMatter);
 
         static SmallestDarkMatter toDarkMatter(Address cell) {
-            return asDarkMatterTag(Reference.fromOrigin(Layout.cellToOrigin(cell.asPointer())).toJava());
+            return asSmallestDarkMatter(Reference.fromOrigin(Layout.cellToOrigin(cell.asPointer())).toJava());
         }
 
         @FOLD
@@ -68,6 +82,9 @@ public final class DarkMatter {
             Layout.writeHubReference(origin, Reference.fromJava(hub()));
             Layout.writeMisc(origin, Word.zero());
         }
+
+        private SmallestDarkMatter() {
+        }
     }
 
     private DarkMatter() {
@@ -80,7 +97,7 @@ public final class DarkMatter {
 
     @FOLD
     private static DynamicHub hub() {
-        return ClassRegistry.SYSTEM_LONG_ARRAY.dynamicHub();
+        return DARK_MATTER_ARRAY.dynamicHub();
     }
 
     @FOLD
@@ -94,16 +111,21 @@ public final class DarkMatter {
     }
 
     /**
-     * Tells whether an address is the origin of an dark matter chunk.
-     * @param origin
-     * @return
+     * Tells whether an address is the origin of a cell formatted as dark matter.
+     * @param origin heap address
+     * @return true if the address is the origin of a cell formatted as dark matter.
      */
     public static boolean isDarkMatterOrigin(Address origin) {
         final Word hubWord =  origin.asPointer().readWord(Layout.hubIndex());
         return hubWord.equals(hubWord()) && hubWord.equals(SmallestDarkMatter.hubWord());
     }
 
-    public static Size darkMatterChunkSize(Address address) {
+    /**
+     * Size of a cell formatted as dark matter. Raises a {@linkplain FatalError} if the address is not the start of some dark matter.
+     * @param address address of a cell formatted as a dark matter.
+     * @return Size size of the dark matter cell
+     */
+    public static Size darkMatterSize(Address address) {
         final Word hubWord =  address.asPointer().readWord(Layout.hubIndex());
         if (hubWord.equals(hubWord())) {
             return Size.fromInt(Layout.readArrayLength(address.asPointer()));
@@ -112,6 +134,11 @@ public final class DarkMatter {
         return minSize();
     }
 
+    /**
+     * Format a word-aligned heap region as dark matter. A {@linkplain FatalError} is raised if the region is less than two-words wide.
+     * @param start address to the first word of the region
+     * @param size size of the region
+     */
     public static void format(Address start, Size size) {
         if (size.greaterThan(minSize())) {
             final Pointer origin = Layout.cellToOrigin(start.asPointer());
@@ -138,6 +165,11 @@ public final class DarkMatter {
         }
     }
 
+    /**
+      * Format a word-aligned heap region as dark matter. A {@linkplain FatalError} is raised if the region is less than two-words wide.
+     * @param start address to the first word of the region
+     * @param end  address to the end of the last word of the region
+     */
     public static void format(Address start, Address end) {
         format(start, end.minus(start).asSize());
     }

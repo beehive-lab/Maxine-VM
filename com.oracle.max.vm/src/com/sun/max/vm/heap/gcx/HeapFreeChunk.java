@@ -208,13 +208,12 @@ public class HeapFreeChunk {
         return Layout.originToCell(Reference.fromJava(chunk).toOrigin());
     }
 
-    public static void makeParsable(Address headOfFreeChunkListAddress) {
+    public static void formatAsDarkMatter(Address headOfFreeChunkListAddress) {
         Address chunkAddress = headOfFreeChunkListAddress;
         while (!chunkAddress.isZero()) {
-            Address start = chunkAddress.asPointer();
-            Address end = start.plus(HeapFreeChunk.getFreechunkSize(chunkAddress));
+            Address start = chunkAddress;
             chunkAddress =  HeapFreeChunk.getFreeChunkNext(chunkAddress);
-            HeapSchemeAdaptor.fillWithDeadObject(start, end);
+            DarkMatter.format(start, HeapFreeChunk.getFreechunkSize(start));
         }
     }
 
