@@ -294,7 +294,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
                         totalFreeChunkSpace -=  chunk.size.toLong();
                         remove(prevChunk, chunk);
                         Pointer start = result.asPointer().plus(size);
-                        HeapSchemeAdaptor.fillWithDeadObject(start, start.plus(spaceLeft));
+                        DarkMatter.format(start, spaceLeft);
                     }
                     return result;
                 } else if (chunk.size.equals(size)) {
@@ -586,7 +586,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
             recordFreeSpace(topAtRefill, spaceLeft);
             useTLABBin = tlabFreeSpaceList.totalSize > 0;
         } else if (spaceLeft.greaterThan(0)) {
-            HeapSchemeAdaptor.fillWithDeadObject(topAtRefill, topAtRefill.plus(spaceLeft));
+            DarkMatter.format(topAtRefill, spaceLeft);
         }
         return binAllocate(1, refillSize, false);
     }
@@ -673,7 +673,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
         if (deadSpace.greaterThan(minReclaimableSpace)) {
             recordFreeSpace(endOfLastVisitedObject, deadSpace);
-        } else {
+        } else if (deadSpace.isNotZero()) {
             DarkMatter.format(endOfLastVisitedObject, deadSpace);
         }
         endOfLastVisitedObject = liveObject.plus(Layout.size(Layout.cellToOrigin(liveObject)));
@@ -689,7 +689,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(endOfLeftObject, numDeadBytes);
-        } else {
+        } else if (numDeadBytes.isNotZero()) {
             DarkMatter.format(endOfLeftObject, numDeadBytes);
         }
         return rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
@@ -837,7 +837,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
     public void retireTLAB(Pointer start, Size size) {
         // Ignore.
-        HeapSchemeAdaptor.fillWithDeadObject(start, start.plus(size));
+        DarkMatter.format(start, size);
     }
 
     /**
