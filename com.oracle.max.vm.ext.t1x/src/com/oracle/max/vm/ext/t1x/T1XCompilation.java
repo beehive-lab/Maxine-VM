@@ -227,12 +227,22 @@ public abstract class T1XCompilation {
     /**
      * The first code position in the range covered by the exception handler synthesized for a synchronized method.
      */
-    int syncMethodStartPos = -1;
+    int syncHandlerStartPos = -1;
 
     /**
      * The code position one past the range covered by the exception handler synthesized for a synchronized method.
      */
-    int syncMethodEndPos = -1;
+    int syncHandlerEndPos = -1;
+
+    /**
+     * The first code position where the {@link #synchronizedReceiver} must be in the reference map.
+     */
+    int syncRefMapStartPos = -1;
+
+    /**
+     * The code position one past where the {@link #synchronizedReceiver} must be in the reference map.
+     */
+    int syncRefMapEndPos = -1;
 
     /**
      * The code position of the exception handler synthesized for a synchronized method.
@@ -371,8 +381,10 @@ public abstract class T1XCompilation {
         stream = null;
         handlerBCIs = null;
         handlers = null;
-        syncMethodStartPos = -1;
-        syncMethodEndPos = -1;
+        syncHandlerStartPos = -1;
+        syncHandlerEndPos = -1;
+        syncRefMapStartPos = -1;
+        syncRefMapEndPos = -1;
         synchronizedReceiver = -1;
         syncMethodHandlerPos = -1;
         cp = null;
@@ -1337,8 +1349,9 @@ public abstract class T1XCompilation {
                 loadObject(0, "object", 0);
                 storeObject(template.sig.in[0].reg, synchronizedReceiver);
             }
+            syncRefMapStartPos = buf.position();
             finish();
-            syncMethodStartPos = buf.position();
+            syncHandlerStartPos = buf.position();
         }
     }
 
@@ -1351,9 +1364,9 @@ public abstract class T1XCompilation {
             } else {
                 loadObject(0, "object", synchronizedReceiver);
             }
+            syncHandlerEndPos = buf.position();
             finish();
-
-            syncMethodEndPos = buf.position();
+            syncRefMapEndPos = buf.position();
             emit(RETHROW_EXCEPTION);
         }
     }
