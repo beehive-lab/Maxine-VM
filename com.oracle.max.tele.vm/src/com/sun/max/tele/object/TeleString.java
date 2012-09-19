@@ -130,10 +130,10 @@ public final class TeleString extends TeleTupleObject implements StringProvider 
         }
     }
 
-    private String string;
+    private String string = null;
 
     public String getString() {
-        if (status().isNotDead()) {
+        if (status().isLive()) {
             String s = getString(vm(), reference());
             if (s != null) {
                 string = SymbolTable.intern(s);
