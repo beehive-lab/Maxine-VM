@@ -81,4 +81,10 @@ public interface MaxMemoryIO {
      */
     long readLong(Address address, int idOffset);
 
+    /**
+     * Determines whether a value read from VM memory contains the special value used by the VM
+     * in debugging mode to overwrite unused memory.
+     */
+    boolean isZappedValue(Value value);
+
 }

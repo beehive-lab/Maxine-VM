@@ -22,6 +22,7 @@
  */
 package com.sun.max.tele.data;
 
+import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
@@ -78,6 +79,10 @@ public final class VmMemoryIO extends AbstractVmHolder implements MaxMemoryIO {
 
     public long readLong(Address address, int offset) {
         return access.readLong(address, offset);
+    }
+
+    public boolean isZappedValue(Value value) {
+        return value.toLong() == Memory.ZAPPED_MARKER;
     }
 
     /**
