@@ -184,33 +184,45 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
         return vm().memoryIO().getLong(base, 0, bitmapWordIndex(bitIndex));
     }
 
-    public MarkColor getMarkColor(int bitIndex) {
-        final Address address = addressOf(bitIndex);
-        if (vm().objects().objectStatusAt(address).isLive()) {
-            try {
-                if (isWhite(bitIndex)) {
-                    if (isClear(bitIndex + 1)) {
-                        return MARK_WHITE;
-                    }
-                    TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
-                    return MARK_INVALID;
-                } else if (isGreyWhenNotWhite(bitIndex)) {
-                    return MARK_GRAY;
-                }
-                if (isClear(bitIndex + 1)) {
-                    return MARK_BLACK;
-                }
-                TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
-                return MARK_INVALID;
-            } catch (DataIOError e) {
-                return MARK_UNAVAILABLE;
-            }
+    public MarkColor getMarkColor(Address heapAddress) {
+        if (vm().objects().objectStatusAt(heapAddress).isLive() && isCovered(heapAddress)) {
+            return getMarkColorUnsafe(heapAddress);
         }
         return null;
     }
 
-    public MaxMarkBitmap.MarkColor getMarkColor(Address heapAddress) {
-        return getMarkColor(bitIndexOf(heapAddress));
+    public MarkColor getMarkColor(int bitIndex) {
+        final Address heapAddress = addressOf(bitIndex);
+        if (vm().objects().objectStatusAt(heapAddress).isLive()) {
+            return getMarkColorUnsafe(heapAddress);
+        }
+        return null;
+    }
+
+    /**
+     * Gets the marking at a particular index of the bitmap. Does <em>not check</em> that there is an object at that
+     * location, or even whether the address is covered by the bitmap, so the mark could be at an invalid location.
+     */
+    public MarkColor getMarkColorUnsafe(Address address) {
+        final int bitIndex = bitIndexOf(address);
+        try {
+            if (isWhite(bitIndex)) {
+                if (isClear(bitIndex + 1)) {
+                    return MARK_WHITE;
+                }
+                TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
+                return MARK_INVALID;
+            } else if (isGreyWhenNotWhite(bitIndex)) {
+                return MARK_GRAY;
+            }
+            if (isClear(bitIndex + 1)) {
+                return MARK_BLACK;
+            }
+            TeleWarning.message("Invalid mark in mark bitmap @" + bitIndex);
+            return MARK_INVALID;
+        } catch (DataIOError e) {
+            return MARK_UNAVAILABLE;
+        }
     }
 
     /**
@@ -340,6 +352,11 @@ public final class VmMarkBitmap extends TricolorHeapMarker implements MaxMarkBit
             return false;
         }
 
+        /**
+         * {@inheritDoc}
+         * <p>
+         * The only reference possible is to the header of the array that holds the whole map in the region.
+         */
         public RemoteReference makeReference(Address origin) throws TeleError {
             return objectStatusAt(origin).isLive() ? longArrayRef : null;
         }

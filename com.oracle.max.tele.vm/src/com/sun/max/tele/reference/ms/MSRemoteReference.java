@@ -73,32 +73,12 @@ public class MSRemoteReference extends  RemoteReference {
             }
 
             // Transitions
-            @Override
-            void analyzingBegins(MSRemoteReference ref) {
-                ref.refState = OBJ_UNKNOWN;
-            }
-        },
-
-        /**
-         * Reference to an object whose reachability is unknown, heap {@link HeapPhase#ANALYZING}.
-         */
-        OBJ_UNKNOWN ("UNKNOWN object (Analyzing)") {
-
-            // Properties
-            @Override ObjectStatus status() {
-                return LIVE;
-            }
 
             @Override
-            boolean isFreeSpace() {
-                return false;
+            void discoveredUnreachable(MSRemoteReference ref) {
+                ref.refState = OBJ_UNREACHABLE;
             }
 
-            // Transitions
-            @Override
-            void discoveredReachable(MSRemoteReference ref) {
-                ref.refState = OBJ_LIVE;
-            }
             @Override
             void die(MSRemoteReference ref) {
                 ref.refState = OBJ_DEAD;
@@ -113,7 +93,7 @@ public class MSRemoteReference extends  RemoteReference {
 
             // Properties
             @Override ObjectStatus status() {
-                return DEAD;
+                return UNREACHABLE;
             }
 
             @Override
@@ -262,7 +242,7 @@ public class MSRemoteReference extends  RemoteReference {
         /**
          * @see MSRemoteReference#discoveredReachable()
          */
-        void discoveredReachable(MSRemoteReference ref) {
+        void discoveredUnreachable(MSRemoteReference ref) {
             TeleError.unexpected("Illegal state transition");
         }
 
@@ -328,6 +308,12 @@ public class MSRemoteReference extends  RemoteReference {
     public static MSRemoteReference createFree(RemoteMSHeapScheme remoteScheme, Address origin) {
         final MSRemoteReference ref = new MSRemoteReference(remoteScheme, origin);
         ref.refState = RefState.FREE_CHUNK;
+        return ref;
+    }
+
+    public static MSRemoteReference createUnreachable(RemoteMSHeapScheme remoteScheme, Address origin) {
+        final MSRemoteReference ref = new MSRemoteReference(remoteScheme, origin);
+        ref.refState = RefState.OBJ_UNREACHABLE;
         return ref;
     }
 
@@ -403,9 +389,9 @@ public class MSRemoteReference extends  RemoteReference {
     /**
      * State transition on an ordinary live object reference during {@link HeapPhase#ANALYZING} when an object is found to be reachable.
      */
-    public void discoveredReachable() {
+    public void discoveredUnreachable() {
         priorStatus = refState.status();
-        refState.discoveredReachable(this);
+        refState.discoveredUnreachable(this);
     }
 
     /**

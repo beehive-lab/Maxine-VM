@@ -157,7 +157,7 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
 
     /**
      * Scans forward in the bitmap, locating the closest bit <em>before</em> a specified starting location that begins a
-     * mark of the specified color.
+     * mark of the specified color at an object location.
      *
      * @param startBitIndex Where the scan should start
      * @return the index of the closest mark before the starting index, -1 if none.
@@ -166,7 +166,7 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
 
     /**
      * Scans forward in the bitmap, locating the closest bit <em>after</em> a specified starting location that begins a
-     * mark of the specified color.
+     * mark of the specified color at an object location.
      *
      * @param startBitIndex Where the scan should start
      * @return the index of the closest mark after the starting index, -1 if none.
