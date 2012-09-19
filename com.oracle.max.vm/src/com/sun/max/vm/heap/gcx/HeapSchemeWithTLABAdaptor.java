@@ -57,13 +57,13 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
     }
 
     protected static void fillTLABWithDeadObject(Pointer tlabAllocationMark, Pointer tlabEnd) {
-        // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
+        // Need to plant a dead object in the leftover to make the heap parsable (required for sweeping).
         Pointer hardLimit = tlabEnd.plus(tlabHeadroom());
         if (tlabAllocationMark.greaterThan(tlabEnd)) {
             FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
             return;
         }
-        fillWithDeadObject(tlabAllocationMark, hardLimit);
+        DarkMatter.format(tlabAllocationMark, hardLimit);
     }
 
     class TLABFiller extends HeapSchemeWithTLAB.ResetTLAB {

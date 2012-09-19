@@ -353,7 +353,8 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
             return objectSpace.allocate(size);
         }
         Address nextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
-        fillWithDeadObject(tlabMark, tlabHardLimit);
+        // We will not reuse the leftover, turn it into dark matter.
+        DarkMatter.format(tlabMark, tlabHardLimit);
         // Zap chunk data to leave allocation area clean.
         Memory.clearWords(chunk, effectiveSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
         chunk.plus(effectiveSize).setWord(nextChunk);

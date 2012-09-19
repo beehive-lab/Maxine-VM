@@ -389,7 +389,8 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
         // Otherwise, the chunk can accommodate the request AND
         // we'll have enough room left in the chunk to format a dead object or to store the next chunk pointer.
         Address nextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
-        fillWithDeadObject(tlabMark,  tlabHardLimit);
+        // We will not reuse the leftover, turn it into dark matter.
+        DarkMatter.format(tlabMark, tlabHardLimit);
         Size effectiveSize = chunkSize.minus(tlabHeadroom());
         // Zap chunk data to leave allocation area clean.
         Memory.clearWords(chunk, effectiveSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());

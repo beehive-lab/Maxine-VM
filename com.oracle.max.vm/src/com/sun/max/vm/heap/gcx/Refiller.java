@@ -23,7 +23,6 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * Basic refiller for bump pointer allocators.
@@ -48,7 +47,7 @@ public abstract class Refiller {
      * @param end end of the region, must be greater than start
      */
     void makeParsable(Pointer start, Pointer end) {
-        HeapSchemeAdaptor.fillWithDeadObject(start, end);
+        DarkMatter.format(start, end);
     }
 
     /**

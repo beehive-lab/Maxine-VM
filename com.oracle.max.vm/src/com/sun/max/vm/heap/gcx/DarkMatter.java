@@ -29,7 +29,6 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -45,18 +44,18 @@ import com.sun.max.vm.type.*;
  */
 public final class DarkMatter {
 
-    private static class DarkMatterTag {
+    private static class SmallestDarkMatter {
 
         @INTRINSIC(UNSAFE_CAST)
-        private static native DarkMatterTag asDarkMatterTag(Object darkMatter);
+        private static native SmallestDarkMatter asDarkMatterTag(Object darkMatter);
 
-        static DarkMatterTag toDarkMatter(Address cell) {
+        static SmallestDarkMatter toDarkMatter(Address cell) {
             return asDarkMatterTag(Reference.fromOrigin(Layout.cellToOrigin(cell.asPointer())).toJava());
         }
 
         @FOLD
         static DynamicHub hub() {
-            return ClassActor.fromJava(DarkMatterTag.class).dynamicHub();
+            return ClassActor.fromJava(SmallestDarkMatter.class).dynamicHub();
         }
 
         @FOLD
@@ -68,79 +67,15 @@ public final class DarkMatter {
             final Pointer origin = Layout.cellToOrigin(darkMatter.asPointer());
             Layout.writeHubReference(origin, Reference.fromJava(hub()));
             Layout.writeMisc(origin, Word.zero());
-        }
-
-        Size size() {
-            return hub().tupleSize;
-        }
-    }
-
-    private static final class DarkMatterHeader extends DarkMatterTag {
-        @INTRINSIC(UNSAFE_CAST)
-        private static native DarkMatterHeader asDarkMatterHeader(Object darkMatter);
-
-        static DarkMatterHeader toDarkMatter(Address cell) {
-            return asDarkMatterHeader(Reference.fromOrigin(Layout.cellToOrigin(cell.asPointer())).toJava());
-        }
-
-        @FOLD
-        static DynamicHub hub() {
-            return ClassActor.fromJava(DarkMatterHeader.class).dynamicHub();
-        }
-
-        @FOLD
-        static Word hubWord() {
-            return Reference.fromJava(hub()).toOrigin();
-        }
-
-        /**
-         * Index of the word storing "size" field of the dark matter header.
-         */
-        @FOLD
-        private static int sizeIndex() {
-            return ClassRegistry.findField(HeapFreeChunk.class, "size").offset() >> Word.widthValue().log2numberOfBytes;
-        }
-
-        @INLINE
-        public static void setSize(Address darkMatter, Size size) {
-            darkMatter.asPointer().setWord(sizeIndex(), size);
-        }
-
-        static void format(Address darkMatter) {
-            final Pointer origin = Layout.cellToOrigin(darkMatter.asPointer());
-            Layout.writeHubReference(origin, Reference.fromJava(hub()));
-            Layout.writeMisc(origin, Word.zero());
-        }
-
-        @INSPECTED
-        /**
-         * Size of the chunk of dark matter in bytes (including the size of the instance of DarkMatterHeader prefixing the chunk).
-         */
-        private Size size;
-
-        @Override
-        Size size() {
-            return size;
         }
     }
 
     private DarkMatter() {
     }
 
-    private static DarkMatterTag toDarkMatter(Address origin) {
-        final Word hubWord =  origin.asPointer().readWord(Layout.hubIndex());
-        if (hubWord.equals(DarkMatterHeader.hubWord())) {
-            return DarkMatterHeader.toDarkMatter(origin);
-        }
-        if (hubWord.equals(DarkMatterTag.hubWord())) {
-            return DarkMatterTag.toDarkMatter(origin);
-        }
-        return null;
-    }
-
     @FOLD
     public static Size minSize() {
-        return DarkMatterTag.hub().tupleSize;
+        return SmallestDarkMatter.hub().tupleSize;
     }
 
     @FOLD
@@ -165,15 +100,15 @@ public final class DarkMatter {
      */
     public static boolean isDarkMatterOrigin(Address origin) {
         final Word hubWord =  origin.asPointer().readWord(Layout.hubIndex());
-        return hubWord.equals(DarkMatterHeader.hubWord()) || hubWord.equals(hubWord());
+        return hubWord.equals(hubWord()) && hubWord.equals(SmallestDarkMatter.hubWord());
     }
 
     public static Size darkMatterChunkSize(Address address) {
         final Word hubWord =  address.asPointer().readWord(Layout.hubIndex());
-        if (hubWord.equals(DarkMatterHeader.hubWord())) {
+        if (hubWord.equals(hubWord())) {
             return Size.fromInt(Layout.readArrayLength(address.asPointer()));
         }
-        FatalError.check(hubWord.equals(DarkMatterHeader.hubWord()), "not dark matter origin");
+        FatalError.check(hubWord.equals(SmallestDarkMatter.hubWord()), "not dark matter origin");
         return minSize();
     }
 
@@ -187,39 +122,23 @@ public final class DarkMatter {
             if (MaxineVM.isDebug()) {
                 Memory.setWords(start.plus(darkMatterHeaderSize()).asPointer(), length, Memory.zappedMarker());
             }
+        } else if (size.equals(minSize())) {
+            SmallestDarkMatter.format(start);
         } else {
-            FatalError.check(size.equals(minSize()), "Invalid size for dark matter");
-            DarkMatterTag.format(start);
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("[");
+            Log.print(start);
+            Log.print(",");
+            Log.print(start.plus(size));
+            Log.print(" (");
+            Log.print(size);
+            Log.print(")");
+            Log.unlock(lockDisabledSafepoints);
+            FatalError.unexpected("invalid dark matter size");
         }
     }
 
     public static void format(Address start, Address end) {
         format(start, end.minus(start).asSize());
     }
-/*
-    public static boolean isDarkMatterOrigin(Address origin) {
-        final Word hubWord =  origin.asPointer().readWord(Layout.hubIndex());
-        return hubWord.equals(DarkMatterHeader.hubWord()) || hubWord.equals(DarkMatterTag.hubWord());
-    }
-
-    public static Size darkMatterChunkSize(Address origin) {
-        return toDarkMatter(origin).size();
-    }
-
-    public static void format(Address start, Size size) {
-        if (size.greaterThan(HeapSchemeAdaptor.minObjectWords())) {
-            DarkMatterHeader.format(start);
-            DarkMatterHeader.setSize(start, size);
-            if (MaxineVM.isDebug()) {
-                Memory.setWords(start.plus(minSize()).asPointer(), size.minus(minSize()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt(), Memory.zappedMarker());
-            }
-        } else {
-            FatalError.check(size.equals(minSize()), "Invalid size for dark matter");
-            DarkMatterTag.format(start);
-        }
-
-    }
-    public static void format(Address start, Address end) {
-        format(start, end.minus(start).asSize());
-    }*/
 }
