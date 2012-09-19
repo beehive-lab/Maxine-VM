@@ -154,7 +154,7 @@ public final class MemoryWordsTable extends InspectorTable {
     @Override
     public boolean isBoundaryRow(int row) {
         // TODO (mlvdv)  this doesn't work when origin != cell, i.e. with layouts other than OHM
-        return vm().objects().objectStatusAt(tableModel.getMemoryRegion(row).start()).isLive();
+        return vm().objects().objectStatusAt(tableModel.getMemoryRegion(row).start()).isNotDead();
     }
 
     public InspectorView getView() {
