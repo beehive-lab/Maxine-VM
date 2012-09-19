@@ -53,13 +53,13 @@ public class GCTest4 {
         Node1 node = start;
         while (node != null) {
             if (!node.id.equals(String.valueOf(len))) {
-                throw new Error("assert fail");
+                throw new Error("assert 1 fail");
             }
             node = node.next;
             len++;
         }
         if (len != length) {
-            throw new Error("assert fail");
+            throw new Error("assert 2 fail");
         }
     }
 

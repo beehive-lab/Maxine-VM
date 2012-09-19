@@ -284,7 +284,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         if (cell.isNotZero()) {
             Address hardLimit = hardLimit();
             if (cell.lessThan(hardLimit)) {
-                HeapSchemeAdaptor.fillWithDeadObject(cell, hardLimit);
+                DarkMatter.format(cell, hardLimit);
             }
         }
     }
@@ -316,10 +316,6 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 // Check if we can use the space that was left over.
                 if (cell.equals(startOfSpaceLeft) && cell.plus(size).equals(hardLimit)) {
                     return cell;
-                }
-                if (MaxineVM.isDebug()) {
-                    Log.print("Refill after failed attempt to allocate ");
-                    Log.printlnToPowerOfTwoUnits(size);
                 }
                 Address chunk = refillManager.allocateRefill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
                 if (chunk.isNotZero()) {

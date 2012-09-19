@@ -23,7 +23,6 @@
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -103,7 +102,7 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
 
     public void retireTLAB(Pointer start, Size size) {
         if (!allocator.retireTop(start, size)) {
-            fillWithDeadObject(start, start.plus(size));
+            DarkMatter.format(start, size);
         }
     }
 

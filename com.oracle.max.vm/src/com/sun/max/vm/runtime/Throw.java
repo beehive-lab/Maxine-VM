@@ -52,6 +52,7 @@ public final class Throw {
     public static int TraceExceptions;
     public static boolean TraceExceptionsRaw;
     public static boolean FatalVMAssertions = true;
+    public static boolean FatalOutOfMemory;
     private static int TraceExceptionsMaxFrames = 200;
     private static int TraceExceptionsRawMaxFrames = 200;
     private static String TraceExceptionsFilter;
@@ -69,6 +70,8 @@ public final class Throw {
             "Perform a raw stack scan when a fatal VM occurs.", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "FatalVMAssertions", Throw.class,
             "Convert assertions thrown in the VM code to fatal errors.", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "FatalOutOfMemory", Throw.class,
+            "Quick exit of the VM on first OutOfMemoryError.", Phase.STARTING);
     }
 
     static class StackFrameDumper extends RawStackFrameVisitor {
@@ -149,6 +152,11 @@ public final class Throw {
                     }
                 }
             }
+        }
+        if (FatalOutOfMemory && throwable instanceof OutOfMemoryError) {
+            Log.print("Failing fast on ");
+            Log.println(throwable);
+            MaxineVM.native_exit(11);
         }
     }
 

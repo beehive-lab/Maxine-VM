@@ -181,9 +181,9 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
                     Log.unlock(lockDisabledSafepoints);
                 }
                 // Just make the space left parsable.
-                if (!spaceLeft.isZero()) {
+                if (spaceLeft.isNotZero()) {
                     retiredWaste = retiredWaste.plus(spaceLeft);
-                    HeapSchemeAdaptor.fillWithDeadObject(startOfSpaceLeft, startOfSpaceLeft.plus(spaceLeft));
+                    DarkMatter.format(startOfSpaceLeft, spaceLeft);
                     deadSpaceListener.notifyRetireDeadSpace(startOfSpaceLeft, spaceLeft);
                 }
                 toFullState(regionInfo);

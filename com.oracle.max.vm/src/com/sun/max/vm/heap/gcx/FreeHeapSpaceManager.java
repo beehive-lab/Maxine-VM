@@ -150,7 +150,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         @INLINE
         @Override
         protected void retireDeadSpace(Pointer deadSpace, Size size) {
-            HeapSchemeAdaptor.fillWithDeadObject(deadSpace, deadSpace.plus(size));
+            DarkMatter.format(deadSpace, size);
         }
 
         @INLINE
@@ -203,9 +203,11 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         }
 
         @INLINE
-        void makeParsable() {
+        void doBeforeGC() {
             if (!head.isZero()) {
-                HeapFreeChunk.makeParsable(head);
+                // FIXME: this shouldn't be necessary. The GC knows how to parse HeapFreeChunk, so all it should have to do is
+                // zero-out the head of the list.
+                HeapFreeChunk.formatAsDarkMatter(head);
                 reset();
             }
         }
@@ -294,7 +296,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
                         totalFreeChunkSpace -=  chunk.size.toLong();
                         remove(prevChunk, chunk);
                         Pointer start = result.asPointer().plus(size);
-                        HeapSchemeAdaptor.fillWithDeadObject(start, start.plus(spaceLeft));
+                        DarkMatter.format(start, spaceLeft);
                     }
                     return result;
                 } else if (chunk.size.equals(size)) {
@@ -586,7 +588,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
             recordFreeSpace(topAtRefill, spaceLeft);
             useTLABBin = tlabFreeSpaceList.totalSize > 0;
         } else if (spaceLeft.greaterThan(0)) {
-            HeapSchemeAdaptor.fillWithDeadObject(topAtRefill, topAtRefill.plus(spaceLeft));
+            DarkMatter.format(topAtRefill, spaceLeft);
         }
         return binAllocate(1, refillSize, false);
     }
@@ -673,9 +675,8 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
         if (deadSpace.greaterThan(minReclaimableSpace)) {
             recordFreeSpace(endOfLastVisitedObject, deadSpace);
-        } else if (MaxineVM.isDebug()) {
-            // Helping the inspector.
-            DarkMatterDebugHelper.setDarkMatter(endOfLastVisitedObject, deadSpace);
+        } else if (deadSpace.isNotZero()) {
+            DarkMatter.format(endOfLastVisitedObject, deadSpace);
         }
         endOfLastVisitedObject = liveObject.plus(Layout.size(Layout.cellToOrigin(liveObject)));
         return endOfLastVisitedObject;
@@ -690,9 +691,8 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(endOfLeftObject, numDeadBytes);
-        } else if (MaxineVM.isDebug()) {
-            // Helping the inspector.
-            DarkMatterDebugHelper.setDarkMatter(endOfLeftObject, numDeadBytes);
+        } else if (numDeadBytes.isNotZero()) {
+            DarkMatter.format(endOfLeftObject, numDeadBytes);
         }
         return rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
     }
@@ -803,7 +803,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     public void doBeforeGC() {
         smallObjectAllocator.doBeforeGC();
         for (FreeSpaceList fsp : freeChunkBins) {
-            fsp.makeParsable();
+            fsp.doBeforeGC();
         }
     }
 
@@ -839,7 +839,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
     public void retireTLAB(Pointer start, Size size) {
         // Ignore.
-        HeapSchemeAdaptor.fillWithDeadObject(start, start.plus(size));
+        DarkMatter.format(start, size);
     }
 
     /**

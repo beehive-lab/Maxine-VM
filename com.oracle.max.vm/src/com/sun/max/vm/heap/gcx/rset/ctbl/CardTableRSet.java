@@ -511,6 +511,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
                     Log.print(" card # ");
                     Log.println(cardTable.tableEntryIndex(deadObjectAddress));
                 }
+                // Here we don't use dark matter as we're formatting allocatable space.
                 HeapSchemeAdaptor.fillWithDeadObject(deadObjectAddress, end);
                 return deadObjectAddress;
             }
