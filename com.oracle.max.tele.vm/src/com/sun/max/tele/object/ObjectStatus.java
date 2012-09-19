@@ -40,13 +40,18 @@ import com.sun.max.vm.heap.*;
  * <ul>
  * <li> {@link #LIVE}: Determined to be reachable as of the most recent collection, or <em>presumed</em> to be reachable
  * during certain GC phases when its reachability has not yet been determined.</li>
+ * <li> {@link #FORWARDER}: A <em>Quasi-object</em> that represents the old copy of an object that has been forwarded by
+ * a relocating collector.  Its lifetime starts when the new copy is created and ends when the GC
+ * {@linkplain HeapPhase#ANALYZING analyzing} phase is complete.</li>
+ * <li> {@link UNREACHABLE}: A <em>Quasi-object</em> that represents a formerly {@linkplain #LIVE live} object during
+ * a GC {@linkplain HeapPhase#RECLAIMING reclaiming} phase, when that object has been determined by the immediately
+ * preceding {@linkplain HeapPhase#ANALYZING analyzing phase} to be unreachable.
+ * <li> {@link #FREE}: A <em>Quasi-object</em> that is formatted by the GC to explicitly span a segment of unallocated
+ * memory that is available for allocation.</li>
+ * <li> {@link #DARK}: A <em>Quasi-object</em> that is formatted by the GC to explicitly span a segment of unallocated
+ * memory that is <em>not</em> available for allocation.</li>
  * <li> {@link #DEAD}: Unreachable memory, possibly at a site that formerly held a live or quasi-object but which no
  * longer does; no assumptions about memory may be made</li>
- * <li> {@link #FORWARDER}: A <em>Quasi object</em> that represents the old copy of an object that has been forwarded by
- * a relocating collector, whose lifetime starts when the new copy is created and ends when the GC
- * {@linkplain HeapPhase#ANALYZING} is complete.</li>
- * <li> {@link #FREE}: A <em>Quasi object</em> that is formatted by the GC to explicitly span a segment of unallocated
- * memory.</li>
  * </ul>
  * <p>
  * {@linkplain RemoteReference Remote references} and thus {@linkplain TeleObject remote objects} can change states in
@@ -62,14 +67,6 @@ public enum ObjectStatus {
      */
     LIVE("Live", "Determined to be reachable as of the most recent collection"),
 
-    @Deprecated
-    UNKNOWN("Unknown", "During liveness analysis:  formerly live, not yet determined reachable"),
-
-    /**
-     * The region of memory formerly represented an object that has been collected.
-     */
-    DEAD("Dead", "The region of memory formerly represented an object that has been collected"),
-
     /**
      * A region of memory that formerly held a live object, but which has been copied by a relocating collector.
      * The lifetime of this status begins when the new copy is made, and a forwarding pointer inserted into
@@ -78,10 +75,27 @@ public enum ObjectStatus {
     FORWARDER("Forwarder", "Old copy of a forwarded object, for the duration of the GC analyzing phase"),
 
     /**
+     * A region of memory that formerly held a live object, but which is now known (to the inspector, at least, if not yet
+     * to the GC implementation) to be unreachable and has not yet been reclaimed.
+     */
+    UNREACHABLE("Unreachable", "A formerly live object known to be unreachable but not reclaimed"),
+
+    /**
      * A region of memory corresponding to an element of the GC's free space list.  It is formatted as an
      * object, even though it is never reachable as an object.
      */
-    FREE("Free Space", "A GC-formatted quasi object that spans a chunk of unallocated memory");
+    FREE("Free Space", "A GC-formatted quasi- object that spans a chunk of memory available for allocation"),
+
+    /**
+     * A region of unallocated memory that the GC chooses not to make available for allocation and so is not
+     * on the GC's free space list.  It is formatted as an object, even though it is never reachable as an object.
+     */
+    DARK("Dark Matter", "A GC-formatted quasi- object that spans a chunk of unallocated memory that is not available for allocation"),
+
+    /**
+     * The region of memory formerly represented an object or quasi-object that has been released/collected.
+     */
+    DEAD("Dead", "The region of memory formerly represented an object that has been collected");
 
     private final String label;
     private final String description;
@@ -102,7 +116,7 @@ public enum ObjectStatus {
     /**
      * Does the memory represent an object that is currently assumed to be reachable?
      *
-     * @return {@code this == } {@link #LIVE}.
+     * @return {@code this == } {@link #LIVE}
      */
     public boolean isLive() {
         return this == LIVE;
@@ -111,7 +125,7 @@ public enum ObjectStatus {
     /**
      * Has the object represented by the memory been determined to be unreachable?
      *
-     * @return {@code this == } {@link #DEAD}.
+     * @return {@code this == } {@link #DEAD}
      */
     public boolean isDead() {
         return this == DEAD;
@@ -127,31 +141,49 @@ public enum ObjectStatus {
     }
 
     /**
-     * Does the memory represent either a {@link #LIVE} or <em>quasi</em> object that can be usefully viewed as
+     * Does the memory represent either a {@link #LIVE} or <em>quasi-object</em> that can be usefully viewed as
      * if it were an object.
      *
-     * @return {@code this != } {@link #DEAD}.
+     * @return {@code this != } {@link #DEAD}
      */
     public boolean isNotDead() {
         return this != DEAD;
     }
 
     /**
-     * Does the memory hold a <em>quasi</em> object representing the old copy of an object being forwarded during the current GC cycle?
+     * Does the memory hold a <em>quasi-object</em> representing the old copy of an object being forwarded during the current GC cycle?
      *
-     * @return {@code this ==} {@link #FORWARDER}; always {@code false} when GC not {@linkplain HeapPhase#ANALYZING ANALYZING}.
+     * @return {@code this ==} {@link #FORWARDER}; can only be {@code true} while the GC is {@linkplain HeapPhase#ANALYZING analyzing}.
      */
     public boolean isForwarder() {
         return this == FORWARDER;
     }
 
     /**
-     * Does the memory hold a <em>quasi</em> object formatted by the GC to represent unallocated memory.
+     * Does the memory hold a <em>quasi-object</em> representing an object that is known to be unreachable, but which has not been reclaimed.
      *
-     * @return {@code this ==} {@link #FREE};
+     * @return {@code this ==} {@link #UNREACHABLE}; can only be {@code true} when the GC is {@linkplain HeapPhase#RECLAIMING reclaiming}.
+     */
+    public boolean isUnreachable() {
+        return this == UNREACHABLE;
+    }
+
+    /**
+     * Does the memory hold a <em>quasi-object</em> formatted by the GC to represent free memory available for allocation?
+     *
+     * @return {@code this ==} {@link #FREE}
      */
     public boolean isFree() {
         return this == FREE;
+    }
+
+    /**
+     * Does the memory hold a <em>quasi-object</em> formatted by the GC to represent free memory <em>not</em> available for allocation?
+     *
+     * @return {@code this ==} {@link #DARK}
+     */
+    public boolean isDark() {
+        return this == DARK;
     }
 
     public static final List<ObjectStatus> VALUES = Arrays.asList(values());

@@ -329,7 +329,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             return;
         }
         if (heapRegions.size() < MAX_VM_HEAP_REGIONS) {
-            updateHeapFreeChunkHubOrigin();
+            updateFreeHubOrigins();
             initializeHeapRegions();
             if (heapRegions.size() < MAX_VM_HEAP_REGIONS) {
                 return;

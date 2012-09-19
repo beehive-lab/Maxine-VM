@@ -50,10 +50,12 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
      * The absolute address of the dynamic hub for the class {@link HeapFreeChunk}, stored
      * on the assumption that it is in the boot heap and never changes.  This gets used for
      * quick testing on possible free space chunk origins.
-     * Remote heap scheme making use of HeapFreeChunk should use {@link #updateHeapFreeChunkHubOrigin()} to
+     * Remote heap scheme making use of HeapFreeChunk should use {@link #updateFreeHubOrigins()} to
      * initialize this field.
      */
     protected Address heapFreeChunkHubOrigin = Address.zero();
+
+    protected Address darkMatterHubOrigin = Address.zero();
 
     /**
      * A printer for statistics at the end of each update.
@@ -146,15 +148,25 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         }
     }
 
-    public HeapPhase phase() {
+    public final HeapPhase phase() {
         return phase;
     }
 
-    protected long gcStartedCount() {
+    /**
+     * @return the number of heap collections that have started
+     */
+    protected final long gcStartedCount() {
         return gcStartedCount;
     }
 
-    protected void updateHeapFreeChunkHubOrigin() {
+    /**
+     * @return the number of heap collections that have completed
+     */
+    protected final long gcCompletedCount() {
+        return gcCompletedCount;
+    }
+
+    protected final void updateFreeHubOrigins() {
         if (heapFreeChunkHubOrigin.isZero()) {
             // Assume this never changes, once located.
             final TeleClassActor hfcClassActor = classes().findTeleClassActor(HeapFreeChunk.class);
@@ -165,9 +177,24 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
                 }
             }
         }
+        if (darkMatterHubOrigin.isZero()) {
+            // Assume this never changes, once located.
+            // TODO (fix this)
+               final TeleClassActor hfcClassActor = classes().findTeleClassActor(HeapFreeChunk.class);
+            if (hfcClassActor != null) {
+                final TeleDynamicHub teleDynamicHub = hfcClassActor.getTeleDynamicHub();
+                if (teleDynamicHub != null) {
+                    darkMatterHubOrigin = teleDynamicHub.origin();
+                }
+            }
+        }
     }
 
-    protected boolean isHeapFreeChunkOrigin(Address origin) throws TeleError {
+    /**
+     * Determines whether the object at a memory location in the VM is an instance of {@link HeapFreeChunk},
+     * using a test that depends on the class's dynamic hub object never being collected and never relocated.
+     */
+    protected final boolean isHeapFreeChunkOrigin(Address origin) throws TeleError {
         if (heapFreeChunkHubOrigin.isZero()) {
             return false;
         }
@@ -175,6 +202,17 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         return hubOrigin.equals(heapFreeChunkHubOrigin);
     }
 
+    /**
+     * Determines whether the object at a memory location in the VM is an instance of DARK MATTER,
+     * using a test that depends on the class's dynamic hub never being collected and never relocated.
+     */
+    protected final boolean isDarkMatterOrigin(Address origin) throws TeleError {
+        if (darkMatterHubOrigin.isZero()) {
+            return false;
+        }
+        final Address hubOrigin = referenceManager().makeTemporaryRemoteReference(origin).readHubAsWord().asAddress();
+        return hubOrigin.equals(darkMatterHubOrigin);
+    }
 
     // TODO (mlvdv)  Update; won't work now; important for attach mode
 
