@@ -457,7 +457,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 // Left-over in allocator is not formated.
                 Address endOfSpaceLeft = allocator.hardLimit();
                 if (endOfSpaceLeft.greaterThan(startOfSpaceLeft)) {
-                    fillWithDeadObject(startOfSpaceLeft, allocator.hardLimit());
+                    DarkMatter.format(startOfSpaceLeft, endOfSpaceLeft);
                 }
                 // Notify that we need to run a full GC immediately after this overflowing minor collection.
                 resizingPolicy.notifyMinorEvacuationOverflow();

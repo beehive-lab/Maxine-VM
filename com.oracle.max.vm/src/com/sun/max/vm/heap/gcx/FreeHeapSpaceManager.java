@@ -203,9 +203,11 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         }
 
         @INLINE
-        void makeParsable() {
+        void doBeforeGC() {
             if (!head.isZero()) {
-                HeapFreeChunk.makeParsable(head);
+                // FIXME: this shouldn't be necessary. The GC knows how to parse HeapFreeChunk, so all it should have to do is
+                // zero-out the head of the list.
+                HeapFreeChunk.formatAsDarkMatter(head);
                 reset();
             }
         }
@@ -801,7 +803,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     public void doBeforeGC() {
         smallObjectAllocator.doBeforeGC();
         for (FreeSpaceList fsp : freeChunkBins) {
-            fsp.makeParsable();
+            fsp.doBeforeGC();
         }
     }
 

@@ -24,9 +24,11 @@ package com.sun.max.vm.actor.holder;
 
 import java.util.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -73,6 +75,36 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
               NO_INNER_CLASSES,
               NO_OUTER_CLASS,
               NO_ENCLOSING_METHOD_INFO);
+    }
+
+    /**
+     * Special constructor allowing to create an array class actor with a name not derived from its components class actor.
+     * The only purpose for this constructor, at the moment, is to build a special type for formatting dark matter
+     * @see DarkMatter
+     * @param componentClassActor class actor of the component type of the array
+     * @param arrayTypeName name of the type array
+     */
+    @HOSTED_ONLY
+    public ArrayClassActor(ClassActor componentClassActor, Utf8Constant arrayTypeName) {
+        super(Kind.REFERENCE,
+                        componentClassActor.kind.arrayLayout(Layout.layoutScheme()),
+                        componentClassActor.classLoader,
+                        arrayTypeName,
+                        componentClassActor.majorVersion,
+                        componentClassActor.minorVersion,
+                        createFlags(componentClassActor),
+                        JavaTypeDescriptor.getArrayDescriptorForDescriptor(componentClassActor.typeDescriptor, 1),
+                        ClassRegistry.OBJECT,
+                        componentClassActor,
+                        getInterfaceActors(),
+                        FieldActor.NONE,
+                        MethodActor.NONE,
+                        NO_GENERIC_SIGNATURE,
+                        NO_RUNTIME_VISIBLE_ANNOTATION_BYTES,
+                        NO_SOURCE_FILE_NAME,
+                        NO_INNER_CLASSES,
+                        NO_OUTER_CLASS,
+                        NO_ENCLOSING_METHOD_INFO);
     }
 
     /**
