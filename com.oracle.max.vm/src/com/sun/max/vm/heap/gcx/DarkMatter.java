@@ -52,6 +52,7 @@ import com.sun.max.vm.value.*;
  * instance of the class SmallestDarkMatter.
  */
 public final class DarkMatter {
+    @INSPECTED
     private static final ArrayClassActor<LongValue> DARK_MATTER_ARRAY =
         new ArrayClassActor<LongValue>(ClassRegistry.LONG, SymbolTable.makeSymbol("dark matter []"));
 
