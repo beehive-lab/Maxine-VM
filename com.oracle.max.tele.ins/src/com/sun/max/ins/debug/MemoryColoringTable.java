@@ -616,6 +616,11 @@ public final class MemoryColoringTable extends InspectorTable {
         }
 
         public void refresh(boolean force) {
+            for (WordValueLabel label : addressToLabelMap.values()) {
+                if (label != null) {
+                    label.refresh(force);
+                }
+            }
         }
     }
 
