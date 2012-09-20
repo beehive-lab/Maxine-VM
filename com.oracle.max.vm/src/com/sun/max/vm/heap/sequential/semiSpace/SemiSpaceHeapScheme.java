@@ -546,7 +546,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
             if (detailLogger.enabled()) {
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(ref).toJava());
-                detailLogger.logForward(hub.classActor, fromCell, toCell, size.toInt());
+                detailLogger.logForward(hub.classActor.id, Pointer.zero(), fromCell, toCell, size.toInt());
             }
 
             VMTI.handler().objectSurviving(fromCell);
