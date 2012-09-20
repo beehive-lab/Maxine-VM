@@ -180,7 +180,7 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         if (darkMatterHubOrigin.isZero()) {
             // Assume this never changes, once located.
             // TODO (fix this)
-               final TeleClassActor hfcClassActor = classes().findTeleClassActor(HeapFreeChunk.class);
+            final TeleClassActor hfcClassActor = classes().findTeleClassActor(HeapFreeChunk.class);
             if (hfcClassActor != null) {
                 final TeleDynamicHub teleDynamicHub = hfcClassActor.getTeleDynamicHub();
                 if (teleDynamicHub != null) {
