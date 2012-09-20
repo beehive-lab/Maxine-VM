@@ -206,9 +206,28 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
             final Pointer toOrigin = evacuate(origin);
             forwardRef = Reference.fromOrigin(toOrigin);
             Layout.writeForwardRef(origin, forwardRef);
+        }
+        return forwardRef;
+    }
+
+    /**
+     * Evacuate a cell of the evacuated area if not already done, and return the reference to the evacuated cell new location.
+     * Same as {@link #getForwardRef(Pointer)}, but with logging support.
+     * The second argument is only used when detail logging is enabled (only in debug mode).
+     *
+     * @param origin origin of the cell in the evacuated area
+     * @param at pointer to the location of the reference
+     * @return a reference to the evacuated cell's new location
+     */
+    protected final Reference getForwardRef(Pointer origin, Pointer at) {
+        Reference forwardRef = Layout.readForwardRef(origin);
+        if (forwardRef.isZero()) {
+            final Pointer toOrigin = evacuate(origin);
+            forwardRef = Reference.fromOrigin(toOrigin);
+            Layout.writeForwardRef(origin, forwardRef);
             if (MaxineVM.isDebug() && detailLogger.enabled()) {
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(forwardRef).toJava());
-                detailLogger.logForward(hub.classActor, origin, toOrigin, Layout.size(toOrigin).toInt());
+                detailLogger.logForward(hub.classActor.id, at, origin, toOrigin, Layout.size(toOrigin).toInt());
             }
         }
         return forwardRef;
@@ -225,7 +244,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         final Reference ref = refHolderOrigin.getReference(wordIndex);
         final Pointer origin = ref.toOrigin();
         if (inEvacuatedArea(origin)) {
-            final Reference forwardRef = getForwardRef(origin);
+            final Reference forwardRef = MaxineVM.isDebug() ? getForwardRef(origin, refHolderOrigin.plusWords(wordIndex)) : getForwardRef(origin);
             refHolderOrigin.setReference(wordIndex, forwardRef);
             updateRSet(refHolderOrigin, wordIndex, forwardRef);
         }
