@@ -78,7 +78,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         fullGC = fullCollectionCount > lastCompletedFullCollectionCount;
     }
 
-    private TeleCardTableRSet teleCardTableRSet;
     private TeleContiguousHeapSpace nursery;
     private TeleContiguousHeapSpace oldFrom;
     private TeleContiguousHeapSpace oldTo;
@@ -448,12 +447,14 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
 
             @Override
             public String terseInfo() {
-                return "";
+                // Return card table index and whether the card is dirty or not.
+                final int ci = cardTableRSet.cardIndex(address);
+                return Integer.toString(ci);
             }
 
             @Override
             public String shortDescription() {
-                return vm().heapScheme().name();
+                return "Card #";
             }
 
             @Override
