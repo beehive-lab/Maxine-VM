@@ -153,6 +153,8 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess ContiguousAllocatingSpace_space = new TeleInstanceReferenceFieldAccess(ContiguousAllocatingSpace.class, "space", ContiguousHeapSpace.class);
     public final TeleInstanceWordFieldAccess ContiguousHeapSpace_committedEnd = new TeleInstanceWordFieldAccess(ContiguousHeapSpace.class, "committedEnd");
     public final TeleInstanceReferenceFieldAccess ContiguousSemiSpace_fromSpace = new TeleInstanceReferenceFieldAccess(ContiguousSemiSpace.class, "fromSpace", ContiguousHeapSpace.class);
+    public final TeleStaticReferenceFieldAccess DarkMatter_DARK_MATTER_ARRAY = new TeleStaticReferenceFieldAccess(DarkMatter.class, "DARK_MATTER_ARRAY", ArrayClassActor.class);
+    public final TeleStaticReferenceFieldAccess DarkMatter_DARK_MATTER_CLASS_NAME = new TeleStaticReferenceFieldAccess(DarkMatter.class, "DARK_MATTER_CLASS_NAME", String.class);
     public final TeleInstanceReferenceFieldAccess Descriptor_string = new TeleInstanceReferenceFieldAccess(Descriptor.class, "string", String.class);
     public final TeleStaticReferenceFieldAccess DynamicLinker_libInfoArray = new TeleStaticReferenceFieldAccess(DynamicLinker.class, "libInfoArray", LibInfo[].class);
     public final TeleStaticIntFieldAccess DynamicLinker_libInfoIndex = new TeleStaticIntFieldAccess(DynamicLinker.class, "libInfoIndex");

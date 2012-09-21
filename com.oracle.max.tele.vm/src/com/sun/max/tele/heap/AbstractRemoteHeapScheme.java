@@ -171,21 +171,22 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
             // Assume this never changes, once located.
             final TeleClassActor hfcClassActor = classes().findTeleClassActor(HeapFreeChunk.class);
             if (hfcClassActor != null) {
-                final TeleDynamicHub teleDynamicHub = hfcClassActor.getTeleDynamicHub();
-                if (teleDynamicHub != null) {
-                    heapFreeChunkHubOrigin = teleDynamicHub.origin();
+                final TeleDynamicHub freeChunkDynamicHub = hfcClassActor.getTeleDynamicHub();
+                if (freeChunkDynamicHub != null) {
+                    heapFreeChunkHubOrigin = freeChunkDynamicHub.origin();
                 }
             }
         }
         if (darkMatterHubOrigin.isZero()) {
             // Assume this never changes, once located.
-            // TODO (fix this)
-            final TeleClassActor hfcClassActor = classes().findTeleClassActor(HeapFreeChunk.class);
-            if (hfcClassActor != null) {
-                final TeleDynamicHub teleDynamicHub = hfcClassActor.getTeleDynamicHub();
-                if (teleDynamicHub != null) {
-                    darkMatterHubOrigin = teleDynamicHub.origin();
+            final TeleReferenceClassActor darkMatterClassActor = (TeleReferenceClassActor) objects().makeTeleObject(fields().DarkMatter_DARK_MATTER_ARRAY.readRemoteReference(vm()));
+            if (darkMatterClassActor != null) {
+                final TeleDynamicHub darkMatterDynamicHub = darkMatterClassActor.getTeleDynamicHub();
+                if (darkMatterDynamicHub != null) {
+                    darkMatterHubOrigin = darkMatterDynamicHub.origin();
                 }
+                // The dark matter class is not registered in the VM; handle specially so the local instance can be found.
+                classes().registerUnregisteredClass(DarkMatter.DARK_MATTER_CLASS_NAME, DarkMatter.DARK_MATTER_ARRAY);
             }
         }
     }
