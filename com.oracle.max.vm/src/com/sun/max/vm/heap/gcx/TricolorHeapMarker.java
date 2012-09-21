@@ -257,6 +257,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     /**
      * Number of bytes covered by each bit of the bitmaps. Must be a power of 2 of a number of words.
      */
+    @INSPECTED
     final int wordsCoveredPerBit;
 
     /**
@@ -268,6 +269,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * Log 2 of the number of bytes covered by a bit. Used to compute bit index in the color map from address.
      */
     final int log2BytesCoveredPerBit;
+
     /**
      * Log 2 to compute the bitmap word index from an offset from the beginning of the covered area.
      */
