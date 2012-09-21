@@ -241,7 +241,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     /**
      * Map:  VM address in Object-Space --> a {@link MSRemoteReference} that refers to the free space chunk whose origin is at that location.
      * <p>
-     * <strong>Invariant</strong>: the map holds only objects with status {@linkplain ObjectStatus#FREE}.
+     * <strong>Invariant</strong>: the map holds only objects with status {@linkplain ObjectStatus#FREE} or {@linkplain ObjectStatus#DARK DARK}.
      */
     private WeakRemoteReferenceMap<MSRemoteReference> freeSpaceRefMap = new WeakRemoteReferenceMap<MSRemoteReference>();
 
@@ -326,10 +326,15 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
     // TODO (mlvdv) Consider whether we should periodically purge the maps of weak references to references that have been collected.
 
-     /**
+    /**
      * {@inheritDoc}
      * <p>
      * This gets called more than once during the startup sequence.
+     * <p>
+     * The sequence of things to be updated is based on an analysis of what might have happened since the last we
+     * checked. In the limiting case, since the only forced halt is at the beginning of the
+     * {@linkplain HeapPhase#RECLAIMING RECLAIMING} phase, we might find that we have halted at this point in the cycle
+     * and we haven't updated since the last halt at the same point.
      */
     @Override
     public void updateMemoryStatus(long epoch) {
@@ -363,33 +368,37 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             heapUpdateTracer.begin();
 
             /*
-             * This is a normal refresh. Immediately update information about the location/size/allocation of the heap region; this
-             * update must be forced because remote objects are otherwise not refreshed until later in the update
-             * cycle.
+             * This is a normal refresh. Immediately update information about the location/size/allocation of the heap
+             * region, which is represented by a remote object; this update must be forced because remote objects are
+             * otherwise not refreshed until later in the update cycle.
              */
             objectSpaceMemoryRegion.updateCache(epoch);
 
             // The order of the following reference updates is significant
 
             if (lastGCCompletedCount < gcCompletedCount()) {
-                // A GC, and in particular a RECLAIMING phase, has completed since the last time we checked.
-                // Find any references still marked UNREACHABLE and make them DEAD.
-                // It is important to clear them out before we start the next RECLAIMING phase, which might be now.
+                /*
+                 * A GC, and in particular a RECLAIMING phase, has completed since the last time we checked. Find any
+                 * references still marked UNREACHABLE and make them DEAD. It is important to clear them out before we
+                 * handle the conclusion of the following ANALYZING phase, which might be now.
+                 */
                 for (MSRemoteReference objectRef : objectRefMap.values()) {
                     if (objectRef.status().isUnreachable()) {
                         objectRef.die();
                         assert objectRefMap.remove(objectRef.origin()) != null;
                     }
-
                 }
                 lastGCCompletedCount = gcCompletedCount();
             }
 
             if (phase().isReclaiming()) {
                 if (lastReclaimingPhaseCount < gcStartedCount()) {
-                    // This is the first halt in a RECLAIMING phase, probably the one triggered by the phase change listener
-                    // Find any LIVE object references that are unmarked and make them UNREACHABLE before anything else
-                    // happens in this phase.
+                    /*
+                     * We are halted for the first time in this RECLAIMING phase, usually because of the phase change
+                     * listener we registered. That means that an ANALYZING phase has concluded since the last time we
+                     * checked. Find any LIVE object references that are unmarked and make them UNREACHABLE before
+                     * anything else happens in this phase.
+                     */
                     for (MSRemoteReference objectRef : objectRefMap.values()) {
                         if (objectRef.status().isLive()) {
                             if (markBitMap().getMarkColor(objectRef.origin()) != MarkColor.MARK_BLACK) {
@@ -402,8 +411,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                     }
                     lastReclaimingPhaseCount = gcStartedCount();
                 }
-                // UNREACHABLE objects can be released at any time during the RECLAIMING phase, when
-                // the space is turned into DARK matter, a FREE chunk, or zapped.
+                /*
+                 * Every time we stop while RECLAIMING, check to see if any unreachable objects have been reclaimed
+                 * since we last checked. The memory that held an unreachable object might now hold a FREE chunk, DARK
+                 * matter, or might be entirely zapped.
+                 */
                 for (MSRemoteReference objectRef : objectRefMap.values()) {
                     if (objectRef.status().isUnreachable()) {
                         final Address origin = objectRef.origin();
@@ -415,23 +427,28 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 }
             }
 
-            // We might not have done this check since the last time a RECLAIMING phase started
+            /*
+             * No matter what phase we're in, once everything else is taken care of, see if any free space has been
+             * released. Do this last because nothing else in this part of the update is affected by it. Free space
+             * isn't supposed to be released during the ANALYSIS phase, but we might not have checked since some time in
+             * an earlier phase.
+             */
             for (MSRemoteReference freeSpaceRef : freeSpaceRefMap.values()) {
                 switch (freeSpaceRef.status()) {
                     case FREE:
-                        // FREE chunks can be released during mutation when the space is used to allocate a new object.
-                        // FREE chunks can be released during reclaiming when the space is merged with another FREE chunk.
+                        // FREE chunks can be released during a MUTATING phase when the space is used to allocate a new object.
+                        // FREE chunks can be released during a RECLAIMING phase when the space is merged with another FREE chunk.
                         if (!objectStatusAt(freeSpaceRef.origin()).isFree()) {
-                            // The reference no longer points at a free space chunk
-                            freeSpaceRef.die();
+                            // The reference no longer points at a free space chunk, so it has been released.
+                            freeSpaceRef.release();
                             assert freeSpaceRefMap.remove(freeSpaceRef.origin()) != null;
                         }
                         break;
                     case DARK:
-                        // DARK chunks can be released during reclaiming when the space is merged with another FREE chunk.
+                        // DARK chunks can be released during a RECLAIMING phase  when the space is merged with another FREE chunk.
                         if (!objectStatusAt(freeSpaceRef.origin()).isDark()) {
-                            // The reference no longer points at dark matter
-                            freeSpaceRef.die();
+                            // The reference no longer points at dark matter, so it has been released.
+                            freeSpaceRef.release();
                             assert freeSpaceRefMap.remove(freeSpaceRef.origin()) != null;
                         }
                         break;
@@ -439,6 +456,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             }
 
             heapUpdateTracer.end(heapUpdateStatsPrinter);
+            lastUpdateEpoch = epoch;
         }
     }
 
@@ -502,7 +520,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             case MUTATING:
             case ANALYZING:
                 if (objectSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin)) {
-                    if (isHeapFreeChunkOrigin(origin)) {
+                    if (isHeapFreeChunkOrigin(origin) || isDarkMatterOrigin(origin)) {
                         return ObjectStatus.FREE;
                     }
                     return ObjectStatus.LIVE;
@@ -510,10 +528,9 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 break;
             case RECLAIMING:
                 if (objectSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin)) {
-                    if (isHeapFreeChunkOrigin(origin)) {
+                    if (isHeapFreeChunkOrigin(origin) || isDarkMatterOrigin(origin)) {
                         return ObjectStatus.FREE;
                     }
-                    // TODO (mlvdv) check for DARK matter
                     switch(scheme.markBitmap.getMarkColorUnsafe(origin)) {
                         case MARK_BLACK:
                             return ObjectStatus.LIVE;
@@ -549,10 +566,10 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             return oldRef.status().isLive() ? oldRef : null;
         }
         if (freeSpaceRefMap.get(origin) != null) {
-            // A reference to a free space quasi object at that address already exists.
+            // A reference to a free space quasi object at that address already exists; nothing LIVE here.
             return null;
         }
-        // Not in either map; might be a new reference
+        // Not in either map; might be a new LIVE reference
         if (objectStatusAt(origin).isLive()) {
             final MSRemoteReference newLiveRef = MSRemoteReference.createLive(this, origin);
             if (newLiveRef != null) {
@@ -584,7 +601,8 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 freeSpaceRefMap.put(origin, newFreeRef);
                 return newFreeRef;
             case DARK:
-                // TODO (mlvdv) create DARK matter reference
+                final MSRemoteReference newDarkRef = MSRemoteReference.createDark(this, origin);
+                freeSpaceRefMap.put(origin, newDarkRef);
                 break;
             case UNREACHABLE:
                 final MSRemoteReference newUnreachableRef = MSRemoteReference.createUnreachable(this, origin);
