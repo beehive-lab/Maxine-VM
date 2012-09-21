@@ -37,24 +37,33 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * An helper class to fill free space that cannot be allocated with instances of distinguishable "dark matter" object types, so that:
+ * Implementation of a special "<em>dark matter</em>" object type, used to fill free space that cannot be allocated, so that:
  * <ul>
- * <li>Memory management related operations that walk over a memory regions comprising dark matter don't pay extra cost for skipping the dark matter (for example,
- * sweep operations of  mark-sweep collector, or dirty card scanning in a generational GC with a card-table based remembered set). </li>
- * <li> The inspector can easily and unambiguously distinguish dark matter.</li>
+ * <li>Memory management related operations that walk over memory regions comprising dark matter pay no extra cost for skipping dark matter. Examples
+ * include sweep operations of  mark-sweep collector, and dirty card scanning in a generational GC with a card-table based remembered set. </li>
+ * <li>The inspector can easily and unambiguously distinguish dark matter.</li>
+ * </ul>
+ * To achieve the above, each span of dark memory is formatted as a special type of object that can be neither allocated nor referenced directly
+ * by application code.
+ * Because dark matter can be of arbitrary size, it is formatted as an instance of the special scalar array type represented by the
+ * {@linkplain DarkMatter#DARK_MATTER_ARRAY DARK_MATTER_ARRAY} array class actor.  This class:
  * <ul>
- * To achieve the above, dark matter is formatted as special objects that cannot be allocated nor reference directly by application code.
- * Because dark matter can be of arbitrary size, it is formatted as an instance of the special dark matter scalar array type represented by the
- *  {@linkplain DarkMatter#DARK_MATTER_ARRAY} array class actor.
- * This type has no symbolic definition, cannot be named in Java nor instantiated via reflection. In particular, it isn't registered in the class registry.
- * It is otherwise equivalent in layout to an long array, and as any array can have a length of 0. Thus, the minimum size for a dark matter array is
- * three-words, and it cannot be used to format the smallest pieces of heap space which are only two-words wide. These are instead formatted as
- * instance of the class SmallestDarkMatter.
+ * <li>has no symbolic definition;</li>
+ * <li>is not registered in the class registry;</li>
+ * <li>cannot be named in Java; and</li>
+ * <li>cannot be instantiated via reflection.</li>
+ * </ul>
+ * This class is otherwise equivalent in layout to a long array.  As any array can have zero length, the minimum size for an instance is
+ * three words.  The smallest pieces of heap space, which are two words wide, are formatted specially as instances of the class {@link SmallestDarkMatter}.
  */
 public final class DarkMatter {
+
     @INSPECTED
-    private static final ArrayClassActor<LongValue> DARK_MATTER_ARRAY =
-        new ArrayClassActor<LongValue>(ClassRegistry.LONG, SymbolTable.makeSymbol("dark matter []"));
+    public static final String DARK_MATTER_CLASS_NAME = "dark matter []";
+
+    @INSPECTED
+    public static final ArrayClassActor<LongValue> DARK_MATTER_ARRAY =
+        new ArrayClassActor<LongValue>(ClassRegistry.LONG, SymbolTable.makeSymbol(DARK_MATTER_CLASS_NAME));
 
     /**
      * Variable-less class used to format the smallest possible dark-matter (i.e., two-words space).
