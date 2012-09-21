@@ -289,6 +289,13 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         }
     }
 
+    protected Pointer allocateLarge(Size size) {
+        FatalError.check(isLarge(size), "Size must be large");
+        synchronized (refillLock()) {
+            return refillManager.allocateLargeRaw(size).asPointer();
+        }
+    }
+
     protected Pointer refillOrAllocate(Size size) {
         synchronized (refillLock()) {
             // We're the only thread that can refill the allocator now.

@@ -41,6 +41,9 @@ public final class AtomicBumpPointerAllocator <T extends Refiller>extends BaseAt
     @INLINE
     @Override
     public Pointer allocateCleared(Size size) {
+        if (isLarge(size)) {
+            return clearAllocatedCell(allocateLarge(size), size);
+        }
         return clearAllocatedCell(bumpAllocate(size), size);
     }
 }
