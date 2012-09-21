@@ -131,7 +131,18 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     }
 
     public void visit(CellRangeVisitor visitor) {
-        visitor.visitCells(space.start(), allocator.unsafeTop());
+        Address atop = allocator.unsafeTop();
+        if (space.contains(atop)) {
+            // Normal situation. The allocator is within the bound
+            FatalError.check(space.contains(allocator.start()), "allocator must be within space bounds");
+            visitor.visitCells(space.start(), atop);
+        } else {
+            // Allocators may be out of bounds
+            // This happens when the space is full and the allocator is refill with out of bounds space.
+            // The allocator is nevertheless considered part of the space.
+            visitor.visitCells(space.start(), space.committedEnd());
+            visitor.visitCells(allocator.start(), atop);
+        }
     }
 
     public void visitAllocatedCells(CellVisitor visitor) {
