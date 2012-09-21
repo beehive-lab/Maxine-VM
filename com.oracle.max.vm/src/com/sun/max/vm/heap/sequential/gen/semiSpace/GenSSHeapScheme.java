@@ -57,7 +57,10 @@ import com.sun.max.vm.ti.*;
  *
  */
 public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements XirWriteBarrierSpecification, RSetCoverage, EvacuationBufferProvider {
-    static boolean AlwaysFullGC = false;
+    static boolean AlwaysFullGC;
+    static boolean ForceCleanCardsAfterMinorGC;
+
+    public static boolean OldSpaceDirtyCardsStats;
 
     /**
      * Knob for the fixed ratio resizing policy.
@@ -72,6 +75,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     static {
         VMOptions.addFieldOption("-XX:", "YoungGenHeapPercent", GenSSHeapScheme.class, "Fixed percentage of heap size that must be used by young gen", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "AlwaysFullGC", GenSSHeapScheme.class, "Always do full GC when true", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "ForceCleanCardsAfterMinorGC", GenSSHeapScheme.class, "Force cleaning of old space dirty card after GC", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "OldSpaceDirtyCardsStats", GenSSHeapScheme.class, "Print stats on old space dirty cards", Phase.PRISTINE);
     }
 
     /**
@@ -384,7 +389,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             refVerifier.setVerifiedSpace(oldSpace.space);
         }
         verifyCommon();
-        // there are no pointer from old to young.
         if (resizingPolicy.minorEvacuationOverflow()) {
             // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
             noFromSpaceReferencesVerifiers.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
@@ -528,6 +532,14 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
     }
 
+    public void countOldSpaceDirtyCards(String when) {
+        // there are no pointer from old to young, but card may be dirtied by GC code.
+        final int countTo = cardTableRSet.countCardInState(oldSpace.space.start(), oldSpace.space.committedEnd(), CardState.DIRTY_CARD);
+        Log.print("# dirty card ");
+        Log.print(when);
+        Log.print(":  to=");
+        Log.println(countTo);
+    }
     /**
      * Implement logic for garbage collecting at safetpoint.
      * Always start with a minor collection.
@@ -540,7 +552,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final boolean oldSpaceMutatorOverflow = oldSpace.allocator.refillManager().mutatorOverflow();
         resizingPolicy.clearNotifications();
         evacTimers.resetTrackTime();
-
+        if (OldSpaceDirtyCardsStats) {
+            countOldSpaceDirtyCards("before minor collection");
+        }
         VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
         Heap.invokeGCCallbacks(GCCallbackPhase.BEFORE);
         if (MaxineVM.isDebug() && Heap.verbose()) {
@@ -554,8 +568,14 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         if (MaxineVM.isDebug() && Heap.verbose()) {
             Log.println("--End nursery evacuation");
         }
+        if (OldSpaceDirtyCardsStats) {
+            countOldSpaceDirtyCards("after minor collection");
+        }
         if (VerifyAfterGC) {
             verifyAfterMinorCollection();
+        }
+        if (ForceCleanCardsAfterMinorGC) {
+            cardTableRSet.setCards(oldSpace.space.start(), oldSpace.allocator().unsafeTop(), CardState.CLEAN_CARD);
         }
         final Size estimatedEvac = estimatedNextEvac();
         evacTimers.stop(TOTAL);

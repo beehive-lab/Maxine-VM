@@ -385,8 +385,11 @@ public class DebugHeap {
         void visitCell(
             @VMLogParam(name = "cell") Pointer cell);
 
+        // Use class ID and not ClassActor since the logger boiler plate will automatically log a class id that it converts back into a class actor name when tracing.
+        // The latter involves a ClassID.toClassActor method call, a fairly complicated code with virtual call etc.,  which might come across forwarding reference and crash as a result.
         void forward(
-            @VMLogParam(name = "classActor") ClassActor classActor,
+            @VMLogParam(name = "classID") int classID,
+            @VMLogParam(name = "at") Pointer at,
             @VMLogParam(name = "fromCell") Pointer fromCell,
             @VMLogParam(name = "toCell") Pointer toCell,
             @VMLogParam(name = "size") int size);
@@ -424,9 +427,11 @@ public class DebugHeap {
         }
 
         @Override
-        protected void traceForward(ClassActor classActor, Pointer fromCell, Pointer toCell, int size) {
-            Log.print("Forwarding ");
-            Log.print(classActor.name.string);
+        protected void traceForward(int classID, Pointer at, Pointer fromCell, Pointer toCell, int size) {
+            Log.print("Forwarding <classId=");
+            Log.print(classID);
+            Log.print("> @");
+            Log.print(at);
             Log.print(" from ");
             Log.print(fromCell);
             Log.print(" to ");
@@ -477,10 +482,10 @@ public class DebugHeap {
         }
 
         @INLINE
-        public final void logForward(ClassActor classActor, Pointer fromCell, Pointer toCell, int size) {
-            log(Operation.Forward.ordinal(), classActorArg(classActor), fromCell, toCell, intArg(size));
+        public final void logForward(int classID, Pointer at, Pointer fromCell, Pointer toCell, int size) {
+            log(Operation.Forward.ordinal(), intArg(classID), at, fromCell, toCell, intArg(size));
         }
-        protected abstract void traceForward(ClassActor classActor, Pointer fromCell, Pointer toCell, int size);
+        protected abstract void traceForward(int classID, Pointer at, Pointer fromCell, Pointer toCell, int size);
 
         @INLINE
         public final void logSkipped(int padBytes) {
@@ -504,7 +509,7 @@ public class DebugHeap {
         protected void trace(Record r) {
             switch (r.getOperation()) {
                 case 0: { //Forward
-                    traceForward(toClassActor(r, 1), toPointer(r, 2), toPointer(r, 3), toInt(r, 4));
+                    traceForward(toInt(r, 1), toPointer(r, 2), toPointer(r, 3), toPointer(r, 4), toInt(r, 5));
                     break;
                 }
                 case 1: { //Skipped
