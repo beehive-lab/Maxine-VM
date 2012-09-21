@@ -36,8 +36,7 @@ import com.sun.max.vm.heap.gcx.*;
 
 /**
  * Representation of a remote object reference in a heap region managed by a mark sweep GC. The states of the reference
- * represent what can be known about the object at any given time, especially those relevant during the
- * {@link HeapPhase#ANALYZING} phase of the heap.
+ * represent what can be known about the object at any given time.
  *
  * @see <a href="http://en.wikipedia.org/wiki/State_pattern">"State" design pattern</a>
  */
@@ -67,11 +66,6 @@ public class MSRemoteReference extends  RemoteReference {
                 return LIVE;
             }
 
-            @Override
-            boolean isFreeSpace() {
-                return false;
-            }
-
             // Transitions
 
             @Override
@@ -96,16 +90,7 @@ public class MSRemoteReference extends  RemoteReference {
                 return UNREACHABLE;
             }
 
-            @Override
-            boolean isFreeSpace() {
-                return false;
-            }
-
             // Transitions
-            @Override
-            void mutatingBegins(MSRemoteReference ref) {
-                ref.refState = FREE_DARK_MATTER;
-            }
 
             @Override
             void die(MSRemoteReference ref) {
@@ -124,26 +109,16 @@ public class MSRemoteReference extends  RemoteReference {
                 return DEAD;
             }
 
-            @Override
-            boolean isFreeSpace() {
-                return false;
-            }
-
             // Transitions (none: death is final)
 
         },
 
-        FREE_CHUNK ("Chunk of free memory") {
+        FREE_CHUNK ("Chunk of allocatable free memory") {
 
             // Properties;
             @Override
             ObjectStatus status() {
                 return FREE;
-            }
-
-            @Override
-            boolean isFreeSpace() {
-                return true;
             }
 
            // Transitions
@@ -153,22 +128,12 @@ public class MSRemoteReference extends  RemoteReference {
             }
         },
 
-        FREE_DARK_MATTER ("Unreachable object holding free space") {
+        FREE_DARK ("Chunk of unallocatable free memory") {
 
             // Properties;
             @Override
             ObjectStatus status() {
-                return LIVE;
-            }
-
-            @Override
-            boolean isFreeSpace() {
-                return true;
-            }
-
-            @Override
-            boolean isDarkMatter() {
-                return true;
+                return DARK;
             }
 
            // Transitions
@@ -184,11 +149,6 @@ public class MSRemoteReference extends  RemoteReference {
             @Override
             ObjectStatus status() {
                 return DEAD;
-            }
-
-            @Override
-            boolean isFreeSpace() {
-                return true;
             }
 
             // Transitions (none: death is final)
@@ -218,45 +178,12 @@ public class MSRemoteReference extends  RemoteReference {
             return label;
         }
 
-        /**
-         * @see RemoteReference#isFreeSpace()
-         */
-        abstract boolean isFreeSpace();
-
-        /**
-         * @see MSRemoteReference#isDarkMatter()
-         */
-        boolean isDarkMatter() {
-            return false;
-        }
-
         // Transitions
-
-        /**
-         * @see MSRemoteReference#analyzingBegins()
-         */
-        void analyzingBegins(MSRemoteReference ref) {
-            TeleError.unexpected("Illegal state transition");
-        }
 
         /**
          * @see MSRemoteReference#discoveredReachable()
          */
         void discoveredUnreachable(MSRemoteReference ref) {
-            TeleError.unexpected("Illegal state transition");
-        }
-
-        /**
-         * @see MSRemoteReference#reclaimingBegins()
-         */
-        void reclaimingBegins(MSRemoteReference ref) {
-            TeleError.unexpected("Illegal state transition");
-        }
-
-        /**
-         * @see MSRemoteReference#mutatingBegins()
-         */
-        void mutatingBegins(MSRemoteReference ref) {
             TeleError.unexpected("Illegal state transition");
         }
 
@@ -308,6 +235,12 @@ public class MSRemoteReference extends  RemoteReference {
     public static MSRemoteReference createFree(RemoteMSHeapScheme remoteScheme, Address origin) {
         final MSRemoteReference ref = new MSRemoteReference(remoteScheme, origin);
         ref.refState = RefState.FREE_CHUNK;
+        return ref;
+    }
+
+    public static MSRemoteReference createDark(RemoteMSHeapScheme remoteScheme, Address origin) {
+        final MSRemoteReference ref = new MSRemoteReference(remoteScheme, origin);
+        ref.refState = RefState.FREE_DARK;
         return ref;
     }
 
@@ -369,45 +302,12 @@ public class MSRemoteReference extends  RemoteReference {
         return remoteScheme.heapSchemeClass().getSimpleName() + " state=" + refState.gcDescription(this);
     }
 
-    @Override
-    public boolean isFreeSpace() {
-        return refState.isFreeSpace();
-    }
-
-    public boolean isDarkMatter() {
-        return refState.isDarkMatter();
-    }
-
-    /**
-     * State transition on an ordinary live reference when an {@link HeapPhase#ANALYZING} phase is discovered to have begun.
-     */
-    public void analyzingBegins() {
-        priorStatus = refState.status();
-        refState.analyzingBegins(this);
-    }
-
     /**
      * State transition on an ordinary live object reference during {@link HeapPhase#ANALYZING} when an object is found to be reachable.
      */
     public void discoveredUnreachable() {
         priorStatus = refState.status();
         refState.discoveredUnreachable(this);
-    }
-
-    /**
-     * State transition on an object when {@link HeapPhase#RECLAIMING} starts.
-     */
-    public void reclaimingBegins() {
-        priorStatus = refState.status();
-        refState.reclaimingBegins(this);
-    }
-
-    /**
-     * State transition on an object when {@link HeapPhase#MUTATING} begins.
-     */
-    public void mutatingBegins() {
-        priorStatus = refState.status();
-        refState.mutatingBegins(this);
     }
 
     /**
