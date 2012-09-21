@@ -432,7 +432,7 @@ public class DebugHeap {
             Log.print(classID);
             Log.print("> @");
             Log.print(at);
-            Log.print("from ");
+            Log.print(" from ");
             Log.print(fromCell);
             Log.print(" to ");
             Log.print(toCell);
