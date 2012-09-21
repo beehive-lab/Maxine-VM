@@ -78,6 +78,15 @@ public interface MaxClasses extends MaxEntity<MaxClasses> {
     TeleClassActor findTeleClassActor(Class type);
 
     /**
+     * Does a particular class name refer to a special internal class that cannot
+     * be present in the VM's ordinary class registry.
+     *
+     * @param name a class name
+     * @return whether the class name refers to a special, unregistered class
+     */
+    boolean isUnregisteredClassName(String name);
+
+    /**
      * Writes current statistics concerning inspection of the VM's heap.
      *
      * @param printStream stream to which to write
