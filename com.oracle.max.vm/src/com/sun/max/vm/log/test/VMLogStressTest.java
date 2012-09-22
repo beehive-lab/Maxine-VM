@@ -27,11 +27,11 @@ import java.util.concurrent.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.Flusher;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
+import com.sun.max.vm.log.nat.VMLogNative.NativeRecord;
 import com.sun.max.vm.log.nat.thread.var.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
@@ -43,10 +43,20 @@ import com.sun.max.vm.ti.*;
  */
 public class VMLogStressTest {
 
+    private static class XFlusherDebugLogger extends VMLogger {
+        XFlusherDebugLogger() {
+            super("XFlusherDebug", 1, "debug XFlusher");
+        }
+    }
+
+    private static final XFlusherDebugLogger xFlusherDebugLogger = new XFlusherDebugLogger();
+
     private static class XFlusher extends Flusher {
 
         @Override
         public void flushRecord(VmThread vmThread, Record r, int uuid) {
+            NativeRecord nativeRecord = (NativeRecord) r;
+            xFlusherDebugLogger.log(0, nativeRecord.address);
             logger.trace(r);
         }
 
@@ -76,7 +86,6 @@ public class VMLogStressTest {
 
     private static class Tester extends Thread {
         private Random rand;
-        private long uuid;
         private LoggedData loggedData;
 
         Tester(int i) {
@@ -88,56 +97,109 @@ public class VMLogStressTest {
         public void run() {
             loggedData = new LoggedData();
             loggedDataMap.put(VmThread.fromJava(this).id(), loggedData);
-            while (!done) {
-                int argc = rand.nextInt(4);
-                int[] args = new int[argc + 1];
-                for (int i = 1; i <= args.length; i++) {
-                    args[i - 1] = rand.nextInt();
+            long uuid = 0;
+            int myIterations = iterations;
+
+            try {
+                while (myIterations > 0) {
+                    int argc = rand.nextInt(4);
+                    long[] args = new long[argc + 1];
+                    for (int i = 1; i <= args.length; i++) {
+                        args[i - 1] = rand.nextLong();
+                    }
+                    int index = loggedData.save(new Data(uuid, args));
+                    switch (argc) {
+                        case 0:
+                            logger.logFoo1(uuid, index, args[0]);
+                            break;
+                        case 1:
+                            logger.logFoo2(uuid, index, args[0], args[1]);
+                            break;
+                        case 2:
+                            logger.logFoo3(uuid, index, args[0], args[1], args[2]);
+                            break;
+                        case 3:
+                            logger.logFoo4(uuid, index, args[0], args[1], args[2], args[3]);
+                    }
+                    uuid++;
+                    myIterations--;
                 }
-                loggedData.save(new Data(uuid, args));
-                switch (argc) {
-                    case 0:
-                        logger.logFoo1(uuid, args[0]);
-                        break;
-                    case 1:
-                        logger.logFoo2(uuid, args[0], args[1]);
-                        break;
-                    case 2:
-                        logger.logFoo3(uuid, args[0], args[1], args[2]);
-                        break;
-                    case 3:
-                        logger.logFoo4(uuid, args[0], args[1], args[2], args[3]);
-                }
-                uuid++;
+            } catch (Throwable ex) {
+                Log.println(ex.getMessage());
+                MaxineVM.native_exit(1);
             }
         }
+
     }
 
     private static class Data {
-        long uuid;
-        int[] data;
+        final long uuid;
+        final long[] data;
 
-        Data(long uuid, int[] data) {
+        Data(long uuid, long[] data) {
             this.uuid = uuid;
             this.data = data;
         }
     }
 
+    /**
+     * A per-thread store of logged records.
+     *
+     */
     private static class LoggedData {
+        /**
+         * index where next record will be stored (circular buffer).
+         */
         int index;
+        /**
+         * Circular buffer of logged records.
+         */
         Data[] dataStore = new Data[xvmLog.numLogEntries() * 2];
+        /**
+         * The last uuid checked.
+         */
+        long lastUuid = -1;
 
-        void save(Data data) {
+        /**
+         * Stores the data in the buffer and returns the index at which it was stored.
+         * @param data
+         * @return
+         */
+        int save(Data data) {
+            int result = index;
             dataStore[index++] = data;
             if (index >= dataStore.length) {
                 index = 0;
             }
+            return result;
         }
 
-        void check(long uuid, int[] args) {
+        /**
+         * Checks that the data at index {@code uuid} matches {@code args}.
+         * and that records are delivered in the correct order with no duplicates/omissions.
+         * @param uuid
+         * @param args
+         */
+        void check(long uuid, long index, long[] args) {
+            asert(uuid == lastUuid + 1);
+            lastUuid = uuid;
+            Data storedData = dataStore[(int) index];
+            asert(storedData.uuid == uuid);
+            asert(storedData.data.length == args.length);
+            for (int i = 0; i < args.length; i++) {
+                asert(storedData.data[i] == args[i]);
+            }
+        }
 
+        @NEVER_INLINE
+        void asert(boolean value) {
+            if (!value) {
+                throw new RuntimeException("logged data mismatch");
+            }
         }
     }
+
+    private static int iterations = 1000000;
 
     private static class VMTIHandler extends NullVMTIHandler {
         @Override
@@ -151,10 +213,14 @@ public class VMLogStressTest {
             String[] args = extArg.split(",");
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
-                if (arg.equals("t")) {
+                if (arg.startsWith("t=")) {
                     // TODO
+                } else if (arg.startsWith("c=")) {
+                    iterations = getValue(arg);
                 }
             }
+
+            logger.enable(true);
 
             Thread[] threads = new Thread[numThreads];
             for (int t = 0; t < numThreads; t++) {
@@ -162,6 +228,11 @@ public class VMLogStressTest {
                 threads[t].start();
             }
 
+        }
+
+        private static int getValue(String arg) {
+            int ix = arg.indexOf('=');
+            return Integer.parseInt(arg.substring(ix + 1));
         }
     }
 
@@ -183,34 +254,45 @@ public class VMLogStressTest {
             super("Stress Tester");
         }
 
-        @Override
-        protected void traceFoo1(int threadId, long uuid, int arg1) {
-            loggedDataMap.get(threadId).check(uuid, new int[] {arg1});
+        @NEVER_INLINE
+        private static LoggedData getLoggedData(int threadId) {
+            LoggedData result = loggedDataMap.get(threadId);
+            assert result != null;
+            return result;
         }
 
         @Override
-        protected void traceFoo2(int threadId, long uuid, int arg1, int arg2) {
-            loggedDataMap.get(threadId).check(uuid, new int[] {arg1, arg2});
+        @NEVER_INLINE
+        protected void traceFoo1(int threadId, long uuid, long index, long arg1) {
+            getLoggedData(threadId).check(uuid, index, new long[] {arg1});
         }
 
         @Override
-        protected void traceFoo3(int threadId, long uuid, int arg1, int arg2, int arg3) {
-            loggedDataMap.get(threadId).check(uuid, new int[] {arg1, arg2, arg3});
+        @NEVER_INLINE
+        protected void traceFoo2(int threadId, long uuid, long index, long arg1, long arg2) {
+            getLoggedData(threadId).check(uuid, index, new long[] {arg1, arg2});
         }
 
         @Override
-        protected void traceFoo4(int threadId, long uuid, int arg1, int arg2, int arg3, int arg4) {
-            loggedDataMap.get(threadId).check(uuid, new int[] {arg1, arg2, arg3, arg4});
+        @NEVER_INLINE
+        protected void traceFoo3(int threadId, long uuid, long index, long arg1, long arg2, long arg3) {
+            getLoggedData(threadId).check(uuid, index, new long[] {arg1, arg2, arg3});
+        }
+
+        @Override
+        @NEVER_INLINE
+        protected void traceFoo4(int threadId, long uuid, long index, long arg1, long arg2, long arg3, long arg4) {
+            getLoggedData(threadId).check(uuid, index, new long[] {arg1, arg2, arg3, arg4});
         }
     }
 
     @HOSTED_ONLY
     @VMLoggerInterface(hidden = true, traceThread = true)
     static interface XVMLoggerInterface {
-        void foo1(long uuid, int value1);
-        void foo2(long uuid, int value1, int value2);
-        void foo3(long uuid, int value1, int value2, int value3);
-        void foo4(long uuid, int value1, int value2, int value3, int value4);
+        void foo1(long uuid, long index, long value1);
+        void foo2(long uuid, long index, long value1, long value2);
+        void foo3(long uuid, long index, long value1, long value2, long value3);
+        void foo4(long uuid, long index, long value1, long value2, long value3, long value4);
     }
 
 // START GENERATED CODE
@@ -235,47 +317,50 @@ public class VMLogStressTest {
         }
 
         @INLINE
-        public final void logFoo1(long arg1, int arg2) {
-            log(Operation.Foo1.ordinal(), longArg(arg1), intArg(arg2));
+        public final void logFoo1(long arg1, long arg2, long arg3) {
+            log(Operation.Foo1.ordinal(), longArg(arg1), longArg(arg2), longArg(arg3));
         }
-        protected abstract void traceFoo1(int threadId, long arg1, int arg2);
+        protected abstract void traceFoo1(int threadId, long arg1, long arg2, long arg3);
 
         @INLINE
-        public final void logFoo2(long arg1, int arg2, int arg3) {
-            log(Operation.Foo2.ordinal(), longArg(arg1), intArg(arg2), intArg(arg3));
+        public final void logFoo2(long arg1, long arg2, long arg3, long arg4) {
+            log(Operation.Foo2.ordinal(), longArg(arg1), longArg(arg2), longArg(arg3), longArg(arg4));
         }
-        protected abstract void traceFoo2(int threadId, long arg1, int arg2, int arg3);
+        protected abstract void traceFoo2(int threadId, long arg1, long arg2, long arg3, long arg4);
 
         @INLINE
-        public final void logFoo3(long arg1, int arg2, int arg3, int arg4) {
-            log(Operation.Foo3.ordinal(), longArg(arg1), intArg(arg2), intArg(arg3), intArg(arg4));
+        public final void logFoo3(long arg1, long arg2, long arg3, long arg4, long arg5) {
+            log(Operation.Foo3.ordinal(), longArg(arg1), longArg(arg2), longArg(arg3), longArg(arg4), longArg(arg5));
         }
-        protected abstract void traceFoo3(int threadId, long arg1, int arg2, int arg3, int arg4);
+        protected abstract void traceFoo3(int threadId, long arg1, long arg2, long arg3, long arg4, long arg5);
 
         @INLINE
-        public final void logFoo4(long arg1, int arg2, int arg3, int arg4, int arg5) {
-            log(Operation.Foo4.ordinal(), longArg(arg1), intArg(arg2), intArg(arg3), intArg(arg4), intArg(arg5));
+        public final void logFoo4(long arg1, long arg2, long arg3, long arg4, long arg5,
+                long arg6) {
+            log(Operation.Foo4.ordinal(), longArg(arg1), longArg(arg2), longArg(arg3), longArg(arg4), longArg(arg5),
+                longArg(arg6));
         }
-        protected abstract void traceFoo4(int threadId, long arg1, int arg2, int arg3, int arg4, int arg5);
+        protected abstract void traceFoo4(int threadId, long arg1, long arg2, long arg3, long arg4, long arg5,
+                long arg6);
 
         @Override
         protected void trace(Record r) {
             int threadId = r.getThreadId();
             switch (r.getOperation()) {
                 case 0: { //Foo1
-                    traceFoo1(threadId, toLong(r, 1), toInt(r, 2));
+                    traceFoo1(threadId, toLong(r, 1), toLong(r, 2), toLong(r, 3));
                     break;
                 }
                 case 1: { //Foo2
-                    traceFoo2(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3));
+                    traceFoo2(threadId, toLong(r, 1), toLong(r, 2), toLong(r, 3), toLong(r, 4));
                     break;
                 }
                 case 2: { //Foo3
-                    traceFoo3(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3), toInt(r, 4));
+                    traceFoo3(threadId, toLong(r, 1), toLong(r, 2), toLong(r, 3), toLong(r, 4), toLong(r, 5));
                     break;
                 }
                 case 3: { //Foo4
-                    traceFoo4(threadId, toLong(r, 1), toInt(r, 2), toInt(r, 3), toInt(r, 4), toInt(r, 5));
+                    traceFoo4(threadId, toLong(r, 1), toLong(r, 2), toLong(r, 3), toLong(r, 4), toLong(r, 5), toLong(r, 6));
                     break;
                 }
             }
