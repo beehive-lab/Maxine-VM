@@ -40,27 +40,29 @@ import com.sun.max.vm.heap.gcx.*;
  *
  * @see <a href="http://en.wikipedia.org/wiki/State_pattern">"State" design pattern</a>
  */
-public class MSRemoteReference extends  RemoteReference {
+public final class MSRemoteReference extends  RemoteReference {
+
     /**
-     * An enumeration of possible states of a remote reference for this kind of collector, based on the heap phase and
-     * what is known at any given time.
+     * An internal enumeration of possible states of a remote reference for this kind of collector, based on the heap
+     * phase and what is known at any given time.
      * <p>
-     * Each member encapsulates the <em>behavior</em> associated with a state, including both the interpretation of
-     * the data held by the reference and by allowable state transitions.
+     * Each member encapsulates the <em>behavior</em> associated with a state, including both the interpretation of the
+     * data held by the reference and by allowable state transitions.
      * <p>
      * This set of states actually defines two independent state models: one for ordinary object and one for
-     * pseudo-objects (instances of {@link HeapFreeChunk}) used by the collector to represent unallocated
-     * memory in a fashion similar to ordinary objects.  These can be treated as ordinary references for some
+     * pseudo-objects (instances of {@link HeapFreeChunk} or {@link DarkMatter}) used by the collector to represent
+     * unallocated memory in a fashion similar to ordinary objects. These can be treated as ordinary references for some
      * purposes, but not all.
      */
-    static enum RefState {
+    private static enum RefState {
 
         /**
          * Reference to a reachable object.
          */
-        OBJ_LIVE ("LIVE object"){
+        REF_LIVE ("LIVE object"){
 
             // Properties
+
             @Override
             ObjectStatus status() {
                 return LIVE;
@@ -70,23 +72,24 @@ public class MSRemoteReference extends  RemoteReference {
 
             @Override
             void discoveredUnreachable(MSRemoteReference ref) {
-                ref.refState = OBJ_UNREACHABLE;
+                ref.refState = REF_UNREACHABLE;
             }
 
             @Override
             void die(MSRemoteReference ref) {
-                ref.refState = OBJ_DEAD;
+                ref.refState = REF_DEAD;
             }
         },
 
         /**
-         * Reference to an object found unreachable, heap {@link HeapPhase#RECLAIMING}, modeling
-         * the state where the GC has not yet reclaimed the space.
+         * Reference to an object found unreachable during heap {@link HeapPhase#RECLAIMING}, but not yet reclaimed.
          */
-        OBJ_UNREACHABLE ("UNREACHABLE object (Reclaiming)") {
+        REF_UNREACHABLE ("UNREACHABLE object (RECLAIMING only)") {
 
             // Properties
-            @Override ObjectStatus status() {
+
+            @Override
+            ObjectStatus status() {
                 return UNREACHABLE;
             }
 
@@ -94,64 +97,65 @@ public class MSRemoteReference extends  RemoteReference {
 
             @Override
             void die(MSRemoteReference ref) {
-                ref.refState = OBJ_DEAD;
+                ref.refState = REF_DEAD;
             }
         },
 
         /**
-         * Reference to an object that has been determined unreachable, and which should be forgotten;
-         * no assumptions may be made about memory contents at the location.
+         * Reference to a <em>quasi-object</em> that fills a region of unallocated memory that is available for
+         * allocation.
          */
-        OBJ_DEAD ("DEAD object") {
-
-            // Properties
-            @Override ObjectStatus status() {
-                return DEAD;
-            }
-
-            // Transitions (none: death is final)
-
-        },
-
-        FREE_CHUNK ("Chunk of allocatable free memory") {
+        REF_FREE_CHUNK ("Chunk of allocatable free memory") {
 
             // Properties;
+
             @Override
             ObjectStatus status() {
                 return FREE;
             }
 
-           // Transitions
+            // Transitions
+
             @Override
-            void release(MSRemoteReference ref) {
-                ref.refState = FREE_RELEASED;
+            void die(MSRemoteReference ref) {
+                ref.refState = REF_DEAD;
             }
         },
 
-        FREE_DARK ("Chunk of unallocatable free memory") {
+        /**
+         * Reference to a <em>quasi-object</em> that fills a region of unallocated memory that is not available for
+         * allocation.
+         */
+        REF_DARK_MATTER ("Chunk of unallocatable free memory") {
 
             // Properties;
+
             @Override
             ObjectStatus status() {
                 return DARK;
             }
 
            // Transitions
+
             @Override
-            void release(MSRemoteReference ref) {
-                ref.refState = FREE_RELEASED;
+            void die(MSRemoteReference ref) {
+                ref.refState = REF_DEAD;
             }
         },
 
-        FREE_RELEASED ("Released free space") {
+        /**
+         * Reference to a formerly live or quasi-object that has been determined unreachable, and which should be
+         * forgotten. No assumptions may be made about memory contents at the location.
+         */
+        REF_DEAD ("DEAD object or quasi-object") {
 
-            // Properties;
-            @Override
-            ObjectStatus status() {
+            // Properties
+            @Override ObjectStatus status() {
                 return DEAD;
             }
 
-            // Transitions (none: death is final)
+            // Transitions (alas, death is final!)
+
         };
 
         protected final String label;
@@ -170,11 +174,11 @@ public class MSRemoteReference extends  RemoteReference {
         /**
          * @see RemoteReference#origin()
          */
-        final Address origin(MSRemoteReference ref) {
+        Address origin(MSRemoteReference ref) {
             return ref.origin;
         }
 
-        final String gcDescription(MSRemoteReference ref) {
+        String gcDescription(MSRemoteReference ref) {
             return label;
         }
 
@@ -193,15 +197,6 @@ public class MSRemoteReference extends  RemoteReference {
         void die(MSRemoteReference ref) {
             TeleError.unexpected("Illegal state transition");
         }
-
-
-        /**
-         * @see MSRemoteReference#release()
-         */
-        void release(MSRemoteReference ref) {
-            TeleError.unexpected("Illegal state transition");
-        }
-
 
     }
 
@@ -228,25 +223,25 @@ public class MSRemoteReference extends  RemoteReference {
 
     public static MSRemoteReference createLive(RemoteMSHeapScheme remoteScheme, Address origin) {
         final MSRemoteReference ref = new MSRemoteReference(remoteScheme, origin);
-        ref.refState = RefState.OBJ_LIVE;
+        ref.refState = RefState.REF_LIVE;
         return ref;
     }
 
     public static MSRemoteReference createFree(RemoteMSHeapScheme remoteScheme, Address origin) {
         final MSRemoteReference ref = new MSRemoteReference(remoteScheme, origin);
-        ref.refState = RefState.FREE_CHUNK;
+        ref.refState = RefState.REF_FREE_CHUNK;
         return ref;
     }
 
     public static MSRemoteReference createDark(RemoteMSHeapScheme remoteScheme, Address origin) {
         final MSRemoteReference ref = new MSRemoteReference(remoteScheme, origin);
-        ref.refState = RefState.FREE_DARK;
+        ref.refState = RefState.REF_DARK_MATTER;
         return ref;
     }
 
     public static MSRemoteReference createUnreachable(RemoteMSHeapScheme remoteScheme, Address origin) {
         final MSRemoteReference ref = new MSRemoteReference(remoteScheme, origin);
-        ref.refState = RefState.OBJ_UNREACHABLE;
+        ref.refState = RefState.REF_UNREACHABLE;
         return ref;
     }
 
@@ -258,9 +253,8 @@ public class MSRemoteReference extends  RemoteReference {
     private ObjectStatus priorStatus = null;
 
     /**
-     * The current state of the reference with respect to
-     * where the object is located, what heap phase we might
-     * be in, and whether the object is live, forwarded, or dead.
+     * The current state of the reference with respect to where the object is located, what heap phase we might be in,
+     * and its status.
      */
     private MSRemoteReference.RefState refState = null;
 
@@ -271,6 +265,8 @@ public class MSRemoteReference extends  RemoteReference {
         this.origin = origin;
         this.remoteScheme = remoteScheme;
     }
+
+    // Reference properties
 
     @Override
     public ObjectStatus status() {
@@ -302,6 +298,8 @@ public class MSRemoteReference extends  RemoteReference {
         return remoteScheme.heapSchemeClass().getSimpleName() + " state=" + refState.gcDescription(this);
     }
 
+    // Reference state transitions
+
     /**
      * State transition on an ordinary live object reference during {@link HeapPhase#ANALYZING} when an object is found to be reachable.
      */
@@ -316,13 +314,5 @@ public class MSRemoteReference extends  RemoteReference {
     public void die() {
         priorStatus = refState.status();
         refState.die(this);
-    }
-
-    /**
-     * State transition on any kind of free space when it has been coalesced or allocated and should be forgotten.
-     */
-    public void release() {
-        priorStatus = refState.status();
-        refState.release(this);
     }
 }

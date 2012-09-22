@@ -216,9 +216,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     private final TimedTrace heapUpdateTracer;
 
     private long lastUpdateEpoch = -1L;
-    private long lastGCStartedCount = 0L;
     private long lastGCCompletedCount = 0L;
-    private long lastAnalyzingPhaseCount = 0L;
     private long lastReclaimingPhaseCount = 0L;
 
     /**
@@ -241,7 +239,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     /**
      * Map:  VM address in Object-Space --> a {@link MSRemoteReference} that refers to the free space chunk whose origin is at that location.
      * <p>
-     * <strong>Invariant</strong>: the map holds only objects with status {@linkplain ObjectStatus#FREE} or {@linkplain ObjectStatus#DARK DARK}.
+     * <strong>Invariant</strong>: the map holds only objects with status {@linkplain ObjectStatus#FREE FREE} or {@linkplain ObjectStatus#DARK DARK}.
      */
     private WeakRemoteReferenceMap<MSRemoteReference> freeSpaceRefMap = new WeakRemoteReferenceMap<MSRemoteReference>();
 
@@ -295,11 +293,12 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 updateMemoryStatus(initializationEpoch);
                 /*
                  * Add a heap phase listener that will will force the VM to stop any time the heap transitions from
-                 * analysis to the reclaiming phase of a GC. This is exactly the moment in a GC cycle when reference
+                 * analysis to the RECLAIMING phase of a GC. This is exactly the moment in a GC cycle when reference
                  * information must be updated. Unfortunately, the handler supplied with this listener will only be
                  * called after the VM state refresh cycle is complete. That would be too late since so many other parts
                  * of the refresh cycle depend on references. Consequently, the needed updates take place when this
-                 * manager gets refreshed (early in the refresh cycle), not when this handler eventually gets called.
+                 * manager gets refreshed (early in the refresh cycle, see UpdateMemoryStatus()), not when this handler
+                 * eventually gets called.
                  */
                 try {
                     vm().addGCPhaseListener(RECLAIMING, new MaxGCPhaseListener() {
@@ -345,7 +344,10 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             // Can't do anything until we have the VM object that represents the scheme implementation
             return;
         }
+
+        // Ensure we have the latest information from the remote scheme object, since it may not yet have been touched in the refresh cycle.
         scheme.updateCacheIfNeeded();
+
         if (objectSpaceMemoryRegion == null) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "looking for heap region");
             /*
@@ -363,6 +365,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
             Trace.end(TRACE_VALUE, tracePrefix() + "looking for heap region: " + (heapRegions.isEmpty() ? "not" : "") + " found");
         }
+
         if (objectSpaceMemoryRegion != null && epoch > lastUpdateEpoch) {
 
             heapUpdateTracer.begin();
@@ -380,7 +383,8 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 /*
                  * A GC, and in particular a RECLAIMING phase, has completed since the last time we checked. Find any
                  * references still marked UNREACHABLE and make them DEAD. It is important to clear them out before we
-                 * handle the conclusion of the following ANALYZING phase, which might be now.
+                 * handle the possible conclusion of the following ANALYZING phase that may also have happened since
+                 * we last checked.
                  */
                 for (MSRemoteReference objectRef : objectRefMap.values()) {
                     if (objectRef.status().isUnreachable()) {
@@ -397,7 +401,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                      * We are halted for the first time in this RECLAIMING phase, usually because of the phase change
                      * listener we registered. That means that an ANALYZING phase has concluded since the last time we
                      * checked. Find any LIVE object references that are unmarked and make them UNREACHABLE before
-                     * anything else happens in this phase.
+                     * anything else happens during this phase.
                      */
                     for (MSRemoteReference objectRef : objectRefMap.values()) {
                         if (objectRef.status().isLive()) {
@@ -440,7 +444,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                         // FREE chunks can be released during a RECLAIMING phase when the space is merged with another FREE chunk.
                         if (!objectStatusAt(freeSpaceRef.origin()).isFree()) {
                             // The reference no longer points at a free space chunk, so it has been released.
-                            freeSpaceRef.release();
+                            freeSpaceRef.die();
                             assert freeSpaceRefMap.remove(freeSpaceRef.origin()) != null;
                         }
                         break;
@@ -448,7 +452,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                         // DARK chunks can be released during a RECLAIMING phase  when the space is merged with another FREE chunk.
                         if (!objectStatusAt(freeSpaceRef.origin()).isDark()) {
                             // The reference no longer points at dark matter, so it has been released.
-                            freeSpaceRef.release();
+                            freeSpaceRef.die();
                             assert freeSpaceRefMap.remove(freeSpaceRef.origin()) != null;
                         }
                         break;
@@ -520,16 +524,22 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             case MUTATING:
             case ANALYZING:
                 if (objectSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin)) {
-                    if (isHeapFreeChunkOrigin(origin) || isDarkMatterOrigin(origin)) {
+                    if (isHeapFreeChunkOrigin(origin)) {
                         return ObjectStatus.FREE;
+                    }
+                    if (isDarkMatterOrigin(origin)) {
+                        return ObjectStatus.DARK;
                     }
                     return ObjectStatus.LIVE;
                 }
                 break;
             case RECLAIMING:
                 if (objectSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin)) {
-                    if (isHeapFreeChunkOrigin(origin) || isDarkMatterOrigin(origin)) {
+                    if (isHeapFreeChunkOrigin(origin)) {
                         return ObjectStatus.FREE;
+                    }
+                    if (isDarkMatterOrigin(origin)) {
+                        return ObjectStatus.DARK;
                     }
                     switch(scheme.markBitmap.getMarkColorUnsafe(origin)) {
                         case MARK_BLACK:
@@ -562,14 +572,14 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         TeleError.check(contains(origin), "Location is outside MS heap region");
         final MSRemoteReference oldRef = objectRefMap.get(origin);
         if (oldRef != null) {
-            // A live or unreachable object is in the map at that location
+            // A live object or unreachable quasi-object is in the map at that location; only return if live.
             return oldRef.status().isLive() ? oldRef : null;
         }
         if (freeSpaceRefMap.get(origin) != null) {
             // A reference to a free space quasi object at that address already exists; nothing LIVE here.
             return null;
         }
-        // Not in either map; might be a new LIVE reference
+        // Not in either map; might be a live object not yet seen.
         if (objectStatusAt(origin).isLive()) {
             final MSRemoteReference newLiveRef = MSRemoteReference.createLive(this, origin);
             if (newLiveRef != null) {
@@ -591,10 +601,10 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         }
         final MSRemoteReference oldObjectRef = objectRefMap.get(origin);
         if (oldObjectRef != null) {
-            // A reference to a live or unreachable object at that address already exists.
+            // A live object or unreachable quasi-object is in the map at that location; only return if unreachable.
             return oldObjectRef.status().isUnreachable() ? oldObjectRef : null;
         }
-        // Not in either map
+        // Not in either map; might be a quasi-object not yet seen.
         switch (objectStatusAt(origin)) {
             case FREE:
                 final MSRemoteReference newFreeRef = MSRemoteReference.createFree(this, origin);
@@ -629,18 +639,6 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     private boolean inLiveArea(Address address) {
         // TODO (mlvdv) refine
         return objectSpaceMemoryRegion.containsInAllocated(address);
-    }
-
-    /**
-     * Checks whether the origin of a reference is currently the origin of an instance
-     * of {@link HeapFreeChunk} in VM memory.
-     *
-     * @param ref a reference, presumably once known to be the origin of a {@link HeapFreeChunk}
-     * @return whether the reference points at a {@link HeapFreeChunk}
-     */
-    protected boolean isFreeSpace(RemoteReference ref) {
-        final Address hubOrigin = ref.readHubAsWord().asAddress();
-        return heapFreeChunkHubOrigin.isNotZero() && hubOrigin.equals(heapFreeChunkHubOrigin);
     }
 
     @SuppressWarnings("deprecation")
