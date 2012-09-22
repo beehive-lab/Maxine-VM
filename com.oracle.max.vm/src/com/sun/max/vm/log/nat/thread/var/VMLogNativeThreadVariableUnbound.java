@@ -95,17 +95,17 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
                 // may need to flush the log, as are just about to step on a live record
                 if (flusher != null) {
                     flush(FLUSHMODE_FULL, VmThread.fromTLA(tla));
-                    // reset
+                    // reset, but not forgetting the reservation for this record
                     wrap = 0;
                     firstOffset = 0;
-                    newNextOffset = 0;
+                    newNextOffset = recordSize; // past slot for this record
                     recordAddress = buffer;
                     holeAddress = Pointer.zero();
-                }
-
-                // skip over records until we are >= newNextOffset
-                while (firstOffset < newNextOffset) {
-                    firstOffset = nextRecordOffset(buffer, firstOffset);
+                } else {
+                    // skip over records until we are >= newNextOffset
+                    while (firstOffset < newNextOffset) {
+                        firstOffset = nextRecordOffset(buffer, firstOffset);
+                    }
                 }
             }
             // firstOffset needs to wrap now, unless we flushed
@@ -149,12 +149,6 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         scanOrFlushLog(tla, visitor, true);
     }
 
-    // temporary -- to track VMLog bug
-    private int debug_next_offset = -1;
-    private int debug_offset = -1;
-    private int debug_last_offset = -1;
-    private int debug_first_offset = -1;
-
     private void scanOrFlushLog(Pointer tla, PointerIndexVisitor visitor, boolean scanning) {
         long offsets = vmLogBufferOffsetsTL.load(tla).toLong();
         int nextOffset = nextOffset(offsets);
@@ -168,11 +162,11 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         int offset = firstOffset(offsets);
         VmThread vmThread = VmThread.fromTLA(tla);
 
-        if (MaxineVM.isDebug()) {
-            debug_next_offset = nextOffset;
-            debug_first_offset = offset;
-            debug_offset = offset;
-        }
+        // N.B. It is possible that a GC scan was provoked by log flushing,
+        // in which case it is important to save/restore the "address" field of the
+        // associated NativeRecord, to avoid corruption when the flush iteration resumes.
+        Pointer saveAddress = r.address;
+
         while (offset != nextOffset) {
             r.address = buffer.plus(offset);
             int header = r.getHeader();
@@ -185,10 +179,10 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
                 }
             }
             offset = modLogSize(offset + ARGS_OFFSET + r.getArgCount() * Word.size());
-            if (MaxineVM.isDebug()) {
-                debug_last_offset = debug_offset;
-                debug_offset = offset;
-            }
+        }
+
+        if (scanning) {
+            r.address = saveAddress;
         }
     }
 
