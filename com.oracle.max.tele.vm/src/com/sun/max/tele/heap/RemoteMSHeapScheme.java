@@ -386,12 +386,18 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                  * handle the possible conclusion of the following ANALYZING phase that may also have happened since
                  * we last checked.
                  */
+                int unreachable = 0;
                 for (MSRemoteReference objectRef : objectRefMap.values()) {
                     if (objectRef.status().isUnreachable()) {
                         objectRef.die();
                         assert objectRefMap.remove(objectRef.origin()) != null;
+                        unreachable++;
                     }
                 }
+                if (unreachable > 0) {
+                    Trace.line(TRACE_VALUE, tracePrefix() + "first halt after GC cycle=" + gcCompletedCount() + ", unreachable died=" + unreachable);
+                }
+
                 lastGCCompletedCount = gcCompletedCount();
             }
 
@@ -403,16 +409,23 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                      * checked. Find any LIVE object references that are unmarked and make them UNREACHABLE before
                      * anything else happens during this phase.
                      */
+                    int reachable = 0;
+                    int unreachable = 0;
                     for (MSRemoteReference objectRef : objectRefMap.values()) {
                         if (objectRef.status().isLive()) {
                             if (markBitMap().getMarkColor(objectRef.origin()) != MarkColor.MARK_BLACK) {
                                 objectRef.discoveredUnreachable();
+                                unreachable++;
+                            } else {
+                                reachable++;
                             }
                         } else {
                             // There shouldn't be any UNREACHABLE objects at this point; any lingering ones have been removed by the previous check.
-                            TeleWarning.message(tracePrefix() + "Found unexpected ref status at RECLAIMING start=" + objectRef);
+                            TeleWarning.message(tracePrefix() + "Found unexpected ref status in reclaiming, start=" + objectRef);
                         }
                     }
+                    Trace.line(TRACE_VALUE, tracePrefix() + "first halt reclaiming in GC cycle=" + gcStartedCount() + ", reachable=" + reachable + ", unreachable=" + unreachable);
+
                     lastReclaimingPhaseCount = gcStartedCount();
                 }
                 /*
@@ -420,14 +433,19 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                  * since we last checked. The memory that held an unreachable object might now hold a FREE chunk, DARK
                  * matter, or might be entirely zapped.
                  */
+                int unreachableDied = 0;
                 for (MSRemoteReference objectRef : objectRefMap.values()) {
                     if (objectRef.status().isUnreachable()) {
                         final Address origin = objectRef.origin();
                         if (objectStatusAt(origin).isDead() || isHeapFreeChunkOrigin(origin) || isDarkMatterOrigin(origin)) {
                             objectRef.die();
                             assert objectRefMap.remove(objectRef.origin()) != null;
+                            unreachableDied++;
                         }
                     }
+                }
+                if (unreachableDied > 0) {
+                    Trace.line(TRACE_VALUE, tracePrefix() + "halt reclaiming in GC cycle=" + gcStartedCount() + ", unreachable died=" + unreachableDied);
                 }
             }
 
@@ -437,6 +455,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
              * isn't supposed to be released during the ANALYSIS phase, but we might not have checked since some time in
              * an earlier phase.
              */
+            int freeDied = 0;
             for (MSRemoteReference freeSpaceRef : freeSpaceRefMap.values()) {
                 switch (freeSpaceRef.status()) {
                     case FREE:
@@ -446,6 +465,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                             // The reference no longer points at a free space chunk, so it has been released.
                             freeSpaceRef.die();
                             assert freeSpaceRefMap.remove(freeSpaceRef.origin()) != null;
+                            freeDied++;
                         }
                         break;
                     case DARK:
@@ -454,9 +474,13 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                             // The reference no longer points at dark matter, so it has been released.
                             freeSpaceRef.die();
                             assert freeSpaceRefMap.remove(freeSpaceRef.origin()) != null;
+                            freeDied++;
                         }
                         break;
                 }
+            }
+            if (freeDied > 0) {
+                Trace.line(TRACE_VALUE, tracePrefix() + "halt " + phase().name() + " in GC cycle=" + gcStartedCount() + ", free died=" + freeDied);
             }
 
             heapUpdateTracer.end(heapUpdateStatsPrinter);
