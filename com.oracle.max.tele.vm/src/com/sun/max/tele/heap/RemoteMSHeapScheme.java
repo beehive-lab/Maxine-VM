@@ -39,7 +39,6 @@ import com.sun.max.tele.heap.region.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.reference.ms.*;
-import com.sun.max.tele.reference.ms.MSRemoteReference.RefStateCount;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
@@ -665,97 +664,37 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         return objectSpaceMemoryRegion.containsInAllocated(address);
     }
 
-    @SuppressWarnings("deprecation")
-    private void printRegionObjectStats(PrintStream printStream, int indent, boolean verbose, TeleMemoryRegion region, WeakRemoteReferenceMap<MSRemoteReference> map) {
-        final NumberFormat formatter = NumberFormat.getInstance();
-        int totalRefs = 0;
-        int liveRefs = 0;
-        int unreachableRefs = 0;
-        int freeRefs = 0;
-        int darkRefs = 0;
-        int deadRefs = 0;
-
-        for (MSRemoteReference ref : map.values()) {
-            switch(ref.status()) {
-                case LIVE:
-                    liveRefs++;
-                    break;
-                case UNREACHABLE:
-                    unreachableRefs++;
-                    break;
-                case FREE:
-                    freeRefs++;
-                    break;
-                case DARK:
-                    darkRefs++;
-                    break;
-                case DEAD:
-                    deadRefs++;
-                    break;
-            }
-        }
-        totalRefs = liveRefs + unreachableRefs + deadRefs;
-
-        // Line 0
-        String indentation = Strings.times(' ', indent);
-        final StringBuilder sb0 = new StringBuilder();
-        sb0.append("heap region: ");
-        sb0.append(heapRegions.get(0).entityName());
-        if (verbose) {
-            sb0.append(", ref. mgr=").append(getClass().getSimpleName());
-        }
-        printStream.println(indentation + sb0.toString());
-
-        // increase indentation
-        indentation += Strings.times(' ', 4);
-
-        // Line 1
-        final StringBuilder sb1 = new StringBuilder();
-        sb1.append("memory: ");
-        final MemoryUsage usage = region.getUsage();
-        final long size = usage.getCommitted();
-        if (size > 0) {
-            sb1.append("size=" + formatter.format(size));
-            final long used = usage.getUsed();
-            sb1.append(", used=" + formatter.format(used) + " (" + (Long.toString(100 * used / size)) + "%)");
-        } else {
-            sb1.append(" <unallocated>");
-        }
-        printStream.println(indentation + sb1.toString());
-
-        // Line 2, indented
-        final StringBuilder sb2 = new StringBuilder();
-        sb2.append("mapped object refs=").append(formatter.format(totalRefs));
-        if (totalRefs > 0) {
-            sb2.append(", object status: ");
-            sb2.append(ObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
-            sb2.append(ObjectStatus.UNREACHABLE.label()).append("=").append(formatter.format(unreachableRefs));
-            sb2.append(ObjectStatus.FREE.label()).append("=").append(formatter.format(freeRefs));
-            sb2.append(ObjectStatus.DARK.label()).append("=").append(formatter.format(darkRefs));
-        }
-        printStream.println(indentation + sb2.toString());
-        if (deadRefs > 0) {
-            printStream.println(indentation + "ERROR: " + formatter.format(deadRefs) + " DEAD refs in map");
-        }
-
-        // Line 3, optional
-        if (verbose && totalRefs > 0) {
-            printStream.println(indentation +  "Mapped object ref states:");
-            final String stateIndentation = indentation + Strings.times(' ', 4);
-            for (RefStateCount refStateCount : MSRemoteReference.getStateCounts(map.values())) {
-                if (refStateCount.count > 0) {
-                    printStream.println(stateIndentation + refStateCount.stateName + ": " + formatter.format(refStateCount.count));
-                }
-            }
-        }
-    }
-
-
     public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
         if (objectSpaceMemoryRegion != null) {
             final NumberFormat formatter = NumberFormat.getInstance();
 
-            final int totalRefs = objectRefMap.values().size();
+            int liveRefs = 0;
+            int unreachableRefs = 0;
+            int freeRefs = 0;
+            int darkRefs = 0;
+            int deadRefs = 0;
+
+            for (MSRemoteReference ref : objectRefMap.values()) {
+                switch(ref.status()) {
+                    case LIVE:
+                        liveRefs++;
+                        break;
+                    case UNREACHABLE:
+                        unreachableRefs++;
+                        break;
+                    case FREE:
+                        freeRefs++;
+                        break;
+                    case DARK:
+                        darkRefs++;
+                        break;
+                    case DEAD:
+                        deadRefs++;
+                        break;
+                }
+            }
+            final int totalRefs = liveRefs + unreachableRefs + freeRefs + darkRefs + deadRefs;
+
 
             // Line 0
             String indentation = Strings.times(' ', indent);
@@ -763,6 +702,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             sb0.append("Dynamic Heap:");
             if (verbose) {
                 sb0.append("  VMScheme=").append(vm().heapScheme().name());
+                sb0.append(", ref. mgr=").append(getClass().getSimpleName());
             }
             printStream.println(indentation + sb0.toString());
 
@@ -772,12 +712,37 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             // Line 1
             final StringBuilder sb1 = new StringBuilder();
             sb1.append("phase=").append(phase().label());
-            sb1.append(", collections completed=").append(formatter.format(gcCompletedCount));
+            sb1.append(", collections started=").append(formatter.format(gcStartedCount));
+            sb1.append(", completed=").append(formatter.format(gcCompletedCount));
             sb1.append(", total object refs mapped=").append(formatter.format(totalRefs));
             printStream.println(indentation + sb1.toString());
 
-            printRegionObjectStats(printStream, indent + 4, verbose, objectSpaceMemoryRegion, objectRefMap);
+            // Line 2
+            final StringBuilder sb11 = new StringBuilder();
+            sb11.append("memory: ");
+            final MemoryUsage usage = objectSpaceMemoryRegion.getUsage();
+            final long size = usage.getCommitted();
+            if (size > 0) {
+                sb11.append("size=" + formatter.format(size));
+            } else {
+                sb11.append(" <unallocated>");
+            }
+            printStream.println(indentation + sb11.toString());
 
+            // Line 3, optional
+            if (totalRefs > 0) {
+                final StringBuilder sb2 = new StringBuilder();
+                sb2.append("objects: ");
+                sb2.append(ObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
+                sb2.append(ObjectStatus.UNREACHABLE.label()).append("=").append(formatter.format(unreachableRefs)).append(", ");
+                sb2.append(ObjectStatus.FREE.label()).append("=").append(formatter.format(freeRefs)).append(", ");
+                sb2.append(ObjectStatus.DARK.label()).append("=").append(formatter.format(darkRefs));
+                printStream.println(indentation + sb2.toString());
+            }
+
+            if (deadRefs > 0) {
+                printStream.println(indentation + "ERROR: " + formatter.format(deadRefs) + " DEAD refs in map");
+            }
         }
     }
 
