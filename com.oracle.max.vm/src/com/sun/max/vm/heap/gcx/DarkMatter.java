@@ -68,7 +68,7 @@ public final class DarkMatter {
     /**
      * Variable-less class used to format the smallest possible dark-matter (i.e., two-words space).
      */
-    private static class SmallestDarkMatter {
+    public static class SmallestDarkMatter {
 
         @INTRINSIC(UNSAFE_CAST)
         private static native SmallestDarkMatter asSmallestDarkMatter(Object darkMatter);
@@ -127,7 +127,7 @@ public final class DarkMatter {
      */
     public static boolean isDarkMatterOrigin(Address origin) {
         final Word hubWord =  origin.asPointer().readWord(Layout.hubIndex());
-        return hubWord.equals(hubWord()) && hubWord.equals(SmallestDarkMatter.hubWord());
+        return hubWord.equals(hubWord()) || hubWord.equals(SmallestDarkMatter.hubWord());
     }
 
     /**
