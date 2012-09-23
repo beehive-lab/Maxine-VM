@@ -27,6 +27,7 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  *
@@ -80,14 +81,16 @@ public class PrimitiveValueLabel extends ValueLabel {
 
     @Override
     public void updateText() {
-        assert value() != null;
+        final Value value = value();
+        assert value != null;
         setModeFont();
 
         try {
-            final String asString = value().toString();
+            final String asString = value.toString();
+
 
             if (kind == Kind.BOOLEAN) {
-                final int asInt = value().toInt();
+                final int asInt = value.toInt();
                 final String asHex = intTo0xHex(asInt);
                 if (textDisplayMode) {
                     displayText = asString;
@@ -98,7 +101,7 @@ public class PrimitiveValueLabel extends ValueLabel {
                 setWrappedToolTipHtmlText("boolean '" + asString + "' <br>as int: " + Integer.toString(asInt) + ", " + asHex);
 
             } else if (kind == Kind.BYTE) {
-                final short asShort = value().toShort();
+                final short asShort = value.toShort();
                 final String asHex = intTo0xHex(asShort);
                 if (textDisplayMode) {
                     displayText = asString;
@@ -109,7 +112,7 @@ public class PrimitiveValueLabel extends ValueLabel {
                 setWrappedToolTipHtmlText("byte '" + asString + "' <br>as int: " + Short.toString(asShort) + ", " + asHex);
 
             } else if (kind == Kind.CHAR) {
-                final short asShort = value().toShort();
+                final short asShort = value.toShort();
                 final String asHex = intTo0xHex(asShort);
                 if (textDisplayMode) {
                     displayText = "'" + asString + "'";
@@ -120,7 +123,7 @@ public class PrimitiveValueLabel extends ValueLabel {
                 setWrappedToolTipHtmlText("char '" + asString + "' <br>as int: " + Short.toString(asShort) + ", " + asHex);
 
             } else if (kind == Kind.DOUBLE) {
-                final long asLong = value().toLong();
+                final long asLong = value.toLong();
                 final String asHex = longTo0xHex(asLong);
                 if (textDisplayMode) {
                     displayText = asString;
@@ -131,7 +134,7 @@ public class PrimitiveValueLabel extends ValueLabel {
                 setWrappedToolTipHtmlText("double '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
 
             } else if (kind == Kind.FLOAT) {
-                final long asLong = value().toLong();
+                final long asLong = value.toLong();
                 final String asHex = longTo0xHex(asLong);
                 if (textDisplayMode) {
                     displayText = asString;
@@ -142,7 +145,7 @@ public class PrimitiveValueLabel extends ValueLabel {
                 setWrappedToolTipHtmlText("float '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
 
             } else if (kind == Kind.INT) {
-                final int asInt = value().toInt();
+                final int asInt = value.toInt();
                 final String asHex = intTo0xHex(asInt);
                 if (textDisplayMode) {
                     displayText = asString;
@@ -153,7 +156,7 @@ public class PrimitiveValueLabel extends ValueLabel {
                 setWrappedToolTipHtmlText("int '" + asString + "' <br>as int: " + Integer.toString(asInt) + ", " + asHex);
 
             } else if (kind == Kind.LONG) {
-                final long asLong = value().toLong();
+                final long asLong = value.toLong();
                 final String asHex = longTo0xHex(asLong);
                 if (textDisplayMode) {
                     displayText = asString;
@@ -164,7 +167,7 @@ public class PrimitiveValueLabel extends ValueLabel {
                 setWrappedToolTipHtmlText("long '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
 
             } else if (kind == Kind.SHORT) {
-                final short asShort = value().toShort();
+                final short asShort = value.toShort();
                 final String asHex = intTo0xHex(asShort);
                 if (textDisplayMode) {
                     displayText = "'" + asString + "'";
@@ -176,6 +179,11 @@ public class PrimitiveValueLabel extends ValueLabel {
             } else {
                 setText(asString);
                 setWrappedToolTipHtmlText(asString);
+            }
+            if (value().kind().width.numberOfBytes == vm().platform().nBytesInWord() &&
+                            vm().memoryIO().isZappedValue(value())) {
+                setText(inspection().nameDisplay().zappedDataShortText());
+                setToolTipText(inspection().nameDisplay().zappedDataLongText());
             }
         } catch (IllegalArgumentException e) {
             setText(inspection().nameDisplay().unavailableDataShortText());
