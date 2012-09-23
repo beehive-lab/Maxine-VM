@@ -55,7 +55,23 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
      */
     protected Address heapFreeChunkHubOrigin = Address.zero();
 
+    /**
+     * The absolute address of the dynamic hub for the class {@link DarkMatter}, stored
+     * on the assumption that it is in the boot heap and never changes.  This gets used for
+     * quick testing on possible free space chunk origins.
+     * Remote heap scheme making use of HeapFreeChunk should use {@link #updateFreeHubOrigins()} to
+     * initialize this field.
+     */
     protected Address darkMatterHubOrigin = Address.zero();
+
+    /**
+     * The absolute address of the dynamic hub for the class {@link DarkMatter.SmallestDarkMatter}, stored
+     * on the assumption that it is in the boot heap and never changes.  This gets used for
+     * quick testing on possible free space chunk origins.
+     * Remote heap scheme making use of HeapFreeChunk should use {@link #updateFreeHubOrigins()} to
+     * initialize this field.
+     */
+    protected Address smallestDarkMatterHubOrigin = Address.zero();
 
     /**
      * A printer for statistics at the end of each update.
@@ -166,6 +182,11 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         return gcCompletedCount;
     }
 
+    /**
+     * Ensure that we have discovered the hubs, presumed to be at fixed locations in the Boot Heap, of quasi-objects
+     * used by GC to format various kinds of free space in the heap.  Once these have been located, the origins of
+     * such quasi-objects can be recognized with a simple hub address comparison.
+     */
     protected final void updateFreeHubOrigins() {
         if (heapFreeChunkHubOrigin.isZero()) {
             // Assume this never changes, once located.
@@ -189,6 +210,16 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
                 classes().registerUnregisteredClass(DarkMatter.DARK_MATTER_CLASS_NAME, DarkMatter.DARK_MATTER_ARRAY);
             }
         }
+        if (smallestDarkMatterHubOrigin.isZero()) {
+            // Assume this never changes, once located.
+            final TeleClassActor smallestDarkMatterClassActor = classes().findTeleClassActor(DarkMatter.SmallestDarkMatter.class);
+            if (smallestDarkMatterClassActor != null) {
+                final TeleDynamicHub freeChunkDynamicHub = smallestDarkMatterClassActor.getTeleDynamicHub();
+                if (freeChunkDynamicHub != null) {
+                    smallestDarkMatterHubOrigin = freeChunkDynamicHub.origin();
+                }
+            }
+        }
     }
 
     /**
@@ -196,23 +227,18 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
      * using a test that depends on the class's dynamic hub object never being collected and never relocated.
      */
     protected final boolean isHeapFreeChunkOrigin(Address origin) throws TeleError {
-        if (heapFreeChunkHubOrigin.isZero()) {
-            return false;
-        }
         final Address hubOrigin = referenceManager().makeTemporaryRemoteReference(origin).readHubAsWord().asAddress();
-        return hubOrigin.equals(heapFreeChunkHubOrigin);
+        return hubOrigin.isNotZero() && hubOrigin.equals(heapFreeChunkHubOrigin);
     }
 
     /**
-     * Determines whether the object at a memory location in the VM is an instance of DARK MATTER,
-     * using a test that depends on the class's dynamic hub never being collected and never relocated.
+     * Determines whether the object at a memory location in the VM is an instance of <em>dark matter,</em>, instances
+     * of classes {@link DarkMatter} and {@link DarkMatter.SmallestDarkMatter}.  The test depends on the classes'
+     * dynamic hubs never being collected and never relocated.
      */
     protected final boolean isDarkMatterOrigin(Address origin) throws TeleError {
-        if (darkMatterHubOrigin.isZero()) {
-            return false;
-        }
         final Address hubOrigin = referenceManager().makeTemporaryRemoteReference(origin).readHubAsWord().asAddress();
-        return hubOrigin.equals(darkMatterHubOrigin);
+        return hubOrigin.isNotZero() && (hubOrigin.equals(darkMatterHubOrigin) || hubOrigin.equals(smallestDarkMatterHubOrigin));
     }
 
     // TODO (mlvdv)  Update; won't work now; important for attach mode
