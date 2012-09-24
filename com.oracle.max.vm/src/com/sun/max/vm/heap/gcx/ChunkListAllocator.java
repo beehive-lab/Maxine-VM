@@ -162,7 +162,7 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends BaseAt
                 // Refill. First, fill up the allocator to bring everyone to refill synchronization.
                 Pointer startOfSpaceLeft = atomicSetTopToLimit();
 
-                Address chunk = refillManager.allocateRefill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
+                Address chunk = refillManager.allocateRefill(null, startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
                 if (!chunk.isZero()) {
                     // Won race to get a next chunk to refill the allocator.
                     refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));

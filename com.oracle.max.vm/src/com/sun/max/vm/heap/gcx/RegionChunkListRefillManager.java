@@ -299,7 +299,7 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
      * thread can enter this method.
      */
     @Override
-    public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+    public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
         // FIXME: see comment above. We should never reach here as request for refilling the allocator can only happen via the allocateCleared call, which
         // should never be called on the tlab allocator since these are routed early on to the overflow allocator.
         FatalError.unexpected("Should not reach here");

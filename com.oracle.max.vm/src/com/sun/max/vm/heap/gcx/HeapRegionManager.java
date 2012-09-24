@@ -153,7 +153,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         managerAllocator = new AtomicBumpPointerAllocator<Refiller>(new Refiller() {
 
             @Override
-            public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+            public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
                 FatalError.unexpected("Must not have to refill");
                 return Address.zero();
             }

@@ -59,6 +59,7 @@ import com.sun.max.vm.ti.*;
 public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements XirWriteBarrierSpecification, RSetCoverage, EvacuationBufferProvider {
     static boolean AlwaysFullGC;
     static boolean ForceCleanCardsAfterMinorGC;
+    static private int BreakAfterGCCount;
 
     public static boolean OldSpaceDirtyCardsStats;
 
@@ -77,7 +78,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         VMOptions.addFieldOption("-XX:", "AlwaysFullGC", GenSSHeapScheme.class, "Always do full GC when true", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "ForceCleanCardsAfterMinorGC", GenSSHeapScheme.class, "Force cleaning of old space dirty card after GC", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "OldSpaceDirtyCardsStats", GenSSHeapScheme.class, "Print stats on old space dirty cards", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "BreakAfterGCCount", GenSSHeapScheme.class, "Break at every GC after GC count", Phase.PRISTINE);
     }
+
 
     /**
      * Refiller for the OldSpace allocator.
@@ -98,12 +101,14 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         Size spaceLeft = Size.zero();
 
         @Override
-        public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
             this.startOfSpaceLeft = startOfSpaceLeft;
             this.spaceLeft = spaceLeft;
 
             // Force full collection.
-            Heap.collectGarbage(Size.zero());
+            if (!Heap.collectGarbage(requestedSize)) {
+                throw new OutOfMemoryError();
+            }
             // The current thread hold the refill lock and will do the refill of the allocator.
             return Address.zero();
         }
@@ -139,10 +144,14 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      */
     class YoungSpaceRefiller extends Refiller {
         @Override
-        public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
             AtomicBumpPointerAllocator<YoungSpaceRefiller> allocator = youngSpace.allocator();
             Size size = allocator.size();
+            int i = 0;
             while (!Heap.collectGarbage(size)) {
+                if (++i > 3) {
+                    FatalError.breakpoint();
+                }
                 size = allocator.size();
             }
             // We're out of safepoint. The current thread hold the refill lock and will do the refill of the allocator.
@@ -549,6 +558,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      * This is caught by the refiller of the old generation allocator, which in this case allocate space directly in the second semi-space.
      */
     private void doCollect(int invocationCount) {
+        if (MaxineVM.isDebug() && BreakAfterGCCount > 0 && invocationCount > BreakAfterGCCount) {
+            FatalError.breakpoint();
+        }
         final boolean oldSpaceMutatorOverflow = oldSpace.allocator.refillManager().mutatorOverflow();
         resizingPolicy.clearNotifications();
         evacTimers.resetTrackTime();

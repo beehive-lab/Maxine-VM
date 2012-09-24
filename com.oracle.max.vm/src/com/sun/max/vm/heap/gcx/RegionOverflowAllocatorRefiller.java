@@ -101,7 +101,7 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
     }
 
     @Override
-    public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+    public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
         // Try to refill the overflow allocator with a single continuous chunk. Runs GC if can't.
         synchronized (refillLock()) {
             retireAllocatingRegion(startOfSpaceLeft, spaceLeft);

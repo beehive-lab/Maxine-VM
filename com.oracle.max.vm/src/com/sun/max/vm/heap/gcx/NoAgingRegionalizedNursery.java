@@ -36,7 +36,7 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
 
     final class NurseryRefiller extends Refiller {
         @Override
-        public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
             Size size = allocator.size();
             while (!Heap.collectGarbage(size)) {
                 size = allocator.size();

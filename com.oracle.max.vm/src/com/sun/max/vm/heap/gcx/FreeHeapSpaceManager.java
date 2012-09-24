@@ -120,7 +120,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
         @Override
         @INLINE
-        public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
             return binRefill(refillSize, startOfSpaceLeft, spaceLeft);
         }
 
