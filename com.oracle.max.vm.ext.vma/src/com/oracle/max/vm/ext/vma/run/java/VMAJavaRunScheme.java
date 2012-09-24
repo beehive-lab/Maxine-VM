@@ -170,6 +170,7 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
         }
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
+                checkJDKDeopt();
                 if (adviceHandler != null) {
                     adviceHandler.initialise(phase);
                     advising = true;
@@ -192,6 +193,13 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
     @INLINE
     public static VMAdviceHandler adviceHandler() {
         return adviceHandler;
+    }
+
+    /**
+     * If the classes to be advised include any compiled into the boot image, they need to be deopted first.
+     */
+    private void checkJDKDeopt() {
+
     }
 
     /**

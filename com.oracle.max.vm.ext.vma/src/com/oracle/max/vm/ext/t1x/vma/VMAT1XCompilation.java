@@ -120,8 +120,10 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
 
     @Override
     protected void finish() {
-        // assign the bci value as the last argument
-        assignInt(template.sig.in.length - 1, "bci", stream.currentBCI());
+        if (templates != defaultTemplates) {
+            // assign the bci value as the last argument
+            assignInt(template.sig.in.length - 1, "bci", stream.currentBCI());
+        }
         super.finish();
     }
 

@@ -27,23 +27,21 @@ import java.util.*;
 /**
  * Defines a compact textual format for the the {@link VMATextStore} output.
  *
- * There is an explicit assumption that store records are ordered in time to support
- * the relative time optimization. However, an embedded {@link Key#THREAD_SWITCH} record can be
- * used to "reset" the time for stores that are created from a set of records for a set
- * of threads. Such "batched" stores are also indicated by the second argument to
- * the {@link Key#INITIALIZE_LOG} record having the {@link BATCHED} bit set.
- * A per-thread store contains only records from one thread and is indicated
- * by the second argument to the {@link Key#INITIALIZE_LOG} record having the {@link PER_THREAD} bit set.
+ * There is an explicit assumption that store records are ordered in time to support the relative time optimization.
+ * However, an embedded {@link Key#THREAD_SWITCH} record can be used to "reset" the time for stores that are created
+ * from a set of records for a set of threads. Such "batched" stores are also indicated by the second argument to the
+ * {@link Key#INITIALIZE_LOG} record having the {@link BATCHED} bit set. A per-thread store contains only records from
+ * one thread and is indicated by the second argument to the {@link Key#INITIALIZE_LOG} record having the
+ * {@link PER_THREAD} bit set.
  *
- * Normally the store uses relative time, recording the offset from the previous
- * record for that thread. However, it is possible to use absolute time and this is
- * indicated by a {@code true} value to first argument of the {@link Key#INITIALIZE_LOG} record.
+ * Normally the store uses relative time, recording the offset from the previous record for that thread. However, it is
+ * possible to use absolute time and this is indicated by a {@code true} value to first argument of the
+ * {@link Key#INITIALIZE_LOG} record.
  *
- * Each store record occupies one line starting with the string code for the {@link Key}.
- * The key is followed by the time (either absolute or relative) and then, for most records,
- * the thread that created the record, and the bytecode index of the associated instruction.
- * This is then followed by arguments that are specific
- * to the record, generally in same order as the parameters to the methods in {@link VMATextStore}.
+ * Each store record occupies one line starting with the string code for the {@link Key}. The key is followed by the
+ * time (either absolute or relative) and then, for most records, the thread that created the record, and the bytecode
+ * index of the associated instruction. This is then followed by arguments that are specific to the record, generally in
+ * same order as the parameters to the methods in {@link VMATextStore}.
  *
  */
 
@@ -55,7 +53,7 @@ public abstract class CVMATextStore extends VMATextStore {
     public static final int PER_THREAD = 2;
 
     /**
-     * Log records that do not have a time component.
+     * Log records that do not have a (relative) time component.
      * N.B. {@link Key#INITIALIZE_LOG}, {@link Key#FINALIZE_LOG} and {@link Key.THREAD_SWITCH}
      * are in this set because their time component is always absolute.
      */
@@ -78,7 +76,7 @@ public abstract class CVMATextStore extends VMATextStore {
     public static final char FLOAT_VALUE = 'F';
     public static final char DOUBLE_VALUE = 'D';
 
-    // Argument indices for frequently accessed parts of the majority of records
+    // Argument indices for record component access
     public static final int KEY_INDEX = 0;
     public static final int TIME_INDEX = 1;
     public static final int THREAD_INDEX = 2;
@@ -87,6 +85,18 @@ public abstract class CVMATextStore extends VMATextStore {
     public static final int STATIC_CLASSNAME_INDEX = 4;
     public static final int ID_CLASSNAME_INDEX = 5;
     public static final int ARRAY_INDEX_INDEX = 5;
+    public static final int NEW_ARRAY_LENGTH_INDEX = 5;
+    public static final int CONST_LOAD_VALUE_INDEX = 4;
+    public static final int ARRAY_LENGTH_INDEX = 4;
+    public static final int LOADSTORE_DISP_INDEX = 4;
+    public static final int IF_OPCODE_INDEX = 4;
+    public static final int OP_OPCODE_INDEX = 4;
+    public static final int OP_VALUES_INDEX = 5;
+    public static final int CONV_OPCODE_INDEX = 4;
+    public static final int RETURN_VALUE_INDEX = 4;
+    public static final int RETURN_THROW_POP_INDEX = 5;
+    public static final int STACK_ADJUST_INDEX = 4;
+    public static final int GOTO_TARGET_INDEX = 4;
     public static final int DEFINE_ARG_INDEX = 1;
 
     public static boolean hasId(Key code) {

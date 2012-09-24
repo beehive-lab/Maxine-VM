@@ -116,7 +116,8 @@ public class TransientVMAdviceHandlerTypes {
                 case ThreadStarting:
                 case ThreadTerminating:
                     return new AdviceRecord();
-                case IfInt:
+                case IfObject:
+                    return new ObjectObjectTBciAdviceRecord();
                 case OperationLong:
                     return new LongLongAdviceRecord();
                 case ArrayStoreFloat:
@@ -125,7 +126,6 @@ public class TransientVMAdviceHandlerTypes {
                     return new ObjectFloatAdviceRecord();
                 case ArrayStoreObject:
                 case CheckCast:
-                case IfObject:
                 case InstanceOf:
                 case MultiNewArray:
                 case PutFieldObject:
@@ -173,6 +173,8 @@ public class TransientVMAdviceHandlerTypes {
                 case PutStaticLong:
                 case ReturnByThrow:
                     return new ObjectLongAdviceRecord();
+                case IfInt:
+                    return new LongLongTBciAdviceRecord();
 // END GENERATED CODE
 
                 case Unseen:
@@ -262,6 +264,10 @@ public class TransientVMAdviceHandlerTypes {
         public long value2;
     }
 
+    public static class LongLongTBciAdviceRecord extends LongLongAdviceRecord {
+        public short targetBci;
+    }
+
     public static class FloatAdviceRecord extends AdviceRecord {
         public float value;
     }
@@ -280,6 +286,10 @@ public class TransientVMAdviceHandlerTypes {
 
     public static class ObjectObjectAdviceRecord extends ObjectAdviceRecord {
         public Object value2;
+    }
+
+    public static class ObjectObjectTBciAdviceRecord extends ObjectObjectAdviceRecord {
+        public short targetBci;
     }
 
     public static class ObjectLongAdviceRecord extends ObjectAdviceRecord {

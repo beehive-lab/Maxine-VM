@@ -160,6 +160,16 @@ public abstract class VMLog implements Heap.GCCallback {
             return header & Record.ARGCOUNT_MASK;
         }
 
+        @HOSTED_ONLY
+        public static String inspectHeader(int header) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Op: "); sb.append(getOperation(header));
+            sb.append(", Logger: "); sb.append(getLoggerId(header));
+            sb.append(", Thread: "); sb.append(getThreadId(header));
+            sb.append(", ArgC: "); sb.append(getArgCount(header));
+            return sb.toString();
+        }
+
         /**
          * Encodes the loggerId, the operation and the argument count.
          * Bits 0-3: argument count (max 15)
