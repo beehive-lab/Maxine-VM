@@ -50,10 +50,28 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
      * The absolute address of the dynamic hub for the class {@link HeapFreeChunk}, stored
      * on the assumption that it is in the boot heap and never changes.  This gets used for
      * quick testing on possible free space chunk origins.
-     * Remote heap scheme making use of HeapFreeChunk should use {@link #updateHeapFreeChunkHubOrigin()} to
+     * Remote heap scheme making use of HeapFreeChunk should use {@link #updateFreeHubOrigins()} to
      * initialize this field.
      */
     protected Address heapFreeChunkHubOrigin = Address.zero();
+
+    /**
+     * The absolute address of the dynamic hub for the class {@link DarkMatter}, stored
+     * on the assumption that it is in the boot heap and never changes.  This gets used for
+     * quick testing on possible free space chunk origins.
+     * Remote heap scheme making use of HeapFreeChunk should use {@link #updateFreeHubOrigins()} to
+     * initialize this field.
+     */
+    protected Address darkMatterHubOrigin = Address.zero();
+
+    /**
+     * The absolute address of the dynamic hub for the class {@link DarkMatter.SmallestDarkMatter}, stored
+     * on the assumption that it is in the boot heap and never changes.  This gets used for
+     * quick testing on possible free space chunk origins.
+     * Remote heap scheme making use of HeapFreeChunk should use {@link #updateFreeHubOrigins()} to
+     * initialize this field.
+     */
+    protected Address smallestDarkMatterHubOrigin = Address.zero();
 
     /**
      * A printer for statistics at the end of each update.
@@ -105,7 +123,11 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         return Collections.emptyList();
     }
 
-    public MaxMarkBitsInfo markBitInfo() {
+    public boolean hasMarkBitmap() {
+        return false;
+    }
+
+    public MaxMarkBitmap markBitMap() {
         return null;
     }
 
@@ -142,35 +164,82 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         }
     }
 
-    public HeapPhase phase() {
+    public final HeapPhase phase() {
         return phase;
     }
 
-    protected long gcStartedCount() {
+    /**
+     * @return the number of heap collections that have started
+     */
+    protected final long gcStartedCount() {
         return gcStartedCount;
     }
 
-    protected void updateHeapFreeChunkHubOrigin() {
+    /**
+     * @return the number of heap collections that have completed
+     */
+    protected final long gcCompletedCount() {
+        return gcCompletedCount;
+    }
+
+    /**
+     * Ensure that we have discovered the hubs, presumed to be at fixed locations in the Boot Heap, of quasi-objects
+     * used by GC to format various kinds of free space in the heap.  Once these have been located, the origins of
+     * such quasi-objects can be recognized with a simple hub address comparison.
+     */
+    protected final void updateFreeHubOrigins() {
         if (heapFreeChunkHubOrigin.isZero()) {
             // Assume this never changes, once located.
             final TeleClassActor hfcClassActor = classes().findTeleClassActor(HeapFreeChunk.class);
             if (hfcClassActor != null) {
-                final TeleDynamicHub teleDynamicHub = hfcClassActor.getTeleDynamicHub();
-                if (teleDynamicHub != null) {
-                    heapFreeChunkHubOrigin = teleDynamicHub.origin();
+                final TeleDynamicHub freeChunkDynamicHub = hfcClassActor.getTeleDynamicHub();
+                if (freeChunkDynamicHub != null) {
+                    heapFreeChunkHubOrigin = freeChunkDynamicHub.origin();
+                }
+            }
+        }
+        if (darkMatterHubOrigin.isZero()) {
+            // Assume this never changes, once located.
+            final TeleReferenceClassActor darkMatterClassActor = (TeleReferenceClassActor) objects().makeTeleObject(fields().DarkMatter_DARK_MATTER_ARRAY.readRemoteReference(vm()));
+            if (darkMatterClassActor != null) {
+                final TeleDynamicHub darkMatterDynamicHub = darkMatterClassActor.getTeleDynamicHub();
+                if (darkMatterDynamicHub != null) {
+                    darkMatterHubOrigin = darkMatterDynamicHub.origin();
+                }
+                // The dark matter class is not registered in the VM; handle specially so the local instance can be found.
+                classes().registerUnregisteredClass(DarkMatter.DARK_MATTER_CLASS_NAME, DarkMatter.DARK_MATTER_ARRAY);
+            }
+        }
+        if (smallestDarkMatterHubOrigin.isZero()) {
+            // Assume this never changes, once located.
+            final TeleClassActor smallestDarkMatterClassActor = classes().findTeleClassActor(DarkMatter.SmallestDarkMatter.class);
+            if (smallestDarkMatterClassActor != null) {
+                final TeleDynamicHub freeChunkDynamicHub = smallestDarkMatterClassActor.getTeleDynamicHub();
+                if (freeChunkDynamicHub != null) {
+                    smallestDarkMatterHubOrigin = freeChunkDynamicHub.origin();
                 }
             }
         }
     }
 
-    protected boolean isHeapFreeChunkOrigin(Address origin) throws TeleError {
-        if (heapFreeChunkHubOrigin.isZero()) {
-            return false;
-        }
+    /**
+     * Determines whether the object at a memory location in the VM is an instance of {@link HeapFreeChunk},
+     * using a test that depends on the class's dynamic hub object never being collected and never relocated.
+     */
+    protected final boolean isHeapFreeChunkOrigin(Address origin) throws TeleError {
         final Address hubOrigin = referenceManager().makeTemporaryRemoteReference(origin).readHubAsWord().asAddress();
-        return hubOrigin.equals(heapFreeChunkHubOrigin);
+        return hubOrigin.isNotZero() && hubOrigin.equals(heapFreeChunkHubOrigin);
     }
 
+    /**
+     * Determines whether the object at a memory location in the VM is an instance of <em>dark matter,</em>, instances
+     * of classes {@link DarkMatter} and {@link DarkMatter.SmallestDarkMatter}.  The test depends on the classes'
+     * dynamic hubs never being collected and never relocated.
+     */
+    protected final boolean isDarkMatterOrigin(Address origin) throws TeleError {
+        final Address hubOrigin = referenceManager().makeTemporaryRemoteReference(origin).readHubAsWord().asAddress();
+        return hubOrigin.isNotZero() && (hubOrigin.equals(darkMatterHubOrigin) || hubOrigin.equals(smallestDarkMatterHubOrigin));
+    }
 
     // TODO (mlvdv)  Update; won't work now; important for attach mode
 

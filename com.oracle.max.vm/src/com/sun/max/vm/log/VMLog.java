@@ -560,6 +560,13 @@ public abstract class VMLog implements Heap.GCCallback {
     }
 
     /**
+     * Override to perform some debugging action when a corrupted record is detected.
+     * @param r
+     */
+    protected void dumpCorruptedLog(Record r) {
+    }
+
+    /**
      * Encapsulates the logic of visiting reference valued arguments.
      * @param r the log record
      * @param argBase the address of the base of the arguments
@@ -567,6 +574,11 @@ public abstract class VMLog implements Heap.GCCallback {
      */
     protected void scanArgs(Record r, Pointer argBase, PointerIndexVisitor visitor) {
         int loggerId = r.getLoggerId();
+        if (MaxineVM.isDebug()) {
+            if (loggerId < 0 || loggerId > loggers.length) {
+                dumpCorruptedLog(r);
+            }
+        }
         int[] loggerOperationRefMaps = operationRefMaps[loggerId];
         if (loggerOperationRefMaps != null) {
             int op = r.getOperation();
@@ -729,7 +741,7 @@ public abstract class VMLog implements Heap.GCCallback {
         }
     }
 
-    private static final RawDumpFlusher rawDumpFlusher = new RawDumpFlusher();
+    public static final RawDumpFlusher rawDumpFlusher = new RawDumpFlusher();
     private static TraceDumpFlusher traceDumpFlusher;
 
     /**

@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -51,6 +49,12 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
         @Override
         protected void doBeforeGC() {
             // Nothing to do.
+        }
+
+        @Override
+        public Address allocateLargeRaw(Size size) {
+            FatalError.unimplemented();
+            return Address.zero();
         }
     }
 
@@ -119,7 +123,7 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
         while (nurseryRegionsList.tail() != lastCommittedRegion) {
             uncommitedNurseryRegionsList.prepend(nurseryRegionsList.removeTail());
         }
-        allocator.initialize(RegionTable.theRegionTable().regionAddress(nurseryRegionsList.head()), genSizingPolicy.initialYoungGenSize());
+        allocator.initialize(RegionTable.theRegionTable().regionAddress(nurseryRegionsList.head()), genSizingPolicy.initialYoungGenSize(), Size.fromInt(HeapRegionConstants.regionSizeInBytes));
     }
 
     public Pointer allocate(Size size) {
@@ -160,7 +164,7 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
     public void retireTLAB(Pointer start, Size size) {
         FatalError.check(allocator.inCurrentContiguousChunk(start), "Retired TLAB Space must be in allocating space");
         if (!allocator.retireTop(start, size)) {
-            fillWithDeadObject(start, start.plus(size));
+            DarkMatter.format(start, size);
         }
     }
 

@@ -58,7 +58,7 @@ public class VmAddressSpace extends AbstractVmHolder implements MaxAddressSpace 
 
     private final MaxEntityMemoryRegion<MaxAddressSpace> addressSpaceMemoryRegion;
 
-    private final SortedMemoryRegionSet<MaxEntityMemoryRegion<? extends MaxEntity>> map
+    private volatile SortedMemoryRegionSet<MaxEntityMemoryRegion<? extends MaxEntity>> map
         = new SortedMemoryRegionSet<MaxEntityMemoryRegion<? extends MaxEntity>>();
 
     private VmAddressSpace(TeleVM vm) {
@@ -146,7 +146,9 @@ public class VmAddressSpace extends AbstractVmHolder implements MaxAddressSpace 
      */
     public void add(MaxEntityMemoryRegion<? extends MaxEntity> allocation) {
         assert allocation != null;
-        map.add(allocation);
+        final SortedMemoryRegionSet<MaxEntityMemoryRegion< ? extends MaxEntity>> mapCopy = map.copy();
+        mapCopy.add(allocation);
+        map = mapCopy;
     }
 
     /**
@@ -158,7 +160,10 @@ public class VmAddressSpace extends AbstractVmHolder implements MaxAddressSpace 
      */
     public boolean remove(MaxEntityMemoryRegion<? extends MaxEntity> allocation) {
         assert allocation != null;
-        return map.remove(allocation);
+        final SortedMemoryRegionSet<MaxEntityMemoryRegion< ? extends MaxEntity>> mapCopy = map.copy();
+        final boolean result = mapCopy.remove(allocation);
+        map = mapCopy;
+        return result;
     }
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
@@ -252,6 +257,16 @@ public class VmAddressSpace extends AbstractVmHolder implements MaxAddressSpace 
             sorted = true;
         }
 
+        private SortedMemoryRegionSet<Region_Type> copy() {
+            final SortedMemoryRegionSet<Region_Type> newSet
+                = new SortedMemoryRegionSet<Region_Type>();
+            final Region_Type[] newRegions = Arrays.copyOf(regions, size);
+            for (Region_Type region : newRegions) {
+                newSet.add(region);
+            }
+            return newSet;
+        }
+
         int size() {
             return size;
         }
@@ -263,7 +278,7 @@ public class VmAddressSpace extends AbstractVmHolder implements MaxAddressSpace 
         /**
          * Searches for an element in this list based on an address.
          */
-        synchronized Region_Type find(Address address) {
+        Region_Type find(Address address) {
             for (Region_Type region : this) {
                 if (region.contains(address)) {
                     return region;
@@ -275,7 +290,7 @@ public class VmAddressSpace extends AbstractVmHolder implements MaxAddressSpace 
         /**
          * Adds an element to this list.
          */
-        synchronized void add(Region_Type newRegion) {
+        void add(Region_Type newRegion) {
             // Linear search to discover duplicates; not necessarily sorted.
             for (int index = 0; index < size; index++) {
                 if (regions[index] == newRegion) {
@@ -293,7 +308,7 @@ public class VmAddressSpace extends AbstractVmHolder implements MaxAddressSpace 
             Trace.line(TRACE_VALUE, tracePrefix() + "Adding new: " + newRegion.owner().entityName());
         }
 
-        synchronized boolean remove(Region_Type oldRegion) {
+        boolean remove(Region_Type oldRegion) {
             // Linear search to discover duplicates; not necessarily sorted.
             for (int index = 0; index < size; index++) {
                 if (regions[index] == oldRegion) {

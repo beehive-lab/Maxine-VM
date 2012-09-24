@@ -153,7 +153,7 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
     // the refill allocate. We currently leave this as is because doing this change also requires changing the FreeHeapSpaceManager of the MSHeapScheme
 
     @Override
-    public Address allocateLarge(Size size) {
+    public Address allocateLargeRaw(Size size) {
         FatalError.unexpected("Should not reach here");
         return Address.zero();
     }
@@ -320,7 +320,7 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
 
     @Override
     protected void retireDeadSpace(Pointer deadSpace, Size size) {
-        HeapSchemeAdaptor.fillWithDeadObject(deadSpace, deadSpace.plus(size));
+        DarkMatter.format(deadSpace, size);
         deadSpaceListener.notifyRetireDeadSpace(deadSpace, size);
     }
 

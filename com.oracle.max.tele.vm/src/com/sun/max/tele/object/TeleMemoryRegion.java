@@ -96,7 +96,10 @@ public class TeleMemoryRegion extends TeleTupleObject {
     private boolean updateRegionInfoCache() {
         try {
             final long nBytes = fields().MemoryRegion_size.readWord(reference()).asSize().toLong();
-
+            if (nBytes < 0L) {
+                TeleWarning.message("Incorrect Memory size read at " + reference());
+                return false;
+            }
             final RemoteReference regionNameStringReference = fields().MemoryRegion_regionName.readRemoteReference(reference());
             final TeleString teleString = (TeleString) objects().makeTeleObject(regionNameStringReference);
             final String regionName = teleString == null ? "<null>" : teleString.getString();

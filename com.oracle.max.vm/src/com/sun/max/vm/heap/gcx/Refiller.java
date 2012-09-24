@@ -23,7 +23,6 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * Basic refiller for bump pointer allocators.
@@ -48,12 +47,21 @@ public abstract class Refiller {
      * @param end end of the region, must be greater than start
      */
     void makeParsable(Pointer start, Pointer end) {
-        HeapSchemeAdaptor.fillWithDeadObject(start, end);
+        DarkMatter.format(start, end);
     }
 
     /**
      * Prepare for GC.
      */
     protected abstract void doBeforeGC();
+
+    /**
+     * Called directly by the allocator if the requested size is larger than its maximum size limit.
+     * The allocated chunk is left raw. Clearing (i.e., zero-fill) is the responsibility of the caller.
+     *
+     * @param size number of bytes requested
+     * @return the address to a contiguous region of the requested size
+     */
+    public abstract Address allocateLargeRaw(Size size);
 
 }

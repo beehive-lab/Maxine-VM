@@ -23,7 +23,6 @@
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -103,7 +102,7 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
 
     public void retireTLAB(Pointer start, Size size) {
         if (!allocator.retireTop(start, size)) {
-            fillWithDeadObject(start, start.plus(size));
+            DarkMatter.format(start, size);
         }
     }
 
@@ -132,7 +131,26 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
     }
 
     public void visit(CellRangeVisitor visitor) {
-        visitor.visitCells(space.start(), allocator.unsafeTop());
+        Address atop = allocator.unsafeTop();
+        if (space.contains(atop)) {
+            // Normal situation. The allocator is within the bound
+            FatalError.check(space.contains(allocator.start()), "allocator must be within space bounds");
+            visitor.visitCells(space.start(), atop);
+        } else {
+            // Allocators may be out of bounds
+            // This happens when the space is full and the allocator is refill with out of bounds space.
+            // The allocator is nevertheless considered part of the space.
+            visitor.visitCells(space.start(), space.committedEnd());
+            visitor.visitCells(allocator.start(), atop);
+        }
+    }
+
+    public void visitAllocatedCells(CellVisitor visitor) {
+        final Address top = allocator.unsafeTop();
+        Pointer cell = space.start().asPointer();
+        do {
+            cell = visitor.visitCell(cell);
+        } while (cell.lessThan(top));
     }
 
     @Override

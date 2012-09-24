@@ -153,9 +153,8 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
 
         if (spaceLeft.lessThan(minReclaimableSpace)) {
             if (!spaceLeft.isZero()) {
-                HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(spaceLeft));
+                DarkMatter.format(leftover, spaceLeft);
                 deadSpaceListener.notifyRetireDeadSpace(leftover, spaceLeft);
-
             }
             FULL_REGION.setState(rinfo);
             unavailableRegions.append(regionID);
@@ -262,7 +261,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
 
                                     if (tailSize.lessThan(minReclaimableSpace)) {
                                         if (!tailSize.isZero()) {
-                                            HeapSchemeAdaptor.fillWithDeadObject(tail, tailEnd);
+                                            DarkMatter.format(tail, tailSize);
                                             deadSpaceListener.notifyRetireDeadSpace(tail, tailSize);
                                         }
                                         allocationRegions.remove(lastRegion);
@@ -408,7 +407,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         refillManager.setMinChunkSize(minReclaimableSpace);
         // Initialize the tlab allocator with a first region.
         tlabAllocator.initialize(regionSize, regionSize);
-        overflowAllocator.initialize(Address.zero(), Size.zero());
+        overflowAllocator.initialize(Address.zero(), Size.zero(), Size.zero());
     }
 
     public Pointer allocate(Size size) {
@@ -427,7 +426,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
             return;
         }
         if (size.lessThan(minRetiredFreeChunkSize())) {
-            HeapSchemeAdaptor.fillWithDeadObject(start, start.plus(size));
+            DarkMatter.format(start, size);
         } else {
             HeapFreeChunk.format(start, size);
         }
@@ -588,7 +587,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 if (tailSize.lessThan(minReclaimableSpace)) {
                     if (!tailSize.isZero()) {
                         final Pointer tailStart = csrLastLiveAddress.asPointer();
-                        HeapSchemeAdaptor.fillWithDeadObject(tailStart, tailStart.plus(tailSize));
+                        DarkMatter.format(tailStart, tailSize);
                     }
                 }
             }

@@ -153,6 +153,8 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess ContiguousAllocatingSpace_space = new TeleInstanceReferenceFieldAccess(ContiguousAllocatingSpace.class, "space", ContiguousHeapSpace.class);
     public final TeleInstanceWordFieldAccess ContiguousHeapSpace_committedEnd = new TeleInstanceWordFieldAccess(ContiguousHeapSpace.class, "committedEnd");
     public final TeleInstanceReferenceFieldAccess ContiguousSemiSpace_fromSpace = new TeleInstanceReferenceFieldAccess(ContiguousSemiSpace.class, "fromSpace", ContiguousHeapSpace.class);
+    public final TeleStaticReferenceFieldAccess DarkMatter_DARK_MATTER_ARRAY = new TeleStaticReferenceFieldAccess(DarkMatter.class, "DARK_MATTER_ARRAY", ArrayClassActor.class);
+    public final TeleStaticReferenceFieldAccess DarkMatter_DARK_MATTER_CLASS_NAME = new TeleStaticReferenceFieldAccess(DarkMatter.class, "DARK_MATTER_CLASS_NAME", String.class);
     public final TeleInstanceReferenceFieldAccess Descriptor_string = new TeleInstanceReferenceFieldAccess(Descriptor.class, "string", String.class);
     public final TeleStaticReferenceFieldAccess DynamicLinker_libInfoArray = new TeleStaticReferenceFieldAccess(DynamicLinker.class, "libInfoArray", LibInfo[].class);
     public final TeleStaticIntFieldAccess DynamicLinker_libInfoIndex = new TeleStaticIntFieldAccess(DynamicLinker.class, "libInfoIndex");
@@ -205,6 +207,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_coveredAreaEnd = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "coveredAreaEnd");
     public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_coveredAreaStart = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "coveredAreaStart");
     public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_tableAddress = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "tableAddress");
+    public final TeleInstanceReferenceFieldAccess MSHeapScheme_heapMarker = new TeleInstanceReferenceFieldAccess(MSHeapScheme.class, "heapMarker", TricolorHeapMarker.class);
     public final TeleInstanceReferenceFieldAccess MSHeapScheme_objectSpace = new TeleInstanceReferenceFieldAccess(MSHeapScheme.class, "objectSpace", FreeHeapSpaceManager.class);
     public final TeleInstanceReferenceFieldAccess MaxineVM_config = new TeleInstanceReferenceFieldAccess(MaxineVM.class, "config", VMConfiguration.class);
     public final TeleStaticWordFieldAccess MaxineVM_primordialTLBlock = new TeleStaticWordFieldAccess(MaxineVM.class, "primordialTLBlock");
@@ -256,8 +259,10 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleStaticIntFieldAccess Trace_level = new TeleStaticIntFieldAccess(Trace.class, "level");
     public final TeleStaticLongFieldAccess Trace_threshold = new TeleStaticLongFieldAccess(Trace.class, "threshold");
     public final TeleInstanceWordFieldAccess TricolorHeapMarker_base = new TeleInstanceWordFieldAccess(TricolorHeapMarker.class, "base");
+    public final TeleInstanceReferenceFieldAccess TricolorHeapMarker_colorMap = new TeleInstanceReferenceFieldAccess(TricolorHeapMarker.class, "colorMap", MemoryRegion.class);
     public final TeleInstanceWordFieldAccess TricolorHeapMarker_coveredAreaEnd = new TeleInstanceWordFieldAccess(TricolorHeapMarker.class, "coveredAreaEnd");
     public final TeleInstanceWordFieldAccess TricolorHeapMarker_coveredAreaStart = new TeleInstanceWordFieldAccess(TricolorHeapMarker.class, "coveredAreaStart");
+    public final TeleInstanceIntFieldAccess TricolorHeapMarker_wordsCoveredPerBit = new TeleInstanceIntFieldAccess(TricolorHeapMarker.class, "wordsCoveredPerBit");
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "constantPool", ConstantPool.class);
     public final TeleInstanceReferenceFieldAccess Utf8Constant_string = new TeleInstanceReferenceFieldAccess(Utf8Constant.class, "string", String.class);
     public final TeleInstanceReferenceFieldAccess VMConfiguration_heapScheme = new TeleInstanceReferenceFieldAccess(VMConfiguration.class, "heapScheme", HeapScheme.class);

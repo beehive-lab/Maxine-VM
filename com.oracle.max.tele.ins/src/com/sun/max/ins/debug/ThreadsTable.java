@@ -91,9 +91,11 @@ public final class ThreadsTable extends InspectorTable {
     @Override
     public Color cellForegroundColor(int row, int col) {
         final MaxThread thread = (MaxThread) tableModel.getValueAt(row, 0);
-        final MaxThreadState threadState = thread.state();
-        if (threadState == BREAKPOINT || threadState == WATCHPOINT) {
-            return preference().style().debugIPTagColor();
+        if (thread != null) {
+            final MaxThreadState threadState = thread.state();
+            if (threadState == BREAKPOINT || threadState == WATCHPOINT) {
+                return preference().style().debugIPTagColor();
+            }
         }
         return null;
     }

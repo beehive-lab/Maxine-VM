@@ -154,7 +154,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
                 }
             }
         }
-        return vm().referenceManager().zeroReference();
+        return null;
     }
 
     /**

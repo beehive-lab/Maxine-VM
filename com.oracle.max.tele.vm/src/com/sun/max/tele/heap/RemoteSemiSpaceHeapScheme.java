@@ -364,6 +364,11 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         }
     }
 
+    @Override
+    public boolean hasMarkBitmap() {
+        return false;
+    }
+
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
         return new MaxMemoryManagementInfo() {
 

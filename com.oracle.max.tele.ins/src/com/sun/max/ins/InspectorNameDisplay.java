@@ -140,6 +140,23 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * @return a short string, suitable for label text, to use in place of data that should be read from the VM,
      * but which cannot be for some reason (no process, process terminated, other i/o error).
      */
+    public String zappedDataShortText() {
+        return "<ZAPPED>";
+    }
+
+    /**
+     * @return a long string, suitable for tool tip text, to use in place of data that should be read from the VM,
+     * but which cannot be for some reason (no process, process terminated, other i/o error).
+     */
+    public String zappedDataLongText() {
+        return "Memory contents ZAPPED";
+    }
+
+
+    /**
+     * @return a short string, suitable for label text, to use in place of data that should be read from the VM,
+     * but which cannot be for some reason (no process, process terminated, other i/o error).
+     */
     public String noProcessShortText() {
         return "<no process>";
     }
@@ -769,14 +786,22 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceLabelText(MaxObject object) {
             final TeleHub teleHub = (TeleHub) object;
             //final Class javaType = teleHub.classActorForType().toJava();
-            final Class javaType = teleHub.hub().classActor.toJava();
+            final ClassActor classActor = teleHub.hub().classActor;
+            if (vm().classes().isUnregisteredClassName(classActor.name.string)) {
+                return objectReference(null, teleHub, teleHub.maxineTerseRole(), "*\"" + classActor.name.string + "\"");
+            }
+            final Class javaType = classActor.toJava();
             return objectReference(null, teleHub, teleHub.maxineTerseRole(), javaType.getSimpleName());
         }
 
         public String referenceToolTipText(MaxObject object) {
             final TeleHub teleHub = (TeleHub) object;
             //final Class javaType = teleHub.classActorForType().toJava();
-            final Class javaType = teleHub.hub().classActor.toJava();
+            final ClassActor classActor = teleHub.hub().classActor;
+            if (vm().classes().isUnregisteredClassName(classActor.name.string)) {
+                return objectReference(null, teleHub, teleHub.maxineRole(), "(unregistered) \"" + classActor.name.string + "\"");
+            }
+            final Class javaType = classActor.toJava();
             if (!(javaType.isPrimitive() || Word.class.isAssignableFrom(javaType))) {
                 return objectReference(null, teleHub, teleHub.maxineRole(), javaType.getName());
             }
@@ -857,12 +882,18 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceLabelText(MaxObject object) {
             final TeleClassActor teleClassActor = (TeleClassActor) object;
             final ClassActor classActor = teleClassActor.classActor();
+            if (vm().classes().isUnregisteredClassName(classActor.name.string)) {
+                return objectReference(null, object, object.maxineTerseRole(), "*\"" + classActor.name.string + "\"");
+            }
             return objectReference(null, object,  object.maxineTerseRole(), classActor.toJava().getSimpleName());
         }
 
         public String referenceToolTipText(MaxObject object) {
             final TeleClassActor teleClassActor = (TeleClassActor) object;
             final ClassActor classActor = teleClassActor.classActor();
+            if (vm().classes().isUnregisteredClassName(classActor.name.string)) {
+                return objectReference(null, object, object.maxineRole(), "(unregistered) \"" + classActor.name.string + "\"");
+            }
             return objectReference(null, object, object.maxineRole(), classActor.name.toString());
         }
     }

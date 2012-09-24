@@ -235,13 +235,20 @@ public abstract class Trap {
                     FatalError.unexpected("fatal stack fault in red zone", false, null, trapFrame);
                     break; // unreachable
                 default:
+                    Log.print("Unhandled trap in target method");
+                    Log.printMethod(targetMethod, false);
+                    Log.print("@ ");
+                    Log.print(pc);
+                    Log.print(" trap #");
+                    Log.println(trapNumber);
                     FatalError.unexpected("unknown trap number", false, null, trapFrame);
-
             }
         } else {
             // the fault occurred in native code
             Log.print("Trap in native code (or a runtime stub) @ ");
             Log.print(pc);
+            Log.print(" trap #");
+            Log.print(trapNumber);
             Log.println(", exiting.");
             FatalError.unexpected("Trap in native code or a runtime stub", true, null, trapFrame);
         }

@@ -33,6 +33,7 @@ import com.sun.max.ins.object.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.MaxMarkBitmap.MarkColor;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -224,6 +225,11 @@ public class WordValueLabel extends ValueLabel {
         UNCHECKED_WORD,
 
         /**
+         * Special display of a word that has been filled with the special "Zapped" value.
+         */
+        ZAPPED,
+
+        /**
          * Numeric display of a word whose value is invalid relative to expectations for it.
          */
         INVALID,
@@ -234,9 +240,9 @@ public class WordValueLabel extends ValueLabel {
         UNAVAILABLE;
     }
 
-    private DisplayMode displayMode;
+    private DisplayMode displayMode = null;
 
-    private final boolean forceTxt;
+    private final boolean preferTextInitially;
 
     private Font wordDataFont;
 
@@ -258,6 +264,27 @@ public class WordValueLabel extends ValueLabel {
      */
     public WordValueLabel(Inspection inspection, ValueMode valueMode, Component parent) {
         this(inspection, valueMode, Word.zero(), parent);
+    }
+
+    /**
+     * Creates a display label for a word of machine data, initially set to null.
+     * <p>
+     * Content of label is supplied by override {@link ValueLabel#fetchValue()}, which
+     * gets called initially and when the label is refreshed.
+     * <br>
+     * Display state can be cycled among alternate presentations in some situations.
+     * <p>
+     * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
+     * when the display state is cycled; this will be done automatically if the table is passed in
+     * as the parent component.
+     *
+     * @param inspection
+     * @param valueMode presumed type of value for the word, influences display modes
+     * @param parent a component that should be repainted when the display state is cycled;
+     * @param preferTextInitially if {@code true} causes any possible alternate (textual) display to be used initially.
+     */
+    public WordValueLabel(Inspection inspection, ValueMode valueMode, Component parent, boolean preferTextInitially) {
+        this(inspection, valueMode, Word.zero(), parent, preferTextInitially);
     }
 
     /**
@@ -298,14 +325,14 @@ public class WordValueLabel extends ValueLabel {
      * @param valueMode presumed type of value for the word, influences display modes
      * @param word initial value for content.
      * @param parent a component that should be repainted when the display state is cycled;
-     * @param forceText if {@code true} causes any possible alternate (textual) display to be used initially.
+     * @param preferTextInitially if {@code true} causes any possible alternate (textual) display to be used initially.
      */
-    public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent, boolean forceText) {
+    public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent, boolean preferTextInitially) {
         super(inspection, null);
         this.parent = parent;
         this.valueMode = valueMode;
         this.wordDataFont = inspection.preference().style().defaultWordDataFont();
-        this.forceTxt = forceText;
+        this.preferTextInitially = preferTextInitially;
         initializeValue();
         if (value() == null) {
             setValue(new WordValue(word));
@@ -431,8 +458,21 @@ public class WordValueLabel extends ValueLabel {
         stack = null;
         threadLocalsBlock = null;
 
+        /**
+         * The previous display mode, null initially, which will supersede the default and be reused if appropriate
+         */
+        final DisplayMode oldDisplayMode = displayMode;
+
+        /**
+         * {@code true} only the first time the value gets set <em>and</em> there is a preference for initial text.
+         * After the first time, the mode previously in effect, as selected by the user, prevails if appropriate to the value.
+         */
+        final boolean forceText = oldDisplayMode == null && preferTextInitially;
+
         if (newValue == VoidValue.VOID) {
             displayMode = DisplayMode.INVALID;
+        } else if (vm().memoryIO().isZappedValue(newValue)) {
+            displayMode = DisplayMode.ZAPPED;
         } else if (valueMode == ValueMode.FLAGS_REGISTER) {
             if (newValue == null) {
                 displayMode = DisplayMode.INVALID;
@@ -463,35 +503,26 @@ public class WordValueLabel extends ValueLabel {
                     thread = vm().threadManager().findThread(address);
                     // From here on, we need to try reading from the VM, if it is available
                     if (newValue == null || newValue.isZero()) {
-                        if (valueMode == ValueMode.REFERENCE || forceTxt) {
+                        if (valueMode == ValueMode.REFERENCE || preferTextInitially) {
                             displayMode = DisplayMode.NULL_WORD;
                         }
                     } else if ((object = vm().objects().findObjectAt(address)) != null) {
+                        // Value is the address of an object origin; select display mode, keeping previous one if relevant.
                         switch(valueMode) {
-                            case REFERENCE:
-                            case LITERAL_REFERENCE:
-                                displayMode = DisplayMode.OBJECT_REFERENCE_TEXT;
-                                break;
                             case HUB_REFERENCE:
-                                displayMode = DisplayMode.HUB_REFERENCE_TEXT;
+                                displayMode = (oldDisplayMode == DisplayMode.HUB_REFERENCE_TEXT || forceText) ? DisplayMode.HUB_REFERENCE_TEXT : DisplayMode.HUB_REFERENCE;
                                 break;
                             default:
-                                displayMode = forceTxt ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
+                                displayMode = (oldDisplayMode == DisplayMode.OBJECT_REFERENCE_TEXT || forceText) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
                         }
                     } else if ((object = vm().objects().findQuasiObjectAt(address)) != null) {
-                        switch(valueMode) {
-                            case REFERENCE:
-                                displayMode = DisplayMode.QUASI_OBJECT_REFERENCE_TEXT;
-                                break;
-                            default:
-                                displayMode = forceTxt ? DisplayMode.QUASI_OBJECT_REFERENCE_TEXT : DisplayMode.QUASI_OBJECT_REFERENCE;
-                        }
+                        displayMode = (oldDisplayMode == DisplayMode.QUASI_OBJECT_REFERENCE_TEXT || forceText) ? DisplayMode.QUASI_OBJECT_REFERENCE_TEXT : DisplayMode.QUASI_OBJECT_REFERENCE;
                     } else if (thread != null && thread.stack().memoryRegion().contains(address)) {
                         stack = thread.stack();
-                        displayMode = (valueMode == ValueMode.REFERENCE || forceTxt) ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
+                        displayMode = (oldDisplayMode == DisplayMode.STACK_LOCATION_TEXT || forceText) ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
                     } else if (thread != null && thread.localsBlock().memoryRegion() != null && thread.localsBlock().memoryRegion().contains(address)) {
                         threadLocalsBlock = thread.localsBlock();
-                        displayMode = (valueMode == ValueMode.REFERENCE || forceTxt) ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
+                        displayMode = (oldDisplayMode == DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT || forceText) ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                     } else if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
                         displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                     } else if (valueMode == ValueMode.HUB_REFERENCE) {
@@ -517,15 +548,15 @@ public class WordValueLabel extends ValueLabel {
                             final Word jitEntryPoint = codeStart.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset());
                             final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset());
                             if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
-                                displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT || forceTxt) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
+                                displayMode = (oldDisplayMode == DisplayMode.CALL_ENTRY_POINT_TEXT || forceText) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
                             } else {
-                                displayMode = (valueMode == ValueMode.CALL_RETURN_POINT || forceTxt) ? DisplayMode.CALL_RETURN_POINT_TEXT : DisplayMode.CALL_RETURN_POINT;
+                                displayMode = (oldDisplayMode == DisplayMode.CALL_RETURN_POINT_TEXT || forceText) ? DisplayMode.CALL_RETURN_POINT_TEXT : DisplayMode.CALL_RETURN_POINT;
                             }
                         } else {
                             nativeFunction = vm().machineCode().findNativeFunction(address);
                             if (nativeFunction != null) {
                                 // The word points into a native function
-                                displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT || forceTxt) ? DisplayMode.NATIVE_FUNCTION_TEXT : DisplayMode.NATIVE_FUNCTION;
+                                displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT || oldDisplayMode == DisplayMode.NATIVE_FUNCTION_TEXT || forceText) ? DisplayMode.NATIVE_FUNCTION_TEXT : DisplayMode.NATIVE_FUNCTION;
                             } else if (valueMode == ValueMode.ITABLE_ENTRY) {
                                 final TeleClassActor teleClassActor = vm().classes().findTeleClassActor(address.toInt());
                                 if (teleClassActor != null) {
@@ -536,6 +567,18 @@ public class WordValueLabel extends ValueLabel {
                                 }
                             }
                         }
+                    }
+                    final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
+                    if (markBitMap != null && markBitMap.isCovered(address)) {
+                        final int bitIndex = markBitMap.getBitIndexOf(address);
+                        final StringBuilder sb = new StringBuilder();
+                        sb.append("<br>Heap mark bit(");
+                        sb.append(bitIndex);
+                        sb.append(")=");
+                        sb.append(markBitMap.isBitSet(bitIndex) ? "1" : "0");
+                        sb.append(", color=");
+                        sb.append(markBitMap.getMarkColor(bitIndex));
+                        this.setToolTipSuffix(sb.toString());
                     }
                 } catch (TerminatedProcessIOException terminatedProcessIOException) {
                     object = null;
@@ -863,22 +906,27 @@ public class WordValueLabel extends ValueLabel {
                 final long offset = address.minus(stack.memoryRegion().start()).toLong();
                 final StringBuilder ttBuilder = new StringBuilder();
                 ttBuilder.append(value.toWord().to0xHexString());
-                final MaxStackFrame stackFrame = stack.findStackFrame(address);
-                String methodName = null;
-                if (stackFrame instanceof MaxStackFrame.Compiled) {
-                    methodName = inspection().nameDisplay().veryShortName(stackFrame.compilation());
-                }
-                if (stackFrame == null) {
+                try {
+                    final MaxStackFrame stackFrame = stack.findStackFrame(address);
+                    String methodName = null;
+                    if (stackFrame instanceof MaxStackFrame.Compiled) {
+                        methodName = inspection().nameDisplay().veryShortName(stackFrame.compilation());
+                    }
+                    if (stackFrame == null) {
+                        ttBuilder.append("<br>Points into stack for thread ").append(threadName);
+                        ttBuilder.append("<br>").append(longToDecimalAndHex(offset)).append(" bytes from beginning");
+                    } else {
+                        ttBuilder.append("<br>Points at stack frame for thread ").append(threadName);
+                        final String positionString = Integer.toString(stackFrame.position());
+                        if (methodName == null) {
+                            ttBuilder.append("<br>  position=").append(positionString);
+                        } else {
+                            ttBuilder.append("<br>  ").append(positionString).append(": ").append(methodName);
+                        }
+                    }
+                } catch (NullPointerException enull) {
                     ttBuilder.append("<br>Points into stack for thread ").append(threadName);
                     ttBuilder.append("<br>").append(longToDecimalAndHex(offset)).append(" bytes from beginning");
-                } else {
-                    ttBuilder.append("<br>Points at stack frame for thread ").append(threadName);
-                    final String positionString = Integer.toString(stackFrame.position());
-                    if (methodName == null) {
-                        ttBuilder.append("<br>  position=").append(positionString);
-                    } else {
-                        ttBuilder.append("<br>  ").append(positionString).append(": ").append(methodName);
-                    }
                 }
                 setWrappedToolTipHtmlText(ttBuilder.toString());
                 break;
@@ -1179,6 +1227,13 @@ public class WordValueLabel extends ValueLabel {
                 final String doubleText = valueToDoubleText(value);
                 setWrappedText(doubleText);
                 setWrappedToolTipHtmlText("0x" + hexString + "<br>As float = " + floatText + "<br>As double = " + doubleText);
+                break;
+            }
+            case ZAPPED: {
+                setFont(wordDataFont);
+                setForeground(null);
+                setWrappedText(nameDisplay.zappedDataShortText());
+                setWrappedToolTipHtmlText(nameDisplay.zappedDataLongText());
                 break;
             }
             case UNAVAILABLE: {
@@ -1557,6 +1612,37 @@ public class WordValueLabel extends ValueLabel {
         return action;
     }
 
+    private InspectorAction getShowHeapMarkAction(Value value) {
+        InspectorAction action = null;
+        final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
+        if (value != VoidValue.VOID && markBitMap != null) {
+            final Address address = value.toWord().asAddress();
+            if (markBitMap.isCovered(address)) {
+                final int bitIndex = markBitMap.getBitIndexOf(address);
+                final MarkColor markColor = markBitMap.getMarkColor(bitIndex);
+
+                final StringBuilder sb = new StringBuilder();
+                sb.append("Show heap mark bit(");
+                sb.append(bitIndex);
+                sb.append(")=");
+                sb.append(markBitMap.isBitSet(bitIndex) ? "1" : "0");
+                sb.append(", color=");
+                sb.append(markColor);
+                action = new InspectorAction(inspection(), sb.toString()) {
+
+                    @Override
+                    protected void procedure() {
+                        focus().setMarkBitIndex(bitIndex);
+                        focus().setAddress(address);
+                    }
+
+                };
+            }
+        }
+        return action;
+    }
+
+
     @Override
     public Transferable getTransferable() {
         Transferable transferable = null;
@@ -1710,12 +1796,34 @@ public class WordValueLabel extends ValueLabel {
             }
         }
 
+        private final class MenuShowHeapMarkAction extends InspectorAction {
+
+            private final InspectorAction showHeapMarkAction;
+
+            private MenuShowHeapMarkAction(Value value) {
+                super(inspection(), "Show heap bitmap mark for location");
+                showHeapMarkAction = getShowHeapMarkAction(value);
+                if (showHeapMarkAction == null) {
+                    setEnabled(false);
+                } else {
+                    setEnabled(true);
+                    setName(showHeapMarkAction.name());
+                }
+            }
+
+            @Override
+            public void procedure() {
+                showHeapMarkAction.perform();
+            }
+        }
+
         public WordValueMenuItems(Inspection inspection, Value value) {
             add(actions().copyValue(value, "Copy value to clipboard"));
             add(new MenuViewObjectAction(value));
             add(new MenuViewMemoryAction(value));
             add(new MenuCloseAndViewObjectAction(value));
             add(new MenuCycleDisplayAction());
+            add(new MenuShowHeapMarkAction(value));
             add(new MenuShowMemoryRegionAction(value));
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,18 @@ public class MemoryWordRegion extends InspectorMemoryRegion {
         InspectorError.check(start.isAligned(vm.platform().nBytesInWord()));
     }
 
+    /**
+     * Creates a memory region containing only aligned, whole words.
+     *
+     * @param memoryRegion description of a region of VM memory
+     * @throws InspectorError if the start or end of the region is not word aligned
+     */
+    public MemoryWordRegion(MaxVM vm, MaxMemoryRegion memoryRegion) {
+        super(vm, memoryRegion.regionName(), memoryRegion.start(), memoryRegion.nBytes());
+        this.nWords = memoryRegion.nBytes() / vm.platform().nBytesInWord();
+        InspectorError.check(memoryRegion.start().isAligned(vm.platform().nBytesInWord()));
+        InspectorError.check(memoryRegion.start().plus(memoryRegion.nBytes()).isAligned(vm.platform().nBytesInWord()));
+    }
 
     /**
      * Address of the specified word in the region.

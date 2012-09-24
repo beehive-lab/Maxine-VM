@@ -55,6 +55,16 @@ public class DebugHeap {
         return MaxineVM.isDebug() && vmConfig().heapScheme().supportsTagging();
     }
 
+    @FOLD
+    public static boolean isPadding() {
+        return MaxineVM.isDebug() && vmConfig().heapScheme().supportsPadding();
+    }
+
+    @FOLD
+    private static int hubIndex() {
+        return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
+    }
+
     /**
      * Increments a given allocation mark to reserve space for a {@linkplain #writeCellTag(Pointer) debug tag} if
      * this is a {@linkplain MaxineVM#isDebug() debug} VM.
@@ -129,12 +139,12 @@ public class DebugHeap {
     }
 
     public static void writeCellPadding(Pointer start, int words) {
-        FatalError.check(MaxineVM.isDebug(), "Can only be called in debug VM");
+        FatalError.check(isPadding(), "Can only be called in debug VM");
         Memory.setWords(start, words, padWord());
     }
 
     public static int writeCellPadding(Pointer start, Address end) {
-        FatalError.check(MaxineVM.isDebug(), "Can only be called in debug VM");
+        FatalError.check(isPadding(), "Can only be called in debug VM");
         final int words = end.minus(start).dividedBy(Word.size()).toInt();
         Memory.setWords(start, words, padWord());
         return words;
@@ -177,8 +187,8 @@ public class DebugHeap {
     }
 
     public static final class RefVerifier extends PointerIndexVisitor {
-        private MemoryRegion space1;
-        private MemoryRegion space2;
+        MemoryRegion space1;
+        MemoryRegion space2;
 
         public RefVerifier() {
 
@@ -253,11 +263,10 @@ public class DebugHeap {
         FatalError.unexpected("invalid ref");
     }
 
-    protected static Hub checkHub(Pointer origin, MemoryRegion space) {
+    protected static Hub checkHub(Pointer origin, RefVerifier refVerifier) {
         final Reference hubRef = Layout.readHubReference(origin);
         FatalError.check(!hubRef.isZero(), "null hub");
-        final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
-        verifyRefAtIndex(origin, hubIndex, hubRef, space, null);
+        verifyRefAtIndex(origin, hubIndex(), hubRef, refVerifier.space1, refVerifier.space2);
         final Hub hub = UnsafeCast.asHub(hubRef.toJava());
 
         Hub h = hub;
@@ -285,40 +294,38 @@ public class DebugHeap {
 
     /**
      * Verifies that a given memory region consisting of contiguous objects is well formed.
-     * The memory region is well formed if:
-     *
-     * a. Each reference embedded in an object points to an address in the given memory region, the boot
+     * The memory region is well formed if each reference embedded in an object points to an address in the given memory region, the boot
      *    {@linkplain Heap#bootHeapRegion heap} or {@linkplain Code#bootCodeRegion code} region.
-     *
-     * b. If the heap scheme supports tagging:
-     *    It starts with an object preceded by a debug tag word.
-     *    Each object in the region is immediately succeeded by another object with the preceding debug tag.
-     *
+     * In addition if the heap scheme supports tagging, the memory region is well formed if
+     * <ul>
+     *    <li>It starts with an object preceded by a debug tag word.</li>
+     *    <li>Each object in the region is immediately succeeded by another object with the preceding debug tag.</li>
+     * </ul>
      * This method doesn't do anything if not called in a {@linkplain MaxineVM#isDebug() debug} VM.
      *
      * @param region the region being verified
      * @param start the start of the memory region to verify
      * @param end the end of memory region
-     * @param space the address space in which valid objects can be found apart from the boot
-     *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions.
      * @param verifier a {@link PointerIndexVisitor} instance that will call
      *            {@link #verifyRefAtIndex(Address, int, Reference, MemoryRegion, MemoryRegion)} for a reference value denoted by a base
      *            pointer and offset
      */
-    public static void verifyRegion(MemoryRegion region, Address start, final Address end, final MemoryRegion space, RefVerifier verifier, DetailLogger detailLogger) {
+    public static void verifyRegion(MemoryRegion region, Address start, final Address end, RefVerifier verifier, DetailLogger detailLogger) {
         if (!MaxineVM.isDebug()) {
             return;
         }
         Pointer cell = start.asPointer();
         while (cell.lessThan(end)) {
-            cell = skipCellPadding(cell, detailLogger);
+            if (isPadding()) {
+                cell = skipCellPadding(cell, detailLogger);
+            }
             if (cell.greaterEqual(end)) {
                 break;
             }
             cell = checkDebugCellTag(start, cell);
 
             final Pointer origin = Layout.cellToOrigin(cell);
-            final Hub hub = checkHub(origin, space);
+            final Hub hub = checkHub(origin, verifier);
 
             if (hub.isJLRReference) {
                 JLRRAlias refAlias = SpecialReferenceManager.asJLRRAlias(Reference.fromOrigin(origin).toJava());
@@ -345,9 +352,11 @@ public class DebugHeap {
                 if (specificLayout.isHybridLayout()) {
                     TupleReferenceMap.visitReferences(hub, origin, verifier);
                 } else if (specificLayout.isReferenceArrayLayout()) {
+                    final MemoryRegion space1 = verifier.space1;
+                    final MemoryRegion space2 = verifier.space2;
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {
-                        verifyRefAtIndex(origin, index, Layout.getReference(origin, index), space, null);
+                        verifyRefAtIndex(origin, index, Layout.getReference(origin, index), space1, space2);
                     }
                 }
                 cell = cell.plus(Layout.size(origin));
@@ -356,7 +365,7 @@ public class DebugHeap {
     }
 
     private static Pointer skipCellPadding(Pointer cell, DetailLogger detailLogger) {
-        if (MaxineVM.isDebug()) {
+        if (isPadding()) {
             Pointer cellStart = cell;
             while (cell.getWord().equals(DebugHeap.padWord())) {
                 cell = cell.plusWords(1);
@@ -376,8 +385,11 @@ public class DebugHeap {
         void visitCell(
             @VMLogParam(name = "cell") Pointer cell);
 
+        // Use class ID and not ClassActor since the logger boiler plate will automatically log a class id that it converts back into a class actor name when tracing.
+        // The latter involves a ClassID.toClassActor method call, a fairly complicated code with virtual call etc.,  which might come across forwarding reference and crash as a result.
         void forward(
-            @VMLogParam(name = "classActor") ClassActor classActor,
+            @VMLogParam(name = "classID") int classID,
+            @VMLogParam(name = "at") Pointer at,
             @VMLogParam(name = "fromCell") Pointer fromCell,
             @VMLogParam(name = "toCell") Pointer toCell,
             @VMLogParam(name = "size") int size);
@@ -415,9 +427,11 @@ public class DebugHeap {
         }
 
         @Override
-        protected void traceForward(ClassActor classActor, Pointer fromCell, Pointer toCell, int size) {
-            Log.print("Forwarding ");
-            Log.print(classActor.name.string);
+        protected void traceForward(int classID, Pointer at, Pointer fromCell, Pointer toCell, int size) {
+            Log.print("Forwarding <classId=");
+            Log.print(classID);
+            Log.print("> @");
+            Log.print(at);
             Log.print(" from ");
             Log.print(fromCell);
             Log.print(" to ");
@@ -468,10 +482,10 @@ public class DebugHeap {
         }
 
         @INLINE
-        public final void logForward(ClassActor classActor, Pointer fromCell, Pointer toCell, int size) {
-            log(Operation.Forward.ordinal(), classActorArg(classActor), fromCell, toCell, intArg(size));
+        public final void logForward(int classID, Pointer at, Pointer fromCell, Pointer toCell, int size) {
+            log(Operation.Forward.ordinal(), intArg(classID), at, fromCell, toCell, intArg(size));
         }
-        protected abstract void traceForward(ClassActor classActor, Pointer fromCell, Pointer toCell, int size);
+        protected abstract void traceForward(int classID, Pointer at, Pointer fromCell, Pointer toCell, int size);
 
         @INLINE
         public final void logSkipped(int padBytes) {
@@ -495,7 +509,7 @@ public class DebugHeap {
         protected void trace(Record r) {
             switch (r.getOperation()) {
                 case 0: { //Forward
-                    traceForward(toClassActor(r, 1), toPointer(r, 2), toPointer(r, 3), toInt(r, 4));
+                    traceForward(toInt(r, 1), toPointer(r, 2), toPointer(r, 3), toPointer(r, 4), toInt(r, 5));
                     break;
                 }
                 case 1: { //Skipped

@@ -28,7 +28,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
@@ -175,7 +174,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
             recordFreeSpace(address, size);
         } else {
             if (zapDeadReferences) {
-                HeapSchemeAdaptor.fillWithDeadObject(address.asPointer(), address.asPointer().plus(size));
+                DarkMatter.format(address, size);
             }
             if (MaxineVM.isDebug()) {
                 logger.logDeadSpace(address, size);

@@ -40,7 +40,7 @@ import com.sun.max.vm.type.*;
  * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size marking stack, an (optional) rescan map.
  * The marking algorithm follows a strategy similar to Detlef & Printezis ISMM 2000 (see {@link ForwardScanState}
  * for details).
- *
+ * <p>
  * The tricolor mark-bitmap encodes three colors using two consecutive bits but consumes as much space overhead as
  * a single-bit mark bitmap, thanks to padding rare tiny objects to guarantee two color bits for every objects.
  * Tracing algorithm uses a single-bit mark bitmap and a fairly large marking stack (from several thousands of references, up to
@@ -49,39 +49,41 @@ import com.sun.max.vm.type.*;
  * thus revisiting all marked objects. The cost of rescan is so overwhelming that a very large marking stack is used to avoid
  * this possibility. The reason for the blind rescan is that with a single bit, one cannot distinguish visited (black) objects from
  * unvisited but live (grey) objects.
- *
+ * <p>
  * Every bit maps to a fixed chunk of heap such that every object's first words coincide with one fixed chunk.
  *  Almost all objects have a size larger than the size of a single chunk covered by one bit. Those that don't
  *  (called tiny objects) are segregated or padded (i.e., the heap allocate them the required space to cover 2 bits of the mark bitmap).
  *  Maxine currently aligns objects on a 8-byte word boundary, uses 8-bytes words, and uses a two-words header.
  *
  * The following choices are considered:
- * - each bit corresponds to a single word of the heap; Every object is thus guaranteed two-bit; the mark bitmap consumes 16 Kb
- * per Mb of heap.
- * - each bit corresponds to two words of the heap; Every object larger that 3 words occupies 2 chunks. With this design,
+ * <ul>
+ * <li>each bit corresponds to a single word of the heap; Every object is thus guaranteed two-bit; the mark bitmap consumes 16 Kb
+ * per Mb of heap.</li>
+ * <li>each bit corresponds to two words of the heap; Every object larger that 3 words occupies 2 chunks. With this design,
  * the smallest objects can only be allocated 1 bit. Since such objects are generally rare they can be treated
  * specially: e.g., padded to be associated with two bits, or segregated to be allocated in an area covered by a one bit
  * bitmap. Padding is simpler as it allows a unique bitmaps. Maxine's current 8-byte alignment raises another problem
  * with this approach: a chunk can be shared by two objects. This complicates finding the "origin" of an object. The solution
  * is to require objects to be chunk-aligned (i.e., 16-byte aligned) potentially wasting heap space. This would make the
- * mark bitmap consumes 8 Kb / Mb of heap.
- *
+ * mark bitmap consumes 8 Kb / Mb of heap.</li>
+ * </ul>
+ * <p>
  * Which solution is best depends on the amount of space wasted by the 2-words alignment requirement, compared to bitmap
  * space saved. A larger grain also means less time to scan the bitmap. We leave this choice to the heap implementation
  * / collector, which is responsible for aligning object and dealing with small object. For simplicity, we begin here
  * with the first alternative (1 bit per word).
- *
+ * <p>
  * Finally, note that when a bit of the color map covers X bytes and objects are X byte-aligned (for X = 8 or 16),
  * the first bit of a color may be either an odd or an even bit, and a color may span
  * two bitmap words. This complicates color search/update operation. A heap allocator may arrange for guaranteeing that
  * an object marks never span a bitmap word by padding a dead object before (Dead objects are special instance of Object
  * whose size is strictly 2 words, regardless of other rules for dealing with tiny objects).
- *
+ * <p>
  * An other alternative is to exploit location of an object with respect to the current cursor on the mark bitmap:
  * since object located after the cursor aren't visited yet, we can use the black mark for marking these grey
  * (i.e., an object with the black mark set is black only if located before the finger). In this case, the grey mark is really only used
  * on overflow of the mark stack.
- *
+ * <p>
  * This class enables both designs, and provides generic bitmap manipulation that understands color coding and
  * color-oriented operations (i.e., searching grey or black mark, etc.). It provides fast and slow variant of
  * operations, wherein the fast variant assumes that a color never span a bitmap word. The GC is responsible for
@@ -113,19 +115,19 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     /**
      * 2-bit mark for white object (00).
      */
-    static final long WHITE = 0L;
+    protected static final long WHITE = 0L;
     /**
      * 2-bit mark for black object (01).
      */
-    static final long BLACK = 1L;
+    protected static final long BLACK = 1L;
     /**
      * 2-bit mark for grey objects (11).
      */
-    static final long GREY = 3L;
+    protected static final long GREY = 3L;
     /**
      * Invalid 2-bit mark pattern (10).
      */
-    static final long INVALID = 2L;
+    protected static final long INVALID = 2L;
 
     static final long COLOR_MASK = 3L;
 
@@ -236,7 +238,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return a bit position within a word.
      */
     @INLINE
-    static int bitIndexInWord(int bitIndex) {
+    protected static int bitIndexInWord(int bitIndex) {
         return bitIndex & bitIndexInWordMask;
     }
 
@@ -255,6 +257,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     /**
      * Number of bytes covered by each bit of the bitmaps. Must be a power of 2 of a number of words.
      */
+    @INSPECTED
     final int wordsCoveredPerBit;
 
     /**
@@ -266,6 +269,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * Log 2 of the number of bytes covered by a bit. Used to compute bit index in the color map from address.
      */
     final int log2BytesCoveredPerBit;
+
     /**
      * Log 2 to compute the bitmap word index from an offset from the beginning of the covered area.
      */
@@ -297,12 +301,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     /**
      * Memory where the color map is stored. Formatted as a byte array.
      */
+    @INSPECTED
     public final MemoryRegion colorMap;
 
     /**
      * Shortcut to colorMap.start() for fast bitmap operation.
      */
-    @INSPECTED Address base;
+    @INSPECTED
+    protected Address base;
 
     /**
      * The marking stack.
@@ -371,7 +377,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         traceMark(cell, color, bitIndexOf(cell), msg);
     }
 
-    final long color(int bitIndex) {
+    protected final long color(int bitIndex) {
         if (isWhite(bitIndex)) {
             FatalError.check(isClear(bitIndex + 1), "Invalid mark in mark bitmap");
             return WHITE;
@@ -475,7 +481,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         return numberOfBytesNeeded.alignUp(Word.size()).plus(Word.size());
     }
 
-
     /**
      * Returns max amount of memory needed to cover a contiguous range of address of the specified size.
      * Let the HeapScheme decide where to allocate.
@@ -562,20 +567,23 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         setCoveredArea(start, end);
         colorMap.setStart(bitmapStorage);
         colorMap.setSize(bitmapSize);
-        // Format the mark bitmap as an byte array
-        Pointer origin = bitmapStorage.asPointer();
-        Layout.writeArrayLength(origin, bitmapSize.minus(markBitmapHeaderSize().unsignedShiftedRight(Kind.LONG.width.log2numberOfBytes)).toInt());
-        Layout.writeHubReference(origin, Reference.fromJava(ClassRegistry.LONG_ARRAY.dynamicHub()));
-
+        if (!MaxineVM.isHosted()) {
+            // Format the mark bitmap as an byte array
+            Pointer origin = bitmapStorage.asPointer();
+            Layout.writeArrayLength(origin, bitmapSize.minus(markBitmapHeaderSize()).unsignedShiftedRight(Kind.LONG.width.log2numberOfBytes).toInt());
+            Layout.writeHubReference(origin, Reference.fromJava(ClassRegistry.LONG_ARRAY.dynamicHub()));
+        }
         base = bitmapStorage.plus(markBitmapHeaderSize());
         final int baseBias = start.unsignedShiftedRight(log2BitmapWord).toInt();
         biasedBitmapBase = colorMap.start().minus(baseBias);
-        if (UseRescanMap) {
-            overflowScanState = overflowScanWithRescanMapState;
-        } else {
-            overflowScanState = overflowLinearScanState;
+        if (!MaxineVM.isHosted()) {
+            if (UseRescanMap) {
+                overflowScanState = overflowScanWithRescanMapState;
+            } else {
+                overflowScanState = overflowLinearScanState;
+            }
+            overflowScanState.initialize();
         }
-        overflowScanState.initialize();
     }
 
     // Address to bitmap word / bit index operations.
@@ -619,7 +627,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return an index to a word of the color map.
      */
     @INLINE
-    final int bitmapWordIndex(int bitIndex) {
+    public final int bitmapWordIndex(int bitIndex) {
         return bitIndex >> Word.widthValue().log2numberOfBits;
     }
 
@@ -629,12 +637,20 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return an index to a word of the color map.
      */
     @INLINE
-    final int bitmapWordIndex(Address address) {
+    protected final int bitmapWordIndex(Address address) {
         return address.minus(coveredAreaStart).unsignedShiftedRight(log2BitmapWord).toInt();
+    }
+
+    @HOSTED_ONLY
+    protected long hostedBitmapWordAt(int bitIndex) {
+        return base.asPointer().getLong(bitmapWordIndex(bitIndex));
     }
 
     @INLINE
     final long bitmapWordAt(int bitIndex) {
+        if (MaxineVM.isHosted()) {
+            return hostedBitmapWordAt(bitIndex);
+        }
         return base.asPointer().getLong(bitmapWordIndex(bitIndex));
     }
 
@@ -644,6 +660,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return a pointer to a word of the color map
   */
     @INLINE
+    protected
     final Pointer bitmapWordPointerAt(int bitIndex) {
         return base.asPointer().plus(bitmapWordIndex(bitIndex) << Word.widthValue().log2numberOfBytes);
     }
@@ -652,11 +669,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      *  Bit index in the bitmap for the address into the covered area.
      */
     @INLINE
+    protected
     final int bitIndexOf(Address address) {
         return address.minus(coveredAreaStart).unsignedShiftedRight(log2BytesCoveredPerBit).toInt();
     }
 
     @INLINE
+    protected
     final Address addressOf(int bitIndex) {
         return coveredAreaStart.plus(Address.fromInt(bitIndex).shiftedLeft(log2BytesCoveredPerBit));
     }
@@ -738,15 +757,16 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param bitIndex a bit index.
      * @return a boolean indicating whether the bit at the specified index is set.
      */
-    final boolean isSet(int bitIndex) {
+    protected final boolean isSet(int bitIndex) {
         return (bitmapWordAt(bitIndex) & bitmaskFor(bitIndex)) != 0;
     }
+
     /**
      * Return a boolean indicating whether a bit is clear in the color map (regardless of color logic).
      * @param bitIndex a bit index.
      * @return a boolean indicating whether the bit at the specified index is clear.
      */
-    final boolean isClear(int bitIndex) {
+    protected final boolean isClear(int bitIndex) {
         return (bitmapWordAt(bitIndex) & bitmaskFor(bitIndex)) == 0;
     }
 
@@ -759,6 +779,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return true if the object is white.
      */
     @INLINE
+    protected
     final boolean isWhite(int bitIndex) {
         return isClear(bitIndex);
     }
@@ -768,7 +789,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         return isWhite(bitIndexOf(cell));
     }
 
-    final boolean isGreyWhenNotWhite(int bitIndex) {
+    protected final boolean isGreyWhenNotWhite(int bitIndex) {
         return isSet(bitIndex + 1);
     }
 
@@ -834,7 +855,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * Clear the color map, i.e., turn all bits to white.
      */
     private void clearColorMap() {
-        Memory.clearWords(colorMap.start().asPointer(), colorMap.size().toInt() >> Word.widthValue().log2numberOfBytes);
+        Memory.clearWords(colorMapBase(), colorMap.size().minus(markBitmapHeaderSize()).toInt() >> Word.widthValue().log2numberOfBytes);
     }
 
     private final RootCellVisitor rootCellVisitor;
@@ -1750,8 +1771,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         Size tailSpace = sweeper.endOfSweepingRegion().minus(tail).asSize();
         if (tailSpace.greaterEqual(sweeper.minReclaimableSpace())) {
             sweeper.processDeadSpace(tail, tailSpace);
-        } else if (MaxineVM.isDebug()) {
-            DarkMatterDebugHelper.setDarkMatter(tail, tailSpace);
+        } else if (tailSpace.isNotZero()) {
+            DarkMatter.format(tail, tailSpace);
         }
         return lastLiveMark;
     }

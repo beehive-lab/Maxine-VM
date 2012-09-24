@@ -32,9 +32,10 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.debug.DebugHeap.DetailLogger;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLogger.Interval;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
@@ -63,8 +64,8 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     }
 
     @INLINE
-    protected static boolean traceEvacVisitedCell() {
-        return MaxineVM.isDebug() && traceEvacVisitedCellEnabled;
+    protected final boolean traceEvacVisitedCell() {
+        return MaxineVM.isDebug() && traceEvacVisitedCellEnabled && detailLogger.enabled();
     }
 
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
@@ -75,7 +76,9 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
 
     private EvacuationTimers timers;
 
-    private PhaseLogger phaseLogger;
+    protected PhaseLogger phaseLogger;
+
+    protected DetailLogger detailLogger;
 
     public void setGCOperation(GCOperation gcOperation) {
         currentGCOperation = gcOperation;
@@ -149,10 +152,18 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * Set the phase logger for this evacuator.
      * HeapScheme using multiple evacuator instances might have to share a single phase logger
      * as currently the Heap class assume there's a single such phase logger per-heap scheme.
-     * @param phaseLogger
+     * @param phaseLogger a phase logger
      */
     public void setPhaseLogger(PhaseLogger phaseLogger) {
         this.phaseLogger = phaseLogger;
+    }
+
+    /**
+     * Set the detail logger for this evacuator.
+      * @param detailLogger a detail logger
+    */
+    public void setDetailLogger(DetailLogger detailLogger) {
+        this.detailLogger = detailLogger;
     }
 
   /**
@@ -175,7 +186,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * Default is to do nothing.
      *
      * @param refHolderOrigin origin of the reference holder
-     * @param wordIndex
+     * @param wordIndex word index relative to the reference holder's origin where the reference to the evacuated cell is stored.
      * @param ref reference to an evacuated cell
      */
     void updateRSet(Pointer refHolderOrigin, int wordIndex, Reference ref) {
@@ -200,6 +211,29 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     }
 
     /**
+     * Evacuate a cell of the evacuated area if not already done, and return the reference to the evacuated cell new location.
+     * Same as {@link #getForwardRef(Pointer)}, but with logging support.
+     * The second argument is only used when detail logging is enabled (only in debug mode).
+     *
+     * @param origin origin of the cell in the evacuated area
+     * @param at pointer to the location of the reference
+     * @return a reference to the evacuated cell's new location
+     */
+    protected final Reference getForwardRef(Pointer origin, Pointer at) {
+        Reference forwardRef = Layout.readForwardRef(origin);
+        if (forwardRef.isZero()) {
+            final Pointer toOrigin = evacuate(origin);
+            forwardRef = Reference.fromOrigin(toOrigin);
+            Layout.writeForwardRef(origin, forwardRef);
+            if (MaxineVM.isDebug() && detailLogger.enabled()) {
+                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(forwardRef).toJava());
+                detailLogger.logForward(hub.classActor.id, at, origin, toOrigin, Layout.size(toOrigin).toInt());
+            }
+        }
+        return forwardRef;
+    }
+
+    /**
      * Test if a reference in an cell points to the evacuated area. If it does, the referenced cell is
      * first evacuated if it is still in the evacuated area.
      * The reference is updated to the evacuated cell's new location.
@@ -210,7 +244,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         final Reference ref = refHolderOrigin.getReference(wordIndex);
         final Pointer origin = ref.toOrigin();
         if (inEvacuatedArea(origin)) {
-            final Reference forwardRef = getForwardRef(origin);
+            final Reference forwardRef = MaxineVM.isDebug() ? getForwardRef(origin, refHolderOrigin.plusWords(wordIndex)) : getForwardRef(origin);
             refHolderOrigin.setReference(wordIndex, forwardRef);
             updateRSet(refHolderOrigin, wordIndex, forwardRef);
         }
@@ -296,6 +330,13 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         Heap.bootHeapRegion.visitReferences(this);
     }
 
+    /**
+     * Evacuate all objects of the evacuated area directly reachable from the immortal heap.
+     */
+    final protected void evacuateFromImmortalHeap() {
+        ImmortalHeap.visitCells(this);
+    }
+
     void evacuateFromCode() {
         // References in the boot code region are immutable and only ever refer
         // to objects in the boot heap region.
@@ -309,7 +350,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      */
     final protected Pointer scanCellForEvacuatees(Pointer cell) {
         if (traceEvacVisitedCell()) {
-            Log.print("visitCell "); Log.println(cell);
+            detailLogger.logVisitCell(cell);
         }
         final Pointer origin = Layout.cellToOrigin(cell);
         // Update the hub first so that is can be dereferenced to obtain
@@ -438,7 +479,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         evacuateFromRoots();
         timers.stop(ROOT_SCAN);
         if (logPhases) {
-            phaseLogger.logScanningRoots(VMLogger.Interval.BEGIN);
+            phaseLogger.logScanningRoots(VMLogger.Interval.END);
         }
 
         if (logPhases) {
@@ -459,6 +500,16 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         timers.stop(CODE_SCAN);
         if (logPhases) {
             phaseLogger.logScanningCode(VMLogger.Interval.END);
+        }
+
+        if (Heap.logGCPhases()) {
+            phaseLogger.logScanningImmortalHeap(VMLogger.Interval.BEGIN);
+        }
+        timers.start(IMMORTAL_SCAN);
+        evacuateFromImmortalHeap();
+        timers.stop(IMMORTAL_SCAN);
+        if (Heap.logGCPhases()) {
+            phaseLogger.logScanningImmortalHeap(VMLogger.Interval.END);
         }
 
         if (logPhases) {
@@ -508,6 +559,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         void scanningRoots(@VMLogParam(name = "interval") Interval interval);
         void scanningBootHeap(@VMLogParam(name = "interval") Interval interval);
         void scanningCode(@VMLogParam(name = "interval") Interval interval);
+        void scanningImmortalHeap(@VMLogParam(name = "interval") Interval interval);
         void scanningRSet(@VMLogParam(name = "interval") Interval interval);
         void evacuating(@VMLogParam(name = "interval") Interval interval);
         void processingSpecialReferences(@VMLogParam(name = "interval") Interval interval);
@@ -544,6 +596,11 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         }
 
         @Override
+        protected void traceScanningImmortalHeap(Interval interval) {
+            tracePhase("Scanning immortal heap", interval);
+        }
+
+        @Override
         protected void traceScanningRSet(Interval interval) {
             tracePhase("Scanning remembered sets", interval);
         }
@@ -565,7 +622,8 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     private static abstract class PhaseLoggerAuto extends com.sun.max.vm.heap.HeapScheme.PhaseLogger {
         public enum Operation {
             Evacuating, ProcessingSpecialReferences, ScanningBootHeap,
-            ScanningCode, ScanningRSet, ScanningRoots, ScanningThreadRoots;
+            ScanningCode, ScanningImmortalHeap, ScanningRSet, ScanningRoots,
+            ScanningThreadRoots;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
@@ -607,6 +665,12 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         protected abstract void traceScanningCode(Interval interval);
 
         @INLINE
+        public final void logScanningImmortalHeap(Interval interval) {
+            log(Operation.ScanningImmortalHeap.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningImmortalHeap(Interval interval);
+
+        @INLINE
         public final void logScanningRSet(Interval interval) {
             log(Operation.ScanningRSet.ordinal(), intervalArg(interval));
         }
@@ -644,15 +708,19 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
                     traceScanningCode(toInterval(r, 1));
                     break;
                 }
-                case 4: { //ScanningRSet
+                case 4: { //ScanningImmortalHeap
+                    traceScanningImmortalHeap(toInterval(r, 1));
+                    break;
+                }
+                case 5: { //ScanningRSet
                     traceScanningRSet(toInterval(r, 1));
                     break;
                 }
-                case 5: { //ScanningRoots
+                case 6: { //ScanningRoots
                     traceScanningRoots(toInterval(r, 1));
                     break;
                 }
-                case 6: { //ScanningThreadRoots
+                case 7: { //ScanningThreadRoots
                     traceScanningThreadRoots(toVmThread(r, 1));
                     break;
                 }

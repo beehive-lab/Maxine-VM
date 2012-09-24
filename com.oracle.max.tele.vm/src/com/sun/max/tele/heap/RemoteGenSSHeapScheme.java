@@ -78,7 +78,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         fullGC = fullCollectionCount > lastCompletedFullCollectionCount;
     }
 
-    private TeleCardTableRSet teleCardTableRSet;
     private TeleContiguousHeapSpace nursery;
     private TeleContiguousHeapSpace oldFrom;
     private TeleContiguousHeapSpace oldTo;
@@ -329,7 +328,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             return;
         }
         if (heapRegions.size() < MAX_VM_HEAP_REGIONS) {
-            updateHeapFreeChunkHubOrigin();
+            updateFreeHubOrigins();
             initializeHeapRegions();
             if (heapRegions.size() < MAX_VM_HEAP_REGIONS) {
                 return;
@@ -420,13 +419,58 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     }
 
     @Override
-    public MaxMemoryManagementInfo getMemoryManagementInfo(Address address) {
-        // TODO Auto-generated method stub
-        return null;
+    public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
+        return new MaxMemoryManagementInfo() {
+            @Override
+            public MaxMemoryStatus status() {
+                if (address == null || address.isZero()) {
+                    return MaxMemoryStatus.UNKNOWN;
+                }
+                final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
+                if (heapRegion == null) {
+                    return MaxMemoryStatus.UNKNOWN;
+                }
+                if (contains(address)) {
+                    switch(objectStatusAt(address)) {
+                        case LIVE:
+                            return MaxMemoryStatus.LIVE;
+                        case FORWARDER:
+                            return MaxMemoryStatus.LIVE;
+                        case DEAD:
+                            return MaxMemoryStatus.DEAD;
+                        case FREE:
+                            return MaxMemoryStatus.FREE;
+                    }
+                }
+                return MaxMemoryStatus.LIVE;
+            }
+
+            @Override
+            public String terseInfo() {
+                // Return card table index and whether the card is dirty or not.
+                final int ci = cardTableRSet.cardIndex(address);
+                return Integer.toString(ci);
+            }
+
+            @Override
+            public String shortDescription() {
+                return "Card #";
+            }
+
+            @Override
+            public Address address() {
+                return address;
+            }
+
+            @Override
+            public MaxObject tele() {
+                return null;
+            }
+        };
     }
 
     public ObjectStatus objectStatusAt(Address origin) {
-        TeleError.check(contains(origin), "Location is outside GenSSHeapScheme regions");
+        TeleError.check(contains(origin), "Location is outside GenSSHeapScheme dynamic heap regions");
         if (isHeapFreeChunkOrigin(origin)) {
             return ObjectStatus.FREE;
         }

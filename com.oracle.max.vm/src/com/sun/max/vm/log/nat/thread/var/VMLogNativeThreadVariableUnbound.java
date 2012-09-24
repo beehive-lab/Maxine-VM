@@ -26,7 +26,9 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.nat.thread.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -149,6 +151,60 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         scanOrFlushLog(tla, visitor, true);
     }
 
+    // temporary -- to track VMLog bug
+    private Runnable vmLogDumper = new Runnable() {
+        public void run() {
+            dumpCorruptedLog(debug_tla, debug_offset);
+        }
+    };
+
+    private int debug_next_offset = -1;
+    private int debug_offset = -1;
+    private int debug_last_offset = -1;
+    private int debug_first_offset = -1;
+    private int debug_header = 0;
+    private Pointer debug_tla;
+
+    @Override
+    protected void dumpCorruptedLog(Record r) {
+        if (MaxineVM.isDebug()) {
+            if (r != getNativeRecord(debug_tla)) {
+                FatalError.unexpected("Corrupted VMLog detected");
+            }
+            dumpCorruptedLog(debug_tla, debug_offset);
+        }
+    }
+
+    private void dumpCorruptedLog(Pointer tla, int corruptedOffset) {
+        VmThread vmThread = VmThread.fromTLA(tla);
+        NativeRecord r = getNativeRecord(tla);
+        int loggerId = r.getLoggerId();
+        Log.print(loggerId);
+        Log.print(" : invalid header in log of ");
+        Log.printThread(vmThread, false);
+        final RawDumpFlusher flusher = VMLog.rawDumpFlusher;
+        long offsets = vmLogBufferOffsetsTL.load(tla).toLong();
+        int offset = firstOffset(offsets);
+        Pointer buffer = getBuffer(tla);
+        boolean lockDisabledSafepoints = Log.lock();
+        Log.print("VMLog contents for thread: "); Log.printThread(vmThread, true);
+        Log.unlock(lockDisabledSafepoints);
+
+        flusher.start(vmThread);
+        while (offset != corruptedOffset) {
+            r.address = buffer.plus(offset);
+            int header = r.getHeader();
+            // variable length records can cause holes
+            if (!Record.isFree(header)) {
+                flusher.flushRecord(vmThread, r, r.address.readInt(ID_OFFSET));
+            }
+            offset = modLogSize(offset + ARGS_OFFSET + r.getArgCount() * Word.size());
+        }
+        flusher.end(vmThread);
+        FatalError.breakpoint();
+        FatalError.unexpected("Corrupted VMLog record");
+    }
+
     private void scanOrFlushLog(Pointer tla, PointerIndexVisitor visitor, boolean scanning) {
         long offsets = vmLogBufferOffsetsTL.load(tla).toLong();
         int nextOffset = nextOffset(offsets);
@@ -162,6 +218,13 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         int offset = firstOffset(offsets);
         VmThread vmThread = VmThread.fromTLA(tla);
 
+        if (MaxineVM.isDebug()) {
+            debug_tla = tla;
+            debug_next_offset = nextOffset;
+            debug_first_offset = offset;
+            debug_offset = offset;
+            FatalError.setOnVMOpError(vmLogDumper);
+        }
         // N.B. It is possible that a GC scan was provoked by log flushing,
         // in which case it is important to save/restore the "address" field of the
         // associated NativeRecord, to avoid corruption when the flush iteration resumes.
@@ -170,6 +233,9 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         while (offset != nextOffset) {
             r.address = buffer.plus(offset);
             int header = r.getHeader();
+            if (MaxineVM.isDebug()) {
+                debug_header = header;
+            }
             // variable length records can cause holes
             if (!Record.isFree(header)) {
                 if (scanning) {
@@ -183,6 +249,9 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
 
         if (scanning) {
             r.address = saveAddress;
+        }
+        if (MaxineVM.isDebug()) {
+            FatalError.setOnVMOpError(null);
         }
     }
 

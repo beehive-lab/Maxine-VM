@@ -222,16 +222,4 @@ public abstract class RemoteReference extends Reference {
         return false;
     }
 
-    /**
-     * Does the reference point at a pseudo-object representing free space in the heap; such a pseudo object might be
-     * represented much like an ordinary heap object, and the VM might use some of the ordinary reference machinery to
-     * refer to it, but it is assumed not to be a legitimate object in any sense, and in particular never to be
-     * reachable in the usual manner.
-     *
-     * @return does this reference point at a pseudo-object that represents free space in the heap?
-     */
-    public boolean isFreeSpace() {
-        return false;
-    }
-
 }

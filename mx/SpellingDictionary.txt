@@ -189,6 +189,7 @@ refactor
 refactored
 refactoring
 regexp
+regionalized
 registry
 reified
 reifies

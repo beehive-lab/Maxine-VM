@@ -137,11 +137,12 @@ public final class NoEvacuatedSpaceReferenceVerifier extends PointerIndexVisitor
         return cell.plus(Layout.size(origin));
     }
 
-
     private void checkNoRef(Pointer pointer, int wordIndex) {
         final Pointer cell = pointer.getReference(wordIndex).toOrigin();
         if (evacuatedSpace.contains(cell)) {
-            Log.print("Reference at ");
+            Log.print("Reference in ");
+            Log.print(pointer);
+            Log.print(" at ");
             Log.print(pointer.plusWords(wordIndex));
             Log.print(" holds pointer to evacuated location ");
             Log.println(cell);

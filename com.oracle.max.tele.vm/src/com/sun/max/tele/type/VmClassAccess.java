@@ -89,6 +89,11 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     private final Map<Integer, ClassActor> idToClassActor = new HashMap<Integer, ClassActor>();
 
     /**
+     * Special handling for magical system classes that cannot be put into the VM class registry.
+     */
+    private final Map<String, ClassActor> nameToUnregisteredClassActor = new HashMap<String, ClassActor>();
+
+    /**
      * The number of classes loaded in the VM that were discovered when the registry was created.
      */
     private final int initialClassCount;
@@ -327,6 +332,21 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         return cachedVmBootClassRegistryReference;
     }
 
+    /**
+     * Registers with the local class registry the information needed to produce a local instance of
+     * {@link ClassActor} for a special class in the VM that cannot be registered in the VM's {@link ClassRegistry}.
+     *
+     * @param classActorName the name of a special class in the VM, typically not a legal Java class name
+     * @param classActor a local class actor for the class
+     */
+    public void registerUnregisteredClass(String classActorName, ClassActor classActor) {
+        nameToUnregisteredClassActor.put(classActorName, classActor);
+    }
+
+    public boolean isUnregisteredClassName(String classActorName) {
+        return nameToUnregisteredClassActor.get(classActorName) != null;
+    }
+
     public void processAttachFixupList() {
         if (attachFixupList != null) {
             final TimedTrace timedTrace = new TimedTrace(TRACE_VALUE, tracePrefix() + " adding entries from attach fixup list");
@@ -386,6 +406,12 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
             final RemoteReference byteArrayReference = fields().ClassActor_classfile.readRemoteReference(classActorReference);
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) objects().makeTeleObject(byteArrayReference);
             if (teleByteArrayObject == null) {
+                // The VM has no classfile available for copying
+                final ClassActor specialClassActor = nameToUnregisteredClassActor.get(name);
+                if (specialClassActor != null) {
+                    // It is a special "magic class" that has been registered by name
+                    return specialClassActor;
+                }
                 throw new NoClassDefFoundError(String.format("Could not retrieve class file from VM for %s%nTry using '%s' VM option to access generated class files.",
                     name, ClassfileReader.saveClassDir));
             }

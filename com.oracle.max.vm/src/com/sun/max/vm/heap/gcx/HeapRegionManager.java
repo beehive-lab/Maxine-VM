@@ -162,6 +162,12 @@ public final class HeapRegionManager implements HeapAccountOwner {
             protected void doBeforeGC() {
             }
 
+            @Override
+            public Address allocateLargeRaw(Size size) {
+                FatalError.unexpected("Must never handle a large request");
+                return Address.zero();
+            }
+
         });
     }
 
@@ -248,7 +254,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         // object. We solve the bootstrapping problem this causes by using a linear allocator as a custom allocator for the current
         // thread. The contiguous set of regions consumed by the initialization will be accounted after the fact to the special
         // boot heap account.
-        managerAllocator.initialize(startOfManagedSpace, bootHeapSize);
+        managerAllocator.initialize(startOfManagedSpace, bootHeapSize, bootHeapSize);
         try {
             heapScheme.enableCustomAllocation(Reference.fromJava(managerAllocator).toOrigin());
             // Record initial space usage.

@@ -3686,28 +3686,43 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     final class SetMarkBitAction extends InspectorAction {
-        private static final String DEFAULT_TITLE = "Mark bit";
+        private static final String DEFAULT_TITLE = "Set Mark bit";
         SetMarkBitAction() {
-            super(inspection(), "Display mark bit for word at address...");
-            setEnabled(true);
+            super(inspection(), "Mark word at address...");
+            refreshableActions.add(this);
         }
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), Address.zero(), "View Mark Bit for word at address...", "View") {
+            new AddressInputDialog(inspection(), Address.zero(), "Set Mark Bit for word at address...", "Set Bit") {
                 @Override
                 public void entered(Address address) {
-                    MaxMarkBitsInfo m = vm().heap().markBitInfo();
-                    assert m != null;
-                    if (!m.isCovered(address)) {
+                    MaxMarkBitmap markBitmap = vm().heap().markBitMap();
+                    assert markBitmap != null;
+                    if (!markBitmap.isCovered(address)) {
                         gui().errorMessage("Address " + address + " is not covered with a mark bit");
                         return;
                     }
-                    // TODO (ld): Need to add a mark bit  if one isn't created already for the address, and update  the MarkBitView.
+                    if (!address.isWordAligned()) {
+                        gui().errorMessage("Address " + address + " is not word aligned");
+                    }
+                    final int bitIndexOf = vm().heap().markBitMap().getBitIndexOf(address);
+                    if (markBitmap.isBitSet(bitIndexOf)) {
+                        gui().informationMessage("Mark bit already set for address=" + address.to0xHexString());
+                    } else {
+                        markBitmap.setBit(bitIndexOf);
+                    }
                 }
             };
         }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(vm().heap().markBitMap() != null);
+        }
     }
+
+    private InspectorAction setMarkBitAtAddressAction = new SetMarkBitAction();
 
 
     /**
@@ -3715,41 +3730,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction removeAllWatchpoints() {
         return removeAllWatchpoints;
-    }
-
-    private InspectorAction setMarkBitAtIndex;
-
-    /**
-     * @return an Action that will add a mark bit from a specified bit index to the mark bits view.
-     */
-    public final InspectorAction setMarkBitAtIndex() {
-        return setMarkBitAtIndex;
-    }
-
-    private InspectorAction setMarkBitAtAddress;
-
-    /**
-     * @return an Action that will add a mark bit from a specified heap address to the mark bits view.
-     */
-    public final InspectorAction setMarkBitAtAddress() {
-        return setMarkBitAtAddress;
-    }
-
-    private InspectorAction removeSelectedMarkBit;
-
-    /**
-     * @return an Action that will remove the currently selected mark bit from the mark bits view.
-     */
-    public final InspectorAction removeSelectedMarkBit() {
-        return removeSelectedMarkBit;
-    }
-
-    private InspectorAction removeAllMarkBits;
-    /**
-     * @return an Action that will remove all mark bits from the mark bits view.
-     */
-    public final InspectorAction removeAllMarkBits() {
-        return removeAllMarkBits;
     }
 
      /**
@@ -4650,7 +4630,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     }
 
-
     /**
      * @return menu items for memory-related actions that are independent of context
      */
@@ -4663,8 +4642,17 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     menu.add(viewHeapRegionInfoMenu());
                 }
                 menu.add(views().memoryBytes().viewMenu());
+                if (vm().heap().hasMarkBitmap()) {
+                    menu.add(markBitmapMenu());
+                }
             }
         };
+    }
+
+    public JMenu markBitmapMenu() {
+        final JMenu menu = new JMenu("Mark Bitmap");
+        menu.add(setMarkBitAtAddressAction);
+        return menu;
     }
 
     /**
@@ -4778,6 +4766,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(views().activateSingletonViewAction(ViewKind.BOOT_IMAGE));
                 menu.add(views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
                 menu.add(views().activateSingletonViewAction(ViewKind.DEBUG_INFO));
+                menu.add(views().activateSingletonViewAction(ViewKind.MARK_BITMAP));
                 menu.add(views().memory().viewMenu());
                 menu.add(views().memoryBytes().viewMenu());
                 menu.add(views().activateSingletonViewAction(ViewKind.METHODS));

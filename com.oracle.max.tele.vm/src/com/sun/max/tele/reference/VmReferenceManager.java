@@ -141,26 +141,26 @@ public final class VmReferenceManager extends AbstractVmHolder {
         vm().lock();
         try {
             final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
-            if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
-                // In an object-holding region
-                final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
-                final RemoteReference liveObjectReference = objectHoldingRegion.objectReferenceManager().makeReference(origin);
-                if (liveObjectReference != null) {
-                    // A valid origin
-                    return liveObjectReference;
-                } else {
-                    // In an object holding region, but not an origin
-                    return referenceScheme.makeZeroReference("Null ref: not a valid origin in " + objectHoldingRegion.entityName(), origin);
+            if (maxMemoryRegion == null) {
+                // Not in any memory region we know about
+                if (vm().isAttaching() && objects().isPlausibleOriginUnsafe(origin)) {
+                    return new ProvisionalRemoteReference(vm(), origin);
                 }
-            } else if (maxMemoryRegion != null) {
+                return referenceScheme.makeZeroReference("Null ref: address in no known memory region ", origin);
+            }
+            if (!(maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>)) {
                 // In a region that isn't supposed to hold objects
                 return referenceScheme.makeZeroReference("Null ref: address in non-object holding region " + maxMemoryRegion.owner().entityName(), origin);
             }
-            // Not in any memory region we know about
-            if (vm().isAttaching() && objects().isPlausibleOriginUnsafe(origin)) {
-                return new ProvisionalRemoteReference(vm(), origin);
+            // In an object-holding region
+            final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
+            final RemoteReference liveObjectReference = objectHoldingRegion.objectReferenceManager().makeReference(origin);
+            if (liveObjectReference == null) {
+                // In an object holding region, but not an origin
+                return referenceScheme.makeZeroReference("Null ref: not a valid origin in " + objectHoldingRegion.entityName(), origin);
             }
-            return referenceScheme.makeZeroReference("Null ref: address in no known memory region ", origin);
+            // A valid origin
+            return liveObjectReference;
         } finally {
             vm().unlock();
         }
@@ -182,26 +182,27 @@ public final class VmReferenceManager extends AbstractVmHolder {
         vm().lock();
         try {
             final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
-            if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
-                // In an object-holding region
-                final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
-                final RemoteReference quasiObjectReference = objectHoldingRegion.objectReferenceManager().makeQuasiReference(origin);
-                if (quasiObjectReference != null) {
-                    // Origin of a quasi object
-                    return quasiObjectReference;
-                } else {
-                    // In an object holding region, but not an origin of a quasi object
-                    return referenceScheme.makeZeroReference("Null ref: not a quasi object origin in " + objectHoldingRegion.entityName(), origin);
+
+            if (maxMemoryRegion == null) {
+                // Not in any memory region we know about
+                if (vm().isAttaching() && objects().isPlausibleOriginUnsafe(origin)) {
+                    return new ProvisionalRemoteReference(vm(), origin);
                 }
-            } else if (maxMemoryRegion != null) {
+                return referenceScheme.makeZeroReference("Null ref: address in no known memory region ", origin);
+            }
+            if (!(maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>)) {
                 // In a region that isn't supposed to hold objects
                 return referenceScheme.makeZeroReference("Null ref: address in non-object holding region " + maxMemoryRegion.owner().entityName(), origin);
             }
-            // Not in any memory region we know about
-            if (vm().isAttaching() && objects().isPlausibleOriginUnsafe(origin)) {
-                return new ProvisionalRemoteReference(vm(), origin);
+            // In an object-holding region
+            final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
+            final RemoteReference quasiObjectReference = objectHoldingRegion.objectReferenceManager().makeQuasiReference(origin);
+            if (quasiObjectReference == null) {
+                // In an object holding region, but not an origin of a quasi object
+                return referenceScheme.makeZeroReference("Null ref: not a quasi object origin in " + objectHoldingRegion.entityName(), origin);
             }
-            return referenceScheme.makeZeroReference("Null ref: address in no known memory region ", origin);
+            // Origin of a quasi object
+            return quasiObjectReference;
         } finally {
             vm().unlock();
         }

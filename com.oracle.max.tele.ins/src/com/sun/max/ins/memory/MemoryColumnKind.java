@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ public enum MemoryColumnKind implements ColumnKind {
     UNICODE("Unicode", "Word as 16 bit chars", false, 20),
     FLOAT("Float", "Word as single precision float", false, 20),
     DOUBLE("Double", "Word as double precision float", false, 20),
+    MARK_BITS("Mark bits", "Contents of the Mark Bitmap word covering this address", false, 20),
     REGION("Region", "Memory region pointed to by value", true, 20);
 
     private final String columnLabel;

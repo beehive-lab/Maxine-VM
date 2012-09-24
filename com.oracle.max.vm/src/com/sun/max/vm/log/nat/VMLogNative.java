@@ -27,6 +27,8 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -41,6 +43,14 @@ import com.sun.max.vm.thread.*;
  * {@link VMLog#getRecord} is called.
  */
 public abstract class VMLogNative extends VMLog {
+    /**
+     * If true, allocate NativeRecord in heap area not subjected to relocation by the GC.
+     */
+    static boolean PinNativeRecord = false;
+
+    static {
+        VMOptions.addFieldOption("-XX:", "PinNativeRecord", VMLogNative.class, "Allocate VMLog's NativeRecord in heap area not subjected to relocation by the GC", Phase.PRISTINE);
+    }
 
     /**
      * Where the per-thread instance of {@link NativeRecord} is stored.
@@ -212,7 +222,17 @@ public abstract class VMLogNative extends VMLog {
         // We disable logging for this allocation because we cannot log until
         // it is set and we could be logging heap allocation
         boolean oldState = setThreadState(false);
-        Reference nativeRecordRef = Reference.fromJava(new NativeRecord(getArgsOffset()));
+        Reference nativeRecordRef = Reference.zero();
+        try {
+            if (PinNativeRecord) {
+                Heap.enableImmortalMemoryAllocation();
+            }
+            nativeRecordRef = Reference.fromJava(new NativeRecord(getArgsOffset()));
+        } finally {
+            if (PinNativeRecord) {
+                Heap.disableImmortalMemoryAllocation();
+            }
+        }
         setThreadState(oldState);
         vmLogNativeRecordTL.store3(nativeRecordRef);
         return nativeRecordRef;

@@ -51,17 +51,17 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     private final Kind componentKind;
 
+    private String maxineRole = null;
+
     protected TeleArrayObject(TeleVM vm, RemoteReference reference, Kind componentKind, SpecificLayout layout) {
         super(vm, reference, layout);
         this.componentKind = componentKind;
     }
 
-    @Override
     public ObjectKind kind() {
         return ObjectKind.ARRAY;
     }
 
-    @Override
     public HeaderField[] headerFields() {
         return objects().arrayLayout().headerFields();
     }
@@ -215,4 +215,19 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
         LOGGER.info("Command received to SET ARRAY at index " + i + " + to + " + value);
     }
 
+
+    @Override
+    public String maxineRole() {
+        return maxineRole;
+    }
+
+    /**
+     * Assign to this array object a short description of the role played by this specific
+     * array in the VM, suitable for textual annotation where mention of the object appears.
+     *
+     * @param role a short string describing the role played by this array in the VM.
+     */
+    public void setMaxineRole(String role) {
+        this.maxineRole = role;
+    }
 }

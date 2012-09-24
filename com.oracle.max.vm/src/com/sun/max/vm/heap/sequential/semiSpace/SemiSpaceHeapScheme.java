@@ -546,7 +546,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
             if (detailLogger.enabled()) {
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(ref).toJava());
-                detailLogger.logForward(hub.classActor, fromCell, toCell, size.toInt());
+                detailLogger.logForward(hub.classActor.id, Pointer.zero(), fromCell, toCell, size.toInt());
             }
 
             VMTI.handler().objectSurviving(fromCell);
@@ -980,7 +980,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 phaseLogger.logVerifyingHeapObjects(Interval.BEGIN);
                 phaseLogger.logVerifyingRegion(toSpace, toSpace.start().asPointer(), allocationMark());
             }
-            DebugHeap.verifyRegion(toSpace, toSpace.start().asPointer(), allocationMark(), toSpace, refVerifier, detailLogger);
+            DebugHeap.verifyRegion(toSpace, toSpace.start().asPointer(), allocationMark(), refVerifier, detailLogger);
             if (Heap.logGCPhases()) {
                 phaseLogger.logVerifyingHeapObjects(Interval.END);
                 phaseLogger.logVerifyingCodeObjects(Interval.BEGIN);
@@ -1004,7 +1004,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             if (Heap.logGCPhases()) {
                 phaseLogger.logVerifyingRegion(cr, cr.start().asPointer(), cr.getAllocationMark());
             }
-            DebugHeap.verifyRegion(cr, cr.start().asPointer(), cr.getAllocationMark(), toSpace, refVerifier, detailLogger);
+            DebugHeap.verifyRegion(cr, cr.start().asPointer(), cr.getAllocationMark(), refVerifier, detailLogger);
         }
     }
 

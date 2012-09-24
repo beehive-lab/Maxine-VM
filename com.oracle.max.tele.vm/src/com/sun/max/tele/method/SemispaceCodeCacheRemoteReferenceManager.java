@@ -146,7 +146,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
                 }
             }
         }
-        return vm().referenceManager().zeroReference();
+        return null;
     }
 
     /**

@@ -161,7 +161,7 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
         }
     }
 
-    // TODO (mlvdv) when Java 7 generics used, remote warnign suppression from all implementations of this method.
+    // TODO (mlvdv) when Java 7 generics used, remote warning suppression from all implementations of this method.
     /**
      * Overwritten by subclasses to update the list model when the filter input field is updated.
      *

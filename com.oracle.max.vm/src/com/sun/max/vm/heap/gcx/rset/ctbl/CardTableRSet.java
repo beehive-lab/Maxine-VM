@@ -355,6 +355,21 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
         }
     }
 
+    public int countCardInState(Address start, Address end, CardState cardState) {
+        final int endOfRange = cardTable.tableEntryIndex(end);
+        int count = 0;
+        int cardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, cardState);
+        while (cardIndex < endOfRange) {
+            count++;
+            cardIndex = cardTable.first(++cardIndex, endOfRange, cardState);
+        }
+        return count;
+    }
+
+    public void setCards(Address start, Address end, CardState cardState) {
+        cardTable.fill(cardTable.tableEntryIndex(start), cardTable.tableEntryIndex(end), cardState.value);
+    }
+
     public static abstract class CardRangeVisitor {
         abstract public void visitCards(Address start, Address end);
     }
@@ -511,6 +526,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
                     Log.print(" card # ");
                     Log.println(cardTable.tableEntryIndex(deadObjectAddress));
                 }
+                // Here we don't use dark matter as we're formatting allocatable space.
                 HeapSchemeAdaptor.fillWithDeadObject(deadObjectAddress, end);
                 return deadObjectAddress;
             }
