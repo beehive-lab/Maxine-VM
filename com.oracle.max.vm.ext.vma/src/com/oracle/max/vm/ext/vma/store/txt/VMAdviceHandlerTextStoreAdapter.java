@@ -211,6 +211,10 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
         getStoreAdaptorForThread(VmThread.current().id()).store.removal(id);
     }
 
+    public void removed(long time, long id) {
+        removed(id);
+    }
+
 // In the BytecodeAdvice method equivalents below, parameter arg1 is the bci value.
 
 // START GENERATED CODE

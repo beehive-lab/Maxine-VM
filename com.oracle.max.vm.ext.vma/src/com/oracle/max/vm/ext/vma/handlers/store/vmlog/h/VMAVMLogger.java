@@ -311,6 +311,10 @@ public class VMAVMLogger {
         protected void traceUnseenObject(int threadId, long arg1, Object arg2) {
             storeAdaptor(threadId).unseenObject(arg1, arg2);
         }
+        @Override
+        protected void traceRemoved(int threadId, long arg1, long arg2) {
+            storeAdaptor(threadId).removed(arg1, arg2);
+        }
     }
 
     @HOSTED_ONLY
@@ -434,6 +438,8 @@ public class VMAVMLogger {
 
         void unseenObject(long arg1, Object arg2);
 
+        void removed(long arg1, long arg2);
+
     }
 // END GENERATED INTERFACE
 
@@ -454,7 +460,8 @@ public class VMAVMLogger {
             AdviseBeforePutStatic4, AdviseBeforeReturn, AdviseBeforeReturn2, AdviseBeforeReturn3,
             AdviseBeforeReturn4, AdviseBeforeReturn5, AdviseBeforeReturnByThrow, AdviseBeforeStackAdjust,
             AdviseBeforeStore, AdviseBeforeStore2, AdviseBeforeStore3, AdviseBeforeStore4,
-            AdviseBeforeThreadStarting, AdviseBeforeThreadTerminating, AdviseBeforeThrow, UnseenObject;
+            AdviseBeforeThreadStarting, AdviseBeforeThreadTerminating, AdviseBeforeThrow, Removed,
+            UnseenObject;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
@@ -464,7 +471,7 @@ public class VMAVMLogger {
             0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4, 0x4, 0x0, 0x0, 0x18, 0xc, 0x4, 0x4,
             0x4, 0x4, 0x0, 0x4, 0x4, 0x0, 0x0, 0x0, 0x4, 0x4, 0x14, 0x4, 0x4,
             0x4, 0x14, 0x4, 0x0, 0x0, 0x0, 0x4, 0x0, 0x4, 0x0, 0x0, 0x0, 0x8,
-            0x0, 0x0, 0x0, 0x4, 0x2};
+            0x0, 0x0, 0x0, 0x4, 0x0, 0x2};
 
         protected VMAVMLoggerAuto(String name) {
             super(name, Operation.VALUES.length, REFMAPS);
@@ -830,6 +837,12 @@ public class VMAVMLogger {
         protected abstract void traceAdviseBeforeThrow(int threadId, long arg1, int arg2, Object arg3);
 
         @INLINE
+        public final void logRemoved(long arg1, long arg2) {
+            log(Operation.Removed.ordinal(), longArg(arg1), longArg(arg2));
+        }
+        protected abstract void traceRemoved(int threadId, long arg1, long arg2);
+
+        @INLINE
         public final void logUnseenObject(long arg1, Object arg2) {
             log(Operation.UnseenObject.ordinal(), longArg(arg1), objectArg(arg2));
         }
@@ -1071,7 +1084,11 @@ public class VMAVMLogger {
                     traceAdviseBeforeThrow(threadId, toLong(r, 1), toInt(r, 2), toObject(r, 3));
                     break;
                 }
-                case 58: { //UnseenObject
+                case 58: { //Removed
+                    traceRemoved(threadId, toLong(r, 1), toLong(r, 2));
+                    break;
+                }
+                case 59: { //UnseenObject
                     traceUnseenObject(threadId, toLong(r, 1), toObject(r, 2));
                     break;
                 }
