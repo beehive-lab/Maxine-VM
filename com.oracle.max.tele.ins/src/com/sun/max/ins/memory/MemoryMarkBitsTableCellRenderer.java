@@ -116,9 +116,14 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
         final MaxMarkBitmap markBitmap = vm().heap().markBitMap();
         final Address memoryAddress = tableModel.getAddress(row);
 
-        if (markBitmap == null || !markBitmap.isCovered(memoryAddress)) {
-            renderer = inspection().gui().getUnavailableDataTableCellRenderer();
+        if (markBitmap == null) {
+            renderer.setText("");
             renderer.setToolTipPrefix(tableModel.getRowDescription(row));
+            renderer.setWrappedToolTipHtmlText("<br>No bitmap available");
+        } else if (!markBitmap.isCovered(memoryAddress)) {
+            renderer.setText("");
+            renderer.setToolTipPrefix(tableModel.getRowDescription(row));
+            renderer.setWrappedToolTipHtmlText("<br>Not covered by bitmap");
         } else {
             final int bitIndex = markBitmap.getBitIndexOf(memoryAddress);
             final int bitIndexInWord = markBitmap.getBitIndexInWord(bitIndex);
