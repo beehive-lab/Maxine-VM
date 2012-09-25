@@ -51,10 +51,10 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * in the VM.</p>
  * <p>
  * This support will not function correctly unless the VM is built in DEBUG mode, in which case the GC will
- * {@linkplain Memory#ZAPPED_MARKER zap} all memory in free space with one exception.  The GC formats each segment
- * of free space as a <em>quasi-object</em>, for example an instance of {@link HeapFreeChunk} or as some
- * kind of <em>dark matter</em> with an ordinary two-word object header. This formatting is needed, among
- * other reasons, to allow the GC to sweep all of memory.</p>
+ * {@linkplain Memory#ZAPPED_MARKER zap} all memory in free space with one exception.
+ * The exception is the headers of <em>quasi-objects</em> used by the GC to represent free space explicitly.
+ * Examples include instances of {@link HeapFreeChunk}, {@link DarkMatter}, and {@link DarkMatter.SmallestDarkMatter}.
+ * This formatting is needed, among other reasons, to allow the GC to sweep all of memory.</p>
  * <p>
  * The term <em>quasi-object</em> refers to an area of memory formatted as if it were an ordinary Maxine
  * VM object, but which is
@@ -64,29 +64,39 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * <li>is never reachable from any object roots.</li>
  * </ul></p>
  * <p>
- * It is further assumed that <em>precise scanning</em> is used during the GC
- * {@linkplain HeapPhase#RECLAIMING reclaiming} phase,
- * in which implementation <em>dark matter</em> objects, which are unreachable, are specially zapped and
+ * This support further depends on the use of <em>precise scanning</em> during the GC {@linkplain HeapPhase#RECLAIMING reclaiming} phase,
+ * in which <em>dark matter</em> objects (those determined to be unreachable but not worth reclaiming) are specially zapped and
  * formatted for convenient recognition.</p>
  * <p>
- * For the purpose of this exposition, assume two collections of references indexed by memory location,
- * which we'll call <em>Maps</em>: one for <em>Objects</em> and one for <em>Free Space</em>.
- * These maps never contain {@linkplain ObjectStatus#DEAD DEAD} references.</p>
+ * This implementation maintains two <em>maps</em> from VM memory locations to {@link RemoteReference}s:  an <em>Object Map</em>
+ * and a <em>Free Space Map</em>. A {@link RemoteReference}s represents the <em>identity</em> of an object (whether legitimate or quasi-)
+ * in the VM. Note that this perspective differs somewhat from that of the GC implementation.</p>
  * <p>
- * A {@link RemoteReference} encapsulates the <em>identity</em> of an object (whether legitimate or quasi-).
- * By invariant, there may be no more than one reference in the the maps (collectively) at any memory location.
- * This identity relation permits the distinction
- * between object and reference to be blurred for brevity in the following description.</p>
+ * General map invariants:
+ * <ul>
+ * <li>The <em>Object Map</em> only holds references that are {@linkplain ObjectStatus#LIVE LIVE} or
+ * {@linkplain ObjectStatus#UNREACHABLE UNREACHABLE}.</li>
+ * <li>The <em>Free Space Map</em> only holds references that are {@linkplain ObjectStatus#FREE FREE} or
+ * {@linkplain ObjectStatus#DARK DARK}.</li>
+ * <li>The maps never contain {@linkplain ObjectStatus#DEAD DEAD} references.</li>
+ * <li>A single memory location never appears simultaneously in both maps, which is to say there can
+ * only be one reference (and one kind of object) at a location.</li>
+ * <li>A reference never moves from one map to another, consistent with the reference state transitions expressed
+ * by the specific implementation of references used for these maps ({@link MSRemoteReference}). In particular,
+ * the only identity-preserving state transition that occurs within the maps is from {@linkplain ObjectStatus#LIVE LIVE}
+ * to {@linkplain ObjectStatus#UNREACHABLE UNREACHABLE}.  Every other change in status at a memory location is modeled
+ * here by the replacement of one object by another with separate identity (e.g. a new chunk of free space <em>replaces</em> an object,
+ * the old object becomes {@linkplain ObjectStatus#DEAD DEAD} and its reference is removed from the map).</li>
+ * </ul></p>
  * <p>
- * <b>Implementation note:</b> the division of the references into two maps is purely conceptual for the purpose
- * of this description.  Since the reference {@linkplain MSRemoteReference states} are all distinct,
- * they could be kept in a single map, two maps, or even a separate map for each reference state.
+ * The following description enumerates more specifically what remote inspection can observe during each {@link HeapPhase}.
+ * The <em>canonical</em> relationship between references and VM objects allows the distinction between
+ * the two to be blurred for brevity in this description.</p>
  * <p>
- *
  * <b>{@link HeapPhase#MUTATING} Summary</b>
  * <p>
  * During this phase new objects are allocated by splitting (if needed) {@linkplain ObjectStatus#FREE FREE} quasi-object instances.
- * Newly allocated objects appear, and {@linkplain ObjectStatus#FREE FREE} quasi-objects both appear and disappear (are released).</p>
+ * Newly allocated objects appear, and {@linkplain ObjectStatus#FREE FREE} quasi-objects both appear and disappear (are overwritten).</p>
  * <ul>
  * <li><b>Object Map:</b>
  * <ol>
@@ -96,14 +106,14 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * </ol></li>
  * <li><b>Free Space Map:</b>
  * <ol>
- * <li>The Free Space map contains only contain quasi-object references that are {@linkplain ObjectStatus#FREE FREE}
- * or {@linkplain ObjectStatus#DARK DARK}.</li>
+ * <li>The Free Space map contains only {@linkplain ObjectStatus#FREE FREE} or {@linkplain ObjectStatus#DARK DARK}
+ * quasi-object references.</li>
  * <li>Previously unseen {@linkplain ObjectStatus#FREE FREE} quasi-objects, possibly newly created, may be discovered
  * and added to the Free Space Map.</li>
  * <li>Previously unseen {@linkplain ObjectStatus#DARK DARK} quasi-objects may be discovered and added to the
  * Free Space Map, but they do not change during this phase.</li>
  * <li>A {@linkplain ObjectStatus#FREE FREE} quasi-object reference in the map may be discovered, by observing that its hub pointer
- * has changed, to have been <em>released</em>: i.e. replaced by an object allocation. This reference becomes
+ * has changed, to have been <em>overwritten</em>: i.e. replaced by an object allocation. This reference becomes
  * {@linkplain ObjectStatus#DEAD DEAD} and is removed from the Free Space Map.</li>
  * <li>{@linkplain ObjectStatus#FREE FREE} quasi-objects in the map do not change in size, on the assumption that allocation
  * out of a {@linkplain ObjectStatus#FREE FREE} quasi-object always happens at the beginning,
@@ -116,21 +126,21 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * <b>{@link HeapPhase#ANALYZING} Summary</b>
  * <p>
  * During this phase the only observable change is the transition of some heap object locations from <em>unmarked</em> to
- * <em>marked</em>.  A <em>mark</em> records that the GC has determined the object to be <em>reachable</em>,
- * whereas an <em>unmarked</em> location signified an object whose reachability is unknown.</p>
+ * <em>marked</em>.  A <em>mark</em> appears when the GC has determined the object to be <em>reachable</em>,
+ * whereas an <em>unmarked</em> location signified an object whose reachability remains unknown.</p>
  * <ul>
  * <li><b>Object Map:</b>
  * <ol>
- * <li>The Object Map contains only object references that are {@linkplain ObjectStatus#LIVE LIVE}, whether or not
- * the objects are <em>marked</em>.</li>
+ * <li>The Object Map contains only {@linkplain ObjectStatus#LIVE LIVE} references, whether or not
+ * they are <em>marked</em>.</li>
  * <li>New {@linkplain ObjectStatus#LIVE LIVE} objects may be discovered and added to the Object Map.</li>
  * <li>Unmarked objects in the map may become marked.</li>
  * <li>No other changes to the Object Map take place during the {@linkplain HeapPhase#ANALYZING analyzing} phase.</li>
  * </ol></li>
  * <li><b>Free Space Map:</b>
  * <ol>
- * <li>The Free Space map contains only quasi-objects that are {@linkplain ObjectStatus#FREE FREE} or
- * {@linkplain ObjectStatus#DARK DARK}.</li>
+ * <li>The Free Space map contains only {@linkplain ObjectStatus#FREE FREE} or
+ * {@linkplain ObjectStatus#DARK DARK} quasi-object references.</li>
  * <li>Previously unseen {@linkplain ObjectStatus#FREE FREE} quasi-objects may be discovered
  * and added to the Free Space Map, but they do not change during this phase.</li>
  * <li>Previously unseen {@linkplain ObjectStatus#DARK DARK} quasi-objects may be discovered and added to the
@@ -156,10 +166,10 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * <li>Marking does not change during this phase.</li>
  * <li>A previously unseen marked object may be discovered and added to the Object Map as {@linkplain ObjectStatus#LIVE LIVE}.</li>
  * <li>A previously unseen unmarked object may be discovered and added to the Object Map as {@linkplain ObjectStatus#UNREACHABLE UNREACHABLE}.</li>
- * <li>An {@linkplain ObjectStatus#UNREACHABLE UNREACHABLE} object in the Object Map might be discovered to have been <em>released</em>
- * through merging with another instance {@linkplain ObjectStatus#FREE FREE} quasi-object (by observing that the header has been zapped).
+ * <li>An {@linkplain ObjectStatus#UNREACHABLE UNREACHABLE} object in the Object Map might be discovered to have been <em>overwritten</em>
+ * through merging with another {@linkplain ObjectStatus#FREE FREE} quasi-object (by observing that the header has been zapped).
  * This reference becomes {@linkplain ObjectStatus#DEAD DEAD} and is removed from the Object Map.</li>
- * <li>An {@linkplain ObjectStatus#UNREACHABLE UNREACHABLE} object in the Object Map might be discovered to have been <em>released</em>
+ * <li>An {@linkplain ObjectStatus#UNREACHABLE UNREACHABLE} object in the Object Map might be discovered to have been <em>overwritten</em>
  * through replacement by a {@linkplain ObjectStatus#FREE FREE} quasi-object (by observing that the header has been replaced).
  * This reference becomes {@linkplain ObjectStatus#DEAD DEAD} and is removed from the Object Map.
  * <ul>
@@ -169,7 +179,7 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * formerly {@linkplain ObjectStatus#UNREACHABLE UNREACHABLE} object to a view on the newly discovered {@linkplain ObjectStatus#FREE FREE} quasi-object
  * that replaced it (or should it be converted to a dead object view?).</li>
  * </ul></li>
- * <li>An {@linkplain ObjectStatus#UNREACHABLE UNREACHABLE} object in the Object Map might be discovered to have been <em>released</em>
+ * <li>An {@linkplain ObjectStatus#UNREACHABLE UNREACHABLE} object in the Object Map might be discovered to have been <em>overwritten</em>
  * through replacement by an instance of {@linkplain ObjectStatus#DARK DARK} matter (by observing that the header has been replaced).
  * This reference becomes {@linkplain ObjectStatus#DEAD DEAD} and is removed from the Object Map.
  * <ul>
@@ -180,32 +190,34 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * {@linkplain ObjectStatus#DARK DARK} matter that replaced it (or should it be converted to a dead object view?).</li>
  * </ul></li>
  * <li>At the end of the {@linkplain HeapPhase#RECLAIMING reclaiming} phase, every {@linkplain ObjectStatus#UNREACHABLE UNREACHABLE}
- * object in the Object Map should have become {@linkplain ObjectStatus#DEAD DEAD}, either zapped, replaced in memory by a
+ * object in the Object Map should have become {@linkplain ObjectStatus#DEAD DEAD}: overwritten in memory by a
  * {@linkplain ObjectStatus#FREE FREE} quasi-object or a {@linkplain ObjectStatus#DARK DARK} quasi-object.</li>
  * <li>No other changes to the Object Map take place during the {@linkplain HeapPhase#RECLAIMING reclaiming} phase.</li>
  * </ol></li>
  * <li><b>Free Space Map:</b>
  * <ol>
- * <li>The Free Space map contains only quasi-object references that are {@linkplain ObjectStatus#FREE FREE}
- * or {@linkplain ObjectStatus#DARK DARK}.</li>
+ * <li>The Free Space map contains only {@linkplain ObjectStatus#FREE FREE}
+ * or {@linkplain ObjectStatus#DARK DARK} quasi-object references.</li>
  * <li>Previously unseen {@linkplain ObjectStatus#FREE FREE} quasi-objects may be discovered
  * and added to the Free Space Map, but they do not change during this phase.</li>
  * <li>Previously unseen {@linkplain ObjectStatus#DARK DARK} quasi-objects may be discovered and added to the
  * Free Space Map, but they do not change during this phase.</li>
  * <li>A {@linkplain ObjectStatus#FREE FREE} quasi-object reference in the Free Space Map may be discovered, by observing that its hub pointer
- * has changed, to have been <em>released</em> through merging with another {@linkplain ObjectStatus#FREE FREE} quasi-object. This reference becomes
+ * has changed, to have been <em>overwritten</em> through merging with another {@linkplain ObjectStatus#FREE FREE} quasi-object. This reference becomes
  * {@linkplain ObjectStatus#DEAD DEAD} and is removed from the Free Space Map.</li>
  * <li>A {@linkplain ObjectStatus#FREE FREE} quasi-object reference in the Free Space Map may be discovered to have changed in size through
  * consolidation with following reclaimed space.</li>
  * <li>A {@linkplain ObjectStatus#DARK DARK} object in the Free Space Map maybe be discovered to have
- * been <em>reclaimed</em> through merging with another {@linkplain ObjectStatus#FREE FREE} quasi-object. This quasi-reference becomes
+ * been <em>overwritten</em> through merging with another {@linkplain ObjectStatus#FREE FREE} quasi-object. This quasi-reference becomes
  * {@linkplain ObjectStatus#DEAD DEAD} and is removed from the FreeSpace Map.</li>
  * </ol></li></ul>
  * <p>
+ * @see MSHeapScheme
  * @see HeapFreeChunk
+ * @see DarkMatter
+ * @see DarkMatter.SmallestDarkMatter
  * @see Memory#ZAPPED_MARKER
  * @see Sweeper#minReclaimableSpace()
- * @see MSHeapScheme
  * @see VmMarkBitmap
  */
 public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
@@ -449,28 +461,28 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             }
 
             /*
-             * No matter what phase we're in, once everything else is taken care of, see if any free space has been
-             * released. Do this last because nothing else in this part of the update is affected by it. Free space
-             * isn't supposed to be released during the ANALYSIS phase, but we might not have checked since some time in
+             * No matter what phase we're in, once everything else is taken care of, see if any free space quasi-objects have been
+             * overwritten. Do this last because nothing else in this part of the update is affected by it. Free space
+             * isn't supposed to be overwritten during the ANALYSIS phase, but we might not have checked since some time in
              * an earlier phase.
              */
             int freeDied = 0;
             for (MSRemoteReference freeSpaceRef : freeSpaceRefMap.values()) {
                 switch (freeSpaceRef.status()) {
                     case FREE:
-                        // FREE chunks can be released during a MUTATING phase when the space is used to allocate a new object.
-                        // FREE chunks can be released during a RECLAIMING phase when the space is merged with another FREE chunk.
+                        // FREE chunks can be overwritten during a MUTATING phase when the space is used to allocate a new object.
+                        // FREE chunks can be overwritten during a RECLAIMING phase when the space is merged with another FREE chunk.
                         if (!objectStatusAt(freeSpaceRef.origin()).isFree()) {
-                            // The reference no longer points at a free space chunk, so it has been released.
+                            // The reference no longer points at a free space chunk, so it has been overwritten.
                             freeSpaceRef.die();
                             assert freeSpaceRefMap.remove(freeSpaceRef.origin()) != null;
                             freeDied++;
                         }
                         break;
                     case DARK:
-                        // DARK chunks can be released during a RECLAIMING phase  when the space is merged with another FREE chunk.
+                        // DARK chunks can be overwritten during a RECLAIMING phase  when the space is merged with another FREE chunk.
                         if (!objectStatusAt(freeSpaceRef.origin()).isDark()) {
-                            // The reference no longer points at dark matter, so it has been released.
+                            // The reference no longer points at dark matter, so it has been overwritten.
                             freeSpaceRef.die();
                             assert freeSpaceRefMap.remove(freeSpaceRef.origin()) != null;
                             freeDied++;
