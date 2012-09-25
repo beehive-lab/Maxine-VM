@@ -153,6 +153,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     protected MarkBitmapView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
 
+        markBitmap = vm().heap().markBitMap();
+
         viewPreferences = MarkBitmapViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
 
@@ -237,7 +239,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         viewMenu.add(scrollToFocusAction);
         viewMenu.add(defaultMenuItems(MenuKind.VIEW_MENU));
 
-        if (vm().heap().markBitMap() == null) {
+        if (markBitmap == null) {
             createNullContent();
         } else {
             createTableContent();
@@ -246,7 +248,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
     @Override
     protected void refreshState(boolean force) {
-        if (table == null && vm().heap().markBitMap() != null) {
+        if (markBitmap == null && vm().heap().markBitMap() != null) {
+            markBitmap = vm().heap().markBitMap();
             reconstructView();
         }
         if (table != null) {
@@ -260,7 +263,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
      */
     private void createNullContent() {
         final InspectorPanel nullPanel = new InspectorPanel(inspection(), new BorderLayout());
-        nullPanel.add(new PlainLabel(inspection(), "<Mark Bitmap not yet allocated>"), BorderLayout.PAGE_START);
+        nullPanel.add(new PlainLabel(inspection(), "<no bitmap>"), BorderLayout.PAGE_START);
         setContentPane(nullPanel);
     }
 
@@ -448,6 +451,18 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     }
 
     public void tableColumnViewPreferencesChanged() {
+        reconstructView();
+    }
+
+    @Override
+    public void viewClosing() {
+        viewPreferences.removeListener(this);
+        super.viewClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        markBitmap = null;
         reconstructView();
     }
 
