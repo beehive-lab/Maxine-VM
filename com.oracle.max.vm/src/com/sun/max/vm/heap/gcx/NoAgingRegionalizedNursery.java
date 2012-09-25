@@ -26,6 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.GCRequest;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -37,10 +38,9 @@ public final class NoAgingRegionalizedNursery implements HeapSpace {
     final class NurseryRefiller extends Refiller {
         @Override
         public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
-            Size size = allocator.size();
-            while (!Heap.collectGarbage(size)) {
-                size = allocator.size();
-                // TODO: condition for OOM
+            GCRequest.setGCRequest(requestedSize);
+            if (!Heap.collectGarbage()) {
+                throw new OutOfMemoryError();
             }
             // We're out of safepoint. The current thread hold the refill lock and will do the refill of the allocator.
             return Address.zero();

@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
 import static com.sun.max.vm.MaxineVM.Phase.*;
 import static com.sun.max.vm.heap.gcx.EvacuationTimers.TIMED_OPERATION.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.lang.management.*;
 
@@ -81,6 +82,36 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         VMOptions.addFieldOption("-XX:", "BreakAfterGCCount", GenSSHeapScheme.class, "Break at every GC after GC count", Phase.PRISTINE);
     }
 
+    static final class GenSSGCRequest  extends GCRequest {
+         /**
+         * Indicates whether the failed allocation request was performed against the old gen.
+         */
+        boolean oldGenOverflow;
+        /**
+         * Flags set by the GC to indicate that this request raised an out of memory error.
+         */
+        boolean outOfMemory;
+
+        /**
+         * Result of last executed request. If  {@code true}, the request was satisfied.
+         */
+        boolean result;
+
+        protected GenSSGCRequest(VmThread thread) {
+            super(thread);
+        }
+
+        @Override
+        public void clear() {
+            super.clear();
+            oldGenOverflow = false;
+            outOfMemory = false;
+        }
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native GenSSGCRequest asGenSSGCRequest(GCRequest gcRequest);
+
 
     /**
      * Refiller for the OldSpace allocator.
@@ -97,6 +128,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      *
      */
     final class OldSpaceRefiller extends Refiller {
+        /**
+         * Track space left in old gen's allocator before GC request was issued.
+         * This is used to notify the GC that request was issued because of a failed
+         * mutator allocation directly in the old generation.
+         */
         Pointer startOfSpaceLeft = Pointer.zero();
         Size spaceLeft = Size.zero();
 
@@ -104,9 +140,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
             this.startOfSpaceLeft = startOfSpaceLeft;
             this.spaceLeft = spaceLeft;
-
-            // Force full collection.
-            if (!Heap.collectGarbage(requestedSize)) {
+            final GenSSGCRequest gcRequest = asGenSSGCRequest(VmThread.current().gcRequest);
+            gcRequest.clear();
+            gcRequest.requestedBytes = requestedSize;
+            // Space is needed in the old generation
+            gcRequest.oldGenOverflow = true;
+            if (!Heap.collectGarbage()) {
                 throw new OutOfMemoryError();
             }
             // The current thread hold the refill lock and will do the refill of the allocator.
@@ -134,7 +173,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
         @Override
         public Address allocateLargeRaw(Size size) {
-            FatalError.unexpected("Should never be called");
+            FatalError.unexpected("Should never be called on OldSpaceRefiller");
             return Address.zero();
         }
     }
@@ -145,14 +184,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     class YoungSpaceRefiller extends Refiller {
         @Override
         public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
-            AtomicBumpPointerAllocator<YoungSpaceRefiller> allocator = youngSpace.allocator();
-            Size size = allocator.size();
-            int i = 0;
-            while (!Heap.collectGarbage(size)) {
-                if (++i > 3) {
-                    FatalError.breakpoint();
-                }
-                size = allocator.size();
+            final GenSSGCRequest gcRequest = asGenSSGCRequest(VmThread.current().gcRequest);
+            gcRequest.clear();
+            gcRequest.requestedBytes = requestedSize;
+            if (!Heap.collectGarbage()) {
+                throw new OutOfMemoryError();
             }
             // We're out of safepoint. The current thread hold the refill lock and will do the refill of the allocator.
             return Address.zero();
@@ -194,6 +230,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         @Override
         protected void collect(int invocationCount) {
             doCollect(invocationCount);
+        }
+
+        GenSSGCRequest gcRequest() {
+            return asGenSSGCRequest(callingThread().gcRequest);
         }
     }
 
@@ -346,19 +386,23 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
     @Override
-    public boolean collectGarbage(Size requestedFreeSpace) {
-        VMTI.handler().beginGC();
-        if ((requestedFreeSpace.isZero() && !DisableExplicitGC) || youngSpace.freeSpace().lessThan(requestedFreeSpace)) {
-            if (!Heap.gcDisabled()) {
-                genCollection.submit();
-            }
+    public GCRequest createThreadLocalGCRequest(VmThread vmThread) {
+        return new GenSSGCRequest(vmThread);
+    }
+
+    @Override
+    public boolean collectGarbage() {
+        final GenSSGCRequest gcRequest = asGenSSGCRequest(VmThread.current().gcRequest);
+        final Size requestedSize = gcRequest.requestedBytes;
+        final boolean submitRequest =  (gcRequest.explicit && !DisableExplicitGC) ||  gcRequest.oldGenOverflow ?  oldSpace.freeSpace().lessThan(requestedSize) : youngSpace.freeSpace().lessThan(requestedSize);
+        if (submitRequest) {
+            VMTI.handler().beginGC();
+            genCollection.submit();
+            VMTI.handler().endGC();
+            return gcRequest.result;
         }
-        final boolean result = oldSpace.freeSpace().plus(youngSpace.freeSpace()).greaterThan(requestedFreeSpace);
-        VMTI.handler().endGC();
-        if (resizingPolicy.outOfMemory()) {
-            throw new OutOfMemoryError();
-        }
-        return result;
+        // Request can be satisfied without performing a GC (typically, because another GC request raced with it and succeeded)
+        return true;
     }
 
     private void verifyCodeRegion(CodeRegion cr) {
@@ -561,7 +605,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         if (MaxineVM.isDebug() && BreakAfterGCCount > 0 && invocationCount > BreakAfterGCCount) {
             FatalError.breakpoint();
         }
+        final GenSSGCRequest gcRequest = genCollection.gcRequest();
         final boolean oldSpaceMutatorOverflow = oldSpace.allocator.refillManager().mutatorOverflow();
+        gcRequest.lastInvocationCount = invocationCount;
+
         resizingPolicy.clearNotifications();
         evacTimers.resetTrackTime();
         if (OldSpaceDirtyCardsStats) {
@@ -634,6 +681,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 timeLogger.logGcTimes(invocationCount, false, evacTimers.get(TOTAL).getLastElapsedTime());
             }
         }
+        gcRequest.outOfMemory = resizingPolicy.outOfMemory();
+        gcRequest.result =
+            gcRequest.explicit ||
+            (gcRequest.oldGenOverflow && oldSpace.freeSpace().greaterEqual(gcRequest.requestedBytes)) ||
+            youngSpace.freeSpace().greaterEqual(gcRequest.requestedBytes);
+
         accumulatedGCTime = System.currentTimeMillis() - startGCTime;
         Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);

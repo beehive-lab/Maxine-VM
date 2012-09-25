@@ -30,6 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.GCRequest;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.runtime.*;
 
@@ -213,7 +214,9 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
             if (MaxineVM.isDebug()) {
                 checkForSuspisciousGC(gcCount++);
             }
-        } while(Heap.collectGarbage(Size.fromInt(regionSizeInBytes))); // Always collect for at least one region.
+            // Always collect for at least one region.
+            GCRequest.setGCRequest(Size.fromInt(regionSizeInBytes));
+        } while(Heap.collectGarbage());
         // Not enough freed memory.
         throw outOfMemoryError;
     }

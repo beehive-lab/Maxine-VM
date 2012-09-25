@@ -31,6 +31,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.runtime.*;
 
@@ -126,6 +127,8 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
     }
 
     private HeapRegionInfo changeAllocatingRegion() {
+        // Set GC request to always collect for at least one region.
+        GCRequest.setGCRequest(Size.fromInt(regionSizeInBytes));
         synchronized (refillLock()) {
             int gcCount = 0;
             retireCurrentAllocatingRegion();
@@ -140,7 +143,7 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
                 if (MaxineVM.isDebug()) {
                     checkForSuspisciousGC(gcCount++);
                 }
-            } while(Heap.collectGarbage(Size.fromInt(regionSizeInBytes))); // Always collect for at least one region.
+            } while(Heap.collectGarbage()); // Always collect for at least one region.
             // Not enough freed memory.
             throw outOfMemoryError;
         }
