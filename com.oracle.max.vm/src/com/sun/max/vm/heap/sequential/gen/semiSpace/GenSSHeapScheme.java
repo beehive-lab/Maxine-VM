@@ -479,6 +479,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         oldSpaceEvacuator.setGCOperation(genCollection);
         oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
         oldSpaceEvacuator.evacuate(Heap.logGCPhases());
+        if (OldSpaceDirtyCardsStats) {
+            countOldSpaceDirtyCards("after old gen evacuation");
+        }
         final CardFirstObjectTable fot = cardTableRSet.cfoTable;
         final int startIndex = fot.tableEntryIndex(oldSpace.fromSpace.start());
         final int endIndex = fot.tableEntryIndex(oldSpace.fromSpace.committedEnd());
@@ -495,6 +498,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             oldSpace.allocator.refill(oldSpace.space.start(), oldSpace.space.committedSize());
             oldSpace.allocator.unsafeSetTopToLimit();
             resizingPolicy.notifyFullEvacuationOverflowRange(youngSpace.allocator.start(), top);
+        } else {
+            cardTableRSet.setCards(oldSpace.space.start(), oldSpace.allocator().unsafeTop(), CardState.CLEAN_CARD);
         }
     }
 
