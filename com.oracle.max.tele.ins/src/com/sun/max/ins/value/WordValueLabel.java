@@ -471,7 +471,8 @@ public class WordValueLabel extends ValueLabel {
 
         if (newValue == VoidValue.VOID) {
             displayMode = DisplayMode.INVALID;
-        } else if (vm().memoryIO().isZappedValue(newValue)) {
+        } else if (vm().memoryIO().isZappedValue(newValue) && valueMode != ValueMode.INTEGER_REGISTER) {
+            // We want to use a special display for this value when in memory, but not in a register when the zapping is being done
             displayMode = DisplayMode.ZAPPED;
         } else if (valueMode == ValueMode.FLAGS_REGISTER) {
             if (newValue == null) {
