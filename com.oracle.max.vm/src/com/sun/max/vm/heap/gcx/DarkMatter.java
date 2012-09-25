@@ -73,18 +73,9 @@ public final class DarkMatter {
         @INTRINSIC(UNSAFE_CAST)
         private static native SmallestDarkMatter asSmallestDarkMatter(Object darkMatter);
 
-        static SmallestDarkMatter toDarkMatter(Address cell) {
-            return asSmallestDarkMatter(Reference.fromOrigin(Layout.cellToOrigin(cell.asPointer())).toJava());
-        }
-
         @FOLD
         static DynamicHub hub() {
             return ClassActor.fromJava(SmallestDarkMatter.class).dynamicHub();
-        }
-
-        @FOLD
-        static Word hubWord() {
-            return Reference.fromJava(hub()).toOrigin();
         }
 
         static void format(Address darkMatter) {
@@ -113,35 +104,6 @@ public final class DarkMatter {
     @FOLD
     private static Size darkMatterHeaderSize() {
         return Layout.longArrayLayout().getArraySize(Kind.LONG, 0);
-    }
-
-    @FOLD
-    private static Word hubWord() {
-        return Reference.fromJava(hub()).toOrigin();
-    }
-
-    /**
-     * Tells whether an address is the origin of a cell formatted as dark matter.
-     * @param origin heap address
-     * @return true if the address is the origin of a cell formatted as dark matter.
-     */
-    public static boolean isDarkMatterOrigin(Address origin) {
-        final Word hubWord =  origin.asPointer().readWord(Layout.hubIndex());
-        return hubWord.equals(hubWord()) || hubWord.equals(SmallestDarkMatter.hubWord());
-    }
-
-    /**
-     * Size of a cell formatted as dark matter. Raises a {@linkplain FatalError} if the address is not the start of some dark matter.
-     * @param address address of a cell formatted as a dark matter.
-     * @return Size size of the dark matter cell
-     */
-    public static Size darkMatterSize(Address address) {
-        final Word hubWord =  address.asPointer().readWord(Layout.hubIndex());
-        if (hubWord.equals(hubWord())) {
-            return Size.fromInt(Layout.readArrayLength(address.asPointer()));
-        }
-        FatalError.check(hubWord.equals(SmallestDarkMatter.hubWord()), "not dark matter origin");
-        return minSize();
     }
 
     /**
