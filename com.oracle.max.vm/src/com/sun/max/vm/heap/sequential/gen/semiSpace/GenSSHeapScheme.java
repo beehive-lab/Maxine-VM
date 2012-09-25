@@ -633,7 +633,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         if (VerifyAfterGC) {
             verifyAfterMinorCollection();
         }
-        if (ForceCleanCardsAfterMinorGC) {
+
+        if (ForceCleanCardsAfterMinorGC && !resizingPolicy.minorEvacuationOverflow()) {
+            // Don't need to clean card if a minor evacuation overflow occurred as this will trigger a full GC.
+            // Also, the boundary isn't correct in that case, as the allocator's is pointing to the other old semi-space in that case.
             cardTableRSet.setCards(oldSpace.space.start(), oldSpace.allocator().unsafeTop(), CardState.CLEAN_CARD);
         }
         final Size estimatedEvac = estimatedNextEvac();
