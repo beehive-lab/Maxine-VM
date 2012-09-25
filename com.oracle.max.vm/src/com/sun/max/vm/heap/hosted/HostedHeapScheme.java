@@ -31,12 +31,13 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * A pseudo heap for limited unit testing on the prototype host,
  * without bootstrapping the VM.
  */
-public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
+public class HostedHeapScheme extends HeapSchemeAdaptor {
 
     public HostedHeapScheme() {
         super();
@@ -96,7 +97,7 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
         return false;
     }
 
-    public boolean collectGarbage(Size requestedFreeSpace) {
+    public boolean collectGarbage() {
         throw ProgramError.unexpected();
     }
 
@@ -146,6 +147,11 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
     @Override
     public PhaseLogger phaseLogger() {
         FatalError.unexpected("Non implemented");
+        return null;
+    }
+
+    @Override
+    public GCRequest createThreadLocalGCRequest(VmThread vmThread) {
         return null;
     }
 
