@@ -79,7 +79,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
                 new AddressInputDialog(inspection(), Address.zero(), "View RegionInfo for address...", "View") {
                     @Override
                     public void entered(Address address) {
-                        MaxMemoryManagementInfo info = vm().getMemoryManagementInfo(address);
+                        MaxMemoryManagementInfo info = vm().heap().getMemoryManagementInfo(address);
                         // TODO: revisit this.
                         if (info.status().equals(MaxMemoryStatus.LIVE)) {
                             final MaxObject object = info.tele();

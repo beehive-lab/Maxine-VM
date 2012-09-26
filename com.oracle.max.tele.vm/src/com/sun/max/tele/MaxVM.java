@@ -251,15 +251,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void removeThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException;
 
     /**
-     * Gets whatever information is known about the current state of memory management at a particular location in VM
-     * memory. Always returns a non-null description, even if nothing is known.
-     *
-     * @param address a location in VM memory
-     * @return information about the location with respect to memory management in the VM
-     */
-    MaxMemoryManagementInfo getMemoryManagementInfo(Address address);
-
-    /**
      * Determines if the heap and code sections in the boot image have been relocated.
      */
     boolean isBootImageRelocated();
