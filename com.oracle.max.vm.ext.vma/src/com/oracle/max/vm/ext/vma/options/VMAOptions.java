@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.vma.options;
 import static com.oracle.max.vm.ext.vma.VMABytecodes.*;
 import static com.oracle.max.vm.ext.vma.options.VMAOptions.AdviceModeOption.*;
 
+import java.util.*;
 import java.util.regex.Pattern;
 
 import com.oracle.max.vm.ext.vma.*;
@@ -33,17 +34,19 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.VMOptions;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Defines all the options that can be used to control the VMA system.
  *
- * Normally, VMA is enabled only at VM runtime {@link MaxineVM.Phase#RUNNING} through the {@code XX:VMA} style options.
- * However, it possible to enable VMA in the boot image, in which case the options apply to the classes
- * compiled into the boot image. By default the boot image options also apply to the runtime phase and any extra runtime
- * settings are additive. However, the boot image settings can be rest with the {@link #VMAReset} option.
+ * VMA is enabled only at VM runtime {@link MaxineVM.Phase#RUNNING} through the {@code XX:VMA} style options.
+ * However, JDK classes in the boot image can be deoptimized and instrumented at runtime.
  *
  * Note that that the {@link #VMA} option is dominant. If it is not set, the other options are ignored even if they are
  * set.
@@ -167,7 +170,6 @@ public class VMAOptions {
         VMOptions.addFieldOption("-XX:", "VMABI", "regex for bytecodes to match");
         VMOptions.addFieldOption("-XX:", "VMABX", "regex for bytecodes to not match");
         VMOptions.addFieldOption("-XX:", "VMAConfig", "use pre-defined configuration");
-        VMOptions.addFieldOption("-XX:", "VMAReset", "reset boot image options");
     }
 
     /**
@@ -215,11 +217,6 @@ public class VMAOptions {
     public static boolean VMA;
 
     /**
-     * When set at runtime causes the boot image settings to be reset (forgotten).
-     */
-    private static boolean VMAReset;
-
-    /**
      * The {@link VMAdviceHandler} handler class name.
      */
     private static String handlerClassName;
@@ -243,14 +240,8 @@ public class VMAOptions {
      * @return true iff advising is enabled, i.e. {@link #VMA == true}
      */
     public static boolean initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PRIMORDIAL) {
-            // TODO save boot settings
-        }
         // We execute the setup code below if and only if VMA is set.
-        if (VMA && (MaxineVM.isHosted() && phase == MaxineVM.Phase.HOSTED_COMPILING || phase == MaxineVM.Phase.RUNNING)) {
-            if (phase == MaxineVM.Phase.RUNNING) {
-                // TODO merge/reset boot settings
-            }
+        if (VMA && phase == MaxineVM.Phase.RUNNING) {
             // always exclude advising packages and key JDK classes
             String xPattern = X_PATTERN;
             if (VMACX != null) {
@@ -304,13 +295,18 @@ public class VMAOptions {
                     }
                 }
             }
+
             if (logger.enabled()) {
                 for (VMABytecodes b : VMABytecodes.values()) {
                     boolean[] state = bytecodeApply[b.ordinal()];
                     logger.logBytecodeSetting(b, state[0], state[1]);
                 }
             }
+
             advising = VMA;
+
+            checkBootImageJDKClasses();
+
         }
         return VMA;
     }
@@ -332,6 +328,43 @@ public class VMAOptions {
         }
     }
 
+    /**
+     * Any JDK classes built into the boot image that are subject to advising must be deoptimized
+     * and instrumented.
+     */
+    private static void checkBootImageJDKClasses() {
+        Collection<ClassActor> bootClassActors = ClassRegistry.BOOT_CLASS_REGISTRY.getClassActors();
+        ArrayList<TargetMethod> deoptMethods = new ArrayList<TargetMethod>();
+        for (ClassActor classActor : bootClassActors) {
+            String className = classActor.qualifiedName();
+            if (instrumentClass(className)) {
+                for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
+                    checkDeopt(staticMethodActor, deoptMethods);
+                }
+                for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
+                    checkDeopt(virtualMethodActor, deoptMethods);
+                }
+            }
+        }
+
+        new Deoptimization(deoptMethods).go();
+
+    }
+
+    private static void checkDeopt(ClassMethodActor classMethodActor, ArrayList<TargetMethod> deoptMethods) {
+        TargetMethod tm = classMethodActor.currentTargetMethod();
+        if (tm != null && !tm.isBaseline()) {
+            deoptMethods.add(tm);
+        }
+    }
+
+    private static boolean instrumentClass(String className) {
+        boolean include = classInclusionPattern == null || classInclusionPattern.matcher(className).matches();
+        if (include) {
+            include = !classExclusionPattern.matcher(className).matches();
+        }
+        return include;
+    }
 
     /**
      * Check if given method should be instrumented for advising.
@@ -342,10 +375,7 @@ public class VMAOptions {
         final String className = cma.holder().typeDescriptor.toJavaString();
         boolean include = false;
         if (advising) {
-            include = classInclusionPattern == null || classInclusionPattern.matcher(className).matches();
-            if (include) {
-                include = !classExclusionPattern.matcher(className).matches();
-            }
+            include = instrumentClass(className);
         }
         if (logger.enabled()) {
             logger.logInstrument(cma, include);
