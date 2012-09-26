@@ -286,7 +286,7 @@ public class AdviceRecordsQuery extends QueryBase {
     }
 
     private static char adviceId(AdviceRecord ar) {
-        return AdviceMode.values()[ar.getAdviceMode()].name().charAt(0);
+        return AdviceMode.values()[ar.getAdviceModeAsInt()].name().charAt(0);
     }
 
     private static String toBci(AdviceRecord ar) {

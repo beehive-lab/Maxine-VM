@@ -33,6 +33,7 @@ import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.hosted.*;
@@ -76,6 +77,20 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     @Override
     protected T1XTargetMethod newT1XTargetMethod(T1XCompilation comp, boolean install) {
         return new VMAT1XTargetMethod(comp, install);
+    }
+
+    @Override
+    public T1XTargetMethod compile(ClassMethodActor method, boolean isDeopt, boolean install) {
+        // just to catch and report exceptions, VM will bailout to C1X but that is not helpful for VMA
+        try {
+            return super.compile(method, isDeopt, install);
+        } catch (Error ex) {
+            Log.print("VMA compilation of ");
+            Log.printMethod(method, false);
+            Log.print(" failed: ");
+            Log.println(ex.getMessage());
+            throw ex;
+        }
     }
 
     @Override

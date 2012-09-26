@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,42 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test;
+package com.oracle.max.vma.tools.qa.queries;
 
-public class New1 extends New0 {
+import java.io.*;
+import java.util.*;
 
-    New1(int a, int b) {
-        super(a, b);
-    }
+import com.oracle.max.vma.tools.qa.*;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.AdviceRecord;
 
-    New1(int a) {
-        super(a);
-        f();
-        g();
-    }
 
-    private static void f() {
-
-    }
-
-    private static void g() {
-        try {
-            h();
-        } catch (Throwable t) {
-
+public class DebugQuery extends QueryBase {
+    @Override
+    public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
+        TraceRun traceRun = traceRuns.get(traceFocus);
+        for (int i = 0; i < traceRun.adviceRecordList.size(); i++) {
+            AdviceRecord ar = traceRun.adviceRecordList.get(i);
+            int j = ProcessLog.getRecordListIndex(traceRun.adviceRecordList, ar);
+            if (i != j) {
+                System.err.println("failed to locate AdviceRecord: " + i);
+            }
         }
+        return null;
     }
 
-    private static void h() {
-        hx();
-    }
-
-    private static void hx() {
-        throw new RuntimeException();
-    }
-
-    public static void main(String[] args) {
-        new New1(1, 2);
-        new New1(3);
-    }
 }
