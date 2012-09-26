@@ -34,7 +34,7 @@ public interface MaxMemoryManagementInfo  {
     /**
      * @return the status of the memory location with respect to the VM's memory management.
      */
-    MaxMemoryStatus status();
+    MaxMemoryManagementStatus status();
 
     /**
      * @return a very short string presenting information about a memory location in the VM

@@ -81,7 +81,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
                     public void entered(Address address) {
                         MaxMemoryManagementInfo info = vm().heap().getMemoryManagementInfo(address);
                         // TODO: revisit this.
-                        if (info.status().equals(MaxMemoryStatus.LIVE)) {
+                        if (info.status().equals(MaxMemoryManagementStatus.LIVE)) {
                             final MaxObject object = info.tele();
                             focus().setHeapObject(object);
                         } else {

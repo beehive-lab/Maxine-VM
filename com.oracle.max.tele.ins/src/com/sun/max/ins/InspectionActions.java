@@ -784,7 +784,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             MaxMemoryManagementInfo info = inspection().vm().heap().getMemoryManagementInfo(focus().address());
             // TODO: revisit this.
-            if (info.status().equals(MaxMemoryStatus.LIVE)) {
+            if (info.status().equals(MaxMemoryManagementStatus.LIVE)) {
                 final MaxObject object = info.tele();
                 focus().setHeapObject(object);
             }

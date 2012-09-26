@@ -49,12 +49,12 @@ public abstract class RemoteRegionBasedHeapScheme extends AbstractRemoteHeapSche
         }
 
         // TODO (mlvdv) search through the regions handled by this manager
-        public MaxMemoryStatus status() {
+        public MaxMemoryManagementStatus status() {
             if (regionID < 0) {
                 final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
                 if (heapRegion == null) {
                     // The location is not in any memory region allocated by the heap.
-                    return MaxMemoryStatus.UNKNOWN;
+                    return MaxMemoryManagementStatus.UNKNOWN;
                 }
             }
              // Unclear what the semantics of this should be during GC.
@@ -67,7 +67,7 @@ public abstract class RemoteRegionBasedHeapScheme extends AbstractRemoteHeapSche
             // However, it doesn't maintain these as "linearly allocating memory region". This could be done by formatting
             // all reusable free space as such (instead of the chunk of free list as is done now). in any case.
 
-            return MaxMemoryStatus.LIVE;
+            return MaxMemoryManagementStatus.LIVE;
         }
 
         public String terseInfo() {

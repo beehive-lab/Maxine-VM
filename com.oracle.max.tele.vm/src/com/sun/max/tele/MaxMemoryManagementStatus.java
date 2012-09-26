@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ package com.sun.max.tele;
  * placeholder version, not in wide use, to be elaborated as the framework for memory
  * management in the VM and Inspector are generalized.
  */
-public enum MaxMemoryStatus {
+public enum MaxMemoryManagementStatus {
 
     // TODO (mlvdv) This is a preliminary rough cut; it will be elaborated in discussion with Laurent
     // as we define a more general way to manage and describe memory management in the VM.
@@ -39,40 +39,36 @@ public enum MaxMemoryStatus {
     // on one more members.
 
     /**
+     * The memory is not in the heap.
+     */
+    NONE("None", "Not in heap"),
+    /**
      * The memory is allocated and in use by the VM.
      */
-    LIVE("Live"),
+    LIVE("Live", "Allocated"),
 
     /**
-     * The memory is owned by the VM, but not in use and not being allocated from.
+     * The memory is owned by the heap, but not in use and not being allocated from.
      */
-    DEAD("Dead"),
+    DEAD("Dead", "Unused"),
 
     /**
      * The memory is owned by the VM, in a region from which allocation is happening, but which is not
      * in a part of the region that has been allocated yet.
      */
-    FREE("Free"),
-
-    /**
-     * The memory cannot be read.
-     */
-    UNREADABLE("Unreadable"),
-
-    /**
-     * The memory is in some state that is not otherwise described by this enumeration.
-     */
-    OTHER("Other"),
+    FREE("Free", "Available for allocation"),
 
     /**
      * The memory memory state cannot be determined.
      */
-    UNKNOWN("Unknown");
+    UNKNOWN("Unknown", "Status cannot be determined");
 
     private final String asString;
+    private final String description;
 
-    MaxMemoryStatus(String asString) {
+    MaxMemoryManagementStatus(String asString, String description) {
         this.asString = asString;
+        this.description = description;
     }
 
     public boolean isKnown() {
@@ -81,6 +77,10 @@ public enum MaxMemoryStatus {
 
     public boolean isLive() {
         return this == LIVE;
+    }
+
+    public String description() {
+        return description;
     }
 
     @Override

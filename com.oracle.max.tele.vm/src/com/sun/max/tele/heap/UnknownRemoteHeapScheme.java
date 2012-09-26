@@ -108,13 +108,13 @@ public final class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
         return new MaxMemoryManagementInfo() {
 
-            public MaxMemoryStatus status() {
+            public MaxMemoryManagementStatus status() {
                 for (MaxHeapRegion heapRegion : heap().heapRegions()) {
                     if (heapRegion.memoryRegion().contains(address)) {
-                        return MaxMemoryStatus.LIVE;
+                        return MaxMemoryManagementStatus.LIVE;
                     }
                 }
-                return MaxMemoryStatus.UNKNOWN;
+                return MaxMemoryManagementStatus.UNKNOWN;
             }
 
             public String terseInfo() {
