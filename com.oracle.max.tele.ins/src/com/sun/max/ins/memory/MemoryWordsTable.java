@@ -293,7 +293,7 @@ public final class MemoryWordsTable extends InspectorTable {
             final Address address = memoryWordRegion.getAddressAt(row);
             MaxMemoryRegion rowMemoryRegion = addressToMemoryRegion.get(address.toLong());
             if (rowMemoryRegion == null) {
-                rowMemoryRegion = new MemoryWordRegion(vm(), address, 1);
+                rowMemoryRegion = new MemoryWordRegion(inspection(), address, 1);
                 addressToMemoryRegion.put(address.toLong(), rowMemoryRegion);
             }
             return rowMemoryRegion;

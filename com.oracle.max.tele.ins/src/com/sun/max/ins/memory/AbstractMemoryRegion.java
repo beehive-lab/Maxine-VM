@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,64 +24,33 @@ package com.sun.max.ins.memory;
 
 import java.lang.management.*;
 
+import com.sun.max.ins.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
-/**
- * Representation of a span of memory in the VM.
- */
-public class InspectorMemoryRegion implements MaxMemoryRegion {
-
-    private final MaxVM vm;
-    private String regionName;
-
-    /**
-     * Default start location, as of creation time.
-     */
-    private final Address start;
-
-    /**
-     * Default size, as of creation time.
-     */
-    private final long nBytes;
+public abstract class AbstractMemoryRegion extends AbstractInspectionHolder implements MaxMemoryRegion {
 
     private MemoryUsage memoryUsage = null;
 
-    public InspectorMemoryRegion(MaxVM maxVM, String regionName, Address start, long nBytes) {
-        TeleError.check(nBytes == 0 || start.isNotZero(), "Non-empty memory regions may not start address 0");
-        this.vm = maxVM;
-        this.start = start;
-        this.nBytes = nBytes;
-        this.regionName = regionName;
-    }
-
-    public final MaxVM vm() {
-        return vm;
-    }
-
-    public final String regionName() {
-        return regionName;
-    }
-
-    public final Address start() {
-        return start;
-    }
-
-    public final long nBytes() {
-        return nBytes;
+    public AbstractMemoryRegion(Inspection inspection) {
+        super(inspection);
     }
 
     public final Address end() {
-        return start().plus(nBytes);
+        return start().plus(nBytes());
     }
 
     public final boolean isAllocated() {
         return MaxMemoryRegion.Util.isAllocated(this);
     }
 
-    public final void setDescription(String regionName) {
-        this.regionName = regionName;
+    public final MemoryUsage getUsage() {
+        if (memoryUsage == null) {
+            // Lazy initialization to avoid object creation circularities
+            // The default usage is 100%, i.e. the region is completely used.
+            this.memoryUsage = MaxMemoryRegion.Util.defaultUsage(this);
+        }
+        return memoryUsage;
     }
 
     public final boolean contains(Address address) {
@@ -108,12 +77,4 @@ public class InspectorMemoryRegion implements MaxMemoryRegion {
         return MaxMemoryRegion.Util.equal(this, otherMemoryRegion);
     }
 
-    public final MemoryUsage getUsage() {
-        if (memoryUsage == null) {
-            // Lazy initialization to avoid object creation circularities
-            // The default usage is 100%, i.e. the region is completely used.
-            this.memoryUsage = MaxMemoryRegion.Util.defaultUsage(this);
-        }
-        return memoryUsage;
-    }
 }

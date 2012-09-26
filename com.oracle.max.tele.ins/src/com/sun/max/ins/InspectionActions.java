@@ -3070,7 +3070,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetWordWatchpointAction(Address address, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.memoryRegion = new MemoryWordRegion(vm(), address, 1);
+            this.memoryRegion = new MemoryWordRegion(inspection(), address, 1);
             setEnabled(vm().watchpointManager().findWatchpoints(memoryRegion).isEmpty());
         }
 
@@ -3083,7 +3083,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 new MemoryRegionInputDialog(inspection(), vm().bootImageStart(), "Watch memory starting at address...", "Watch") {
                     @Override
                     public void entered(Address address, long nBytes) {
-                        setWatchpoint(new MemoryWordRegion(vm(), address, nBytes / nBytesInWord), "User specified region");
+                        setWatchpoint(new MemoryWordRegion(inspection(), address, nBytes / nBytesInWord), "User specified region");
                     }
                 };
             }
@@ -3165,7 +3165,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 new AddressInputDialog(inspection(), vm().bootImageStart(), "Watch memory...", "Watch") {
                     @Override
                     public void entered(Address address) {
-                        setWatchpoint(new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord()), "User specified region");
+                        setWatchpoint(new FixedMemoryRegion(inspection(), "", address, vm().platform().nBytesInWord()), "User specified region");
                     }
                 };
             }
@@ -3350,7 +3350,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             this.index = index;
             this.indexPrefix = indexPrefix;
             final Pointer address = object.origin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes));
-            this.memoryRegion = new InspectorMemoryRegion(vm(), "", address, elementKind.width.numberOfBytes);
+            this.memoryRegion = new FixedMemoryRegion(inspection(), "", address, elementKind.width.numberOfBytes);
             refresh(true);
         }
 
