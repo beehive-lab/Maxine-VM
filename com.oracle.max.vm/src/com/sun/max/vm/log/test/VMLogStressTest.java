@@ -288,7 +288,7 @@ public class VMLogStressTest {
 
     @HOSTED_ONLY
     @VMLoggerInterface(hidden = true, traceThread = true)
-    static interface XVMLoggerInterface {
+    interface XVMLoggerInterface {
         void foo1(long uuid, long index, long value1);
         void foo2(long uuid, long index, long value1, long value2);
         void foo3(long uuid, long index, long value1, long value2, long value3);
