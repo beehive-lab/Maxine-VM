@@ -194,7 +194,7 @@ public final class MSRemoteReference extends  RemoteReference {
             return label;
         }
 
-        // Transitions
+        // Transitions: default is Illegal
 
         /**
          * @see MSRemoteReference#discoveredUnreachable()
@@ -209,7 +209,6 @@ public final class MSRemoteReference extends  RemoteReference {
         void die(MSRemoteReference ref) {
             TeleError.unexpected("Illegal state transition on: " + ref);
         }
-
     }
 
     public static final class RefStateCount {

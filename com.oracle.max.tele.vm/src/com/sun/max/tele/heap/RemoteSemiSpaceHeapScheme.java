@@ -30,6 +30,7 @@ import java.text.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.InitializationListener;
@@ -42,30 +43,148 @@ import com.sun.max.tele.reference.semispace.SemiSpaceRemoteReference.RefStateCou
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.ms.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.runtime.*;
 
-
 /**
- * Inspector support for working with VM sessions using the VM's simple
- * {@linkplain SemiSpaceHeapScheme semispace collector},
- * an implementation of the VM's {@link HeapScheme} interface.
  * <p>
- * <strong>Comments are out of date</strong>
+ * Inspection support specialized for the basic {@linkplain MSHeapScheme SemiSpaceHeapScheme semispace implementation}
+ * of {@link HeapScheme} in the VM.
+ * </p>
  * <p>
- * The operation of the semispace collector in the VM is modeled using the
- * following techniques and invariants.
+ * This support will function correctly whether or not the VM is built in DEBUG mode. When built in DEBUG mode, the GC
+ * will {@linkplain Memory#ZAPPED_MARKER zap} all memory unallocated space.
+ * </p>
  * <p>
- * For each of the two regions, From-Space and To-Space, a reference map is maintained with the following structure:
+ * This implementation maintains two <em>maps</em> from VM memory locations to {@link RemoteReference}s: one for each of
+ * the two memory regions used by the scheme(<em>To-Space</em> and <em>From-Space</em>). When the collector
+ * <em>swaps</em> at the beginning of {@linkplain HeapPhase#ANALYZING analyzing}, the two maps are likewise swapped.
+ * Which is to say, the From-Space Map always contains references only into From-Space, wherever From-Space is located.
+ * </p>
+ * <p>
+ * References in this implementation can refer to {@linkplain ObjectStatus#LIVE LIVE} objects in the VM heap or to
+ * {@linkplain ObjectStatus#FORWARDER FORWARDER} quasi-objects. The term <em>quasi-object</em> refers to an area of
+ * memory formatted as if it were an ordinary Maxine VM object, but which is
  * <ul>
- * <li><strong>Key:</strong> an address (in the specific heap space of VM memory)
- * that has been discovered to be the location of an object origin</li>
- * <li><strong>Value:</strong> a weak reference to instance of {@link RemoteReference}
- * that has been created by this manager and whose origin is that address.</li>
+ * <li>only known to the GC implementation;</li>
+ * <li>is never given ordinary object behavior; and</li>
+ * <li>is never reachable from any object roots.</li>
+ * </ul>
+ * </p>
+ * <p>
+ * A {@link RemoteReference} represents the <em>identity</em> of an object (whether legitimate or quasi-) in the VM.
+ * Note that this perspective differs somewhat from that of the GC implementation.
+ * </p>
+ * <p>
+ * General map invariants:
+ * <ul>
+ * <li>The <em>To-Space Map</em> only holds references that are {@linkplain ObjectStatus#LIVE LIVE}.</li>
+ * <li>The <em>From-Space Map</em> only holds references that are {@linkplain ObjectStatus#LIVE LIVE} or
+ * {@linkplain ObjectStatus#FORWARDER FORWARD}.</li>
+ * <li>The maps never contain {@linkplain ObjectStatus#DEAD DEAD} references.</li>
+ * <li>The maps always refer only to locations in disjoint regions of memory, so memory location never appears
+ * simultaneously in both maps, which is to say there can only be one reference (and one kind of object) at a heap
+ * location.</li>
+ * <li>There are situations where a reference moves from one map to the other.</li>
+ * </ul>
+ * </p>
+ * <p>
+ * The following description enumerates more specifically what remote inspection can observe during each
+ * {@link HeapPhase}. The <em>canonical</em> relationship between references and VM objects allows the distinction
+ * between the two to be blurred for brevity in this description.
+ * </p>
+ * <p>
+ * <b>{@link HeapPhase#MUTATING} Summary</b>
+ * <p>
+ * During this phase new objects are allocated linearly in To-Space; From-Space contains nothing.
+ * </p>
+ * <ul>
+ * <li><b>To-Space Map:</b>
+ * <ol>
+ * <li>The To-Space Map contains only {@linkplain ObjectStatus#LIVE LIVE} object references.</li>
+ * <li>New {@linkplain ObjectStatus#LIVE LIVE} objects may be discovered and added to the To-Space Map.</li>
+ * <li>No other changes to the To-Space Map take place during the {@linkplain HeapPhase#MUTATING mutating} phase.</li>
+ * </ol>
+ * </li>
+ * <li><b>From-Space Map:</b>
+ * <ol>
+ * <li>The From-Space Map is empty.</li>
+ * <li>No objects appear in From-Space during the {@linkplain HeapPhase#MUTATING mutating} phase.</li>
+ * <li>When build in DEBUG mode, the GC {@linkplain Memory#ZAPPED_MARKER zaps} the entire From-Space.</li>
+ * </ol>
+ * </li>
  * </ul>
  * <p>
- *
+ * <b>{@link HeapPhase#ANALYZING} Summary</b>
+ * <p>
+ * This phase begins by swapping the two spaces, so that From-Space contains all allocated objects, reachable or not.
+ * The GC traces reachable objects, and as as they are discovered they are <em>copied</em> and stored by linear
+ * allocation into To-Space. A <em>forwarding pointer</em> is stored into the old copy so that all references to the
+ * object can eventually be redirected to the new copy by the end of the phase, at which time the contents of From-Space
+ * are forgotten (and zapped if in DEBUG mode).
+ * <ul>
+ * <li><b>To-Space Map:</b>
+ * <ol>
+ * <li>The To-Space Map is empty at the beginning of the phase.</li>
+ * <li>A previously unseen {@linkplain ObjectStatus#LIVE LIVE} object may be discovered in To-Space and added
+ * to the To-Space Map.  Such an object is known to be the new copy of an object in From-Space, but in this event
+ * the location of the old copy (now a <em>Forwarder</em> quasi-object) is unknown.</li>
+ * <li>A previously unseen {@linkplain ObjectStatus#FORWARDER FORWARDER} might be discovered in From-Space that is
+ * the old copy of a previously seen {@linkplain ObjectStatus#LIVE LIVE} object in the To-Space map.  In this event
+ * the location of the old copy (a <em>Forwarder</em> quasi-object) is recorded in the To-Space reference.</li>
+ * <li>A previously unseen {@linkplain ObjectStatus#FORWARDER FORWARDER} might be discovered in From-Space that is
+ * the old copy of a previously unseen {@linkplain ObjectStatus#LIVE LIVE} object in To-Space.  In this event a new
+ * {@linkplain ObjectStatus#LIVE LIVE} reference is added to the To-Space map, in which the location of its old copy
+ * is recorded.</li>
+ * <li>No other changes to the To-Space Map take place during the {@linkplain HeapPhase#ANALYZING analyzing} phase.</li>
+ * </ol>
+ * </li>
+ * <li><b>From-Space Map:</b>
+ * <ol>
+ * <li>The From-Space Map at the beginning of the phase contains precisely the contents of the To-Space map just before
+ * the beginning of the phase, at which point all contained references are {@linkplain ObjectStatus#LIVE LIVE}.  This
+ * reflects the assumption that all objects are live until proven otherwise, which can only be done at the end of the phase.</li>
+ * <li>A previously unseen {@linkplain ObjectStatus#LIVE LIVE} object may be discovered in From-Space and added
+ * to the From-Space Map.
+ * <li>A previously unseen {@linkplain ObjectStatus#FORWARDER FORWARDER} might be discovered in From-Space and added
+ * to the From-Space Map.  If the new copy of forwarded object has already been seen (and thus is in the To-Space Map),
+ * then the location of this old copy is recorded in that reference; if the new copy has not been seen, then a new
+ * {@linkplain ObjectStatus#LIVE LIVE} reference is created, the location of the old copy is recorded, and it is added
+ * to the To-Space Map.</li>
+ * <li>A previously unseen {@linkplain ObjectStatus#LIVE LIVE} object in From-Space may be discovered to have been forwarded.
+ * In this event, the reference is removed from the From-Space Map, assigned its new memory location, the location of this old
+ * copy recorded in it, and the reference is added to the To-Space Map.  A <em>new</em> quasi-object
+ * {@linkplain ObjectStatus#FORWARDER FORWARDER} is then created and added back into the From-Space Map.
+ * <li>No other changes to the From-Space Map take place during the {@linkplain HeapPhase#ANALYZING analyzing} phase.</li>
+ * </ol>
+ * </li>
+ * </ul>
+ * <p>
+ * <b>{@link HeapPhase#RECLAIMING} Summary</b>
+ * <p>
+ * At the beginning of this phase all reachable objects have been copied into To-Space and all references to them
+ * revised to the new location.  The contents of From-Space (unreachable objects and forwarders) are forgotten.  In
+ * DEBUG mode, the GC {@linkplain Memory#ZAPPED_MARKER zaps} the entire From-Space. This phase is extremely brief.</p>
+ * <ul>
+ * <li><b>To-Space Map:</b>
+ * <ol>
+ * <li>The To-Space Map contains only {@linkplain ObjectStatus#LIVE LIVE} object references.</li>
+ * <li>No changes to the To-Space Map take place during the {@linkplain HeapPhase#RECLAIMING reclaiming} phase.</li>
+ * </ol>
+ * </li>
+ * <li><b>From-Space Map:</b>
+ * <ol>
+ * <li>At the beginning of the phase, every entry in the From-Space map is removed and made {@linkplain ObjectStatus#DEAD DEAD}.
+ * This includes {@linkplain ObjectStatus#LIVE LIVE} references, which are now known to be unreachable, and
+ * {@linkplain ObjectStatus#FORWARDER FORWARDER} quasi-objects, which play no further role.</li>
+ * <li>The From-Space Map remains empty during the (brief) remainder of the {@linkplain HeapPhase#RECLAIMING reclaiming} phase.</li>
+ * </ol>
+ * </li>
+ * </ul>
  * @see SemiSpaceHeapScheme
+ * @see Memory#ZAPPED_MARKER
+ * @see SemiSpaceRemoteReference
  */
 public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
 
