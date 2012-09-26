@@ -358,7 +358,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
                     case DEAD:
                         deadCount++;
                         iterator.remove();
-                        Trace.line(TRACE_VALUE, tracePrefix() + ": DEAD reference removed from map " + teleObject.reference().toString() +
+                        Trace.line(TRACE_VALUE + 1, tracePrefix() + ": DEAD reference removed from map " + teleObject.reference().toString() +
                                         " gc=\"" + remoteRef.gcDescription() + "\"");
                         break;
                     default:
@@ -388,8 +388,6 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             }
         }
     }
-
-
 
     /**
      * Registers a type of surrogate object to be created for a specific VM object type.
