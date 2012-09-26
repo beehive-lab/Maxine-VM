@@ -101,7 +101,7 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * <li><b>Object Map:</b>
  * <ol>
  * <li>The Object Map contains only {@linkplain ObjectStatus#LIVE LIVE} object references.</li>
- * <li>New {@linkplain ObjectStatus#LIVE LIVE} objects may be discovered and added to the Object Map.</li>
+ * <li>Previously unseen {@linkplain ObjectStatus#LIVE LIVE} objects may be discovered and added to the Object Map.</li>
  * <li>No other changes to the Object Map take place during the {@linkplain HeapPhase#MUTATING mutating} phase.</li>
  * </ol></li>
  * <li><b>Free Space Map:</b>
@@ -148,7 +148,6 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * <li>No other changes to the Free Space Map take place during the {@linkplain HeapPhase#ANALYZING analyzing} phase.</li>
  * </ol></li></ul>
  * <p>
- *
  * <b>{@link HeapPhase#RECLAIMING} Summary</b>
  * <p>
  * During this phase the memory holding unreachable (<em>unmarked</em>) objects is reclaimed as <em>free space</em>, either
@@ -219,6 +218,7 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * @see Memory#ZAPPED_MARKER
  * @see Sweeper#minReclaimableSpace()
  * @see VmMarkBitmap
+ * @see MSRemoteReference
  */
 public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
 
