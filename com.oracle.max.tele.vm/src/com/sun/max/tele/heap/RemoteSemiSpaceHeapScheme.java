@@ -491,39 +491,57 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
         return new MaxMemoryManagementInfo() {
 
-            public MaxMemoryStatus status() {
+            public MaxMemoryManagementStatus status() {
                 final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
+                final HeapPhase phase = heap().phase();
                 if (heapRegion == null) {
                     // The location is not in any memory region allocated by the heap.
-                    return MaxMemoryStatus.UNKNOWN;
-                }
-                if (heap().phase().isCollecting()) {
-                    // Don't quibble if we're in a GC, as long as the address is in either the To or From regions.
-                    return MaxMemoryStatus.LIVE;
+                    return MaxMemoryManagementStatus.NONE;
                 }
                 if (heapRegion.entityName().equals(SemiSpaceHeapScheme.FROM_REGION_NAME)) {
-                    // When not in GC, everything in from-space is dead
-                    return MaxMemoryStatus.DEAD;
+                    // From-Space is generally DEAD, unless we're collecting, in which case we treat
+                    // the allocated portion of From-Space as LIVE for the time being.
+                    if (phase.isCollecting() && fromSpaceMemoryRegion.containsInAllocated(address)) {
+                        return MaxMemoryManagementStatus.LIVE;
+                    }
+                    return MaxMemoryManagementStatus.DEAD;
                 }
-                if (!heapRegion.memoryRegion().containsInAllocated(address)) {
-                    // everything in to-space after the global allocation mark is dead
-                    return MaxMemoryStatus.FREE;
-                }
-                for (TeleNativeThread teleNativeThread : vm().teleProcess().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
-                    TeleThreadLocalsArea teleThreadLocalsArea = teleNativeThread.localsBlock().tlaFor(SafepointPoll.State.ENABLED);
-                    if (teleThreadLocalsArea != null) {
-                        Word tlabDisabledWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME);
-                        Word tlabMarkWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_MARK_THREAD_LOCAL_NAME);
-                        Word tlabTopWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_TOP_THREAD_LOCAL_NAME);
-                        if (tlabDisabledWord.isNotZero() && tlabMarkWord.isNotZero() && tlabTopWord.isNotZero()) {
-                            if (address.greaterEqual(tlabMarkWord.asAddress()) && tlabTopWord.asAddress().greaterThan(address)) {
-                                return MaxMemoryStatus.FREE;
+                if (heapRegion.entityName().equals(SemiSpaceHeapScheme.TO_REGION_NAME)) {
+                    if (phase.isCollecting()) {
+                        // While collecting treat the whole allocated part of To-Space as LIVE
+                        if (toSpaceMemoryRegion.containsInAllocated(address)) {
+                            return MaxMemoryManagementStatus.LIVE;
+                        }
+                        return MaxMemoryManagementStatus.FREE;
+                    }
+                    // phase is MUTATING; look more closely at the allocations in each TLAB
+                    if (!toSpaceMemoryRegion.containsInAllocated(address)) {
+                        // everything in to-space after the global allocation mark is dead
+                        return MaxMemoryManagementStatus.FREE;
+                    }
+                    // TODO (mlvdv) tighten up this loop to return LIVE when it finds the TLAB
+                    // containing the address and it is before the mark.  I'm not sure of the exact math.
+                    for (TeleNativeThread teleNativeThread : vm().teleProcess().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
+                        TeleThreadLocalsArea teleThreadLocalsArea = teleNativeThread.localsBlock().tlaFor(SafepointPoll.State.ENABLED);
+                        if (teleThreadLocalsArea != null) {
+                            Word tlabDisabledWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME);
+                            Word tlabMarkWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_MARK_THREAD_LOCAL_NAME);
+                            Word tlabTopWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_TOP_THREAD_LOCAL_NAME);
+                            if (tlabDisabledWord.isNotZero() && tlabMarkWord.isNotZero() && tlabTopWord.isNotZero()) {
+                                if (address.greaterEqual(tlabMarkWord.asAddress()) && tlabTopWord.asAddress().greaterThan(address)) {
+                                    return MaxMemoryManagementStatus.FREE;
+                                }
                             }
                         }
                     }
+                    // Everything else should be live.
+                    return MaxMemoryManagementStatus.LIVE;
                 }
-                // Everything else should be live.
-                return MaxMemoryStatus.LIVE;
+                // Some other heap region such as boot or immortal; use the simple test
+                if (heapRegion.memoryRegion().containsInAllocated(address)) {
+                    return MaxMemoryManagementStatus.LIVE;
+                }
+                return MaxMemoryManagementStatus.FREE;
             }
 
             public String terseInfo() {

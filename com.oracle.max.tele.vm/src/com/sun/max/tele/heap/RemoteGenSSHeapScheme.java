@@ -422,27 +422,27 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
         return new MaxMemoryManagementInfo() {
             @Override
-            public MaxMemoryStatus status() {
+            public MaxMemoryManagementStatus status() {
                 if (address == null || address.isZero()) {
-                    return MaxMemoryStatus.UNKNOWN;
+                    return MaxMemoryManagementStatus.UNKNOWN;
                 }
                 final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
                 if (heapRegion == null) {
-                    return MaxMemoryStatus.UNKNOWN;
+                    return MaxMemoryManagementStatus.UNKNOWN;
                 }
                 if (contains(address)) {
                     switch(objectStatusAt(address)) {
                         case LIVE:
-                            return MaxMemoryStatus.LIVE;
+                            return MaxMemoryManagementStatus.LIVE;
                         case FORWARDER:
-                            return MaxMemoryStatus.LIVE;
+                            return MaxMemoryManagementStatus.LIVE;
                         case DEAD:
-                            return MaxMemoryStatus.DEAD;
+                            return MaxMemoryManagementStatus.DEAD;
                         case FREE:
-                            return MaxMemoryStatus.FREE;
+                            return MaxMemoryManagementStatus.FREE;
                     }
                 }
-                return MaxMemoryStatus.LIVE;
+                return MaxMemoryManagementStatus.LIVE;
             }
 
             @Override
