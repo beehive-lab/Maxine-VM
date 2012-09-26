@@ -77,7 +77,10 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     private final InspectorAction interactiveMakeViewByAddressAction;
     private final InspectorAction interactiveMakeViewByIDAction;
 
+    private final InspectorAction closeDeadViewsAction;
+
     private final List<InspectorAction> makeViewActions;
+    private final List<InspectorAction> closeViewActions;
 
     ObjectViewManager(final Inspection inspection) {
         super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -105,9 +108,14 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         interactiveMakeViewByAddressAction = new InteractiveViewObjectByAddressAction();
         interactiveMakeViewByIDAction = new InteractiveViewObjectByIDAction();
 
-        makeViewActions = new ArrayList<InspectorAction>(1);
+        closeDeadViewsAction = new CloseDeadViewsAction();
+
+        makeViewActions = new ArrayList<InspectorAction>(2);
         makeViewActions.add(interactiveMakeViewByAddressAction);
         makeViewActions.add(interactiveMakeViewByIDAction);
+
+        closeViewActions = new ArrayList<InspectorAction>(1);
+        closeViewActions.add(closeDeadViewsAction);
 
         Trace.end(1, tracePrefix() + "initializing");
     }
@@ -125,8 +133,17 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         return interactiveMakeViewByIDAction;
     }
 
+    public InspectorAction makeCloseDeadViewsAction() {
+        return closeDeadViewsAction;
+    }
+
     public InspectorAction makeViewAction(MaxObject object, String actionTitle) {
         return new ViewSpecifiedObjectAction(object, actionTitle);
+    }
+
+    @Override
+    public void vmStateChanged(boolean force) {
+        refreshActions();
     }
 
     @Override
@@ -139,6 +156,11 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     @Override
     protected List<InspectorAction> makeViewActions() {
         return makeViewActions;
+    }
+
+    @Override
+    protected List<InspectorAction> closeViewActions() {
+        return closeViewActions;
     }
 
     private ObjectView makeObjectView(Inspection inspection, MaxObject object) {
@@ -189,13 +211,15 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
                 }
             }
             if (objectView != null) {
-                objectToView.put(object, objectView);
+                //objectToView.put(object, objectView);
+                addView(object, objectView);
                 objectView.addViewEventListener(new ViewEventListener() {
 
                     @Override
                     public void viewClosing(InspectorView view) {
                         final ObjectView objectView = (ObjectView) view;
-                        assert objectToView.remove(objectView.object()) != null;
+                        removeView(objectView.object(), objectView);
+                        //assert objectToView.remove(objectView.object()) != null;
                     }
 
                 });
@@ -234,17 +258,46 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     }
 
     public void resetObjectToViewMapEntry(MaxObject oldObject, MaxObject newObject, ObjectView objectView) {
-        final ObjectView mappedView = objectToView.remove(oldObject);
-        assert mappedView == objectView;
-        final ObjectView collision = objectToView.put(newObject, objectView);
+        removeView(oldObject, objectView);
+        addView(newObject, objectView);
+    }
+
+    private void addView(MaxObject object, ObjectView view) {
+        final ObjectView collision = objectToView.put(object, view);
         assert collision == null;
+        refreshActions();
+    }
+
+    private void removeView(MaxObject object, ObjectView view) {
+        final ObjectView mappedView = objectToView.remove(object);
+        if (view != null) {
+            assert mappedView == view;
+        }
+        refreshActions();
+    }
+
+    private void refreshActions() {
+        for (InspectorAction action : makeViewActions) {
+            action.refresh(true);
+        }
+        for (InspectorAction action : closeViewActions) {
+            action.refresh(true);
+        }
     }
 
     /**
      * @return all existing instances of {@link ObjectView}, even if hidden or iconic.
      */
-    public Set<ObjectView> objectViews() {
+    private Set<ObjectView> objectViews() {
         return new HashSet<ObjectView>(objectToView.values());
+    }
+
+    private void closeDeadViews() {
+        for (ObjectView view : objectViews()) {
+            if (view.object().status().isDead()) {
+                view.dispose();
+            }
+        }
     }
 
     private final class InteractiveViewObjectByAddressAction extends InspectorAction {
@@ -301,6 +354,31 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         }
     }
 
+    private final class CloseDeadViewsAction extends InspectorAction {
+
+        CloseDeadViewsAction() {
+            super(inspection(), "Close all DEAD object views");
+        }
+
+        @Override
+        protected void procedure() {
+            closeDeadViews();
+        }
+
+        @Override
+        public
+        void refresh(boolean force) {
+            for (ObjectView view : objectToView.values()) {
+                if (view.object().status().isDead()) {
+                    setEnabled(true);
+                    return;
+                }
+
+            }
+            setEnabled(false);
+        }
+    }
+
     /**
      * Action:  creates a view for a specific heap object in the VM.
      */
@@ -319,5 +397,6 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
             focus().setHeapObject(object);
         }
     }
+
 
 }

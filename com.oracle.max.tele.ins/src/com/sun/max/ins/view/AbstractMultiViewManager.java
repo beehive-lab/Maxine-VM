@@ -56,6 +56,7 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
         this.shortName = shortName;
         this.longName = longName;
         this.deactivateAllAction = new DeactivateAllAction(shortName);
+        inspection().addInspectionListener(this);
         refresh();
     }
 
@@ -129,6 +130,9 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
                     }
                     menu.addSeparator();
                     menu.add(deactivateAllAction);
+                    for (InspectorAction closeViewAction : closeViewActions()) {
+                        menu.add(closeViewAction);
+                    }
                 } else {
                     for (InspectorAction makeViewAction : makeViewActions()) {
                         menu.add(makeViewAction);
@@ -179,6 +183,17 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
      * @return actions that can create a new view
      */
     protected List<InspectorAction> makeViewActions() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Gets a list of interactive (context-independent) actions that
+     * can close existing views.  These will be added to the view menu
+     * for this kind.
+     *
+     * @return actions that can close existing views
+     */
+    protected List<InspectorAction> closeViewActions() {
         return Collections.emptyList();
     }
 
