@@ -1228,10 +1228,6 @@ public abstract class TeleVM implements MaxVM {
         threadDetachListeners.remove(listener);
     }
 
-    public final MaxMemoryManagementInfo getMemoryManagementInfo(Address address) {
-        return heapAccess.getMemoryManagementInfo(address);
-    }
-
     /**
      * Acquires a lock on the VM process and related cached state; blocks until lock
      * can be acquired.  The lock is reentrant, so that nested lock acquisition behaves with

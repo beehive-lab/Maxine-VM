@@ -394,7 +394,7 @@ public final class MemoryWordsTable extends InspectorTable {
             String labelText = "";
             String toolTipText = tableModel.getRowDescription(row);
             final MaxMemoryRegion memoryRegionForRow = tableModel.getMemoryRegion(row);
-            MaxMemoryManagementInfo memoryManagementInfo = vm().getMemoryManagementInfo(memoryRegionForRow.start());
+            MaxMemoryManagementInfo memoryManagementInfo = vm().heap().getMemoryManagementInfo(memoryRegionForRow.start());
             if (memoryManagementInfo.status().isKnown()) {
                 // Only display something if we know something; blank otherwise.
                 labelText = memoryManagementInfo.terseInfo();
