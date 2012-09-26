@@ -115,6 +115,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             oldGenOverflow = false;
             outOfMemory = false;
             fullGCOccurred = false;
+            result = false;
             oldGenFreeSpace = Size.zero();
             youngGenFreeSpace = Size.zero();
         }
@@ -713,7 +714,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             if (VerifyAfterGC) {
                 verifyAfterFullCollection();
             }
-            if (resizingPolicy.resizeAfterFullGC(estimatedEvac, oldSpace.freeSpace(), oldSpaceMutatorOverflow)) {
+            final GenSSGCRequest gcRequest = genCollection.gcRequest();
+            final Size oldSpaceRequestedBytes = gcRequest.oldGenOverflow ?  gcRequest.requestedBytes : Size.zero();
+            if (resizingPolicy.resizeAfterFullGC(estimatedEvac, oldSpace.freeSpace(), oldSpaceMutatorOverflow, oldSpaceRequestedBytes)) {
                 resize(youngSpace, resizingPolicy.youngGenSize());
                 resize(oldSpace, resizingPolicy.oldGenSize());
             }
@@ -740,10 +743,16 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         if (gcRequest.outOfMemory) {
             gcRequest.result = false;
         } else {
+            // We take into account that the GC request was issued because of failed allocation directly in the old gen (e.g., for a large object).
+            // We may be in situation where the space left in the old gen is much smaller than the requestedBytes, yet, the young generation
+            // may be large enough to accommodate the request.
             gcRequest.result =
                 gcRequest.explicit ||
-                (gcRequest.oldGenOverflow && oldSpace.freeSpace().greaterEqual(gcRequest.requestedBytes)) ||
+                gcRequest.oldGenOverflow ? oldSpace.freeSpace().greaterEqual(gcRequest.requestedBytes) :
                 youngSpace.freeSpace().greaterEqual(gcRequest.requestedBytes);
+            if (gcRequest.result && gcRequest.oldGenOverflow && oldSpace.freeSpace().lessThan(gcRequest.requestedBytes)) {
+                FatalError.breakpoint();
+            }
         }
         final long endGCTime = System.currentTimeMillis();
         if (performFullGC) {
