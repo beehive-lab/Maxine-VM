@@ -560,7 +560,12 @@ public class ProcessLog {
     }
 
     /**
-     * Fixup the end creation record for object records where the after <init> was a forward ref.
+     * Fixup the end creation record for object records.
+     * If the trace has INVOKESPECIAL/AFTER records, this just means fixing up
+     * the case where the AFTER <init> was a forward reference.
+     *
+     * Otherwise, where we only have METHOD_ENTRY/RETURN pairs it means locating
+     * the matching RETURN for the <init> after the NEW.
      */
     private void fixupEndCreationRecords() {
         for (ObjectRecord objectRecord : objects.values()) {
@@ -581,9 +586,108 @@ public class ProcessLog {
                     }
                 }
                 */
-                objectRecord.setEndCreationRecord(objectRecord.beginCreationRecord);
+                int index = getRecordListIndex(objectRecord.beginCreationRecord);
+                assert index >= 0 : "failed to find creation record index";
+                int mIndex = getInitMethodEntry(objectRecord, index + 1);
+                // We define end creation to be the RETURN that matches this constructor invocation.
+                // There may be an arbitrary number of other method invocations in between
+                AdviceRecord endCreationRecord = null;
+                if (mIndex > 0) {
+                    int depth = 0;
+                    for (int i = mIndex + 1; i < adviceRecordList.size(); i++) {
+                        AdviceRecord ar = adviceRecordList.get(i);
+                        RecordType art = ar.getRecordType();
+                        if (art == MethodEntry) {
+                            depth++;
+                        } else if (art == Return || art == ReturnDouble || art == ReturnFloat || art == ReturnLong || art == ReturnObject || art == ReturnByThrow) {
+                            if (depth == 0) {
+                                endCreationRecord = ar;
+                                break;
+                            } else {
+                                if (art == ReturnByThrow) {
+                                    int pop = ar.getPackedValue();
+                                    depth -= pop;
+                                } else {
+                                    depth--;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    endCreationRecord = adviceRecordList.get(index + 1);
+                }
+                assert endCreationRecord != null : "failed to find end creation record";
+                objectRecord.setEndCreationRecord(endCreationRecord);
             }
         }
+    }
+
+    /**
+     * Attempt to locate the constructor METHOD_ENTRY for {@code objectRecord} starting at {@code index}.
+     * There may not be one if the class was not instrumented.
+     * @param objectRecord
+     * @param index
+     * @return index of METHOD_ENTRY revcord or -1 of not found
+     */
+    private int getInitMethodEntry(ObjectRecord objectRecord, int index) {
+        for (int i = index; i < adviceRecordList.size(); i++) {
+            AdviceRecord ar = adviceRecordList.get(i);
+            if (ar.getRecordType() == MethodEntry) {
+                ObjectRecord methodEntryObject = AdviceRecordHelper.getObjectRecord(ar);
+                if (objectRecord.id.equals(methodEntryObject.id)) {
+                    MethodRecord mr = AdviceRecordHelper.getMethod(ar);
+                    if (mr.name.equals("<init>")) {
+                        return i;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Find the index of the given {@link AdviceRecord} in {@code adviceRecordList}.
+     * @param ar
+     * @return
+     */
+    public static int getRecordListIndex(ArrayList<AdviceRecord> adviceRecordList, AdviceRecord ar) {
+        // list is sorted by time, so binary search.
+        int lwb = 0;
+        int upb = adviceRecordList.size() - 1;
+        while (lwb <= upb) {
+            int mid = (lwb + upb) >>> 1;
+            AdviceRecord candidate = adviceRecordList.get(mid);
+            if (candidate == ar) {
+                return mid;
+            } else if (candidate.time < ar.time) {
+                lwb = mid + 1;
+            } else if (candidate.time > ar.time) {
+                upb = mid - 1;
+            } else {
+                // equal but several records (either side of index) may have the same time
+                int sindex = mid;
+                while (sindex >= 0 && candidate.time == ar.time) {
+                    if (candidate == ar) {
+                        return sindex;
+                    }
+                    candidate = adviceRecordList.get(--sindex);
+                }
+                sindex = mid;
+                candidate = adviceRecordList.get(sindex);
+                while (sindex < adviceRecordList.size() && candidate.time == ar.time) {
+                    if (candidate == ar) {
+                        return sindex;
+                    }
+                    candidate = adviceRecordList.get(++sindex);
+                }
+                return -1; // fail, should never happen
+            }
+        }
+        return -1;
+    }
+
+    private int getRecordListIndex(AdviceRecord ar) {
+        return getRecordListIndex(adviceRecordList, ar);
     }
 
     private void objectsPut(String id, ObjectRecord td) {

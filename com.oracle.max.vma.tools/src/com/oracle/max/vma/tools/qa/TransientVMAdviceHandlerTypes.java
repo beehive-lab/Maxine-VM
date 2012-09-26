@@ -212,7 +212,7 @@ public class TransientVMAdviceHandlerTypes {
         public void setCodeModeBci(RecordType rt, AdviceMode adviceMode, short bci) {
             codeAndValue = adviceMode.ordinal() | (rt.ordinal() << AdviceRecord.CODE_SHIFT) | (bci << BCI_SHIFT);
             assert getRecordType() == rt;
-            assert adviceMode.ordinal() == getAdviceMode();
+            assert adviceMode.ordinal() == getAdviceModeAsInt();
             assert bci == getBci();
         }
 
@@ -226,8 +226,12 @@ public class TransientVMAdviceHandlerTypes {
             return RecordType.RECORD_TYPE_VALUES[recordOrd];
         }
 
-        public int getAdviceMode() {
+        public int getAdviceModeAsInt() {
             return (int) (codeAndValue & 1);
+        }
+
+        public AdviceMode getAdviceMode() {
+            return AdviceMode.values()[getAdviceModeAsInt()];
         }
 
         public int getPackedValue() {
@@ -248,7 +252,8 @@ public class TransientVMAdviceHandlerTypes {
 
         @Override
         public String toString() {
-            return getRecordType() + ": " + getAdviceMode() + "bci: " + getBci() + "pv: " + getPackedValue();
+            return getRecordType() + ": " + getAdviceMode() + " bci: " + getBci() + " pv: " + getPackedValue() +
+                " time: " + time;
         }
     }
 
