@@ -88,12 +88,16 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
          */
         boolean oldGenOverflow;
         /**
-         * Flags set by the GC to indicate that this request raised an out of memory error.
+         * Flag set by the GC to indicate that this request raised an out of memory error.
          */
         boolean outOfMemory;
 
         /**
-         * Result of last executed request. If  {@code true}, the request was satisfied.
+         * Flag set by the GC to indicate that this request caused a full GC.
+         */
+        boolean fullGCOccurred;
+        /**
+         * Flag set by the GC to indicate whether the submitted request was satisfied. If  {@code true}, the request was satisfied.
          */
         boolean result;
 
@@ -110,6 +114,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             super.clear();
             oldGenOverflow = false;
             outOfMemory = false;
+            fullGCOccurred = false;
+            oldGenFreeSpace = Size.zero();
+            youngGenFreeSpace = Size.zero();
         }
 
         @Override
@@ -128,6 +135,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                     Log.print(", Old free space = ");
                     Log.printToPowerOfTwoUnits(oldGenFreeSpace);
                     Log.println(" did not free enough--");
+                    if (outOfMemory) {
+                        Log.println("Out of memory");
+                    }
                 }
             }
             Log.unlock(lockDisabledSafepoints);
@@ -302,6 +312,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     @INSPECTED
     private int fullCollectionCount;
+
+    private int lastFullCollectionInvocationCount;
 
     /**
      * Support for heap verification. All live objects are evacuated to the old to space on minor collection.
@@ -488,7 +500,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         youngSpaceEvacuator.doBeforeGC();
         // NOTE: counter must be incremented before a heap phase change  to ANALYZING.
         fullCollectionCount++;
-        // Gather information needed in case we overflowed.
+        lastFullCollectionInvocationCount = genCollection.invocationCount();
+        // Gather information needed in case we overflowed.fullCollectionCount
         // We need these because the flipSpace method refill the allocator from the start of the to-space.
         final boolean minorEvacuationOverflow = resizingPolicy.minorEvacuationOverflow();
         final Address oldAllocatorTop =  oldSpace.allocator.unsafeTop();
@@ -530,6 +543,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     public Address refillEvacuationBuffer() {
         final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
         Size spaceLeft = allocator.freeSpace();
+        // FIXME: remove -- debug only
+        if (spaceLeft.isZero()) {
+            FatalError.breakpoint();
+        }
         Address startOfSpaceLeft = allocator.unsafeSetTopToLimit();
         FatalError.check(VmThread.current().isVmOperationThread(), "must only be called by VmOperation");
         // First, make sure we're doing minor collection here.
@@ -579,12 +596,15 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             if (endOfSpaceLeft.greaterThan(startOfSpaceLeft)) {
                 fillWithDeadObject(startOfSpaceLeft, endOfSpaceLeft);
             }
-            // Need to refill old gen allocator with young gen space.
+            // Need to refill old gen allocator with the (now empty) young gen space.
             resizingPolicy.notifyOutOfMemory();
             resizingPolicy.notifyFullEvacuationOverflow();
-            allocator.refill(youngSpace.space.start(), youngSpace.space.committedSize());
-            startOfSpaceLeft = allocator.unsafeSetTopToLimit();
-            HeapFreeChunk.format(startOfSpaceLeft,  youngSpace.space.committedSize());
+            final Size refillSize = youngSpace.space.committedSize();
+            startOfSpaceLeft = youngSpace.space.start();
+            allocator.refill(startOfSpaceLeft, refillSize);
+            // Now format and return the whole young space to old gen evacuator.
+            allocator.unsafeSetTopToLimit();
+            HeapFreeChunk.format(startOfSpaceLeft,  refillSize);
             return startOfSpaceLeft;
         } else {
             FatalError.unexpected("Shouldn't refill evacuation buffer outside of GC operations");
@@ -677,7 +697,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                             evacTimers.get(WEAK_REF).getLastElapsedTime());
             timeLogger.logGcTimes(invocationCount, true, evacTimers.get(TOTAL).getLastElapsedTime());
         }
-        if (resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace(), oldSpaceMutatorOverflow) || AlwaysFullGC) {
+        final boolean performFullGC = resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace(), oldSpaceMutatorOverflow) || AlwaysFullGC;
+        if (performFullGC) {
             // Force a temporary transition to MUTATING state.
             // This simplifies the inspector's maintenance of references state and GC counters.
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
@@ -697,7 +718,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 resize(oldSpace, resizingPolicy.oldGenSize());
             }
             evacTimers.stop(TOTAL);
-            lastFullGCTime = System.currentTimeMillis() - lastFullGCTime;
 
             if (Heap.logGCTime()) {
                 timeLogger.logPhaseTimes(invocationCount,
@@ -710,19 +730,27 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 timeLogger.logGcTimes(invocationCount, false, evacTimers.get(TOTAL).getLastElapsedTime());
             }
         }
-        // WARNING: do not load the gcRequest before the evacuation code as the GCRequest may be a young object and its reference
-        // may be stored on this stack frame and may not be processed by the GC (FIXME: why ?)
+        // WARNING: do not use a local variable holding the gcRequest across evacuation as the GCRequest may be a young object and therefore relocate between
+        // two uses. The stack frame of this method somehow is not processed by the GC (FIXME: why ?).
         final GenSSGCRequest gcRequest = genCollection.gcRequest();
         gcRequest.lastInvocationCount = invocationCount;
-        gcRequest.outOfMemory = resizingPolicy.outOfMemory();
         gcRequest.oldGenFreeSpace = oldSpace.freeSpace();
         gcRequest.youngGenFreeSpace = youngSpace.freeSpace();
-        gcRequest.result =
-            gcRequest.explicit ||
-            (gcRequest.oldGenOverflow && oldSpace.freeSpace().greaterEqual(gcRequest.requestedBytes)) ||
-            youngSpace.freeSpace().greaterEqual(gcRequest.requestedBytes);
-
-        accumulatedGCTime = System.currentTimeMillis() - startGCTime;
+        gcRequest.outOfMemory = resizingPolicy.outOfMemory();
+        if (gcRequest.outOfMemory) {
+            gcRequest.result = false;
+        } else {
+            gcRequest.result =
+                gcRequest.explicit ||
+                (gcRequest.oldGenOverflow && oldSpace.freeSpace().greaterEqual(gcRequest.requestedBytes)) ||
+                youngSpace.freeSpace().greaterEqual(gcRequest.requestedBytes);
+        }
+        final long endGCTime = System.currentTimeMillis();
+        if (performFullGC) {
+            gcRequest.fullGCOccurred = performFullGC;
+            lastFullGCTime = endGCTime;
+        }
+        accumulatedGCTime = endGCTime - startGCTime;
         Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
     }
@@ -776,7 +804,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     @Override
     public long maxObjectInspectionAge() {
-        return lastFullGCTime;
+        return System.currentTimeMillis() - lastFullGCTime;
     }
 
     /**
