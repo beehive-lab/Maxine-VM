@@ -434,9 +434,6 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
             return false;
         }
         // Should we grow ?
-        if (oldSpaceRequestedBytes.greaterThan(estimatedEvacuation)) {
-            FatalError.breakpoint();
-        }
         final Size oldFreeSpaceNeeded = estimatedEvacuation.greaterThan(oldSpaceRequestedBytes) ? estimatedEvacuation : oldSpaceRequestedBytes;
         return canIncreaseSize(oldFreeSpaceNeeded, oldGenFreeSpace);
     }

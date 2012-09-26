@@ -101,8 +101,13 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
          */
         boolean result;
 
-        // Debug support for now
+        /**
+         * Free space in old generation after this GC request.
+         */
         Size oldGenFreeSpace;
+        /**
+         * Free space in young generation after this GC request.
+         */
         Size youngGenFreeSpace;
 
         protected GenSSGCRequest(VmThread thread) {
@@ -527,7 +532,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         youngSpaceEvacuator.doAfterGC();
         oldSpaceEvacuator.setGCOperation(null);
         if (resizingPolicy.fullEvacuationOverflow()) {
-            FatalError.breakpoint();
             // Re-establish the allocators.
             FatalError.check(oldSpace.allocator.start().equals(youngSpace.space.start()), "invariant violated for full evacuation overflow");
             final Address top = oldSpace.allocator.unsafeTop();
@@ -544,10 +548,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     public Address refillEvacuationBuffer() {
         final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
         Size spaceLeft = allocator.freeSpace();
-        // FIXME: remove -- debug only
-        if (spaceLeft.isZero()) {
-            FatalError.breakpoint();
-        }
         Address startOfSpaceLeft = allocator.unsafeSetTopToLimit();
         FatalError.check(VmThread.current().isVmOperationThread(), "must only be called by VmOperation");
         // First, make sure we're doing minor collection here.
@@ -591,8 +591,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             // The GC has run out of old space to evacuate live objects. This happens when the previous minor collection has already overflowed into the from space and
             //  overflow + live(old) > old-semi-space.  However, note that  overflow + live(old) <= old-semi-space + young space.
             // In this case, we just want to have enough to (1) complete the GC and (2) let the mutator catch the OOM.
-            // So we just overflow back to the young space by refilling with the evacuation buffer with the young gen,  and we'll resume after GC with a non empty young generation and a full old generation.
-            FatalError.breakpoint();
+            // So we just overflow back to the young space by refilling with the evacuation buffer with the young gen,  and we'll resume after GC with a non empty young generation and
+            // a full old generation.
             Address endOfSpaceLeft = allocator.hardLimit();
             if (endOfSpaceLeft.greaterThan(startOfSpaceLeft)) {
                 fillWithDeadObject(startOfSpaceLeft, endOfSpaceLeft);
@@ -750,9 +750,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 gcRequest.explicit ||
                 gcRequest.oldGenOverflow ? oldSpace.freeSpace().greaterEqual(gcRequest.requestedBytes) :
                 youngSpace.freeSpace().greaterEqual(gcRequest.requestedBytes);
-            if (gcRequest.result && gcRequest.oldGenOverflow && oldSpace.freeSpace().lessThan(gcRequest.requestedBytes)) {
-                FatalError.breakpoint();
-            }
         }
         final long endGCTime = System.currentTimeMillis();
         if (performFullGC) {
