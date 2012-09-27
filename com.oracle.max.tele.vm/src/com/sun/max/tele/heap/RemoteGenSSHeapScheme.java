@@ -424,12 +424,14 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             @Override
             public MaxMemoryManagementStatus status() {
                 if (address == null || address.isZero()) {
-                    return MaxMemoryManagementStatus.UNKNOWN;
+                    return MaxMemoryManagementStatus.NONE;
                 }
                 final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
                 if (heapRegion == null) {
-                    return MaxMemoryManagementStatus.UNKNOWN;
+                    // The location is not in any memory region allocated by the heap.
+                    return MaxMemoryManagementStatus.NONE;
                 }
+                // TODO (mlvdv) using ObjectStatusAt() isn't correct, but unsure what to do
                 if (contains(address)) {
                     switch(objectStatusAt(address)) {
                         case LIVE:

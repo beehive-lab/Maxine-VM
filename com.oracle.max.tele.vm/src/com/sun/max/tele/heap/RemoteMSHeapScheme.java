@@ -35,6 +35,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxMarkBitmap.MarkColor;
 import com.sun.max.tele.TeleVM.InitializationListener;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.heap.region.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
@@ -44,6 +45,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.ms.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * <p>
@@ -500,28 +502,46 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     }
 
 
-    // TODO (mlvdv)  fix
+    // TODO (mlvdv)  I took a stab at this; not sure how accurate, especially when collecting
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
         return new MaxMemoryManagementInfo() {
 
             public MaxMemoryManagementStatus status() {
-                // TODO (mlvdv) ensure the location is in one of the regions being managed.
                 final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
+                final HeapPhase phase = heap().phase();
                 if (heapRegion == null) {
                     // The location is not in any memory region allocated by the heap.
-                    return MaxMemoryManagementStatus.UNKNOWN;
+                    return MaxMemoryManagementStatus.NONE;
                 }
-
-                // Unclear what the semantics of this should be during GC.
-                // We should be able to tell past the marking phase if an address point to a live object.
-                // But what about during the marking phase ? The only thing that can be told is that
-                // what was dead before marking begin should still be dead during marking.
-
-                // TODO (ld) This requires the inspector to know intimately about the heap structures.
-                // The current MS scheme  linearly allocate over chunk of free space discovered during the past MS.
-                // However, it doesn't maintain these as "linearly allocating memory region". This could be done by formatting
-                // all reusable free space as such (instead of the chunk of free list as is done now). in any case.
-
+                if (!objectSpaceMemoryRegion.contains(address)) {
+                 // In some other heap region such as boot or immortal; use the simple test
+                    if (heapRegion.memoryRegion().containsInAllocated(address)) {
+                        return MaxMemoryManagementStatus.LIVE;
+                    }
+                    return MaxMemoryManagementStatus.FREE;
+                }
+                if (!objectSpaceMemoryRegion.containsInAllocated(address)) {
+                    // In the dynamic heap, but not yet made available for allocation
+                    return MaxMemoryManagementStatus.DEAD;
+                }
+                if (phase.isCollecting()) {
+                    // Not sure what can be done here; assume LIVE
+                    return MaxMemoryManagementStatus.LIVE;
+                }
+                for (TeleNativeThread teleNativeThread : vm().teleProcess().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
+                    TeleThreadLocalsArea teleThreadLocalsArea = teleNativeThread.localsBlock().tlaFor(SafepointPoll.State.ENABLED);
+                    if (teleThreadLocalsArea != null) {
+                        Word tlabDisabledWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME);
+                        Word tlabMarkWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_MARK_THREAD_LOCAL_NAME);
+                        Word tlabTopWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_TOP_THREAD_LOCAL_NAME);
+                        if (tlabDisabledWord.isNotZero() && tlabMarkWord.isNotZero() && tlabTopWord.isNotZero()) {
+                            if (address.greaterEqual(tlabMarkWord.asAddress()) && tlabTopWord.asAddress().greaterThan(address)) {
+                                return MaxMemoryManagementStatus.FREE;
+                            }
+                        }
+                    }
+                }
+                // Everything else should be live.
                 return MaxMemoryManagementStatus.LIVE;
             }
 
@@ -667,9 +687,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     }
 
     /**
-     * Is the address in an area where an object could be either
-     * {@linkplain ObjectStatus#LIVE LIVE} or
-     * {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.
+     * Is the address in an area where an object could be?
      */
     private boolean inLiveArea(Address address) {
         // TODO (mlvdv) refine
