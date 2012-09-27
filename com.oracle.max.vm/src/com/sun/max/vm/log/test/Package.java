@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,42 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test;
+package com.sun.max.vm.log.test;
 
-public class New1 extends New0 {
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
-    New1(int a, int b) {
-        super(a, b);
+
+public class Package extends BootImagePackage {
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return System.getProperty("max.vmlog.stresstest") != null;
     }
 
-    New1(int a) {
-        super(a);
-        f();
-        g();
-    }
-
-    private static void f() {
-
-    }
-
-    private static void g() {
-        try {
-            h();
-        } catch (Throwable t) {
-
-        }
-    }
-
-    private static void h() {
-        hx();
-    }
-
-    private static void hx() {
-        throw new RuntimeException();
-    }
-
-    public static void main(String[] args) {
-        new New1(1, 2);
-        new New1(3);
-    }
 }

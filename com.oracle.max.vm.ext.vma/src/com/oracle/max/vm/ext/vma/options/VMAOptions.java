@@ -74,7 +74,7 @@ public class VMAOptions {
 
     private static final BM[] LIFETIME_BM = new BM[] {
         new BM(NEW, A), new BM(NEWARRAY, A), new BM(ANEWARRAY, A),
-        new BM(MULTIANEWARRAY, A), new BM(INVOKESPECIAL, A)
+        new BM(MULTIANEWARRAY, A), new BM(MENTRY, A), new BM(RETURN, B) // use RETURN as alternate for INVOKESPECIAL/AFTER
     };
 
     private static final BM[] READ_BM = compose(LIFETIME_BM, new BM[] {new BM(GETFIELD, B), new BM(GETSTATIC, B)});
@@ -97,12 +97,14 @@ public class VMAOptions {
         new BM(INVOKESTATIC, B), new BM(INVOKESPECIAL, B)
     };
 
+    /*
     private static final BM[] AFTERINVOKE_BM = new BM[] {
         new BM(INVOKEVIRTUAL, A), new BM(INVOKEINTERFACE, A),
         new BM(INVOKESTATIC, A), new BM(INVOKESPECIAL, A)
     };
+    */
 
-    private static final BM[] INVOKE_BM = compose(BEFOREINVOKE_BM, AFTERINVOKE_BM);
+    private static final BM[] INVOKE_BM = compose(BEFOREINVOKE_BM/*, AFTERINVOKE_BM*/);
     private static final BM[] METHOD_ENTRY_EXIT_BM = compose(METHOD_ENTRY_BM, METHOD_EXIT_BM);
 
     private static final BM[] ARRAYLOAD_BM = new BM[] {new BM(IALOAD, B), new BM(LALOAD, B), new BM(FALOAD, B),
