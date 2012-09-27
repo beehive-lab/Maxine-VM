@@ -434,4 +434,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         refresh(true);
     }
 
+    public void cardTableIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit) {
+    }
+
 }

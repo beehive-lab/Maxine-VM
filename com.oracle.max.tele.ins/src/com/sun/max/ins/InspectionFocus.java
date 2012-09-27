@@ -532,7 +532,42 @@ public class InspectionFocus extends AbstractInspectionHolder {
         for (ViewFocusListener listener : copyListeners()) {
             listener.markBitIndexFocusChanged(oldMarkBitIndex, heapMarkBit);
         }
+    }
 
+    private int cardTableIndex;
+
+    private final Object cardTableIndexFocusTracer = new Object() {
+        @Override
+        public String toString() {
+            return tracePrefix() + "Focus(Heap card table index):  " + cardTableIndex;
+        }
+    };
+
+    /**
+     * Currently selected byte index in the VM's heap card table, -1 if none.
+     */
+    public int cardTableIndex() {
+        return cardTableIndex;
+    }
+
+    /**
+     * Whether there is a currently selected card table byte index.
+     */
+    public boolean hasCardTableIndex() {
+        return cardTableIndex >= 0;
+    }
+
+    /**
+     * Shifts the focus of the Inspection to a particular byte in the heap's card table.
+     * This is a view state change that can happen when there is no change to VM state.
+     */
+    public void setCardTIndex(int cardTableByteIndex) {
+        final int oldCardTableByteIndex = this.markBitIndex;
+        this.markBitIndex = cardTableByteIndex;
+        Trace.line(TRACE_VALUE, cardTableIndexFocusTracer);
+        for (ViewFocusListener listener : copyListeners()) {
+            listener.cardTableIndexFocusChanged(oldCardTableByteIndex, cardTableByteIndex);
+        }
     }
 
 }

@@ -104,9 +104,23 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
      * scheme using a mark-bitmap for trace-based collection, if {@link #hasMarkBitmap()} {@code == true} and if the bitmap has been
      * created.  {@code null} otherwise
      *
-     * @return the heap's {@link MaxMarkBitmap}, if one is available, {@code null} otherwiese.
+     * @return the heap's {@link MaxMarkBitmap}, if one is available, {@code null} otherwise.
      */
     MaxMarkBitmap markBitMap();
+
+    /**
+     * @return whether the current heap implementation uses a {@link MaxCardTable}.
+     */
+    boolean hasCardTable();
+
+    /**
+     * Return heap-specific implementation of {@link MaxCardTable} that the inspector can use to display card marking
+     * information for the heap scheme, if {@link #hasCardTable()} {@code == true} and if the bitmap has been created.
+     * {@code null} otherwise
+     *
+     * @return the heap's {@link MaxCardTable}, if one is available, {@code null} otherwise.
+     */
+    MaxCardTable cardTable();
 
     /**
      * Writes current statistics concerning inspection of the VM's heap.
