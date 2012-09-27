@@ -92,4 +92,18 @@ public interface RemoteHeapScheme extends RemoteScheme {
      */
     MaxMarkBitmap markBitMap();
 
+    /**
+     * @return {@code true} if the heap implementation uses a {@link MaxCardTable}, even if not yet created.
+     */
+    boolean hasCardTable();
+
+    /**
+     * Return heap-specific implementation of {@link MaxCardTable} for the heap scheme,
+     * if {@link #hasCardTable()} {@code == true} and if the bitmap has been created.
+     * {@code null} otherwise
+     *
+     * @return the heap's {@link MaxCardTable}, if one is available, {@code null} otherwise.
+     */
+    MaxCardTable cardTable();
+
 }

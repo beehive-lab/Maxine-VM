@@ -27,6 +27,8 @@ import com.sun.max.unsafe.*;
 
 /**
  * Interface for listening to changes of focus (view state) in the Inspector.
+ *
+ * @see InspectionFocus
  */
 public interface ViewFocusListener {
 
@@ -75,8 +77,13 @@ public interface ViewFocusListener {
     void heapObjectFocusChanged(MaxObject oldObject, MaxObject object);
 
     /**
-     * Notifies that the heap mark bit focus has changed (view state only), possibly to -1 meaning <em>none</em>.
+     * Notifies that the heap mark bit index focus has changed (view state only), possibly to -1 meaning <em>none</em>.
      */
     void markBitIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit);
+
+    /**
+     * Notifies that the heap card table byte index focus has changed (view state only), possibly to -1 meaning <em>none</em>.
+     */
+    void cardTableIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit);
 
 }

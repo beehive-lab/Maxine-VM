@@ -471,6 +471,16 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         };
     }
 
+    @Override
+    public boolean hasCardTable() {
+        return true;
+    }
+
+    @Override
+    public MaxCardTable cardTable() {
+        return null;
+    }
+
     public ObjectStatus objectStatusAt(Address origin) {
         TeleError.check(contains(origin), "Location is outside GenSSHeapScheme dynamic heap regions");
         if (isHeapFreeChunkOrigin(origin)) {

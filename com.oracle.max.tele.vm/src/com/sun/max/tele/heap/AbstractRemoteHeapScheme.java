@@ -131,6 +131,14 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         return null;
     }
 
+    public boolean hasCardTable() {
+        return false;
+    }
+
+    public MaxCardTable cardTable() {
+        return null;
+    }
+
     /**
      * @return surrogate for the VM object that implements the {@link HeapScheme} interface
      */

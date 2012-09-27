@@ -677,4 +677,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         return this.getClass().getSimpleName() + ":  " + getTitle();
     }
 
+    public void cardTableIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit) {
+    }
+
 }

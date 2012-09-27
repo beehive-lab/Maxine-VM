@@ -56,4 +56,7 @@ public class InspectionFocusAdapter implements ViewFocusListener {
 
     public void markBitIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit) {
     }
+
+    public void cardTableIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit) {
+    }
 }

@@ -35,6 +35,7 @@ import com.sun.max.ins.InvokeMethodLogView.InvokeMethodLogViewManager;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.debug.BreakpointsView.BreakpointsViewManager;
 import com.sun.max.ins.debug.MarkBitmapView.*;
+import com.sun.max.ins.debug.CardTableView.CardTableViewManager;
 import com.sun.max.ins.debug.RegistersView.RegistersViewManager;
 import com.sun.max.ins.debug.StackFrameView.StackFrameViewManager;
 import com.sun.max.ins.debug.StackView.StackViewManager;
@@ -93,6 +94,14 @@ public final class InspectionViews extends AbstractInspectionHolder {
             @Override
             public BreakpointsViewManager viewManager() {
                 final BreakpointsViewManager viewManager = BreakpointsView.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
+        CARD_TABLE(true, false, "The heap's CardTable") {
+            @Override
+            public CardTableViewManager viewManager() {
+                final CardTableViewManager viewManager = CardTableView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
