@@ -306,6 +306,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
 
     // Current view specifications.
     private MemoryWordRegion memoryWordRegion;
+    private Address memoryWordRegionStart;
 
     /**
      * The name of the region to display.  If {@code null}, always use the name of the region.  If the empty string, then synthesize a name.
@@ -481,6 +482,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
 
     @Override
     protected void createViewContent() {
+
+        memoryWordRegionStart = memoryWordRegion.start();
 
         table = new MemoryWordsTable(inspection(), this, memoryWordRegion, origin, instanceViewPreferences, setOriginToSelectionAction);
 
@@ -693,7 +696,15 @@ public final class MemoryView extends AbstractView<MemoryView> {
 
     @Override
     protected void refreshState(boolean force) {
-        table.refresh(force);
+        if (memoryWordRegion.start().equals(memoryWordRegionStart)) {
+            table.refresh(force);
+        } else if (viewMode() == ViewMode.WORD) {
+            // In Word mode, showing a region that has just moved.
+            // The table will update automatically, we just need to reset the UI state here
+            memoryWordRegionStart = memoryWordRegion.start();
+            origin = memoryWordRegionStart;
+            originField.setText(origin.toUnsignedString(16));
+        }
         setTitle();
     }
 
