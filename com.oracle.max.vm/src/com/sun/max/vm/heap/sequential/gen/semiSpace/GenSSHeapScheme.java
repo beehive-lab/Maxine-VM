@@ -340,6 +340,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      */
     private final DebugHeap.RefVerifier refVerifier = new DebugHeap.RefVerifier();
     /**
+     * Storage for recording references to be excluded from the set of verified by the reference verifier.
+     */
+    private final long [] refExclusions = new long[1];
+
+    /**
      * A verifier that checks that all roots are pointing to memory areas holding live objects.
      */
     private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(refVerifier);
@@ -388,6 +393,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             youngSpaceEvacuator.setDetailLogger(detailLogger);
             oldSpaceEvacuator.setDetailLogger(detailLogger);
         }
+        // this will be used at PRISTINE time to store the biased card table address as an exception to reference verification.
+        refVerifier.setExclusions(new long[] {1});
     }
 
     @Override
@@ -462,6 +469,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         DebugHeap.verifyRegion(ImmortalHeap.getImmortalHeap(), ImmortalHeap.getImmortalHeap().start(), ImmortalHeap.getImmortalHeap().mark(), refVerifier, detailLogger);
 
         // Code only point to memory region that contains live objects
+        verifyCodeRegion(Code.bootCodeRegion());
         verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
         verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
         oldSpace.visit(fotVerifier);
@@ -480,9 +488,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
             overflowedArea.setStart(oldSpaceAllocator.start());
             overflowedArea.setEnd(oldSpaceAllocator.unsafeTop());
-            refVerifier.setVerifiedSpaces(oldToSpace, overflowedArea);
+            refVerifier.setValidSpaces(oldToSpace, overflowedArea);
         } else {
-            refVerifier.setVerifiedSpace(oldSpace.space);
+            refVerifier.setValidHeapSpace(oldSpace.space);
         }
         verifyCommon();
         if (resizingPolicy.minorEvacuationOverflow()) {
@@ -499,7 +507,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             Memory.zapRegion(oldSpace.fromSpace);
         }
         noFromSpaceReferencesVerifiers.setEvacuatedSpace(oldSpace.fromSpace);
-        refVerifier.setVerifiedSpace(oldSpace.space);
+        refVerifier.setValidHeapSpace(oldSpace.space);
         verifyCommon();
         oldSpace.visit(noFromSpaceReferencesVerifiers);
     }
@@ -861,7 +869,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             oldSpace.allocator.setSizeLimit(resizingPolicy.maxOldGenSize());
             initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
             cardTableRSet.initializeXirStartupConstants();
-
+            refExclusions[0] = cardTableRSet.cardTable.biasedTableAddress().toLong();
+            refVerifier.setExclusions(refExclusions);
             /*
              * The evacuators include their own local allocation buffer, refilled via the EvacuationBufferProvider interface implemented by the GenSSHeapScheme.
              * The evacuators are initialized with the retireAfterEvacuation parameter to true. This allows the GenSSHeapScheme to

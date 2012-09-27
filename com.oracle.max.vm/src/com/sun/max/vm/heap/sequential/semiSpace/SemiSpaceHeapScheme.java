@@ -352,6 +352,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 swapSemiSpaces(); // Swap semispaces. From--> To and To-->From
                 stopTimer(clearTimer);
 
+                refVerifier.setValidSpaces(fromSpace, toSpace);
                 if (Heap.logGCPhases()) {
                     phaseLogger.logScanningRoots(VMLogger.Interval.BEGIN);
                 }
@@ -434,6 +435,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
 
                 // Post-verification of the heap.
+                refVerifier.setValidHeapSpace(toSpace);
                 verifyObjectSpaces(GCCallbackPhase.AFTER);
 
                 if (Heap.logGCTime()) {
@@ -541,7 +543,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 return forwardRef;
             }
             if (VerifyReferences) {
-                DebugHeap.verifyRefAtIndex(Address.zero(), 0, ref, toSpace, fromSpace);
+                refVerifier.verifyRefAtIndex(Address.zero(), 0, ref);
             }
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
