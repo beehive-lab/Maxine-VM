@@ -54,7 +54,7 @@ public abstract class RemoteRegionBasedHeapScheme extends AbstractRemoteHeapSche
                 final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
                 if (heapRegion == null) {
                     // The location is not in any memory region allocated by the heap.
-                    return MaxMemoryManagementStatus.UNKNOWN;
+                    return MaxMemoryManagementStatus.NONE;
                 }
             }
              // Unclear what the semantics of this should be during GC.

@@ -56,12 +56,7 @@ public enum MaxMemoryManagementStatus {
      * The memory is owned by the VM, in a region from which allocation is happening, but which is not
      * in a part of the region that has been allocated yet.
      */
-    FREE("Free", "Available for allocation"),
-
-    /**
-     * The memory memory state cannot be determined.
-     */
-    UNKNOWN("Unknown", "Status cannot be determined");
+    FREE("Free", "Available for allocation");
 
     private final String asString;
     private final String description;
@@ -72,7 +67,7 @@ public enum MaxMemoryManagementStatus {
     }
 
     public boolean isKnown() {
-        return this != UNKNOWN;
+        return this != NONE;
     }
 
     public boolean isLive() {
