@@ -42,7 +42,7 @@ import com.sun.max.vm.type.*;
 public class Log2RegionToByteMapTable {
     /**
      * Offset to the {@link #table} variable.
-     * This is primaly used to bypass write-barrier when setting the variable.
+     * This is primarily used to bypass write-barrier when setting the variable.
      */
     @FOLD
     public static int tableOffset() {
