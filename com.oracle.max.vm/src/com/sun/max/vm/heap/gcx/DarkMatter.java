@@ -31,6 +31,8 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -65,6 +67,8 @@ public final class DarkMatter {
     public static final ArrayClassActor<LongValue> DARK_MATTER_ARRAY =
         new ArrayClassActor<LongValue>(ClassRegistry.LONG, SymbolTable.makeSymbol(DARK_MATTER_CLASS_NAME));
 
+    public static final DarkMatterLogger logger = new DarkMatterLogger();
+
     /**
      * Variable-less class used to format the smallest possible dark-matter (i.e., two-words space).
      */
@@ -91,6 +95,9 @@ public final class DarkMatter {
             final Pointer origin = Layout.cellToOrigin(darkMatter.asPointer());
             Layout.writeHubReference(origin, Reference.fromJava(hub()));
             Layout.writeMisc(origin, Word.zero());
+            if (logger.enabled()) {
+                logger.logFormatSmall(darkMatter);
+            }
         }
 
         private SmallestDarkMatter() {
@@ -118,6 +125,10 @@ public final class DarkMatter {
     @FOLD
     private static Word hubWord() {
         return Reference.fromJava(hub()).toOrigin();
+    }
+
+    public static boolean isDarkMatter(Word hubWord) {
+        return hubWord.equals(hubWord()) || hubWord.equals(SmallestDarkMatter.hubWord());
     }
 
     /**
@@ -159,6 +170,9 @@ public final class DarkMatter {
             if (MaxineVM.isDebug()) {
                 Memory.setWords(start.plus(darkMatterHeaderSize()).asPointer(), length, Memory.zappedMarker());
             }
+            if (logger.enabled()) {
+                logger.logFormat(start, start.plus(size));
+            }
         } else if (size.equals(minSize())) {
             SmallestDarkMatter.format(start);
         } else {
@@ -183,4 +197,88 @@ public final class DarkMatter {
     public static void format(Address start, Address end) {
         format(start, end.minus(start).asSize());
     }
+
+    /*
+     * Interface for logging heap resizing decisions made by the GenSSHeapSizingPolicy.
+     * The interface uses long instead of Size to improve human-readability from the inspector's log views.
+     */
+    @HOSTED_ONLY
+    @VMLoggerInterface(defaultConstructor = true)
+    private interface DarkMatterLoggerInterface {
+        void format(
+                        @VMLogParam(name = "start") Address start,
+                        @VMLogParam(name = "end") Address end);
+        void formatSmall(
+                        @VMLogParam(name = "start") Address start);
+    }
+
+    static final class DarkMatterLogger extends DarkMatterLoggerAuto {
+        DarkMatterLogger() {
+            super("DarkMatter", "Dark Matter Formation");
+        }
+        @Override
+        protected void traceFormat(Address start, Address end) {
+            Log.print("dark matter @ ");
+            Log.printRange(start, end, true);
+        }
+
+        @Override
+        protected void traceFormatSmall(Address start) {
+            Log.print("small dark matter @ ");
+            Log.println(start);
+        }
+    }
+
+// START GENERATED CODE
+    private static abstract class DarkMatterLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            Format, FormatSmall;
+
+            @SuppressWarnings("hiding")
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected DarkMatterLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        protected DarkMatterLoggerAuto() {
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logFormat(Address start, Address end) {
+            log(Operation.Format.ordinal(), start, end);
+        }
+        protected abstract void traceFormat(Address start, Address end);
+
+        @INLINE
+        public final void logFormatSmall(Address start) {
+            log(Operation.FormatSmall.ordinal(), start);
+        }
+        protected abstract void traceFormatSmall(Address start);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //Format
+                    traceFormat(toAddress(r, 1), toAddress(r, 2));
+                    break;
+                }
+                case 1: { //FormatSmall
+                    traceFormatSmall(toAddress(r, 1));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
+
 }
