@@ -61,7 +61,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
     @INSPECTED
     final FreeHeapSpaceManager objectSpace;
 
-    private final Collect collect = new Collect();
+    private final MSCollection collect = new MSCollection();
 
     final AfterMarkSweepVerifier afterGCVerifier;
 
@@ -155,10 +155,9 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         }
     }
 
-    public boolean collectGarbage(Size requestedFreeSpace) {
-        collect.requestedSize = requestedFreeSpace;
-        boolean forcedGC = requestedFreeSpace.toInt() == 0;
-        if (forcedGC) {
+    public boolean collectGarbage() {
+        final GCRequest gcRequest = VmThread.current().gcRequest;
+        if (gcRequest.explicit) {
             collect.submit();
             return true;
         }
@@ -167,11 +166,11 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         // TODO (ld) might be better to try allocate the requested space and save the result for the caller.
         // This may avoid starvation case where in concurrent threads allocate the requested space
         // in after this method returns but before the caller allocated the space..
-        if (objectSpace.canSatisfyAllocation(requestedFreeSpace)) {
+        if (objectSpace.canSatisfyAllocation(gcRequest.requestedBytes)) {
             return true;
         }
-        VmOperationThread.submit(collect);
-        return objectSpace.canSatisfyAllocation(requestedFreeSpace);
+        collect.submit();
+        return objectSpace.canSatisfyAllocation(gcRequest.requestedBytes);
     }
 
     public boolean contains(Address address) {
@@ -206,16 +205,25 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
     public void writeBarrier(Reference from, Reference to) {
     }
 
+    private static final class MSGCRequest extends GCRequest {
+        protected MSGCRequest(VmThread thread) {
+            super(thread);
+        }
+    }
+
+    public GCRequest createThreadLocalGCRequest(VmThread vmThread) {
+        return new MSGCRequest(vmThread);
+    }
+
     /**
      * Class implementing the garbage collection routine.
      * This is the {@link VmOperationThread}'s entry point to garbage collection.
      */
-    final class Collect extends GCOperation {
-        public Collect() {
-            super("Collect");
+    final class MSCollection extends GCOperation {
+        public MSCollection() {
+            super("MSCollection");
         }
 
-        private Size requestedSize;
         private final TimerMetric reclaimTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
         private final TimerMetric totalPauseTime = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
@@ -305,6 +313,8 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
                 Log.print("End mark-sweep #");
                 Log.println(collectionCount);
             }
+            final GCRequest gcRequest = callingThread().gcRequest;
+            gcRequest.lastInvocationCount = invocationCount;
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
             stopTimer(totalPauseTime);
 

@@ -25,6 +25,7 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.heap.HeapScheme.GCRequest;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.runtime.*;
@@ -362,38 +363,38 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         return canIncreaseSize(overflowEvacuationSize, oldGenFreeSpace);
     }
 
-    private boolean canIncreaseSize(Size estimatedEvacuation, Size oldGenFreeSpace) {
-        final Size usedSpace = oldGenSize().minus(oldGenFreeSpace);
+    private boolean canIncreaseSize(Size oldFreeSpaceNeeded, Size currentOldFreeSpace) {
+        final Size usedSpace = oldGenSize().minus(currentOldFreeSpace);
         if (normalMode) {
             Size freeHeapSpace = heapSize.minus(usedSpace);
             if (heapSize.lessThan(maxHeapSize)) {
                 FatalError.check(normalMode, "Heap sizing policy must be in normal mode");
                 Size minFreeHeapSpace = percent(heapSize, minFreePercent);
                 if (freeHeapSpace.greaterEqual(minFreeHeapSpace)) {
-                    if (oldGenFreeSpace.greaterEqual(estimatedEvacuation)) {
+                    if (currentOldFreeSpace.greaterEqual(oldFreeSpaceNeeded)) {
                         return false;
                     }
                     // We're above the ratio of free space, but that isn't enough to cover the estimated evacuation space.
                     // Recompute the heap size using the estimated evacuation as free old generation space.
-                    adjustForEstimatedEvacuation(estimatedEvacuation, usedSpace, Size.zero());
+                    adjustForEstimatedEvacuation(oldFreeSpaceNeeded, usedSpace, Size.zero());
                     return true;
                 }
                 minFreeHeapSpace = alignUp(usedSpace.times(minFreePercent).dividedBy(100 - minFreePercent));
                 final Size targetGrowth = minFreeHeapSpace.minus(freeHeapSpace);
                 heapSize = usedSpace.plus(minFreeHeapSpace);
-                if (oldGenSize().minus(usedSpace).lessThan(estimatedEvacuation)) {
-                    adjustForEstimatedEvacuation(estimatedEvacuation, usedSpace, targetGrowth);
+                if (oldGenSize().minus(usedSpace).lessThan(oldFreeSpaceNeeded)) {
+                    adjustForEstimatedEvacuation(oldFreeSpaceNeeded, usedSpace, targetGrowth);
                 } else if (logger.enabled()) {
                     logger.logGrowHeap(heapSize.toLong(), youngGenSize().toLong(), oldGenSize().toLong(), targetGrowth.toLong());
                 }
                 return true;
-            }  else if (oldGenFreeSpace.lessThan(estimatedEvacuation)) {
-                return sizeDownYoungGen(estimatedEvacuation, oldGenFreeSpace);
+            }  else if (currentOldFreeSpace.lessThan(oldFreeSpaceNeeded)) {
+                return sizeDownYoungGen(oldFreeSpaceNeeded, currentOldFreeSpace);
             }
             return false;
         }
-        if (oldGenFreeSpace.lessThan(estimatedEvacuation)) {
-            return sizeDownYoungGen(estimatedEvacuation, oldGenFreeSpace);
+        if (currentOldFreeSpace.lessThan(oldFreeSpaceNeeded)) {
+            return sizeDownYoungGen(oldFreeSpaceNeeded, currentOldFreeSpace);
         }
         return false;
     }
@@ -402,17 +403,19 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      * Recompute heap and generation size based on information provided.
      * The new heap and generation sizes can be consulted using the methods {@link #heapSize()} {@link #youngGenSize()} {@link #oldGenSize()}.
      *
-     * @param estimatedEvacuation
-     * @param oldGenFreeSpace
+     * @param estimatedEvacuation estimation of the amount of bytes that will be evacuated in the next minor collection
+     * @param oldGenFreeSpace free space in the old generation
+     * @param oldGenMutatorOverflow {@code true} if a mutator overflowed the old generation
+     * @param oldSpaceRequestedBytes space requested in the old generation by the current {@link GCRequest}.
      * @return true if the policy requires changes of generation and heap sizes.
      */
-    public boolean resizeAfterFullGC(Size estimatedEvacuation, Size oldGenFreeSpace, boolean oldGenMutatorOverflow) {
+    public boolean resizeAfterFullGC(Size estimatedEvacuation, Size oldGenFreeSpace, boolean oldGenMutatorOverflow, Size oldSpaceRequestedBytes) {
         minorEvacuationOverflow = false;
         final Size usedSpace = oldGenSize().minus(oldGenFreeSpace);
         Size freeHeapSpace = heapSize.minus(usedSpace);
         Size maxFreeHeapSpace = percent(heapSize, maxFreePercent);
         // Should we shrink ?
-        // Don't both if the evacuator ended up out of memory.
+        // Don't bother if the evacuator ended up out of memory.
         // Also, for simplicity, we don't if the full GC was trigger because of a mutator overflow, otherwise we risk shrinking below what the mutator was requesting.
         // Trying to be smarter requires providing here the actual size requested by the mutator.
         if (!(oldGenMutatorOverflow || outOfMemory) && freeHeapSpace.greaterThan(maxFreeHeapSpace) && maxFreeHeapSpace.greaterEqual(estimatedEvacuation)) {
@@ -431,7 +434,8 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
             return false;
         }
         // Should we grow ?
-        return canIncreaseSize(estimatedEvacuation, oldGenFreeSpace);
+        final Size oldFreeSpaceNeeded = estimatedEvacuation.greaterThan(oldSpaceRequestedBytes) ? estimatedEvacuation : oldSpaceRequestedBytes;
+        return canIncreaseSize(oldFreeSpaceNeeded, oldGenFreeSpace);
     }
 
     public boolean outOfMemory() {

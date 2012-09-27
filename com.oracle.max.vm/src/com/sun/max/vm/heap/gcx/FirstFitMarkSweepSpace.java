@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.GCRequest;
 import com.sun.max.vm.heap.gcx.HeapRegionInfo.Flag;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.layout.*;
@@ -186,6 +187,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         final Size tailSize = roundedUpSize.minus(size);
         final int extraRegion = tailSize.greaterThan(0) && tailSize.lessThan(HeapSchemeAdaptor.minObjectSize())  ? 1 : 0;
         int numContiguousRegionNeeded = roundedUpSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt() + extraRegion;
+        GCRequest.setGCRequest(roundedUpSize);
 
         if (TraceLargeObjectAllocations) {
             Log.print("requesting #");
@@ -292,7 +294,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 if (MaxineVM.isDebug()) {
                     checkForSuspisciousGC(gcCount++);
                 }
-            } while(Heap.collectGarbage(roundedUpSize)); // Always collect for at least one region.
+            } while(Heap.collectGarbage()); // Always collect for at least one region.
             // Not enough freed memory.
             throw outOfMemoryError;
         }

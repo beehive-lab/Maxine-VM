@@ -24,6 +24,8 @@ package com.sun.max.vm.run.java;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.GCRequest;
+import com.sun.max.vm.thread.*;
 
 /**
  * A daemon thread that calls {@link Heap#collectGarbage(Size)} periodically.
@@ -43,10 +45,13 @@ class ExcessiveGCDaemon extends Thread {
 
     @Override
     public void run() {
+        final GCRequest gcRequest = VmThread.current().gcRequest;
         while (true) {
             try {
                 Thread.sleep(frequency);
-                Heap.collectGarbage(Size.zero());
+                // FIXME: should use a different flag to distinguish these "forced" GC from actual Runtime.gc call.
+                gcRequest.explicit = true;
+                Heap.collectGarbage();
             } catch (InterruptedException e) {
             }
         }
