@@ -412,15 +412,8 @@ public abstract class CodeManager {
      */
     void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
         if (includeBootCode) {
-            CodeRegion codeRegion = Code.bootCodeRegion();
-            Pointer firstCell = codeRegion.gcstart().asPointer();
-            Pointer cell = firstCell;
-            while (cell.lessThan(codeRegion.getAllocationMark())) {
-                cell = DebugHeap.checkDebugCellTag(firstCell, cell);
-                cell = cellVisitor.visitCell(cell);
-            }
+            visitAllIn(cellVisitor, Code.bootCodeRegion());
         }
-
         visitAllIn(cellVisitor, runtimeBaselineCodeRegion);
         visitAllIn(cellVisitor, runtimeOptCodeRegion);
     }
