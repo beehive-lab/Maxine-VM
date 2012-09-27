@@ -49,6 +49,7 @@ class ExcessiveGCDaemon extends Thread {
         while (true) {
             try {
                 Thread.sleep(frequency);
+                // FIXME: should use a different flag to distinguish these "forced" GC from actual Runtime.gc call.
                 gcRequest.explicit = true;
                 Heap.collectGarbage();
             } catch (InterruptedException e) {

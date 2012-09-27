@@ -131,7 +131,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             Log.print("--GC requested by thread ");
             Log.printThread(requester, false);
             if (explicit) {
-                Log.println("completed");
+                Log.println(" completed");
             } else {
                 if (satisfied) {
                     Log.println(" freed enough--");
@@ -435,7 +435,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     public boolean collectGarbage() {
         final GenSSGCRequest gcRequest = asGenSSGCRequest(VmThread.current().gcRequest);
         final Size requestedSize = gcRequest.requestedBytes;
-        final boolean submitRequest =  (gcRequest.explicit && !DisableExplicitGC) ||  gcRequest.oldGenOverflow ?  oldSpace.freeSpace().lessThan(requestedSize) : youngSpace.freeSpace().lessThan(requestedSize);
+        final boolean submitRequest =
+            (gcRequest.explicit && !DisableExplicitGC) ||
+            (gcRequest.oldGenOverflow ?  oldSpace.freeSpace().lessThan(requestedSize) : youngSpace.freeSpace().lessThan(requestedSize));
         if (submitRequest) {
             VMTI.handler().beginGC();
             genCollection.submit();

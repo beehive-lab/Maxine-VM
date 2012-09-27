@@ -58,7 +58,7 @@ public interface HeapScheme extends VMScheme {
          */
         public int lastInvocationCount;
         /**
-         * Indicate whether this request is for an explicit GC.
+         * Indicate whether this request is the result of a {@linkplain java.lang.Runtime#gc()} call.
          */
         public boolean explicit;
 
