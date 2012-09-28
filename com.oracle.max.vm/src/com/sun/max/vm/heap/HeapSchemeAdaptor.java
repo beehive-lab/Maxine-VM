@@ -163,10 +163,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             plantDeadObject(cell);
         } else {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("[");
-            Log.print(start);
-            Log.print(",");
-            Log.print(end);
+            Log.printRange(start, end, false);
             Log.print(" (");
             Log.print(end.minus(start));
             Log.print(")");

@@ -401,6 +401,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         cardTableRSet.initialize(phase);
+        if (MaxineVM.isHosted() && phase == BOOTSTRAPPING) {
+            // Make sure the DarkMatter logger has its options checked at boot image generation time.
+            DarkMatter.initialize();
+        }
         if (phase == PRISTINE) {
             lastFullGCTime = System.currentTimeMillis();
         }
