@@ -67,7 +67,10 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     /**
-     * @return length of this array in the VM.
+     * Gets the number of elements contained in the array; -1 if not yet available.  Once available, this
+     * value will be reported every time, even if the object dies and the length field is overwritten.
+     *
+     * @return length of this array in the VM when it was created.
      */
     public int length() {
         if (length < 0) {
