@@ -387,8 +387,7 @@ void core_dump() {
     log_print("dumping core....\n  heap @ ");
     log_print_symbol(image_heap());
     log_print_newline();
-    kill(getpid(), SIGABRT);
-    sleep(3);
+    abort();
 #endif
 }
 
