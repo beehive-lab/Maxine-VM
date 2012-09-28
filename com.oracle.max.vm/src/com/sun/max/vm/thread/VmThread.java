@@ -277,6 +277,8 @@ public class VmThread {
 
     private ConditionVariable waitingCondition = ConditionVariableFactory.create();
 
+    public final HeapScheme.GCRequest gcRequest = VMConfiguration.vmConfig().heapScheme().createThreadLocalGCRequest(this);
+
     /**
      * A "monitor" used to suspend the thread by {@link VmOperation}.
      */

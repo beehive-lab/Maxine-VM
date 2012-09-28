@@ -208,7 +208,11 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
 
     @Override
     public void removed(long id) {
-        store.removal(id);
+        getStoreAdaptorForThread(VmThread.current().id()).store.removal(id);
+    }
+
+    public void removed(long time, long id) {
+        removed(id);
     }
 
 // In the BytecodeAdvice method equivalents below, parameter arg1 is the bci value.
@@ -449,12 +453,12 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
 
     public void adviseBeforeCheckCast(long time, int arg1, Object arg2, Object arg3) {
         ClassActor ca = (ClassActor) arg3;
-        store.adviseBeforeCheckCast(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg1), ca.name(), state.readId(ca.classLoader));
+        store.adviseBeforeCheckCast(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2), ca.name(), state.readId(ca.classLoader));
     }
 
     public void adviseBeforeInstanceOf(long time, int arg1, Object arg2, Object arg3) {
         ClassActor ca = (ClassActor) arg3;
-        store.adviseBeforeInstanceOf(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg1), ca.name(), state.readId(ca.classLoader));
+        store.adviseBeforeInstanceOf(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2), ca.name(), state.readId(ca.classLoader));
     }
 
     public void adviseBeforeMonitorEnter(long time, int arg1, Object arg2) {

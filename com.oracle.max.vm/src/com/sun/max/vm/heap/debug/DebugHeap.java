@@ -186,13 +186,29 @@ public class DebugHeap {
         }
     }
 
+    /**
+     * Verifies that a reference points into the bounds of  valid heap space.
+     * This is a gross verification, i.e., it doesn't verify if the reference is actual to a valid object in a live part of the heap.
+     */
     public static final class RefVerifier extends PointerIndexVisitor {
+        /**
+         * An address space in which valid objects can be found apart from the boot {@linkplain Heap#bootHeapRegion heap} and
+         * {@linkplain Code#bootCodeRegion code} regions. This value is ignored if {@code null}.
+         */
         MemoryRegion space1;
+        /**
+         * A second address space in which valid objects can be found apart from the boot {@linkplain Heap#bootHeapRegion heap} and
+         * {@linkplain Code#bootCodeRegion code} regions. This value is ignored if {@code null}.
+         */
         MemoryRegion space2;
+        /**
+         * Array holding references values (other than {@code null}  that must be excluded from verification.
+         */
+        long [] exclusions;
 
         public RefVerifier() {
-
         }
+
         public RefVerifier(MemoryRegion space) {
             this.space1 = space;
         }
@@ -201,72 +217,102 @@ public class DebugHeap {
             this.space1 = space1;
             this.space2 = space2;
         }
-        @Override
-        public void visit(Pointer pointer, int index) {
-            DebugHeap.verifyRefAtIndex(pointer, index, pointer.getReference(index), space1, space2);
+
+        /**
+         * Verifies that a reference value denoted by a given base pointer and index points into a known object address space.
+         *
+         * @param address the base pointer of a reference. If this value is {@link Address#zero()}, then both it and {@code
+         *            index} are ignored.
+         * @param index the offset in words from {@code address} of the reference to be verified
+         * @param ref the reference to be verified
+         * @param space1 an address space in which valid objects can be found apart from the boot
+         *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions. This value is
+         *            ignored if null.
+         * @param space2 another address space in which valid objects can be found apart from the boot
+         *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions. This value is
+         *            ignored if null.
+         */
+        public void verifyRefAtIndex(Address address, int index, Reference ref) {
+            if (ref.isZero()) {
+                return;
+            }
+            if (isTagging()) {
+                checkNonNullRefTag(ref);
+            }
+            if (CodePointer.isCodePointer(ref)) {
+                return;
+            }
+            final Pointer origin = ref.toOrigin();
+            if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.contains(origin)) {
+                return;
+            }
+            if (space1 != null && space1.contains(origin)) {
+                return;
+            }
+            if (space2 != null && space2.contains(origin)) {
+                return;
+            }
+            if (exclusions != null) {
+                for (int i = 0; i < exclusions.length; i++) {
+                    if (origin.equals(Pointer.fromLong(exclusions[i]))) {
+                        return;
+                    }
+                }
+            }
+            Log.print("invalid ref: ");
+            Log.print(origin.asAddress());
+            if (!address.isZero()) {
+                Log.print(" @ ");
+                Log.print(address);
+                Log.print("+");
+                Log.print(index * Word.size());
+            }
+            Log.println();
+            FatalError.unexpected("invalid ref");
         }
 
-        public void setVerifiedSpace(MemoryRegion space) {
+        @Override
+        public void visit(Pointer pointer, int index) {
+            verifyRefAtIndex(pointer, index, pointer.getReference(index));
+        }
+
+        /**
+         * Set the verifier to include one extra valid memory region in addition to the boot, code and immortal heap regions.
+         * This replaces all previous heap space (except for the default one).
+         * @param space a memory region
+         */
+        public void setValidHeapSpace(MemoryRegion space) {
             this.space1 = space;
             this.space2 = null;
         }
 
-        public void setVerifiedSpaces(MemoryRegion space1, MemoryRegion space2) {
+        /**
+         * Set the verifier to include two extra valid memory region in addition to the boot, code and immortal heap regions.
+         * This replaces all previous heap space (except for the default ones).
+         * @param space1 a memory region
+         * @param space2 a memory region
+         */
+        public void setValidSpaces(MemoryRegion space1, MemoryRegion space2) {
             this.space1 = space1;
             this.space2 = space2;
         }
-    }
 
-    /**
-     * Verifies that a reference value denoted by a given base pointer and index points into a known object address space.
-     *
-     * @param address the base pointer of a reference. If this value is {@link Address#zero()}, then both it and {@code
-     *            index} are ignored.
-     * @param index the offset in words from {@code address} of the reference to be verified
-     * @param ref the reference to be verified
-     * @param space1 an address space in which valid objects can be found apart from the boot
-     *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions. This value is
-     *            ignored if null.
-     * @param space2 another address space in which valid objects can be found apart from the boot
-     *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions. This value is
-     *            ignored if null.
-     */
-    public static void verifyRefAtIndex(Address address, int index, Reference ref, MemoryRegion space1, MemoryRegion space2) {
-        if (ref.isZero()) {
-            return;
+        public void setExclusions(long [] exclusions) {
+            if (exclusions != null) {
+                for (int i = 0; i < exclusions.length; i++) {
+                    if (exclusions[i] == 0) {
+                        FatalError.unexpected("Can't set null as a special address");
+                    }
+                }
+            }
+            this.exclusions = exclusions;
         }
-        if (isTagging()) {
-            checkNonNullRefTag(ref);
-        }
-        if (CodePointer.isCodePointer(ref)) {
-            return;
-        }
-        final Pointer origin = ref.toOrigin();
-        if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.contains(origin)) {
-            return;
-        }
-        if (space1 != null && space1.contains(origin)) {
-            return;
-        }
-        if (space2 != null && space2.contains(origin)) {
-            return;
-        }
-        Log.print("invalid ref: ");
-        Log.print(origin.asAddress());
-        if (!address.isZero()) {
-            Log.print(" @ ");
-            Log.print(address);
-            Log.print("+");
-            Log.print(index * Word.size());
-        }
-        Log.println();
-        FatalError.unexpected("invalid ref");
     }
 
     protected static Hub checkHub(Pointer origin, RefVerifier refVerifier) {
         final Reference hubRef = Layout.readHubReference(origin);
         FatalError.check(!hubRef.isZero(), "null hub");
-        verifyRefAtIndex(origin, hubIndex(), hubRef, refVerifier.space1, refVerifier.space2);
+        refVerifier.visit(origin, hubIndex());
         final Hub hub = UnsafeCast.asHub(hubRef.toJava());
 
         Hub h = hub;
@@ -352,11 +398,9 @@ public class DebugHeap {
                 if (specificLayout.isHybridLayout()) {
                     TupleReferenceMap.visitReferences(hub, origin, verifier);
                 } else if (specificLayout.isReferenceArrayLayout()) {
-                    final MemoryRegion space1 = verifier.space1;
-                    final MemoryRegion space2 = verifier.space2;
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {
-                        verifyRefAtIndex(origin, index, Layout.getReference(origin, index), space1, space2);
+                        verifier.visit(origin, Layout.firstElementIndex());
                     }
                 }
                 cell = cell.plus(Layout.size(origin));

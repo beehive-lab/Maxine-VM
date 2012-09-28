@@ -148,7 +148,7 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
             out.printf("        ClassActor ca = (ClassActor) arg3;%n");
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
-            out.print(", state.readId(arg1), ca.name(), state.readId(ca.classLoader)");
+            out.print(", state.readId(arg2), ca.name(), state.readId(ca.classLoader)");
             out.printf(");%n");
         } else if (name.contains("Thread")) {
             // drop VmThread arg

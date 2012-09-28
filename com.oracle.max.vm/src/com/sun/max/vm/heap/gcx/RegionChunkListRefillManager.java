@@ -31,6 +31,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.runtime.*;
 
@@ -126,6 +127,8 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
     }
 
     private HeapRegionInfo changeAllocatingRegion() {
+        // Set GC request to always collect for at least one region.
+        GCRequest.setGCRequest(Size.fromInt(regionSizeInBytes));
         synchronized (refillLock()) {
             int gcCount = 0;
             retireCurrentAllocatingRegion();
@@ -140,7 +143,7 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
                 if (MaxineVM.isDebug()) {
                     checkForSuspisciousGC(gcCount++);
                 }
-            } while(Heap.collectGarbage(Size.fromInt(regionSizeInBytes))); // Always collect for at least one region.
+            } while(Heap.collectGarbage()); // Always collect for at least one region.
             // Not enough freed memory.
             throw outOfMemoryError;
         }
@@ -299,7 +302,7 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
      * thread can enter this method.
      */
     @Override
-    public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+    public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
         // FIXME: see comment above. We should never reach here as request for refilling the allocator can only happen via the allocateCleared call, which
         // should never be called on the tlab allocator since these are routed early on to the overflow allocator.
         FatalError.unexpected("Should not reach here");

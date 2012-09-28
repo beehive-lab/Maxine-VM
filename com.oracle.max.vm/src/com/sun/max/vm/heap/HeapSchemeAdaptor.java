@@ -58,7 +58,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         VMOptions.addFieldOption("-XX:", "DisableExplicitGC", HeapSchemeAdaptor.class, "Tells whether System.gc() forces a full GC", MaxineVM.Phase.PRISTINE);
     }
 
-
     public class GarbageCollectorMXBeanAdaptor extends MemoryManagerMXBeanAdaptor implements GarbageCollectorMXBean  {
         public GarbageCollectorMXBeanAdaptor(String name) {
             super(name);
@@ -395,4 +394,5 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         // Override if not true.
         return thread instanceof VmOperationThread;
     }
+
 }

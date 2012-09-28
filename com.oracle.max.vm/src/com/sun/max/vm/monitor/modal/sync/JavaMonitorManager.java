@@ -367,6 +367,23 @@ public class JavaMonitorManager {
         }
     }
 
+    @NO_SAFEPOINT_POLLS("verification requires mutual exclusion with GC")
+    private static int verifyBindableMonitors() {
+        int errors = 0;
+        int n = numberOfBindableMonitors;
+        if (numberOfBindableMonitors > bindableMonitors.length) {
+            errors = 1 << 30;
+            n = bindableMonitors.length;
+        }
+        int nullEntries = 0;
+        for (int i = 0; i < n; i++) {
+            if (bindableMonitors[i] == null) {
+                nullEntries++;
+            }
+        }
+        return errors | nullEntries;
+    }
+
     /**
      * Expands the list of unbound monitors by allocating and adding {@link #unboundListGrowQty} new
      * monitors to the list.
@@ -398,6 +415,7 @@ public class JavaMonitorManager {
             monitor = newUnboundList;
         }
         SafepointPoll.enable();
+        FatalError.check(verifyBindableMonitors() == 0, "corrupted bindableMonitors array");
     }
 
     /**
