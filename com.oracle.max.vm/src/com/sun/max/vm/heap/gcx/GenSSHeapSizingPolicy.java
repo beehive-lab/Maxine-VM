@@ -554,22 +554,16 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
             Log.printlnToPowerOfTwoUnits(Size.fromLong(maxOldSize));
         }
 
-        private void traceOverflowEvacuation(String overflowType, Address start, Address end) {
-            Log.print(overflowType);
-            Log.print(" [");
-            Log.print(start);
-            Log.print(", ");
-            Log.print(end);
-            Log.println(" ]");
-        }
         @Override
         protected void traceMinorOverflowEvacuation(Address start, Address end) {
-            traceOverflowEvacuation("Minor", start, end);
+            Log.print("Minor");
+            Log.printRange(start, end, true);
         }
 
         @Override
         protected void traceFullOverflowEvacuation(Address start, Address end) {
-            traceOverflowEvacuation("Full", start, end);
+            Log.print("Full");
+            Log.printRange(start, end, true);
         }
     }
 
