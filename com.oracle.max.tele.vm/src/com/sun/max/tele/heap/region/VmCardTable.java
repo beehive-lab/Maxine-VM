@@ -22,21 +22,18 @@
  */
 package com.sun.max.tele.heap.region;
 
-import static com.sun.max.tele.MaxMarkBitmap.MarkColor.*;
-
 import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.tele.data.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.gcx.*;
 
+// TODO (mlvdv)  this is just a skeleton; it is non-functional
 /**
  * A specialized subclass of the Mark Bitmap used by some GC implementations. The singleton instance, corresponding to
  * the one used in the VM, is not created until the VM heap scheme has allocated the bit map data and initialized
@@ -95,7 +92,7 @@ public final class VmCardTable extends AbstractVmHolder implements MaxCardTable,
     public VmCardTable(TeleVM vm, TeleCardTableRSet cardTableRSet) {
         super(vm);
         this.cardTableRSet = cardTableRSet;
-        final long coveredSize = 0L; // remoteHeapMarker.coveredAreaEnd().minus(remoteHeapMarker.coveredAreaStart()).toLong();
+       // final long coveredSize = 0L; // remoteHeapMarker.coveredAreaEnd().minus(remoteHeapMarker.coveredAreaStart()).toLong();
         this.coveredMemoryRegion = null; // new TeleFixedMemoryRegion(vm, ENTITY_NAME, remoteHeapMarker.coveredAreaStart(), coveredSize);
         final Address dataRegionStart = Address.zero(); //remoteHeapMarker.colorMapDataRegion().getRegionStart();
         final long dataRegionSize = 0L; //remoteHeapMarker.colorMapDataRegion().getRegionNBytes();
