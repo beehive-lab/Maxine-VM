@@ -337,7 +337,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     protected abstract int objectSize();
 
     public final TeleFixedMemoryRegion objectMemoryRegion() {
-        if (status().isNotDead() && objectSize() > 0) {
+        if (objectSize() > 0) {
             return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.toOrigin()), objectSize());
         }
         return null;
