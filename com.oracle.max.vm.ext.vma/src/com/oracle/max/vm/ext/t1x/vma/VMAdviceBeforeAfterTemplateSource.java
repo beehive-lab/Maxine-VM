@@ -2702,6 +2702,15 @@ public class VMAdviceBeforeAfterTemplateSource {
         Throw.raise(object);
     }
 
+    @T1X_TEMPLATE(RETHROW_EXCEPTION)
+    public static void rethrowException(int bci) {
+        Throwable throwable = VmThread.current().loadExceptionForHandler();
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeThrow(bci, throwable);
+        }
+        Throw.raise(throwable);
+    }
+
     @T1X_TEMPLATE(MONITORENTER)
     public static void monitorenter(@Slot(0) Object object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {

@@ -58,11 +58,6 @@ public class T1XTemplateSource {
     @INTRINSIC(CMP_BYTECODE)
     public static native int rawCompare(@INTRINSIC.Constant int opcode, double l, double r);
 
-    @T1X_TEMPLATE(RETHROW_EXCEPTION)
-    public static void rethrowException() {
-        Throw.raise(VmThread.current().loadExceptionForHandler());
-    }
-
     @T1X_TEMPLATE(PROFILE_NONSTATIC_METHOD_ENTRY)
     public static void profileNonstaticMethodEntry(MethodProfile mpo, Object rcvr) {
         // entrypoint counters count down to zero ("overflow")
@@ -2315,6 +2310,12 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(ATHROW)
     public static void athrow(@Slot(0) Object object) {
         Throw.raise(object);
+    }
+
+    @T1X_TEMPLATE(RETHROW_EXCEPTION)
+    public static void rethrowException() {
+        Throwable throwable = VmThread.current().loadExceptionForHandler();
+        Throw.raise(throwable);
     }
 
     @T1X_TEMPLATE(MONITORENTER)

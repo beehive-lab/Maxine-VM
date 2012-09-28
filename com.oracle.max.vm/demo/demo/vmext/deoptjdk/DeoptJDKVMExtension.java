@@ -22,14 +22,24 @@
  */
 package demo.vmext.deoptjdk;
 
+import static com.sun.max.vm.MaxineVM.*;
+
+import java.io.*;
+import java.lang.ref.*;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.regex.*;
 
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.object.ObjectAccess;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -71,31 +81,89 @@ public class DeoptJDKVMExtension {
             String className = classActor.qualifiedName();
             if (includeClassPattern.matcher(className).matches() && (excludeClassPattern == null || !excludeClassPattern.matcher(className).matches())) {
                 for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
-                    TargetMethod tm = isOpt(staticMethodActor);
-                    if (tm != null) {
-                        deoptMethods.add(tm);
-                    }
+                    checkDeopt(staticMethodActor, deoptMethods);
                 }
                 for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
-                    TargetMethod tm = isOpt(virtualMethodActor);
-                    if (tm != null) {
-                        deoptMethods.add(tm);
-                    }
+                    checkDeopt(virtualMethodActor, deoptMethods);
                 }
             }
         }
 
+        // Force the compilation of methods not compiled into the boot image when using C1X that
+        // are needed when T1X uses a T1X-compiled JDK, to break meta-circularity.
+        // This list was experimentally determined.
+        forceCompile(HashMap.class, "hash");
+        forceCompile(HashMap.class, "indexFor");
+        forceCompile(getClass("java.util.HashMap$Entry"), "<init>");
+        forceCompile(ObjectAccess.class, "makeHashCode");
+        forceCompile(AbstractList.class, "<init>");
+        forceCompile(AbstractCollection.class, "<init>");
+        forceCompile(ArrayList.class, "rangeCheck");
+        forceCompile(ArrayList.class, "ensureCapacityInternal");
+        forceCompile(Array.class, "newInstance");
+        forceCompile(Math.class, "min", SignatureDescriptor.fromJava(int.class, int.class, int.class));
+        forceCompile(ThreadLocal.class, "access$400");
+        forceCompile(getClass("java.lang.ThreadLocal$ThreadLocalMap"), "access$000");
+        forceCompile(getClass("java.lang.ThreadLocal$ThreadLocalMap"), "setThreshold");
+        forceCompile(getClass("java.lang.ThreadLocal$ThreadLocalMap$Entry"), "<init>");
+        forceCompile(Enum.class, "ordinal");
+        forceCompile(EnumMap.class, "unmaskNull");
+        forceCompile(FilterInputStream.class, "<init>");
+        forceCompile(Reference.class, "<init>");
+        forceCompile(Reference.class, "access$100");
+        forceCompile(WeakReference.class, "<init>");
+
+        // Compile the methods first, in case of a method used by the compilation system,
+        // which would cause runaway recursion.
+        Iterator<TargetMethod> iter = deoptMethods.iterator();
+        while (iter.hasNext()) {
+            TargetMethod tm = iter.next();
+            try {
+                vm().compilationBroker.compile(tm.classMethodActor, Nature.BASELINE, false, true);
+            } catch (Throwable t) {
+                // some failure that (likely) can't easily be expressed in cantBaseline
+                Log.print("can't baseline compile ");
+                Log.println(tm.classMethodActor.format(" %H.%n(%p) " + t));
+                iter.remove();
+            }
+        }
         new Deoptimization(deoptMethods).go();
 
     }
 
-    private static TargetMethod isOpt(ClassMethodActor classMethodActor) {
-        TargetMethod tm = classMethodActor.currentTargetMethod();
-        if (tm != null && !tm.isBaseline()) {
-            return tm;
-        } else {
+    private static Class<?> getClass(String name) {
+        try {
+            return Class.forName(name);
+        } catch (Throwable t) {
+            FatalError.unexpected("can't find class " + name);
             return null;
         }
+    }
+
+    private static void forceCompile(Class<?> klass, String methodName) {
+        forceCompile(klass, methodName, null);
+    }
+
+    private static void forceCompile(Class<?> klass, String methodName, SignatureDescriptor sig) {
+        ClassActor.fromJava(klass).findLocalClassMethodActor(
+                        SymbolTable.makeSymbol(methodName), sig).makeTargetMethod();
+    }
+
+    private static void checkDeopt(ClassMethodActor classMethodActor, ArrayList<TargetMethod> deoptMethods) {
+        TargetMethod tm = classMethodActor.currentTargetMethod();
+        if (tm != null && !tm.isBaseline()) {
+            if (cantBaseline(classMethodActor)) {
+                Log.print("can't baseline compile ");
+                Log.println(classMethodActor.format(" %H.%n(%p)"));
+            } else {
+                deoptMethods.add(tm);
+            }
+        }
+    }
+
+    private static boolean cantBaseline(ClassMethodActor classMethodActor) {
+        ClassMethodActor compilee = classMethodActor.compilee();
+        return Actor.isUnsafe(compilee.flags()) || (compilee.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
     }
 
     private static void listMethodStates(Collection<ClassActor> bootClassActors) {
