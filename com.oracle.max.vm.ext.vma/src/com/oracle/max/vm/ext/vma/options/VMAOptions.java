@@ -25,7 +25,6 @@ package com.oracle.max.vm.ext.vma.options;
 import static com.oracle.max.vm.ext.vma.VMABytecodes.*;
 import static com.oracle.max.vm.ext.vma.options.VMAOptions.AdviceModeOption.*;
 
-import java.util.*;
 import java.util.regex.Pattern;
 
 import com.oracle.max.vm.ext.vma.*;
@@ -34,13 +33,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.VMOptions;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.deopt.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Defines all the options that can be used to control the VMA system.
@@ -221,13 +216,6 @@ public class VMAOptions {
      */
     private static String handlerClassName;
 
-     /**
-     * Ultimately will have the same value as the @link {@link #VMA} option but is not set until the VM phase
-     * is reached where advising can safely start.
-     */
-    @RESET
-    private static boolean advising;
-
     /**
      * Not currently interpreted, but could allow a different template class to be built into the boot image.
      */
@@ -303,10 +291,6 @@ public class VMAOptions {
                 }
             }
 
-            advising = VMA;
-
-            checkBootImageJDKClasses();
-
         }
         return VMA;
     }
@@ -328,37 +312,7 @@ public class VMAOptions {
         }
     }
 
-    /**
-     * Any JDK classes built into the boot image that are subject to advising must be deoptimized
-     * and instrumented.
-     */
-    private static void checkBootImageJDKClasses() {
-        Collection<ClassActor> bootClassActors = ClassRegistry.BOOT_CLASS_REGISTRY.getClassActors();
-        ArrayList<TargetMethod> deoptMethods = new ArrayList<TargetMethod>();
-        for (ClassActor classActor : bootClassActors) {
-            String className = classActor.qualifiedName();
-            if (instrumentClass(className)) {
-                for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
-                    checkDeopt(staticMethodActor, deoptMethods);
-                }
-                for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
-                    checkDeopt(virtualMethodActor, deoptMethods);
-                }
-            }
-        }
-
-        new Deoptimization(deoptMethods).go();
-
-    }
-
-    private static void checkDeopt(ClassMethodActor classMethodActor, ArrayList<TargetMethod> deoptMethods) {
-        TargetMethod tm = classMethodActor.currentTargetMethod();
-        if (tm != null && !tm.isBaseline()) {
-            deoptMethods.add(tm);
-        }
-    }
-
-    private static boolean instrumentClass(String className) {
+    public static boolean instrumentClass(String className) {
         boolean include = classInclusionPattern == null || classInclusionPattern.matcher(className).matches();
         if (include) {
             include = !classExclusionPattern.matcher(className).matches();
@@ -372,9 +326,9 @@ public class VMAOptions {
      * @param cma
      */
     public static boolean instrumentForAdvising(ClassMethodActor cma) {
-        final String className = cma.holder().typeDescriptor.toJavaString();
-        boolean include = false;
-        if (advising) {
+        boolean include = VMA;
+        if (VMA) {
+            final String className = cma.holder().typeDescriptor.toJavaString();
             include = instrumentClass(className);
         }
         if (logger.enabled()) {
@@ -402,11 +356,12 @@ public class VMAOptions {
         void bytecodeSetting(@VMLogParam(name = "bytecode") VMABytecodes bytecode,
                              @VMLogParam(name = "before") boolean before, @VMLogParam(name = "after") boolean after);
         void instrument(@VMLogParam(name = "methodActor") ClassMethodActor methodActor, @VMLogParam(name = "include") boolean include);
+        void jdkDeopt(@VMLogParam(name = "stage") String stage);
     }
 
-    private static final VMALogger logger = new VMALogger();
+    public static final VMALogger logger = new VMALogger();
 
-    private static class VMALogger extends VMALoggerAuto {
+    public static class VMALogger extends VMALoggerAuto {
         VMALogger() {
             super("VMA", "VMA operations");
         }
@@ -431,18 +386,24 @@ public class VMAOptions {
             }
         }
 
+        @Override
+        protected void traceJdkDeopt(String stage) {
+            Log.print("VMA: JDKDeopt: ");
+            Log.println(stage);
+        }
+
     }
 
 // START GENERATED CODE
     private static abstract class VMALoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            BytecodeSetting, Instrument;
+            BytecodeSetting, Instrument, JdkDeopt;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = null;
+        private static final int[] REFMAPS = new int[] {0x0, 0x0, 0x1};
 
         protected VMALoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -465,6 +426,12 @@ public class VMAOptions {
         }
         protected abstract void traceInstrument(ClassMethodActor methodActor, boolean include);
 
+        @INLINE
+        public final void logJdkDeopt(String stage) {
+            log(Operation.JdkDeopt.ordinal(), objectArg(stage));
+        }
+        protected abstract void traceJdkDeopt(String stage);
+
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
@@ -474,6 +441,10 @@ public class VMAOptions {
                 }
                 case 1: { //Instrument
                     traceInstrument(toClassMethodActor(r, 1), toBoolean(r, 2));
+                    break;
+                }
+                case 2: { //JdkDeopt
+                    traceJdkDeopt(toString(r, 1));
                     break;
                 }
             }

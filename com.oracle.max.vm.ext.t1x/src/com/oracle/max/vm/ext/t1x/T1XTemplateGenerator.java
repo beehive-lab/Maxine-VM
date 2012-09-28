@@ -943,6 +943,17 @@ public class T1XTemplateGenerator {
         newLine();
     }
 
+    public void generateReThrowTemplate() {
+        startMethodGeneration();
+        generateTemplateTag("RETHROW_EXCEPTION");
+        out.printf("    public static void rethrowException(%s) {%n", suffixParams(false));
+        out.printf("        Throwable throwable = VmThread.current().loadExceptionForHandler();%n");
+        generateBeforeAdvice(NULL_ARGS);
+        out.printf("        Throw.raise(throwable);%n");
+        out.printf("    }%n");
+        newLine();
+    }
+
     public static final EnumSet<T1XTemplateTag> MONITOR_TEMPLATE_TAGS = EnumSet.of(MONITORENTER, MONITOREXIT);
 
     /**
@@ -1503,6 +1514,7 @@ public class T1XTemplateGenerator {
         generateCheckcastTemplates();
         generateArraylengthTemplate();
         generateAThrowTemplate();
+        generateReThrowTemplate();
         generateMonitorTemplates();
         generateInstanceofTemplates();
         generateReturnTemplate(VOID, "registerFinalizer");
