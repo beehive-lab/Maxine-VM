@@ -581,6 +581,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 // Refill the allocator with the old from space.
                 spaceLeft = fromSpace.committedSize();
                 allocator.refill(fromSpace.start(), spaceLeft);
+                FatalError.breakpoint(); // FIXME: remove  / temp debug
                 startOfSpaceLeft = allocator.unsafeSetTopToLimit();
             }
             HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);

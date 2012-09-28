@@ -310,6 +310,11 @@ public class EvacuatorToCardSpace extends Evacuator {
             if (!chunk.equals(limit)) {
                 recordRange(allocatedRangeStart, ptop);
                 allocatedRangeStart = chunk;
+            } else {
+                // DEBUG CODE -- REMOVE ME.
+                Log.print("not recording range on evac buffer refill ");
+                Log.printRange(allocatedRangeStart, ptop, true);
+                FatalError.breakpoint();
             }
             Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
             rset.notifyRefill(chunk, chunkSize);
