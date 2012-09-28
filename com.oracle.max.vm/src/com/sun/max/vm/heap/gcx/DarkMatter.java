@@ -160,6 +160,29 @@ public final class DarkMatter {
         Log.unlock(lockDisabledSafepoints);
         FatalError.unexpected("Not enough space to format Dark Matter");
     }
+
+    private static void plantDarkMatter(Address start, Size size)  {
+        final Pointer origin = Layout.cellToOrigin(start.asPointer());
+        final int length = size.minus(darkMatterHeaderSize()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        Layout.writeHubReference(origin, Reference.fromJava(hub()));
+        Layout.writeMisc(origin, Word.zero());
+        if (MaxineVM.isDebug()) {
+            origin.writeWord(Layout.arrayLayout().arrayLengthOffset(), Word.zero());
+        }
+        Layout.writeArrayLength(origin, length);
+        if (MaxineVM.isDebug()) {
+            Memory.setWords(start.plus(darkMatterHeaderSize()).asPointer(), length, Memory.zappedMarker());
+        }
+        // FIXME: Tracing  here may lead to issue with GC if used when retiring TLABs during mutator allocation.
+        if (logger.enabled()) {
+            logger.logFormat(start, start.plus(size));
+        }
+    }
+
+    @FOLD
+    private static Size maxDarkMatterSize() {
+        return Size.G.shiftedLeft(Word.widthValue().log2numberOfBytes);
+    }
     /**
      * Format a word-aligned heap region as dark matter. A {@linkplain FatalError} is raised if the region is less than two-words wide.
      * @param start address to the first word of the region
@@ -167,18 +190,14 @@ public final class DarkMatter {
      */
     public static void format(Address start, Size size) {
         if (size.greaterThan(minSize())) {
-            final Pointer origin = Layout.cellToOrigin(start.asPointer());
-            final int length = size.minus(darkMatterHeaderSize()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
-            Layout.writeHubReference(origin, Reference.fromJava(hub()));
-            Layout.writeMisc(origin, Word.zero());
-            Layout.writeArrayLength(origin, length);
-            if (MaxineVM.isDebug()) {
-                Memory.setWords(start.plus(darkMatterHeaderSize()).asPointer(), length, Memory.zappedMarker());
+            // Can't use DarkMatter array for formatting very large region (length encoded as. Need to slice it into smaller region.
+            while (size.greaterThan(maxDarkMatterSize())) {
+                FatalError.breakpoint();
+                plantDarkMatter(start, maxDarkMatterSize());
+                start = start.plus(maxDarkMatterSize());
+                size = size.minus(maxDarkMatterSize());
             }
-            // FIXME: Tracing  here may lead to issue with GC if used when retiring TLABs during mutator allocation.
-            if (logger.enabled()) {
-                logger.logFormat(start, start.plus(size));
-            }
+            plantDarkMatter(start, size);
         } else if (size.equals(minSize())) {
             SmallestDarkMatter.format(start);
         } else {
