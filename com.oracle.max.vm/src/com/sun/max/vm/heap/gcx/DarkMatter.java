@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -70,24 +68,25 @@ public final class DarkMatter {
     public static final DarkMatterLogger logger = new DarkMatterLogger();
 
     /**
+     * Boot image generation initialization. The logger may not be initialized properly during boot image generation.
+     * Calling this during heap scheme initialization forces its initialization.
+     */
+    @HOSTED_ONLY
+    public static void initialize() {
+        logger.checkOptions();
+    }
+
+    /**
      * Variable-less class used to format the smallest possible dark-matter (i.e., two-words space).
      */
     public static class SmallestDarkMatter {
-
-        @INTRINSIC(UNSAFE_CAST)
-        private static native SmallestDarkMatter asSmallestDarkMatter(Object darkMatter);
-
-        static SmallestDarkMatter toDarkMatter(Address cell) {
-            return asSmallestDarkMatter(Reference.fromOrigin(Layout.cellToOrigin(cell.asPointer())).toJava());
-        }
-
         @FOLD
         static DynamicHub hub() {
             return ClassActor.fromJava(SmallestDarkMatter.class).dynamicHub();
         }
 
         @FOLD
-        static Word hubWord() {
+        static Word hubOrigin() {
             return Reference.fromJava(hub()).toOrigin();
         }
 
@@ -95,6 +94,7 @@ public final class DarkMatter {
             final Pointer origin = Layout.cellToOrigin(darkMatter.asPointer());
             Layout.writeHubReference(origin, Reference.fromJava(hub()));
             Layout.writeMisc(origin, Word.zero());
+            // FIXME: Tracing  here may lead to issue with GC if used when retiring TLABs during mutator allocation.
             if (logger.enabled()) {
                 logger.logFormatSmall(darkMatter);
             }
@@ -123,22 +123,17 @@ public final class DarkMatter {
     }
 
     @FOLD
-    private static Word hubWord() {
+    private static Word hubOrigin() {
         return Reference.fromJava(hub()).toOrigin();
     }
 
-    public static boolean isDarkMatter(Word hubWord) {
-        return hubWord.equals(hubWord()) || hubWord.equals(SmallestDarkMatter.hubWord());
-    }
-
     /**
-     * Tells whether an address is the origin of a cell formatted as dark matter.
-     * @param origin heap address
-     * @return true if the address is the origin of a cell formatted as dark matter.
+     * Tells whether the value of a word equals the address of a DarkMatter hub.
+     * @param hubWord a word value
+     * @return true if the word value is the origin of a dark matter hub.
      */
-    public static boolean isDarkMatterOrigin(Address origin) {
-        final Word hubWord =  origin.asPointer().readWord(Layout.hubIndex());
-        return hubWord.equals(hubWord()) || hubWord.equals(SmallestDarkMatter.hubWord());
+    public static boolean isDarkMatterHub(Word hubWord) {
+        return hubWord.equals(hubOrigin()) || hubWord.equals(SmallestDarkMatter.hubOrigin());
     }
 
     /**
@@ -148,13 +143,23 @@ public final class DarkMatter {
      */
     public static Size darkMatterSize(Address address) {
         final Word hubWord =  address.asPointer().readWord(Layout.hubIndex());
-        if (hubWord.equals(hubWord())) {
+        if (hubWord.equals(hubOrigin())) {
             return Size.fromInt(Layout.readArrayLength(address.asPointer()));
         }
-        FatalError.check(hubWord.equals(SmallestDarkMatter.hubWord()), "not dark matter origin");
+        FatalError.check(hubWord.equals(SmallestDarkMatter.hubOrigin()), "not dark matter origin");
         return minSize();
     }
 
+    @NEVER_INLINE
+    private static void reportInvalidDarkMatterRange(Address start, Size size) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.printRange(start, start.plus(size), false);
+        Log.print(" (");
+        Log.print(size);
+        Log.print(")");
+        Log.unlock(lockDisabledSafepoints);
+        FatalError.unexpected("Not enough space to format Dark Matter");
+    }
     /**
      * Format a word-aligned heap region as dark matter. A {@linkplain FatalError} is raised if the region is less than two-words wide.
      * @param start address to the first word of the region
@@ -170,22 +175,14 @@ public final class DarkMatter {
             if (MaxineVM.isDebug()) {
                 Memory.setWords(start.plus(darkMatterHeaderSize()).asPointer(), length, Memory.zappedMarker());
             }
+            // FIXME: Tracing  here may lead to issue with GC if used when retiring TLABs during mutator allocation.
             if (logger.enabled()) {
                 logger.logFormat(start, start.plus(size));
             }
         } else if (size.equals(minSize())) {
             SmallestDarkMatter.format(start);
         } else {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("[");
-            Log.print(start);
-            Log.print(",");
-            Log.print(start.plus(size));
-            Log.print(" (");
-            Log.print(size);
-            Log.print(")");
-            Log.unlock(lockDisabledSafepoints);
-            FatalError.unexpected("invalid dark matter size");
+            reportInvalidDarkMatterRange(start, size);
         }
     }
 

@@ -227,7 +227,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
             Layout.writeForwardRef(origin, forwardRef);
             if (MaxineVM.isDebug()) {
                 Reference hubRef = Layout.readHubReference(forwardRef);
-                FatalError.check(!DarkMatter.isDarkMatter(hubRef.toOrigin()), "must not forward dark matter");
+                FatalError.check(!DarkMatter.isDarkMatterHub(hubRef.toOrigin()), "must not forward dark matter");
                 if (detailLogger.enabled()) {
                     final Hub hub = UnsafeCast.asHub(hubRef.toJava());
                     detailLogger.logForward(hub.classActor.id, at, origin, toOrigin, Layout.size(toOrigin).toInt());
