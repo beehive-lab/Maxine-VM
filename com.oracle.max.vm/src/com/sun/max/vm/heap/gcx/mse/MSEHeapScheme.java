@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx.mse;
 
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -41,7 +42,6 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.ti.*;
 
 /**
  * Region-based Mark Sweep + Evacuation-based defragmentation Heap Scheme.
@@ -191,7 +191,21 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
     private final long [] allocatedSinceLastGC = new long[16];
     private long usedSpaceAfterLastGC;
 
-    public boolean collectGarbage(Size requestedFreeSpace) {
+    private static final class MSEGCRequest extends GCRequest {
+        protected MSEGCRequest(VmThread thread) {
+            super(thread);
+        }
+    }
+
+    public GCRequest createThreadLocalGCRequest(VmThread vmThread) {
+        return new MSEGCRequest(vmThread);
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native MSEGCRequest asMSEGCRequest(GCRequest gcRequest);
+
+    public boolean collectGarbage() {
+        final MSEGCRequest gcRequest = asMSEGCRequest(VmThread.current().gcRequest);
         final Size usedSpaceBefore = markSweepSpace.usedSpace();
         if (MaxineVM.isDebug()) {
             final int logCursor = collectionCount % 16;
@@ -205,7 +219,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
                 Log.println();
             }
         }
-        if (requestedFreeSpace.isZero()) {
+        if (gcRequest.explicit) {
             // This is a forced GC.
             collect.submit();
             reportFragmentationStats(true);
@@ -215,7 +229,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
         if (MaxineVM.isDebug()) {
             usedSpaceAfterLastGC = markSweepSpace.usedSpace().toLong();
         }
-        boolean result =  markSweepSpace.usedSpace().minus(usedSpaceBefore).greaterThan(requestedFreeSpace);
+        boolean result =  markSweepSpace.usedSpace().minus(usedSpaceBefore).greaterThan(gcRequest.requestedBytes);
         reportFragmentationStats(result);
         return result;
     }
@@ -306,7 +320,6 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
             startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
 
-            VMTI.handler().beginGC();
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
             vmConfig().monitorScheme().beforeGarbageCollection();
@@ -338,7 +351,8 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
             heapResizingPolicy.resizeAfterCollection(freeSpaceAfterGC, markSweepSpace);
             markSweepSpace.doAfterGC();
 
-            VMTI.handler().endGC();
+            final GCRequest gcRequest = callingThread().gcRequest;
+            gcRequest.lastInvocationCount = invocationCount;
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
             stopTimer(totalPauseTime);
 

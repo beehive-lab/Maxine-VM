@@ -41,6 +41,87 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 public interface HeapScheme extends VMScheme {
+    /**
+     * Thread-local GC request to store parameters and results between a thread issuing a GC request and the VM operation.
+     * Every thread is given one and uses it to communicate details regarding its requests for garbage collection.
+     * This class can be extended to allow additional heap scheme specific information to be passed to a GC operation.
+     */
+    public static abstract class GCRequest {
+        public final VmThread requester;
+        /**
+         * Amount of bytes requested if this request was issued by a failed allocation operation.
+         */
+        public Size requestedBytes;
+        /**
+         * Invocation count of the last satisfied request.
+         * See {@link GCOperation#invocationCount()}.
+         */
+        public int lastInvocationCount;
+        /**
+         * Indicate whether this request is the result of a {@linkplain java.lang.Runtime#gc()} call.
+         */
+        public boolean explicit;
+
+        public void clear() {
+            explicit = false;
+            requestedBytes = Size.zero();
+        }
+
+        protected GCRequest(VmThread requester) {
+            this.requester = requester;
+        }
+
+        public void printBeforeGC() {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("--GC requested by thread ");
+            Log.printThread(requester, false);
+            Log.print(" for ");
+            if (explicit) {
+                Log.print("Explicit GC");
+            } else {
+                Log.print(requestedBytes.toLong());
+                Log.println(" bytes --");
+            }
+            Log.unlock(lockDisabledSafepoints);
+        }
+
+        public void printAfterGC(boolean satisfied) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("--GC requested by thread ");
+            Log.printThread(requester, false);
+            if (explicit) {
+                Log.println("completed");
+            } else {
+                if (satisfied) {
+                    Log.println(" freed enough--");
+                } else {
+                    Log.println(" did not free enough--");
+                }
+            }
+            Log.unlock(lockDisabledSafepoints);
+        }
+
+        /**
+         * Convenience for clearing the {@linkplain GCRequest} of the current thread before returning it.
+         * @return the {@linkplain GCRequest} for the current thread.
+         */
+        public static GCRequest clearedGCRequest() {
+            final GCRequest gcRequest = VmThread.current().gcRequest;
+            gcRequest.clear();
+            return gcRequest;
+        }
+
+        /**
+         * Convenience for setting {@linkplain GCRequest#requestedBytes} for the current thread.
+         * The GC request is cleared beforehand.
+         *
+         * @param requestedBytes number of bytes.
+         */
+        public static void setGCRequest(Size requestedBytes) {
+            final GCRequest gcRequest = clearedGCRequest();
+            gcRequest.requestedBytes = requestedBytes;
+        }
+    }
 
     /**
      * Indicates the boot image loader where the boot region should be mapped in the virtual address space: anywhere (i.e., anywhere inside),
@@ -128,13 +209,21 @@ public interface HeapScheme extends VMScheme {
      */
     boolean contains(Address address);
 
-    /**
-     * Performs a garbage collection.
+     /**
+     * Create a thread-local GC Request for a vmThread.
      *
-     * @param requestedFreeSpace the minimum amount of space the collection must free up
-     * @return {@code true} if at least {@code requestedFreeSpace} was freed up, {@code false} otherwise
+     * @param vmThread the thread this thread-local GC Request is for.
+     * @return a heap scheme specific sub class of {@linkplain GCRequest}
      */
-    boolean collectGarbage(Size requestedFreeSpace);
+    GCRequest createThreadLocalGCRequest(VmThread vmThread);
+
+    /**
+     * Request a garbage collection.
+     * The details of the request are described in the requesting thread's GC request (@see {@link GCRequest}).
+     *
+     * @return {@code true} if the request was satisfied, {@code false} otherwise
+     */
+    boolean collectGarbage();
 
     /**
      * Gets the amount of free memory on the heap. This method does not trigger a GC.

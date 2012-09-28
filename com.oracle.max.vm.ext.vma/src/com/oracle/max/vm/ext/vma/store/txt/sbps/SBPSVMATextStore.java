@@ -433,7 +433,7 @@ public class SBPSVMATextStore extends CSFVMATextStore {
      * @param key
      * @param className
      * @param threadName
-     * @param bci TODO
+     * @param bci bytecode index
      */
     private void appendTTC(long time, Key key, String className, String threadName, int bci) {
         appendTT(time, key, threadName, bci);
@@ -686,12 +686,10 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
-    private void store_adviseBeforeLoad(long time, String threadName, int bci, int arg1) {
+    private void store_adviseBeforeLoad(long time, String threadName, int bci, int dispToLocalSlot) {
         appendTT(time, ADVISE_BEFORE_LOAD, threadName, bci);
         appendSpace();
-        sb.append(bci);
-        appendSpace();
-        sb.append(arg1);
+        sb.append(dispToLocalSlot);
         end();
     }
 

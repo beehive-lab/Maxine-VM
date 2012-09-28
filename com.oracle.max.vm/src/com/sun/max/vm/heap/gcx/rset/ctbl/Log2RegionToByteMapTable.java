@@ -125,6 +125,10 @@ public class Log2RegionToByteMapTable {
     public Address tableAddress() {
         return tableAddress;
     }
+
+    public Address biasedTableAddress() {
+        return biasedTableAddress;
+    }
     /**
      * Inspector support.
      * @return total size of the backing storage for the byte map.

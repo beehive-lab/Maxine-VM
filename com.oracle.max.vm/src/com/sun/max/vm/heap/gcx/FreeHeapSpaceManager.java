@@ -29,6 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.GCRequest;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -120,7 +121,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
         @Override
         @INLINE
-        public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
             return binRefill(refillSize, startOfSpaceLeft, spaceLeft);
         }
 
@@ -559,6 +560,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
             if (!result.isZero()) {
                 return result;
             }
+            GCRequest.setGCRequest(size);
             if (MaxineVM.isDebug() && Heap.logAllGC()) {
                 gcCount++;
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -577,7 +579,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
                     FatalError.unexpected("Suspiscious repeating GC calls detected");
                 }
             }
-        } while (Heap.collectGarbage(size));
+        } while (Heap.collectGarbage());
         // Not enough freed memory.
         throw outOfMemoryError;
     }
