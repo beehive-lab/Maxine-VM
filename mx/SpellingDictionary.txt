@@ -105,7 +105,9 @@ finalizers
 fixup
 floatable
 foo
+formedness
 generational
+generify
 growable
 hashcode
 hexadecimal
@@ -169,6 +171,7 @@ placeholder
 polymorphic
 popup
 postorder
+pre
 preload
 preloaded
 preloads
@@ -177,6 +180,7 @@ prepopulated
 preprocessed
 primordial
 println
+pristine
 proactively
 probers
 programmatic
@@ -230,6 +234,7 @@ uncomment
 uncompiled
 undock
 undockable
+unforwarded
 unix
 unmark
 unmarking
