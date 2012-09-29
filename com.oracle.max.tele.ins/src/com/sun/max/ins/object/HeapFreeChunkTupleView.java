@@ -26,6 +26,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
 
 /**
@@ -44,11 +45,13 @@ import com.sun.max.vm.heap.gcx.*;
 public class HeapFreeChunkTupleView extends ObjectView<HeapFreeChunkTupleView> {
 
     private final TeleHeapFreeChunk teleHFC;
+    Size totalFreeSize;
     private ObjectScrollPane fieldsPane;
 
     HeapFreeChunkTupleView(Inspection inspection, MaxObject object) {
         super(inspection, object);
-        teleHFC = (TeleHeapFreeChunk) object;
+        this.teleHFC = (TeleHeapFreeChunk) object;
+        this.totalFreeSize = teleHFC.size();
         createFrame(true);
     }
 
@@ -56,7 +59,7 @@ public class HeapFreeChunkTupleView extends ObjectView<HeapFreeChunkTupleView> {
     protected void createViewContent() {
         super.createViewContent();
 
-        final int numPadWords = teleHFC.size().minus(teleHFC.objectSize()).dividedBy(vm().platform().nBytesInWord()).toInt();
+        final int numPadWords = totalFreeSize.minus(teleHFC.objectSize()).dividedBy(vm().platform().nBytesInWord()).toInt();
 
         fieldsPane = ObjectScrollPane.createTupleFieldsPaddedPane(inspection(), this, numPadWords);
         getContentPane().add(fieldsPane);
@@ -68,7 +71,11 @@ public class HeapFreeChunkTupleView extends ObjectView<HeapFreeChunkTupleView> {
 
     @Override
     protected void refreshState(boolean force) {
-        fieldsPane.refresh(force);
+        if (totalFreeSize == teleHFC.size()) {
+            fieldsPane.refresh(force);
+        } else {
+            totalFreeSize = teleHFC.size();
+            reconstructView();
+        }
     }
-
 }
