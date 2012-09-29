@@ -87,6 +87,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     private Rectangle originalFrameGeometry = null;
 
     private InspectorMenu objectMenu;
+    private List<InspectorAction> actions = new ArrayList<InspectorAction>();
     private InspectorAction visitStaticTupleAction = null;
     private InspectorAction visitForwardedToAction = null;
     private InspectorAction visitForwardedFromAction = null;
@@ -162,12 +163,15 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         // to subclasses, so that more view-specific items can be prepended to the standard ones.
         objectMenu = makeMenu(MenuKind.OBJECT_MENU);
         visitStaticTupleAction = actions().viewStaticTupleForObject(object);
+        actions.add(visitStaticTupleAction);
         objectMenu.add(visitStaticTupleAction);
         if (vm().heap().hasForwarders()) {
             visitForwardedToAction = new VisitForwardedToAction(inspection());
             objectMenu.add(visitForwardedToAction);
+            actions.add(visitForwardedToAction);
             visitForwardedFromAction = new VisitForwardedFromAction(inspection());
             objectMenu.add(visitForwardedFromAction);
+            actions.add(visitForwardedFromAction);
         }
         makeMenu(MenuKind.CODE_MENU);
 
@@ -312,8 +316,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         if (objectHeaderTable != null) {
             objectHeaderTable.refresh(force);
         }
-        visitForwardedToAction.refresh(force);
-        visitForwardedFromAction.refresh(force);
+        refreshActions(force);
         refreshBackgroundColor();
         setTitle();
     }
@@ -355,6 +358,12 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             sb.append(object.origin().toHexString());
             sb.append(inspection().nameDisplay().referenceLabelText(object, MAX_TITLE_STRING_LENGTH));
             objectDescription = sb.toString();
+        }
+    }
+
+    private void refreshActions(boolean force) {
+        for (InspectorAction action : actions) {
+            action.refresh(force);
         }
     }
 
