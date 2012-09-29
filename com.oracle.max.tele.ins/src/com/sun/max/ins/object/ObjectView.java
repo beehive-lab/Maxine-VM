@@ -163,11 +163,12 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         objectMenu = makeMenu(MenuKind.OBJECT_MENU);
         visitStaticTupleAction = actions().viewStaticTupleForObject(object);
         objectMenu.add(visitStaticTupleAction);
-        visitForwardedToAction = new VisitForwardedToAction(inspection());
-        objectMenu.add(visitForwardedToAction);
-        visitForwardedFromAction = new VisitForwardedFromAction(inspection());
-        objectMenu.add(visitForwardedFromAction);
-
+        if (vm().heap().hasForwarders()) {
+            visitForwardedToAction = new VisitForwardedToAction(inspection());
+            objectMenu.add(visitForwardedToAction);
+            visitForwardedFromAction = new VisitForwardedFromAction(inspection());
+            objectMenu.add(visitForwardedFromAction);
+        }
         makeMenu(MenuKind.CODE_MENU);
 
         if (object.getTeleClassMethodActorForObject() != null || TeleTargetMethod.class.isAssignableFrom(object.getClass())) {

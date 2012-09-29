@@ -95,6 +95,11 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
     MaxMemoryManagementInfo getMemoryManagementInfo(Address address);
 
     /**
+     * @return whether the current heap implementation relocates objects and leaves forwarders behind.
+     */
+    boolean hasForwarders();
+
+    /**
      * @return whether the current heap implementation uses a {@link MaxBitMarkmap}.
      */
     boolean hasMarkBitmap();
@@ -130,5 +135,7 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
      * @param verbose possibly write extended information when true
      */
     void printSessionStats(PrintStream printStream, int indent, boolean verbose);
+
+
 
 }
