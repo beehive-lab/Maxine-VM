@@ -333,6 +333,12 @@ public final class MemoryWordsTable extends InspectorTable {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
+            if (addressToLabelMap.size() > 100) {
+                // A lot of scrolling over a large region has generated a label cache that
+                // takes a long time to refresh.  Clearing it might cause a transient loss of
+                // some view state, but we avoid sluggish refresh.
+                addressToLabelMap.clear();
+            }
             WordValueLabel label = addressToLabelMap.get(address.toLong());
             if (label == null) {
                 label = new WordValueLabel(inspection, ValueMode.WORD, address, MemoryWordsTable.this, true);
