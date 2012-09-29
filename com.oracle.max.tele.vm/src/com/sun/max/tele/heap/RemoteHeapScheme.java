@@ -81,6 +81,11 @@ public interface RemoteHeapScheme extends RemoteScheme {
     MaxMemoryManagementInfo getMemoryManagementInfo(Address address);
 
     /**
+     * @return {@code true} if the heap implementation relocates objects and leaves forwarders behind.
+     */
+    boolean hasForwarders();
+
+    /**
      * @return {@code true} if the heap implementation uses a {@link MaxMarkBitmap}, even if not yet created.
      */
     boolean hasMarkBitmap();
