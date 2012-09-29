@@ -50,10 +50,19 @@ public class TeleHeapFreeChunk extends TeleTupleObject {
         return true;
     }
 
+    /**
+     * Gets the size of the free space represented by this quasi-object, including the legitimate paerts
+     * of the object:  header and fields.
+     *
+     * @return the total size of the free space occupied by the quasi-object
+     */
     public final Size size() {
         return size;
     }
 
+    /**
+     * @return reference to the next linked instance in a free list
+     */
     public final RemoteReference nextRef() {
         return nextRef;
     }

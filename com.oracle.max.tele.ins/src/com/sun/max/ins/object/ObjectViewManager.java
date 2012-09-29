@@ -94,6 +94,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         // Use this if there is no object type subclass matched
         defaultTupleViewConstructor = getConstructor(TupleView.class);
         // Tuple views for specific subclasses
+        teleTupleObjectClassToObjectViewConstructor.put(TeleHeapFreeChunk.class, getConstructor(HeapFreeChunkTupleView.class));
         teleTupleObjectClassToObjectViewConstructor.put(TeleHeapRegionInfo.class, getConstructor(HeapRegionInfoView.class));
         focus().addListener(new InspectionFocusAdapter() {
 
