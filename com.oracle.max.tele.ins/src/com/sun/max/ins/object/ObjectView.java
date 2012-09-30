@@ -87,10 +87,10 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     private Rectangle originalFrameGeometry = null;
 
     private InspectorMenu objectMenu;
+
+    /** Actions that need to be refreshed. */
     private List<InspectorAction> actions = new ArrayList<InspectorAction>();
     private InspectorAction visitStaticTupleAction = null;
-    private InspectorAction visitForwardedToAction = null;
-    private InspectorAction visitForwardedFromAction = null;
 
     protected ObjectView(final Inspection inspection, final MaxObject object) {
         super(inspection, VIEW_KIND, null);
@@ -166,13 +166,16 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         actions.add(visitStaticTupleAction);
         objectMenu.add(visitStaticTupleAction);
         if (vm().heap().hasForwarders()) {
-            visitForwardedToAction = new VisitForwardedToAction(inspection());
+            final InspectorAction visitForwardedToAction = new VisitForwardedToAction(inspection());
             objectMenu.add(visitForwardedToAction);
             actions.add(visitForwardedToAction);
-            visitForwardedFromAction = new VisitForwardedFromAction(inspection());
+            final InspectorAction visitForwardedFromAction = new VisitForwardedFromAction(inspection());
             objectMenu.add(visitForwardedFromAction);
             actions.add(visitForwardedFromAction);
         }
+        final InspectorAction visitOverwritingObjectAction = new VisitOverwritingObjectAction(inspection());
+        objectMenu.add(visitOverwritingObjectAction);
+        actions.add(visitOverwritingObjectAction);
         makeMenu(MenuKind.CODE_MENU);
 
         if (object.getTeleClassMethodActorForObject() != null || TeleTargetMethod.class.isAssignableFrom(object.getClass())) {
@@ -459,6 +462,41 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
                 }
             }
             setEnabled(forwardedFromObject != null);
+        }
+    }
+
+    /**
+     * Enabled when the object being viewed is dead, but there is another object now at the same origin.
+     */
+    private final class VisitOverwritingObjectAction extends InspectorAction {
+
+        private MaxObject forwardedFromObject;
+
+        public VisitOverwritingObjectAction(Inspection inspection) {
+            super(inspection, "View overwriting object");
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            try {
+                final MaxObject overwritingObject = vm().objects().findAnyObjectAt(object.origin());
+                if (overwritingObject != null) {
+                    focus().setHeapObject(overwritingObject);
+                }
+            } catch (MaxVMBusyException e) {
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            super.refresh(force);
+            try {
+                setEnabled(object.status().isDead() && vm().objects().findAnyObjectAt(object.origin()) != null);
+                return;
+            } catch (MaxVMBusyException e1) {
+                setEnabled(false);
+            }
         }
     }
 }
