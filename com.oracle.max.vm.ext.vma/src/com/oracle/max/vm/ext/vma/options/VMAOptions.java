@@ -40,10 +40,8 @@ import com.sun.max.vm.log.hosted.*;
 /**
  * Defines all the options that can be used to control the VMA system.
  *
- * Normally, VMA is enabled only at VM runtime {@link MaxineVM.Phase#RUNNING} through the {@code XX:VMA} style options.
- * However, it possible to enable VMA in the boot image, in which case the options apply to the classes
- * compiled into the boot image. By default the boot image options also apply to the runtime phase and any extra runtime
- * settings are additive. However, the boot image settings can be rest with the {@link #VMAReset} option.
+ * VMA is enabled only at VM runtime {@link MaxineVM.Phase#RUNNING} through the {@code XX:VMA} style options.
+ * However, JDK classes in the boot image can be deoptimized and instrumented at runtime.
  *
  * Note that that the {@link #VMA} option is dominant. If it is not set, the other options are ignored even if they are
  * set.
@@ -167,7 +165,6 @@ public class VMAOptions {
         VMOptions.addFieldOption("-XX:", "VMABI", "regex for bytecodes to match");
         VMOptions.addFieldOption("-XX:", "VMABX", "regex for bytecodes to not match");
         VMOptions.addFieldOption("-XX:", "VMAConfig", "use pre-defined configuration");
-        VMOptions.addFieldOption("-XX:", "VMAReset", "reset boot image options");
     }
 
     /**
@@ -215,21 +212,14 @@ public class VMAOptions {
     public static boolean VMA;
 
     /**
-     * When set at runtime causes the boot image settings to be reset (forgotten).
+     * Set true once {@link #initialize} has been called.
      */
-    private static boolean VMAReset;
+    private static boolean initialized;
 
     /**
      * The {@link VMAdviceHandler} handler class name.
      */
     private static String handlerClassName;
-
-     /**
-     * Ultimately will have the same value as the @link {@link #VMA} option but is not set until the VM phase
-     * is reached where advising can safely start.
-     */
-    @RESET
-    private static boolean advising;
 
     /**
      * Not currently interpreted, but could allow a different template class to be built into the boot image.
@@ -243,14 +233,8 @@ public class VMAOptions {
      * @return true iff advising is enabled, i.e. {@link #VMA == true}
      */
     public static boolean initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PRIMORDIAL) {
-            // TODO save boot settings
-        }
         // We execute the setup code below if and only if VMA is set.
-        if (VMA && (MaxineVM.isHosted() && phase == MaxineVM.Phase.HOSTED_COMPILING || phase == MaxineVM.Phase.RUNNING)) {
-            if (phase == MaxineVM.Phase.RUNNING) {
-                // TODO merge/reset boot settings
-            }
+        if (VMA && phase == MaxineVM.Phase.RUNNING) {
             // always exclude advising packages and key JDK classes
             String xPattern = X_PATTERN;
             if (VMACX != null) {
@@ -304,13 +288,14 @@ public class VMAOptions {
                     }
                 }
             }
+
             if (logger.enabled()) {
                 for (VMABytecodes b : VMABytecodes.values()) {
                     boolean[] state = bytecodeApply[b.ordinal()];
                     logger.logBytecodeSetting(b, state[0], state[1]);
                 }
             }
-            advising = VMA;
+            initialized = true;
         }
         return VMA;
     }
@@ -332,6 +317,16 @@ public class VMAOptions {
         }
     }
 
+    public static boolean instrumentClass(String className) {
+        if (!initialized) {
+            return false;
+        }
+        boolean include = classInclusionPattern == null || classInclusionPattern.matcher(className).matches();
+        if (include) {
+            include = !classExclusionPattern.matcher(className).matches();
+        }
+        return include;
+    }
 
     /**
      * Check if given method should be instrumented for advising.
@@ -339,13 +334,10 @@ public class VMAOptions {
      * @param cma
      */
     public static boolean instrumentForAdvising(ClassMethodActor cma) {
-        final String className = cma.holder().typeDescriptor.toJavaString();
-        boolean include = false;
-        if (advising) {
-            include = classInclusionPattern == null || classInclusionPattern.matcher(className).matches();
-            if (include) {
-                include = !classExclusionPattern.matcher(className).matches();
-            }
+        boolean include = initialized && VMA;
+        if (include) {
+            final String className = cma.holder().typeDescriptor.toJavaString();
+            include = instrumentClass(className);
         }
         if (logger.enabled()) {
             logger.logInstrument(cma, include);
@@ -372,11 +364,12 @@ public class VMAOptions {
         void bytecodeSetting(@VMLogParam(name = "bytecode") VMABytecodes bytecode,
                              @VMLogParam(name = "before") boolean before, @VMLogParam(name = "after") boolean after);
         void instrument(@VMLogParam(name = "methodActor") ClassMethodActor methodActor, @VMLogParam(name = "include") boolean include);
+        void jdkDeopt(@VMLogParam(name = "stage") String stage);
     }
 
-    private static final VMALogger logger = new VMALogger();
+    public static final VMALogger logger = new VMALogger();
 
-    private static class VMALogger extends VMALoggerAuto {
+    public static class VMALogger extends VMALoggerAuto {
         VMALogger() {
             super("VMA", "VMA operations");
         }
@@ -401,18 +394,24 @@ public class VMAOptions {
             }
         }
 
+        @Override
+        protected void traceJdkDeopt(String stage) {
+            Log.print("VMA: JDKDeopt: ");
+            Log.println(stage);
+        }
+
     }
 
 // START GENERATED CODE
     private static abstract class VMALoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            BytecodeSetting, Instrument;
+            BytecodeSetting, Instrument, JdkDeopt;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = null;
+        private static final int[] REFMAPS = new int[] {0x0, 0x0, 0x1};
 
         protected VMALoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -435,6 +434,12 @@ public class VMAOptions {
         }
         protected abstract void traceInstrument(ClassMethodActor methodActor, boolean include);
 
+        @INLINE
+        public final void logJdkDeopt(String stage) {
+            log(Operation.JdkDeopt.ordinal(), objectArg(stage));
+        }
+        protected abstract void traceJdkDeopt(String stage);
+
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
@@ -444,6 +449,10 @@ public class VMAOptions {
                 }
                 case 1: { //Instrument
                     traceInstrument(toClassMethodActor(r, 1), toBoolean(r, 2));
+                    break;
+                }
+                case 2: { //JdkDeopt
+                    traceJdkDeopt(toString(r, 1));
                     break;
                 }
             }
