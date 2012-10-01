@@ -578,6 +578,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 }
                 // Notify that we need to run a full GC immediately after this overflowing minor collection.
                 resizingPolicy.notifyMinorEvacuationOverflow();
+                youngSpaceEvacuator.enableDarkMatterRefCheck(true);
+                oldSpaceEvacuator.enableDarkMatterRefCheck(true);
                 // Refill the allocator with the old from space.
                 spaceLeft = fromSpace.committedSize();
                 allocator.refill(fromSpace.start(), spaceLeft);
@@ -672,6 +674,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final boolean oldSpaceMutatorOverflow = oldSpace.allocator.refillManager().mutatorOverflow();
 
         resizingPolicy.clearNotifications();
+        youngSpaceEvacuator.enableDarkMatterRefCheck(false);
+        oldSpaceEvacuator.enableDarkMatterRefCheck(false);
+
         evacTimers.resetTrackTime();
         if (OldSpaceDirtyCardsStats) {
             countOldSpaceDirtyCards("before minor collection");
