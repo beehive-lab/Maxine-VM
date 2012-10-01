@@ -83,6 +83,11 @@ public interface InspectorView<View_Type extends InspectorView> {
     Rectangle getGeometry();
 
     /**
+     * @return whether the view has been <em>pinned</em> and should be immune from bulk closing commands.
+     */
+    boolean isPinned();
+
+    /**
      * Gets from subclasses the currently appropriate title for this view's display frame.
      *
      * @return a short string suitable for appearing in the window frame of an view.

@@ -1448,7 +1448,9 @@ public class WordValueLabel extends ValueLabel {
                                         if (newView == oldView) {
                                             newView.highlight();
                                         } else {
-                                            oldView.dispose();
+                                            if (!oldView.isPinned()) {
+                                                oldView.dispose();
+                                            }
                                         }
                                     }
                                 }

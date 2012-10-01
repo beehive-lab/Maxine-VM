@@ -82,7 +82,7 @@ public final class VmMemoryIO extends AbstractVmHolder implements MaxMemoryIO {
     }
 
     public boolean isZappedValue(Value value) {
-        return value.toLong() == Memory.ZAPPED_MARKER;
+        return value.toWord().value == Memory.ZAPPED_MARKER;
     }
 
     /**

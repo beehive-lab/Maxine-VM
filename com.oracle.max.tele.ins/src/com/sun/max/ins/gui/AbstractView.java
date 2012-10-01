@@ -23,6 +23,7 @@
 package com.sun.max.ins.gui;
 
 import java.awt.*;
+import java.awt.event.*;
 import java.awt.print.*;
 import java.text.*;
 import java.util.*;
@@ -59,6 +60,7 @@ import com.sun.max.unsafe.*;
 public abstract class AbstractView<View_Type extends AbstractView> extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener, InspectorView<View_Type> {
 
     private static final int TRACE_VALUE = 1;
+    private static final String PINNED_LOGO_TEXT = "(*)";
 
     private static final ImageIcon DEFAULT_MENU_ICON = InspectorImageIcon.createDownTriangle(16, 16);
 
@@ -106,7 +108,8 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
                 return new AbstractInspectorMenuItems(inspection()) {
                     public void addTo(InspectorMenu menu) {
                         menu.add(getCloseViewAction());
-                        menu.add(views().deactivateOtherViewsAction(view));
+                        menu.addSeparator();
+                        menu.add(isPinnedCheckBox);
                         menu.addSeparator();
                         menu.add(gui().moveToMiddleAction(view));
                         menu.add(gui().resizeToFitAction(view));
@@ -193,6 +196,8 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
 
     private Set<ViewEventListener> viewEventListeners = CiUtil.newIdentityHashSet();
 
+    private final JCheckBoxMenuItem isPinnedCheckBox;
+
     /**
      * Abstract constructor for all views.
      *
@@ -213,6 +218,14 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
             }
         };
+        this.isPinnedCheckBox = new JCheckBoxMenuItem("Pin view " + PINNED_LOGO_TEXT);
+        this.isPinnedCheckBox.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent itemEvent) {
+                // Catch check box events where the user changes the "pinned" setting
+                // Refresh so that the title will be redisplayed and show the new "pin" status
+                refresh(true);
+            }
+        });
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "refresh");
     }
 
@@ -246,6 +259,10 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         getJComponent().setBounds(rectangle);
     }
 
+    public boolean isPinned() {
+        return isPinnedCheckBox.isSelected();
+    }
+
     /**
      * Sets the size of the view in the main frame.
      *
@@ -264,14 +281,21 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     /**
      * @return the string currently appearing in the title or tab of the view's window frame
      */
-    protected String getTitle() {
+    protected final String getTitle() {
         return frame.getTitle();
     }
 
     public abstract String getTextForTitle();
 
     protected final void setTitle(String title) {
-        frame.setTitle(title == null ? getTextForTitle() : title);
+        frame.setTitle(pinnedPrefix() + (title == null ? getTextForTitle() : title));
+    }
+
+    /**
+     * @return a short standard string that symbolizes the pinning of a view, if pinned; empty string otherwise.
+     */
+    private String pinnedPrefix() {
+        return isPinned() ? (PINNED_LOGO_TEXT + " ") : "";
     }
 
     /**
@@ -582,16 +606,13 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
 
     public final InspectorAction getShowViewAction() {
         // Only need one, but maybe not even that one; create lazily.
-        if (showViewAction == null) {
-            showViewAction = new InspectorAction(inspection(), getTextForTitle()) {
+        return new InspectorAction(inspection(), pinnedPrefix() + getTextForTitle()) {
 
-                @Override
-                protected void procedure() {
-                    highlight();
-                }
-            };
-        }
-        return showViewAction;
+            @Override
+            protected void procedure() {
+                highlight();
+            }
+        };
     }
 
     /**
@@ -604,6 +625,11 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
 
                 @Override
                 protected void procedure() {
+                    if (isPinned()) {
+                        if (!gui().yesNoDialog("View is pinned; close anyway?")) {
+                            return;
+                        }
+                    }
                     dispose();
                 }
             };

@@ -472,6 +472,11 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     }
 
     @Override
+    public boolean hasForwarders() {
+        return true;
+    }
+
+    @Override
     public boolean hasCardTable() {
         return true;
     }

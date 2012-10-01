@@ -77,6 +77,9 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     private final InspectorAction interactiveMakeViewByAddressAction;
     private final InspectorAction interactiveMakeViewByIDAction;
 
+    private final InspectorAction closeForwarderViewsAction;
+    private final InspectorAction closeFreeSpaceViewsAction;
+    private final InspectorAction closeDarkMatterViewsAction;
     private final InspectorAction closeDeadViewsAction;
 
     private final List<InspectorAction> makeViewActions;
@@ -94,6 +97,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         // Use this if there is no object type subclass matched
         defaultTupleViewConstructor = getConstructor(TupleView.class);
         // Tuple views for specific subclasses
+        teleTupleObjectClassToObjectViewConstructor.put(TeleHeapFreeChunk.class, getConstructor(HeapFreeChunkTupleView.class));
         teleTupleObjectClassToObjectViewConstructor.put(TeleHeapRegionInfo.class, getConstructor(HeapRegionInfoView.class));
         focus().addListener(new InspectionFocusAdapter() {
 
@@ -108,7 +112,10 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         interactiveMakeViewByAddressAction = new InteractiveViewObjectByAddressAction();
         interactiveMakeViewByIDAction = new InteractiveViewObjectByIDAction();
 
-        closeDeadViewsAction = new CloseDeadViewsAction();
+        closeForwarderViewsAction = new CloseViewsByStatusAction(ObjectStatus.FORWARDER);
+        closeFreeSpaceViewsAction = new CloseViewsByStatusAction(ObjectStatus.FREE);
+        closeDarkMatterViewsAction = new CloseViewsByStatusAction(ObjectStatus.DARK);
+        closeDeadViewsAction = new CloseViewsByStatusAction(ObjectStatus.DEAD);
 
         makeViewActions = new ArrayList<InspectorAction>(2);
         makeViewActions.add(interactiveMakeViewByAddressAction);
@@ -116,6 +123,9 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
         closeViewActions = new ArrayList<InspectorAction>(1);
         closeViewActions.add(closeDeadViewsAction);
+        closeViewActions.add(closeForwarderViewsAction);
+        closeViewActions.add(closeFreeSpaceViewsAction);
+        closeViewActions.add(closeDarkMatterViewsAction);
 
         Trace.end(1, tracePrefix() + "initializing");
     }
@@ -148,7 +158,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
     @Override
     public void vmProcessTerminated() {
-        for (ObjectView objectView : objectViews()) {
+        for (ObjectView objectView : new ArrayList<ObjectView>(objectViews())) {
             objectView.dispose();
         }
     }
@@ -292,14 +302,6 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         return new HashSet<ObjectView>(objectToView.values());
     }
 
-    private void closeDeadViews() {
-        for (ObjectView view : objectViews()) {
-            if (view.object().status().isDead()) {
-                view.dispose();
-            }
-        }
-    }
-
     private final class InteractiveViewObjectByAddressAction extends InspectorAction {
 
         InteractiveViewObjectByAddressAction() {
@@ -354,22 +356,30 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         }
     }
 
-    private final class CloseDeadViewsAction extends InspectorAction {
+    private final class CloseViewsByStatusAction extends InspectorAction {
 
-        CloseDeadViewsAction() {
-            super(inspection(), "Close all DEAD object views");
+        final ObjectStatus status;
+
+        CloseViewsByStatusAction(ObjectStatus status) {
+            super(inspection(), "Close unpinned " + status.label() + " object views");
+            this.status = status;
         }
 
         @Override
         protected void procedure() {
-            closeDeadViews();
+
+            for (ObjectView view : new ArrayList<ObjectView>(objectToView.values())) {
+                if (view.object().status() == status && !view.isPinned()) {
+                    view.dispose();
+                }
+            }
         }
 
         @Override
         public
         void refresh(boolean force) {
             for (ObjectView view : objectToView.values()) {
-                if (view.object().status().isDead()) {
+                if (view.object().status() == status) {
                     setEnabled(true);
                     return;
                 }

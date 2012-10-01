@@ -142,9 +142,7 @@ public final class MethodViewContainer extends TabbedView<MethodViewContainer> {
 
     @Override
     public void vmProcessTerminated() {
-        for (InspectorView view : this) {
-            view.dispose();
-        }
+        closeAll();
     }
 
 }

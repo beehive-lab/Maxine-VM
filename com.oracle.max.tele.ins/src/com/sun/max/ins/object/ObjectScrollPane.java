@@ -62,6 +62,17 @@ public final class ObjectScrollPane extends InspectorScrollPane {
     }
 
     /**
+     * @param numPadWords  number of extra words to display as anonymous, untyped fields.
+     * @return a new {@link JScrollPane} displaying the fields of a padded {@link TeleTupleObject} ; never null;
+     */
+    public static ObjectScrollPane createTupleFieldsPaddedPane(Inspection inspection, ObjectView objectView, int numPadWords) {
+        final TeleTupleObject teleTupleObject = (TeleTupleObject) objectView.object();
+        final ObjectFieldsPaddedTable inspectorTable = new ObjectFieldsPaddedTable(inspection, objectView, "Object", teleTupleObject.getFieldActors(), numPadWords);
+        return new ObjectScrollPane(inspection, inspectorTable, objectView);
+    }
+
+    /**
+     *
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleHub} object; never null;
      */
     public static ObjectScrollPane createHubFieldsPane(Inspection inspection, ObjectView objectView) {

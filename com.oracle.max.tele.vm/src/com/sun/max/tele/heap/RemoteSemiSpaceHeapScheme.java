@@ -483,11 +483,6 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         }
     }
 
-    @Override
-    public boolean hasMarkBitmap() {
-        return false;
-    }
-
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
         return new MaxMemoryManagementInfo() {
 
@@ -561,6 +556,11 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                 return null;
             }
         };
+    }
+
+    @Override
+    public boolean hasForwarders() {
+        return true;
     }
 
     /**
