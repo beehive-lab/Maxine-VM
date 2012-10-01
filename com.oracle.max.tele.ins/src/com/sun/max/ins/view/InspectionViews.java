@@ -333,9 +333,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
             @Override
             protected void procedure() {
                 // The standard view set has no multi view instances; dispose all
-                for (InspectorView view : activeViews()) {
-                    final ViewKind kind = view.viewManager().viewKind();
-                    if (!kind.isSingleton) {
+                for (InspectorView view : new ArrayList<InspectorView>(activeViews())) {
+                    if (!view.viewManager().viewKind().isSingleton) {
                         view.dispose();
                     }
                 }
@@ -353,7 +352,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             protected void procedure() {
-                for (InspectorView view : activeViews()) {
+                for (InspectorView view : new ArrayList<InspectorView>(activeViews())) {
                     if (view.isPinned()) {
                         view.dispose();
                     }
@@ -494,7 +493,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             protected void procedure() {
-                for (InspectorView view : activeViews()) {
+                for (InspectorView view : new ArrayList<InspectorView>(activeViews())) {
                     if (view != exceptInspector) {
                         view.dispose();
                     }

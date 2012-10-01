@@ -282,7 +282,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     /**
      * @return the string currently appearing in the title or tab of the view's window frame
      */
-    protected String getTitle() {
+    protected final String getTitle() {
         return frame.getTitle();
     }
 
@@ -292,6 +292,9 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         frame.setTitle(pinnedPrefix() + (title == null ? getTextForTitle() : title));
     }
 
+    /**
+     * @return a short standard string that symbolizes the pinning of a view, if pinned; empty string otherwise.
+     */
     private String pinnedPrefix() {
         return isPinned() ? (PINNED_LOGO_TEXT + " ") : "";
     }
@@ -604,16 +607,13 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
 
     public final InspectorAction getShowViewAction() {
         // Only need one, but maybe not even that one; create lazily.
-        if (showViewAction == null) {
-            showViewAction = new InspectorAction(inspection(), pinnedPrefix() + getTextForTitle()) {
+        return new InspectorAction(inspection(), pinnedPrefix() + getTextForTitle()) {
 
-                @Override
-                protected void procedure() {
-                    highlight();
-                }
-            };
-        }
-        return showViewAction;
+            @Override
+            protected void procedure() {
+                highlight();
+            }
+        };
     }
 
     /**

@@ -158,7 +158,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
     @Override
     public void vmProcessTerminated() {
-        for (ObjectView objectView : objectViews()) {
+        for (ObjectView objectView : new ArrayList<ObjectView>(objectViews())) {
             objectView.dispose();
         }
     }
@@ -367,11 +367,11 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
         @Override
         protected void procedure() {
-            for (ObjectView view : objectToView.values()) {
+
+            for (ObjectView view : new ArrayList<ObjectView>(objectToView.values())) {
                 if (view.object().status() == status && !view.isPinned()) {
                     view.dispose();
                 }
-
             }
         }
 
