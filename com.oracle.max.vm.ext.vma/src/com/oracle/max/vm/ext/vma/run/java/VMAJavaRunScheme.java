@@ -44,6 +44,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.run.java.JavaRunScheme;
@@ -301,8 +302,15 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             forceCompile(ObjectAccess.class, "makeHashCode");
             forceCompile(AbstractList.class, "<init>");
             forceCompile(AbstractCollection.class, "<init>");
-            forceCompile(ArrayList.class, "rangeCheck");
-            forceCompile(ArrayList.class, "ensureCapacityInternal");
+            if (JDK.JDK_VERSION == 6) {
+                forceCompile(ArrayList.class, "ensureCapacity");
+                forceCompile(ArrayList.class, "RangeCheck");
+                forceCompile(getClass("java.lang.AbstractStringBuilder"), "ensureCapacity");
+            } else {
+                forceCompile(ArrayList.class, "ensureCapacityInternal");
+                forceCompile(ArrayList.class, "rangeCheck");
+                forceCompile(getClass("java.lang.AbstractStringBuilder"), "ensureCapacityInternal");
+            }
             forceCompile(Array.class, "newInstance");
             forceCompile(Math.class, "min", SignatureDescriptor.fromJava(int.class, int.class, int.class));
             forceCompile(Math.class, "max", SignatureDescriptor.fromJava(int.class, int.class, int.class));
@@ -320,7 +328,6 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             forceCompile(String.class, "lastIndexOf", SignatureDescriptor.fromJava(int.class, String.class));
             forceCompile(String.class, "lastIndexOf", SignatureDescriptor.fromJava(int.class, String.class, int.class));
             forceCompile(String.class, "substring", SignatureDescriptor.fromJava(String.class, int.class));
-            forceCompile(getClass("java.lang.AbstractStringBuilder"), "ensureCapacityInternal");
             forceCompile(Arrays.class, "copyOf", SignatureDescriptor.fromJava(char[].class, char[].class, int.class));
             forceCompile(BitSet.class, "wordIndex");
             forceCompile(Class.class, "getEnclosingMethodInfo");
@@ -361,9 +368,11 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             forceCompile(klass, methodName, null);
         }
 
+        @NEVER_INLINE
         private static void forceCompile(Class<?> klass, String methodName, SignatureDescriptor sig) {
-            ClassActor.fromJava(klass).findLocalClassMethodActor(
-                            SymbolTable.makeSymbol(methodName), sig).makeTargetMethod();
+            ClassMethodActor cma = ClassActor.fromJava(klass).findLocalClassMethodActor(SymbolTable.makeSymbol(methodName), sig);
+            assert cma != null;
+            cma.makeTargetMethod();
         }
 
         private static void checkDeopt(ClassMethodActor classMethodActor, ArrayList<TargetMethod> deoptMethods) {

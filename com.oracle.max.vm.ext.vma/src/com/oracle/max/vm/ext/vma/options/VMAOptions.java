@@ -212,6 +212,11 @@ public class VMAOptions {
     public static boolean VMA;
 
     /**
+     * Set true once {@link #initialize} has been called.
+     */
+    private static boolean initialized;
+
+    /**
      * The {@link VMAdviceHandler} handler class name.
      */
     private static String handlerClassName;
@@ -290,7 +295,7 @@ public class VMAOptions {
                     logger.logBytecodeSetting(b, state[0], state[1]);
                 }
             }
-
+            initialized = true;
         }
         return VMA;
     }
@@ -313,6 +318,9 @@ public class VMAOptions {
     }
 
     public static boolean instrumentClass(String className) {
+        if (!initialized) {
+            return false;
+        }
         boolean include = classInclusionPattern == null || classInclusionPattern.matcher(className).matches();
         if (include) {
             include = !classExclusionPattern.matcher(className).matches();
@@ -326,8 +334,8 @@ public class VMAOptions {
      * @param cma
      */
     public static boolean instrumentForAdvising(ClassMethodActor cma) {
-        boolean include = VMA;
-        if (VMA) {
+        boolean include = initialized && VMA;
+        if (include) {
             final String className = cma.holder().typeDescriptor.toJavaString();
             include = instrumentClass(className);
         }
