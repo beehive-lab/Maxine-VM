@@ -333,9 +333,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
             @Override
             protected void procedure() {
                 // The standard view set has no multi view instances; dispose all
-                for (InspectorView view : activeViews()) {
-                    final ViewKind kind = view.viewManager().viewKind();
-                    if (!kind.isSingleton) {
+                for (InspectorView view : new ArrayList<InspectorView>(activeViews())) {
+                    if (!view.viewManager().viewKind().isSingleton) {
                         view.dispose();
                     }
                 }
@@ -349,12 +348,14 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 }
             }
         };
-        deactivateAllAction = new InspectorAction(inspection, "Close all views") {
+        deactivateAllAction = new InspectorAction(inspection, "Close all unpinned views") {
 
             @Override
             protected void procedure() {
-                for (InspectorView view : activeViews()) {
-                    view.dispose();
+                for (InspectorView view : new ArrayList<InspectorView>(activeViews())) {
+                    if (view.isPinned()) {
+                        view.dispose();
+                    }
                 }
             }
         };
@@ -478,28 +479,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
      */
     public InspectorAction deactivateAllViewsAction(ViewKind kind) {
         return kind.deactivateAllAction(null);
-    }
-
-
-    /**
-     * Gets the action that will deactivate all active views with one exception.
-     *
-     * @param exceptInspector the one view that should not be deactivated
-     * @return the action for deactivating
-     */
-    public InspectorAction deactivateOtherViewsAction(final InspectorView exceptInspector) {
-        return new InspectorAction(inspection(), "Close other views") {
-
-            @Override
-            protected void procedure() {
-                for (InspectorView view : activeViews()) {
-                    if (view != exceptInspector) {
-                        view.dispose();
-                    }
-                }
-            }
-
-        };
     }
 
     /**

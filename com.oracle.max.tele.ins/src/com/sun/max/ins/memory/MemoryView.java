@@ -39,6 +39,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 // TODO (mlvdv) try to make columns narrow
@@ -122,10 +123,14 @@ public final class MemoryView extends AbstractView<MemoryView> {
 
         public MemoryView makeView(MaxObject object) {
             MemoryView memoryView = null;
-            final TeleFixedMemoryRegion objectMemoryRegion = object.objectMemoryRegion();
+            TeleFixedMemoryRegion objectMemoryRegion = object.objectMemoryRegion();
             if (objectMemoryRegion == null) {
                 gui().warningMessage("Unable to determine memory occupied by object");
-            }  else {
+            } else {
+                if (object instanceof TeleHeapFreeChunk) {
+                    final TeleHeapFreeChunk teleHFC = (TeleHeapFreeChunk) object;
+                    objectMemoryRegion = new TeleFixedMemoryRegion(vm(), objectMemoryRegion.regionName(), objectMemoryRegion.start(), teleHFC.size().toInt());
+                }
                 memoryView = new MemoryView(inspection(), objectMemoryRegion, null, object.origin(), object.status().isDead() ? ViewMode.WORD : ViewMode.OBJECT, null);
                 notifyAddingView(memoryView);
             }

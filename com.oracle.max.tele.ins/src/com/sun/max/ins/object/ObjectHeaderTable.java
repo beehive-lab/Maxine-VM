@@ -289,7 +289,8 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     private final class ValueRenderer implements TableCellRenderer, Prober {
 
-        private InspectorLabel[] labels = new InspectorLabel[headerFields.length];
+        private final InspectorLabel[] labels = new InspectorLabel[headerFields.length];
+        private boolean live = true;
 
         public ValueRenderer(Inspection inspection) {
             final MaxObject object = view.object();
@@ -368,6 +369,22 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public void refresh(boolean force) {
+            if (live && !view.object().status().isLive()) {
+                // The object has died since the last time we looked; replace the labels to read general word values.
+                for (int row = 0; row < headerFields.length; row++) {
+                    final HeaderField finalHeaderField = headerFields[row];
+                    labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, ObjectHeaderTable.this) {
+
+                        @Override
+                        public Value fetchValue() {
+
+                            final Address headerFieldAddress = view.object().headerAddress(finalHeaderField);
+                            return vm().memoryIO().readWordValue(headerFieldAddress);
+                        }
+                    };
+                }
+                live = false;
+            }
             for (InspectorLabel label : labels) {
                 label.refresh(force);
             }

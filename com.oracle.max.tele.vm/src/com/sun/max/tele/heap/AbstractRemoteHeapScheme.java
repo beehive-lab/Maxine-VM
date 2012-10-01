@@ -123,6 +123,10 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         return Collections.emptyList();
     }
 
+    public boolean hasForwarders() {
+        return false;
+    }
+
     public boolean hasMarkBitmap() {
         return false;
     }

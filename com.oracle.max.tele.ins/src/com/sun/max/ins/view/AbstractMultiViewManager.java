@@ -121,10 +121,6 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
                 menu.removeAll();
                 final List<View_Kind> views = activeViews();
                 if (views.size() > 0) {
-                    for (InspectorView view : views) {
-                        menu.add(view.getShowViewAction());
-                    }
-                    menu.addSeparator();
                     for (InspectorAction makeViewAction : makeViewActions()) {
                         menu.add(makeViewAction);
                     }
@@ -132,6 +128,10 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
                     menu.add(deactivateAllAction);
                     for (InspectorAction closeViewAction : closeViewActions()) {
                         menu.add(closeViewAction);
+                    }
+                    menu.addSeparator();
+                    for (InspectorView view : views) {
+                        menu.add(view.getShowViewAction());
                     }
                 } else {
                     for (InspectorAction makeViewAction : makeViewActions()) {
@@ -143,12 +143,13 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
         return menu;
     }
 
-    public final void deactivateAllViews() {
+    public final void deactivateAllUnpinnedViews() {
         for (InspectorView view : new ArrayList<View_Kind>(views)) {
-            view.dispose();
+            if (!view.isPinned()) {
+                view.dispose();
+            }
         }
         refresh();
-        assert !isActive();
     }
 
     public final InspectorAction deactivateAllAction(InspectorView exception) {
@@ -228,12 +229,12 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
     private final class DeactivateAllAction extends InspectorAction {
 
         public DeactivateAllAction(String title) {
-            super(inspection(), "Close all " + title + " views");
+            super(inspection(), "Close unpinned " + title + " views");
         }
 
         @Override
         protected void procedure() {
-            deactivateAllViews();
+            deactivateAllUnpinnedViews();
         }
 
         @Override
