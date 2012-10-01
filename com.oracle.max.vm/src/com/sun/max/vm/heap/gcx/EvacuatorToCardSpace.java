@@ -242,10 +242,14 @@ public class EvacuatorToCardSpace extends Evacuator {
     }
 
     private void recordRange(Address start, Address end) {
+        final Size rangeSize = end.minus(start).asSize();
+        if (rangeSize.isZero()) {
+            return;
+        }
         if (MaxineVM.isDebug() && checkDarkMatterRefs) {
             DarkMatter.checkNoDarkMatterRef(start, end);
         }
-        evacuatedBytes = evacuatedBytes.plus(end.minus(start));
+        evacuatedBytes = evacuatedBytes.plus(rangeSize);
         survivorRanges.add(start, end);
         if (logger.enabled()) {
             logger.logUpdateSurvivorRange(start, end);
@@ -274,6 +278,9 @@ public class EvacuatorToCardSpace extends Evacuator {
      */
     public void prefillSurvivorRanges(Address start, Address end) {
         FatalError.check(toSpace.contains(start) && toSpace.contains(end), "Range must be in to-space");
+        if (MaxineVM.isDebug() && checkDarkMatterRefs) {
+            DarkMatter.checkNoDarkMatterRef(start, end);
+        }
         survivorRanges.add(start, end);
         if (logger.enabled()) {
             logger.logPrefillSurvivorRanges(start, end);
@@ -369,6 +376,9 @@ public class EvacuatorToCardSpace extends Evacuator {
 
     @Override
     final Pointer evacuate(Pointer fromOrigin) {
+        if (MaxineVM.isDebug() && checkDarkMatterRefs) {
+            DarkMatter.scanCellForDarkMatter(fromOrigin);
+        }
         final Pointer fromCell = Layout.originToCell(fromOrigin);
         final Size size = Layout.size(fromOrigin);
         final Pointer toCell = allocate(size);
