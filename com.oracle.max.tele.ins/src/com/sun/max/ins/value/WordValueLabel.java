@@ -613,7 +613,7 @@ public class WordValueLabel extends ValueLabel {
         if (value == VoidValue.VOID) {
             setFont(style.wordAlternateTextFont());
             setForeground(style.wordInvalidDataColor());
-            setWrappedText("void");
+            setWrappedText("<unreadable>");
             setWrappedToolTipHtmlText(htmlify("<memory unreadable>"));
             if (parent != null) {
                 parent.repaint();
