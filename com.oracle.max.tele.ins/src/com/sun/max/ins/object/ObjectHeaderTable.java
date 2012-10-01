@@ -385,10 +385,8 @@ public final class ObjectHeaderTable extends InspectorTable {
                 }
                 live = false;
             }
-            if (view.object().status().isLive()) {
-                for (InspectorLabel label : labels) {
-                    label.refresh(force);
-                }
+            for (InspectorLabel label : labels) {
+                label.refresh(force);
             }
         }
     }
