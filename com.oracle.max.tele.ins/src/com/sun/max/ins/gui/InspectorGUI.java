@@ -28,7 +28,6 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.util.*;
 
 /**
  * Basic GUI services for a VM Inspection session.
@@ -40,11 +39,6 @@ public interface InspectorGUI {
      * Its frame must already have been created.
      */
     void addView(InspectorView view);
-
-    /**
-     * Removes and disposes all instances of {@link AbstractView} currently in the GUI display that match a predicate.
-     */
-    void removeViews(Predicate<InspectorView> predicate);
 
     /**
      * Shows a visual indication of the Inspector state with regard to accepting user inputs.

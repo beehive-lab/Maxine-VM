@@ -41,7 +41,6 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.heap.*;
 
 /**
@@ -354,20 +353,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopPane.add(component);
         component.setVisible(true);
         repaint();
-    }
-
-    public void removeViews(Predicate<InspectorView> predicate) {
-        for (int i = desktopPane.getComponentCount() - 1; i >= 0; i--) {
-            // Delete backwards so that the indices don't change
-            final Component component = desktopPane.getComponent(i);
-            if (component instanceof InspectorInternalFrame) {
-                final InspectorFrame inspectorFrame = (InspectorFrame) component;
-                final InspectorView view = inspectorFrame.view();
-                if (predicate.evaluate(view)) {
-                    view.dispose();
-                }
-            }
-        }
     }
 
     public void showInspectorBusy(boolean busy) {
