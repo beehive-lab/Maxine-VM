@@ -121,10 +121,6 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
                 menu.removeAll();
                 final List<View_Kind> views = activeViews();
                 if (views.size() > 0) {
-                    for (InspectorView view : views) {
-                        menu.add(view.getShowViewAction());
-                    }
-                    menu.addSeparator();
                     for (InspectorAction makeViewAction : makeViewActions()) {
                         menu.add(makeViewAction);
                     }
@@ -132,6 +128,10 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
                     menu.add(deactivateAllAction);
                     for (InspectorAction closeViewAction : closeViewActions()) {
                         menu.add(closeViewAction);
+                    }
+                    menu.addSeparator();
+                    for (InspectorView view : views) {
+                        menu.add(view.getShowViewAction());
                     }
                 } else {
                     for (InspectorAction makeViewAction : makeViewActions()) {
