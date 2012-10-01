@@ -349,12 +349,14 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 }
             }
         };
-        deactivateAllAction = new InspectorAction(inspection, "Close all views") {
+        deactivateAllAction = new InspectorAction(inspection, "Close all unpinned views") {
 
             @Override
             protected void procedure() {
                 for (InspectorView view : activeViews()) {
-                    view.dispose();
+                    if (view.isPinned()) {
+                        view.dispose();
+                    }
                 }
             }
         };

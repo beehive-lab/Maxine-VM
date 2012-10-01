@@ -35,6 +35,6 @@ public interface MultiViewManager<Inspector_Kind extends InspectorView> extends 
     /**
      * Disposes all existing views of this kind.
      */
-    void deactivateAllViews();
+    void deactivateAllUnpinnedViews();
 
 }
