@@ -123,18 +123,33 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * @return a short string, suitable for label text, to use in place of data that should be read from the VM,
      * but which cannot be for some reason (no process, process terminated, other i/o error).
      */
-    public String unavailableDataShortText() {
-        return "<?>";
+    public String unreadableDataShortText() {
+        return "<unreadable>";
     }
 
     /**
      * @return a long string, suitable for tool tip text, to use in place of data that should be read from the VM,
      * but which cannot be for some reason (no process, process terminated, other i/o error).
      */
+    public String unreadableDataLongText() {
+        return "Data unreadable from VM";
+    }
+
+    /**
+     * @return a short string, suitable for label text, to use in place of data that should be read from the VM,
+     * but which cannot be for some reason (no process, process terminated, other i/o error).
+     */
+    public String unavailableDataShortText() {
+        return "<?>";
+    }
+
+    /**
+     * @return a long string, suitable for tool tip text, to use in place of data that should be available from the VM,
+     * but which for some reason isn't available.
+     */
     public String unavailableDataLongText() {
         return "<?> Data unavailable";
     }
-
 
     /**
      * @return a short string, suitable for label text, to use in place of data that should be read from the VM,
