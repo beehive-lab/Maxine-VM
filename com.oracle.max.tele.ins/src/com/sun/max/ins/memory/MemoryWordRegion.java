@@ -22,6 +22,7 @@
  */
 package com.sun.max.ins.memory;
 
+import com.sun.max.ins.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
@@ -30,33 +31,45 @@ import com.sun.max.unsafe.*;
  * Representation for a region of VM memory constrained to contain
  * only whole words, word aligned.
  */
-public class MemoryWordRegion extends InspectorMemoryRegion {
+public class MemoryWordRegion extends AbstractMemoryRegion {
 
+    private final Address start;
+    private final long nBytes;
     private final long nWords;
+
+    private final MaxMemoryRegion memoryRegion;
 
     /**
      * Creates a memory region containing only aligned, whole words.
-     *
+     * @param inspection TODO
      * @param start address at beginning of region, must be word aligned
      * @param nWords number of words to include in the region
      */
-    public MemoryWordRegion(MaxVM vm, Address start, long nWords) {
-        super(vm, null, start, vm.platform().nBytesInWord() * nWords);
+    public MemoryWordRegion(Inspection inspection, Address start, long nWords) {
+        super(inspection);
+        this.start = start;
         this.nWords = nWords;
-        InspectorError.check(start.isAligned(vm.platform().nBytesInWord()));
+        final int nBytesInWord = inspection.vm().platform().nBytesInWord();
+        this.nBytes = nBytesInWord * nWords;
+        this.memoryRegion = null;
+        InspectorError.check(start.isAligned(nBytesInWord));
     }
 
     /**
      * Creates a memory region containing only aligned, whole words.
-     *
+     * @param inspection TODO
      * @param memoryRegion description of a region of VM memory
      * @throws InspectorError if the start or end of the region is not word aligned
      */
-    public MemoryWordRegion(MaxVM vm, MaxMemoryRegion memoryRegion) {
-        super(vm, memoryRegion.regionName(), memoryRegion.start(), memoryRegion.nBytes());
-        this.nWords = memoryRegion.nBytes() / vm.platform().nBytesInWord();
-        InspectorError.check(memoryRegion.start().isAligned(vm.platform().nBytesInWord()));
-        InspectorError.check(memoryRegion.start().plus(memoryRegion.nBytes()).isAligned(vm.platform().nBytesInWord()));
+    public MemoryWordRegion(Inspection inspection, MaxMemoryRegion memoryRegion) {
+        super(inspection);
+        this.start = Address.zero();
+        this.nBytes = -1;
+        final int nBytesInWord = inspection.vm().platform().nBytesInWord();
+        this.nWords = memoryRegion.nBytes() / nBytesInWord;
+        this.memoryRegion = memoryRegion;
+        InspectorError.check(memoryRegion.start().isAligned(nBytesInWord));
+        InspectorError.check(memoryRegion.start().plus(memoryRegion.nBytes()).isAligned(nBytesInWord));
     }
 
     /**
@@ -81,12 +94,23 @@ public class MemoryWordRegion extends InspectorMemoryRegion {
         return -1;
     }
 
-
     /**
      * @return the number of words in the region
      */
     public long nWords() {
         return nWords;
+    }
+
+    public String regionName() {
+        return memoryRegion == null ? null : memoryRegion.regionName();
+    }
+
+    public Address start() {
+        return memoryRegion == null ? start : memoryRegion.start();
+    }
+
+    public long nBytes() {
+        return memoryRegion == null ? nBytes : memoryRegion.nBytes();
     }
 
 }

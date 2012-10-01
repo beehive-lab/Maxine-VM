@@ -352,7 +352,7 @@ public final class Heap {
             "Run a garbage collection every <n> milliseconds. A value of 0 disables this mechanism.");
     }
 
-    public static boolean collectGarbage(Size requestedFreeSpace) {
+    public static boolean collectGarbage() {
         if (Heap.gcDisabled()) {
             Throw.stackDump("Out of memory and GC is disabled");
             MaxineVM.native_exit(1);
@@ -372,7 +372,7 @@ public final class Heap {
             // It is possible that a VM operation (that isn't a GC operation) was running while mutator threads
             // disabled the GC. If that is the case, the current GC operation is illegal.
             FatalError.check(disableGCThreadCount == 0, "GC must be enabled");
-            return heapLockedCollectGarbage(requestedFreeSpace);
+            return heapLockedCollectGarbage();
         } else {
             // Calls to collect garbage need to synchronize on the heap lock. This ensures that
             // GC operations are submitted serially to the VM operation thread. It also means
@@ -381,34 +381,20 @@ public final class Heap {
             // this request).
             synchronized (HEAP_LOCK) {
                 waitForGCDisablingThreads();
-                return heapLockedCollectGarbage(requestedFreeSpace);
+                return heapLockedCollectGarbage();
             }
         }
     }
 
-    private static boolean heapLockedCollectGarbage(Size requestedFreeSpace) {
+    private static boolean heapLockedCollectGarbage() {
         if (verbose()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("--GC requested by thread ");
-            Log.printCurrentThread(false);
-            Log.print(" for ");
-            Log.print(requestedFreeSpace.toLong());
-            Log.println(" bytes --");
-            Log.unlock(lockDisabledSafepoints);
+            VmThread.current().gcRequest.printBeforeGC();
         }
-        final boolean freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
+        final boolean result = heapScheme().collectGarbage();
         if (verbose()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("--GC requested by thread ");
-            Log.printCurrentThread(false);
-            if (freedEnough) {
-                Log.println(" freed enough--");
-            } else {
-                Log.println(" did not free enough--");
-            }
-            Log.unlock(lockDisabledSafepoints);
+            VmThread.current().gcRequest.printAfterGC(result);
         }
-        return freedEnough;
+        return result;
     }
 
     // Note: Called via reflection from jvm.c

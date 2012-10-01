@@ -327,6 +327,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      */
     final class CollectHeap extends GCOperation {
 
+        SemiSpaceGCRequest gcRequest() {
+            return asSemiSpaceGCRequest(callingThread().gcRequest);
+        }
+
         public CollectHeap() {
             super("CollectHeap");
         }
@@ -348,6 +352,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 swapSemiSpaces(); // Swap semispaces. From--> To and To-->From
                 stopTimer(clearTimer);
 
+                refVerifier.setValidSpaces(fromSpace, toSpace);
                 if (Heap.logGCPhases()) {
                     phaseLogger.logScanningRoots(VMLogger.Interval.BEGIN);
                 }
@@ -420,6 +425,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 // Now officially mark From-space as having no allocations.
                 fromSpace.mark.set(fromSpace.start());
 
+                final SemiSpaceGCRequest gcRequest = gcRequest();
+                gcRequest.lastInvocationCount = invocationCount;
 
                 lastGCTime = System.currentTimeMillis();
                 accumulatedGCTime += lastGCTime - startGCTime;
@@ -428,6 +435,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
 
                 // Post-verification of the heap.
+                refVerifier.setValidHeapSpace(toSpace);
                 verifyObjectSpaces(GCCallbackPhase.AFTER);
 
                 if (Heap.logGCTime()) {
@@ -535,7 +543,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 return forwardRef;
             }
             if (VerifyReferences) {
-                DebugHeap.verifyRefAtIndex(Address.zero(), 0, ref, toSpace, fromSpace);
+                refVerifier.verifyRefAtIndex(Address.zero(), 0, ref);
             }
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
@@ -732,17 +740,31 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         return result;
     }
 
-    public boolean collectGarbage(Size requestedFreeSpace) {
+    private static final class SemiSpaceGCRequest extends GCRequest {
+        protected SemiSpaceGCRequest(VmThread thread) {
+            super(thread);
+        }
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native SemiSpaceGCRequest asSemiSpaceGCRequest(GCRequest gcRequest);
+
+    public GCRequest createThreadLocalGCRequest(VmThread vmThread) {
+        return new SemiSpaceGCRequest(vmThread);
+    }
+
+    public boolean collectGarbage() {
         // We invoke the VMTI callbacks here and not via the GCCallBack so that
         // they occur on the actual thread causing the GC and not the VM operation thread.
         VMTI.handler().beginGC();
-        boolean result = collectGarbageImpl(requestedFreeSpace);
+        boolean result = collectGarbageImpl(asSemiSpaceGCRequest(VmThread.current().gcRequest));
         VMTI.handler().endGC();
         return result;
     }
 
-    private boolean collectGarbageImpl(Size requestedFreeSpace) {
-        if ((requestedFreeSpace.isZero() && !DisableExplicitGC) || immediateFreeSpace().lessThan(requestedFreeSpace)) {
+    private boolean collectGarbageImpl(SemiSpaceGCRequest gcRequest) {
+        final Size requestedFreeSpace = gcRequest.requestedBytes;
+        if ((gcRequest.explicit && !DisableExplicitGC) || immediateFreeSpace().lessThan(requestedFreeSpace)) {
             executeGC();
         }
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
@@ -891,13 +913,15 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         Address end;
         do {
             if (GCBeforeAllocation && !VmThread.isAttaching()) {
-                Heap.collectGarbage(size);
+                GCRequest.setGCRequest(size);
+                Heap.collectGarbage();
             }
             oldAllocationMark = allocationMark().asPointer();
             cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
             end = cell.plus(size);
             while (end.greaterThan(top)) {
-                if (!Heap.collectGarbage(size)) {
+                GCRequest.setGCRequest(size);
+                if (!Heap.collectGarbage()) {
                     /*
                      * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we
                      * cannot grow the heap any further (i.e. we are at the limit set by -Xmx). In that case we raise 'top' to the actual end of

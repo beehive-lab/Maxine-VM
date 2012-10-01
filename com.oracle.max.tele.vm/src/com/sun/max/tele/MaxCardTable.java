@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,21 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package com.sun.max.tele;
 
-package com.sun.max.ins.view;
-
-import com.sun.max.ins.gui.*;
+import com.sun.max.unsafe.*;
 
 
-/**
- * Manager for a kind of Inspector view that may have an arbitrary
- * number of instances active.
- */
-public interface MultiViewManager<Inspector_Kind extends InspectorView> extends ViewManager<Inspector_Kind> {
+public interface MaxCardTable extends MaxEntity<MaxCardTable> {
 
     /**
-     * Disposes all existing views of this kind.
+     * Describes the memory region covered by the card table.
      */
-    void deactivateAllUnpinnedViews();
+    MaxMemoryRegion coveredMemoryRegion();
+
+    /**
+     * Indicate whether the heap address is covered by the card table (i.e., if a mark in the mark bitmap is associated with this address).
+     * @param heapAddress
+     * @return true if the address is covered
+     */
+    boolean isCovered(Address heapAddress);
 
 }

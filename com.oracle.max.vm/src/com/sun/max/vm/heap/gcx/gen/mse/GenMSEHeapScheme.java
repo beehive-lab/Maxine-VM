@@ -25,6 +25,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
 import static com.sun.max.vm.heap.gcx.gen.mse.GenMSEHeapScheme.GenMSEHeapRegionTag.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
@@ -263,6 +264,20 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         theHeapRegionManager().checkOutgoingReferences();
     }
 
+    final class GenMSEGCRequest  extends GCRequest {
+        protected GenMSEGCRequest(VmThread vmThread) {
+            super(vmThread);
+        }
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native GenMSEGCRequest asGenSSGCRequest(GCRequest gcRequest);
+
+    @Override
+    public GCRequest createThreadLocalGCRequest(VmThread vmThread) {
+        return new GenMSEGCRequest(vmThread);
+    }
+
     final class GenCollection extends GCOperation {
         HeapRegionRangeIterable regionsRangeIterable;
         int fullCollectionCount = 0;
@@ -343,6 +358,8 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
                     FatalError.unimplemented();
                 }
             }
+            final GCRequest gcRequest = callingThread().gcRequest;
+            gcRequest.lastInvocationCount = invocationCount;
         }
     }
 
@@ -352,7 +369,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     }
 
     @Override
-    public boolean collectGarbage(Size requestedFreeSpace) {
+    public boolean collectGarbage() {
         genCollection.submit();
         return true;
     }

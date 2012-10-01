@@ -441,35 +441,31 @@ public class EvacuatorToCardSpace extends Evacuator {
             this.instanceName = instanceName;
         }
 
-        private void traceRange(String title, Address start, Address end) {
+        private void traceRange(String title, Address start, Address end, boolean newLine) {
             Log.print(title);
-            Log.print("["); Log.print(start); Log.print(", "); Log.print(end); Log.print("]");
+            Log.printRange(start, end, newLine);
         }
 
         @Override
         protected void traceEvacuateSurvivorRange(Address start, Address end) {
-            traceRange("Evacuated range ", start, end);
-            Log.println();
+            traceRange("Evacuated range ", start, end, true);
         }
 
         @Override
         protected void tracePrefillSurvivorRanges(Address start, Address end) {
-            traceRange("Prefill with range ", start, end);
-            Log.println();
+            traceRange("Prefill with range ", start, end, true);
         }
 
         @Override
         protected void traceUpdateSurvivorRange(Address start, Address end) {
-            traceRange("Add range", start, end);
-            Log.println();
+            traceRange("Add range", start, end, true);
         }
 
         @Override
         protected void traceBeginEvacuation(Address fromStart, Address fromEnd, Address toStart, Address toEnd) {
             Log.print("Begin "); Log.print(instanceName); Log.print(" evacuation: ");
-            traceRange("from space ", fromStart, fromEnd);
-            traceRange("to space,",  toStart, toEnd);
-            Log.println();
+            traceRange("from space ", fromStart, fromEnd, false);
+            traceRange("to space,",  toStart, toEnd, true);
         }
 
         @Override

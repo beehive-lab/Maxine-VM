@@ -58,7 +58,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         VMOptions.addFieldOption("-XX:", "DisableExplicitGC", HeapSchemeAdaptor.class, "Tells whether System.gc() forces a full GC", MaxineVM.Phase.PRISTINE);
     }
 
-
     public class GarbageCollectorMXBeanAdaptor extends MemoryManagerMXBeanAdaptor implements GarbageCollectorMXBean  {
         public GarbageCollectorMXBeanAdaptor(String name) {
             super(name);
@@ -164,10 +163,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             plantDeadObject(cell);
         } else {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("[");
-            Log.print(start);
-            Log.print(",");
-            Log.print(end);
+            Log.printRange(start, end, false);
             Log.print(" (");
             Log.print(end.minus(start));
             Log.print(")");
@@ -395,4 +391,5 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         // Override if not true.
         return thread instanceof VmOperationThread;
     }
+
 }

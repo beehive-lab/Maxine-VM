@@ -20,7 +20,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.sun.max.ins.memory;
 
 import static com.sun.max.tele.MaxMarkBitmap.MarkColor.*;
@@ -39,15 +38,16 @@ import com.sun.max.unsafe.*;
 
 /**
  * A table cell renderer for tables with rows representing memory words: displays in the cell
- * the contents of the {@link MaxMarkBitmap} word containing the bit that is used to mark each word.
+ * the contents of the {@linkplain MaxMarkBitmap Mark Bitmap} word containing the bit that is used to mark each word.
  * <p>
- * If there is no {@link MaMarkBitmap}, either because one is not in use or because it has not yet been initialized, or because
- * the word is not covered by the bitmap then the
- * cell displays the standard text representing unavailable data.
+ * If a {@linkplain MaxMarkBitmap Mark Bitmap} is not used, or if one is used but has not yet been initialized, or if
+ * the word is not covered by the bitmap, then the cell is rendered blank with an explanatory tooltip.</p>
  * <p>
- * The bitmap word is displayed as a sequence of bytes in hex format, with the exception of the byte containing the mark bit
+ * The relevant bitmap word is displayed as a sequence of bytes in hex format, with the exception of the byte containing the mark bit
  * for the word.  That byte is displayed in binary, surrounded by '|' characters.  The specific bit used to mark the word is
- * bracketed with '<' and '>'.
+ * bracketed with '<' and '>'.</p>
+ *
+ * @see MaxMarkBitmap
  */
 public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRenderer {
 
@@ -116,9 +116,18 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
         final MaxMarkBitmap markBitmap = vm().heap().markBitMap();
         final Address memoryAddress = tableModel.getAddress(row);
 
-        if (markBitmap == null || !markBitmap.isCovered(memoryAddress)) {
-            renderer = inspection().gui().getUnavailableDataTableCellRenderer();
+        if (!vm().heap().hasMarkBitmap()) {
+            renderer.setText("");
             renderer.setToolTipPrefix(tableModel.getRowDescription(row));
+            renderer.setWrappedToolTipHtmlText("<br>No bitmap used in this VM");
+        } else if (markBitmap == null) {
+            renderer.setText("");
+            renderer.setToolTipPrefix(tableModel.getRowDescription(row));
+            renderer.setWrappedToolTipHtmlText("<br>Bitmap not yet allocated");
+        } else if (!markBitmap.isCovered(memoryAddress)) {
+            renderer.setText("");
+            renderer.setToolTipPrefix(tableModel.getRowDescription(row));
+            renderer.setWrappedToolTipHtmlText("<br>Not covered by bitmap");
         } else {
             final int bitIndex = markBitmap.getBitIndexOf(memoryAddress);
             final int bitIndexInWord = markBitmap.getBitIndexInWord(bitIndex);

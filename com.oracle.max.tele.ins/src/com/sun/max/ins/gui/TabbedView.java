@@ -24,13 +24,13 @@ package com.sun.max.ins.gui;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
+import com.sun.max.tele.*;
 
 /**
  * An {@link AbstractView} that contains within it a collection of views in a tabbed frame.
@@ -62,6 +62,10 @@ public abstract class TabbedView<View_Type extends TabbedView> extends AbstractV
 
         public void stateChanged(ChangeEvent event) {
             // A view tab has become visible that was not visible before.
+            if (vm().state().processState() == MaxProcessState.TERMINATED) {
+                // Tabbed views can "become visible" during the shutdown sequence after the VM process dies and when
+                // the tabbed views are being closed; do nothing in that situation.
+            }
             final InspectorView selectedView = getSelected();
             if (selectedView != null) {
                 // View may not have been getting refreshed while not visible.
@@ -182,14 +186,10 @@ public abstract class TabbedView<View_Type extends TabbedView> extends AbstractV
      * Disposes of all but the specified view, presumed to be a tabbed member of this view.
      */
     public void closeOthers(InspectorView keepView) {
-        final List<AbstractView> toClose = new ArrayList<AbstractView>();
-        for (AbstractView view : views) {
+        for (AbstractView view : new ArrayList<AbstractView>(views)) {
             if (view != keepView) {
-                toClose.add(view);
+                close(view);
             }
-        }
-        for (InspectorView view : toClose) {
-            close(view);
         }
     }
 
@@ -199,10 +199,17 @@ public abstract class TabbedView<View_Type extends TabbedView> extends AbstractV
     @Override
     public void viewClosing() {
         removeChangeListener(tabChangeListener);
-        for (InspectorView view : this) {
+        closeAll();
+        super.viewClosing();
+    }
+
+    /**
+     * Closes all tabbed member views, but doesn't do any other cleanup.
+     */
+    protected void closeAll() {
+        for (InspectorView view : new ArrayList<AbstractView>(views)) {
             view.dispose();
         }
-        super.viewClosing();
     }
 
 }

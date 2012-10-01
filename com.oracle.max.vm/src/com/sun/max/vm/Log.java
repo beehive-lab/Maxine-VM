@@ -246,6 +246,22 @@ public final class Log {
     }
 
     /**
+     * Print an address range.
+     * @param start first address in the range
+     * @param end last address in the range
+     */
+    public static void printRange(Word start, Word end, boolean withNewLine) {
+        out.print("[");
+        out.print(start);
+        out.print(",");
+        out.print(end);
+        if (withNewLine) {
+            out.println("]");
+        } else {
+            out.print("]");
+        }
+    }
+    /**
      * Equivalent to calling {@link LogPrintStream#print(CodePointer)} on {@link #out}.
      */
     public static void print(CodePointer cp) {

@@ -23,8 +23,8 @@
 package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.GCRequest;
 
 /**
  * Implements method substitutions for {@link java.lang.Runtime java.lang.Runtime}.
@@ -73,7 +73,9 @@ public final class JDK_java_lang_Runtime {
     @SUBSTITUTE
     private void gc() {
         if (!Heap.gcDisabled()) {
-            Heap.collectGarbage(Size.zero());
+            final GCRequest gcRequest = GCRequest.clearedGCRequest();
+            gcRequest.explicit = true;
+            Heap.collectGarbage();
         }
     }
 

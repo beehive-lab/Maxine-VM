@@ -285,7 +285,7 @@ public final class MemoryColoringTable extends InspectorTable {
 
         public MarkBitmapTableModel(Inspection inspection, MaxMarkBitmap markBitmap) {
             super(inspection, markBitmap.coveredMemoryRegion().start());
-            setMemoryRegion(new MemoryWordRegion(inspection.vm(), markBitmap.coveredMemoryRegion()));
+            setMemoryRegion(new MemoryWordRegion(inspection(), markBitmap.coveredMemoryRegion()));
             //positionBias = memoryWordRegion.start().minus(origin).dividedBy(getWordSize()).toInt();
         }
 
@@ -338,7 +338,7 @@ public final class MemoryColoringTable extends InspectorTable {
             final Address address = memoryWordRegion.getAddressAt(row);
             MaxMemoryRegion rowMemoryRegion = addressToMemoryRegion.get(address.toLong());
             if (rowMemoryRegion == null) {
-                rowMemoryRegion = new MemoryWordRegion(vm(), address, 1);
+                rowMemoryRegion = new MemoryWordRegion(inspection(), address, 1);
                 addressToMemoryRegion.put(address.toLong(), rowMemoryRegion);
             }
             return rowMemoryRegion;
@@ -591,6 +591,12 @@ public final class MemoryColoringTable extends InspectorTable {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
+            if (addressToLabelMap.size() > 100) {
+                // A lot of scrolling over a large region has generated a label cache that
+                // takes a long time to refresh.  Clearing it might cause a transient loss of
+                // some view state, but we avoid sluggish refresh.
+                addressToLabelMap.clear();
+            }
             WordValueLabel label = addressToLabelMap.get(address.toLong());
             if (label == null) {
                 label = new WordValueLabel(inspection, ValueMode.WORD, address, MemoryColoringTable.this, false);

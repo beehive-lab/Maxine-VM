@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -31,6 +29,8 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -65,25 +65,28 @@ public final class DarkMatter {
     public static final ArrayClassActor<LongValue> DARK_MATTER_ARRAY =
         new ArrayClassActor<LongValue>(ClassRegistry.LONG, SymbolTable.makeSymbol(DARK_MATTER_CLASS_NAME));
 
+    public static final DarkMatterLogger logger = new DarkMatterLogger();
+
+    /**
+     * Boot image generation initialization. The logger may not be initialized properly during boot image generation.
+     * Calling this during heap scheme initialization forces its initialization.
+     */
+    @HOSTED_ONLY
+    public static void initialize() {
+        logger.checkOptions();
+    }
+
     /**
      * Variable-less class used to format the smallest possible dark-matter (i.e., two-words space).
      */
     public static class SmallestDarkMatter {
-
-        @INTRINSIC(UNSAFE_CAST)
-        private static native SmallestDarkMatter asSmallestDarkMatter(Object darkMatter);
-
-        static SmallestDarkMatter toDarkMatter(Address cell) {
-            return asSmallestDarkMatter(Reference.fromOrigin(Layout.cellToOrigin(cell.asPointer())).toJava());
-        }
-
         @FOLD
         static DynamicHub hub() {
             return ClassActor.fromJava(SmallestDarkMatter.class).dynamicHub();
         }
 
         @FOLD
-        static Word hubWord() {
+        static Word hubOrigin() {
             return Reference.fromJava(hub()).toOrigin();
         }
 
@@ -91,6 +94,10 @@ public final class DarkMatter {
             final Pointer origin = Layout.cellToOrigin(darkMatter.asPointer());
             Layout.writeHubReference(origin, Reference.fromJava(hub()));
             Layout.writeMisc(origin, Word.zero());
+            // FIXME: Tracing  here may lead to issue with GC if used when retiring TLABs during mutator allocation.
+            if (logger.enabled()) {
+                logger.logFormatSmall(darkMatter);
+            }
         }
 
         private SmallestDarkMatter() {
@@ -116,34 +123,52 @@ public final class DarkMatter {
     }
 
     @FOLD
-    private static Word hubWord() {
+    private static Word hubOrigin() {
         return Reference.fromJava(hub()).toOrigin();
     }
 
     /**
-     * Tells whether an address is the origin of a cell formatted as dark matter.
-     * @param origin heap address
-     * @return true if the address is the origin of a cell formatted as dark matter.
+     * Tells whether the value of a word equals the address of a DarkMatter hub.
+     * @param hubWord a word value
+     * @return true if the word value is the origin of a dark matter hub.
      */
-    public static boolean isDarkMatterOrigin(Address origin) {
-        final Word hubWord =  origin.asPointer().readWord(Layout.hubIndex());
-        return hubWord.equals(hubWord()) || hubWord.equals(SmallestDarkMatter.hubWord());
+    public static boolean isDarkMatterHub(Word hubWord) {
+        return hubWord.equals(hubOrigin()) || hubWord.equals(SmallestDarkMatter.hubOrigin());
     }
 
-    /**
-     * Size of a cell formatted as dark matter. Raises a {@linkplain FatalError} if the address is not the start of some dark matter.
-     * @param address address of a cell formatted as a dark matter.
-     * @return Size size of the dark matter cell
-     */
-    public static Size darkMatterSize(Address address) {
-        final Word hubWord =  address.asPointer().readWord(Layout.hubIndex());
-        if (hubWord.equals(hubWord())) {
-            return Size.fromInt(Layout.readArrayLength(address.asPointer()));
+    @NEVER_INLINE
+    private static void reportInvalidDarkMatterRange(Address start, Size size) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.printRange(start, start.plus(size), false);
+        Log.print(" (");
+        Log.print(size);
+        Log.print(")");
+        Log.unlock(lockDisabledSafepoints);
+        FatalError.unexpected("Not enough space to format Dark Matter");
+    }
+
+    private static void plantDarkMatter(Address start, Size size)  {
+        final Pointer origin = Layout.cellToOrigin(start.asPointer());
+        final int length = size.minus(darkMatterHeaderSize()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        Layout.writeHubReference(origin, Reference.fromJava(hub()));
+        Layout.writeMisc(origin, Word.zero());
+        if (MaxineVM.isDebug()) {
+            origin.writeWord(Layout.arrayLayout().arrayLengthOffset(), Word.zero());
         }
-        FatalError.check(hubWord.equals(SmallestDarkMatter.hubWord()), "not dark matter origin");
-        return minSize();
+        Layout.writeArrayLength(origin, length);
+        if (MaxineVM.isDebug()) {
+            Memory.setWords(start.plus(darkMatterHeaderSize()).asPointer(), length, Memory.zappedMarker());
+        }
+        // FIXME: Tracing  here may lead to issue with GC if used when retiring TLABs during mutator allocation.
+        if (logger.enabled()) {
+            logger.logFormat(start, start.plus(size));
+        }
     }
 
+    @FOLD
+    private static Size maxDarkMatterSize() {
+        return Size.G.shiftedLeft(Word.widthValue().log2numberOfBytes);
+    }
     /**
      * Format a word-aligned heap region as dark matter. A {@linkplain FatalError} is raised if the region is less than two-words wide.
      * @param start address to the first word of the region
@@ -151,27 +176,18 @@ public final class DarkMatter {
      */
     public static void format(Address start, Size size) {
         if (size.greaterThan(minSize())) {
-            final Pointer origin = Layout.cellToOrigin(start.asPointer());
-            final int length = size.minus(darkMatterHeaderSize()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
-            Layout.writeHubReference(origin, Reference.fromJava(hub()));
-            Layout.writeMisc(origin, Word.zero());
-            Layout.writeArrayLength(origin, length);
-            if (MaxineVM.isDebug()) {
-                Memory.setWords(start.plus(darkMatterHeaderSize()).asPointer(), length, Memory.zappedMarker());
+            // Can't use DarkMatter array for formatting very large region (length encoded as. Need to slice it into smaller region.
+            while (size.greaterThan(maxDarkMatterSize())) {
+                FatalError.breakpoint();
+                plantDarkMatter(start, maxDarkMatterSize());
+                start = start.plus(maxDarkMatterSize());
+                size = size.minus(maxDarkMatterSize());
             }
+            plantDarkMatter(start, size);
         } else if (size.equals(minSize())) {
             SmallestDarkMatter.format(start);
         } else {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("[");
-            Log.print(start);
-            Log.print(",");
-            Log.print(start.plus(size));
-            Log.print(" (");
-            Log.print(size);
-            Log.print(")");
-            Log.unlock(lockDisabledSafepoints);
-            FatalError.unexpected("invalid dark matter size");
+            reportInvalidDarkMatterRange(start, size);
         }
     }
 
@@ -183,4 +199,88 @@ public final class DarkMatter {
     public static void format(Address start, Address end) {
         format(start, end.minus(start).asSize());
     }
+
+    /*
+     * Interface for logging heap resizing decisions made by the GenSSHeapSizingPolicy.
+     * The interface uses long instead of Size to improve human-readability from the inspector's log views.
+     */
+    @HOSTED_ONLY
+    @VMLoggerInterface(defaultConstructor = true)
+    private interface DarkMatterLoggerInterface {
+        void format(
+                        @VMLogParam(name = "start") Address start,
+                        @VMLogParam(name = "end") Address end);
+        void formatSmall(
+                        @VMLogParam(name = "start") Address start);
+    }
+
+    static final class DarkMatterLogger extends DarkMatterLoggerAuto {
+        DarkMatterLogger() {
+            super("DarkMatter", "Dark Matter Formation");
+        }
+        @Override
+        protected void traceFormat(Address start, Address end) {
+            Log.print("dark matter @ ");
+            Log.printRange(start, end, true);
+        }
+
+        @Override
+        protected void traceFormatSmall(Address start) {
+            Log.print("small dark matter @ ");
+            Log.println(start);
+        }
+    }
+
+// START GENERATED CODE
+    private static abstract class DarkMatterLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            Format, FormatSmall;
+
+            @SuppressWarnings("hiding")
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected DarkMatterLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        protected DarkMatterLoggerAuto() {
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logFormat(Address start, Address end) {
+            log(Operation.Format.ordinal(), start, end);
+        }
+        protected abstract void traceFormat(Address start, Address end);
+
+        @INLINE
+        public final void logFormatSmall(Address start) {
+            log(Operation.FormatSmall.ordinal(), start);
+        }
+        protected abstract void traceFormatSmall(Address start);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //Format
+                    traceFormat(toAddress(r, 1), toAddress(r, 2));
+                    break;
+                }
+                case 1: { //FormatSmall
+                    traceFormatSmall(toAddress(r, 1));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
+
 }

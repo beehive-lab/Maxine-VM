@@ -32,13 +32,17 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.sequential.semiSpace.*;
 
 /**
  * Representation of a remote object reference in a heap region managed by a semispace GC. The states of the reference
  * represent possible states of knowledge about the particular object, especially those relevant during the
- * {@link HeapPhase#ANALYZING} phase of the heap.
+ * {@link HeapPhase#ANALYZING} phase of the heap, and what changes (transitions) to the objects
+ * are legitimate for this collector.
  *
  * @see <a href="http://en.wikipedia.org/wiki/State_pattern">"State" design pattern</a>
+ * @see SemiSpaceHeapScheme
+ * @see RemoteSemiSpaceHeapScheme
  */
 public class SemiSpaceRemoteReference extends RemoteReference {
 
@@ -52,9 +56,9 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     private static enum RefState {
 
         /**
-         * Live reference in To-Space, heap not {@link HeapPhase#ANALYZING}, not forwarded.
+         * Live reference in To-Space, heap not {@linkplain HeapPhase#ANALYZING analyzing}, not forwarded.
          */
-        REF_LIVE ("LIVE (not Analyzing)"){
+        SS_LIVE ("LIVE (not Analyzing)"){
 
             // Properties
             @Override
@@ -77,14 +81,14 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             // Transitions
             @Override
             void beginAnalyzing(SemiSpaceRemoteReference ref) {
-                ref.refState = REF_FROM;
+                ref.refState = SS_FROM;
             }
         },
 
         /**
-         * Reference in From-Space, heap {@link HeapPhase#ANALYZING}, not forwarded.
+         * Reference in From-Space, heap {@linkplain HeapPhase#ANALYZING analyzing}, not forwarded.
          */
-        REF_FROM ("LIVE (Analyzing: From-only), not forwarded"){
+        SS_FROM ("LIVE (Analyzing: From-only), not forwarded"){
 
             // Properties
             @Override ObjectStatus status() {
@@ -108,18 +112,19 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             void discoverForwarded(SemiSpaceRemoteReference ref, Address newOrigin) {
                 ref.alternateOrigin = ref.origin;
                 ref.origin = newOrigin;
-                ref.refState = REF_FROM_TO;
+                ref.refState = SS_FROM_TO;
             }
             @Override
             void endAnalyzing(SemiSpaceRemoteReference ref) {
-                ref.refState = REF_DEAD;
+                ref.refState = SS_DEAD;
             }
         },
 
         /**
-         * Reference in To-Space, heap {@link HeapPhase#ANALYZING}, presumed to be forwarded new copy, location of original copy is unknown.
+         * Reference in To-Space, heap {@linkplain HeapPhase#ANALYZING analyzing},
+         * presumed to be forwarded new copy, location of original copy is unknown.
          */
-        REF_TO("LIVE (Analyzing: To only)") {
+        SS_TO("LIVE (Analyzing: To only)") {
 
             // Properties
             @Override ObjectStatus status() {
@@ -142,15 +147,19 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             @Override
             void discoverOldOrigin(SemiSpaceRemoteReference ref, Address oldOrigin) {
                 ref.alternateOrigin = oldOrigin;
-                ref.refState = REF_FROM_TO;
+                ref.refState = SS_FROM_TO;
             }
             @Override
             void endAnalyzing(SemiSpaceRemoteReference ref) {
-                ref.refState = REF_LIVE;
+                ref.refState = SS_LIVE;
             }
         },
 
-        REF_FROM_TO ("LIVE (Analyzing: From+To)") {
+        /**
+         * Reference in To-Space, heap {@linkplain HeapPhase#ANALYZING analyzing},
+         * forwarded from a known location in From-Space.
+         */
+        SS_FROM_TO ("LIVE (Analyzing: From+To)") {
 
             // Properties
             @Override ObjectStatus status() {
@@ -173,11 +182,16 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             @Override
             void endAnalyzing(SemiSpaceRemoteReference ref) {
                 ref.alternateOrigin = Address.zero();
-                ref.refState = REF_LIVE;
+                ref.refState = SS_LIVE;
             }
         },
 
-        REF_FORWARDER ("FORWARDER (Quasi object, only during Analyzing)") {
+        /**
+         * Reference to a quasi-object <em>forwarder</em> in From-Space,
+         * heap {@linkplain HeapPhase#ANALYZING analyzing}, location of
+         * new copy in To-space known.
+         */
+        SS_FORWARDER ("FORWARDER (Quasi object, only during Analyzing)") {
 
             // Properties
             @Override ObjectStatus status() {
@@ -200,11 +214,16 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             @Override
             void endAnalyzing(SemiSpaceRemoteReference ref) {
                 ref.alternateOrigin = Address.zero();
-                ref.refState = REF_DEAD;
+                ref.refState = SS_DEAD;
             }
         },
 
-        REF_DEAD ("Dead") {
+        /**
+         * Reference to a formerly live object that has been determined unreachable or to
+         * a <em>forwarder</em>, once heap {@linkplain HeapPhase#ANALYZING analyzing is complete},
+         * and which should be forgotten. No assumptions may be made about memory contents at the location.
+         */
+        SS_DEAD ("Dead") {
 
             // Properties
             @Override ObjectStatus status() {
@@ -223,7 +242,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
                 return Address.zero();
             }
 
-            // Transitions (none: death is final)
+            // Transitions (none: alas, death is final)
 
         };
 
@@ -255,6 +274,9 @@ public class SemiSpaceRemoteReference extends RemoteReference {
          */
         abstract Address forwardedTo(SemiSpaceRemoteReference ref);
 
+        /**
+         * @see RemoteReference#gcDescription()
+         */
         String gcDescription(SemiSpaceRemoteReference ref) {
             return label;
         }
@@ -313,13 +335,13 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     }
 
     /**
-     * Creates a reference to an object, discovered in To-Space when the heap is <em>not</em> {@link HeapPhase#ANALYZING}.
+     * Creates a new reference to an object, discovered in To-Space when the heap is <em>not</em> {@link HeapPhase#ANALYZING}.
      *
      * @param origin the location of the object in VM To-Space.
      * @return a remote reference to an ordinary live object
      */
     public static SemiSpaceRemoteReference createLive(AbstractRemoteHeapScheme remoteScheme, Address origin) {
-        return new SemiSpaceRemoteReference(remoteScheme, RefState.REF_LIVE, origin);
+        return new SemiSpaceRemoteReference(remoteScheme, RefState.SS_LIVE, origin);
     }
 
     /**
@@ -331,7 +353,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * @return a remote reference to the an object in From-Space with unknown reachability
      */
     public static SemiSpaceRemoteReference createInFromOnly(AbstractRemoteHeapScheme remoteScheme, Address origin) {
-        return new SemiSpaceRemoteReference(remoteScheme, RefState.REF_FROM, origin);
+        return new SemiSpaceRemoteReference(remoteScheme, RefState.SS_FROM, origin);
     }
 
     /**
@@ -343,7 +365,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * @return a remote reference to the new copy of a forwarded object in To-Space
      */
     public static SemiSpaceRemoteReference createInToOnly(AbstractRemoteHeapScheme remoteScheme, Address origin) {
-        return new SemiSpaceRemoteReference(remoteScheme, RefState.REF_TO, origin);
+        return new SemiSpaceRemoteReference(remoteScheme, RefState.SS_TO, origin);
     }
 
     /**
@@ -354,7 +376,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * @return a remote reference to the new copy of the forwarded object
      */
     public static SemiSpaceRemoteReference createInFromTo(AbstractRemoteHeapScheme remoteScheme, Address fromSpaceOrigin, Address toSpaceOrigin) {
-        return new SemiSpaceRemoteReference(remoteScheme, RefState.REF_FROM_TO, toSpaceOrigin, fromSpaceOrigin);
+        return new SemiSpaceRemoteReference(remoteScheme, RefState.SS_FROM_TO, toSpaceOrigin, fromSpaceOrigin);
     }
 
     /**
@@ -366,7 +388,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * is finished {@link HeapPhase#ANALYZING}.
      */
     public static SemiSpaceRemoteReference createForwarder(AbstractRemoteHeapScheme remoteScheme, Address fromSpaceOrigin, Address toSpaceOrigin) {
-        return new SemiSpaceRemoteReference(remoteScheme, RefState.REF_FORWARDER, fromSpaceOrigin, toSpaceOrigin);
+        return new SemiSpaceRemoteReference(remoteScheme, RefState.SS_FORWARDER, fromSpaceOrigin, toSpaceOrigin);
     }
 
     /**
@@ -403,6 +425,8 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         this(remoteScheme, refState, origin, Address.zero());
     }
 
+    // Remote Reference properties
+
     @Override
     public ObjectStatus status() {
         return refState.status();
@@ -432,6 +456,8 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     public String gcDescription() {
         return remoteScheme.heapSchemeClass().getSimpleName() + " state=" + refState.gcDescription(this);
     }
+
+    // Reference state transitions
 
     /**
      * State transition on an ordinary live reference in To-Space when an {@link HeapPhase#ANALYZING} phase is discovered to

@@ -218,6 +218,7 @@ public final class MemoryWordsTable extends InspectorTable {
             addColumn(MemoryColumnKind.UNICODE, new UnicodeRenderer(inspection()), null);
             addColumn(MemoryColumnKind.FLOAT, new FloatRenderer(inspection()), null);
             addColumn(MemoryColumnKind.DOUBLE, new DoubleRenderer(inspection()), null);
+            addColumn(MemoryColumnKind.MM_STATUS, new MemoryMgtStatusRenderer(inspection(), table, tableModel), null);
             addColumn(MemoryColumnKind.MARK_BITS, new MemoryMarkBitsTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(MemoryColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
@@ -293,7 +294,7 @@ public final class MemoryWordsTable extends InspectorTable {
             final Address address = memoryWordRegion.getAddressAt(row);
             MaxMemoryRegion rowMemoryRegion = addressToMemoryRegion.get(address.toLong());
             if (rowMemoryRegion == null) {
-                rowMemoryRegion = new MemoryWordRegion(vm(), address, 1);
+                rowMemoryRegion = new MemoryWordRegion(inspection(), address, 1);
                 addressToMemoryRegion.put(address.toLong(), rowMemoryRegion);
             }
             return rowMemoryRegion;
@@ -332,6 +333,12 @@ public final class MemoryWordsTable extends InspectorTable {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
+            if (addressToLabelMap.size() > 100) {
+                // A lot of scrolling over a large region has generated a label cache that
+                // takes a long time to refresh.  Clearing it might cause a transient loss of
+                // some view state, but we avoid sluggish refresh.
+                addressToLabelMap.clear();
+            }
             WordValueLabel label = addressToLabelMap.get(address.toLong());
             if (label == null) {
                 label = new WordValueLabel(inspection, ValueMode.WORD, address, MemoryWordsTable.this, true);
@@ -394,7 +401,7 @@ public final class MemoryWordsTable extends InspectorTable {
             String labelText = "";
             String toolTipText = tableModel.getRowDescription(row);
             final MaxMemoryRegion memoryRegionForRow = tableModel.getMemoryRegion(row);
-            MaxMemoryManagementInfo memoryManagementInfo = vm().getMemoryManagementInfo(memoryRegionForRow.start());
+            MaxMemoryManagementInfo memoryManagementInfo = vm().heap().getMemoryManagementInfo(memoryRegionForRow.start());
             if (memoryManagementInfo.status().isKnown()) {
                 // Only display something if we know something; blank otherwise.
                 labelText = memoryManagementInfo.terseInfo();
@@ -443,7 +450,7 @@ public final class MemoryWordsTable extends InspectorTable {
         }
     }
 
-    private final class ValueRenderer extends DefaultTableCellRenderer implements Prober{
+    private final class ValueRenderer extends DefaultTableCellRenderer implements Prober {
 
         private final Inspection inspection;
         // WordValueLabels have important user interaction state, so create one per memory location and keep them around,
@@ -457,6 +464,12 @@ public final class MemoryWordsTable extends InspectorTable {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
+            if (addressToLabelMap.size() > 100) {
+                // A lot of scrolling over a large region has generated a label cache that
+                // takes a long time to refresh.  Clearing it might cause a transient loss of
+                // some view state, but we avoid sluggish refresh.
+                addressToLabelMap.clear();
+            }
             WordValueLabel label = addressToLabelMap.get(address.toLong());
             if (label == null) {
                 label = new WordValueLabel(inspection, ValueMode.WORD, MemoryWordsTable.this) {

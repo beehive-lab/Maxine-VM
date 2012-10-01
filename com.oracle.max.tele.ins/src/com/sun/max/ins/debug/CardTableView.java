@@ -32,52 +32,50 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
-import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMarkBitmap.MarkColor;
 import com.sun.max.unsafe.*;
 
-public class MarkBitmapView extends AbstractView<MarkBitmapView> implements TableColumnViewPreferenceListener {
+public class CardTableView extends AbstractView<CardTableView> implements TableColumnViewPreferenceListener {
     private static final int TRACE_VALUE = 1;
-    private static final ViewKind VIEW_KIND = ViewKind.MARK_BITMAP;
-    private static final String SHORT_NAME = "Mark Bitmap";
-    private static final String LONG_NAME = "Mark Bitmap View";
-    private static final String GEOMETRY_SETTINGS_KEY = "markBitmapViewGeometry";
+    private static final ViewKind VIEW_KIND = ViewKind.CARD_TABLE;
+    private static final String SHORT_NAME = "Card Table";
+    private static final String LONG_NAME = "Card Table View";
+    private static final String GEOMETRY_SETTINGS_KEY = "cardTableViewGeometry";
 
-    public static final class MarkBitmapViewManager extends AbstractSingletonViewManager<MarkBitmapView> {
-        protected MarkBitmapViewManager(Inspection inspection) {
+    public static final class CardTableViewManager extends AbstractSingletonViewManager<CardTableView> {
+        protected CardTableViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
             focus().addListener(new InspectionFocusAdapter() {
 
                 @Override
-                public void markBitIndexFocusChanged(int oldHeapMarkBit, int heapMarkBit) {
-                    if (heapMarkBit >= 0) {
-                        final MarkBitmapView view = MarkBitmapViewManager.this.activateView();
-                        view.scrollToRowCentered(heapMarkBit);
+                public void cardTableIndexFocusChanged(int oldCardTableByteIndex, int cardTableByteIndex) {
+                    if (cardTableByteIndex >= 0) {
+                        final CardTableView view = CardTableViewManager.this.activateView();
+                        view.scrollToRowCentered(cardTableByteIndex);
                     }
                 }
             });
         }
 
         @Override
-        protected MarkBitmapView createView(Inspection inspection) {
-            return new MarkBitmapView(inspection);
+        protected CardTableView createView(Inspection inspection) {
+            return new CardTableView(inspection);
         }
 
         @Override
         public boolean isSupported() {
-            return vm().heap().hasMarkBitmap();
+            return vm().heap().hasCardTable();
         }
     }
 
-    private static MarkBitmapViewManager viewManager = null;
+    private static CardTableViewManager viewManager = null;
 
-    public static MarkBitmapViewManager makeViewManager(Inspection inspection) {
+    public static CardTableViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
-            viewManager = new MarkBitmapViewManager(inspection);
+            viewManager = new CardTableViewManager(inspection);
         }
         return viewManager;
     }
@@ -131,11 +129,11 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     }
 
     private final InspectorAction scrollToFocusAction;
-    private final InspectorAction viewBitmapMemoryAction;
-    private final InspectorAction viewBitmapDataAction;
+    private final InspectorAction viewCardTableMemoryAction;
+    private final InspectorAction viewCardTableDataAction;
 
-    private MaxMarkBitmap markBitmap = null;
-    private MaxObject markBitmapData = null;
+    private MaxCardTable cardTable = null;
+    private MaxObject cardTableData = null;
     private MemoryColoringTable table;
     private InspectorScrollPane scrollPane;
     private JToolBar toolBar;
@@ -146,16 +144,16 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     private final InspectorButton prefsButton;
 
     // This is a singleton viewer, so only use a single level of view preferences.
-    private final MarkBitmapViewPreferences viewPreferences;
+    private final CardTableViewPreferences viewPreferences;
 
     // TODO (mlvdv) generify the combo box when abandon Java 6
     @SuppressWarnings("unchecked")
-    protected MarkBitmapView(Inspection inspection) {
+    protected CardTableView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
 
-        markBitmap = vm().heap().markBitMap();
+        cardTable = vm().heap().cardTable();
 
-        viewPreferences = MarkBitmapViewPreferences.globalPreferences(inspection());
+        viewPreferences = CardTableViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
 
         // The combo box holds the current view mode
@@ -202,8 +200,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         prefsButton.setIcon(style.generalPreferencesIcon());
 
         scrollToFocusAction = new ScrollToFocusAction(inspection);
-        viewBitmapMemoryAction = new ViewBitmapMemoryAction(inspection);
-        viewBitmapDataAction = new ViewBitmapDataAction(inspection);
+        viewCardTableMemoryAction = new ViewCardTableMemoryAction(inspection);
+        viewCardTableDataAction = new ViewBitmapDataAction(inspection);
         refreshAllActions(true);
 
         createFrame(true);
@@ -227,29 +225,31 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
         final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(viewBitmapMemoryAction);
+        memoryMenu.add(viewCardTableMemoryAction);
         memoryMenu.add(actions().viewSelectedMemoryWatchpointAction());
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
 
         final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(viewBitmapDataAction);
+        objectMenu.add(viewCardTableDataAction);
         objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
 
         final InspectorMenu viewMenu = makeMenu(MenuKind.VIEW_MENU);
         viewMenu.add(scrollToFocusAction);
         viewMenu.add(defaultMenuItems(MenuKind.VIEW_MENU));
 
-        if (markBitmap == null) {
+        if (cardTable == null) {
             createNullContent();
         } else {
-            createTableContent();
+            final InspectorPanel nullPanel = new InspectorPanel(inspection(), new BorderLayout());
+            nullPanel.add(new PlainLabel(inspection(), "<Temp Placeholder for Card Table Content"), BorderLayout.PAGE_START);
+            setContentPane(nullPanel);
         }
     }
 
     @Override
     protected void refreshState(boolean force) {
-        if (markBitmap == null && vm().heap().markBitMap() != null) {
-            markBitmap = vm().heap().markBitMap();
+        if (cardTable == null && vm().heap().cardTable() != null) {
+            cardTable = vm().heap().cardTable();
             reconstructView();
         }
         if (table != null) {
@@ -263,7 +263,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
      */
     private void createNullContent() {
         final InspectorPanel nullPanel = new InspectorPanel(inspection(), new BorderLayout());
-        nullPanel.add(new PlainLabel(inspection(), "<no bitmap>"), BorderLayout.PAGE_START);
+        nullPanel.add(new PlainLabel(inspection(), "<no card table allocated>"), BorderLayout.PAGE_START);
         setContentPane(nullPanel);
     }
 
@@ -271,10 +271,10 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
      * Creates a pane that displays and permits interaction with the mark bitmap, assumes that the bitmap has been allocated in VM memory.
      */
     private void createTableContent() {
-        markBitmap = vm().heap().markBitMap();
-        assert markBitmap != null;
-        markBitmapData = markBitmap.representation();
-        table = new MemoryColoringTable(inspection(), this, markBitmap, viewPreferences);
+        cardTable = vm().heap().cardTable();
+        assert cardTable != null;
+        cardTableData = cardTable.representation();
+ //       table = new MemoryColoringTable(inspection(), this, markBitmap, viewPreferences);
         final InspectorPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         toolBar = new InspectorToolBar(inspection());
         toolBar.setBorder(preference().style().defaultPaneBorder());
@@ -328,8 +328,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
 
     private void refreshAllActions(boolean force) {
-        viewBitmapMemoryAction.refresh(force);
-        viewBitmapDataAction.refresh(force);
+        viewCardTableMemoryAction.refresh(force);
+        viewCardTableDataAction.refresh(force);
     }
 
     private int firstVisibleRow() {
@@ -358,32 +358,32 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         if (!rowIsVible(startIndex)) {
             startIndex = firstVisibleRow();
         }
-        int goalIndex = -1;
-        switch (viewMode()) {
-            case SET_BIT:
-                goalIndex = markBitmap.nextSetBitAfter(startIndex);
-                break;
-            case BLACK:
-                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_BLACK);
-                break;
-            case GRAY:
-                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_GRAY);
-                break;
-            case WHITE:
-                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_WHITE);
-                break;
-            case INVALID:
-                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_INVALID);
-                break;
-            default:
-                InspectorError.unknownCase();
-        }
-        if (goalIndex < 0) {
-            flash(3);
-        } else {
-            focus().setAddress(markBitmap.heapAddress(goalIndex));
-            scrollToRowCentered(goalIndex);
-        }
+//        int goalIndex = -1;
+//        switch (viewMode()) {
+//            case SET_BIT:
+//                goalIndex = markBitmap.nextSetBitAfter(startIndex);
+//                break;
+//            case BLACK:
+//                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_BLACK);
+//                break;
+//            case GRAY:
+//                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_GRAY);
+//                break;
+//            case WHITE:
+//                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_WHITE);
+//                break;
+//            case INVALID:
+//                goalIndex = markBitmap.nextMarkAfter(startIndex, MarkColor.MARK_INVALID);
+//                break;
+//            default:
+//                InspectorError.unknownCase();
+//        }
+//        if (goalIndex < 0) {
+//            flash(3);
+//        } else {
+//            focus().setAddress(markBitmap.heapAddress(goalIndex));
+//            scrollToRowCentered(goalIndex);
+//        }
     }
 
     /**
@@ -394,32 +394,32 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         if (!rowIsVible(startIndex)) {
             startIndex = lastVisibleRow();
         }
-        int goalIndex = -1;
-        switch (viewMode()) {
-            case SET_BIT:
-                goalIndex = markBitmap.previousSetBitBefore(startIndex);
-                break;
-            case BLACK:
-                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_BLACK);
-                break;
-            case GRAY:
-                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_GRAY);
-                break;
-            case WHITE:
-                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_WHITE);
-                break;
-            case INVALID:
-                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_INVALID);
-                break;
-            default:
-                InspectorError.unknownCase();
-        }
-        if (goalIndex < 0) {
-            flash(3);
-        } else {
-            focus().setAddress(markBitmap.heapAddress(goalIndex));
-            scrollToRowCentered(goalIndex);
-        }
+//        int goalIndex = -1;
+//        switch (viewMode()) {
+//            case SET_BIT:
+//                goalIndex = markBitmap.previousSetBitBefore(startIndex);
+//                break;
+//            case BLACK:
+//                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_BLACK);
+//                break;
+//            case GRAY:
+//                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_GRAY);
+//                break;
+//            case WHITE:
+//                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_WHITE);
+//                break;
+//            case INVALID:
+//                goalIndex = markBitmap.previousMarkBefore(startIndex, MarkColor.MARK_INVALID);
+//                break;
+//            default:
+//                InspectorError.unknownCase();
+//        }
+//        if (goalIndex < 0) {
+//            flash(3);
+//        } else {
+//            focus().setAddress(markBitmap.heapAddress(goalIndex));
+//            scrollToRowCentered(goalIndex);
+//        }
     }
 
     @Override
@@ -445,7 +445,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MarkBitmapColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<CardTableColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
             }
         };
     }
@@ -462,7 +462,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
     @Override
     public void vmProcessTerminated() {
-        markBitmap = null;
+        cardTable = null;
         reconstructView();
     }
 
@@ -476,12 +476,12 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         @Override
         protected void procedure() {
             scrollToRowCentered(table.findCoveringRow(focus().address()));
-            MarkBitmapView.this.forceRefresh();
+            CardTableView.this.forceRefresh();
         }
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(markBitmap != null && markBitmap.isCovered(focus().address()));
+            setEnabled(cardTable != null && cardTable.isCovered(focus().address()));
         }
     }
 
@@ -496,29 +496,29 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
         @Override
         protected void procedure() {
-            if (markBitmapData != null) {
-                focus().setHeapObject(markBitmapData);
+            if (cardTableData != null) {
+                focus().setHeapObject(cardTableData);
             }
         }
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(markBitmapData != null);
+            setEnabled(cardTableData != null);
         }
     }
 
-    private final class ViewBitmapMemoryAction extends InspectorAction {
+    private final class ViewCardTableMemoryAction extends InspectorAction {
 
-        private static final String TITLE = "View Bitmap Memory";
+        private static final String TITLE = "View Card Table Memory";
 
-        public ViewBitmapMemoryAction(Inspection inspection) {
+        public ViewCardTableMemoryAction(Inspection inspection) {
             super(inspection, TITLE);
             refresh(true);
         }
 
         @Override
         protected void procedure() {
-            final MaxEntityMemoryRegion<MaxMarkBitmap> memoryRegion = vm().heap().markBitMap().memoryRegion();
+            final MaxEntityMemoryRegion<MaxCardTable> memoryRegion = vm().heap().cardTable().memoryRegion();
             if (memoryRegion.isAllocated()) {
                 views().memory().makeView(memoryRegion, null);
             }
@@ -526,8 +526,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
         @Override
         public void refresh(boolean force) {
-            final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
-            setEnabled(markBitMap != null && markBitMap.memoryRegion().isAllocated());
+            final MaxCardTable cardTable = vm().heap().cardTable();
+            setEnabled(cardTable != null && cardTable.memoryRegion().isAllocated());
         }
     }
 

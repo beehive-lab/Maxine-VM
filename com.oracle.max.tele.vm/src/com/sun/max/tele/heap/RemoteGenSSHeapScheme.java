@@ -422,27 +422,29 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
         return new MaxMemoryManagementInfo() {
             @Override
-            public MaxMemoryStatus status() {
+            public MaxMemoryManagementStatus status() {
                 if (address == null || address.isZero()) {
-                    return MaxMemoryStatus.UNKNOWN;
+                    return MaxMemoryManagementStatus.NONE;
                 }
                 final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
                 if (heapRegion == null) {
-                    return MaxMemoryStatus.UNKNOWN;
+                    // The location is not in any memory region allocated by the heap.
+                    return MaxMemoryManagementStatus.NONE;
                 }
+                // TODO (mlvdv) using ObjectStatusAt() isn't correct, but unsure what to do
                 if (contains(address)) {
                     switch(objectStatusAt(address)) {
                         case LIVE:
-                            return MaxMemoryStatus.LIVE;
+                            return MaxMemoryManagementStatus.LIVE;
                         case FORWARDER:
-                            return MaxMemoryStatus.LIVE;
+                            return MaxMemoryManagementStatus.LIVE;
                         case DEAD:
-                            return MaxMemoryStatus.DEAD;
+                            return MaxMemoryManagementStatus.DEAD;
                         case FREE:
-                            return MaxMemoryStatus.FREE;
+                            return MaxMemoryManagementStatus.FREE;
                     }
                 }
-                return MaxMemoryStatus.LIVE;
+                return MaxMemoryManagementStatus.LIVE;
             }
 
             @Override
@@ -467,6 +469,21 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                 return null;
             }
         };
+    }
+
+    @Override
+    public boolean hasForwarders() {
+        return true;
+    }
+
+    @Override
+    public boolean hasCardTable() {
+        return true;
+    }
+
+    @Override
+    public MaxCardTable cardTable() {
+        return null;
     }
 
     public ObjectStatus objectStatusAt(Address origin) {

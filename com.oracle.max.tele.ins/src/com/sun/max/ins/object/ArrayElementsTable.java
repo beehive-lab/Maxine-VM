@@ -286,7 +286,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         @Override
         public MaxMemoryRegion getMemoryRegion(int row) {
-            return new InspectorMemoryRegion(vm(), "", getAddress(row), nBytesInElement);
+            return new FixedMemoryRegion(inspection(), "", getAddress(row), nBytesInElement);
         }
 
         @Override

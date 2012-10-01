@@ -61,6 +61,14 @@ public interface ObjectViewFactory extends InspectionViewFactory<ObjectView>{
     InspectorAction makeViewByIDAction();
 
     /**
+     * Gets an action that closes all views on objects and quasi-objects
+     * whose status is {@linkplain ObjectStatus#DEAD DEAD}.
+     *
+     * @return an action that closes views on dead objects.
+     */
+    InspectorAction makeCloseDeadViewsAction();
+
+    /**
      * Gets an action that makes a view on a specified object in
      * VM memory.
      *

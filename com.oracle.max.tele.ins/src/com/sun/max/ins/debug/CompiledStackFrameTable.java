@@ -202,7 +202,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             slotDescriptions = new String[slots.size()];
             int index = 0;
             for (Slot slot : slots) {
-                regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().platform().nBytesInWord());
+                regions[index] = new FixedMemoryRegion(inspection(), "", getOrigin().plus(slot.offset), vm().platform().nBytesInWord());
                 slotDescriptions[index] = "Stack frame slot \"" + slot.name + "\"";
                 index++;
             }

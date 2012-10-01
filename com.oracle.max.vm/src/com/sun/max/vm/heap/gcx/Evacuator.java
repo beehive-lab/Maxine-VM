@@ -210,6 +210,18 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         return forwardRef;
     }
 
+    @NEVER_INLINE
+    private static void reportDarkMatterForwarding(Pointer origin, Pointer at, Pointer forwarded) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("forwarding dark matter @ ");
+        Log.print(at);
+        Log.print(" from ");
+        Log.print(origin);
+        Log.print(" to ");
+        Log.println(forwarded);
+        Log.unlock(lockDisabledSafepoints);
+        FatalError.unexpected("must not forward dark matter");
+    }
     /**
      * Evacuate a cell of the evacuated area if not already done, and return the reference to the evacuated cell new location.
      * Same as {@link #getForwardRef(Pointer)}, but with logging support.
@@ -225,9 +237,15 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
             final Pointer toOrigin = evacuate(origin);
             forwardRef = Reference.fromOrigin(toOrigin);
             Layout.writeForwardRef(origin, forwardRef);
-            if (MaxineVM.isDebug() && detailLogger.enabled()) {
-                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(forwardRef).toJava());
-                detailLogger.logForward(hub.classActor.id, at, origin, toOrigin, Layout.size(toOrigin).toInt());
+            if (MaxineVM.isDebug()) {
+                Reference hubRef = Layout.readHubReference(forwardRef);
+                if (DarkMatter.isDarkMatterHub(hubRef.toOrigin())) {
+                    reportDarkMatterForwarding(origin, at, forwardRef.toOrigin());
+                }
+                if (detailLogger.enabled()) {
+                    final Hub hub = UnsafeCast.asHub(hubRef.toJava());
+                    detailLogger.logForward(hub.classActor.id, at, origin, toOrigin, Layout.size(toOrigin).toInt());
+                }
             }
         }
         return forwardRef;

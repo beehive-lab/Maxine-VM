@@ -37,6 +37,7 @@ import com.sun.max.vm.runtime.*;
  */
 public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
     protected static boolean VerifyAfterGC = false;
+
     static {
         VMOptions.addFieldOption("-XX:", "VerifyAfterGC", HeapSchemeWithTLABAdaptor.class, "Verify heap after GC", Phase.PRISTINE);
     }
