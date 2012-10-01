@@ -481,28 +481,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
         return kind.deactivateAllAction(null);
     }
 
-
-    /**
-     * Gets the action that will deactivate all active views with one exception.
-     *
-     * @param exceptInspector the one view that should not be deactivated
-     * @return the action for deactivating
-     */
-    public InspectorAction deactivateOtherViewsAction(final InspectorView exceptInspector) {
-        return new InspectorAction(inspection(), "Close other views") {
-
-            @Override
-            protected void procedure() {
-                for (InspectorView view : new ArrayList<InspectorView>(activeViews())) {
-                    if (view != exceptInspector) {
-                        view.dispose();
-                    }
-                }
-            }
-
-        };
-    }
-
     /**
      * Gets the action that will deactivate all views of a particular kind
      * with one exception.

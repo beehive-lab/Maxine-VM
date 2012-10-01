@@ -108,7 +108,6 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
                 return new AbstractInspectorMenuItems(inspection()) {
                     public void addTo(InspectorMenu menu) {
                         menu.add(getCloseViewAction());
-                        menu.add(views().deactivateOtherViewsAction(view));
                         menu.addSeparator();
                         menu.add(isPinnedCheckBox);
                         menu.addSeparator();
