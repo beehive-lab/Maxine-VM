@@ -71,6 +71,7 @@ public class HeapFreeChunkTupleView extends ObjectView<HeapFreeChunkTupleView> {
 
     @Override
     protected void refreshState(boolean force) {
+        super.refreshState(force);
         if (totalFreeSize == teleHFC.size()) {
             fieldsPane.refresh(force);
         } else {
