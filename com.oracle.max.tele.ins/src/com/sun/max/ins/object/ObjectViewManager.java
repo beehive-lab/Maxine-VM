@@ -293,9 +293,9 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         return new HashSet<ObjectView>(objectToView.values());
     }
 
-    private void closeDeadViews() {
+    private void closeUnpinnedDeadViews() {
         for (ObjectView view : objectViews()) {
-            if (view.object().status().isDead()) {
+            if (view.object().status().isDead() && !view.isPinned()) {
                 view.dispose();
             }
         }
@@ -358,12 +358,12 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     private final class CloseDeadViewsAction extends InspectorAction {
 
         CloseDeadViewsAction() {
-            super(inspection(), "Close all DEAD object views");
+            super(inspection(), "Close unpinned DEAD object views");
         }
 
         @Override
         protected void procedure() {
-            closeDeadViews();
+            closeUnpinnedDeadViews();
         }
 
         @Override

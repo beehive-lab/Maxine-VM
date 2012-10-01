@@ -143,12 +143,13 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
         return menu;
     }
 
-    public final void deactivateAllViews() {
+    public final void deactivateAllUnpinnedViews() {
         for (InspectorView view : new ArrayList<View_Kind>(views)) {
-            view.dispose();
+            if (!view.isPinned()) {
+                view.dispose();
+            }
         }
         refresh();
-        assert !isActive();
     }
 
     public final InspectorAction deactivateAllAction(InspectorView exception) {
@@ -228,12 +229,12 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
     private final class DeactivateAllAction extends InspectorAction {
 
         public DeactivateAllAction(String title) {
-            super(inspection(), "Close all " + title + " views");
+            super(inspection(), "Close unpinned " + title + " views");
         }
 
         @Override
         protected void procedure() {
-            deactivateAllViews();
+            deactivateAllUnpinnedViews();
         }
 
         @Override
