@@ -22,12 +22,15 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
@@ -105,6 +108,71 @@ public final class DarkMatter {
     }
 
     private DarkMatter() {
+    }
+
+    public final static class NoDarkMatterRefClosure extends PointerIndexVisitor {
+        @INLINE
+        private final void checkRef(Pointer pointer, int wordIndex) {
+            Pointer origin = pointer.getWord(wordIndex).asPointer();
+            // only check non-null, non-forwarded reference.
+            if (origin.isNotZero() && Layout.readForwardRef(origin).isZero() && isDarkMatterHub(origin.getWord())) {
+                Log.print("Found reference to DarkMatter @");
+                Log.print();
+                Log.print(" @ ");
+                Log.print(pointer);
+                Log.print(" [");
+                Log.print(wordIndex);
+                Log.println("]");
+            }
+        }
+         @Override
+        public final void visit(Pointer pointer, int wordIndex) {
+             checkRef(pointer, wordIndex);
+        }
+
+        public Pointer scanCellForDarkMatter(Pointer cell) {
+            final Pointer origin = Layout.cellToOrigin(cell);
+            // Update the hub first so that is can be dereferenced to obtain
+            // the reference map needed to find the other references in the object
+            checkRef(origin, Layout.hubIndex());
+            final Hub hub =  Layout.getHub(origin);
+            if (hub == heapFreeChunkHub()) {
+                return cell.plus(toHeapFreeChunk(origin).size);
+            }
+            // Update the other references in the object
+            final SpecificLayout specificLayout = hub.specificLayout;
+            if (specificLayout == Layout.tupleLayout()) {
+                //TupleReferenceMap.visitReferences(hub, origin, this);
+                hub.visitMappedReferences(origin, this);
+                if (hub.isJLRReference) {
+                    checkRef(origin, SpecialReferenceManager.referentIndex());
+                }
+                return cell.plus(hub.tupleSize);
+            }
+            final int length = Layout.readArrayLength(origin);
+            if (specificLayout == Layout.hybridLayout()) {
+                hub.visitMappedReferences(origin, this);
+                //TupleReferenceMap.visitReferences(hub, origin, this);
+                return cell.plus(Layout.hybridLayout().getArraySize(length));
+            } else if (specificLayout == Layout.referenceArrayLayout()) {
+                final int wordIndex = Layout.firstElementIndex();
+                final int endIndex = wordIndex + length;
+                while (wordIndex < endIndex) {
+                    checkRef(origin, wordIndex);
+                }
+                return cell.plus(Layout.referenceArrayLayout().getArraySize(Kind.REFERENCE, length));
+            }
+            return cell.plus(Layout.size(origin));
+        }
+    }
+
+    private static final NoDarkMatterRefClosure darkMatterRefCheckerClosure = new NoDarkMatterRefClosure();
+
+    public static void checkNoDarkMatterRef(Pointer start, Pointer end) {
+        Pointer cell = start;
+        while (cell.lessThan(end)) {
+            cell = darkMatterRefCheckerClosure.scanCellForDarkMatter(cell);
+        }
     }
 
     @FOLD

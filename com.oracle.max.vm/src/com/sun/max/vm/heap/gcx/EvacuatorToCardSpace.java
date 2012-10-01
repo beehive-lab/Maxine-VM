@@ -364,26 +364,6 @@ public class EvacuatorToCardSpace extends Evacuator {
         return cell;
     }
 
-    /**
-     * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
-     *
-     * @param cell a pointer to a cell
-     * @return pointer to the end of the cell
-     */
-    public final Pointer visitCell(Pointer cell) {
-        return scanCellForEvacuatees(cell);
-    }
-
-    /**
-     * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
-     *
-     * @param cell a pointer to a cell
-     * @return pointer to the end of the cell
-     */
-    public final Pointer visitCell(Pointer cell, Address start, Address end) {
-        return scanCellForEvacuatees(cell, start, end);
-    }
-
     @Override
     final Pointer evacuate(Pointer fromOrigin) {
         final Pointer fromCell = Layout.originToCell(fromOrigin);
@@ -391,6 +371,11 @@ public class EvacuatorToCardSpace extends Evacuator {
         final Pointer toCell = allocate(size);
         Memory.copyBytes(fromCell, toCell, size);
         return toCell;
+    }
+
+    private boolean checkDarkMatterRefs = false;
+    public void enableDarkMatterRefCheck(boolean b) {
+        checkDarkMatterRefs = b;
     }
 
     @Override
@@ -402,6 +387,9 @@ public class EvacuatorToCardSpace extends Evacuator {
             survivorRanges.remove();
             if (logger.enabled()) {
                 logger.logEvacuateSurvivorRange(start, end);
+            }
+            if (MaxineVM.isDebug() && checkDarkMatterRefs) {
+                DarkMatter.checkNoDarkMatterRef(start, end);
             }
             evacuateRange(start, end);
             updateSurvivorRanges();
