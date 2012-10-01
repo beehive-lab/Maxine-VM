@@ -77,6 +77,9 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     private final InspectorAction interactiveMakeViewByAddressAction;
     private final InspectorAction interactiveMakeViewByIDAction;
 
+    private final InspectorAction closeForwarderViewsAction;
+    private final InspectorAction closeFreeSpaceViewsAction;
+    private final InspectorAction closeDarkMatterViewsAction;
     private final InspectorAction closeDeadViewsAction;
 
     private final List<InspectorAction> makeViewActions;
@@ -109,7 +112,10 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         interactiveMakeViewByAddressAction = new InteractiveViewObjectByAddressAction();
         interactiveMakeViewByIDAction = new InteractiveViewObjectByIDAction();
 
-        closeDeadViewsAction = new CloseDeadViewsAction();
+        closeForwarderViewsAction = new CloseViewsByStatusAction(ObjectStatus.FORWARDER);
+        closeFreeSpaceViewsAction = new CloseViewsByStatusAction(ObjectStatus.FREE);
+        closeDarkMatterViewsAction = new CloseViewsByStatusAction(ObjectStatus.DARK);
+        closeDeadViewsAction = new CloseViewsByStatusAction(ObjectStatus.DEAD);
 
         makeViewActions = new ArrayList<InspectorAction>(2);
         makeViewActions.add(interactiveMakeViewByAddressAction);
@@ -117,6 +123,9 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
         closeViewActions = new ArrayList<InspectorAction>(1);
         closeViewActions.add(closeDeadViewsAction);
+        closeViewActions.add(closeForwarderViewsAction);
+        closeViewActions.add(closeFreeSpaceViewsAction);
+        closeViewActions.add(closeDarkMatterViewsAction);
 
         Trace.end(1, tracePrefix() + "initializing");
     }
@@ -293,14 +302,6 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         return new HashSet<ObjectView>(objectToView.values());
     }
 
-    private void closeUnpinnedDeadViews() {
-        for (ObjectView view : objectViews()) {
-            if (view.object().status().isDead() && !view.isPinned()) {
-                view.dispose();
-            }
-        }
-    }
-
     private final class InteractiveViewObjectByAddressAction extends InspectorAction {
 
         InteractiveViewObjectByAddressAction() {
@@ -355,22 +356,30 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         }
     }
 
-    private final class CloseDeadViewsAction extends InspectorAction {
+    private final class CloseViewsByStatusAction extends InspectorAction {
 
-        CloseDeadViewsAction() {
-            super(inspection(), "Close unpinned DEAD object views");
+        final ObjectStatus status;
+
+        CloseViewsByStatusAction(ObjectStatus status) {
+            super(inspection(), "Close unpinned " + status.label() + " object views");
+            this.status = status;
         }
 
         @Override
         protected void procedure() {
-            closeUnpinnedDeadViews();
+            for (ObjectView view : objectToView.values()) {
+                if (view.object().status() == status && !view.isPinned()) {
+                    view.dispose();
+                }
+
+            }
         }
 
         @Override
         public
         void refresh(boolean force) {
             for (ObjectView view : objectToView.values()) {
-                if (view.object().status().isDead()) {
+                if (view.object().status() == status) {
                     setEnabled(true);
                     return;
                 }
