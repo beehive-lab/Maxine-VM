@@ -181,6 +181,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
             this.startOfSpaceLeft = startOfSpaceLeft;
             this.spaceLeft = spaceLeft;
+            if (spaceLeft.isZero()) {
+                Log.println("MUTATOR OVERFLOW with ZERO space left");
+                FatalError.breakpoint();
+            }
             final GenSSGCRequest gcRequest = asGenSSGCRequest(GCRequest.clearedGCRequest());
             gcRequest.requestedBytes = requestedSize;
             // Space is needed in the old generation
@@ -586,7 +590,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 // Refill the allocator with the old from space.
                 spaceLeft = fromSpace.committedSize();
                 allocator.refill(fromSpace.start(), spaceLeft);
-                FatalError.breakpoint(); // FIXME: remove  / temp debug
                 startOfSpaceLeft = allocator.unsafeSetTopToLimit();
             }
             HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);

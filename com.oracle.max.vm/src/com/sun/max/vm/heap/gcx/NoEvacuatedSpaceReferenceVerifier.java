@@ -149,6 +149,9 @@ public final class NoEvacuatedSpaceReferenceVerifier extends PointerIndexVisitor
             FatalError.breakpoint();
             FatalError.crash("invariant violation");
         }
+        if (!cell.isZero()) {
+            DarkMatter.checkNotDarkMatterRef(Layout.cellToOrigin(cell), Layout.hubIndex());
+        }
     }
 
     @Override
