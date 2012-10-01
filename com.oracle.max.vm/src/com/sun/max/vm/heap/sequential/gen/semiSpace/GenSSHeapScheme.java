@@ -563,6 +563,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
         Size spaceLeft = allocator.freeSpace();
         Address startOfSpaceLeft = allocator.unsafeSetTopToLimit();
+        if (MaxineVM.isDebug() && spaceLeft.isZero()) { // FIXME: remove  / temp debug
+            FatalError.breakpoint();
+        }
         FatalError.check(VmThread.current().isVmOperationThread(), "must only be called by VmOperation");
         // First, make sure we're doing minor collection here.
         if (youngSpaceEvacuator.getGCOperation() != null) {

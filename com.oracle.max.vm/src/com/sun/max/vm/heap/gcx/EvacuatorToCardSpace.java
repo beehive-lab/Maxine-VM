@@ -242,6 +242,9 @@ public class EvacuatorToCardSpace extends Evacuator {
     }
 
     private void recordRange(Address start, Address end) {
+        if (MaxineVM.isDebug() && checkDarkMatterRefs) {
+            DarkMatter.checkNoDarkMatterRef(start, end);
+        }
         evacuatedBytes = evacuatedBytes.plus(end.minus(start));
         survivorRanges.add(start, end);
         if (logger.enabled()) {
@@ -387,9 +390,6 @@ public class EvacuatorToCardSpace extends Evacuator {
             survivorRanges.remove();
             if (logger.enabled()) {
                 logger.logEvacuateSurvivorRange(start, end);
-            }
-            if (MaxineVM.isDebug() && checkDarkMatterRefs) {
-                DarkMatter.checkNoDarkMatterRef(start, end);
             }
             evacuateRange(start, end);
             updateSurvivorRanges();
