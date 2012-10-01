@@ -112,7 +112,7 @@ public final class DarkMatter {
 
     public final static class NoDarkMatterRefClosure extends PointerIndexVisitor {
         @INLINE
-        private final void checkRef(Pointer pointer, int wordIndex) {
+        private void checkRef(Pointer pointer, int wordIndex) {
             Pointer origin = pointer.getWord(wordIndex).asPointer();
             // only check non-null, non-forwarded reference.
             if (origin.isNotZero() && Layout.readForwardRef(origin).isZero() && isDarkMatterHub(origin.getWord())) {
@@ -123,14 +123,15 @@ public final class DarkMatter {
                 Log.print(" [");
                 Log.print(wordIndex);
                 Log.println("]");
+                FatalError.unexpected("Dark Matter must not be referenced");
             }
         }
-         @Override
-        public final void visit(Pointer pointer, int wordIndex) {
-             checkRef(pointer, wordIndex);
+        @Override
+        public void visit(Pointer pointer, int wordIndex) {
+            checkRef(pointer, wordIndex);
         }
 
-        public Pointer scanCellForDarkMatter(Pointer cell) {
+        private Pointer scanCellForDarkMatter(Pointer cell) {
             final Pointer origin = Layout.cellToOrigin(cell);
             // Update the hub first so that is can be dereferenced to obtain
             // the reference map needed to find the other references in the object
@@ -168,8 +169,8 @@ public final class DarkMatter {
 
     private static final NoDarkMatterRefClosure darkMatterRefCheckerClosure = new NoDarkMatterRefClosure();
 
-    public static void checkNoDarkMatterRef(Pointer start, Pointer end) {
-        Pointer cell = start;
+    public static void checkNoDarkMatterRef(Address start, Address end) {
+        Pointer cell = start.asPointer();
         while (cell.lessThan(end)) {
             cell = darkMatterRefCheckerClosure.scanCellForDarkMatter(cell);
         }
