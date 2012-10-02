@@ -591,6 +591,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 spaceLeft = fromSpace.committedSize();
                 allocator.refill(fromSpace.start(), spaceLeft);
                 startOfSpaceLeft = allocator.unsafeSetTopToLimit();
+            } else if (MaxineVM.isDebug() && spaceLeft.lessThan(HeapFreeChunk.heapFreeChunkHeaderSize())) { // FIXME: remove and fix when hit
+                FatalError.unexpected("Refill evacuation buffer attempt to format space smaller than heap free chunk");
             }
             HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
             return startOfSpaceLeft;
