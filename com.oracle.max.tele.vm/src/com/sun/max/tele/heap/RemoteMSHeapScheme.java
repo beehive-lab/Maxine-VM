@@ -222,7 +222,7 @@ import com.sun.max.vm.runtime.*;
  * @see VmMarkBitmap
  * @see MSRemoteReference
  */
-public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
+public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager, VmMarkBitmapHeap {
 
     private static final int TRACE_VALUE = 1;
 
@@ -563,12 +563,6 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         };
     }
 
-    @Override
-    public boolean hasMarkBitmap() {
-        return true;
-    }
-
-    @Override
     public MaxMarkBitmap markBitMap() {
         return scheme.markBitmap;
     }

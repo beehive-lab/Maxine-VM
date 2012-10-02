@@ -113,7 +113,7 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
         Color foregroundColor = inspectorTable.cellForegroundColor(row, column);
 
         InspectorLabel renderer = label;
-        final MaxMarkBitmap markBitmap = vm().heap().markBitMap();
+        final MaxMarkBitmap markBitmap = vm().heap().markBitmap();
         final Address memoryAddress = tableModel.getAddress(row);
 
         if (!vm().heap().hasMarkBitmap()) {
@@ -226,7 +226,7 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
 
     private InspectorAction getShowHeapMarkAction(final int bitIndex) {
 
-        final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
+        final MaxMarkBitmap markBitMap = vm().heap().markBitmap();
         if (bitIndex >= 0 && markBitMap != null) {
             final Address address = markBitMap.heapAddress(bitIndex);
             if (markBitMap.isCovered(address)) {

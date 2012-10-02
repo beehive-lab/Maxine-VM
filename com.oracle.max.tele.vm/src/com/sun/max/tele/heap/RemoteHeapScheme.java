@@ -31,8 +31,13 @@ import com.sun.max.vm.heap.*;
 
 /**
  *  Remote inspection support for a particular implementation of the {@link HeapScheme} in the VM.
+ *  Implementations of this interface that offer additional information announce this by implementing
+ *  additional interfaces.
  *
  *  @see HeapScheme
+ *  @see VmCardTableHeap
+ *  @see VmMarkBitmapHeap
+ *  @see VmRelocatingH
  */
 public interface RemoteHeapScheme extends RemoteScheme {
 
@@ -79,36 +84,5 @@ public interface RemoteHeapScheme extends RemoteScheme {
      * @return non-null information about the location with respect to memory management in the VM,
      */
     MaxMemoryManagementInfo getMemoryManagementInfo(Address address);
-
-    /**
-     * @return {@code true} if the heap implementation relocates objects and leaves forwarders behind.
-     */
-    boolean hasForwarders();
-
-    /**
-     * @return {@code true} if the heap implementation uses a {@link MaxMarkBitmap}, even if not yet created.
-     */
-    boolean hasMarkBitmap();
-
-    /**
-     * Return heap-specific implementation of {@link MaxMarkBitmap} that the inspector can use to display mark-bit information for heap
-     * scheme using a mark-bitmap for trace-based collection.
-     * @return null if no implementation in use or if not yet created.
-     */
-    MaxMarkBitmap markBitMap();
-
-    /**
-     * @return {@code true} if the heap implementation uses a {@link MaxCardTable}, even if not yet created.
-     */
-    boolean hasCardTable();
-
-    /**
-     * Return heap-specific implementation of {@link MaxCardTable} for the heap scheme,
-     * if {@link #hasCardTable()} {@code == true} and if the bitmap has been created.
-     * {@code null} otherwise
-     *
-     * @return the heap's {@link MaxCardTable}, if one is available, {@code null} otherwise.
-     */
-    MaxCardTable cardTable();
 
 }
