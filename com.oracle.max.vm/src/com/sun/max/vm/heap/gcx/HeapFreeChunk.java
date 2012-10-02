@@ -151,9 +151,14 @@ public class HeapFreeChunk {
     static HeapFreeChunk format(Address deadSpace, Size numBytes, Address nextChunk, DynamicHub hub) {
         final Pointer cell = deadSpace.asPointer();
         if (MaxineVM.isDebug()) {
-            FatalError.check(hub.isSubClassHub(heapFreeChunkHub().classActor),
-                            "Should format with a sub-class of HeapFreeChunk");
-            FatalError.check(numBytes.greaterEqual(heapFreeChunkHeaderSize()), "Size must be at least a heap free chunk size");
+            FatalError.check(hub.isSubClassHub(heapFreeChunkHub().classActor), "Should format with a sub-class of HeapFreeChunk");
+            if (numBytes.greaterEqual(heapFreeChunkHeaderSize())) {
+                Log.print("Dead space @");
+                Log.print(deadSpace);
+                Log.print(" size = ");
+                Log.println(numBytes);
+                FatalError.unexpected("Size must be at least a heap free chunk size");
+            }
             Memory.setWords(cell, numBytes.toInt() >> Word.widthValue().log2numberOfBytes, deadSpaceMark());
         }
         Cell.plantTuple(cell, hub);

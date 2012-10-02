@@ -115,6 +115,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         refDiscoveryEnabled = false;
     }
 
+    @INLINE
     private void updateReferenceArray(Pointer refArrayOrigin, final int firstIndex, final int length) {
         for (int index = firstIndex; index < length; index++) {
             updateEvacuatedRef(refArrayOrigin, index);
@@ -366,6 +367,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
      * @param cell
      */
+    @INLINE
     final protected Pointer scanCellForEvacuatees(Pointer cell) {
         if (traceEvacVisitedCell()) {
             detailLogger.logVisitCell(cell);
@@ -480,7 +482,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     final void evacuateRange(Pointer start, Pointer end) {
         Pointer cell = start;
         while (cell.lessThan(end)) {
-            cell = visitCell(cell);
+            cell = scanCellForEvacuatees(cell);
         }
     }
 
@@ -567,6 +569,27 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         timers.start(EPILOGUE);
         doAfterEvacuation();
         timers.stop(EPILOGUE);
+    }
+
+
+    /**
+     * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
+     *
+     * @param cell a pointer to a cell
+     * @return pointer to the end of the cell
+     */
+    public final Pointer visitCell(Pointer cell) {
+        return scanCellForEvacuatees(cell);
+    }
+
+    /**
+     * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
+     *
+     * @param cell a pointer to a cell
+     * @return pointer to the end of the cell
+     */
+    public final Pointer visitCell(Pointer cell, Address start, Address end) {
+        return scanCellForEvacuatees(cell, start, end);
     }
 
 

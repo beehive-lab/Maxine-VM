@@ -181,6 +181,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         public Address allocateRefill(Size requestedSize, Pointer startOfSpaceLeft, Size spaceLeft) {
             this.startOfSpaceLeft = startOfSpaceLeft;
             this.spaceLeft = spaceLeft;
+            if (spaceLeft.isZero()) {
+                Log.println("MUTATOR OVERFLOW with ZERO space left");
+                FatalError.breakpoint();
+            }
             final GenSSGCRequest gcRequest = asGenSSGCRequest(GCRequest.clearedGCRequest());
             gcRequest.requestedBytes = requestedSize;
             // Space is needed in the old generation
@@ -563,6 +567,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
         Size spaceLeft = allocator.freeSpace();
         Address startOfSpaceLeft = allocator.unsafeSetTopToLimit();
+        if (MaxineVM.isDebug() && spaceLeft.isZero()) { // FIXME: remove  / temp debug
+            FatalError.breakpoint();
+        }
         FatalError.check(VmThread.current().isVmOperationThread(), "must only be called by VmOperation");
         // First, make sure we're doing minor collection here.
         if (youngSpaceEvacuator.getGCOperation() != null) {
@@ -578,10 +585,14 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 }
                 // Notify that we need to run a full GC immediately after this overflowing minor collection.
                 resizingPolicy.notifyMinorEvacuationOverflow();
+                youngSpaceEvacuator.enableDarkMatterRefCheck(true);
+                oldSpaceEvacuator.enableDarkMatterRefCheck(true);
                 // Refill the allocator with the old from space.
                 spaceLeft = fromSpace.committedSize();
                 allocator.refill(fromSpace.start(), spaceLeft);
                 startOfSpaceLeft = allocator.unsafeSetTopToLimit();
+            } else if (MaxineVM.isDebug() && spaceLeft.lessThan(HeapFreeChunk.heapFreeChunkHeaderSize())) { // FIXME: remove and fix when hit
+                FatalError.unexpected("Refill evacuation buffer attempt to format space smaller than heap free chunk");
             }
             HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
             return startOfSpaceLeft;
@@ -671,6 +682,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final boolean oldSpaceMutatorOverflow = oldSpace.allocator.refillManager().mutatorOverflow();
 
         resizingPolicy.clearNotifications();
+        youngSpaceEvacuator.enableDarkMatterRefCheck(false);
+        oldSpaceEvacuator.enableDarkMatterRefCheck(false);
+
         evacTimers.resetTrackTime();
         if (OldSpaceDirtyCardsStats) {
             countOldSpaceDirtyCards("before minor collection");
