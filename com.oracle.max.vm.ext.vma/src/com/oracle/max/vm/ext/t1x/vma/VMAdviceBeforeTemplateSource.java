@@ -2675,6 +2675,9 @@ public class VMAdviceBeforeTemplateSource {
         if (ObjectAccess.readClassActor(object).hasFinalizer()) {
             SpecialReferenceManager.registerFinalizee(object);
         }
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci);
+        }
     }
 
     @T1X_TEMPLATE(LOCK)

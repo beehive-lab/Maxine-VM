@@ -1400,6 +1400,7 @@ public class T1XTemplateGenerator {
             out.printf("        if (ObjectAccess.readClassActor(object).hasFinalizer()) {%n");
             out.printf("            SpecialReferenceManager.registerFinalizee(object);%n");
             out.printf("        }%n");
+            generateBeforeAdvice(k);
         } else {
             if (unlock.length() > 0) {
                 // need to advise the implicit monitorexit
