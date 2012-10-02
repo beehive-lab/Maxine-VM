@@ -681,6 +681,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case DRETURN$unlock:
                 case ARETURN$unlock:
                 case RETURN$unlock:
+                case RETURN$registerFinalizer:
                     generateReturn(tag, k);
                     break;
 
@@ -695,7 +696,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     break;
 
                 // No special treatment for the following codes
-                case RETURN$registerFinalizer:
                 case LOAD_EXCEPTION:
                     break;
 
