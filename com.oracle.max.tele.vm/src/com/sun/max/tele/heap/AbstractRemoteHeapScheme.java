@@ -123,26 +123,6 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         return Collections.emptyList();
     }
 
-    public boolean hasForwarders() {
-        return false;
-    }
-
-    public boolean hasMarkBitmap() {
-        return false;
-    }
-
-    public MaxMarkBitmap markBitMap() {
-        return null;
-    }
-
-    public boolean hasCardTable() {
-        return false;
-    }
-
-    public MaxCardTable cardTable() {
-        return null;
-    }
-
     /**
      * @return surrogate for the VM object that implements the {@link HeapScheme} interface
      */
