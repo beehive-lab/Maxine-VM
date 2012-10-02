@@ -95,11 +95,13 @@ public class EvacuatorToCardSpace extends Evacuator {
    /**
      * Allocation hand to the evacuator's private promotion space.
      */
+    @INSPECTED
     protected Pointer ptop;
 
     /***
      * End of the evacuator's private promotion space.
      */
+    @INSPECTED
     protected Pointer pend;
 
     /**
@@ -113,6 +115,12 @@ public class EvacuatorToCardSpace extends Evacuator {
     @INSPECTED
     private Address allocatedRangeStart;
 
+    /**
+     * Mark that keeps track of the first word the evacuator's allocator is set to.
+     * For debugging purposes only.
+     */
+    @INSPECTED
+    private Address initialEvacuationMark;
     /**
      * Start of the last unrecorded survivor ranges resulting from overflow allocation.
      */
@@ -202,6 +210,7 @@ public class EvacuatorToCardSpace extends Evacuator {
             ptop = chunk.asPointer();
             pend = chunk.plus(chunkSize.minus(evacuationBufferHeadroom())).asPointer();
         }
+        initialEvacuationMark = ptop;
         allocatedRangeStart = ptop;
         if (logger.enabled()) {
             SpaceBounds toSpaceBounds = toSpace.bounds();

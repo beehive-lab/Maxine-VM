@@ -31,6 +31,7 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
@@ -226,6 +227,8 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
                         addToRegistry(classActorRef);
                     } catch (InvalidReferenceException e) {
                         e.printStackTrace();
+                    } catch (DataIOError eio) {
+                        eio.printStackTrace();
                     }
                     dynamicallyLoadedClassCount++;
                 }

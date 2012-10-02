@@ -122,7 +122,8 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
     @INSPECTED
     private boolean minorEvacuationOverflow = false;
 
-    private boolean fullEvacuationOverflow = false;
+    @INSPECTED
+    private boolean oldEvacuationOverflow = false;
 
     /**
      * Young generation heap percentage computed by the last resizing request.
@@ -268,7 +269,7 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
     }
 
     public void notifyFullEvacuationOverflow() {
-        fullEvacuationOverflow = true;
+        oldEvacuationOverflow = true;
     }
 
     public void notifyFullEvacuationOverflowRange(Address start, Address end) {
@@ -286,12 +287,12 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
     }
 
     public boolean fullEvacuationOverflow() {
-        return fullEvacuationOverflow;
+        return oldEvacuationOverflow;
     }
 
     public void clearNotifications() {
         outOfMemory = false;
-        fullEvacuationOverflow = false;
+        oldEvacuationOverflow = false;
         minorEvacuationOverflow = false;
     }
 

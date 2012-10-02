@@ -530,13 +530,14 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final boolean minorEvacuationOverflow = resizingPolicy.minorEvacuationOverflow();
         final Address oldAllocatorTop =  oldSpace.allocator.unsafeTop();
         oldSpace.flipSpaces();
+        HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
+        oldSpaceEvacuator.setGCOperation(genCollection);
         if (minorEvacuationOverflow) {
             final Address startRange =  oldSpace.allocator.start();
             resizingPolicy.notifyMinorEvacuationOverflowRange(startRange, oldAllocatorTop);
             oldSpace.allocator.unsafeSetTop(oldAllocatorTop);
             oldSpaceEvacuator.prefillSurvivorRanges(startRange, oldAllocatorTop);
         }
-        oldSpaceEvacuator.setGCOperation(genCollection);
         oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
         oldSpaceEvacuator.evacuate(Heap.logGCPhases());
         if (OldSpaceDirtyCardsStats) {
@@ -548,6 +549,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         fot.clear(startIndex, endIndex);
         cardTableRSet.cardTable.clean(startIndex, endIndex);
         youngSpaceEvacuator.doAfterGC();
+        HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
         oldSpaceEvacuator.setGCOperation(null);
         if (resizingPolicy.fullEvacuationOverflow()) {
             // Re-establish the allocators.
@@ -697,7 +699,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final long startGCTime = System.currentTimeMillis();
         evacTimers.start(TOTAL);
         youngSpaceEvacuator.setGCOperation(genCollection);
+        HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
         youngSpaceEvacuator.evacuate(Heap.logGCPhases());
+        HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
         youngSpaceEvacuator.setGCOperation(null);
         if (MaxineVM.isDebug() && Heap.verbose()) {
             Log.println("--End nursery evacuation");
