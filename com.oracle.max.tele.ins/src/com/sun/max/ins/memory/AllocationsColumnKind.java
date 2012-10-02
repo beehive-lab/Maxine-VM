@@ -23,6 +23,7 @@
 package com.sun.max.ins.memory;
 
 import com.sun.max.ins.debug.*;
+import com.sun.max.tele.*;
 
 /**
  * Defines the columns that can be displayed describing memory regions that the VM has allocated from the OS.
@@ -54,6 +55,10 @@ public enum AllocationsColumnKind implements ColumnKind {
         this.defaultVisibility = defaultVisibility;
         this.minWidth = minWidth;
         assert defaultVisibility || canBeMadeInvisible();
+    }
+
+    public boolean isSupported(MaxVM vm) {
+        return true;
     }
 
     public String label() {

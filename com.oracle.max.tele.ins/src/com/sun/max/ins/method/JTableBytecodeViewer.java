@@ -333,15 +333,15 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final class BytecodeTableColumnModel extends InspectorTableColumnModel<BytecodeColumnKind> {
 
         BytecodeTableColumnModel(BytecodeViewPreferences instanceViewPreferences) {
-            super(BytecodeColumnKind.values().length, instanceViewPreferences);
-            addColumn(BytecodeColumnKind.TAG, new TagRenderer(inspection), null);
-            addColumn(BytecodeColumnKind.NUMBER, new NumberRenderer(), null);
-            addColumn(BytecodeColumnKind.BCI, new BCIRenderer(), null);
-            addColumn(BytecodeColumnKind.INSTRUCTION, new InstructionRenderer(), null);
-            addColumn(BytecodeColumnKind.OPERAND1, new OperandRenderer(), null);
-            addColumn(BytecodeColumnKind.OPERAND2, new OperandRenderer(), null);
-            addColumn(BytecodeColumnKind.SOURCE_LINE, new SourceLineRenderer(), null);
-            addColumn(BytecodeColumnKind.BYTES, new BytesRenderer(), null);
+            super(inspection(), BytecodeColumnKind.values().length, instanceViewPreferences);
+            addColumnIfSupported(BytecodeColumnKind.TAG, new TagRenderer(inspection), null);
+            addColumnIfSupported(BytecodeColumnKind.NUMBER, new NumberRenderer(), null);
+            addColumnIfSupported(BytecodeColumnKind.BCI, new BCIRenderer(), null);
+            addColumnIfSupported(BytecodeColumnKind.INSTRUCTION, new InstructionRenderer(), null);
+            addColumnIfSupported(BytecodeColumnKind.OPERAND1, new OperandRenderer(), null);
+            addColumnIfSupported(BytecodeColumnKind.OPERAND2, new OperandRenderer(), null);
+            addColumnIfSupported(BytecodeColumnKind.SOURCE_LINE, new SourceLineRenderer(), null);
+            addColumnIfSupported(BytecodeColumnKind.BYTES, new BytesRenderer(), null);
         }
     }
 

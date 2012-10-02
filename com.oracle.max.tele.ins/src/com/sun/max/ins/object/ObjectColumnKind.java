@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.sun.max.ins.object;
 
 import com.sun.max.ins.debug.*;
+import com.sun.max.tele.*;
 
 /**
  * Defines the columns supported by the object view.
@@ -53,6 +54,10 @@ public enum ObjectColumnKind implements ColumnKind {
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;
         this.minWidth = minWidth;
+    }
+
+    public boolean isSupported(MaxVM vm) {
+        return true;
     }
 
     public String label() {

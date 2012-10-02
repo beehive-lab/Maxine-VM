@@ -169,15 +169,15 @@ public final class ObjectHeaderTable extends InspectorTable {
     private final class ObjectHeaderColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
 
         ObjectHeaderColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, ObjectViewPreferences viewPreferences) {
-            super(ObjectColumnKind.values().length, viewPreferences);
-            addColumn(ObjectColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(ObjectColumnKind.ADDRESS, new MemoryAddressLocationTableCellRenderer(inspection(), ObjectHeaderTable.this, tableModel), null);
-            addColumn(ObjectColumnKind.OFFSET, new MemoryOffsetLocationTableCellRenderer(inspection(), ObjectHeaderTable.this, tableModel), null);
-            addColumn(ObjectColumnKind.TYPE,  new MemoryContentsTypeTableCellRenderer(inspection(), ObjectHeaderTable.this, tableModel), null);
-            addColumn(ObjectColumnKind.NAME, new NameRenderer(inspection()), null);
-            addColumn(ObjectColumnKind.VALUE, new ValueRenderer(inspection()), null);
-            addColumn(ObjectColumnKind.BYTES,  new MemoryBytesTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(ObjectColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
+            super(inspection(), ObjectColumnKind.values().length, viewPreferences);
+            addColumnIfSupported(ObjectColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(ObjectColumnKind.ADDRESS, new MemoryAddressLocationTableCellRenderer(inspection(), ObjectHeaderTable.this, tableModel), null);
+            addColumnIfSupported(ObjectColumnKind.OFFSET, new MemoryOffsetLocationTableCellRenderer(inspection(), ObjectHeaderTable.this, tableModel), null);
+            addColumnIfSupported(ObjectColumnKind.TYPE,  new MemoryContentsTypeTableCellRenderer(inspection(), ObjectHeaderTable.this, tableModel), null);
+            addColumnIfSupported(ObjectColumnKind.NAME, new NameRenderer(inspection()), null);
+            addColumnIfSupported(ObjectColumnKind.VALUE, new ValueRenderer(inspection()), null);
+            addColumnIfSupported(ObjectColumnKind.BYTES,  new MemoryBytesTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(ObjectColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
     }
 

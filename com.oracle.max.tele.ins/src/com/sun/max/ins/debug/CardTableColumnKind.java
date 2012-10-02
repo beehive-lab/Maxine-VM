@@ -53,27 +53,31 @@ public enum CardTableColumnKind implements ColumnKind {
         this.defaultVisibility = defaultVisibility;
         this.minWidth = minWidth;
     }
-    @Override
+
+    public boolean isSupported(MaxVM vm) {
+        return true;
+    }
+
     public String label() {
         return label;
     }
 
-    @Override
+
     public String toolTipText() {
         return toolTipText;
     }
 
-    @Override
+
     public boolean canBeMadeInvisible() {
         return true;
     }
 
-    @Override
+
     public boolean defaultVisibility() {
         return true;
     }
 
-    @Override
+
     public int minWidth() {
         return -1;
     }
