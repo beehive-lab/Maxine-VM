@@ -152,11 +152,11 @@ public class HeapFreeChunk {
         final Pointer cell = deadSpace.asPointer();
         if (MaxineVM.isDebug()) {
             FatalError.check(hub.isSubClassHub(heapFreeChunkHub().classActor), "Should format with a sub-class of HeapFreeChunk");
-            if (numBytes.greaterEqual(heapFreeChunkHeaderSize())) {
+            if (numBytes.lessThan(heapFreeChunkHeaderSize())) {
                 Log.print("Dead space @");
                 Log.print(deadSpace);
                 Log.print(" size = ");
-                Log.println(numBytes);
+                Log.println(numBytes.toLong());
                 FatalError.unexpected("Size must be at least a heap free chunk size");
             }
             Memory.setWords(cell, numBytes.toInt() >> Word.widthValue().log2numberOfBytes, deadSpaceMark());
