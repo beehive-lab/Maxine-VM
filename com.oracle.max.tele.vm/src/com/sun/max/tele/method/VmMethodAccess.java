@@ -69,7 +69,7 @@ public final class VmMethodAccess extends AbstractVmHolder implements MaxMethods
     // START GENERATED CONTENT
     public final TeleStaticMethodAccess Code_codePointerToTargetMethod = new TeleStaticMethodAccess(vm(), Code.class, "codePointerToTargetMethod", SignatureDescriptor.fromJava(TargetMethod.class, Pointer.class));
     public final TeleStaticMethodAccess FatalError_breakpoint = new TeleStaticMethodAccess(vm(), FatalError.class, "breakpoint", SignatureDescriptor.fromJava(void.class));
-    public final TeleStaticMethodAccess FatalError_unexpected = new TeleStaticMethodAccess(vm(), FatalError.class, "unexpected", SignatureDescriptor.fromJava(FatalError.class, String.class, Throwable.class));
+    public final TeleStaticMethodAccess FatalError_unexpected = new TeleStaticMethodAccess(vm(), FatalError.class, "unexpected", SignatureDescriptor.fromJava(FatalError.class, String.class, boolean.class, Throwable.class, Pointer.class));
     public final TeleStaticMethodAccess CodeManager$Inspect_inspectableCodeEvictionCompleted = new TeleStaticMethodAccess(vm(), CodeManager.Inspect.class, "inspectableCodeEvictionCompleted", SignatureDescriptor.fromJava(void.class));
     public final TeleStaticMethodAccess CodeManager$Inspect_inspectableCodeEvictionStarted = new TeleStaticMethodAccess(vm(), CodeManager.Inspect.class, "inspectableCodeEvictionStarted", SignatureDescriptor.fromJava(void.class));
     public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableDecreaseMemoryRequested = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableDecreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
