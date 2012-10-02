@@ -574,7 +574,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         // First, make sure we're doing minor collection here.
         if (youngSpaceEvacuator.getGCOperation() != null) {
             FatalError.check(!resizingPolicy.minorEvacuationOverflow(), "Must not have recursive overflow of old space during minor collection");
-            if (youngSpaceEvacuator.evacuatedBytes().isNotZero()) {
+            // We're in overflow situation if (a) some bytes have already been evacuated (so we know that we've already refilled the evacuation buffer with all the space that
+            // was available in the old to-space) or (b) the space left is too small for a heap free chunk, so we can't even do the initial refill with what's left in the old to-space.
+            if (youngSpaceEvacuator.evacuatedBytes().isNotZero() || spaceLeft.lessThan(HeapFreeChunk.heapFreeChunkHeaderSize())) {
                 // This is not a refill before minor evacuation start, but an overflow situation.
                 // Refill using the from space.
                 final ContiguousHeapSpace fromSpace = oldSpace.fromSpace;
@@ -591,8 +593,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 spaceLeft = fromSpace.committedSize();
                 allocator.refill(fromSpace.start(), spaceLeft);
                 startOfSpaceLeft = allocator.unsafeSetTopToLimit();
-            } else if (MaxineVM.isDebug() && spaceLeft.lessThan(HeapFreeChunk.heapFreeChunkHeaderSize())) { // FIXME: remove and fix when hit
-                FatalError.unexpected("Refill evacuation buffer attempt to format space smaller than heap free chunk");
             }
             HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
             return startOfSpaceLeft;
