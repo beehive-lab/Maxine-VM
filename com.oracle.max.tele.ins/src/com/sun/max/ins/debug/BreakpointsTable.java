@@ -145,13 +145,13 @@ public final class BreakpointsTable extends InspectorTable {
     private final class BreakpointsColumnModel extends InspectorTableColumnModel<BreakpointsColumnKind>  {
 
         private BreakpointsColumnModel(BreakpointsViewPreferences viewPreferences) {
-            super(BreakpointsColumnKind.values().length, viewPreferences);
-            addColumn(BreakpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
-            addColumn(BreakpointsColumnKind.ENABLED, null, new DefaultCellEditor(new JCheckBox()));
-            addColumn(BreakpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
-            addColumn(BreakpointsColumnKind.LOCATION, new LocationCellRenderer(inspection()), null);
-            addColumn(BreakpointsColumnKind.CONDITION, new ConditionCellRenderer(), new DefaultCellEditor(new JTextField()));
-            addColumn(BreakpointsColumnKind.TRIGGER_THREAD, new TriggerThreadCellRenderer(inspection()), null);
+            super(inspection(), BreakpointsColumnKind.values().length, viewPreferences);
+            addColumnIfSupported(BreakpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
+            addColumnIfSupported(BreakpointsColumnKind.ENABLED, null, new DefaultCellEditor(new JCheckBox()));
+            addColumnIfSupported(BreakpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
+            addColumnIfSupported(BreakpointsColumnKind.LOCATION, new LocationCellRenderer(inspection()), null);
+            addColumnIfSupported(BreakpointsColumnKind.CONDITION, new ConditionCellRenderer(), new DefaultCellEditor(new JTextField()));
+            addColumnIfSupported(BreakpointsColumnKind.TRIGGER_THREAD, new TriggerThreadCellRenderer(inspection()), null);
         }
     }
 

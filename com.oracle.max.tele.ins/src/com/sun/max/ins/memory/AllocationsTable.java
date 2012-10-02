@@ -139,14 +139,14 @@ public final class AllocationsTable extends InspectorTable {
     private final class AllocationsColumnModel extends InspectorTableColumnModel<AllocationsColumnKind> {
 
         private AllocationsColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, AllocationsViewPreferences viewPreferences) {
-            super(AllocationsColumnKind.values().length, viewPreferences);
-            addColumn(AllocationsColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(AllocationsColumnKind.NAME, new NameCellRenderer(), null);
-            addColumn(AllocationsColumnKind.START, new StartAddressCellRenderer(), null);
-            addColumn(AllocationsColumnKind.MARK, new MarkAddressCellRenderer(), null);
-            addColumn(AllocationsColumnKind.END, new EndAddressCellRenderer(), null);
-            addColumn(AllocationsColumnKind.SIZE, new SizeCellRenderer(), null);
-            addColumn(AllocationsColumnKind.ALLOC, new AllocCellRenderer(), null);
+            super(inspection(), AllocationsColumnKind.values().length, viewPreferences);
+            addColumnIfSupported(AllocationsColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(AllocationsColumnKind.NAME, new NameCellRenderer(), null);
+            addColumnIfSupported(AllocationsColumnKind.START, new StartAddressCellRenderer(), null);
+            addColumnIfSupported(AllocationsColumnKind.MARK, new MarkAddressCellRenderer(), null);
+            addColumnIfSupported(AllocationsColumnKind.END, new EndAddressCellRenderer(), null);
+            addColumnIfSupported(AllocationsColumnKind.SIZE, new SizeCellRenderer(), null);
+            addColumnIfSupported(AllocationsColumnKind.ALLOC, new AllocCellRenderer(), null);
         }
     }
 

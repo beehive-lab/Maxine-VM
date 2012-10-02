@@ -117,20 +117,20 @@ public final class WatchpointsTable extends InspectorTable {
     private final class WatchpointsColumnModel extends InspectorTableColumnModel<WatchpointsColumnKind> {
 
         private WatchpointsColumnModel(WatchpointsViewPreferences viewPreferences) {
-            super(WatchpointsColumnKind.values().length, viewPreferences);
-            addColumn(WatchpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
-            addColumn(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()), null);
-            addColumn(WatchpointsColumnKind.SIZE, new SizeCellRenderer(inspection()), null);
-            addColumn(WatchpointsColumnKind.END, new EndAddressCellRenderer(inspection()), null);
-            addColumn(WatchpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
-            addColumn(WatchpointsColumnKind.REGION, new RegionRenderer(inspection()), null);
-            addColumn(WatchpointsColumnKind.READ, null, new DefaultCellEditor(new JCheckBox()));
-            addColumn(WatchpointsColumnKind.WRITE, null, new DefaultCellEditor(new JCheckBox()));
-            addColumn(WatchpointsColumnKind.EXEC, null, new DefaultCellEditor(new JCheckBox()));
-            addColumn(WatchpointsColumnKind.GC, null, new DefaultCellEditor(new JCheckBox()));
-            addColumn(WatchpointsColumnKind.TRIGGERED_THREAD, new TriggerThreadCellRenderer(inspection()), null);
-            addColumn(WatchpointsColumnKind.ADDRESS_TRIGGERED, new TriggerAddressCellRenderer(inspection()), null);
-            addColumn(WatchpointsColumnKind.CODE_TRIGGERED, new TriggerCodeCellRenderer(inspection()), null);
+            super(inspection(), WatchpointsColumnKind.values().length, viewPreferences);
+            addColumnIfSupported(WatchpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
+            addColumnIfSupported(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()), null);
+            addColumnIfSupported(WatchpointsColumnKind.SIZE, new SizeCellRenderer(inspection()), null);
+            addColumnIfSupported(WatchpointsColumnKind.END, new EndAddressCellRenderer(inspection()), null);
+            addColumnIfSupported(WatchpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
+            addColumnIfSupported(WatchpointsColumnKind.REGION, new RegionRenderer(inspection()), null);
+            addColumnIfSupported(WatchpointsColumnKind.READ, null, new DefaultCellEditor(new JCheckBox()));
+            addColumnIfSupported(WatchpointsColumnKind.WRITE, null, new DefaultCellEditor(new JCheckBox()));
+            addColumnIfSupported(WatchpointsColumnKind.EXEC, null, new DefaultCellEditor(new JCheckBox()));
+            addColumnIfSupported(WatchpointsColumnKind.GC, null, new DefaultCellEditor(new JCheckBox()));
+            addColumnIfSupported(WatchpointsColumnKind.TRIGGERED_THREAD, new TriggerThreadCellRenderer(inspection()), null);
+            addColumnIfSupported(WatchpointsColumnKind.ADDRESS_TRIGGERED, new TriggerAddressCellRenderer(inspection()), null);
+            addColumnIfSupported(WatchpointsColumnKind.CODE_TRIGGERED, new TriggerCodeCellRenderer(inspection()), null);
         }
 
     }

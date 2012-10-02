@@ -107,13 +107,13 @@ public final class ThreadsTable extends InspectorTable {
     private final class ThreadsColumnModel extends InspectorTableColumnModel<ThreadsColumnKind> {
 
         private ThreadsColumnModel(ThreadsViewPreferences viewPreferences) {
-            super(ThreadsColumnKind.values().length, viewPreferences);
-            addColumn(ThreadsColumnKind.ID, new IDCellRenderer(inspection()), null);
-            addColumn(ThreadsColumnKind.HANDLE, new HandleCellRenderer(inspection()), null);
-            addColumn(ThreadsColumnKind.LOCAL_HANDLE, new LocalHandleCellRenderer(inspection()), null);
-            addColumn(ThreadsColumnKind.KIND, new KindCellRenderer(inspection()), null);
-            addColumn(ThreadsColumnKind.NAME, new NameCellRenderer(inspection()), null);
-            addColumn(ThreadsColumnKind.STATUS, new StatusCellRenderer(inspection()), null);
+            super(inspection(), ThreadsColumnKind.values().length, viewPreferences);
+            addColumnIfSupported(ThreadsColumnKind.ID, new IDCellRenderer(inspection()), null);
+            addColumnIfSupported(ThreadsColumnKind.HANDLE, new HandleCellRenderer(inspection()), null);
+            addColumnIfSupported(ThreadsColumnKind.LOCAL_HANDLE, new LocalHandleCellRenderer(inspection()), null);
+            addColumnIfSupported(ThreadsColumnKind.KIND, new KindCellRenderer(inspection()), null);
+            addColumnIfSupported(ThreadsColumnKind.NAME, new NameCellRenderer(inspection()), null);
+            addColumnIfSupported(ThreadsColumnKind.STATUS, new StatusCellRenderer(inspection()), null);
         }
     }
 

@@ -23,6 +23,7 @@
 package com.sun.max.ins.memory;
 
 import com.sun.max.ins.debug.*;
+import com.sun.max.tele.*;
 
 /**
  * Definition for the columns that can be displayed describing
@@ -41,7 +42,13 @@ public enum MemoryColumnKind implements ColumnKind {
     FLOAT("Float", "Word as single precision float", false, 20),
     DOUBLE("Double", "Word as double precision float", false, 20),
     MM_STATUS("MM Stat", "Heap memory status", false, 20),
-    MARK_BITS("Mark bits", "Contents of the Mark Bitmap word covering this address", false, 20),
+    MARK_BITS("Mark bits", "Contents of the Mark Bitmap word covering this address", false, 20) {
+
+        @Override
+        public boolean isSupported(MaxVM vm) {
+            return vm.heap().hasMarkBitmap();
+        }
+    },
     REGION("Region", "Memory region pointed to by value", true, 20);
 
     private final String columnLabel;
@@ -54,6 +61,10 @@ public enum MemoryColumnKind implements ColumnKind {
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;
         this.minWidth = minWidth;
+    }
+
+    public boolean isSupported(MaxVM vm) {
+        return true;
     }
 
     public String label() {
