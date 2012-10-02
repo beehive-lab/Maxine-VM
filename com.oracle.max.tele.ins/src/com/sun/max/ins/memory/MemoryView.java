@@ -373,7 +373,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
             final Address alignedStart = start.alignUp(nBytesInWord);
             start = (start.equals(alignedStart)) ? start : alignedStart.minus(nBytesInWord);
             final long wordCount = wordsInRegion(memoryRegion);
-            this.originalMemoryWordRegion = new MemoryWordRegion(null, start, wordCount);
+            this.originalMemoryWordRegion = new MemoryWordRegion(inspection, start, wordCount);
         }
         this.memoryWordRegion = originalMemoryWordRegion;
         this.originalOrigin = (origin == null) ? start : origin;
