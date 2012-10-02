@@ -99,6 +99,7 @@ endian
 endianness
 entrypoint
 enum
+enums
 epilogue
 finalizer
 finalizers
