@@ -159,6 +159,9 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleStaticReferenceFieldAccess DynamicLinker_libInfoArray = new TeleStaticReferenceFieldAccess(DynamicLinker.class, "libInfoArray", LibInfo[].class);
     public final TeleStaticIntFieldAccess DynamicLinker_libInfoIndex = new TeleStaticIntFieldAccess(DynamicLinker.class, "libInfoIndex");
     public final TeleInstanceWordFieldAccess EvacuatorToCardSpace_allocatedRangeStart = new TeleInstanceWordFieldAccess(EvacuatorToCardSpace.class, "allocatedRangeStart");
+    public final TeleInstanceWordFieldAccess EvacuatorToCardSpace_initialEvacuationMark = new TeleInstanceWordFieldAccess(EvacuatorToCardSpace.class, "initialEvacuationMark");
+    public final TeleInstanceWordFieldAccess EvacuatorToCardSpace_pend = new TeleInstanceWordFieldAccess(EvacuatorToCardSpace.class, "pend");
+    public final TeleInstanceWordFieldAccess EvacuatorToCardSpace_ptop = new TeleInstanceWordFieldAccess(EvacuatorToCardSpace.class, "ptop");
     public final TeleInstanceReferenceFieldAccess FreeHeapSpaceManager_committedHeapSpace = new TeleInstanceReferenceFieldAccess(FreeHeapSpaceManager.class, "committedHeapSpace", ContiguousHeapSpace.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_cardTableRSet = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "cardTableRSet", CardTableRSet.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "oldSpace", FirstFitMarkSweepSpace.class);
@@ -171,6 +174,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "youngSpace", ContiguousAllocatingSpace.class);
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_youngSpaceEvacuator = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "youngSpaceEvacuator", NoAgingNurseryEvacuator.class);
     public final TeleInstanceBooleanFieldAccess GenSSHeapSizingPolicy_minorEvacuationOverflow = new TeleInstanceBooleanFieldAccess(GenSSHeapSizingPolicy.class, "minorEvacuationOverflow");
+    public final TeleInstanceBooleanFieldAccess GenSSHeapSizingPolicy_oldEvacuationOverflow = new TeleInstanceBooleanFieldAccess(GenSSHeapSizingPolicy.class, "oldEvacuationOverflow");
     public final TeleStaticReferenceFieldAccess Heap_HEAP_BOOT_NAME = new TeleStaticReferenceFieldAccess(Heap.class, "HEAP_BOOT_NAME", String.class);
     public final TeleStaticReferenceFieldAccess Heap_bootHeapRegion = new TeleStaticReferenceFieldAccess(Heap.class, "bootHeapRegion", BootHeapRegion.class);
     public final TeleInstanceReferenceFieldAccess HeapFreeChunk_next = new TeleInstanceReferenceFieldAccess(HeapFreeChunk.class, "next", HeapFreeChunk.class);

@@ -330,7 +330,9 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
                 Log.println("--Begin nursery evacuation");
             }
             youngSpaceEvacuator.setGCOperation(this);
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
             youngSpaceEvacuator.evacuate(Heap.logGCPhases());
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
             youngSpaceEvacuator.setGCOperation(null);
             if (Heap.verbose()) {
                 Log.println("--End nursery evacuation");
@@ -340,6 +342,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             }
             Size worstCaseEvac = youngSpace.totalSpace();
             Size freeSpace = oldSpace.freeSpace();
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
             if (worstCaseEvac.greaterThan(freeSpace)) {
                 if (Heap.verbose()) {
                     Log.println("--Begin old geneneration collection");

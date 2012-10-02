@@ -128,4 +128,7 @@ public class TeleContiguousHeapSpace extends TeleMemoryRegion {
         return isAllocated() ? address.greaterEqual(getRegionStart()) && address.lessThan(committedEndCache) : false;
     }
 
+    public Address committedEnd() {
+        return committedEndCache;
+    }
 }

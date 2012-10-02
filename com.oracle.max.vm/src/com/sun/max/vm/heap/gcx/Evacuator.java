@@ -490,7 +490,6 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         timers.start(PROLOGUE);
         doBeforeEvacuation();
         timers.stop(PROLOGUE);
-        HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
         if (logPhases) {
             phaseLogger.logScanningRoots(VMLogger.Interval.BEGIN);
@@ -565,7 +564,6 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
             phaseLogger.logProcessingSpecialReferences(VMLogger.Interval.END);
         }
 
-        HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
         timers.start(EPILOGUE);
         doAfterEvacuation();
         timers.stop(EPILOGUE);
