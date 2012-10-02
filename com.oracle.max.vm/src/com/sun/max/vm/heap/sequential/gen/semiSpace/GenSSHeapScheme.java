@@ -525,14 +525,13 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         // NOTE: counter must be incremented before a heap phase change  to ANALYZING.
         fullCollectionCount++;
         lastFullCollectionInvocationCount = genCollection.invocationCount();
-        // Gather information needed in case we overflowed.fullCollectionCount
+        // Gather information needed in case we overflowed.
         // We need these because the flipSpace method refill the allocator from the start of the to-space.
-        final boolean minorEvacuationOverflow = resizingPolicy.minorEvacuationOverflow();
         final Address oldAllocatorTop =  oldSpace.allocator.unsafeTop();
         oldSpace.flipSpaces();
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
         oldSpaceEvacuator.setGCOperation(genCollection);
-        if (minorEvacuationOverflow) {
+        if (resizingPolicy.minorEvacuationOverflow()) {
             final Address startRange =  oldSpace.allocator.start();
             resizingPolicy.notifyMinorEvacuationOverflowRange(startRange, oldAllocatorTop);
             oldSpace.allocator.unsafeSetTop(oldAllocatorTop);
