@@ -387,7 +387,9 @@ void core_dump() {
     log_print("dumping core....\n  heap @ ");
     log_print_symbol(image_heap());
     log_print_newline();
-    abort();
+    // Use kill instead of abort so the vm process keeps running after the core is created.
+    kill(getpid(), SIGABRT);
+    sleep(3);
 #endif
 }
 
