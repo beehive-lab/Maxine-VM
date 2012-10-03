@@ -93,6 +93,24 @@ public final class BootHeapRegion extends LinearAllocatorRegion {
         }
     }
 
+    public int referenceMapIndex(Address referenceLocation) {
+        if (contains(referenceLocation)) {
+            return referenceLocation.minus(start).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        }
+        return -1;
+    }
+
+    public boolean isMutableReference(Address referenceLocation) {
+        if (contains(referenceLocation)) {
+            final int bitIndex = referenceLocation.minus(start).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+            final int wordIndex = bitIndex >> Word.widthValue().log2numberOfBits;
+            final   Address refmapWord = referenceMap.getWord(wordIndex).asAddress();
+            final Address bitmask = Address.fromLong(1L).shiftedLeft(bitIndex);
+            return refmapWord.and(bitmask).isNotZero();
+        }
+        return false;
+    }
+
     public void visitCells(CellVisitor cellVisitor) {
         final Pointer firstCell = start().asPointer();
         final Pointer lastCell = mark();

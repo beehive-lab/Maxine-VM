@@ -409,7 +409,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                  * Check first if a GC cycle has started since the last time we looked.
                  */
                 if (lastAnalyzingPhaseCount < gcStartedCount()) {
-                    assert lastAnalyzingPhaseCount == gcStartedCount() - 1;
+                    assert lastAnalyzingPhaseCount == gcStartedCount() - 1 || TeleVM.mode != MaxInspectionMode.CREATE;
                     assert oldFromSpaceRefMap.isEmpty();
                     assert promotedRefMap.isEmpty();
                     if (isFullGC()) {
