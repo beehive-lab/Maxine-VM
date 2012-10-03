@@ -186,7 +186,7 @@ import com.sun.max.vm.runtime.*;
  * @see Memory#ZAPPED_MARKER
  * @see SemiSpaceRemoteReference
  */
-public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
+public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager, VmRelocatingHeap {
 
     private static final int TRACE_VALUE = 1;
 
@@ -556,11 +556,6 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                 return null;
             }
         };
-    }
-
-    @Override
-    public boolean hasForwarders() {
-        return true;
     }
 
     /**

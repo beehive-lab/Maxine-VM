@@ -31,6 +31,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.value.*;
@@ -50,27 +51,27 @@ final class HeapRegionInfoTable extends InspectorTable {
             this.label = label;
             this.toolTipText = toolTipText;
         }
-        @Override
+
+        public boolean isSupported(MaxVM vm) {
+            return true;
+        }
+
         public String label() {
             return label;
         }
 
-        @Override
         public String toolTipText() {
             return toolTipText;
         }
 
-        @Override
         public boolean canBeMadeInvisible() {
             return false;
         }
 
-        @Override
         public boolean defaultVisibility() {
             return true;
         }
 
-        @Override
         public int minWidth() {
             return -1;
         }
@@ -228,11 +229,11 @@ final class HeapRegionInfoTable extends InspectorTable {
 
     }
 
-    static final class HeapRegionInfoColumnModel extends InspectorTableColumnModel<HeapRegionInfoColumnKind> {
+    final class HeapRegionInfoColumnModel extends InspectorTableColumnModel<HeapRegionInfoColumnKind> {
         HeapRegionInfoColumnModel(TableCellRenderer cellRenderer, HeapRegionInfoViewPreferences viewPreferences) {
-            super(HeapRegionInfoColumnKind.values().length, viewPreferences);
-            addColumn(HeapRegionInfoColumnKind.NAME, cellRenderer, null);
-            addColumn(HeapRegionInfoColumnKind.VALUE, cellRenderer, null);
+            super(inspection(), HeapRegionInfoColumnKind.values().length, viewPreferences);
+            addColumnIfSupported(HeapRegionInfoColumnKind.NAME, cellRenderer, null);
+            addColumnIfSupported(HeapRegionInfoColumnKind.VALUE, cellRenderer, null);
         }
     }
 

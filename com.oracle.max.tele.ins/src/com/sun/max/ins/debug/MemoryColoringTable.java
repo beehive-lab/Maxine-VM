@@ -257,14 +257,14 @@ public final class MemoryColoringTable extends InspectorTable {
     private final class MemoryColoringColumnModel extends InspectorTableColumnModel<MarkBitmapColumnKind> {
 
         private MemoryColoringColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, TableColumnVisibilityPreferences<MarkBitmapColumnKind> instanceViewPreferences) {
-            super(MarkBitmapColumnKind.values().length,  instanceViewPreferences);
-            addColumn(MarkBitmapColumnKind.MAP_BIT_INDEX, new MapBitIndexRenderer(inspection()), null);
-            addColumn(MarkBitmapColumnKind.WORD_INDEX, new WordIndexRenderer(inspection()), null);
-            addColumn(MarkBitmapColumnKind.BITMAP_WORD_ADDRESS, new BitmapWordAddressRenderer(inspection()), null);
-            addColumn(MarkBitmapColumnKind.WORD_BIT_INDEX, new WordBitIndexRenderer(inspection()), null);
-            addColumn(MarkBitmapColumnKind.WORD_BITS, new MemoryMarkBitsTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(MarkBitmapColumnKind.MARK_BIT, new MarkBitRenderer(inspection()), null);
-            addColumn(MarkBitmapColumnKind.HEAP_ADDRESS, new CoveredAddressRenderer(inspection()), null);
+            super(inspection(),  MarkBitmapColumnKind.values().length, instanceViewPreferences);
+            addColumnIfSupported(MarkBitmapColumnKind.MAP_BIT_INDEX, new MapBitIndexRenderer(inspection()), null);
+            addColumnIfSupported(MarkBitmapColumnKind.WORD_INDEX, new WordIndexRenderer(inspection()), null);
+            addColumnIfSupported(MarkBitmapColumnKind.BITMAP_WORD_ADDRESS, new BitmapWordAddressRenderer(inspection()), null);
+            addColumnIfSupported(MarkBitmapColumnKind.WORD_BIT_INDEX, new WordBitIndexRenderer(inspection()), null);
+            addColumnIfSupported(MarkBitmapColumnKind.WORD_BITS, new MemoryMarkBitsTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(MarkBitmapColumnKind.MARK_BIT, new MarkBitRenderer(inspection()), null);
+            addColumnIfSupported(MarkBitmapColumnKind.HEAP_ADDRESS, new CoveredAddressRenderer(inspection()), null);
         }
     }
 

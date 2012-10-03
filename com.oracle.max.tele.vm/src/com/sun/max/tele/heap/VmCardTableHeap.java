@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,47 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-package com.sun.max.ins.debug;
+package com.sun.max.tele.heap;
 
 import com.sun.max.tele.*;
 
+
 /**
- * ColumnKind general interface; must be implemented by Enums.
+ * Interface implemented by instances of {@link RemoteHeapScheme} for heap implementations
+ * that use a {@link CardTable}.
  */
-public interface ColumnKind {
+public interface VmCardTableHeap {
 
     /**
-     * @return whether the column is supported in the current session.
+     * Return heap-specific implementation of {@link MaxCardTable} for the heap scheme,
+     * if {@link #hasCardTable()} {@code == true} and if the bitmap has been created.
+     * {@code null} otherwise
+     *
+     * @return the heap's {@link MaxCardTable}, if one is available, {@code null} otherwise.
      */
-    boolean isSupported(MaxVM vm);
+    MaxCardTable cardTable();
 
-    /**
-     * @return text to appear in the column header
-     */
-    String label();
-
-    /**
-     * @return text to appear in the column header's toolTip, null if none specified.
-     */
-    String toolTipText();
-
-    /**
-     * @return whether this column kind can be made invisible; default true.
-     */
-    boolean canBeMadeInvisible();
-
-    /**
-     * Determines if this column should be visible by default; default true.
-     */
-    boolean defaultVisibility();
-
-    /**
-     * @return minimum width allowed for this column when resized by user; -1 if none specified.
-     */
-    int minWidth();
-
-    int ordinal();
-    String name();
-    String toString();
 }

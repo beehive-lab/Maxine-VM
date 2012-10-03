@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,9 @@ import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 
 /**
- * Encapsulates preferences about which columns should be visible in a table-based viewer.
+ * Encapsulates preferences about which columns should be visible in a table-based viewer, selected from
+ * among those that are supported in the current session.
+ * <p>
  * There are three modes of use:
  * <ul>
  *  <li>1.  Global, persistent preferences.</li>
@@ -76,7 +78,15 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
 
     private final Set<TableColumnViewPreferenceListener> tableColumnViewPreferenceListeners = CiUtil.newIdentityHashSet();
 
-    private final ColumnKind_Type[] columnTypeValues;
+    /**
+     * All of the defined column kinds.
+     */
+    private final ColumnKind_Type [] columnTypeValues;
+
+    /**
+     * The column kinds that are supported in this session.
+     */
+    private final ArrayList<ColumnKind_Type> supportedColumnTypes;
 
     /**
      * Mode 1:  Global, persistent preferences.
@@ -98,6 +108,12 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         this.visibleColumns = new HashMap<ColumnKind_Type, Boolean>();
         this.columnTypeValues = columnTypeValues;
+        this.supportedColumnTypes = new ArrayList<ColumnKind_Type>();
+        for (ColumnKind_Type columnKind : columnTypeValues) {
+            if (columnKind.isSupported(inspection.vm())) {
+                supportedColumnTypes.add(columnKind);
+            }
+        }
         final InspectionSettings settings = inspection.settings();
         saveSettingsListener = new AbstractSaveSettingsListener(name) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
@@ -106,12 +122,13 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
         };
         settings.addSaveSettingsListener(saveSettingsListener);
 
-        for (ColumnKind_Type columnType : columnTypeValues) {
+        for (ColumnKind_Type columnType : supportedColumnTypes) {
             final boolean defaultVisibility = defaultVisibility(columnType);
             final Boolean visible = settings.get(saveSettingsListener, getPreferenceName(columnType), OptionTypes.BOOLEAN_TYPE, defaultVisibility);
             visibleColumns.put(columnType, visible);
         }
     }
+
 
     /**
      * @return the textual name under which the visibility of the column type will be made persistent.
@@ -132,9 +149,10 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
     public TableColumnVisibilityPreferences(TableColumnVisibilityPreferences<ColumnKind_Type> defaultPreferences) {
         inspection = defaultPreferences.inspection;
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
-        saveSettingsListener = null;
-        columnTypeValues = defaultPreferences.columnTypeValues;
-        visibleColumns = new HashMap<ColumnKind_Type, Boolean>(defaultPreferences.visibleColumns);
+        this.saveSettingsListener = null;
+        this.columnTypeValues = defaultPreferences.columnTypeValues;
+        this.supportedColumnTypes = defaultPreferences.supportedColumnTypes;
+        this.visibleColumns = new HashMap<ColumnKind_Type, Boolean>(defaultPreferences.visibleColumns);
     }
 
     public final Inspection inspection() {
@@ -250,7 +268,7 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
         final ItemListener itemListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final Object source = e.getItemSelectable();
-                for (ColumnKind_Type columnType : columnTypeValues) {
+                for (ColumnKind_Type columnType : supportedColumnTypes) {
                     final InspectorCheckBox checkBox = checkBoxes[columnType.ordinal()];
                     if (source == checkBox) {
                         if (checkBox.isSelected() != isVisible(columnType)) {
@@ -263,7 +281,7 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
         };
         final JPanel content = new InspectorPanel(inspection);
         content.add(new TextLabel(inspection, "View Columns:  "));
-        for (ColumnKind_Type columnType : columnTypeValues) {
+        for (ColumnKind_Type columnType : supportedColumnTypes) {
             if (canBeMadeInvisible(columnType)) {
                 final InspectorCheckBox checkBox =
                     new InspectorCheckBox(inspection, label(columnType), saveSettingsListener != null ? "Display column in all views?" : "Display column in this view?", isVisible(columnType));

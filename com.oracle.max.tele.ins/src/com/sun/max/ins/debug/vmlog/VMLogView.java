@@ -284,7 +284,7 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
                 TeleError.unexpected("Exception instantiating VMLog subclass: " + vmLogClassName, ex);
             }
 
-            VMLogColumnModel columnModel = new VMLogColumnModel(vmLogView);
+            VMLogColumnModel columnModel = new VMLogColumnModel(inspection, vmLogView);
             configureDefaultTable(vmLogView.tableModel, columnModel);
         }
 
@@ -305,20 +305,19 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
     }
 
     private static class VMLogColumnModel extends InspectorTableColumnModel<VMLogColumnKind>  {
-        private VMLogColumnModel(VMLogView vmLogView) {
-            super(VMLogColumnKind.values().length, vmLogView.viewPreferences);
-            Inspection inspection = vmLogView.inspection();
-            addColumn(VMLogColumnKind.ID, new IdCellRenderer(inspection, vmLogView), null);
-            addColumn(VMLogColumnKind.THREAD, new ThreadCellRenderer(inspection, vmLogView), null);
-            addColumn(VMLogColumnKind.OPERATION, new OperationCellRenderer(inspection, vmLogView), null);
-            addColumn(VMLogColumnKind.ARG1, new ArgCellRenderer(inspection, vmLogView, 1), null);
-            addColumn(VMLogColumnKind.ARG2, new ArgCellRenderer(inspection, vmLogView, 2), null);
-            addColumn(VMLogColumnKind.ARG3, new ArgCellRenderer(inspection, vmLogView, 3), null);
-            addColumn(VMLogColumnKind.ARG4, new ArgCellRenderer(inspection, vmLogView, 4), null);
-            addColumn(VMLogColumnKind.ARG5, new ArgCellRenderer(inspection, vmLogView, 5), null);
-            addColumn(VMLogColumnKind.ARG6, new ArgCellRenderer(inspection, vmLogView, 6), null);
-            addColumn(VMLogColumnKind.ARG7, new ArgCellRenderer(inspection, vmLogView, 7), null);
-            addColumn(VMLogColumnKind.ARG8, new ArgCellRenderer(inspection, vmLogView, 8), null);
+        private VMLogColumnModel(Inspection inspection, VMLogView vmLogView) {
+            super(inspection, VMLogColumnKind.values().length, vmLogView.viewPreferences);
+            addColumnIfSupported(VMLogColumnKind.ID, new IdCellRenderer(inspection, vmLogView), null);
+            addColumnIfSupported(VMLogColumnKind.THREAD, new ThreadCellRenderer(inspection, vmLogView), null);
+            addColumnIfSupported(VMLogColumnKind.OPERATION, new OperationCellRenderer(inspection, vmLogView), null);
+            addColumnIfSupported(VMLogColumnKind.ARG1, new ArgCellRenderer(inspection, vmLogView, 1), null);
+            addColumnIfSupported(VMLogColumnKind.ARG2, new ArgCellRenderer(inspection, vmLogView, 2), null);
+            addColumnIfSupported(VMLogColumnKind.ARG3, new ArgCellRenderer(inspection, vmLogView, 3), null);
+            addColumnIfSupported(VMLogColumnKind.ARG4, new ArgCellRenderer(inspection, vmLogView, 4), null);
+            addColumnIfSupported(VMLogColumnKind.ARG5, new ArgCellRenderer(inspection, vmLogView, 5), null);
+            addColumnIfSupported(VMLogColumnKind.ARG6, new ArgCellRenderer(inspection, vmLogView, 6), null);
+            addColumnIfSupported(VMLogColumnKind.ARG7, new ArgCellRenderer(inspection, vmLogView, 7), null);
+            addColumnIfSupported(VMLogColumnKind.ARG8, new ArgCellRenderer(inspection, vmLogView, 8), null);
         }
     }
 

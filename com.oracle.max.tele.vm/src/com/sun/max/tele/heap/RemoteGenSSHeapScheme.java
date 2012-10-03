@@ -46,7 +46,7 @@ import com.sun.max.vm.heap.sequential.gen.semiSpace.*;
 * an implementation of the VM's {@link HeapScheme} interface.
 * WORK IN PROGRESS.
 */
-public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
+public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager, VmCardTableHeap, VmRelocatingHeap {
     private static final int TRACE_VALUE = 1;
     /**
      * Number of contiguous VM regions for dynamic heap space.
@@ -519,17 +519,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         };
     }
 
-    @Override
-    public boolean hasForwarders() {
-        return true;
-    }
-
-    @Override
-    public boolean hasCardTable() {
-        return true;
-    }
-
-    @Override
     public MaxCardTable cardTable() {
         return null;
     }

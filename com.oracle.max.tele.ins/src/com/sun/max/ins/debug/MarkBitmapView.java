@@ -153,7 +153,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     protected MarkBitmapView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
 
-        markBitmap = vm().heap().markBitMap();
+        markBitmap = vm().heap().markBitmap();
 
         viewPreferences = MarkBitmapViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
@@ -248,8 +248,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
     @Override
     protected void refreshState(boolean force) {
-        if (markBitmap == null && vm().heap().markBitMap() != null) {
-            markBitmap = vm().heap().markBitMap();
+        if (markBitmap == null && vm().heap().markBitmap() != null) {
+            markBitmap = vm().heap().markBitmap();
             reconstructView();
         }
         if (table != null) {
@@ -271,7 +271,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
      * Creates a pane that displays and permits interaction with the mark bitmap, assumes that the bitmap has been allocated in VM memory.
      */
     private void createTableContent() {
-        markBitmap = vm().heap().markBitMap();
+        markBitmap = vm().heap().markBitmap();
         assert markBitmap != null;
         markBitmapData = markBitmap.representation();
         table = new MemoryColoringTable(inspection(), this, markBitmap, viewPreferences);
@@ -518,7 +518,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
         @Override
         protected void procedure() {
-            final MaxEntityMemoryRegion<MaxMarkBitmap> memoryRegion = vm().heap().markBitMap().memoryRegion();
+            final MaxEntityMemoryRegion<MaxMarkBitmap> memoryRegion = vm().heap().markBitmap().memoryRegion();
             if (memoryRegion.isAllocated()) {
                 views().memory().makeView(memoryRegion, null);
             }
@@ -526,7 +526,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
         @Override
         public void refresh(boolean force) {
-            final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
+            final MaxMarkBitmap markBitMap = vm().heap().markBitmap();
             setEnabled(markBitMap != null && markBitMap.memoryRegion().isAllocated());
         }
     }

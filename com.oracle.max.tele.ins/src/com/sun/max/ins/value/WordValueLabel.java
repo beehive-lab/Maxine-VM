@@ -569,7 +569,7 @@ public class WordValueLabel extends ValueLabel {
                             }
                         }
                     }
-                    final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
+                    final MaxMarkBitmap markBitMap = vm().heap().markBitmap();
                     if (markBitMap != null && markBitMap.isCovered(address)) {
                         final int bitIndex = markBitMap.getBitIndexOf(address);
                         final StringBuilder sb = new StringBuilder();
@@ -1613,7 +1613,7 @@ public class WordValueLabel extends ValueLabel {
 
     private InspectorAction getShowHeapMarkAction(Value value) {
         InspectorAction action = null;
-        final MaxMarkBitmap markBitMap = vm().heap().markBitMap();
+        final MaxMarkBitmap markBitMap = vm().heap().markBitmap();
         if (value != VoidValue.VOID && markBitMap != null) {
             final Address address = value.toWord().asAddress();
             if (markBitMap.isCovered(address)) {

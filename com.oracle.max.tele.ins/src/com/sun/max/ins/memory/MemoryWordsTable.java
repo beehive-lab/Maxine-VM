@@ -206,21 +206,21 @@ public final class MemoryWordsTable extends InspectorTable {
     private final class MemoryWordsColumnModel extends InspectorTableColumnModel<MemoryColumnKind> {
 
         private MemoryWordsColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, TableColumnVisibilityPreferences<MemoryColumnKind> instanceViewPreferences) {
-            super(MemoryColumnKind.values().length, instanceViewPreferences);
-            addColumn(MemoryColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(MemoryColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
-            addColumn(MemoryColumnKind.MMTAG, new MMTagRenderer(inspection()), null);
-            addColumn(MemoryColumnKind.WORD, new WordOffsetRenderer(inspection()), null);
-            addColumn(MemoryColumnKind.OFFSET, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(MemoryColumnKind.VALUE, new ValueRenderer(inspection()), null);
-            addColumn(MemoryColumnKind.BYTES, new MemoryBytesTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(MemoryColumnKind.CHAR, new CharRenderer(inspection()), null);
-            addColumn(MemoryColumnKind.UNICODE, new UnicodeRenderer(inspection()), null);
-            addColumn(MemoryColumnKind.FLOAT, new FloatRenderer(inspection()), null);
-            addColumn(MemoryColumnKind.DOUBLE, new DoubleRenderer(inspection()), null);
-            addColumn(MemoryColumnKind.MM_STATUS, new MemoryMgtStatusRenderer(inspection(), table, tableModel), null);
-            addColumn(MemoryColumnKind.MARK_BITS, new MemoryMarkBitsTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(MemoryColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
+            super(inspection(), MemoryColumnKind.values().length, instanceViewPreferences);
+            addColumnIfSupported(MemoryColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(MemoryColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
+            addColumnIfSupported(MemoryColumnKind.MMTAG, new MMTagRenderer(inspection()), null);
+            addColumnIfSupported(MemoryColumnKind.WORD, new WordOffsetRenderer(inspection()), null);
+            addColumnIfSupported(MemoryColumnKind.OFFSET, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(MemoryColumnKind.VALUE, new ValueRenderer(inspection()), null);
+            addColumnIfSupported(MemoryColumnKind.BYTES, new MemoryBytesTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(MemoryColumnKind.CHAR, new CharRenderer(inspection()), null);
+            addColumnIfSupported(MemoryColumnKind.UNICODE, new UnicodeRenderer(inspection()), null);
+            addColumnIfSupported(MemoryColumnKind.FLOAT, new FloatRenderer(inspection()), null);
+            addColumnIfSupported(MemoryColumnKind.DOUBLE, new DoubleRenderer(inspection()), null);
+            addColumnIfSupported(MemoryColumnKind.MM_STATUS, new MemoryMgtStatusRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(MemoryColumnKind.MARK_BITS, new MemoryMarkBitsTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(MemoryColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
     }
 

@@ -111,7 +111,7 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
      *
      * @return the heap's {@link MaxMarkBitmap}, if one is available, {@code null} otherwise.
      */
-    MaxMarkBitmap markBitMap();
+    MaxMarkBitmap markBitmap();
 
     /**
      * @return whether the current heap implementation uses a {@link MaxCardTable}.
