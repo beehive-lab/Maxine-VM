@@ -2829,12 +2829,13 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(LDC$reference)
-    public static void uoldc(ResolutionGuard guard, int bci) {
+    public static Object uoldc(ResolutionGuard guard, int bci) {
         ClassActor classActor = Snippets.resolveClass(guard);
         Object constant = classActor.javaClass();
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
+        return constant;
     }
 
     @T1X_TEMPLATE(LDC$reference$resolved)
