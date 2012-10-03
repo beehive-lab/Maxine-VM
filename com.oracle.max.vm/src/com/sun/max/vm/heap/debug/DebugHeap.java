@@ -40,6 +40,7 @@ import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * A collection of routines useful for placing and operating on special
@@ -183,6 +184,91 @@ public class DebugHeap {
             final Pointer origin = ref.toOrigin();
             final Pointer cell = Layout.originToCell(origin);
             checkCellTag(cell, cell.minusWords(1).getWord(0));
+        }
+    }
+
+    public static final class ReferenceFinder extends PointerIndexVisitor implements CellVisitor {
+        private boolean fatalErrorIfFound = false;
+        private Address searched;
+        private long visitedRefsCount;
+        private long visitedCellsCount;
+
+        public ReferenceFinder(boolean fatalErrorIfFound) {
+            this.fatalErrorIfFound = fatalErrorIfFound;
+        }
+
+        public void setSearchedReference(Address origin) {
+            this.searched = origin;
+            this.visitedRefsCount = 0L;
+            this.visitedCellsCount = 0L;
+        }
+
+        public void setSearchedReference(Address origin, boolean fatalErrorIfFound) {
+            this.searched = origin;
+            this.visitedRefsCount = 0L;
+            this.visitedCellsCount = 0L;
+            this.fatalErrorIfFound = fatalErrorIfFound;
+        }
+
+        public long visitedRefsCount() {
+            return visitedRefsCount;
+        }
+        public long visitedCellsCount() {
+            return visitedCellsCount;
+        }
+        private void reportFoundRef(Pointer pointer, int wordIndex) {
+            Log.print("found reference ");
+            Log.print(searched);
+            Log.print(" @ ");
+            Log.print(pointer);
+            Log.print(" + ");
+            Log.println(wordIndex);
+            FatalError.breakpoint();
+            if (fatalErrorIfFound) {
+                FatalError.unexpected("unexpected reference");
+            }
+        }
+        @INLINE
+        private void checkRef(Pointer pointer, int wordIndex) {
+            visitedRefsCount++;
+            if (pointer.getWord(wordIndex).asAddress().equals(searched)) {
+                reportFoundRef(pointer, wordIndex);
+            }
+        }
+        @Override
+        public void visit(Pointer pointer, int wordIndex) {
+            checkRef(pointer, wordIndex);
+        }
+
+        @Override
+        public Pointer visitCell(Pointer cell) {
+            final Pointer origin = Layout.cellToOrigin(cell);
+            visitedCellsCount++;
+            checkRef(origin,  Layout.hubIndex());
+            final Hub hub =  Layout.getHub(origin);
+            final SpecificLayout specificLayout = hub.specificLayout;
+            if (specificLayout == Layout.tupleLayout()) {
+                //TupleReferenceMap.visitReferences(hub, origin, this);
+                hub.visitMappedReferences(origin, this);
+                if (hub.isJLRReference) {
+                    checkRef(origin, SpecialReferenceManager.referentIndex());
+                }
+                return cell.plus(hub.tupleSize);
+            }
+            final int length = Layout.readArrayLength(origin);
+            if (specificLayout == Layout.hybridLayout()) {
+                hub.visitMappedReferences(origin, this);
+                //TupleReferenceMap.visitReferences(hub, origin, this);
+                return cell.plus(Layout.hybridLayout().getArraySize(length));
+            } else if (specificLayout == Layout.referenceArrayLayout()) {
+                int wordIndex = Layout.firstElementIndex();
+                final int endIndex = wordIndex + length;
+                while (wordIndex < endIndex) {
+                    checkRef(origin, wordIndex++);
+                }
+                return cell.plus(Layout.referenceArrayLayout().getArraySize(Kind.REFERENCE, length));
+            }
+            return cell.plus(Layout.size(origin));
         }
     }
 

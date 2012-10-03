@@ -117,6 +117,10 @@ public final class DarkMatter {
         Log.print(pointer);
         Log.print(" [");
         Log.print(wordIndex);
+        if (Heap.bootHeapRegion.isMutableReference(pointer.plus(wordIndex))) {
+            Log.print(" -- mutable boot region reference / refmap index #");
+            Log.print(Heap.bootHeapRegion.referenceMapIndex(pointer.plusWords(wordIndex)));
+        }
         Log.println("]");
         FatalError.unexpected("Dark Matter must not be referenced");
     }

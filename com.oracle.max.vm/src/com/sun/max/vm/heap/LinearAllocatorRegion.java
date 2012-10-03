@@ -152,7 +152,7 @@ public class LinearAllocatorRegion extends LinearAllocationMemoryRegion {
         int nextBitIndex = firstBitIndex;
         if (refMapWordIndex < lastRefMapWordIndex) {
             if ((firstBitIndex  & mask) != 0) {
-                // first bit is not at a word boundary. Scan reference from the first bit index this the last bit of the current refmap word
+                // first bit is not at a word boundary. Scan reference from the first bit index to the last bit of the current refmap word
                 final int lastBit = (refMapWordIndex + 1) << Word.widthValue().log2numberOfBits;
                 scanReferences(pointerIndexVisitor, refMap, refMapWordIndex++, firstBitIndex, lastBit, logging);
             }

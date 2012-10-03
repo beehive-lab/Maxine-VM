@@ -43,6 +43,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.Heap.GCCallbackPhase;
 import com.sun.max.vm.heap.debug.*;
+import com.sun.max.vm.heap.debug.DebugHeap.ReferenceFinder;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
@@ -563,6 +564,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
     }
 
+    final DebugHeap.ReferenceFinder referenceFinder = new ReferenceFinder(false);
+
     @Override
     public Address refillEvacuationBuffer() {
         final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
@@ -582,18 +585,25 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 // Refill using the from space.
                 final ContiguousHeapSpace fromSpace = oldSpace.fromSpace;
                 // Left-over in allocator is not formated.
-                Address endOfSpaceLeft = allocator.hardLimit();
-                if (endOfSpaceLeft.greaterThan(startOfSpaceLeft)) {
-                    DarkMatter.format(startOfSpaceLeft, endOfSpaceLeft);
+                final Address endOfSpaceLeft = allocator.hardLimit();
+                final Address darkMatter = startOfSpaceLeft;
+                if (endOfSpaceLeft.greaterThan(darkMatter)) {
+                    DarkMatter.format(darkMatter, endOfSpaceLeft);
                 }
                 // Notify that we need to run a full GC immediately after this overflowing minor collection.
                 resizingPolicy.notifyMinorEvacuationOverflow();
+                youngSpaceEvacuator.setOveflowEvacuationPhase(darkMatter);
                 youngSpaceEvacuator.enableDarkMatterRefCheck(true);
                 oldSpaceEvacuator.enableDarkMatterRefCheck(true);
                 // Refill the allocator with the old from space.
                 spaceLeft = fromSpace.committedSize();
                 allocator.refill(fromSpace.start(), spaceLeft);
                 startOfSpaceLeft = allocator.unsafeSetTopToLimit();
+                // FIXME -- remove temp debug.
+                if (MaxineVM.isDebug()) {
+                    referenceFinder.setSearchedReference(darkMatter);
+                    Heap.bootHeapRegion.visitCells(referenceFinder);
+                }
             }
             HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
             return startOfSpaceLeft;
@@ -626,6 +636,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             // Need to refill old gen allocator with the (now empty) young gen space.
             resizingPolicy.notifyOutOfMemory();
             resizingPolicy.notifyFullEvacuationOverflow();
+            oldSpaceEvacuator.setOveflowEvacuationPhase(startOfSpaceLeft);
             final Size refillSize = youngSpace.space.committedSize();
             startOfSpaceLeft = youngSpace.space.start();
             allocator.refill(startOfSpaceLeft, refillSize);
@@ -782,6 +793,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 gcRequest.oldGenOverflow ? oldSpace.freeSpace().greaterEqual(gcRequest.requestedBytes) :
                 youngSpace.freeSpace().greaterEqual(gcRequest.requestedBytes);
         }
+        youngSpaceEvacuator.clearOveflowEvacuationPhase();
+        oldSpaceEvacuator.clearOveflowEvacuationPhase();
         final long endGCTime = System.currentTimeMillis();
         if (performFullGC) {
             gcRequest.fullGCOccurred = performFullGC;
