@@ -51,7 +51,6 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     public static void onLoad(String args) {
         VMAJavaRunScheme.registerAdviceHandler(new SyncStoreVMAdviceHandler());
-        ObjectStateHandlerAdaptor.forceCompile();
     }
 
     private static long getTime() {
@@ -69,7 +68,7 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
         if (phase == MaxineVM.Phase.RUNNING) {
             storeAdaptor = new VMAdviceHandlerTextStoreAdapter(state, false, false);
             storeAdaptor.initialise(phase);
-            super.setRemovalTracker(storeAdaptor.getRemovalTracker());
+            super.setDeadObjectHandler(storeAdaptor.getRemovalTracker());
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             storeAdaptor.initialise(phase);
         }

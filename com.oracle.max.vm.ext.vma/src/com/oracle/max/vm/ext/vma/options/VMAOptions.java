@@ -70,30 +70,96 @@ public class VMAOptions {
         }
     }
 
-    private static final BM[] LIFETIME_BM = new BM[] {
+    /**
+     * Object creation.
+     */
+    private static final BM[] NEW_BM = new BM[] {
         new BM(NEW, A), new BM(NEWARRAY, A), new BM(ANEWARRAY, A),
-        new BM(MULTIANEWARRAY, A), new BM(MENTRY, A), new BM(RETURN, B) // use RETURN as alternate for INVOKESPECIAL/AFTER
+        new BM(MULTIANEWARRAY, A)
     };
 
-    private static final BM[] READ_BM = compose(LIFETIME_BM, new BM[] {new BM(GETFIELD, B), new BM(GETSTATIC, B)});
+    /**
+     * Enables determination of the begin/end of object construction.
+     */
+    private static final BM[] CONSTRUCTOR_BM = new BM[] {
+        new BM(MENTRY, A), new BM(RETURN, B) // use RETURN as alternate for INVOKESPECIAL/AFTER
+    };
 
-    private static final BM[] WRITE_BM = compose(LIFETIME_BM, new BM[] {new BM(PUTFIELD, B), new BM(PUTSTATIC, B)});
+    /**
+     * Getting a field of an object or a class (static).
+     */
+    private static final BM[] GETFIELD_BM = new BM[] {new BM(GETFIELD, B), new BM(GETSTATIC, B)};
 
+    /**
+     * An array load.
+     */
+    private static final BM[] ARRAYLOAD_BM = new BM[] {new BM(IALOAD, B), new BM(LALOAD, B), new BM(FALOAD, B),
+        new BM(DALOAD, B), new BM(AALOAD, B), new BM(BALOAD, B), new BM(CALOAD, B), new BM(SALOAD, B)};
+
+    /**
+     * Method invocation (before).
+     */
+    private static final BM[] BEFORE_INVOKE_BM = new BM[] {
+        new BM(INVOKEVIRTUAL, B), new BM(INVOKEINTERFACE, B),
+        new BM(INVOKESTATIC, B), new BM(INVOKESPECIAL, B)
+    };
+
+    /**
+     * IF operations on objects.
+     */
+    private static final BM[] IFOBJECT_BM = new BM[] {new BM(IF_ACMPNE, B), new BM(IF_ACMPEQ, B), new BM(IFNULL, B), new BM(IFNONNULL, B)};
+
+    /**
+     * Monitor entry/exit.
+     */
     private static final BM[] MONITOR_BM = new BM[] {new BM(MONITORENTER, B), new BM(MONITOREXIT, B)};
 
+    /**
+     * Casts.
+     */
+    private static final BM[] CAST_BM = new BM[] {new BM(INSTANCEOF, B), new BM(CHECKCAST, B)};
+
+    /**
+     * A read, where this is defined as any access to the object's fields (or array elements) or class metadata.
+     * The latter encompasses many bytecodes, e.g. method invocation, checkcast, eetc.
+     */
+    private static final BM[] READ_BM = compose(GETFIELD_BM, ARRAYLOAD_BM, BEFORE_INVOKE_BM, IFOBJECT_BM, MONITOR_BM, CAST_BM);
+
+    /**
+     * Writing a field of an object or a class (static).
+     */
+    private static final BM[] PUTFIELD_BM = new BM[] {new BM(PUTFIELD, B), new BM(PUTSTATIC, B)};
+
+    /**
+     * Array store.
+     */
+    private static final BM[] ARRAYSTORE_BM = new BM[] {new BM(IASTORE, B), new BM(LASTORE, B), new BM(FASTORE, B),
+        new BM(DASTORE, B), new BM(AASTORE, B), new BM(BASTORE, B), new BM(CASTORE, B), new BM(SASTORE, B)};
+
+    /**
+     * A write, defined similarly to read.
+     */
+    private static final BM[] WRITE_BM = compose(ARRAYSTORE_BM, PUTFIELD_BM);
+
+    /**
+     * Method entry.
+     */
     private static final BM[] METHOD_ENTRY_BM = new BM[] {
         new BM(MENTRY, A),
     };
 
+    /**
+     * Method exit, defined as the various forms of {@code RETURN}.
+     */
     private static final BM[] METHOD_EXIT_BM = new BM[] {
         new BM(IRETURN, B), new BM(LRETURN, B), new BM(FRETURN, B),
         new BM(DRETURN, B), new BM(ARETURN, B), new BM(RETURN, B)
     };
 
-    private static final BM[] BEFOREINVOKE_BM = new BM[] {
-        new BM(INVOKEVIRTUAL, B), new BM(INVOKEINTERFACE, B),
-        new BM(INVOKESTATIC, B), new BM(INVOKESPECIAL, B)
-    };
+    /**
+     * Method entry and exit.
+     */
+    private static final BM[] METHOD_ENTRY_EXIT_BM = compose(METHOD_ENTRY_BM, METHOD_EXIT_BM);
 
     /*
     private static final BM[] AFTERINVOKE_BM = new BM[] {
@@ -102,29 +168,18 @@ public class VMAOptions {
     };
     */
 
-    private static final BM[] INVOKE_BM = compose(BEFOREINVOKE_BM/*, AFTERINVOKE_BM*/);
-    private static final BM[] METHOD_ENTRY_EXIT_BM = compose(METHOD_ENTRY_BM, METHOD_EXIT_BM);
-
-    private static final BM[] ARRAYLOAD_BM = new BM[] {new BM(IALOAD, B), new BM(LALOAD, B), new BM(FALOAD, B),
-        new BM(DALOAD, B), new BM(AALOAD, B), new BM(BALOAD, B), new BM(CALOAD, B), new BM(SALOAD, B)};
-    private static final BM[] ARRAYSTORE_BM = new BM[] {new BM(IASTORE, B), new BM(LASTORE, B), new BM(FASTORE, B),
-        new BM(DASTORE, B), new BM(AASTORE, B), new BM(BASTORE, B), new BM(CASTORE, B), new BM(SASTORE, B)};
-    private static final BM[] CAST_BM = new BM[] {new BM(INSTANCEOF, B), new BM(CHECKCAST, B)};
-    private static final BM[] GETPUTFIELD_BM = new BM[] {new BM(GETFIELD, B), new BM(PUTFIELD, B)};
-    private static final BM[] IFOBJECT_BM = new BM[] {new BM(IF_ACMPNE, B), new BM(IF_ACMPEQ, B), new BM(IFNULL, B), new BM(IFNONNULL, B)};
 //    private static final BM[] SWITCH_BM = new BM[] {new BM(TABLESWITCH, B), new BM(LOOKUPSWITCH, B)};
-    private static final BM[] THREADLOCAL_BM = compose(LIFETIME_BM, MONITOR_BM, BEFOREINVOKE_BM, GETPUTFIELD_BM, CAST_BM,
-                              IFOBJECT_BM, ARRAYLOAD_BM, ARRAYSTORE_BM);
+    private static final BM[] THREADLOCAL_BM = compose(NEW_BM, READ_BM, WRITE_BM);
 
     enum StdConfig {
         NULL("null", new BM[0]),
-        LIFETIME("lifetime", LIFETIME_BM),
-        READ("read", READ_BM),
-        WRITE("write", WRITE_BM),
+        LIFETIME("timeline", compose(NEW_BM, CONSTRUCTOR_BM, READ_BM, WRITE_BM)),
+        READ("read", compose(NEW_BM, READ_BM)),
+        WRITE("write", compose(NEW_BM, WRITE_BM)),
         MONITOR("monitor", MONITOR_BM),
-        BEFOREINVOKE("beforeinvoke", BEFOREINVOKE_BM),
+        BEFOREINVOKE("beforeinvoke", BEFORE_INVOKE_BM),
 //        AFTERINVOKE("afterinvoke", AFTERINVOKE_BM),
-        INVOKE("invoke", INVOKE_BM),
+        INVOKE("invoke", BEFORE_INVOKE_BM),
         ENTRY("entry", METHOD_ENTRY_BM),
         EXIT("exit", METHOD_EXIT_BM),
         ENTRYEXIT("entryexit", METHOD_ENTRY_EXIT_BM),
