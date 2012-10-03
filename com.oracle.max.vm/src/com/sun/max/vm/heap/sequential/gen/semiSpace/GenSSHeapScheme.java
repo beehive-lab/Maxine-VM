@@ -506,6 +506,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
             noFromSpaceReferencesVerifiers.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
             noFromSpaceReferencesVerifiers.visitCells(oldSpaceAllocator.start(), oldSpaceAllocator.unsafeTop());
+            if (MaxineVM.isDebug()) {
+                referenceFinder.setSearchedReference(youngSpaceEvacuator.overflowEvacuationMark());
+                Heap.bootHeapRegion.visitCells(referenceFinder);
+            }
         } else {
             oldSpace.visit(noFromSpaceReferencesVerifiers);
         }
