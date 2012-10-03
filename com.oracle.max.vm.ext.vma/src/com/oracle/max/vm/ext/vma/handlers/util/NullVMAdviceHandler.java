@@ -23,7 +23,6 @@
 package com.oracle.max.vm.ext.vma.handlers.util;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
 
@@ -38,10 +37,6 @@ import com.sun.max.vm.thread.*;
  *
  */
 public class NullVMAdviceHandler extends VMAdviceHandler {
-
-    @Override
-    public void gcSurvivor(Pointer cell) {
-    }
 
 // START GENERATED CODE
 // EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY

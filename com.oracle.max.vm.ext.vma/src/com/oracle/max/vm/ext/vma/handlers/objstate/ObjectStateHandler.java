@@ -20,28 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.oracle.max.vm.ext.vma.handlers.objstate;
 
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 
 /**
  * Abstracts the implementation of state used for object tracking, in particular,
  * the mechanism for allocation and storage of unique identifiers, and the recording
- * of which objects are live.
+ * of which objects are live (optional).
  *
- * An implementation is required to be thread safe by design or by explicit synchronisation.
+ * An implementation is required to be thread safe by design or by explicit synchronization.
  *
  */
 public abstract class ObjectStateHandler {
 
     /**
      * An instance of this class is used to inform about dead objects, in response to invoking the {@link #gc} method.
+     * N.B. An implementation may not support the dead object handling.
      *
      */
-    public interface RemovalTracker {
-        void removed(long id);
+    public interface DeadObjectHandler {
+        void dead(long id);
     }
 
     /**
@@ -68,14 +67,8 @@ public abstract class ObjectStateHandler {
     public abstract long readId(Object obj);
 
     /**
-     * Increment the lifetime of the object denoted by <code>cell</code>.
-     * @param cell
-     */
-    public abstract void incrementLifetime(Pointer cell);
-
-    /**
-     * Generate callbacks for objects that did not survive the gc that just completed.
+     * Optionally generate callbacks for objects that did not survive the gc that just completed.
      * @param rt
      */
-    public abstract void gc(RemovalTracker rt);
+    public abstract void gc(DeadObjectHandler rt);
 }

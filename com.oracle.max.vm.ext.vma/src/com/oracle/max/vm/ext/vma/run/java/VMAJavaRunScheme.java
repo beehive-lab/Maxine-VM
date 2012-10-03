@@ -96,17 +96,6 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             }
         }
 
-        @Override
-        public void objectSurviving(Pointer cell) {
-            /*
-             * This method is called in the VMOperation thread (which does not have
-             * advising enabled). So there is no need or requirement to enable/disable.
-             */
-            if (VMAJavaRunScheme.isVMAdvising()) {
-                VMAJavaRunScheme.adviceHandler().gcSurvivor(cell);
-            }
-
-        }
     }
 
     /**
