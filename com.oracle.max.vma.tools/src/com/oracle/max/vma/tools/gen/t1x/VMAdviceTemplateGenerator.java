@@ -1213,10 +1213,11 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         startMethodGeneration();
         generateTemplateTag("%s", tag);
         if (tag == LDC$reference) {
-            out.printf("    public static void uoldc(ResolutionGuard guard%s) {%n", suffixParams(true));
+            out.printf("    public static Object uoldc(ResolutionGuard guard%s) {%n", suffixParams(true));
             out.printf("        ClassActor classActor = Snippets.resolveClass(guard);%n");
             out.printf("        Object constant = classActor.javaClass();%n");
             generateBeforeAdvice(k);
+            out.printf("        return constant;%n");
         } else {
             String ks = k.substring(0, 1).toLowerCase();
             out.printf("    public static void %sldc(%s constant%s) {%n", ks, k, suffixParams(true));
