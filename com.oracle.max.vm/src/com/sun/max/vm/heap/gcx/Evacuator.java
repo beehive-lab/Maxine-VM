@@ -488,17 +488,21 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     }
 
     // temp -- for debugging.
-    TIMED_OPERATION evacuationPhase;
-    TIMED_OPERATION overflowEvacuationPhase;
-    Address overflowEvacuationMark = Address.zero();
+    private TIMED_OPERATION evacuationPhase;
+    private TIMED_OPERATION overflowEvacuationPhase;
+    private Address overflowEvacuationMark = Address.zero();
 
-    public void setOveflowEvacuationPhase(Address mark) {
+    public final void setOveflowEvacuationPhase(Address mark) {
         overflowEvacuationPhase = evacuationPhase;
         overflowEvacuationMark = mark;
     }
-    public void clearOveflowEvacuationPhase() {
+    public final void clearOveflowEvacuationPhase() {
         overflowEvacuationPhase = null;
         overflowEvacuationMark = Address.zero();
+    }
+
+    public final Address overflowEvacuationMark() {
+        return overflowEvacuationMark;
     }
 
     public final void evacuate(boolean logPhases) {
