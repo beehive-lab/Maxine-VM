@@ -366,11 +366,18 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
 
         private static void checkDeopt(ClassMethodActor classMethodActor, ArrayList<TargetMethod> deoptMethods) {
             TargetMethod tm = classMethodActor.currentTargetMethod();
-            if (tm != null && !tm.isBaseline()) {
-                if (cantBaseline(classMethodActor)) {
-                    VMAOptions.logger.logInstrument(tm.classMethodActor, false);
+            if (tm != null) {
+                if (!tm.isBaseline()) {
+                    if (cantBaseline(classMethodActor)) {
+                        VMAOptions.logger.logInstrument(tm.classMethodActor, false);
+                    } else {
+                        deoptMethods.add(tm);
+                    }
                 } else {
-                    deoptMethods.add(tm);
+                    // already baseline compiled but not instrumented
+                    if (!(tm instanceof VMAT1XTargetMethod)) {
+                        deoptMethods.add(tm);
+                    }
                 }
             }
         }
