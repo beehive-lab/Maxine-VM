@@ -507,9 +507,13 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             noFromSpaceReferencesVerifiers.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
             noFromSpaceReferencesVerifiers.visitCells(oldSpaceAllocator.start(), oldSpaceAllocator.unsafeTop());
             if (MaxineVM.isDebug()) {
+                referenceFinder.setFatalErrorAction(fatalErrorAction);
                 referenceFinder.setSearchedReference(youngSpaceEvacuator.overflowEvacuationMark());
                 Heap.bootHeapRegion.visitCells(referenceFinder);
-            }
+                referenceFinder.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
+                referenceFinder.visitCells(oldSpaceAllocator.start(), oldSpaceAllocator.unsafeTop());
+                referenceFinder.setFatalErrorAction(null);
+           }
         } else {
             oldSpace.visit(noFromSpaceReferencesVerifiers);
         }
@@ -569,6 +573,15 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
     final DebugHeap.ReferenceFinder referenceFinder = new ReferenceFinder(false);
+    // FIXME: REMOVE temp debug
+    final Runnable fatalErrorAction = new Runnable() {
+        public void run() {
+            Log.print(" initial evacuation mark ");
+            Log.println(youngSpaceEvacuator.initialEvacuationMark());
+            Log.printRange(oldSpace.space.start(), oldSpace.space.committedEnd(), true);
+            Log.printRange(oldSpace.allocator.start(), oldSpace.allocator.unsafeTop(), true);
+        }
+    };
 
     @Override
     public Address refillEvacuationBuffer() {
@@ -603,7 +616,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 spaceLeft = fromSpace.committedSize();
                 allocator.refill(fromSpace.start(), spaceLeft);
                 startOfSpaceLeft = allocator.unsafeSetTopToLimit();
-                // FIXME -- remove temp debug.
+                // FIXME: REMOVE temp debug.
                 if (MaxineVM.isDebug()) {
                     referenceFinder.setSearchedReference(darkMatter);
                     Heap.bootHeapRegion.visitCells(referenceFinder);

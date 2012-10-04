@@ -192,6 +192,7 @@ public class DebugHeap {
         private Address searched;
         private long visitedRefsCount;
         private long visitedCellsCount;
+        private Runnable runOnFatalError;
 
         public ReferenceFinder(boolean fatalErrorIfFound) {
             this.fatalErrorIfFound = fatalErrorIfFound;
@@ -216,6 +217,9 @@ public class DebugHeap {
         public long visitedCellsCount() {
             return visitedCellsCount;
         }
+        public void setFatalErrorAction(Runnable runnable) {
+            this.runOnFatalError = runnable;
+        }
         private void reportFoundRef(Pointer pointer, int wordIndex) {
             Log.print("found reference ");
             Log.print(searched);
@@ -225,6 +229,9 @@ public class DebugHeap {
             Log.println(wordIndex);
             FatalError.breakpoint();
             if (fatalErrorIfFound) {
+                if (runOnFatalError != null) {
+                    runOnFatalError.run();
+                }
                 FatalError.unexpected("unexpected reference");
             }
         }
@@ -269,6 +276,14 @@ public class DebugHeap {
                 return cell.plus(Layout.referenceArrayLayout().getArraySize(Kind.REFERENCE, length));
             }
             return cell.plus(Layout.size(origin));
+        }
+
+        public void visitCells(Address start, Address end) {
+            Pointer cell = start.asPointer();
+            do {
+                cell = visitCell(cell);
+            } while (cell.lessThan(end));
+
         }
     }
 
