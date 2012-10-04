@@ -32,7 +32,17 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 
 /**
- * Representation of a remote object reference in a generational heap with a non-aging nursery and a semispace old generation.
+ * Representation of a remote object reference in a generational heap with a non-aging nursery and a semi-space old generation.
+ * A young generation collection evacuates objects from the young generation into the to-space of the old generation using
+ * a copying mechanism that leaves forwarders in the evacuated objects.
+ * The to-space of the old generation is almost never empty.
+ * An old generation collection occurs only when the young generation is empty (i.e., all live young objects have been evacuated),
+ * and proceeds in a classic semi-space fashion: the to and from space swap,
+ * and live objects from the from-space are evacuated in the to-space using
+ * a copying mechanism that leaves forwarders in the evacuated objects.
+ * Complications in the model arise because of the of potential overflow situations:
+ * a young generation collection may overflow into the from space.
+ * a old generation collection may overflow into the young space.
  */
 public class GenSSRemoteReference extends RemoteReference {
     /**
@@ -66,6 +76,7 @@ public class GenSSRemoteReference extends RemoteReference {
     private static enum RefState {
         /**
          * Live young reference.
+         * Address is in the allocated part of the young generation.
          * Valid only during the {@link HeapPhase#MUTATING} phase.
          */
         YOUNG_REF_LIVE("LIVE(young)") {
@@ -97,9 +108,12 @@ public class GenSSRemoteReference extends RemoteReference {
        },
         /**
          * Young reference, not forwarded.
+         * Address is in the allocated part of the young generation.
          * Valid only during the {@link HeapPhase#ANALYZING} phase.
+         * This is the state {@link #YOUNG_REF_LIVE} changes to when a transition {@link HeapPhase#MUTATING}
+         * to {@link HeapPhase#ANALYZING} is detected.
          */
-        YOUNG_REF_FROM("LIVE(young+Analyzing)") {
+        YOUNG_REF_FROM("LIVE(Analyzing: young, !forwarder)") {
 
             @Override
             ObjectStatus status() {
@@ -146,9 +160,44 @@ public class GenSSRemoteReference extends RemoteReference {
         },
 
         /**
-         * Reference to a promoted object whose forwarder is unknown. The object resides in the old to-space.
+         * Reference to a young forwarding object.
+         * Address is in the young generation, and its header comprises a forwarder to the old generation.
+         * A reference to the forwarded object must be in the @link {@link #PROMOTED_REF} state.
          */
-        OLD_PROMOTED_REF("LIVE(Analyzing: old only)") {
+        YOUNG_FORWARDER("FORWARDER(Quasi object, only during minor collection analyzing") {
+            @Override
+            ObjectStatus status() {
+                return FORWARDER;
+            }
+
+            @Override
+            Address origin(GenSSRemoteReference ref) {
+                return ref.origin;
+            }
+
+            @Override
+            Address forwardedFrom(GenSSRemoteReference ref) {
+                return Address.zero();
+            }
+
+            @Override
+            Address forwardedTo(GenSSRemoteReference ref) {
+                return ref.alternateOrigin;
+            }
+
+            @Override
+            void analysisEnds(GenSSRemoteReference ref, boolean minorCollection) {
+                ref.alternateOrigin = Address.zero();
+                ref.refState = REF_DEAD;
+            }
+        },
+
+        /**
+         * Reference to an object promoted from the young generation to the old generation
+         * whose forwarder is unknown.
+         * Address in the old to-space, or in the from space if a minor evacuation overflow occurred.
+         */
+        PROMOTED_UNKNOWN_FORWARDER_REF("LIVE(Analyzing: promoted, young forwarder unknown)") {
 
             @Override
             ObjectStatus status() {
@@ -189,9 +238,11 @@ public class GenSSRemoteReference extends RemoteReference {
         },
 
         /**
-         * Reference to a promoted object whose forwarder in young space is known. The object resides in the old to-space.
+         * Reference to an object promoted from the young generation to the old generation whose forwarder in young space is known.
+         * Address is in the old to-space.
+         * There must be a reference in the {@link #YOUNG_FORWARDER} for a forwarding object in the young generation.
          */
-        PROMOTED_REF("LIVE(Analyzing: promoted+young forwarder)") {
+        PROMOTED_REF("LIVE(Analyzing: promoted, young forwarder known)") {
 
             @Override
             ObjectStatus status() {
@@ -227,35 +278,14 @@ public class GenSSRemoteReference extends RemoteReference {
             }
         },
 
-        YOUNG_FORWARDER("FORWARDER(Quasi object, only during minor collection analyzing") {
-            @Override
-            ObjectStatus status() {
-                return FORWARDER;
-            }
 
-            @Override
-            Address origin(GenSSRemoteReference ref) {
-                return ref.origin;
-            }
-
-            @Override
-            Address forwardedFrom(GenSSRemoteReference ref) {
-                return Address.zero();
-            }
-
-            @Override
-            Address forwardedTo(GenSSRemoteReference ref) {
-                return ref.alternateOrigin;
-            }
-
-            @Override
-            void analysisEnds(GenSSRemoteReference ref, boolean minorCollection) {
-                ref.alternateOrigin = Address.zero();
-                ref.refState = REF_DEAD;
-            }
-        },
-
-        OLD_FORWARDER("FORWARDER(Quasi object, only during full collection analyzing") {
+        /**
+         * Reference to an old forwarding object.
+         * The forwarded may be known, in which case, it has a {@link #OLD_SURVIVOR_REF} reference.
+         * Address must be in from-space.
+         * State is valid only during  {@link HeapPhase#ANALYZING} of old generation collections.
+         */
+        OLD_FORWARDER("FORWARDER(Quasi object, old collection analyzing only") {
             @Override
             ObjectStatus status() {
                 return FORWARDER;
@@ -319,7 +349,14 @@ public class GenSSRemoteReference extends RemoteReference {
             }
         },
 
-        OLD_REF_FROM("LIVE(Analyzing: old from-only)") {
+        /**
+         * Old reference not forwarded.
+         * Address is in the allocated part of the old from-space.
+         * Valid only during the {@link HeapPhase#ANALYZING} phase of old generation collections.
+         * This is the state {@link #OLD_REF_LIVE} references change to when a transition {@link HeapPhase#MUTATING}
+         * to {@link HeapPhase#ANALYZING} for an old generation collection is detected.
+         */
+        OLD_REF_FROM("LIVE(Analyzing: old from-only, !forwarder)") {
             @Override
             ObjectStatus status() {
                 return LIVE;
@@ -353,7 +390,7 @@ public class GenSSRemoteReference extends RemoteReference {
                 if (!minorCollection) {
                     ref.alternateOrigin = ref.origin;
                     ref.origin = toOrigin;
-                    ref.refState = OLD_REF_FROM_TO;
+                    ref.refState = OLD_SURVIVOR_REF;
                     return;
                 }
                 TeleError.unexpected("Illegal state transition");
@@ -361,7 +398,15 @@ public class GenSSRemoteReference extends RemoteReference {
 
         },
 
-        OLD_REF_TO("LIVE (Analyzing: old to-only)") {
+        /**
+         * Survivor of old collection.
+         * Forwarder is not known.
+         * Address is in survivor range.
+         * State is only valid during the {@link HeapPhase#ANALYZING} of an old generation collection.
+         * Reference is created in this state when a reference in to-space is discovered
+         * during the analyzing phase of an old collection.
+         */
+        OLD_SURVIVOR_UNKNOWN_FORWARDER_REF("LIVE (Analyzing: old survivor, forwarder unknown)") {
             @Override
             ObjectStatus status() {
                 return LIVE;
@@ -395,17 +440,21 @@ public class GenSSRemoteReference extends RemoteReference {
             void discoverForwarder(GenSSRemoteReference ref, Address forwarderOrigin, boolean minorCollection) {
                 if (!minorCollection) {
                     ref.alternateOrigin = forwarderOrigin;
-                    ref.refState = OLD_REF_FROM_TO;
+                    ref.refState = OLD_SURVIVOR_REF;
                     return;
                 }
                 TeleError.unexpected("Illegal state transition");
             }
        },
 
-        /**
-         * Reference in from space of old generation (not in promotion space). Must only be seen during full collection's {@link HeapPhase#ANALYZING} phase.
-         */
-        OLD_REF_FROM_TO("LIVE (Analyzing: old from+to)") {
+       /**
+        * Survivor of old collection.
+        * Forwarder is known (there must be an OLD_FORWARDER in the old-from map).
+        * Address is in survivor range.
+        * Reference is in old-to map.
+        * State is only valid during the {@link HeapPhase#ANALYZING} of an old generation collection.
+        */
+       OLD_SURVIVOR_REF("LIVE (Analyzing: old survivor, forwarder known)") {
             @Override
             ObjectStatus status() {
                 return LIVE;
@@ -608,7 +657,7 @@ public class GenSSRemoteReference extends RemoteReference {
 
     public static GenSSRemoteReference createOldTo(AbstractRemoteHeapScheme remoteScheme, Address toOrigin, boolean isPromoted) {
         final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, toOrigin, Address.zero());
-        ref.refState = isPromoted ? RefState.OLD_PROMOTED_REF : RefState.OLD_REF_TO;
+        ref.refState = isPromoted ? RefState.PROMOTED_UNKNOWN_FORWARDER_REF : RefState.OLD_SURVIVOR_UNKNOWN_FORWARDER_REF;
         return ref;
     }
 
@@ -620,7 +669,7 @@ public class GenSSRemoteReference extends RemoteReference {
 
     public static GenSSRemoteReference createFromTo(AbstractRemoteHeapScheme remoteScheme, Address fromOrigin, Address toOrigin, boolean isYoung) {
         final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, toOrigin, fromOrigin);
-        ref.refState = isYoung ? RefState.PROMOTED_REF  : RefState.OLD_REF_FROM_TO;
+        ref.refState = isYoung ? RefState.PROMOTED_REF  : RefState.OLD_SURVIVOR_REF;
         return ref;
     }
 
