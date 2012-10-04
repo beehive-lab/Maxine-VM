@@ -43,6 +43,14 @@ public class TeleFixedMemoryRegion extends VmMemoryRegion {
         this.regionName = regionName;
     }
 
+    public TeleFixedMemoryRegion(MaxVM vm, String regionName, Address start, Address end) {
+        super(vm);
+        TeleError.check(end.isZero() || start.isNotZero(), "Non-empty memory regions may not start address 0");
+        this.start = start;
+        this.nBytes = end.minus(start).toLong();
+        this.regionName = regionName;
+    }
+
     public final String regionName() {
         return regionName;
     }

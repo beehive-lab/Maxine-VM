@@ -23,6 +23,7 @@
 package com.sun.max.tele.heap.region;
 
 import java.io.*;
+import java.lang.management.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
@@ -32,6 +33,7 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 
 // TODO (mlvdv)  this is just a skeleton; it is non-functional
 /**
@@ -46,64 +48,131 @@ public final class VmCardTable extends AbstractVmHolder implements MaxCardTable,
 
     private static final String ENTITY_NAME = "Heap-Card Table data";
 
+    private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY = Collections.emptyList();
+
     /**
-     * Representation of a VM memory region used to hold a card Table.  The card table is implemented as a single long array that
+     * Representation of a VM memory region used to hold a card Table.  The card table is implemented as a single byte array that
      * occupied the entire region.
+     * <p>
+     * The card table may be reallocated during the startup sequence of the VM.
      * <p>
      * This region has no parent; it is allocated dynamically from the OS
      * <p>
      * This region has no children.
      */
-    private static final class CardTableMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxCardTable> {
+    private final class CardTableMemoryRegion extends AbstractVmHolder implements MaxEntityMemoryRegion<MaxCardTable> {
 
-        private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY = Collections.emptyList();
 
         private final MaxCardTable owner;
 
-        protected CardTableMemoryRegion(MaxVM vm, MaxCardTable owner, String regionName, Address start, long nBytes) {
-            super(vm, regionName, start, nBytes);
+        protected CardTableMemoryRegion(TeleVM vm, MaxCardTable owner) {
+            super(vm);
             this.owner = owner;
         }
 
-        @Override
         public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
-            // The MarkBitmap fully occupies a region allocated from the OS, not part of any other region.
+            // The Card Table fully occupies a region allocated from the OS, not part of any other region.
             return null;
         }
 
-        @Override
         public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
             return EMPTY;
         }
 
-        @Override
         public MaxCardTable owner() {
             return owner;
         }
+
+        public String regionName() {
+            return "Card Table";
+        }
+
+        @Override
+        public Address start() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public long nBytes() {
+            // TODO Auto-generated method stub
+            return 0;
+        }
+
+        @Override
+        public Address end() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public boolean isAllocated() {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public MemoryUsage getUsage() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public boolean contains(Address address) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        public Address mark() {
+            return null;
+        }
+
+        public boolean containsInAllocated(Address address) {
+            return contains(address);
+        }
+
+        @Override
+        public boolean overlaps(MaxMemoryRegion memoryRegion) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean sameAs(MaxMemoryRegion memoryRegion) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+
     }
 
     private final TeleCardTableRSet cardTableRSet;
-    private final TeleFixedMemoryRegion coveredMemoryRegion;
+    private final CardTable cardTable;
     private final CardTableMemoryRegion cardTableMemoryRegion;
-    private final TeleArrayObject cardTableArray;
     private final CardTableObjectReferenceManager objectReferenceManager;
+
+
+//    private final TeleFixedMemoryRegion coveredMemoryRegion;
+//    private final TeleArrayObject cardTableArray;
 
     // TODO (mlvdv)  should be a TeleCardTable
     public VmCardTable(TeleVM vm, TeleCardTableRSet cardTableRSet) {
         super(vm);
         this.cardTableRSet = cardTableRSet;
+        this.cardTable = cardTableRSet.cardTable();
+        this.cardTableMemoryRegion = new CardTableMemoryRegion(vm, this);
+        this.objectReferenceManager = new CardTableObjectReferenceManager(vm, null);
+
        // final long coveredSize = 0L; // remoteHeapMarker.coveredAreaEnd().minus(remoteHeapMarker.coveredAreaStart()).toLong();
-        this.coveredMemoryRegion = null; // new TeleFixedMemoryRegion(vm, ENTITY_NAME, remoteHeapMarker.coveredAreaStart(), coveredSize);
-        final Address dataRegionStart = Address.zero(); //remoteHeapMarker.colorMapDataRegion().getRegionStart();
-        final long dataRegionSize = 0L; //remoteHeapMarker.colorMapDataRegion().getRegionNBytes();
-        this.cardTableMemoryRegion = new CardTableMemoryRegion(vm, this, ENTITY_NAME, dataRegionStart, dataRegionSize);
-        this.objectReferenceManager = new CardTableObjectReferenceManager(vm, dataRegionStart);
-        this.cardTableArray = (TeleArrayObject) vm.objects().makeTeleObject(objectReferenceManager.byteArrayRef);
-        this.cardTableArray.setMaxineRole(ENTITY_NAME);
+//        this.coveredMemoryRegion = null; // new TeleFixedMemoryRegion(vm, ENTITY_NAME, remoteHeapMarker.coveredAreaStart(), coveredSize);
+//        final Address dataRegionStart = Address.zero(); //remoteHeapMarker.colorMapDataRegion().getRegionStart();
+//        final long dataRegionSize = 0L; //remoteHeapMarker.colorMapDataRegion().getRegionNBytes();
+//        this.cardTableArray = (TeleArrayObject) vm.objects().makeTeleObject(objectReferenceManager.byteArrayRef);
+//        this.cardTableArray.setMaxineRole(ENTITY_NAME);
     }
 
     public String entityName() {
-        return cardTableMemoryRegion.regionName();
+        return ENTITY_NAME;
     }
 
     public String entityDescription() {
@@ -124,13 +193,26 @@ public final class VmCardTable extends AbstractVmHolder implements MaxCardTable,
     }
 
     public MaxObject representation() {
-        return cardTableArray;
+        // TODO - return the TeleArray
+        return null;
     }
 
-    @Override
+
+
     public MaxMemoryRegion coveredMemoryRegion() {
-        return coveredMemoryRegion;
+        return new TeleFixedMemoryRegion(vm(), "CardTable covered region", cardTable.coveredAreaStart(), cardTable.coveredAreaEnd());
     }
+
+    public boolean isCovered(Address heapAddress) {
+        return cardTable.isCovered(heapAddress);
+    }
+
+    public int cardSize() {
+        // TODO
+        return 0;
+
+    }
+
 
 //    public int getBitIndexOf(Address heapAddress) {
 //        return coveredMemoryRegion.contains(heapAddress) ? byteIndexOf(heapAddress) : -1;
@@ -296,11 +378,8 @@ public final class VmCardTable extends AbstractVmHolder implements MaxCardTable,
         TeleWarning.unimplemented();
     }
 
-    public boolean isCovered(Address heapAddress) {
-        // TODO Auto-generated method stub
-        return false;
-    }
 
+    // TODO  do we need make this dynamic
     /**
      * Manager for object references for the unmanaged card table region, which contains,
      * once initialized, a singleton long array.
