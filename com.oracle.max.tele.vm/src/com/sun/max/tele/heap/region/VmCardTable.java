@@ -386,24 +386,24 @@ public final class VmCardTable extends AbstractVmHolder implements MaxCardTable,
      */
     private class CardTableObjectReferenceManager extends AbstractVmHolder implements RemoteObjectReferenceManager {
 
-        private final Address byteArrayOrigin;
-        private final ConstantRemoteReference byteArrayRef;
+//        private final Address byteArrayOrigin;
+//        private final ConstantRemoteReference byteArrayRef;
 
         protected CardTableObjectReferenceManager(TeleVM vm, Address start) {
             super(vm);
-            byteArrayOrigin = objects().layoutScheme().generalLayout.cellToOrigin(start.asPointer());
-            byteArrayRef = new ConstantRemoteReference(vm(), byteArrayOrigin) {
-
-                @Override
-                public ObjectStatus status() {
-                    return ObjectStatus.LIVE;
-                }
-
-                @Override
-                public ObjectStatus priorStatus() {
-                    return null;
-                }
-            };
+//            byteArrayOrigin = objects().layoutScheme().generalLayout.cellToOrigin(start.asPointer());
+//            byteArrayRef = new ConstantRemoteReference(vm(), byteArrayOrigin) {
+//
+//                @Override
+//                public ObjectStatus status() {
+//                    return ObjectStatus.LIVE;
+//                }
+//
+//                @Override
+//                public ObjectStatus priorStatus() {
+//                    return null;
+//                }
+//            };
         }
 
         /**
@@ -416,8 +416,9 @@ public final class VmCardTable extends AbstractVmHolder implements MaxCardTable,
         }
 
         public ObjectStatus objectStatusAt(Address origin) {
-            TeleError.check(memoryRegion().contains(origin), "Location is outside region");
-            return origin.equals(byteArrayOrigin) ? ObjectStatus.LIVE : ObjectStatus.DEAD;
+//            TeleError.check(memoryRegion().contains(origin), "Location is outside region");
+//            return origin.equals(byteArrayOrigin) ? ObjectStatus.LIVE : ObjectStatus.DEAD;
+            return ObjectStatus.DEAD;
         }
 
         public boolean isForwardingAddress(Address forwardingAddress) {
@@ -430,7 +431,8 @@ public final class VmCardTable extends AbstractVmHolder implements MaxCardTable,
          * The only reference possible is to the header of the array that holds the whole map in the region.
          */
         public RemoteReference makeReference(Address origin) throws TeleError {
-            return objectStatusAt(origin).isLive() ? byteArrayRef : null;
+//            return objectStatusAt(origin).isLive() ? byteArrayRef : null;
+            return null;
         }
 
         public RemoteReference makeQuasiReference(Address origin) {
