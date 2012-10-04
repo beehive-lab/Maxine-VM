@@ -42,6 +42,11 @@ public class TeleBootHeapRegion extends TeleLinearAllocationMemoryRegion {
      */
     private Address referenceMap = Address.zero();
 
+    /**
+     * End of the byte array that holds the boot heap reference map.
+     */
+    private Address referenceMapEnd = Address.zero();
+
     private final int mask;
 
 
@@ -69,22 +74,37 @@ public class TeleBootHeapRegion extends TeleLinearAllocationMemoryRegion {
             final RemoteReference refMapByteArrayRef = fields().BootHeapRegion_referenceMapBytes.readRemoteReference(reference());
             if (!refMapByteArrayRef.isZero()) {
                 final TeleArrayObject refMapByteArray = (TeleArrayObject) objects().makeTeleObject(refMapByteArrayRef);
+                referenceMapEnd = refMapByteArray.objectMemoryRegion().end();
                 referenceMap = refMapByteArrayRef.toOrigin().plus(refMapByteArray.arrayOffsetFromOrigin());
             }
         }
         return true;
     }
 
+    /**
+     * Determines whether the address, presumed to be in the boot heap region, is the location of a reference field that
+     * might be changed during VM operation.
+     *
+     * @param address a VM memory location presumed to be in the boot heap region
+     * @return {@code true} iff the address is covered by the reference map and is marked as <em>mutable</em>.
+     */
     public boolean isRefMapMarked(Address address) {
         if (!referenceMap.isZero() && isAllocated() && contains(address)) {
             final int bitIndex = address.minus(getRegionStart()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
             final int wordIndex = bitIndex >> Word.widthValue().log2numberOfBits;
             final Address tableWordAddress = referenceMap.plus(wordIndex * Word.size());
-            final Address refMapWord = memory().readWord(tableWordAddress).asAddress();
-            final int bitWordIndex = bitIndex & mask;
-            //final String suffix = refMapWord.isBitSet(bitWordIndex) ? " MARKED" : "";
-            //System.out.println("bit=" + bitIndex + " (" + wordIndex + "/" + bitWordIndex + ") word@" + tableWordAddress.to0xHexString() + ", value=" + refMapWord.to0xHexString() + suffix);
-            return refMapWord.isBitSet(bitWordIndex);
+            if (tableWordAddress.lessThan(referenceMapEnd)) {
+                /*
+                 * The boot heap reference map does not cover the entire boot heap.  In order to minimize the size of the map, the
+                 * boot heap is arranged with all the mutable objects at the beginning.  If the computed mark bit for a boot heap
+                 * address would be past the end of the reference map table, then we know it immutable/unmarked.
+                 */
+                final Address refMapWord = memory().readWord(tableWordAddress).asAddress();
+                final int bitWordIndex = bitIndex & mask;
+                //final String suffix = refMapWord.isBitSet(bitWordIndex) ? " MARKED" : "";
+                //System.out.println("bit=" + bitIndex + " (" + wordIndex + "/" + bitWordIndex + ") word@" + tableWordAddress.to0xHexString() + ", value=" + refMapWord.to0xHexString() + suffix);
+                return refMapWord.isBitSet(bitWordIndex);
+            }
         }
         return false;
     }
