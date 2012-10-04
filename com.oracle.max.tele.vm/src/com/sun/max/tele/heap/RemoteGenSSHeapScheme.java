@@ -117,6 +117,8 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
 
     /**
      * Map VM addresses in the nursery to {@link GenSSRemoteReference} that refer to the object whose origin is at that location.
+     * Reference in this map can be in either of these states: {@linkplain GenSSRemoteReference.RefState#YOUNG_REF_LIVE},
+     * {@linkplain GenSSRemoteReference.RefState#YOUNG_FORWARDER}, {@linkplain GenSSRemoteReference.RefState#YOUNG_REF_FROM}.
      */
     private WeakRemoteReferenceMap<GenSSRemoteReference> nurseryRefMap = new WeakRemoteReferenceMap<GenSSRemoteReference>();
     /**
@@ -422,6 +424,13 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                         // Transition the state of all references that are now in the old from-Space
                         beginAnalyzing("flip old generation semi spaces", oldFromSpaceRefMap);
                         GenSSRemoteReference.checkNoLiveRef(oldToSpaceRefMap, false);
+                        if (minorEvacuationOverflow) {
+                            // reference in the overflow map now become old live to space refs.
+                            for (GenSSRemoteReference ref : overflowRefMap.values()) {
+                                oldToSpaceRefMap.put(ref.toOrigin(), ref);
+                            }
+                            overflowRefMap.clear();
+                        }
                     } else {
                         beginAnalyzing("turn all young refs into young from refs ", nurseryRefMap);
                     }
@@ -656,9 +665,19 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                 }
                 // Fall-off and check live old objects. Same logic as for the reclaiming phase for old objects.
             case RECLAIMING:
+                // Don't check against young object: we check them above (MUTATING CASE), and if not,
+                // we're in RECLAIMING phase and there are no young objects.
                 WeakRemoteReferenceMap<GenSSRemoteReference> oldAllocatorRefMap = oldToSpaceRefMap;
+
+                // FIXME: revisit this. We might need to distinguish full GC and minor GC and consider
+                // distinguishing the mutating from the reclaiming phase because of objects in the overflow area.
+
                 if (minorEvacuationOverflow) {
-                    // The oldAllocator doesn't point to the from space but to the overflow area. The from space is full so we can check against it directly.
+                    // We may be: MUTATING between young and old collection, or reclaiming after either collection.
+                    // If reclaiming after a full collection, all objects in overflow area should be LIVE_OLD (i.e.,
+                    // there cannot be any forwarder to them).
+                    // The oldAllocator doesn't point to the old to-space but to an overflow area in the old from-space.
+                    // The to space is full so we can check against it directly.
                     if (oldTo.containsInAllocated(origin)) {
                         ref = oldToSpaceRefMap.get(origin);
                         if (ref != null) {
@@ -673,7 +692,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                     // We will check against the allocator, make sure we put the reference in the overflow map.
                     oldAllocatorRefMap = overflowRefMap;
                 }
-                // There are no young object while in the reclaiming phase.
                 if (oldAllocator.containsInAllocated(origin)) {
                     ref = oldAllocatorRefMap.get(origin);
                     if (ref != null) {
