@@ -280,16 +280,20 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
             }
         };
         final JPanel content = new InspectorPanel(inspection);
-        content.add(new TextLabel(inspection, "View Columns:  "));
+        content.setLayout(new BorderLayout());
+        content.add(new TextLabel(inspection, "View Columns:  "), BorderLayout.WEST);
+        final JPanel choices = new InspectorPanel(inspection);
+        choices.setLayout(new GridLayout(0, 5));
         for (ColumnKind_Type columnType : supportedColumnTypes) {
             if (canBeMadeInvisible(columnType)) {
                 final InspectorCheckBox checkBox =
                     new InspectorCheckBox(inspection, label(columnType), saveSettingsListener != null ? "Display column in all views?" : "Display column in this view?", isVisible(columnType));
                 checkBox.addItemListener(itemListener);
                 checkBoxes[columnType.ordinal()] = checkBox;
-                content.add(checkBox);
+                choices.add(checkBox);
             }
         }
+        content.add(choices, BorderLayout.CENTER);
         final JPanel panel = new InspectorPanel(inspection, new BorderLayout());
         panel.add(content, BorderLayout.WEST);
         return panel;
