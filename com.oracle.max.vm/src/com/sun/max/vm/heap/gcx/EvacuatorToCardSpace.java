@@ -95,11 +95,13 @@ public class EvacuatorToCardSpace extends Evacuator {
    /**
      * Allocation hand to the evacuator's private promotion space.
      */
+    @INSPECTED
     protected Pointer ptop;
 
     /***
      * End of the evacuator's private promotion space.
      */
+    @INSPECTED
     protected Pointer pend;
 
     /**
@@ -113,6 +115,12 @@ public class EvacuatorToCardSpace extends Evacuator {
     @INSPECTED
     private Address allocatedRangeStart;
 
+    /**
+     * Mark that keeps track of the first word the evacuator's allocator is set to.
+     * For debugging purposes only.
+     */
+    @INSPECTED
+    private Address initialEvacuationMark;
     /**
      * Start of the last unrecorded survivor ranges resulting from overflow allocation.
      */
@@ -202,6 +210,7 @@ public class EvacuatorToCardSpace extends Evacuator {
             ptop = chunk.asPointer();
             pend = chunk.plus(chunkSize.minus(evacuationBufferHeadroom())).asPointer();
         }
+        initialEvacuationMark = ptop;
         allocatedRangeStart = ptop;
         if (logger.enabled()) {
             SpaceBounds toSpaceBounds = toSpace.bounds();
@@ -242,7 +251,14 @@ public class EvacuatorToCardSpace extends Evacuator {
     }
 
     private void recordRange(Address start, Address end) {
-        evacuatedBytes = evacuatedBytes.plus(end.minus(start));
+        final Size rangeSize = end.minus(start).asSize();
+        if (rangeSize.isZero()) {
+            return;
+        }
+        if (MaxineVM.isDebug() && checkDarkMatterRefs) {
+            DarkMatter.checkNoDarkMatterRef(start, end);
+        }
+        evacuatedBytes = evacuatedBytes.plus(rangeSize);
         survivorRanges.add(start, end);
         if (logger.enabled()) {
             logger.logUpdateSurvivorRange(start, end);
@@ -271,6 +287,9 @@ public class EvacuatorToCardSpace extends Evacuator {
      */
     public void prefillSurvivorRanges(Address start, Address end) {
         FatalError.check(toSpace.contains(start) && toSpace.contains(end), "Range must be in to-space");
+        if (MaxineVM.isDebug() && checkDarkMatterRefs) {
+            DarkMatter.checkNoDarkMatterRef(start, end);
+        }
         survivorRanges.add(start, end);
         if (logger.enabled()) {
             logger.logPrefillSurvivorRanges(start, end);
@@ -310,6 +329,11 @@ public class EvacuatorToCardSpace extends Evacuator {
             if (!chunk.equals(limit)) {
                 recordRange(allocatedRangeStart, ptop);
                 allocatedRangeStart = chunk;
+            } else {
+                // DEBUG CODE -- REMOVE ME.
+                Log.print("not recording range on evac buffer refill ");
+                Log.printRange(allocatedRangeStart, ptop, true);
+                FatalError.breakpoint();
             }
             Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
             rset.notifyRefill(chunk, chunkSize);
@@ -359,33 +383,21 @@ public class EvacuatorToCardSpace extends Evacuator {
         return cell;
     }
 
-    /**
-     * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
-     *
-     * @param cell a pointer to a cell
-     * @return pointer to the end of the cell
-     */
-    public final Pointer visitCell(Pointer cell) {
-        return scanCellForEvacuatees(cell);
-    }
-
-    /**
-     * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
-     *
-     * @param cell a pointer to a cell
-     * @return pointer to the end of the cell
-     */
-    public final Pointer visitCell(Pointer cell, Address start, Address end) {
-        return scanCellForEvacuatees(cell, start, end);
-    }
-
     @Override
     final Pointer evacuate(Pointer fromOrigin) {
+        if (MaxineVM.isDebug() && checkDarkMatterRefs) {
+            DarkMatter.scanCellForDarkMatter(fromOrigin);
+        }
         final Pointer fromCell = Layout.originToCell(fromOrigin);
         final Size size = Layout.size(fromOrigin);
         final Pointer toCell = allocate(size);
         Memory.copyBytes(fromCell, toCell, size);
         return toCell;
+    }
+
+    private boolean checkDarkMatterRefs = false;
+    public void enableDarkMatterRefCheck(boolean b) {
+        checkDarkMatterRefs = b;
     }
 
     @Override

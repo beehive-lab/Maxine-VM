@@ -82,6 +82,7 @@ public final class FatalError extends Error {
      * A breakpoint should be set on this method when debugging the VM so that
      * fatal errors can be investigated before the VM exits.
      */
+    @INSPECTED
     @NEVER_INLINE
     public static void breakpoint() {
     }
@@ -118,6 +119,7 @@ public final class FatalError extends Error {
      * @see #unexpected(String, boolean, Throwable, Pointer)
      * @return never
      */
+    @INSPECTED
     @NEVER_INLINE
     public static FatalError unexpected(String message, Throwable throwable) {
         throw unexpected(message, false, throwable, Pointer.zero());

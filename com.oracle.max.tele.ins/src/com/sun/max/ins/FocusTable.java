@@ -58,6 +58,10 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             this.minWidth = minWidth;
         }
 
+        public boolean isSupported(MaxVM vm) {
+            return true;
+        }
+
         public String label() {
             return label;
         }
@@ -176,9 +180,9 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
     private final class FocusColumnModel extends InspectorTableColumnModel<FocusColumnKind> {
 
         private FocusColumnModel(FocusViewPreferences viewPreferences) {
-            super(FocusColumnKind.values().length, viewPreferences);
-            addColumn(FocusColumnKind.NAME, new NameCellRenderer(inspection()), null);
-            addColumn(FocusColumnKind.VALUE, new ValueCellRenderer(inspection()), null);
+            super(inspection(), FocusColumnKind.values().length, viewPreferences);
+            addColumnIfSupported(FocusColumnKind.NAME, new NameCellRenderer(inspection()), null);
+            addColumnIfSupported(FocusColumnKind.VALUE, new ValueCellRenderer(inspection()), null);
         }
     }
 

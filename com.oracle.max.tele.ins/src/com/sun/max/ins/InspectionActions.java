@@ -3697,7 +3697,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             new AddressInputDialog(inspection(), Address.zero(), "Set Mark Bit for word at address...", "Set Bit") {
                 @Override
                 public void entered(Address address) {
-                    MaxMarkBitmap markBitmap = vm().heap().markBitMap();
+                    MaxMarkBitmap markBitmap = vm().heap().markBitmap();
                     assert markBitmap != null;
                     if (!markBitmap.isCovered(address)) {
                         gui().errorMessage("Address " + address + " is not covered with a mark bit");
@@ -3706,7 +3706,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     if (!address.isWordAligned()) {
                         gui().errorMessage("Address " + address + " is not word aligned");
                     }
-                    final int bitIndexOf = vm().heap().markBitMap().getBitIndexOf(address);
+                    final int bitIndexOf = vm().heap().markBitmap().getBitIndexOf(address);
                     if (markBitmap.isBitSet(bitIndexOf)) {
                         gui().informationMessage("Mark bit already set for address=" + address.to0xHexString());
                     } else {
@@ -3718,7 +3718,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(vm().heap().markBitMap() != null);
+            setEnabled(vm().heap().markBitmap() != null);
         }
     }
 

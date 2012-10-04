@@ -23,6 +23,7 @@
 package com.sun.max.ins.debug.vmlog;
 
 import com.sun.max.ins.debug.*;
+import com.sun.max.tele.*;
 import com.sun.max.vm.log.*;
 
 
@@ -66,6 +67,10 @@ enum VMLogColumnKind implements ColumnKind {
         this.defaultVisibility = defaultVisibility;
         this.minWidth = minWidth;
         assert defaultVisibility || canBeMadeInvisible();
+    }
+
+    public boolean isSupported(MaxVM vm) {
+        return true;
     }
 
     public String label() {

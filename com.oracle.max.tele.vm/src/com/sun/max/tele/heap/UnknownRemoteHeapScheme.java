@@ -100,11 +100,6 @@ public final class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
         }
     }
 
-    @Override
-    public boolean hasMarkBitmap() {
-        return false;
-    }
-
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
         return new MaxMemoryManagementInfo() {
 

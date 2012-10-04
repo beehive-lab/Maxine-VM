@@ -166,14 +166,14 @@ public class CompiledStackFrameTable extends InspectorTable {
     private final class CompiledStackFrameTableColumnModel extends InspectorTableColumnModel<CompiledStackFrameColumnKind> {
 
         CompiledStackFrameTableColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, CompiledStackFrameViewPreferences viewPreferences) {
-            super(CompiledStackFrameColumnKind.values().length, viewPreferences);
-            addColumn(CompiledStackFrameColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(CompiledStackFrameColumnKind.NAME, new NameRenderer(inspection()), null);
-            addColumn(CompiledStackFrameColumnKind.ADDRESS, new MemoryAddressLocationTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(CompiledStackFrameColumnKind.OFFSET_SP, new OffsetSPRenderer(inspection()), null);
-            addColumn(CompiledStackFrameColumnKind.OFFSET_FP, new OffsetFPRenderer(inspection()), null);
-            addColumn(CompiledStackFrameColumnKind.VALUE, new ValueRenderer(inspection()), null);
-            addColumn(CompiledStackFrameColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
+            super(inspection(), CompiledStackFrameColumnKind.values().length, viewPreferences);
+            addColumnIfSupported(CompiledStackFrameColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(CompiledStackFrameColumnKind.NAME, new NameRenderer(inspection()), null);
+            addColumnIfSupported(CompiledStackFrameColumnKind.ADDRESS, new MemoryAddressLocationTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(CompiledStackFrameColumnKind.OFFSET_SP, new OffsetSPRenderer(inspection()), null);
+            addColumnIfSupported(CompiledStackFrameColumnKind.OFFSET_FP, new OffsetFPRenderer(inspection()), null);
+            addColumnIfSupported(CompiledStackFrameColumnKind.VALUE, new ValueRenderer(inspection()), null);
+            addColumnIfSupported(CompiledStackFrameColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
     }
 

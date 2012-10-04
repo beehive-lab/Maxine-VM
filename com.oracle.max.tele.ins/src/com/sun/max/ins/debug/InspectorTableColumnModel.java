@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,17 +35,28 @@ import com.sun.max.ins.gui.*;
  */
 public abstract class InspectorTableColumnModel<ColumnKind_Type extends  ColumnKind> extends DefaultTableColumnModel implements Prober {
 
+    private final Inspection inspection;
+
+    /**
+     * The supported columns that have been created, indexed by the kind's enum ordinal.
+     * There will be null values for unsupported column kinds, and these will not show up in the kind map
+     */
     private final TableColumn[] columns;
+
+    /**
+     * Map:  ColumnKind.ordinal() -> ColumnKind
+     * Contains only the kinds that are supported .
+     */
     private final Map<Integer, ColumnKind_Type> columnKinds;
     private final TableColumnVisibilityPreferences<ColumnKind_Type> viewPreferences;
 
     /**
      * Creates a specialized table column model.
-     *
      * @param columnKindCount the number of table columns that will be created
      * @param viewPreferences
      */
-    public InspectorTableColumnModel(int columnKindCount, TableColumnVisibilityPreferences<ColumnKind_Type> viewPreferences) {
+    public InspectorTableColumnModel(Inspection inspection, int columnKindCount, TableColumnVisibilityPreferences<ColumnKind_Type> viewPreferences) {
+        this.inspection = inspection;
         this.columns = new TableColumn[columnKindCount];
         this.columnKinds = new IdentityHashMap<Integer, ColumnKind_Type>();
         this.viewPreferences = viewPreferences;
@@ -53,20 +64,24 @@ public abstract class InspectorTableColumnModel<ColumnKind_Type extends  ColumnK
 
     public final void refresh(boolean force) {
         for (TableColumn column : columns) {
-            final TableCellRenderer cellRenderer = column.getCellRenderer();
-            if (cellRenderer instanceof Prober) {
-                final Prober prober = (Prober) cellRenderer;
-                prober.refresh(force);
+            if (column != null) {
+                final TableCellRenderer cellRenderer = column.getCellRenderer();
+                if (cellRenderer instanceof Prober) {
+                    final Prober prober = (Prober) cellRenderer;
+                    prober.refresh(force);
+                }
             }
         }
     }
 
     public final void redisplay() {
         for (TableColumn column : columns) {
-            final TableCellRenderer cellRenderer = column.getCellRenderer();
-            if (cellRenderer instanceof Prober) {
-                final Prober prober = (Prober) cellRenderer;
-                prober.redisplay();
+            if (column != null) {
+                final TableCellRenderer cellRenderer = column.getCellRenderer();
+                if (cellRenderer instanceof Prober) {
+                    final Prober prober = (Prober) cellRenderer;
+                    prober.redisplay();
+                }
             }
         }
     }
@@ -97,17 +112,19 @@ public abstract class InspectorTableColumnModel<ColumnKind_Type extends  ColumnK
     }
 
     /**
-     * Adds a column to this model, which may or not be visible depending on the initial description of the column kind.
+     * Adds a column to this model, if supported for the current VM, which may or not be visible depending on the initial description of the column kind.
      */
-    protected final void addColumn(ColumnKind_Type columnKind, TableCellRenderer renderer, TableCellEditor editor) {
-        final TableColumn tableColumn = new TableColumn(columnKind.ordinal(), 0, renderer, editor);
-        tableColumn.setHeaderValue(columnKind.label());
-        tableColumn.setMinWidth(columnKind.minWidth());
-        tableColumn.setIdentifier(columnKind);
-        columnKinds.put(columnKind.ordinal(), columnKind);
-        columns[columnKind.ordinal()] = tableColumn;
-        if (viewPreferences.isVisible(columnKind)) {
-            addColumn(tableColumn);
+    protected final void addColumnIfSupported(ColumnKind_Type columnKind, TableCellRenderer renderer, TableCellEditor editor) {
+        if (columnKind.isSupported(inspection.vm())) {
+            final TableColumn tableColumn = new TableColumn(columnKind.ordinal(), 0, renderer, editor);
+            tableColumn.setHeaderValue(columnKind.label());
+            tableColumn.setMinWidth(columnKind.minWidth());
+            tableColumn.setIdentifier(columnKind);
+            columnKinds.put(columnKind.ordinal(), columnKind);
+            columns[columnKind.ordinal()] = tableColumn;
+            if (viewPreferences.isVisible(columnKind)) {
+                addColumn(tableColumn);
+            }
         }
     }
 

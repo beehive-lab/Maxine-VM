@@ -326,17 +326,17 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
     private final class MachineCodeTableColumnModel extends InspectorTableColumnModel<MachineCodeColumnKind> {
 
         private MachineCodeTableColumnModel(MachineCodeViewPreferences viewPreferences) {
-            super(MachineCodeColumnKind.values().length, viewPreferences);
+            super(inspection(), MachineCodeColumnKind.values().length, viewPreferences);
             final Address startAddress = tableModel.machineCode.getMachineCodeInfo().length() == 0 ? Address.zero() : tableModel.rowToInstruction(0).address;
-            addColumn(MachineCodeColumnKind.TAG, new TagRenderer(inspection), null);
-            addColumn(MachineCodeColumnKind.NUMBER, new NumberRenderer(), null);
-            addColumn(MachineCodeColumnKind.ADDRESS, new AddressRenderer(startAddress), null);
-            addColumn(MachineCodeColumnKind.POSITION, new PositionRenderer(startAddress), null);
-            addColumn(MachineCodeColumnKind.LABEL, new LabelRenderer(startAddress), null);
-            addColumn(MachineCodeColumnKind.INSTRUCTION, new InstructionRenderer(inspection), null);
-            addColumn(MachineCodeColumnKind.OPERANDS, operandsRenderer, null);
-            addColumn(MachineCodeColumnKind.SOURCE_LINE, sourceLineRenderer, null);
-            addColumn(MachineCodeColumnKind.BYTES, new BytesRenderer(inspection), null);
+            addColumnIfSupported(MachineCodeColumnKind.TAG, new TagRenderer(inspection), null);
+            addColumnIfSupported(MachineCodeColumnKind.NUMBER, new NumberRenderer(), null);
+            addColumnIfSupported(MachineCodeColumnKind.ADDRESS, new AddressRenderer(startAddress), null);
+            addColumnIfSupported(MachineCodeColumnKind.POSITION, new PositionRenderer(startAddress), null);
+            addColumnIfSupported(MachineCodeColumnKind.LABEL, new LabelRenderer(startAddress), null);
+            addColumnIfSupported(MachineCodeColumnKind.INSTRUCTION, new InstructionRenderer(inspection), null);
+            addColumnIfSupported(MachineCodeColumnKind.OPERANDS, operandsRenderer, null);
+            addColumnIfSupported(MachineCodeColumnKind.SOURCE_LINE, sourceLineRenderer, null);
+            addColumnIfSupported(MachineCodeColumnKind.BYTES, new BytesRenderer(inspection), null);
         }
     }
 

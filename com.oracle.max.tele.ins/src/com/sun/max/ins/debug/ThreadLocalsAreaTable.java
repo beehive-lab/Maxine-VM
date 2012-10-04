@@ -148,13 +148,13 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
     private final class ThreadLocalsAreaTableColumnModel extends InspectorTableColumnModel<ThreadLocalVariablesColumnKind> {
 
         ThreadLocalsAreaTableColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, ThreadLocalsViewPreferences viewPreferences) {
-            super(ThreadLocalVariablesColumnKind.values().length, viewPreferences);
-            addColumn(ThreadLocalVariablesColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(ThreadLocalVariablesColumnKind.ADDRESS, new MemoryAddressLocationTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(ThreadLocalVariablesColumnKind.POSITION, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel, inspection().vm().platform().nBytesInWord()), null);
-            addColumn(ThreadLocalVariablesColumnKind.NAME, new NameRenderer(inspection()), null);
-            addColumn(ThreadLocalVariablesColumnKind.VALUE, new ValueRenderer(), null);
-            addColumn(ThreadLocalVariablesColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
+            super(inspection(), ThreadLocalVariablesColumnKind.values().length, viewPreferences);
+            addColumnIfSupported(ThreadLocalVariablesColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(ThreadLocalVariablesColumnKind.ADDRESS, new MemoryAddressLocationTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(ThreadLocalVariablesColumnKind.POSITION, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel, inspection().vm().platform().nBytesInWord()), null);
+            addColumnIfSupported(ThreadLocalVariablesColumnKind.NAME, new NameRenderer(inspection()), null);
+            addColumnIfSupported(ThreadLocalVariablesColumnKind.VALUE, new ValueRenderer(), null);
+            addColumnIfSupported(ThreadLocalVariablesColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
     }
 
