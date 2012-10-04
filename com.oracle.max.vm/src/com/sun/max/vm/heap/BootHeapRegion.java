@@ -36,8 +36,10 @@ import com.sun.max.vm.runtime.*;
  */
 public final class BootHeapRegion extends LinearAllocatorRegion {
 
+    @INSPECTED
     private byte[] referenceMapBytes;
 
+    @INSPECTED
     private Pointer referenceMap;
 
     private java.lang.ref.Reference[] specialReferences = {};

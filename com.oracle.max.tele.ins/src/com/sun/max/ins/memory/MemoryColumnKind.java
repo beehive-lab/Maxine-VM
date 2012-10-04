@@ -49,6 +49,7 @@ public enum MemoryColumnKind implements ColumnKind {
             return vm.heap().hasMarkBitmap();
         }
     },
+    BOOT_REF_MAP("Boot RefMap", "Mutable ref. fields in Boot Heap", false, 10),
     REGION("Region", "Memory region pointed to by value", true, 20);
 
     private final String columnLabel;

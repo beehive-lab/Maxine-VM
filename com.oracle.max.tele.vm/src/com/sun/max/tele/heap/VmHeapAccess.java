@@ -137,7 +137,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
     /**
      * Surrogate for the object in VM memory that describes the memory region holding the boot heap.
      */
-    private TeleMemoryRegion teleBootHeapMemoryRegion = null;
+    private TeleBootHeapRegion teleBootHeapMemoryRegion = null;
 
     /**
      * Description of the boot region holding objects in the VM.
@@ -247,7 +247,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
         // Get a local surrogate for the instance of {@link MemoryRegion} in the VM that describes the boot heap
         final RemoteReference bootHeapRegionReference = fields().Heap_bootHeapRegion.readRemoteReference(vm());
-        this.teleBootHeapMemoryRegion = (TeleMemoryRegion) objects().makeTeleObject(bootHeapRegionReference);
+        this.teleBootHeapMemoryRegion = (TeleBootHeapRegion) objects().makeTeleObject(bootHeapRegionReference);
 
         // Replace the faked representation of the boot heap with one represented uniformly via reference to the VM object
         vm().addressSpace().remove(this.bootHeapRegion.memoryRegion());
@@ -428,6 +428,10 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             return cardTableHeap.cardTable();
         }
         return null;
+    }
+
+    public boolean isBootHeapRefMapMarked(Address address) {
+        return teleBootHeapMemoryRegion == null ? false : teleBootHeapMemoryRegion.isRefMapMarked(address);
     }
 
     public List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations() {

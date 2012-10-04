@@ -220,6 +220,7 @@ public final class MemoryWordsTable extends InspectorTable {
             addColumnIfSupported(MemoryColumnKind.DOUBLE, new DoubleRenderer(inspection()), null);
             addColumnIfSupported(MemoryColumnKind.MM_STATUS, new MemoryMgtStatusRenderer(inspection(), table, tableModel), null);
             addColumnIfSupported(MemoryColumnKind.MARK_BITS, new MemoryMarkBitsTableCellRenderer(inspection(), table, tableModel), null);
+            addColumnIfSupported(MemoryColumnKind.BOOT_REF_MAP, new BootHeapRefMapRenderer(inspection()), null);
             addColumnIfSupported(MemoryColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
     }
@@ -601,6 +602,50 @@ public final class MemoryWordsTable extends InspectorTable {
             setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor());
             return this;
+        }
+    }
+
+    private final class BootHeapRefMapRenderer extends InspectorLabel implements TableCellRenderer {
+        BootHeapRefMapRenderer(Inspection inspection) {
+            super(inspection, "");
+            setOpaque(true);
+            setHorizontalAlignment(JLabel.CENTER);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final Address address = tableModel.getAddress(row);
+
+            String text = "";
+            String toolTipText = "";
+            Color cellBackgroundColor = cellBackgroundColor();
+            Color cellForegroundColor = cellForegroundColor(row, col);
+            if (!vm().heap().bootHeapRegion().contains(address)) {
+                toolTipText = "not in boot heap";
+            } else if (vm().heap().isBootHeapRefMapMarked(address)) {
+                text = "1";
+                toolTipText = "Marked as mutable boot heap reference";
+                cellBackgroundColor = preference().style().markedBlackBackgroundColor();
+                cellForegroundColor = preference().style().markedWhiteBackgroundColor();
+            } else {
+                text = "0";
+                toolTipText = "Not marked as mutable boot heap reference";
+            }
+            setText(text);
+            setWrappedToolTipHtmlText(tableModel.getRowDescription(row) + "<br>" + toolTipText);
+            if (isBoundaryRow(row)) {
+                setBorder(preference().style().defaultPaneTopBorder());
+            } else {
+                setBorder(null);
+            }
+            setForeground(cellForegroundColor);
+            setBackground(cellBackgroundColor);
+            return this;
+        }
+
+        public void refresh(boolean force) {
+        }
+
+        public void redisplay() {
         }
     }
 

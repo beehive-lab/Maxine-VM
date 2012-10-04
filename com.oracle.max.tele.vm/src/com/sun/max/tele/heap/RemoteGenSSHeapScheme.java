@@ -32,6 +32,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.InitializationListener;
 import com.sun.max.tele.field.*;
+import com.sun.max.tele.heap.region.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.reference.gen.semispace.*;
@@ -105,6 +106,11 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     private TeleCardTableRSet cardTableRSet;
     private TeleBaseAtomicBumpPointerAllocator nurseryAllocator;
     private TeleBaseAtomicBumpPointerAllocator oldAllocator;
+
+    /**
+     * Access to the card table for external use and visualization.
+     */
+    private VmCardTable vmCardTable;
 
     /**
      * Track whether a minor evacuation overflowed into from space.
@@ -219,6 +225,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             cardTableRSet = scheme.readTeleCardTableRSet();
             heapRegions.add(cardTableRSet.vmHeapRegion);
             vm().addressSpace().add(cardTableRSet.vmHeapRegion.memoryRegion());
+            vmCardTable = new VmCardTable(vm(), cardTableRSet);
         }
         Trace.end(TRACE_VALUE, tracePrefix() + "looking for heap regions, " + heapRegions.size() + " found");
     }
@@ -520,7 +527,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     }
 
     public MaxCardTable cardTable() {
-        return null;
+        return vmCardTable;
     }
 
     public ObjectStatus objectStatusAt(Address origin) {
