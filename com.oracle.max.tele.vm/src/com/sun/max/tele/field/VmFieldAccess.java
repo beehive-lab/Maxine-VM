@@ -168,9 +168,13 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "youngSpace", NoAgingRegionalizedNursery.class);
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_cardTableRSet = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "cardTableRSet", CardTableRSet.class);
     public final TeleInstanceIntFieldAccess GenSSHeapScheme_fullCollectionCount = new TeleInstanceIntFieldAccess(GenSSHeapScheme.class, "fullCollectionCount");
+    public final TeleInstanceWordFieldAccess GenSSHeapScheme_oldOverflowEvacuationMark = new TeleInstanceWordFieldAccess(GenSSHeapScheme.class, "oldOverflowEvacuationMark");
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "oldSpace", ContiguousSemiSpace.class);
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_oldSpaceEvacuator = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "oldSpaceEvacuator", EvacuatorToCardSpace.class);
+    public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_overflowedArea = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "overflowedArea", MemoryRegion.class);
+    public final TeleInstanceBooleanFieldAccess GenSSHeapScheme_requiresFullGC = new TeleInstanceBooleanFieldAccess(GenSSHeapScheme.class, "requiresFullGC");
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_resizingPolicy = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "resizingPolicy", GenSSHeapSizingPolicy.class);
+    public final TeleInstanceWordFieldAccess GenSSHeapScheme_youngOverflowEvacuationMark = new TeleInstanceWordFieldAccess(GenSSHeapScheme.class, "youngOverflowEvacuationMark");
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "youngSpace", ContiguousAllocatingSpace.class);
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_youngSpaceEvacuator = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "youngSpaceEvacuator", NoAgingNurseryEvacuator.class);
     public final TeleInstanceBooleanFieldAccess GenSSHeapSizingPolicy_minorEvacuationOverflow = new TeleInstanceBooleanFieldAccess(GenSSHeapSizingPolicy.class, "minorEvacuationOverflow");
