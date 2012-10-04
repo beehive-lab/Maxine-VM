@@ -73,11 +73,6 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void gcSurvivor(Pointer cell) {
-        // Don't GC when in GC!
-    }
-
-    @Override
     public void initialise(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.RUNNING) {
             String freq = System.getProperty("max.vma.handler.gctest.freq");

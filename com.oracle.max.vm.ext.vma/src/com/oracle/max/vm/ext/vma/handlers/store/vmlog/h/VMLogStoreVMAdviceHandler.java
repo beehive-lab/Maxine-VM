@@ -113,10 +113,10 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    private static class RemovalTracker implements ObjectStateHandler.RemovalTracker {
+    private static class RemovalTracker implements ObjectStateHandler.DeadObjectHandler {
 
         @Override
-        public void removed(long id) {
+        public void dead(long id) {
             VMAVMLogger.logger.logRemoved(getTime(), id);
         }
 
@@ -128,7 +128,6 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     public static void onLoad(String args) {
         VMAJavaRunScheme.registerAdviceHandler(new VMLogStoreVMAdviceHandler());
-        ObjectStateHandlerAdaptor.forceCompile();
     }
 
     private static boolean getPerThread() {
@@ -156,7 +155,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
             }
             storeAdaptor = new VMAdviceHandlerTextStoreAdapter(state, true, perThread);
             storeAdaptor.initialise(phase);
-            super.setRemovalTracker(new RemovalTracker());
+            super.setDeadObjectHandler(new RemovalTracker());
             VMAVMLogger.logger.storeAdaptor = storeAdaptor;
             VMAVMLogger.logger.enable(true);
             String ltp = System.getProperty(TIME_PROPERTY);

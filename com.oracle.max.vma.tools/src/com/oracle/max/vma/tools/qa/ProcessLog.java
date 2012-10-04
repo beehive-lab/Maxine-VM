@@ -616,7 +616,10 @@ public class ProcessLog {
                 } else {
                     endCreationRecord = adviceRecordList.get(index + 1);
                 }
-                assert endCreationRecord != null : "failed to find end creation record";
+                if (endCreationRecord == null) {
+                    System.err.printf("failed to find end creation record for %s%n", objectRecord);
+                    endCreationRecord = adviceRecordList.get(index + 1);
+                }
                 objectRecord.setEndCreationRecord(endCreationRecord);
             }
         }
@@ -634,7 +637,7 @@ public class ProcessLog {
             AdviceRecord ar = adviceRecordList.get(i);
             if (ar.getRecordType() == MethodEntry) {
                 ObjectRecord methodEntryObject = AdviceRecordHelper.getObjectRecord(ar);
-                if (objectRecord.id.equals(methodEntryObject.id)) {
+                if (methodEntryObject != null && objectRecord.id.equals(methodEntryObject.id)) {
                     MethodRecord mr = AdviceRecordHelper.getMethod(ar);
                     if (mr.name.equals("<init>")) {
                         return i;

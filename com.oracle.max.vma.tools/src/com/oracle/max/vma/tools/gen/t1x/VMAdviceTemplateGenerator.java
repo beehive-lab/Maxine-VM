@@ -634,6 +634,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     generateThrow();
                     break;
 
+                case RETHROW_EXCEPTION:
+                    generateReThrow();
+                    break;
+
                 case ARRAYLENGTH:
                     generateArrayLength();
                     break;
@@ -677,6 +681,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case DRETURN$unlock:
                 case ARETURN$unlock:
                 case RETURN$unlock:
+                case RETURN$registerFinalizer:
                     generateReturn(tag, k);
                     break;
 
@@ -691,7 +696,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     break;
 
                 // No special treatment for the following codes
-                case RETURN$registerFinalizer:
                 case LOAD_EXCEPTION:
                     break;
 
@@ -875,6 +879,12 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     private void generateThrow() {
         startGuardAdvice();
         out.printf(INDENT12_ADVISE_PREFIX + "object);%n", adviceType.methodNameComponent, methodName);
+        endGuardAdvice();
+    }
+
+    private void generateReThrow() {
+        startGuardAdvice();
+        out.printf(INDENT12_ADVISE_PREFIX + "throwable);%n", adviceType.methodNameComponent, "Throw");
         endGuardAdvice();
     }
 
@@ -1203,10 +1213,11 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         startMethodGeneration();
         generateTemplateTag("%s", tag);
         if (tag == LDC$reference) {
-            out.printf("    public static void uoldc(ResolutionGuard guard%s) {%n", suffixParams(true));
+            out.printf("    public static Object uoldc(ResolutionGuard guard%s) {%n", suffixParams(true));
             out.printf("        ClassActor classActor = Snippets.resolveClass(guard);%n");
             out.printf("        Object constant = classActor.javaClass();%n");
             generateBeforeAdvice(k);
+            out.printf("        return constant;%n");
         } else {
             String ks = k.substring(0, 1).toLowerCase();
             out.printf("    public static void %sldc(%s constant%s) {%n", ks, k, suffixParams(true));

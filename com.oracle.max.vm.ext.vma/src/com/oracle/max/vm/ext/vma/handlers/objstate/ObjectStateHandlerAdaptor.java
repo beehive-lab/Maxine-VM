@@ -27,45 +27,35 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
 
 /**
  * An adaptor class that handles the state (id, liveness) management for advice handlers.
  *
  * Leaves the actual handling of unseen and removed (dead) objects to subclass.
  *
- * Currently hard-wires {@link BitSetObjectStateHandler} as the state implementation.
+ * Currently hard-wires {@link SimpleObjectStateHandler} as the state implementation.
  *
  */
 
 public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
 
     protected ObjectStateHandler state;
-    protected ObjectStateHandler.RemovalTracker removalTracker;
-
-    /**
-     * Call in dynamic loading context to force compile gcSurvivor now otherwise it will be compiled lazily
-     * while a GC is occurring, which will cause a fatal exception.
-     */
-    public static void forceCompile() {
-        ClassActor.fromJava(ObjectStateHandlerAdaptor.class).findClassMethodActor(SymbolTable.makeSymbol("gcSurvivor"), SignatureDescriptor.create(void.class, Pointer.class)).makeTargetMethod();
-    }
+    protected ObjectStateHandler.DeadObjectHandler deadObjectHandler;
 
     @Override
     public void initialise(MaxineVM.Phase phase) {
         super.initialise(phase);
         if ((phase == MaxineVM.Phase.BOOTSTRAPPING) ||
             (phase == MaxineVM.Phase.RUNNING && state == null)) {
-            state = BitSetObjectStateHandler.create();
+            state = new SimpleObjectStateHandler();
         }
     }
 
-    protected void setRemovalTracker(ObjectStateHandler.RemovalTracker removalTracker) {
-        this.removalTracker = removalTracker;
+    protected void setDeadObjectHandler(ObjectStateHandler.DeadObjectHandler deadObjectHandler) {
+        this.deadObjectHandler = deadObjectHandler;
     }
 
     /**
@@ -100,13 +90,8 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
 
     @Override
     public void adviseAfterGC() {
-        // generate log records for objects that didn't survive this GC
-        state.gc(removalTracker);
-    }
-
-    @Override
-    public void gcSurvivor(Pointer cell) {
-        state.incrementLifetime(cell);
+        // (possibly) generate log records for objects that didn't survive this GC
+        state.gc(deadObjectHandler);
     }
 
 // START GENERATED CODE

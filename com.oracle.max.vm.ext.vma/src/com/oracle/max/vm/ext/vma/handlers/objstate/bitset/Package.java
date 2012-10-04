@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,29 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test;
+package com.oracle.max.vm.ext.vma.handlers.objstate.bitset;
 
-import java.lang.reflect.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
-public class ReflectCons {
 
-    static class A {
-        private int a;
-
-        A(int a) {
-            this.a = a;
-        }
-    }
-
-    public static void main(String[] args) throws Exception {
-        System.out.println("main entered");
-        Constructor<?> c = ReflectCons.A.class.getDeclaredConstructor(new Class<?>[] {int.class});
-        for (int i = 0; i < 100; i++) {
-            @SuppressWarnings("unused")
-            ReflectCons.A rc1 = (ReflectCons.A) c.newInstance(i);
-            System.out.println("A constructed");
-        }
-        System.out.println("main exited");
+public class Package extends BootImagePackage {
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return false;
     }
 
 }

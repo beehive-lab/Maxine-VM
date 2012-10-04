@@ -24,7 +24,6 @@ package com.oracle.max.vm.ext.vma.handlers.cbc.h;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
@@ -51,10 +50,6 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
 
     public static void onLoad(String args) {
         VMAJavaRunScheme.registerAdviceHandler(new CBCVMAdviceHandler());
-    }
-
-    @Override
-    public void gcSurvivor(Pointer cell) {
     }
 
 // START GENERATED CODE

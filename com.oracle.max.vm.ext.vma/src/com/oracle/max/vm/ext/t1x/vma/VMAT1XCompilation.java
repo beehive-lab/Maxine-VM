@@ -123,7 +123,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
             if (adviceTypeOptions[AFTER_INDEX]) {
                 templates = vmaT1X.afterTemplates;
             } else {
-                templates = vmaT1X.getAltT1X().templates;
+                templates = defaultTemplates;
             }
         }
     }
@@ -135,7 +135,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
 
     @Override
     protected void finish() {
-        if (templates != defaultTemplates) {
+        if (templates != defaultTemplates && template.tag != null && template.tag != CREATE_MULTIANEWARRAY_DIMENSIONS) {
             // assign the bci value as the last argument
             assignInt(template.sig.in.length - 1, "bci", stream.currentBCI());
         }

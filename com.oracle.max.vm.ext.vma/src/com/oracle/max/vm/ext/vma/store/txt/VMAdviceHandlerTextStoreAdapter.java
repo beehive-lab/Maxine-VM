@@ -59,7 +59,7 @@ import com.sun.max.vm.thread.*;
  *
  *
  */
-public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.RemovalTracker {
+public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.DeadObjectHandler {
 
     interface ThreadNameGenerator {
         String getThreadName();
@@ -126,7 +126,7 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
         this.tng = tng;
     }
 
-    public ObjectStateHandler.RemovalTracker getRemovalTracker() {
+    public ObjectStateHandler.DeadObjectHandler getRemovalTracker() {
         return this;
     }
 
@@ -207,12 +207,12 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
     }
 
     @Override
-    public void removed(long id) {
+    public void dead(long id) {
         getStoreAdaptorForThread(VmThread.current().id()).store.removal(id);
     }
 
     public void removed(long time, long id) {
-        removed(id);
+        dead(id);
     }
 
 // In the BytecodeAdvice method equivalents below, parameter arg1 is the bci value.

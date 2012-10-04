@@ -2702,6 +2702,15 @@ public class VMAdviceBeforeAfterTemplateSource {
         Throw.raise(object);
     }
 
+    @T1X_TEMPLATE(RETHROW_EXCEPTION)
+    public static void rethrowException(int bci) {
+        Throwable throwable = VmThread.current().loadExceptionForHandler();
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeThrow(bci, throwable);
+        }
+        Throw.raise(throwable);
+    }
+
     @T1X_TEMPLATE(MONITORENTER)
     public static void monitorenter(@Slot(0) Object object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
@@ -2740,6 +2749,9 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void vreturnRegisterFinalizer(Reference object, int bci) {
         if (ObjectAccess.readClassActor(object).hasFinalizer()) {
             SpecialReferenceManager.registerFinalizee(object);
+        }
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeReturn(bci);
         }
     }
 
@@ -2899,12 +2911,13 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(LDC$reference)
-    public static void uoldc(ResolutionGuard guard, int bci) {
+    public static Object uoldc(ResolutionGuard guard, int bci) {
         ClassActor classActor = Snippets.resolveClass(guard);
         Object constant = classActor.javaClass();
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(bci, constant);
         }
+        return constant;
     }
 
     @T1X_TEMPLATE(LDC$reference$resolved)

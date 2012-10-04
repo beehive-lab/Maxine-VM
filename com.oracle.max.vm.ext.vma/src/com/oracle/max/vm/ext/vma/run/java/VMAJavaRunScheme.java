@@ -22,6 +22,13 @@
  */
 package com.oracle.max.vm.ext.vma.run.java;
 
+import static com.sun.max.vm.MaxineVM.*;
+
+import java.io.*;
+import java.lang.ref.*;
+import java.lang.reflect.*;
+import java.util.*;
+
 import com.oracle.max.vm.ext.t1x.vma.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
@@ -30,12 +37,22 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.ProgramError;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.*;
+import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.run.java.JavaRunScheme;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.thread.VmThreadLocal;
 import com.sun.max.vm.ti.*;
+import com.sun.max.vm.type.*;
 import com.sun.max.vm.ext.jvmti.*;
 
 /**
@@ -47,17 +64,23 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
     private static class VMTIHandler extends NullVMTIHandler {
         @Override
         public void threadStart(VmThread vmThread) {
-            threadStarting();
+            if (advising) {
+                adviceHandler.adviseBeforeThreadStarting(VmThread.current());
+                enableAdvising();
+            }
         }
 
         @Override
         public void threadEnd(VmThread vmThread) {
-            threadTerminating();
+            if (advising) {
+                disableAdvising();
+                adviceHandler.adviseBeforeThreadTerminating(VmThread.current());
+            }
         }
 
         @Override
         public void beginGC() {
-            if (VMAJavaRunScheme.isAdvising()) {
+            if (VMAJavaRunScheme.isThreadAdvising()) {
                 VMAJavaRunScheme.disableAdvising();
                 VMAJavaRunScheme.adviceHandler().adviseBeforeGC();
                 VMAJavaRunScheme.enableAdvising();
@@ -66,24 +89,13 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
 
         @Override
         public void endGC() {
-            if (VMAJavaRunScheme.isAdvising()) {
+            if (VMAJavaRunScheme.isThreadAdvising()) {
                 VMAJavaRunScheme.disableAdvising();
                 VMAJavaRunScheme.adviceHandler().adviseAfterGC();
                 VMAJavaRunScheme.enableAdvising();
             }
         }
 
-        @Override
-        public void objectSurviving(Pointer cell) {
-            /*
-             * This method is called in the VMOperation thread (which does not have
-             * tracking enabled). So there is no need or requirement to enable/disable.
-             */
-            if (VMAJavaRunScheme.isVMAdvising()) {
-                VMAJavaRunScheme.adviceHandler().gcSurvivor(cell);
-            }
-
-        }
     }
 
     /**
@@ -170,7 +182,7 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
         }
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
-                checkJDKDeopt();
+                JDKDeopt.run();
                 if (adviceHandler != null) {
                     adviceHandler.initialise(phase);
                     advising = true;
@@ -185,6 +197,7 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
                 // N.B. daemon threads may still be running and invoking advice.
                 // There is nothing we can do about that as they may be in the act
                 // of logging so disabling advising for them would be meaningless.
+                // This has to be dealt with in the handler.
                 adviceHandler.initialise(phase);
             }
         }
@@ -193,32 +206,6 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
     @INLINE
     public static VMAdviceHandler adviceHandler() {
         return adviceHandler;
-    }
-
-    /**
-     * If the classes to be advised include any compiled into the boot image, they need to be deopted first.
-     */
-    private void checkJDKDeopt() {
-
-    }
-
-    /**
-     * If the VM is being run with advising turned on, enables advising for the current thread.
-     */
-    public static void threadStarting() {
-        if (advising) {
-            adviceHandler.adviseBeforeThreadStarting(VmThread.current());
-            enableAdvising();
-        }
-    }
-
-    /**
-     * If the VM is being run with advising turned on, notifies the advisee that this thread is terminating.
-     */
-    public static void threadTerminating() {
-        if (advising) {
-            adviceHandler.adviseBeforeThreadTerminating(VmThread.current());
-        }
     }
 
     /**
@@ -249,13 +236,13 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
      * Is advising enabled for the current thread?
      */
     @INLINE
-    public static boolean isAdvising() {
+    private static boolean isThreadAdvising() {
         return VmThread.currentTLA().getWord(VM_ADVISING.index) != Word.zero();
     }
 
     @Override
     public void exceptionRaised(ClassMethodActor throwingActor, Throwable throwable, int bci, int poppedFrames) {
-        if (isAdvising() && isInstrumented(throwingActor)) {
+        if (isThreadAdvising() && isInstrumented(throwingActor)) {
             disableAdvising();
             adviceHandler.adviseBeforeReturnByThrow(bci, throwable, poppedFrames);
             enableAdvising();
@@ -266,5 +253,140 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
         return classMethodActor.currentTargetMethod() instanceof VMAT1XTargetMethod;
     }
 
+    /**
+     * Encapsulates all the logic to handle the recompilation and deoptimization of the JDK methods in the boot image,
+     * that are subject to advising. Only methods that are capable of baseline compilation are candidates, which
+     * excludes any substituted methods that use VM features not supported by the baseline compiler.
+     */
+    private static class JDKDeopt {
 
+        static void run() {
+            VMAOptions.logger.logJdkDeopt("checking boot image JDK classes");
+            Collection<ClassActor> bootClassActors = ClassRegistry.BOOT_CLASS_REGISTRY.getClassActors();
+            ArrayList<TargetMethod> deoptMethods = new ArrayList<TargetMethod>();
+            for (ClassActor classActor : bootClassActors) {
+                String className = classActor.qualifiedName();
+                if (VMAOptions.instrumentClass(className)) {
+                    for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
+                        checkDeopt(staticMethodActor, deoptMethods);
+                    }
+                    for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
+                        checkDeopt(virtualMethodActor, deoptMethods);
+                    }
+                }
+            }
+
+            if (deoptMethods.size() == 0) {
+                return;
+            }
+
+            VMAOptions.logger.logJdkDeopt("force compile key T1X needed methods");
+
+            // Force the compilation of methods not compiled into the boot image when using C1X that
+            // are needed when VMAT1X uses a T1X-compiled JDK, to break meta-circularity.
+            // This list was experimentally determined.
+            forceCompile(HashMap.class, "hash");
+            forceCompile(HashMap.class, "indexFor");
+            forceCompile(getClass("java.util.HashMap$Entry"), "<init>");
+            forceCompile(ObjectAccess.class, "makeHashCode");
+            forceCompile(AbstractList.class, "<init>");
+            forceCompile(AbstractCollection.class, "<init>");
+            if (JDK.JDK_VERSION == 6) {
+                forceCompile(ArrayList.class, "ensureCapacity");
+                forceCompile(ArrayList.class, "RangeCheck");
+                forceCompile(getClass("java.lang.AbstractStringBuilder"), "ensureCapacity");
+            } else {
+                forceCompile(ArrayList.class, "ensureCapacityInternal");
+                forceCompile(ArrayList.class, "rangeCheck");
+                forceCompile(getClass("java.lang.AbstractStringBuilder"), "ensureCapacityInternal");
+            }
+            forceCompile(Array.class, "newInstance");
+            forceCompile(Math.class, "min", SignatureDescriptor.fromJava(int.class, int.class, int.class));
+            forceCompile(Math.class, "max", SignatureDescriptor.fromJava(int.class, int.class, int.class));
+            forceCompile(ThreadLocal.class, "access$400");
+            forceCompile(getClass("java.lang.ThreadLocal$ThreadLocalMap"), "access$000");
+            forceCompile(getClass("java.lang.ThreadLocal$ThreadLocalMap"), "setThreshold");
+            forceCompile(getClass("java.lang.ThreadLocal$ThreadLocalMap$Entry"), "<init>");
+            forceCompile(Enum.class, "ordinal");
+            forceCompile(EnumMap.class, "unmaskNull");
+            forceCompile(FilterInputStream.class, "<init>");
+            forceCompile(Reference.class, "<init>");
+            forceCompile(Reference.class, "access$100");
+            forceCompile(WeakReference.class, "<init>");
+            forceCompile(String.class, "<init>", SignatureDescriptor.fromJava(void.class, int.class, int.class, char[].class));
+            forceCompile(String.class, "lastIndexOf", SignatureDescriptor.fromJava(int.class, String.class));
+            forceCompile(String.class, "lastIndexOf", SignatureDescriptor.fromJava(int.class, String.class, int.class));
+            forceCompile(String.class, "substring", SignatureDescriptor.fromJava(String.class, int.class));
+            forceCompile(Arrays.class, "copyOf", SignatureDescriptor.fromJava(char[].class, char[].class, int.class));
+            forceCompile(BitSet.class, "wordIndex");
+            forceCompile(Class.class, "getEnclosingMethodInfo");
+            forceCompile(java.util.regex.Matcher.class, "getTextLength");
+
+            // Compile the methods first, in case of a method used by the compilation system,
+            // which would cause runaway recursion.
+            Iterator<TargetMethod> iter = deoptMethods.iterator();
+            while (iter.hasNext()) {
+                TargetMethod tm = iter.next();
+                boolean instrument = true;
+                try {
+                    vm().compilationBroker.compile(tm.classMethodActor, Nature.BASELINE, false, true);
+                } catch (Throwable t) {
+                    // some failure that (likely) can't easily be expressed in cantBaseline
+                    iter.remove();
+                    instrument = false;
+                }
+                VMAOptions.logger.logInstrument(tm.classMethodActor, instrument);
+            }
+
+            VMAOptions.logger.logJdkDeopt("start deoptimizing");
+            new Deoptimization(deoptMethods).go();
+            VMAOptions.logger.logJdkDeopt("done deoptimizing");
+
+        }
+
+        private static Class<?> getClass(String name) {
+            try {
+                return Class.forName(name);
+            } catch (Throwable t) {
+                FatalError.unexpected("can't find class " + name);
+                return null;
+            }
+        }
+
+        private static void forceCompile(Class<?> klass, String methodName) {
+            forceCompile(klass, methodName, null);
+        }
+
+        @NEVER_INLINE
+        private static void forceCompile(Class<?> klass, String methodName, SignatureDescriptor sig) {
+            ClassMethodActor cma = ClassActor.fromJava(klass).findLocalClassMethodActor(SymbolTable.makeSymbol(methodName), sig);
+            assert cma != null;
+            cma.makeTargetMethod();
+        }
+
+        private static void checkDeopt(ClassMethodActor classMethodActor, ArrayList<TargetMethod> deoptMethods) {
+            TargetMethod tm = classMethodActor.currentTargetMethod();
+            if (tm != null) {
+                if (!tm.isBaseline()) {
+                    if (cantBaseline(classMethodActor)) {
+                        VMAOptions.logger.logInstrument(tm.classMethodActor, false);
+                    } else {
+                        deoptMethods.add(tm);
+                    }
+                } else {
+                    // already baseline compiled but not instrumented
+                    if (!(tm instanceof VMAT1XTargetMethod)) {
+                        deoptMethods.add(tm);
+                    }
+                }
+            }
+        }
+
+        private static boolean cantBaseline(ClassMethodActor classMethodActor) {
+            ClassMethodActor compilee = classMethodActor.compilee();
+            return Actor.isUnsafe(compilee.flags()) || (compilee.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
+        }
+
+
+    }
 }

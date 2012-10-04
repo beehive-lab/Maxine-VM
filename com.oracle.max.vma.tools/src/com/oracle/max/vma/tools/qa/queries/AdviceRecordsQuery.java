@@ -32,15 +32,44 @@ import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vma.tools.qa.*;
 import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
-
 public class AdviceRecordsQuery extends QueryBase {
+    private static final String[] INDENTS = new String[64];
+
+    static {
+        String s = "";
+        for (int i = 0; i < INDENTS.length; i++) {
+            INDENTS[i] = s;
+            s = s + "  ";
+        }
+    }
+
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
+        int fromIndex = 0;
+        int toIndex = traceRun.adviceRecordList.size();
+        boolean indenting = false;
+        int indent = 0;
+        // Checkstyle: stop modified control variable check
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if (arg.equals("-from")) {
+                fromIndex = Integer.parseInt(args[++i]);
+            } else if (arg.equals("-to")) {
+                toIndex = Integer.parseInt(args[++i]);
+            } else if (arg.equals("-indent")) {
+                indenting = true;
+            }
+        }
+        // Checkstyle : resume modified control variable check
         long chunkStartTime = System.currentTimeMillis();
         long processStartTime = chunkStartTime;
         long count = 0;
-        for (AdviceRecord ar : traceRun.adviceRecordList) {
+        for (int index = fromIndex; index < toIndex; index++) {
+            if (indenting) {
+                ps.print(INDENTS[indent]);
+            }
+            AdviceRecord ar = traceRun.adviceRecordList.get(index);
             RecordType rt = ar.getRecordType();
             ps.printf("%-10d %s %c%s %s ", timeValue(traceRun, ar.time), ar.thread, adviceId(ar), toBci(ar), rt);
             switch (rt) {
@@ -127,9 +156,18 @@ public class AdviceRecordsQuery extends QueryBase {
                 case ReturnFloat:
                 case ReturnDouble:
                     printValue(ps, rt, ar);
+                    indent--;
                     break;
                 case Return:
+                    indent--;
                     break;
+
+                case ReturnByThrow: {
+                    int pop = ar.getPackedValue();
+                    ps.printf("%s %d", getObjectRecord(ar), pop);
+                    indent -= pop;
+                    break;
+                }
 
                 case GetStatic:
                 case PutStaticDouble:
@@ -164,6 +202,7 @@ public class AdviceRecordsQuery extends QueryBase {
                     if (oar != null) {
                         ps.printf("(%s)", oar);
                     }
+                    indent++;
                     break;
                 }
 
@@ -185,10 +224,6 @@ public class AdviceRecordsQuery extends QueryBase {
                 case MonitorEnter:
                 case MonitorExit:
                     ps.print(getObjectRecord(ar));
-                    break;
-
-                case ReturnByThrow:
-                    ps.printf("%s %d", getObjectRecord(ar), ar.getPackedValue());
                     break;
 
                 case Removal:

@@ -21,10 +21,11 @@
  * questions.
  */
 
-package com.oracle.max.vm.ext.vma.handlers.objstate;
+package com.oracle.max.vm.ext.vma.handlers.objstate.bitset;
 
 import java.util.BitSet;
 
+import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.sun.max.annotate.INLINE;
 import com.sun.max.unsafe.Address;
 import com.sun.max.unsafe.Pointer;
@@ -34,6 +35,11 @@ import com.sun.max.vm.layout.xohm.XOhmGeneralLayout;
 import com.sun.max.vm.reference.Reference;
 
 /**
+ * Now defunct implementation that tracked the liveness of objects using bitsets and advice from the
+ * GC implementation on whether an object survived a GC. Not appropriate for a generational GC, for example,
+ * without a lot of work in the GC. Could be re-purposed to use weak references, at considerable overhead to
+ * the GC implementation.
+ *
  * This implementation uses two bitsets for tracking objects. The {@link #idSet} records the id of a live object, an id
  * simply being an index into the set. The set has a bit set for an object that is currently live.
  *
@@ -121,7 +127,7 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
     }
 
     @INLINE
-    @Override
+//    @Override
     public void incrementLifetime(Pointer cell) {
         long id = XOhmGeneralLayout.Static.readXtra(cell).asAddress().toLong();
         if (id > 0) {
@@ -134,10 +140,10 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
     }
 
     @Override
-    public synchronized void gc(RemovalTracker rt) {
+    public synchronized void gc(DeadObjectHandler rt) {
         for (int id = idSet.nextSetBit(1); id >= 0; id = idSet.nextSetBit(id + 1)) {
             if (!gcSet.get(id)) {
-                rt.removed(id);
+                rt.dead(id);
                 idSet.clear(id);
                 if (id < lowestFreeBit) {
                     lowestFreeBit = id;
