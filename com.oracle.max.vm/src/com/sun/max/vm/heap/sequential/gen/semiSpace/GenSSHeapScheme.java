@@ -43,7 +43,9 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.Heap.GCCallbackPhase;
 import com.sun.max.vm.heap.debug.*;
+import com.sun.max.vm.heap.debug.DebugHeap.ReferenceFinder;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.heap.gcx.EvacuationTimers.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.log.VMLog.Record;
@@ -320,6 +322,14 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     @INSPECTED
     private final EvacuatorToCardSpace oldSpaceEvacuator;
 
+    /**
+     * Record the decision taken at the end of a minor collection.
+     * This also simplifies the reference model of the inspector to identify whether the current
+     * {@link HeapPhase#MUTATING} is a temporary transition to full GC.
+     */
+    @INSPECTED
+    private boolean requiresFullGC;
+
     @INSPECTED
     private int fullCollectionCount;
 
@@ -354,10 +364,21 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(refVerifier);
 
     /**
-     * Used to record the prefix of the from space that was overflowed by a minor collection.
-     * Used mostly for verification purposes.
+     * Record the overflow area in from space of the last minor collection if one occurred.
+     * Updated in minor collection's {@link HeapPhase#ANALYZING}, just before the transition to {@link HeapPhase#RECLAIMING}.
+     * Reset in subsequent full collection's {@link HeapPhase#RECLAIMING}, just before the transition to {@link HeapPhase#MUTATING}.
+     * Used by the GC to pre-fill its survivor ranges so that the overflow area is accounted as root of collection.
+     * Used by the inspector to identify live reference after a minor collection.
      */
+    @INSPECTED
     private final MemoryRegion overflowedArea = new MemoryRegion();
+    @INSPECTED
+    private Address youngOverflowEvacuationMark = Address.zero();
+    private TIMED_OPERATION youngOverflowEvacuationOp;
+    @INSPECTED
+    private Address oldOverflowEvacuationMark = Address.zero();
+    private TIMED_OPERATION oldOverflowEvacuationOp;
+
 
     private final EvacuationTimers evacTimers = new EvacuationTimers();
 
@@ -488,14 +509,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             Memory.zapRegion(youngSpace.space);
         }
         final ContiguousHeapSpace oldToSpace = oldSpace.space;
-        final BaseAtomicBumpPointerAllocator oldSpaceAllocator = oldSpace.allocator;
 
         // Setup ref verifier appropriately.
         noFromSpaceReferencesVerifiers.setEvacuatedSpace(youngSpace);
         if (resizingPolicy.minorEvacuationOverflow()) {
             // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
-            overflowedArea.setStart(oldSpaceAllocator.start());
-            overflowedArea.setEnd(oldSpaceAllocator.unsafeTop());
             refVerifier.setValidSpaces(oldToSpace, overflowedArea);
         } else {
             refVerifier.setValidHeapSpace(oldSpace.space);
@@ -504,7 +522,15 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         if (resizingPolicy.minorEvacuationOverflow()) {
             // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
             noFromSpaceReferencesVerifiers.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
-            noFromSpaceReferencesVerifiers.visitCells(oldSpaceAllocator.start(), oldSpaceAllocator.unsafeTop());
+            noFromSpaceReferencesVerifiers.visitCells(overflowedArea.start(), overflowedArea.end());
+            if (MaxineVM.isDebug()) {
+                referenceFinder.setFatalErrorAction(fatalErrorAction);
+                referenceFinder.setSearchedReference(youngOverflowEvacuationMark);
+                Heap.bootHeapRegion.visitCells(referenceFinder);
+                referenceFinder.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
+                referenceFinder.visitCells(overflowedArea.start(), overflowedArea.end());
+                referenceFinder.setFatalErrorAction(null);
+            }
         } else {
             oldSpace.visit(noFromSpaceReferencesVerifiers);
         }
@@ -525,18 +551,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         // NOTE: counter must be incremented before a heap phase change  to ANALYZING.
         fullCollectionCount++;
         lastFullCollectionInvocationCount = genCollection.invocationCount();
-        // Gather information needed in case we overflowed.fullCollectionCount
-        // We need these because the flipSpace method refill the allocator from the start of the to-space.
-        final boolean minorEvacuationOverflow = resizingPolicy.minorEvacuationOverflow();
-        final Address oldAllocatorTop =  oldSpace.allocator.unsafeTop();
         oldSpace.flipSpaces();
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
         oldSpaceEvacuator.setGCOperation(genCollection);
-        if (minorEvacuationOverflow) {
-            final Address startRange =  oldSpace.allocator.start();
-            resizingPolicy.notifyMinorEvacuationOverflowRange(startRange, oldAllocatorTop);
-            oldSpace.allocator.unsafeSetTop(oldAllocatorTop);
-            oldSpaceEvacuator.prefillSurvivorRanges(startRange, oldAllocatorTop);
+        if (resizingPolicy.minorEvacuationOverflow()) {
+            oldSpace.allocator.unsafeSetTop(overflowedArea.end());
+            oldSpaceEvacuator.prefillSurvivorRanges(overflowedArea.start(), overflowedArea.end());
         }
         oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
         oldSpaceEvacuator.evacuate(Heap.logGCPhases());
@@ -564,6 +584,17 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
     }
 
+    final DebugHeap.ReferenceFinder referenceFinder = new ReferenceFinder(false);
+    // FIXME: REMOVE temp debug
+    final Runnable fatalErrorAction = new Runnable() {
+        public void run() {
+            Log.print(" initial evacuation mark ");
+            Log.println(youngSpaceEvacuator.initialEvacuationMark());
+            Log.printRange(oldSpace.space.start(), oldSpace.space.committedEnd(), true);
+            Log.printRange(oldSpace.allocator.start(), oldSpace.allocator.unsafeTop(), true);
+        }
+    };
+
     @Override
     public Address refillEvacuationBuffer() {
         final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
@@ -583,18 +614,26 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 // Refill using the from space.
                 final ContiguousHeapSpace fromSpace = oldSpace.fromSpace;
                 // Left-over in allocator is not formated.
-                Address endOfSpaceLeft = allocator.hardLimit();
-                if (endOfSpaceLeft.greaterThan(startOfSpaceLeft)) {
-                    DarkMatter.format(startOfSpaceLeft, endOfSpaceLeft);
+                final Address endOfSpaceLeft = allocator.hardLimit();
+                final Address darkMatter = startOfSpaceLeft;
+                if (endOfSpaceLeft.greaterThan(darkMatter)) {
+                    DarkMatter.format(darkMatter, endOfSpaceLeft);
                 }
                 // Notify that we need to run a full GC immediately after this overflowing minor collection.
                 resizingPolicy.notifyMinorEvacuationOverflow();
+                youngOverflowEvacuationMark = darkMatter;
+                youngOverflowEvacuationOp = youngSpaceEvacuator.currentEvacuationOperation();
                 youngSpaceEvacuator.enableDarkMatterRefCheck(true);
                 oldSpaceEvacuator.enableDarkMatterRefCheck(true);
                 // Refill the allocator with the old from space.
                 spaceLeft = fromSpace.committedSize();
                 allocator.refill(fromSpace.start(), spaceLeft);
                 startOfSpaceLeft = allocator.unsafeSetTopToLimit();
+                // FIXME: REMOVE temp debug.
+                if (MaxineVM.isDebug()) {
+                    referenceFinder.setSearchedReference(darkMatter);
+                    Heap.bootHeapRegion.visitCells(referenceFinder);
+                }
             }
             HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
             return startOfSpaceLeft;
@@ -627,6 +666,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             // Need to refill old gen allocator with the (now empty) young gen space.
             resizingPolicy.notifyOutOfMemory();
             resizingPolicy.notifyFullEvacuationOverflow();
+            oldOverflowEvacuationMark = startOfSpaceLeft;
+            oldOverflowEvacuationOp = oldSpaceEvacuator.currentEvacuationOperation();
             final Size refillSize = youngSpace.space.committedSize();
             startOfSpaceLeft = youngSpace.space.start();
             allocator.refill(startOfSpaceLeft, refillSize);
@@ -701,6 +742,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         youngSpaceEvacuator.setGCOperation(genCollection);
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
         youngSpaceEvacuator.evacuate(Heap.logGCPhases());
+        if (resizingPolicy.minorEvacuationOverflow()) {
+            overflowedArea.setStart(oldSpace.allocator.start());
+            overflowedArea.setEnd(oldSpace.allocator.unsafeTop());
+            resizingPolicy.notifyMinorEvacuationOverflowRange(overflowedArea);
+        }
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
         youngSpaceEvacuator.setGCOperation(null);
         if (MaxineVM.isDebug() && Heap.verbose()) {
@@ -730,8 +776,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                             evacTimers.get(WEAK_REF).getLastElapsedTime());
             timeLogger.logGcTimes(invocationCount, true, evacTimers.get(TOTAL).getLastElapsedTime());
         }
-        final boolean performFullGC = resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace(), oldSpaceMutatorOverflow) || AlwaysFullGC;
-        if (performFullGC) {
+        requiresFullGC = resizingPolicy.shouldPerformFullGC(estimatedEvac, oldSpace.freeSpace(), oldSpaceMutatorOverflow) || AlwaysFullGC;
+        if (requiresFullGC) {
             // Force a temporary transition to MUTATING state.
             // This simplifies the inspector's maintenance of references state and GC counters.
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
@@ -783,10 +829,18 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 gcRequest.oldGenOverflow ? oldSpace.freeSpace().greaterEqual(gcRequest.requestedBytes) :
                 youngSpace.freeSpace().greaterEqual(gcRequest.requestedBytes);
         }
+        overflowedArea.setStart(Address.zero());
+        overflowedArea.setSize(Size.zero());
+        youngOverflowEvacuationMark = Address.zero();
+        oldOverflowEvacuationMark = Address.zero();
+        youngOverflowEvacuationOp = null;
+        oldOverflowEvacuationOp = null;
         final long endGCTime = System.currentTimeMillis();
-        if (performFullGC) {
-            gcRequest.fullGCOccurred = performFullGC;
+        if (requiresFullGC) {
+            gcRequest.fullGCOccurred = requiresFullGC;
             lastFullGCTime = endGCTime;
+            // clearing this flag must be done before moving to the MUTATING phase to avoid the inspector's confusion.
+            requiresFullGC = false;
         }
         accumulatedGCTime = endGCTime - startGCTime;
         Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
@@ -929,7 +983,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             }
             // Make the heap inspectable
             HeapScheme.Inspect.init(true);
-            // HeapScheme.Inspect.notifyHeapRegions(youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
+            // Register the regions (so, in particular, they can be retrieved when the inspector attaching to a core / a running vm)
+            HeapScheme.Inspect.notifyHeapRegions(youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
         } finally {
             Heap.disableImmortalMemoryAllocation();
         }

@@ -43,10 +43,10 @@ import com.sun.max.vm.heap.sequential.gen.semiSpace.*;
 
 /**
  * Inspector support for working with VM sessions using the VM's simple
-* {@linkplain GenSSHeapScheme generational collector},
-* an implementation of the VM's {@link HeapScheme} interface.
-* WORK IN PROGRESS.
-*/
+ * {@linkplain GenSSHeapScheme generational collector},
+ * an implementation of the VM's {@link HeapScheme} interface.
+ * WORK IN PROGRESS.
+ */
 public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager, VmCardTableHeap, VmRelocatingHeap {
     private static final int TRACE_VALUE = 1;
     /**
@@ -68,41 +68,129 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
      * Track full completed collection count. Updated only when entering the reclaiming phase of a full GC.
      */
     private long lastCompletedFullCollectionCount = 0L;
-    private boolean fullGC = false;
-    private boolean initialized = false;
+    /**
+     * Indicates whether the current {@link HeapPhase#ANALYZING} or {@link HeapPhase#RECLAIMING} phases are for an old generation collection.
+     */
+    private boolean isFullGC = false;
+    /**
+     * Indicates whether the current {@link HeapPhase#MUTATING} phase is a non-allocating transition between minor and full collection.
+     * If set while in the {@link HeapPhase#MUTATING} phase, the young generation doesn't hold any live objects and there should be no live reference to young generation addresses.
+     */
+    private boolean requiresFullGC;
 
-    private boolean isFullGC() {
-        return fullGC;
-    }
+    private boolean initialized = false;
 
     private void updateFullGCStatus() {
         int fullCollectionCount = scheme.fullCollectionCount();
-        fullGC = fullCollectionCount > lastCompletedFullCollectionCount;
+        isFullGC = fullCollectionCount > lastCompletedFullCollectionCount;
+    }
+
+
+    /**
+     * Helper class to describe live ranges of old objects produced by an evacuation.
+     * Only two instances: one for evacuation of the young generation, the other for evacuation
+     * of the old generation.
+     * In both case, objects are evacuated in the old to-space and overflow may occurs.
+     * On overflow, objects are evacuated in an overflow area.
+     * The overflow area is the old from space for young generation evacuations, and the young generation
+     * for old generation evacuation.
+     * If no overflow occurred, survivors resides in one range defined by the initial evacuation mark and the top of the evacuation's allocator.
+     * If overflow occurred, survivors resides in two ranges: a range in the old-to space between the initial evacuation mark and the overflow mark,
+     * and the range in the overflow area between the start and top of the old space allocator (now set to the overflow area).
+     */
+    final class SurvivorRangesInfo {
+        final MemoryRegion survivorRange = new MemoryRegion();
+        final MemoryRegion overflowRange = new MemoryRegion();
+        final RemoteReference evacuator;
+        boolean overflowOccurred;
+        boolean updated = false;
+
+        SurvivorRangesInfo(RemoteReference evacuator) {
+            this.evacuator = evacuator;
+        }
+
+        private void checkValidUse() {
+            assert updated;
+        }
+
+        private boolean requiresUpdate() {
+            return
+                (phase() == ANALYZING && (isFullGC ? this == oldSurvivorRanges : this == youngSurvivorRanges)) ||
+                (phase() == MUTATING && requiresFullGC && this == youngSurvivorRanges) ||
+                (phase() == RECLAIMING && (isFullGC ? this == oldSurvivorRanges : this == youngSurvivorRanges));
+        }
+
+        void updateRanges(boolean evacuationOverflow, Address overflowEvacuationMark) {
+            if (!requiresUpdate()) {
+                return;
+            }
+            this.overflowOccurred = evacuationOverflow;
+            survivorRange.setStart(scheme.initialEvacuationMark(evacuator));
+            Address oldAllocatorTop = phase() == ANALYZING ? scheme.ptop(evacuator) : overflowArea.getRegionEnd();
+            if (overflowOccurred) {
+                survivorRange.setEnd(overflowEvacuationMark);
+                overflowRange.setStart(oldAllocator.start());
+                overflowRange.setEnd(oldAllocatorTop);
+            } else {
+                survivorRange.setEnd(oldAllocatorTop);
+                overflowRange.setStart(Address.zero());
+                overflowRange.setSize(Size.zero());
+            }
+            updated = true;
+        }
+
+        boolean inSurvivorRanges(Address origin) {
+            checkValidUse();
+            return survivorRange.contains(origin) || overflowRange.contains(origin);
+        }
+
+        boolean isPlausibleSurvivor(Address origin) {
+            return inSurvivorRanges(origin) && objects().isPlausibleOriginUnsafe(origin);
+        }
+
+        boolean isPlausibleForwardingAddress(Address forwardingAddress) {
+            if (inSurvivorRanges(forwardingAddress)) {
+                Address possibleOrigin = objects().forwardingPointerToOriginUnsafe(forwardingAddress);
+                return possibleOrigin.isNotZero() && objectStatusAt(possibleOrigin).isLive();
+            }
+            return false;
+        }
+
+        boolean inOldRanges(Address origin) {
+            checkValidUse();
+            if (overflowOccurred) {
+                return (origin.greaterEqual(oldTo.getRegionStart()) && origin.lessThan(survivorRange.end())) || overflowRange.contains(origin);
+            } else {
+                return oldAllocator.containsInAllocated(origin);
+            }
+        }
+
+        boolean isPlausibleOld(Address origin) {
+            return inOldRanges(origin) && objects().isPlausibleOriginUnsafe(origin);
+        }
     }
     /**
-     * Range of old to-space holding the survivors of the latest old generation collection.
-     * Updated once per update cycle.
+     * Describes live ranges produced by a young generation evacuation.
+     * Updated once per update cycle that requires its uses as described below.
+     * It is used during minor collections, in {@link HeapPhase#ANALYZING} to identify promoted objects and their forwarders,
+     * and in {@link HeapPhase#RECLAIMING} to identify live old objects.
+     * If the collection upgrade to full collection it is also used during the fake {@link HeapPhase#MUTATING} phase
+     * between the young and old generation collections.
      */
-    private final MemoryRegion oldSurvivorRange = new MemoryRegion();
+    SurvivorRangesInfo youngSurvivorRanges;
     /**
-     * Range of young space used when a full GC overflow occurred to hold the survivors of the latest old generation collection.
+     * Updated once per update cycle that requires its uses as described below.
      * Updated once per update cycle.
+     * Used during old generation collection, in {@link HeapPhase#ANALYZING} to identify old surviving objects and their forwarders,
+     *  in {@link HeapPhase#RECLAIMING} to identify live objects.
      */
-    private final MemoryRegion oldOverflowRange = new MemoryRegion();
-    /**
-     * Range of old to-space holding the survivors of the latest young generation collection.
-     * Updated once per update cycle.
-     */
-    private final MemoryRegion youngSurvivorRange = new MemoryRegion();
-    /**
-     * Range of old from-space used when a minor GC overflow occurred to hold the survivors of the latest young generation collection.
-     * Updated once per update cycle.
-     */
-    private final MemoryRegion youngOverflowRange = new MemoryRegion();
+    SurvivorRangesInfo oldSurvivorRanges;
+
 
     private TeleContiguousHeapSpace nursery;
     private TeleContiguousHeapSpace oldFrom;
     private TeleContiguousHeapSpace oldTo;
+    private TeleMemoryRegion overflowArea;
     private TeleCardTableRSet cardTableRSet;
     private TeleBaseAtomicBumpPointerAllocator nurseryAllocator;
     private TeleBaseAtomicBumpPointerAllocator oldAllocator;
@@ -122,7 +210,10 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     boolean oldEvacuationOverflow = false;
 
     /**
-     * Map VM addresses in the nursery to {@link GenSSRemoteReference} that refer to the object whose origin is at that location.
+     * Map VM addresses in the nursery to {@link GenSSRemoteReference} that refer to the object whose origin is at that location, except
+     * for addresses corresponding to overflowed old evacuation survivors when in full GC {@link HeapPhase#ANALYZING}.
+     * Reference in this map can be in either of these states: {@linkplain GenSSRemoteReference.RefState#YOUNG_REF_LIVE},
+     * {@linkplain GenSSRemoteReference.RefState#YOUNG_FORWARDER}, {@linkplain GenSSRemoteReference.RefState#YOUNG_REF_FROM}.
      */
     private WeakRemoteReferenceMap<GenSSRemoteReference> nurseryRefMap = new WeakRemoteReferenceMap<GenSSRemoteReference>();
     /**
@@ -145,13 +236,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
      * <strong>Invariant</strong>: the map holds only objects with status {@linkplain ObjectStatus#FREE FREE} or {@linkplain ObjectStatus#DARK DARK}.
      */
     private WeakRemoteReferenceMap<GenSSRemoteReference> unallocatedRefMap = new WeakRemoteReferenceMap<GenSSRemoteReference>();
-
-    /**
-     * Map VM addresses in the from space area of the old generation to {@link GenSSRemoteReference} that refer to objects whose origin is at that location.
-     * This maps is used only when a minor evacuation overflow to the from space.
-     * The overflowRefMap is merged in the to space refmap when full GC begins.
-     */
-    private WeakRemoteReferenceMap<GenSSRemoteReference> overflowRefMap = new WeakRemoteReferenceMap<GenSSRemoteReference>();
 
     public RemoteGenSSHeapScheme(TeleVM vm) {
         super(vm);
@@ -239,7 +323,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     }
 
     private void beginAnalyzing(String action, WeakRemoteReferenceMap<GenSSRemoteReference> refMap) {
-        final boolean minorCollection = !isFullGC();
+        final boolean minorCollection = !isFullGC;
         final String prefix =  tracePrefix() + "first halt in " + (minorCollection ? "MINOR" : "FULL") + " GC cycle=" + gcStartedCount() + ", ";
         Trace.begin(TRACE_VALUE,  prefix + action);
         List<GenSSRemoteReference> references = refMap.values();
@@ -251,7 +335,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
 
 
     private void updateForwardedReferences(WeakRemoteReferenceMap<GenSSRemoteReference> fromSpaceMap, WeakRemoteReferenceMap<GenSSRemoteReference> toSpaceMap) {
-        final boolean minorCollection = !isFullGC();
+        final boolean minorCollection = !isFullGC;
         final String prefix =  tracePrefix() + "checking forwarding refs, " + (minorCollection ? "MINOR" : "FULL") +  " GC cycle=" + gcStartedCount();
         int newlyForwarded = 0;
         int live = 0;
@@ -294,7 +378,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     }
 
     private void updatedReclaimedReference(WeakRemoteReferenceMap<GenSSRemoteReference> fromSpaceMap, WeakRemoteReferenceMap<GenSSRemoteReference> toSpaceMap) {
-        final boolean minorCollection = !isFullGC();
+        final boolean minorCollection = !isFullGC;
         final String prefix =  tracePrefix() + "first halt in  RECLAIMING phase of " + (minorCollection ? "MINOR" : "FULL") +  " GC cycle=" + gcStartedCount();
         Trace.begin(TRACE_VALUE, prefix + " -- clear forwarded & remove dead references");
         for (GenSSRemoteReference ref : toSpaceMap.values()) {
@@ -341,7 +425,11 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     }
 
     public boolean canCreateLive() {
-        return !(isFullGC() && lastReclaimingPhaseCount < gcStartedCount());
+        return !(isFullGC && lastReclaimingPhaseCount < gcStartedCount());
+    }
+
+    public boolean isInOverflowArea(Address origin) {
+        return overflowArea.contains(origin);
     }
 
     private boolean checkNoOverlap(WeakRemoteReferenceMap<GenSSRemoteReference> map1, WeakRemoteReferenceMap<GenSSRemoteReference> map2) {
@@ -355,21 +443,6 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         return true;
     }
 
-    private void updateEvacuator(RemoteReference evacuator, MemoryRegion survivorRange, MemoryRegion overflowRange, boolean overflowOccurred) {
-        Address initialMark = scheme.initialEvacuationMark(evacuator);
-        Address ptop = scheme.ptop(evacuator);
-        survivorRange.setStart(initialMark);
-        if (overflowOccurred) {
-            survivorRange.setEnd(oldTo.committedEnd());
-            overflowRange.setStart(oldAllocator.start());
-            overflowRange.setEnd(ptop);
-        } else {
-            survivorRange.setEnd(ptop);
-            overflowRange.setStart(Address.zero());
-            overflowRange.setSize(Size.zero());
-        }
-    }
-
     @Override
     public void updateMemoryStatus(long epoch) {
         super.updateMemoryStatus(epoch);
@@ -379,13 +452,15 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             return;
         }
         if (heapRegions.size() < MAX_VM_HEAP_REGIONS) {
-            updateFreeHubOrigins();
             initializeHeapRegions();
             if (heapRegions.size() < MAX_VM_HEAP_REGIONS) {
                 return;
             }
             nurseryAllocator = scheme.readYoungSpaceAllocator();
             oldAllocator = scheme.readOldSpaceAllocator();
+            overflowArea = scheme.readYoungOverflowArea();
+            youngSurvivorRanges = new SurvivorRangesInfo(scheme.youngSpaceEvacuator());
+            oldSurvivorRanges = new SurvivorRangesInfo(scheme.oldSpaceEvacuator());
         }
 
         if (epoch > lastUpdateEpoch) {
@@ -403,32 +478,44 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             cardTableRSet.updateCache(epoch);
             minorEvacuationOverflow = scheme.minorEvacuationOverflow();
             oldEvacuationOverflow = scheme.oldEvacuationOverflow();
+            requiresFullGC = scheme.requiresFullCollection();
+            updateFullGCStatus();
+            // The following two requires the above information, so should be done last.
+            youngSurvivorRanges.updateRanges(minorEvacuationOverflow, scheme.youngOverflowEvacuationMark());
+            oldSurvivorRanges.updateRanges(oldEvacuationOverflow, scheme.oldOverflowEvacuationMark());
             /*
              * For this collector, we only need an overall review of reference state when we're actually collecting.
              */
             if (phase().isCollecting()) {
-                updateFullGCStatus();
-                updateEvacuator(scheme.youngSpaceEvacuator(), youngSurvivorRange, youngOverflowRange, minorEvacuationOverflow);
-                if (fullGC) {
-                    updateEvacuator(scheme.oldSpaceEvacuator(), oldSurvivorRange, oldOverflowRange, oldEvacuationOverflow);
-                }
-               /*
+                /*
                  * Check first if a GC cycle has started since the last time we looked.
                  */
                 if (lastAnalyzingPhaseCount < gcStartedCount()) {
-                    assert lastAnalyzingPhaseCount == gcStartedCount() - 1;
+                    assert lastAnalyzingPhaseCount == gcStartedCount() - 1 || TeleVM.mode != MaxInspectionMode.CREATE;
                     assert oldFromSpaceRefMap.isEmpty();
                     assert promotedRefMap.isEmpty();
-                    if (isFullGC()) {
+                    if (isFullGC) {
                         final TeleContiguousHeapSpace tempHeapSpace = oldTo;
                         oldTo = oldFrom;
                         oldFrom = tempHeapSpace;
                         final WeakRemoteReferenceMap<GenSSRemoteReference> tempRefMap = oldToSpaceRefMap;
                         oldToSpaceRefMap = oldFromSpaceRefMap;
                         oldFromSpaceRefMap = tempRefMap;
+                        if (minorEvacuationOverflow) {
+                            // There might be references in oldFromSpaceRefMap with an origin in to-space after we flipped
+                            // (those that were evacuated in the overflow area).
+                            // We need to move them to the oldToSpaceMap as they are considered live now.
+                            for (GenSSRemoteReference ref : oldFromSpaceRefMap.values()) {
+                                Address origin = ref.origin();
+                                if (overflowArea.contains(origin)) {
+                                    oldFromSpaceRefMap.remove(origin);
+                                    oldToSpaceRefMap.put(origin, ref);
+                                }
+                            }
+                        }
                         // Transition the state of all references that are now in the old from-Space
                         beginAnalyzing("flip old generation semi spaces", oldFromSpaceRefMap);
-                        GenSSRemoteReference.checkNoLiveRef(oldToSpaceRefMap, false);
+                        GenSSRemoteReference.checkNoLiveRef(oldFromSpaceRefMap, false);
                     } else {
                         beginAnalyzing("turn all young refs into young from refs ", nurseryRefMap);
                     }
@@ -438,7 +525,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                  * If we're still analyzing, we need to update references to objects that may have been forwarded during this GC cycle.
                  */
                 if (lastReclaimingPhaseCount < gcStartedCount()) {
-                    if (isFullGC()) {
+                    if (isFullGC) {
                         updateForwardedReferences(oldFromSpaceRefMap, oldToSpaceRefMap);
                         GenSSRemoteReference.checkNoLiveRef(oldToSpaceRefMap, false);
                     } else {
@@ -454,7 +541,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                      */
                     assert lastReclaimingPhaseCount == gcStartedCount() - 1;
                     lastReclaimingPhaseCount = gcStartedCount();
-                    if (isFullGC()) {
+                    if (isFullGC) {
                         updatedReclaimedReference(oldFromSpaceRefMap, oldToSpaceRefMap);
                         lastCompletedFullCollectionCount = scheme.fullCollectionCount();
                     } else {
@@ -540,57 +627,55 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         }
         switch(phase()) {
             case MUTATING:
-                if ((oldTo.contains(origin) && origin.lessThan(oldAllocator.top()) || nurseryAllocator.containsInAllocated(origin)) &&
+                if (requiresFullGC && youngSurvivorRanges.isPlausibleOld(origin)) {
+                    // fake mutating phase between young and old generation collections of a full GC.
+                    return ObjectStatus.LIVE;
+                } else if ((nurseryAllocator.containsInAllocated(origin) || oldAllocator.containsInAllocated(origin)) &&
                                 objects().isPlausibleOriginUnsafe(origin)) {
+                    // standard MUTATING phase.
                     return ObjectStatus.LIVE;
                 }
                 break;
             case ANALYZING:
-                if (fullGC) {
+                if (isFullGC) {
+                    if (oldSurvivorRanges.isPlausibleSurvivor(origin)) {
+                        // a survivor old object
+                        return ObjectStatus.LIVE;
+                    }
                     if (oldFrom.containsInAllocated(origin)) {
                         if (objects().hasForwardingAddressUnsafe(origin)) {
                             final Address forwardAddress = objects().getForwardingAddressUnsafe(origin);
-                            if (oldAllocator.containsInAllocated(forwardAddress) && objects().isPlausibleOriginUnsafe(forwardAddress)) {
+                            if (oldSurvivorRanges.isPlausibleSurvivor(forwardAddress)) {
+                                // a forwarder to a surviving old object
                                 return ObjectStatus.FORWARDER;
                             }
                         } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                            // an old from object
                             return ObjectStatus.LIVE;
                         }
-                    } else if ((oldSurvivorRange.contains(origin) || oldOverflowRange.contains(origin)) && objects().isPlausibleOriginUnsafe(origin)) {
-                        return ObjectStatus.LIVE;
                     }
                 } else if (nursery.containsInAllocated(origin)) {
                     if (objects().hasForwardingAddressUnsafe(origin)) {
                         final Address forwardAddress = objects().getForwardingAddressUnsafe(origin);
-                        if (oldAllocator.containsInAllocated(forwardAddress) && objects().isPlausibleOriginUnsafe(forwardAddress)) {
+                        if (youngSurvivorRanges.isPlausibleSurvivor(forwardAddress)) {
+                            // a forwarder to a promoted object
                             return ObjectStatus.FORWARDER;
                         }
                     } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                        // a young object
                         return ObjectStatus.LIVE;
                     }
-                } else if ((youngSurvivorRange.contains(origin) || youngOverflowRange.contains(origin)) && objects().isPlausibleOriginUnsafe(origin)) {
+                } else if (youngSurvivorRanges.isPlausibleSurvivor(origin)) {
                     // A promoted young object
                     return ObjectStatus.LIVE;
-                } else if (oldTo.contains(origin) && origin.lessThan(youngSurvivorRange.start()) && objects().isPlausibleOriginUnsafe(origin)) {
+                } else if (youngSurvivorRanges.isPlausibleOld(origin)) {
                     // An old live object
                     return ObjectStatus.LIVE;
                 }
                 break;
             case RECLAIMING:
-                // Whether full or minor collection, the nursery and old from space are always empty during the reclaiming phase.
-                if (fullGC && oldEvacuationOverflow) {
-                    assert nursery.contains(oldAllocator.top());
-                    // there might be live objects in the young generation which serves as overflow area to the old generation evacuator
-                    if ((oldTo.contains(origin) || (nursery.contains(origin) && origin.lessThan(oldAllocator.top()))) && objects().isPlausibleOriginUnsafe(origin)) {
-                        return ObjectStatus.LIVE;
-                    }
-                } else if (minorEvacuationOverflow && !fullGC) {
-                    assert oldFrom.contains(oldAllocator.top());
-                    // there might be live objects in the old from-space which serves as overflow area to the young generation evacuator
-                    if ((oldTo.contains(origin) || (oldFrom.contains(origin) && origin.lessThan(oldAllocator.top()))) && objects().isPlausibleOriginUnsafe(origin)) {
-                        return ObjectStatus.LIVE;
-                    }
-                } else if (oldTo.contains(origin) && origin.lessThan(oldAllocator.top()) && objects().isPlausibleOriginUnsafe(origin)) {
+                SurvivorRangesInfo survivorRanges = isFullGC ? oldSurvivorRanges : youngSurvivorRanges;
+                if (survivorRanges.isPlausibleOld(origin)) {
                     return ObjectStatus.LIVE;
                 }
                 break;
@@ -602,14 +687,11 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
 
     public boolean isForwardingAddress(Address forwardingAddress) {
         if (phase() == HeapPhase.ANALYZING) {
-            Address possibleOrigin = Address.zero();
-            boolean inSurvivorRange = fullGC ?
-                 oldSurvivorRange.contains(forwardingAddress) || oldOverflowRange.contains(forwardingAddress) :
-                 youngSurvivorRange.contains(forwardingAddress) || youngOverflowRange.contains(forwardingAddress);
-            if (inSurvivorRange) {
-                possibleOrigin = objects().forwardingPointerToOriginUnsafe(forwardingAddress);
+            if (isFullGC) {
+                return oldSurvivorRanges.isPlausibleForwardingAddress(forwardingAddress);
+            } else {
+                return youngSurvivorRanges.isPlausibleForwardingAddress(forwardingAddress);
             }
-            return possibleOrigin.isNotZero() && objectStatusAt(possibleOrigin).isLive();
         }
         return false;
     }
@@ -634,79 +716,70 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         return reference != null && reference.status().isQuasi() ? reference : null;
     }
 
-    private int overflowReferenceCount = 0;
     /**
      * Creates a reference of the appropriate kind if there is an object or <em>quasi</em>
      * object at the specified origin in VM memory.
-     * <p>
-     * Using this shared internal method has advantage that the logic is all in one place.
-     * The disadvantage is that references will be created unnecessarily.  That effect should
-     * be small, though.  The most common use case is to look for a live object, and the number
-     * of live objects dominates the number of <em>quasi</em> objects.  Looking for <em>quasi</em>
-     * objects only will probably succeed most of the time anyway, because callers are likely to
-     * have already checked the object's status before making the reference.
+     *
+    * @param origin an absolute memory location in the VM.
+     * @return a remote reference to an object in the VM, {@code null} if no object
+     * @throws TeleError if the origin is not in the memory regions being managed or if invariant to the reference model are violated.
      */
     private RemoteReference internalMakeRef(Address origin) {
         GenSSRemoteReference ref = null;
         switch(phase()) {
             case MUTATING:
-                if (nurseryAllocator.containsInAllocated(origin)) {
-                    ref = nurseryRefMap.get(origin);
-                    if (ref != null) {
-                        // A reference to the object is already in one of the live map.
-                        TeleError.check(ref.status().isLive());
-                    } else if (objects().isPlausibleOriginUnsafe(origin)) {
-                        ref = GenSSRemoteReference.createLive(this, origin, true);
-                        nurseryRefMap.put(origin, ref);
-                    }
-                    break;
-                }
-                // Fall-off and check live old objects. Same logic as for the reclaiming phase for old objects.
-            case RECLAIMING:
-                WeakRemoteReferenceMap<GenSSRemoteReference> oldAllocatorRefMap = oldToSpaceRefMap;
-                if (minorEvacuationOverflow) {
-                    // The oldAllocator doesn't point to the from space but to the overflow area. The from space is full so we can check against it directly.
-                    if (oldTo.containsInAllocated(origin)) {
-                        ref = oldToSpaceRefMap.get(origin);
-                        if (ref != null) {
-                            // A reference to the object is already in one of the live map.
-                            TeleError.check(ref.status().isLive());
-                        } else if (objects().isPlausibleOriginUnsafe(origin)) {
-                            ref = GenSSRemoteReference.createLive(this, origin, false);
-                            oldToSpaceRefMap.put(origin, ref);
-                        }
+                WeakRemoteReferenceMap<GenSSRemoteReference> map = null;
+                if (requiresFullGC) {
+                    if (youngSurvivorRanges.inOldRanges(origin)) {
+                        map = oldToSpaceRefMap;
+                    } else {
+                        // not a valid object reference.
                         break;
                     }
-                    // We will check against the allocator, make sure we put the reference in the overflow map.
-                    oldAllocatorRefMap = overflowRefMap;
+                } else if (nurseryAllocator.containsInAllocated(origin)) {
+                    map = nurseryRefMap;
+                } else if (oldAllocator.containsInAllocated(origin)) {
+                    map = oldToSpaceRefMap;
+                } else {
+                    // not a valid object reference.
+                    break;
                 }
-                // There are no young object while in the reclaiming phase.
-                if (oldAllocator.containsInAllocated(origin)) {
-                    ref = oldAllocatorRefMap.get(origin);
+                assert map != null;
+                ref = map.get(origin);
+                if (ref != null) {
+                    TeleError.check(ref.status().isLive());
+                } else if (objects().isPlausibleOriginUnsafe(origin)) {
+                    ref = GenSSRemoteReference.createLive(this, origin, true);
+                    map.put(origin, ref);
+                }
+                // Otherwise, not a valid object reference.
+                break;
+            case RECLAIMING:
+                // We are either in RECLAIMING phase and there are no young objects (except for old evacuation overflow)
+                SurvivorRangesInfo survivorRanges = isFullGC ? oldSurvivorRanges : youngSurvivorRanges;
+                if (survivorRanges.isPlausibleOld(origin)) {
+                    ref = oldToSpaceRefMap.get(origin);
                     if (ref != null) {
                         // A reference to the object is already in one of the live map.
                         TeleError.check(ref.status().isLive());
                     } else if (objects().isPlausibleOriginUnsafe(origin)) {
                         ref = GenSSRemoteReference.createLive(this, origin, false);
-                        oldAllocatorRefMap.put(origin, ref);
+                        oldToSpaceRefMap.put(origin, ref);
                     }
                 }
+                // Otherwise, reference is unknown.
                 break;
             case ANALYZING:
-                if (isFullGC()) {
-                    /*
-                     * Full GC. Nursery is empty.
-                     */
-                    if (oldSurvivorRange.contains(origin) || oldOverflowRange.contains(origin)) {
+                if (isFullGC) {
+                    // Full GC. Nursery is empty and only used as overflow area. The nursery ref map must be left empty.
+                    if (oldSurvivorRanges.inSurvivorRanges(origin)) {
                         ref = oldToSpaceRefMap.get(origin);
                         if (ref != null) {
                             // A reference to the object is already in one of the live map.
                             TeleError.check(ref.status().isLive());
                         } else if (objects().isPlausibleOriginUnsafe(origin)) {
-                            /*
-                             * A newly discovered object in the old To-Space.  In the analyzing phase of a full GC, the object must be a
-                             * copy of a forwarded object.
-                             */
+                            // A newly discovered object in the old To-Space.  In the analyzing phase of a full GC, the object must be a
+                            // copy of a forwarded object.
                             ref = GenSSRemoteReference.createOldTo(this, origin, false);
                             oldToSpaceRefMap.put(origin, ref);
                         }
@@ -716,11 +789,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                 } else {
                     if (nursery.containsInAllocated(origin)) {
                         ref = makeForwardedReference(origin, nurseryRefMap, promotedRefMap, true);
-                        break;
-                    }
-                    boolean isPromoted = youngSurvivorRange.contains(origin) || youngOverflowRange.contains(origin);
-                    boolean isOldLive = oldTo.containsInAllocated(origin) && origin.lessThan(youngSurvivorRange.start());
-                    if (isPromoted) {
+                    } else if (youngSurvivorRanges.inSurvivorRanges(origin)) {
                         ref = promotedRefMap.get(origin);
                         if (ref != null) {
                             TeleError.check(ref.status().isLive() && !ref.status().isForwarder());
@@ -728,11 +797,11 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                             ref = GenSSRemoteReference.createOldTo(this, origin, true);
                             promotedRefMap.put(origin, ref);
                         }
-                    } else if (isOldLive) {
+                    } else if (youngSurvivorRanges.inOldRanges(origin)) {
                         ref = oldToSpaceRefMap.get(origin);
                         if (ref != null) {
                             // A reference to the object is already in one of the live map.
-                            TeleError.check(ref.status().isLive());
+                            TeleError.check(ref.status().isLive() && !ref.status().isForwarder());
                         } else if (objects().isPlausibleOriginUnsafe(origin)) {
                             ref = GenSSRemoteReference.createLive(this, origin, false);
                             oldToSpaceRefMap.put(origin, ref);
@@ -826,8 +895,7 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
 
     @Override
     public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
-        // TODO Auto-generated method stub
-
+        // TODO
     }
 
     public static class TeleGenSSHeapScheme extends TeleHeapScheme {
@@ -894,6 +962,10 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             return fields().GenSSHeapScheme_fullCollectionCount.readInt(reference());
         }
 
+        public boolean requiresFullCollection() {
+            return fields().GenSSHeapScheme_requiresFullGC.readBoolean(reference());
+        }
+
         public RemoteReference oldSpaceEvacuator() {
             return fields().GenSSHeapScheme_oldSpaceEvacuator.readRemoteReference(reference());
         }
@@ -910,7 +982,15 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
             return  fields().EvacuatorToCardSpace_initialEvacuationMark.readWord(evacuator).asAddress();
         }
 
-        /**
+        public Address youngOverflowEvacuationMark() {
+            return fields().GenSSHeapScheme_youngOverflowEvacuationMark.readWord(reference()).asAddress();
+        }
+
+        public Address oldOverflowEvacuationMark() {
+            return fields().GenSSHeapScheme_oldOverflowEvacuationMark.readWord(reference()).asAddress();
+        }
+
+     /**
          * Return top-most allocated mark within the current evacuation buffer of the evacuator.
          * @return an address in the evacuation buffer of an evacuator
          */
@@ -937,6 +1017,10 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                 return false;
             }
             return fields().GenSSHeapSizingPolicy_minorEvacuationOverflow.readBoolean(resizingPolicyReference);
+        }
+
+        public TeleMemoryRegion readYoungOverflowArea() {
+            return (TeleMemoryRegion)  objects().makeTeleObject(fields().GenSSHeapScheme_overflowedArea.readRemoteReference(reference()));
         }
     }
 }

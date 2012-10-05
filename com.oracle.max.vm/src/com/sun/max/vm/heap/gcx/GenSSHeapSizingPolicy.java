@@ -23,6 +23,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.HeapScheme.GCRequest;
@@ -262,9 +263,9 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         minorEvacuationOverflow = true;
     }
 
-    public void notifyMinorEvacuationOverflowRange(Address start, Address end) {
+    public void notifyMinorEvacuationOverflowRange(MemoryRegion overflowArea) {
         if (logger.enabled()) {
-            logger.logMinorOverflowEvacuation(start, end);
+            logger.logMinorOverflowEvacuation(overflowArea.start(), overflowArea.end());
         }
     }
 
