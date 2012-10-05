@@ -279,6 +279,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         // Memory management
         classToTeleTupleObjectConstructor.put(MemoryRegion.class, getConstructor(TeleMemoryRegion.class));
         classToTeleTupleObjectConstructor.put(LinearAllocationMemoryRegion.class, getConstructor(TeleLinearAllocationMemoryRegion.class));
+        classToTeleTupleObjectConstructor.put(BootHeapRegion.class, getConstructor(TeleBootHeapRegion.class));
         // Maxine code management
         classToTeleTupleObjectConstructor.put(TargetMethod.class, getConstructor(TeleTargetMethod.class));
         classToTeleTupleObjectConstructor.put(CodeRegion.class, getConstructor(TeleCodeRegion.class));

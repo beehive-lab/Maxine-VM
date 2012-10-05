@@ -62,6 +62,10 @@ public final class TeleCardTableRSet extends TeleTupleObject {
         vmHeapRegion = new VmHeapRegion(vm, rsetMemory);
     }
 
+    public CardTable cardTable() {
+        return cardTable;
+    }
+
     public int cardIndex(Address address) {
         return cardTable.tableEntryIndex(address);
     }

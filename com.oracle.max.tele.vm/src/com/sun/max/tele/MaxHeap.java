@@ -136,6 +136,9 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
      */
     void printSessionStats(PrintStream printStream, int indent, boolean verbose);
 
-
+    /**
+     * Determines whether a VM memory address, presumed to be in the boot heap, is marked in boot heap's built-in reference map as a mutable reference field.
+     */
+    boolean isBootHeapRefMapMarked(Address address);
 
 }
