@@ -110,8 +110,8 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess BaseAtomicBumpPointerAllocator_start = new TeleInstanceWordFieldAccess(BaseAtomicBumpPointerAllocator.class, "start");
     public final TeleInstanceWordFieldAccess BaseAtomicBumpPointerAllocator_top = new TeleInstanceWordFieldAccess(BaseAtomicBumpPointerAllocator.class, "top");
     public final TeleInstanceReferenceFieldAccess CardTableRSet_cardTable = new TeleInstanceReferenceFieldAccess(CardTableRSet.class, "cardTable", CardTable.class);
-    public final TeleInstanceReferenceFieldAccess CardTableRSet_cardTableMemory = new TeleInstanceReferenceFieldAccess(CardTableRSet.class, "cardTableMemory", MemoryRegion.class);
     public final TeleInstanceReferenceFieldAccess CardTableRSet_cfoTable = new TeleInstanceReferenceFieldAccess(CardTableRSet.class, "cfoTable", CardFirstObjectTable.class);
+    public final TeleInstanceReferenceFieldAccess CardTableRSet_tablesMemory = new TeleInstanceReferenceFieldAccess(CardTableRSet.class, "tablesMemory", MemoryRegion.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_classLoader = new TeleInstanceReferenceFieldAccess(ClassActor.class, "classLoader", ClassLoader.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_classfile = new TeleInstanceReferenceFieldAccess(ClassActor.class, "classfile", byte[].class);
     public final TeleInstanceReferenceFieldAccess ClassActor_componentClassActor = new TeleInstanceReferenceFieldAccess(ClassActor.class, "componentClassActor", ClassActor.class);

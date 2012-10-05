@@ -475,6 +475,9 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         return cell.plus(Layout.size(origin));
     }
 
+    // temp debug support
+    private Pointer scannedCell = Pointer.zero();
+
     /**
      * Evacuate all cells from the evacuated area reachable from the specified range of heap addresses.
      * The range comprise an integral number of cells.
@@ -483,9 +486,9 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * @param end last address of the range, must coincide with the end of a cell
      */
     final void evacuateRange(Pointer start, Pointer end) {
-        Pointer cell = start;
-        while (cell.lessThan(end)) {
-            cell = scanCellForEvacuatees(cell);
+        /* Pointer */ scannedCell = start;
+        while (scannedCell.lessThan(end)) {
+            scannedCell = scanCellForEvacuatees(scannedCell);
         }
     }
 
