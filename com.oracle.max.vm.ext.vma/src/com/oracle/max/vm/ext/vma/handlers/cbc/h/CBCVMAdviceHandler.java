@@ -41,10 +41,13 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
     @Override
     public void initialise(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.TERMINATING) {
+            long totalCount = 0;
             System.out.println("Advice method counts");
             for (AdviceMethod am : AdviceMethod.values()) {
-                System.out.printf("  %-20s B:%d, A:%d%n", am.name(), counts[am.ordinal()][0], counts[am.ordinal()][1]);
+                System.out.printf("  %-20s B:%,d, A:%,d%n", am.name(), counts[am.ordinal()][0], counts[am.ordinal()][1]);
+                totalCount += counts[am.ordinal()][0] + counts[am.ordinal()][1];
             }
+            System.out.printf("Total: %,d%n", totalCount);
         }
     }
 

@@ -511,9 +511,12 @@ public class ProcessLog {
         } finally {
             reader.close();
         }
+
         if (verbose) {
             System.out.println("processing trace file " + dataDirName + " complete");
         }
+
+        checkSorted();
 
         // create a map from classloaders to classes loaded by them
         Map<String, SortedMap<String, ClassRecord>> classLoaders = new HashMap<String, SortedMap<String, ClassRecord>>();
@@ -533,6 +536,20 @@ public class ProcessLog {
                         missingConstructorCount, allocationEpochs, startTime, lastTime);
 
         return result;
+    }
+
+    private void checkSorted() {
+        AdviceRecord last = null;
+        for (int i = 0; i < adviceRecordList.size(); i++) {
+            AdviceRecord ar = adviceRecordList.get(i);
+            if (last != null) {
+                if (last.time > ar.time) {
+                    System.err.println("advice record list is not sorted by time, at record " + i);
+                    System.exit(1);
+                }
+            }
+            last = ar;
+        }
     }
 
     private RecordReader checkTimeOrdered(File file) throws IOException {
@@ -982,6 +999,10 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_STORE: {
                 adviceRecord = createAdviceRecordAndSetTimeThreadValue("Store", AdviceMode.BEFORE, arg(LOADSTORE_DISP_INDEX + 1), arg(LOADSTORE_DISP_INDEX + 2));
+                if (adviceRecord.getRecordType() == StoreObject) {
+                    ObjectRecord or = AdviceRecordHelper.getObjectRecord(adviceRecord);
+                    or.addTraceElement(adviceRecord);
+                }
                 adviceRecord.setPackedValue(Integer.parseInt(arg(LOADSTORE_DISP_INDEX)));
                 break;
             }
@@ -1199,6 +1220,10 @@ public class ProcessLog {
             case ADVISE_BEFORE_RETURN: {
                 if (arg(RETURN_VALUE_INDEX) != null) {
                     adviceRecord = createAdviceRecordAndSetTimeThreadValue("Return", AdviceMode.BEFORE, arg(RETURN_VALUE_INDEX), arg(RETURN_VALUE_INDEX + 1));
+                    if (adviceRecord.getRecordType() == ReturnObject) {
+                        ObjectRecord or = AdviceRecordHelper.getObjectRecord(adviceRecord);
+                        or.addTraceElement(adviceRecord);
+                    }
                 } else {
                     adviceRecord = createAdviceRecordAndSetTimeAndThread(Return, AdviceMode.BEFORE, bci);
                 }

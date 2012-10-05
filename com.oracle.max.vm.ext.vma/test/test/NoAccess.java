@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,9 +20,39 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vma.tools.qa;
+package test;
 
+/**
+ * A test that creates objects and passes them around, compare them but never reads or writes
+ * any part of the object (user fields or meta-data).
+ *
+ */
+public class NoAccess {
 
-public class AdviceRecords {
+    private static class A {
+
+    }
+
+    public static void main(String[] args) {
+        A[] aa = new A[100];
+        for (int a = 0; a < aa.length; a++) {
+            aa[a] = new A();
+        }
+
+        for (int n = 0; n < 100; n++) {
+            for (int i = 0; i < aa.length - 1; i++) {
+                @SuppressWarnings("unused")
+                A r = choose(aa[i], aa[i + 1]);
+            }
+        }
+    }
+
+    private static A choose(A a1, A a2) {
+        if (a1 == a2) {
+            return a1;
+        } else {
+            return a2;
+        }
+    }
 
 }
