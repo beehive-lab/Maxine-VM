@@ -833,6 +833,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         overflowedArea.setSize(Size.zero());
         youngOverflowEvacuationMark = Address.zero();
         oldOverflowEvacuationMark = Address.zero();
+        youngOverflowEvacuationOp = null;
+        oldOverflowEvacuationOp = null;
         final long endGCTime = System.currentTimeMillis();
         if (requiresFullGC) {
             gcRequest.fullGCOccurred = requiresFullGC;
@@ -981,7 +983,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             }
             // Make the heap inspectable
             HeapScheme.Inspect.init(true);
-            // HeapScheme.Inspect.notifyHeapRegions(youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
+            // Register the regions (so, in particular, they can be retrieved when the inspector attaching to a core / a running vm)
+            HeapScheme.Inspect.notifyHeapRegions(youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
         } finally {
             Heap.disableImmortalMemoryAllocation();
         }

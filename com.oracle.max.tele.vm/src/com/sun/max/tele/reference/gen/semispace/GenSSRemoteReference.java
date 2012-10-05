@@ -64,7 +64,7 @@ public class GenSSRemoteReference extends RemoteReference {
 
     private ObjectStatus priorStatus = null;
 
-    private final AbstractRemoteHeapScheme remoteScheme;
+    private final RemoteGenSSHeapScheme remoteScheme;
 
     /**
      * An enumeration of possible states of a remote reference for this kind of collector, based on the heap phase and
@@ -431,7 +431,7 @@ public class GenSSRemoteReference extends RemoteReference {
             void analysisEnds(GenSSRemoteReference ref, boolean minorCollection) {
                 if (!minorCollection) {
                     assert ref.alternateOrigin == Address.zero();
-                    ref.refState = OLD_REF_LIVE;
+                    ref.refState = ref.remoteScheme.isInOverflowArea(ref.origin)  ? YOUNG_REF_LIVE : OLD_REF_LIVE;
                     return;
                 }
                 TeleError.unexpected("Illegal state transition");
@@ -478,7 +478,7 @@ public class GenSSRemoteReference extends RemoteReference {
             void analysisEnds(GenSSRemoteReference ref, boolean minorCollection) {
                 if (!minorCollection) {
                     ref.alternateOrigin = Address.zero();
-                    ref.refState = OLD_REF_LIVE;
+                    ref.refState = ref.remoteScheme.isInOverflowArea(ref.origin)  ? YOUNG_REF_LIVE : OLD_REF_LIVE;
                     return;
                 }
                 TeleError.unexpected("Illegal state transition");
@@ -584,7 +584,7 @@ public class GenSSRemoteReference extends RemoteReference {
         }
     }
 
-    protected GenSSRemoteReference(AbstractRemoteHeapScheme remoteScheme, Address origin, Address alternateOrigin) {
+    protected GenSSRemoteReference(RemoteGenSSHeapScheme remoteScheme, Address origin, Address alternateOrigin) {
         super(remoteScheme.vm());
         this.origin = origin;
         this.alternateOrigin = alternateOrigin;
@@ -648,26 +648,26 @@ public class GenSSRemoteReference extends RemoteReference {
      * @param isYoung true if the object is located in the nursery. Otherwise the object is in the old To-space.
      * @return a remote reference to an live object
      */
-    public static GenSSRemoteReference createLive(AbstractRemoteHeapScheme remoteScheme, Address toOrigin, boolean isYoung) {
-        TeleError.check(((RemoteGenSSHeapScheme) remoteScheme).canCreateLive());
+    public static GenSSRemoteReference createLive(RemoteGenSSHeapScheme remoteScheme, Address toOrigin, boolean isYoung) {
+        TeleError.check(remoteScheme.canCreateLive());
         final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, toOrigin, Address.zero());
         ref.refState = isYoung ? RefState.YOUNG_REF_LIVE : RefState.OLD_REF_LIVE;
         return ref;
     }
 
-    public static GenSSRemoteReference createOldTo(AbstractRemoteHeapScheme remoteScheme, Address toOrigin, boolean isPromoted) {
+    public static GenSSRemoteReference createOldTo(RemoteGenSSHeapScheme remoteScheme, Address toOrigin, boolean isPromoted) {
         final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, toOrigin, Address.zero());
         ref.refState = isPromoted ? RefState.PROMOTED_UNKNOWN_FORWARDER_REF : RefState.OLD_SURVIVOR_UNKNOWN_FORWARDER_REF;
         return ref;
     }
 
-    public static GenSSRemoteReference createFromOnly(AbstractRemoteHeapScheme remoteScheme, Address fromOrigin, boolean isYoung) {
+    public static GenSSRemoteReference createFromOnly(RemoteGenSSHeapScheme remoteScheme, Address fromOrigin, boolean isYoung) {
         final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, fromOrigin, Address.zero());
         ref.refState = isYoung ? RefState.YOUNG_REF_FROM : RefState.OLD_REF_FROM;
         return ref;
     }
 
-    public static GenSSRemoteReference createFromTo(AbstractRemoteHeapScheme remoteScheme, Address fromOrigin, Address toOrigin, boolean isYoung) {
+    public static GenSSRemoteReference createFromTo(RemoteGenSSHeapScheme remoteScheme, Address fromOrigin, Address toOrigin, boolean isYoung) {
         final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, toOrigin, fromOrigin);
         ref.refState = isYoung ? RefState.PROMOTED_REF  : RefState.OLD_SURVIVOR_REF;
         return ref;
@@ -691,7 +691,7 @@ public class GenSSRemoteReference extends RemoteReference {
         return sb.toString();
     }
 
-    public static GenSSRemoteReference createForwarder(AbstractRemoteHeapScheme remoteScheme, GenSSRemoteReference forwardedRef) {
+    public static GenSSRemoteReference createForwarder(RemoteGenSSHeapScheme remoteScheme, GenSSRemoteReference forwardedRef) {
         final GenSSRemoteReference ref = new GenSSRemoteReference(remoteScheme, forwardedRef.alternateOrigin, forwardedRef.origin);
         ref.refState = forwardedRef.refState.forwarderState();
         return ref;

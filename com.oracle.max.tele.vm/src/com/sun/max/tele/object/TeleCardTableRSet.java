@@ -58,7 +58,7 @@ public final class TeleCardTableRSet extends TeleTupleObject {
 
     public TeleCardTableRSet(TeleVM vm, RemoteReference cardTableRSetReference) {
         super(vm, cardTableRSetReference);
-        final TeleMemoryRegion rsetMemory = (TeleMemoryRegion) objects().makeTeleObject(fields().CardTableRSet_cardTableMemory.readRemoteReference(reference()));
+        final TeleMemoryRegion rsetMemory = (TeleMemoryRegion) objects().makeTeleObject(fields().CardTableRSet_tablesMemory.readRemoteReference(reference()));
         vmHeapRegion = new VmHeapRegion(vm, rsetMemory);
     }
 
