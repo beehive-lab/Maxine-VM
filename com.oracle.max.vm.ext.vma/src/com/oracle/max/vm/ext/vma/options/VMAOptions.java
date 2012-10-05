@@ -120,11 +120,17 @@ public class VMAOptions {
     private static final BM[] CAST_BM = new BM[] {new BM(INSTANCEOF, B), new BM(CHECKCAST, B)};
 
     /**
-     * A read, where this is defined as any access to the object's fields (or array elements) or class metadata.
-     * The latter encompasses many bytecodes, e.g. method invocation, checkcast, eetc.
+     * A read, where this is defined as any access to the object's state (fields, array elements or class metadata).
+     * The latter encompasses many bytecodes, e.g. method invocation, checkcast, etc.
      */
-    private static final BM[] READ_BM = compose(GETFIELD_BM, ARRAYLOAD_BM, BEFORE_INVOKE_BM, IFOBJECT_BM, MONITOR_BM, CAST_BM);
+    private static final BM[] READ_BM = compose(GETFIELD_BM, ARRAYLOAD_BM, BEFORE_INVOKE_BM, MONITOR_BM, CAST_BM);
 
+    /**
+     * A use of an object that does not involve reading it's state.
+     * N.B. {@code ALOAD} and {@code AALOAD} are included, but currently the relevant advice is not implemented.
+     */
+    private static final BM[] USE_BM = compose(IFOBJECT_BM, new BM[] {new BM(ARETURN, B), new BM(ASTORE, B), new BM(AASTORE, B),
+                                                                      new BM(ALOAD, A), new BM(AALOAD, A)});
     /**
      * Writing a field of an object or a class (static).
      */
@@ -168,12 +174,16 @@ public class VMAOptions {
     };
     */
 
-//    private static final BM[] SWITCH_BM = new BM[] {new BM(TABLESWITCH, B), new BM(LOOKUPSWITCH, B)};
     private static final BM[] THREADLOCAL_BM = compose(NEW_BM, READ_BM, WRITE_BM);
+
+    private static final BM[] TIMELINE_ACCESS = compose(NEW_BM, CONSTRUCTOR_BM, READ_BM, WRITE_BM);
+
+    private static final BM[] TIMELINE_USE = compose(TIMELINE_ACCESS, USE_BM);
 
     enum StdConfig {
         NULL("null", new BM[0]),
-        LIFETIME("timeline", compose(NEW_BM, CONSTRUCTOR_BM, READ_BM, WRITE_BM)),
+        LIFETIME_USE("timeline_use", TIMELINE_USE),
+        LIFETIME_ACCESS("timeline_access", TIMELINE_ACCESS),
         READ("read", compose(NEW_BM, READ_BM)),
         WRITE("write", compose(NEW_BM, WRITE_BM)),
         MONITOR("monitor", MONITOR_BM),

@@ -197,6 +197,24 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
         }
     }
 
+    @Override
+    protected void do_synchronizedMethodAcquire() {
+        // Called without a call to processBytecode so have to select templates explicitly.
+        if (method.isSynchronized()) {
+            selectTemplates(VMABytecodes.MONITORENTER.ordinal());
+        }
+        super.do_synchronizedMethodAcquire();
+    }
+
+    @Override
+    protected void do_synchronizedMethodHandler(ClassMethodActor method, int endBCI) {
+        // Called without a call to processBytecode so have to select templates explicitly.
+        if (method.isSynchronized()) {
+            selectTemplates(VMABytecodes.MONITOREXIT.ordinal());
+        }
+        super.do_synchronizedMethodHandler(method, endBCI);
+    }
+
     /*
      * The following overrides handle before advice for bytecodes that, by default in T1X,
      * do not have an associated template.

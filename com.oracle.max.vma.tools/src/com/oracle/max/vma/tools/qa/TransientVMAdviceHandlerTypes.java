@@ -252,8 +252,8 @@ public class TransientVMAdviceHandlerTypes {
 
         @Override
         public String toString() {
-            return getRecordType() + ": " + getAdviceMode() + " bci: " + getBci() + " pv: " + getPackedValue() +
-                " time: " + time;
+            return "@" + time + " th: " + thread + " " + getRecordType() + ": " + getAdviceMode() + " bci: " +
+            getBci() + " pv: " + getPackedValue();
         }
     }
 
