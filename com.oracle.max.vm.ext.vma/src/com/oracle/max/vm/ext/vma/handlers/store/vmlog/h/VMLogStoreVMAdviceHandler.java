@@ -117,7 +117,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
         @Override
         public void dead(long id) {
-            VMAVMLogger.logger.logRemoved(getTime(), id);
+            VMAVMLogger.logger.logDead(getTime(), id);
         }
 
     }
@@ -366,7 +366,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeReturn(int arg1, double arg2) {
+    public void adviseBeforeReturn(int arg1, Object arg2) {
         super.adviseBeforeReturn(arg1, arg2);
         VMAVMLogger.logger.logAdviseBeforeReturn(getTime(), arg1, arg2);
     }
@@ -384,7 +384,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeReturn(int arg1, Object arg2) {
+    public void adviseBeforeReturn(int arg1, double arg2) {
         super.adviseBeforeReturn(arg1, arg2);
         VMAVMLogger.logger.logAdviseBeforeReturn(getTime(), arg1, arg2);
     }
@@ -513,6 +513,18 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void adviseBeforeMonitorExit(int arg1, Object arg2) {
         super.adviseBeforeMonitorExit(arg1, arg2);
         VMAVMLogger.logger.logAdviseBeforeMonitorExit(getTime(), arg1, arg2);
+    }
+
+    @Override
+    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
+        super.adviseAfterLoad(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseAfterLoad(getTime(), arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
+        super.adviseAfterArrayLoad(arg1, arg2, arg3, arg4);
+        VMAVMLogger.logger.logAdviseAfterArrayLoad(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override

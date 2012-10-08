@@ -45,6 +45,7 @@ public class TransientVMAdviceHandlerTypes {
 
         ArrayLength,
         ArrayLoad,
+        ArrayLoadObject,
         ArrayStoreDouble,
         ArrayStoreFloat,
         ArrayStoreLong,
@@ -69,6 +70,7 @@ public class TransientVMAdviceHandlerTypes {
         InvokeStatic,
         InvokeVirtual,
         Load,
+        LoadObject,
         MethodEntry,
         MonitorEnter,
         MonitorExit,
@@ -124,6 +126,7 @@ public class TransientVMAdviceHandlerTypes {
                 case PutFieldFloat:
                 case PutStaticFloat:
                     return new ObjectFloatAdviceRecord();
+                case ArrayLoadObject:
                 case ArrayStoreObject:
                 case CheckCast:
                 case InstanceOf:
@@ -141,6 +144,7 @@ public class TransientVMAdviceHandlerTypes {
                 case ConstLoadObject:
                 case GetField:
                 case GetStatic:
+                case LoadObject:
                 case MonitorEnter:
                 case MonitorExit:
                 case New:

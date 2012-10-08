@@ -77,7 +77,7 @@ public class SBPSVMATextStoreGenerator {
             out.printf(");%n");
         } else if (name.contains("ArrayLoad") || name.contains("ArrayStore")) {
             out.print(",  checkRepeatId(arg4, arg2), arg5");
-            if (name.contains("ArrayStore")) {
+            if (name.contains("ArrayStore") || name.contains("AfterArrayLoad")) {
                 out.print(", arg6");
             }
             out.printf(");%n");

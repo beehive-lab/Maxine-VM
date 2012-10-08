@@ -73,17 +73,17 @@ public class SBPSLockedVMATextStore extends SBPSVMATextStore {
     }
 
     @Override
-    public synchronized void adviseBeforeConstLoad(long arg1, String arg2, int arg3, double arg4) {
-        super.adviseBeforeConstLoad(arg1, arg2, arg3, arg4);
-    }
-
-    @Override
     public synchronized void adviseBeforeConstLoad(long arg1, String arg2, int arg3, long arg4) {
         super.adviseBeforeConstLoad(arg1, arg2, arg3, arg4);
     }
 
     @Override
     public synchronized void adviseBeforeConstLoad(long arg1, String arg2, int arg3, float arg4) {
+        super.adviseBeforeConstLoad(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public synchronized void adviseBeforeConstLoad(long arg1, String arg2, int arg3, double arg4) {
         super.adviseBeforeConstLoad(arg1, arg2, arg3, arg4);
     }
 
@@ -163,17 +163,17 @@ public class SBPSLockedVMATextStore extends SBPSVMATextStore {
     }
 
     @Override
-    public synchronized void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, double arg5) {
-        super.adviseBeforeConversion(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    @Override
     public synchronized void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, float arg5) {
         super.adviseBeforeConversion(arg1, arg2, arg3, arg4, arg5);
     }
 
     @Override
     public synchronized void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, long arg5) {
+        super.adviseBeforeConversion(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public synchronized void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, double arg5) {
         super.adviseBeforeConversion(arg1, arg2, arg3, arg4, arg5);
     }
 
@@ -193,18 +193,8 @@ public class SBPSLockedVMATextStore extends SBPSVMATextStore {
     }
 
     @Override
-    public synchronized void adviseBeforeReturn(long arg1, String arg2, int arg3, float arg4) {
-        super.adviseBeforeReturn(arg1, arg2, arg3, arg4);
-    }
-
-    @Override
-    public synchronized void adviseBeforeReturn(long arg1, String arg2, int arg3) {
-        super.adviseBeforeReturn(arg1, arg2, arg3);
-    }
-
-    @Override
-    public synchronized void adviseBeforeReturn(long arg1, String arg2, int arg3, double arg4) {
-        super.adviseBeforeReturn(arg1, arg2, arg3, arg4);
+    public synchronized void adviseBeforeReturnObject(long arg1, String arg2, int arg3, long arg4) {
+        super.adviseBeforeReturnObject(arg1, arg2, arg3, arg4);
     }
 
     @Override
@@ -213,8 +203,18 @@ public class SBPSLockedVMATextStore extends SBPSVMATextStore {
     }
 
     @Override
-    public synchronized void adviseBeforeReturnObject(long arg1, String arg2, int arg3, long arg4) {
-        super.adviseBeforeReturnObject(arg1, arg2, arg3, arg4);
+    public synchronized void adviseBeforeReturn(long arg1, String arg2, int arg3, float arg4) {
+        super.adviseBeforeReturn(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public synchronized void adviseBeforeReturn(long arg1, String arg2, int arg3, double arg4) {
+        super.adviseBeforeReturn(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public synchronized void adviseBeforeReturn(long arg1, String arg2, int arg3) {
+        super.adviseBeforeReturn(arg1, arg2, arg3);
     }
 
     @Override
@@ -228,12 +228,12 @@ public class SBPSLockedVMATextStore extends SBPSVMATextStore {
     }
 
     @Override
-    public synchronized void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, long arg7) {
+    public synchronized void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, double arg7) {
         super.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     }
 
     @Override
-    public synchronized void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, double arg7) {
+    public synchronized void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, long arg7) {
         super.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     }
 
@@ -253,12 +253,12 @@ public class SBPSLockedVMATextStore extends SBPSVMATextStore {
     }
 
     @Override
-    public synchronized void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, long arg8) {
+    public synchronized void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, double arg8) {
         super.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     }
 
     @Override
-    public synchronized void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, double arg8) {
+    public synchronized void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, long arg8) {
         super.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     }
 
@@ -315,6 +315,16 @@ public class SBPSLockedVMATextStore extends SBPSVMATextStore {
     @Override
     public synchronized void adviseBeforeMonitorExit(long arg1, String arg2, int arg3, long arg4) {
         super.adviseBeforeMonitorExit(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public synchronized void adviseAfterLoadObject(long arg1, String arg2, int arg3, int arg4, long arg5) {
+        super.adviseAfterLoadObject(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public synchronized void adviseAfterArrayLoadObject(long arg1, String arg2, int arg3, long arg4, int arg5, long arg6) {
+        super.adviseAfterArrayLoadObject(arg1, arg2, arg3, arg4, arg5, arg6);
     }
 
     @Override

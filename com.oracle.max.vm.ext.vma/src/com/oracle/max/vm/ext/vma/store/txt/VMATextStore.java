@@ -153,13 +153,13 @@ public abstract class VMATextStore {
 
     public abstract void adviseBeforeGoto(long time, String threadName, int bci, int arg1);
 
-    public abstract void adviseBeforeReturn(long time, String threadName, int bci, double value);
+    public abstract void adviseBeforeReturnObject(long time, String threadName, int bci, long value);
 
     public abstract void adviseBeforeReturn(long time, String threadName, int bci, long value);
 
     public abstract void adviseBeforeReturn(long time, String threadName, int bci, float value);
 
-    public abstract void adviseBeforeReturnObject(long time, String threadName, int bci, long value);
+    public abstract void adviseBeforeReturn(long time, String threadName, int bci, double value);
 
     public abstract void adviseBeforeReturn(long time, String threadName, int bci);
 
@@ -202,6 +202,10 @@ public abstract class VMATextStore {
     public abstract void adviseBeforeMonitorEnter(long time, String threadName, int bci, long objId);
 
     public abstract void adviseBeforeMonitorExit(long time, String threadName, int bci, long objId);
+
+    public abstract void adviseAfterLoadObject(long time, String threadName, int bci, int index, long value);
+
+    public abstract void adviseAfterArrayLoadObject(long time, String threadName, int bci, long objId, int index, long value);
 
     public abstract void adviseAfterNew(long time, String threadName, int bci, long objId, String className, long clId);
 

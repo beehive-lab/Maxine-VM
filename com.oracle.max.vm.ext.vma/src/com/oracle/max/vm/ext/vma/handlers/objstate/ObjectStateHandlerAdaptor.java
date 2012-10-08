@@ -118,11 +118,6 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
-        checkId(arg2);
-    }
-
-    @Override
     public void adviseBeforeConstLoad(int arg1, float arg2) {
     }
 
@@ -149,8 +144,16 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     }
 
     @Override
+    public void adviseBeforeStore(int arg1, int arg2, double arg3) {
+    }
+
+    @Override
     public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
         checkId(arg3);
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, int arg2, long arg3) {
     }
 
     @Override
@@ -158,11 +161,8 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeStore(int arg1, int arg2, double arg3) {
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, long arg3) {
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
+        checkId(arg2);
     }
 
     @Override
@@ -182,11 +182,6 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
-        checkId(arg2);
-    }
-
-    @Override
     public void adviseBeforeStackAdjust(int arg1, int arg2) {
     }
 
@@ -195,11 +190,15 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     }
 
     @Override
+    public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
+    }
+
+    @Override
     public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
+    public void adviseBeforeConversion(int arg1, int arg2, double arg3) {
     }
 
     @Override
@@ -208,10 +207,6 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
 
     @Override
     public void adviseBeforeConversion(int arg1, int arg2, float arg3) {
-    }
-
-    @Override
-    public void adviseBeforeConversion(int arg1, int arg2, double arg3) {
     }
 
     @Override
@@ -229,7 +224,8 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeReturn(int arg1, double arg2) {
+    public void adviseBeforeReturn(int arg1, Object arg2) {
+        checkId(arg2);
     }
 
     @Override
@@ -241,8 +237,7 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeReturn(int arg1, Object arg2) {
-        checkId(arg2);
+    public void adviseBeforeReturn(int arg1, double arg2) {
     }
 
     @Override
@@ -255,17 +250,12 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, float arg4) {
-        checkClassLoaderId(arg2);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, double arg4) {
-        checkClassLoaderId(arg2);
-    }
-
-    @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, long arg4) {
+        checkClassLoaderId(arg2);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, float arg4) {
         checkClassLoaderId(arg2);
     }
 
@@ -276,12 +266,12 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeGetField(int arg1, Object arg2, int arg3) {
-        checkId(arg2);
+    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, double arg4) {
+        checkClassLoaderId(arg2);
     }
 
     @Override
-    public void adviseBeforePutField(int arg1, Object arg2, int arg3, float arg4) {
+    public void adviseBeforeGetField(int arg1, Object arg2, int arg3) {
         checkId(arg2);
     }
 
@@ -291,14 +281,19 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforePutField(int arg1, Object arg2, int arg3, Object arg4) {
+    public void adviseBeforePutField(int arg1, Object arg2, int arg3, float arg4) {
         checkId(arg2);
-        checkId(arg4);
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, int arg3, double arg4) {
         checkId(arg2);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, int arg3, Object arg4) {
+        checkId(arg2);
+        checkId(arg4);
     }
 
     @Override
@@ -348,6 +343,22 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
 
     @Override
     public void adviseBeforeMonitorExit(int arg1, Object arg2) {
+        checkId(arg2);
+    }
+
+    @Override
+    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
+        checkId(arg3);
+    }
+
+    @Override
+    public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
+        checkId(arg2);
+        checkId(arg4);
+    }
+
+    @Override
+    public void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
         checkId(arg2);
     }
 

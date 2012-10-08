@@ -997,11 +997,14 @@ public class ProcessLog {
                 break;
             }
 
+            case ADVISE_AFTER_LOAD:
             case ADVISE_BEFORE_STORE: {
-                adviceRecord = createAdviceRecordAndSetTimeThreadValue("Store", AdviceMode.BEFORE, arg(LOADSTORE_DISP_INDEX + 1), arg(LOADSTORE_DISP_INDEX + 2));
-                if (adviceRecord.getRecordType() == StoreObject) {
+                adviceRecord = createAdviceRecordAndSetTimeThreadValue(key == Key.ADVISE_AFTER_LOAD ? "Load" : "Store", AdviceMode.BEFORE, arg(LOADSTORE_DISP_INDEX + 1), arg(LOADSTORE_DISP_INDEX + 2));
+                if (adviceRecord.getRecordType() == StoreObject || adviceRecord.getRecordType() == LoadObject) {
                     ObjectRecord or = AdviceRecordHelper.getObjectRecord(adviceRecord);
-                    or.addTraceElement(adviceRecord);
+                    if (or != null) {
+                        or.addTraceElement(adviceRecord);
+                    }
                 }
                 adviceRecord.setPackedValue(Integer.parseInt(arg(LOADSTORE_DISP_INDEX)));
                 break;
@@ -1018,13 +1021,23 @@ public class ProcessLog {
                 break;
             }
 
+            case ADVISE_AFTER_ARRAY_LOAD:
             case ADVISE_BEFORE_ARRAY_STORE: {
                 objectRecord = getTraceRecord(objIdArg);
                 int arrayIndex = (int) expectNumber(arg(ARRAY_INDEX_INDEX));
-                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeThreadValue("ArrayStore", AdviceMode.BEFORE, arg(ARRAY_INDEX_INDEX + 1), arg(ARRAY_INDEX_INDEX + 2));
+                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeThreadValue(
+                                key == Key.ADVISE_BEFORE_ARRAY_STORE ? "ArrayStore" : "ArrayLoad",
+                                AdviceMode.BEFORE, arg(ARRAY_INDEX_INDEX + 1), arg(ARRAY_INDEX_INDEX + 2));
                 objectAdviceRecord.value = objectRecord;
                 objectAdviceRecord.setPackedValue(arrayIndex);
                 objectRecord.addTraceElement(objectAdviceRecord);
+                if (objectAdviceRecord.getRecordType() == ArrayStoreObject || objectAdviceRecord.getRecordType() == ArrayLoadObject) {
+                    ObjectRecord object1 = getTraceRecord(arg(ARRAY_INDEX_INDEX + 2));
+                    if (object1 != null) {
+                        object1.addTraceElement(objectAdviceRecord);
+                    }
+
+                }
                 adviceRecord = objectAdviceRecord;
                 break;
             }
@@ -1222,7 +1235,9 @@ public class ProcessLog {
                     adviceRecord = createAdviceRecordAndSetTimeThreadValue("Return", AdviceMode.BEFORE, arg(RETURN_VALUE_INDEX), arg(RETURN_VALUE_INDEX + 1));
                     if (adviceRecord.getRecordType() == ReturnObject) {
                         ObjectRecord or = AdviceRecordHelper.getObjectRecord(adviceRecord);
-                        or.addTraceElement(adviceRecord);
+                        if (or != null) {
+                            or.addTraceElement(adviceRecord);
+                        }
                     }
                 } else {
                     adviceRecord = createAdviceRecordAndSetTimeAndThread(Return, AdviceMode.BEFORE, bci);
@@ -1290,6 +1305,7 @@ public class ProcessLog {
                         break;
                     case ConstLoadObject:
                     case StoreObject:
+                    case LoadObject:
                     case ReturnObject:
                         ((ObjectAdviceRecord) adviceRecord).value = or;
                         break;
@@ -1505,9 +1521,11 @@ public class ProcessLog {
             case ADVISE_BEFORE_PUT_FIELD:
             case ADVISE_BEFORE_PUT_STATIC:
             case ADVISE_BEFORE_ARRAY_STORE:
+            case ADVISE_AFTER_ARRAY_LOAD:
             case ADVISE_BEFORE_IF:
             case ADVISE_BEFORE_OPERATION:
             case ADVISE_BEFORE_LOAD:
+            case ADVISE_AFTER_LOAD:
             case ADVISE_BEFORE_STORE:
             case ADVISE_BEFORE_CONST_LOAD:
 

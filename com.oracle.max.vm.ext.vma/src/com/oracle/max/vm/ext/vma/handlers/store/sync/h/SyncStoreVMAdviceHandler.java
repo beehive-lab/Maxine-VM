@@ -251,7 +251,7 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public synchronized void adviseBeforeReturn(int arg1, double arg2) {
+    public synchronized void adviseBeforeReturn(int arg1, Object arg2) {
         super.adviseBeforeReturn(arg1, arg2);
         storeAdaptor.adviseBeforeReturn(getTime(), arg1, arg2);
     }
@@ -269,7 +269,7 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public synchronized void adviseBeforeReturn(int arg1, Object arg2) {
+    public synchronized void adviseBeforeReturn(int arg1, double arg2) {
         super.adviseBeforeReturn(arg1, arg2);
         storeAdaptor.adviseBeforeReturn(getTime(), arg1, arg2);
     }
@@ -398,6 +398,18 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public synchronized void adviseBeforeMonitorExit(int arg1, Object arg2) {
         super.adviseBeforeMonitorExit(arg1, arg2);
         storeAdaptor.adviseBeforeMonitorExit(getTime(), arg1, arg2);
+    }
+
+    @Override
+    public synchronized void adviseAfterLoad(int arg1, int arg2, Object arg3) {
+        super.adviseAfterLoad(arg1, arg2, arg3);
+        storeAdaptor.adviseAfterLoad(getTime(), arg1, arg2, arg3);
+    }
+
+    @Override
+    public synchronized void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
+        super.adviseAfterArrayLoad(arg1, arg2, arg3, arg4);
+        storeAdaptor.adviseAfterArrayLoad(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override
