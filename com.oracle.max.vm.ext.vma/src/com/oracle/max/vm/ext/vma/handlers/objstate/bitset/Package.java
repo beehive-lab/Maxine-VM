@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.store;
+package com.oracle.max.vm.ext.vma.handlers.objstate.bitset;
 
-import java.io.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
-/**
- * Specification of the directory to be used for a persistent logs.
- * The default file name is {@link #DEFAULT_STOREDIR} but this
- * can be changed using the {@link #STOREDIR_PROPERTY} system property.
- *
- */
-public class VMAStoreFile {
-    public static final String STOREDIR_PROPERTY = "max.vma.storedir";
-    public static final String DEFAULT_STOREDIR = "output.vma";
-    public static final String GLOBAL_STORE = "vm";
-    public static final String DEFAULT_STOREFILE = DEFAULT_STOREDIR + File.separator + GLOBAL_STORE;
 
-    public static String getStoreDir() {
-        String storeDir = System.getProperty(STOREDIR_PROPERTY);
-        if (storeDir == null) {
-            storeDir = DEFAULT_STOREDIR;
-        }
-        return storeDir;
+public class Package extends BootImagePackage {
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return false;
     }
+
 }

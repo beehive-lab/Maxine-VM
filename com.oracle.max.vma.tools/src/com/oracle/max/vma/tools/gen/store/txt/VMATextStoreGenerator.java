@@ -85,12 +85,16 @@ public class VMATextStoreGenerator {
             getStaticDone = true;
         } else if (name.endsWith("PutStatic")) {
             out.printf(", String className, long clId, String fieldName, %s value", getLastParameterNameHandlingObject(m));
-        } else if (name.endsWith("ArrayLoad")) {
+        } else if (name.endsWith("BeforeArrayLoad")) {
             out.print(", long objId, int index");
             arrayLoadDone = true;
+        } else if (name.endsWith("AfterArrayLoad")) {
+            out.printf(", long objId, int index, %s value", getLastParameterNameHandlingObject(m));
+        } else if (name.endsWith("AfterLoad")) {
+            out.printf(", int index, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("ArrayStore")) {
             out.printf(", long objId, int index, %s value", getLastParameterNameHandlingObject(m));
-        } else if (name.endsWith("Store")) {
+        } else if (name.endsWith("BeforeStore")) {
             out.printf(", int index, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.contains("New")) {
             out.print(", long objId, String className, long clId");

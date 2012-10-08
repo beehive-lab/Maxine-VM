@@ -511,9 +511,12 @@ public class ProcessLog {
         } finally {
             reader.close();
         }
+
         if (verbose) {
             System.out.println("processing trace file " + dataDirName + " complete");
         }
+
+        checkSorted();
 
         // create a map from classloaders to classes loaded by them
         Map<String, SortedMap<String, ClassRecord>> classLoaders = new HashMap<String, SortedMap<String, ClassRecord>>();
@@ -533,6 +536,20 @@ public class ProcessLog {
                         missingConstructorCount, allocationEpochs, startTime, lastTime);
 
         return result;
+    }
+
+    private void checkSorted() {
+        AdviceRecord last = null;
+        for (int i = 0; i < adviceRecordList.size(); i++) {
+            AdviceRecord ar = adviceRecordList.get(i);
+            if (last != null) {
+                if (last.time > ar.time) {
+                    System.err.println("advice record list is not sorted by time, at record " + i);
+                    System.exit(1);
+                }
+            }
+            last = ar;
+        }
     }
 
     private RecordReader checkTimeOrdered(File file) throws IOException {
@@ -616,7 +633,10 @@ public class ProcessLog {
                 } else {
                     endCreationRecord = adviceRecordList.get(index + 1);
                 }
-                assert endCreationRecord != null : "failed to find end creation record";
+                if (endCreationRecord == null) {
+                    System.err.printf("failed to find end creation record for %s%n", objectRecord);
+                    endCreationRecord = adviceRecordList.get(index + 1);
+                }
                 objectRecord.setEndCreationRecord(endCreationRecord);
             }
         }
@@ -634,7 +654,7 @@ public class ProcessLog {
             AdviceRecord ar = adviceRecordList.get(i);
             if (ar.getRecordType() == MethodEntry) {
                 ObjectRecord methodEntryObject = AdviceRecordHelper.getObjectRecord(ar);
-                if (objectRecord.id.equals(methodEntryObject.id)) {
+                if (methodEntryObject != null && objectRecord.id.equals(methodEntryObject.id)) {
                     MethodRecord mr = AdviceRecordHelper.getMethod(ar);
                     if (mr.name.equals("<init>")) {
                         return i;
@@ -977,8 +997,15 @@ public class ProcessLog {
                 break;
             }
 
+            case ADVISE_AFTER_LOAD:
             case ADVISE_BEFORE_STORE: {
-                adviceRecord = createAdviceRecordAndSetTimeThreadValue("Store", AdviceMode.BEFORE, arg(LOADSTORE_DISP_INDEX + 1), arg(LOADSTORE_DISP_INDEX + 2));
+                adviceRecord = createAdviceRecordAndSetTimeThreadValue(key == Key.ADVISE_AFTER_LOAD ? "Load" : "Store", AdviceMode.BEFORE, arg(LOADSTORE_DISP_INDEX + 1), arg(LOADSTORE_DISP_INDEX + 2));
+                if (adviceRecord.getRecordType() == StoreObject || adviceRecord.getRecordType() == LoadObject) {
+                    ObjectRecord or = AdviceRecordHelper.getObjectRecord(adviceRecord);
+                    if (or != null) {
+                        or.addTraceElement(adviceRecord);
+                    }
+                }
                 adviceRecord.setPackedValue(Integer.parseInt(arg(LOADSTORE_DISP_INDEX)));
                 break;
             }
@@ -994,13 +1021,23 @@ public class ProcessLog {
                 break;
             }
 
+            case ADVISE_AFTER_ARRAY_LOAD:
             case ADVISE_BEFORE_ARRAY_STORE: {
                 objectRecord = getTraceRecord(objIdArg);
                 int arrayIndex = (int) expectNumber(arg(ARRAY_INDEX_INDEX));
-                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeThreadValue("ArrayStore", AdviceMode.BEFORE, arg(ARRAY_INDEX_INDEX + 1), arg(ARRAY_INDEX_INDEX + 2));
+                ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeThreadValue(
+                                key == Key.ADVISE_BEFORE_ARRAY_STORE ? "ArrayStore" : "ArrayLoad",
+                                AdviceMode.BEFORE, arg(ARRAY_INDEX_INDEX + 1), arg(ARRAY_INDEX_INDEX + 2));
                 objectAdviceRecord.value = objectRecord;
                 objectAdviceRecord.setPackedValue(arrayIndex);
                 objectRecord.addTraceElement(objectAdviceRecord);
+                if (objectAdviceRecord.getRecordType() == ArrayStoreObject || objectAdviceRecord.getRecordType() == ArrayLoadObject) {
+                    ObjectRecord object1 = getTraceRecord(arg(ARRAY_INDEX_INDEX + 2));
+                    if (object1 != null) {
+                        object1.addTraceElement(objectAdviceRecord);
+                    }
+
+                }
                 adviceRecord = objectAdviceRecord;
                 break;
             }
@@ -1196,6 +1233,12 @@ public class ProcessLog {
             case ADVISE_BEFORE_RETURN: {
                 if (arg(RETURN_VALUE_INDEX) != null) {
                     adviceRecord = createAdviceRecordAndSetTimeThreadValue("Return", AdviceMode.BEFORE, arg(RETURN_VALUE_INDEX), arg(RETURN_VALUE_INDEX + 1));
+                    if (adviceRecord.getRecordType() == ReturnObject) {
+                        ObjectRecord or = AdviceRecordHelper.getObjectRecord(adviceRecord);
+                        if (or != null) {
+                            or.addTraceElement(adviceRecord);
+                        }
+                    }
                 } else {
                     adviceRecord = createAdviceRecordAndSetTimeAndThread(Return, AdviceMode.BEFORE, bci);
                 }
@@ -1262,6 +1305,7 @@ public class ProcessLog {
                         break;
                     case ConstLoadObject:
                     case StoreObject:
+                    case LoadObject:
                     case ReturnObject:
                         ((ObjectAdviceRecord) adviceRecord).value = or;
                         break;
@@ -1477,9 +1521,11 @@ public class ProcessLog {
             case ADVISE_BEFORE_PUT_FIELD:
             case ADVISE_BEFORE_PUT_STATIC:
             case ADVISE_BEFORE_ARRAY_STORE:
+            case ADVISE_AFTER_ARRAY_LOAD:
             case ADVISE_BEFORE_IF:
             case ADVISE_BEFORE_OPERATION:
             case ADVISE_BEFORE_LOAD:
+            case ADVISE_AFTER_LOAD:
             case ADVISE_BEFORE_STORE:
             case ADVISE_BEFORE_CONST_LOAD:
 

@@ -36,6 +36,7 @@ public class BasicCountsQuery extends QueryBase {
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
+        ps.println("Advice Records: " + traceRun.adviceRecordList.size());
         ps.println("Classes: " + getNumClasses(traceRun));
         ps.println("ClassLoaders: " + traceRun.classLoaders.size());
         long objs = traceRun.objectCount;

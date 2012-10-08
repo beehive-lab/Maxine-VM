@@ -123,7 +123,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
             if (adviceTypeOptions[AFTER_INDEX]) {
                 templates = vmaT1X.afterTemplates;
             } else {
-                templates = vmaT1X.getAltT1X().templates;
+                templates = defaultTemplates;
             }
         }
     }
@@ -135,7 +135,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
 
     @Override
     protected void finish() {
-        if (templates != defaultTemplates) {
+        if (templates != defaultTemplates && template.tag != null && template.tag != CREATE_MULTIANEWARRAY_DIMENSIONS) {
             // assign the bci value as the last argument
             assignInt(template.sig.in.length - 1, "bci", stream.currentBCI());
         }
@@ -195,6 +195,24 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
             }
             finish();
         }
+    }
+
+    @Override
+    protected void do_synchronizedMethodAcquire() {
+        // Called without a call to processBytecode so have to select templates explicitly.
+        if (method.isSynchronized()) {
+            selectTemplates(VMABytecodes.MONITORENTER.ordinal());
+        }
+        super.do_synchronizedMethodAcquire();
+    }
+
+    @Override
+    protected void do_synchronizedMethodHandler(ClassMethodActor method, int endBCI) {
+        // Called without a call to processBytecode so have to select templates explicitly.
+        if (method.isSynchronized()) {
+            selectTemplates(VMABytecodes.MONITOREXIT.ordinal());
+        }
+        super.do_synchronizedMethodHandler(method, endBCI);
     }
 
     /*
@@ -323,7 +341,8 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
 
     @Override
     protected void do_load(int index, Kind kind) {
-        if (templates != defaultTemplates) {
+        if (templates != defaultTemplates && templates != vmaT1X.afterTemplates) {
+            // The AFTER templates do not have the ALOAD etc tags, they use ALOAD$adviseafter
             T1XTemplateTag tag = null;
             // Checkstyle: stop
             switch (kind.asEnum) {
@@ -339,6 +358,16 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
             finish();
         }
         super.do_load(index, kind);
+        if (templates != defaultTemplates) {
+            if (kind.asEnum == KindEnum.REFERENCE) {
+                T1XTemplateTag tag = ALOAD$adviseafter;
+                start(tag);
+                assignInt(0, "index", index);
+                CiRegister reg = reg(1, "value", kind);
+                peekWord(reg, 0);
+                finish();
+            }
+        }
     }
 
     @Override

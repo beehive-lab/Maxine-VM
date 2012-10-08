@@ -625,6 +625,14 @@ public class SBPSVMATextStore extends CSFVMATextStore {
         end();
     }
 
+    private void store_adviseAfterArrayLoadObject(long time, String threadName, int bci, long objId, int index, long valueId) {
+        appendTTIdIndex(time, ADVISE_AFTER_ARRAY_LOAD, objId, threadName, bci, index);
+        sb.append(OBJ_VALUE);
+        appendSpace();
+        sb.append(valueId);
+        end();
+    }
+
     private void store_adviseAfterNew(long time, String threadName, int bci, long objId, String className, long clId) {
         appendTTId(time, ADVISE_AFTER_NEW, objId, threadName, bci);
         sb.append(className);
@@ -728,6 +736,17 @@ public class SBPSVMATextStore extends CSFVMATextStore {
 
     private void store_adviseBeforeStoreObject(long time, String threadName, int bci, int dispToLocalSlot, long value) {
         appendTT(time, ADVISE_BEFORE_STORE, threadName, bci);
+        appendSpace();
+        sb.append(dispToLocalSlot);
+        appendSpace();
+        sb.append(OBJ_VALUE);
+        appendSpace();
+        sb.append(value);
+        end();
+    }
+
+    private void store_adviseAfterLoadObject(long time, String threadName, int bci, int dispToLocalSlot, long value) {
+        appendTT(time, ADVISE_AFTER_LOAD, threadName, bci);
         appendSpace();
         sb.append(dispToLocalSlot);
         appendSpace();
@@ -1114,12 +1133,12 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     @Override
-    public void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, double arg5) {
+    public void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, float arg5) {
         store_adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, float arg5) {
+    public void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, double arg5) {
         store_adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
@@ -1144,12 +1163,17 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     @Override
-    public void adviseBeforeReturn(long arg1, String arg2, int arg3, long arg4) {
-        store_adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3, arg4);
+    public void adviseBeforeReturnObject(long arg1, String arg2, int arg3, long arg4) {
+        store_adviseBeforeReturnObject(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
     public void adviseBeforeReturn(long arg1, String arg2, int arg3, float arg4) {
+        store_adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeReturn(long arg1, String arg2, int arg3, double arg4) {
         store_adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
@@ -1159,13 +1183,8 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     @Override
-    public void adviseBeforeReturn(long arg1, String arg2, int arg3, double arg4) {
+    public void adviseBeforeReturn(long arg1, String arg2, int arg3, long arg4) {
         store_adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeReturnObject(long arg1, String arg2, int arg3, long arg4) {
-        store_adviseBeforeReturnObject(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
@@ -1179,17 +1198,17 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     @Override
+    public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, long arg7) {
+        store_adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
+    }
+
+    @Override
     public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, float arg7) {
         store_adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
     }
 
     @Override
     public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, double arg7) {
-        store_adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, long arg7) {
         store_adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6), arg7);
     }
 
@@ -1204,12 +1223,12 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     }
 
     @Override
-    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, long arg8) {
+    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, double arg8) {
         store_adviseBeforePutField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getFieldShortForm(arg5, arg6, arg7), arg8);
     }
 
     @Override
-    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, double arg8) {
+    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, long arg8) {
         store_adviseBeforePutField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getFieldShortForm(arg5, arg6, arg7), arg8);
     }
 
@@ -1266,6 +1285,16 @@ public class SBPSVMATextStore extends CSFVMATextStore {
     @Override
     public void adviseBeforeMonitorExit(long arg1, String arg2, int arg3, long arg4) {
         store_adviseBeforeMonitorExit(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2));
+    }
+
+    @Override
+    public void adviseAfterLoadObject(long arg1, String arg2, int arg3, int arg4, long arg5) {
+        store_adviseAfterLoadObject(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseAfterArrayLoadObject(long arg1, String arg2, int arg3, long arg4, int arg5, long arg6) {
+        store_adviseAfterArrayLoadObject(arg1, getThreadShortForm(arg2), arg3,  checkRepeatId(arg4, arg2), arg5, arg6);
     }
 
     @Override

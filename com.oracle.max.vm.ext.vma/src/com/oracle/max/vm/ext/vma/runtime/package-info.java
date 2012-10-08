@@ -54,7 +54,7 @@
  * The other component of the runtime that is necessary for persistent recording of the advice
  * data is {@link ObjectStateHandler}. This manages the assignment of unique identifiers to
  * objects and the notification of object death. The default implementation of this abstract class
- * is {@link com.oracle.max.vm.ext.vma.handlers.objstate.BitSetObjectStateHandler}, which uses a
+ * is {@link com.oracle.max.vm.ext.vma.handlers.objstate.bitset.BitSetObjectStateHandler}, which uses a
  * {@link java.util.BitSet} to manage both unique ids and the liveness of objects.
  *
  */
