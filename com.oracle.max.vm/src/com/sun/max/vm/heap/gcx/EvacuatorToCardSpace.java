@@ -29,6 +29,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.gcx.EvacuatingSpace.SpaceBounds;
+import com.sun.max.vm.heap.gcx.EvacuationTimers.TIMED_OPERATION;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.log.VMLog.Record;
@@ -148,6 +149,13 @@ public class EvacuatorToCardSpace extends Evacuator {
 
     private final EvacuationLogger logger;
 
+    private long [] opEvacuationMarks = new long[TIMED_OPERATION.values().length];
+
+    @Override
+    protected void doAfterOperation(TIMED_OPERATION op) {
+        opEvacuationMarks[op.ordinal()] = ptop.toLong();
+    }
+
     public EvacuatorToCardSpace(EvacuatingSpace fromSpace, HeapSpace toSpace, EvacuationBufferProvider evacuationBufferProvider, CardTableRSet rset, String name) {
         this.fromSpace = fromSpace;
         this.toSpace = toSpace;
@@ -205,7 +213,7 @@ public class EvacuatorToCardSpace extends Evacuator {
         evacuatedBytes = Size.zero();
         lastOverflowAllocatedRangeStart = Pointer.zero();
         lastOverflowAllocatedRangeEnd = Pointer.zero();
-
+        debugRetired_ptop = Pointer.zero();
         if (ptop.isZero()) {
             Address chunk = evacuationBufferProvider.refillEvacuationBuffer();
             Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
@@ -307,8 +315,9 @@ public class EvacuatorToCardSpace extends Evacuator {
             // check if request can fit in the remaining space when taking the headroom into account.
             Pointer limit = pend.plus(evacuationBufferHeadroom());
             if (ptop.plus(size).equals(limit)) {
-                // Does fit.
-                return ptop;
+                Pointer cell = ptop;
+                ptop = limit;
+                return cell;
             }
             if (ptop.lessThan(limit)) {
                 debugRetired_ptop = ptop;
@@ -382,7 +391,6 @@ public class EvacuatorToCardSpace extends Evacuator {
             newTop = ptop.plus(size);
         }
         ptop = newTop;
-        // FIXME ? it'll be cleaner to do a rset.notifySplitLive(cell, size, hardLimit) here.
         cfoTable.set(cell, ptop);
         return cell;
     }
@@ -401,7 +409,7 @@ public class EvacuatorToCardSpace extends Evacuator {
 
     private boolean checkDarkMatterRefs = false;
     public void enableDarkMatterRefCheck(boolean b) {
-        checkDarkMatterRefs = b;
+        checkDarkMatterRefs = MaxineVM.isDebug() && b;
     }
 
     @Override

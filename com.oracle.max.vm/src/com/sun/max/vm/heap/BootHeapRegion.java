@@ -39,9 +39,6 @@ public final class BootHeapRegion extends LinearAllocatorRegion {
     @INSPECTED
     private byte[] referenceMapBytes;
 
-    @INSPECTED
-    private Pointer referenceMap;
-
     private java.lang.ref.Reference[] specialReferences = {};
 
     public BootHeapRegion(Address start, Size size, String description) {
@@ -63,15 +60,12 @@ public final class BootHeapRegion extends LinearAllocatorRegion {
     }
 
     public void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
-        if (referenceMap.isZero()) {
-            referenceMap = ArrayAccess.elementPointer(referenceMapBytes, 0);
-        }
         final int referenceMapWords = UnsignedMath.divide(referenceMapBytes.length, Word.size());
         if (Heap.logRootScanning()) {
-            Heap.rootScanLogger.logScanningBootHeap(this, start().plus(referenceMapWords * Word.size()));
-            scanReferenceMap(pointerIndexVisitor, referenceMap, referenceMapWords, true);
+            Heap.rootScanLogger.logScanningBootHeap(this, start().plus(referenceMapBytes.length));
+            scanReferenceMap(pointerIndexVisitor, referenceMapBytes, referenceMapWords, true);
         } else {
-            scanReferenceMap(pointerIndexVisitor, referenceMap, referenceMapWords, false);
+            scanReferenceMap(pointerIndexVisitor, referenceMapBytes, referenceMapWords, false);
         }
         discoverSpecialReference();
     }
@@ -83,15 +77,11 @@ public final class BootHeapRegion extends LinearAllocatorRegion {
      * @param pointerIndexVisitor
      */
     public void visitReferences(Address start, Address end, PointerIndexVisitor pointerIndexVisitor) {
-        if (referenceMap.isZero()) {
-            referenceMap = ArrayAccess.elementPointer(referenceMapBytes, 0);
-        }
         FatalError.check(contains(start) && contains(end), "range not in boot heap region");
         if (Heap.logRootScanning()) {
-            // Heap.rootScanLogger.logScanningBootHeap(this, start().plus(referenceMapWords * Word.size()));
-            scanReferences(pointerIndexVisitor, referenceMap, start, end, true);
+            scanReferences(pointerIndexVisitor, referenceMapBytes, start, end, true);
         } else {
-            scanReferences(pointerIndexVisitor, referenceMap, start, end, false);
+            scanReferences(pointerIndexVisitor, referenceMapBytes, start, end, false);
         }
     }
 
@@ -102,11 +92,25 @@ public final class BootHeapRegion extends LinearAllocatorRegion {
         return -1;
     }
 
+    /**
+     * Return the address to the top most mutable location in the boot region.
+     * @return an address in the boot region
+     */
+    public Address lastMutableReferenceAddress() {
+        final Pointer referenceMap =  ArrayAccess.elementPointer(referenceMapBytes, 0);
+        final int lastWordIndex = (referenceMapBytes.length >> Word.widthValue().log2numberOfBytes) - 1;
+        final Word lastRefMapWord = referenceMap.getWord(lastWordIndex).asPointer();
+        final int bitIndex = lastRefMapWord.mostSignificantBitSet();
+        final int lastBitIndex = bitIndex + (lastWordIndex <<  Word.widthValue().log2numberOfBits);
+        return start.plus(lastBitIndex << Word.widthValue().log2numberOfBytes);
+    }
+
     public boolean isMutableReference(Address referenceLocation) {
         if (contains(referenceLocation)) {
+            final Pointer referenceMap =  ArrayAccess.elementPointer(referenceMapBytes, 0);
             final int bitIndex = referenceLocation.minus(start).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
             final int wordIndex = bitIndex >> Word.widthValue().log2numberOfBits;
-            final   Address refmapWord = referenceMap.getWord(wordIndex).asAddress();
+            final  Address refmapWord = referenceMap.getWord(wordIndex).asAddress();
             final Address bitmask = Address.fromLong(1L).shiftedLeft(bitIndex);
             return refmapWord.and(bitmask).isNotZero();
         }
