@@ -81,6 +81,15 @@ public class VMAdviceBeforeTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$boolean$init)
+    public static int getstaticBoolean(Object staticTuple, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+        }
+        boolean result = TupleAccess.readBoolean(staticTuple, offset);
+        return UnsafeCast.asByte(result);
+    }
+
     @T1X_TEMPLATE(GETSTATIC$boolean)
     public static int getstaticBoolean(ResolutionGuard.InPool guard, int bci) {
         return resolveAndGetStaticBoolean(guard, bci);
@@ -102,15 +111,6 @@ public class VMAdviceBeforeTemplateSource {
             boolean result = TupleAccess.readBoolean(f.holder().staticTuple(), f.offset());
             return UnsafeCast.asByte(result);
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$boolean$init)
-    public static int getstaticBoolean(Object staticTuple, int offset, int bci) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
-        }
-        boolean result = TupleAccess.readBoolean(staticTuple, offset);
-        return UnsafeCast.asByte(result);
     }
 
     @T1X_TEMPLATE(PUTFIELD$boolean$resolved)
@@ -201,6 +201,15 @@ public class VMAdviceBeforeTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$byte$init)
+    public static int getstaticByte(Object staticTuple, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+        }
+        byte result = TupleAccess.readByte(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$byte)
     public static int getstaticByte(ResolutionGuard.InPool guard, int bci) {
         return resolveAndGetStaticByte(guard, bci);
@@ -222,15 +231,6 @@ public class VMAdviceBeforeTemplateSource {
             byte result = TupleAccess.readByte(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$byte$init)
-    public static int getstaticByte(Object staticTuple, int offset, int bci) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
-        }
-        byte result = TupleAccess.readByte(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$byte$resolved)
@@ -348,6 +348,15 @@ public class VMAdviceBeforeTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$char$init)
+    public static int getstaticChar(Object staticTuple, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+        }
+        char result = TupleAccess.readChar(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$char)
     public static int getstaticChar(ResolutionGuard.InPool guard, int bci) {
         return resolveAndGetStaticChar(guard, bci);
@@ -369,15 +378,6 @@ public class VMAdviceBeforeTemplateSource {
             char result = TupleAccess.readChar(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$char$init)
-    public static int getstaticChar(Object staticTuple, int offset, int bci) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
-        }
-        char result = TupleAccess.readChar(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$char$resolved)
@@ -495,6 +495,15 @@ public class VMAdviceBeforeTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$short$init)
+    public static int getstaticShort(Object staticTuple, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+        }
+        short result = TupleAccess.readShort(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$short)
     public static int getstaticShort(ResolutionGuard.InPool guard, int bci) {
         return resolveAndGetStaticShort(guard, bci);
@@ -516,15 +525,6 @@ public class VMAdviceBeforeTemplateSource {
             short result = TupleAccess.readShort(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$short$init)
-    public static int getstaticShort(Object staticTuple, int offset, int bci) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
-        }
-        short result = TupleAccess.readShort(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$short$resolved)
@@ -642,6 +642,15 @@ public class VMAdviceBeforeTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$int$init)
+    public static int getstaticInt(Object staticTuple, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+        }
+        int result = TupleAccess.readInt(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$int)
     public static int getstaticInt(ResolutionGuard.InPool guard, int bci) {
         return resolveAndGetStaticInt(guard, bci);
@@ -663,15 +672,6 @@ public class VMAdviceBeforeTemplateSource {
             int result = TupleAccess.readInt(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$int$init)
-    public static int getstaticInt(Object staticTuple, int offset, int bci) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
-        }
-        int result = TupleAccess.readInt(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$int$resolved)
@@ -923,6 +923,15 @@ public class VMAdviceBeforeTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$float$init)
+    public static float getstaticFloat(Object staticTuple, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+        }
+        float result = TupleAccess.readFloat(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$float)
     public static float getstaticFloat(ResolutionGuard.InPool guard, int bci) {
         return resolveAndGetStaticFloat(guard, bci);
@@ -944,15 +953,6 @@ public class VMAdviceBeforeTemplateSource {
             float result = TupleAccess.readFloat(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$float$init)
-    public static float getstaticFloat(Object staticTuple, int offset, int bci) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
-        }
-        float result = TupleAccess.readFloat(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$float$resolved)
@@ -1260,6 +1260,15 @@ public class VMAdviceBeforeTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$long$init)
+    public static long getstaticLong(Object staticTuple, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+        }
+        long result = TupleAccess.readLong(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$long)
     public static long getstaticLong(ResolutionGuard.InPool guard, int bci) {
         return resolveAndGetStaticLong(guard, bci);
@@ -1281,15 +1290,6 @@ public class VMAdviceBeforeTemplateSource {
             long result = TupleAccess.readLong(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$long$init)
-    public static long getstaticLong(Object staticTuple, int offset, int bci) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
-        }
-        long result = TupleAccess.readLong(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$long$resolved)
@@ -1639,6 +1639,15 @@ public class VMAdviceBeforeTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$double$init)
+    public static double getstaticDouble(Object staticTuple, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+        }
+        double result = TupleAccess.readDouble(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$double)
     public static double getstaticDouble(ResolutionGuard.InPool guard, int bci) {
         return resolveAndGetStaticDouble(guard, bci);
@@ -1660,15 +1669,6 @@ public class VMAdviceBeforeTemplateSource {
             double result = TupleAccess.readDouble(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$double$init)
-    public static double getstaticDouble(Object staticTuple, int offset, int bci) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
-        }
-        double result = TupleAccess.readDouble(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$double$resolved)
@@ -1976,6 +1976,15 @@ public class VMAdviceBeforeTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$reference$init)
+    public static Reference getstaticObject(Object staticTuple, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+        }
+        Object result = TupleAccess.readObject(staticTuple, offset);
+        return Reference.fromJava(result);
+    }
+
     @T1X_TEMPLATE(GETSTATIC$reference)
     public static Reference getstaticReference(ResolutionGuard.InPool guard, int bci) {
         return resolveAndGetStaticReference(guard, bci);
@@ -1997,15 +2006,6 @@ public class VMAdviceBeforeTemplateSource {
             Object result = TupleAccess.readObject(f.holder().staticTuple(), f.offset());
             return Reference.fromJava(result);
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$reference$init)
-    public static Reference getstaticObject(Object staticTuple, int offset, int bci) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
-        }
-        Object result = TupleAccess.readObject(staticTuple, offset);
-        return Reference.fromJava(result);
     }
 
     @T1X_TEMPLATE(PUTFIELD$reference$resolved)
@@ -2236,6 +2236,15 @@ public class VMAdviceBeforeTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$word$init)
+    public static Word getstaticWord(Object staticTuple, int offset, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+        }
+        Word result = TupleAccess.readWord(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$word)
     public static Word getstaticWord(ResolutionGuard.InPool guard, int bci) {
         return resolveAndGetStaticWord(guard, bci);
@@ -2257,15 +2266,6 @@ public class VMAdviceBeforeTemplateSource {
             Word result = TupleAccess.readWord(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$word$init)
-    public static Word getstaticWord(Object staticTuple, int offset, int bci) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
-        }
-        Word result = TupleAccess.readWord(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$word$resolved)
@@ -2586,18 +2586,18 @@ public class VMAdviceBeforeTemplateSource {
         return result;
     }
 
-    @T1X_TEMPLATE(CHECKCAST)
-    public static Object checkcast(ResolutionGuard guard, @Slot(0) Object object, int bci) {
-        resolveAndCheckcast(guard, object, bci);
-        return object;
-    }
-
     @T1X_TEMPLATE(CHECKCAST$resolved)
     public static Object checkcast(ClassActor classActor, @Slot(0) Object object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeCheckCast(bci, object, classActor);
         }
         Snippets.checkCast(classActor, object);
+        return object;
+    }
+
+    @T1X_TEMPLATE(CHECKCAST)
+    public static Object checkcast(ResolutionGuard guard, @Slot(0) Object object, int bci) {
+        resolveAndCheckcast(guard, object, bci);
         return object;
     }
 

@@ -48,6 +48,10 @@ public class NoAccess {
     }
 
     private static A choose(A a1, A a2) {
+        return doChoose(a2, a1);
+    }
+
+    private static A doChoose(A a1, A a2) {
         if (a1 == a2) {
             return a1;
         } else {

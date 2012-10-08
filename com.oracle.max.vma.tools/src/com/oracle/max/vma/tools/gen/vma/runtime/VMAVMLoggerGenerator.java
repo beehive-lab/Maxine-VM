@@ -49,7 +49,7 @@ public class VMAVMLoggerGenerator {
             }
         }
         generateImpl(ObjectStateHandlerAdaptor.class.getDeclaredMethod("unseenObject", Object.class));
-        generateImpl(ObjectStateHandler.DeadObjectHandler.class.getDeclaredMethod("removed", long.class));
+        generateImpl(ObjectStateHandler.DeadObjectHandler.class.getDeclaredMethod("dead", long.class));
         out.printf("%s}%n%n", INDENT4);
 
 
@@ -63,7 +63,7 @@ public class VMAVMLoggerGenerator {
             }
         }
         generateInterface(ObjectStateHandlerAdaptor.class.getDeclaredMethod("unseenObject", Object.class));
-        generateInterface(ObjectStateHandler.DeadObjectHandler.class.getDeclaredMethod("removed", long.class));
+        generateInterface(ObjectStateHandler.DeadObjectHandler.class.getDeclaredMethod("dead", long.class));
         out.printf("%s}%n", INDENT4);
         AdviceGeneratorHelper.updateSource(VMAVMLogger.class, null, "// START GENERATED INTERFACE", "// END GENERATED INTERFACE", false);
     }

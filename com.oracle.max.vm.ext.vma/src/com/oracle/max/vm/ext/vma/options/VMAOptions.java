@@ -79,13 +79,6 @@ public class VMAOptions {
     };
 
     /**
-     * Enables determination of the begin/end of object construction.
-     */
-    private static final BM[] CONSTRUCTOR_BM = new BM[] {
-        new BM(MENTRY, A), new BM(RETURN, B) // use RETURN as alternate for INVOKESPECIAL/AFTER
-    };
-
-    /**
      * Getting a field of an object or a class (static).
      */
     private static final BM[] GETFIELD_BM = new BM[] {new BM(GETFIELD, B), new BM(GETSTATIC, B)};
@@ -120,14 +113,18 @@ public class VMAOptions {
     private static final BM[] CAST_BM = new BM[] {new BM(INSTANCEOF, B), new BM(CHECKCAST, B)};
 
     /**
+     * Throw.
+     */
+    private static final BM[] THROW_BM = new BM[] {new BM(ATHROW, B)};
+
+    /**
      * A read, where this is defined as any access to the object's state (fields, array elements or class metadata).
      * The latter encompasses many bytecodes, e.g. method invocation, checkcast, etc.
      */
-    private static final BM[] READ_BM = compose(GETFIELD_BM, ARRAYLOAD_BM, BEFORE_INVOKE_BM, MONITOR_BM, CAST_BM);
+    private static final BM[] READ_BM = compose(GETFIELD_BM, ARRAYLOAD_BM, BEFORE_INVOKE_BM, MONITOR_BM, CAST_BM, THROW_BM);
 
     /**
      * A use of an object that does not involve reading it's state.
-     * N.B. {@code ALOAD} and {@code AALOAD} are included, but currently the relevant advice is not implemented.
      */
     private static final BM[] USE_BM = compose(IFOBJECT_BM, new BM[] {new BM(ARETURN, B), new BM(ASTORE, B), new BM(AASTORE, B),
                                                                       new BM(ALOAD, A), new BM(AALOAD, A)});
@@ -167,6 +164,13 @@ public class VMAOptions {
      */
     private static final BM[] METHOD_ENTRY_EXIT_BM = compose(METHOD_ENTRY_BM, METHOD_EXIT_BM);
 
+    /**
+     * Enables determination of the begin/end of object construction.
+     * If we had INVOKE after advice this could be streamlined, but absent that we
+     * need all method entries and returns.
+     */
+    private static final BM[] CONSTRUCTOR_BM = METHOD_ENTRY_EXIT_BM;
+
     /*
     private static final BM[] AFTERINVOKE_BM = new BM[] {
         new BM(INVOKEVIRTUAL, A), new BM(INVOKEINTERFACE, A),
@@ -176,14 +180,14 @@ public class VMAOptions {
 
     private static final BM[] THREADLOCAL_BM = compose(NEW_BM, READ_BM, WRITE_BM);
 
-    private static final BM[] TIMELINE_ACCESS = compose(NEW_BM, CONSTRUCTOR_BM, READ_BM, WRITE_BM);
+    private static final BM[] OBJECT_ACCESS = compose(NEW_BM, CONSTRUCTOR_BM, READ_BM, WRITE_BM);
 
-    private static final BM[] TIMELINE_USE = compose(TIMELINE_ACCESS, USE_BM);
+    private static final BM[] OBJECT_USE = compose(OBJECT_ACCESS, USE_BM);
 
     enum StdConfig {
         NULL("null", new BM[0]),
-        LIFETIME_USE("timeline_use", TIMELINE_USE),
-        LIFETIME_ACCESS("timeline_access", TIMELINE_ACCESS),
+        LIFETIME_USE("objectuse", OBJECT_USE),
+        LIFETIME_ACCESS("objectaccess", OBJECT_ACCESS),
         READ("read", compose(NEW_BM, READ_BM)),
         WRITE("write", compose(NEW_BM, WRITE_BM)),
         MONITOR("monitor", MONITOR_BM),

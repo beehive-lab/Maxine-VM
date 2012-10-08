@@ -51,7 +51,7 @@ import com.sun.max.vm.type.*;
  * a group for which there is no value in providing independent advice and some, e.g. {@code GETFIELD} for which it is
  * necessary to create type-specific variants (in order to pass arguments unboxed). To reduce the fan out of methods
  * boolean, byte, char, short, int and Word values are all passed as long. On the other hand the {@link AdviceMode}
- * is encoded explicitly rather than being passed as argument. In part this is because only a few bytecodes can support
+ * is encoded explicitly rather than being passed as argument. In part this is because many bytecodes cannot support
  * {@link AdviceMode#AFTER} owing to limitations in the template generator. This decision could be changed
  * relatively easily owing to the aggressive use of automatic source code generation.
  *
@@ -140,8 +140,11 @@ public class BytecodeAdviceGenerator {
 
         @Override
         public String suffixArgs(boolean comma) {
-            // TODO Auto-generated method stub
             return null;
+        }
+
+        @Override
+        public void endTemplateMethodGeneration(T1XTemplateTag tag) {
         }
     }
 
@@ -273,21 +276,25 @@ public class BytecodeAdviceGenerator {
 
     private static Set<String> scalarArraySet = new HashSet<String>();
 
-    private static boolean arrayLoadDone;
+    private static boolean arrayLoadBeforeDone;
 
     private static void generateArrayLoadStore(VMABytecodes bytecode) {
-        assert adviceMode == BEFORE;
-        boolean isLoad = bytecode.methodName.contains("Load");
-        String value = isLoad ? "" : ", %s value";
-        if (isLoad && arrayLoadDone) {
+//        assert adviceMode == BEFORE;
+        boolean isLoadBefore = bytecode.methodName.contains("Load") && adviceMode == BEFORE;
+        if (isLoadBefore && arrayLoadBeforeDone) {
             return;
         }
+        String value = isLoadBefore ? "" : ", %s value";
         String type = typeFor(bytecode.name().charAt(0));
-        if (!scalarArraySet.contains(bytecode.methodName + type)) {
+        if (adviceMode == AFTER && !type.equals("Object")) {
+            return;
+        }
+        String key = bytecode.methodName + type + adviceMode;
+        if (!scalarArraySet.contains(key)) {
             out.printf(METHOD_PREFIX + "Object array, int index" + value + ");%n%n", adviceModeString, bytecode.methodName, type);
-            scalarArraySet.add(bytecode.methodName + type);
-            if (isLoad) {
-                arrayLoadDone = true;
+            scalarArraySet.add(key);
+            if (isLoadBefore) {
+                arrayLoadBeforeDone = true;
             }
         }
     }
@@ -305,21 +312,21 @@ public class BytecodeAdviceGenerator {
 
     private static Set<String> scalarLoadSet = new HashSet<String>();
 
-    private static boolean loadDone;
+    private static boolean loadBeforeDone;
 
     private static void generateScalarLoadStore(VMABytecodes bytecode) {
-        assert adviceMode == BEFORE;
-        boolean isLoad = bytecode.methodName.contains("Load");
-        String value = isLoad ? "" : ", %s value";
-        if (isLoad && loadDone) {
+//        assert adviceMode == BEFORE;
+        boolean isLoadBefore = bytecode.methodName.contains("Load") && adviceMode == BEFORE;
+        if (isLoadBefore && loadBeforeDone) {
             return;
         }
+        String value = isLoadBefore ? "" : ", %s value";
         String type = typeFor(bytecode.name().charAt(0));
         if (!scalarLoadSet.contains(bytecode.methodName + type)) {
             out.printf(METHOD_PREFIX + "int dispToLocalSlot" + value + ");%n%n", adviceModeString, bytecode.methodName, type);
             scalarLoadSet.add(bytecode.methodName + type);
-            if (isLoad) {
-                loadDone = true;
+            if (isLoadBefore) {
+                loadBeforeDone = true;
             }
         }
     }
