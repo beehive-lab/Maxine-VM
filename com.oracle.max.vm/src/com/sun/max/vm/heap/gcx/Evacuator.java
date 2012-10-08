@@ -33,6 +33,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.debug.DebugHeap.DetailLogger;
+import com.sun.max.vm.heap.gcx.EvacuationTimers.TIMED_OPERATION;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.*;
@@ -75,6 +76,8 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     private GCOperation currentGCOperation;
 
     private EvacuationTimers timers;
+
+    private TIMED_OPERATION currentEvacuationOperation;
 
     protected PhaseLogger phaseLogger;
 
@@ -472,6 +475,9 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         return cell.plus(Layout.size(origin));
     }
 
+    // temp debug support
+    private Pointer scannedCell = Pointer.zero();
+
     /**
      * Evacuate all cells from the evacuated area reachable from the specified range of heap addresses.
      * The range comprise an integral number of cells.
@@ -480,13 +486,18 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * @param end last address of the range, must coincide with the end of a cell
      */
     final void evacuateRange(Pointer start, Pointer end) {
-        Pointer cell = start;
-        while (cell.lessThan(end)) {
-            cell = scanCellForEvacuatees(cell);
+        /* Pointer */ scannedCell = start;
+        while (scannedCell.lessThan(end)) {
+            scannedCell = scanCellForEvacuatees(scannedCell);
         }
     }
 
+    public TIMED_OPERATION currentEvacuationOperation() {
+        return currentEvacuationOperation;
+    }
+
     public final void evacuate(boolean logPhases) {
+        currentEvacuationOperation = PROLOGUE;
         timers.start(PROLOGUE);
         doBeforeEvacuation();
         timers.stop(PROLOGUE);
@@ -494,6 +505,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         if (logPhases) {
             phaseLogger.logScanningRoots(VMLogger.Interval.BEGIN);
         }
+        currentEvacuationOperation = ROOT_SCAN;
         timers.start(ROOT_SCAN);
         evacuateFromRoots();
         timers.stop(ROOT_SCAN);
@@ -504,6 +516,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         if (logPhases) {
             phaseLogger.logScanningBootHeap(VMLogger.Interval.BEGIN);
         }
+        currentEvacuationOperation = BOOT_HEAP_SCAN;
         timers.start(BOOT_HEAP_SCAN);
         evacuateFromBootHeap();
         timers.stop(BOOT_HEAP_SCAN);
@@ -514,6 +527,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         if (logPhases) {
             phaseLogger.logScanningCode(VMLogger.Interval.BEGIN);
         }
+        currentEvacuationOperation = CODE_SCAN;
         timers.start(CODE_SCAN);
         evacuateFromCode();
         timers.stop(CODE_SCAN);
@@ -524,6 +538,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         if (Heap.logGCPhases()) {
             phaseLogger.logScanningImmortalHeap(VMLogger.Interval.BEGIN);
         }
+        currentEvacuationOperation = IMMORTAL_SCAN;
         timers.start(IMMORTAL_SCAN);
         evacuateFromImmortalHeap();
         timers.stop(IMMORTAL_SCAN);
@@ -534,6 +549,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         if (logPhases) {
             phaseLogger.logScanningRSet(VMLogger.Interval.BEGIN);
         }
+        currentEvacuationOperation = RSET_SCAN;
         timers.start(RSET_SCAN);
         evacuateFromRSets();
         timers.stop(RSET_SCAN);
@@ -544,6 +560,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         if (logPhases) {
             phaseLogger.logEvacuating(VMLogger.Interval.BEGIN);
         }
+        currentEvacuationOperation = COPY;
         timers.start(COPY);
         evacuateReachables();
         timers.stop(COPY);
@@ -554,6 +571,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         if (logPhases) {
             phaseLogger.logProcessingSpecialReferences(VMLogger.Interval.BEGIN);
         }
+        currentEvacuationOperation = WEAK_REF;
         timers.start(WEAK_REF);
         disableSpecialRefDiscovery();
         SpecialReferenceManager.processDiscoveredSpecialReferences(this);
@@ -564,6 +582,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
             phaseLogger.logProcessingSpecialReferences(VMLogger.Interval.END);
         }
 
+        currentEvacuationOperation = EPILOGUE;
         timers.start(EPILOGUE);
         doAfterEvacuation();
         timers.stop(EPILOGUE);

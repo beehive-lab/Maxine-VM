@@ -93,7 +93,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public int objectSize() {
-        return Layout.getArraySize(componentKind(), length).toInt();
+        return Layout.getArraySize(componentKind(), length()).toInt();
     }
 
     @Override

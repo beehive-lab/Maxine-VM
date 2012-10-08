@@ -88,11 +88,11 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
     }
 
     /**
-     * Contiguous regions of virtual memory holding the card table data.
+     * Contiguous regions of virtual memory holding the remembered set data (both the card table and the FOT).
      * Mostly used to feed the inspector.
      */
     @INSPECTED
-    final MemoryRegion cardTableMemory;
+    final MemoryRegion tablesMemory;
 
     /**
      * The table recording card state. The table is updated by compiler-generated write-barrier execution and explicitly by the GC.
@@ -149,7 +149,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
     public CardTableRSet() {
         cardTable = new CardTable();
         cfoTable = new CardFirstObjectTable();
-        cardTableMemory = new MemoryRegion("Card and FOT tables");
+        tablesMemory = new MemoryRegion("Card and FOT tables");
     }
 
     /**
@@ -183,26 +183,27 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
             final Address bootCardTableStart = Heap.bootHeapRegion.start().plus(reservedSpace).minus(bootCardTableSize);
             FatalError.check(reservedSpace.greaterThan(bootCardTableSize.plus(Heap.bootHeapRegion.size())) &&
                             VMConfiguration.vmConfig().heapScheme().bootRegionMappingConstraint().equals(BootRegionMappingConstraint.AT_START),
-                "card table initialization invariant violated");
+                "card table remembered set initialization invariant violated");
             initialize(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.size(), bootCardTableStart, bootCardTableSize);
         }
     }
 
     /**
-     * Initialize a card table covering a contiguous range of virtual address. The memory for the card table's data must be provided by the caller as the
-     * caller may want to enforcement some specific order between card table address and heap addresses.
-     * The amount of memory needed by the card table for a specific area to cover is computed using  {@link #memoryRequirement(Size)}.
-     * The amount of space needed
-     * @param coveredAreaStart
-     * @param coveredAreaSize
-     * @param cardTableDataStart
-     * @param cardTableDataSize
+     * Initialize a card table based remembered set to cover a contiguous range of virtual addresses.
+     * The memory for the remembered set tables (card and FOT tables) must be provided by the caller as the
+     * caller may want to enforce some constraints on the location of these tables in memory with respect to the covered heap addresses.
+     * The amount of memory needed by remembered set's tables for a given area to cover is computed using  {@link #memoryRequirement(Size)}.
+     *
+     * @param coveredAreaStart start of the contiguous range of heap covered by the remembered set
+     * @param coveredAreaSize end of the contiguous range of heap covered by the remembered set
+     * @param tablesDataStart start of the memory regions reserved for the remembered set's tables
+     * @param tablesDataSize end of the memory regions reserved for the remembered set's tables
      */
-    public void initialize(Address coveredAreaStart, Size coveredAreaSize, Address cardTableDataStart, Size cardTableDataSize) {
-        cardTableMemory.setStart(cardTableDataStart);
-        cardTableMemory.setSize(cardTableDataSize);
-        cardTable.initialize(coveredAreaStart, coveredAreaSize, cardTableDataStart);
-        final Address cfoTableStart = cardTableDataStart.plus(cardTable.tableSize(coveredAreaSize).wordAligned());
+    public void initialize(Address coveredAreaStart, Size coveredAreaSize, Address tablesDataStart, Size tablesDataSize) {
+        tablesMemory.setStart(tablesDataStart);
+        tablesMemory.setSize(tablesDataSize);
+        cardTable.initialize(coveredAreaStart, coveredAreaSize, tablesDataStart);
+        final Address cfoTableStart = tablesDataStart.plus(cardTable.tableSize(coveredAreaSize).wordAligned());
         cfoTable.initialize(coveredAreaStart, coveredAreaSize, cfoTableStart);
         if (bootCardTableLiterals != null) {
             patchBootCodeLiterals();
@@ -445,7 +446,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
      * @return a non-null {@link MemoryRegion}
      */
     public MemoryRegion memory() {
-        return cardTableMemory;
+        return tablesMemory;
     }
 
     private void updateForFreeSpace(Address start, Address end) {

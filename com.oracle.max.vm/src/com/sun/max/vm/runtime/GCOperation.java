@@ -173,6 +173,10 @@ public abstract class GCOperation extends VmOperation {
         final long k = Size.K.toLong();
         long beforeFree = 0L;
         long beforeUsed = 0L;
+        invocationCount++;
+        if (Heap.LogGCSuppressionCount > 0) {
+            Heap.LogGCSuppressionCount--;
+        }
         if (Heap.verbose()) {
             Log.print("--Start GC ");
             Log.print(invocationCount);
@@ -206,10 +210,6 @@ public abstract class GCOperation extends VmOperation {
             Log.print(invocationCount);
             Log.println("--");
             Log.unlock(lockDisabledSafepoints);
-        }
-        invocationCount++;
-        if (Heap.LogGCSuppressionCount > 0) {
-            Heap.LogGCSuppressionCount--;
         }
     }
 

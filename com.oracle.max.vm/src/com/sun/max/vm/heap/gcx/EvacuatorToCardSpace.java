@@ -121,6 +121,10 @@ public class EvacuatorToCardSpace extends Evacuator {
      */
     @INSPECTED
     private Address initialEvacuationMark;
+
+    public Address initialEvacuationMark() {
+        return initialEvacuationMark;
+    }
     /**
      * Start of the last unrecorded survivor ranges resulting from overflow allocation.
      */

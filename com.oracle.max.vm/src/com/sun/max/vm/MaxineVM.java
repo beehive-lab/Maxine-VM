@@ -560,6 +560,10 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native void native_trap_exit(int code, Address address);
 
+    /**
+     * Generate a core file of the vm process.
+     * Note that this doesn't exit the vm which can progress normally after the core generation.
+     */
     @C_FUNCTION
     public static native void core_dump();
 

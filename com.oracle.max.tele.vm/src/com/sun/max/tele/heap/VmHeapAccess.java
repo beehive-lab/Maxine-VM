@@ -282,50 +282,57 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         assert vm().lockHeldByCurrentThread();
         if (!isInitialized) {
             Trace.line(TRACE_VALUE, tracePrefix() + "not initialized yet");
-        } else if (epoch <= lastUpdateEpoch) {
-            Trace.line(TRACE_VALUE, tracePrefix() + "redundant udpate epoch=" + epoch);
-        } else {
-            updateTracer.begin();
-
-
-            // Suspend checking for heap containment of object origin addresses.
-            updatingHeapMemoryRegions = true;
-
-            // Starting from scratch, locate all known heap regions; most of the time it won't change.
-            final List<VmHeapRegion> discoveredHeapRegions = new ArrayList<VmHeapRegion>(allHeapRegions.size());
-
-            // We already know about the boot heap, and there's no reason to refresh its status
-            discoveredHeapRegions.add(bootHeapRegion);
-
-            // Check for the {@link ImmortalHeap} description
-            if (teleImmortalHeapRegion == null) {
-                final RemoteReference immortalHeapReference = fields().ImmortalHeap_immortalHeap.readRemoteReference(vm());
-                if (!immortalHeapReference.isZero()) {
-                    teleImmortalHeapRegion = (TeleMemoryRegion) objects().makeTeleObject(immortalHeapReference);
-                    immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion);
-                    vm().addressSpace().add(immortalHeapRegion.memoryRegion());
-                }
-            } else {
-                // Force an update, in case it has just been allocated.
-                teleImmortalHeapRegion.updateCache(epoch);
-            }
-            if (immortalHeapRegion != null) {
-                discoveredHeapRegions.add(immortalHeapRegion);
-            }
-
-            // Update the specific scheme last, in case the immortal heap region has been allocated since the
-            // last time we looked; it will be needed by the scheme update.
-            remoteHeapScheme.updateMemoryStatus(epoch);
-            discoveredHeapRegions.addAll(remoteHeapScheme.heapRegions());
-
-            allHeapRegions = Collections.unmodifiableList(discoveredHeapRegions);
-
-            // Resume checking for heap containment of object origin addresses.
-            updatingHeapMemoryRegions = false;
-
-            lastUpdateEpoch = epoch;
-            updateTracer.end(statsPrinter);
+            return;
         }
+        if (epoch <= lastUpdateEpoch) {
+            if (epoch == 0 && TeleVM.mode == MaxInspectionMode.ATTACH) {
+                // Special case for attachment mode. The first update was performed while the remote heap scheme
+                // wasn't initialized. This might cause missing remote-scheme specific regions whose descriptions is stored in
+                // the boot region.
+                Trace.line(TRACE_VALUE, tracePrefix() + "attach-mode forced udpate");
+            } else {
+                Trace.line(TRACE_VALUE, tracePrefix() + "redundant udpate epoch=" + epoch);
+                return;
+            }
+        }
+        updateTracer.begin();
+        // Suspend checking for heap containment of object origin addresses.
+        updatingHeapMemoryRegions = true;
+
+        // Starting from scratch, locate all known heap regions; most of the time it won't change.
+        final List<VmHeapRegion> discoveredHeapRegions = new ArrayList<VmHeapRegion>(allHeapRegions.size());
+
+        // We already know about the boot heap, and there's no reason to refresh its status
+        discoveredHeapRegions.add(bootHeapRegion);
+
+        // Check for the {@link ImmortalHeap} description
+        if (teleImmortalHeapRegion == null) {
+            final RemoteReference immortalHeapReference = fields().ImmortalHeap_immortalHeap.readRemoteReference(vm());
+            if (!immortalHeapReference.isZero()) {
+                teleImmortalHeapRegion = (TeleMemoryRegion) objects().makeTeleObject(immortalHeapReference);
+                immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion);
+                vm().addressSpace().add(immortalHeapRegion.memoryRegion());
+            }
+        } else {
+            // Force an update, in case it has just been allocated.
+            teleImmortalHeapRegion.updateCache(epoch);
+        }
+        if (immortalHeapRegion != null) {
+            discoveredHeapRegions.add(immortalHeapRegion);
+        }
+
+        // Update the specific scheme last, in case the immortal heap region has been allocated since the
+        // last time we looked; it will be needed by the scheme update.
+        remoteHeapScheme.updateMemoryStatus(epoch);
+        discoveredHeapRegions.addAll(remoteHeapScheme.heapRegions());
+
+        allHeapRegions = Collections.unmodifiableList(discoveredHeapRegions);
+
+        // Resume checking for heap containment of object origin addresses.
+        updatingHeapMemoryRegions = false;
+
+        lastUpdateEpoch = epoch;
+        updateTracer.end(statsPrinter);
     }
 
     public String entityName() {
