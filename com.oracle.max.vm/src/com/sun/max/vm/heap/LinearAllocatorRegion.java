@@ -29,6 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.debug.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -169,14 +170,16 @@ public class LinearAllocatorRegion extends LinearAllocationMemoryRegion {
     }
 
     @INLINE
-    protected final void scanReferences(PointerIndexVisitor pointerIndexVisitor, Pointer refMap, Address rangeStart, Address rangeEnd, boolean logging) {
+    protected final void scanReferences(PointerIndexVisitor pointerIndexVisitor, byte [] referenceMapBytes, Address rangeStart, Address rangeEnd, boolean logging) {
         final int firstBitIndex = rangeStart.minus(start).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
         final int lastBitIndex = rangeEnd.minus(start).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        final Pointer refMap =  ArrayAccess.elementPointer(referenceMapBytes, 0);
         scanReferences(pointerIndexVisitor, refMap, firstBitIndex, lastBitIndex, logging);
     }
 
     @INLINE
-    protected final void scanReferenceMap(PointerIndexVisitor pointerIndexVisitor, Pointer refMap, int refMapWords, boolean logging) {
+    protected final void scanReferenceMap(PointerIndexVisitor pointerIndexVisitor, byte [] referenceMapBytes, int refMapWords, boolean logging) {
+        final Pointer refMap =  ArrayAccess.elementPointer(referenceMapBytes, 0);
         int refMapWordIndex = 0;
         while (refMapWordIndex < refMapWords) {
             scanReferences(pointerIndexVisitor, refMap, refMapWordIndex++, logging);

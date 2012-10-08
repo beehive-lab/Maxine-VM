@@ -43,9 +43,8 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.Heap.GCCallbackPhase;
 import com.sun.max.vm.heap.debug.*;
-import com.sun.max.vm.heap.debug.DebugHeap.ReferenceFinder;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.heap.gcx.EvacuationTimers.*;
+import com.sun.max.vm.heap.gcx.EvacuationTimers.TIMED_OPERATION;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.log.VMLog.Record;
@@ -319,6 +318,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     @INSPECTED
     private final NoAgingNurseryEvacuator youngSpaceEvacuator;
 
+    /**
+     * Implementation of old space evacuation. Used by full collection operations to collect the old generation.
+     */
     @INSPECTED
     private final EvacuatorToCardSpace oldSpaceEvacuator;
 
@@ -330,9 +332,15 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     @INSPECTED
     private boolean requiresFullGC;
 
+    /**
+     * Record the number of completed full collections.
+     */
     @INSPECTED
     private int fullCollectionCount;
 
+    /**
+     * Record the invocation count of the last full collection. Debugging purpose only.
+     */
     private int lastFullCollectionInvocationCount;
 
     /**
@@ -372,13 +380,28 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      */
     @INSPECTED
     private final MemoryRegion overflowedArea = new MemoryRegion();
+    /**
+     * Record the top-most allocated address in the old generation to-space upon minor evacuation overflow.
+     * Debugging purpose only. Used by the inspector to precisely determine range of promoted objects in the to-space.
+     */
     @INSPECTED
     private Address youngOverflowEvacuationMark = Address.zero();
+    /**
+     * Record the evacuation operation in which an minor evacuation overflow occurred.
+     * Debugging purpose only.
+     */
     private TIMED_OPERATION youngOverflowEvacuationOp;
+    /**
+     * Record the top-most allocated address in the old generation to-space upon full evacuation overflow.
+     * Debugging purpose only. Used by the inspector to precisely determine range of survivor objects in the to-space.
+     */
     @INSPECTED
     private Address oldOverflowEvacuationMark = Address.zero();
+   /**
+    * Record the evacuation operation in which an full evacuation overflow occurred.
+    * Debugging purpose only.
+    */
     private TIMED_OPERATION oldOverflowEvacuationOp;
-
 
     private final EvacuationTimers evacTimers = new EvacuationTimers();
 
@@ -523,14 +546,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             // Have to visit both the old gen's to space and the overflow in the old gen from space (i.e., the bound of the oldSpace's allocator.
             noFromSpaceReferencesVerifiers.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
             noFromSpaceReferencesVerifiers.visitCells(overflowedArea.start(), overflowedArea.end());
-            if (MaxineVM.isDebug()) {
-                referenceFinder.setFatalErrorAction(fatalErrorAction);
-                referenceFinder.setSearchedReference(youngOverflowEvacuationMark);
-                Heap.bootHeapRegion.visitCells(referenceFinder);
-                referenceFinder.visitCells(oldToSpace.start(), oldToSpace.committedEnd());
-                referenceFinder.visitCells(overflowedArea.start(), overflowedArea.end());
-                referenceFinder.setFatalErrorAction(null);
-            }
         } else {
             oldSpace.visit(noFromSpaceReferencesVerifiers);
         }
@@ -560,6 +575,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
         oldSpaceEvacuator.setEvacuationSpace(oldSpace.fromSpace, oldSpace);
         oldSpaceEvacuator.evacuate(Heap.logGCPhases());
+
         if (OldSpaceDirtyCardsStats) {
             countOldSpaceDirtyCards("after old gen evacuation");
         }
@@ -584,25 +600,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
     }
 
-    final DebugHeap.ReferenceFinder referenceFinder = new ReferenceFinder(false);
-    // FIXME: REMOVE temp debug
-    final Runnable fatalErrorAction = new Runnable() {
-        public void run() {
-            Log.print(" initial evacuation mark ");
-            Log.println(youngSpaceEvacuator.initialEvacuationMark());
-            Log.printRange(oldSpace.space.start(), oldSpace.space.committedEnd(), true);
-            Log.printRange(oldSpace.allocator.start(), oldSpace.allocator.unsafeTop(), true);
-        }
-    };
-
     @Override
     public Address refillEvacuationBuffer() {
         final CardSpaceAllocator<OldSpaceRefiller> allocator = oldSpace.allocator();
         Size spaceLeft = allocator.freeSpace();
         Address startOfSpaceLeft = allocator.unsafeSetTopToLimit();
-        if (MaxineVM.isDebug() && spaceLeft.isZero()) { // FIXME: remove  / temp debug
-            FatalError.breakpoint();
-        }
         FatalError.check(VmThread.current().isVmOperationThread(), "must only be called by VmOperation");
         // First, make sure we're doing minor collection here.
         if (youngSpaceEvacuator.getGCOperation() != null) {
@@ -623,17 +625,10 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 resizingPolicy.notifyMinorEvacuationOverflow();
                 youngOverflowEvacuationMark = darkMatter;
                 youngOverflowEvacuationOp = youngSpaceEvacuator.currentEvacuationOperation();
-                youngSpaceEvacuator.enableDarkMatterRefCheck(true);
-                oldSpaceEvacuator.enableDarkMatterRefCheck(true);
                 // Refill the allocator with the old from space.
                 spaceLeft = fromSpace.committedSize();
                 allocator.refill(fromSpace.start(), spaceLeft);
                 startOfSpaceLeft = allocator.unsafeSetTopToLimit();
-                // FIXME: REMOVE temp debug.
-                if (MaxineVM.isDebug()) {
-                    referenceFinder.setSearchedReference(darkMatter);
-                    Heap.bootHeapRegion.visitCells(referenceFinder);
-                }
             }
             HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
             return startOfSpaceLeft;
@@ -725,8 +720,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final boolean oldSpaceMutatorOverflow = oldSpace.allocator.refillManager().mutatorOverflow();
 
         resizingPolicy.clearNotifications();
-        youngSpaceEvacuator.enableDarkMatterRefCheck(false);
-        oldSpaceEvacuator.enableDarkMatterRefCheck(false);
+        youngSpaceEvacuator.enableDarkMatterRefCheck(MaxineVM.isDebug());
+        oldSpaceEvacuator.enableDarkMatterRefCheck(MaxineVM.isDebug());
 
         evacTimers.resetTrackTime();
         if (OldSpaceDirtyCardsStats) {

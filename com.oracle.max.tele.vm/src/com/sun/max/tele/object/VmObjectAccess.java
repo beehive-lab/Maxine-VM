@@ -431,10 +431,19 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
                 return false;
             }
             // Presume that we have a valid location of a Hub object.
-            final Word nextHubWord = hubRef.readHubAsWord();
+            Word nextHubWord = hubRef.readHubAsWord();
             if (nextHubWord.equals(hubHubWord)) {
                 // We arrived at the DynamicHub for the class DynamicHub
                 return true;
+            }
+            if (hasForwardingAddressUnsafe(hubOrigin)) {
+                final Address forwardedHubOrigin = getForwardingAddressUnsafe(hubOrigin);
+                final RemoteReference forwardedHubRef = referenceManager().makeTemporaryRemoteReference(forwardedHubOrigin);
+                nextHubWord = forwardedHubRef.readHubAsWord();
+                if (nextHubWord.equals(hubHubWord)) {
+                    // We arrived at the DynamicHub for the class DynamicHub
+                    return true;
+                }
             }
             // If we're still not at the dynamic hub's hub, this can only be the dynamic hub for static hub. If not, it isn't a plausible object.
             return nextHubWord.equals(staticHubHubWord());
