@@ -89,25 +89,22 @@ public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
     }
 
     final class BootRegionDirtyCardEvacuationClosure extends CardTableRSet.CardRangeVisitor {
-        Address lastMutableReferenceLocation = Address.zero();
+        Address mutableBootReferencesLimit = Address.zero();
         BootRegionDirtyCardEvacuationClosure() {
         }
 
         public void initialize() {
-            lastMutableReferenceLocation = Heap.bootHeapRegion.lastMutableReferenceAddress();
+            mutableBootReferencesLimit = Heap.bootHeapRegion.lastMutableReferenceAddress().plus(Word.widthValue().numberOfBytes);
         }
 
         @INLINE
         @Override
         public void visitCards(Address start, Address end) {
-            if (end.greaterThan(lastMutableReferenceLocation)) {
-                Log.println("");
-                Log.println(">>> VISITED CARD HIGHER THAN TOP MOST REFERENCE LOCATION");
-                FatalError.breakpoint();
-                if (start.greaterThan(lastMutableReferenceLocation)) {
+            if (end.greaterThan(mutableBootReferencesLimit)) {
+                if (start.greaterThan(mutableBootReferencesLimit)) {
                     return;
                 }
-                end = lastMutableReferenceLocation;
+                end = mutableBootReferencesLimit;
             }
             Heap.bootHeapRegion.visitReferences(start, end, NoAgingNurseryEvacuator.this);
         }
