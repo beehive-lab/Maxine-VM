@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.max.vma.tools.qa.*;
+import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.AdviceRecord;
 
 public class AdviceRecordsQuery extends QueryBase {
     private static final String[] INDENTS = new String[64];
@@ -43,6 +44,7 @@ public class AdviceRecordsQuery extends QueryBase {
         TraceRun traceRun = traceRuns.get(traceFocus);
         int fromIndex = 0;
         int toIndex = traceRun.adviceRecordList.size();
+        ArrayList<AdviceRecord> showIndexList = null;
         boolean indenting = false;
         int indent = 0;
         // Checkstyle: stop modified control variable check
@@ -54,6 +56,8 @@ public class AdviceRecordsQuery extends QueryBase {
                 toIndex = Integer.parseInt(args[++i]);
             } else if (arg.equals("-indent")) {
                 indenting = true;
+            } else if (arg.equals("-index")) {
+                showIndexList = traceRun.adviceRecordList;
             }
         }
         // Checkstyle : resume modified control variable check
@@ -64,7 +68,7 @@ public class AdviceRecordsQuery extends QueryBase {
             if (indenting) {
                 ps.print(INDENTS[indent]);
             }
-            indent = AdviceRecordHelper.print(this, traceRun, ps, traceRun.adviceRecordList.get(index), indent, true);
+            indent = AdviceRecordHelper.print(this, traceRun, ps, traceRun.adviceRecordList.get(index), showIndexList, indent, true);
             count++;
             if (verbose && ((count % 100000) == 0)) {
                 long endTime = System.currentTimeMillis();

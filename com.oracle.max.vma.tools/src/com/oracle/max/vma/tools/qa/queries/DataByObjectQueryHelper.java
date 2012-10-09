@@ -50,7 +50,7 @@ public class DataByObjectQueryHelper extends QueryBase {
 
         if (showAllAccesses) {
             for (int i = 0; i < td.getAdviceRecords().size(); i++) {
-                AdviceRecordHelper.print(this, traceRun, ps, td.getAdviceRecords().get(i), 0, true);
+                AdviceRecordHelper.print(this, traceRun, ps, td.getAdviceRecords().get(i), traceRun.adviceRecordList, 0, true);
             }
         }
 
