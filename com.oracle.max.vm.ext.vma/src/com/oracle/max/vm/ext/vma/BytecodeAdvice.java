@@ -134,6 +134,10 @@ public abstract class BytecodeAdvice {
 
     public abstract void adviseBeforeMonitorExit(int bci, Object object);
 
+    public abstract void adviseAfterLoad(int bci, int dispToLocalSlot, Object value);
+
+    public abstract void adviseAfterArrayLoad(int bci, Object array, int index, Object value);
+
     public abstract void adviseAfterNew(int bci, Object object);
 
     public abstract void adviseAfterNewArray(int bci, Object object, int length);

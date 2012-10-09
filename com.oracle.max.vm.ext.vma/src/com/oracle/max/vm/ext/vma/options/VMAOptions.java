@@ -40,10 +40,8 @@ import com.sun.max.vm.log.hosted.*;
 /**
  * Defines all the options that can be used to control the VMA system.
  *
- * Normally, VMA is enabled only at VM runtime {@link MaxineVM.Phase#RUNNING} through the {@code XX:VMA} style options.
- * However, it possible to enable VMA in the boot image, in which case the options apply to the classes
- * compiled into the boot image. By default the boot image options also apply to the runtime phase and any extra runtime
- * settings are additive. However, the boot image settings can be rest with the {@link #VMAReset} option.
+ * VMA is enabled only at VM runtime {@link MaxineVM.Phase#RUNNING} through the {@code XX:VMA} style options.
+ * However, JDK classes in the boot image can be deoptimized and instrumented at runtime.
  *
  * Note that that the {@link #VMA} option is dominant. If it is not set, the other options are ignored even if they are
  * set.
@@ -72,30 +70,106 @@ public class VMAOptions {
         }
     }
 
-    private static final BM[] LIFETIME_BM = new BM[] {
+    /**
+     * Object creation.
+     */
+    private static final BM[] NEW_BM = new BM[] {
         new BM(NEW, A), new BM(NEWARRAY, A), new BM(ANEWARRAY, A),
-        new BM(MULTIANEWARRAY, A), new BM(MENTRY, A), new BM(RETURN, B) // use RETURN as alternate for INVOKESPECIAL/AFTER
+        new BM(MULTIANEWARRAY, A)
     };
 
-    private static final BM[] READ_BM = compose(LIFETIME_BM, new BM[] {new BM(GETFIELD, B), new BM(GETSTATIC, B)});
+    /**
+     * Getting a field of an object or a class (static).
+     */
+    private static final BM[] GETFIELD_BM = new BM[] {new BM(GETFIELD, B), new BM(GETSTATIC, B)};
 
-    private static final BM[] WRITE_BM = compose(LIFETIME_BM, new BM[] {new BM(PUTFIELD, B), new BM(PUTSTATIC, B)});
+    /**
+     * An array load.
+     */
+    private static final BM[] ARRAYLOAD_BM = new BM[] {new BM(IALOAD, B), new BM(LALOAD, B), new BM(FALOAD, B),
+        new BM(DALOAD, B), new BM(AALOAD, B), new BM(BALOAD, B), new BM(CALOAD, B), new BM(SALOAD, B)};
 
+    /**
+     * Method invocation (before).
+     */
+    private static final BM[] BEFORE_INVOKE_BM = new BM[] {
+        new BM(INVOKEVIRTUAL, B), new BM(INVOKEINTERFACE, B),
+        new BM(INVOKESTATIC, B), new BM(INVOKESPECIAL, B)
+    };
+
+    /**
+     * IF operations on objects.
+     */
+    private static final BM[] IFOBJECT_BM = new BM[] {new BM(IF_ACMPNE, B), new BM(IF_ACMPEQ, B), new BM(IFNULL, B), new BM(IFNONNULL, B)};
+
+    /**
+     * Monitor entry/exit.
+     */
     private static final BM[] MONITOR_BM = new BM[] {new BM(MONITORENTER, B), new BM(MONITOREXIT, B)};
 
+    /**
+     * Casts.
+     */
+    private static final BM[] CAST_BM = new BM[] {new BM(INSTANCEOF, B), new BM(CHECKCAST, B)};
+
+    /**
+     * Throw.
+     */
+    private static final BM[] THROW_BM = new BM[] {new BM(ATHROW, B)};
+
+    /**
+     * A read, where this is defined as any access to the object's state (fields, array elements or class metadata).
+     * The latter encompasses many bytecodes, e.g. method invocation, checkcast, etc.
+     */
+    private static final BM[] READ_BM = compose(GETFIELD_BM, ARRAYLOAD_BM, BEFORE_INVOKE_BM, MONITOR_BM, CAST_BM, THROW_BM);
+
+    /**
+     * A use of an object that does not involve reading it's state.
+     */
+    private static final BM[] USE_BM = compose(IFOBJECT_BM, new BM[] {new BM(ARETURN, B), new BM(ASTORE, B), new BM(AASTORE, B),
+                                                                      new BM(ALOAD, A), new BM(AALOAD, A)});
+    /**
+     * Writing a field of an object or a class (static).
+     */
+    private static final BM[] PUTFIELD_BM = new BM[] {new BM(PUTFIELD, B), new BM(PUTSTATIC, B)};
+
+    /**
+     * Array store.
+     */
+    private static final BM[] ARRAYSTORE_BM = new BM[] {new BM(IASTORE, B), new BM(LASTORE, B), new BM(FASTORE, B),
+        new BM(DASTORE, B), new BM(AASTORE, B), new BM(BASTORE, B), new BM(CASTORE, B), new BM(SASTORE, B)};
+
+    /**
+     * A write, defined similarly to read.
+     */
+    private static final BM[] WRITE_BM = compose(ARRAYSTORE_BM, PUTFIELD_BM);
+
+    /**
+     * Method entry.
+     */
     private static final BM[] METHOD_ENTRY_BM = new BM[] {
         new BM(MENTRY, A),
     };
 
+    /**
+     * Method exit, defined as the various forms of {@code RETURN}.
+     */
     private static final BM[] METHOD_EXIT_BM = new BM[] {
         new BM(IRETURN, B), new BM(LRETURN, B), new BM(FRETURN, B),
         new BM(DRETURN, B), new BM(ARETURN, B), new BM(RETURN, B)
     };
 
-    private static final BM[] BEFOREINVOKE_BM = new BM[] {
-        new BM(INVOKEVIRTUAL, B), new BM(INVOKEINTERFACE, B),
-        new BM(INVOKESTATIC, B), new BM(INVOKESPECIAL, B)
-    };
+    /**
+     * Method entry and exit.
+     */
+    private static final BM[] METHOD_ENTRY_EXIT_BM = compose(METHOD_ENTRY_BM, METHOD_EXIT_BM);
+
+    /**
+     * Enables determination of the begin/end of object construction.
+     * If we had INVOKE after advice this could be streamlined, but absent that we
+     * need all method entries and returns.
+     */
+    private static final BM[] CONSTRUCTOR_BM = METHOD_ENTRY_EXIT_BM;
 
     /*
     private static final BM[] AFTERINVOKE_BM = new BM[] {
@@ -104,29 +178,22 @@ public class VMAOptions {
     };
     */
 
-    private static final BM[] INVOKE_BM = compose(BEFOREINVOKE_BM/*, AFTERINVOKE_BM*/);
-    private static final BM[] METHOD_ENTRY_EXIT_BM = compose(METHOD_ENTRY_BM, METHOD_EXIT_BM);
+    private static final BM[] THREADLOCAL_BM = compose(NEW_BM, READ_BM, WRITE_BM);
 
-    private static final BM[] ARRAYLOAD_BM = new BM[] {new BM(IALOAD, B), new BM(LALOAD, B), new BM(FALOAD, B),
-        new BM(DALOAD, B), new BM(AALOAD, B), new BM(BALOAD, B), new BM(CALOAD, B), new BM(SALOAD, B)};
-    private static final BM[] ARRAYSTORE_BM = new BM[] {new BM(IASTORE, B), new BM(LASTORE, B), new BM(FASTORE, B),
-        new BM(DASTORE, B), new BM(AASTORE, B), new BM(BASTORE, B), new BM(CASTORE, B), new BM(SASTORE, B)};
-    private static final BM[] CAST_BM = new BM[] {new BM(INSTANCEOF, B), new BM(CHECKCAST, B)};
-    private static final BM[] GETPUTFIELD_BM = new BM[] {new BM(GETFIELD, B), new BM(PUTFIELD, B)};
-    private static final BM[] IFOBJECT_BM = new BM[] {new BM(IF_ACMPNE, B), new BM(IF_ACMPEQ, B), new BM(IFNULL, B), new BM(IFNONNULL, B)};
-//    private static final BM[] SWITCH_BM = new BM[] {new BM(TABLESWITCH, B), new BM(LOOKUPSWITCH, B)};
-    private static final BM[] THREADLOCAL_BM = compose(LIFETIME_BM, MONITOR_BM, BEFOREINVOKE_BM, GETPUTFIELD_BM, CAST_BM,
-                              IFOBJECT_BM, ARRAYLOAD_BM, ARRAYSTORE_BM);
+    private static final BM[] OBJECT_ACCESS = compose(NEW_BM, CONSTRUCTOR_BM, READ_BM, WRITE_BM);
+
+    private static final BM[] OBJECT_USE = compose(OBJECT_ACCESS, USE_BM);
 
     enum StdConfig {
         NULL("null", new BM[0]),
-        LIFETIME("lifetime", LIFETIME_BM),
-        READ("read", READ_BM),
-        WRITE("write", WRITE_BM),
+        LIFETIME_USE("objectuse", OBJECT_USE),
+        LIFETIME_ACCESS("objectaccess", OBJECT_ACCESS),
+        READ("read", compose(NEW_BM, READ_BM)),
+        WRITE("write", compose(NEW_BM, WRITE_BM)),
         MONITOR("monitor", MONITOR_BM),
-        BEFOREINVOKE("beforeinvoke", BEFOREINVOKE_BM),
+        BEFOREINVOKE("beforeinvoke", BEFORE_INVOKE_BM),
 //        AFTERINVOKE("afterinvoke", AFTERINVOKE_BM),
-        INVOKE("invoke", INVOKE_BM),
+        INVOKE("invoke", BEFORE_INVOKE_BM),
         ENTRY("entry", METHOD_ENTRY_BM),
         EXIT("exit", METHOD_EXIT_BM),
         ENTRYEXIT("entryexit", METHOD_ENTRY_EXIT_BM),
@@ -167,7 +234,6 @@ public class VMAOptions {
         VMOptions.addFieldOption("-XX:", "VMABI", "regex for bytecodes to match");
         VMOptions.addFieldOption("-XX:", "VMABX", "regex for bytecodes to not match");
         VMOptions.addFieldOption("-XX:", "VMAConfig", "use pre-defined configuration");
-        VMOptions.addFieldOption("-XX:", "VMAReset", "reset boot image options");
     }
 
     /**
@@ -215,21 +281,14 @@ public class VMAOptions {
     public static boolean VMA;
 
     /**
-     * When set at runtime causes the boot image settings to be reset (forgotten).
+     * Set true once {@link #initialize} has been called.
      */
-    private static boolean VMAReset;
+    private static boolean initialized;
 
     /**
      * The {@link VMAdviceHandler} handler class name.
      */
     private static String handlerClassName;
-
-     /**
-     * Ultimately will have the same value as the @link {@link #VMA} option but is not set until the VM phase
-     * is reached where advising can safely start.
-     */
-    @RESET
-    private static boolean advising;
 
     /**
      * Not currently interpreted, but could allow a different template class to be built into the boot image.
@@ -243,14 +302,8 @@ public class VMAOptions {
      * @return true iff advising is enabled, i.e. {@link #VMA == true}
      */
     public static boolean initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PRIMORDIAL) {
-            // TODO save boot settings
-        }
         // We execute the setup code below if and only if VMA is set.
-        if (VMA && (MaxineVM.isHosted() && phase == MaxineVM.Phase.HOSTED_COMPILING || phase == MaxineVM.Phase.RUNNING)) {
-            if (phase == MaxineVM.Phase.RUNNING) {
-                // TODO merge/reset boot settings
-            }
+        if (VMA && phase == MaxineVM.Phase.RUNNING) {
             // always exclude advising packages and key JDK classes
             String xPattern = X_PATTERN;
             if (VMACX != null) {
@@ -304,13 +357,14 @@ public class VMAOptions {
                     }
                 }
             }
+
             if (logger.enabled()) {
                 for (VMABytecodes b : VMABytecodes.values()) {
                     boolean[] state = bytecodeApply[b.ordinal()];
                     logger.logBytecodeSetting(b, state[0], state[1]);
                 }
             }
-            advising = VMA;
+            initialized = true;
         }
         return VMA;
     }
@@ -332,6 +386,16 @@ public class VMAOptions {
         }
     }
 
+    public static boolean instrumentClass(String className) {
+        if (!initialized) {
+            return false;
+        }
+        boolean include = classInclusionPattern == null || classInclusionPattern.matcher(className).matches();
+        if (include) {
+            include = !classExclusionPattern.matcher(className).matches();
+        }
+        return include;
+    }
 
     /**
      * Check if given method should be instrumented for advising.
@@ -339,13 +403,10 @@ public class VMAOptions {
      * @param cma
      */
     public static boolean instrumentForAdvising(ClassMethodActor cma) {
-        final String className = cma.holder().typeDescriptor.toJavaString();
-        boolean include = false;
-        if (advising) {
-            include = classInclusionPattern == null || classInclusionPattern.matcher(className).matches();
-            if (include) {
-                include = !classExclusionPattern.matcher(className).matches();
-            }
+        boolean include = initialized && VMA;
+        if (include) {
+            final String className = cma.holder().typeDescriptor.toJavaString();
+            include = instrumentClass(className);
         }
         if (logger.enabled()) {
             logger.logInstrument(cma, include);
@@ -372,11 +433,12 @@ public class VMAOptions {
         void bytecodeSetting(@VMLogParam(name = "bytecode") VMABytecodes bytecode,
                              @VMLogParam(name = "before") boolean before, @VMLogParam(name = "after") boolean after);
         void instrument(@VMLogParam(name = "methodActor") ClassMethodActor methodActor, @VMLogParam(name = "include") boolean include);
+        void jdkDeopt(@VMLogParam(name = "stage") String stage);
     }
 
-    private static final VMALogger logger = new VMALogger();
+    public static final VMALogger logger = new VMALogger();
 
-    private static class VMALogger extends VMALoggerAuto {
+    public static class VMALogger extends VMALoggerAuto {
         VMALogger() {
             super("VMA", "VMA operations");
         }
@@ -401,18 +463,24 @@ public class VMAOptions {
             }
         }
 
+        @Override
+        protected void traceJdkDeopt(String stage) {
+            Log.print("VMA: JDKDeopt: ");
+            Log.println(stage);
+        }
+
     }
 
 // START GENERATED CODE
     private static abstract class VMALoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            BytecodeSetting, Instrument;
+            BytecodeSetting, Instrument, JdkDeopt;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = null;
+        private static final int[] REFMAPS = new int[] {0x0, 0x0, 0x1};
 
         protected VMALoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -435,6 +503,12 @@ public class VMAOptions {
         }
         protected abstract void traceInstrument(ClassMethodActor methodActor, boolean include);
 
+        @INLINE
+        public final void logJdkDeopt(String stage) {
+            log(Operation.JdkDeopt.ordinal(), objectArg(stage));
+        }
+        protected abstract void traceJdkDeopt(String stage);
+
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
@@ -444,6 +518,10 @@ public class VMAOptions {
                 }
                 case 1: { //Instrument
                     traceInstrument(toClassMethodActor(r, 1), toBoolean(r, 2));
+                    break;
+                }
+                case 2: { //JdkDeopt
+                    traceJdkDeopt(toString(r, 1));
                     break;
                 }
             }

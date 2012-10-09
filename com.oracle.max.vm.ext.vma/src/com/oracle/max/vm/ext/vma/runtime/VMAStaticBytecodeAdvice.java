@@ -212,7 +212,7 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeReturn(int arg1, double arg2) {
+    public static void adviseBeforeReturn(int arg1, Object arg2) {
         disableAdvising();
         adviceHandler().adviseBeforeReturn(arg1, arg2);
         enableAdvising();
@@ -233,7 +233,7 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeReturn(int arg1, Object arg2) {
+    public static void adviseBeforeReturn(int arg1, double arg2) {
         disableAdvising();
         adviceHandler().adviseBeforeReturn(arg1, arg2);
         enableAdvising();
@@ -383,6 +383,20 @@ public class VMAStaticBytecodeAdvice {
     public static void adviseBeforeMonitorExit(int arg1, Object arg2) {
         disableAdvising();
         adviceHandler().adviseBeforeMonitorExit(arg1, arg2);
+        enableAdvising();
+    }
+
+    @NEVER_INLINE
+    public static void adviseAfterLoad(int arg1, int arg2, Object arg3) {
+        disableAdvising();
+        adviceHandler().adviseAfterLoad(arg1, arg2, arg3);
+        enableAdvising();
+    }
+
+    @NEVER_INLINE
+    public static void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
+        disableAdvising();
+        adviceHandler().adviseAfterArrayLoad(arg1, arg2, arg3, arg4);
         enableAdvising();
     }
 

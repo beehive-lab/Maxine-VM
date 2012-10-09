@@ -52,7 +52,7 @@ public class CBCVMAdviceHandlerGenerator {
         generateSignature(m, null);
         out.printf(" {%n");
         String[] name = stripPrefix(m.getName());
-        out.printf("        counts[%d][%d]++;%n", enumMap.get(name[1]), AdviceMode.valueOf(name[0]).ordinal());
+        out.printf("        ThreadCounts.get().data[%d][%d]++;%n", enumMap.get(name[1]), AdviceMode.valueOf(name[0]).ordinal());
         out.printf("    }%n%n");
     }
 

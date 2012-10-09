@@ -23,7 +23,6 @@
 package com.oracle.max.vm.ext.vma.handlers.util;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
 
@@ -38,10 +37,6 @@ import com.sun.max.vm.thread.*;
  *
  */
 public class NullVMAdviceHandler extends VMAdviceHandler {
-
-    @Override
-    public void gcSurvivor(Pointer cell) {
-    }
 
 // START GENERATED CODE
 // EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
@@ -67,15 +62,11 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseAfterNew(int arg1, Object arg2) {
+    public void adviseBeforeConstLoad(int arg1, long arg2) {
     }
 
     @Override
-    public void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
-    }
-
-    @Override
-    public void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
+    public void adviseBeforeConstLoad(int arg1, Object arg2) {
     }
 
     @Override
@@ -87,14 +78,6 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeConstLoad(int arg1, Object arg2) {
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(int arg1, long arg2) {
-    }
-
-    @Override
     public void adviseBeforeLoad(int arg1, int arg2) {
     }
 
@@ -103,7 +86,7 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
+    public void adviseBeforeStore(int arg1, int arg2, long arg3) {
     }
 
     @Override
@@ -115,11 +98,7 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeStore(int arg1, int arg2, long arg3) {
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
+    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
     }
 
     @Override
@@ -135,11 +114,11 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeStackAdjust(int arg1, int arg2) {
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
+    public void adviseBeforeStackAdjust(int arg1, int arg2) {
     }
 
     @Override
@@ -151,11 +130,15 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeConversion(int arg1, int arg2, long arg3) {
+    public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
     }
 
     @Override
     public void adviseBeforeConversion(int arg1, int arg2, float arg3) {
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, int arg2, long arg3) {
     }
 
     @Override
@@ -175,7 +158,7 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeReturn(int arg1, double arg2) {
+    public void adviseBeforeReturn(int arg1, Object arg2) {
     }
 
     @Override
@@ -187,7 +170,7 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeReturn(int arg1, Object arg2) {
+    public void adviseBeforeReturn(int arg1, double arg2) {
     }
 
     @Override
@@ -199,7 +182,7 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, float arg4) {
+    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, Object arg4) {
     }
 
     @Override
@@ -211,19 +194,11 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, Object arg4) {
+    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, float arg4) {
     }
 
     @Override
     public void adviseBeforeGetField(int arg1, Object arg2, int arg3) {
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, int arg3, float arg4) {
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, int arg3, long arg4) {
     }
 
     @Override
@@ -232,6 +207,14 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, int arg3, double arg4) {
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, int arg3, long arg4) {
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, int arg3, float arg4) {
     }
 
     @Override
@@ -272,6 +255,26 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
 
     @Override
     public void adviseBeforeMonitorExit(int arg1, Object arg2) {
+    }
+
+    @Override
+    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
+    }
+
+    @Override
+    public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
+    }
+
+    @Override
+    public void adviseAfterNew(int arg1, Object arg2) {
+    }
+
+    @Override
+    public void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
+    }
+
+    @Override
+    public void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
     }
 
     @Override

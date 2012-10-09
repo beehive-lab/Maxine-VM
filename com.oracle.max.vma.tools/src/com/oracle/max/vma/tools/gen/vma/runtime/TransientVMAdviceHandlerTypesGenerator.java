@@ -82,6 +82,7 @@ public class TransientVMAdviceHandlerTypesGenerator {
         if (name.equals("ReturnByThrow")) {
             // nothing special, just avoid match in next clause
         } else if (name.equals("ConstLoad") || name.endsWith("Store") || name.endsWith("Conversion") ||
+                        m.getName().endsWith("AfterLoad") || m.getName().endsWith("AfterArrayLoad") ||
                         name.contains("Return") ||  name.contains("PutField") ||
                         name.contains("PutStatic") || name.contains("Operation")) {
             if (m.getParameterTypes().length > 1) {
@@ -120,7 +121,7 @@ public class TransientVMAdviceHandlerTypesGenerator {
             String adviceRecordName = "";
             if (name.equals("ReturnByThrow")) {
                 adviceRecordName = "ObjectLong";
-            } else if (name.contains("ConstLoad") || name.startsWith("Store") || name.contains("Conversion")) {
+            } else if (name.contains("ConstLoad") || name.startsWith("Store") || name.contains("Conversion") || name.equals("LoadObject")) {
                 adviceRecordName = uLastParam;
             } else if (name.contains("Return")) {
                 if (m.getParameterTypes().length > 1) {
@@ -131,7 +132,7 @@ public class TransientVMAdviceHandlerTypesGenerator {
             } else if (name.contains("GetField") || name.contains("GetStatic")) {
                 adviceRecordName = "Object";
             } else if (name.contains("PutField") || name.contains("PutStatic") ||
-                            name.startsWith("ArrayStore")) {
+                            name.startsWith("ArrayStore") || name.contains("ArrayLoadObject")) {
                 adviceRecordName = "Object" + uLastParam;
             } else if (name.contains("Operation")) {
                 adviceRecordName = uLastParam + uLastParam;

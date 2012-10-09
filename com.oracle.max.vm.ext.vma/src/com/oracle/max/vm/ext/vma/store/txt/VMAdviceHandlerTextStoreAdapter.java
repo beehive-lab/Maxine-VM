@@ -59,7 +59,7 @@ import com.sun.max.vm.thread.*;
  *
  *
  */
-public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.RemovalTracker {
+public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.DeadObjectHandler {
 
     interface ThreadNameGenerator {
         String getThreadName();
@@ -126,7 +126,7 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
         this.tng = tng;
     }
 
-    public ObjectStateHandler.RemovalTracker getRemovalTracker() {
+    public ObjectStateHandler.DeadObjectHandler getRemovalTracker() {
         return this;
     }
 
@@ -207,12 +207,12 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
     }
 
     @Override
-    public void removed(long id) {
+    public void dead(long id) {
         getStoreAdaptorForThread(VmThread.current().id()).store.removal(id);
     }
 
-    public void removed(long time, long id) {
-        removed(id);
+    public void dead(long time, long id) {
+        dead(id);
     }
 
 // In the BytecodeAdvice method equivalents below, parameter arg1 is the bci value.
@@ -352,8 +352,8 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
         store.adviseBeforeGoto(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
-    public void adviseBeforeReturn(long time, int arg1, double arg2) {
-        store.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1, arg2);
+    public void adviseBeforeReturn(long time, int arg1, Object arg2) {
+        store.adviseBeforeReturnObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2));
     }
 
     public void adviseBeforeReturn(long time, int arg1, long arg2) {
@@ -364,8 +364,8 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
         store.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
-    public void adviseBeforeReturn(long time, int arg1, Object arg2) {
-        store.adviseBeforeReturnObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2));
+    public void adviseBeforeReturn(long time, int arg1, double arg2) {
+        store.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
     public void adviseBeforeReturn(long time, int arg1) {
@@ -467,6 +467,14 @@ public class VMAdviceHandlerTextStoreAdapter implements ObjectStateHandler.Remov
 
     public void adviseBeforeMonitorExit(long time, int arg1, Object arg2) {
         store.adviseBeforeMonitorExit(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2));
+    }
+
+    public void adviseAfterLoad(long time, int arg1, int arg2, Object arg3) {
+        store.adviseAfterLoadObject(time, perThread ? null : tng.getThreadName(), arg1, arg2, state.readId(arg3));
+    }
+
+    public void adviseAfterArrayLoad(long time, int arg1, Object arg2, int arg3, Object arg4) {
+        store.adviseAfterArrayLoadObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2), arg3, state.readId(arg4));
     }
 
     public void adviseAfterMethodEntry(long time, int arg1, Object arg2, MethodActor arg3) {

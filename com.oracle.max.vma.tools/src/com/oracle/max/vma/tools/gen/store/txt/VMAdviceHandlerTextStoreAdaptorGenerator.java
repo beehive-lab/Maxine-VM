@@ -96,11 +96,11 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
         } else if (name.endsWith("ArrayLoad") || name.endsWith("ArrayStore")) {
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
             out.printf(", state.readId(arg2), arg3");
-            if (name.endsWith("ArrayStore")) {
+            if (name.endsWith("ArrayStore") || name.endsWith("AfterArrayLoad")) {
                 generateValueArg(m, 4);
             }
             out.printf(");%n");
-        } else if (name.endsWith("Store")) {
+        } else if (name.endsWith("Store") || name.endsWith("AfterLoad")) {
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
             generateValueArg(m, 2);
             generateValueArg(m, 3);
