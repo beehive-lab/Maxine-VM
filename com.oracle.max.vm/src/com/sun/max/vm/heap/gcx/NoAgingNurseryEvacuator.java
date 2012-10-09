@@ -89,12 +89,23 @@ public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
     }
 
     final class BootRegionDirtyCardEvacuationClosure extends CardTableRSet.CardRangeVisitor {
+        Address mutableBootReferencesLimit = Address.zero();
         BootRegionDirtyCardEvacuationClosure() {
+        }
+
+        public void initialize() {
+            mutableBootReferencesLimit = Heap.bootHeapRegion.lastMutableReferenceAddress().plus(Word.widthValue().numberOfBytes);
         }
 
         @INLINE
         @Override
         public void visitCards(Address start, Address end) {
+            if (end.greaterThan(mutableBootReferencesLimit)) {
+                if (start.greaterThan(mutableBootReferencesLimit)) {
+                    return;
+                }
+                end = mutableBootReferencesLimit;
+            }
             Heap.bootHeapRegion.visitReferences(start, end, NoAgingNurseryEvacuator.this);
         }
     }
@@ -120,6 +131,7 @@ public class NoAgingNurseryEvacuator extends EvacuatorToCardSpace {
         // NOTE: if immortal region happens to grow very large, it may be sensible to also scan it using the
         // card table, instead of just letting super-class Evacuator iterate over entire immortal memory.
         final BootHeapRegion bootHeapRegion = Heap.bootHeapRegion;
+        bootRegionDirtyCardClosure.initialize();
         rset.cleanAndVisitCards(bootHeapRegion.start(), bootHeapRegion.end(), bootRegionDirtyCardClosure);
         bootHeapRegion.discoverSpecialReference();
     }

@@ -576,6 +576,7 @@ public class SpecialReferenceManager {
             if (!addedToPending) {
                 Log.print(" {not added to Reference.pending list}");
             }
+            Log.println("");
         }
 
         @Override

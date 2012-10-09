@@ -237,9 +237,12 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
      */
     private WeakRemoteReferenceMap<GenSSRemoteReference> unallocatedRefMap = new WeakRemoteReferenceMap<GenSSRemoteReference>();
 
+
+    final private boolean isDump;
     public RemoteGenSSHeapScheme(TeleVM vm) {
         super(vm);
         this.heapUpdateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating");
+        this.isDump = TeleVM.isDump();
     }
 
     @Override
@@ -491,33 +494,36 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
                  * Check first if a GC cycle has started since the last time we looked.
                  */
                 if (lastAnalyzingPhaseCount < gcStartedCount()) {
-                    assert lastAnalyzingPhaseCount == gcStartedCount() - 1 || TeleVM.mode != MaxInspectionMode.CREATE;
                     assert oldFromSpaceRefMap.isEmpty();
                     assert promotedRefMap.isEmpty();
-                    if (isFullGC) {
-                        final TeleContiguousHeapSpace tempHeapSpace = oldTo;
-                        oldTo = oldFrom;
-                        oldFrom = tempHeapSpace;
-                        final WeakRemoteReferenceMap<GenSSRemoteReference> tempRefMap = oldToSpaceRefMap;
-                        oldToSpaceRefMap = oldFromSpaceRefMap;
-                        oldFromSpaceRefMap = tempRefMap;
-                        if (minorEvacuationOverflow) {
-                            // There might be references in oldFromSpaceRefMap with an origin in to-space after we flipped
-                            // (those that were evacuated in the overflow area).
-                            // We need to move them to the oldToSpaceMap as they are considered live now.
-                            for (GenSSRemoteReference ref : oldFromSpaceRefMap.values()) {
-                                Address origin = ref.origin();
-                                if (overflowArea.contains(origin)) {
-                                    oldFromSpaceRefMap.remove(origin);
-                                    oldToSpaceRefMap.put(origin, ref);
+                    // The following isn't relevant is we're inspecting from a core dump.
+                    if (!isDump) {
+                        assert lastAnalyzingPhaseCount == gcStartedCount() - 1;
+                        if (isFullGC) {
+                            final TeleContiguousHeapSpace tempHeapSpace = oldTo;
+                            oldTo = oldFrom;
+                            oldFrom = tempHeapSpace;
+                            final WeakRemoteReferenceMap<GenSSRemoteReference> tempRefMap = oldToSpaceRefMap;
+                            oldToSpaceRefMap = oldFromSpaceRefMap;
+                            oldFromSpaceRefMap = tempRefMap;
+                            if (minorEvacuationOverflow) {
+                                // There might be references in oldFromSpaceRefMap with an origin in to-space after we flipped
+                                // (those that were evacuated in the overflow area).
+                                // We need to move them to the oldToSpaceMap as they are considered live now.
+                                for (GenSSRemoteReference ref : oldFromSpaceRefMap.values()) {
+                                    Address origin = ref.origin();
+                                    if (overflowArea.contains(origin)) {
+                                        oldFromSpaceRefMap.remove(origin);
+                                        oldToSpaceRefMap.put(origin, ref);
+                                    }
                                 }
                             }
+                            // Transition the state of all references that are now in the old from-Space
+                            beginAnalyzing("flip old generation semi spaces", oldFromSpaceRefMap);
+                            GenSSRemoteReference.checkNoLiveRef(oldFromSpaceRefMap, false);
+                        } else {
+                            beginAnalyzing("turn all young refs into young from refs ", nurseryRefMap);
                         }
-                        // Transition the state of all references that are now in the old from-Space
-                        beginAnalyzing("flip old generation semi spaces", oldFromSpaceRefMap);
-                        GenSSRemoteReference.checkNoLiveRef(oldFromSpaceRefMap, false);
-                    } else {
-                        beginAnalyzing("turn all young refs into young from refs ", nurseryRefMap);
                     }
                     lastAnalyzingPhaseCount = gcStartedCount();
                 }
