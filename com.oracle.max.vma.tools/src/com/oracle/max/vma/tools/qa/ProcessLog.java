@@ -665,49 +665,8 @@ public class ProcessLog {
         return -1;
     }
 
-    /**
-     * Find the index of the given {@link AdviceRecord} in {@code adviceRecordList}.
-     * @param ar
-     * @return
-     */
-    public static int getRecordListIndex(ArrayList<AdviceRecord> adviceRecordList, AdviceRecord ar) {
-        // list is sorted by time, so binary search.
-        int lwb = 0;
-        int upb = adviceRecordList.size() - 1;
-        while (lwb <= upb) {
-            int mid = (lwb + upb) >>> 1;
-            AdviceRecord candidate = adviceRecordList.get(mid);
-            if (candidate == ar) {
-                return mid;
-            } else if (candidate.time < ar.time) {
-                lwb = mid + 1;
-            } else if (candidate.time > ar.time) {
-                upb = mid - 1;
-            } else {
-                // equal but several records (either side of index) may have the same time
-                int sindex = mid;
-                while (sindex >= 0 && candidate.time == ar.time) {
-                    if (candidate == ar) {
-                        return sindex;
-                    }
-                    candidate = adviceRecordList.get(--sindex);
-                }
-                sindex = mid;
-                candidate = adviceRecordList.get(sindex);
-                while (sindex < adviceRecordList.size() && candidate.time == ar.time) {
-                    if (candidate == ar) {
-                        return sindex;
-                    }
-                    candidate = adviceRecordList.get(++sindex);
-                }
-                return -1; // fail, should never happen
-            }
-        }
-        return -1;
-    }
-
     private int getRecordListIndex(AdviceRecord ar) {
-        return getRecordListIndex(adviceRecordList, ar);
+        return AdviceRecordHelper.getRecordListIndex(adviceRecordList, ar);
     }
 
     private void objectsPut(String id, ObjectRecord td) {
