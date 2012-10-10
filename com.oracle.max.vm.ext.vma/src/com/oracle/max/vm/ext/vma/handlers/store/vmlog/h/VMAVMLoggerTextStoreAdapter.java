@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jni;
+package com.oracle.max.vm.ext.vma.handlers.store.vmlog.h;
 
-import com.sun.max.config.*;
+import com.oracle.max.vm.ext.vma.store.txt.*;
+import com.sun.max.vm.thread.*;
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
+
+public class VMAVMLoggerTextStoreAdapter extends TextStoreAdapter {
+
+    protected VMAVMLoggerTextStoreAdapter() {
+        super(true, true);
+    }
+
+    private VMAVMLoggerTextStoreAdapter(VmThread vmThread) {
+        super(vmThread);
     }
 
     @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {MemberID.class, FieldID.class, MethodID.class, ObjectID.class, JniHandle.class};
+    protected TextStoreAdapter[] createArray(int length) {
+        return new VMAVMLoggerTextStoreAdapter[length];
     }
+
+    @Override
+    protected TextStoreAdapter createThreadTextStoreAdapter(VmThread vmThread) {
+        return new VMAVMLoggerTextStoreAdapter(vmThread);
+    }
+
 }

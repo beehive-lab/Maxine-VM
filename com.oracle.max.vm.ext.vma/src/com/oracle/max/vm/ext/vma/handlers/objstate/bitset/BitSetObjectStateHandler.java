@@ -27,10 +27,10 @@ import java.util.BitSet;
 
 import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.sun.max.annotate.INLINE;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.xohm.XOhmGeneralLayout;
 import com.sun.max.vm.reference.Reference;
 
@@ -95,35 +95,37 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
      * Returns a new id.
      */
     @Override
-    public synchronized long assignId(Object obj) {
+    public synchronized ObjectID assignId(Object obj) {
         return assignId(Reference.fromJava(obj));
     }
 
     @Override
-    public synchronized long assignId(Reference objRef) {
+    public synchronized ObjectID assignId(Reference objRef) {
         int id = idSet.nextClearBit(lowestFreeBit);
         lowestFreeBit = id + 1;
         idSet.set(id);
-        writeId(objRef, id);
-        return id;
+        ObjectID objID = ObjectID.fromWord(Address.fromLong(id));
+        writeId(objRef, objID);
+        return objID;
     }
 
     @Override
-    public synchronized long assignUnseenId(Object obj) {
-        long id = nextUnseenId--;
-        writeId(Reference.fromJava(obj), id);
-        return id;
+    public synchronized ObjectID assignUnseenId(Object obj) {
+        ObjectID objID = ObjectID.fromWord(Address.fromLong(nextUnseenId--));
+        writeId(Reference.fromJava(obj), objID);
+        return objID;
     }
 
     @Override
     @INLINE
-    public long readId(Object obj) {
-        return obj == null ? 0 : XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj)).asAddress().toLong();
+    public ObjectID readId(Object obj) {
+        Word id = obj == null ? Word.zero() : XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj));
+        return ObjectID.fromWord(id);
     }
 
     @INLINE
-    void writeId(Reference objRef, long id) {
-        XOhmGeneralLayout.Static.writeXtra(objRef, Address.fromLong(id));
+    void writeId(Reference objRef, ObjectID id) {
+        XOhmGeneralLayout.Static.writeXtra(objRef, id);
     }
 
     @INLINE
@@ -143,7 +145,7 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
     public synchronized void gc(DeadObjectHandler rt) {
         for (int id = idSet.nextSetBit(1); id >= 0; id = idSet.nextSetBit(id + 1)) {
             if (!gcSet.get(id)) {
-                rt.dead(id);
+                rt.dead(ObjectID.fromWord(Address.fromLong(id)));
                 idSet.clear(id);
                 if (id < lowestFreeBit) {
                     lowestFreeBit = id;

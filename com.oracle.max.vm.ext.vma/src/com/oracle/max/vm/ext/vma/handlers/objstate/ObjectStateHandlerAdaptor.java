@@ -27,6 +27,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -71,8 +72,8 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
      */
     private void checkId(Object obj) {
         if (obj != null) {
-            long id = state.readId(obj);
-            if (id == 0) {
+            ObjectID id = state.readId(obj);
+            if (id.isZero()) {
                 state.assignUnseenId(obj);
                 // check the classloader also
                 final Reference objRef = Reference.fromJava(obj);

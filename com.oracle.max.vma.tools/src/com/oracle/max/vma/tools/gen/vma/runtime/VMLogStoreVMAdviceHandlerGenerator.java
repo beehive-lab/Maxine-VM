@@ -25,10 +25,17 @@ package com.oracle.max.vma.tools.gen.vma.runtime;
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.lang.reflect.*;
+
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
+/**
+ * Handles the conversion of reference valued arguments to the {@link ObjectID}, {@link ClassID}, {@link MethodID},
+ * {@link FieldID}. etc. Note that whereas the latter three support conversion back their {@link Actor} form,
+ * an {@code ObjectID} does not. Therefore, the information on class and classloader has to be extracted
+ * when the object is first observed, e.g., in a {@code NEW}.
+ */
 public class VMLogStoreVMAdviceHandlerGenerator {
     public static void main(String[] args) throws Exception {
         createGenerator(VMLogStoreVMAdviceHandlerGenerator.class);
@@ -48,20 +55,43 @@ public class VMLogStoreVMAdviceHandlerGenerator {
     }
 
     private static void generate(Method m) {
+        String name = m.getName();
         out.printf("    @Override%n");
         int argCount = generateSignature(m, null);
         out.printf(" {%n");
-        if (m.getName().contains("MultiNewArray")) {
+        if (name.contains("MultiNewArray")) {
             out.printf("        adviseAfterNewArray(arg1, arg2, arg3[0]);%n");
         } else {
-            out.printf("        super.%s(", m.getName());
+            out.printf("        super.%s(", name);
             generateInvokeArgs(argCount);
-            out.printf("        VMAVMLogger.logger.log%s(getTime()%s", toFirstUpper(m.getName()), argCount > 0 ? ", " : "");
-            generateInvokeArgs(argCount);
+            out.printf("        VMAVMLogger.logger.log%s(getTime()", toFirstUpper(m.getName()));
+            // Have to convert Object to ObjectID etc.
+            if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
+                out.printf(", arg1, state.readId(arg2), ClassID.create(ObjectAccess.readClassActor(arg2))");
+                if (name.endsWith("NewArray")) {
+                    out.print(", arg3");
+                }
+            } else {
+                Class<?>[] params = m.getParameterTypes();
+                for (int i = 0; i < params.length; i++) {
+                    out.printf(", %s", convertArg(params[i].getSimpleName(), "arg" + (i + 1)));
+                }
+            }
+            out.printf(");%n");
             if (m.getName().contains("NewArray")) {
                 out.printf("        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);%n");
             }
         }
         out.printf("    }%n%n");
+    }
+
+    private static String convertArg(String type, String arg) {
+        if (type.equals("Object") || type.equals("Throwable")) {
+            return "state.readId(" + arg + ")";
+        } else if (type.equals("MethodActor")) {
+            return "MethodID.fromMethodActor(" + arg + ")";
+        } else {
+            return arg;
+        }
     }
 }

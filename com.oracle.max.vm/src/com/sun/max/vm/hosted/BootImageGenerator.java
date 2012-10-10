@@ -220,7 +220,7 @@ public final class BootImageGenerator {
                 System.setProperty(CompilationBroker.COMPILATION_BROKER_CLASS_PROPERTY_NAME, compilationBrokerClassOption.getValue());
             }
 
-            ClassID.traceArrayClassIDs = debugClassIDOption.getValue();
+            ClassIDManager.traceArrayClassIDs = debugClassIDOption.getValue();
 
             String[] extraClassesAndPackages = options.getArguments();
             if (extraClassesAndPackages.length != 0) {
@@ -259,7 +259,7 @@ public final class BootImageGenerator {
             }
 
             // ClassID debugging
-            ClassID.validateUsedClassIds();
+            ClassIDManager.validateUsedClassIds();
 
             writeJar(new File(vmDirectory, IMAGE_JAR_FILE_NAME));
             writeImage(dataPrototype, new File(vmDirectory, IMAGE_FILE_NAME));

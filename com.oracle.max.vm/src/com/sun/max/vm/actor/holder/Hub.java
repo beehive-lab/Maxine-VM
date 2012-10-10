@@ -81,7 +81,7 @@ public abstract class Hub extends Hybrid {
      * using a hash function of {@code id % divisor}.
      *
      * @param ids set of class ids with interface ids encoded as their negative value
-     * @see ClassID
+     * @see ClassIDManager
      */
     private static boolean colliding(int[] ids, int divisor) {
         if (divisor < 64) {
@@ -348,7 +348,7 @@ public abstract class Hub extends Hybrid {
             return false;
         }
         final int id = (int) pvalue;
-        return ClassID.toClassActor(id) != null || ClassID.isUsedID(id);
+        return ClassIDManager.toClassActor(id) != null || ClassIDManager.isUsedID(id);
     }
 
     /**

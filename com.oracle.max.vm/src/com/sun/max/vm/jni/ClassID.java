@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,43 +22,35 @@
  */
 package com.sun.max.vm.jni;
 
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
+
 
 /**
- * @see FieldID
- * @see MethodID
+ * A placeholder class for representing a non-moving reference to an object.
+ * Similar to a {@link JniHandle} but with no prescribed implementation.
+ *
+ * In Maxine, a class id is actually represented as an {@code int} and
+ * managed by {@link ClassIDManager}. However, for use with {@link VMLogger}
+ * and for consistency with the other {@code xxxID} classes, it is defined
+ * here, even though it is not used in the JNI implementation.
  */
-public abstract class MemberID extends Word {
-
-    static final int NUMBER_OF_MEMBER_BITS = 16;
-    static final int MEMBER_INDEX_MASK = 0x0000ffff;
-
-    public static Word create(int holderID, int memberIndex) {
-        assert (0 <= memberIndex) && (memberIndex <= MEMBER_INDEX_MASK);
-        final Address word = Address.fromInt(holderID).shiftedLeft(NUMBER_OF_MEMBER_BITS);
-        return word.or(memberIndex);
-    }
-
-    public static Word create(MemberActor memberActor) {
-        return create(memberActor.holder().id, memberActor.memberIndex());
-    }
-
+public class ClassID extends Word {
     @HOSTED_ONLY
-    public MemberID(long value) {
+    protected ClassID(long value) {
         super(value);
     }
 
-    @INLINE
-    protected final ClassActor getHolder() {
-        return ClassIDManager.toClassActor(asAddress().unsignedShiftedRight(NUMBER_OF_MEMBER_BITS).toInt());
+    public static ClassID create(ClassActor classActor) {
+        return fromWord(Address.fromInt(classActor.id));
     }
 
-    @INLINE
-    protected final int getMemberIndex() {
-        final Address word = asAddress().and(MEMBER_INDEX_MASK);
-        return word.toInt();
+    @INTRINSIC(UNSAFE_CAST)
+    public static ClassID fromWord(Word word) {
+        return new ClassID(word.value);
     }
+
 }

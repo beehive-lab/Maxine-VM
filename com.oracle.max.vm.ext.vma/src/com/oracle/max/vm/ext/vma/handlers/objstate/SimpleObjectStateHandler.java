@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.xohm.*;
 import com.sun.max.vm.reference.*;
 
@@ -42,32 +43,33 @@ public class SimpleObjectStateHandler extends ObjectStateHandler {
     private static final AtomicLong nextId = new AtomicLong(0);
 
     @Override
-    public long assignId(Object obj) {
+    public ObjectID assignId(Object obj) {
         return assignId(Reference.fromJava(obj));
     }
 
     @Override
-    public long assignId(Reference objRef) {
-        long id = nextId.incrementAndGet();
+    public ObjectID assignId(Reference objRef) {
+        ObjectID id = ObjectID.fromWord(Address.fromLong(nextId.incrementAndGet()));
         writeId(objRef, id);
         return id;
     }
 
     @Override
-    public long assignUnseenId(Object obj) {
-        long id = nextUnseenId.decrementAndGet();
+    public ObjectID assignUnseenId(Object obj) {
+        ObjectID id = ObjectID.fromWord(Address.fromLong(nextUnseenId.decrementAndGet()));
         writeId(Reference.fromJava(obj), id);
         return id;
     }
 
     @Override
-    public long readId(Object obj) {
-        return obj == null ? 0 : XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj)).asAddress().toLong();
+    public ObjectID readId(Object obj) {
+        Word id = obj == null ? Word.zero() : XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj));
+        return ObjectID.fromWord(id);
     }
 
     @INLINE
-    void writeId(Reference objRef, long id) {
-        XOhmGeneralLayout.Static.writeXtra(objRef, Address.fromLong(id));
+    void writeId(Reference objRef, ObjectID id) {
+        XOhmGeneralLayout.Static.writeXtra(objRef, id);
     }
 
     @Override
