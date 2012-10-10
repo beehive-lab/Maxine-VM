@@ -249,6 +249,14 @@ public class Stubs {
         return virtualDispatchEntryPoint.plus(callEntryPoint.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
+    public static boolean isJumpToStaticTrampoline(TargetMethod tm) {
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.isPatchedJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(),  vm().stubs.staticTrampoline().codeAt(OPTIMIZED_ENTRY_POINT.offset()));
+        } else {
+            throw FatalError.unimplemented();
+        }
+    }
+
     /**
      * Resolves the vtable entry denoted by a given receiver object and vtable index.
      *
@@ -267,8 +275,12 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-
-        CodePointer vtableEntryPoint = selectedCallee.makeTargetMethod(caller).getEntryPoint(VTABLE_ENTRY_POINT);
+        final TargetMethod selectedCalleeTargetMethod =  selectedCallee.makeTargetMethod(caller);
+        FatalError.check(selectedCalleeTargetMethod.invalidated() == null, "resolved virtual method must not be invalidated");
+        CodePointer vtableEntryPoint = selectedCalleeTargetMethod.getEntryPoint(VTABLE_ENTRY_POINT);
+        if (selectedCallee.hadDeopt && Deoptimization.deoptLogger.enabled()) {
+            Deoptimization.deoptLogger.logResolveVTable(vTableIndex,  hub.classActor, vtableEntryPoint.toAddress());
+        }
         hub.setWord(vTableIndex, vtableEntryPoint.toAddress());
 
         CodePointer adjustedEntryPoint = adjustEntryPointForCaller(vtableEntryPoint, caller);

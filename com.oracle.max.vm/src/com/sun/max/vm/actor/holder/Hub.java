@@ -31,6 +31,7 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
@@ -274,18 +275,54 @@ public abstract class Hub extends Hybrid {
     }
 
     void initializeVTable(VirtualMethodActor[] allVirtualMethodActors) {
+        final int baseIndex = firstWordIndex();
         for (int i = 0; i < allVirtualMethodActors.length; i++) {
             final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
-            final int vTableIndex = firstWordIndex() + i;
+            final int vTableIndex = baseIndex + i;
             assert virtualMethodActor.vTableIndex() == vTableIndex;
             assert getWord(vTableIndex).isZero();
-            Address vTableEntry;
-
-            vTableEntry = checkCompiled(virtualMethodActor);
+            Address vTableEntry = checkCompiled(virtualMethodActor);
             if (vTableEntry.isZero()) {
                 vTableEntry = vm().stubs.virtualTrampoline(vTableIndex).toAddress();
             }
             setWord(vTableIndex, vTableEntry);
+
+/*            if (MaxineVM.isHosted()) {
+                Address vTableEntry = checkCompiled(virtualMethodActor);
+                if (vTableEntry.isZero()) {
+                    vTableEntry = vm().stubs.virtualTrampoline(vTableIndex).toAddress();
+                }
+                setWord(vTableIndex, vTableEntry);
+            } else {
+                final Address vTableEntry = vm().stubs.virtualTrampoline(vTableIndex).toAddress();
+                setWord(vTableIndex, vTableEntry);
+            }*/
+        }
+    }
+
+    public void checkVTable() {
+        if (!MaxineVM.isHosted()) {
+            final int baseIndex = firstWordIndex();
+            VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
+            for (int i = 0; i < allVirtualMethodActors.length; i++) {
+                final int vTableIndex = baseIndex + i;
+                final Address vTableEntry = getWord(vTableIndex).asAddress();
+                TargetMethod tm = Code.codePointerToTargetMethod(vTableEntry.asPointer());
+                assert tm != null && !Stubs.isJumpToStaticTrampoline(tm);
+            }
+        }
+    }
+
+    void optimizedVTable() {
+        final int baseIndex = firstWordIndex();
+        VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
+        for (int i = 0; i < allVirtualMethodActors.length; i++) {
+            final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
+            final Address vTableEntry = checkCompiled(virtualMethodActor);
+            if (vTableEntry.isNotZero()) {
+                final int vTableIndex = baseIndex + i;
+                setWord(vTableIndex, vTableEntry);
+            }
         }
     }
 

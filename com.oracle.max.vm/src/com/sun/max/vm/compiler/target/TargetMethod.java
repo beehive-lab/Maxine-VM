@@ -827,7 +827,7 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     public final ClassMethodActor callSiteToCallee(CodePointer callSite) {
-        int callPos = callSite.minus(codeStart).toInt();
+        final int callPos = callSite.minus(codeStart).toInt();
         int dcIndex = 0;
         for (int i = 0; i < safepoints.size(); i++) {
             if (safepoints.isSetAt(DIRECT_CALL, i)) {
@@ -837,6 +837,35 @@ public abstract class TargetMethod extends MemoryRegion {
                 dcIndex++;
             }
         }
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("Could not find callee in ");
+        Log.print(this);
+        Log.print(" for call site: ");
+        Log.print(callSite.toHexString());
+        Log.print(" [");
+        Log.print(codeStart());
+        Log.print(" + ");
+        Log.print(callPos);
+        Log.println("]");
+        dcIndex = 0;
+        for (int i = 0; i < safepoints.size(); i++) {
+            if (safepoints.isSetAt(DIRECT_CALL, i)) {
+                if (safepoints.causePosAt(i) == callPos) {
+                    Log.print("* ");
+                } else {
+                    Log.print("  ");
+                }
+                Log.print("safepoint # ");
+                Log.print(i);
+                Log.print(", direct call # ");
+                Log.print(dcIndex);
+                Log.print(" ");
+                Log.println(directCallees[dcIndex]);
+                dcIndex++;
+            }
+        }
+        Log.unlock(lockDisabledSafepoints);
+        FatalError.breakpoint();
         throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
     }
 

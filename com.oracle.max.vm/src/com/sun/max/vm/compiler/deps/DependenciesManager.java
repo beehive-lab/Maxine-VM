@@ -144,6 +144,9 @@ public final class DependenciesManager {
             classActor.prependToSiblingList();
             ArrayList<Dependencies> invalidated = ConcreteTypeDependencyProcessor.recordUniqueConcreteSubtype(classActor);
             ConcreteTypeDependencyProcessor.invalidateDependencies(invalidated, classActor);
+            if (!MaxineVM.isHosted()) {
+                classActor.dynamicHub().checkVTable();
+            }
         } finally {
             classHierarchyLock.writeLock().unlock();
         }
