@@ -59,22 +59,41 @@ public class VMLogStoreVMAdviceHandlerGenerator {
         out.printf("    @Override%n");
         int argCount = generateSignature(m, null);
         out.printf(" {%n");
+        boolean isPutGet = false;
+        boolean isPutGetStatic = false;
         if (name.contains("MultiNewArray")) {
             out.printf("        adviseAfterNewArray(arg1, arg2, arg3[0]);%n");
         } else {
             out.printf("        super.%s(", name);
             generateInvokeArgs(argCount);
+            if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray") ||
+                name.equals("adviseBeforeCheckCast") || name.equals("adviseBeforeInstanceOf") ||
+                name.contains("Field") || name.contains("GetStatic") || name.contains("PutStatic")) {
+                out.printf("%sClassActor ca = ObjectAccess.readClassActor(arg2);%n", INDENT8);
+            }
+            if (name.contains("Field") || name.contains("GetStatic") || name.contains("PutStatic")) {
+                out.printf("%sFieldActor fa = ca.findInstanceFieldActor(arg3);%n", INDENT8);
+                isPutGet = true;
+                if (name.contains("Static")) {
+                    isPutGetStatic = true;
+                }
+            }
             out.printf("        VMAVMLogger.logger.log%s(getTime()", toFirstUpper(m.getName()));
             // Have to convert Object to ObjectID etc.
-            if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
-                out.printf(", arg1, state.readId(arg2), ClassID.create(ObjectAccess.readClassActor(arg2))");
+            if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray") ||
+                            name.equals("adviseBeforeCheckCast") || name.equals("adviseBeforeInstanceOf")) {
+                out.printf(", arg1, state.readId(arg2), ClassID.create(ca), state.readId(ca.classLoader)");
                 if (name.endsWith("NewArray")) {
                     out.print(", arg3");
                 }
             } else {
                 Class<?>[] params = m.getParameterTypes();
                 for (int i = 0; i < params.length; i++) {
-                    out.printf(", %s", convertArg(params[i].getSimpleName(), "arg" + (i + 1)));
+                    if (isPutGetStatic && i == 1) {
+                        // skip as encoded in FieldID
+                        continue;
+                    }
+                    out.printf(", %s", convertArg(isPutGet, params[i].getSimpleName(), "arg" + (i + 1)));
                 }
             }
             out.printf(");%n");
@@ -85,11 +104,13 @@ public class VMLogStoreVMAdviceHandlerGenerator {
         out.printf("    }%n%n");
     }
 
-    private static String convertArg(String type, String arg) {
+    private static String convertArg(boolean isPutGet, String type, String arg) {
         if (type.equals("Object") || type.equals("Throwable")) {
             return "state.readId(" + arg + ")";
         } else if (type.equals("MethodActor")) {
             return "MethodID.fromMethodActor(" + arg + ")";
+        } else if (isPutGet && arg.equals("arg3")) {
+            return "FieldID.fromFieldActor(fa)";
         } else {
             return arg;
         }

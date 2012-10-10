@@ -88,9 +88,7 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
             out.printf(", ca.name(), state.readId(ca.classLoader).toLong(), ca.findStaticFieldActor(arg3).name()");
             if (name.endsWith("PutStatic")) {
-                if (name.endsWith("PutStatic")) {
-                    generateValueArg(m, 4);
-                }
+                generateValueArg(m, 4);
             }
             out.printf(");%n");
         } else if (name.endsWith("ArrayLoad") || name.endsWith("ArrayStore")) {
