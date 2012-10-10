@@ -48,6 +48,9 @@ public class VirtualMethodActor extends ClassMethodActor {
     @CONSTANT
     private int vTableIndex = INVALID_VTABLE_INDEX;
 
+    // FIXME: temp debugging
+    public boolean hadDeopt; // true if was deopt at least once.
+
     /**
      * Gets the index of this method in the vtable of its holder's class hierarchy.
      * A negative return value implies that this method in not an entry in any vtable.
