@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.objstate;
 
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -30,6 +31,8 @@ import com.sun.max.vm.reference.*;
  * of which objects are live (optional).
  *
  * An implementation is required to be thread safe by design or by explicit synchronization.
+ *
+ * This interface uses the opaque {@link ObjectID} class to represent object ids.
  *
  */
 public abstract class ObjectStateHandler {
@@ -40,31 +43,31 @@ public abstract class ObjectStateHandler {
      *
      */
     public interface DeadObjectHandler {
-        void dead(long id);
+        void dead(ObjectID id);
     }
 
     /**
      * Create and assign a unique id for a tracked object.
      */
-    public abstract long assignId(Object obj);
+    public abstract ObjectID assignId(Object obj);
 
     /**
      * Create and assign a unique id for a tracked object via its reference.
      */
-    public abstract long assignId(Reference objRef);
+    public abstract ObjectID assignId(Reference objRef);
 
     /**
      * Create a unique id for an object that we did not see the creation of
      * and therefore likely will not see the garbage collection, e.g. (immortal,
      * boot heap objects).
      */
-    public abstract long assignUnseenId(Object obj);
+    public abstract ObjectID assignUnseenId(Object obj);
 
     /**
      * Return the unique id for given object or zero if {@code obj == null}.
      * @param obj
      */
-    public abstract long readId(Object obj);
+    public abstract ObjectID readId(Object obj);
 
     /**
      * Optionally generate callbacks for objects that did not survive the gc that just completed.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,28 @@
  */
 package com.sun.max.vm.jni;
 
-import com.sun.max.config.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+
+/**
+ * A placeholder class for representing a non-moving reference to an object.
+ * Similar to a {@link JniHandle} but with no prescribed implementation.
+ */
+public class ObjectID extends Word {
+    @HOSTED_ONLY
+    protected ObjectID(long value) {
+        super(value);
     }
 
-    @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {MemberID.class, FieldID.class, MethodID.class, ObjectID.class, JniHandle.class};
+    @INTRINSIC(UNSAFE_CAST)
+    public static ObjectID fromWord(Word word) {
+        return new ObjectID(word.value);
+    }
+
+    @INLINE
+    public long toLong() {
+        return asAddress().toLong();
     }
 }

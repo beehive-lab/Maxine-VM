@@ -163,7 +163,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
             cachedVmBootClassRegistryReference = referenceManager().makeReference(vm().bootImageStart().plus(vm().bootImage().header.classRegistryOffset));
             count = processClassRegistry(cachedVmBootClassRegistryReference);
             count += processClassRegistry(fields().ClassRegistry_bootClassRegistry.readRemoteReference(cachedVmBootClassRegistryReference));
-            ClassID.setMapping(classIDMapping);
+            ClassIDManager.setMapping(classIDMapping);
         } catch (Throwable throwable) {
             TeleError.unexpected("could not build inspector type registry", throwable);
         }
@@ -518,7 +518,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         }
     };
 
-    private final ClassID.Mapping classIDMapping = new ClassID.Mapping() {
+    private final ClassIDManager.Mapping classIDMapping = new ClassIDManager.Mapping() {
         public ClassActor idToClassActor(int id) {
             if (usingTeleClassIDs.get()) {
                 return findClassActorByID(id);
