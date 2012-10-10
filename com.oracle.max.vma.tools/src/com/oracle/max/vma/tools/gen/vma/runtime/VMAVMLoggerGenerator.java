@@ -62,7 +62,7 @@ public class VMAVMLoggerGenerator {
 
         out.printf("%s@HOSTED_ONLY%n", INDENT4);
         out.printf("%s@VMLoggerInterface(hidden = true, traceThread = true)%n", INDENT4);
-        out.printf("%sprivate interface VMAVMLoggerInterface {%n", INDENT4);
+        out.printf("%spublic interface VMAVMLoggerInterface {%n", INDENT4);
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
             if (name.startsWith("advise")) {
@@ -86,18 +86,6 @@ public class VMAVMLoggerGenerator {
         }
     }
 
-    /*
-    private static void generateImpl(Method m) {
-        out.print(INDENT8);
-        out.println("@Override");
-        int argCount = generateSignature(INDENT8, "protected", new MyMethodNameOverride(m), null, implArgumentsPrefix);
-        out.println(" {");
-        out.printf("%sstoreAdaptor(threadId).%s(", INDENT12, m.getName());
-        generateInvokeArgs(argCount);
-        out.printf("%s}%n", INDENT8);
-    }
-    */
-
     private static void generateIntf(Method m) {
         generate(m, null);
     }
@@ -118,17 +106,32 @@ public class VMAVMLoggerGenerator {
         final String methodName = tracePrefix == null ? name : tracePrefix + toFirstUpper(name);
         String threadId = tracePrefix == null ? "" : "int threadId, ";
         String protectedTag = tracePrefix == null ? "" : "protected ";
-        out.printf("%s%svoid %s(%slong time%s", INDENT8, protectedTag, methodName, threadId,
-                        AdviceGeneratorHelper.isBytecodeAdviceMethod(m) || m.getName().contains("ReturnByThrow") ? ", int bci" : "");
-        if (name.contains("New") || name.contains("unseen")) {
-            out.print(", ObjectID objId, ClassID classId");
+        boolean bci = AdviceGeneratorHelper.isBytecodeAdviceMethod(m) || m.getName().contains("ReturnByThrow");
+        boolean isGetPutStatic = false;
+        Class<?>[] params = m.getParameterTypes();
+        out.printf("%s%svoid %s(%slong time%s", INDENT8, protectedTag, methodName, threadId, bci ? ", int bci" : "");
+        if (name.contains("New") || name.contains("unseen") ||
+            name.contains("CheckCast") || name.contains("InstanceOf")) {
+            out.print(", ObjectID arg1, ClassID arg2, ObjectID arg3");
             if (name.contains("NewArray")) {
                 out.print(", int length");
             }
+        } else if (name.contains("PutField") || name.contains("GetField")) {
+            out.print(", ObjectID arg1, FieldID arg2");
+            if (name.contains("PutField")) {
+                Class<?> lastParam = params[params.length - 1];
+                out.printf(", %s arg3", convertParamType(lastParam.getSimpleName()));
+            }
+        } else if (name.contains("PutStatic") || name.contains("GetStatic")) {
+            isGetPutStatic = true;
+            out.print(", FieldID arg1");
+            if (name.contains("PutStatic")) {
+                Class<?> lastParam = params[params.length - 1];
+                out.printf(", %s arg2", convertParamType(lastParam.getSimpleName()));
+            }
         } else if (name.contains("dead")) {
-            out.print(", ObjectID objId");
+            out.print(", ObjectID arg1");
         } else {
-            Class< ? >[] params = m.getParameterTypes();
             // skip bci
             for (int i = 1; i < params.length; i++) {
                 Class< ? > param = params[i];
@@ -141,6 +144,21 @@ public class VMAVMLoggerGenerator {
             out.println(";");
         } else {
             out.println(" {");
+            int argc = m.getParameterTypes().length;
+            out.printf("%sstoreAdaptor(threadId).%s(time%s%s", INDENT12, m.getName(),
+                            bci ? ", bci" : "", bci ? argc > 1 ? ", " : "" : "");
+            if (name.contains("New") || name.contains("unseen") ||
+                name.contains("CheckCast") || name.contains("InstanceOf")) {
+                out.printf("%sarg1, arg2, arg3", name.contains("unseen") ? ", " : "");
+                if (name.contains("NewArray")) {
+                    out.print(", length");
+                }
+                out.printf(");%n");
+            } else if (name.contains("dead")) {
+                out.print(", arg1);\n");
+            } else {
+                generateInvokeArgs(argc - (isGetPutStatic ? 2 : 1), 1);
+            }
             out.printf("%s}%n%n", INDENT8);
         }
     }

@@ -850,6 +850,11 @@ public class VMLogger {
     }
 
     @INLINE
+    public static FieldID toFieldID(Record r, int argNum) {
+        return FieldID.fromWord(r.getArg(argNum));
+    }
+
+    @INLINE
     public static ObjectID toObjectID(Record r, int argNum) {
         return ObjectID.fromWord(r.getArg(argNum));
     }

@@ -53,4 +53,9 @@ public class ClassID extends Word {
         return new ClassID(word.value);
     }
 
+    public static ClassActor toClassActor(ClassID classID) {
+        return ClassIDManager.toClassActor(classID.asAddress().toInt());
+    }
+
+
 }

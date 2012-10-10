@@ -31,6 +31,7 @@ import com.oracle.max.vm.ext.vma.run.java.*;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.*;
@@ -159,7 +160,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
                 vmaVMLog = VMAJavaRunScheme.vmaVMLog();
                 vmaVMLog.registerCustom(VMAVMLogger.logger, createFlusher(perThread));
             }
-            storeAdaptor = new VMAVMLoggerTextStoreAdapter();
+            storeAdaptor = new VMAVMLoggerTextStoreAdapter(state);
             storeAdaptor.initialise(phase);
             super.setDeadObjectHandler(new RemovalTracker());
             VMAVMLogger.logger.storeAdaptor = storeAdaptor;
@@ -185,7 +186,8 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     @Override
     protected void unseenObject(Object obj) {
-        VMAVMLogger.logger.logUnseenObject(getTime(), state.readId(obj), ClassID.create(ObjectAccess.readClassActor(obj)));
+        ClassActor ca = ObjectAccess.readClassActor(obj);
+        VMAVMLogger.logger.logUnseenObject(getTime(), state.readId(obj), ClassID.create(ca), state.readId(ca.classLoader));
     }
 
     @Override
@@ -231,20 +233,30 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseAfterNew(int arg1, Object arg2) {
         super.adviseAfterNew(arg1, arg2);
-        VMAVMLogger.logger.logAdviseAfterNew(getTime(), arg1, state.readId(arg2), ClassID.create(ObjectAccess.readClassActor(arg2)));
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        VMAVMLogger.logger.logAdviseAfterNew(getTime(), arg1, state.readId(arg2), ClassID.create(ca), state.readId(ca.classLoader));
     }
 
     @Override
     public void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
         super.adviseAfterNewArray(arg1, arg2, arg3);
-        VMAVMLogger.logger.logAdviseAfterNewArray(getTime(), arg1, state.readId(arg2), ClassID.create(ObjectAccess.readClassActor(arg2)), arg3);
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        VMAVMLogger.logger.logAdviseAfterNewArray(getTime(), arg1, state.readId(arg2), ClassID.create(ca), state.readId(ca.classLoader), arg3);
         MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);
     }
 
     @Override
-    public void adviseBeforeConstLoad(int arg1, float arg2) {
-        super.adviseBeforeConstLoad(arg1, arg2);
-        VMAVMLogger.logger.logAdviseBeforeConstLoad(getTime(), arg1, arg2);
+    public void adviseBeforeCheckCast(int arg1, Object arg2, Object arg3) {
+        super.adviseBeforeCheckCast(arg1, arg2, arg3);
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        VMAVMLogger.logger.logAdviseBeforeCheckCast(getTime(), arg1, state.readId(arg2), ClassID.create(ca), state.readId(ca.classLoader));
+    }
+
+    @Override
+    public void adviseBeforeInstanceOf(int arg1, Object arg2, Object arg3) {
+        super.adviseBeforeInstanceOf(arg1, arg2, arg3);
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        VMAVMLogger.logger.logAdviseBeforeInstanceOf(getTime(), arg1, state.readId(arg2), ClassID.create(ca), state.readId(ca.classLoader));
     }
 
     @Override
@@ -261,6 +273,12 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     @Override
     public void adviseBeforeConstLoad(int arg1, long arg2) {
+        super.adviseBeforeConstLoad(arg1, arg2);
+        VMAVMLogger.logger.logAdviseBeforeConstLoad(getTime(), arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, float arg2) {
         super.adviseBeforeConstLoad(arg1, arg2);
         VMAVMLogger.logger.logAdviseBeforeConstLoad(getTime(), arg1, arg2);
     }
@@ -302,7 +320,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
         super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
         VMAVMLogger.logger.logAdviseBeforeArrayStore(getTime(), arg1, state.readId(arg2), arg3, arg4);
     }
@@ -314,7 +332,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
         super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
         VMAVMLogger.logger.logAdviseBeforeArrayStore(getTime(), arg1, state.readId(arg2), arg3, arg4);
     }
@@ -332,13 +350,13 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
+    public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
         super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
         VMAVMLogger.logger.logAdviseBeforeOperation(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
+    public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
         super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
         VMAVMLogger.logger.logAdviseBeforeOperation(getTime(), arg1, arg2, arg3, arg4);
     }
@@ -347,6 +365,12 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
         super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
         VMAVMLogger.logger.logAdviseBeforeOperation(getTime(), arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, int arg2, float arg3) {
+        super.adviseBeforeConversion(arg1, arg2, arg3);
+        VMAVMLogger.logger.logAdviseBeforeConversion(getTime(), arg1, arg2, arg3);
     }
 
     @Override
@@ -362,21 +386,15 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public void adviseBeforeConversion(int arg1, int arg2, float arg3) {
-        super.adviseBeforeConversion(arg1, arg2, arg3);
-        VMAVMLogger.logger.logAdviseBeforeConversion(getTime(), arg1, arg2, arg3);
+    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
+        super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+        VMAVMLogger.logger.logAdviseBeforeIf(getTime(), arg1, arg2, state.readId(arg3), state.readId(arg4), arg5);
     }
 
     @Override
     public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
         super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
         VMAVMLogger.logger.logAdviseBeforeIf(getTime(), arg1, arg2, arg3, arg4, arg5);
-    }
-
-    @Override
-    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
-        super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
-        VMAVMLogger.logger.logAdviseBeforeIf(getTime(), arg1, arg2, state.readId(arg3), state.readId(arg4), arg5);
     }
 
     @Override
@@ -418,61 +436,81 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseBeforeGetStatic(int arg1, Object arg2, int arg3) {
         super.adviseBeforeGetStatic(arg1, arg2, arg3);
-        VMAVMLogger.logger.logAdviseBeforeGetStatic(getTime(), arg1, state.readId(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, long arg4) {
-        super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
-        VMAVMLogger.logger.logAdviseBeforePutStatic(getTime(), arg1, state.readId(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, float arg4) {
-        super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
-        VMAVMLogger.logger.logAdviseBeforePutStatic(getTime(), arg1, state.readId(arg2), arg3, arg4);
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        FieldActor fa = ca.findInstanceFieldActor(arg3);
+        VMAVMLogger.logger.logAdviseBeforeGetStatic(getTime(), arg1, FieldID.fromFieldActor(fa));
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, Object arg4) {
         super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
-        VMAVMLogger.logger.logAdviseBeforePutStatic(getTime(), arg1, state.readId(arg2), arg3, state.readId(arg4));
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        FieldActor fa = ca.findInstanceFieldActor(arg3);
+        VMAVMLogger.logger.logAdviseBeforePutStatic(getTime(), arg1, FieldID.fromFieldActor(fa), state.readId(arg4));
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, float arg4) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        FieldActor fa = ca.findInstanceFieldActor(arg3);
+        VMAVMLogger.logger.logAdviseBeforePutStatic(getTime(), arg1, FieldID.fromFieldActor(fa), arg4);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, long arg4) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        FieldActor fa = ca.findInstanceFieldActor(arg3);
+        VMAVMLogger.logger.logAdviseBeforePutStatic(getTime(), arg1, FieldID.fromFieldActor(fa), arg4);
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, double arg4) {
         super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
-        VMAVMLogger.logger.logAdviseBeforePutStatic(getTime(), arg1, state.readId(arg2), arg3, arg4);
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        FieldActor fa = ca.findInstanceFieldActor(arg3);
+        VMAVMLogger.logger.logAdviseBeforePutStatic(getTime(), arg1, FieldID.fromFieldActor(fa), arg4);
     }
 
     @Override
     public void adviseBeforeGetField(int arg1, Object arg2, int arg3) {
         super.adviseBeforeGetField(arg1, arg2, arg3);
-        VMAVMLogger.logger.logAdviseBeforeGetField(getTime(), arg1, state.readId(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, int arg3, long arg4) {
-        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
-        VMAVMLogger.logger.logAdviseBeforePutField(getTime(), arg1, state.readId(arg2), arg3, arg4);
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        FieldActor fa = ca.findInstanceFieldActor(arg3);
+        VMAVMLogger.logger.logAdviseBeforeGetField(getTime(), arg1, state.readId(arg2), FieldID.fromFieldActor(fa));
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, int arg3, float arg4) {
         super.adviseBeforePutField(arg1, arg2, arg3, arg4);
-        VMAVMLogger.logger.logAdviseBeforePutField(getTime(), arg1, state.readId(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, int arg3, double arg4) {
-        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
-        VMAVMLogger.logger.logAdviseBeforePutField(getTime(), arg1, state.readId(arg2), arg3, arg4);
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        FieldActor fa = ca.findInstanceFieldActor(arg3);
+        VMAVMLogger.logger.logAdviseBeforePutField(getTime(), arg1, state.readId(arg2), FieldID.fromFieldActor(fa), arg4);
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, int arg3, Object arg4) {
         super.adviseBeforePutField(arg1, arg2, arg3, arg4);
-        VMAVMLogger.logger.logAdviseBeforePutField(getTime(), arg1, state.readId(arg2), arg3, state.readId(arg4));
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        FieldActor fa = ca.findInstanceFieldActor(arg3);
+        VMAVMLogger.logger.logAdviseBeforePutField(getTime(), arg1, state.readId(arg2), FieldID.fromFieldActor(fa), state.readId(arg4));
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, int arg3, double arg4) {
+        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        FieldActor fa = ca.findInstanceFieldActor(arg3);
+        VMAVMLogger.logger.logAdviseBeforePutField(getTime(), arg1, state.readId(arg2), FieldID.fromFieldActor(fa), arg4);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, int arg3, long arg4) {
+        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        FieldActor fa = ca.findInstanceFieldActor(arg3);
+        VMAVMLogger.logger.logAdviseBeforePutField(getTime(), arg1, state.readId(arg2), FieldID.fromFieldActor(fa), arg4);
     }
 
     @Override
@@ -509,18 +547,6 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void adviseBeforeThrow(int arg1, Object arg2) {
         super.adviseBeforeThrow(arg1, arg2);
         VMAVMLogger.logger.logAdviseBeforeThrow(getTime(), arg1, state.readId(arg2));
-    }
-
-    @Override
-    public void adviseBeforeCheckCast(int arg1, Object arg2, Object arg3) {
-        super.adviseBeforeCheckCast(arg1, arg2, arg3);
-        VMAVMLogger.logger.logAdviseBeforeCheckCast(getTime(), arg1, state.readId(arg2), state.readId(arg3));
-    }
-
-    @Override
-    public void adviseBeforeInstanceOf(int arg1, Object arg2, Object arg3) {
-        super.adviseBeforeInstanceOf(arg1, arg2, arg3);
-        VMAVMLogger.logger.logAdviseBeforeInstanceOf(getTime(), arg1, state.readId(arg2), state.readId(arg3));
     }
 
     @Override
