@@ -59,40 +59,43 @@ import com.sun.max.vm.ext.jvmti.*;
  * Variant of {@link JavaRunScheme} that supports the VMA framework.
  *
  */
-
 public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VMAHandler {
     private static class VMTIHandler extends NullVMTIHandler {
         @Override
         public void threadStart(VmThread vmThread) {
             if (advising) {
-                adviceHandler.adviseBeforeThreadStarting(VmThread.current());
-                enableAdvising();
+                if (VMAOptions.instrumentThread(vmThread)) {
+                    adviceHandler.adviseBeforeThreadStarting(VmThread.current());
+                    enableAdvising();
+                }
             }
         }
 
         @Override
         public void threadEnd(VmThread vmThread) {
             if (advising) {
-                disableAdvising();
-                adviceHandler.adviseBeforeThreadTerminating(VmThread.current());
+                if (isThreadAdvising()) {
+                    disableAdvising();
+                    adviceHandler.adviseBeforeThreadTerminating(VmThread.current());
+                }
             }
         }
 
         @Override
         public void beginGC() {
-            if (VMAJavaRunScheme.isThreadAdvising()) {
-                VMAJavaRunScheme.disableAdvising();
-                VMAJavaRunScheme.adviceHandler().adviseBeforeGC();
-                VMAJavaRunScheme.enableAdvising();
+            if (isThreadAdvising()) {
+                disableAdvising();
+                adviceHandler.adviseBeforeGC();
+                enableAdvising();
             }
         }
 
         @Override
         public void endGC() {
-            if (VMAJavaRunScheme.isThreadAdvising()) {
-                VMAJavaRunScheme.disableAdvising();
-                VMAJavaRunScheme.adviceHandler().adviseAfterGC();
-                VMAJavaRunScheme.enableAdvising();
+            if (isThreadAdvising()) {
+                disableAdvising();
+                adviceHandler.adviseAfterGC();
+                enableAdvising();
             }
         }
 

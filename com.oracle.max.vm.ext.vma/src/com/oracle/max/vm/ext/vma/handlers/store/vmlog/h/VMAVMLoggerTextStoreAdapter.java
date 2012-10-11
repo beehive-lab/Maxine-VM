@@ -23,7 +23,9 @@
 package com.oracle.max.vm.ext.vma.handlers.store.vmlog.h;
 
 import com.oracle.max.vm.ext.vma.handlers.objstate.*;
+import com.oracle.max.vm.ext.vma.store.*;
 import com.oracle.max.vm.ext.vma.store.txt.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
@@ -58,6 +60,21 @@ public class VMAVMLoggerTextStoreAdapter extends TextStoreAdapter {
         return new VMAVMLoggerTextStoreAdapter(state, vmThread);
     }
 
+    @Override
+    public void initialise(MaxineVM.Phase phase) {
+        super.initialise(phase);
+        if (phase == MaxineVM.Phase.RUNNING) {
+            store = VMAStoreFactory.create(perThread);
+
+            if (store == null || !store.initializeStore(threadBatched, perThread)) {
+                throw new RuntimeException("VMA store initialization failed");
+            }
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            if (store != null) {
+                store.finalizeStore();
+            }
+        }
+    }
     public void unseenObject(long time, ObjectID objID, ClassID classID, ObjectID clID) {
         ClassActor ca = ClassID.toClassActor(classID);
         store.unseenObject(time, null, objID.toLong(), ca.name(), state.readId(ca.classLoader).toLong());
