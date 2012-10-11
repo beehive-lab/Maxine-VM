@@ -574,12 +574,16 @@ public final class MachineCodeInfoCache extends AbstractVmHolder {
          * @see TargetMethod#debugInfoAt(int, FrameAccess)
          */
         public CiDebugInfo getDebugInfoAtSafepointIndex(final int safepointIndex) {
-            return VmClassAccess.usingTeleClassIDs(new Function<CiDebugInfo>() {
-                @Override
-                public CiDebugInfo call() throws Exception {
-                    return targetMethodCopy.debugInfoAt(safepointIndex, null);
-                }
-            });
+            try {
+                return VmClassAccess.usingTeleClassIDs(new Function<CiDebugInfo>() {
+                    @Override
+                    public CiDebugInfo call() throws Exception {
+                        return targetMethodCopy.debugInfoAt(safepointIndex, null);
+                    }
+                });
+            } catch (Error error) {
+                return null;
+            }
         }
 
         /**
