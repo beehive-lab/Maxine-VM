@@ -95,15 +95,25 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         public String suffixArgs(boolean comma) {
             return "";
         }
+
+        @Override
+        public void endTemplateMethodGeneration(T1XTemplateTag tag) {
+        }
     }
 
     private static class MethodStatus {
         int offset; // in the ByteArrayOutputStream array
         boolean output; // are we outputting this method
         T1XTemplateTag tag; // that this method is associated with
+        EnumSet<AdviceType> atSet = EnumSet.noneOf(AdviceType.class);
         MethodStatus(int offset) {
             this.offset = offset;
             this.output = true;
+        }
+
+        @Override
+        public String toString() {
+            return tag + ": " + atSet + ": " + offset + ": " + output;
         }
     }
 
@@ -132,31 +142,44 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         }
 
         /**
-         *  Discard this and any intervening untagged (helper) methods.
-         * @param tag
+         * Discard this and any intervening untagged (helper) methods if we only added advice
+         * of the type that we are not generating in this run.
          */
         void discard(T1XTemplateTag tag) {
-            final int listLength  = methodStatusList.size();
-            //Checkstyle: stop Indentation check
-            methodStatusList.get(listLength - 1).output = false;
-            //Checkstyle: resume Indentation check
-            int index = listLength - 2;
-            while (index >= 0) {
-                MethodStatus ms = methodStatusList.get(index);
-                if (ms.tag == null) {
-                    ms.output = false;
-                } else if (ms.tag != tag) {
-                    return;
+            final int listLength = methodStatusList.size();
+            MethodStatus ms = methodStatusList.get(listLength - 1);
+            // ok to destroy ms.asSet
+            ms.atSet.retainAll(generating);
+            // throw it away if we generated advice type that was not wanted.
+            if (ms.atSet.isEmpty()) {
+                ms.output = false;
+                // Checkstyle: resume Indentation check
+                int index = listLength - 2;
+                while (index >= 0) {
+                    ms = methodStatusList.get(index);
+                    if (ms.tag == null) {
+                        ms.output = false;
+                    } else if (ms.tag != tag) {
+                        return;
+                    }
+                    index--;
                 }
-                index--;
             }
         }
 
         void setTag(T1XTemplateTag tag) {
-            //Checkstyle: stop Indentation check
-            methodStatusList.get(methodStatusList.size() - 1).tag = tag;
-            //Checkstyle: resume Indentation check
+            MethodStatus ms = methodStatusList.get(methodStatusList.size() - 1);
+            ms.tag = tag;
+        }
 
+        void addAdviceType(AdviceType at) {
+            MethodStatus ms = methodStatusList.get(methodStatusList.size() - 1);
+            ms.atSet.add(at);
+        }
+
+        void removeAdviceType(AdviceType at) {
+            MethodStatus ms = methodStatusList.get(methodStatusList.size() - 1);
+            ms.atSet.remove(at);
         }
 
         @Override
@@ -193,7 +216,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     /**
      * Records whether we want to generate a particular advice type.
      */
-    private static boolean[] generating = new boolean[AdviceType.values().length];
+    private static EnumSet<AdviceType> generating;
 
     private static boolean hasBeforeAndAfter(T1XTemplateTag tag) {
         for (AdviceType at : AdviceType.values()) {
@@ -210,8 +233,19 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         private static final String INT_BCI_NOARG = "int " + BCI_NOARG;
         private static final String INT_BCI = ", " + INT_BCI_NOARG;
 
+        /**
+         * Start of a template method generation.
+         * Don't know what tag yet, but that's ok, we just need to record
+         * where we are in the output stream in case we want to discard it later.
+         */
         public void startMethodGeneration() {
             byteArrayOut.addMethodStatus();
+        }
+
+        @Override
+        public void endTemplateMethodGeneration(T1XTemplateTag tag) {
+            // N.B. we discard the entire method if it only contains advice of the kind we are not generating.
+            byteArrayOut.discard(tag);
         }
 
         public String suffixParams(boolean comma) {
@@ -225,18 +259,20 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         private boolean generateTag(T1XTemplateTag tag, AdviceType at) {
             // We only generate if the tag (a) has the capability for the requested advice type
             // and (b) the program is being run to generate that kind of advice.
-            // TODO There is a bug in this logic for tags that generate both before/after advice
-            // as the at==AFTER call causes the BEFORE advice to be thrown away when generating(AFTER) is true.
-            // Not currently an issue as no tags generate before and after advice.
-            return tagAdviceCapabilities[tag.ordinal()][at.ordinal()] && generating[at.ordinal()];
+            return tagAdviceCapabilities[tag.ordinal()][at.ordinal()] && generating.contains(at);
         }
 
+        /**
+         * Called to generate the specific type of advice for {@code tag}.
+         * Code will already have been output since the call to {@link #startMethodGeneration()},
+         * and we may decide here to throw it away if we are not generating that advice.
+         */
         public void generate(T1XTemplateTag tag, AdviceType at, Object... args) {
             byteArrayOut.setTag(tag);
             if (!generateTag(tag, at)) {
-                byteArrayOut.discard(tag);
                 return;
             }
+            byteArrayOut.addAdviceType(at); // Record that we did generate "at" advice
             adviceType = at;
             methodName = tag.opcode >= 0 ? AdviceGeneratorHelper.codeMap.get(tag.opcode).methodName : "???";
 
@@ -370,8 +406,12 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case BALOAD:
                 case CALOAD:
                 case SALOAD:
-                    assert adviceType == AdviceType.BEFORE;
-                    generateArrayLoad(k);
+                    if (adviceType == AdviceType.BEFORE || k.equals("Object")) {
+                        generateArrayLoad(k);
+                    } else {
+                        // Undo add which will cause method to be discarded
+                        byteArrayOut.removeAdviceType(at);
+                    }
                     break;
 
                 case IASTORE:
@@ -407,6 +447,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     assert adviceType == AdviceType.BEFORE;
                     generateLoad(k);
                     break;
+                case ALOAD$adviseafter:
+                    generateAfterLoad(k);
+                    break;
+
 
                 case ISTORE:
                 case LSTORE:
@@ -532,7 +576,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     // Checkstyle: stop
                 case NEW:
                 case NEW$init:
-                    // Checvkstyle: resume
+                    // Checkstyle: resume
                     assert adviceType == AdviceType.AFTER;
                     generateNew();
                     break;
@@ -634,6 +678,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     generateThrow();
                     break;
 
+                case RETHROW_EXCEPTION:
+                    generateReThrow();
+                    break;
+
                 case ARRAYLENGTH:
                     generateArrayLength();
                     break;
@@ -677,6 +725,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case DRETURN$unlock:
                 case ARETURN$unlock:
                 case RETURN$unlock:
+                case RETURN$registerFinalizer:
                     generateReturn(tag, k);
                     break;
 
@@ -691,7 +740,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     break;
 
                 // No special treatment for the following codes
-                case RETURN$registerFinalizer:
                 case LOAD_EXCEPTION:
                     break;
 
@@ -703,7 +751,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     ProgramError.unexpected("tag " + tag + " not implemented");
             }
         }
-
     }
 
     private void startGuardAdvice() {
@@ -744,7 +791,11 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
     private void generateArrayLoad(String k) {
         startGuardAdvice();
-        out.printf(INDENT12_ADVISE_PREFIX + "array, index);%n", adviceType.methodNameComponent, methodName);
+        if (adviceType == AdviceType.BEFORE) {
+            out.printf(INDENT12_ADVISE_PREFIX + "array, index);%n", adviceType.methodNameComponent, methodName);
+        } else {
+            out.printf(INDENT12_ADVISE_PREFIX + "array, index, result);%n", adviceType.methodNameComponent, methodName);
+        }
         endGuardAdvice();
     }
 
@@ -770,6 +821,12 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     private void generateLoad(String k) {
         startGuardAdvice();
         out.printf(INDENT12_ADVISE_PREFIX + "index);%n", adviceType.methodNameComponent, methodName);
+        endGuardAdvice();
+    }
+
+    private void generateAfterLoad(String k) {
+        startGuardAdvice();
+        out.printf(INDENT12_ADVISE_PREFIX + "index, %s);%n", adviceType.methodNameComponent, methodName, putValue(k));
         endGuardAdvice();
     }
 
@@ -875,6 +932,12 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     private void generateThrow() {
         startGuardAdvice();
         out.printf(INDENT12_ADVISE_PREFIX + "object);%n", adviceType.methodNameComponent, methodName);
+        endGuardAdvice();
+    }
+
+    private void generateReThrow() {
+        startGuardAdvice();
+        out.printf(INDENT12_ADVISE_PREFIX + "throwable);%n", adviceType.methodNameComponent, "Throw");
         endGuardAdvice();
     }
 
@@ -1002,6 +1065,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         // for record keeping only, no output
         // currently disabled
         // generateAfterAdvice(k, variant, tag);
+        endTemplateMethodGeneration();
     }
 
 
@@ -1048,6 +1112,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         // for record keeping only, no output
         // currently disabled
         // generateAfterAdvice(k, variant, tag);
+        endTemplateMethodGeneration();
     }
 
 
@@ -1059,7 +1124,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateAfterAdvice();
         out.printf("    }%n");
         newLine();
-
+        endTemplateMethodGeneration();
     }
 
     private static final EnumSet<T1XTemplateTag>  INVOKE_AFTER_TEMPLATES = EnumSet.of(
@@ -1098,6 +1163,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         endGuardAdvice();
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
     */
 
@@ -1118,6 +1184,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> SHORT_CONST_TEMPLATES = EnumSet.of(ACONST_NULL);
@@ -1142,6 +1209,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateBeforeAdvice("Reference",  "null");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> CONST_TEMPLATES = EnumSet.of(ICONST, LCONST, FCONST, DCONST);
@@ -1176,6 +1244,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateBeforeAdvice(k);
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     private static boolean hasLDCTemplates(Kind k) {
@@ -1203,10 +1272,11 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         startMethodGeneration();
         generateTemplateTag("%s", tag);
         if (tag == LDC$reference) {
-            out.printf("    public static void uoldc(ResolutionGuard guard%s) {%n", suffixParams(true));
+            out.printf("    public static Object uoldc(ResolutionGuard guard%s) {%n", suffixParams(true));
             out.printf("        ClassActor classActor = Snippets.resolveClass(guard);%n");
             out.printf("        Object constant = classActor.javaClass();%n");
             generateBeforeAdvice(k);
+            out.printf("        return constant;%n");
         } else {
             String ks = k.substring(0, 1).toLowerCase();
             out.printf("    public static void %sldc(%s constant%s) {%n", ks, k, suffixParams(true));
@@ -1214,7 +1284,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         }
         out.printf("    }%n");
         newLine();
-
+        endTemplateMethodGeneration();
     }
 
     private static final EnumSet<T1XTemplateTag> LOAD_TEMPLATE_TAGS = EnumSet.of(ILOAD, LLOAD, FLOAD, DLOAD, ALOAD);
@@ -1226,7 +1296,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
             case LLOAD: case LSTORE: return "long";
             case FLOAD: case FSTORE: return "float";
             case DLOAD: case DSTORE: return "double";
-            case ALOAD: case ASTORE: return "Object";
+            case ALOAD: case ASTORE: case ALOAD$adviseafter: return "Object";
         }
         // Checkstyle: resume
         return "???";
@@ -1238,6 +1308,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         for (T1XTemplateTag tag : LOAD_TEMPLATE_TAGS) {
             generateLoadTemplate(tag);
         }
+        generateAfterLoadTemplate(ALOAD$adviseafter);
     }
 
     /**
@@ -1251,6 +1322,21 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateBeforeAdvice(k);
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
+    }
+
+    /**
+     * Generate the {@code LOAD} template for given type.
+     */
+    private void generateAfterLoadTemplate(T1XTemplateTag tag) {
+        String k = lsType(tag);
+        startMethodGeneration();
+        generateTemplateTag("%s", tag);
+        out.printf("    public static void %sload(int index, %s value%s) {%n", k.substring(0, 1).toLowerCase(), k, suffixParams(true));
+        generateAfterAdvice(k);
+        out.printf("    }%n");
+        newLine();
+        endTemplateMethodGeneration();
     }
 
 
@@ -1276,6 +1362,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateBeforeAdvice(k);
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     private void generateIINC() {
@@ -1285,7 +1372,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();
-
+        endTemplateMethodGeneration();
     }
 
     private static final EnumSet<T1XTemplateTag> IFCMP_TEMPLATE_TAGS = EnumSet.of(IF_ICMPEQ, IF_ICMPNE, IF_ICMPLT, IF_ICMPGE, IF_ICMPGT, IF_ICMPLE, IF_ACMPEQ, IF_ACMPNE);
@@ -1320,6 +1407,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
 
@@ -1335,6 +1423,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     private static final EnumSet<T1XTemplateTag> IF_TEMPLATE_TAGS = EnumSet.of(IFEQ, IFNE, IFLT, IFLE, IFGE, IFGT, IFNULL, IFNONNULL);
@@ -1364,6 +1453,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     private static VMAdviceTemplateGenerator vmaT1XTemplateGen;
@@ -1415,15 +1505,13 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         // discover what the advice capabilities are for each tag
         vmaT1XTemplateGen.generateAll(new DiscoverCapabilitiesHook());
 
-        generating[AdviceType.BEFORE.ordinal()] = true;
-        generating[AdviceType.AFTER.ordinal()] = false;
+        generating = EnumSet.of(AdviceType.BEFORE);
         generateAdviceSource(VMAdviceBeforeTemplateSource.class, checkOnly);
 
-        generating[AdviceType.BEFORE.ordinal()] = false;
-        generating[AdviceType.AFTER.ordinal()] = true;
+        generating = EnumSet.of(AdviceType.AFTER);
         generateAdviceSource(VMAdviceAfterTemplateSource.class, checkOnly);
 
-        generating[AdviceType.BEFORE.ordinal()] = true;
+        generating = EnumSet.allOf(AdviceType.class);
         generateAdviceSource(VMAdviceBeforeAfterTemplateSource.class, checkOnly);
 
     }

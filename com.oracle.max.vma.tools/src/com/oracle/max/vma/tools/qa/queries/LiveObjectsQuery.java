@@ -30,8 +30,11 @@ import com.oracle.max.vma.tools.qa.*;
 
 /**
  * Reports on the number of live instances at the end of the trace, where live
- * is defined a zero deletion time in the {@link ObjectRecord}, i.e. no
- * {@link TextObjectTrackerLog#REMOVAL_ID}.
+ * is defined a zero deletion time in the {@link ObjectRecord}, i.e., no object death record.
+ *
+ * N.B. This will not report any useful information unless the trace contains
+ * object death records.
+ *
  */
 public class LiveObjectsQuery extends QueryBase {
     @Override

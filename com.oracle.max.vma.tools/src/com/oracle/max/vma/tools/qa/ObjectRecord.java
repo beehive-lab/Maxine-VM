@@ -118,14 +118,15 @@ public class ObjectRecord {
             result.append(TimeFunctions.formatTime(getEndCreationTime() - traceRun.startTime));
         }
         if (showLt) {
-            result.append(", lt ");
-            result.append(TimeFunctions.formatTime(getLifeTime(traceRun.lastTime)));
+            result.append(", la ");
+            result.append(TimeFunctions.formatTime(getLastAccessTime() - traceRun.startTime));
         }
         if (showLt) {
             result.append(", mlt ");
             result.append(TimeFunctions.formatTime(getModifyLifeTime()));
         }
-        result.append(removalRecord == null ? ", alive" : ", dead");
+        // no support for object death
+        // result.append(removalRecord == null ? ", alive" : ", dead");
         return result.toString();
     }
 
@@ -248,17 +249,31 @@ public class ObjectRecord {
 
     /**
      * Returns the time period from the end of the object construction to its
-     * removal, if known, else to lastTime.
+     * last access time (effective death). Returns zero if never accessed
+     * after construction.
      */
-    public long getLifeTime(long lastTime) {
-        long result =  ((removalRecord == null) ? lastTime : removalRecord.time)
-                - endCreationRecord.time;
-//        if (result < 0) {
-//            System.console();
-//        }
-        return result;
+    public long getEffectiveLifeTime() {
+        return getLastAccessTime() - endCreationRecord.time;
     }
 
+    /**
+     * Returns the last time the object was accessed either for read or write.
+     * While not equivalent to object death, since it may still be reachable,
+     * it is effectively dead in the sense that the application is (evidently)
+     * no longer interested in it beyond that point.
+     */
+    public long getLastAccessTime() {
+        int s = adviceRecords.size();
+        if (s > 0) {
+            return adviceRecords.get(s - 1).time;
+        } else {
+            return endCreationRecord.time;
+        }
+    }
+
+    /**
+     * Returns the last time the object was modified.
+     */
     public long getLastModifyTime() {
         if (immutable && (lastModifyTime >= 0)) {
             return lastModifyTime;
@@ -270,7 +285,7 @@ public class ObjectRecord {
     /**
      * Returns the time period from the end of the object construction to the
      * last time the object was modified. If no updates took place after
-     * construction, returns 0. Also sets lastModifyTime.
+     * construction, returns 0. Also sets {@link #lastModifyTime}.
      */
     public long getModifyLifeTime() {
         // traces are ordered by time

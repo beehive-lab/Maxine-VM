@@ -333,6 +333,15 @@ public class CompilationBroker {
         return compile(cma, Nature.BASELINE, true);
     }
 
+    public TargetMethod compile(ClassMethodActor cma, Nature nature, boolean isDeopt) {
+        try {
+            return compile(cma, nature, isDeopt, false);
+        } catch (Throwable t) {
+            // cannot happen
+            return null;
+        }
+    }
+
     /**
      * Produces a target method for the specified method actor. If another thread is currently
      * compiling {@code cma}, then the result of that compilation is returned. Otherwise,
@@ -342,10 +351,11 @@ public class CompilationBroker {
      * @param cma the method for which to make the target method
      * @param nature the specific type of target method required or {@code null} if any target method is acceptable
      * @param isDeopt if the compilation is for a deoptimzation
+     * @param failFast don't try recompilation on failure, instead rethrow the exception
      * @return a newly compiled version of a {@code cma}
-     * @throws InternalError if an uncaught exception is thrown during compilation
+     * @throws iff failFast the exception that was thrown by first selected compiler
      */
-    public TargetMethod compile(ClassMethodActor cma, Nature nature, boolean isDeopt) {
+    public TargetMethod compile(ClassMethodActor cma, Nature nature, boolean isDeopt, boolean failFast) throws Throwable {
         boolean retryRun = false;
         while (true) {
             Compilation compilation;
@@ -393,6 +403,9 @@ public class CompilationBroker {
                     Log.print(": Compilation of " + cma + " by " + compilation.compiler + " failed");
                     t.printStackTrace(Log.out);
                     Log.unlock(lockDisabledSafepoints);
+                }
+                if (failFast) {
+                    throw t;
                 }
                 if (!FailOverCompilation || retryRun || (baselineCompiler == null) || (isHosted() && compilation.compiler == optimizingCompiler)) {
                     // This is the final failure: no other compilers available or failover is disabled

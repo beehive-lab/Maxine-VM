@@ -20,62 +20,58 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.oracle.max.vm.ext.vma.handlers.objstate;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 
 /**
  * Abstracts the implementation of state used for object tracking, in particular,
  * the mechanism for allocation and storage of unique identifiers, and the recording
- * of which objects are live.
+ * of which objects are live (optional).
  *
- * An implementation is required to be thread safe by design or by explicit synchronisation.
+ * An implementation is required to be thread safe by design or by explicit synchronization.
+ *
+ * This interface uses the opaque {@link ObjectID} class to represent object ids.
  *
  */
 public abstract class ObjectStateHandler {
 
     /**
      * An instance of this class is used to inform about dead objects, in response to invoking the {@link #gc} method.
+     * N.B. An implementation may not support the dead object handling.
      *
      */
-    public interface RemovalTracker {
-        void removed(long id);
+    public interface DeadObjectHandler {
+        void dead(ObjectID id);
     }
 
     /**
      * Create and assign a unique id for a tracked object.
      */
-    public abstract long assignId(Object obj);
+    public abstract ObjectID assignId(Object obj);
 
     /**
      * Create and assign a unique id for a tracked object via its reference.
      */
-    public abstract long assignId(Reference objRef);
+    public abstract ObjectID assignId(Reference objRef);
 
     /**
      * Create a unique id for an object that we did not see the creation of
      * and therefore likely will not see the garbage collection, e.g. (immortal,
      * boot heap objects).
      */
-    public abstract long assignUnseenId(Object obj);
+    public abstract ObjectID assignUnseenId(Object obj);
 
     /**
      * Return the unique id for given object or zero if {@code obj == null}.
      * @param obj
      */
-    public abstract long readId(Object obj);
+    public abstract ObjectID readId(Object obj);
 
     /**
-     * Increment the lifetime of the object denoted by <code>cell</code>.
-     * @param cell
-     */
-    public abstract void incrementLifetime(Pointer cell);
-
-    /**
-     * Generate callbacks for objects that did not survive the gc that just completed.
+     * Optionally generate callbacks for objects that did not survive the gc that just completed.
      * @param rt
      */
-    public abstract void gc(RemovalTracker rt);
+    public abstract void gc(DeadObjectHandler rt);
 }

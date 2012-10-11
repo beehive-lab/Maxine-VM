@@ -557,8 +557,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 detailLogger.logForward(hub.classActor.id, Pointer.zero(), fromCell, toCell, size.toInt());
             }
 
-            VMTI.handler().objectSurviving(fromCell);
-
             Memory.copyBytes(fromCell, toCell, size);
 
             final Pointer toOrigin = Layout.cellToOrigin(toCell);

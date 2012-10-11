@@ -23,7 +23,7 @@
 package com.sun.max.vm.compiler.deps;
 
 import static com.sun.max.vm.actor.holder.ClassActor.*;
-import static com.sun.max.vm.actor.holder.ClassID.*;
+import static com.sun.max.vm.actor.holder.ClassIDManager.*;
 import static com.sun.max.vm.compiler.deps.DependenciesManager.classHierarchyLock;
 import static com.sun.max.vm.compiler.deps.ContextDependents.map;
 
@@ -188,12 +188,12 @@ public class DependenciesStats {
             if (printDetails) {
                 Log.println("class id, class name, parent class id, concrete subtype, concrete subtype class id");
             }
-            final int largestClassId = ClassID.largestClassId();
+            final int largestClassId = ClassIDManager.largestClassId();
             while (classId <= largestClassId) {
                 ClassActor classActor;
                 // Skip unused ids
                 do {
-                    classActor = ClassID.toClassActor(classId++);
+                    classActor = ClassIDManager.toClassActor(classId++);
                 } while(classActor == null && classId <= largestClassId);
                 if (classId > largestClassId) {
                     break;
@@ -251,7 +251,7 @@ public class DependenciesStats {
         } else {
             Log.print(uct);
             Log.print(", ");
-            Log.print(ClassID.toClassActor(uct).name());
+            Log.print(ClassIDManager.toClassActor(uct).name());
         }
         Log.println();
     }
