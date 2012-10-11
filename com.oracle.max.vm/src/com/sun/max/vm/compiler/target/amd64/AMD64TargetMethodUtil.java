@@ -222,7 +222,7 @@ public final class AMD64TargetMethodUtil {
 
     public static boolean isPatchedJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
         final Pointer jumpSite = tm.codeAt(pos).toPointer();
-        if (jumpSite.readByte(0) == RIP_JMP) {
+        if (jumpSite.readByte(0) == (byte) RIP_JMP) {
             CodePointer target = readCall32Target(tm, pos);
             return jumpTarget.equals(target);
         }
