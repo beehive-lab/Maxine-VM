@@ -139,16 +139,20 @@ public final class DependenciesManager {
      * @param classActor the class to be added to the global class hierarchy
      */
     public static void addToHierarchy(ClassActor classActor) {
+        boolean refreshTables = false;
         classHierarchyLock.writeLock().lock();
         try {
             classActor.prependToSiblingList();
             ArrayList<Dependencies> invalidated = ConcreteTypeDependencyProcessor.recordUniqueConcreteSubtype(classActor);
             ConcreteTypeDependencyProcessor.invalidateDependencies(invalidated, classActor);
-            if (!MaxineVM.isHosted()) {
-                classActor.dynamicHub().checkVTable();
-            }
+            refreshTables = true;
         } finally {
             classHierarchyLock.writeLock().unlock();
+            if (!MaxineVM.isHosted() && refreshTables) {
+                // Don't need to be under the class hierarchy lock to do this.
+                classActor.dynamicHub().refreshVTable();
+                classActor.dynamicHub().refreshITable();
+            }
         }
     }
 

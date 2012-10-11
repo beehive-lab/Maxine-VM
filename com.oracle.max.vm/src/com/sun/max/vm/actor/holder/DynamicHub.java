@@ -26,9 +26,15 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.deps.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  */
@@ -108,12 +114,57 @@ public final class DynamicHub extends Hub {
                     final int iIndex = iTableIndex - iTableStartIndex;
                     assert getWord(iTableIndex).isZero();
                     Address iTableEntry;
-                    iTableEntry = checkCompiled(virtualMethodActor);
-                    if (iTableEntry.isZero()) {
+                    if (MaxineVM.isHosted()) {
+                        iTableEntry = checkCompiled(virtualMethodActor);
+                        if (iTableEntry.isZero()) {
+                            iTableEntry = vm().stubs.interfaceTrampoline(iIndex).toAddress();
+                        }
+                    } else {
+                        // IMPORTANT: Don't fill with compiled method entry points.
+                        // See Hub.initializeVTable  for a detailed explanation.
                         iTableEntry = vm().stubs.interfaceTrampoline(iIndex).toAddress();
                     }
                     setWord(iTableIndex, iTableEntry);
                 }
+            }
+        }
+    }
+
+    private void checkITableEntry(int iTableIndex) {
+        final Address vTableEntry = getWord(iTableIndex).asAddress();
+        TargetMethod tm = Code.codePointerToTargetMethod(vTableEntry.asPointer());
+        if (tm == null || Stubs.isJumpToStaticTrampoline(tm)) {
+            Log.println(classActor.toString() + "(hub = " + Reference.fromJava(this).toOrigin().to0xHexString() +
+                            ") has interface table entry #" + (iTableIndex - iTableStartIndex) + "(" + iTableIndex + ") points to method patched with static trampoline");
+            FatalError.unexpected("corrupted itable");
+        }
+    }
+    /**
+     * Make a given itable entry point to the trampoline again.
+     * @param index a word index relative to the hub's origin into the itable
+     */
+    public void resetITableEntry(int index) {
+        setWord(index, vm().stubs.interfaceTrampoline(index - iTableStartIndex).toAddress());
+    }
+
+    /**
+     * Replace itable trampolines with compiled method entry points for compiled methods.
+     * This is done once, upon adding the class actor to the class hierarchy.
+     * @see DependenciesManager
+     */
+    public void refreshITable() {
+        final int lastITableIndex = iTableStartIndex + iTableLength;
+        final int [] iToV = classActor.iToV();
+        for (int iTableIndex = iTableStartIndex; iTableIndex < lastITableIndex; iTableIndex++) {
+            final int iIndex = iTableIndex - iTableStartIndex;
+            final int vTableIndex = iToV[iIndex];
+            if (vTableIndex >= vTableStartIndex()) {
+                final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
+                final Address vTableEntry = checkCompiled(virtualMethodActor);
+                if (vTableEntry.isNotZero()) {
+                    setWord(iTableIndex, vTableEntry);
+                }
+                checkITableEntry(iTableIndex);
             }
         }
     }

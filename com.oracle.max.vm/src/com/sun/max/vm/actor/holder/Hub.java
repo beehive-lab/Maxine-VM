@@ -33,12 +33,15 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.Category;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -59,6 +62,11 @@ public abstract class Hub extends Hybrid {
     public final ClassActor classActor;
     public final Layout.Category layoutCategory;
     public BiasedLockEpoch64 biasedLockEpoch = BiasedLockEpoch64.init();
+    /**
+     * Word index to the first element of the variable-size part of the hub.
+     * The index is relative to the first word following the hub's header.
+     * Note that all indexes to virtual and interface tables are also relative to the first word following the hub's header.
+     */
     private static final int firstWordIndex;
     public final int iTableStartIndex;
     public final int iTableLength;
@@ -146,6 +154,7 @@ public abstract class Hub extends Hybrid {
         return Layout.hybridLayout().firstAvailableWordArrayIndex(tupleSize);
     }
 
+    @FOLD
     public static int getFirstWordIndex() {
         return firstWordIndex;
     }
@@ -170,6 +179,10 @@ public abstract class Hub extends Hybrid {
         return referenceMapStartIndex + referenceMapLength - 1;
     }
 
+    /**
+     * Index, relative to the first word following the hub's header, to the first entry of the virtual table.
+     * @return an word index
+     */
     @INLINE
     public static int vTableStartIndex() {
         return getFirstWordIndex();
@@ -275,71 +288,80 @@ public abstract class Hub extends Hybrid {
     }
 
     void initializeVTable(VirtualMethodActor[] allVirtualMethodActors) {
-        final int baseIndex = firstWordIndex();
         for (int i = 0; i < allVirtualMethodActors.length; i++) {
             final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
-            final int vTableIndex = baseIndex + i;
+            final int vTableIndex = vTableStartIndex() + i;
             assert virtualMethodActor.vTableIndex() == vTableIndex;
             assert getWord(vTableIndex).isZero();
-            Address vTableEntry = checkCompiled(virtualMethodActor);
-            if (vTableEntry.isZero()) {
-                vTableEntry = vm().stubs.virtualTrampoline(vTableIndex).toAddress();
-            }
-            setWord(vTableIndex, vTableEntry);
-
-/*            if (MaxineVM.isHosted()) {
-                Address vTableEntry = checkCompiled(virtualMethodActor);
+            Address vTableEntry;
+            if (MaxineVM.isHosted()) {
+                vTableEntry = checkCompiled(virtualMethodActor);
                 if (vTableEntry.isZero()) {
                     vTableEntry = vm().stubs.virtualTrampoline(vTableIndex).toAddress();
                 }
-                setWord(vTableIndex, vTableEntry);
             } else {
-                final Address vTableEntry = vm().stubs.virtualTrampoline(vTableIndex).toAddress();
-                setWord(vTableIndex, vTableEntry);
-            }*/
+                // IMPORTANT: Don't fill with compiled method entry points.
+                // This is delayed to until the class actor for this class is actually entered in the class hierarchy.
+                // There's a couple of reasons for that:
+                // 1. A deoptimization may occur between the initialization of the vtable and the insertion of the class actor to the class hierarchy graph.
+                // In this interval of time, the class actor is not visible to the deoptimization process. By the time it becomes visible, the deopt is complete
+                // and the vtable is corrupted with code pointers to obsolete optimized method whose entry point has been patched a jump to static trampoline.
+                // This will cause subsequent vtable dispatch to fail as these will take the trampoline, which will attempt to patch what it believe was a direct call.
+                // This results in an fatal error because the call site isn't a direct call but a register indirect call of a vtable dispatch.
+                //
+                // 2. multiple threads may race to create a ClassActor for the same class as they race for their definition. There's no need to waste time
+                // checking for compiled code until the class actor is effectively selected to define the class (which is effected when adding to the class hierarchy.
+                // This will be done with the method optimized vtable below.
+                vTableEntry = vm().stubs.virtualTrampoline(vTableIndex).toAddress();
+            }
+            setWord(vTableIndex, vTableEntry);
+        }
+    }
+
+    private void checkVTableEntry(int vTableIndex) {
+        final Address vTableEntry = getWord(vTableIndex).asAddress();
+        TargetMethod tm = Code.codePointerToTargetMethod(vTableEntry.asPointer());
+        if (tm == null || Stubs.isJumpToStaticTrampoline(tm)) {
+            Log.println(classActor.toString() + "(hub = " + Reference.fromJava(this).toOrigin().to0xHexString() +
+                            ") has virtual table entry #" + (vTableIndex - firstWordIndex) + "(" + vTableIndex + ") points to method patched with static trampoline");
+            FatalError.unexpected("corrupted vtable");
         }
     }
 
     public void checkVTable() {
         if (!MaxineVM.isHosted()) {
-            final int baseIndex = firstWordIndex();
             VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
-            for (int i = 0; i < allVirtualMethodActors.length; i++) {
-                final int vTableIndex = baseIndex + i;
-                final Address vTableEntry = getWord(vTableIndex).asAddress();
-                TargetMethod tm = Code.codePointerToTargetMethod(vTableEntry.asPointer());
-                assert tm != null && !Stubs.isJumpToStaticTrampoline(tm);
+            final int endOfVTable = firstWordIndex() + allVirtualMethodActors.length;
+            for (int vTableIndex = firstWordIndex(); vTableIndex < endOfVTable; vTableIndex++) {
+                checkVTableEntry(vTableIndex);
             }
         }
     }
 
-    void optimizedVTable() {
-        final int baseIndex = firstWordIndex();
+    /**
+     * Replace vtable trampoline with compiled method entry points for compiled virtual methods.
+     * This is done once, upon adding the class actor to the class hierarchy.
+     * @see DependenciesManager
+     */
+    public void refreshVTable() {
         VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
         for (int i = 0; i < allVirtualMethodActors.length; i++) {
             final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
             final Address vTableEntry = checkCompiled(virtualMethodActor);
             if (vTableEntry.isNotZero()) {
-                final int vTableIndex = baseIndex + i;
-                setWord(vTableIndex, vTableEntry);
+                setWord(vTableStartIndex() + i, vTableEntry);
             }
+            // FIXME: turn to debug code
+            checkVTableEntry(vTableStartIndex() + i);
         }
     }
 
     /**
-     * Make a given vtable entry point to the trampoline again.
+     * Make a given vtable entry points to the trampoline again.
      * @param index the offset into the vtable as answered by {@linkplain VirtualMethodActor#vTableIndex()}
      */
     public void resetVTableEntry(int index) {
         setWord(index, vm().stubs.virtualTrampoline(index).toAddress());
-    }
-
-    /**
-     * Make a given itable entry point to the trampoline again.
-     * @param index the offset into the itable
-     */
-    public void resetITableEntry(int index) {
-        setWord(index, vm().stubs.interfaceTrampoline(index - iTableStartIndex).toAddress());
     }
 
     /**
