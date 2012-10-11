@@ -92,6 +92,24 @@ public class Stubs {
     private final Stub[] deoptStubsForCompilerStubs = new Stub[CiKind.VALUES.length];
 
     /**
+     * Position of the instruction in virtual / interface trampolines loading the immediate index in the scratch register.
+     * Used to quickly retrieve the itable / vtable index the trampoline dispatch to.
+     */
+    private int indexMovInstrPos;
+
+    /**
+     * Return the index, relative to Hub's origin, to the entry of dispatch tables (virtual or interface) the stub is assigned to.
+     * @param stub a virtual or interface trampoline stub
+     * @return an index to a virtual table entry if the stub is a virtual call trampoline stub, an index to a interface table entry if the stub is a interface call trampoline.
+     */
+    public int getDispatchTableIndex(TargetMethod stub) {
+        assert stub.is(VirtualTrampoline) || stub.is(InterfaceTrampoline);
+        final int index = stub.codeStart().toPointer().readInt(indexMovInstrPos);
+        assert stub.is(VirtualTrampoline) ? (virtualTrampolines.size() > index && virtualTrampolines.get(index) == stub) : (interfaceTrampolines.size() > index && interfaceTrampolines.get(index) == stub);
+        return index;
+    }
+
+    /**
      * The deopt stub used for a frame stopped at a safepoint poll.
      * This stub saves the registers, making them available for deoptimization.
      */
@@ -249,6 +267,14 @@ public class Stubs {
         return virtualDispatchEntryPoint.plus(callEntryPoint.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
+    public static boolean isJumpToStaticTrampoline(TargetMethod tm) {
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(),  OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
+        } else {
+            throw FatalError.unimplemented();
+        }
+    }
+
     /**
      * Resolves the vtable entry denoted by a given receiver object and vtable index.
      *
@@ -267,8 +293,12 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-
-        CodePointer vtableEntryPoint = selectedCallee.makeTargetMethod(caller).getEntryPoint(VTABLE_ENTRY_POINT);
+        final TargetMethod selectedCalleeTargetMethod =  selectedCallee.makeTargetMethod(caller);
+        FatalError.check(selectedCalleeTargetMethod.invalidated() == null, "resolved virtual method must not be invalidated");
+        CodePointer vtableEntryPoint = selectedCalleeTargetMethod.getEntryPoint(VTABLE_ENTRY_POINT);
+        if (selectedCallee.hadDeopt && Deoptimization.deoptLogger.enabled()) {
+            Deoptimization.deoptLogger.logResolveVTable(vTableIndex,  hub.classActor, vtableEntryPoint.toAddress());
+        }
         hub.setWord(vTableIndex, vtableEntryPoint.toAddress());
 
         CodePointer adjustedEntryPoint = adjustEntryPointForCaller(vtableEntryPoint, caller);
@@ -332,6 +362,10 @@ public class Stubs {
             // save the index in the scratch register. This register is then callee-saved
             // so that the stack walker can find it.
             asm.movl(registerConfig.getScratchRegister(), index);
+            if (isHosted() && index == 0) {
+                indexMovInstrPos = asm.codeBuffer.position() -  WordWidth.BITS_32.numberOfBytes;
+            }
+
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);

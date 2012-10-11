@@ -228,6 +228,7 @@ public final class Stub extends TargetMethod {
     }
 
     @Override
+    @HOSTED_ONLY
     public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
         if (directCallees != null && directCallees.length != 0) {
             assert directCallees.length == 1 && directCallees[0] instanceof ClassMethodActor;

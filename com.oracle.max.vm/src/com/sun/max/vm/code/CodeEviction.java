@@ -666,7 +666,7 @@ public final class CodeEviction extends VmOperation {
                     patchArrayHubs(vtableIndex);
                 }
                 // act accordingly if this method is also an interface method
-                patchItables(cma, ca, holderHub, tm);
+                patchItables(holderHub, tm);
                 // include subclasses (the vtable index stays the same for this method)
                 subclassPatcher.cma = cma;
                 subclassPatcher.tm = tm;
@@ -716,7 +716,7 @@ public final class CodeEviction extends VmOperation {
                 shub.resetVTableEntry(vtableIndex);
                 logDispatchTableReset('V', shub, vtableIndex);
             }
-            patchItables(cma, ca, hub, tm);
+            patchItables(hub, tm);
             return true;
         }
     }
@@ -724,7 +724,7 @@ public final class CodeEviction extends VmOperation {
     /**
      * Helper function to collect patch locations for interface methods.
      */
-    private void patchItables(ClassMethodActor cma, ClassActor ca, DynamicHub holderHub, TargetMethod tm) {
+    private void patchItables(DynamicHub holderHub, TargetMethod tm) {
         final int lastITableIndex = holderHub.iTableStartIndex + holderHub.iTableLength;
         for (int i = holderHub.iTableStartIndex; i < lastITableIndex; i++) {
             if (holderHub.getWord(i).equals(tm.getEntryPoint(VTABLE_ENTRY_POINT))) {

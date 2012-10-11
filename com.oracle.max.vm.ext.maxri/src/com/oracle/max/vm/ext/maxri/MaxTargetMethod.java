@@ -244,6 +244,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             if (vm().compilationBroker.needsAdapters()) {
                 AMD64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
             }
+            FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
         } else {
             throw FatalError.unimplemented();
         }
