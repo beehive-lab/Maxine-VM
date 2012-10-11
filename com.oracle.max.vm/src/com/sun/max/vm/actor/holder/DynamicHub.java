@@ -164,7 +164,9 @@ public final class DynamicHub extends Hub {
                 if (vTableEntry.isNotZero()) {
                     setWord(iTableIndex, vTableEntry);
                 }
-                checkITableEntry(iTableIndex);
+                if (MaxineVM.isDebug()) {
+                    checkITableEntry(iTableIndex);
+                }
             }
         }
     }

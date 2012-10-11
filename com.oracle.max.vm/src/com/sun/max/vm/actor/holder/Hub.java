@@ -351,8 +351,9 @@ public abstract class Hub extends Hybrid {
             if (vTableEntry.isNotZero()) {
                 setWord(vTableStartIndex() + i, vTableEntry);
             }
-            // FIXME: turn to debug code
-            checkVTableEntry(vTableStartIndex() + i);
+            if (MaxineVM.isDebug()) {
+                checkVTableEntry(vTableStartIndex() + i);
+            }
         }
     }
 
