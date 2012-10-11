@@ -36,6 +36,7 @@ import com.sun.max.vm.VMOptions;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Defines all the options that can be used to control the VMA system.
@@ -231,6 +232,8 @@ public class VMAOptions {
         VMOptions.addFieldOption("-XX:", "VMA", "enable advising");
         VMOptions.addFieldOption("-XX:", "VMACI", "regex for classes to instrument");
         VMOptions.addFieldOption("-XX:", "VMACX", "regex for classes not to instrument");
+        VMOptions.addFieldOption("-XX:", "VMATI", "regex for threads to include");
+        VMOptions.addFieldOption("-XX:", "VMATX", "regex for threads to exclude");
         VMOptions.addFieldOption("-XX:", "VMABI", "regex for bytecodes to match");
         VMOptions.addFieldOption("-XX:", "VMABX", "regex for bytecodes to not match");
         VMOptions.addFieldOption("-XX:", "VMAConfig", "use pre-defined configuration");
@@ -247,6 +250,9 @@ public class VMAOptions {
      */
     private static String VMACX;
 
+    private static String VMATI;
+    private static String VMATX;
+
     /**
      * {@link Pattern regex pattern} defining specific bytecodes to instrument.
      * If this option is set, only these bytecodes are instrumented, otherwise
@@ -262,6 +268,9 @@ public class VMAOptions {
 
     private static Pattern classInclusionPattern;
     private static Pattern classExclusionPattern;
+
+    private static Pattern threadInclusionPattern;
+    private static Pattern threadExclusionPattern;
 
     /**
      * Records whether advice is being applied in the given mode for each bytecode.
@@ -313,6 +322,14 @@ public class VMAOptions {
                 classInclusionPattern = Pattern.compile(VMACI);
             }
             classExclusionPattern = Pattern.compile(xPattern);
+
+            if (VMATI != null) {
+                threadInclusionPattern = Pattern.compile(VMATI);
+            }
+            if (VMATX != null) {
+                threadExclusionPattern = Pattern.compile(VMATI);
+            }
+
 
             if (VMAConfig != null) {
                 String[] vmaConfigs = VMAConfig.split(",");
@@ -410,6 +427,15 @@ public class VMAOptions {
         }
         if (logger.enabled()) {
             logger.logInstrument(cma, include);
+        }
+        return include;
+    }
+
+    public static boolean instrumentThread(VmThread vmThread) {
+        String name = vmThread.getName();
+        boolean include = threadInclusionPattern == null || threadInclusionPattern.matcher(name).matches();
+        if (include) {
+            include = threadExclusionPattern == null || !threadExclusionPattern.matcher(name).matches();
         }
         return include;
     }

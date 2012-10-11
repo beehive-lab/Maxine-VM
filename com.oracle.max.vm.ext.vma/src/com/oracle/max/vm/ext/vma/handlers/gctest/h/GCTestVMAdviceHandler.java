@@ -26,21 +26,24 @@ import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
- * In early development there were problems with GC ref maps relative to the advice calls in
- * generated code. This "handler" performs GC on a random basis for each advice method whihc,
- * hopefully, is a useful regression test that the maps are ok.
+ * In early development there were problems with GC ref maps relative to the advice calls in generated code. This
+ * "handler" performs GC on a random basis for each advice method which, hopefully, is a useful regression test that the
+ * maps are ok.
+ *
+ * By default, a GC will be invoked (randomly) on approximately 10% of the advice methods.
+ * The percentage can be controlled by the {@link #PERCENT_PROPERTY} property. Setting the
+ * value at 100 will invoke a GC on every advice method.
+ *
  * Can be built into the boot image or dynamically loaded.
  */
 public class GCTestVMAdviceHandler extends VMAdviceHandler {
+
+    private static final String PERCENT_PROPERTY = "max.vma.handler.gctest.percent";
 
     private Random random = new Random(46737);
     private static int frequency;
@@ -50,9 +53,6 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
 
     public static void onLoad(String args) {
         VMAJavaRunScheme.registerAdviceHandler(new GCTestVMAdviceHandler());
-        // must compile gcSurvivor now otherwise it will be compiled lazily
-        // while a GC is occurring, which will cause a fatal exception.
-        ClassActor.fromJava(GCTestVMAdviceHandler.class).findClassMethodActor(SymbolTable.makeSymbol("gcSurvivor"), SignatureDescriptor.create(void.class, Pointer.class)).makeTargetMethod();
     }
 
     private void randomlyGC(int methodOrd, int adviceOrd) {
@@ -63,7 +63,7 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
         int next = random.nextInt(100);
         if (next % frequency == 0) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("GCTestVMAdviceHandlerLog.GC: ");
+            Log.print("GCTestVMAdviceHandler.GC: ");
             Log.print(ident1);
             Log.print(":");
             Log.println(ident2);
@@ -75,7 +75,7 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     @Override
     public void initialise(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.RUNNING) {
-            String freq = System.getProperty("max.vma.handler.gctest.freq");
+            String freq = System.getProperty(PERCENT_PROPERTY);
             if (freq == null) {
                 frequency = 10;
             } else {

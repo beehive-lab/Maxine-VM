@@ -31,6 +31,6 @@ public class Package extends BootImagePackage {
 
     @Override
     public Class[] wordSubclasses() {
-        return new Class[] {MemberID.class, FieldID.class, MethodID.class, ObjectID.class, JniHandle.class};
+        return new Class[] {MemberID.class, FieldID.class, MethodID.class, ObjectID.class, ClassID.class, JniHandle.class};
     }
 }
