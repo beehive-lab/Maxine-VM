@@ -114,6 +114,7 @@ public final class AMD64TargetMethodUtil {
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(disp32);
     }
 
+
     /**
      * Patches the offset operand of a 32-bit relative CALL instruction.
      *
@@ -220,11 +221,21 @@ public final class AMD64TargetMethodUtil {
         patchSite.writeByte(4, (byte) (disp32 >> 24));
     }
 
-    public static boolean isPatchedJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
+    /**
+     * Indicate with the instruction in a target method at a given position is a jump to a specified destination.
+     * Used in particular for testing if the entry points of a target method were patched to jump to a trampoline.
+     *
+     * @param tm a target method
+     * @param pos byte index relative to the start of the method to a call site
+     * @param jumpTarget target to compare with the target of the assumed jump instruction
+     * @return {@code true} if the instruction is a jump to the target, false otherwise
+     */
+    public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
         final Pointer jumpSite = tm.codeAt(pos).toPointer();
         if (jumpSite.readByte(0) == (byte) RIP_JMP) {
-            CodePointer target = readCall32Target(tm, pos);
-            return jumpTarget.equals(target);
+            final int disp32 = jumpSite.readInt(1);
+            final Pointer target = jumpSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(disp32);
+            return jumpTarget.toPointer().equals(target);
         }
         return false;
     }
