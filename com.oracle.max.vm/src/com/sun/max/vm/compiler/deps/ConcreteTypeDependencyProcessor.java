@@ -110,7 +110,7 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
     protected int visit(DependencyProcessorVisitor dependencyProcessorVisitor, ClassActor context, Dependencies dependencies, int index) {
         ConcreteTypeDependencyProcessorVisitor uctVisitor = (ConcreteTypeDependencyProcessorVisitor) dependencyProcessorVisitor;
         if (uctVisitor != null) {
-            if (!uctVisitor.doConcreteSubtype(dependencies.targetMethod, context, ClassID.toClassActor(context.uniqueConcreteType))) {
+            if (!uctVisitor.doConcreteSubtype(dependencies.targetMethod, context, ClassIDManager.toClassActor(context.uniqueConcreteType))) {
                 return -1;
             }
         }
@@ -126,12 +126,12 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
                 // So the test above filters that either has no concrete or multiple concrete sub-types.
                 return null;
             }
-            return ClassID.toClassActor(uct);
+            return ClassIDManager.toClassActor(uct);
         }
         // Should we care about being less conservative for class array?
         // i.e., we should return the array class id if the element type is a leaf
         // (i.e., has no sub-classes, or has no implementation if an interface).
-        return ClassID.toClassActor(classActor.uniqueConcreteType);
+        return ClassIDManager.toClassActor(classActor.uniqueConcreteType);
     }
 
     /**

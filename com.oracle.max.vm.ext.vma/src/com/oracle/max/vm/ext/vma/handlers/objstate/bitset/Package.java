@@ -20,27 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vma.tools.qa.queries;
+package com.oracle.max.vm.ext.vma.handlers.objstate.bitset;
 
-import java.io.*;
-import java.util.*;
-
-import com.oracle.max.vma.tools.qa.*;
-import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.AdviceRecord;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
 
-public class DebugQuery extends QueryBase {
+public class Package extends BootImagePackage {
     @Override
-    public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
-        TraceRun traceRun = traceRuns.get(traceFocus);
-        for (int i = 0; i < traceRun.adviceRecordList.size(); i++) {
-            AdviceRecord ar = traceRun.adviceRecordList.get(i);
-            int j = AdviceRecordHelper.getRecordListIndex(traceRun.adviceRecordList, ar);
-            if (i != j) {
-                System.err.println("failed to locate AdviceRecord: " + i);
-            }
-        }
-        return null;
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return false;
     }
 
 }

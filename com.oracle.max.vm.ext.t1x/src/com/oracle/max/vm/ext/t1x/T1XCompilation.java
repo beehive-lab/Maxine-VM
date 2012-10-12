@@ -1340,7 +1340,7 @@ public abstract class T1XCompilation {
         }
     }
 
-    void do_synchronizedMethodAcquire() {
+    protected void do_synchronizedMethodAcquire() {
         if (method.isSynchronized()) {
             start(LOCK);
             if (method.isStatic()) {
@@ -1355,7 +1355,7 @@ public abstract class T1XCompilation {
         }
     }
 
-    void do_synchronizedMethodHandler(ClassMethodActor method, int endBCI) {
+    protected void do_synchronizedMethodHandler(ClassMethodActor method, int endBCI) {
         if (method.isSynchronized()) {
             syncMethodHandlerPos = buf.position();
             start(UNLOCK);

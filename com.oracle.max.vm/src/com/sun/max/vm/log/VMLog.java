@@ -69,6 +69,12 @@ import com.sun.max.vm.thread.*;
  * This is primarily intended for custom loggers as the normal expectation is that the default
  * log does not need to be preserved in its entirety. However, it is possible to dump the
  * default log, which can be useful in desperate situations.
+ *
+ * <b>N.B.</b> It is important that flushing code does not invoke a garbage collection if the
+ * log records include reference valued arguments. While the log itself is scanned by the GC
+ * there might be a log method on the stack at the time the GC occurs and, since the {@link VMLogger}
+ * log methods use {@link Word} values, the stack value will not be processed by the GC, which will
+ * result in a bogus reference subsequently being stored in the log.
  */
 public abstract class VMLog implements Heap.GCCallback {
 

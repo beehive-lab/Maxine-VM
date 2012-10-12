@@ -765,7 +765,7 @@ public class VMLogger {
 
     @INLINE
     public static ClassActor toClassActor(Word arg) {
-        return ClassID.toClassActor(arg.asAddress().toInt());
+        return ClassIDManager.toClassActor(arg.asAddress().toInt());
     }
 
     public static String toVmThreadName(int id) {
@@ -842,6 +842,26 @@ public class VMLogger {
     @INLINE
     public static CodePointer toCodePointer(Record r, int argNum) {
         return CodePointer.fromTaggedLong(toLong(r, argNum));
+    }
+
+    @INLINE
+    public static MethodID toMethodID(Record r, int argNum) {
+        return MethodID.fromWord(r.getArg(argNum));
+    }
+
+    @INLINE
+    public static FieldID toFieldID(Record r, int argNum) {
+        return FieldID.fromWord(r.getArg(argNum));
+    }
+
+    @INLINE
+    public static ObjectID toObjectID(Record r, int argNum) {
+        return ObjectID.fromWord(r.getArg(argNum));
+    }
+
+    @INLINE
+    public static ClassID toClassID(Record r, int argNum) {
+        return ClassID.fromWord(r.getArg(argNum));
     }
 
     // check that loggers are up to date in VM image

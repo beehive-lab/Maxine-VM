@@ -38,14 +38,14 @@ import com.sun.max.vm.type.*;
  * tests and also serves as the opaque {@code jclass} handle to a
  * class in JNI code.
  */
-public final class ClassID {
+public final class ClassIDManager {
 
     /**
      * Value to be used as invalid class id.
      */
     public static int NULL_CLASS_ID = -1;
 
-    private ClassID() {
+    private ClassIDManager() {
     }
 
     static final int MINIMAL_CLASSES_POPULATIONS = 4000;
@@ -54,7 +54,7 @@ public final class ClassID {
 
     /**
      * A bit set keeping track of the assigned class identifiers. A bit set to 1 doesn't necessarily mean a
-     * non-null entry in {@link ClassID#idToClassActor} as class identifiers are reserved eagerly for array classes,
+     * non-null entry in {@link ClassIDManager#idToClassActor} as class identifiers are reserved eagerly for array classes,
      * whereas the corresponding array class actors are created lazily.
      * Thus it is possible to encounter a null entry for a used class identifier.
      */

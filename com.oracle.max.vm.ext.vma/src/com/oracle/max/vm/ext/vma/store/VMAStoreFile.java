@@ -26,8 +26,8 @@ import java.io.*;
 
 /**
  * Specification of the directory to be used for a persistent logs.
- * The default file name is {@value DEFAULT_LOGDIR} but this
- * can be changed using the {@value LOGDIR_PROPERTY} system property.
+ * The default file name is {@link #DEFAULT_STOREDIR} but this
+ * can be changed using the {@link #STOREDIR_PROPERTY} system property.
  *
  */
 public class VMAStoreFile {
@@ -37,10 +37,10 @@ public class VMAStoreFile {
     public static final String DEFAULT_STOREFILE = DEFAULT_STOREDIR + File.separator + GLOBAL_STORE;
 
     public static String getStoreDir() {
-        String logDir = System.getProperty(STOREDIR_PROPERTY);
-        if (logDir == null) {
-            logDir = DEFAULT_STOREDIR;
+        String storeDir = System.getProperty(STOREDIR_PROPERTY);
+        if (storeDir == null) {
+            storeDir = DEFAULT_STOREDIR;
         }
-        return logDir;
+        return storeDir;
     }
 }
