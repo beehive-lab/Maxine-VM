@@ -325,9 +325,6 @@ public class Stubs {
         final TargetMethod selectedCalleeTargetMethod =  selectedCallee.makeTargetMethod(caller);
         FatalError.check(selectedCalleeTargetMethod.invalidated() == null, "resolved virtual method must not be invalidated");
         CodePointer vtableEntryPoint = selectedCalleeTargetMethod.getEntryPoint(VTABLE_ENTRY_POINT);
-        if (selectedCallee.hadDeopt && Deoptimization.deoptLogger.enabled()) {
-            Deoptimization.deoptLogger.logResolveVTable(vTableIndex,  hub.classActor, vtableEntryPoint.toAddress());
-        }
         hub.setWord(vTableIndex, vtableEntryPoint.toAddress());
 
         CodePointer adjustedEntryPoint = adjustEntryPointForCaller(vtableEntryPoint, caller);
