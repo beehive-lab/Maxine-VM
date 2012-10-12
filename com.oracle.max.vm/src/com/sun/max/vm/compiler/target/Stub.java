@@ -104,7 +104,20 @@ public final class Stub extends TargetMethod {
         /**
          * The trap stub.
          */
-        TrapStub
+        TrapStub,
+
+        /**
+         * A place holder for invalid indexes of dispatch tables (virtual / interface).
+         */
+        InvalidIndexTrampoline
+    }
+
+    @HOSTED_ONLY
+    private static final Stub canonicalInvalidIndexStub = new Stub();
+
+    @HOSTED_ONLY
+    public static Stub canonicalInvalidIndexStub() {
+        return canonicalInvalidIndexStub;
     }
 
     /**
@@ -126,6 +139,12 @@ public final class Stub extends TargetMethod {
     @Override
     public Stub.Type stubType() {
         return type;
+    }
+
+    @HOSTED_ONLY
+    private Stub() {
+        super("Invalid Index stub",  CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        type = InvalidIndexTrampoline;
     }
 
     public Stub(Type type, String stubName, int frameSize, byte[] code, int callPos, int callSize, ClassMethodActor callee, int registerRestoreEpilogueOffset) {

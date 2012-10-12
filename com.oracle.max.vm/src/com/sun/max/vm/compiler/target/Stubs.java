@@ -68,6 +68,17 @@ public class Stubs {
         }
 
         /**
+         * Initialize the first invalid index with the canonical invalid index stub to avoid wasting memory with never used trampoline stubs.
+         * @param firstValidIndex the first valid index for a type of dispatch table.
+         */
+        @HOSTED_ONLY
+        void initializeInvalidIndexEntries(int firstValidIndex) {
+            for (int i = 0; i < firstValidIndex; i++) {
+                add(Stub.canonicalInvalidIndexStub());
+            }
+        }
+
+        /**
          * Generate trampolines for indexes up to the specified index.
          * This is the only method adding stubs to the list (and generally, modifying the list).
          * @param index an index for a trampoline to resolve methods invoked via table-driven dispatch.
@@ -238,16 +249,21 @@ public class Stubs {
         }
     }
 
-
     public final RegisterConfigs registerConfigs;
 
     private int prologueSize = -1;
 
     public CodePointer interfaceTrampoline(int iIndex) {
+        if (isHosted() && interfaceTrampolines.size() == 0) {
+            interfaceTrampolines.initializeInvalidIndexEntries(DynamicHub.firstValidInterfaceIndex());
+        }
         return interfaceTrampolines.getTrampoline(iIndex);
     }
 
     public CodePointer virtualTrampoline(int vTableIndex) {
+        if (isHosted() && virtualTrampolines.size() == 0) {
+            virtualTrampolines.initializeInvalidIndexEntries(Hub.vTableStartIndex());
+        }
         return virtualTrampolines.getTrampoline(vTableIndex);
     }
 
