@@ -345,20 +345,19 @@ public abstract class Hub extends Hybrid {
      */
     public void refreshVTable() {
         final VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
-        // This method is only used when not hosted. Therefore it can only be invoked on hubs of descendants of java.lang.Object,
-        // which have a non-null super class actor with a non-null  table of all method actors.
-
-        // Don't bother refreshing entries that are beyond this class superclass's virtual table: they either aren't compiled
-        // or are already being updated by concurrent compilations.
-        final int end = classActor.superClassActor.allVirtualMethodActors().length;
-        for (int i = 0; i < end; i++) {
-            final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
-            final Address vTableEntry = checkCompiled(virtualMethodActor);
-            if (vTableEntry.isNotZero()) {
-                setWord(vTableStartIndex() + i, vTableEntry);
-            }
-            if (MaxineVM.isDebug()) {
-                checkVTableEntry(vTableStartIndex() + i);
+        if (allVirtualMethodActors.length > 0) {
+            // Don't bother refreshing entries that are beyond this class superclass's virtual table: they either aren't compiled
+            // or are already being updated by concurrent compilations.
+            final int end = classActor.superClassActor.allVirtualMethodActors().length;
+            for (int i = 0; i < end; i++) {
+                final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
+                final Address vTableEntry = checkCompiled(virtualMethodActor);
+                if (vTableEntry.isNotZero()) {
+                    setWord(vTableStartIndex() + i, vTableEntry);
+                }
+                if (MaxineVM.isDebug()) {
+                    checkVTableEntry(vTableStartIndex() + i);
+                }
             }
         }
     }
