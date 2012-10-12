@@ -24,6 +24,7 @@ package com.sun.max.vm.actor.holder;
 
 import static com.sun.max.vm.MaxineVM.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -54,6 +55,17 @@ public final class DynamicHub extends Hub {
               allInterfaceActors,
               vTableLength,
               referenceMap);
+    }
+
+    /**
+     * First valid interface index for an interface method actor.
+     * Interface index always starts from 1 (index 0 is reserved).
+     * The interface index is used to index the {@link ClassActor#iToV()} table.
+     * @return the first valid interface index
+     */
+    @FOLD
+    public static int firstValidInterfaceIndex() {
+        return 1;
     }
 
     private void initializeMTable(int[] superClassActorIds, Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup, int[] iToV) {
