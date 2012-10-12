@@ -341,12 +341,18 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
 
     @Override
     protected void do_load(int index, Kind kind) {
-        if (templates != defaultTemplates && templates != vmaT1X.afterTemplates) {
-            // The AFTER templates do not have the ALOAD etc tags, they use ALOAD$adviseafter
+        if (templates != defaultTemplates && kind.asEnum == KindEnum.REFERENCE) {
+            start(ALOAD);
+            assignInt(0, "index", index);
+            assignInt(1, "localOffset", localSlotOffset(index, Kind.REFERENCE));
+            finish();
+            return;
+        }
+        if (templates != defaultTemplates) {
             T1XTemplateTag tag = null;
             // Checkstyle: stop
             switch (kind.asEnum) {
-                case REFERENCE: tag = ALOAD; break;
+                case REFERENCE: tag = ALOAD; assert false; break;
                 case INT: tag = ILOAD; break;
                 case LONG: tag = LLOAD; break;
                 case FLOAT: tag = FLOAD; break;
@@ -358,16 +364,6 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
             finish();
         }
         super.do_load(index, kind);
-        if (templates != defaultTemplates) {
-            if (kind.asEnum == KindEnum.REFERENCE) {
-                T1XTemplateTag tag = ALOAD$adviseafter;
-                start(tag);
-                assignInt(0, "index", index);
-                CiRegister reg = reg(1, "value", kind);
-                peekWord(reg, 0);
-                finish();
-            }
-        }
     }
 
     @Override

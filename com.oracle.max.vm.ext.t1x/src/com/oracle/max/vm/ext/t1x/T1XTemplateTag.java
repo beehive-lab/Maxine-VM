@@ -371,9 +371,7 @@ public enum T1XTemplateTag {
     INVOKEVIRTUAL$adviseafter(-1),
     INVOKEINTERFACE$adviseafter(-1),
     INVOKESPECIAL$adviseafter(-1),
-    INVOKESTATIC$adviseafter(-1),
-    ALOAD$adviseafter,
-    AALOAD$adviseafter;
+    INVOKESTATIC$adviseafter(-1);
 
     // END VMA additions
 

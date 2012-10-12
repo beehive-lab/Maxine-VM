@@ -135,11 +135,13 @@ public class VMAdviceAfterTemplateSource {
         }
     }
 
-    @T1X_TEMPLATE(ALOAD$adviseafter)
-    public static void oload(int index, Object value, int bci) {
+    @T1X_TEMPLATE(ALOAD)
+    public static Reference aload(int index, int localOffset, int bci) {
+        Reference value = VMRegister.getAbiFramePointer().readReference(localOffset);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterLoad(bci, index, value);
         }
+        return value;
     }
 
 // END GENERATED CODE

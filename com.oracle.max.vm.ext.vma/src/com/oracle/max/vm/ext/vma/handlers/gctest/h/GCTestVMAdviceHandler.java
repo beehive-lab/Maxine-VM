@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.vma.handlers.gctest.h;
 
 import java.util.*;
+import java.util.regex.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
@@ -44,11 +45,15 @@ import com.sun.max.vm.thread.*;
 public class GCTestVMAdviceHandler extends VMAdviceHandler {
 
     private static final String PERCENT_PROPERTY = "max.vma.handler.gctest.percent";
+    private static final String VERBOSE_PROPERTY = "max.vma.handler.gctest.verbose";
+    private static final String METHODS_PROPERTY = "max.vma.handler.gctest.methods";
 
     private Random random = new Random(46737);
     private static int frequency;
-    private static AdviceMethod[] methodValues = AdviceMethod.values();
-    private static AdviceMode[] modeValues = AdviceMode.values();
+    private static Pattern methodsPattern;
+    private static boolean verbose;
+    private static final AdviceMethod[] methodValues = AdviceMethod.values();
+    private static final AdviceMode[] modeValues = AdviceMode.values();
 
 
     public static void onLoad(String args) {
@@ -59,28 +64,43 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
         randomlyGC(methodValues[methodOrd].name(), modeValues[adviceOrd].name());
     }
 
-    private void randomlyGC(String ident1, String ident2) {
+    private void randomlyGC(String method, String mode) {
+        if (methodsPattern != null) {
+            if (!matchMethod(method, mode)) {
+                return;
+            }
+        }
+
         int next = random.nextInt(100);
         if (next % frequency == 0) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("GCTestVMAdviceHandler.GC: ");
-            Log.print(ident1);
+            Log.print(method);
             Log.print(":");
-            Log.println(ident2);
+            Log.println(mode);
             Log.unlock(lockDisabledSafepoints);
             System.gc();
         }
     }
 
+    private static boolean matchMethod(String method, String mode) {
+        return methodsPattern.matcher(method).matches();
+    }
+
     @Override
     public void initialise(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.RUNNING) {
+            String methodPatternProp = System.getProperty(METHODS_PROPERTY);
+            if (methodPatternProp != null) {
+                methodsPattern = Pattern.compile(methodPatternProp);
+            }
             String freq = System.getProperty(PERCENT_PROPERTY);
             if (freq == null) {
                 frequency = 10;
             } else {
                 frequency = 100 / Integer.parseInt(freq);
             }
+            verbose = System.getProperty(VERBOSE_PROPERTY) != null;
         }
     }
 

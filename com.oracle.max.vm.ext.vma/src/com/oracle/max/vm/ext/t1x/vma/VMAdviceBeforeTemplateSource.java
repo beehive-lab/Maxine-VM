@@ -2874,10 +2874,12 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(ALOAD)
-    public static void oload(int index, int bci) {
+    public static Reference aload(int index, int localOffset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeLoad(bci, index);
         }
+        Reference value = VMRegister.getAbiFramePointer().readReference(localOffset);
+        return value;
     }
 
     @T1X_TEMPLATE(ISTORE)

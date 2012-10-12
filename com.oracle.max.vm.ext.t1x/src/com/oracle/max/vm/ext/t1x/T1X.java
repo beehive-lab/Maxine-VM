@@ -450,7 +450,7 @@ public class T1X implements RuntimeCompiler {
                     INVOKESPECIAL$void$resolved, INVOKESPECIAL$float$resolved, INVOKESPECIAL$long$resolved, INVOKESPECIAL$double$resolved, INVOKESPECIAL$reference$resolved,
                     INVOKESPECIAL$word$resolved, INVOKESTATIC$void$init, INVOKESTATIC$float$init, INVOKESTATIC$long$init, INVOKESTATIC$double$init, INVOKESTATIC$reference$init,
                     INVOKESTATIC$word$init, INVOKEVIRTUAL$adviseafter, INVOKEINTERFACE$adviseafter, INVOKESPECIAL$adviseafter, INVOKESTATIC$adviseafter,
-                    ALOAD$adviseafter, AALOAD$adviseafter, BREAKPOINT);
+                    BREAKPOINT);
 
     protected boolean isUnimplemented(T1XTemplateTag tag) {
         return UNIMPLEMENTED_TEMPLATES.contains(tag);

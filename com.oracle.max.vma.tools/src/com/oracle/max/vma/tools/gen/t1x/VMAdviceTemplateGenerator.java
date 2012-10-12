@@ -444,13 +444,9 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case FLOAD:
                 case DLOAD:
                 case ALOAD:
-                    assert adviceType == AdviceType.BEFORE;
+                    assert adviceType == AdviceType.BEFORE || tag == ALOAD;
                     generateLoad(k);
                     break;
-                case ALOAD$adviseafter:
-                    generateAfterLoad(k);
-                    break;
-
 
                 case ISTORE:
                 case LSTORE:
@@ -820,13 +816,8 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
     private void generateLoad(String k) {
         startGuardAdvice();
-        out.printf(INDENT12_ADVISE_PREFIX + "index);%n", adviceType.methodNameComponent, methodName);
-        endGuardAdvice();
-    }
-
-    private void generateAfterLoad(String k) {
-        startGuardAdvice();
-        out.printf(INDENT12_ADVISE_PREFIX + "index, %s);%n", adviceType.methodNameComponent, methodName, putValue(k));
+        String value = adviceType == AdviceType.AFTER ? (", " + putValue(k)) : "";
+        out.printf(INDENT12_ADVISE_PREFIX + "index%s);%n", adviceType.methodNameComponent, methodName, value);
         endGuardAdvice();
     }
 
@@ -1296,7 +1287,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
             case LLOAD: case LSTORE: return "long";
             case FLOAD: case FSTORE: return "float";
             case DLOAD: case DSTORE: return "double";
-            case ALOAD: case ASTORE: case ALOAD$adviseafter: return "Object";
+            case ALOAD: case ASTORE: return "Object";
         }
         // Checkstyle: resume
         return "???";
@@ -1308,13 +1299,16 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         for (T1XTemplateTag tag : LOAD_TEMPLATE_TAGS) {
             generateLoadTemplate(tag);
         }
-        generateAfterLoadTemplate(ALOAD$adviseafter);
     }
 
     /**
      * Generate the {@code LOAD} template for given type.
      */
     private void generateLoadTemplate(T1XTemplateTag tag) {
+        if (tag == ALOAD) {
+            generateALoadTemplate(tag);
+            return;
+        }
         String k = lsType(tag);
         startMethodGeneration();
         generateTemplateTag("%s", tag);
@@ -1328,12 +1322,15 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     /**
      * Generate the {@code LOAD} template for given type.
      */
-    private void generateAfterLoadTemplate(T1XTemplateTag tag) {
+    private void generateALoadTemplate(T1XTemplateTag tag) {
         String k = lsType(tag);
         startMethodGeneration();
         generateTemplateTag("%s", tag);
-        out.printf("    public static void %sload(int index, %s value%s) {%n", k.substring(0, 1).toLowerCase(), k, suffixParams(true));
+        out.printf("    public static Reference aload(int index, int localOffset%s) {%n", suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        Reference value = VMRegister.getAbiFramePointer().readReference(localOffset);%n");
         generateAfterAdvice(k);
+        out.printf("        return value;%n");
         out.printf("    }%n");
         newLine();
         endTemplateMethodGeneration();
