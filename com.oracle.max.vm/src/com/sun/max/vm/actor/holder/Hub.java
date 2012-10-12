@@ -330,7 +330,7 @@ public abstract class Hub extends Hybrid {
 
     public void checkVTable() {
         if (!MaxineVM.isHosted()) {
-            VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
+            final VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
             final int endOfVTable = firstWordIndex() + allVirtualMethodActors.length;
             for (int vTableIndex = firstWordIndex(); vTableIndex < endOfVTable; vTableIndex++) {
                 checkVTableEntry(vTableIndex);
@@ -344,15 +344,21 @@ public abstract class Hub extends Hybrid {
      * @see DependenciesManager
      */
     public void refreshVTable() {
-        VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
-        for (int i = 0; i < allVirtualMethodActors.length; i++) {
-            final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
-            final Address vTableEntry = checkCompiled(virtualMethodActor);
-            if (vTableEntry.isNotZero()) {
-                setWord(vTableStartIndex() + i, vTableEntry);
+        final VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
+        if (allVirtualMethodActors.length > 0) {
+            // Don't bother refreshing entries that are beyond this class superclass's virtual table: they either aren't compiled
+            // or are already being updated by concurrent compilations.
+            final int end = classActor.superClassActor.allVirtualMethodActors().length;
+            for (int i = 0; i < end; i++) {
+                final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
+                final Address vTableEntry = checkCompiled(virtualMethodActor);
+                if (vTableEntry.isNotZero()) {
+                    setWord(vTableStartIndex() + i, vTableEntry);
+                }
+                if (MaxineVM.isDebug()) {
+                    checkVTableEntry(vTableStartIndex() + i);
+                }
             }
-            // FIXME: turn to debug code
-            checkVTableEntry(vTableStartIndex() + i);
         }
     }
 

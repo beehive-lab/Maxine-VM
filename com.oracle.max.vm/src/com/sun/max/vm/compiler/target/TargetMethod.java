@@ -28,7 +28,6 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.*;
 
 import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
@@ -55,6 +54,7 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 
 /**
@@ -150,10 +150,11 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * If non-null, then this method has been invalidated.
+     * Set only by deoptimization operation at safepoint.
      *
      * @see #invalidated()
      */
-    private final AtomicReference<InvalidationMarker> invalidated = new AtomicReference<InvalidationMarker>();
+    private InvalidationMarker invalidated;
 
     /**
      * The frame size (in bytes) of an activation of this target method. This does not
@@ -236,7 +237,12 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     public boolean invalidate(InvalidationMarker marker) {
         assert marker != null;
-        return invalidated.compareAndSet(null, marker);
+        assert isHosted() || VmThread.current().isVmOperationThread();
+        if (invalidated == null) {
+            invalidated = marker;
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -250,7 +256,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * @return a non-null {@link InvalidationMarker} object iff this method has been invalidated
      */
     public InvalidationMarker invalidated() {
-        return invalidated.get();
+        return invalidated;
     }
 
     /**

@@ -59,15 +59,57 @@ import com.sun.max.vm.thread.*;
  */
 public class Stubs {
 
-    /**
-     * The stubs called to link an interface method call.
-     */
-    private final ArrayList<Stub> virtualTrampolines = new ArrayList<Stub>();
+    final private class TrampolineList extends ArrayList<Stub> {
+        final boolean isInterface;
+        final char stubNamePrefix;
+        TrampolineList(boolean isInterface) {
+            this.isInterface = isInterface;
+            stubNamePrefix = isInterface ? 'i' : 'v';
+        }
+
+        /**
+         * Initialize the first invalid index with the canonical invalid index stub to avoid wasting memory with never used trampoline stubs.
+         * @param firstValidIndex the first valid index for a type of dispatch table.
+         */
+        @HOSTED_ONLY
+        void initializeInvalidIndexEntries(int firstValidIndex) {
+            for (int i = 0; i < firstValidIndex; i++) {
+                add(Stub.canonicalInvalidIndexStub());
+            }
+        }
+
+        /**
+         * Generate trampolines for indexes up to the specified index.
+         * This is the only method adding stubs to the list (and generally, modifying the list).
+         * @param index an index for a trampoline to resolve methods invoked via table-driven dispatch.
+         */
+        synchronized void makeTrampolines(int index) {
+            for (int i = size(); i <= index; i++) {
+                final String stubName = stubNamePrefix + "trampoline<" + i + ">";
+                traceBeforeStubCreation(stubName);
+                Stub stub = genDynamicTrampoline(i, isInterface, stubName);
+                add(stub);
+                traceAfterStubCreation(stubName);
+            }
+        }
+
+        CodePointer getTrampoline(int index) {
+            if (size() <= index) {
+                makeTrampolines(index);
+            }
+            return VTABLE_ENTRY_POINT.in(get(index));
+        }
+    }
 
     /**
      * The stubs called to link an interface method call.
      */
-    private final ArrayList<Stub> interfaceTrampolines = new ArrayList<Stub>();
+    private final TrampolineList virtualTrampolines = new TrampolineList(false);
+
+    /**
+     * The stubs called to link an interface method call.
+     */
+    private final TrampolineList interfaceTrampolines = new TrampolineList(true);
 
     /**
      * The stub called to link a call site where the exact method being called is known.
@@ -207,35 +249,22 @@ public class Stubs {
         }
     }
 
-
     public final RegisterConfigs registerConfigs;
 
     private int prologueSize = -1;
 
-    public synchronized CodePointer interfaceTrampoline(int iIndex) {
-        if (interfaceTrampolines.size() <= iIndex) {
-            for (int i = interfaceTrampolines.size(); i <= iIndex; i++) {
-                String stubName = "itrampoline<" + i + ">";
-                traceBeforeStubCreation(stubName);
-                Stub stub = genDynamicTrampoline(i, true, stubName);
-                interfaceTrampolines.add(stub);
-                traceAfterStubCreation(stubName);
-            }
+    public CodePointer interfaceTrampoline(int iIndex) {
+        if (isHosted() && interfaceTrampolines.size() == 0) {
+            interfaceTrampolines.initializeInvalidIndexEntries(DynamicHub.firstValidInterfaceIndex());
         }
-        return VTABLE_ENTRY_POINT.in(interfaceTrampolines.get(iIndex));
+        return interfaceTrampolines.getTrampoline(iIndex);
     }
 
-    public synchronized CodePointer virtualTrampoline(int vTableIndex) {
-        if (virtualTrampolines.size() <= vTableIndex) {
-            for (int i = virtualTrampolines.size(); i <= vTableIndex; i++) {
-                String stubName = "vtrampoline<" + i + ">";
-                traceBeforeStubCreation(stubName);
-                Stub stub = genDynamicTrampoline(i, false, stubName);
-                virtualTrampolines.add(stub);
-                traceAfterStubCreation(stubName);
-            }
+    public CodePointer virtualTrampoline(int vTableIndex) {
+        if (isHosted() && virtualTrampolines.size() == 0) {
+            virtualTrampolines.initializeInvalidIndexEntries(Hub.vTableStartIndex());
         }
-        return VTABLE_ENTRY_POINT.in(virtualTrampolines.get(vTableIndex));
+        return virtualTrampolines.getTrampoline(vTableIndex);
     }
 
     protected void traceBeforeStubCreation(String stubName) {
@@ -296,9 +325,6 @@ public class Stubs {
         final TargetMethod selectedCalleeTargetMethod =  selectedCallee.makeTargetMethod(caller);
         FatalError.check(selectedCalleeTargetMethod.invalidated() == null, "resolved virtual method must not be invalidated");
         CodePointer vtableEntryPoint = selectedCalleeTargetMethod.getEntryPoint(VTABLE_ENTRY_POINT);
-        if (selectedCallee.hadDeopt && Deoptimization.deoptLogger.enabled()) {
-            Deoptimization.deoptLogger.logResolveVTable(vTableIndex,  hub.classActor, vtableEntryPoint.toAddress());
-        }
         hub.setWord(vTableIndex, vtableEntryPoint.toAddress());
 
         CodePointer adjustedEntryPoint = adjustEntryPointForCaller(vtableEntryPoint, caller);

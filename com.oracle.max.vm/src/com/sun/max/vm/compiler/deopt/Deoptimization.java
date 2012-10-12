@@ -201,7 +201,6 @@ public class Deoptimization extends VmOperation {
                 };
                 c.doClass(method.holder());
                 method.holder().allSubclassesDo(c);
-                virtualMethod.hadDeopt = true;
             }
         }
     }
@@ -873,16 +872,6 @@ public class Deoptimization extends VmOperation {
             @VMLogParam(name = "vtableIndex") int vtableIndex,
             @VMLogParam(name = "classActor") ClassActor classActor);
 
-        void initVTable(
-            @VMLogParam(name = "vtableIndex") int vtableIndex,
-            @VMLogParam(name = "classActor") ClassActor classActor,
-            @VMLogParam(name = "entryPoint") Address entryPoint);
-
-        void resolveVTable(
-            @VMLogParam(name = "vtableIndex") int vtableIndex,
-            @VMLogParam(name = "classActor") ClassActor classActor,
-            @VMLogParam(name = "entryPoint") Address entryPoint);
-
         void patchITable(
             @VMLogParam(name = "classActor") ClassActor classActor,
             @VMLogParam(name = "iIndex") int iIndex);
@@ -968,19 +957,6 @@ public class Deoptimization extends VmOperation {
         }
 
         @Override
-        protected void traceInitVTable(int vtableIndex, ClassActor classActor, Address entryPoint) {
-            Log.print("  init vtable[" + vtableIndex + "] of " + classActor + " with ");
-            Log.println(entryPoint);
-        }
-
-        @Override
-        protected void traceResolveVTable(int vtableIndex, ClassActor classActor, Address entryPoint) {
-            Log.print("  init vtable[" + vtableIndex + "] of " + classActor + " with ");
-            Log.println(entryPoint);
-
-        }
-
-        @Override
         protected void tracePatchReturnAddress(TargetMethod tm, Object callee, Stub stub, CodePointer to, Pointer save, Pointer patch, CodePointer from) {
             deoptPrefix(); Log.println("patched return address @ " + patch.to0xHexString() + " of call to " + callee +
                             ": " + from.to0xHexString() + '[' + tm + '+' + from.minus(tm.codeStart()).toInt() + ']' +
@@ -1046,15 +1022,14 @@ public class Deoptimization extends VmOperation {
     private static abstract class DeoptLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
             ALot, CatchException, Continuation,
-            DoIt, Frames, InitVTable, PatchITable,
-            PatchReturnAddress, PatchVTable, ResolveVTable, Start,
-            TmPos, Unroll;
+            DoIt, Frames, PatchITable, PatchReturnAddress,
+            PatchVTable, Start, TmPos, Unroll;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x1, 0x7, 0x0, 0x3, 0x3, 0x0, 0x0, 0x4f, 0x0, 0x0, 0x1, 0x1, 0x3};
+        private static final int[] REFMAPS = new int[] {0x1, 0x7, 0x0, 0x3, 0x3, 0x0, 0x4f, 0x0, 0x1, 0x1, 0x3};
 
         protected DeoptLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -1096,12 +1071,6 @@ public class Deoptimization extends VmOperation {
         protected abstract void traceFrames(CiFrame topFrame, String label);
 
         @INLINE
-        public final void logInitVTable(int vtableIndex, ClassActor classActor, Address entryPoint) {
-            log(Operation.InitVTable.ordinal(), intArg(vtableIndex), classActorArg(classActor), entryPoint);
-        }
-        protected abstract void traceInitVTable(int vtableIndex, ClassActor classActor, Address entryPoint);
-
-        @INLINE
         public final void logPatchITable(ClassActor classActor, int iIndex) {
             log(Operation.PatchITable.ordinal(), classActorArg(classActor), intArg(iIndex));
         }
@@ -1121,12 +1090,6 @@ public class Deoptimization extends VmOperation {
             log(Operation.PatchVTable.ordinal(), intArg(vtableIndex), classActorArg(classActor));
         }
         protected abstract void tracePatchVTable(int vtableIndex, ClassActor classActor);
-
-        @INLINE
-        public final void logResolveVTable(int vtableIndex, ClassActor classActor, Address entryPoint) {
-            log(Operation.ResolveVTable.ordinal(), intArg(vtableIndex), classActorArg(classActor), entryPoint);
-        }
-        protected abstract void traceResolveVTable(int vtableIndex, ClassActor classActor, Address entryPoint);
 
         @INLINE
         public final void logStart(TargetMethod targetMethod) {
@@ -1169,35 +1132,27 @@ public class Deoptimization extends VmOperation {
                     traceFrames(toCiFrame(r, 1), toString(r, 2));
                     break;
                 }
-                case 5: { //InitVTable
-                    traceInitVTable(toInt(r, 1), toClassActor(r, 2), toAddress(r, 3));
-                    break;
-                }
-                case 6: { //PatchITable
+                case 5: { //PatchITable
                     tracePatchITable(toClassActor(r, 1), toInt(r, 2));
                     break;
                 }
-                case 7: { //PatchReturnAddress
+                case 6: { //PatchReturnAddress
                     tracePatchReturnAddress(toTargetMethod(r, 1), toObject(r, 2), toStub(r, 3), toCodePointer(r, 4), toPointer(r, 5), toPointer(r, 6), toCodePointer(r, 7));
                     break;
                 }
-                case 8: { //PatchVTable
+                case 7: { //PatchVTable
                     tracePatchVTable(toInt(r, 1), toClassActor(r, 2));
                     break;
                 }
-                case 9: { //ResolveVTable
-                    traceResolveVTable(toInt(r, 1), toClassActor(r, 2), toAddress(r, 3));
-                    break;
-                }
-                case 10: { //Start
+                case 8: { //Start
                     traceStart(toTargetMethod(r, 1));
                     break;
                 }
-                case 11: { //TmPos
+                case 9: { //TmPos
                     traceTmPos(toTargetMethod(r, 1), toInt(r, 2));
                     break;
                 }
-                case 12: { //Unroll
+                case 10: { //Unroll
                     traceUnroll(toInfo(r, 1), toArrayListCiConstant(r, 2), toPointer(r, 3));
                     break;
                 }
