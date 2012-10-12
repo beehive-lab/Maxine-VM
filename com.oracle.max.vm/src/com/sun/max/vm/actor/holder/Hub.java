@@ -330,7 +330,7 @@ public abstract class Hub extends Hybrid {
 
     public void checkVTable() {
         if (!MaxineVM.isHosted()) {
-            VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
+            final VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
             final int endOfVTable = firstWordIndex() + allVirtualMethodActors.length;
             for (int vTableIndex = firstWordIndex(); vTableIndex < endOfVTable; vTableIndex++) {
                 checkVTableEntry(vTableIndex);
@@ -344,7 +344,7 @@ public abstract class Hub extends Hybrid {
      * @see DependenciesManager
      */
     public void refreshVTable() {
-        VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
+        final VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
         for (int i = 0; i < allVirtualMethodActors.length; i++) {
             final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
             final Address vTableEntry = checkCompiled(virtualMethodActor);
