@@ -42,6 +42,7 @@ import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 import com.oracle.max.vm.ext.t1x.*;
 
 /**
@@ -2959,17 +2960,15 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(ALOAD)
-    public static void oload(int index, int bci) {
+    public static Reference aload(int index, int localOffset, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeLoad(bci, index);
         }
-    }
-
-    @T1X_TEMPLATE(ALOAD$adviseafter)
-    public static void oload(int index, Object value, int bci) {
+        Reference value = VMRegister.getAbiFramePointer().readReference(localOffset);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterLoad(bci, index, value);
         }
+        return value;
     }
 
     @T1X_TEMPLATE(ISTORE)
