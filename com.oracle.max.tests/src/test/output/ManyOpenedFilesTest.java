@@ -35,15 +35,19 @@ public class ManyOpenedFilesTest {
         try {
             for (int i = 0; i < 10000; i++) {
                 new PrintStream(new FileOutputStream("/tmp/testdir/test." + i)).println("tempt test file #" + i);
+                if ((i % 200) == 0) {
+                    System.gc();
+                }
             }
+        } catch (IOException eio) {
+            eio.printStackTrace(System.err);
+        } finally {
             System.out.println("Deleting created test files");
             for (String filename : tempDir.list()) {
                 new File(tempDir, filename).delete();
             }
             tempDir.delete();
             System.out.println("Done");
-        } catch (IOException eio) {
-            eio.printStackTrace(System.err);
         }
     }
 }
