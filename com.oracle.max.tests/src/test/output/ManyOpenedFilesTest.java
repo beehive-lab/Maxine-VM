@@ -30,7 +30,7 @@ public class ManyOpenedFilesTest {
         File tempDir = new File("/tmp/testdir");
         tempDir.mkdir();
         try {
-            for (int i = 0; i < 10000; i++) {
+            for (int i = 0; i < 1000; i++) {
                 new PrintStream(new FileOutputStream("/tmp/testdir/test." + i)).println("tempt test file #" + i);
             }
         } catch (IOException eio) {
