@@ -36,7 +36,7 @@
 #include <pwd.h>
 #include <time.h>
 #include <sys/param.h>
-
+#include <sys/resource.h>
 #include "log.h"
 #include "image.h"
 #include "threads.h"
@@ -49,6 +49,25 @@
 #if os_MAXVE
 #include "maxve.h"
 #endif
+
+static void max_fd_limit() {
+#if os_LINUX || os_SOLARIS || os_DARWIN
+    // set the number of file descriptors to max. print out error
+    // if getrlimit/setrlimit fails but continue regardless.
+    struct rlimit nbr_files;
+    int status = getrlimit(RLIMIT_NOFILE, &nbr_files);
+    if (status != 0) {
+        log_println("getrlimit failed");
+    } else {
+        nbr_files.rlim_cur = nbr_files.rlim_max;
+        status = setrlimit(RLIMIT_NOFILE, &nbr_files);
+        if (status != 0) {
+            log_println("setrlimit failed");
+        }
+    }
+#endif
+}
+
 
 #define IMAGE_FILE_NAME  "maxine.vm"
 #define DARWIN_STACK_ALIGNMENT ((Address) 16)
@@ -283,7 +302,6 @@ int maxine(int argc, char *argv[], char *executablePath) {
     VMRunMethod method;
     int exitCode = 0;
     int i;
-
     /* Extract the '-XX:LogFile' argument and pass the rest through to MaxineVM.run(). */
     const char *logFilePath = getenv("MAXINE_LOG_FILE");
     for (i = 1; i < argc; i++) {
@@ -320,6 +338,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
         }
     }
 #endif
+    max_fd_limit();
 
     loadImage();
 
