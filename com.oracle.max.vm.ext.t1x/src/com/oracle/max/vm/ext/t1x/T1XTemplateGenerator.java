@@ -85,7 +85,6 @@ public class T1XTemplateGenerator {
 
         /**
          * Called at the end of a template method generation (but not helper methods).
-         * @param tag TODO
          */
         void endTemplateMethodGeneration(T1XTemplateTag tag);
 
@@ -99,7 +98,7 @@ public class T1XTemplateGenerator {
         /**
          * Companion method to {@link #suffixParams(boolean) for forwarding extra params to nested calls.
          * @param comma {@code true} iff a comma should precede additional params
-         * @returnstring defining the additional arguments
+         * @return string defining the additional arguments
          */
         String suffixArgs(boolean comma);
     }
@@ -475,6 +474,15 @@ public class T1XTemplateGenerator {
     }
 
     /**
+     * For VMA override with {@link FieldActor} instead of {@code offset}.
+     */
+    protected void generatePutFieldTemplateBody(Kind k, String m) {
+        out.printf("    public static void putfield%s(@Slot(%d) Object object, int offset, @Slot(0) %s value%s) {%n", ur(k), k.stackSlots, rs(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        TupleAccess.%srite%s(object, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+    }
+
+    /**
      * Generate the resolved and unresolved {@code PUTFIELD} template tag for given type.
      */
     public void generatePutFieldTemplate(Kind k) {
@@ -482,9 +490,7 @@ public class T1XTemplateGenerator {
         final String m = k == REFERENCE ? "noninlineW" : "w";
         startMethodGeneration();
         generateTemplateTag("PUTFIELD$%s$resolved", lr(k));
-        out.printf("    public static void putfield%s(@Slot(%d) Object object, int offset, @Slot(0) %s value%s) {%n", ur(k), objectSlot, rs(k), suffixParams(true));
-        generateBeforeAdvice(k);
-        out.printf("        TupleAccess.%srite%s(object, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+        generatePutFieldTemplateBody(k, m);
         out.printf("    }%n");
         newLine();
         endTemplateMethodGeneration();
@@ -526,6 +532,15 @@ public class T1XTemplateGenerator {
     }
 
     /**
+     * For VMA override with {@link FieldActor} instead of {@code offset}.
+     */
+    protected void generatePutStaticTemplateBody(Kind k, String m) {
+        out.printf("    public static void putstatic%s(Object staticTuple, int offset, @Slot(0) %s value%s) {%n", ur(k), rs(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        TupleAccess.%srite%s(staticTuple, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+    }
+
+    /**
      * Generate the resolved and unresolved {@code PUTSTATIC} template tag for given type.
      * @param k type
      */
@@ -533,9 +548,7 @@ public class T1XTemplateGenerator {
         final String m = k == REFERENCE ? "noninlineW" : "w";
         startMethodGeneration();
         generateTemplateTag("PUTSTATIC$%s$init", lr(k));
-        out.printf("    public static void putstatic%s(Object staticTuple, int offset, @Slot(0) %s value%s) {%n", ur(k), rs(k), suffixParams(true));
-        generateBeforeAdvice(k);
-        out.printf("        TupleAccess.%srite%s(staticTuple, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+        generatePutStaticTemplateBody(k, m);
         out.printf("    }%n");
         newLine();
         endTemplateMethodGeneration();
@@ -579,15 +592,22 @@ public class T1XTemplateGenerator {
     }
 
     /**
+     * For VMA override with {@link FieldActor} instead of {@code offset}.
+     */
+    protected void generateGetFieldTemplateBody(Kind k) {
+        out.printf("    public static %s getfield%s(@Slot(0) Object object, int offset%s) {%n", rs(k), u(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        %s result = TupleAccess.read%s(object, offset);%n", j(k), u(k));
+    }
+
+    /**
      * Generate the resolved and unresolved {@code GETFIELD} template tag for given type.
      * @param k type
      */
     public void generateGetFieldTemplate(Kind k) {
         startMethodGeneration();
         generateTemplateTag("GETFIELD$%s$resolved", lr(k));
-        out.printf("    public static %s getfield%s(@Slot(0) Object object, int offset%s) {%n", rs(k), u(k), suffixParams(true));
-        generateBeforeAdvice(k);
-        out.printf("        %s result = TupleAccess.read%s(object, offset);%n", j(k), u(k));
+        generateGetFieldTemplateBody(k);
         out.printf("        return %s;%n", toStackKindCast(k, "result"));
         out.printf("    }%n");
         newLine();
@@ -633,15 +653,22 @@ public class T1XTemplateGenerator {
     }
 
     /**
+     * For VMA override with {@link FieldActor} instead of {@code offset}.
+     */
+    protected void generateGetStaticTemplateBody(Kind k) {
+        out.printf("    public static %s getstatic%s(Object staticTuple, int offset%s) {%n", rs(k), u(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        %s result = TupleAccess.read%s(staticTuple, offset);%n", j(k), u(k));
+    }
+
+    /**
      * Generate the resolved and unresolved {@code GETFIELD} template tag for given type.
      * @param k type
      */
     public void generateGetStaticTemplate(Kind k) {
         startMethodGeneration();
         generateTemplateTag("GETSTATIC$%s$init", lr(k));
-        out.printf("    public static %s getstatic%s(Object staticTuple, int offset%s) {%n", rs(k), u(k), suffixParams(true));
-        generateBeforeAdvice(k);
-        out.printf("        %s result = TupleAccess.read%s(staticTuple, offset);%n", j(k), u(k));
+        generateGetStaticTemplateBody(k);
         out.printf("        return %s;%n", toStackKindCast(k, "result"));
         out.printf("    }%n");
         newLine();

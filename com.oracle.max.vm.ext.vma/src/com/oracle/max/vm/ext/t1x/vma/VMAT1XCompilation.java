@@ -148,6 +148,15 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
      */
 
     @Override
+    protected void assignFieldAccessParameter(T1XTemplateTag tag, FieldActor fieldActor) {
+        if (templates == defaultTemplates) {
+            super.assignFieldAccessParameter(tag, fieldActor);
+        } else {
+            assignObject(1, "f", fieldActor);
+        }
+    }
+
+    @Override
     protected void assignInvokeVirtualTemplateParameters(VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
         if (templates == defaultTemplates) {
             super.assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);

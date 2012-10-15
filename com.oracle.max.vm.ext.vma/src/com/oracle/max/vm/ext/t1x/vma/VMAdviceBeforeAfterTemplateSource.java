@@ -42,7 +42,6 @@ import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 import com.oracle.max.vm.ext.t1x.*;
 
 /**
@@ -52,11 +51,11 @@ public class VMAdviceBeforeAfterTemplateSource {
 
 // START GENERATED CODE
     @T1X_TEMPLATE(GETFIELD$boolean$resolved)
-    public static int getfieldBoolean(@Slot(0) Object object, int offset, int bci) {
+    public static int getfieldBoolean(@Slot(0) Object object, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
-        boolean result = TupleAccess.readBoolean(object, offset);
+        boolean result = TupleAccess.readBoolean(object, f.offset());
         return UnsafeCast.asByte(result);
     }
 
@@ -69,7 +68,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static int resolveAndGetFieldBoolean(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -83,11 +82,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$boolean$init)
-    public static int getstaticBoolean(Object staticTuple, int offset, int bci) {
+    public static int getstaticBoolean(Object staticTuple, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, f);
         }
-        boolean result = TupleAccess.readBoolean(staticTuple, offset);
+        boolean result = TupleAccess.readBoolean(staticTuple, f.offset());
         return UnsafeCast.asByte(result);
     }
 
@@ -101,7 +100,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -115,11 +114,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTFIELD$boolean$resolved)
-    public static void putfieldBoolean(@Slot(1) Object object, int offset, @Slot(0) int value, int bci) {
+    public static void putfieldBoolean(@Slot(1) Object object, FieldActor f, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
-        TupleAccess.writeBoolean(object, offset, UnsafeCast.asBoolean((byte) value));
+        TupleAccess.writeBoolean(object, f.offset(), UnsafeCast.asBoolean((byte) value));
     }
 
     @T1X_TEMPLATE(PUTFIELD$boolean)
@@ -131,7 +130,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutFieldBoolean(ResolutionGuard.InPool guard, Object object, int value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -143,11 +142,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$boolean$init)
-    public static void putstaticBoolean(Object staticTuple, int offset, @Slot(0) int value, int bci) {
+    public static void putstaticBoolean(Object staticTuple, FieldActor f, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, f, value);
         }
-        TupleAccess.writeBoolean(staticTuple, offset, UnsafeCast.asBoolean((byte) value));
+        TupleAccess.writeBoolean(staticTuple, f.offset(), UnsafeCast.asBoolean((byte) value));
     }
 
     @T1X_TEMPLATE(PUTSTATIC$boolean)
@@ -159,7 +158,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutStaticBoolean(ResolutionGuard.InPool guard, int value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f, value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -172,11 +171,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETFIELD$byte$resolved)
-    public static int getfieldByte(@Slot(0) Object object, int offset, int bci) {
+    public static int getfieldByte(@Slot(0) Object object, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
-        byte result = TupleAccess.readByte(object, offset);
+        byte result = TupleAccess.readByte(object, f.offset());
         return result;
     }
 
@@ -189,7 +188,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static int resolveAndGetFieldByte(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -203,11 +202,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$byte$init)
-    public static int getstaticByte(Object staticTuple, int offset, int bci) {
+    public static int getstaticByte(Object staticTuple, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, f);
         }
-        byte result = TupleAccess.readByte(staticTuple, offset);
+        byte result = TupleAccess.readByte(staticTuple, f.offset());
         return result;
     }
 
@@ -221,7 +220,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -235,11 +234,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTFIELD$byte$resolved)
-    public static void putfieldByte(@Slot(1) Object object, int offset, @Slot(0) int value, int bci) {
+    public static void putfieldByte(@Slot(1) Object object, FieldActor f, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
-        TupleAccess.writeByte(object, offset, (byte) value);
+        TupleAccess.writeByte(object, f.offset(), (byte) value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$byte)
@@ -251,7 +250,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutFieldByte(ResolutionGuard.InPool guard, Object object, int value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -263,11 +262,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$byte$init)
-    public static void putstaticByte(Object staticTuple, int offset, @Slot(0) int value, int bci) {
+    public static void putstaticByte(Object staticTuple, FieldActor f, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, f, value);
         }
-        TupleAccess.writeByte(staticTuple, offset, (byte) value);
+        TupleAccess.writeByte(staticTuple, f.offset(), (byte) value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$byte)
@@ -279,7 +278,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutStaticByte(ResolutionGuard.InPool guard, int value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f, value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -319,11 +318,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETFIELD$char$resolved)
-    public static int getfieldChar(@Slot(0) Object object, int offset, int bci) {
+    public static int getfieldChar(@Slot(0) Object object, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
-        char result = TupleAccess.readChar(object, offset);
+        char result = TupleAccess.readChar(object, f.offset());
         return result;
     }
 
@@ -336,7 +335,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static int resolveAndGetFieldChar(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -350,11 +349,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$char$init)
-    public static int getstaticChar(Object staticTuple, int offset, int bci) {
+    public static int getstaticChar(Object staticTuple, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, f);
         }
-        char result = TupleAccess.readChar(staticTuple, offset);
+        char result = TupleAccess.readChar(staticTuple, f.offset());
         return result;
     }
 
@@ -368,7 +367,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -382,11 +381,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTFIELD$char$resolved)
-    public static void putfieldChar(@Slot(1) Object object, int offset, @Slot(0) int value, int bci) {
+    public static void putfieldChar(@Slot(1) Object object, FieldActor f, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
-        TupleAccess.writeChar(object, offset, (char) value);
+        TupleAccess.writeChar(object, f.offset(), (char) value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$char)
@@ -398,7 +397,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutFieldChar(ResolutionGuard.InPool guard, Object object, int value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -410,11 +409,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$char$init)
-    public static void putstaticChar(Object staticTuple, int offset, @Slot(0) int value, int bci) {
+    public static void putstaticChar(Object staticTuple, FieldActor f, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, f, value);
         }
-        TupleAccess.writeChar(staticTuple, offset, (char) value);
+        TupleAccess.writeChar(staticTuple, f.offset(), (char) value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$char)
@@ -426,7 +425,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutStaticChar(ResolutionGuard.InPool guard, int value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f, value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -466,11 +465,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETFIELD$short$resolved)
-    public static int getfieldShort(@Slot(0) Object object, int offset, int bci) {
+    public static int getfieldShort(@Slot(0) Object object, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
-        short result = TupleAccess.readShort(object, offset);
+        short result = TupleAccess.readShort(object, f.offset());
         return result;
     }
 
@@ -483,7 +482,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static int resolveAndGetFieldShort(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -497,11 +496,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$short$init)
-    public static int getstaticShort(Object staticTuple, int offset, int bci) {
+    public static int getstaticShort(Object staticTuple, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, f);
         }
-        short result = TupleAccess.readShort(staticTuple, offset);
+        short result = TupleAccess.readShort(staticTuple, f.offset());
         return result;
     }
 
@@ -515,7 +514,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -529,11 +528,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTFIELD$short$resolved)
-    public static void putfieldShort(@Slot(1) Object object, int offset, @Slot(0) int value, int bci) {
+    public static void putfieldShort(@Slot(1) Object object, FieldActor f, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
-        TupleAccess.writeShort(object, offset, (short) value);
+        TupleAccess.writeShort(object, f.offset(), (short) value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$short)
@@ -545,7 +544,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutFieldShort(ResolutionGuard.InPool guard, Object object, int value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -557,11 +556,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$short$init)
-    public static void putstaticShort(Object staticTuple, int offset, @Slot(0) int value, int bci) {
+    public static void putstaticShort(Object staticTuple, FieldActor f, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, f, value);
         }
-        TupleAccess.writeShort(staticTuple, offset, (short) value);
+        TupleAccess.writeShort(staticTuple, f.offset(), (short) value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$short)
@@ -573,7 +572,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutStaticShort(ResolutionGuard.InPool guard, int value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f, value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -613,11 +612,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETFIELD$int$resolved)
-    public static int getfieldInt(@Slot(0) Object object, int offset, int bci) {
+    public static int getfieldInt(@Slot(0) Object object, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
-        int result = TupleAccess.readInt(object, offset);
+        int result = TupleAccess.readInt(object, f.offset());
         return result;
     }
 
@@ -630,7 +629,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static int resolveAndGetFieldInt(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -644,11 +643,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$int$init)
-    public static int getstaticInt(Object staticTuple, int offset, int bci) {
+    public static int getstaticInt(Object staticTuple, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, f);
         }
-        int result = TupleAccess.readInt(staticTuple, offset);
+        int result = TupleAccess.readInt(staticTuple, f.offset());
         return result;
     }
 
@@ -662,7 +661,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -676,11 +675,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTFIELD$int$resolved)
-    public static void putfieldInt(@Slot(1) Object object, int offset, @Slot(0) int value, int bci) {
+    public static void putfieldInt(@Slot(1) Object object, FieldActor f, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
-        TupleAccess.writeInt(object, offset, value);
+        TupleAccess.writeInt(object, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$int)
@@ -692,7 +691,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutFieldInt(ResolutionGuard.InPool guard, Object object, int value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -704,11 +703,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$int$init)
-    public static void putstaticInt(Object staticTuple, int offset, @Slot(0) int value, int bci) {
+    public static void putstaticInt(Object staticTuple, FieldActor f, @Slot(0) int value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, f, value);
         }
-        TupleAccess.writeInt(staticTuple, offset, value);
+        TupleAccess.writeInt(staticTuple, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$int)
@@ -720,7 +719,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutStaticInt(ResolutionGuard.InPool guard, int value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f, value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -894,11 +893,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETFIELD$float$resolved)
-    public static float getfieldFloat(@Slot(0) Object object, int offset, int bci) {
+    public static float getfieldFloat(@Slot(0) Object object, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
-        float result = TupleAccess.readFloat(object, offset);
+        float result = TupleAccess.readFloat(object, f.offset());
         return result;
     }
 
@@ -911,7 +910,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static float resolveAndGetFieldFloat(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -925,11 +924,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$float$init)
-    public static float getstaticFloat(Object staticTuple, int offset, int bci) {
+    public static float getstaticFloat(Object staticTuple, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, f);
         }
-        float result = TupleAccess.readFloat(staticTuple, offset);
+        float result = TupleAccess.readFloat(staticTuple, f.offset());
         return result;
     }
 
@@ -943,7 +942,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -957,11 +956,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTFIELD$float$resolved)
-    public static void putfieldFloat(@Slot(1) Object object, int offset, @Slot(0) float value, int bci) {
+    public static void putfieldFloat(@Slot(1) Object object, FieldActor f, @Slot(0) float value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
-        TupleAccess.writeFloat(object, offset, value);
+        TupleAccess.writeFloat(object, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$float)
@@ -973,7 +972,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutFieldFloat(ResolutionGuard.InPool guard, Object object, float value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -985,11 +984,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$float$init)
-    public static void putstaticFloat(Object staticTuple, int offset, @Slot(0) float value, int bci) {
+    public static void putstaticFloat(Object staticTuple, FieldActor f, @Slot(0) float value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, f, value);
         }
-        TupleAccess.writeFloat(staticTuple, offset, value);
+        TupleAccess.writeFloat(staticTuple, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$float)
@@ -1001,7 +1000,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutStaticFloat(ResolutionGuard.InPool guard, float value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f, value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -1231,11 +1230,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETFIELD$long$resolved)
-    public static long getfieldLong(@Slot(0) Object object, int offset, int bci) {
+    public static long getfieldLong(@Slot(0) Object object, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
-        long result = TupleAccess.readLong(object, offset);
+        long result = TupleAccess.readLong(object, f.offset());
         return result;
     }
 
@@ -1248,7 +1247,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static long resolveAndGetFieldLong(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1262,11 +1261,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$long$init)
-    public static long getstaticLong(Object staticTuple, int offset, int bci) {
+    public static long getstaticLong(Object staticTuple, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, f);
         }
-        long result = TupleAccess.readLong(staticTuple, offset);
+        long result = TupleAccess.readLong(staticTuple, f.offset());
         return result;
     }
 
@@ -1280,7 +1279,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1294,11 +1293,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTFIELD$long$resolved)
-    public static void putfieldLong(@Slot(2) Object object, int offset, @Slot(0) long value, int bci) {
+    public static void putfieldLong(@Slot(2) Object object, FieldActor f, @Slot(0) long value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
-        TupleAccess.writeLong(object, offset, value);
+        TupleAccess.writeLong(object, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$long)
@@ -1310,7 +1309,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutFieldLong(ResolutionGuard.InPool guard, Object object, long value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -1322,11 +1321,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$long$init)
-    public static void putstaticLong(Object staticTuple, int offset, @Slot(0) long value, int bci) {
+    public static void putstaticLong(Object staticTuple, FieldActor f, @Slot(0) long value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, f, value);
         }
-        TupleAccess.writeLong(staticTuple, offset, value);
+        TupleAccess.writeLong(staticTuple, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$long)
@@ -1338,7 +1337,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutStaticLong(ResolutionGuard.InPool guard, long value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f, value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -1610,11 +1609,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETFIELD$double$resolved)
-    public static double getfieldDouble(@Slot(0) Object object, int offset, int bci) {
+    public static double getfieldDouble(@Slot(0) Object object, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
-        double result = TupleAccess.readDouble(object, offset);
+        double result = TupleAccess.readDouble(object, f.offset());
         return result;
     }
 
@@ -1627,7 +1626,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static double resolveAndGetFieldDouble(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1641,11 +1640,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$double$init)
-    public static double getstaticDouble(Object staticTuple, int offset, int bci) {
+    public static double getstaticDouble(Object staticTuple, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, f);
         }
-        double result = TupleAccess.readDouble(staticTuple, offset);
+        double result = TupleAccess.readDouble(staticTuple, f.offset());
         return result;
     }
 
@@ -1659,7 +1658,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1673,11 +1672,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTFIELD$double$resolved)
-    public static void putfieldDouble(@Slot(2) Object object, int offset, @Slot(0) double value, int bci) {
+    public static void putfieldDouble(@Slot(2) Object object, FieldActor f, @Slot(0) double value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
-        TupleAccess.writeDouble(object, offset, value);
+        TupleAccess.writeDouble(object, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$double)
@@ -1689,7 +1688,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutFieldDouble(ResolutionGuard.InPool guard, Object object, double value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -1701,11 +1700,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$double$init)
-    public static void putstaticDouble(Object staticTuple, int offset, @Slot(0) double value, int bci) {
+    public static void putstaticDouble(Object staticTuple, FieldActor f, @Slot(0) double value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, f, value);
         }
-        TupleAccess.writeDouble(staticTuple, offset, value);
+        TupleAccess.writeDouble(staticTuple, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$double)
@@ -1717,7 +1716,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutStaticDouble(ResolutionGuard.InPool guard, double value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f, value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -1947,11 +1946,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETFIELD$reference$resolved)
-    public static Reference getfieldObject(@Slot(0) Object object, int offset, int bci) {
+    public static Reference getfieldObject(@Slot(0) Object object, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
-        Object result = TupleAccess.readObject(object, offset);
+        Object result = TupleAccess.readObject(object, f.offset());
         return Reference.fromJava(result);
     }
 
@@ -1964,7 +1963,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Reference resolveAndGetFieldReference(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1978,11 +1977,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$reference$init)
-    public static Reference getstaticObject(Object staticTuple, int offset, int bci) {
+    public static Reference getstaticObject(Object staticTuple, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, f);
         }
-        Object result = TupleAccess.readObject(staticTuple, offset);
+        Object result = TupleAccess.readObject(staticTuple, f.offset());
         return Reference.fromJava(result);
     }
 
@@ -1996,7 +1995,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -2010,11 +2009,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTFIELD$reference$resolved)
-    public static void putfieldReference(@Slot(1) Object object, int offset, @Slot(0) Reference value, int bci) {
+    public static void putfieldReference(@Slot(1) Object object, FieldActor f, @Slot(0) Reference value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
-        TupleAccess.noninlineWriteObject(object, offset, value);
+        TupleAccess.noninlineWriteObject(object, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$reference)
@@ -2026,7 +2025,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutFieldReference(ResolutionGuard.InPool guard, Object object, Reference value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value);
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -2038,11 +2037,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$reference$init)
-    public static void putstaticReference(Object staticTuple, int offset, @Slot(0) Reference value, int bci) {
+    public static void putstaticReference(Object staticTuple, FieldActor f, @Slot(0) Reference value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, f, value);
         }
-        TupleAccess.noninlineWriteObject(staticTuple, offset, value);
+        TupleAccess.noninlineWriteObject(staticTuple, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$reference)
@@ -2054,7 +2053,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutStaticReference(ResolutionGuard.InPool guard, Reference value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value);
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f, value);
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -2210,11 +2209,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETFIELD$word$resolved)
-    public static Word getfieldWord(@Slot(0) Object object, int offset, int bci) {
+    public static Word getfieldWord(@Slot(0) Object object, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
-        Word result = TupleAccess.readWord(object, offset);
+        Word result = TupleAccess.readWord(object, f.offset());
         return result;
     }
 
@@ -2227,7 +2226,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Word resolveAndGetFieldWord(ResolutionGuard.InPool guard, Object object, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetField(bci, object, f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -2241,11 +2240,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(GETSTATIC$word$init)
-    public static Word getstaticWord(Object staticTuple, int offset, int bci) {
+    public static Word getstaticWord(Object staticTuple, FieldActor f, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, offset);
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, staticTuple, f);
         }
-        Word result = TupleAccess.readWord(staticTuple, offset);
+        Word result = TupleAccess.readWord(staticTuple, f.offset());
         return result;
     }
 
@@ -2259,7 +2258,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f.offset());
+            VMAStaticBytecodeAdvice.adviseBeforeGetStatic(bci, f.holder().staticTuple(), f);
         }
         if (f.isVolatile()) {
             preVolatileRead();
@@ -2273,11 +2272,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTFIELD$word$resolved)
-    public static void putfieldWord(@Slot(1) Object object, int offset, @Slot(0) Word value, int bci) {
+    public static void putfieldWord(@Slot(1) Object object, FieldActor f, @Slot(0) Word value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, offset, value.asAddress().toLong());
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value.asAddress().toLong());
         }
-        TupleAccess.writeWord(object, offset, value);
+        TupleAccess.writeWord(object, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTFIELD$word)
@@ -2289,7 +2288,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutFieldWord(ResolutionGuard.InPool guard, Object object, Word value, int bci) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f.offset(), value.asAddress().toLong());
+            VMAStaticBytecodeAdvice.adviseBeforePutField(bci, object, f, value.asAddress().toLong());
         }
         if (f.isVolatile()) {
             preVolatileWrite();
@@ -2301,11 +2300,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     @T1X_TEMPLATE(PUTSTATIC$word$init)
-    public static void putstaticWord(Object staticTuple, int offset, @Slot(0) Word value, int bci) {
+    public static void putstaticWord(Object staticTuple, FieldActor f, @Slot(0) Word value, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, offset, value.asAddress().toLong());
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, staticTuple, f, value.asAddress().toLong());
         }
-        TupleAccess.writeWord(staticTuple, offset, value);
+        TupleAccess.writeWord(staticTuple, f.offset(), value);
     }
 
     @T1X_TEMPLATE(PUTSTATIC$word)
@@ -2317,7 +2316,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void resolveAndPutStaticWord(ResolutionGuard.InPool guard, Word value, int bci) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f.offset(), value.asAddress().toLong());
+            VMAStaticBytecodeAdvice.adviseBeforePutStatic(bci, f.holder().staticTuple(), f, value.asAddress().toLong());
         }
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {

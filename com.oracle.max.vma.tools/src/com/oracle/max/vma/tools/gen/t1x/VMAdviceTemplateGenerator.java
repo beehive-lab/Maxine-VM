@@ -55,6 +55,9 @@ import com.sun.max.vm.type.*;
  * {@link T1X} doesn't use templates for many of the simple bytecodes, or some of the INVOKE bytecodes,
  * any more, which complicates the implementation as we have to generate templates for those directly.
  *
+ * We also override some enabling methods to achieve a similar effect for GET/PUTFIELD, GET/PUTSTATIC,
+ * where the changes are much smaller.
+ *
  * Two different mechanisms can be generated for testing whether the advice methods should be invoked.
  * All ultimately test bit zero of the {@klink VMAJavaRunScheme#VM_ADVISING} thread local.
  * The first mechanism is to include the body of {@link VMAJavaRunScheme#isAdvising} which is an
@@ -80,13 +83,16 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
      */
     private static class DiscoverCapabilitiesHook implements AdviceHook {
 
+        @Override
         public void startMethodGeneration() {
         }
 
+        @Override
         public void generate(T1XTemplateTag tag, AdviceType at, Object... args) {
             tagAdviceCapabilities[tag.ordinal()][at.ordinal()] = true;
         }
 
+        @Override
         public String suffixParams(boolean comma) {
             return "";
         }
@@ -238,6 +244,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
          * Don't know what tag yet, but that's ok, we just need to record
          * where we are in the output stream in case we want to discard it later.
          */
+        @Override
         public void startMethodGeneration() {
             byteArrayOut.addMethodStatus();
         }
@@ -248,10 +255,12 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
             byteArrayOut.discard(tag);
         }
 
+        @Override
         public String suffixParams(boolean comma) {
             return comma ? INT_BCI : INT_BCI_NOARG;
         }
 
+        @Override
         public String suffixArgs(boolean comma) {
             return comma ? BCI : BCI_NOARG;
         }
@@ -267,6 +276,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
          * Code will already have been output since the call to {@link #startMethodGeneration()},
          * and we may decide here to throw it away if we are not generating that advice.
          */
+        @Override
         public void generate(T1XTemplateTag tag, AdviceType at, Object... args) {
             byteArrayOut.setTag(tag);
             if (!generateTag(tag, at)) {
@@ -758,28 +768,26 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     }
 
     private void generatePutField(String k, boolean resolved) {
-        String offset = resolved ? "offset" : "f.offset()";
         startGuardAdvice();
-        out.printf(INDENT12_ADVISE_PREFIX + "object, %s, %s);%n", adviceType.methodNameComponent, methodName, offset, putValue(k, ""));
+        out.printf(INDENT12_ADVISE_PREFIX + "object, f, %s);%n", adviceType.methodNameComponent, methodName, putValue(k, ""));
         endGuardAdvice();
     }
 
     private void generateGetField(String k, boolean resolved) {
-        String offset = resolved ? "offset" : "f.offset()";
         startGuardAdvice();
-        out.printf(INDENT12_ADVISE_PREFIX + "object, %s);%n", adviceType.methodNameComponent, methodName, offset);
+        out.printf(INDENT12_ADVISE_PREFIX + "object, f);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private void generatePutStatic(String k, boolean init) {
-        String args = init ? "staticTuple, offset" : "f.holder().staticTuple(), f.offset()";
+        String args = init ? "staticTuple, f" : "f.holder().staticTuple(), f";
         startGuardAdvice();
         out.printf(INDENT12_ADVISE_PREFIX + "%s, %s);%n", adviceType.methodNameComponent, methodName, args, putValue(k, ""));
         endGuardAdvice();
     }
 
     private void generateGetStatic(String k, boolean init) {
-        String args = init ? "staticTuple, offset" : "f.holder().staticTuple(), f.offset()";
+        String args = init ? "staticTuple, f" : "f.holder().staticTuple(), f";
         startGuardAdvice();
         out.printf(INDENT12_ADVISE_PREFIX + "%s);%n", adviceType.methodNameComponent, methodName, args);
         endGuardAdvice();
@@ -1157,6 +1165,38 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         endTemplateMethodGeneration();
     }
     */
+
+    /*
+     * Overrides to pass the FieldActor to resolved field access templates.
+     */
+
+    @Override
+    protected void generatePutFieldTemplateBody(Kind k, String m) {
+        out.printf("    public static void putfield%s(@Slot(%d) Object object, FieldActor f, @Slot(0) %s value%s) {%n", ur(k), k.stackSlots, rs(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        TupleAccess.%srite%s(object, f.offset(), %s);%n", m, u(k), fromStackKindCast(k, "value"));
+    }
+
+    @Override
+    protected void generatePutStaticTemplateBody(Kind k, String m) {
+        out.printf("    public static void putstatic%s(Object staticTuple, FieldActor f, @Slot(0) %s value%s) {%n", ur(k), rs(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        TupleAccess.%srite%s(staticTuple, f.offset(), %s);%n", m, u(k), fromStackKindCast(k, "value"));
+    }
+
+    @Override
+    protected void generateGetFieldTemplateBody(Kind k) {
+        out.printf("    public static %s getfield%s(@Slot(0) Object object, FieldActor f%s) {%n", rs(k), u(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        %s result = TupleAccess.read%s(object, f.offset());%n", j(k), u(k));
+    }
+
+    @Override
+    protected void generateGetStaticTemplateBody(Kind k) {
+        out.printf("    public static %s getstatic%s(Object staticTuple, FieldActor f%s) {%n", rs(k), u(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        %s result = TupleAccess.read%s(staticTuple, f.offset());%n", j(k), u(k));
+    }
 
 
     private static final EnumSet<T1XTemplateTag> STACK_ADJUST_TEMPLATES = EnumSet.of(POP, POP2, DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP);
