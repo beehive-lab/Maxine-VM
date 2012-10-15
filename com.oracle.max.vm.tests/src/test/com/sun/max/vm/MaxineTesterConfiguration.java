@@ -107,17 +107,18 @@ public class MaxineTesterConfiguration {
         output(findOutputTests("test.output."));
 
         // Refine expectation for certain output tests
-        output(Classes.forName("test.output.AWTFont"),                  FAIL_DARWIN, RAND_SPARC);
+        output(Classes.forName("test.output.AWTFont"),                  FAIL_DARWIN);
         output(Classes.forName("test.output.GCTest7"),                  RAND_DARWIN);
 //        output(test.output.MegaThreads.class,              RAND_ALL);
 //        output(test.output.SafepointWhileInJava.class,     RAND_LINUX);
         output(Classes.forName("test.output.WeakReferenceTest01"),                  RAND_ALL);
         output(Classes.forName("test.output.WeakReferenceTest02"),                  RAND_ALL);
         output(Classes.forName("test.output.WeakReferenceTest03"),                  RAND_ALL);
-        output(Classes.forName("test.output.WeakReferenceTest03_01"),               RAND_ALL);
+        output(Classes.forName("test.output.WeakReferenceTest03_01"),            RAND_ALL);
         output(Classes.forName("test.output.WeakReferenceTest04"),                  RAND_ALL);
-        output(Classes.forName("test.output.GCTest8"),                              RAND_ALL);
+        output(Classes.forName("test.output.GCTest8"),                                       RAND_ALL);
         output(Classes.forName("test.output.CatchOutOfMemory"),                     RAND_ALL);
+        output(Classes.forName("test.output.ManyOpenedFilesTest"),                  FAIL_DARWIN);
 
         vmoutput(findOutputTests("test.vm.output."));
 
@@ -145,12 +146,12 @@ public class MaxineTesterConfiguration {
 
         dacapo2006("antlr");
         dacapo2006("bloat");
-        dacapo2006("xalan",    FAIL_ALL);
+        dacapo2006("xalan");
         dacapo2006("hsqldb");
         dacapo2006("luindex");
-        dacapo2006("lusearch", FAIL_ALL);
+        dacapo2006("lusearch");
         dacapo2006("jython");
-        dacapo2006("chart",    FAIL_ALL);
+        dacapo2006("chart");
         dacapo2006("eclipse");
         dacapo2006("fop");
         dacapo2006("pmd");
@@ -159,13 +160,13 @@ public class MaxineTesterConfiguration {
         dacapoBach("batik");
         dacapoBach("eclipse");
         dacapoBach("fop");
-        dacapoBach("h2", FAIL_ALL);
+        dacapoBach("h2");
         dacapoBach("jython");
         dacapoBach("luindex");
-        dacapoBach("lusearch", FAIL_ALL);
+        dacapoBach("lusearch");
         dacapoBach("pmd");
         dacapoBach("sunflow");
-        dacapoBach("tomcat", FAIL_ALL);
+        dacapoBach("tomcat");
         dacapoBach("tradebeans",  FAIL_ALL);
         dacapoBach("tradesoap",  FAIL_ALL);
         dacapoBach("xalan");
@@ -202,7 +203,7 @@ public class MaxineTesterConfiguration {
         specjvm2008("crypto.aes");
         specjvm2008("crypto.rsa");
         specjvm2008("crypto.signverify");
-        specjvm2008("derby", FAIL_ALL);
+        specjvm2008("derby");
         specjvm2008("mpegaudio");
         specjvm2008("scimark.fft.large");
         specjvm2008("scimark.lu.large");
