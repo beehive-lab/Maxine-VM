@@ -222,20 +222,20 @@ public class BytecodeAdviceGenerator {
 
     private static void generateGetField(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
-        out.printf(METHOD_PREFIX + "Object object, int offset);%n%n", adviceModeString, bytecode.methodName);
+        out.printf(METHOD_PREFIX + "Object object, FieldActor f);%n%n", adviceModeString, bytecode.methodName);
     }
 
     private static void generateGetStatic(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
         // StaticTuple but ClassActor.staticTuple returns Object
-        out.printf(METHOD_PREFIX + "Object staticTuple, int offset);%n%n", adviceModeString, bytecode.methodName);
+        out.printf(METHOD_PREFIX + "Object staticTuple, FieldActor f);%n%n", adviceModeString, bytecode.methodName);
     }
 
     private static void generatePutField(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
         for (Kind k : getPutTypes) {
             if (hasGetPutTemplates(k)) {
-                out.printf(METHOD_PREFIX + "Object object, int offset, %s value);%n%n", adviceModeString, bytecode.methodName, j(k));
+                out.printf(METHOD_PREFIX + "Object object, FieldActor f, %s value);%n%n", adviceModeString, bytecode.methodName, j(k));
             }
         }
     }
@@ -245,7 +245,7 @@ public class BytecodeAdviceGenerator {
         for (Kind k : getPutTypes) {
             if (hasGetPutTemplates(k)) {
                 // StaticTuple but ClassActor.staticTuple returns Object
-                out.printf(METHOD_PREFIX + "Object staticTuple, int offset, %s value);%n%n", adviceModeString, bytecode.methodName, j(k));
+                out.printf(METHOD_PREFIX + "Object staticTuple, FieldActor f, %s value);%n%n", adviceModeString, bytecode.methodName, j(k));
             }
         }
     }
@@ -323,7 +323,7 @@ public class BytecodeAdviceGenerator {
         String value = isLoadBefore ? "" : ", %s value";
         String type = typeFor(bytecode.name().charAt(0));
         if (!scalarLoadSet.contains(bytecode.methodName + type)) {
-            out.printf(METHOD_PREFIX + "int dispToLocalSlot" + value + ");%n%n", adviceModeString, bytecode.methodName, type);
+            out.printf(METHOD_PREFIX + "int index" + value + ");%n%n", adviceModeString, bytecode.methodName, type);
             scalarLoadSet.add(bytecode.methodName + type);
             if (isLoadBefore) {
                 loadBeforeDone = true;

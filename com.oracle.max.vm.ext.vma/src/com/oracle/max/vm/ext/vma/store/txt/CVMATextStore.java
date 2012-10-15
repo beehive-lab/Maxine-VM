@@ -126,16 +126,16 @@ public abstract class CVMATextStore extends VMATextStore {
         ADVISE_BEFORE_THROW("BT"),
         ADVISE_BEFORE_IF("BI"),
         ADVISE_BEFORE_LOAD("BL"),
-        ADVISE_AFTER_MULTI_NEW_ARRAY("AMNA"),
         ADVISE_BEFORE_RETURN_BY_THROW("BRBT"),
+        ADVISE_AFTER_MULTI_NEW_ARRAY("AMNA"),
         ADVISE_BEFORE_INVOKE_INTERFACE("BII"),
         ADVISE_BEFORE_STORE("BS"),
         ADVISE_BEFORE_INSTANCE_OF("BIO"),
         ADVISE_BEFORE_ARRAY_STORE("BAS"),
         ADVISE_BEFORE_GET_STATIC("BGS"),
         ADVISE_BEFORE_PUT_FIELD("BPF"),
-        ADVISE_BEFORE_INVOKE_STATIC("BIS"),
         ADVISE_BEFORE_PUT_STATIC("BPS"),
+        ADVISE_BEFORE_INVOKE_STATIC("BIS"),
         ADVISE_BEFORE_MONITOR_EXIT("BMX"),
         ADVISE_BEFORE_ARRAY_LENGTH("BAG"),
         REMOVAL("D"),
@@ -146,8 +146,8 @@ public abstract class CVMATextStore extends VMATextStore {
         ADVISE_AFTER_ARRAY_LOAD("AAL"),
         ADVISE_BEFORE_OPERATION("BO"),
         INITIALIZE_STORE("IL"),
-        ADVISE_BEFORE_INVOKE_SPECIAL("BIZ"),
         ADVISE_BEFORE_STACK_ADJUST("BSA"),
+        ADVISE_BEFORE_INVOKE_SPECIAL("BIZ"),
         ADVISE_BEFORE_GC("BGC"),
         ADVISE_BEFORE_RETURN("BR"),
         ADVISE_BEFORE_ARRAY_LOAD("BAL"),
@@ -161,9 +161,9 @@ public abstract class CVMATextStore extends VMATextStore {
         ADVISE_AFTER_METHOD_ENTRY("AME"),
         ADVISE_BEFORE_CONST_LOAD("BCL"),
         ADVISE_AFTER_NEW("AN"),
+        UNSEEN("U"),
         ADVISE_AFTER_NEW_ARRAY("ANA"),
-        ADVISE_BEFORE_INVOKE_VIRTUAL("BIV"),
-        UNSEEN("U");
+        ADVISE_BEFORE_INVOKE_VIRTUAL("BIV");
         public final String code;
         private Key(String code) {
             this.code = code;
@@ -172,6 +172,9 @@ public abstract class CVMATextStore extends VMATextStore {
 
     public static final EnumSet<Key> hasIdSet = EnumSet.of(
         Key.ADVISE_BEFORE_RETURN_BY_THROW,
+        Key.ADVISE_AFTER_NEW,
+        Key.ADVISE_AFTER_NEW_ARRAY,
+        Key.ADVISE_AFTER_MULTI_NEW_ARRAY,
         Key.ADVISE_BEFORE_ARRAY_LOAD,
         Key.ADVISE_BEFORE_ARRAY_STORE,
         Key.ADVISE_BEFORE_GET_FIELD,
@@ -186,13 +189,13 @@ public abstract class CVMATextStore extends VMATextStore {
         Key.ADVISE_BEFORE_INSTANCE_OF,
         Key.ADVISE_BEFORE_MONITOR_ENTER,
         Key.ADVISE_BEFORE_MONITOR_EXIT,
+        Key.ADVISE_AFTER_ARRAY_LOAD,
+        Key.ADVISE_AFTER_METHOD_ENTRY);
+
+    public static final EnumSet<Key> hasBciSet = EnumSet.of(
         Key.ADVISE_AFTER_NEW,
         Key.ADVISE_AFTER_NEW_ARRAY,
         Key.ADVISE_AFTER_MULTI_NEW_ARRAY,
-        Key.ADVISE_AFTER_METHOD_ENTRY,
-        Key.ADVISE_AFTER_ARRAY_LOAD);
-
-    public static final EnumSet<Key> hasBciSet = EnumSet.of(
         Key.ADVISE_BEFORE_CONST_LOAD,
         Key.ADVISE_BEFORE_LOAD,
         Key.ADVISE_BEFORE_ARRAY_LOAD,
@@ -218,11 +221,8 @@ public abstract class CVMATextStore extends VMATextStore {
         Key.ADVISE_BEFORE_INSTANCE_OF,
         Key.ADVISE_BEFORE_MONITOR_ENTER,
         Key.ADVISE_BEFORE_MONITOR_EXIT,
-        Key.ADVISE_AFTER_NEW,
-        Key.ADVISE_AFTER_NEW_ARRAY,
-        Key.ADVISE_AFTER_MULTI_NEW_ARRAY,
-        Key.ADVISE_AFTER_METHOD_ENTRY,
         Key.ADVISE_AFTER_LOAD,
-        Key.ADVISE_AFTER_ARRAY_LOAD);
+        Key.ADVISE_AFTER_ARRAY_LOAD,
+        Key.ADVISE_AFTER_METHOD_ENTRY);
 // END GENERATED CODE
 }

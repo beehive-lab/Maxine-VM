@@ -76,9 +76,8 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
             out.printf(");%n");
         } else if (name.endsWith("GetField")  || name.endsWith("PutField")) {
             out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg2);%n");
-            out.printf("        FieldActor fa = ca.findInstanceFieldActor(arg3);%n");
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
-            out.printf(", state.readId(arg2).toLong(), fa.holder().name(), state.readId(ca.classLoader).toLong(), fa.name()");
+            out.printf(", state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name()");
             if (name.endsWith("PutField")) {
                 generateValueArg(m, 4);
             }
@@ -86,7 +85,7 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
         } else if (name.endsWith("GetStatic")  || name.endsWith("PutStatic")) {
             out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg2);%n");
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
-            out.printf(", ca.name(), state.readId(ca.classLoader).toLong(), ca.findStaticFieldActor(arg3).name()");
+            out.printf(", ca.name(), state.readId(ca.classLoader).toLong(), arg3.name()");
             if (name.endsWith("PutStatic")) {
                 generateValueArg(m, 4);
             }

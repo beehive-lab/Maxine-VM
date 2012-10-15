@@ -107,7 +107,31 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public synchronized void adviseBeforeConstLoad(int arg1, long arg2) {
+    public synchronized void adviseAfterNew(int arg1, Object arg2) {
+        super.adviseAfterNew(arg1, arg2);
+        storeAdaptor.adviseAfterNew(getTime(), arg1, arg2);
+    }
+
+    @Override
+    public synchronized void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
+        super.adviseAfterNewArray(arg1, arg2, arg3);
+        storeAdaptor.adviseAfterNewArray(getTime(), arg1, arg2, arg3);
+        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);
+    }
+
+    @Override
+    public synchronized void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
+        adviseAfterNewArray(arg1, arg2, arg3[0]);
+    }
+
+    @Override
+    public synchronized void adviseBeforeConstLoad(int arg1, float arg2) {
+        super.adviseBeforeConstLoad(arg1, arg2);
+        storeAdaptor.adviseBeforeConstLoad(getTime(), arg1, arg2);
+    }
+
+    @Override
+    public synchronized void adviseBeforeConstLoad(int arg1, double arg2) {
         super.adviseBeforeConstLoad(arg1, arg2);
         storeAdaptor.adviseBeforeConstLoad(getTime(), arg1, arg2);
     }
@@ -119,13 +143,7 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public synchronized void adviseBeforeConstLoad(int arg1, float arg2) {
-        super.adviseBeforeConstLoad(arg1, arg2);
-        storeAdaptor.adviseBeforeConstLoad(getTime(), arg1, arg2);
-    }
-
-    @Override
-    public synchronized void adviseBeforeConstLoad(int arg1, double arg2) {
+    public synchronized void adviseBeforeConstLoad(int arg1, long arg2) {
         super.adviseBeforeConstLoad(arg1, arg2);
         storeAdaptor.adviseBeforeConstLoad(getTime(), arg1, arg2);
     }
@@ -143,7 +161,7 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public synchronized void adviseBeforeStore(int arg1, int arg2, long arg3) {
+    public synchronized void adviseBeforeStore(int arg1, int arg2, Object arg3) {
         super.adviseBeforeStore(arg1, arg2, arg3);
         storeAdaptor.adviseBeforeStore(getTime(), arg1, arg2, arg3);
     }
@@ -161,9 +179,15 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public synchronized void adviseBeforeStore(int arg1, int arg2, Object arg3) {
+    public synchronized void adviseBeforeStore(int arg1, int arg2, long arg3) {
         super.adviseBeforeStore(arg1, arg2, arg3);
         storeAdaptor.adviseBeforeStore(getTime(), arg1, arg2, arg3);
+    }
+
+    @Override
+    public synchronized void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+        storeAdaptor.adviseBeforeArrayStore(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override
@@ -185,15 +209,15 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public synchronized void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
-        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-        storeAdaptor.adviseBeforeArrayStore(getTime(), arg1, arg2, arg3, arg4);
-    }
-
-    @Override
     public synchronized void adviseBeforeStackAdjust(int arg1, int arg2) {
         super.adviseBeforeStackAdjust(arg1, arg2);
         storeAdaptor.adviseBeforeStackAdjust(getTime(), arg1, arg2);
+    }
+
+    @Override
+    public synchronized void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
+        super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
+        storeAdaptor.adviseBeforeOperation(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override
@@ -209,19 +233,13 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public synchronized void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
-        super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
-        storeAdaptor.adviseBeforeOperation(getTime(), arg1, arg2, arg3, arg4);
-    }
-
-    @Override
-    public synchronized void adviseBeforeConversion(int arg1, int arg2, float arg3) {
+    public synchronized void adviseBeforeConversion(int arg1, int arg2, long arg3) {
         super.adviseBeforeConversion(arg1, arg2, arg3);
         storeAdaptor.adviseBeforeConversion(getTime(), arg1, arg2, arg3);
     }
 
     @Override
-    public synchronized void adviseBeforeConversion(int arg1, int arg2, long arg3) {
+    public synchronized void adviseBeforeConversion(int arg1, int arg2, float arg3) {
         super.adviseBeforeConversion(arg1, arg2, arg3);
         storeAdaptor.adviseBeforeConversion(getTime(), arg1, arg2, arg3);
     }
@@ -281,61 +299,61 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     }
 
     @Override
-    public synchronized void adviseBeforeGetStatic(int arg1, Object arg2, int arg3) {
+    public synchronized void adviseBeforeGetStatic(int arg1, Object arg2, FieldActor arg3) {
         super.adviseBeforeGetStatic(arg1, arg2, arg3);
         storeAdaptor.adviseBeforeGetStatic(getTime(), arg1, arg2, arg3);
     }
 
     @Override
-    public synchronized void adviseBeforePutStatic(int arg1, Object arg2, int arg3, Object arg4) {
+    public synchronized void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
         super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
         storeAdaptor.adviseBeforePutStatic(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override
-    public synchronized void adviseBeforePutStatic(int arg1, Object arg2, int arg3, double arg4) {
+    public synchronized void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, double arg4) {
         super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
         storeAdaptor.adviseBeforePutStatic(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override
-    public synchronized void adviseBeforePutStatic(int arg1, Object arg2, int arg3, long arg4) {
+    public synchronized void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
         super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
         storeAdaptor.adviseBeforePutStatic(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override
-    public synchronized void adviseBeforePutStatic(int arg1, Object arg2, int arg3, float arg4) {
+    public synchronized void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, Object arg4) {
         super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
         storeAdaptor.adviseBeforePutStatic(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override
-    public synchronized void adviseBeforeGetField(int arg1, Object arg2, int arg3) {
+    public synchronized void adviseBeforeGetField(int arg1, Object arg2, FieldActor arg3) {
         super.adviseBeforeGetField(arg1, arg2, arg3);
         storeAdaptor.adviseBeforeGetField(getTime(), arg1, arg2, arg3);
     }
 
     @Override
-    public synchronized void adviseBeforePutField(int arg1, Object arg2, int arg3, Object arg4) {
+    public synchronized void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
         super.adviseBeforePutField(arg1, arg2, arg3, arg4);
         storeAdaptor.adviseBeforePutField(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override
-    public synchronized void adviseBeforePutField(int arg1, Object arg2, int arg3, double arg4) {
+    public synchronized void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
         super.adviseBeforePutField(arg1, arg2, arg3, arg4);
         storeAdaptor.adviseBeforePutField(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override
-    public synchronized void adviseBeforePutField(int arg1, Object arg2, int arg3, long arg4) {
+    public synchronized void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, Object arg4) {
         super.adviseBeforePutField(arg1, arg2, arg3, arg4);
         storeAdaptor.adviseBeforePutField(getTime(), arg1, arg2, arg3, arg4);
     }
 
     @Override
-    public synchronized void adviseBeforePutField(int arg1, Object arg2, int arg3, float arg4) {
+    public synchronized void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, double arg4) {
         super.adviseBeforePutField(arg1, arg2, arg3, arg4);
         storeAdaptor.adviseBeforePutField(getTime(), arg1, arg2, arg3, arg4);
     }
@@ -410,24 +428,6 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public synchronized void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
         super.adviseAfterArrayLoad(arg1, arg2, arg3, arg4);
         storeAdaptor.adviseAfterArrayLoad(getTime(), arg1, arg2, arg3, arg4);
-    }
-
-    @Override
-    public synchronized void adviseAfterNew(int arg1, Object arg2) {
-        super.adviseAfterNew(arg1, arg2);
-        storeAdaptor.adviseAfterNew(getTime(), arg1, arg2);
-    }
-
-    @Override
-    public synchronized void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
-        super.adviseAfterNewArray(arg1, arg2, arg3);
-        storeAdaptor.adviseAfterNewArray(getTime(), arg1, arg2, arg3);
-        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);
-    }
-
-    @Override
-    public synchronized void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
-        adviseAfterNewArray(arg1, arg2, arg3[0]);
     }
 
     @Override

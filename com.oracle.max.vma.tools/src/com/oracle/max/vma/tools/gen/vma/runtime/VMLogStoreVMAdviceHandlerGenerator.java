@@ -66,14 +66,12 @@ public class VMLogStoreVMAdviceHandlerGenerator {
         } else {
             out.printf("        super.%s(", name);
             generateInvokeArgs(argCount);
-            if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray") ||
-                name.contains("Field") || name.contains("GetStatic") || name.contains("PutStatic")) {
+            if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
                 out.printf("%sClassActor ca = ObjectAccess.readClassActor(arg2);%n", INDENT8);
             } else if (name.equals("adviseBeforeCheckCast") || name.equals("adviseBeforeInstanceOf")) {
                 out.printf("%sClassActor ca = UnsafeCast.asClassActor(arg3);%n", INDENT8);
             }
             if (name.contains("Field") || name.contains("GetStatic") || name.contains("PutStatic")) {
-                out.printf("%sFieldActor fa = ca.find%sFieldActor(arg3);%n", INDENT8, name.contains("Field") ? "Instance" : "Static");
                 isPutGet = true;
                 if (name.contains("Static")) {
                     isPutGetStatic = true;
@@ -111,7 +109,7 @@ public class VMLogStoreVMAdviceHandlerGenerator {
         } else if (type.equals("MethodActor")) {
             return "MethodID.fromMethodActor(" + arg + ")";
         } else if (isPutGet && arg.equals("arg3")) {
-            return "FieldID.fromFieldActor(fa)";
+            return "FieldID.fromFieldActor(arg3)";
         } else {
             return arg;
         }

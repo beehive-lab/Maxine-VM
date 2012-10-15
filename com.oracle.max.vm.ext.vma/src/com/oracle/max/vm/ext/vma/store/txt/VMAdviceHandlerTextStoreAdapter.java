@@ -298,59 +298,54 @@ public class VMAdviceHandlerTextStoreAdapter extends TextStoreAdapter implements
         store.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1);
     }
 
-    public void adviseBeforeGetStatic(long time, int arg1, Object arg2, int arg3) {
+    public void adviseBeforeGetStatic(long time, int arg1, Object arg2, FieldActor arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforeGetStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), ca.findStaticFieldActor(arg3).name());
+        store.adviseBeforeGetStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name());
     }
 
-    public void adviseBeforePutStatic(long time, int arg1, Object arg2, int arg3, float arg4) {
+    public void adviseBeforePutStatic(long time, int arg1, Object arg2, FieldActor arg3, float arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), ca.findStaticFieldActor(arg3).name(), arg4);
+        store.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
-    public void adviseBeforePutStatic(long time, int arg1, Object arg2, int arg3, double arg4) {
+    public void adviseBeforePutStatic(long time, int arg1, Object arg2, FieldActor arg3, double arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), ca.findStaticFieldActor(arg3).name(), arg4);
+        store.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
-    public void adviseBeforePutStatic(long time, int arg1, Object arg2, int arg3, long arg4) {
+    public void adviseBeforePutStatic(long time, int arg1, Object arg2, FieldActor arg3, long arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), ca.findStaticFieldActor(arg3).name(), arg4);
+        store.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
-    public void adviseBeforePutStatic(long time, int arg1, Object arg2, int arg3, Object arg4) {
+    public void adviseBeforePutStatic(long time, int arg1, Object arg2, FieldActor arg3, Object arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutStaticObject(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), ca.findStaticFieldActor(arg3).name(), state.readId(arg4).toLong());
+        store.adviseBeforePutStaticObject(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), state.readId(arg4).toLong());
     }
 
-    public void adviseBeforeGetField(long time, int arg1, Object arg2, int arg3) {
+    public void adviseBeforeGetField(long time, int arg1, Object arg2, FieldActor arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        FieldActor fa = ca.findInstanceFieldActor(arg3);
-        store.adviseBeforeGetField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), fa.holder().name(), state.readId(ca.classLoader).toLong(), fa.name());
+        store.adviseBeforeGetField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name());
     }
 
-    public void adviseBeforePutField(long time, int arg1, Object arg2, int arg3, float arg4) {
+    public void adviseBeforePutField(long time, int arg1, Object arg2, FieldActor arg3, float arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        FieldActor fa = ca.findInstanceFieldActor(arg3);
-        store.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), fa.holder().name(), state.readId(ca.classLoader).toLong(), fa.name(), arg4);
+        store.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
-    public void adviseBeforePutField(long time, int arg1, Object arg2, int arg3, long arg4) {
+    public void adviseBeforePutField(long time, int arg1, Object arg2, FieldActor arg3, long arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        FieldActor fa = ca.findInstanceFieldActor(arg3);
-        store.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), fa.holder().name(), state.readId(ca.classLoader).toLong(), fa.name(), arg4);
+        store.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
-    public void adviseBeforePutField(long time, int arg1, Object arg2, int arg3, Object arg4) {
+    public void adviseBeforePutField(long time, int arg1, Object arg2, FieldActor arg3, Object arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        FieldActor fa = ca.findInstanceFieldActor(arg3);
-        store.adviseBeforePutFieldObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), fa.holder().name(), state.readId(ca.classLoader).toLong(), fa.name(), state.readId(arg4).toLong());
+        store.adviseBeforePutFieldObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), state.readId(arg4).toLong());
     }
 
-    public void adviseBeforePutField(long time, int arg1, Object arg2, int arg3, double arg4) {
+    public void adviseBeforePutField(long time, int arg1, Object arg2, FieldActor arg3, double arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        FieldActor fa = ca.findInstanceFieldActor(arg3);
-        store.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), fa.holder().name(), state.readId(ca.classLoader).toLong(), fa.name(), arg4);
+        store.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
     public void adviseBeforeInvokeVirtual(long time, int arg1, Object arg2, MethodActor arg3) {

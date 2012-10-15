@@ -44,17 +44,17 @@ public abstract class BytecodeAdvice {
 
     public abstract void adviseBeforeConstLoad(int bci, double value);
 
-    public abstract void adviseBeforeLoad(int bci, int dispToLocalSlot);
+    public abstract void adviseBeforeLoad(int bci, int index);
 
     public abstract void adviseBeforeArrayLoad(int bci, Object array, int index);
 
-    public abstract void adviseBeforeStore(int bci, int dispToLocalSlot, long value);
+    public abstract void adviseBeforeStore(int bci, int index, long value);
 
-    public abstract void adviseBeforeStore(int bci, int dispToLocalSlot, float value);
+    public abstract void adviseBeforeStore(int bci, int index, float value);
 
-    public abstract void adviseBeforeStore(int bci, int dispToLocalSlot, double value);
+    public abstract void adviseBeforeStore(int bci, int index, double value);
 
-    public abstract void adviseBeforeStore(int bci, int dispToLocalSlot, Object value);
+    public abstract void adviseBeforeStore(int bci, int index, Object value);
 
     public abstract void adviseBeforeArrayStore(int bci, Object array, int index, long value);
 
@@ -94,25 +94,25 @@ public abstract class BytecodeAdvice {
 
     public abstract void adviseBeforeReturn(int bci);
 
-    public abstract void adviseBeforeGetStatic(int bci, Object staticTuple, int offset);
+    public abstract void adviseBeforeGetStatic(int bci, Object staticTuple, FieldActor f);
 
-    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, int offset, Object value);
+    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, FieldActor f, Object value);
 
-    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, int offset, double value);
+    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, FieldActor f, double value);
 
-    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, int offset, long value);
+    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, FieldActor f, long value);
 
-    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, int offset, float value);
+    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, FieldActor f, float value);
 
-    public abstract void adviseBeforeGetField(int bci, Object object, int offset);
+    public abstract void adviseBeforeGetField(int bci, Object object, FieldActor f);
 
-    public abstract void adviseBeforePutField(int bci, Object object, int offset, Object value);
+    public abstract void adviseBeforePutField(int bci, Object object, FieldActor f, Object value);
 
-    public abstract void adviseBeforePutField(int bci, Object object, int offset, double value);
+    public abstract void adviseBeforePutField(int bci, Object object, FieldActor f, double value);
 
-    public abstract void adviseBeforePutField(int bci, Object object, int offset, long value);
+    public abstract void adviseBeforePutField(int bci, Object object, FieldActor f, long value);
 
-    public abstract void adviseBeforePutField(int bci, Object object, int offset, float value);
+    public abstract void adviseBeforePutField(int bci, Object object, FieldActor f, float value);
 
     public abstract void adviseBeforeInvokeVirtual(int bci, Object object, MethodActor methodActor);
 
@@ -134,7 +134,7 @@ public abstract class BytecodeAdvice {
 
     public abstract void adviseBeforeMonitorExit(int bci, Object object);
 
-    public abstract void adviseAfterLoad(int bci, int dispToLocalSlot, Object value);
+    public abstract void adviseAfterLoad(int bci, int index, Object value);
 
     public abstract void adviseAfterArrayLoad(int bci, Object array, int index, Object value);
 
