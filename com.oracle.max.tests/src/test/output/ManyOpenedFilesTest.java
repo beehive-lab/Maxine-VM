@@ -24,9 +24,6 @@ package test.output;
 
 import java.io.*;
 
-/**
- * Testing timely reclamation of dead open file descriptors.
- */
 public class ManyOpenedFilesTest {
     public static void main(String[] args) {
         System.out.println("Creating 10000 Testing File");
@@ -35,9 +32,6 @@ public class ManyOpenedFilesTest {
         try {
             for (int i = 0; i < 10000; i++) {
                 new PrintStream(new FileOutputStream("/tmp/testdir/test." + i)).println("tempt test file #" + i);
-                if ((i % 200) == 0) {
-                    System.gc();
-                }
             }
         } catch (IOException eio) {
             eio.printStackTrace(System.err);
