@@ -105,6 +105,7 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
                         NO_INNER_CLASSES,
                         NO_OUTER_CLASS,
                         NO_ENCLOSING_METHOD_INFO);
+        ClassRegistry.addUnregisteredClass(this);
     }
 
     /**

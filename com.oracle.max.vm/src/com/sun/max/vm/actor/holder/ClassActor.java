@@ -52,6 +52,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
@@ -230,7 +231,13 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         this.minorVersion = minorVersion;
         this.kind = kind;
         this.componentClassActor = componentClassActor;
-        this.id = elementClassActor().makeID(numberOfDimensions());
+        if (isHosted() && componentClassActor != null && componentClassActor.kind == Kind.LONG && componentClassActor.arrayClassIDs != null) {
+            assert name.equals(DarkMatter.DARK_MATTER_CLASS_NAME);
+            // Special case Dark Matter class.
+            this.id = ClassID.allocate();
+        } else {
+            this.id = elementClassActor().makeID(numberOfDimensions());
+        }
         ClassID.register(this);
         this.typeDescriptor = typeDescriptor;
         this.superClassActor = superClassActor;
