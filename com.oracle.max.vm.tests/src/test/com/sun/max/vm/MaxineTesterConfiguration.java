@@ -167,8 +167,8 @@ public class MaxineTesterConfiguration {
         dacapoBach("pmd");
         dacapoBach("sunflow");
         dacapoBach("tomcat");
-        dacapoBach("tradebeans",  FAIL_ALL);
-        dacapoBach("tradesoap",  FAIL_ALL);
+        dacapoBach("tradebeans");
+        dacapoBach("tradesoap");
         dacapoBach("xalan");
 
         specjvm98("_201_compress");
