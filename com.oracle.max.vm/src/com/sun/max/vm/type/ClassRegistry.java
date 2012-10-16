@@ -489,14 +489,27 @@ public final class ClassRegistry {
     @HOSTED_ONLY
     private ConcurrentLinkedQueue<ClassActor> bootImageClasses;
 
+    /**
+     * Hidden classes not registered in the class registry.
+     */
+    @HOSTED_ONLY
+    private static ConcurrentLinkedQueue<ClassActor> unregisteredClasses = new ConcurrentLinkedQueue<ClassActor>();
+
+    @HOSTED_ONLY
+    public  static void addUnregisteredClass(ClassActor classActor) {
+        unregisteredClasses.add(classActor);
+    }
+
     @HOSTED_ONLY
     private static class BootImageClassesIterator implements Iterable<ClassActor>, Iterator<ClassActor> {
         Iterator<ClassActor> bootListIter;
         Iterator<ClassActor> vmListIter;
+        Iterator<ClassActor> unregisteredListIter;
 
         private BootImageClassesIterator() {
             bootListIter = BOOT_CLASS_REGISTRY.bootImageClasses.iterator();
             vmListIter = VM_CLASS_REGISTRY.bootImageClasses.iterator();
+            unregisteredListIter = unregisteredClasses.iterator();
         }
 
         public Iterator<ClassActor> iterator() {
@@ -508,13 +521,15 @@ public final class ClassRegistry {
                 return bootListIter.next();
             } else if (vmListIter.hasNext()) {
                 return vmListIter.next();
+            } else if (unregisteredListIter.hasNext()) {
+                return unregisteredListIter.next();
             } else {
                 throw new NoSuchElementException();
             }
         }
 
         public boolean hasNext() {
-            return bootListIter.hasNext() || vmListIter.hasNext();
+            return bootListIter.hasNext() || vmListIter.hasNext() || unregisteredListIter.hasNext();
         }
 
         public void remove() {
