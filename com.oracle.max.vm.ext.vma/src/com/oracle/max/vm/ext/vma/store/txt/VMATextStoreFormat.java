@@ -45,7 +45,7 @@ import java.util.*;
  *
  */
 
-public abstract class CVMATextStore extends VMATextStore {
+public abstract class VMATextStoreFormat {
 
     public static final long REPEAT_ID_VALUE = Long.MIN_VALUE;
     public static final char REPEAT_ID = '*';

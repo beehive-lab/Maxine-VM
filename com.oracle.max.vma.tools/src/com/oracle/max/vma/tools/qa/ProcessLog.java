@@ -23,7 +23,7 @@
 
 package com.oracle.max.vma.tools.qa;
 
-import static com.oracle.max.vm.ext.vma.store.txt.CVMATextStore.*;
+import static com.oracle.max.vm.ext.vma.store.txt.VMATextStoreFormat.*;
 import static com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 import static com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.RecordType.*;
 
@@ -846,17 +846,17 @@ public class ProcessLog {
 
         Key key = commandMap.get(recordParts[0]);
 
-        if (CVMATextStore.hasTimeAndThread(key)) {
+        if (VMATextStoreFormat.hasTimeAndThread(key)) {
             getTimeAndThread();
-        } else if (CVMATextStore.hasTime(key)) {
+        } else if (VMATextStoreFormat.hasTime(key)) {
             getTime();
         }
 
-        if (CVMATextStore.hasBci(key)) {
+        if (VMATextStoreFormat.hasBci(key)) {
             bci = (short) Integer.parseInt(bciArg);
         }
 
-        if (CVMATextStore.hasId(key)) {
+        if (VMATextStoreFormat.hasId(key)) {
             if (arg(OBJ_ID_INDEX).charAt(0) == REPEAT_ID) {
                 objIdArg = lastId.get(threadArg);
             } else {
@@ -876,10 +876,12 @@ public class ProcessLog {
                 absTime = Boolean.parseBoolean(arg2);
                 return;
 
-            case FINALIZE_STORE:
-                lastTime = Long.parseLong(arg1);
+            case FINALIZE_STORE: {
+                long t = Long.parseLong(arg1);
+                lastTime = absTime ? t : lastTime + t;
                 allocationEpoch.endTime = lastTime;
                 return;
+            }
 
             case THREAD_SWITCH:
                 throw new TraceException("batched log is not supported - use ConvertLog -unbatch");

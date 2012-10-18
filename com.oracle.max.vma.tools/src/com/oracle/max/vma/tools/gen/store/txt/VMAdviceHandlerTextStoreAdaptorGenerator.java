@@ -165,7 +165,7 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
 
     private static void generateStoreCallPrefix(String name, boolean isBytecodeAdviceMethod) {
         // Every bytecode advice method has arg1, as it's the bci value
-        out.printf("        store.%s(time, perThread ? null : tng.getThreadName()", name);
+        out.printf("        txtStore.%s(time, perThread ? null : tng.getThreadName()", name);
         if (isBytecodeAdviceMethod) {
             out.print(", arg1");
         }

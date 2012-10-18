@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.vma.store.txt;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.store.*;
 
 /**
  * An interface that is derived from {@link VMAdviceHandler} but is suitable for persistent textual storage. I.e., object
@@ -35,40 +36,11 @@ import com.oracle.max.vm.ext.vma.*;
  *
  * An implementation must be thread-safe either by design or by appropriate synchronization.
  *
- * The interface provides explicit support for per-thread stores through the {@code threadBatched}
- * and {@code perThread} arguments to {@link #initializeStore}. If both of these values are {@code false}
- * then the assumption is that calls from multiple threads are interleaved. If {@code threadBatched}
- * is {@code true} then calls are batched from the same thread and each batch must be preceded by
- * a call to {@link #threadSwitch}. If {@code perThread} is {@code true}, which implies that {@code threadBatched}
- * is {@code true}, then the store implementation is expected to support per-thread stores. The caller
- * must announce new threads via the {@link #newThread} method and subsequently use the returned {@VMATextStore}
- * instance when storing records for that thread. Since the thread is implicit in per-thread or batched mode,
- * it is permissible to pass {@code null} for the {@code threadName} argument in the advice methods.
- *
  */
-public abstract class VMATextStore {
+public abstract class VMATextStore extends VMAStore {
 
     /**
-     * Initialize the store subsystem.
-     * @param threadBatched {@code true} thread records are batched together and not interleaved
-     * @param perThread a request for per thread output store if possible
-     * @return {@code true} iff the initialization was successful.
-     */
-    public abstract boolean initializeStore(boolean threadBatched, boolean perThread);
-
-    /**
-     * Finalize the store, e.g. flush trace.
-     */
-    public abstract void finalizeStore();
-
-    /**
-     * Log the removal on an object from the VM (i.e. object death).
-     * @param id
-     */
-    public abstract void removal(long id);
-
-    /**
-     * Record an object that was not seen by the adviseNew methods but was used in an operation.
+     * Record an object that was not seen by the {@link VMAdviceHandler#adviseNew} methods but was used in an operation.
      *
      * @param time
      * @param threadName irrelevant but included for consistency with other methods
@@ -77,20 +49,6 @@ public abstract class VMATextStore {
      * @param clId
      */
     public abstract void unseenObject(long time, String threadName, long objId, String className, long clId);
-
-    /**
-     * In per-thread mode must be called notify the start of a new thread, typically
-     * from {@code adviseBeforeThreadStarting}, but certainly before any {@code adviseXXX} methods
-     * of this called are called.
-     * For per-thread stores may return a per-thread specific store that should be
-     * used instead of {@code this}.
-     */
-    public abstract VMATextStore newThread(String threadName);
-
-    /**
-     * Must be called in {@link #threadBatched} mode to indicate records now for given thread.
-     */
-    public abstract void threadSwitch(long time, String threadName);
 
 // START GENERATED CODE
 // EDIT AND RUN VMATextStoreGenerator.main() TO MODIFY

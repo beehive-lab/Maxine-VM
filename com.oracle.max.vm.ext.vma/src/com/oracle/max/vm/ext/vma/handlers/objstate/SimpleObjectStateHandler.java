@@ -37,10 +37,17 @@ import com.sun.max.vm.reference.*;
  * Ids for objects whose creation was not observed (unseen) are negative and descend from {@code -1}.
  * Zero is not a valid id; instead it denotes "no id assigned" or the null object.
  *
+ * Bits 56-63 are used for the bitmask. Mask bits may be set before the id and vice versa.
+ *
  */
 public class SimpleObjectStateHandler extends ObjectStateHandler {
     private static final AtomicLong nextUnseenId = new AtomicLong(0);
     private static final AtomicLong nextId = new AtomicLong(0);
+    private static final int BITMASK_SHIFT = 56;
+    private static final int BITMASK_MASK = 0xFF;
+    private static final long IDMASK = 0xFFFFFFFFFFFFFFFL;
+    private static final long SIGNEXTEND = 0xF000000000000000L;
+    private static final long SIGNBIT = 1L << (BITMASK_SHIFT - 1);
 
     @Override
     public ObjectID assignId(Object obj) {
@@ -49,31 +56,80 @@ public class SimpleObjectStateHandler extends ObjectStateHandler {
 
     @Override
     public ObjectID assignId(Reference objRef) {
-        ObjectID id = ObjectID.fromWord(Address.fromLong(nextId.incrementAndGet()));
-        writeId(objRef, id);
-        return id;
+        long idAndMask = readIdAndMaskAsLong(objRef);
+        long objId = nextId.incrementAndGet();
+        writeId(objRef, Address.fromLong(idAndMask | objId));
+        return ObjectID.fromWord(Address.fromLong(objId));
     }
 
     @Override
     public ObjectID assignUnseenId(Object obj) {
-        ObjectID id = ObjectID.fromWord(Address.fromLong(nextUnseenId.decrementAndGet()));
-        writeId(Reference.fromJava(obj), id);
-        return id;
+        long idAndMask = readIdAndMaskAsLong(obj);
+        long objId = nextUnseenId.decrementAndGet();
+        // have to create a 56 bit negative number
+        writeId(Reference.fromJava(obj), Address.fromLong(objId & IDMASK | idAndMask));
+        return ObjectID.fromWord(Address.fromLong(objId));
     }
 
     @Override
     public ObjectID readId(Object obj) {
-        Word id = obj == null ? Word.zero() : XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj));
-        return ObjectID.fromWord(id);
+        if (obj == null) {
+            return ObjectID.fromWord(Word.zero());
+        }
+        long id =  readIdAndMaskAsLong(obj) & IDMASK;
+        // check negative
+        if ((id & SIGNBIT) != 0) {
+            id = id | SIGNEXTEND;
+        }
+        return ObjectID.fromWord(Address.fromLong(id));
     }
 
     @INLINE
-    void writeId(Reference objRef, ObjectID id) {
+    void writeId(Reference objRef, Word id) {
         XOhmGeneralLayout.Static.writeXtra(objRef, id);
+    }
+
+    @INLINE
+    private long readIdAndMaskAsLong(Object obj) {
+        return XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj)).asAddress().toLong();
+    }
+
+    @INLINE
+    private long readIdAndMaskAsLong(Reference objRef) {
+        return XOhmGeneralLayout.Static.readXtra(objRef).asAddress().toLong();
+    }
+
+    @Override
+    public int readBit(Object obj, int n) {
+        if (obj == null) {
+            return 0;
+        }
+        int mask = 1 << n;
+        long idAndMask = readIdAndMaskAsLong(obj);
+        return (int) (idAndMask >> BITMASK_SHIFT) & mask;
+    }
+
+    @Override
+    public void writeBit(Object obj, int n, int value) {
+        if (obj == null) {
+            return;
+        }
+        Reference objRef = Reference.fromJava(obj);
+        long idAndMask = readIdAndMaskAsLong(objRef);
+        long mask = 1 << n;
+        if (value == 0) {
+            mask = ~mask & 0xFF;
+            idAndMask = idAndMask & (mask << BITMASK_SHIFT);
+        } else {
+            idAndMask = idAndMask | (mask << BITMASK_SHIFT);
+        }
+
+        writeId(objRef, Address.fromLong(idAndMask));
     }
 
     @Override
     public void gc(DeadObjectHandler rt) {
     }
+
 
 }

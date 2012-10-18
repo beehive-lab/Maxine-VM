@@ -111,7 +111,7 @@ public class CVMATextStoreGenerator {
             generateHasIdSet();
             out.println();
             generateHasBciSet();
-            AdviceGeneratorHelper.updateSource(CVMATextStore.class, null, false);
+            AdviceGeneratorHelper.updateSource(VMATextStoreFormat.class, null, false);
         }
     }
 

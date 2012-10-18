@@ -61,7 +61,7 @@ public class SBPSVMATextStoreGenerator {
             out.printf("    }%n%n");
             return;
         }
-        out.printf("        store_%s(", m.getName());
+        out.printf("        super.%s(", m.getName());
         out.printf("arg1, getThreadShortForm(arg2)%s", hasBci(name) ? ", arg3" : "");
         if (name.contains("GetField") || name.contains("PutField")) {
             out.print(", checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getFieldShortForm(arg5, arg6, arg7)");

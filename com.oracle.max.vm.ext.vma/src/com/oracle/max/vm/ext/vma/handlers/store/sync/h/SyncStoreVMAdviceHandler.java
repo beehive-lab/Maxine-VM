@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.vma.handlers.store.sync.h;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.handlers.*;
 import com.oracle.max.vm.ext.vma.handlers.objstate.*;
+import com.oracle.max.vm.ext.vma.options.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.sun.max.vm.*;
@@ -47,13 +48,14 @@ import com.sun.max.vm.thread.*;
 public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     private VMAdviceHandlerTextStoreAdapter storeAdaptor;
+    private VMAOptions.TimeMode timeMode;
 
     public static void onLoad(String args) {
         VMAJavaRunScheme.registerAdviceHandler(new SyncStoreVMAdviceHandler());
     }
 
-    private static long getTime() {
-        return System.nanoTime();
+    private long getTime() {
+        return timeMode.getTime();
     }
 
     @Override
@@ -67,6 +69,7 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
         if (phase == MaxineVM.Phase.RUNNING) {
             storeAdaptor = new VMAdviceHandlerTextStoreAdapter(state, false, false);
             storeAdaptor.initialise(phase);
+            timeMode = VMAOptions.getTimeMode();
             super.setDeadObjectHandler(storeAdaptor.getRemovalTracker());
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             synchronized (this) {

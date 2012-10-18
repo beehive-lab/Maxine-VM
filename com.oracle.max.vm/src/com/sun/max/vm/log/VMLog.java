@@ -463,11 +463,10 @@ public abstract class VMLog implements Heap.GCCallback {
 
     /**
      * Allocate a monotonically increasing unique id for a log record.
-     *
+     * A custom log can override this if it does not need a unique id.
      */
-    @INLINE
     @NO_SAFEPOINT_POLLS("atomic")
-    protected final int getUniqueId() {
+    protected int getUniqueId() {
         if (MaxineVM.isHosted()) {
             synchronized (this) {
                 return nextId++;

@@ -112,7 +112,7 @@ public class VMAVMLoggerGenerator {
         out.printf("%s%svoid %s(%slong time%s", INDENT8, protectedTag, methodName, threadId, bci ? ", int bci" : "");
         if (name.contains("New") || name.contains("unseen") ||
             name.contains("CheckCast") || name.contains("InstanceOf")) {
-            out.print(", ObjectID arg1, ClassID arg2, ObjectID arg3");
+            out.print(", ObjectID arg1, ClassID arg2");
             if (name.contains("NewArray")) {
                 out.print(", int length");
             }
@@ -149,7 +149,7 @@ public class VMAVMLoggerGenerator {
                             bci ? ", bci" : "", bci ? argc > 1 ? ", " : "" : "");
             if (name.contains("New") || name.contains("unseen") ||
                 name.contains("CheckCast") || name.contains("InstanceOf")) {
-                out.printf("%sarg1, arg2, arg3", name.contains("unseen") ? ", " : "");
+                out.printf("%sarg1, arg2", name.contains("unseen") ? ", " : "");
                 if (name.contains("NewArray")) {
                     out.print(", length");
                 }

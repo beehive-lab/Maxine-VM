@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.vma.options;
 import static com.oracle.max.vm.ext.vma.VMABytecodes.*;
 import static com.oracle.max.vm.ext.vma.options.VMAOptions.AdviceModeOption.*;
 
+import java.util.concurrent.atomic.*;
 import java.util.regex.Pattern;
 
 import com.oracle.max.vm.ext.vma.*;
@@ -237,6 +238,7 @@ public class VMAOptions {
         VMOptions.addFieldOption("-XX:", "VMABI", "regex for bytecodes to match");
         VMOptions.addFieldOption("-XX:", "VMABX", "regex for bytecodes to not match");
         VMOptions.addFieldOption("-XX:", "VMAConfig", "use pre-defined configuration");
+        VMOptions.addFieldOption("-XX:", "VMATime", "specify how time is recorded");
     }
 
     /**
@@ -265,6 +267,43 @@ public class VMAOptions {
      * {@link Pattern regex pattern} defining specific bytecodes to exclude from instrumentation.
      */
     private static String VMABX;
+
+    private static String VMATime;
+
+    public enum TimeMode {
+        NONE,
+        WALL {
+            @Override
+            public long getTime() {
+                return System.nanoTime();
+            }
+        },
+
+        UID {
+            @Override
+            public long getTime() {
+                return uuid.getAndIncrement();
+            }
+        };
+
+        private static AtomicLong uuid = new AtomicLong();
+
+        private boolean absolute;
+
+        public boolean isAbsolute() {
+            return absolute;
+        }
+
+        public void setAbsolute() {
+            absolute = true;
+        }
+
+        public long getTime() {
+            return 0;
+        }
+    }
+
+    private static TimeMode timeMode = TimeMode.WALL;
 
     private static Pattern classInclusionPattern;
     private static Pattern classExclusionPattern;
@@ -375,6 +414,24 @@ public class VMAOptions {
                 }
             }
 
+            if (VMATime != null) {
+                if (VMATime.startsWith("wall")) {
+                    timeMode = TimeMode.WALL;
+                    if (VMATime.endsWith("abs")) {
+                        timeMode.setAbsolute();
+                    }
+                } else if (VMATime.startsWith("uid")) {
+                    timeMode = TimeMode.UID;
+                    if (VMATime.endsWith("abs")) {
+                        timeMode.setAbsolute();
+                    }
+                } else if (VMATime.equals("none")) {
+                    timeMode = TimeMode.NONE;
+                } else {
+                    Log.println("VMA: unknown time mode: " + VMATime);
+                    MaxineVM.native_exit(1);
+                }
+            }
             if (logger.enabled()) {
                 for (VMABytecodes b : VMABytecodes.values()) {
                     boolean[] state = bytecodeApply[b.ordinal()];
@@ -384,6 +441,10 @@ public class VMAOptions {
             initialized = true;
         }
         return VMA;
+    }
+
+    public static TimeMode getTimeMode() {
+        return timeMode;
     }
 
     /**

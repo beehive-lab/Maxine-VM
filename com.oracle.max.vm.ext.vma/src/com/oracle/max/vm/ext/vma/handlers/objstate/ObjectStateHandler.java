@@ -28,7 +28,8 @@ import com.sun.max.vm.reference.*;
 /**
  * Abstracts the implementation of state used for object tracking, in particular,
  * the mechanism for allocation and storage of unique identifiers, and the recording
- * of which objects are live (optional).
+ * of which objects are live (optional). An 8 bit bitset is supported for
+ * arbitrary tagging of objects.
  *
  * An implementation is required to be thread safe by design or by explicit synchronization.
  *
@@ -70,8 +71,19 @@ public abstract class ObjectStateHandler {
     public abstract ObjectID readId(Object obj);
 
     /**
+     * Read the {@code n}th bit of the bitset of the object.
+     */
+    public abstract int readBit(Object obj, int n);
+
+    /**
+     * Set the {@code n}th bit of the bitset of the object to {@code value}.
+     */
+    public abstract void writeBit(Object obj, int n, int value);
+
+    /**
      * Optionally generate callbacks for objects that did not survive the gc that just completed.
      * @param rt
      */
     public abstract void gc(DeadObjectHandler rt);
+
 }
