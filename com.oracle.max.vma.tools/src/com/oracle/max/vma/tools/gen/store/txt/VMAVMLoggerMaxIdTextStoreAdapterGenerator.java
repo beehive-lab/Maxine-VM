@@ -42,17 +42,17 @@ import com.sun.max.vm.jni.*;
  * the {@link String} and {@code long} valued API of {@link VMATextStore}.
  */
 @HOSTED_ONLY
-public class VMAVMLoggerTextStoreAdapterGenerator {
+public class VMAVMLoggerMaxIdTextStoreAdapterGenerator {
 
     public static void main(String[] args) throws Exception {
-        createGenerator(VMAVMLoggerTextStoreAdapterGenerator.class);
+        createGenerator(VMAVMLoggerMaxIdTextStoreAdapterGenerator.class);
         generateAutoComment();
         for (Method m : VMAVMLogger.VMAVMLoggerInterface.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generate(m);
             }
         }
-        AdviceGeneratorHelper.updateSource(VMAVMLoggerTextStoreAdapter.class, null, false);
+        AdviceGeneratorHelper.updateSource(VMAVMLoggerMaxIdTextStoreAdapter.class, null, false);
     }
 
     private static void generate(Method m) {
@@ -61,19 +61,10 @@ public class VMAVMLoggerTextStoreAdapterGenerator {
         generateSignature(INDENT4, "public", new MethodNameOverride(m), null, null);
         out.printf(" {%n");
         Class< ? >[] params = m.getParameterTypes();
-        int mArg = hasMethodIDArg(params);
-        if (mArg >= 0) {
-            String arg = "arg" + (mArg + 1);
-            out.printf("%sMethodActor ma = MethodID.toMethodActor(%s);%n", INDENT8, arg);
-            out.printf("%sClassActor ca = ma.holder();%n", INDENT8);
-        } else if (oname.contains("GetField") || oname.contains("PutField")) {
-            out.printf("%sFieldActor fa = FieldID.toFieldActor(arg4);%n", INDENT8);
-        } else if (oname.contains("GetStatic") || oname.contains("PutStatic")) {
-            out.printf("%sFieldActor fa = FieldID.toFieldActor(arg3);%n", INDENT8);
-        } else if (oname.contains("CheckCast") || oname.contains("InstanceOf") || oname.contains("New")) {
-            out.printf("%sClassActor ca = ClassID.toClassActor(arg4);%n", INDENT8);
+        out.printf("%stxtStore.%s(arg1", INDENT8, oname);
+        if (!noThread(m.getName())) {
+            out.print(", null");
         }
-        out.printf("%stxtStore.%s(arg1, null", INDENT8, oname);
         // skip arg1 (time)
         for (int i = 1; i < params.length; i++) {
             Class< ? > param = params[i];
@@ -87,15 +78,19 @@ public class VMAVMLoggerTextStoreAdapterGenerator {
     private static String convertArg(String type, String arg) {
         if (type.equals("ObjectID")) {
             return arg + ".toLong()";
-        } else if (type.equals("MethodID")) {
-            return "ca.name(), state.readId(ca.classLoader).toLong(), ma.name()";
+        } else if (type.equals("MethodID") || type.equals("FieldID")) {
+            return "MemberID.getClassIDAsInt(" + arg + "), MemberID.getMemberIDAsInt(" + arg + ")";
         } else if (type.equals("ClassID")) {
-            return "ca.name(), state.readId(ca.classLoader).toLong()";
-        } else if (type.equals("FieldID")) {
-            return "fa.holder().name(), state.readId(fa.holder().classLoader).toLong(), fa.name()";
+            return "ClassID.asInt(" + arg + ")";
         } else {
             return arg;
         }
+    }
+
+    private static boolean noThread(String name) {
+        return name.contains("Invoke") || name.contains("MethodEntry") || name.contains("unseen") ||
+               name.contains("Static") || name.contains("Field") || name.contains("New") ||
+               name.contains("CheckCast") || name.contains("InstanceOf");
     }
 
     private static String getMethodNameRenamingObjectID(Method m) {
@@ -111,13 +106,4 @@ public class VMAVMLoggerTextStoreAdapterGenerator {
         return result;
     }
 
-    private static int hasMethodIDArg(Class<?>[] params) {
-        for (int i = 1; i < params.length; i++) {
-            Class< ? > param = params[i];
-            if (param == MethodID.class) {
-                return i;
-            }
-        }
-        return -1;
-    }
 }

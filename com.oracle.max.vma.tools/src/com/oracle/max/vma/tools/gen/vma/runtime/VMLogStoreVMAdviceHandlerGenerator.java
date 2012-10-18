@@ -81,7 +81,7 @@ public class VMLogStoreVMAdviceHandlerGenerator {
             // Have to convert Object to ObjectID etc.
             if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray") ||
                             name.equals("adviseBeforeCheckCast") || name.equals("adviseBeforeInstanceOf")) {
-                out.printf(", arg1, state.readId(arg2), ClassID.create(ca), state.readId(ca.classLoader)");
+                out.printf(", arg1, state.readId(arg2), createClassID(ca)");
                 if (name.endsWith("NewArray")) {
                     out.print(", arg3");
                 }
@@ -107,9 +107,9 @@ public class VMLogStoreVMAdviceHandlerGenerator {
         if (type.equals("Object") || type.equals("Throwable")) {
             return "state.readId(" + arg + ")";
         } else if (type.equals("MethodActor")) {
-            return "MethodID.fromMethodActor(" + arg + ")";
+            return "createMethodID(" + arg + ")";
         } else if (isPutGet && arg.equals("arg3")) {
-            return "FieldID.fromFieldActor(arg3)";
+            return "createFieldID(arg3)";
         } else {
             return arg;
         }

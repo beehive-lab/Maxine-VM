@@ -20,40 +20,38 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vma.tools.gen.store.txt;
+package com.oracle.max.vma.tools.gen.store;
 
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.lang.reflect.*;
 
-import com.oracle.max.vm.ext.vma.store.txt.*;
-import com.oracle.max.vm.ext.vma.store.txt.sbps.*;
+import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
 import com.oracle.max.vma.tools.gen.vma.*;
+import com.sun.max.annotate.*;
 
 /**
- * {@link SBPSLockedVMATextStore locking/synchronizing logger} generator.
+ * Generates implementation of {@link VMAVMLoggerTextStoreAdaptor} from the
+ * methods in {@link VMAdviceHandler}.
+ *
  */
-public class SBPSLockedVMATextStoreGenerator {
+@HOSTED_ONLY
+public class VMAVMLoggerStoreAdapterGenerator {
     public static void main(String[] args) throws Exception {
-        createGenerator(SBPSLockedVMATextStoreGenerator.class);
+        createGenerator(VMAVMLoggerStoreAdapterGenerator.class);
         generateAutoComment();
-        for (Method m : VMATextStore.class.getMethods()) {
-            String name = m.getName();
-            if (name.startsWith("advise") || name.equals("removal") ||
-                name.equals("finalizeLog") || name.equals("unseenObject") || name.equals("resetTime")) {
+        for (Method m : VMAVMLogger.VMAVMLoggerInterface.class.getMethods()) {
+            if (m.getName().startsWith("advise")) {
                 generate(m);
             }
         }
-        AdviceGeneratorHelper.updateSource(SBPSLockedVMATextStore.class, null, false);
+        AdviceGeneratorHelper.updateSource(VMAVMLoggerStoreAdapter.class, null, false);
     }
 
     private static void generate(Method m) {
-        out.printf("    @Override%n");
-        final int argCount = generateSignature(m, "synchronized");
-        out.printf(" {%n");
-        out.printf("        super.%s(", m.getName());
-        generateInvokeArgs(argCount);
-        out.printf("    }%n%n");
+        generateSignature(INDENT4, "public", new MethodNameOverride(m), "abstract", null);
+        out.printf(";%n");
     }
 
 }

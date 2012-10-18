@@ -54,7 +54,7 @@ import com.sun.max.vm.thread.*;
  *
  *
  */
-public class VMAdviceHandlerTextStoreAdapter extends TextStoreAdapter implements ObjectStateHandler.DeadObjectHandler {
+public class VMAdviceHandlerTextStoreAdapter extends VMAStoreAdapter implements ObjectStateHandler.DeadObjectHandler {
 
     interface ThreadNameGenerator {
         String getThreadName();
@@ -80,6 +80,8 @@ public class VMAdviceHandlerTextStoreAdapter extends TextStoreAdapter implements
      */
     private final ObjectStateHandler state;
 
+    private VMATextStore txtStore;
+
     protected void setThreadNameGenerator(ThreadNameGenerator tng) {
         this.tng = tng;
     }
@@ -94,14 +96,15 @@ public class VMAdviceHandlerTextStoreAdapter extends TextStoreAdapter implements
     }
 
     @Override
-    protected TextStoreAdapter[] createArray(int length) {
+    protected VMAStoreAdapter[] createArray(int length) {
         return new VMAdviceHandlerTextStoreAdapter[length];
     }
 
     @Override
-    protected TextStoreAdapter createThreadTextStoreAdapter(VmThread vmThread) {
+    protected VMAStoreAdapter createThreadStoreAdapter(VmThread vmThread) {
         VMAdviceHandlerTextStoreAdapter ta = new VMAdviceHandlerTextStoreAdapter(state, true, true);
         this.vmThread = vmThread;
+        this.txtStore = (VMATextStore) store;
         ta.tng = null;
         return ta;
     }
@@ -115,8 +118,9 @@ public class VMAdviceHandlerTextStoreAdapter extends TextStoreAdapter implements
             }
 
             store = VMAStoreFactory.create(perThread);
+            txtStore = (VMATextStore) store;
 
-            if (store == null || !store.initializeStore(threadBatched, perThread)) {
+            if (store == null || !store.initializeStore(threadBatched, perThread, null)) {
                 throw new RuntimeException("VMA store initialization failed");
             }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
@@ -129,7 +133,7 @@ public class VMAdviceHandlerTextStoreAdapter extends TextStoreAdapter implements
     public void unseenObject(long time, Object obj) {
         final Reference objRef = Reference.fromJava(obj);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
-        store.unseenObject(time, tng.getThreadName(), state.readId(obj).toLong(), hub.classActor.name(), state.readId(hub.classActor.classLoader).toLong());
+        txtStore.unseenObject(time, tng.getThreadName(), state.readId(obj).toLong(), hub.classActor.name(), state.readId(hub.classActor.classLoader).toLong());
     }
 
     @Override
@@ -138,7 +142,8 @@ public class VMAdviceHandlerTextStoreAdapter extends TextStoreAdapter implements
     }
 
     public void dead(long time, long id) {
-        getStoreAdaptorForThread(VmThread.current().id()).store.removal(id);
+        VMATextStore threadTxtStore = (VMATextStore) getStoreAdaptorForThread(VmThread.current().uuid).getStore();
+        threadTxtStore.removal(id);
     }
 
 // In the BytecodeAdvice method equivalents below, parameter arg1 is the bci value.
@@ -147,35 +152,35 @@ public class VMAdviceHandlerTextStoreAdapter extends TextStoreAdapter implements
 // EDIT AND RUN VMAdviceHandlerTextStoreAdaptorGenerator.main() TO MODIFY
 
     public void adviseBeforeGC(long time) {
-        store.adviseBeforeGC(time, perThread ? null : tng.getThreadName());
+        txtStore.adviseBeforeGC(time, perThread ? null : tng.getThreadName());
     }
 
     public void adviseAfterGC(long time) {
-        store.adviseAfterGC(time, perThread ? null : tng.getThreadName());
+        txtStore.adviseAfterGC(time, perThread ? null : tng.getThreadName());
     }
 
     public void adviseBeforeThreadStarting(long time, VmThread arg1) {
-        store.adviseBeforeThreadStarting(time, perThread ? null : tng.getThreadName());
+        txtStore.adviseBeforeThreadStarting(time, perThread ? null : tng.getThreadName());
     }
 
     public void adviseBeforeThreadTerminating(long time, VmThread arg1) {
-        store.adviseBeforeThreadTerminating(time, perThread ? null : tng.getThreadName());
+        txtStore.adviseBeforeThreadTerminating(time, perThread ? null : tng.getThreadName());
     }
 
     public void adviseBeforeReturnByThrow(long time, int arg1, Throwable arg2, int arg3) {
-        store.adviseBeforeReturnByThrow(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3);
+        txtStore.adviseBeforeReturnByThrow(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3);
     }
 
     public void adviseAfterNew(long time, int arg1, Object arg2) {
         final Reference objRef = Reference.fromJava(arg2);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
-        store.adviseAfterNew(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), hub.classActor.name(), state.readId(hub.classActor.classLoader).toLong());
+        txtStore.adviseAfterNew(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), hub.classActor.name(), state.readId(hub.classActor.classLoader).toLong());
     }
 
     public void adviseAfterNewArray(long time, int arg1, Object arg2, int arg3) {
         final Reference objRef = Reference.fromJava(arg2);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
-        store.adviseAfterNewArray(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), hub.classActor.name(), state.readId(hub.classActor.classLoader).toLong(), arg3);
+        txtStore.adviseAfterNewArray(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), hub.classActor.name(), state.readId(hub.classActor.classLoader).toLong(), arg3);
     }
 
     public void adviseAfterMultiNewArray(long time, int arg1, Object arg2, int[] arg3) {
@@ -183,223 +188,223 @@ public class VMAdviceHandlerTextStoreAdapter extends TextStoreAdapter implements
     }
 
     public void adviseBeforeConstLoad(long time, int arg1, float arg2) {
-        store.adviseBeforeConstLoad(time, perThread ? null : tng.getThreadName(), arg1, arg2);
+        txtStore.adviseBeforeConstLoad(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
     public void adviseBeforeConstLoad(long time, int arg1, double arg2) {
-        store.adviseBeforeConstLoad(time, perThread ? null : tng.getThreadName(), arg1, arg2);
+        txtStore.adviseBeforeConstLoad(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
     public void adviseBeforeConstLoad(long time, int arg1, Object arg2) {
-        store.adviseBeforeConstLoadObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong());
+        txtStore.adviseBeforeConstLoadObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong());
     }
 
     public void adviseBeforeConstLoad(long time, int arg1, long arg2) {
-        store.adviseBeforeConstLoad(time, perThread ? null : tng.getThreadName(), arg1, arg2);
+        txtStore.adviseBeforeConstLoad(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
     public void adviseBeforeLoad(long time, int arg1, int arg2) {
-        store.adviseBeforeLoad(time, perThread ? null : tng.getThreadName(), arg1, arg2);
+        txtStore.adviseBeforeLoad(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
     public void adviseBeforeArrayLoad(long time, int arg1, Object arg2, int arg3) {
-        store.adviseBeforeArrayLoad(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3);
+        txtStore.adviseBeforeArrayLoad(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3);
     }
 
     public void adviseBeforeStore(long time, int arg1, int arg2, Object arg3) {
-        store.adviseBeforeStoreObject(time, perThread ? null : tng.getThreadName(), arg1, arg2, state.readId(arg3).toLong());
+        txtStore.adviseBeforeStoreObject(time, perThread ? null : tng.getThreadName(), arg1, arg2, state.readId(arg3).toLong());
     }
 
     public void adviseBeforeStore(long time, int arg1, int arg2, float arg3) {
-        store.adviseBeforeStore(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
+        txtStore.adviseBeforeStore(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
     }
 
     public void adviseBeforeStore(long time, int arg1, int arg2, double arg3) {
-        store.adviseBeforeStore(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
+        txtStore.adviseBeforeStore(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
     }
 
     public void adviseBeforeStore(long time, int arg1, int arg2, long arg3) {
-        store.adviseBeforeStore(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
+        txtStore.adviseBeforeStore(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
     }
 
     public void adviseBeforeArrayStore(long time, int arg1, Object arg2, int arg3, Object arg4) {
-        store.adviseBeforeArrayStoreObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3, state.readId(arg4).toLong());
+        txtStore.adviseBeforeArrayStoreObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3, state.readId(arg4).toLong());
     }
 
     public void adviseBeforeArrayStore(long time, int arg1, Object arg2, int arg3, float arg4) {
-        store.adviseBeforeArrayStore(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3, arg4);
+        txtStore.adviseBeforeArrayStore(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3, arg4);
     }
 
     public void adviseBeforeArrayStore(long time, int arg1, Object arg2, int arg3, long arg4) {
-        store.adviseBeforeArrayStore(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3, arg4);
+        txtStore.adviseBeforeArrayStore(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3, arg4);
     }
 
     public void adviseBeforeArrayStore(long time, int arg1, Object arg2, int arg3, double arg4) {
-        store.adviseBeforeArrayStore(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3, arg4);
+        txtStore.adviseBeforeArrayStore(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3, arg4);
     }
 
     public void adviseBeforeStackAdjust(long time, int arg1, int arg2) {
-        store.adviseBeforeStackAdjust(time, perThread ? null : tng.getThreadName(), arg1, arg2);
+        txtStore.adviseBeforeStackAdjust(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
     public void adviseBeforeOperation(long time, int arg1, int arg2, double arg3, double arg4) {
-        store.adviseBeforeOperation(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3, arg4);
+        txtStore.adviseBeforeOperation(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3, arg4);
     }
 
     public void adviseBeforeOperation(long time, int arg1, int arg2, long arg3, long arg4) {
-        store.adviseBeforeOperation(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3, arg4);
+        txtStore.adviseBeforeOperation(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3, arg4);
     }
 
     public void adviseBeforeOperation(long time, int arg1, int arg2, float arg3, float arg4) {
-        store.adviseBeforeOperation(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3, arg4);
+        txtStore.adviseBeforeOperation(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3, arg4);
     }
 
     public void adviseBeforeConversion(long time, int arg1, int arg2, long arg3) {
-        store.adviseBeforeConversion(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
+        txtStore.adviseBeforeConversion(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
     }
 
     public void adviseBeforeConversion(long time, int arg1, int arg2, float arg3) {
-        store.adviseBeforeConversion(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
+        txtStore.adviseBeforeConversion(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
     }
 
     public void adviseBeforeConversion(long time, int arg1, int arg2, double arg3) {
-        store.adviseBeforeConversion(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
+        txtStore.adviseBeforeConversion(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3);
     }
 
     public void adviseBeforeIf(long time, int arg1, int arg2, int arg3, int arg4, int arg5) {
-        store.adviseBeforeIf(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3, arg4, arg5);
+        txtStore.adviseBeforeIf(time, perThread ? null : tng.getThreadName(), arg1, arg2, arg3, arg4, arg5);
     }
 
     public void adviseBeforeIf(long time, int arg1, int arg2, Object arg3, Object arg4, int arg5) {
-        store.adviseBeforeIfObject(time, perThread ? null : tng.getThreadName(), arg1, arg2, state.readId(arg3).toLong(), state.readId(arg4).toLong(), arg5);
+        txtStore.adviseBeforeIfObject(time, perThread ? null : tng.getThreadName(), arg1, arg2, state.readId(arg3).toLong(), state.readId(arg4).toLong(), arg5);
     }
 
     public void adviseBeforeGoto(long time, int arg1, int arg2) {
-        store.adviseBeforeGoto(time, perThread ? null : tng.getThreadName(), arg1, arg2);
+        txtStore.adviseBeforeGoto(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
     public void adviseBeforeReturn(long time, int arg1, Object arg2) {
-        store.adviseBeforeReturnObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong());
+        txtStore.adviseBeforeReturnObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong());
     }
 
     public void adviseBeforeReturn(long time, int arg1, long arg2) {
-        store.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1, arg2);
+        txtStore.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
     public void adviseBeforeReturn(long time, int arg1, float arg2) {
-        store.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1, arg2);
+        txtStore.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
     public void adviseBeforeReturn(long time, int arg1, double arg2) {
-        store.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1, arg2);
+        txtStore.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1, arg2);
     }
 
     public void adviseBeforeReturn(long time, int arg1) {
-        store.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1);
+        txtStore.adviseBeforeReturn(time, perThread ? null : tng.getThreadName(), arg1);
     }
 
     public void adviseBeforeGetStatic(long time, int arg1, Object arg2, FieldActor arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforeGetStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name());
+        txtStore.adviseBeforeGetStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name());
     }
 
     public void adviseBeforePutStatic(long time, int arg1, Object arg2, FieldActor arg3, float arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
+        txtStore.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
     public void adviseBeforePutStatic(long time, int arg1, Object arg2, FieldActor arg3, double arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
+        txtStore.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
     public void adviseBeforePutStatic(long time, int arg1, Object arg2, FieldActor arg3, long arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
+        txtStore.adviseBeforePutStatic(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
     public void adviseBeforePutStatic(long time, int arg1, Object arg2, FieldActor arg3, Object arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutStaticObject(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), state.readId(arg4).toLong());
+        txtStore.adviseBeforePutStaticObject(time, perThread ? null : tng.getThreadName(), arg1, ca.name(), state.readId(ca.classLoader).toLong(), arg3.name(), state.readId(arg4).toLong());
     }
 
     public void adviseBeforeGetField(long time, int arg1, Object arg2, FieldActor arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforeGetField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name());
+        txtStore.adviseBeforeGetField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name());
     }
 
     public void adviseBeforePutField(long time, int arg1, Object arg2, FieldActor arg3, float arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
+        txtStore.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
     public void adviseBeforePutField(long time, int arg1, Object arg2, FieldActor arg3, long arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
+        txtStore.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
     public void adviseBeforePutField(long time, int arg1, Object arg2, FieldActor arg3, Object arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutFieldObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), state.readId(arg4).toLong());
+        txtStore.adviseBeforePutFieldObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), state.readId(arg4).toLong());
     }
 
     public void adviseBeforePutField(long time, int arg1, Object arg2, FieldActor arg3, double arg4) {
         ClassActor ca = ObjectAccess.readClassActor(arg2);
-        store.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
+        txtStore.adviseBeforePutField(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name(), arg4);
     }
 
     public void adviseBeforeInvokeVirtual(long time, int arg1, Object arg2, MethodActor arg3) {
-        store.adviseBeforeInvokeVirtual(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name());
+        txtStore.adviseBeforeInvokeVirtual(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name());
     }
 
     public void adviseBeforeInvokeSpecial(long time, int arg1, Object arg2, MethodActor arg3) {
-        store.adviseBeforeInvokeSpecial(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name());
+        txtStore.adviseBeforeInvokeSpecial(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name());
     }
 
     public void adviseBeforeInvokeStatic(long time, int arg1, Object arg2, MethodActor arg3) {
-        store.adviseBeforeInvokeStatic(time, perThread ? null : tng.getThreadName(), arg1, 0, arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name());
+        txtStore.adviseBeforeInvokeStatic(time, perThread ? null : tng.getThreadName(), arg1, 0, arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name());
     }
 
     public void adviseBeforeInvokeInterface(long time, int arg1, Object arg2, MethodActor arg3) {
-        store.adviseBeforeInvokeInterface(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name());
+        txtStore.adviseBeforeInvokeInterface(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name());
     }
 
     public void adviseBeforeArrayLength(long time, int arg1, Object arg2, int arg3) {
-        store.adviseBeforeArrayLength(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3);
+        txtStore.adviseBeforeArrayLength(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3);
     }
 
     public void adviseBeforeThrow(long time, int arg1, Object arg2) {
-        store.adviseBeforeThrow(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong());
+        txtStore.adviseBeforeThrow(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong());
     }
 
     public void adviseBeforeCheckCast(long time, int arg1, Object arg2, Object arg3) {
         ClassActor ca = (ClassActor) arg3;
-        store.adviseBeforeCheckCast(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), ca.name(), state.readId(ca.classLoader).toLong());
+        txtStore.adviseBeforeCheckCast(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), ca.name(), state.readId(ca.classLoader).toLong());
     }
 
     public void adviseBeforeInstanceOf(long time, int arg1, Object arg2, Object arg3) {
         ClassActor ca = (ClassActor) arg3;
-        store.adviseBeforeInstanceOf(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), ca.name(), state.readId(ca.classLoader).toLong());
+        txtStore.adviseBeforeInstanceOf(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), ca.name(), state.readId(ca.classLoader).toLong());
     }
 
     public void adviseBeforeMonitorEnter(long time, int arg1, Object arg2) {
-        store.adviseBeforeMonitorEnter(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong());
+        txtStore.adviseBeforeMonitorEnter(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong());
     }
 
     public void adviseBeforeMonitorExit(long time, int arg1, Object arg2) {
-        store.adviseBeforeMonitorExit(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong());
+        txtStore.adviseBeforeMonitorExit(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong());
     }
 
     public void adviseAfterLoad(long time, int arg1, int arg2, Object arg3) {
-        store.adviseAfterLoadObject(time, perThread ? null : tng.getThreadName(), arg1, arg2, state.readId(arg3).toLong());
+        txtStore.adviseAfterLoadObject(time, perThread ? null : tng.getThreadName(), arg1, arg2, state.readId(arg3).toLong());
     }
 
     public void adviseAfterArrayLoad(long time, int arg1, Object arg2, int arg3, Object arg4) {
-        store.adviseAfterArrayLoadObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3, state.readId(arg4).toLong());
+        txtStore.adviseAfterArrayLoadObject(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3, state.readId(arg4).toLong());
     }
 
     public void adviseAfterMethodEntry(long time, int arg1, Object arg2, MethodActor arg3) {
-        store.adviseAfterMethodEntry(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name());
+        txtStore.adviseAfterMethodEntry(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name());
     }
 
 // END GENERATED CODE

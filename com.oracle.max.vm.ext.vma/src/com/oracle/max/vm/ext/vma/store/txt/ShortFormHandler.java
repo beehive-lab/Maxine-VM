@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.*;
 /**
  * Defines a compact textual format that uses short forms for class, field and thread names.
  * In addition, a repeated id (but not when used as a value) is, by default, passed as
- * {@link CVMATextStore.Key#REPEAT_ID} and the
+ * {@link VMATextStoreFormat.Key#REPEAT_ID} and the
  * underlying format knows how to interpret that. This can be suppressed by setting the
  * system property {@value NO_REPEATS_PROPERTY). Repeated ids are only generated
  * for records created by the same originating thread.
@@ -54,19 +54,18 @@ import java.util.concurrent.atomic.*;
  * mutable, thread-local, instances are used to do the initial lookup in the map
  * to avoid unnecessary allocation.
  *
- * The class implements all the {@link VMATextStore} methods and, after handling the compression
- * based on the arguments, invokes the same method with the possibly transformed arguments,
- * on a {#link {@link #del delegate instance}. A concrete subclass must implement the
- * {@link #defineShortForm(ShortForm, Object, String, String)} method, which is called
- * whenever a new short form is created.
+ * A concrete subclass must implement the {@link #defineShortForm(ShortForm, Object, String, String)} method,
+ * which is called whenever a new short form is created.
  */
 
-public abstract class CSFVMATextStore extends CVMATextStore {
+public abstract class ShortFormHandler {
 
-    private static final String NO_REPEATS_PROPERTY = "max.vma.norepeatids";
     private static final String PREFIX_PROPERTY = "max.vma.shortprefix";
-    private static boolean doRepeats;
     private static boolean doPrefix;
+
+    protected ShortFormHandler() {
+        doPrefix = System.getProperty(PREFIX_PROPERTY) != null;
+    }
 
     /**
      * Denotes a class name and classloader id.
@@ -155,7 +154,7 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         private ConcurrentMap<Object, String> shortForms = new ConcurrentHashMap<Object, String>();
         private AtomicInteger nextIdA = new AtomicInteger();
 
-        String createShortForm(CSFVMATextStore handler, Object key) {
+        String createShortForm(ShortFormHandler handler, Object key) {
             String shortForm = shortForms.get(key);
             String classShortForm = null;
             if (shortForm == null) {
@@ -192,86 +191,14 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         }
     }
 
-    /**
-     * Mutable "long" for recording last object id used by a thread.
-     */
-    private static class LastId {
-        long id = REPEAT_ID_VALUE;
-    }
-
-    protected boolean threadBatched;
-    protected boolean perThread;
-
-    /**
-     * Maintains the last id for the set of threads in the trace, when not in {@link #perThread} mode.
-     */
-    private static ConcurrentMap<String, LastId> repeatedIds;
-
-    /**
-     * Per-thread last id.
-     */
-    protected LastId perThreadLastId = new LastId();
-
-    @Override
-    public boolean initializeStore(boolean threadBatched, boolean perThread) {
-        this.threadBatched = threadBatched;
-        this.perThread = perThread;
-        initStaticState(perThread);
-        return true;
-    }
-
-    protected void initStaticState(boolean perThread) {
-        if (!perThread) {
-            repeatedIds = new ConcurrentHashMap<String, LastId>();
-        }
-        doRepeats = System.getProperty(NO_REPEATS_PROPERTY) == null;
-        doPrefix = System.getProperty(PREFIX_PROPERTY) != null;
-    }
-
-    /**
-     * Check if this {@code objId} is the same as the previous one.
-     * Note that all traces that start with an {@code objId} must call this method!
-     * @param id
-     * @param threadName
-     * @return {@link TextVMAdviceHandlerLog#REPEAT_ID_VALUE} for a match, {@code id} otherwise
-     */
-    protected long checkRepeatId(long id, String threadName) {
-        LastId lastId;
-        if (doRepeats) {
-            lastId = getLastId(threadName);
-            if (lastId.id == id) {
-                return REPEAT_ID_VALUE;
-            } else {
-                lastId.id = id;
-            }
-        }
-        return id;
-    }
-
-    private LastId getLastId(String threadName) {
-        if (perThread) {
-            return perThreadLastId;
-        }
-        LastId lastId = repeatedIds.get(threadName);
-        if (lastId == null) {
-            lastId = new LastId();
-            LastId winner = repeatedIds.putIfAbsent(threadName, lastId);
-            // Another thread may have beaten us to it.
-            if (winner != null) {
-                lastId = winner;
-            }
-        }
-        return lastId;
-    }
-
-    protected String getClassShortForm(String className, long clId) {
+    public String getClassShortForm(String className, long clId) {
         ClassNameId classNameId = classNameIdTL.get();
         classNameId.name = className;
         classNameId.clId = clId;
         return ShortForm.C.createShortForm(this, classNameId);
     }
 
-    protected String getFieldShortForm(String className, long clId, String fieldName) {
+    public String getFieldShortForm(String className, long clId, String fieldName) {
         QualName qualNameId = qualNameTL.get();
         qualNameId.className.name = className;
         qualNameId.className.clId = clId;
@@ -279,7 +206,7 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         return ShortForm.F.createShortForm(this, qualNameId);
     }
 
-    protected String getThreadShortForm(String threadName) {
+    public String getThreadShortForm(String threadName) {
         // per thread store, thread implicit
         if (threadName == null) {
             return null;
@@ -287,7 +214,7 @@ public abstract class CSFVMATextStore extends CVMATextStore {
         return ShortForm.T.createShortForm(this, threadName);
     }
 
-    protected String getMethodShortForm(String className, long clId, String fieldName) {
+    public String getMethodShortForm(String className, long clId, String fieldName) {
         QualName qualNameId = qualNameTL.get();
         qualNameId.className.name = className;
         qualNameId.className.clId = clId;

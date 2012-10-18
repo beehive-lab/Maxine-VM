@@ -64,11 +64,11 @@ public class VMAVMLogger {
             super("VMAdvice");
         }
 
-        VMAVMLoggerTextStoreAdapter storeAdaptor;
+        VMAVMLoggerStoreAdapter storeAdaptor;
 
         @NEVER_INLINE
-        private VMAVMLoggerTextStoreAdapter storeAdaptor(int threadId) {
-            return (VMAVMLoggerTextStoreAdapter) storeAdaptor.getStoreAdaptorForThread(threadId);
+        private VMAVMLoggerStoreAdapter storeAdaptor(int threadId) {
+            return (VMAVMLoggerStoreAdapter) storeAdaptor.getStoreAdaptorForThread(threadId);
         }
 
 // START GENERATED INTERFACE
@@ -325,13 +325,13 @@ public class VMAVMLogger {
         }
 
         @Override
-        protected void traceAdviseBeforeCheckCast(int threadId, long time, int bci, ObjectID arg1, ClassID arg2, ObjectID arg3) {
-            storeAdaptor(threadId).adviseBeforeCheckCast(time, bci, arg1, arg2, arg3);
+        protected void traceAdviseBeforeCheckCast(int threadId, long time, int bci, ObjectID arg1, ClassID arg2) {
+            storeAdaptor(threadId).adviseBeforeCheckCast(time, bci, arg1, arg2);
         }
 
         @Override
-        protected void traceAdviseBeforeInstanceOf(int threadId, long time, int bci, ObjectID arg1, ClassID arg2, ObjectID arg3) {
-            storeAdaptor(threadId).adviseBeforeInstanceOf(time, bci, arg1, arg2, arg3);
+        protected void traceAdviseBeforeInstanceOf(int threadId, long time, int bci, ObjectID arg1, ClassID arg2) {
+            storeAdaptor(threadId).adviseBeforeInstanceOf(time, bci, arg1, arg2);
         }
 
         @Override
@@ -355,13 +355,13 @@ public class VMAVMLogger {
         }
 
         @Override
-        protected void traceAdviseAfterNew(int threadId, long time, int bci, ObjectID arg1, ClassID arg2, ObjectID arg3) {
-            storeAdaptor(threadId).adviseAfterNew(time, bci, arg1, arg2, arg3);
+        protected void traceAdviseAfterNew(int threadId, long time, int bci, ObjectID arg1, ClassID arg2) {
+            storeAdaptor(threadId).adviseAfterNew(time, bci, arg1, arg2);
         }
 
         @Override
-        protected void traceAdviseAfterNewArray(int threadId, long time, int bci, ObjectID arg1, ClassID arg2, ObjectID arg3, int length) {
-            storeAdaptor(threadId).adviseAfterNewArray(time, bci, arg1, arg2, arg3, length);
+        protected void traceAdviseAfterNewArray(int threadId, long time, int bci, ObjectID arg1, ClassID arg2, int length) {
+            storeAdaptor(threadId).adviseAfterNewArray(time, bci, arg1, arg2, length);
         }
 
         @Override
@@ -370,8 +370,8 @@ public class VMAVMLogger {
         }
 
         @Override
-        protected void traceUnseenObject(int threadId, long time, ObjectID arg1, ClassID arg2, ObjectID arg3) {
-            storeAdaptor(threadId).unseenObject(time, arg1, arg2, arg3);
+        protected void traceUnseenObject(int threadId, long time, ObjectID arg1, ClassID arg2) {
+            storeAdaptor(threadId).unseenObject(time, arg1, arg2);
         }
 
         @Override
@@ -434,16 +434,16 @@ public class VMAVMLogger {
         void adviseBeforeInvokeInterface(long time, int bci, ObjectID arg1, MethodID arg2);
         void adviseBeforeArrayLength(long time, int bci, ObjectID arg1, int arg2);
         void adviseBeforeThrow(long time, int bci, ObjectID arg1);
-        void adviseBeforeCheckCast(long time, int bci, ObjectID arg1, ClassID arg2, ObjectID arg3);
-        void adviseBeforeInstanceOf(long time, int bci, ObjectID arg1, ClassID arg2, ObjectID arg3);
+        void adviseBeforeCheckCast(long time, int bci, ObjectID arg1, ClassID arg2);
+        void adviseBeforeInstanceOf(long time, int bci, ObjectID arg1, ClassID arg2);
         void adviseBeforeMonitorEnter(long time, int bci, ObjectID arg1);
         void adviseBeforeMonitorExit(long time, int bci, ObjectID arg1);
         void adviseAfterLoad(long time, int bci, int arg1, ObjectID arg2);
         void adviseAfterArrayLoad(long time, int bci, ObjectID arg1, int arg2, ObjectID arg3);
-        void adviseAfterNew(long time, int bci, ObjectID arg1, ClassID arg2, ObjectID arg3);
-        void adviseAfterNewArray(long time, int bci, ObjectID arg1, ClassID arg2, ObjectID arg3, int length);
+        void adviseAfterNew(long time, int bci, ObjectID arg1, ClassID arg2);
+        void adviseAfterNewArray(long time, int bci, ObjectID arg1, ClassID arg2, int length);
         void adviseAfterMethodEntry(long time, int bci, ObjectID arg1, MethodID arg2);
-        void unseenObject(long time, ObjectID arg1, ClassID arg2, ObjectID arg3);
+        void unseenObject(long time, ObjectID arg1, ClassID arg2);
         void dead(long time, ObjectID arg1);
     }
 // END GENERATED INTERFACE
@@ -508,19 +508,16 @@ public class VMAVMLogger {
         protected abstract void traceAdviseAfterMethodEntry(int threadId, long arg1, int arg2, ObjectID arg3, MethodID arg4);
 
         @INLINE
-        public final void logAdviseAfterNew(long arg1, int arg2, ObjectID arg3, ClassID arg4, ObjectID arg5) {
-            log(Operation.AdviseAfterNew.ordinal(), longArg(arg1), intArg(arg2), arg3, arg4, arg5);
+        public final void logAdviseAfterNew(long arg1, int arg2, ObjectID arg3, ClassID arg4) {
+            log(Operation.AdviseAfterNew.ordinal(), longArg(arg1), intArg(arg2), arg3, arg4);
         }
-        protected abstract void traceAdviseAfterNew(int threadId, long arg1, int arg2, ObjectID arg3, ClassID arg4, ObjectID arg5);
+        protected abstract void traceAdviseAfterNew(int threadId, long arg1, int arg2, ObjectID arg3, ClassID arg4);
 
         @INLINE
-        public final void logAdviseAfterNewArray(long arg1, int arg2, ObjectID arg3, ClassID arg4, ObjectID arg5,
-                int arg6) {
-            log(Operation.AdviseAfterNewArray.ordinal(), longArg(arg1), intArg(arg2), arg3, arg4, arg5,
-                intArg(arg6));
+        public final void logAdviseAfterNewArray(long arg1, int arg2, ObjectID arg3, ClassID arg4, int arg5) {
+            log(Operation.AdviseAfterNewArray.ordinal(), longArg(arg1), intArg(arg2), arg3, arg4, intArg(arg5));
         }
-        protected abstract void traceAdviseAfterNewArray(int threadId, long arg1, int arg2, ObjectID arg3, ClassID arg4, ObjectID arg5,
-                int arg6);
+        protected abstract void traceAdviseAfterNewArray(int threadId, long arg1, int arg2, ObjectID arg3, ClassID arg4, int arg5);
 
         @INLINE
         public final void logAdviseBeforeArrayLength(long arg1, int arg2, ObjectID arg3, int arg4) {
@@ -559,10 +556,10 @@ public class VMAVMLogger {
         protected abstract void traceAdviseBeforeArrayStore(int threadId, long arg1, int arg2, ObjectID arg3, int arg4, long arg5);
 
         @INLINE
-        public final void logAdviseBeforeCheckCast(long arg1, int arg2, ObjectID arg3, ClassID arg4, ObjectID arg5) {
-            log(Operation.AdviseBeforeCheckCast.ordinal(), longArg(arg1), intArg(arg2), arg3, arg4, arg5);
+        public final void logAdviseBeforeCheckCast(long arg1, int arg2, ObjectID arg3, ClassID arg4) {
+            log(Operation.AdviseBeforeCheckCast.ordinal(), longArg(arg1), intArg(arg2), arg3, arg4);
         }
-        protected abstract void traceAdviseBeforeCheckCast(int threadId, long arg1, int arg2, ObjectID arg3, ClassID arg4, ObjectID arg5);
+        protected abstract void traceAdviseBeforeCheckCast(int threadId, long arg1, int arg2, ObjectID arg3, ClassID arg4);
 
         @INLINE
         public final void logAdviseBeforeConstLoad(long arg1, int arg2, ObjectID arg3) {
@@ -649,10 +646,10 @@ public class VMAVMLogger {
                 int arg6);
 
         @INLINE
-        public final void logAdviseBeforeInstanceOf(long arg1, int arg2, ObjectID arg3, ClassID arg4, ObjectID arg5) {
-            log(Operation.AdviseBeforeInstanceOf.ordinal(), longArg(arg1), intArg(arg2), arg3, arg4, arg5);
+        public final void logAdviseBeforeInstanceOf(long arg1, int arg2, ObjectID arg3, ClassID arg4) {
+            log(Operation.AdviseBeforeInstanceOf.ordinal(), longArg(arg1), intArg(arg2), arg3, arg4);
         }
-        protected abstract void traceAdviseBeforeInstanceOf(int threadId, long arg1, int arg2, ObjectID arg3, ClassID arg4, ObjectID arg5);
+        protected abstract void traceAdviseBeforeInstanceOf(int threadId, long arg1, int arg2, ObjectID arg3, ClassID arg4);
 
         @INLINE
         public final void logAdviseBeforeInvokeInterface(long arg1, int arg2, ObjectID arg3, MethodID arg4) {
@@ -853,10 +850,10 @@ public class VMAVMLogger {
         protected abstract void traceDead(int threadId, long arg1, ObjectID arg2);
 
         @INLINE
-        public final void logUnseenObject(long arg1, ObjectID arg2, ClassID arg3, ObjectID arg4) {
-            log(Operation.UnseenObject.ordinal(), longArg(arg1), arg2, arg3, arg4);
+        public final void logUnseenObject(long arg1, ObjectID arg2, ClassID arg3) {
+            log(Operation.UnseenObject.ordinal(), longArg(arg1), arg2, arg3);
         }
-        protected abstract void traceUnseenObject(int threadId, long arg1, ObjectID arg2, ClassID arg3, ObjectID arg4);
+        protected abstract void traceUnseenObject(int threadId, long arg1, ObjectID arg2, ClassID arg3);
 
         @Override
         protected void trace(Record r) {
@@ -879,11 +876,11 @@ public class VMAVMLogger {
                     break;
                 }
                 case 4: { //AdviseAfterNew
-                    traceAdviseAfterNew(threadId, toLong(r, 1), toInt(r, 2), toObjectID(r, 3), toClassID(r, 4), toObjectID(r, 5));
+                    traceAdviseAfterNew(threadId, toLong(r, 1), toInt(r, 2), toObjectID(r, 3), toClassID(r, 4));
                     break;
                 }
                 case 5: { //AdviseAfterNewArray
-                    traceAdviseAfterNewArray(threadId, toLong(r, 1), toInt(r, 2), toObjectID(r, 3), toClassID(r, 4), toObjectID(r, 5), toInt(r, 6));
+                    traceAdviseAfterNewArray(threadId, toLong(r, 1), toInt(r, 2), toObjectID(r, 3), toClassID(r, 4), toInt(r, 5));
                     break;
                 }
                 case 6: { //AdviseBeforeArrayLength
@@ -911,7 +908,7 @@ public class VMAVMLogger {
                     break;
                 }
                 case 12: { //AdviseBeforeCheckCast
-                    traceAdviseBeforeCheckCast(threadId, toLong(r, 1), toInt(r, 2), toObjectID(r, 3), toClassID(r, 4), toObjectID(r, 5));
+                    traceAdviseBeforeCheckCast(threadId, toLong(r, 1), toInt(r, 2), toObjectID(r, 3), toClassID(r, 4));
                     break;
                 }
                 case 13: { //AdviseBeforeConstLoad
@@ -967,7 +964,7 @@ public class VMAVMLogger {
                     break;
                 }
                 case 26: { //AdviseBeforeInstanceOf
-                    traceAdviseBeforeInstanceOf(threadId, toLong(r, 1), toInt(r, 2), toObjectID(r, 3), toClassID(r, 4), toObjectID(r, 5));
+                    traceAdviseBeforeInstanceOf(threadId, toLong(r, 1), toInt(r, 2), toObjectID(r, 3), toClassID(r, 4));
                     break;
                 }
                 case 27: { //AdviseBeforeInvokeInterface
@@ -1103,7 +1100,7 @@ public class VMAVMLogger {
                     break;
                 }
                 case 60: { //UnseenObject
-                    traceUnseenObject(threadId, toLong(r, 1), toObjectID(r, 2), toClassID(r, 3), toObjectID(r, 4));
+                    traceUnseenObject(threadId, toLong(r, 1), toObjectID(r, 2), toClassID(r, 3));
                     break;
                 }
             }

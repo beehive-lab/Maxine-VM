@@ -44,7 +44,7 @@ public class ClassID extends Word {
         super(value);
     }
 
-    public static ClassID create(ClassActor classActor) {
+    public static ClassID fromClassActor(ClassActor classActor) {
         return fromWord(Address.fromInt(classActor.id));
     }
 
@@ -57,5 +57,8 @@ public class ClassID extends Word {
         return ClassIDManager.toClassActor(classID.asAddress().toInt());
     }
 
+    public static int asInt(ClassID classID) {
+        return classID.asAddress().toInt();
+    }
 
 }

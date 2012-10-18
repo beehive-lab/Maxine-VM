@@ -45,7 +45,7 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
         long total;
 
         static ThreadCounts get() {
-            ThreadCounts threadCounts = threadMap[VmThread.current().id()];
+            ThreadCounts threadCounts = threadMap[VmThread.current().uuid];
             if (threadCounts.vmThread == null) {
                 threadCounts.vmThread = VmThread.current();
             }
