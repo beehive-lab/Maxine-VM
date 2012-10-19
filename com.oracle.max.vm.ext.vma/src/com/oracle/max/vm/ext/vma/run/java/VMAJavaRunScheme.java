@@ -170,7 +170,7 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             VMTI.registerEventHandler(new VMTIHandler());
             JVMTIException.registerVMAHAndler(this);
             String handlerClassName = getHandlerClassName();
-            if (System.getProperty(VMA_LOG_PROPERTY) != null) {
+            if (handlerClassName.contains("VMLog") || System.getProperty(VMA_LOG_PROPERTY) != null) {
                 vmaVMLog = new VMLogNativeThreadVariableVMA();
                 vmaVMLog.initialize(phase);
             }

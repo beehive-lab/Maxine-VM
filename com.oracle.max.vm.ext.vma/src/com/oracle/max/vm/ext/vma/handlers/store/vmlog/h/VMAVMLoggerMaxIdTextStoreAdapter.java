@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.vma.handlers.store.vmlog.h;
 
 import com.oracle.max.vm.ext.vma.handlers.objstate.*;
+import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.stdid.*;
 import com.oracle.max.vm.ext.vma.store.*;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.oracle.max.vm.ext.vma.store.txt.sbps.*;
@@ -62,7 +63,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
             // use the id as the short form
             final String shortThreadName = Integer.toString(vmThread.uuid);
             ThisSBPSRawVMATextStore threadStore = (ThisSBPSRawVMATextStore) super.newThread(shortThreadName);
-            threadStore.appendThreadShortForm(threadName, shortThreadName);
+            threadStore.addThreadShortFormDef(threadName, shortThreadName);
             return threadStore;
         }
 
@@ -125,9 +126,10 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
      * N.B. We are called with the receiver as the global store adapter, so must locate
      * per thread adapter in order to do the definition.
      *
-     * This may be overkill but, since class ids are typically 4 figures, owing to the number
+     * This might be overkill but, since class ids are typically 4 figures, owing to the number
      * of classes in the boot image, we could map them down to small integers, as most of the
-     * early ids are VM classes.
+     * early ids are VM classes. The problem is that it would require MethodID and FieldID to be
+     * hacked to use the short form of the class.
      */
 
     private static final int DEFINED_BIT = 0;
@@ -144,7 +146,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
     int checkDefineClass(ClassActor ca) {
         if (isUndefined(ca)) {
             VMAVMLoggerMaxIdTextStoreAdapter threadStoreAdapter = (VMAVMLoggerMaxIdTextStoreAdapter) getStoreAdaptorForThread(VmThread.current().uuid);
-            threadStoreAdapter.txtStore.appendClassShortForm(ca.name(), state.readId(ca.classLoader).toLong(), Integer.toString(ca.id));
+            threadStoreAdapter.txtStore.addClassShortFormDef(ca.name(), state.readId(ca.classLoader).toLong(), Integer.toString(ca.id));
             setDefined(ca);
         }
         return ca.id;
@@ -164,7 +166,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
         if (isUndefined(ma)) {
             int caId = checkDefineClass(ma.holder());
             VMAVMLoggerMaxIdTextStoreAdapter threadStoreAdapter = (VMAVMLoggerMaxIdTextStoreAdapter) getStoreAdaptorForThread(VmThread.current().uuid);
-            threadStoreAdapter.txtStore.appendMemberShortForm(key,
+            threadStoreAdapter.txtStore.addMemberShortFormDef(key,
                             Integer.toString(caId), name, Integer.toString(ma.memberIndex()));
             setDefined(ma);
         }

@@ -64,9 +64,9 @@ import com.sun.max.vm.thread.*;
  */
 public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
-    private static final String ADAPTER_PROPERTY = "max.vma.vmloghandler.maxid";
-    private static final Class DEFAULT_ADAPTER = VMAVMLoggerTextStoreAdapter.class;
-    private static final Class MAXIDS_ADAPTER = VMAVMLoggerMaxIdTextStoreAdapter.class;
+    public static final String STDID_PROPERTY = "max.vma.vmloghandler.stdid";
+    private static final Class DEFAULT_ADAPTER = VMAVMLoggerMaxIdTextStoreAdapter.class;
+    private static final String MAXIDS_ADAPTER_CLASSNAME = "com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.stdid.VMAVMLoggerTextStoreAdapter";
 
     /**
      * The custom {@link VMLog} used to store VMA advice records.
@@ -120,9 +120,9 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
             }
             try {
                 Class<?> adapterClass = DEFAULT_ADAPTER;
-                String adapterProperty = System.getProperty(ADAPTER_PROPERTY);
+                String adapterProperty = System.getProperty(STDID_PROPERTY);
                 if (adapterProperty != null) {
-                    adapterClass = MAXIDS_ADAPTER;
+                    adapterClass = Class.forName(MAXIDS_ADAPTER_CLASSNAME);
                 }
                 Constructor<?> cons = adapterClass.getConstructor(ObjectStateHandler.class);
                 storeAdaptor = (VMAVMLoggerStoreAdapter) cons.newInstance(state);
