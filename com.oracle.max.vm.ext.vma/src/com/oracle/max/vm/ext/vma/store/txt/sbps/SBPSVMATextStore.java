@@ -117,14 +117,14 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
             }
             if (type == ShortForm.C) {
                 className = (ClassNameId) key;
-                store.appendClassShortForm(className.name, className.clId, shortForm);
+                store.addClassShortFormDef(className.name, className.clId, shortForm);
             } else if (type == ShortForm.T) {
-                store.appendThreadShortForm((String) key, shortForm);
+                store.addThreadShortFormDef((String) key, shortForm);
             } else {
                 // F/M
                 QualName qualName = (QualName) key;
                 // guaranteed to have already created the short form for the class name
-                store.appendMemberShortForm(type == ShortForm.F ? VMATextStoreFormat.Key.FIELD_DEFINITION : VMATextStoreFormat.Key.METHOD_DEFINITION,
+                store.addMemberShortFormDef(type == ShortForm.F ? VMATextStoreFormat.Key.FIELD_DEFINITION : VMATextStoreFormat.Key.METHOD_DEFINITION,
                                 classShortForm, qualName.name, shortForm);
             }
         }

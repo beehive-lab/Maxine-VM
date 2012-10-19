@@ -20,10 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.store.vmlog.h;
+package com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.stdid;
 
 import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.oracle.max.vm.ext.vma.handlers.store.sync.h.*;
+import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
 import com.oracle.max.vm.ext.vma.store.*;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.sun.max.vm.*;

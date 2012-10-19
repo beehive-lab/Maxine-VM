@@ -277,7 +277,7 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
      * Short form support
      */
     @Override
-    public void appendClassShortForm(String name, long clId, String shortName) {
+    public void addClassShortFormDef(String name, long clId, String shortName) {
         sb.append(VMATextStoreFormat.Key.CLASS_DEFINITION.code);
         appendSpace();
         sb.append(name);
@@ -289,7 +289,7 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void appendThreadShortForm(String name, String shortName) {
+    public void addThreadShortFormDef(String name, String shortName) {
         sb.append(VMATextStoreFormat.Key.THREAD_DEFINITION.code);
         appendSpace();
         // quote because name may contain a space
@@ -302,7 +302,7 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void appendMemberShortForm(VMATextStoreFormat.Key key, String classShortForm, String name, String shortName) {
+    public void addMemberShortFormDef(VMATextStoreFormat.Key key, String classShortForm, String name, String shortName) {
         sb.append(key.code);
         appendSpace();
         sb.append(classShortForm);

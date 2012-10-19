@@ -27,11 +27,27 @@ package com.oracle.max.vm.ext.vma.store.txt;
  */
 public abstract class CVMATextStore extends VMATextStore {
 
-    public abstract void appendClassShortForm(String name, long clId, String shortName);
+    /**
+     * Add a definition of a short form of a class to the store.
+     * @param name full name of the class
+     * @param clId object id of the defining classloader
+     * @param shortName the short name to be used
+     */
+    public abstract void addClassShortFormDef(String name, long clId, String shortName);
 
-    public abstract void appendThreadShortForm(String name, String shortName);
+    /**
+     * Add a definition of a short form of a thread to the store.
+     * @param name full name of the thread (may contain spaces)
+     * @param shortName the short name to be used
+     */
+    public abstract void addThreadShortFormDef(String name, String shortName);
 
-    public abstract void appendMemberShortForm(VMATextStoreFormat.Key key, String classShortForm, String name, String shortName);
+    /**
+     * Add a definition of a short form of a field or method to the store.
+     * @param name name of the field or method
+     * @param shortName the short name to be used
+     */
+    public abstract void addMemberShortFormDef(VMATextStoreFormat.Key key, String classShortForm, String name, String shortName);
 
 
 }
