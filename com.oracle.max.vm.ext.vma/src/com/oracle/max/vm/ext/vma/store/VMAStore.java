@@ -45,7 +45,7 @@ import java.util.*;
  *
  *
  */
-public abstract class VMAStore implements VMAIdStore {
+public abstract class VMAStore implements VMAIdTextStore {
 
     public interface PerThreadStoreOwner {
         /**

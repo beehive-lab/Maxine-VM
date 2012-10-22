@@ -190,16 +190,15 @@ public class AdviceRecordHelper {
             case PutStaticLong:
             case PutStaticFloat:
             case PutStaticObject:
-                ps.print(getField(ar).getQualName());
-                break;
-
             case GetField:
             case PutFieldDouble:
             case PutFieldLong:
             case PutFieldFloat:
             case PutFieldObject:
                 ps.print(getField(ar).getQualName());
-                printValue(ps, rt, ar);
+                if (rt != GetField && rt != GetStatic) {
+                    printValue(ps, rt, ar);
+                }
                 break;
 
             case InvokeVirtual:

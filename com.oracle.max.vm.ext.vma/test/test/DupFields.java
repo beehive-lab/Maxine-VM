@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,35 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vma.tools.qa;
+package test;
 
 
-public abstract class MemberRecord extends NamedRecord {
-    private ClassRecord cr;
+public class DupFields {
 
-    protected MemberRecord(ClassRecord cr, String name) {
-        super(name);
-        this.cr = cr;
-    }
-
-    public void setClassRecord(ClassRecord cr) {
-        this.cr = cr;
-    }
-
-    public ClassRecord getClassRecord() {
-        return cr;
-    }
-
-    public String getQualName() {
-        String result = "";
-        if (cr != null) {
-            result = cr.name + ".";
+    private static class One {
+        private int a;
+        One(int a) {
+            this.a = a;
         }
-        return result + name;
     }
 
-    @Override
-    public String toString() {
-        return getQualName();
+    private static class Two {
+        private int a;
+        Two(int a) {
+            this.a = a;
+        }
     }
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+        new One(1);
+        new Two(2);
+
+    }
+
 }

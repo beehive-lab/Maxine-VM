@@ -43,7 +43,7 @@ public class VMAIdStoreGenerator {
                 generate(m);
             }
         }
-        AdviceGeneratorHelper.updateSource(VMAIdStore.class, null, false);
+        AdviceGeneratorHelper.updateSource(VMAIdTextStore.class, null, false);
 
     }
 
@@ -60,7 +60,7 @@ public class VMAIdStoreGenerator {
                     out.print("long time");
                     break;
 
-                case 1: // thread name
+                case 1: // thread name, drop
                     assert klass == String.class;
                     continue;
 
@@ -75,12 +75,16 @@ public class VMAIdStoreGenerator {
 
                 default:
                     if (klass == String.class) {
-                        out.print(", int " + (seenString ? (hasMethod(name) ? "methodId" : "fieldId") : "classId"));
                         if (!seenString) {
-                            // this is the class, always followed by clId which we drop
+                            // this is the class, always followed by clId both of which we drop
+                            if (isCastOrInstanceOrNewOrUnseen(name)) {
+                                out.print(", int classId");
+                            }
                             // Checkstyle: stop
                             i++;
                             // Checkstyle: resume
+                        } else {
+                            out.print(", int " + (hasMethod(name) ? "methodId" : "fieldId"));
                         }
                         seenString = true;
                     } else {
@@ -96,9 +100,13 @@ public class VMAIdStoreGenerator {
     }
 
     private static boolean include(String name) {
-        return name.contains("Invoke") || name.contains("MethodEntry") || name.contains("unseen") ||
-               name.contains("Static") || name.contains("Field") || name.contains("New") ||
-               name.contains("CheckCast") || name.contains("InstanceOf");
+        return name.contains("Invoke") || name.contains("MethodEntry") ||
+               name.contains("Static") || name.contains("Field")  ||
+               isCastOrInstanceOrNewOrUnseen(name);
+    }
+
+    private static boolean isCastOrInstanceOrNewOrUnseen(String name) {
+        return name.contains("CheckCast") || name.contains("InstanceOf") || name.contains("New") || name.contains("unseen");
     }
 
 }

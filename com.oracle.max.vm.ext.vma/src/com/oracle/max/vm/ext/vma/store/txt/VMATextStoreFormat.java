@@ -100,8 +100,12 @@ public abstract class VMATextStoreFormat {
     public static final int THREAD_INDEX = 2;
     public static final int BCI_INDEX = 3;
     public static final int OBJ_ID_INDEX = 4;
+    public static final int STATIC_FIELDNAME_INDEX = 4;
     public static final int STATIC_CLASSNAME_INDEX = 4;
     public static final int ID_CLASSNAME_INDEX = 5;
+    public static final int NEW_CLASSNAME_INDEX = 5;
+    public static final int ID_FIELDNAME_INDEX = 5;
+    public static final int ID_MEMBERNAME_INDEX = 5;
     public static final int ARRAY_INDEX_INDEX = 5;
     public static final int NEW_ARRAY_LENGTH_INDEX = 5;
     public static final int CONST_LOAD_VALUE_INDEX = 4;

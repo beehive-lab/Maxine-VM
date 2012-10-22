@@ -79,7 +79,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapterGenerator {
         if (type.equals("ObjectID")) {
             return arg + ".toLong()";
         } else if (type.equals("MethodID") || type.equals("FieldID")) {
-            return "MemberID.getClassIDAsInt(" + arg + "), MemberID.getMemberIDAsInt(" + arg + ")";
+            return "MemberID.getMemberIDAsInt(" + arg + ")";
         } else if (type.equals("ClassID")) {
             return "ClassID.asInt(" + arg + ")";
         } else {

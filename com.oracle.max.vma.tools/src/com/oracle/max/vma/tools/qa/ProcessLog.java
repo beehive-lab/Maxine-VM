@@ -143,6 +143,9 @@ public class ProcessLog {
 
     }
 
+    /**
+     * Uniquely identifies a class by its name and classloader id.
+     */
     static class ClassNameId implements Comparable {
 
         String className;
@@ -237,35 +240,26 @@ public class ProcessLog {
      * short form is created.
      */
 
-    /*
-     *  The key of the next two maps is the short form and the value (when defined) is the actual name.
+    /**
+     *  A map from the class short form to the full name and class loader id.
      */
     private Map<String, ClassNameId> classShortFormsToFull = new HashMap<String, ClassNameId>();
+    /**
+     * A map from the thread short form to the full name.
+     */
     private Map<String, String> threadShortFormsToFull = new HashMap<String, String>();
 
-    private Map<String, ClassNameId> classForwardsMap = new HashMap<String, ClassNameId>();
-    private static final String CLASS_FORWARD_PREFIX = "ClassForward:";
+    /**
+     * Records the forward references to class short forms, allowing a placeholder
+     * {@link ClassRecord} to be created using a fake {@link ClassNameId} which
+     * can be fixed up later when the definition is encountered.
+     */
+    private Map<String, ClassNameId> classForwardRefs = new HashMap<String, ClassNameId>();
+    private static final String FORWARD_PREFIX = "Forward:";
 
     /*
-     * Life is more complicated for fields/methods so we have a generic handler class.
+     * Fields/methods share common behavior so we have a generic handler class.
      *
-     * Fields and methods are more complicated because they are only unique when qualified
-     * with a class, and it is possible that both the field and the class are forward references.
-     * So the key of the forward references map is C.X, where C is the class (and may itself be
-     * a forward reference) and X is the field or method short name. So there are three possibilities:
-     * 1) C and X are not forward references
-     * 2) C is a forward reference and X is not
-     * 3) X is a forward reference and C is not
-     *
-     * The case where C is a forward reference is tricky because at the time the field/method
-     * is defined, C may or may not have been defined in the interim. If not, there is no problem
-     * as calling getClassRecord will get the same C value as when C.X was originally
-     * generated. However, if C has been defined in the interim, calling getClassRecord will
-     * get the resolved name, which means that the lookup in the field/method forwards map
-     * will fail. But we can't blindly use the forward name for the class as it may have been
-     * defined initially (cases 1 and 3). The simplest solution for this is to fixup the
-     * field/method forward maps when a class definition occurs, so that it is always safe to
-     * get C by calling getClassRecord.
      */
     private interface Factory<T> {
         T create(ClassRecord cr, String name);
@@ -285,23 +279,33 @@ public class ProcessLog {
         }
     }
 
+    private static class QualName {
+        ClassRecord cr;
+        String name;
+        QualName(ClassRecord cr, String name) {
+            this.cr = cr;
+            this.name = name;
+        }
+    }
+
+
     private class ShortFormHandler<T extends MemberRecord> {
-        /*
-         * In the following, given C.M, then C, M or both could be defined or forward ref
-         */
         /**
-         * The key is C.M and the value (when defined) is the actual name.
+         * The key is the short form and the value (when defined) is the actual name.
          */
-        private Map<String, String> shortFormToFull = new HashMap<String, String>();
+        private Map<String, QualName> shortFormToFull = new HashMap<String, QualName>();
         /**
-         * Set of forward references, key/value is C.M.
+         * Set of forward references.
           */
-        private Map<String, String> forwardRefs = new HashMap<String, String>();
+        private Set<String> forwardRefs = new HashSet<String>();
         /**
-         * Key is C.M, value is an instance of T, but the qualified name may
-         * contain a forward reference and need fixing up.
+         * Key is short name (which is unique, unlike the member name); value is an instance of T,
+         * but {@code classRecord} field may be a forward ref also if the class has not yet been defined.
          */
         private Map<String, T> kindMap = new HashMap<String, T>();
+        /**
+         * factory for creating instances of {@link T}.
+         */
         private final Factory<T> factory;
 
         ShortFormHandler(String kind, Factory<T> factory) {
@@ -311,106 +315,49 @@ public class ProcessLog {
         /**
          * Gets an instance of T for short form arguments.
          * If these short forms have already been defined then the result
-         * will not need fixing up later. Note that either the class or the member name
-         * or both may need fixing up.
-         * @param shortClassName
-         * @param shortKindName
+         * will not need fixing up later.
+         * @param shortName
          */
-        T getRecord(String shortClassName, String shortKindName) {
-            ClassRecord cr = getClassRecord(shortClassName);
-            String qualName = makeQualName(cr.name, shortKindName);
-            String fieldName = shortFormToFull.get(qualName);
-            if (fieldName == null) {
+        T getRecord(String shortName) {
+            QualName qualName = shortFormToFull.get(shortName);
+            if (qualName == null) {
                 // forward reference
-                fieldName = shortKindName;
-                if (forwardRefs.get(qualName) == null) {
+                if (!forwardRefs.contains(shortName)) {
                     // new forward reference
-                    forwardRefs.put(qualName, qualName);
+                    forwardRefs.add(shortName);
                 }
-            } else {
-                qualName = cr.name + "." + fieldName;
             }
-            T kindRecord = kindMap.get(qualName);
+            T kindRecord = kindMap.get(shortName);
             if (kindRecord == null) {
-                kindRecord = factory.create(cr, fieldName);
-                kindMap.put(qualName, kindRecord);
+                kindRecord = factory.create(qualName == null ? null : qualName.cr, qualName == null ? null : qualName.name);
+                kindMap.put(shortName, kindRecord);
             }
             return kindRecord;
         }
 
         /**
          * Definition of a member (field/method).
+         * N.B. The definition uses a class short form which may not yet be defined.
          */
         void define() {
             String classShortForm = recordParts[DEFINE_ARG_INDEX];
-            ClassRecord cr = getClassRecord(classShortForm);
+            ClassRecord cr = getClassRecord(classShortForm); // may be forward
             String definition = recordParts[DEFINE_ARG_INDEX + 1];
-            String qualName = makeQualName(cr.name, recordParts[DEFINE_ARG_INDEX + 2]);
-            // It would be nice if this put was definitive but since cr.name may still be forward it isn't.
-            shortFormToFull.put(qualName, definition);
-            // Note that if cr originally contained a forward reference but has
-            // since been defined, the forwardRefs map will have been fixed up
+            String shortName = recordParts[DEFINE_ARG_INDEX + 2];
+            shortFormToFull.put(shortName, new QualName(cr, definition));
             T t;
-            if (forwardRefs.get(qualName) != null) {
-                t = kindMap.remove(qualName);
+            if (forwardRefs.contains(shortName)) {
+                t = kindMap.remove(shortName);
                 assert t != null;
                 t.setName(definition);
+                t.setClassRecord(cr);
             } else {
                 // no forward refs to this member
-                t = factory.create(getClassRecord(classShortForm), definition);
+                t = factory.create(cr, definition);
             }
-            kindMap.put(t.getQualName(), t);
+            kindMap.put(shortName, t);
         }
 
-        void fixup(String classShortForm, String classForwardName) {
-            fixupMap(shortFormToFull, classShortForm, classForwardName);
-            fixupMap(forwardRefs, classShortForm, classForwardName);
-            ArrayList<AbstractMap.SimpleEntry<String, T>> toDo = new ArrayList<AbstractMap.SimpleEntry<String, T>>();
-            Iterator<String> iter = kindMap.keySet().iterator();
-            while (iter.hasNext())  {
-                String key = iter.next();
-                String[] qualNamePair = separate(key);
-                if (qualNamePair[0].equals(classForwardName)) {
-                    qualNamePair[0] = classShortFormsToFull.get(classShortForm).className;
-                    assert qualNamePair[0] != null;
-                    T def = kindMap.get(key);
-                    iter.remove();
-                    toDo.add(new AbstractMap.SimpleEntry<String, T>(makeQualName(qualNamePair[0], qualNamePair[1]), def));
-                }
-            }
-            for (AbstractMap.SimpleEntry<String, T> putPair : toDo) {
-                kindMap.put(putPair.getKey(), putPair.getValue());
-            }
-        }
-
-        private void fixupMap(Map<String, String> map, String classShortForm, String classForwardName) {
-            ArrayList<AbstractMap.SimpleEntry<String, String>> toDo = new ArrayList<AbstractMap.SimpleEntry<String, String>>();
-            Iterator<String> iter = map.keySet().iterator();
-            while (iter.hasNext()) {
-                String key = iter.next();
-                String[] qualNamePair = separate(key);
-                if (qualNamePair[0].equals(classForwardName)) {
-                    qualNamePair[0] = classShortFormsToFull.get(classShortForm).className;
-                    assert qualNamePair[0] != null;
-                    String def = map.get(key);
-                    iter.remove();
-                    toDo.add(new AbstractMap.SimpleEntry<String, String>(makeQualName(qualNamePair[0], qualNamePair[1]), def));
-                }
-            }
-            for (AbstractMap.SimpleEntry<String, String> putPair : toDo) {
-                map.put(putPair.getKey(), putPair.getValue());
-            }
-        }
-
-        private String makeQualName(String a, String b) {
-            return a + "." + b;
-        }
-
-        private String[] separate(String qualName) {
-            int index = qualName.lastIndexOf('.');
-            assert index > 0;
-            return new String[] {qualName.substring(0, index), qualName.substring(index + 1)};
-        }
     }
 
     private ShortFormHandler<FieldRecord> fieldShortFormHandler = new ShortFormHandler<FieldRecord>("Field", new FieldRecordFactory());
@@ -709,14 +656,14 @@ public class ProcessLog {
         ClassNameId classNameId = classShortFormsToFull.get(shortClassName);
         if (classNameId == null) {
             // forward reference
-            classNameId = classForwardsMap.get(shortClassName);
+            classNameId = classForwardRefs.get(shortClassName);
             if (classNameId == null) {
                 // new forward reference
-                String forwardName = CLASS_FORWARD_PREFIX + shortClassName;
+                String forwardName = FORWARD_PREFIX + shortClassName;
                 // the class definition will contain the classloader id;
                 // at this stage we create a don't care value, as it isn't used
                 classNameId = new ClassNameId(forwardName, ObjectRecord.getMapId("0", allocationEpoch.epoch));
-                classForwardsMap.put(shortClassName, classNameId);
+                classForwardRefs.put(shortClassName, classNameId);
             }
         }
         // Have we created a ClassRecord for this class?
@@ -733,23 +680,19 @@ public class ProcessLog {
 
     /**
      * Sets (and returns) {@link #fieldRecord} handling forward references.
-     *
-     * @param shortClassName
      * @param shortFieldName
      */
-    private FieldRecord getFieldRecord(String shortClassName, String shortFieldName) {
-        fieldRecord = fieldShortFormHandler.getRecord(shortClassName, shortFieldName);
+    private FieldRecord getFieldRecord(String shortFieldName) {
+        fieldRecord = fieldShortFormHandler.getRecord(shortFieldName);
         return fieldRecord;
     }
 
     /**
      * Sets (and returns) {@link #methodRecord} handling forward references.
-     *
-     * @param shortClassName
      * @param shortMethodName
      */
-    private MethodRecord getMethodRecord(String shortClassName, String shortMethodName) {
-        methodRecord = methodShortFormHandler.getRecord(shortClassName, shortMethodName);
+    private MethodRecord getMethodRecord(String shortMethodName) {
+        methodRecord = methodShortFormHandler.getRecord(shortMethodName);
         return methodRecord;
     }
 
@@ -761,7 +704,7 @@ public class ProcessLog {
         ClassNameId classNameId = new ClassNameId(name, getClassLoaderIdAsString(classLoaderId));
         classShortFormsToFull.put(shortForm, classNameId);
         // fix up forward reference
-        ClassNameId forwardName = classForwardsMap.get(shortForm);
+        ClassNameId forwardName = classForwardRefs.get(shortForm);
         if (forwardName != null) {
             // find class record in the classMap under the forward name, remove it,
             // patch name/id and add back under new name.
@@ -769,8 +712,6 @@ public class ProcessLog {
             assert cr != null;
             cr.setName(name, getClassLoaderIdAsString(classLoaderId));
             classMap.put(classNameId, cr);
-            fieldShortFormHandler.fixup(shortForm, forwardName.className);
-            methodShortFormHandler.fixup(shortForm, forwardName.className);
         }
     }
 
@@ -924,7 +865,7 @@ public class ProcessLog {
             case ADVISE_AFTER_NEW_ARRAY:
             case ADVISE_AFTER_NEW: {
                 ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.AFTER, bci);
-                getClassRecord(recordParts[ID_CLASSNAME_INDEX]);
+                getClassRecord(recordParts[NEW_CLASSNAME_INDEX]);
                 objectRecord = new ObjectRecord(objIdArg, allocationEpoch.epoch, classRecord, threadRecord, objectAdviceRecord);
                 classRecord.addObject(objectRecord);
                 objectsPut(objIdArg, objectRecord);
@@ -1015,7 +956,7 @@ public class ProcessLog {
 
 
             case ADVISE_BEFORE_GET_STATIC: {
-                getFieldRecord(arg(STATIC_CLASSNAME_INDEX), arg(STATIC_CLASSNAME_INDEX + 1));
+                getFieldRecord(arg(STATIC_FIELDNAME_INDEX));
                 ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeAndThread(GetStatic, AdviceMode.BEFORE, bci);
                 objectFieldAdviceRecord.value = classRecord;
                 objectFieldAdviceRecord.field = fieldRecord;
@@ -1025,8 +966,8 @@ public class ProcessLog {
             }
 
             case ADVISE_BEFORE_PUT_STATIC: {
-                getFieldRecord(arg(STATIC_CLASSNAME_INDEX), arg(STATIC_CLASSNAME_INDEX + 1));
-                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeThreadValue("PutStatic", AdviceMode.BEFORE, arg(STATIC_CLASSNAME_INDEX + 2), arg(STATIC_CLASSNAME_INDEX + 3));
+                getFieldRecord(arg(STATIC_FIELDNAME_INDEX));
+                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeThreadValue("PutStatic", AdviceMode.BEFORE, arg(STATIC_CLASSNAME_INDEX + 1), arg(STATIC_CLASSNAME_INDEX + 2));
                 objectFieldAdviceRecord.value = classRecord;
                 objectFieldAdviceRecord.field = fieldRecord;
                 classRecord.addTraceElement(objectFieldAdviceRecord);
@@ -1036,7 +977,7 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_GET_FIELD: {
                 objectRecord = getTraceRecord(objIdArg);
-                getFieldRecord(arg(ID_CLASSNAME_INDEX), arg(ID_CLASSNAME_INDEX + 1));
+                getFieldRecord(arg(ID_FIELDNAME_INDEX));
                 ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeAndThread(GetField, AdviceMode.BEFORE, bci);
                 objectFieldAdviceRecord.value = objectRecord;
                 objectFieldAdviceRecord.field = fieldRecord;
@@ -1047,8 +988,8 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_PUT_FIELD: {
                 objectRecord = getTraceRecord(objIdArg);
-                getFieldRecord(arg(ID_CLASSNAME_INDEX), arg(ID_CLASSNAME_INDEX + 1));
-                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeThreadValue("PutField", AdviceMode.BEFORE, arg(ID_CLASSNAME_INDEX + 2), arg(ID_CLASSNAME_INDEX + 3));
+                getFieldRecord(arg(ID_FIELDNAME_INDEX));
+                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeThreadValue("PutField", AdviceMode.BEFORE, arg(ID_FIELDNAME_INDEX + 1), arg(ID_FIELDNAME_INDEX + 2));
                 objectFieldAdviceRecord.value = objectRecord;
                 objectFieldAdviceRecord.field = fieldRecord;
                 objectRecord.addTraceElement(objectFieldAdviceRecord);
@@ -1169,7 +1110,7 @@ public class ProcessLog {
                     adviceModeInt = AdviceMode.AFTER.ordinal();
                 }
                 objectRecord = getTraceRecord(objIdArg);
-                getMethodRecord(arg(ID_CLASSNAME_INDEX), arg(ID_CLASSNAME_INDEX + 1));
+                getMethodRecord(arg(ID_MEMBERNAME_INDEX));
                 ObjectMethodAdviceRecord objectAdviceRecord = (ObjectMethodAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.values()[adviceModeInt], bci);
                 if (key == Key.ADVISE_BEFORE_INVOKE_STATIC /*|| key == Key.ADVISE_AFTER_INVOKE_STATIC*/) {
                     objectAdviceRecord.value = classRecord;
