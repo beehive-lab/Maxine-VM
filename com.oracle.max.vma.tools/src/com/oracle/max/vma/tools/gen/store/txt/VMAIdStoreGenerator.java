@@ -20,18 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vma.tools.gen.store;
+package com.oracle.max.vma.tools.gen.store.txt;
 
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.lang.reflect.*;
 
-import com.oracle.max.vm.ext.vma.store.*;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 import com.sun.max.annotate.*;
 
-
+/**
+ * Generates a variant of {@link VMATextStore} where class/field/method names are represented by small integers.
+ * Also assume per-thread stores so removes the thread name argument.
+ */
 @HOSTED_ONLY
 public class VMAIdStoreGenerator {
     public static void main(String[] args) throws Exception {
@@ -43,7 +45,7 @@ public class VMAIdStoreGenerator {
                 generate(m);
             }
         }
-        AdviceGeneratorHelper.updateSource(VMAIdTextStore.class, null, false);
+        AdviceGeneratorHelper.updateSource(VMAIdTextStoreIntf.class, null, false);
 
     }
 
@@ -51,7 +53,6 @@ public class VMAIdStoreGenerator {
         String name = m.getName();
         out.printf("%svoid %s(", INDENT4, name);
         Class<?>[] params = m.getParameterTypes();
-        boolean seenString = false;
         for (int i = 0; i < params.length; i++) {
             Class<?> klass = params[i];
             switch (i) {
@@ -65,28 +66,17 @@ public class VMAIdStoreGenerator {
                     continue;
 
                 case 2: // bci
-                    if (name.equals("unseenObject")) {
-                        out.print(", " + klass.getSimpleName() + " objId");
-                    } else {
-                        assert klass == int.class;
-                        out.print(", int bci");
-                    }
+                    assert klass == int.class;
+                    out.print(", int bci");
                     break;
 
                 default:
                     if (klass == String.class) {
-                        if (!seenString) {
-                            // this is the class, always followed by clId both of which we drop
-                            if (isCastOrInstanceOrNewOrUnseen(name)) {
-                                out.print(", int classId");
-                            }
-                            // Checkstyle: stop
-                            i++;
-                            // Checkstyle: resume
+                        if (isCastOrInstanceOrNewOrUnseen(name)) {
+                            out.print(", int classId");
                         } else {
                             out.print(", int " + (hasMethod(name) ? "methodId" : "fieldId"));
                         }
-                        seenString = true;
                     } else {
                         out.print(", " + klass.getSimpleName() + " arg" + (i + 1));
                     }

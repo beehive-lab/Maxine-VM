@@ -26,9 +26,13 @@ import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.store.*;
 
 /**
- * An interface that is derived from {@link VMAdviceHandler} but is suitable for persistent textual storage. I.e., object
- * instances are represented by unique identifiers, class instances by their name and classloader instance id, method by
+ * An interface that is derived from {@link VMAdviceHandler} but is suitable for persistent storage. I.e., object
+ * instances are represented by unique identifiers, class instances by their name and class loader instance id, method by
  * name, etc. This class is, therefore, completely VM independent.
+ *
+ * Thread, class, field  and methods are represented by <i>short forms</i> that must be declared to the store
+ * implementation by, e.g. {@link #addClassShortFormDef} prior to use. No interpretation is made of the
+ * value of the short form.
  *
  * Time is explicitly represented by the first argument to the advice store methods.
  *
@@ -37,141 +41,163 @@ import com.oracle.max.vm.ext.vma.store.*;
  * An implementation must be thread-safe either by design or by appropriate synchronization.
  *
  */
-public abstract class VMATextStore extends VMAStore {
+public interface VMATextStore extends VMAStore {
+
+    /**
+     * Add a definition of a short form of a class to the store.
+     * @param name full name of the class
+     * @param clId object id of the defining class loader
+     * @param shortName the short name to be used
+     */
+    void addClassShortFormDef(String name, long clId, String shortName);
+
+    /**
+     * Add a definition of a short form of a thread to the store.
+     * @param name full name of the thread (may contain spaces)
+     * @param shortName the short name to be used
+     */
+    void addThreadShortFormDef(String name, String shortName);
+
+    /**
+     * Add a definition of a short form of a field or method to the store.
+     * @param name name of the field or method
+     * @param shortName the short name to be used
+     */
+    void addMemberShortFormDef(VMATextStoreFormat.Key key, String classShortForm, String name, String shortName);
 
     /**
      * Record an object that was not seen by the {@link VMAdviceHandler#adviseNew} methods but was used in an operation.
      *
      * @param time
      * @param threadName irrelevant but included for consistency with other methods
+     * @param bci for consistency with similar methods; ignored
      * @param objId
-     * @param className
-     * @param clId
+     * @param shortClassName
      */
-    public abstract void unseenObject(long time, String threadName, long objId, String className, long clId);
+    void unseenObject(long time, String threadName, int bci, long objId, String shortClassName);
 
 // START GENERATED CODE
 // EDIT AND RUN VMATextStoreGenerator.main() TO MODIFY
 
-    public abstract void adviseBeforeGC(long time, String threadName);
+    void adviseBeforeGC(long time, String threadName);
 
-    public abstract void adviseAfterGC(long time, String threadName);
+    void adviseAfterGC(long time, String threadName);
 
-    public abstract void adviseBeforeThreadStarting(long time, String threadName);
+    void adviseBeforeThreadStarting(long time, String threadName);
 
-    public abstract void adviseBeforeThreadTerminating(long time, String threadName);
+    void adviseBeforeThreadTerminating(long time, String threadName);
 
-    public abstract void adviseBeforeReturnByThrow(long time, String threadName, int bci, long objId, int poppedFrames);
+    void adviseBeforeReturnByThrow(long time, String threadName, int bci, long objId, int poppedFrames);
 
-    public abstract void adviseAfterNew(long time, String threadName, int bci, long objId, String className, long clId);
+    void adviseBeforeConstLoad(long time, String threadName, int bci, long value);
 
-    public abstract void adviseAfterNewArray(long time, String threadName, int bci, long objId, String className, long clId, int length);
+    void adviseBeforeConstLoadObject(long time, String threadName, int bci, long value);
 
-    public abstract void adviseAfterMultiNewArray(long time, String threadName, int bci, long objId, String className, long clId, int length);
+    void adviseBeforeConstLoad(long time, String threadName, int bci, float value);
 
-    public abstract void adviseBeforeConstLoad(long time, String threadName, int bci, float value);
+    void adviseBeforeConstLoad(long time, String threadName, int bci, double value);
 
-    public abstract void adviseBeforeConstLoad(long time, String threadName, int bci, double value);
+    void adviseBeforeLoad(long time, String threadName, int bci, int arg1);
 
-    public abstract void adviseBeforeConstLoadObject(long time, String threadName, int bci, long value);
+    void adviseBeforeArrayLoad(long time, String threadName, int bci, long objId, int index);
 
-    public abstract void adviseBeforeConstLoad(long time, String threadName, int bci, long value);
+    void adviseBeforeStore(long time, String threadName, int bci, int index, long value);
 
-    public abstract void adviseBeforeLoad(long time, String threadName, int bci, int arg1);
+    void adviseBeforeStore(long time, String threadName, int bci, int index, float value);
 
-    public abstract void adviseBeforeArrayLoad(long time, String threadName, int bci, long objId, int index);
+    void adviseBeforeStore(long time, String threadName, int bci, int index, double value);
 
-    public abstract void adviseBeforeStoreObject(long time, String threadName, int bci, int index, long value);
+    void adviseBeforeStoreObject(long time, String threadName, int bci, int index, long value);
 
-    public abstract void adviseBeforeStore(long time, String threadName, int bci, int index, float value);
+    void adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, float value);
 
-    public abstract void adviseBeforeStore(long time, String threadName, int bci, int index, double value);
+    void adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, long value);
 
-    public abstract void adviseBeforeStore(long time, String threadName, int bci, int index, long value);
+    void adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, double value);
 
-    public abstract void adviseBeforeArrayStoreObject(long time, String threadName, int bci, long objId, int index, long value);
+    void adviseBeforeArrayStoreObject(long time, String threadName, int bci, long objId, int index, long value);
 
-    public abstract void adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, float value);
+    void adviseBeforeStackAdjust(long time, String threadName, int bci, int arg1);
 
-    public abstract void adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, long value);
+    void adviseBeforeOperation(long time, String threadName, int bci, int arg1, long arg2, long arg3);
 
-    public abstract void adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, double value);
+    void adviseBeforeOperation(long time, String threadName, int bci, int arg1, float arg2, float arg3);
 
-    public abstract void adviseBeforeStackAdjust(long time, String threadName, int bci, int arg1);
+    void adviseBeforeOperation(long time, String threadName, int bci, int arg1, double arg2, double arg3);
 
-    public abstract void adviseBeforeOperation(long time, String threadName, int bci, int arg1, double arg2, double arg3);
+    void adviseBeforeConversion(long time, String threadName, int bci, int arg1, float arg2);
 
-    public abstract void adviseBeforeOperation(long time, String threadName, int bci, int arg1, long arg2, long arg3);
+    void adviseBeforeConversion(long time, String threadName, int bci, int arg1, long arg2);
 
-    public abstract void adviseBeforeOperation(long time, String threadName, int bci, int arg1, float arg2, float arg3);
+    void adviseBeforeConversion(long time, String threadName, int bci, int arg1, double arg2);
 
-    public abstract void adviseBeforeConversion(long time, String threadName, int bci, int arg1, long arg2);
+    void adviseBeforeIf(long time, String threadName, int bci, int opcode, int op1, int op2, int targetBci);
 
-    public abstract void adviseBeforeConversion(long time, String threadName, int bci, int arg1, float arg2);
+    void adviseBeforeIfObject(long time, String threadName, int bci, int opcode, long objId1, long objId2, int targetBci);
 
-    public abstract void adviseBeforeConversion(long time, String threadName, int bci, int arg1, double arg2);
+    void adviseBeforeGoto(long time, String threadName, int bci, int arg1);
 
-    public abstract void adviseBeforeIf(long time, String threadName, int bci, int opcode, int op1, int op2, int targetBci);
+    void adviseBeforeReturnObject(long time, String threadName, int bci, long value);
 
-    public abstract void adviseBeforeIfObject(long time, String threadName, int bci, int opcode, long objId1, long objId2, int targetBci);
+    void adviseBeforeReturn(long time, String threadName, int bci, long value);
 
-    public abstract void adviseBeforeGoto(long time, String threadName, int bci, int arg1);
+    void adviseBeforeReturn(long time, String threadName, int bci, float value);
 
-    public abstract void adviseBeforeReturnObject(long time, String threadName, int bci, long value);
+    void adviseBeforeReturn(long time, String threadName, int bci, double value);
 
-    public abstract void adviseBeforeReturn(long time, String threadName, int bci, long value);
+    void adviseBeforeReturn(long time, String threadName, int bci);
 
-    public abstract void adviseBeforeReturn(long time, String threadName, int bci, float value);
+    void adviseBeforeGetStatic(long time, String threadName, int bci, String shortFieldName);
 
-    public abstract void adviseBeforeReturn(long time, String threadName, int bci, double value);
+    void adviseBeforePutStaticObject(long time, String threadName, int bci, String shortFieldName, long value);
 
-    public abstract void adviseBeforeReturn(long time, String threadName, int bci);
+    void adviseBeforePutStatic(long time, String threadName, int bci, String shortFieldName, double value);
 
-    public abstract void adviseBeforeGetStatic(long time, String threadName, int bci, String className, long clId, String fieldName);
+    void adviseBeforePutStatic(long time, String threadName, int bci, String shortFieldName, long value);
 
-    public abstract void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String fieldName, float value);
+    void adviseBeforePutStatic(long time, String threadName, int bci, String shortFieldName, float value);
 
-    public abstract void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String fieldName, double value);
+    void adviseBeforeGetField(long time, String threadName, int bci, long objId, String shortFieldName);
 
-    public abstract void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String fieldName, long value);
+    void adviseBeforePutFieldObject(long time, String threadName, int bci, long objId, String shortFieldName, long value);
 
-    public abstract void adviseBeforePutStaticObject(long time, String threadName, int bci, String className, long clId, String fieldName, long value);
+    void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, double value);
 
-    public abstract void adviseBeforeGetField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName);
+    void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, long value);
 
-    public abstract void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, float value);
+    void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, float value);
 
-    public abstract void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, long value);
+    void adviseBeforeInvokeVirtual(long time, String threadName, int bci, long objId, String shortMethodName);
 
-    public abstract void adviseBeforePutFieldObject(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, long value);
+    void adviseBeforeInvokeSpecial(long time, String threadName, int bci, long objId, String shortMethodName);
 
-    public abstract void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, double value);
+    void adviseBeforeInvokeStatic(long time, String threadName, int bci, long objId, String shortMethodName);
 
-    public abstract void adviseBeforeInvokeVirtual(long time, String threadName, int bci, long objId, String className, long clId, String methodName);
+    void adviseBeforeInvokeInterface(long time, String threadName, int bci, long objId, String shortMethodName);
 
-    public abstract void adviseBeforeInvokeSpecial(long time, String threadName, int bci, long objId, String className, long clId, String methodName);
+    void adviseBeforeArrayLength(long time, String threadName, int bci, long objId, int length);
 
-    public abstract void adviseBeforeInvokeStatic(long time, String threadName, int bci, long objId, String className, long clId, String methodName);
+    void adviseBeforeThrow(long time, String threadName, int bci, long objId);
 
-    public abstract void adviseBeforeInvokeInterface(long time, String threadName, int bci, long objId, String className, long clId, String methodName);
+    void adviseBeforeCheckCast(long time, String threadName, int bci, long objId, String shortClassName);
 
-    public abstract void adviseBeforeArrayLength(long time, String threadName, int bci, long objId, int length);
+    void adviseBeforeInstanceOf(long time, String threadName, int bci, long objId, String shortClassName);
 
-    public abstract void adviseBeforeThrow(long time, String threadName, int bci, long objId);
+    void adviseBeforeMonitorEnter(long time, String threadName, int bci, long objId);
 
-    public abstract void adviseBeforeCheckCast(long time, String threadName, int bci, long objId, String className, long clId);
+    void adviseBeforeMonitorExit(long time, String threadName, int bci, long objId);
 
-    public abstract void adviseBeforeInstanceOf(long time, String threadName, int bci, long objId, String className, long clId);
+    void adviseAfterLoadObject(long time, String threadName, int bci, int index, long value);
 
-    public abstract void adviseBeforeMonitorEnter(long time, String threadName, int bci, long objId);
+    void adviseAfterArrayLoadObject(long time, String threadName, int bci, long objId, int index, long value);
 
-    public abstract void adviseBeforeMonitorExit(long time, String threadName, int bci, long objId);
+    void adviseAfterNew(long time, String threadName, int bci, long objId, String shortClassName);
 
-    public abstract void adviseAfterLoadObject(long time, String threadName, int bci, int index, long value);
+    void adviseAfterNewArray(long time, String threadName, int bci, long objId, String shortClassName, int length);
 
-    public abstract void adviseAfterArrayLoadObject(long time, String threadName, int bci, long objId, int index, long value);
+    void adviseAfterMultiNewArray(long time, String threadName, int bci, long objId, String shortClassName, int length);
 
-    public abstract void adviseAfterMethodEntry(long time, String threadName, int bci, long objId, String className, long clId, String methodName);
+    void adviseAfterMethodEntry(long time, String threadName, int bci, long objId, String shortMethodName);
 
 // END GENERATED CODE
 }

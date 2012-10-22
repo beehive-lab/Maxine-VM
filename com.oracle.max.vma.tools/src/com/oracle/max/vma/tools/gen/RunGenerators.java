@@ -42,7 +42,7 @@ public class RunGenerators {
         NullVMAdviceHandlerGenerator.class,
         ObjectStateHandlerAdaptorGenerator.class,
         VMATextStoreGenerator.class,
-        CVMATextStoreGenerator.class,
+        VMATextStoreFormatGenerator.class,
         SBPSVMATextStoreGenerator.class,
         VMAdviceHandlerTextStoreAdaptorGenerator.class,
         SyncStoreVMAdviceHandlerGenerator.class,

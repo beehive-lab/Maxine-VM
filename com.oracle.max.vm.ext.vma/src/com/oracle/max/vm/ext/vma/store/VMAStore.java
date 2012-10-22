@@ -45,7 +45,7 @@ import java.util.*;
  *
  *
  */
-public abstract class VMAStore implements VMAIdTextStore {
+public interface VMAStore {
 
     public interface PerThreadStoreOwner {
         /**
@@ -62,12 +62,12 @@ public abstract class VMAStore implements VMAIdTextStore {
      * @param storeOwner TODO
      * @return {@code true} iff the initialization was successful.
      */
-    public abstract boolean initializeStore(boolean threadBatched, boolean perThread, PerThreadStoreOwner storeOwner);
+    boolean initializeStore(boolean threadBatched, boolean perThread, PerThreadStoreOwner storeOwner);
 
     /**
      * Finalize the store, e.g. flush trace.
      */
-    public abstract void finalizeStore();
+    void finalizeStore();
 
     /**
      * In per-thread mode must be called notify the start of a new thread, typically
@@ -76,19 +76,19 @@ public abstract class VMAStore implements VMAIdTextStore {
      * For per-thread stores may return a per-thread specific store that should be
      * used instead of {@code this}.
      */
-    public abstract VMAStore newThread(String threadName);
+    VMAStore newThread(String threadName);
 
     /**
      * Must be called if {@code threadBatched} is {@code true} and {@link perThread} is {@code false},
      *  to indicate records now for given thread.
      */
-    public abstract void threadSwitch(long time, String threadName);
+    void threadSwitch(long time, String threadName);
 
     /**
      * Log the removal on an object from the VM (i.e. object death).
      * @param id
      */
-    public abstract void removal(long id);
+    void removal(long id);
 
 
 }

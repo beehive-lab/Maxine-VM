@@ -80,7 +80,7 @@ public class VMAdviceHandlerTextStoreAdapter extends VMAStoreAdapter implements 
      */
     private final ObjectStateHandler state;
 
-    private VMATextStore txtStore;
+    private VMANSFTextStoreIntf txtStore;
 
     protected void setThreadNameGenerator(ThreadNameGenerator tng) {
         this.tng = tng;
@@ -104,7 +104,7 @@ public class VMAdviceHandlerTextStoreAdapter extends VMAStoreAdapter implements 
     protected VMAStoreAdapter createThreadStoreAdapter(VmThread vmThread) {
         VMAdviceHandlerTextStoreAdapter ta = new VMAdviceHandlerTextStoreAdapter(state, true, true);
         this.vmThread = vmThread;
-        this.txtStore = (VMATextStore) store;
+        this.txtStore = (VMANSFTextStoreIntf) store;
         ta.tng = null;
         return ta;
     }
@@ -118,7 +118,7 @@ public class VMAdviceHandlerTextStoreAdapter extends VMAStoreAdapter implements 
             }
 
             store = VMAStoreFactory.create(perThread);
-            txtStore = (VMATextStore) store;
+            txtStore = (VMANSFTextStoreIntf) store;
 
             if (store == null || !store.initializeStore(threadBatched, perThread, null)) {
                 throw new RuntimeException("VMA store initialization failed");
@@ -133,7 +133,8 @@ public class VMAdviceHandlerTextStoreAdapter extends VMAStoreAdapter implements 
     public void unseenObject(long time, Object obj) {
         final Reference objRef = Reference.fromJava(obj);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
-        txtStore.unseenObject(time, tng.getThreadName(), state.readId(obj).toLong(), hub.classActor.name(), state.readId(hub.classActor.classLoader).toLong());
+        // no bci field,so pass zero to match signature
+        txtStore.unseenObject(time, tng.getThreadName(), 0, state.readId(obj).toLong(), hub.classActor.name(), state.readId(hub.classActor.classLoader).toLong());
     }
 
     @Override

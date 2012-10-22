@@ -46,7 +46,7 @@ public class VMAVMLoggerTextStoreAdapter extends VMAVMLoggerStoreAdapter {
     /**
      * An appropriately typed copy of {@link super#store}.
      */
-    private VMATextStore txtStore;
+    private VMANSFTextStoreIntf txtStore;
 
     public VMAVMLoggerTextStoreAdapter(ObjectStateHandler state) {
         super(state);
@@ -65,7 +65,7 @@ public class VMAVMLoggerTextStoreAdapter extends VMAVMLoggerStoreAdapter {
     protected VMAStoreAdapter createThreadStoreAdapter(VmThread vmThread) {
         VMAStore threadStore = store.newThread(vmThread.getName());
         VMAVMLoggerTextStoreAdapter sa = new VMAVMLoggerTextStoreAdapter(state, vmThread, threadStore);
-        sa.txtStore = (VMATextStore) threadStore;
+        sa.txtStore = (VMANSFTextStoreIntf) threadStore;
         return sa;
     }
 
@@ -73,14 +73,14 @@ public class VMAVMLoggerTextStoreAdapter extends VMAVMLoggerStoreAdapter {
     public void initialise(MaxineVM.Phase phase) {
         super.initialise(phase);
         if (phase == MaxineVM.Phase.RUNNING) {
-            txtStore = (VMATextStore) store;
+            txtStore = (VMANSFTextStoreIntf) store;
         }
     }
 
     @Override
     public void unseenObject(long time, ObjectID objID, ClassID classID) {
         ClassActor ca = ClassID.toClassActor(classID);
-        txtStore.unseenObject(time, null, objID.toLong(), ca.name(), state.readId(ca.classLoader).toLong());
+        txtStore.unseenObject(time, null, 0, objID.toLong(), ca.name(), state.readId(ca.classLoader).toLong());
     }
 
 // START GENERATED CODE
