@@ -23,7 +23,6 @@
 package com.oracle.max.vm.ext.vma.store.txt.sbps;
 
 import com.oracle.max.vm.ext.vma.store.txt.*;
-import com.oracle.max.vm.ext.vma.store.txt.ShortFormHandler.*;
 import com.sun.max.program.*;
 
 /**

@@ -24,26 +24,24 @@ package test.output;
 
 import java.io.*;
 
-/**
- * Testing timely reclamation of dead open file descriptors.
- */
 public class ManyOpenedFilesTest {
     public static void main(String[] args) {
         System.out.println("Creating 10000 Testing File");
         File tempDir = new File("/tmp/testdir");
         tempDir.mkdir();
         try {
-            for (int i = 0; i < 10000; i++) {
+            for (int i = 0; i < 1000; i++) {
                 new PrintStream(new FileOutputStream("/tmp/testdir/test." + i)).println("tempt test file #" + i);
             }
+        } catch (IOException eio) {
+            eio.printStackTrace(System.err);
+        } finally {
             System.out.println("Deleting created test files");
             for (String filename : tempDir.list()) {
                 new File(tempDir, filename).delete();
             }
             tempDir.delete();
             System.out.println("Done");
-        } catch (IOException eio) {
-            eio.printStackTrace(System.err);
         }
     }
 }
