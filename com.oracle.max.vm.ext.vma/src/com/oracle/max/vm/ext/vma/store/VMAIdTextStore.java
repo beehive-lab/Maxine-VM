@@ -23,12 +23,12 @@
 package com.oracle.max.vm.ext.vma.store;
 
 /**
- * A variant of a subset of {@link VMAStore} that uses {@code int} id values to denote
+ * A variant of a subset of {@link VMATextStore} that uses {@code int} id values to denote
  * class, method, field values instead of {@link String}. This only supports per-thread
  * stores so the thread is also elided.
  *
  */
-public interface VMAIdStore {
+public interface VMAIdTextStore {
 
 // START GENERATED CODE
 // EDIT AND RUN VMAIdStoreGenerator.main() TO MODIFY
@@ -37,23 +37,23 @@ public interface VMAIdStore {
     void adviseAfterNew(long time, int bci, long arg4, int classId);
     void adviseAfterNewArray(long time, int bci, long arg4, int classId, int arg7);
     void adviseAfterMultiNewArray(long time, int bci, long arg4, int classId, int arg7);
-    void adviseBeforeGetStatic(long time, int bci, int classId, int fieldId);
-    void adviseBeforePutStatic(long time, int bci, int classId, int fieldId, float arg7);
-    void adviseBeforePutStatic(long time, int bci, int classId, int fieldId, double arg7);
-    void adviseBeforePutStatic(long time, int bci, int classId, int fieldId, long arg7);
-    void adviseBeforePutStaticObject(long time, int bci, int classId, int fieldId, long arg7);
-    void adviseBeforeGetField(long time, int bci, long arg4, int classId, int fieldId);
-    void adviseBeforePutField(long time, int bci, long arg4, int classId, int fieldId, float arg8);
-    void adviseBeforePutField(long time, int bci, long arg4, int classId, int fieldId, long arg8);
-    void adviseBeforePutField(long time, int bci, long arg4, int classId, int fieldId, double arg8);
-    void adviseBeforePutFieldObject(long time, int bci, long arg4, int classId, int fieldId, long arg8);
-    void adviseBeforeInvokeVirtual(long time, int bci, long arg4, int classId, int methodId);
-    void adviseBeforeInvokeSpecial(long time, int bci, long arg4, int classId, int methodId);
-    void adviseBeforeInvokeStatic(long time, int bci, long arg4, int classId, int methodId);
-    void adviseBeforeInvokeInterface(long time, int bci, long arg4, int classId, int methodId);
+    void adviseBeforeGetStatic(long time, int bci, int fieldId);
+    void adviseBeforePutStatic(long time, int bci, int fieldId, float arg7);
+    void adviseBeforePutStatic(long time, int bci, int fieldId, double arg7);
+    void adviseBeforePutStatic(long time, int bci, int fieldId, long arg7);
+    void adviseBeforePutStaticObject(long time, int bci, int fieldId, long arg7);
+    void adviseBeforeGetField(long time, int bci, long arg4, int fieldId);
+    void adviseBeforePutField(long time, int bci, long arg4, int fieldId, float arg8);
+    void adviseBeforePutField(long time, int bci, long arg4, int fieldId, long arg8);
+    void adviseBeforePutField(long time, int bci, long arg4, int fieldId, double arg8);
+    void adviseBeforePutFieldObject(long time, int bci, long arg4, int fieldId, long arg8);
+    void adviseBeforeInvokeVirtual(long time, int bci, long arg4, int methodId);
+    void adviseBeforeInvokeSpecial(long time, int bci, long arg4, int methodId);
+    void adviseBeforeInvokeStatic(long time, int bci, long arg4, int methodId);
+    void adviseBeforeInvokeInterface(long time, int bci, long arg4, int methodId);
     void adviseBeforeCheckCast(long time, int bci, long arg4, int classId);
     void adviseBeforeInstanceOf(long time, int bci, long arg4, int classId);
-    void adviseAfterMethodEntry(long time, int bci, long arg4, int classId, int methodId);
+    void adviseAfterMethodEntry(long time, int bci, long arg4, int methodId);
 // END GENERATED CODE
 
 }

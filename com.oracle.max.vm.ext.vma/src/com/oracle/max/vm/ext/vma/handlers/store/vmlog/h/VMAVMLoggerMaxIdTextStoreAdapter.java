@@ -37,7 +37,7 @@ import com.sun.max.vm.thread.*;
  * This variant exploits the fact that the {@link ObjectID}, {@link ClassID} types, etc., are already defined
  * as unique, relatively small integers. So rather than converting to application defined strings
  * and then to opaque short forms of those, as happens in {@link VMAVMLoggerTextStoreAdapter},
- * the ids are used as short forms directly and special calls are made to {@link VMAIdStore}.
+ * the ids are used as short forms directly and special calls are made to {@link VMAIdTextStore}.
  * The path is therefore considerably more efficient. However, there is one problem in that the
  * normal "short form" path that maps class, field, method names from their {@code String} form to
  * small integers on first encounter doesn't occur. It would reintroduce much of the the slow path to do the check
@@ -75,6 +75,132 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
         @Override
         protected ThisSBPSRawVMATextStore createThreadStore(String threadName) {
             return new ThisSBPSRawVMATextStore(threadName);
+        }
+
+        @Override
+        public void unseenObject(long time, String threadName, long objId, String className, long clId) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseAfterNew(long time, String threadName, int bci, long objId, String className, long clId) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseAfterNewArray(long time, String threadName, int bci, long objId, String className, long clId, int length) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseAfterMultiNewArray(long time, String threadName, int bci, long objId, String className, long clId, int length) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforeGetStatic(long time, String threadName, int bci, String className, long clId, String fieldName) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String fieldName, float value) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String fieldName, double value) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String fieldName, long value) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforePutStaticObject(long time, String threadName, int bci, String className, long clId, String fieldName, long value) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforeGetField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, float value) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, long value) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforePutFieldObject(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, long value) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, double value) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforeInvokeVirtual(long time, String threadName, int bci, long objId, String className, long clId, String methodName) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforeInvokeSpecial(long time, String threadName, int bci, long objId, String className, long clId, String methodName) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforeInvokeStatic(long time, String threadName, int bci, long objId, String className, long clId, String methodName) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforeInvokeInterface(long time, String threadName, int bci, long objId, String className, long clId, String methodName) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforeCheckCast(long time, String threadName, int bci, long objId, String className, long clId) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseBeforeInstanceOf(long time, String threadName, int bci, long objId, String className, long clId) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void adviseAfterMethodEntry(long time, String threadName, int bci, long objId, String className, long clId, String methodName) {
+            // TODO Auto-generated method stub
+
         }
 
     }
@@ -174,7 +300,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
 
 
 // START GENERATED CODE
-// EDIT AND RUN VMAVMLoggerIdTextStoreAdapterGenerator.main() TO MODIFY
+// EDIT AND RUN VMAVMLoggerMaxIdTextStoreAdapterGenerator.main() TO MODIFY
 
     @Override
     public void adviseBeforeGC(long arg1) {
@@ -348,72 +474,72 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
 
     @Override
     public void adviseBeforeGetStatic(long arg1, int arg2, FieldID arg3) {
-        txtStore.adviseBeforeGetStatic(arg1, arg2, MemberID.getClassIDAsInt(arg3), MemberID.getMemberIDAsInt(arg3));
+        txtStore.adviseBeforeGetStatic(arg1, arg2, MemberID.getMemberIDAsInt(arg3));
     }
 
     @Override
     public void adviseBeforePutStatic(long arg1, int arg2, FieldID arg3, ObjectID arg4) {
-        txtStore.adviseBeforePutStaticObject(arg1, arg2, MemberID.getClassIDAsInt(arg3), MemberID.getMemberIDAsInt(arg3), arg4.toLong());
+        txtStore.adviseBeforePutStaticObject(arg1, arg2, MemberID.getMemberIDAsInt(arg3), arg4.toLong());
     }
 
     @Override
     public void adviseBeforePutStatic(long arg1, int arg2, FieldID arg3, double arg4) {
-        txtStore.adviseBeforePutStatic(arg1, arg2, MemberID.getClassIDAsInt(arg3), MemberID.getMemberIDAsInt(arg3), arg4);
+        txtStore.adviseBeforePutStatic(arg1, arg2, MemberID.getMemberIDAsInt(arg3), arg4);
     }
 
     @Override
     public void adviseBeforePutStatic(long arg1, int arg2, FieldID arg3, long arg4) {
-        txtStore.adviseBeforePutStatic(arg1, arg2, MemberID.getClassIDAsInt(arg3), MemberID.getMemberIDAsInt(arg3), arg4);
+        txtStore.adviseBeforePutStatic(arg1, arg2, MemberID.getMemberIDAsInt(arg3), arg4);
     }
 
     @Override
     public void adviseBeforePutStatic(long arg1, int arg2, FieldID arg3, float arg4) {
-        txtStore.adviseBeforePutStatic(arg1, arg2, MemberID.getClassIDAsInt(arg3), MemberID.getMemberIDAsInt(arg3), arg4);
+        txtStore.adviseBeforePutStatic(arg1, arg2, MemberID.getMemberIDAsInt(arg3), arg4);
     }
 
     @Override
     public void adviseBeforeGetField(long arg1, int arg2, ObjectID arg3, FieldID arg4) {
-        txtStore.adviseBeforeGetField(arg1, arg2, arg3.toLong(), MemberID.getClassIDAsInt(arg4), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseBeforeGetField(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
     }
 
     @Override
     public void adviseBeforePutField(long arg1, int arg2, ObjectID arg3, FieldID arg4, ObjectID arg5) {
-        txtStore.adviseBeforePutFieldObject(arg1, arg2, arg3.toLong(), MemberID.getClassIDAsInt(arg4), MemberID.getMemberIDAsInt(arg4), arg5.toLong());
+        txtStore.adviseBeforePutFieldObject(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4), arg5.toLong());
     }
 
     @Override
     public void adviseBeforePutField(long arg1, int arg2, ObjectID arg3, FieldID arg4, double arg5) {
-        txtStore.adviseBeforePutField(arg1, arg2, arg3.toLong(), MemberID.getClassIDAsInt(arg4), MemberID.getMemberIDAsInt(arg4), arg5);
+        txtStore.adviseBeforePutField(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4), arg5);
     }
 
     @Override
     public void adviseBeforePutField(long arg1, int arg2, ObjectID arg3, FieldID arg4, long arg5) {
-        txtStore.adviseBeforePutField(arg1, arg2, arg3.toLong(), MemberID.getClassIDAsInt(arg4), MemberID.getMemberIDAsInt(arg4), arg5);
+        txtStore.adviseBeforePutField(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4), arg5);
     }
 
     @Override
     public void adviseBeforePutField(long arg1, int arg2, ObjectID arg3, FieldID arg4, float arg5) {
-        txtStore.adviseBeforePutField(arg1, arg2, arg3.toLong(), MemberID.getClassIDAsInt(arg4), MemberID.getMemberIDAsInt(arg4), arg5);
+        txtStore.adviseBeforePutField(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4), arg5);
     }
 
     @Override
     public void adviseBeforeInvokeVirtual(long arg1, int arg2, ObjectID arg3, MethodID arg4) {
-        txtStore.adviseBeforeInvokeVirtual(arg1, arg2, arg3.toLong(), MemberID.getClassIDAsInt(arg4), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseBeforeInvokeVirtual(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
     }
 
     @Override
     public void adviseBeforeInvokeSpecial(long arg1, int arg2, ObjectID arg3, MethodID arg4) {
-        txtStore.adviseBeforeInvokeSpecial(arg1, arg2, arg3.toLong(), MemberID.getClassIDAsInt(arg4), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseBeforeInvokeSpecial(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
     }
 
     @Override
     public void adviseBeforeInvokeStatic(long arg1, int arg2, ObjectID arg3, MethodID arg4) {
-        txtStore.adviseBeforeInvokeStatic(arg1, arg2, arg3.toLong(), MemberID.getClassIDAsInt(arg4), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseBeforeInvokeStatic(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
     }
 
     @Override
     public void adviseBeforeInvokeInterface(long arg1, int arg2, ObjectID arg3, MethodID arg4) {
-        txtStore.adviseBeforeInvokeInterface(arg1, arg2, arg3.toLong(), MemberID.getClassIDAsInt(arg4), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseBeforeInvokeInterface(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
     }
 
     @Override
@@ -468,7 +594,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
 
     @Override
     public void adviseAfterMethodEntry(long arg1, int arg2, ObjectID arg3, MethodID arg4) {
-        txtStore.adviseAfterMethodEntry(arg1, arg2, arg3.toLong(), MemberID.getClassIDAsInt(arg4), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseAfterMethodEntry(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
     }
 
 // END GENERATED CODE

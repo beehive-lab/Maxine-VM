@@ -49,5 +49,49 @@ public abstract class CVMATextStore extends VMATextStore {
      */
     public abstract void addMemberShortFormDef(VMATextStoreFormat.Key key, String classShortForm, String name, String shortName);
 
+    /*
+     * Variants of methods in VMATextStore that use short forms only.
+     */
+    public abstract void unseenObject(long time, String threadName, long objId, String shortClassName);
+
+    public abstract void adviseAfterNew(long time, String threadName, int bci, long objId, String shortClassName);
+
+    public abstract void adviseAfterNewArray(long time, String threadName, int bci, long objId, String shortClassName, int length);
+
+    public abstract void adviseAfterMultiNewArray(long time, String threadName, int bci, long objId, String shortClassName, int length);
+
+    public abstract void adviseBeforeGetStatic(long time, String threadName, int bci, String shortFieldName);
+
+    public abstract void adviseBeforePutStatic(long time, String threadName, int bci, String shortFieldName, float value);
+
+    public abstract void adviseBeforePutStatic(long time, String threadName, int bci, String shortFieldName, double value);
+
+    public abstract void adviseBeforePutStatic(long time, String threadName, int bci, String shortFieldName, long value);
+
+    public abstract void adviseBeforePutStaticObject(long time, String threadName, int bci, String shortFieldName, long value);
+
+    public abstract void adviseBeforeGetField(long time, String threadName, int bci, long objId, String shortFieldName);
+
+    public abstract void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, float value);
+
+    public abstract void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, long value);
+
+    public abstract void adviseBeforePutFieldObject(long time, String threadName, int bci, long objId, String shortFieldName, long value);
+
+    public abstract void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, double value);
+
+    public abstract void adviseBeforeInvokeVirtual(long time, String threadName, int bci, long objId, String shortMethodName);
+
+    public abstract void adviseBeforeInvokeSpecial(long time, String threadName, int bci, long objId, String shortMethodName);
+
+    public abstract void adviseBeforeInvokeStatic(long time, String threadName, int bci, long objId, String shortMethodName);
+
+    public abstract void adviseBeforeInvokeInterface(long time, String threadName, int bci, long objId, String shortMethodName);
+
+    public abstract void adviseBeforeCheckCast(long time, String threadName, int bci, long objId, String shortClassName);
+
+    public abstract void adviseBeforeInstanceOf(long time, String threadName, int bci, long objId, String shortClassName);
+
+    public abstract void adviseAfterMethodEntry(long time, String threadName, int bci, long objId, String shortMethodName);
 
 }

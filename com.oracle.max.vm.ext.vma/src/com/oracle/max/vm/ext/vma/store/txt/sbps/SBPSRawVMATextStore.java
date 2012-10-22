@@ -36,15 +36,15 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * An implementation of {@link VMATextStore} using a {@link PrintStream} and {@link StringBuilder}.
+ * An implementation of {@link CVMATextStore} using a {@link PrintStream} and {@link StringBuilder}.
  *
  * The default {@link StringBuilder buffer size} is {@link DEFAULT_BUFSIZE} but this can be changed
  * with the {@link BUFSIZE_PROPERTY} system property. The buffer is normally flushed when it is full,
  * but this can be changed to a specific value by setting the {@link FLUSH_PROPERTY} system property.
  *
- * No interpretation is made regarding thread, class, field and method names passed to methods in this class.
- * They could be application defined names or, more likely, <i>short forms</i> that encode the name
- * more efficiently. This would be handled by a subclass.
+ * This store implementation only supports short forms for thread/class/field and method names.
+ * Accordingly it does not implement the methods in {@link VMATextStore} that define an entity
+ * as a class/clid/name triple. That is left to a subclass that can turn the triple into a short form.
  *
  * In per-thread mode each thread has its own buffer and log file.
  * The log file name is used as a stem and each thread's file is named by suffixing with its name.
@@ -54,7 +54,7 @@ import com.sun.max.vm.runtime.*;
  * This class is unsynchronized for use in per-thread mode.
  *
  */
-public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
+public abstract class SBPSRawVMATextStore extends CVMATextStore implements VMAIdTextStore {
 
     private static final String FLUSH_PROPERTY = "max.vma.storeflush";
     private static final String BUFSIZE_PROPERTY = "max.vma.storebufsize";
@@ -223,9 +223,7 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
         end();
     }
 
-    protected SBPSRawVMATextStore createThreadStore(String threadName) {
-        return new SBPSRawVMATextStore(threadName);
-    }
+    protected abstract SBPSRawVMATextStore createThreadStore(String threadName);
 
     @Override
     public void finalizeStore() {
@@ -442,29 +440,29 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
         appendSpace();
     }
 
-    private void appendPutFieldPrefix(long time, long objId, String className, long clId, String memberName, String threadName, int bci) {
+    private void appendPutFieldPrefix(long time, long objId, String memberName, String threadName, int bci) {
         appendTTId(time, ADVISE_BEFORE_PUT_FIELD, objId, threadName, bci);
-        appendQualName(className, clId, memberName);
+        sb.append(memberName);
         appendSpace();
     }
 
-    private void appendPutFieldPrefix(long time, long objId, int classId, int memberId, int bci) {
+    private void appendPutFieldPrefix(long time, long objId, int memberId, int bci) {
         appendTTId(time, ADVISE_BEFORE_PUT_FIELD, objId, null, bci);
-        appendQualId(classId, memberId);
+        sb.append(memberId);
         appendSpace();
     }
 
-    private void appendPutStaticPrefix(long time, String className, long clId, String memberName, String threadName, int bci) {
+    private void appendPutStaticPrefix(long time, String memberName, String threadName, int bci) {
         appendTT(time, ADVISE_BEFORE_PUT_STATIC, threadName, bci);
         appendSpace();
-        appendQualName(className, clId, memberName);
+        sb.append(memberName);
         appendSpace();
     }
 
-    private void appendPutStaticPrefix(long time, int classId, int memberId, int bci) {
+    private void appendPutStaticPrefix(long time, int memberId, int bci) {
         appendTT(time, ADVISE_BEFORE_PUT_STATIC, null, bci);
         appendSpace();
-        appendQualId(classId, memberId);
+        sb.append(memberId);
         appendSpace();
     }
 
@@ -499,12 +497,11 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void unseenObject(long time, String threadName, long objId, String className, long clId) {
+    public void unseenObject(long time, String threadName, long objId, String shortClassName) {
         // There is no "bci" field for this, but we pass zero so that the format of the record is
         // the same as that for a NEW etc.
         appendTTId(time, UNSEEN, objId, threadName, 0);
-        sb.append(className);
-        // clId elided
+        sb.append(shortClassName);
         end();
     }
 
@@ -528,16 +525,16 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforeGetStatic(long time, String threadName, int bci, String className, long clId, String memberName) {
+    public void adviseBeforeGetStatic(long time, String threadName, int bci, String shortFieldName) {
         appendTT(time, ADVISE_BEFORE_GET_STATIC, threadName, bci);
         appendSpace();
-        appendQualName(className, clId, memberName);
+        sb.append(shortFieldName);
         end();
     }
 
     @Override
-    public void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String memberName, double value) {
-        appendPutStaticPrefix(time, className, clId, memberName, threadName, bci);
+    public void adviseBeforePutStatic(long time, String threadName, int bci, String shortFieldName, double value) {
+        appendPutStaticPrefix(time, shortFieldName, threadName, bci);
         sb.append(DOUBLE_VALUE);
         appendSpace();
         sb.append(value);
@@ -545,8 +542,8 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String memberName, long value) {
-        appendPutStaticPrefix(time, className, clId, memberName, threadName, bci);
+    public void adviseBeforePutStatic(long time, String threadName, int bci, String shortFieldName, long value) {
+        appendPutStaticPrefix(time, shortFieldName, threadName, bci);
         sb.append(LONG_VALUE);
         appendSpace();
         sb.append(value);
@@ -554,8 +551,8 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String memberName, float value) {
-        appendPutStaticPrefix(time, className, clId, memberName, threadName, bci);
+    public void adviseBeforePutStatic(long time, String threadName, int bci, String shortFieldName, float value) {
+        appendPutStaticPrefix(time, shortFieldName, threadName, bci);
         sb.append(FLOAT_VALUE);
         appendSpace();
         sb.append(value);
@@ -563,33 +560,24 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforePutStaticObject(long time, String threadName, int bci, String className, long clId, String memberName, long valueId) {
-        appendPutStaticPrefix(time, className, clId, memberName, threadName, bci);
+    public void adviseBeforePutStaticObject(long time, String threadName, int bci, String shortFieldName, long value) {
+        appendPutStaticPrefix(time, shortFieldName, threadName, bci);
         sb.append(OBJ_VALUE);
         appendSpace();
-        sb.append(valueId);
+        sb.append(value);
         end();
     }
 
     @Override
-    public void adviseBeforeGetField(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+    public void adviseBeforeGetField(long time, String threadName, int bci, long objId, String shortFieldName) {
         appendTTId(time, ADVISE_BEFORE_GET_FIELD, objId, threadName, bci);
-        appendQualName(className, clId, memberName);
+        sb.append(shortFieldName);
         end();
     }
 
     @Override
-    public void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String memberName, double value) {
-        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName, bci);
-        sb.append(DOUBLE_VALUE);
-        appendSpace();
-        sb.append(value);
-        end();
-    }
-
-    @Override
-    public void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String memberName, long value) {
-        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName, bci);
+    public void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, long value) {
+        appendPutFieldPrefix(time, objId, shortFieldName, threadName, bci);
         sb.append(LONG_VALUE);
         appendSpace();
         sb.append(value);
@@ -597,8 +585,8 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String memberName, float value) {
-        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName, bci);
+    public void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, float value) {
+        appendPutFieldPrefix(time, objId, shortFieldName, threadName, bci);
         sb.append(FLOAT_VALUE);
         appendSpace();
         sb.append(value);
@@ -606,11 +594,20 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforePutFieldObject(long time, String threadName, int bci, long objId, String className, long clId, String memberName, long valueId) {
-        appendPutFieldPrefix(time, objId, className, clId, memberName, threadName, bci);
-        sb.append(OBJ_VALUE);
+    public void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, double value) {
+        appendPutFieldPrefix(time, objId, shortFieldName, threadName, bci);
+        sb.append(DOUBLE_VALUE);
         appendSpace();
-        sb.append(valueId);
+        sb.append(value);
+        end();
+    }
+
+    @Override
+    public void adviseBeforePutFieldObject(long time, String threadName, int bci, long objId, String shortFieldName, long value) {
+        appendPutFieldPrefix(time, objId, shortFieldName, threadName, bci);
+        sb.append(LONG_VALUE);
+        appendSpace();
+        sb.append(value);
         end();
     }
 
@@ -666,26 +663,26 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseAfterNew(long time, String threadName, int bci, long objId, String className, long clId) {
+    public void adviseAfterNew(long time, String threadName, int bci, long objId, String shortClassName) {
         appendTTId(time, ADVISE_AFTER_NEW, objId, threadName, bci);
-        sb.append(className);
+        sb.append(shortClassName);
         end();
     }
 
     @Override
-    public void adviseAfterNewArray(long time, String threadName, int bci, long objId, String className, long clId, int length) {
+    public void adviseAfterNewArray(long time, String threadName, int bci, long objId, String shortClassName, int length) {
         appendTTId(time, ADVISE_AFTER_NEW_ARRAY, objId, threadName, bci);
-        sb.append(className);
+        sb.append(shortClassName);
         appendSpace();
         sb.append(length);
         end();
     }
 
     @Override
-    public void adviseAfterMultiNewArray(long time, String threadName, int bci, long objId, String className, long clId, int length) {
+    public void adviseAfterMultiNewArray(long time, String threadName, int bci, long objId, String shortClassName, int length) {
         // MultiArrays are explicitly handled by multiple calls to adviseAfterNewArray so we just
         // log the top level array.
-        adviseAfterNewArray(time, threadName, bci, objId, className, clId, length);
+        adviseAfterNewArray(time, threadName, bci, objId, shortClassName, length);
     }
 
     @Override
@@ -966,30 +963,30 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforeInvokeVirtual(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+    public void adviseBeforeInvokeVirtual(long time, String threadName, int bci, long objId, String shortMethodName) {
         appendTTId(time, ADVISE_BEFORE_INVOKE_VIRTUAL, objId, threadName, bci);
-        appendQualName(className, clId, memberName);
+        sb.append(shortMethodName);
         end();
     }
 
     @Override
-    public void adviseBeforeInvokeSpecial(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+    public void adviseBeforeInvokeSpecial(long time, String threadName, int bci, long objId, String shortMethodName) {
         appendTTId(time, ADVISE_BEFORE_INVOKE_SPECIAL, objId, threadName, bci);
-        appendQualName(className, clId, memberName);
+        sb.append(shortMethodName);
         end();
     }
 
     @Override
-    public void adviseBeforeInvokeStatic(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+    public void adviseBeforeInvokeStatic(long time, String threadName, int bci, long objId, String shortMethodName) {
         appendTTId(time, ADVISE_BEFORE_INVOKE_STATIC, objId, threadName, bci);
-        appendQualName(className, clId, memberName);
+        sb.append(shortMethodName);
         end();
     }
 
     @Override
-    public void adviseBeforeInvokeInterface(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+    public void adviseBeforeInvokeInterface(long time, String threadName, int bci, long objId, String shortMethodName) {
         appendTTId(time, ADVISE_BEFORE_INVOKE_INTERFACE, objId, threadName, bci);
-        appendQualName(className, clId, memberName);
+        sb.append(shortMethodName);
         end();
     }
 
@@ -1007,27 +1004,18 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforeCheckCast(long time, String threadName, int bci, long objId, String className, long clId) {
+    public void adviseBeforeCheckCast(long time, String threadName, int bci, long objId, String shortClassName) {
         appendTTId(time, ADVISE_BEFORE_CHECK_CAST, objId, threadName, bci);
-        sb.append(className);
+        sb.append(shortClassName);
         end();
     }
 
     @Override
-    public void adviseBeforeInstanceOf(long time, String threadName, int bci, long objId, String className, long clId) {
+    public void adviseBeforeInstanceOf(long time, String threadName, int bci, long objId, String shortClassName) {
         appendTTId(time, ADVISE_BEFORE_INSTANCE_OF, objId, threadName, bci);
-        sb.append(className);
+        sb.append(shortClassName);
         end();
     }
-
-    /*
-    public void adviseBeforeBytecode(long time, String threadName, int bci, int arg1) {
-        appendTT(time, ADVISE_BEFORE_BYTECODE, threadName, bci);
-        appendSpace();
-        sb.append(arg1);
-        end();
-    }
-    */
 
     @Override
     public void adviseBeforeMonitorEnter(long time, String threadName, int bci, long objId) {
@@ -1041,39 +1029,12 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
         end();
     }
 
-    /*
-    public void adviseAfterInvokeVirtual(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_AFTER_INVOKE_VIRTUAL, objId, threadName, bci);
-        appendQualName(className, clId, memberName);
-        end();
-    }
-
-    public void adviseAfterInvokeStatic(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_AFTER_INVOKE_STATIC, objId, threadName, bci);
-        appendQualName(className, clId, memberName);
-        end();
-    }
-
-    public void adviseAfterInvokeInterface(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_AFTER_INVOKE_INTERFACE, objId, threadName, bci);
-        appendQualName(className, clId, memberName);
-        end();
-    }
-
-    public void adviseAfterInvokeSpecial(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
-        appendTTId(time, ADVISE_AFTER_INVOKE_SPECIAL, objId, threadName, bci);
-        appendQualName(className, clId, memberName);
-        end();
-    }
-    */
-
     @Override
-    public void adviseAfterMethodEntry(long time, String threadName, int bci, long objId, String className, long clId, String memberName) {
+    public void adviseAfterMethodEntry(long time, String threadName, int bci, long objId, String shortMethodName) {
         appendTTId(time, ADVISE_AFTER_METHOD_ENTRY, objId, threadName, bci);
-        appendQualName(className, clId, memberName);
+        sb.append(shortMethodName);
         end();
     }
-
     @Override
     public void adviseBeforeReturnByThrow(long time, String threadName, int bci, long objId, int poppedFrames) {
         appendTTId(time, ADVISE_BEFORE_RETURN_BY_THROW, objId, threadName, bci);
@@ -1111,16 +1072,16 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforeGetStatic(long time, int bci, int classId, int fieldId) {
+    public void adviseBeforeGetStatic(long time, int bci, int fieldId) {
         appendTT(time, ADVISE_BEFORE_GET_STATIC, null, bci);
         appendSpace();
-        appendQualId(classId, fieldId);
+        sb.append(fieldId);
         end();
     }
 
     @Override
-    public void adviseBeforePutStatic(long time, int bci, int classId, int fieldId, float value) {
-        appendPutStaticPrefix(time, classId, fieldId, bci);
+    public void adviseBeforePutStatic(long time, int bci, int fieldId, float value) {
+        appendPutStaticPrefix(time, fieldId, bci);
         sb.append(FLOAT_VALUE);
         appendSpace();
         sb.append(value);
@@ -1128,8 +1089,8 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforePutStatic(long time, int bci, int classId, int fieldId, double value) {
-        appendPutStaticPrefix(time, classId, fieldId, bci);
+    public void adviseBeforePutStatic(long time, int bci, int fieldId, double value) {
+        appendPutStaticPrefix(time, fieldId, bci);
         sb.append(DOUBLE_VALUE);
         appendSpace();
         sb.append(value);
@@ -1137,8 +1098,8 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforePutStatic(long time, int bci, int classId, int fieldId, long value) {
-        appendPutStaticPrefix(time, classId, fieldId, bci);
+    public void adviseBeforePutStatic(long time, int bci, int fieldId, long value) {
+        appendPutStaticPrefix(time, fieldId, bci);
         sb.append(LONG_VALUE);
         appendSpace();
         sb.append(value);
@@ -1146,8 +1107,8 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforePutStaticObject(long time, int bci, int classId, int fieldId, long value) {
-        appendPutStaticPrefix(time, classId, fieldId, bci);
+    public void adviseBeforePutStaticObject(long time, int bci, int fieldId, long value) {
+        appendPutStaticPrefix(time, fieldId, bci);
         sb.append(OBJ_VALUE);
         appendSpace();
         sb.append(value);
@@ -1155,15 +1116,15 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforeGetField(long time, int bci, long objId, int classId, int fieldId) {
+    public void adviseBeforeGetField(long time, int bci, long objId, int fieldId) {
         appendTTId(time, ADVISE_BEFORE_GET_FIELD, objId, null, bci);
-        appendQualId(classId, fieldId);
+        sb.append(fieldId);
         end();
     }
 
     @Override
-    public void adviseBeforePutField(long time, int bci, long objId, int classId, int fieldId, float value) {
-        appendPutFieldPrefix(time, objId, classId, fieldId, bci);
+    public void adviseBeforePutField(long time, int bci, long objId, int fieldId, float value) {
+        appendPutFieldPrefix(time, objId, fieldId, bci);
         sb.append(FLOAT_VALUE);
         appendSpace();
         sb.append(value);
@@ -1171,8 +1132,8 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforePutField(long time, int bci, long objId, int classId, int fieldId, long value) {
-        appendPutFieldPrefix(time, objId, classId, fieldId, bci);
+    public void adviseBeforePutField(long time, int bci, long objId, int fieldId, long value) {
+        appendPutFieldPrefix(time, objId, fieldId, bci);
         sb.append(LONG_VALUE);
         appendSpace();
         sb.append(value);
@@ -1180,8 +1141,8 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforePutField(long time, int bci, long objId, int classId, int fieldId, double value) {
-        appendPutFieldPrefix(time, objId, classId, fieldId, bci);
+    public void adviseBeforePutField(long time, int bci, long objId, int fieldId, double value) {
+        appendPutFieldPrefix(time, objId, fieldId, bci);
         sb.append(DOUBLE_VALUE);
         appendSpace();
         sb.append(value);
@@ -1189,8 +1150,8 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforePutFieldObject(long time, int bci, long objId, int classId, int fieldId, long value) {
-        appendPutFieldPrefix(time, objId, classId, fieldId, bci);
+    public void adviseBeforePutFieldObject(long time, int bci, long objId, int fieldId, long value) {
+        appendPutFieldPrefix(time, objId, fieldId, bci);
         sb.append(OBJ_VALUE);
         appendSpace();
         sb.append(value);
@@ -1198,30 +1159,30 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseBeforeInvokeVirtual(long time, int bci, long objId, int classId, int methodId) {
+    public void adviseBeforeInvokeVirtual(long time, int bci, long objId, int methodId) {
         appendTTId(time, ADVISE_BEFORE_INVOKE_VIRTUAL, objId, null, bci);
-        appendQualId(classId, methodId);
+        sb.append(methodId);
         end();
     }
 
     @Override
-    public void adviseBeforeInvokeSpecial(long time, int bci, long objId, int classId, int methodId) {
+    public void adviseBeforeInvokeSpecial(long time, int bci, long objId, int methodId) {
         appendTTId(time, ADVISE_BEFORE_INVOKE_SPECIAL, objId, null, bci);
-        appendQualId(classId, methodId);
+        sb.append(methodId);
         end();
     }
 
     @Override
-    public void adviseBeforeInvokeStatic(long time, int bci, long objId, int classId, int methodId) {
+    public void adviseBeforeInvokeStatic(long time, int bci, long objId, int methodId) {
         appendTTId(time, ADVISE_BEFORE_INVOKE_STATIC, objId, null, bci);
-        appendQualId(classId, methodId);
+        sb.append(methodId);
         end();
     }
 
     @Override
-    public void adviseBeforeInvokeInterface(long time, int bci, long objId, int classId, int methodId) {
+    public void adviseBeforeInvokeInterface(long time, int bci, long objId, int methodId) {
         appendTTId(time, ADVISE_BEFORE_INVOKE_INTERFACE, objId, null, bci);
-        appendQualId(classId, methodId);
+        sb.append(methodId);
         end();
     }
 
@@ -1240,11 +1201,12 @@ public class SBPSRawVMATextStore extends CVMATextStore implements VMAIdStore {
     }
 
     @Override
-    public void adviseAfterMethodEntry(long time, int bci, long objId, int classId, int methodId) {
+    public void adviseAfterMethodEntry(long time, int bci, long objId, int methodId) {
         appendTTId(time, ADVISE_AFTER_METHOD_ENTRY, objId, null, bci);
-        appendQualId(classId, methodId);
+        sb.append(methodId);
         end();
     }
+
 
 
 }
