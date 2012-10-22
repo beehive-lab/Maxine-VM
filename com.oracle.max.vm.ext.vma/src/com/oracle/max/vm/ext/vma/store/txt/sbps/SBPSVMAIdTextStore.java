@@ -36,15 +36,11 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * An implementation of {@link CVMATextStore} using a {@link PrintStream} and {@link StringBuilder}.
+ * An implementation of {@link VMATextStore} and {@link VMAIdTextStoreIntf} using a {@link PrintStream} and {@link StringBuilder}.
  *
  * The default {@link StringBuilder buffer size} is {@link DEFAULT_BUFSIZE} but this can be changed
  * with the {@link BUFSIZE_PROPERTY} system property. The buffer is normally flushed when it is full,
  * but this can be changed to a specific value by setting the {@link FLUSH_PROPERTY} system property.
- *
- * This store implementation only supports short forms for thread/class/field and method names.
- * Accordingly it does not implement the methods in {@link VMATextStore} that define an entity
- * as a class/clid/name triple. That is left to a subclass that can turn the triple into a short form.
  *
  * In per-thread mode each thread has its own buffer and log file.
  * The log file name is used as a stem and each thread's file is named by suffixing with its name.
@@ -54,7 +50,7 @@ import com.sun.max.vm.runtime.*;
  * This class is unsynchronized for use in per-thread mode.
  *
  */
-public abstract class SBPSRawVMATextStore extends CVMATextStore implements VMAIdTextStore {
+public abstract class SBPSVMAIdTextStore implements VMAIdTextStoreIntf {
 
     private static final String FLUSH_PROPERTY = "max.vma.storeflush";
     private static final String BUFSIZE_PROPERTY = "max.vma.storebufsize";
@@ -120,10 +116,10 @@ public abstract class SBPSRawVMATextStore extends CVMATextStore implements VMAId
 
     private PerThreadStoreOwner storeOwner;
 
-    protected SBPSRawVMATextStore() {
+    protected SBPSVMAIdTextStore() {
     }
 
-    protected SBPSRawVMATextStore(String threadName) {
+    protected SBPSVMAIdTextStore(String threadName) {
         this.threadName = threadName;
     }
 
@@ -184,7 +180,7 @@ public abstract class SBPSRawVMATextStore extends CVMATextStore implements VMAId
      * @param fileName to use for store
      * @return {@code true} iff the persistent store was created ok
      */
-    private static boolean createPersistentStore(SBPSRawVMATextStore store, String fileName) {
+    private static boolean createPersistentStore(SBPSVMAIdTextStore store, String fileName) {
         File file = new File(storeFileDir, fileName);
         try {
             store.ps = new PrintStream(new FileOutputStream(file));
@@ -201,7 +197,7 @@ public abstract class SBPSRawVMATextStore extends CVMATextStore implements VMAId
     @Override
     public VMATextStore newThread(String threadName) {
         if (perThread) {
-            SBPSRawVMATextStore store = createThreadStore(threadName);
+            SBPSVMAIdTextStore store = createThreadStore(threadName);
             store.initializeStore(true, true, storeOwner);
             if (!createPersistentStore(store, threadName)) {
                 FatalError.unexpected("failed to create per-thread VMA store");
@@ -223,7 +219,7 @@ public abstract class SBPSRawVMATextStore extends CVMATextStore implements VMAId
         end();
     }
 
-    protected abstract SBPSRawVMATextStore createThreadStore(String threadName);
+    protected abstract SBPSVMAIdTextStore createThreadStore(String threadName);
 
     @Override
     public void finalizeStore() {
@@ -236,7 +232,7 @@ public abstract class SBPSRawVMATextStore extends CVMATextStore implements VMAId
             synchronized (storeOwner) {
                 Iterator<VMAStore> allStores = storeOwner.getThreadStores();
                 while (allStores.hasNext()) {
-                    SBPSRawVMATextStore store = (SBPSRawVMATextStore) allStores.next();
+                    SBPSVMAIdTextStore store = (SBPSVMAIdTextStore) allStores.next();
                     store.waitForDaemon();
                     store.finalizeLogBuffer();
                 }
@@ -497,10 +493,10 @@ public abstract class SBPSRawVMATextStore extends CVMATextStore implements VMAId
     }
 
     @Override
-    public void unseenObject(long time, String threadName, long objId, String shortClassName) {
+    public void unseenObject(long time, String threadName, int bci, long objId, String shortClassName) {
         // There is no "bci" field for this, but we pass zero so that the format of the record is
         // the same as that for a NEW etc.
-        appendTTId(time, UNSEEN, objId, threadName, 0);
+        appendTTId(time, UNSEEN, objId, threadName, bci);
         sb.append(shortClassName);
         end();
     }
@@ -1044,8 +1040,8 @@ public abstract class SBPSRawVMATextStore extends CVMATextStore implements VMAId
     }
 
     @Override
-    public void unseenObject(long time, long objId, int classId) {
-        appendTTId(time, UNSEEN, objId, null, 0);
+    public void unseenObject(long time, int bci, long objId, int classId) {
+        appendTTId(time, UNSEEN, objId, null, bci);
         sb.append(classId);
         end();
     }

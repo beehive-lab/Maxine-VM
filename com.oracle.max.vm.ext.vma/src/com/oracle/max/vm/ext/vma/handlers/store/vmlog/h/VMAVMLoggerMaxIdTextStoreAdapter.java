@@ -37,7 +37,7 @@ import com.sun.max.vm.thread.*;
  * This variant exploits the fact that the {@link ObjectID}, {@link ClassID} types, etc., are already defined
  * as unique, relatively small integers. So rather than converting to application defined strings
  * and then to opaque short forms of those, as happens in {@link VMAVMLoggerTextStoreAdapter},
- * the ids are used as short forms directly and special calls are made to {@link VMAIdTextStore}.
+ * the ids are used as short forms directly and special calls are made to {@link VMAIdTextStoreIntf}.
  * The path is therefore considerably more efficient. However, there is one problem in that the
  * normal "short form" path that maps class, field, method names from their {@code String} form to
  * small integers on first encounter doesn't occur. It would reintroduce much of the the slow path to do the check
@@ -46,7 +46,7 @@ import com.sun.max.vm.thread.*;
  */
 public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
 
-    public static class ThisSBPSRawVMATextStore extends SBPSRawVMATextStore {
+    public static class ThisSBPSRawVMATextStore extends SBPSVMAIdTextStore {
 
         private VmThread vmThread;
 
@@ -77,138 +77,12 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
             return new ThisSBPSRawVMATextStore(threadName);
         }
 
-        @Override
-        public void unseenObject(long time, String threadName, long objId, String className, long clId) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseAfterNew(long time, String threadName, int bci, long objId, String className, long clId) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseAfterNewArray(long time, String threadName, int bci, long objId, String className, long clId, int length) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseAfterMultiNewArray(long time, String threadName, int bci, long objId, String className, long clId, int length) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforeGetStatic(long time, String threadName, int bci, String className, long clId, String fieldName) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String fieldName, float value) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String fieldName, double value) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforePutStatic(long time, String threadName, int bci, String className, long clId, String fieldName, long value) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforePutStaticObject(long time, String threadName, int bci, String className, long clId, String fieldName, long value) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforeGetField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, float value) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, long value) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforePutFieldObject(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, long value) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforePutField(long time, String threadName, int bci, long objId, String className, long clId, String fieldName, double value) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforeInvokeVirtual(long time, String threadName, int bci, long objId, String className, long clId, String methodName) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforeInvokeSpecial(long time, String threadName, int bci, long objId, String className, long clId, String methodName) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforeInvokeStatic(long time, String threadName, int bci, long objId, String className, long clId, String methodName) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforeInvokeInterface(long time, String threadName, int bci, long objId, String className, long clId, String methodName) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforeCheckCast(long time, String threadName, int bci, long objId, String className, long clId) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseBeforeInstanceOf(long time, String threadName, int bci, long objId, String className, long clId) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void adviseAfterMethodEntry(long time, String threadName, int bci, long objId, String className, long clId, String methodName) {
-            // TODO Auto-generated method stub
-
-        }
-
     }
 
     /**
      * An appropriately typed copy of {@link super#store}.
      */
-    private CVMATextStore txtStore;
+    private VMAIdTextStoreIntf txtStore;
 
     public VMAVMLoggerMaxIdTextStoreAdapter(ObjectStateHandler state) {
         super(state);
@@ -228,7 +102,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
         ThisSBPSRawVMATextStore thisStore = (ThisSBPSRawVMATextStore) store;
         VMAStore threadStore = thisStore.newThread(vmThread);
         VMAVMLoggerMaxIdTextStoreAdapter sa = new VMAVMLoggerMaxIdTextStoreAdapter(state, vmThread, threadStore);
-        sa.txtStore = (CVMATextStore) threadStore;
+        sa.txtStore = (VMAIdTextStoreIntf) threadStore;
         return sa;
     }
 
@@ -237,13 +111,13 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
         VMAStoreFactory.setClass(ThisSBPSRawVMATextStore.class);
         super.initialise(phase);
         if (phase == MaxineVM.Phase.RUNNING) {
-            txtStore = (CVMATextStore) store;
+            txtStore = (VMAIdTextStoreIntf) store;
         }
     }
 
     @Override
     public void unseenObject(long time, ObjectID objID, ClassID classID) {
-        txtStore.unseenObject(time, objID.toLong(), ClassID.asInt(classID));
+        txtStore.unseenObject(time, 0, objID.toLong(), ClassID.asInt(classID));
     }
 
     /*

@@ -155,4 +155,16 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
         gcSet.clear();
     }
 
+    @Override
+    public int readBit(Object obj, int n) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public void writeBit(Object obj, int n, int value) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

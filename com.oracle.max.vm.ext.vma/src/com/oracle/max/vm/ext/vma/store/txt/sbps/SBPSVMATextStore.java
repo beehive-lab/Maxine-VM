@@ -27,13 +27,11 @@ import com.oracle.max.vm.ext.vma.store.txt.ShortFormHandler.*;
 import com.sun.max.program.*;
 
 /**
- * This is the default implementation of {@link SBPSRawVMATextStore}. It translates
+ * This extends {@link SBPSVMAIdTextStore} with an implementation of {@link VMANSFTextStoreIntf}. It translates
  * thread, class, field and method names into shorts forms using {@link ShortFormHandler}.
  *
- * N.B. The classloader id associated with a class, cf. {@link ClassNameId} is only output when the
- * short form of the class is defined.
- */
-public class SBPSVMATextStore extends SBPSRawVMATextStore {
+ **/
+public class SBPSVMATextStore extends SBPSVMAIdTextStore implements VMANSFTextStoreIntf {
 
     private ThisShortFormHandler shortFormHandler;
 
@@ -71,12 +69,6 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
     @Override
     protected SBPSVMATextStore createThreadStore(String threadName) {
         return new SBPSVMATextStore(threadName);
-    }
-
-    @Override
-    public void unseenObject(long time, String threadName, long objId, String className, long clId) {
-        String classShortForm = getClassShortForm(className, clId);
-        super.unseenObject(time, getThreadShortForm(threadName), checkRepeatId(objId, threadName), classShortForm);
     }
 
     private String getThreadShortForm(String threadName) {
@@ -135,11 +127,6 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
 // EDIT AND RUN SBPSVMATextStoreGenerator.main() TO MODIFY
 
     @Override
-    public void adviseAfterMultiNewArray(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, int arg7) {
-        ProgramError.unexpected("adviseAfterMultiNewArray");
-    }
-
-    @Override
     public void adviseBeforeGC(long arg1, String arg2) {
         super.adviseBeforeGC(arg1, getThreadShortForm(arg2));
     }
@@ -165,15 +152,8 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
     }
 
     @Override
-    public void adviseAfterNew(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6) {
-        String classShortForm = getClassShortForm(arg5, arg6);
-        super.adviseAfterNew(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), classShortForm);
-    }
-
-    @Override
-    public void adviseAfterNewArray(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, int arg7) {
-        String classShortForm = getClassShortForm(arg5, arg6);
-        super.adviseAfterNewArray(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), classShortForm, arg7);
+    public void adviseBeforeConstLoad(long arg1, String arg2, int arg3, long arg4) {
+        super.adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
@@ -183,11 +163,6 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
 
     @Override
     public void adviseBeforeConstLoad(long arg1, String arg2, int arg3, double arg4) {
-        super.adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(long arg1, String arg2, int arg3, long arg4) {
         super.adviseBeforeConstLoad(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
@@ -207,16 +182,6 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
     }
 
     @Override
-    public void adviseBeforeStoreObject(long arg1, String arg2, int arg3, int arg4, long arg5) {
-        super.adviseBeforeStoreObject(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
-    }
-
-    @Override
-    public void adviseBeforeStore(long arg1, String arg2, int arg3, int arg4, float arg5) {
-        super.adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
-    }
-
-    @Override
     public void adviseBeforeStore(long arg1, String arg2, int arg3, int arg4, double arg5) {
         super.adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
@@ -227,13 +192,13 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
     }
 
     @Override
-    public void adviseBeforeArrayStoreObject(long arg1, String arg2, int arg3, long arg4, int arg5, long arg6) {
-        super.adviseBeforeArrayStoreObject(arg1, getThreadShortForm(arg2), arg3,  checkRepeatId(arg4, arg2), arg5, arg6);
+    public void adviseBeforeStore(long arg1, String arg2, int arg3, int arg4, float arg5) {
+        super.adviseBeforeStore(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override
-    public void adviseBeforeArrayStore(long arg1, String arg2, int arg3, long arg4, int arg5, float arg6) {
-        super.adviseBeforeArrayStore(arg1, getThreadShortForm(arg2), arg3,  checkRepeatId(arg4, arg2), arg5, arg6);
+    public void adviseBeforeStoreObject(long arg1, String arg2, int arg3, int arg4, long arg5) {
+        super.adviseBeforeStoreObject(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override
@@ -247,17 +212,27 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
     }
 
     @Override
+    public void adviseBeforeArrayStore(long arg1, String arg2, int arg3, long arg4, int arg5, float arg6) {
+        super.adviseBeforeArrayStore(arg1, getThreadShortForm(arg2), arg3,  checkRepeatId(arg4, arg2), arg5, arg6);
+    }
+
+    @Override
+    public void adviseBeforeArrayStoreObject(long arg1, String arg2, int arg3, long arg4, int arg5, long arg6) {
+        super.adviseBeforeArrayStoreObject(arg1, getThreadShortForm(arg2), arg3,  checkRepeatId(arg4, arg2), arg5, arg6);
+    }
+
+    @Override
     public void adviseBeforeStackAdjust(long arg1, String arg2, int arg3, int arg4) {
         super.adviseBeforeStackAdjust(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeOperation(long arg1, String arg2, int arg3, int arg4, double arg5, double arg6) {
+    public void adviseBeforeOperation(long arg1, String arg2, int arg3, int arg4, long arg5, long arg6) {
         super.adviseBeforeOperation(arg1, getThreadShortForm(arg2), arg3, arg4, arg5, arg6);
     }
 
     @Override
-    public void adviseBeforeOperation(long arg1, String arg2, int arg3, int arg4, long arg5, long arg6) {
+    public void adviseBeforeOperation(long arg1, String arg2, int arg3, int arg4, double arg5, double arg6) {
         super.adviseBeforeOperation(arg1, getThreadShortForm(arg2), arg3, arg4, arg5, arg6);
     }
 
@@ -267,7 +242,7 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
     }
 
     @Override
-    public void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, long arg5) {
+    public void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, double arg5) {
         super.adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
@@ -277,7 +252,7 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
     }
 
     @Override
-    public void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, double arg5) {
+    public void adviseBeforeConversion(long arg1, String arg2, int arg3, int arg4, long arg5) {
         super.adviseBeforeConversion(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
@@ -302,7 +277,7 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
     }
 
     @Override
-    public void adviseBeforeReturn(long arg1, String arg2, int arg3, long arg4) {
+    public void adviseBeforeReturn(long arg1, String arg2, int arg3, double arg4) {
         super.adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
@@ -312,97 +287,13 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
     }
 
     @Override
-    public void adviseBeforeReturn(long arg1, String arg2, int arg3, double arg4) {
+    public void adviseBeforeReturn(long arg1, String arg2, int arg3, long arg4) {
         super.adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3, arg4);
     }
 
     @Override
     public void adviseBeforeReturn(long arg1, String arg2, int arg3) {
         super.adviseBeforeReturn(arg1, getThreadShortForm(arg2), arg3);
-    }
-
-    @Override
-    public void adviseBeforeGetStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6) {
-        getClassShortForm(arg4, arg5);
-        super.adviseBeforeGetStatic(arg1, getThreadShortForm(arg2), arg3, getFieldShortForm(arg4, arg5, arg6));
-    }
-
-    @Override
-    public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, float arg7) {
-        getClassShortForm(arg4, arg5);
-        super.adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getFieldShortForm(arg4, arg5, arg6), arg7);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, double arg7) {
-        getClassShortForm(arg4, arg5);
-        super.adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getFieldShortForm(arg4, arg5, arg6), arg7);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, long arg7) {
-        getClassShortForm(arg4, arg5);
-        super.adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getFieldShortForm(arg4, arg5, arg6), arg7);
-    }
-
-    @Override
-    public void adviseBeforePutStaticObject(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, long arg7) {
-        getClassShortForm(arg4, arg5);
-        super.adviseBeforePutStaticObject(arg1, getThreadShortForm(arg2), arg3, getFieldShortForm(arg4, arg5, arg6), arg7);
-    }
-
-    @Override
-    public void adviseBeforeGetField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
-        getClassShortForm(arg5, arg6);
-        super.adviseBeforeGetField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getFieldShortForm(arg5, arg6, arg7));
-    }
-
-    @Override
-    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, float arg8) {
-        getClassShortForm(arg5, arg6);
-        super.adviseBeforePutField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getFieldShortForm(arg5, arg6, arg7), arg8);
-    }
-
-    @Override
-    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, long arg8) {
-        getClassShortForm(arg5, arg6);
-        super.adviseBeforePutField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getFieldShortForm(arg5, arg6, arg7), arg8);
-    }
-
-    @Override
-    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, double arg8) {
-        getClassShortForm(arg5, arg6);
-        super.adviseBeforePutField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getFieldShortForm(arg5, arg6, arg7), arg8);
-    }
-
-    @Override
-    public void adviseBeforePutFieldObject(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, long arg8) {
-        getClassShortForm(arg5, arg6);
-        super.adviseBeforePutFieldObject(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getFieldShortForm(arg5, arg6, arg7), arg8);
-    }
-
-    @Override
-    public void adviseBeforeInvokeVirtual(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
-        getClassShortForm(arg5, arg6);
-        super.adviseBeforeInvokeVirtual(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getMethodShortForm(arg5, arg6, arg7));
-    }
-
-    @Override
-    public void adviseBeforeInvokeSpecial(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
-        getClassShortForm(arg5, arg6);
-        super.adviseBeforeInvokeSpecial(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getMethodShortForm(arg5, arg6, arg7));
-    }
-
-    @Override
-    public void adviseBeforeInvokeStatic(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
-        getClassShortForm(arg5, arg6);
-        super.adviseBeforeInvokeStatic(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getMethodShortForm(arg5, arg6, arg7));
-    }
-
-    @Override
-    public void adviseBeforeInvokeInterface(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
-        getClassShortForm(arg5, arg6);
-        super.adviseBeforeInvokeInterface(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getMethodShortForm(arg5, arg6, arg7));
     }
 
     @Override
@@ -413,18 +304,6 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
     @Override
     public void adviseBeforeThrow(long arg1, String arg2, int arg3, long arg4) {
         super.adviseBeforeThrow(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2));
-    }
-
-    @Override
-    public void adviseBeforeCheckCast(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6) {
-        String classShortForm = getClassShortForm(arg5, arg6);
-        super.adviseBeforeCheckCast(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), classShortForm);
-    }
-
-    @Override
-    public void adviseBeforeInstanceOf(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6) {
-        String classShortForm = getClassShortForm(arg5, arg6);
-        super.adviseBeforeInstanceOf(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), classShortForm);
     }
 
     @Override
@@ -447,10 +326,131 @@ public class SBPSVMATextStore extends SBPSRawVMATextStore {
         super.adviseAfterArrayLoadObject(arg1, getThreadShortForm(arg2), arg3,  checkRepeatId(arg4, arg2), arg5, arg6);
     }
 
+// Generating VMANSFTextStoreIntf methods
+
+    @Override
+    public void unseenObject(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6) {
+        String classShortForm = getClassShortForm(arg5, arg6);
+        super.unseenObject(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), classShortForm);
+    }
+
+    @Override
+    public void adviseBeforeGetField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
+        getClassShortForm(arg5, arg6);
+        super.adviseBeforeGetField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getFieldShortForm(arg5, arg6, arg7));
+    }
+
+    @Override
+    public void adviseBeforeCheckCast(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6) {
+        String classShortForm = getClassShortForm(arg5, arg6);
+        super.adviseBeforeCheckCast(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), classShortForm);
+    }
+
+    @Override
+    public void adviseBeforePutStaticObject(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, long arg7) {
+        getClassShortForm(arg4, arg5);
+        super.adviseBeforePutStaticObject(arg1, getThreadShortForm(arg2), arg3, getFieldShortForm(arg4, arg5, arg6), arg7);
+    }
+
+    @Override
+    public void adviseAfterNewArray(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, int arg7) {
+        String classShortForm = getClassShortForm(arg5, arg6);
+        super.adviseAfterNewArray(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), classShortForm, arg7);
+    }
+
+    @Override
+    public void adviseBeforeInvokeVirtual(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
+        getClassShortForm(arg5, arg6);
+        super.adviseBeforeInvokeVirtual(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getMethodShortForm(arg5, arg6, arg7));
+    }
+
+    @Override
+    public void adviseAfterNew(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6) {
+        String classShortForm = getClassShortForm(arg5, arg6);
+        super.adviseAfterNew(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), classShortForm);
+    }
+
     @Override
     public void adviseAfterMethodEntry(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
         getClassShortForm(arg5, arg6);
         super.adviseAfterMethodEntry(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getMethodShortForm(arg5, arg6, arg7));
+    }
+
+    @Override
+    public void adviseBeforeInvokeSpecial(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
+        getClassShortForm(arg5, arg6);
+        super.adviseBeforeInvokeSpecial(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getMethodShortForm(arg5, arg6, arg7));
+    }
+
+    @Override
+    public void adviseBeforeInvokeInterface(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
+        getClassShortForm(arg5, arg6);
+        super.adviseBeforeInvokeInterface(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getMethodShortForm(arg5, arg6, arg7));
+    }
+
+    @Override
+    public void adviseAfterMultiNewArray(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, int arg7) {
+        ProgramError.unexpected("adviseAfterMultiNewArray");
+    }
+
+    @Override
+    public void adviseBeforeInstanceOf(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6) {
+        String classShortForm = getClassShortForm(arg5, arg6);
+        super.adviseBeforeInstanceOf(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), classShortForm);
+    }
+
+    @Override
+    public void adviseBeforePutFieldObject(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, long arg8) {
+        getClassShortForm(arg5, arg6);
+        super.adviseBeforePutFieldObject(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getFieldShortForm(arg5, arg6, arg7), arg8);
+    }
+
+    @Override
+    public void adviseBeforeInvokeStatic(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7) {
+        getClassShortForm(arg5, arg6);
+        super.adviseBeforeInvokeStatic(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getMethodShortForm(arg5, arg6, arg7));
+    }
+
+    @Override
+    public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, long arg7) {
+        getClassShortForm(arg4, arg5);
+        super.adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getFieldShortForm(arg4, arg5, arg6), arg7);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, float arg7) {
+        getClassShortForm(arg4, arg5);
+        super.adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getFieldShortForm(arg4, arg5, arg6), arg7);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6, double arg7) {
+        getClassShortForm(arg4, arg5);
+        super.adviseBeforePutStatic(arg1, getThreadShortForm(arg2), arg3, getFieldShortForm(arg4, arg5, arg6), arg7);
+    }
+
+    @Override
+    public void adviseBeforeGetStatic(long arg1, String arg2, int arg3, String arg4, long arg5, String arg6) {
+        getClassShortForm(arg4, arg5);
+        super.adviseBeforeGetStatic(arg1, getThreadShortForm(arg2), arg3, getFieldShortForm(arg4, arg5, arg6));
+    }
+
+    @Override
+    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, float arg8) {
+        getClassShortForm(arg5, arg6);
+        super.adviseBeforePutField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getFieldShortForm(arg5, arg6, arg7), arg8);
+    }
+
+    @Override
+    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, double arg8) {
+        getClassShortForm(arg5, arg6);
+        super.adviseBeforePutField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getFieldShortForm(arg5, arg6, arg7), arg8);
+    }
+
+    @Override
+    public void adviseBeforePutField(long arg1, String arg2, int arg3, long arg4, String arg5, long arg6, String arg7, long arg8) {
+        getClassShortForm(arg5, arg6);
+        super.adviseBeforePutField(arg1, getThreadShortForm(arg2), arg3, checkRepeatId(arg4, arg2), getFieldShortForm(arg5, arg6, arg7), arg8);
     }
 
 // END GENERATED CODE

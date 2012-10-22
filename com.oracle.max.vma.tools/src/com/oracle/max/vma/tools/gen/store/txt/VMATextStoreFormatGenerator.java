@@ -33,7 +33,7 @@ import com.oracle.max.vma.tools.gen.vma.*;
 /**
  * Generate the string codes used to identify advice methods in textual log files.
  */
-public class CVMATextStoreGenerator {
+public class VMATextStoreFormatGenerator {
 
     private static final String ADVISE_BEFORE = "adviseBefore";
     private static final String ADVISE_AFTER = "adviseAfter";
@@ -88,7 +88,7 @@ public class CVMATextStoreGenerator {
         if (duplicates) {
             System.err.println("duplicate codes");
         } else {
-            createGenerator(CVMATextStoreGenerator.class);
+            createGenerator(VMATextStoreFormatGenerator.class);
             generateAutoComment();
             out.printf("    public enum Key {%n");
             out.printf("        CLASS_DEFINITION(\"C\"),%n");
