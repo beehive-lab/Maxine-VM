@@ -50,8 +50,8 @@ public class SortUtil {
         }
 
         public int compare(ObjectRecord od1, ObjectRecord od2) {
-            long t1 = od1.getLifeTime(traceRun.lastTime);
-            long t2 = od2.getLifeTime(traceRun.lastTime);
+            long t1 = od1.getEffectiveLifeTime();
+            long t2 = od2.getEffectiveLifeTime();
             if (t1 < t2) {
                 return -1;
             } else if (t1 > t2) {

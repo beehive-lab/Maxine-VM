@@ -1340,7 +1340,7 @@ public abstract class T1XCompilation {
         }
     }
 
-    void do_synchronizedMethodAcquire() {
+    protected void do_synchronizedMethodAcquire() {
         if (method.isSynchronized()) {
             start(LOCK);
             if (method.isStatic()) {
@@ -1355,7 +1355,7 @@ public abstract class T1XCompilation {
         }
     }
 
-    void do_synchronizedMethodHandler(ClassMethodActor method, int endBCI) {
+    protected void do_synchronizedMethodHandler(ClassMethodActor method, int endBCI) {
         if (method.isSynchronized()) {
             syncMethodHandlerPos = buf.position();
             start(UNLOCK);
@@ -1449,6 +1449,14 @@ public abstract class T1XCompilation {
         }
     }
 
+    /** Similar to {@link #assignInvokeVirtualTemplateParameters}, allows
+     * VMA override to consistently pass the {@link FieldActor} to the (VMA) template.
+     * @param fieldActor
+     */
+    protected void assignFieldAccessParameter(T1XTemplateTag tag, FieldActor fieldActor) {
+        assignInt(1, "offset", fieldActor.offset());
+    }
+
     /**
      * Emit template for a bytecode operating on a (static or dynamic) field.
      * @param index Index to the field ref constant.
@@ -1466,14 +1474,14 @@ public abstract class T1XCompilation {
                     if (fieldActor.holder().isInitialized()) {
                         start(tag.initialized);
                         assignObject(0, "staticTuple", fieldActor.holder().staticTuple());
-                        assignInt(1, "offset", fieldActor.offset());
+                        assignFieldAccessParameter(tag, fieldActor);
                         finish();
                         do_postVolatileFieldAccess(tag, fieldActor);
                         return;
                     }
                 } else {
                     start(tag.resolved);
-                    assignInt(1, "offset", fieldActor.offset());
+                    assignFieldAccessParameter(tag, fieldActor);
                     finish();
                     do_postVolatileFieldAccess(tag, fieldActor);
                     return;

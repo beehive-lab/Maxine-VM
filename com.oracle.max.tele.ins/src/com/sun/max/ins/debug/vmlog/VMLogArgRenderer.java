@@ -123,7 +123,7 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
         ClassActor classActor = VmClassAccess.usingTeleClassIDs(new Function<ClassActor>() {
             @Override
             public ClassActor call() throws Exception {
-                return ClassID.toClassActor((int) arg);
+                return ClassIDManager.toClassActor((int) arg);
             }
         });
         return classActor;

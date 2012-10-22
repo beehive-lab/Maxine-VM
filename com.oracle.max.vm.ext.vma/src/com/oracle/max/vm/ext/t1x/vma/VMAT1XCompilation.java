@@ -123,7 +123,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
             if (adviceTypeOptions[AFTER_INDEX]) {
                 templates = vmaT1X.afterTemplates;
             } else {
-                templates = vmaT1X.getAltT1X().templates;
+                templates = defaultTemplates;
             }
         }
     }
@@ -135,7 +135,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
 
     @Override
     protected void finish() {
-        if (templates != defaultTemplates) {
+        if (templates != defaultTemplates && template.tag != null && template.tag != CREATE_MULTIANEWARRAY_DIMENSIONS) {
             // assign the bci value as the last argument
             assignInt(template.sig.in.length - 1, "bci", stream.currentBCI());
         }
@@ -146,6 +146,15 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
      * If and, only if, we are advising the relevant invoke bytecode, we override the default parameter assignment
      * to always pass the MethodActor.
      */
+
+    @Override
+    protected void assignFieldAccessParameter(T1XTemplateTag tag, FieldActor fieldActor) {
+        if (templates == defaultTemplates) {
+            super.assignFieldAccessParameter(tag, fieldActor);
+        } else {
+            assignObject(1, "f", fieldActor);
+        }
+    }
 
     @Override
     protected void assignInvokeVirtualTemplateParameters(VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
@@ -195,6 +204,24 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
             }
             finish();
         }
+    }
+
+    @Override
+    protected void do_synchronizedMethodAcquire() {
+        // Called without a call to processBytecode so have to select templates explicitly.
+        if (method.isSynchronized()) {
+            selectTemplates(VMABytecodes.MONITORENTER.ordinal());
+        }
+        super.do_synchronizedMethodAcquire();
+    }
+
+    @Override
+    protected void do_synchronizedMethodHandler(ClassMethodActor method, int endBCI) {
+        // Called without a call to processBytecode so have to select templates explicitly.
+        if (method.isSynchronized()) {
+            selectTemplates(VMABytecodes.MONITOREXIT.ordinal());
+        }
+        super.do_synchronizedMethodHandler(method, endBCI);
     }
 
     /*
@@ -323,11 +350,18 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
 
     @Override
     protected void do_load(int index, Kind kind) {
+        if (templates != defaultTemplates && kind.asEnum == KindEnum.REFERENCE) {
+            start(ALOAD);
+            assignInt(0, "index", index);
+            assignInt(1, "localOffset", localSlotOffset(index, Kind.REFERENCE));
+            finish();
+            return;
+        }
         if (templates != defaultTemplates) {
             T1XTemplateTag tag = null;
             // Checkstyle: stop
             switch (kind.asEnum) {
-                case REFERENCE: tag = ALOAD; break;
+                case REFERENCE: tag = ALOAD; assert false; break;
                 case INT: tag = ILOAD; break;
                 case LONG: tag = LLOAD; break;
                 case FLOAT: tag = FLOAD; break;

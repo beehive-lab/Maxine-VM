@@ -44,7 +44,35 @@ public class VMAStaticBytecodeAdvice {
 // EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
 
     @NEVER_INLINE
-    public static void adviseBeforeConstLoad(int arg1, long arg2) {
+    public static void adviseAfterNew(int arg1, Object arg2) {
+        disableAdvising();
+        adviceHandler().adviseAfterNew(arg1, arg2);
+        enableAdvising();
+    }
+
+    @NEVER_INLINE
+    public static void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
+        disableAdvising();
+        adviceHandler().adviseAfterNewArray(arg1, arg2, arg3);
+        enableAdvising();
+    }
+
+    @NEVER_INLINE
+    public static void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
+        disableAdvising();
+        adviceHandler().adviseAfterMultiNewArray(arg1, arg2, arg3);
+        enableAdvising();
+    }
+
+    @NEVER_INLINE
+    public static void adviseBeforeConstLoad(int arg1, float arg2) {
+        disableAdvising();
+        adviceHandler().adviseBeforeConstLoad(arg1, arg2);
+        enableAdvising();
+    }
+
+    @NEVER_INLINE
+    public static void adviseBeforeConstLoad(int arg1, double arg2) {
         disableAdvising();
         adviceHandler().adviseBeforeConstLoad(arg1, arg2);
         enableAdvising();
@@ -58,14 +86,7 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeConstLoad(int arg1, float arg2) {
-        disableAdvising();
-        adviceHandler().adviseBeforeConstLoad(arg1, arg2);
-        enableAdvising();
-    }
-
-    @NEVER_INLINE
-    public static void adviseBeforeConstLoad(int arg1, double arg2) {
+    public static void adviseBeforeConstLoad(int arg1, long arg2) {
         disableAdvising();
         adviceHandler().adviseBeforeConstLoad(arg1, arg2);
         enableAdvising();
@@ -86,7 +107,7 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeStore(int arg1, int arg2, long arg3) {
+    public static void adviseBeforeStore(int arg1, int arg2, Object arg3) {
         disableAdvising();
         adviceHandler().adviseBeforeStore(arg1, arg2, arg3);
         enableAdvising();
@@ -107,9 +128,16 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeStore(int arg1, int arg2, Object arg3) {
+    public static void adviseBeforeStore(int arg1, int arg2, long arg3) {
         disableAdvising();
         adviceHandler().adviseBeforeStore(arg1, arg2, arg3);
+        enableAdvising();
+    }
+
+    @NEVER_INLINE
+    public static void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
+        disableAdvising();
+        adviceHandler().adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
         enableAdvising();
     }
 
@@ -135,16 +163,16 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
+    public static void adviseBeforeStackAdjust(int arg1, int arg2) {
         disableAdvising();
-        adviceHandler().adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+        adviceHandler().adviseBeforeStackAdjust(arg1, arg2);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeStackAdjust(int arg1, int arg2) {
+    public static void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
         disableAdvising();
-        adviceHandler().adviseBeforeStackAdjust(arg1, arg2);
+        adviceHandler().adviseBeforeOperation(arg1, arg2, arg3, arg4);
         enableAdvising();
     }
 
@@ -163,21 +191,14 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
-        disableAdvising();
-        adviceHandler().adviseBeforeOperation(arg1, arg2, arg3, arg4);
-        enableAdvising();
-    }
-
-    @NEVER_INLINE
-    public static void adviseBeforeConversion(int arg1, int arg2, float arg3) {
+    public static void adviseBeforeConversion(int arg1, int arg2, long arg3) {
         disableAdvising();
         adviceHandler().adviseBeforeConversion(arg1, arg2, arg3);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeConversion(int arg1, int arg2, long arg3) {
+    public static void adviseBeforeConversion(int arg1, int arg2, float arg3) {
         disableAdvising();
         adviceHandler().adviseBeforeConversion(arg1, arg2, arg3);
         enableAdvising();
@@ -212,7 +233,7 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeReturn(int arg1, double arg2) {
+    public static void adviseBeforeReturn(int arg1, Object arg2) {
         disableAdvising();
         adviceHandler().adviseBeforeReturn(arg1, arg2);
         enableAdvising();
@@ -233,7 +254,7 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeReturn(int arg1, Object arg2) {
+    public static void adviseBeforeReturn(int arg1, double arg2) {
         disableAdvising();
         adviceHandler().adviseBeforeReturn(arg1, arg2);
         enableAdvising();
@@ -247,70 +268,70 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeGetStatic(int arg1, Object arg2, int arg3) {
+    public static void adviseBeforeGetStatic(int arg1, Object arg2, FieldActor arg3) {
         disableAdvising();
         adviceHandler().adviseBeforeGetStatic(arg1, arg2, arg3);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforePutStatic(int arg1, Object arg2, int arg3, Object arg4) {
+    public static void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
         disableAdvising();
         adviceHandler().adviseBeforePutStatic(arg1, arg2, arg3, arg4);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforePutStatic(int arg1, Object arg2, int arg3, double arg4) {
+    public static void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, double arg4) {
         disableAdvising();
         adviceHandler().adviseBeforePutStatic(arg1, arg2, arg3, arg4);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforePutStatic(int arg1, Object arg2, int arg3, long arg4) {
+    public static void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
         disableAdvising();
         adviceHandler().adviseBeforePutStatic(arg1, arg2, arg3, arg4);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforePutStatic(int arg1, Object arg2, int arg3, float arg4) {
+    public static void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, Object arg4) {
         disableAdvising();
         adviceHandler().adviseBeforePutStatic(arg1, arg2, arg3, arg4);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeGetField(int arg1, Object arg2, int arg3) {
+    public static void adviseBeforeGetField(int arg1, Object arg2, FieldActor arg3) {
         disableAdvising();
         adviceHandler().adviseBeforeGetField(arg1, arg2, arg3);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforePutField(int arg1, Object arg2, int arg3, Object arg4) {
+    public static void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
         disableAdvising();
         adviceHandler().adviseBeforePutField(arg1, arg2, arg3, arg4);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforePutField(int arg1, Object arg2, int arg3, double arg4) {
+    public static void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
         disableAdvising();
         adviceHandler().adviseBeforePutField(arg1, arg2, arg3, arg4);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforePutField(int arg1, Object arg2, int arg3, long arg4) {
+    public static void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, Object arg4) {
         disableAdvising();
         adviceHandler().adviseBeforePutField(arg1, arg2, arg3, arg4);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseBeforePutField(int arg1, Object arg2, int arg3, float arg4) {
+    public static void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, double arg4) {
         disableAdvising();
         adviceHandler().adviseBeforePutField(arg1, arg2, arg3, arg4);
         enableAdvising();
@@ -387,23 +408,16 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseAfterNew(int arg1, Object arg2) {
+    public static void adviseAfterLoad(int arg1, int arg2, Object arg3) {
         disableAdvising();
-        adviceHandler().adviseAfterNew(arg1, arg2);
+        adviceHandler().adviseAfterLoad(arg1, arg2, arg3);
         enableAdvising();
     }
 
     @NEVER_INLINE
-    public static void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
+    public static void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
         disableAdvising();
-        adviceHandler().adviseAfterNewArray(arg1, arg2, arg3);
-        enableAdvising();
-    }
-
-    @NEVER_INLINE
-    public static void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
-        disableAdvising();
-        adviceHandler().adviseAfterMultiNewArray(arg1, arg2, arg3);
+        adviceHandler().adviseAfterArrayLoad(arg1, arg2, arg3, arg4);
         enableAdvising();
     }
 

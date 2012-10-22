@@ -53,12 +53,25 @@ public abstract class MemberID extends Word {
 
     @INLINE
     protected final ClassActor getHolder() {
-        return ClassID.toClassActor(asAddress().unsignedShiftedRight(NUMBER_OF_MEMBER_BITS).toInt());
+        return ClassIDManager.toClassActor(getHolderIDAsInt());
     }
 
     @INLINE
     protected final int getMemberIndex() {
         final Address word = asAddress().and(MEMBER_INDEX_MASK);
         return word.toInt();
+    }
+
+    @INLINE
+    protected final int getHolderIDAsInt() {
+        return asAddress().unsignedShiftedRight(NUMBER_OF_MEMBER_BITS).toInt();
+    }
+
+    public static int getClassIDAsInt(MemberID memberID) {
+        return memberID.getHolderIDAsInt();
+    }
+
+    public static int getMemberIDAsInt(MemberID memberID) {
+        return memberID.getMemberIndex();
     }
 }

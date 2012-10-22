@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.compiler.deps;
 
-import static com.sun.max.vm.actor.holder.ClassID.*;
+import static com.sun.max.vm.actor.holder.ClassIDManager.*;
 import static com.sun.max.vm.actor.holder.ClassActor.HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK;
 import static com.sun.max.vm.actor.holder.ClassActor.NO_CONCRETE_SUBTYPE_MARK;
 import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
@@ -148,7 +148,7 @@ public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
                 return false;
             }
             if (uct != HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK) {
-                ClassActor concreteType = ClassID.toClassActor(uct);
+                ClassActor concreteType = ClassIDManager.toClassActor(uct);
                 // This is the only concrete sub-type for the current context. The concrete method
                 // is whatever concrete method is used by this concrete type.
                 setConcreteMethod((MethodActor) concreteType.resolveMethodImpl(method));
@@ -178,7 +178,7 @@ public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
             }
             int classId = root.firstSubclassActorId;
             do {
-                ClassActor subType = ClassID.toClassActor(classId);
+                ClassActor subType = ClassIDManager.toClassActor(classId);
                 if (shouldSearchSubTypes(subType, method)) {
                     searchInstanceClassTree(subType, method);
                 }
@@ -250,7 +250,7 @@ public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
             int methodHolderID = dependencies.packed[i++];
             if (ucmVisitor != null) {
                 impl = MethodID.toMethodActor(MethodID.fromWord(MemberID.create(implHolder, -mindex - 1)));
-                ClassActor methodHolder = ClassID.toClassActor(methodHolderID);
+                ClassActor methodHolder = ClassIDManager.toClassActor(methodHolderID);
                 method = methodHolder.findLocalMethodActor(impl.name, impl.descriptor());
             }
         }

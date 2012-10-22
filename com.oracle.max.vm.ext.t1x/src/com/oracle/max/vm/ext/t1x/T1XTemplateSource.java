@@ -58,11 +58,6 @@ public class T1XTemplateSource {
     @INTRINSIC(CMP_BYTECODE)
     public static native int rawCompare(@INTRINSIC.Constant int opcode, double l, double r);
 
-    @T1X_TEMPLATE(RETHROW_EXCEPTION)
-    public static void rethrowException() {
-        Throw.raise(VmThread.current().loadExceptionForHandler());
-    }
-
     @T1X_TEMPLATE(PROFILE_NONSTATIC_METHOD_ENTRY)
     public static void profileNonstaticMethodEntry(MethodProfile mpo, Object rcvr) {
         // entrypoint counters count down to zero ("overflow")
@@ -146,6 +141,12 @@ public class T1XTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$boolean$init)
+    public static int getstaticBoolean(Object staticTuple, int offset) {
+        boolean result = TupleAccess.readBoolean(staticTuple, offset);
+        return UnsafeCast.asByte(result);
+    }
+
     @T1X_TEMPLATE(GETSTATIC$boolean)
     public static int getstaticBoolean(ResolutionGuard.InPool guard) {
         return resolveAndGetStaticBoolean(guard);
@@ -164,12 +165,6 @@ public class T1XTemplateSource {
             boolean result = TupleAccess.readBoolean(f.holder().staticTuple(), f.offset());
             return UnsafeCast.asByte(result);
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$boolean$init)
-    public static int getstaticBoolean(Object staticTuple, int offset) {
-        boolean result = TupleAccess.readBoolean(staticTuple, offset);
-        return UnsafeCast.asByte(result);
     }
 
     @T1X_TEMPLATE(PUTFIELD$boolean$resolved)
@@ -242,6 +237,12 @@ public class T1XTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$byte$init)
+    public static int getstaticByte(Object staticTuple, int offset) {
+        byte result = TupleAccess.readByte(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$byte)
     public static int getstaticByte(ResolutionGuard.InPool guard) {
         return resolveAndGetStaticByte(guard);
@@ -260,12 +261,6 @@ public class T1XTemplateSource {
             byte result = TupleAccess.readByte(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$byte$init)
-    public static int getstaticByte(Object staticTuple, int offset) {
-        byte result = TupleAccess.readByte(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$byte$resolved)
@@ -356,6 +351,12 @@ public class T1XTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$char$init)
+    public static int getstaticChar(Object staticTuple, int offset) {
+        char result = TupleAccess.readChar(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$char)
     public static int getstaticChar(ResolutionGuard.InPool guard) {
         return resolveAndGetStaticChar(guard);
@@ -374,12 +375,6 @@ public class T1XTemplateSource {
             char result = TupleAccess.readChar(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$char$init)
-    public static int getstaticChar(Object staticTuple, int offset) {
-        char result = TupleAccess.readChar(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$char$resolved)
@@ -470,6 +465,12 @@ public class T1XTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$short$init)
+    public static int getstaticShort(Object staticTuple, int offset) {
+        short result = TupleAccess.readShort(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$short)
     public static int getstaticShort(ResolutionGuard.InPool guard) {
         return resolveAndGetStaticShort(guard);
@@ -488,12 +489,6 @@ public class T1XTemplateSource {
             short result = TupleAccess.readShort(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$short$init)
-    public static int getstaticShort(Object staticTuple, int offset) {
-        short result = TupleAccess.readShort(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$short$resolved)
@@ -584,6 +579,12 @@ public class T1XTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$int$init)
+    public static int getstaticInt(Object staticTuple, int offset) {
+        int result = TupleAccess.readInt(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$int)
     public static int getstaticInt(ResolutionGuard.InPool guard) {
         return resolveAndGetStaticInt(guard);
@@ -602,12 +603,6 @@ public class T1XTemplateSource {
             int result = TupleAccess.readInt(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$int$init)
-    public static int getstaticInt(Object staticTuple, int offset) {
-        int result = TupleAccess.readInt(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$int$resolved)
@@ -781,6 +776,12 @@ public class T1XTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$float$init)
+    public static float getstaticFloat(Object staticTuple, int offset) {
+        float result = TupleAccess.readFloat(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$float)
     public static float getstaticFloat(ResolutionGuard.InPool guard) {
         return resolveAndGetStaticFloat(guard);
@@ -799,12 +800,6 @@ public class T1XTemplateSource {
             float result = TupleAccess.readFloat(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$float$init)
-    public static float getstaticFloat(Object staticTuple, int offset) {
-        float result = TupleAccess.readFloat(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$float$resolved)
@@ -1067,6 +1062,12 @@ public class T1XTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$long$init)
+    public static long getstaticLong(Object staticTuple, int offset) {
+        long result = TupleAccess.readLong(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$long)
     public static long getstaticLong(ResolutionGuard.InPool guard) {
         return resolveAndGetStaticLong(guard);
@@ -1085,12 +1086,6 @@ public class T1XTemplateSource {
             long result = TupleAccess.readLong(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$long$init)
-    public static long getstaticLong(Object staticTuple, int offset) {
-        long result = TupleAccess.readLong(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$long$resolved)
@@ -1377,6 +1372,12 @@ public class T1XTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$double$init)
+    public static double getstaticDouble(Object staticTuple, int offset) {
+        double result = TupleAccess.readDouble(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$double)
     public static double getstaticDouble(ResolutionGuard.InPool guard) {
         return resolveAndGetStaticDouble(guard);
@@ -1395,12 +1396,6 @@ public class T1XTemplateSource {
             double result = TupleAccess.readDouble(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$double$init)
-    public static double getstaticDouble(Object staticTuple, int offset) {
-        double result = TupleAccess.readDouble(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$double$resolved)
@@ -1663,6 +1658,12 @@ public class T1XTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$reference$init)
+    public static Reference getstaticObject(Object staticTuple, int offset) {
+        Object result = TupleAccess.readObject(staticTuple, offset);
+        return Reference.fromJava(result);
+    }
+
     @T1X_TEMPLATE(GETSTATIC$reference)
     public static Reference getstaticReference(ResolutionGuard.InPool guard) {
         return resolveAndGetStaticReference(guard);
@@ -1681,12 +1682,6 @@ public class T1XTemplateSource {
             Object result = TupleAccess.readObject(f.holder().staticTuple(), f.offset());
             return Reference.fromJava(result);
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$reference$init)
-    public static Reference getstaticObject(Object staticTuple, int offset) {
-        Object result = TupleAccess.readObject(staticTuple, offset);
-        return Reference.fromJava(result);
     }
 
     @T1X_TEMPLATE(PUTFIELD$reference$resolved)
@@ -1899,6 +1894,12 @@ public class T1XTemplateSource {
         }
     }
 
+    @T1X_TEMPLATE(GETSTATIC$word$init)
+    public static Word getstaticWord(Object staticTuple, int offset) {
+        Word result = TupleAccess.readWord(staticTuple, offset);
+        return result;
+    }
+
     @T1X_TEMPLATE(GETSTATIC$word)
     public static Word getstaticWord(ResolutionGuard.InPool guard) {
         return resolveAndGetStaticWord(guard);
@@ -1917,12 +1918,6 @@ public class T1XTemplateSource {
             Word result = TupleAccess.readWord(f.holder().staticTuple(), f.offset());
             return result;
         }
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$word$init)
-    public static Word getstaticWord(Object staticTuple, int offset) {
-        Word result = TupleAccess.readWord(staticTuple, offset);
-        return result;
     }
 
     @T1X_TEMPLATE(PUTFIELD$word$resolved)
@@ -2288,15 +2283,15 @@ public class T1XTemplateSource {
         return Reference.fromJava(array);
     }
 
-    @T1X_TEMPLATE(CHECKCAST)
-    public static Object checkcast(ResolutionGuard guard, @Slot(0) Object object) {
-        resolveAndCheckcast(guard, object);
-        return object;
-    }
-
     @T1X_TEMPLATE(CHECKCAST$resolved)
     public static Object checkcast(ClassActor classActor, @Slot(0) Object object) {
         Snippets.checkCast(classActor, object);
+        return object;
+    }
+
+    @T1X_TEMPLATE(CHECKCAST)
+    public static Object checkcast(ResolutionGuard guard, @Slot(0) Object object) {
+        resolveAndCheckcast(guard, object);
         return object;
     }
 
@@ -2315,6 +2310,12 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(ATHROW)
     public static void athrow(@Slot(0) Object object) {
         Throw.raise(object);
+    }
+
+    @T1X_TEMPLATE(RETHROW_EXCEPTION)
+    public static void rethrowException() {
+        Throwable throwable = VmThread.current().loadExceptionForHandler();
+        Throw.raise(throwable);
     }
 
     @T1X_TEMPLATE(MONITORENTER)

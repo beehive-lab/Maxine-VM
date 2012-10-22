@@ -182,12 +182,6 @@ public class DDVMTIHandler implements VMTIHandler {
     }
 
     @Override
-    public void objectSurviving(Pointer cell) {
-        eventHandler1.objectSurviving(cell);
-        eventHandler2.objectSurviving(cell);
-    }
-
-    @Override
     public void methodCompiled(ClassMethodActor classMethodActor) {
         eventHandler1.methodCompiled(classMethodActor);
         eventHandler2.methodCompiled(classMethodActor);

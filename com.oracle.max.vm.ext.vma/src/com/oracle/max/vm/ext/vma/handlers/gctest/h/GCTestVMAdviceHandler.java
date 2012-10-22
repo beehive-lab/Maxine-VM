@@ -23,69 +23,84 @@
 package com.oracle.max.vm.ext.vma.handlers.gctest.h;
 
 import java.util.*;
+import java.util.regex.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
- * In early development there were problems with GC ref maps relative to the advice calls in
- * generated code. This "handler" performs GC on a random basis for each advice method whihc,
- * hopefully, is a useful regression test that the maps are ok.
+ * In early development there were problems with GC ref maps relative to the advice calls in generated code. This
+ * "handler" performs GC on a random basis for each advice method which, hopefully, is a useful regression test that the
+ * maps are ok.
+ *
+ * By default, a GC will be invoked (randomly) on approximately 10% of the advice methods.
+ * The percentage can be controlled by the {@link #PERCENT_PROPERTY} property. Setting the
+ * value at 100 will invoke a GC on every advice method.
+ *
  * Can be built into the boot image or dynamically loaded.
  */
 public class GCTestVMAdviceHandler extends VMAdviceHandler {
 
+    private static final String PERCENT_PROPERTY = "max.vma.handler.gctest.percent";
+    private static final String VERBOSE_PROPERTY = "max.vma.handler.gctest.verbose";
+    private static final String METHODS_PROPERTY = "max.vma.handler.gctest.methods";
+
     private Random random = new Random(46737);
     private static int frequency;
-    private static AdviceMethod[] methodValues = AdviceMethod.values();
-    private static AdviceMode[] modeValues = AdviceMode.values();
+    private static Pattern methodsPattern;
+    private static boolean verbose;
+    private static final AdviceMethod[] methodValues = AdviceMethod.values();
+    private static final AdviceMode[] modeValues = AdviceMode.values();
 
 
     public static void onLoad(String args) {
         VMAJavaRunScheme.registerAdviceHandler(new GCTestVMAdviceHandler());
-        // must compile gcSurvivor now otherwise it will be compiled lazily
-        // while a GC is occurring, which will cause a fatal exception.
-        ClassActor.fromJava(GCTestVMAdviceHandler.class).findClassMethodActor(SymbolTable.makeSymbol("gcSurvivor"), SignatureDescriptor.create(void.class, Pointer.class)).makeTargetMethod();
     }
 
     private void randomlyGC(int methodOrd, int adviceOrd) {
         randomlyGC(methodValues[methodOrd].name(), modeValues[adviceOrd].name());
     }
 
-    private void randomlyGC(String ident1, String ident2) {
+    private void randomlyGC(String method, String mode) {
+        if (methodsPattern != null) {
+            if (!matchMethod(method, mode)) {
+                return;
+            }
+        }
+
         int next = random.nextInt(100);
         if (next % frequency == 0) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("GCTestVMAdviceHandlerLog.GC: ");
-            Log.print(ident1);
+            Log.print("GCTestVMAdviceHandler.GC: ");
+            Log.print(method);
             Log.print(":");
-            Log.println(ident2);
+            Log.println(mode);
             Log.unlock(lockDisabledSafepoints);
             System.gc();
         }
     }
 
-    @Override
-    public void gcSurvivor(Pointer cell) {
-        // Don't GC when in GC!
+    private static boolean matchMethod(String method, String mode) {
+        return methodsPattern.matcher(method).matches();
     }
 
     @Override
     public void initialise(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.RUNNING) {
-            String freq = System.getProperty("max.vma.handler.gctest.freq");
+            String methodPatternProp = System.getProperty(METHODS_PROPERTY);
+            if (methodPatternProp != null) {
+                methodsPattern = Pattern.compile(methodPatternProp);
+            }
+            String freq = System.getProperty(PERCENT_PROPERTY);
             if (freq == null) {
                 frequency = 10;
             } else {
                 frequency = 100 / Integer.parseInt(freq);
             }
+            verbose = System.getProperty(VERBOSE_PROPERTY) != null;
         }
     }
 
@@ -288,7 +303,7 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeReturn(int arg1, double arg2) {
+    public void adviseBeforeReturn(int arg1, Object arg2) {
         randomlyGC(17, 0);
     }
 
@@ -303,7 +318,7 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeReturn(int arg1, Object arg2) {
+    public void adviseBeforeReturn(int arg1, double arg2) {
         randomlyGC(17, 0);
     }
 
@@ -313,52 +328,52 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeGetStatic(int arg1, Object arg2, int arg3) {
+    public void adviseBeforeGetStatic(int arg1, Object arg2, FieldActor arg3) {
         randomlyGC(18, 0);
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, float arg4) {
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
         randomlyGC(19, 0);
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, double arg4) {
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, double arg4) {
         randomlyGC(19, 0);
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, long arg4) {
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
         randomlyGC(19, 0);
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, int arg3, Object arg4) {
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, Object arg4) {
         randomlyGC(19, 0);
     }
 
     @Override
-    public void adviseBeforeGetField(int arg1, Object arg2, int arg3) {
+    public void adviseBeforeGetField(int arg1, Object arg2, FieldActor arg3) {
         randomlyGC(20, 0);
     }
 
     @Override
-    public void adviseBeforePutField(int arg1, Object arg2, int arg3, float arg4) {
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
         randomlyGC(21, 0);
     }
 
     @Override
-    public void adviseBeforePutField(int arg1, Object arg2, int arg3, long arg4) {
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
         randomlyGC(21, 0);
     }
 
     @Override
-    public void adviseBeforePutField(int arg1, Object arg2, int arg3, Object arg4) {
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, Object arg4) {
         randomlyGC(21, 0);
     }
 
     @Override
-    public void adviseBeforePutField(int arg1, Object arg2, int arg3, double arg4) {
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, double arg4) {
         randomlyGC(21, 0);
     }
 
@@ -410,6 +425,16 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     @Override
     public void adviseBeforeMonitorExit(int arg1, Object arg2) {
         randomlyGC(31, 0);
+    }
+
+    @Override
+    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
+        randomlyGC(8, 1);
+    }
+
+    @Override
+    public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
+        randomlyGC(9, 1);
     }
 
     @Override

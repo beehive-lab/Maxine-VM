@@ -23,7 +23,7 @@
 
 package com.oracle.max.vma.tools.log;
 
-import static com.oracle.max.vm.ext.vma.store.txt.CVMATextStore.*;
+import static com.oracle.max.vm.ext.vma.store.txt.VMATextStoreFormat.*;
 
 import java.io.*;
 import java.util.*;
@@ -227,7 +227,7 @@ public class ConvertLog {
         @Override
         void visitLine(String line) {
             setCommand(line);
-            if (CVMATextStore.hasTime(command)) {
+            if (VMATextStoreFormat.hasTime(command)) {
                 lineTime = Long.parseLong(lineParts[1]);
                 lineAbsTime = logUsesAbsTime ? lineTime : lineAbsTime + lineTime;
             } else if (command == Key.INITIALIZE_STORE || command == Key.THREAD_SWITCH || command == Key.FINALIZE_STORE) {
@@ -308,7 +308,7 @@ public class ConvertLog {
             for (int i = 0; i < linesArray.length; i++) {
                 String line;
                 String[] lineParts = linesArray[i].lineParts;
-                if (CVMATextStore.hasTime(commandMap.get(lineParts[0]))) {
+                if (VMATextStoreFormat.hasTime(commandMap.get(lineParts[0]))) {
                     line = fixupTime(linesArray[i], lastTime);
                     lastTime = linesArray[i].time;
                 } else {
@@ -361,8 +361,8 @@ public class ConvertLog {
         @Override
         void visitLine(String line) {
             super.visitLine(line);
-            if (CVMATextStore.hasTime(command)) {
-                if (CVMATextStore.hasTimeAndThread(command)) {
+            if (VMATextStoreFormat.hasTime(command)) {
+                if (VMATextStoreFormat.hasTimeAndThread(command)) {
                     // thread is in lineParts[2]
                     BatchData batch = batchMap.get(lineParts[2]);
                     if (batch == null) {
@@ -483,9 +483,9 @@ public class ConvertLog {
             }
 
             long outputRecordAndNext(long previousTime) throws IOException {
-                if (CVMATextStore.hasTime(record.command)) {
+                if (VMATextStoreFormat.hasTime(record.command)) {
                     record.adjustRelTime(previousTime);
-                    if (CVMATextStore.hasTimeAndThread(record.command)) {
+                    if (VMATextStoreFormat.hasTimeAndThread(record.command)) {
                         // need to insert the thread at slot 2
                         assert record.timedLine.lineParts[2] == null;
                         record.timedLine.lineParts[2] = threadShortForm;
@@ -507,7 +507,7 @@ public class ConvertLog {
                 Record(String line) {
                     String[] parts = split(line);
                     command = commandMap.get(parts[0]);
-                    if (CVMATextStore.hasTime(command)) {
+                    if (VMATextStoreFormat.hasTime(command)) {
                         long thisTime = Long.parseLong(parts[1]);
                         lastAbsTime = logUsesAbsTime ? thisTime : lastAbsTime + thisTime;
                     } else if (command == Key.INITIALIZE_STORE || command == Key.FINALIZE_STORE) {
@@ -545,7 +545,7 @@ public class ConvertLog {
                         result[count] = line.substring(iy, ix);
                         count++;
                         if (count == 1) {
-                            CVMATextStore.Key key = CVMATextStore.commandMap.get(result[0]);
+                            VMATextStoreFormat.Key key = VMATextStoreFormat.commandMap.get(result[0]);
                             if (key == Key.THREAD_DEFINITION) {
                                 // handle quoted thread names with spaces
                                 iy = line.indexOf('"', 3);
@@ -553,7 +553,7 @@ public class ConvertLog {
                                 result[2] = line.substring(iy + 2);
                                 return result;
                             } else {
-                                hasThread = CVMATextStore.hasTimeAndThread(key);
+                                hasThread = VMATextStoreFormat.hasTimeAndThread(key);
                             }
                         } else if (hasThread && count == 2) {
                             count++;
@@ -721,7 +721,7 @@ public class ConvertLog {
                 // no change
                 out.println(line);
             } else {
-                if (CVMATextStore.hasTime(command)) {
+                if (VMATextStoreFormat.hasTime(command)) {
                     if (logUsesAbsTime) {
                         // to relative
                         ProgramError.unexpected("abs to rel not implemented");
@@ -876,14 +876,14 @@ public class ConvertLog {
             String threadArg = perThread ? perThreadString : arg2;
             String objIdArg = "???";
 
-            if (CVMATextStore.hasTime(command)) {
+            if (VMATextStoreFormat.hasTime(command)) {
                 String atTime = "@" + timeArg;
                 out.printf("%-10s ", atTime);
             } else {
                 out.printf("%-11c", ' ');
             }
 
-            if (CVMATextStore.hasId(command)) {
+            if (VMATextStoreFormat.hasId(command)) {
                 if (arg(OBJ_ID_INDEX).charAt(0) == REPEAT_ID) {
                     objIdArg = lastId.get(threadArg);
                 } else {
@@ -893,15 +893,15 @@ public class ConvertLog {
             }
             out.printf("%s ", command);
 
-            if (CVMATextStore.hasBci(command)) {
+            if (VMATextStoreFormat.hasBci(command)) {
                 out.printf("%s ", bciArg);
             }
 
-            if (CVMATextStore.hasTimeAndThread(command)) {
+            if (VMATextStoreFormat.hasTimeAndThread(command)) {
                 printThreadId(threadArg);
             }
 
-            if (CVMATextStore.hasId(command)) {
+            if (VMATextStoreFormat.hasId(command)) {
                 printObjId(objIdArg);
             }
 

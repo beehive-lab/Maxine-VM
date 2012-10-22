@@ -36,8 +36,8 @@ public class ReflectCons {
 
     public static void main(String[] args) throws Exception {
         System.out.println("main entered");
+        Constructor<?> c = ReflectCons.A.class.getDeclaredConstructor(new Class<?>[] {int.class});
         for (int i = 0; i < 100; i++) {
-            Constructor<?> c = ReflectCons.A.class.getDeclaredConstructor(new Class<?>[] {int.class});
             @SuppressWarnings("unused")
             ReflectCons.A rc1 = (ReflectCons.A) c.newInstance(i);
             System.out.println("A constructed");

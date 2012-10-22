@@ -22,17 +22,13 @@
  */
 package com.oracle.max.vm.ext.vma;
 
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
 
 /**
  * Certain VM runtime events can be advised, notably garbage-collection, in addition to the
  * bytecode execution.
  *
- * Garbage Collection can be advised before and after. To aid in the analysis of object lifetimes
- * objects that survive a garbage collection are marked by invoking {@link #gcSurvivor(Pointer)}.
- * In combination with advice on the creation of objects via the {@code NEW} family of bytecodes,
- * this makes it possible to determine object death by an advisee.
+ * Garbage Collection can be advised before and after.
  * a
  */
 
@@ -48,11 +44,6 @@ public abstract class RuntimeAdvice extends BytecodeAdvice {
      *
      */
     public abstract void adviseAfterGC();
-
-    /**
-     * Called as a side-effect of GC when an object survives a garbage collection.
-     */
-    public abstract void gcSurvivor(Pointer cell);
 
     /**
      * Thread start.
