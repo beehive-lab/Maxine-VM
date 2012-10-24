@@ -61,12 +61,17 @@ import com.sun.max.vm.thread.*;
  * Note that object (reference) types cannot be stored in the log owing to potential for
  * the flushing code to provoke a GC. If a log call was on the stack at that time any object types
  * would not be be handled properly as the {@link VMLogger} log methods use {@link Word} types.
+ *
+ * The default adapter is {@link VMAVMLoggerMaxIdTextStoreAdapter}, which uses the Maxine ids for
+ * threads/classes/fields/methods as short forms in the store. However, setting the {@link #STDID_PROPERTY}
+ * causes {@link VMAVMLoggerTextStoreAdapter} to be used instead, which uses the same short form conversion
+ * process as {@link SyncStoreVMAdviceHandler}. This is useful as a sanity check.
  */
 public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     public static final String STDID_PROPERTY = "max.vma.vmloghandler.stdid";
     private static final Class DEFAULT_ADAPTER = VMAVMLoggerMaxIdTextStoreAdapter.class;
-    private static final String MAXIDS_ADAPTER_CLASSNAME = "com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.stdid.VMAVMLoggerTextStoreAdapter";
+    private static final String STDIDS_ADAPTER_CLASSNAME = "com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.stdid.VMAVMLoggerTextStoreAdapter";
 
     /**
      * The custom {@link VMLog} used to store VMA advice records.
@@ -75,7 +80,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @CONSTANT_WHEN_NOT_ZERO
     private VMLog vmaVMLog;
 
-    private VMAVMLoggerStoreAdapter storeAdaptor;
+    private VMAVMLoggerStoreAdapter storeAdapter;
     private VMAOptions.TimeMode timeMode;
 
     /**
@@ -106,39 +111,49 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
         VMAJavaRunScheme.registerAdviceHandler(new VMLogStoreVMAdviceHandler());
     }
 
+    private void setStoreAdapter(MaxineVM.Phase phase) {
+        try {
+            Class<?> adapterClass = DEFAULT_ADAPTER;
+            String adapterProperty = System.getProperty(STDID_PROPERTY);
+            if (adapterProperty != null) {
+                adapterClass = Class.forName(STDIDS_ADAPTER_CLASSNAME);
+            }
+            Constructor<?> cons = adapterClass.getConstructor(ObjectStateHandler.class);
+            storeAdapter = (VMAVMLoggerStoreAdapter) cons.newInstance(state);
+            storeAdapter.initialise(phase);
+        } catch (Exception ex) {
+            Log.println("failed to load adapter class: " + ex);
+            MaxineVM.native_exit(1);
+        }
+
+    }
+
     @Override
     public void initialise(MaxineVM.Phase phase) {
         super.initialise(phase);
         if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
             vmaVMLog = VMAJavaRunScheme.vmaVMLog();
             vmaVMLog.registerCustom(VMAVMLogger.logger, createFlusher());
+            setStoreAdapter(phase);
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (vmaVMLog == null) {
                 // dynamically loaded
                 vmaVMLog = VMAJavaRunScheme.vmaVMLog();
                 vmaVMLog.registerCustom(VMAVMLogger.logger, createFlusher());
             }
-            try {
-                Class<?> adapterClass = DEFAULT_ADAPTER;
-                String adapterProperty = System.getProperty(STDID_PROPERTY);
-                if (adapterProperty != null) {
-                    adapterClass = Class.forName(MAXIDS_ADAPTER_CLASSNAME);
-                }
-                Constructor<?> cons = adapterClass.getConstructor(ObjectStateHandler.class);
-                storeAdaptor = (VMAVMLoggerStoreAdapter) cons.newInstance(state);
-                storeAdaptor.initialise(phase);
-            } catch (Exception ex) {
-                Log.println("failed to load adapter class: " + ex);
-                MaxineVM.native_exit(1);
+            if (storeAdapter == null) {
+                setStoreAdapter(phase);
+            } else {
+                storeAdapter.initialise(phase);
             }
             super.setDeadObjectHandler(new RemovalTracker());
-            VMAVMLogger.logger.storeAdaptor = storeAdaptor;
+            VMAVMLogger.logger.storeAdaptor = storeAdapter;
             timeMode = VMAOptions.getTimeMode();
             VMAVMLogger.logger.enable(true);
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             // the VMA log for the main thread is flushed by adviseBeforeThreadTerminating
             // so we just need to flush the external log
-            storeAdaptor.initialise(phase);
+            storeAdapter.initialise(phase);
         }
 
     }
@@ -169,33 +184,33 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void adviseBeforeThreadStarting(VmThread vmThread) {
         // Need to inform the adapter, no need to log
         // In case of per-thread case, possible create a per-thread adaptor
-        VMAVMLoggerStoreAdapter tsa = (VMAVMLoggerStoreAdapter) storeAdaptor.newThread(vmThread);
+        VMAVMLoggerStoreAdapter tsa = (VMAVMLoggerStoreAdapter) storeAdapter.newThread(vmThread);
         tsa.adviseBeforeThreadStarting(getTime());
     }
 
     @Override
     public void adviseBeforeThreadTerminating(VmThread vmThread) {
         vmaVMLog.flush(VMLog.FLUSHMODE_FULL, vmThread);
-        VMAVMLoggerStoreAdapter threadStoreAdaptor = (VMAVMLoggerStoreAdapter) storeAdaptor.getStoreAdaptorForThread(vmThread.uuid);
+        VMAVMLoggerStoreAdapter threadStoreAdaptor = (VMAVMLoggerStoreAdapter) storeAdapter.getStoreAdaptorForThread(vmThread.uuid);
         if (threadStoreAdaptor == null) {
             // this is a thread which we didn't see the start of
-            threadStoreAdaptor = (VMAVMLoggerStoreAdapter) storeAdaptor.newThread(vmThread);
+            threadStoreAdaptor = (VMAVMLoggerStoreAdapter) storeAdapter.newThread(vmThread);
         }
         threadStoreAdaptor.adviseBeforeThreadTerminating(getTime());
     }
 
     private ClassID createClassID(ClassActor ca) {
-        storeAdaptor.checkDefineClass(ca);
+        storeAdapter.checkDefineClass(ca);
         return ClassID.fromClassActor(ca);
     }
 
     private FieldID createFieldID(FieldActor fa) {
-        storeAdaptor.checkDefineField(fa);
+        storeAdapter.checkDefineField(fa);
         return FieldID.fromFieldActor(fa);
     }
 
     private MethodID createMethodID(MethodActor ma) {
-        storeAdaptor.checkDefineMethod(ma);
+        storeAdapter.checkDefineMethod(ma);
         return MethodID.fromMethodActor(ma);
     }
 

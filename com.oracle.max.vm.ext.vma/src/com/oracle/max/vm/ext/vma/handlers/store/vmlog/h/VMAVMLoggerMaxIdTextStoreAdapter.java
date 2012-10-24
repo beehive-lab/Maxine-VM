@@ -82,7 +82,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
     /**
      * An appropriately typed copy of {@link super#store}.
      */
-    private VMAIdTextStoreIntf txtStore;
+    private ThisSBPSRawVMATextStore txtStore;
 
     public VMAVMLoggerMaxIdTextStoreAdapter(ObjectStateHandler state) {
         super(state);
@@ -102,7 +102,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
         ThisSBPSRawVMATextStore thisStore = (ThisSBPSRawVMATextStore) store;
         VMAStore threadStore = thisStore.newThread(vmThread);
         VMAVMLoggerMaxIdTextStoreAdapter sa = new VMAVMLoggerMaxIdTextStoreAdapter(state, vmThread, threadStore);
-        sa.txtStore = (VMAIdTextStoreIntf) threadStore;
+        sa.txtStore = (ThisSBPSRawVMATextStore) threadStore;
         return sa;
     }
 
@@ -111,7 +111,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
         VMAStoreFactory.setClass(ThisSBPSRawVMATextStore.class);
         super.initialise(phase);
         if (phase == MaxineVM.Phase.RUNNING) {
-            txtStore = (VMAIdTextStoreIntf) store;
+            txtStore = (ThisSBPSRawVMATextStore) store;
         }
     }
 
@@ -198,7 +198,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
 
     @Override
     public void adviseBeforeReturnByThrow(long arg1, int arg2, ObjectID arg3, int arg4) {
-        txtStore.adviseBeforeReturnByThrow(arg1, null, arg2, arg3.toLong(), arg4);
+        txtStore.adviseBeforeReturnByThrow(arg1, null, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), arg4);
     }
 
     @Override
@@ -228,7 +228,7 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
 
     @Override
     public void adviseBeforeArrayLoad(long arg1, int arg2, ObjectID arg3, int arg4) {
-        txtStore.adviseBeforeArrayLoad(arg1, null, arg2, arg3.toLong(), arg4);
+        txtStore.adviseBeforeArrayLoad(arg1, null, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), arg4);
     }
 
     @Override
@@ -253,22 +253,22 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
 
     @Override
     public void adviseBeforeArrayStore(long arg1, int arg2, ObjectID arg3, int arg4, long arg5) {
-        txtStore.adviseBeforeArrayStore(arg1, null, arg2, arg3.toLong(), arg4, arg5);
+        txtStore.adviseBeforeArrayStore(arg1, null, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), arg4, arg5);
     }
 
     @Override
     public void adviseBeforeArrayStore(long arg1, int arg2, ObjectID arg3, int arg4, double arg5) {
-        txtStore.adviseBeforeArrayStore(arg1, null, arg2, arg3.toLong(), arg4, arg5);
+        txtStore.adviseBeforeArrayStore(arg1, null, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), arg4, arg5);
     }
 
     @Override
     public void adviseBeforeArrayStore(long arg1, int arg2, ObjectID arg3, int arg4, float arg5) {
-        txtStore.adviseBeforeArrayStore(arg1, null, arg2, arg3.toLong(), arg4, arg5);
+        txtStore.adviseBeforeArrayStore(arg1, null, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), arg4, arg5);
     }
 
     @Override
     public void adviseBeforeArrayStore(long arg1, int arg2, ObjectID arg3, int arg4, ObjectID arg5) {
-        txtStore.adviseBeforeArrayStoreObject(arg1, null, arg2, arg3.toLong(), arg4, arg5.toLong());
+        txtStore.adviseBeforeArrayStoreObject(arg1, null, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), arg4, arg5.toLong());
     }
 
     @Override
@@ -373,52 +373,52 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
 
     @Override
     public void adviseBeforeGetField(long arg1, int arg2, ObjectID arg3, FieldID arg4) {
-        txtStore.adviseBeforeGetField(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseBeforeGetField(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), MemberID.getMemberIDAsInt(arg4));
     }
 
     @Override
     public void adviseBeforePutField(long arg1, int arg2, ObjectID arg3, FieldID arg4, ObjectID arg5) {
-        txtStore.adviseBeforePutFieldObject(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4), arg5.toLong());
+        txtStore.adviseBeforePutFieldObject(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), MemberID.getMemberIDAsInt(arg4), arg5.toLong());
     }
 
     @Override
     public void adviseBeforePutField(long arg1, int arg2, ObjectID arg3, FieldID arg4, double arg5) {
-        txtStore.adviseBeforePutField(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4), arg5);
+        txtStore.adviseBeforePutField(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), MemberID.getMemberIDAsInt(arg4), arg5);
     }
 
     @Override
     public void adviseBeforePutField(long arg1, int arg2, ObjectID arg3, FieldID arg4, long arg5) {
-        txtStore.adviseBeforePutField(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4), arg5);
+        txtStore.adviseBeforePutField(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), MemberID.getMemberIDAsInt(arg4), arg5);
     }
 
     @Override
     public void adviseBeforePutField(long arg1, int arg2, ObjectID arg3, FieldID arg4, float arg5) {
-        txtStore.adviseBeforePutField(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4), arg5);
+        txtStore.adviseBeforePutField(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), MemberID.getMemberIDAsInt(arg4), arg5);
     }
 
     @Override
     public void adviseBeforeInvokeVirtual(long arg1, int arg2, ObjectID arg3, MethodID arg4) {
-        txtStore.adviseBeforeInvokeVirtual(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseBeforeInvokeVirtual(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), MemberID.getMemberIDAsInt(arg4));
     }
 
     @Override
     public void adviseBeforeInvokeSpecial(long arg1, int arg2, ObjectID arg3, MethodID arg4) {
-        txtStore.adviseBeforeInvokeSpecial(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseBeforeInvokeSpecial(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), MemberID.getMemberIDAsInt(arg4));
     }
 
     @Override
     public void adviseBeforeInvokeStatic(long arg1, int arg2, ObjectID arg3, MethodID arg4) {
-        txtStore.adviseBeforeInvokeStatic(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseBeforeInvokeStatic(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), MemberID.getMemberIDAsInt(arg4));
     }
 
     @Override
     public void adviseBeforeInvokeInterface(long arg1, int arg2, ObjectID arg3, MethodID arg4) {
-        txtStore.adviseBeforeInvokeInterface(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseBeforeInvokeInterface(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), MemberID.getMemberIDAsInt(arg4));
     }
 
     @Override
     public void adviseBeforeArrayLength(long arg1, int arg2, ObjectID arg3, int arg4) {
-        txtStore.adviseBeforeArrayLength(arg1, null, arg2, arg3.toLong(), arg4);
+        txtStore.adviseBeforeArrayLength(arg1, null, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), arg4);
     }
 
     @Override
@@ -428,12 +428,12 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
 
     @Override
     public void adviseBeforeCheckCast(long arg1, int arg2, ObjectID arg3, ClassID arg4) {
-        txtStore.adviseBeforeCheckCast(arg1, arg2, arg3.toLong(), ClassID.asInt(arg4));
+        txtStore.adviseBeforeCheckCast(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), ClassID.asInt(arg4));
     }
 
     @Override
     public void adviseBeforeInstanceOf(long arg1, int arg2, ObjectID arg3, ClassID arg4) {
-        txtStore.adviseBeforeInstanceOf(arg1, arg2, arg3.toLong(), ClassID.asInt(arg4));
+        txtStore.adviseBeforeInstanceOf(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), ClassID.asInt(arg4));
     }
 
     @Override
@@ -453,22 +453,22 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
 
     @Override
     public void adviseAfterArrayLoad(long arg1, int arg2, ObjectID arg3, int arg4, ObjectID arg5) {
-        txtStore.adviseAfterArrayLoadObject(arg1, null, arg2, arg3.toLong(), arg4, arg5.toLong());
+        txtStore.adviseAfterArrayLoadObject(arg1, null, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), arg4, arg5.toLong());
     }
 
     @Override
     public void adviseAfterNew(long arg1, int arg2, ObjectID arg3, ClassID arg4) {
-        txtStore.adviseAfterNew(arg1, arg2, arg3.toLong(), ClassID.asInt(arg4));
+        txtStore.adviseAfterNew(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), ClassID.asInt(arg4));
     }
 
     @Override
     public void adviseAfterNewArray(long arg1, int arg2, ObjectID arg3, ClassID arg4, int arg5) {
-        txtStore.adviseAfterNewArray(arg1, arg2, arg3.toLong(), ClassID.asInt(arg4), arg5);
+        txtStore.adviseAfterNewArray(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), ClassID.asInt(arg4), arg5);
     }
 
     @Override
     public void adviseAfterMethodEntry(long arg1, int arg2, ObjectID arg3, MethodID arg4) {
-        txtStore.adviseAfterMethodEntry(arg1, arg2, arg3.toLong(), MemberID.getMemberIDAsInt(arg4));
+        txtStore.adviseAfterMethodEntry(arg1, arg2, txtStore.checkRepeatId(arg3.toLong(), vmThread.getName()), MemberID.getMemberIDAsInt(arg4));
     }
 
 // END GENERATED CODE

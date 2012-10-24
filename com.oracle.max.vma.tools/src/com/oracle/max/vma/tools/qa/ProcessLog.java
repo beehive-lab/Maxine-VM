@@ -81,7 +81,7 @@ public class ProcessLog {
             if (line == null) {
                 return null;
             }
-            return ConvertLog.split(line);
+            return ConvertLog.split(textKeyMode, line);
         }
 
         @Override
@@ -91,20 +91,25 @@ public class ProcessLog {
     }
 
     private static class PushReader extends RecordReader implements PushRecord {
-        private String[] lineParts;
-        private boolean empty = true;
+        private static final int LENGTH = 1024;
+        private String[][]lineParts = new String[LENGTH][];
+        private int count;
+        private int writeIndex;
+        private int readIndex;
 
         @Override
         public synchronized String[] readLine() throws IOException {
-            while (empty) {
+            while (count == 0) {
                 try {
                     wait();
                 } catch (InterruptedException ex) {
                 }
             }
-            empty = true;
+            count--;
             notify();
-            return lineParts;
+            String[] result = lineParts[readIndex];
+            readIndex = (readIndex + 1) % LENGTH;
+            return result;
         }
 
         @Override
@@ -113,14 +118,15 @@ public class ProcessLog {
 
         @Override
         public synchronized void pushRecord(String[] lineParts) {
-            while (!empty) {
+            while (count >= LENGTH) {
                 try {
                     wait();
                 } catch (InterruptedException ex) {
                 }
             }
-            this.lineParts = lineParts;
-            empty = false;
+            this.lineParts[writeIndex] = lineParts;
+            writeIndex = (writeIndex + 1) % LENGTH;
+            count++;
             notify();
         }
 
@@ -133,6 +139,7 @@ public class ProcessLog {
         PushReaderThread(File[] files, PushReader pushReader) {
             this.pushReader = pushReader;
             this.files = files;
+            setName("PushReader");
         }
 
         @Override
@@ -374,6 +381,8 @@ public class ProcessLog {
     private String[] recordParts;
     private int lineNumber;
 
+    private static boolean textKeyMode;
+
     private ProcessLog(boolean verbose, int maxLines) throws IOException {
         this.verbose = verbose;
         this.maxLines = maxLines;
@@ -430,6 +439,7 @@ public class ProcessLog {
         adviceRecordList = new ArrayList<AdviceRecord>(adviceRecordListCountEstimate);
 
         lineNumber = 1;
+        boolean checked = false;
         try {
             while (true) {
                 recordParts = reader.readLine();
@@ -438,6 +448,10 @@ public class ProcessLog {
                 }
                 if (recordParts.length == 0 || recordParts[0].charAt(0) == '#') {
                     continue;
+                }
+                if (!checked) {
+
+                    checked = true;
                 }
                 try {
                     processTraceRecord();
@@ -499,11 +513,20 @@ public class ProcessLog {
         }
     }
 
+    /**
+     * Check that the header line is not corrupt and set the key mode.
+     */
+    private void checkStoreHeader() {
+        assert recordParts.length == 4;
+        textKeyMode = (Integer.parseInt(recordParts[3]) & TEXT_KEY) != 0;
+        assert VMATextStoreFormat.getCommand(textKeyMode, recordParts[0]) == Key.INITIALIZE_STORE;
+    }
+
     private RecordReader checkTimeOrdered(File file) throws IOException {
         BufferedRecordReader reader = new BufferedRecordReader(new BufferedReader(new FileReader(file)));
         recordParts = reader.readLine();
+        checkStoreHeader();
         reader.close();
-        assert commandMap.get(recordParts[0]) == Key.INITIALIZE_STORE;
         int mode = Integer.parseInt(recordParts[3]);
         if ((mode & BATCHED) != 0) {
             // not time ordered, run the converter to a temp file
@@ -752,7 +775,7 @@ public class ProcessLog {
     }
 
     private Key expectValidTraceStart() throws TraceException {
-        Key result = commandMap.get(recordParts[KEY_INDEX]);
+        Key result = VMATextStoreFormat.getCommand(textKeyMode, recordParts[KEY_INDEX]);
         if (result == null) {
             throw new TraceException("unknown trace command at line " + lineNumber);
         } else {
@@ -785,7 +808,7 @@ public class ProcessLog {
         String objIdArg = "???";
         int adviceModeInt = -1;
 
-        Key key = commandMap.get(recordParts[0]);
+        Key key = VMATextStoreFormat.getCommand(textKeyMode, recordParts[0]);
 
         if (VMATextStoreFormat.hasTimeAndThread(key)) {
             getTimeAndThread();
