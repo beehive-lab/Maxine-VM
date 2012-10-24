@@ -52,9 +52,9 @@ import com.sun.max.vm.runtime.*;
  */
 public abstract class SBPSVMAIdTextStore implements VMAIdTextStoreIntf {
 
-    private static final String FLUSH_PROPERTY = "max.vma.storeflush";
-    private static final String BUFSIZE_PROPERTY = "max.vma.storebufsize";
-    private static final String ABSTIME_PROPERTY = "max.vma.abstime";
+    private static final String FLUSH_PROPERTY = "max.vma.store.flush";
+    private static final String BUFSIZE_PROPERTY = "max.vma.store.bufsize";
+    private static final String TEXTKEY_PROPERTY = "max.vma.store.textkey";
     private static final int DEFAULT_BUFSIZE = 1024 * 1024;
 
     /**
@@ -71,6 +71,9 @@ public abstract class SBPSVMAIdTextStore implements VMAIdTextStoreIntf {
 
     @CONSTANT_WHEN_NOT_ZERO
     private static String flushProperty;
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private static boolean textKey;
 
     private static volatile boolean finalizing;
 
@@ -132,6 +135,7 @@ public abstract class SBPSVMAIdTextStore implements VMAIdTextStoreIntf {
             }
             flushProperty = System.getProperty(FLUSH_PROPERTY);
             storeFileDir = new File(VMAStoreFile.getStoreDir());
+            textKey = System.getProperty(TEXTKEY_PROPERTY) != null;
             cleanOutputDir();
             daemonLock.lock();
         }
@@ -215,7 +219,7 @@ public abstract class SBPSVMAIdTextStore implements VMAIdTextStoreIntf {
         appendSpace();
         sb.append(timeMode.isAbsolute());
         appendSpace();
-        sb.append((threadBatched ? BATCHED : 0) | (perThread ? PER_THREAD : 0));
+        sb.append((threadBatched ? BATCHED : 0) | (perThread ? PER_THREAD : 0) | (textKey ? TEXT_KEY : 0));
         end();
     }
 
@@ -259,7 +263,11 @@ public abstract class SBPSVMAIdTextStore implements VMAIdTextStoreIntf {
 
     protected void finalizeLogBuffer() {
         // Must not call appendCode else will block!
-        sb.append(FINALIZE_STORE.code);
+        if (textKey) {
+            sb.append(FINALIZE_STORE.text);
+        } else {
+            sb.append(FINALIZE_STORE.code);
+        }
         appendSpace();
         appendTime(timeMode.getTime());
         flushLogAt = 0; // force ps.flush
@@ -318,7 +326,11 @@ public abstract class SBPSVMAIdTextStore implements VMAIdTextStoreIntf {
             daemonLock.lock();
         }
         done = false;
-        sb.append(key.code);
+        if (textKey) {
+            sb.append(key.text);
+        } else {
+            sb.append(key.code);
+        }
     }
 
     protected void end() {
@@ -477,7 +489,7 @@ public abstract class SBPSVMAIdTextStore implements VMAIdTextStoreIntf {
         end();
     }
 
-    protected long checkRepeatId(long objId, String threadName) {
+    public long checkRepeatId(long objId, String threadName) {
         return repeatIdHandler.checkRepeatId(objId, threadName);
     }
 

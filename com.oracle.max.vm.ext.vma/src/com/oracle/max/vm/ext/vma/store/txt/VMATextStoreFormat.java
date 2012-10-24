@@ -69,6 +69,7 @@ public abstract class VMATextStoreFormat {
     public static final char REPEAT_ID = '*';
     public static final int BATCHED = 1;
     public static final int PER_THREAD = 2;
+    public static final int TEXT_KEY = 4;
 
     /**
      * Log records that do not have a (relative) time component.
@@ -81,12 +82,26 @@ public abstract class VMATextStoreFormat {
                     Key.THREAD_DEFINITION, Key.METHOD_DEFINITION,
                     Key.REMOVAL);
 
-    public static final Map<String, Key> commandMap = new HashMap<String, Key>();
+    public static final Map<String, Key> textKeyCommandMap = new HashMap<String, Key>();
+    public static final Map<String, Key> codeCommandMap = new HashMap<String, Key>();
 
     static {
         for (Key key : Key.values()) {
-            commandMap.put(key.code, key);
+            codeCommandMap.put(key.code, key);
+            textKeyCommandMap.put(key.text, key);
         }
+    }
+
+    public static Key getCommand(boolean textKeyMode, String code) {
+        if (textKeyMode) {
+            return textKeyCommandMap.get(code);
+        } else {
+            return codeCommandMap.get(code);
+        }
+    }
+
+    public static String getString(boolean textKeyMode, Key key) {
+        return textKeyMode ? key.text : key.code;
     }
 
     public static final char OBJ_VALUE = 'O';
@@ -138,65 +153,64 @@ public abstract class VMATextStoreFormat {
     }
 
 // START GENERATED CODE
-// EDIT AND RUN CVMATextStoreGenerator.main() TO MODIFY
+// EDIT AND RUN VMATextStoreFormatGenerator.main() TO MODIFY
 
     public enum Key {
-        CLASS_DEFINITION("C"),
-        FIELD_DEFINITION("F"),
-        THREAD_DEFINITION("T"),
-        METHOD_DEFINITION("M"),
-        ADVISE_BEFORE_THROW("BT"),
-        ADVISE_BEFORE_IF("BI"),
-        ADVISE_BEFORE_LOAD("BL"),
-        ADVISE_BEFORE_RETURN_BY_THROW("BRBT"),
-        ADVISE_AFTER_MULTI_NEW_ARRAY("AMNA"),
-        ADVISE_BEFORE_INVOKE_INTERFACE("BII"),
-        ADVISE_BEFORE_STORE("BS"),
-        ADVISE_BEFORE_INSTANCE_OF("BIO"),
-        ADVISE_BEFORE_ARRAY_STORE("BAS"),
-        ADVISE_BEFORE_GET_STATIC("BGS"),
-        ADVISE_BEFORE_PUT_FIELD("BPF"),
-        ADVISE_BEFORE_PUT_STATIC("BPS"),
-        ADVISE_BEFORE_INVOKE_STATIC("BIS"),
-        ADVISE_BEFORE_MONITOR_EXIT("BMX"),
-        ADVISE_BEFORE_ARRAY_LENGTH("BAG"),
-        REMOVAL("D"),
-        ADVISE_AFTER_LOAD("AL"),
-        ADVISE_BEFORE_CHECK_CAST("BCC"),
-        ADVISE_AFTER_GC("AGC"),
-        ADVISE_BEFORE_GET_FIELD("BGF"),
-        ADVISE_AFTER_ARRAY_LOAD("AAL"),
-        ADVISE_BEFORE_OPERATION("BO"),
-        INITIALIZE_STORE("IL"),
-        ADVISE_BEFORE_STACK_ADJUST("BSA"),
-        ADVISE_BEFORE_INVOKE_SPECIAL("BIZ"),
-        ADVISE_BEFORE_GC("BGC"),
-        ADVISE_BEFORE_RETURN("BR"),
-        ADVISE_BEFORE_ARRAY_LOAD("BAL"),
-        ADVISE_BEFORE_CONVERSION("BC"),
-        THREAD_SWITCH("ZT"),
-        ADVISE_BEFORE_MONITOR_ENTER("BME"),
-        ADVISE_BEFORE_THREAD_TERMINATING("BTT"),
-        ADVISE_BEFORE_GOTO("BG"),
-        FINALIZE_STORE("FL"),
-        ADVISE_BEFORE_THREAD_STARTING("BTS"),
-        ADVISE_AFTER_METHOD_ENTRY("AME"),
-        ADVISE_BEFORE_CONST_LOAD("BCL"),
-        ADVISE_AFTER_NEW("AN"),
-        UNSEEN("U"),
-        ADVISE_AFTER_NEW_ARRAY("ANA"),
-        ADVISE_BEFORE_INVOKE_VIRTUAL("BIV");
+        THREAD_DEFINITION("T", "0"),
+        CLASS_DEFINITION("C", "1"),
+        FIELD_DEFINITION("F", "2"),
+        METHOD_DEFINITION("M", "3"),
+        ADVISE_BEFORE_THROW("BT", "4"),
+        ADVISE_BEFORE_IF("BI", "5"),
+        ADVISE_BEFORE_LOAD("BL", "6"),
+        ADVISE_AFTER_MULTI_NEW_ARRAY("AMNA", "7"),
+        ADVISE_BEFORE_RETURN_BY_THROW("BRBT", "8"),
+        ADVISE_BEFORE_STORE("BS", "9"),
+        ADVISE_BEFORE_INVOKE_INTERFACE("BII", "A"),
+        ADVISE_BEFORE_INSTANCE_OF("BIO", "B"),
+        ADVISE_BEFORE_ARRAY_STORE("BAS", "C"),
+        ADVISE_BEFORE_GET_STATIC("BGS", "D"),
+        ADVISE_BEFORE_PUT_FIELD("BPF", "E"),
+        ADVISE_BEFORE_PUT_STATIC("BPS", "F"),
+        ADVISE_BEFORE_INVOKE_STATIC("BIS", "G"),
+        REMOVAL("D", "H"),
+        ADVISE_BEFORE_MONITOR_EXIT("BMX", "I"),
+        ADVISE_BEFORE_ARRAY_LENGTH("BAG", "J"),
+        ADVISE_AFTER_LOAD("AL", "K"),
+        ADVISE_BEFORE_CHECK_CAST("BCC", "L"),
+        ADVISE_AFTER_GC("AGC", "M"),
+        ADVISE_BEFORE_GET_FIELD("BGF", "N"),
+        ADVISE_AFTER_ARRAY_LOAD("AAL", "O"),
+        ADVISE_BEFORE_OPERATION("BO", "P"),
+        INITIALIZE_STORE("IL", "Q"),
+        ADVISE_BEFORE_STACK_ADJUST("BSA", "R"),
+        ADVISE_BEFORE_INVOKE_SPECIAL("BIZ", "S"),
+        ADVISE_BEFORE_GC("BGC", "T"),
+        ADVISE_BEFORE_RETURN("BR", "U"),
+        ADVISE_BEFORE_ARRAY_LOAD("BAL", "V"),
+        ADVISE_BEFORE_CONVERSION("BC", "W"),
+        THREAD_SWITCH("ZT", "X"),
+        ADVISE_BEFORE_MONITOR_ENTER("BME", "Y"),
+        ADVISE_BEFORE_THREAD_TERMINATING("BTT", "Z"),
+        ADVISE_BEFORE_GOTO("BG", "a"),
+        FINALIZE_STORE("FL", "b"),
+        ADVISE_BEFORE_THREAD_STARTING("BTS", "c"),
+        ADVISE_AFTER_METHOD_ENTRY("AME", "d"),
+        ADVISE_BEFORE_CONST_LOAD("BCL", "e"),
+        ADVISE_AFTER_NEW("AN", "f"),
+        ADVISE_AFTER_NEW_ARRAY("ANA", "g"),
+        UNSEEN("U", "h"),
+        ADVISE_BEFORE_INVOKE_VIRTUAL("BIV", "i");
+        public final String text;
         public final String code;
-        private Key(String code) {
+        private Key(String text, String code) {
+            this.text = text;
             this.code = code;
         }
     }
 
     public static final EnumSet<Key> hasIdSet = EnumSet.of(
         Key.ADVISE_BEFORE_RETURN_BY_THROW,
-        Key.ADVISE_AFTER_NEW,
-        Key.ADVISE_AFTER_NEW_ARRAY,
-        Key.ADVISE_AFTER_MULTI_NEW_ARRAY,
         Key.ADVISE_BEFORE_ARRAY_LOAD,
         Key.ADVISE_BEFORE_ARRAY_STORE,
         Key.ADVISE_BEFORE_GET_FIELD,
@@ -211,13 +225,13 @@ public abstract class VMATextStoreFormat {
         Key.ADVISE_BEFORE_INSTANCE_OF,
         Key.ADVISE_BEFORE_MONITOR_ENTER,
         Key.ADVISE_BEFORE_MONITOR_EXIT,
-        Key.ADVISE_AFTER_ARRAY_LOAD,
-        Key.ADVISE_AFTER_METHOD_ENTRY);
-
-    public static final EnumSet<Key> hasBciSet = EnumSet.of(
         Key.ADVISE_AFTER_NEW,
         Key.ADVISE_AFTER_NEW_ARRAY,
         Key.ADVISE_AFTER_MULTI_NEW_ARRAY,
+        Key.ADVISE_AFTER_METHOD_ENTRY,
+        Key.ADVISE_AFTER_ARRAY_LOAD);
+
+    public static final EnumSet<Key> hasBciSet = EnumSet.of(
         Key.ADVISE_BEFORE_CONST_LOAD,
         Key.ADVISE_BEFORE_LOAD,
         Key.ADVISE_BEFORE_ARRAY_LOAD,
@@ -243,8 +257,11 @@ public abstract class VMATextStoreFormat {
         Key.ADVISE_BEFORE_INSTANCE_OF,
         Key.ADVISE_BEFORE_MONITOR_ENTER,
         Key.ADVISE_BEFORE_MONITOR_EXIT,
+        Key.ADVISE_AFTER_NEW,
+        Key.ADVISE_AFTER_NEW_ARRAY,
+        Key.ADVISE_AFTER_MULTI_NEW_ARRAY,
+        Key.ADVISE_AFTER_METHOD_ENTRY,
         Key.ADVISE_AFTER_LOAD,
-        Key.ADVISE_AFTER_ARRAY_LOAD,
-        Key.ADVISE_AFTER_METHOD_ENTRY);
+        Key.ADVISE_AFTER_ARRAY_LOAD);
 // END GENERATED CODE
 }

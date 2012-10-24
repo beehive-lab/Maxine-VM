@@ -48,7 +48,8 @@ public class ConvertLog {
 
     private static boolean toAbsTime;
     private static boolean toRelTime;
-    private static boolean verbose = false;
+    private static boolean verbose;
+    private static boolean timeChange;
     private static PrintStream out;
 
     public static void main(String[] args) throws Exception {
@@ -66,8 +67,10 @@ public class ConvertLog {
                 verbose = true;
             } else if (arg.equals("-abstime")) {
                 toAbsTime = true;
+                timeChange = true;
             } else if (arg.equals("-reltime")) {
                 toRelTime = true;
+                timeChange = true;
             } else if (arg.equals("-batch")) {
                 command = new BatchCommand();
             } else if (arg.equals("-unbatch")) {
@@ -78,6 +81,8 @@ public class ConvertLog {
                 command = new ReadableCommand();
             } else if (arg.equals("-merge")) {
                 command = new MergeCommand();
+            } else if (arg.equals("-justread")) {
+                command = new JustReadCommand();
             } else {
                 usage();
             }
@@ -122,15 +127,13 @@ public class ConvertLog {
     private static void processLogFiles(File[] inFiles, String outFile, Command command) throws IOException {
         try {
             out = outFile == null ? System.out : new PrintStream(new FileOutputStream(outFile));
-            long chunkStartTime = System.currentTimeMillis();
-            long processStartTime = chunkStartTime;
-            command.convertLineNumber = 1;
+            command.startTiming();
 
             for (File inFile : inFiles) {
                 BufferedReader r = null;
                 try {
                     r = new BufferedReader(new FileReader(inFile));
-
+                    boolean checked = false;
                     while (true) {
                         final String line = r.readLine();
                         if (line == null) {
@@ -139,14 +142,12 @@ public class ConvertLog {
                         if (line.length() == 0) {
                             continue;
                         }
-
-                        command.visitLine(line);
-                        command.convertLineNumber++;
-                        if (verbose && ((command.convertLineNumber % 100000) == 0)) {
-                            long endTime = System.currentTimeMillis();
-                            System.out.printf("processed %d traces in %d ms (%d)%n", command.convertLineNumber, endTime - processStartTime, endTime - chunkStartTime);
-                            chunkStartTime = endTime;
+                        if (!checked) {
+                            command.checkStoreHeader(line);
+                            checked = true;
                         }
+                        command.visitLine(line);
+                        command.logTiming();
                     }
                 } finally {
                     if (r != null) {
@@ -165,21 +166,52 @@ public class ConvertLog {
         }
     }
 
-    public static String[] split(String line) {
-        int ix = line.indexOf('"');
-        if (ix > 0) {
-            // T "name" id, because thread names can have spaces
-            int iy = line.indexOf('"', ix + 1);
-            String[] lineParts = new String[3];
-            lineParts[0] = "T";
-            lineParts[1] = line.substring(ix + 1, iy);
-            lineParts[2] = line.substring(iy + 2);
-            return lineParts;
-        } else {
-            return line.split(" ");
-        }
+    public static String[] split(boolean textKeyMode, String line) {
+        return split(textKeyMode, line, false);
     }
 
+    /**
+     * Splits the line into space separated components, handling quoted thread names as a special case.
+     * @param textKeyMode {@code true} iff file is in {@link VMATextStoreFormat#TEXT_KEY} mode
+     * @param line the line to be split
+     * @param insertThread iff {@code true} allocate an extra slot for an inserted thread field,
+     *                     for converting per-thread files without a thread field
+     */
+    private static String[] split(boolean textKeyMode, String line, boolean insertThread) {
+        int count = insertThread ? 2 : 1; // 1 extra for the to-be-inserted thread field
+        for (int i = 0; i < line.length(); i++) {
+            if (line.charAt(i) == ' ') {
+                count++;
+            }
+        }
+        String[] result = new String[count];
+        int ix = line.indexOf(' ');
+        int iy = 0;
+        count = 0;
+        boolean hasThread = false;
+        while (ix > 0) {
+            result[count] = line.substring(iy, ix);
+            count++;
+            if (count == 1) {
+                VMATextStoreFormat.Key key = VMATextStoreFormat.getCommand(textKeyMode, result[0]);
+                if (key == Key.THREAD_DEFINITION) {
+                    // handle quoted thread names with spaces
+                    iy = line.indexOf('"', 3);
+                    result[1] = line.substring(3, iy);
+                    result[2] = line.substring(iy + 2);
+                    return result;
+                } else {
+                    hasThread = VMATextStoreFormat.hasTimeAndThread(key);
+                }
+            } else if (insertThread && hasThread && count == 2) {
+                count++;
+            }
+            iy = ix + 1;
+            ix = line.indexOf(' ', iy);
+        }
+        result[count] = line.substring(iy);
+        return result;
+    }
     private static String concat(String[] lineParts) {
         return concat(lineParts, null, 0);
     }
@@ -203,7 +235,32 @@ public class ConvertLog {
     }
 
     private static abstract class Command {
-        int convertLineNumber;
+        boolean textKeyMode;
+        protected long  chunkStartTime;
+        protected long processStartTime;
+        int convertRecordCount;
+
+        void checkStoreHeader(String line) {
+            String[] recordParts = split(false, line);
+            assert recordParts.length == 4;
+            textKeyMode = (Integer.parseInt(recordParts[3]) & TEXT_KEY) != 0;
+            assert VMATextStoreFormat.getCommand(textKeyMode, recordParts[0]) == Key.INITIALIZE_STORE;
+        }
+
+        public void startTiming() {
+            chunkStartTime = System.currentTimeMillis();
+            processStartTime = chunkStartTime;
+
+        }
+
+        public void logTiming() {
+            convertRecordCount++;
+            if (verbose && ((convertRecordCount % 100000) == 0)) {
+                long endTime = System.currentTimeMillis();
+                System.out.printf("processed %d traces in %d ms (%d)%n", convertRecordCount, endTime - processStartTime, endTime - chunkStartTime);
+                chunkStartTime = endTime;
+            }
+        }
 
         void execute(File[] files, String logFileOut) {
 
@@ -236,8 +293,8 @@ public class ConvertLog {
         }
 
         void setCommand(String line) {
-            lineParts = line.split(" ");
-            command = commandMap.get(lineParts[0]);
+            lineParts = split(textKeyMode, line);
+            command = VMATextStoreFormat.getCommand(textKeyMode, lineParts[0]);
         }
 
         void checkTimeFormat() {
@@ -308,7 +365,7 @@ public class ConvertLog {
             for (int i = 0; i < linesArray.length; i++) {
                 String line;
                 String[] lineParts = linesArray[i].lineParts;
-                if (VMATextStoreFormat.hasTime(commandMap.get(lineParts[0]))) {
+                if (VMATextStoreFormat.hasTime(VMATextStoreFormat.getCommand(textKeyMode, lineParts[0]))) {
                     line = fixupTime(linesArray[i], lastTime);
                     lastTime = linesArray[i].time;
                 } else {
@@ -452,6 +509,9 @@ public class ConvertLog {
                 pushRecord.pushRecord(recordParts);
             } else {
                 out.println(ConvertLog.concat(recordParts));
+                if (verbose) {
+                    logTiming();
+                }
             }
 
         }
@@ -464,10 +524,13 @@ public class ConvertLog {
             Record record;
             int lineNumber;
             String threadShortForm;
+            String line;
 
             FileInfo(File file) throws IOException {
                 this.file = file;
                 this.reader = new BufferedReader(new FileReader(file));
+                line = reader.readLine();
+                checkStoreHeader(line);
             }
 
             @Override
@@ -475,11 +538,13 @@ public class ConvertLog {
                 return file.getName() + ": " + lastAbsTime;
             }
 
-            String readRecord() throws IOException {
-                String line = reader.readLine();
+            void readRecord() throws IOException {
+                if (line == null) {
+                    line = reader.readLine();
+                }
                 record = new Record(line);
                 lineNumber++;
-                return line;
+                line = null;
             }
 
             long outputRecordAndNext(long previousTime) throws IOException {
@@ -505,8 +570,8 @@ public class ConvertLog {
                 final Key command;
 
                 Record(String line) {
-                    String[] parts = split(line);
-                    command = commandMap.get(parts[0]);
+                    String[] parts = split(textKeyMode, line, true);
+                    command = VMATextStoreFormat.getCommand(textKeyMode, parts[0]);
                     if (VMATextStoreFormat.hasTime(command)) {
                         long thisTime = Long.parseLong(parts[1]);
                         lastAbsTime = logUsesAbsTime ? thisTime : lastAbsTime + thisTime;
@@ -529,41 +594,6 @@ public class ConvertLog {
                  * Splits the record into space separated components and leaves an empty slot for the thread short form
                  * to be inserted on output.
                  */
-                private String[] split(String line) {
-                    int count = 2; // 1 extra for the to-be-inserted thread field
-                    for (int i = 0; i < line.length(); i++) {
-                        if (line.charAt(i) == ' ') {
-                            count++;
-                        }
-                    }
-                    String[] result = new String[count];
-                    int ix = line.indexOf(' ');
-                    int iy = 0;
-                    count = 0;
-                    boolean hasThread = false;
-                    while (ix > 0) {
-                        result[count] = line.substring(iy, ix);
-                        count++;
-                        if (count == 1) {
-                            VMATextStoreFormat.Key key = VMATextStoreFormat.commandMap.get(result[0]);
-                            if (key == Key.THREAD_DEFINITION) {
-                                // handle quoted thread names with spaces
-                                iy = line.indexOf('"', 3);
-                                result[1] = line.substring(3, iy);
-                                result[2] = line.substring(iy + 2);
-                                return result;
-                            } else {
-                                hasThread = VMATextStoreFormat.hasTimeAndThread(key);
-                            }
-                        } else if (hasThread && count == 2) {
-                            count++;
-                        }
-                        iy = ix + 1;
-                        ix = line.indexOf(' ', iy);
-                    }
-                    result[count] = line.substring(iy);
-                    return result;
-                }
 
                 @Override
                 public String toString() {
@@ -631,7 +661,7 @@ public class ConvertLog {
                 // Earliest is the INITIALIZE_STORE for the merged file
                 // The resulting merge file is not per thread, nor batched
                 long previousTime = fileInfos[0].record.timedLine.time;
-                miscOut(new String[] {"IL", Long.toString(previousTime), "false", "0"});  // new INITIALIZE_STORE
+                miscOut(new String[] {VMATextStoreFormat.getString(textKeyMode, Key.INITIALIZE_STORE), Long.toString(previousTime), "false", textKeyMode ? "4" : "0"});  // new INITIALIZE_STORE
 
                 // Read first real record and sort
                 for (FileInfo fileInfo : fileInfos) {
@@ -642,6 +672,10 @@ public class ConvertLog {
                 LinkedList<FileInfo> fileInfoList = new LinkedList<FileInfo>();
                 for (FileInfo fileInfo : fileInfos) {
                     fileInfoList.add(fileInfo);
+                }
+
+                if (verbose) {
+                    startTiming();
                 }
 
                 // Starting with file containing earliest record, copy records to the output
@@ -693,7 +727,7 @@ public class ConvertLog {
                     previousTime = last.outputRecordAndNext(previousTime);
                     lastRecordAbsTime = last.record.time();
                 }
-                miscOut(new String[] {"FL", Long.toString(lastRecordAbsTime)});
+                miscOut(new String[] {VMATextStoreFormat.getString(textKeyMode, Key.FINALIZE_STORE), Long.toString(lastRecordAbsTime)});
 
             } catch (IOException ex) {
                 System.err.println(ex);
@@ -709,6 +743,14 @@ public class ConvertLog {
         }
 
     }
+
+    private static class JustReadCommand extends BasicCommand {
+        @Override
+        void visitLine(String line) {
+            super.visitLine(line);
+        }
+    }
+
     /**
      * Clones a log. Used to convert from rel/abs time and vice-versa.
      *
@@ -717,7 +759,7 @@ public class ConvertLog {
         @Override
         void visitLine(String line) {
             super.visitLine(line);
-            if ((logUsesAbsTime && toAbsTime) || (!logUsesAbsTime && toRelTime)) {
+            if (!timeChange || (logUsesAbsTime && toAbsTime) || (!logUsesAbsTime && toRelTime)) {
                 // no change
                 out.println(line);
             } else {
@@ -737,7 +779,7 @@ public class ConvertLog {
                         line = sb.toString();
                     }
                 } else if (command == Key.INITIALIZE_STORE) {
-                    line = lineParts[0] + " " + lineAbsTime + " " + !logUsesAbsTime;
+                    line = lineParts[0] + " " + lineAbsTime + " " + !logUsesAbsTime + lineParts[2];
                 }
                 out.println(line);
             }

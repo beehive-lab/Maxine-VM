@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.cbc.h;
 
+import java.util.*;
+
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.vm.*;
@@ -34,6 +36,10 @@ import com.sun.max.vm.thread.*;
  * maintained per-thread and then totaled. Can be built into the boot image or dynamically loaded.
  */
 public class CBCVMAdviceHandler extends VMAdviceHandler {
+
+    private static final String SORT_PROPERTY = "max.vma.handler.cbc.sort";
+
+    private static boolean sort;
 
     private static ThreadCounts[] threadMap = new ThreadCounts[1024];
 
@@ -51,6 +57,24 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
             }
             return threadCounts;
         }
+    }
+
+    private static class SortableCount implements Comparable<SortableCount> {
+        private AdviceMethod method;
+        private AdviceMode mode;
+        private long count;
+
+        SortableCount(AdviceMethod method, AdviceMode mode, long count) {
+            this.method = method;
+            this.mode = mode;
+            this.count = count;
+        }
+
+        @Override
+        public int compareTo(SortableCount o) {
+            return count < o.count ? 1 : (count > o.count ? -1 : 0);
+        }
+
     }
 
     static {
@@ -71,6 +95,26 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
                 }
             }
             printCounts(allThreadCounts, allThreadCounts);
+
+            if (System.getProperty(SORT_PROPERTY) != null) {
+                SortableCount[] sortedCounts = new SortableCount[AdviceMethod.values().length * AdviceMode.values().length];
+                int index = 0;
+                for (AdviceMethod method : AdviceMethod.values()) {
+                    for (AdviceMode mode : AdviceMode.values()) {
+                        sortedCounts[index++] = new SortableCount(method, mode, allThreadCounts.data[method.ordinal()][mode.ordinal()]);
+                    }
+                }
+                Arrays.sort(sortedCounts);
+                System.out.println("Sorted counts");
+                for (int i = 0; i < sortedCounts.length; i++) {
+                    SortableCount sc = sortedCounts[i];
+                    if (sc.count == 0) {
+                        System.out.println("zero for remainder");
+                        break;
+                    }
+                    System.out.printf("  %-20s %s %s%n", sc.count, sc.method, sc.mode);
+                }
+            }
         }
     }
 

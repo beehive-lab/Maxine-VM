@@ -69,15 +69,19 @@ public class VMAVMLoggerMaxIdTextStoreAdapterGenerator {
         for (int i = 1; i < params.length; i++) {
             Class< ? > param = params[i];
             String arg = "arg" + (i + 1);
-            out.printf(", %s", convertArg(param.getSimpleName(), arg));
+            out.printf(", %s", convertArg(param.getSimpleName(), arg, i != params.length - 1 && !oname.contains("IfObject")));
         }
         out.printf(");%n");
         out.printf("    }%n%n");
     }
 
-    private static String convertArg(String type, String arg) {
+    private static String convertArg(String type, String arg, boolean doRepeat) {
         if (type.equals("ObjectID")) {
-            return arg + ".toLong()";
+            String mArg = arg + ".toLong()";
+            if (doRepeat) {
+                mArg = "txtStore.checkRepeatId(" + mArg + ", vmThread.getName())";
+            }
+            return mArg;
         } else if (type.equals("MethodID") || type.equals("FieldID")) {
             return "MemberID.getMemberIDAsInt(" + arg + ")";
         } else if (type.equals("ClassID")) {

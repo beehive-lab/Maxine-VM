@@ -105,8 +105,12 @@ public abstract class VMAStoreAdapter implements VMAStore.PerThreadStoreOwner {
     protected abstract VMAStoreAdapter createThreadStoreAdapter(VmThread vmThread);
 
     public void initialise(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.RUNNING) {
+        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
             storeAdapters = createArray(16);
+        } else if (phase == MaxineVM.Phase.RUNNING) {
+            if (storeAdapters == null) {
+                storeAdapters = createArray(16);
+            }
         }
     }
 
