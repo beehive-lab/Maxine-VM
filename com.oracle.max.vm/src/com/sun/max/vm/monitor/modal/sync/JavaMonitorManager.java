@@ -165,6 +165,7 @@ public class JavaMonitorManager {
                 monitor.refreshBoundObject();
             }
         } else if (phase == MaxineVM.Phase.STARTING) {
+            assert numberOfBindableMonitors <= bindableMonitors.length;
             if (Monitor.TraceMonitors && stickyMonitors.length > 0) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.println("Sticky monitors:");
@@ -414,6 +415,7 @@ public class JavaMonitorManager {
             addToAllBindable(monitor);
             monitor = newUnboundList;
         }
+        FatalError.check(bindableMonitors.length >= numberOfBindableMonitors, "corrupted bindableMonitors array");
         SafepointPoll.enable();
         FatalError.check(verifyBindableMonitors() == 0, "corrupted bindableMonitors array");
     }
