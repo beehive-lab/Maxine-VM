@@ -103,7 +103,7 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
 
     /**
      * A thread local variable that is used to support VM advising, in
-     * particular to indicate whether advising is currently enabled.
+     * particular to indicate whether advising is currently enabled on a particular thread.
      */
     public static final VmThreadLocal VM_ADVISING = new VmThreadLocal(
             "VM_ADVISING", false, "For use by VM advising framework");
@@ -117,8 +117,8 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
     private static VMLog vmaVMLog;
 
     /**
-     * If a handler wishes to use {@link VMLogNativeThreadVariableVMA} then this property must be set
-     * as it must be included in the boot image.
+     * If a handler does <b>not</b> want to use {@link VMLogNativeThreadVariableVMA} then this property should be set
+     * to {@code false}.
      */
     public static final String VMA_LOG_PROPERTY = "max.vma.vmlog";
 
@@ -170,8 +170,8 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             VMTI.registerEventHandler(new VMTIHandler());
             JVMTIException.registerVMAHAndler(this);
             String handlerClassName = getHandlerClassName();
-            if ((handlerClassName != null && handlerClassName.contains("VMLog")) ||
-                 System.getProperty(VMA_LOG_PROPERTY) != null) {
+            final String vmaLogProperty = System.getProperty(VMA_LOG_PROPERTY);
+            if (vmaLogProperty == null || !vmaLogProperty.toLowerCase().equals("false")) {
                 vmaVMLog = new VMLogNativeThreadVariableVMA();
                 vmaVMLog.initialize(phase);
             }

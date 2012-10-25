@@ -84,8 +84,17 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
         }
     }
 
-    private void checkClassLoaderId(Object staticTuple) {
+    private void checkClassLoaderIdOfStaticTuple(Object staticTuple) {
         checkId(ObjectAccess.readClassActor(staticTuple).classLoader);
+    }
+
+    private void checkClassLoaderIdOfMemberActor(MemberActor ma) {
+        checkId(ma.holder().classLoader);
+    }
+
+    private void checkClassLoaderIdOfClassActor(Object obj) {
+        ClassActor ca = UnsafeCast.asClassActor(obj);
+        checkId(ca.classLoader);
     }
 
 
@@ -247,74 +256,81 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
 
     @Override
     public void adviseBeforeGetStatic(int arg1, Object arg2, FieldActor arg3) {
-        checkClassLoaderId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
-        checkClassLoaderId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
-        checkClassLoaderId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, Object arg4) {
-        checkClassLoaderId(arg2);
-        checkId(arg4);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, double arg4) {
-        checkClassLoaderId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforeGetField(int arg1, Object arg2, FieldActor arg3) {
         checkId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
         checkId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
         checkId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, double arg4) {
         checkId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, Object arg4) {
         checkId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
         checkId(arg4);
     }
 
     @Override
     public void adviseBeforeInvokeVirtual(int arg1, Object arg2, MethodActor arg3) {
         checkId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforeInvokeSpecial(int arg1, Object arg2, MethodActor arg3) {
         checkId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforeInvokeStatic(int arg1, Object arg2, MethodActor arg3) {
-        checkId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforeInvokeInterface(int arg1, Object arg2, MethodActor arg3) {
         checkId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
@@ -330,11 +346,13 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     @Override
     public void adviseBeforeCheckCast(int arg1, Object arg2, Object arg3) {
         checkId(arg2);
+        checkClassLoaderIdOfClassActor(arg3);
     }
 
     @Override
     public void adviseBeforeInstanceOf(int arg1, Object arg2, Object arg3) {
         checkId(arg2);
+        checkClassLoaderIdOfClassActor(arg3);
     }
 
     @Override
@@ -366,6 +384,7 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     @Override
     public void adviseAfterMethodEntry(int arg1, Object arg2, MethodActor arg3) {
         checkId(arg2);
+        checkClassLoaderIdOfMemberActor(arg3);
     }
 
 // END GENERATED CODE

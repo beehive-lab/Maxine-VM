@@ -123,7 +123,8 @@ public class VMAOptions {
      * A read, where this is defined as any access to the object's state (fields, array elements or class metadata).
      * The latter encompasses many bytecodes, e.g. method invocation, checkcast, etc.
      */
-    private static final BM[] READ_BM = compose(GETFIELD_BM, ARRAYLOAD_BM, BEFORE_INVOKE_BM, MONITOR_BM, CAST_BM, THROW_BM);
+    private static final BM[] READ_BM = compose(GETFIELD_BM, ARRAYLOAD_BM, new BM[] {new BM(ARRAYLENGTH, B)},
+                                        BEFORE_INVOKE_BM, MONITOR_BM, CAST_BM, THROW_BM);
 
     /**
      * A use of an object that does not involve reading it's state.
@@ -180,8 +181,6 @@ public class VMAOptions {
     };
     */
 
-    private static final BM[] THREADLOCAL_BM = compose(NEW_BM, READ_BM, WRITE_BM);
-
     private static final BM[] OBJECT_ACCESS = compose(NEW_BM, CONSTRUCTOR_BM, READ_BM, WRITE_BM);
 
     private static final BM[] OBJECT_USE = compose(OBJECT_ACCESS, USE_BM);
@@ -198,8 +197,7 @@ public class VMAOptions {
         INVOKE("invoke", BEFORE_INVOKE_BM),
         ENTRY("entry", METHOD_ENTRY_BM),
         EXIT("exit", METHOD_EXIT_BM),
-        ENTRYEXIT("entryexit", METHOD_ENTRY_EXIT_BM),
-        THREADLOCAL("threadlocal", THREADLOCAL_BM);
+        ENTRYEXIT("entryexit", METHOD_ENTRY_EXIT_BM);
 
         private String name;
         private BM[] bytecodesToApply;

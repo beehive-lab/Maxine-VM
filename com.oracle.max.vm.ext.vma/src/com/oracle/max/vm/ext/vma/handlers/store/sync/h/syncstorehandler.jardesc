@@ -11,18 +11,24 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.store.sync.h{SyncStoreVMAdviceHandler.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.store.sync.h.{SyncStoreVMAdviceHandler.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.{VMAStore.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.{VMAStoreAdapter.java"/>
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.{VMAStoreFactory.java"/>
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.{VMAStoreFile.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.{RepeatIdHandler.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.{GlobalRepeatIdHandler.java"/>
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.{VMATextStore.java"/>
-        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.{CVMATextStore.java"/>
-        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.{CSFVMATextStore.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.{VMATextStoreFormat.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.{VMAIdTextStoreIntf.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.{VMANSFTextStoreIntf.java"/>
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.{VMAdviceHandlerTextStoreAdapter.java"/>
-        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.{TextStoreAdapter.java"/>
-        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.sbps{SBPSVMATextStore.java"/>
-        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.sbps.{SBPSLockedVMATextStore.java"/>
-        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.objstate{ObjectStateHandlerAdaptor.java"/>
-        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.objstate{ObjectStateHandler.java"/>
-        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.objstate{SimpleObjectStateHandler.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.sbps.{SBPSVMATextStore.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.sbps.{SBPSVMAIdTextStore.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.{ShortFormHandler.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.{MultiNewArrayHelper.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.objstate.{ObjectStateHandlerAdaptor.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.objstate.{ObjectStateHandler.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.objstate.{SimpleObjectStateHandler.java"/>
     </selectedElements>
 </jardesc>

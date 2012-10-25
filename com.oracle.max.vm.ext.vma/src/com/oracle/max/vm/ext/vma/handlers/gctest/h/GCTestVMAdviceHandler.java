@@ -73,12 +73,14 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
 
         int next = random.nextInt(100);
         if (next % frequency == 0) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("GCTestVMAdviceHandler.GC: ");
-            Log.print(method);
-            Log.print(":");
-            Log.println(mode);
-            Log.unlock(lockDisabledSafepoints);
+            if (verbose) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("GCTestVMAdviceHandler.GC: ");
+                Log.print(method);
+                Log.print(":");
+                Log.println(mode);
+                Log.unlock(lockDisabledSafepoints);
+            }
             System.gc();
         }
     }
