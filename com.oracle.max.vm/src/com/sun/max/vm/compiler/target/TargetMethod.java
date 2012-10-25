@@ -229,7 +229,7 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Atomically marks this method as invalidated.
+     * Marks this method as invalidated.
      *
      * @return true if this was the first attempt to invalidate the method. If not, then the invalidation marker for
      *         this method was not updated.

@@ -139,16 +139,13 @@ public class Deoptimization extends VmOperation {
             if (deoptLogger.enabled()) {
                 deoptLogger.logDoIt("processing ", tm, true);
             }
+            // marks method as invalidated
             if (!tm.invalidate(new InvalidationMarker(tm))) {
                 methods.remove(i);
                 if (deoptLogger.enabled()) {
                     deoptLogger.logDoIt("ignoring previously invalidated method ", tm, true);
                 }
             } else {
-
-                // Atomically marks method as invalidated
-                tm.invalidate(new InvalidationMarker(tm));
-
                 // Find all references to invalidated target method(s) in dispatch tables (e.g. vtables, itables etc) and revert to trampoline references.
                 // Concurrent patching ok here as it is atomic.
                 patchDispatchTables(tm);
@@ -157,7 +154,6 @@ public class Deoptimization extends VmOperation {
                 if (deoptLogger.enabled()) {
                     deoptLogger.logDoIt("patched entry points of  ", tm, false);
                 }
-
                 i++;
             }
         }
@@ -436,7 +432,7 @@ public class Deoptimization extends VmOperation {
         /**
          * The set of methods being deoptimized.
          */
-        final ArrayList<TargetMethod> methods;
+        private final ArrayList<TargetMethod> methods;
 
         public Patcher(ArrayList<TargetMethod> methods) {
             this.methods = methods;
