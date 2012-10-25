@@ -81,8 +81,10 @@ public class ConvertLog {
                 command = new ReadableCommand();
             } else if (arg.equals("-merge")) {
                 command = new MergeCommand();
-            } else if (arg.equals("-justread")) {
-                command = new JustReadCommand();
+            } else if (arg.equals("-textkey")) {
+                command = new TextKeyCommand();
+            } else if (arg.equals("-stats")) {
+                command = new StatsCommand();
             } else {
                 usage();
             }
@@ -147,7 +149,6 @@ public class ConvertLog {
                             checked = true;
                         }
                         command.visitLine(line);
-                        command.logTiming();
                     }
                 } finally {
                     if (r != null) {
@@ -253,7 +254,7 @@ public class ConvertLog {
 
         }
 
-        public void logTiming() {
+        protected void logTiming() {
             convertRecordCount++;
             if (verbose && ((convertRecordCount % 100000) == 0)) {
                 long endTime = System.currentTimeMillis();
@@ -267,6 +268,7 @@ public class ConvertLog {
         }
 
         void visitLine(String line) {
+            logTiming();
         }
 
         void finish() {
@@ -283,6 +285,7 @@ public class ConvertLog {
 
         @Override
         void visitLine(String line) {
+            super.visitLine(line);
             setCommand(line);
             if (VMATextStoreFormat.hasTime(command)) {
                 lineTime = Long.parseLong(lineParts[1]);
@@ -744,10 +747,36 @@ public class ConvertLog {
 
     }
 
-    private static class JustReadCommand extends BasicCommand {
+    private static class StatsCommand extends BasicCommand {
+        private long lineLengths;
+
         @Override
         void visitLine(String line) {
             super.visitLine(line);
+            lineLengths += line.length();
+        }
+
+        @Override
+        void finish() {
+            System.out.printf("Average line length %d%n", lineLengths / convertRecordCount);
+        }
+    }
+
+    private static class TextKeyCommand extends BasicCommand {
+        @Override
+        void visitLine(String line) {
+            super.visitLine(line);
+            if (textKeyMode) {
+                out.println(line);
+            } else {
+                lineParts[0] = VMATextStoreFormat.getString(true, command);
+                final StringBuilder sb = new StringBuilder(lineParts[0]);
+                for (int i = 1; i < lineParts.length; i++) {
+                    sb.append(' ');
+                    sb.append(lineParts[i]);
+                }
+                out.println(sb.toString());
+            }
         }
     }
 
@@ -936,7 +965,7 @@ public class ConvertLog {
             out.printf("%s ", command);
 
             if (VMATextStoreFormat.hasBci(command)) {
-                out.printf("%s ", bciArg);
+                out.printf("bci: %s ", bciArg);
             }
 
             if (VMATextStoreFormat.hasTimeAndThread(command)) {
@@ -952,7 +981,9 @@ public class ConvertLog {
                 case INITIALIZE_STORE:
                     int mode = Integer.parseInt(linePart(3));
                     perThread = (mode & PER_THREAD) != 0;
-                    out.printf("%s %s %s,%s", timeArg, Boolean.parseBoolean(linePart(2)) ? "abs time" : "rel time", (mode & BATCHED) != 0 ? "Batched" : "Unbatched", (mode & PER_THREAD) != 0 ? "Per Thread" : "Shared");
+                    out.printf("%s %s %s,%s,%s", timeArg, Boolean.parseBoolean(linePart(2)) ? "abs time" : "rel time",
+                                    (mode & BATCHED) != 0 ? "Batched" : "Unbatched", (mode & PER_THREAD) != 0 ? "Per Thread" : "Shared",
+                                    (mode & TEXT_KEY) != 0 ? "TextKey" : "CodeKey");
                     break;
 
                 case THREAD_SWITCH:
@@ -1022,17 +1053,17 @@ public class ConvertLog {
 
                 case ADVISE_BEFORE_GET_STATIC:
                 case ADVISE_BEFORE_PUT_STATIC:
-                    printClassIdAndFieldId(arg(STATIC_CLASSNAME_INDEX), arg(STATIC_CLASSNAME_INDEX + 1));
+                    printFieldId(arg(STATIC_FIELDNAME_INDEX));
                     if (command == Key.ADVISE_BEFORE_PUT_STATIC) {
-                        printValue(arg(STATIC_CLASSNAME_INDEX + 2), arg(STATIC_CLASSNAME_INDEX + 3));
+                        printValue(arg(STATIC_FIELDNAME_INDEX + 1), arg(STATIC_FIELDNAME_INDEX + 2));
                     }
                     break;
 
                 case ADVISE_BEFORE_GET_FIELD:
                 case ADVISE_BEFORE_PUT_FIELD:
-                    printClassIdAndFieldId(arg(ID_CLASSNAME_INDEX), arg(ID_CLASSNAME_INDEX + 1));
+                    printFieldId(arg(ID_FIELDNAME_INDEX));
                     if (command == Key.ADVISE_BEFORE_PUT_FIELD) {
-                        printValue(arg(ID_CLASSNAME_INDEX + 2), arg(ID_CLASSNAME_INDEX + 3));
+                        printValue(arg(ID_FIELDNAME_INDEX + 1), arg(ID_FIELDNAME_INDEX + 2));
                     }
                     break;
 
@@ -1077,7 +1108,7 @@ public class ConvertLog {
                 case ADVISE_BEFORE_INVOKE_STATIC:
                 case ADVISE_BEFORE_INVOKE_VIRTUAL:
                 case ADVISE_BEFORE_INVOKE_SPECIAL:
-                    printClassIdAndMethodId(arg(ID_CLASSNAME_INDEX), arg(ID_CLASSNAME_INDEX + 1));
+                    printMethodId(arg(ID_MEMBERNAME_INDEX));
                     break;
 
 
@@ -1122,23 +1153,8 @@ public class ConvertLog {
             out.printf(" cid:%s", klass);
         }
 
-        private static void printClassIdAndClId(String klass, String clId) {
-            printClassId(klass);
-            printClId(clId);
-        }
-
         private static void printClId(String clId) {
             out.printf(" clid:%s", clId);
-        }
-
-        private static void printClassIdAndMethodId(String klass, String method) {
-            printClassId(klass);
-            printMethodId(method);
-        }
-
-        private static void printClassIdAndFieldId(String klass, String field) {
-            printClassId(klass);
-            printFieldId(field);
         }
 
         private static void printFieldId(String field) {

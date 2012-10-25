@@ -82,10 +82,10 @@ public class AdviceRecordHelper {
         }
     }
 
-    public static int print(QueryBase qb, TraceRun traceRun, PrintStream ps, AdviceRecord ar, ArrayList<AdviceRecord> showIndexList, int indent, boolean newline) {
+    public static int print(QueryBase qb, TraceRun traceRun, PrintStream ps, AdviceRecord ar, int showIndex, int indent, boolean newline) {
         RecordType rt = ar.getRecordType();
-        if (showIndexList != null) {
-            ps.printf("[%d] ", getRecordListIndex(showIndexList, ar));
+        if (showIndex >= 0) {
+            ps.printf("[%d] ", showIndex);
         }
         ps.printf("%-10d %s %c%s %s ", qb.timeValue(traceRun, ar.time), ar.thread, adviceId(ar), toBci(ar), rt);
         switch (rt) {

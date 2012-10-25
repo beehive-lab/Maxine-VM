@@ -35,7 +35,7 @@ import com.oracle.max.vm.ext.vma.store.txt.sbps.*;
  */
 
 public class VMAStoreFactory {
-    public static final String STORECLASS_PROPERTY = "max.vma.storeclass";
+    public static final String STORECLASS_PROPERTY = "max.vma.store.class";
 
     private static Class<? extends VMAStore> storeClass;
 

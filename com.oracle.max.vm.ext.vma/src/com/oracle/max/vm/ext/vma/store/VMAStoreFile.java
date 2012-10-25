@@ -31,8 +31,8 @@ import java.io.*;
  *
  */
 public class VMAStoreFile {
-    public static final String STOREDIR_PROPERTY = "max.vma.storedir";
-    public static final String DEFAULT_STOREDIR = "output.vma";
+    public static final String STOREDIR_PROPERTY = "max.vma.store.dir";
+    public static final String DEFAULT_STOREDIR = "vmastore";
     public static final String GLOBAL_STORE = "vm";
     public static final String DEFAULT_STOREFILE = DEFAULT_STOREDIR + File.separator + GLOBAL_STORE;
 

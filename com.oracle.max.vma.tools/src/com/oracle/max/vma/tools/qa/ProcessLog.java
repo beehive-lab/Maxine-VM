@@ -192,9 +192,9 @@ public class ProcessLog {
     private int maxLines;
 
     /**
-     * Experimentally determined, used to set the size of the {@link #adviceRecordList}.
+     * Experimentally determined, using {@code cv -stats}, used to set the size of the {@link #adviceRecordList}.
      */
-    private static final int AVG_LINE_LENGTH = 17;  //
+    private static final int AVG_LINE_LENGTH = 12;  //
 
     private Map<String, ObjectRecord> objects = new HashMap<String, ObjectRecord>(1024 * 1024);
 
@@ -990,7 +990,8 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_PUT_STATIC: {
                 getFieldRecord(arg(STATIC_FIELDNAME_INDEX));
-                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeThreadValue("PutStatic", AdviceMode.BEFORE, arg(STATIC_CLASSNAME_INDEX + 1), arg(STATIC_CLASSNAME_INDEX + 2));
+                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeThreadValue("PutStatic", AdviceMode.BEFORE,
+                                arg(STATIC_FIELDNAME_INDEX + 1), arg(STATIC_FIELDNAME_INDEX + 2));
                 objectFieldAdviceRecord.value = classRecord;
                 objectFieldAdviceRecord.field = fieldRecord;
                 classRecord.addTraceElement(objectFieldAdviceRecord);
@@ -1012,7 +1013,8 @@ public class ProcessLog {
             case ADVISE_BEFORE_PUT_FIELD: {
                 objectRecord = getTraceRecord(objIdArg);
                 getFieldRecord(arg(ID_FIELDNAME_INDEX));
-                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeThreadValue("PutField", AdviceMode.BEFORE, arg(ID_FIELDNAME_INDEX + 1), arg(ID_FIELDNAME_INDEX + 2));
+                ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeThreadValue("PutField", AdviceMode.BEFORE,
+                                arg(ID_FIELDNAME_INDEX + 1), arg(ID_FIELDNAME_INDEX + 2));
                 objectFieldAdviceRecord.value = objectRecord;
                 objectFieldAdviceRecord.field = fieldRecord;
                 objectRecord.addTraceElement(objectFieldAdviceRecord);

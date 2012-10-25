@@ -91,7 +91,7 @@ public class MaxineQuery extends QueryBase {
         ps.printf("%d records involve VM objects%n", vmIndices.size());
         if (detail) {
             for (int index : vmIndices) {
-                print(this, traceRun, ps, traceRun.adviceRecordList.get(index), traceRun.adviceRecordList, 0, true);
+                print(this, traceRun, ps, traceRun.adviceRecordList.get(index), index, 0, true);
             }
         }
         return null;

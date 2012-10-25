@@ -69,20 +69,46 @@ public class ObjectStateHandlerAdaptorGenerator {
             out.printf("        state.assignId(objRef);%n");
             out.printf("        checkId(hub.classActor.classLoader);%n");
         } else {
-            boolean arg2CheckClId = name.contains("PutStatic") || name.contains("GetStatic");
-            boolean arg3NotChecked = name.contains("CheckCast") || name.contains("InstanceOf"); // arg3 is a ClassActor
-            int i = 1;
+            String checkMethod = null;
+            if (name.contains("CheckCast") || name.contains("InstanceOf")) {
+                checkMethod = "ClassLoaderIdOfClassActor";
+            } else if (checkMemberActor(name)) {
+                checkMethod = "ClassLoaderIdOfMemberActor";
+            }
             Class<?>[] params = m.getParameterTypes();
-            for (Class<?> param : params) {
-                boolean check = i == 3 ? !arg3NotChecked : true;
-                if (param == Object.class && check) {
-                    String mm = i == 2 && arg2CheckClId ? "ClassLoader" : "";
-                    out.printf("        check%sId(arg%d);%n", mm, i);
+            for (int i = 1; i < params.length; i++) {
+                Class<?> param = params[i];
+                int argId = i + 1;
+                switch (i) {
+                    case 2:
+                        if (checkMethod != null) {
+                            out.printf("        check%s(arg%d);%n", checkMethod, argId);
+                        } else {
+                            if (param == Object.class) {
+                                out.printf("        checkId(arg%d);%n", argId);
+                            }
+                        }
+                        break;
+
+                    default:
+                        // Currently, the static tuple is passed to Get/Put/Invoke/Static but the
+                        // classloader id of the class is is checked by ClassLoaderIdOfMemberActor
+                        if (param == Object.class && !isGetPutStatic(name)) {
+                            out.printf("        checkId(arg%d);%n", argId);
+                        }
+
                 }
-                i++;
             }
         }
         out.printf("    }%n%n");
+    }
+
+    private static boolean checkMemberActor(String name) {
+        return name.contains("Static") || name.contains("Field") || name.contains("Invoke") || name.contains("MethodEntry");
+    }
+
+    private static boolean isGetPutStatic(String name) {
+        return name.contains("GetStatic") || name.contains("PutStatic") || name.contains("InvokeStatic");
     }
 
 }
