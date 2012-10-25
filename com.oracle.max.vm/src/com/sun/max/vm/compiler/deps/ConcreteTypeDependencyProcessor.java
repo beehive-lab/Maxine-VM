@@ -260,7 +260,7 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
 
         ArrayList<TargetMethod> methods = new ArrayList<TargetMethod>(invalidated.size());
         for (Dependencies deps : invalidated) {
-            if (deps.invalidate()) {
+            if (deps.invalidate() && deps.targetMethod != null) {
                 if (MaxineVM.isHosted()) {
                     CompiledPrototype.invalidateTargetMethod(deps.targetMethod);
                 }
