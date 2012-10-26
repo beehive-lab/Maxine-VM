@@ -327,7 +327,7 @@ public class MaxineTesterConfiguration {
 
         // Alias to default configuration
         imageConfig("gss",  opt_c1x,   "-run=java", "-heap=sequential.gen.semiSpace");
-       // Alternate GC configurations
+        // Alternate GC configurations
         imageConfig("gssd",  opt_c1x,   "-run=java", "-heap=sequential.gen.semiSpace", "-build=DEBUG");
         imageConfig("ss",  opt_c1x,   "-run=java", "-heap=sequential.semiSpace");
         imageConfig("ssd",  opt_c1x,   "-run=java", "-heap=sequential.semiSpace", "-build=DEBUG");
@@ -338,14 +338,12 @@ public class MaxineTesterConfiguration {
         imageConfig("gmse",  opt_c1x,   "-run=java", "-heap=gcx.gen.mse");
         imageConfig("gmsed",  opt_c1x,   "-run=java", "-heap=gcx.gen.mse", "-build=DEBUG");
 
-      // VMA configurations - the -vma option is interpreted by the mx tool to set additional system properties
+        // VMA configurations
         final String vmaT1X = "com.oracle.max.vm.ext.t1x.vma.VMAT1X";
         final String vmaBaseline = "-baseline=" + vmaT1X;
         final String vmaRun = "-run=com.oracle.max.vm.ext.vma.run.java";
         final String vmaLayout = "-layout=xohm";
-        imageConfig("vma-t1x", vmaLayout, vmaBaseline, vmaRun, "-vma");
-
-        maxvmConfig("vma", "-XX:+VMA");
+        imageConfig("vma-t1x", vmaLayout, vmaBaseline, vmaRun);
 
         c1xTest("opt0", "-J-Dmax.c1x.optlevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.exbytecode.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt1", "-J-Dmax.c1x.optlevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");
