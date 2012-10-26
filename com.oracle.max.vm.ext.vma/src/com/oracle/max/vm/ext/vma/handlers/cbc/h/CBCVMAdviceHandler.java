@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.cbc.h;
 
+import java.io.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
@@ -87,48 +88,65 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
     public void initialise(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.TERMINATING) {
             done = true;
-            ThreadCounts allThreadCounts = new ThreadCounts();
-            for (int i = 0; i < threadMap.length; i++) {
-                ThreadCounts threadCounts = threadMap[i];
-                if (threadCounts.vmThread != null) {
-                    printCounts(threadCounts,  allThreadCounts);
+            PrintStream ps = System.out;
+            try {
+                String logpathProperty = System.getProperty("max.test.logpathbase");
+                if (logpathProperty != null) {
+                    ps = new PrintStream(new FileOutputStream(logpathProperty + ".vma"));
                 }
-            }
-            printCounts(allThreadCounts, allThreadCounts);
+                ThreadCounts allThreadCounts = new ThreadCounts();
+                for (int i = 0; i < threadMap.length; i++) {
+                    ThreadCounts threadCounts = threadMap[i];
+                    if (threadCounts.vmThread != null) {
+                        printCounts(ps, threadCounts, allThreadCounts);
+                    }
+                }
+                printCounts(ps, allThreadCounts, allThreadCounts);
 
-            if (System.getProperty(SORT_PROPERTY) != null) {
-                SortableCount[] sortedCounts = new SortableCount[AdviceMethod.values().length * AdviceMode.values().length];
-                int index = 0;
-                for (AdviceMethod method : AdviceMethod.values()) {
-                    for (AdviceMode mode : AdviceMode.values()) {
-                        sortedCounts[index++] = new SortableCount(method, mode, allThreadCounts.data[method.ordinal()][mode.ordinal()]);
+                String sortProperty = System.getProperty(SORT_PROPERTY);
+                if (sortProperty == null || !sortProperty.equals("false")) {
+                    SortableCount[] sortedCounts = new SortableCount[AdviceMethod.values().length * AdviceMode.values().length];
+                    int index = 0;
+                    for (AdviceMethod method : AdviceMethod.values()) {
+                        for (AdviceMode mode : AdviceMode.values()) {
+                            sortedCounts[index++] = new SortableCount(method, mode, allThreadCounts.data[method.ordinal()][mode.ordinal()]);
+                        }
+                    }
+                    Arrays.sort(sortedCounts);
+                    ps.println("Sorted counts");
+                    for (int i = 0; i < sortedCounts.length; i++) {
+                        SortableCount sc = sortedCounts[i];
+                        if (sc.count == 0) {
+                            ps.println("zero for remainder");
+                            break;
+                        }
+                        ps.printf("  %-20s %s %s%n", sc.count, sc.method, sc.mode);
                     }
                 }
-                Arrays.sort(sortedCounts);
-                System.out.println("Sorted counts");
-                for (int i = 0; i < sortedCounts.length; i++) {
-                    SortableCount sc = sortedCounts[i];
-                    if (sc.count == 0) {
-                        System.out.println("zero for remainder");
-                        break;
+            } catch (IOException ex) {
+                System.err.println(ex);
+            } finally {
+                if (ps != null) {
+                    try {
+                        ps.close();
+                    } catch (Exception ex) {
                     }
-                    System.out.printf("  %-20s %s %s%n", sc.count, sc.method, sc.mode);
                 }
             }
         }
     }
 
-    private static void printCounts(ThreadCounts counts, ThreadCounts allThreadCounts) {
+    private static void printCounts(PrintStream ps, ThreadCounts counts, ThreadCounts allThreadCounts) {
         if (counts == allThreadCounts) {
-            System.out.println("Total for all threads");
+            ps.println("Total for all threads");
         } else {
-            System.out.println("Thread: " + counts.vmThread.getName());
+            ps.println("Thread: " + counts.vmThread.getName());
         }
         for (AdviceMethod am : AdviceMethod.values()) {
             long beforeCount = counts.data[am.ordinal()][0];
             long afterCount = counts.data[am.ordinal()][1];
             long beforeAfterCount = beforeCount + afterCount;
-            System.out.printf("  %-20s B:%,d, A:%,d%n", am.name(), beforeCount, afterCount);
+            ps.printf("  %-20s B:%,d, A:%,d%n", am.name(), beforeCount, afterCount);
             if (counts != allThreadCounts) {
                 counts.total += beforeAfterCount;
                 allThreadCounts.data[am.ordinal()][0] += beforeCount;
@@ -136,7 +154,7 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
                 allThreadCounts.total += beforeAfterCount;
             }
         }
-        System.out.printf("Total: %,d%n", counts.total);
+        ps.printf("Total: %,d%n", counts.total);
 
     }
 

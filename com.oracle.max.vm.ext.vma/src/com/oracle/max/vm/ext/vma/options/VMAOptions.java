@@ -324,7 +324,7 @@ public class VMAOptions {
     /**
      * {@code true} if and only if we are doing any kind of advising.
      */
-    public static boolean VMA;
+    public static boolean VMA = true;
 
     /**
      * Set true once {@link #initialize} has been called.
