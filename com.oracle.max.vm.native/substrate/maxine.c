@@ -59,7 +59,11 @@ static void max_fd_limit() {
     if (status != 0) {
         log_println("getrlimit failed");
     } else {
+#if os_DARWIN
+	nbr_files.rlim_cur = MIN(OPEN_MAX, nbr_files.rlim_max);
+#else
         nbr_files.rlim_cur = nbr_files.rlim_max;
+#endif
         status = setrlimit(RLIMIT_NOFILE, &nbr_files);
         if (status != 0) {
             log_println("setrlimit failed");
