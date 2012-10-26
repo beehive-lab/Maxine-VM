@@ -28,8 +28,10 @@ import com.oracle.max.vm.ext.vma.handlers.*;
 import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.oracle.max.vm.ext.vma.handlers.store.sync.h.*;
 import com.oracle.max.vm.ext.vma.options.*;
+import com.oracle.max.vm.ext.vma.options.VMAOptions.TimeMode;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -149,6 +151,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
             super.setDeadObjectHandler(new RemovalTracker());
             VMAVMLogger.logger.storeAdaptor = storeAdapter;
             timeMode = VMAOptions.getTimeMode();
+            ProgramError.check(timeMode != TimeMode.NONE, "VMATime must be wall or uid");
             VMAVMLogger.logger.enable(true);
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             // the VMA log for the main thread is flushed by adviseBeforeThreadTerminating
@@ -175,7 +178,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     @Override
     public void adviseAfterGC() {
-        // We log the GC first, then super will deliver any dead object events
+        // We log the GC first, then super may deliver any dead object events
         VMAVMLogger.logger.logAdviseAfterGC(getTime());
         super.adviseAfterGC();
     }
