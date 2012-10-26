@@ -26,7 +26,10 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.log.nat.thread.var.*;
 import com.sun.max.vm.thread.*;
 
-
+/**
+ * Variant that is used by VMA for storing VMA records.
+ * This does not need the UUID so we override {@link #getUniqueId} to return zero.
+ */
 public class VMLogNativeThreadVariableVMA extends VMLogNativeThreadVariableUnbound {
     public static final String VMA_RECORD_NAME = "VMA_RECORD";
     public static final String VMA_BUFFER_NAME = "VMA_BUFFER";
@@ -42,6 +45,11 @@ public class VMLogNativeThreadVariableVMA extends VMLogNativeThreadVariableUnbou
             setNativeRecordThreadLocal(VMA_RECORD);
             setBufferThreadLocals(VMA_BUFFER, VMA_BUFFER_OFFSETS);
         }
+    }
+
+    @Override
+    protected int getUniqueId() {
+        return 0;
     }
 
 }

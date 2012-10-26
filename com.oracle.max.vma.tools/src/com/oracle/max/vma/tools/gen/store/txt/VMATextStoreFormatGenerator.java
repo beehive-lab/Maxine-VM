@@ -33,7 +33,7 @@ import com.oracle.max.vma.tools.gen.vma.*;
 /**
  * Generate the string codes used to identify advice methods in textual log files.
  */
-public class CVMATextStoreGenerator {
+public class VMATextStoreFormatGenerator {
 
     private static final String ADVISE_BEFORE = "adviseBefore";
     private static final String ADVISE_AFTER = "adviseAfter";
@@ -43,7 +43,7 @@ public class CVMATextStoreGenerator {
 
     public static void main(String[] args) throws Exception {
         boolean duplicates = false;
-        for (Method m : VMATextStore.class.getDeclaredMethods()) {
+        for (Method m : VMATextStore.class.getMethods()) {
             String name = m.getName();
             if (name.equals("setTimeStampGenerator")) {
                 continue;
@@ -67,7 +67,7 @@ public class CVMATextStoreGenerator {
             } else if (name.equals("threadSwitch")) {
                 codeMap.put(name, "ZT");
                 reverseCodeMap.put("ZT", name);
-            } else if (name.equals("newThread")) {
+            } else if (name.equals("newThread") || name.contains("ShortForm")) {
                 // ignore
             } else {
                 if (codeMap.get(name) == null) {
@@ -84,35 +84,51 @@ public class CVMATextStoreGenerator {
                 }
             }
         }
-        //System.out.printf("There are %d codes%n", codeMap.size());
+        System.out.printf("There are %d codes%n", codeMap.size());
         if (duplicates) {
             System.err.println("duplicate codes");
         } else {
-            createGenerator(CVMATextStoreGenerator.class);
+            createGenerator(VMATextStoreFormatGenerator.class);
             generateAutoComment();
             out.printf("    public enum Key {%n");
-            out.printf("        CLASS_DEFINITION(\"C\"),%n");
-            out.printf("        FIELD_DEFINITION(\"F\"),%n");
-            out.printf("        THREAD_DEFINITION(\"T\"),%n");
-            out.printf("        METHOD_DEFINITION(\"M\"),%n");
+            out.printf("        THREAD_DEFINITION(\"T\", \"0\"),%n");
+            out.printf("        CLASS_DEFINITION(\"C\", \"1\"),%n");
+            out.printf("        FIELD_DEFINITION(\"F\", \"2\"),%n");
+            out.printf("        METHOD_DEFINITION(\"M\", \"3\"),%n");
             int size = codeMap.size();
             int count = 1;
+            int ord = 4;
             for (Map.Entry<String, String> entry : codeMap.entrySet()) {
                 String decl = changeCase(entry.getKey());
-                out.printf("        %s(\"%s\")%s%n", decl, entry.getValue(), count < size ? "," : ";");
+                out.printf("        %s(\"%s\", \"%c\")%s%n", decl, entry.getValue(), (char) codeString(ord), count < size ? "," : ";");
                 declMap.put(entry.getKey(), decl);
                 count++;
+                ord++;
             }
+            out.printf("        public final String text;%n");
             out.printf("        public final String code;%n");
-            out.printf("        private Key(String code) {%n");
+            out.printf("        private Key(String text, String code) {%n");
+            out.printf("            this.text = text;%n");
             out.printf("            this.code = code;%n");
             out.printf("        }%n");
             out.printf("    }%n%n");
             generateHasIdSet();
             out.println();
             generateHasBciSet();
-            AdviceGeneratorHelper.updateSource(CVMATextStore.class, null, false);
+            AdviceGeneratorHelper.updateSource(VMATextStoreFormat.class, null, false);
         }
+    }
+
+    private static int codeString(int code) {
+        int result;
+        if (0 <= code && code <= 9) {
+            result = '0' + code;
+        } else if (10 <= code && code <= 35) {
+            result = 'A' + code - 10;
+        } else {
+            result = 'a' + code - 36;
+        }
+        return result;
     }
 
     private static void generateHasIdSet() {

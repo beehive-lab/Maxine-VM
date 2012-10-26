@@ -30,9 +30,8 @@ public class Instanceof01 {
     }
 
     public static void main(String[] args) {
-        cast(new MyObject());
         cast(null);
-
+        cast(new MyObject());
     }
 
     private static MyObject cast(Object obj) {

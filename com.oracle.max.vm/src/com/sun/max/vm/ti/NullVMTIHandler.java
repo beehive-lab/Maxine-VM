@@ -122,10 +122,6 @@ public class NullVMTIHandler implements VMTIHandler {
     }
 
     @Override
-    public void objectSurviving(Pointer cell) {
-    }
-
-    @Override
     public void methodCompiled(ClassMethodActor classMethodActor) {
     }
 

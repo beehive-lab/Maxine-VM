@@ -21,19 +21,25 @@
  * questions.
  */
 
-package com.oracle.max.vm.ext.vma.handlers.objstate;
+package com.oracle.max.vm.ext.vma.handlers.objstate.bitset;
 
 import java.util.BitSet;
 
+import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.sun.max.annotate.INLINE;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.xohm.XOhmGeneralLayout;
 import com.sun.max.vm.reference.Reference;
 
 /**
+ * Now defunct implementation that tracked the liveness of objects using bitsets and advice from the
+ * GC implementation on whether an object survived a GC. Not appropriate for a generational GC, for example,
+ * without a lot of work in the GC. Could be re-purposed to use weak references, at considerable overhead to
+ * the GC implementation.
+ *
  * This implementation uses two bitsets for tracking objects. The {@link #idSet} records the id of a live object, an id
  * simply being an index into the set. The set has a bit set for an object that is currently live.
  *
@@ -89,39 +95,41 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
      * Returns a new id.
      */
     @Override
-    public synchronized long assignId(Object obj) {
+    public synchronized ObjectID assignId(Object obj) {
         return assignId(Reference.fromJava(obj));
     }
 
     @Override
-    public synchronized long assignId(Reference objRef) {
+    public synchronized ObjectID assignId(Reference objRef) {
         int id = idSet.nextClearBit(lowestFreeBit);
         lowestFreeBit = id + 1;
         idSet.set(id);
-        writeId(objRef, id);
-        return id;
+        ObjectID objID = ObjectID.fromWord(Address.fromLong(id));
+        writeId(objRef, objID);
+        return objID;
     }
 
     @Override
-    public synchronized long assignUnseenId(Object obj) {
-        long id = nextUnseenId--;
-        writeId(Reference.fromJava(obj), id);
-        return id;
+    public synchronized ObjectID assignUnseenId(Object obj) {
+        ObjectID objID = ObjectID.fromWord(Address.fromLong(nextUnseenId--));
+        writeId(Reference.fromJava(obj), objID);
+        return objID;
     }
 
     @Override
     @INLINE
-    public long readId(Object obj) {
-        return obj == null ? 0 : XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj)).asAddress().toLong();
+    public ObjectID readId(Object obj) {
+        Word id = obj == null ? Word.zero() : XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj));
+        return ObjectID.fromWord(id);
     }
 
     @INLINE
-    void writeId(Reference objRef, long id) {
-        XOhmGeneralLayout.Static.writeXtra(objRef, Address.fromLong(id));
+    void writeId(Reference objRef, ObjectID id) {
+        XOhmGeneralLayout.Static.writeXtra(objRef, id);
     }
 
     @INLINE
-    @Override
+//    @Override
     public void incrementLifetime(Pointer cell) {
         long id = XOhmGeneralLayout.Static.readXtra(cell).asAddress().toLong();
         if (id > 0) {
@@ -134,10 +142,10 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
     }
 
     @Override
-    public synchronized void gc(RemovalTracker rt) {
+    public synchronized void gc(DeadObjectHandler rt) {
         for (int id = idSet.nextSetBit(1); id >= 0; id = idSet.nextSetBit(id + 1)) {
             if (!gcSet.get(id)) {
-                rt.removed(id);
+                rt.dead(ObjectID.fromWord(Address.fromLong(id)));
                 idSet.clear(id);
                 if (id < lowestFreeBit) {
                     lowestFreeBit = id;
@@ -145,6 +153,18 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
             }
         }
         gcSet.clear();
+    }
+
+    @Override
+    public int readBit(Object obj, int n) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public void writeBit(Object obj, int n, int value) {
+        // TODO Auto-generated method stub
+
     }
 
 }

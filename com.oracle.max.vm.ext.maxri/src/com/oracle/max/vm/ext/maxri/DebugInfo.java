@@ -335,7 +335,7 @@ public final class DebugInfo {
             count++;
             int encCallerIndex = in.decodeUInt();
             int holderID = in.decodeUInt();
-            ClassActor holder = ClassID.toClassActor(holderID);
+            ClassActor holder = ClassIDManager.toClassActor(holderID);
             int m = in.decodeUInt();
             MethodActor method;
             int bci;
@@ -419,7 +419,7 @@ public final class DebugInfo {
         in.pos = framePos;
         int encCallerIndex = in.decodeUInt();
         int holderID = in.decodeUInt();
-        ClassActor holder = ClassID.toClassActor(holderID);
+        ClassActor holder = ClassIDManager.toClassActor(holderID);
         int m = in.decodeUInt();
         RiResolvedMethod method;
         int bci;

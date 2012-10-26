@@ -76,9 +76,8 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
             out.printf(");%n");
         } else if (name.endsWith("GetField")  || name.endsWith("PutField")) {
             out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg2);%n");
-            out.printf("        FieldActor fa = ca.findInstanceFieldActor(arg3);%n");
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
-            out.printf(", state.readId(arg2), fa.holder().name(), state.readId(ca.classLoader), fa.name()");
+            out.printf(", state.readId(arg2).toLong(), arg3.holder().name(), state.readId(ca.classLoader).toLong(), arg3.name()");
             if (name.endsWith("PutField")) {
                 generateValueArg(m, 4);
             }
@@ -86,21 +85,19 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
         } else if (name.endsWith("GetStatic")  || name.endsWith("PutStatic")) {
             out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg2);%n");
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
-            out.printf(", ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg3).name()");
+            out.printf(", ca.name(), state.readId(ca.classLoader).toLong(), arg3.name()");
             if (name.endsWith("PutStatic")) {
-                if (name.endsWith("PutStatic")) {
-                    generateValueArg(m, 4);
-                }
+                generateValueArg(m, 4);
             }
             out.printf(");%n");
         } else if (name.endsWith("ArrayLoad") || name.endsWith("ArrayStore")) {
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
-            out.printf(", state.readId(arg2), arg3");
-            if (name.endsWith("ArrayStore")) {
+            out.printf(", state.readId(arg2).toLong(), arg3");
+            if (name.endsWith("ArrayStore") || name.endsWith("AfterArrayLoad")) {
                 generateValueArg(m, 4);
             }
             out.printf(");%n");
-        } else if (name.endsWith("Store")) {
+        } else if (name.endsWith("Store") || name.endsWith("AfterLoad")) {
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
             generateValueArg(m, 2);
             generateValueArg(m, 3);
@@ -109,7 +106,7 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
             out.printf("        final Reference objRef = Reference.fromJava(arg2);%n");
             out.printf("        final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));%n");
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
-            out.printf(", state.readId(arg2), hub.classActor.name(), state.readId(hub.classActor.classLoader)");
+            out.printf(", state.readId(arg2).toLong(), hub.classActor.name(), state.readId(hub.classActor.classLoader).toLong()");
             if (name.endsWith("NewArray")) {
                 out.print(", arg3");
             }
@@ -125,7 +122,7 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
             out.printf(");%n");
         } else if (name.contains("ReturnByThrow")) {
             generateStoreCallPrefix(oname, true);
-            out.print(", state.readId(arg2), arg3);\n");
+            out.print(", state.readId(arg2).toLong(), arg3);\n");
         } else if (name.contains("Return")) {
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
             if (m.getParameterTypes().length > 1) {
@@ -134,21 +131,21 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
             out.printf(");%n");
         } else if (name.contains("Invoke") || name.contains("MethodEntry")) {
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
-            String arg1 = name.contains("Static") ? "0" : "state.readId(arg2)";
-            out.printf(", %s, arg3.holder().name(), state.readId(arg3.holder().classLoader), arg3.name()", arg1);
+            String arg1 = name.contains("Static") ? "0" : "state.readId(arg2).toLong()";
+            out.printf(", %s, arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name()", arg1);
             out.printf(");%n");
         } else if (name.endsWith("ArrayLength")) {
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
-            out.print(", state.readId(arg2), arg3");
+            out.print(", state.readId(arg2).toLong(), arg3");
             out.printf(");%n");
         } else if (name.contains("Monitor") || name.contains("Throw")) {
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
-            out.print(", state.readId(arg2)");
+            out.print(", state.readId(arg2).toLong()");
             out.printf(");%n");
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
             out.printf("        ClassActor ca = (ClassActor) arg3;%n");
             generateStoreCallPrefix(oname, isBytecodeAdviceMethod);
-            out.print(", state.readId(arg2), ca.name(), state.readId(ca.classLoader)");
+            out.print(", state.readId(arg2).toLong(), ca.name(), state.readId(ca.classLoader).toLong()");
             out.printf(");%n");
         } else if (name.contains("Thread")) {
             // drop VmThread arg
@@ -168,7 +165,7 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
 
     private static void generateStoreCallPrefix(String name, boolean isBytecodeAdviceMethod) {
         // Every bytecode advice method has arg1, as it's the bci value
-        out.printf("        store.%s(time, perThread ? null : tng.getThreadName()", name);
+        out.printf("        txtStore.%s(time, perThread ? null : tng.getThreadName()", name);
         if (isBytecodeAdviceMethod) {
             out.print(", arg1");
         }
@@ -178,7 +175,7 @@ public class VMAdviceHandlerTextStoreAdaptorGenerator {
         String arg = "arg" + argc;
         String valueType = getNthParameterName(m, argc);
         if (valueType.equals("Object")) {
-            out.printf(", state.readId(%s)", arg);
+            out.printf(", state.readId(%s).toLong()", arg);
         } else {
             out.printf(", %s", arg);
         }

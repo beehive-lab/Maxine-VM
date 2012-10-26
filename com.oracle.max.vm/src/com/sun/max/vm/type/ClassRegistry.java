@@ -272,7 +272,7 @@ public final class ClassRegistry {
                 existingClassActor.copyHubs(classActor);
             } else {
                 // Lost the race to define the class; release id(s) associated with 'classActor'.
-                ClassID.remove(classActor);
+                ClassIDManager.remove(classActor);
             }
             return existingClassActor;
         }
