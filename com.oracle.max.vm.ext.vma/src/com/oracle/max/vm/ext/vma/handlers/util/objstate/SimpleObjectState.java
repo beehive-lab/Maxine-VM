@@ -44,7 +44,7 @@ public class SimpleObjectState extends IdBitSetObjectState {
     private static final AtomicLong nextId = new AtomicLong(0);
     private static final int BITMASK_SHIFT = 56;
     private static final int BITMASK_MASK = 0xFF;
-    private static final long IDMASK = 0xFFFFFFFFFFFFFFFL;
+    private static final long IDMASK = 0xFFFFFFFFFFFFFFL;
     private static final long SIGNEXTEND = 0xF000000000000000L;
     private static final long SIGNBIT = 1L << (BITMASK_SHIFT - 1);
 
@@ -124,6 +124,11 @@ public class SimpleObjectState extends IdBitSetObjectState {
         }
 
         writeId(objRef, Address.fromLong(idAndMask));
+    }
+
+    @Override
+    public void writeID(Object obj, ObjectID id) {
+        writeId(Reference.fromJava(obj), id);
     }
 
 }
