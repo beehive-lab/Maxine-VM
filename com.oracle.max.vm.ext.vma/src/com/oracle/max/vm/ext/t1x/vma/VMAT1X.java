@@ -29,6 +29,7 @@ import java.util.*;
 
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.vma.options.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.cri.ci.CiStatistics;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.vm.MaxineVM.Phase;

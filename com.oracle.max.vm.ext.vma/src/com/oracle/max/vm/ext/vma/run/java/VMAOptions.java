@@ -20,10 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.options;
+package com.oracle.max.vm.ext.vma.run.java;
 
 import static com.oracle.max.vm.ext.vma.VMABytecodes.*;
-import static com.oracle.max.vm.ext.vma.options.VMAOptions.AdviceModeOption.*;
+import static com.oracle.max.vm.ext.vma.run.java.VMAOptions.AdviceModeOption.*;
 
 import java.util.concurrent.atomic.*;
 import java.util.regex.Pattern;
@@ -237,6 +237,7 @@ public class VMAOptions {
         VMOptions.addFieldOption("-XX:", "VMABX", "regex for bytecodes to not match");
         VMOptions.addFieldOption("-XX:", "VMAConfig", "use pre-defined configuration");
         VMOptions.addFieldOption("-XX:", "VMATime", "specify how time is recorded");
+        VMOptions.addFieldOption("-XX:", "VMASample", "run in sample mode; interval,period");
     }
 
     /**
@@ -324,7 +325,12 @@ public class VMAOptions {
     /**
      * {@code true} if and only if we are doing any kind of advising.
      */
-    public static boolean VMA = true;
+    static boolean VMA = true;
+
+    /**
+     * Sampling option.
+     */
+    static String VMASample;
 
     /**
      * Set true once {@link #initialize} has been called.

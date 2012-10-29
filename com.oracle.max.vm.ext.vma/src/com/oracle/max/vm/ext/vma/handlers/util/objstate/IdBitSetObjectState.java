@@ -20,32 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vma.tools.gen.vma.runtime;
-
-import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
-import java.lang.reflect.*;
-
-import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
-import com.oracle.max.vma.tools.gen.vma.*;
+package com.oracle.max.vm.ext.vma.handlers.util.objstate;
 
 
-public class NullVMAdviceHandlerGenerator {
-    public static void main(String[] args) throws Exception {
-        createGenerator(NullVMAdviceHandlerGenerator.class);
-        generateAutoComment();
-        for (Method m : VMAdviceHandler.class.getMethods()) {
-            String name = m.getName();
-            if (name.startsWith("advise")) {
-                generate(m);
-            }
-        }
-        AdviceGeneratorHelper.updateSource(NullVMAdviceHandler.class, null, false);
-    }
+public abstract class IdBitSetObjectState extends ObjectState implements ObjectId, ObjectBitSet {
 
-    private static void generate(Method m) {
-        out.printf("    @Override%n");
-        generateSignature(m, null);
-        out.printf(" {%n    }%n%n");
-    }
 }

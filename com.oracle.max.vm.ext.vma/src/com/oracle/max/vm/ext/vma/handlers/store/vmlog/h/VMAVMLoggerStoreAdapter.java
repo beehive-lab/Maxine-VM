@@ -22,7 +22,7 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.store.vmlog.h;
 
-import com.oracle.max.vm.ext.vma.handlers.objstate.*;
+import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.store.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -37,14 +37,14 @@ public abstract class VMAVMLoggerStoreAdapter extends VMAStoreAdapter {
      * Handles the mapping from internal object references to external ids and
      * object death callbacks.
      */
-    protected final ObjectStateHandler state;
+    protected final IdBitSetObjectState state;
 
-    protected VMAVMLoggerStoreAdapter(ObjectStateHandler state) {
+    protected VMAVMLoggerStoreAdapter(IdBitSetObjectState state) {
         super(true, true);
         this.state = state;
     }
 
-    protected VMAVMLoggerStoreAdapter(ObjectStateHandler state, VmThread vmThread, VMAStore threadStore) {
+    protected VMAVMLoggerStoreAdapter(IdBitSetObjectState state, VmThread vmThread, VMAStore threadStore) {
         super(vmThread, threadStore);
         this.state = state;
     }

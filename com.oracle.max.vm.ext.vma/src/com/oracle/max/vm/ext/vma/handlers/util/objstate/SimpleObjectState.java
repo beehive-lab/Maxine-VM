@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.objstate;
+package com.oracle.max.vm.ext.vma.handlers.util.objstate;
 
 import java.util.concurrent.atomic.*;
 
@@ -32,7 +32,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * A simple implementation that just uses a monotonically increasing value for an object id,
- * and does not support {@link DeadObjectHandler dead object handling}.
  *
  * Ids for objects whose creation was not observed (unseen) are negative and descend from {@code -1}.
  * Zero is not a valid id; instead it denotes "no id assigned" or the null object.
@@ -40,7 +39,7 @@ import com.sun.max.vm.reference.*;
  * Bits 56-63 are used for the bitmask. Mask bits may be set before the id and vice versa.
  *
  */
-public class SimpleObjectStateHandler extends ObjectStateHandler {
+public class SimpleObjectState extends IdBitSetObjectState {
     private static final AtomicLong nextUnseenId = new AtomicLong(0);
     private static final AtomicLong nextId = new AtomicLong(0);
     private static final int BITMASK_SHIFT = 56;
@@ -91,12 +90,12 @@ public class SimpleObjectStateHandler extends ObjectStateHandler {
 
     @INLINE
     private long readIdAndMaskAsLong(Object obj) {
-        return XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj)).asAddress().toLong();
+        return readState(obj).asAddress().toLong();
     }
 
     @INLINE
     private long readIdAndMaskAsLong(Reference objRef) {
-        return XOhmGeneralLayout.Static.readXtra(objRef).asAddress().toLong();
+        return readState(objRef).asAddress().toLong();
     }
 
     @Override
@@ -126,10 +125,5 @@ public class SimpleObjectStateHandler extends ObjectStateHandler {
 
         writeId(objRef, Address.fromLong(idAndMask));
     }
-
-    @Override
-    public void gc(DeadObjectHandler rt) {
-    }
-
 
 }

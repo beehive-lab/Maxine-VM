@@ -22,8 +22,8 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.store.vmlog.h;
 
-import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.stdid.*;
+import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.store.*;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.oracle.max.vm.ext.vma.store.txt.sbps.*;
@@ -84,11 +84,11 @@ public class VMAVMLoggerMaxIdTextStoreAdapter extends VMAVMLoggerStoreAdapter {
      */
     private ThisSBPSRawVMATextStore txtStore;
 
-    public VMAVMLoggerMaxIdTextStoreAdapter(ObjectStateHandler state) {
+    public VMAVMLoggerMaxIdTextStoreAdapter(IdBitSetObjectState state) {
         super(state);
     }
 
-    protected VMAVMLoggerMaxIdTextStoreAdapter(ObjectStateHandler state, VmThread vmThread, VMAStore threadStore) {
+    protected VMAVMLoggerMaxIdTextStoreAdapter(IdBitSetObjectState state, VmThread vmThread, VMAStore threadStore) {
         super(state, vmThread, threadStore);
     }
 

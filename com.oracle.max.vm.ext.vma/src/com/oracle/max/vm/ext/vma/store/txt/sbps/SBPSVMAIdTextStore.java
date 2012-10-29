@@ -29,7 +29,7 @@ import java.util.concurrent.locks.*;
 import static com.oracle.max.vm.ext.vma.store.txt.VMATextStoreFormat.*;
 import static com.oracle.max.vm.ext.vma.store.txt.VMATextStoreFormat.Key.*;
 
-import com.oracle.max.vm.ext.vma.options.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
 import com.oracle.max.vm.ext.vma.store.*;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.sun.max.annotate.*;
