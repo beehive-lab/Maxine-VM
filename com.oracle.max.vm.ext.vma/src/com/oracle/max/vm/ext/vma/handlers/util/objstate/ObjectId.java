@@ -54,5 +54,9 @@ public interface ObjectId {
      */
     ObjectID readId(Object obj);
 
+    /**
+     * Allows the "id" field to be used for arbitrary purposes.
+     */
+    void writeID(Object obj, ObjectID id);
 
 }

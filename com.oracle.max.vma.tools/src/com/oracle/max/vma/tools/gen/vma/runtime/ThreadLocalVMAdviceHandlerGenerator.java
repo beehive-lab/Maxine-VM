@@ -54,7 +54,10 @@ public class ThreadLocalVMAdviceHandlerGenerator {
         generateSignature(m, null);
         out.printf(" {%n");
         if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
-            out.printf("        state.assignId(VmThread.current().uuid);%n");
+            out.println("        state.writeID(arg2, ObjectID.fromWord(Address.fromInt(VmThread.current().uuid)));");
+            if (name.equals("adviseAfterNewArray")) {
+                out.println("        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);");
+            }
         } else {
             Class< ? >[] params = m.getParameterTypes();
             for (int i = 1; i < params.length; i++) {
@@ -75,6 +78,9 @@ public class ThreadLocalVMAdviceHandlerGenerator {
                         }
 
                 }
+            }
+            if (name.contains("MultiNewArray")) {
+                out.println("        adviseAfterNewArray(arg1, arg2, arg3[0]);");
             }
         }
         out.printf("    }%n%n");

@@ -22,11 +22,14 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.tl.h;
 
+import com.oracle.max.vm.ext.vma.handlers.*;
 import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
 import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.thread.*;
 
@@ -39,12 +42,15 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
 
     private static final int REPORTED_BIT = 0;
     private IdBitSetObjectState state;
+    private String[] threadNames;
 
     @Override
     public void initialise(MaxineVM.Phase phase) {
         super.initialise(phase);
         if (phase == MaxineVM.Phase.RUNNING) {
             state = new SimpleObjectState();
+            threadNames = new String[1024];
+            threadNames[0] = "UNKNOWN";
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             // TODO
         }
@@ -68,7 +74,7 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
                     Log.print("object ");
                     Log.print(ObjectAccess.readClassActor(obj).name());
                     Log.print(" created by ");
-                    Log.print(state.readId(obj).toLong());
+                    Log.print(threadNames[(int) state.readId(obj).toLong()]);
                     Log.print(" is accessed by ");
                     Log.println(VmThread.current().getName());
                 } finally {
@@ -76,6 +82,19 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
                 }
             }
         }
+    }
+
+    @Override
+    public void adviseBeforeThreadStarting(VmThread vmThread) {
+        int uuid = vmThread.uuid;
+        if (uuid >= threadNames.length) {
+            synchronized (threadNames) {
+                String[] newThreadNames = new String[threadNames.length * 2];
+                System.arraycopy(threadNames, 0, newThreadNames, 0, threadNames.length);
+                threadNames = newThreadNames;
+            }
+        }
+        threadNames[uuid] = vmThread.getName();
     }
 
 // START GENERATED CODE
@@ -87,47 +106,17 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
 
     @Override
     public void adviseAfterNew(int arg1, Object arg2) {
-        state.assignId(VmThread.current().uuid);
+        state.writeID(arg2, ObjectID.fromWord(Address.fromInt(VmThread.current().uuid)));
     }
 
     @Override
     public void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
-        state.assignId(VmThread.current().uuid);
+        state.writeID(arg2, ObjectID.fromWord(Address.fromInt(VmThread.current().uuid)));
+        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);
     }
 
     @Override
     public void adviseBeforeLoad(int arg1, int arg2) {
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(int arg1, Object arg2) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(int arg1, long arg2) {
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(int arg1, double arg2) {
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(int arg1, float arg2) {
-    }
-
-    @Override
-    public void adviseBeforeArrayLoad(int arg1, Object arg2, int arg3) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
-        checkAccess(arg3);
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, double arg3) {
     }
 
     @Override
@@ -139,56 +128,12 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
-        checkAccess(arg2);
+    public void adviseBeforeStore(int arg1, int arg2, double arg3) {
     }
 
     @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
-        checkAccess(arg2);
-        checkAccess(arg4);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, long arg4) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseBeforeStackAdjust(int arg1, int arg2) {
-    }
-
-    @Override
-    public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
-    }
-
-    @Override
-    public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
-    }
-
-    @Override
-    public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
-    }
-
-    @Override
-    public void adviseBeforeConversion(int arg1, int arg2, double arg3) {
-    }
-
-    @Override
-    public void adviseBeforeConversion(int arg1, int arg2, long arg3) {
-    }
-
-    @Override
-    public void adviseBeforeConversion(int arg1, int arg2, float arg3) {
-    }
-
-    @Override
-    public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
+    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
+        checkAccess(arg3);
     }
 
     @Override
@@ -198,24 +143,11 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
     }
 
     @Override
+    public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
+    }
+
+    @Override
     public void adviseBeforeGoto(int arg1, int arg2) {
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, Object arg2) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1) {
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, float arg2) {
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, double arg2) {
     }
 
     @Override
@@ -223,23 +155,20 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeGetStatic(int arg1, Object arg2, FieldActor arg3) {
+    public void adviseBeforeReturn(int arg1, double arg2) {
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
+    public void adviseBeforeReturn(int arg1, float arg2) {
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
+    public void adviseBeforeReturn(int arg1) {
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, double arg4) {
-    }
-
-    @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, Object arg4) {
+    public void adviseBeforeReturn(int arg1, Object arg2) {
+        checkAccess(arg2);
     }
 
     @Override
@@ -269,6 +198,113 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
     }
 
     @Override
+    public void adviseBeforeThrow(int arg1, Object arg2) {
+        checkAccess(arg2);
+    }
+
+    @Override
+    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
+        checkAccess(arg3);
+    }
+
+    @Override
+    public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
+        checkAccess(arg2);
+        checkAccess(arg4);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, double arg2) {
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, float arg2) {
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, Object arg2) {
+        checkAccess(arg2);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, long arg2) {
+    }
+
+    @Override
+    public void adviseBeforeArrayLoad(int arg1, Object arg2, int arg3) {
+        checkAccess(arg2);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
+        checkAccess(arg2);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
+        checkAccess(arg2);
+        checkAccess(arg4);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, long arg4) {
+        checkAccess(arg2);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
+        checkAccess(arg2);
+    }
+
+    @Override
+    public void adviseBeforeStackAdjust(int arg1, int arg2) {
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, int arg2, long arg3) {
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, int arg2, float arg3) {
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, int arg2, double arg3) {
+    }
+
+    @Override
+    public void adviseBeforeGetStatic(int arg1, Object arg2, FieldActor arg3) {
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, Object arg4) {
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, double arg4) {
+    }
+
+    @Override
     public void adviseBeforeInvokeVirtual(int arg1, Object arg2, MethodActor arg3) {
         checkAccess(arg2);
     }
@@ -289,11 +325,6 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
 
     @Override
     public void adviseBeforeArrayLength(int arg1, Object arg2, int arg3) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseBeforeThrow(int arg1, Object arg2) {
         checkAccess(arg2);
     }
 
@@ -320,19 +351,9 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
     }
 
     @Override
-    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
-        checkAccess(arg3);
-    }
-
-    @Override
-    public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
-        checkAccess(arg2);
-        checkAccess(arg4);
-    }
-
-    @Override
     public void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
         checkAccess(arg2);
+        adviseAfterNewArray(arg1, arg2, arg3[0]);
     }
 
     @Override
