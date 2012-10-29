@@ -20,11 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.objstate;
+package com.oracle.max.vm.ext.vma.handlers.util.objstate;
 
-import com.oracle.max.vm.ext.vma.handlers.store.sync.h.*;
-import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
-import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 
@@ -32,9 +29,7 @@ import com.sun.max.vm.*;
 public class Package extends BootImagePackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
-            (VMAJavaRunScheme.isHandlerClass(SyncStoreVMAdviceHandler.class) ||
-             VMAJavaRunScheme.isHandlerClass(VMLogStoreVMAdviceHandler.class));
+        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java");
     }
 
 }

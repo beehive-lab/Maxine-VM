@@ -27,23 +27,13 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.objstate.*;
+import com.oracle.max.vm.ext.vma.handlers.tl.h.*;
 import com.oracle.max.vma.tools.gen.vma.*;
-import com.sun.max.annotate.*;
 
-/**
- * Generates the rote implementations of ObjectStateHandlerAdaptor.
- * Object creation is special and requires that we assign a unique id.
- * All other methods that take objects as parameters have to be checked
- * in case their creation was not observed.
- *
- */
 
-@HOSTED_ONLY
-public class ObjectStateHandlerAdaptorGenerator {
-
+public class ThreadLocalVMAdviceHandlerGenerator {
     public static void main(String[] args) throws Exception {
-        createGenerator(ObjectStateHandlerAdaptorGenerator.class);
+        createGenerator(ThreadLocalVMAdviceHandlerGenerator.class);
         generateAutoComment();
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
@@ -55,7 +45,7 @@ public class ObjectStateHandlerAdaptorGenerator {
                 generate(m);
             }
         }
-        AdviceGeneratorHelper.updateSource(ObjectStateHandlerAdaptor.class, null, false);
+        AdviceGeneratorHelper.updateSource(ThreadLocalVMAdviceHandler.class, null, false);
     }
 
     private static void generate(Method m) {
@@ -64,29 +54,16 @@ public class ObjectStateHandlerAdaptorGenerator {
         generateSignature(m, null);
         out.printf(" {%n");
         if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
-            out.printf("        final Reference objRef = Reference.fromJava(arg2);%n");
-            out.printf("        final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));%n");
-            out.printf("        state.assignId(objRef);%n");
-            out.printf("        checkId(hub.classActor.classLoader);%n");
+            out.printf("        state.assignId(VmThread.current().uuid);%n");
         } else {
-            String checkMethod = null;
-            if (name.contains("CheckCast") || name.contains("InstanceOf")) {
-                checkMethod = "ClassLoaderIdOfClassActor";
-            } else if (checkMemberActor(name)) {
-                checkMethod = "ClassLoaderIdOfMemberActor";
-            }
-            Class<?>[] params = m.getParameterTypes();
+            Class< ? >[] params = m.getParameterTypes();
             for (int i = 1; i < params.length; i++) {
-                Class<?> param = params[i];
+                Class< ? > param = params[i];
                 int argId = i + 1;
                 switch (i) {
                     case 2:
-                        if (checkMethod != null) {
-                            out.printf("        check%s(arg%d);%n", checkMethod, argId);
-                        } else {
-                            if (param == Object.class) {
-                                out.printf("        checkId(arg%d);%n", argId);
-                            }
+                        if (param == Object.class) {
+                            out.printf("        checkAccess(arg%d);%n", argId);
                         }
                         break;
 
@@ -94,17 +71,13 @@ public class ObjectStateHandlerAdaptorGenerator {
                         // Currently, the static tuple is passed to Get/Put/Invoke/Static but the
                         // classloader id of the class is is checked by ClassLoaderIdOfMemberActor
                         if (param == Object.class && !isGetPutStatic(name)) {
-                            out.printf("        checkId(arg%d);%n", argId);
+                            out.printf("        checkAccess(arg%d);%n", argId);
                         }
 
                 }
             }
         }
         out.printf("    }%n%n");
-    }
-
-    private static boolean checkMemberActor(String name) {
-        return name.contains("Static") || name.contains("Field") || name.contains("Invoke") || name.contains("MethodEntry");
     }
 
     private static boolean isGetPutStatic(String name) {

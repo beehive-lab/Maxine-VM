@@ -25,11 +25,10 @@ package com.oracle.max.vm.ext.vma.handlers.store.vmlog.h;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.handlers.*;
-import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.oracle.max.vm.ext.vma.handlers.store.sync.h.*;
-import com.oracle.max.vm.ext.vma.options.*;
-import com.oracle.max.vm.ext.vma.options.VMAOptions.TimeMode;
+import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
+import com.oracle.max.vm.ext.vma.run.java.VMAOptions.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -69,7 +68,7 @@ import com.sun.max.vm.thread.*;
  * causes {@link VMAVMLoggerTextStoreAdapter} to be used instead, which uses the same short form conversion
  * process as {@link SyncStoreVMAdviceHandler}. This is useful as a sanity check.
  */
-public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
+public class VMLogStoreVMAdviceHandler extends ObjectStateAdapter {
 
     public static final String STDID_PROPERTY = "max.vma.vmloghandler.stdid";
     private static final Class DEFAULT_ADAPTER = VMAVMLoggerMaxIdTextStoreAdapter.class;
@@ -96,15 +95,6 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    private class RemovalTracker implements ObjectStateHandler.DeadObjectHandler {
-
-        @Override
-        public void dead(ObjectID id) {
-            VMAVMLogger.logger.logDead(getTime(), id);
-        }
-
-    }
-
     private static VMLog.Flusher createFlusher() {
         return new PerThreadVMLogFlusher();
     }
@@ -120,7 +110,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
             if (adapterProperty != null) {
                 adapterClass = Class.forName(STDIDS_ADAPTER_CLASSNAME);
             }
-            Constructor<?> cons = adapterClass.getConstructor(ObjectStateHandler.class);
+            Constructor<?> cons = adapterClass.getConstructor(IdBitSetObjectState.class);
             storeAdapter = (VMAVMLoggerStoreAdapter) cons.newInstance(state);
             storeAdapter.initialise(phase);
         } catch (Exception ex) {
@@ -148,7 +138,6 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
             } else {
                 storeAdapter.initialise(phase);
             }
-            super.setDeadObjectHandler(new RemovalTracker());
             VMAVMLogger.logger.storeAdaptor = storeAdapter;
             timeMode = VMAOptions.getTimeMode();
             ProgramError.check(timeMode != TimeMode.NONE, "VMATime must be wall or uid");
@@ -180,7 +169,6 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void adviseAfterGC() {
         // We log the GC first, then super may deliver any dead object events
         VMAVMLogger.logger.logAdviseAfterGC(getTime());
-        super.adviseAfterGC();
     }
 
     @Override

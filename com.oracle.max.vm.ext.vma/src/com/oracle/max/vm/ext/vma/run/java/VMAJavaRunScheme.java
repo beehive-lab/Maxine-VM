@@ -32,9 +32,7 @@ import java.util.*;
 import com.oracle.max.vm.ext.t1x.vma.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
-import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.max.annotate.*;
-import com.sun.max.program.ProgramError;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
@@ -49,8 +47,7 @@ import com.sun.max.vm.log.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.run.java.JavaRunScheme;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.VmThread;
-import com.sun.max.vm.thread.VmThreadLocal;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.ext.jvmti.*;
@@ -66,7 +63,13 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             if (advising) {
                 if (VMAOptions.instrumentThread(vmThread)) {
                     adviceHandler.adviseBeforeThreadStarting(VmThread.current());
-                    enableAdvising();
+                    // if sampling is enabled and this thread is starting when sampling is off
+                    // then we don't turn on advising until the next sampling period
+                    synchronized (VmThreadMap.THREAD_LOCK) {
+                        if (SampleThread.sampling) {
+                            enableAdvising();
+                        }
+                    }
                 }
             }
         }
@@ -74,9 +77,11 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
         @Override
         public void threadEnd(VmThread vmThread) {
             if (advising) {
-                if (isThreadAdvising()) {
-                    disableAdvising();
-                    adviceHandler.adviseBeforeThreadTerminating(VmThread.current());
+                if (VMAOptions.instrumentThread(vmThread)) {
+                    synchronized (VmThreadMap.THREAD_LOCK) {
+                        disableAdvising();
+                        adviceHandler.adviseBeforeThreadTerminating(VmThread.current());
+                    }
                 }
             }
         }
@@ -136,12 +141,36 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
      * This property may be specified at boot image time to include a specific handler in the boot image.
      * The preferred approach, however, is to load the handler as a VM extension.
      */
-    public static final String VMA_HANDLER_CLASS_PROPERTY = "max.vma.handler";
+    public static final String VMA_HANDLER_CLASS_PROPERTY = "max.vma.handler.class";
+
+    /**
+     * Short forms.
+     */
+    public static final String VMA_HANDLER_PROPERTY = "max.vma.handler";
+
+    private static final String[] shortHandlerNames = new String[] {
+        "null", "util.Null",
+        "cbc", "cbc.h.CBC",
+        "syncstore", "store.sync.h.SyncStore",
+        "vmlogstore", "store.vmlog.h.VMLogStore",
+    };
 
     public static String getHandlerClassName() {
         String handlerClassName = System.getProperty(VMA_HANDLER_CLASS_PROPERTY);
         if (handlerClassName == null) {
-            // not specified for the boot image, loaded as VM extension
+            String handlerName = System.getProperty(VMA_HANDLER_PROPERTY);
+            if (handlerName != null) {
+                for (int i = 0; i < shortHandlerNames.length; i += 2) {
+                    if (handlerName.equals(shortHandlerNames[i])) {
+                        handlerClassName = "com.oracle.max.vm.ext.vma.handlers." + shortHandlerNames[i + 1] + "VMAdviceHandler";
+                    }
+                }
+                if (handlerClassName == null) {
+                    fail("short handler name " + handlerName + " not found");
+                }
+            } else {
+                // not specified for the boot image, loaded as VM extension
+            }
         }
         return handlerClassName;
     }
@@ -179,7 +208,7 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
                 try {
                     adviceHandler = (VMAdviceHandler) Class.forName(handlerClassName).newInstance();
                 } catch (Throwable ex) {
-                    ProgramError.unexpected("failed to instantiate VMA advice handler class: ", ex);
+                    fail("failed to instantiate VMA advice handler class");
                 }
                 adviceHandler.initialise(phase);
             }
@@ -187,6 +216,8 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
                 JDKDeopt.run();
+                // Check for sample mode
+                checkSampleMode();
                 if (adviceHandler != null) {
                     adviceHandler.initialise(phase);
                     advising = true;
@@ -255,6 +286,109 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
 
     private static boolean isInstrumented(ClassMethodActor classMethodActor) {
         return classMethodActor.currentTargetMethod() instanceof VMAT1XTargetMethod;
+    }
+
+    private void checkSampleMode() {
+        if (VMAOptions.VMASample != null) {
+            new SampleThread(VMAOptions.VMASample).start();
+        }
+    }
+
+    private static class SampleThread extends Thread {
+        private static final int DEFAULT_INITIIAL_PERIOD = 50;
+        private static final int DEFAULT_INTERVAL = 50;
+        private static final int DEFAULT_PERIOD = 10;
+
+        static boolean sampling = true;
+
+        private int interval;
+        private int initialperiod;
+        private int period;
+
+        SampleThread(String option) {
+            super("VMASampler");
+            setDaemon(true);
+            try {
+                period = DEFAULT_PERIOD;
+                interval = DEFAULT_INTERVAL;
+                initialperiod = DEFAULT_INITIIAL_PERIOD;
+                String[] options = option.split(",");
+                if (options.length > 0) {
+                    if (options[0].length() > 0) {
+                        initialperiod = Integer.parseInt(options[0]);
+                    }
+                    if (options.length > 1) {
+                        if (options[1].length() > 0) {
+                            interval = Integer.parseInt(options[1]);
+                        }
+                        if (options.length > 2) {
+                            if (options[2].length() > 0) {
+                                period = Integer.parseInt(options[2]);
+                            }
+                        }
+                    }
+                }
+            } catch (NumberFormatException ex) {
+                fail("usage: -XX:VMASample=initialperiod,interval,period");
+            }
+        }
+
+        @Override
+        public void run() {
+            boolean initial = true;
+            while (true) {
+                try {
+                    Thread.sleep(initial ? initialperiod : period);
+                    synchronized (VmThreadMap.THREAD_LOCK) {
+                        sampling = false;
+                        VmThreadMap.ACTIVE.forAllThreadLocals(threadPredicate, threadDisableisitor);
+                    }
+                    Thread.sleep(interval);
+                    synchronized (VmThreadMap.THREAD_LOCK) {
+                        sampling = true;
+                        VmThreadMap.ACTIVE.forAllThreadLocals(threadPredicate, threadEnableisitor);
+                    }
+                } catch (InterruptedException ex) {
+
+                }
+            }
+        }
+
+        private static final ThreadEnableVisitor threadEnableisitor = new ThreadEnableVisitor();
+        private static final ThreadDisableVisitor threadDisableisitor = new ThreadDisableVisitor();
+        private static final ThreadPredicate threadPredicate = new ThreadPredicate();
+
+        private static class ThreadPredicate implements Pointer.Predicate {
+            @Override
+            public boolean evaluate(Pointer tla) {
+                VmThread vmThread = VmThread.fromTLA(tla);
+                return vmThread.javaThread() != null &&
+                       !vmThread.isVmOperationThread() && !vmThread.isJVMTIAgentThread() &&
+                       VMAOptions.instrumentThread(vmThread);
+            }
+        }
+
+        private static class ThreadEnableVisitor implements Pointer.Procedure {
+
+            @Override
+            public void run(Pointer tla) {
+                VM_ADVISING.store3(tla, Address.fromLong(1));
+            }
+        }
+
+        private static class ThreadDisableVisitor implements Pointer.Procedure {
+
+            @Override
+            public void run(Pointer tla) {
+                VM_ADVISING.store3(tla, Word.zero());
+            }
+        }
+    }
+
+    private static void fail(String m) {
+        Log.println("VMA: ");
+        Log.println(m);
+        MaxineVM.native_exit(1);
     }
 
     /**

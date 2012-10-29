@@ -24,8 +24,7 @@ package com.oracle.max.vm.ext.vma.handlers.store.sync.h;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.handlers.*;
-import com.oracle.max.vm.ext.vma.handlers.objstate.*;
-import com.oracle.max.vm.ext.vma.options.*;
+import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.sun.max.vm.*;
@@ -45,7 +44,7 @@ import com.sun.max.vm.thread.*;
  * Can be built into the boot image or dynamically loaded.
  */
 
-public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
+public class SyncStoreVMAdviceHandler extends ObjectStateAdapter {
 
     private VMAdviceHandlerTextStoreAdapter storeAdaptor;
     private VMAOptions.TimeMode timeMode;
@@ -70,7 +69,6 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
             storeAdaptor = new VMAdviceHandlerTextStoreAdapter(state, false, false);
             storeAdaptor.initialise(phase);
             timeMode = VMAOptions.getTimeMode();
-            super.setDeadObjectHandler(storeAdaptor.getRemovalTracker());
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             synchronized (this) {
                 storeAdaptor.initialise(phase);
@@ -85,9 +83,7 @@ public class SyncStoreVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     @Override
     public synchronized void adviseAfterGC() {
-        // We log the GC first
         storeAdaptor.adviseAfterGC(getTime());
-        super.adviseAfterGC();
     }
 
     @Override

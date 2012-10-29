@@ -23,14 +23,13 @@
 package com.oracle.max.vm.ext.vma.store.txt;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.objstate.*;
+import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.store.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -41,7 +40,7 @@ import com.sun.max.vm.thread.*;
  * the external representation types used by {@link VMATextStore}.
  *
  * There are no conversion smarts in this adaptor; it just assumes that object id assignment has already been done and
- * that it can access the id using the provided implementation of {@link ObjectStateHandler} passed in the constructor.
+ * that it can access the id using the provided implementation of {@link IdBitSetObjectState} passed in the constructor.
  *
  * {@link VMATextStore} methods require the name of the generating thread, whereas {@link VMAdviceHandler} methods do
  * not, as it is implicit, so one task of the adaptor is to associate a thread name with an advice call, which is
@@ -54,7 +53,7 @@ import com.sun.max.vm.thread.*;
  *
  *
  */
-public class VMAdviceHandlerTextStoreAdapter extends VMAStoreAdapter implements ObjectStateHandler.DeadObjectHandler {
+public class VMAdviceHandlerTextStoreAdapter extends VMAStoreAdapter {
 
     interface ThreadNameGenerator {
         String getThreadName();
@@ -78,7 +77,7 @@ public class VMAdviceHandlerTextStoreAdapter extends VMAStoreAdapter implements 
      * Handles the mapping from internal object references to external ids and
      * object death callbacks.
      */
-    private final ObjectStateHandler state;
+    private final IdBitSetObjectState state;
 
     private VMANSFTextStoreIntf txtStore;
 
@@ -86,11 +85,7 @@ public class VMAdviceHandlerTextStoreAdapter extends VMAStoreAdapter implements 
         this.tng = tng;
     }
 
-    public ObjectStateHandler.DeadObjectHandler getRemovalTracker() {
-        return this;
-    }
-
-    public VMAdviceHandlerTextStoreAdapter(ObjectStateHandler state, boolean threadBatched, boolean perThread) {
+    public VMAdviceHandlerTextStoreAdapter(IdBitSetObjectState state, boolean threadBatched, boolean perThread) {
         super(threadBatched, perThread);
         this.state = state;
     }
@@ -135,16 +130,6 @@ public class VMAdviceHandlerTextStoreAdapter extends VMAStoreAdapter implements 
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
         // no bci field,so pass zero to match signature
         txtStore.unseenObject(time, tng.getThreadName(), 0, state.readId(obj).toLong(), hub.classActor.name(), state.readId(hub.classActor.classLoader).toLong());
-    }
-
-    @Override
-    public void dead(ObjectID id) {
-        dead(0, id.toLong());
-    }
-
-    public void dead(long time, long id) {
-        VMATextStore threadTxtStore = (VMATextStore) getStoreAdaptorForThread(VmThread.current().uuid).getStore();
-        threadTxtStore.removal(id);
     }
 
 // In the BytecodeAdvice method equivalents below, parameter arg1 is the bci value.

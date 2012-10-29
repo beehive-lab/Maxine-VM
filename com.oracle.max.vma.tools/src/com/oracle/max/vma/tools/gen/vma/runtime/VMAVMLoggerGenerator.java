@@ -27,10 +27,9 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
+import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vma.tools.gen.vma.*;
-import com.sun.max.vm.jni.*;
 
 /**
  * Generate the {@code VMAVMLogger} class body which uses the tracing aspect of logging to handle log flushing.
@@ -53,10 +52,8 @@ public class VMAVMLoggerGenerator {
             }
         }
 
-        Method unseenObject = ObjectStateHandlerAdaptor.class.getDeclaredMethod("unseenObject", Object.class);
-        Method dead = ObjectStateHandler.DeadObjectHandler.class.getDeclaredMethod("dead", ObjectID.class);
+        Method unseenObject = ObjectStateAdapter.class.getDeclaredMethod("unseenObject", Object.class);
         generateImpl(unseenObject);
-        generateImpl(dead);
         out.printf("%s}%n%n", INDENT4);
 
 
@@ -70,7 +67,6 @@ public class VMAVMLoggerGenerator {
             }
         }
         generateIntf(unseenObject);
-        generateIntf(dead);
         out.printf("%s}%n", INDENT4);
         AdviceGeneratorHelper.updateSource(VMAVMLogger.class, null, "// START GENERATED INTERFACE", "// END GENERATED INTERFACE", false);
     }

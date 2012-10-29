@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,16 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.objstate.bitset;
+package com.oracle.max.vm.ext.vma.handlers.util.objstate;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
+/**
+ * Provides an 8-element bitset in the state word of an object for arbitrary
+ * use by a handler.
+ */
+public interface ObjectBitSet {
+    /**
+     * Read the {@code n}th bit of the bitset of the object.
+     */
+    int readBit(Object obj, int n);
 
+    /**
+     * Set the {@code n}th bit of the bitset of the object to {@code value}.
+     */
+    void writeBit(Object obj, int n, int value);
 
-public class Package extends BootImagePackage {
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return false;
-    }
 
 }

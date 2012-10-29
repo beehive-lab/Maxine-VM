@@ -40,7 +40,7 @@ public class RunGenerators {
         BytecodeAdviceGenerator.class,
         VMAStaticBytecodeAdviceGenerator.class,
         NullVMAdviceHandlerGenerator.class,
-        ObjectStateHandlerAdaptorGenerator.class,
+        ObjectStateAdapterGenerator.class,
         VMATextStoreGenerator.class,
         VMATextStoreFormatGenerator.class,
         SBPSVMATextStoreGenerator.class,
