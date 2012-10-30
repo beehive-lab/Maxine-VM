@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers;
+package com.oracle.max.vm.ext.vma.handlers.util;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.unsafe.*;

@@ -24,8 +24,8 @@ package com.oracle.max.vm.ext.vma.handlers.store.vmlog.h;
 
 import java.lang.reflect.*;
 
-import com.oracle.max.vm.ext.vma.handlers.*;
 import com.oracle.max.vm.ext.vma.handlers.store.sync.h.*;
+import com.oracle.max.vm.ext.vma.handlers.util.*;
 import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.oracle.max.vm.ext.vma.run.java.VMAOptions.*;
