@@ -23,7 +23,6 @@
 package com.oracle.max.vm.ext.vma.handlers.util.objstate;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -34,15 +33,15 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * An adaptor class that handles the state (id, liveness) management for advice handlers.
+ * An adaptor for {@link VMAdviceHandler} that handles the unique id management for objects
+ * passed as arguments to the advice methods. Handles "unseen" objects by invoking {@link #unseenObject}
+ * which must be implemented by the concrete subclass.
  *
- * Leaves the actual handling of unseen and removed (dead) objects to subclass.
- *
- * Currently hard-wires {@link SimpleObjectStateHandler} as the state implementation.
+ * Currently hard-wires {@link SimpleObjectStateHandler} as the {@link ObjectState} implementation.
  *
  */
 
-public abstract class ObjectStateAdapter extends NullVMAdviceHandler {
+public abstract class ObjectStateAdapter extends VMAdviceHandler {
 
     protected SimpleObjectState state;
 
