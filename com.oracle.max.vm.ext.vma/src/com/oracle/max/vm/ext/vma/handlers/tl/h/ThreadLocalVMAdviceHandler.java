@@ -107,6 +107,18 @@ public class ThreadLocalVMAdviceHandler extends ObjectStateAdapter {
         threadNames[uuid] = vmThread.getName();
     }
 
+    @Override
+    public void adviseBeforeGC() {
+    }
+
+    @Override
+    public void adviseAfterGC() {
+    }
+
+    @Override
+    public void adviseBeforeThreadTerminating(VmThread vmThread) {
+    }
+
 // START GENERATED CODE
 // EDIT AND RUN ThreadLocalVMAdviceHandlerGenerator.main() TO MODIFY
 
