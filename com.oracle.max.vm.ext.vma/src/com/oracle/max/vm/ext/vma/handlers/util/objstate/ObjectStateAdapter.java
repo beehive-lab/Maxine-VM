@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.vma.handlers.util.objstate;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -41,7 +42,7 @@ import com.sun.max.vm.reference.*;
  *
  */
 
-public abstract class ObjectStateAdapter extends VMAdviceHandler {
+public abstract class ObjectStateAdapter extends NullVMAdviceHandler {
 
     protected SimpleObjectState state;
 
@@ -65,7 +66,7 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
      * Ensure that {@code obj} has a valid unique id.
      * @param obj
      */
-    private void checkId(Object obj) {
+    protected void checkId(Object obj) {
         if (obj != null) {
             ObjectID id = state.readId(obj);
             if (id.isZero()) {

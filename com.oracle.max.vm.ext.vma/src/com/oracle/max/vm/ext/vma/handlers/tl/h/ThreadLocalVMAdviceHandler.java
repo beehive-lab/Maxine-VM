@@ -23,9 +23,9 @@
 package com.oracle.max.vm.ext.vma.handlers.tl.h;
 
 import com.oracle.max.vm.ext.vma.handlers.*;
-import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
 import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -38,11 +38,16 @@ import com.sun.max.vm.thread.*;
  * Records the thread that created an object in the {@link ObjectState} field
  * and then checks references to objects from other threads.
  */
-public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
+public class ThreadLocalVMAdviceHandler extends ObjectStateAdapter {
 
     private static final int REPORTED_BIT = 0;
     private IdBitSetObjectState state;
     private String[] threadNames;
+
+    @Override
+    protected void unseenObject(Object obj) {
+        ProgramError.unexpected("unseenObject called");
+    }
 
     @Override
     public void initialise(MaxineVM.Phase phase) {
@@ -61,7 +66,12 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
         VMAJavaRunScheme.registerAdviceHandler(new ThreadLocalVMAdviceHandler());
     }
 
-    private void checkAccess(Object obj) {
+    /**
+     * Instead of checking that an object id is assigned, we just check for access by
+     * a different thread.
+     */
+    @Override
+    protected void checkId(Object obj) {
         if (obj == null) {
             return;
         }
@@ -102,6 +112,7 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
 
     @Override
     public void adviseBeforeReturnByThrow(int arg1, Throwable arg2, int arg3) {
+        super.adviseBeforeReturnByThrow(arg1, arg2, arg3);
     }
 
     @Override
@@ -116,249 +127,269 @@ public class ThreadLocalVMAdviceHandler extends NullVMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeLoad(int arg1, int arg2) {
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, float arg3) {
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, long arg3) {
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, double arg3) {
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
-        checkAccess(arg3);
-    }
-
-    @Override
-    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
-        checkAccess(arg3);
-        checkAccess(arg4);
-    }
-
-    @Override
-    public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
-    }
-
-    @Override
-    public void adviseBeforeGoto(int arg1, int arg2) {
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, long arg2) {
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, double arg2) {
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, float arg2) {
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1) {
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, Object arg2) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseBeforeGetField(int arg1, Object arg2, FieldActor arg3) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, Object arg4) {
-        checkAccess(arg2);
-        checkAccess(arg4);
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, double arg4) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseBeforeThrow(int arg1, Object arg2) {
-        checkAccess(arg2);
-    }
-
-    @Override
-    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
-        checkAccess(arg3);
-    }
-
-    @Override
-    public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
-        checkAccess(arg2);
-        checkAccess(arg4);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(int arg1, double arg2) {
-    }
-
-    @Override
     public void adviseBeforeConstLoad(int arg1, float arg2) {
+        super.adviseBeforeConstLoad(arg1, arg2);
     }
 
     @Override
     public void adviseBeforeConstLoad(int arg1, Object arg2) {
-        checkAccess(arg2);
+        super.adviseBeforeConstLoad(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, double arg2) {
+        super.adviseBeforeConstLoad(arg1, arg2);
     }
 
     @Override
     public void adviseBeforeConstLoad(int arg1, long arg2) {
+        super.adviseBeforeConstLoad(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeLoad(int arg1, int arg2) {
+        super.adviseBeforeLoad(arg1, arg2);
     }
 
     @Override
     public void adviseBeforeArrayLoad(int arg1, Object arg2, int arg3) {
-        checkAccess(arg2);
+        super.adviseBeforeArrayLoad(arg1, arg2, arg3);
     }
 
     @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
-        checkAccess(arg2);
+    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
+        super.adviseBeforeStore(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, int arg2, long arg3) {
+        super.adviseBeforeStore(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, int arg2, float arg3) {
+        super.adviseBeforeStore(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, int arg2, double arg3) {
+        super.adviseBeforeStore(arg1, arg2, arg3);
     }
 
     @Override
     public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
-        checkAccess(arg2);
-        checkAccess(arg4);
+        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
     }
 
     @Override
     public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, long arg4) {
-        checkAccess(arg2);
+        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
     }
 
     @Override
     public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
-        checkAccess(arg2);
+        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
     }
 
     @Override
     public void adviseBeforeStackAdjust(int arg1, int arg2) {
-    }
-
-    @Override
-    public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
+        super.adviseBeforeStackAdjust(arg1, arg2);
     }
 
     @Override
     public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
+        super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
     }
 
     @Override
     public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
+        super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
     }
 
     @Override
-    public void adviseBeforeConversion(int arg1, int arg2, long arg3) {
-    }
-
-    @Override
-    public void adviseBeforeConversion(int arg1, int arg2, float arg3) {
+    public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
+        super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
     }
 
     @Override
     public void adviseBeforeConversion(int arg1, int arg2, double arg3) {
+        super.adviseBeforeConversion(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, int arg2, float arg3) {
+        super.adviseBeforeConversion(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, int arg2, long arg3) {
+        super.adviseBeforeConversion(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
+        super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
+        super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforeGoto(int arg1, int arg2) {
+        super.adviseBeforeGoto(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1, Object arg2) {
+        super.adviseBeforeReturn(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1) {
+        super.adviseBeforeReturn(arg1);
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1, long arg2) {
+        super.adviseBeforeReturn(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1, float arg2) {
+        super.adviseBeforeReturn(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1, double arg2) {
+        super.adviseBeforeReturn(arg1, arg2);
     }
 
     @Override
     public void adviseBeforeGetStatic(int arg1, Object arg2, FieldActor arg3) {
-    }
-
-    @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
-    }
-
-    @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
+        super.adviseBeforeGetStatic(arg1, arg2, arg3);
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, Object arg4) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, double arg4) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeGetField(int arg1, Object arg2, FieldActor arg3) {
+        super.adviseBeforeGetField(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, Object arg4) {
+        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
+        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, double arg4) {
+        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
+        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
     }
 
     @Override
     public void adviseBeforeInvokeVirtual(int arg1, Object arg2, MethodActor arg3) {
-        checkAccess(arg2);
+        super.adviseBeforeInvokeVirtual(arg1, arg2, arg3);
     }
 
     @Override
     public void adviseBeforeInvokeSpecial(int arg1, Object arg2, MethodActor arg3) {
-        checkAccess(arg2);
+        super.adviseBeforeInvokeSpecial(arg1, arg2, arg3);
     }
 
     @Override
     public void adviseBeforeInvokeStatic(int arg1, Object arg2, MethodActor arg3) {
+        super.adviseBeforeInvokeStatic(arg1, arg2, arg3);
     }
 
     @Override
     public void adviseBeforeInvokeInterface(int arg1, Object arg2, MethodActor arg3) {
-        checkAccess(arg2);
+        super.adviseBeforeInvokeInterface(arg1, arg2, arg3);
     }
 
     @Override
     public void adviseBeforeArrayLength(int arg1, Object arg2, int arg3) {
-        checkAccess(arg2);
+        super.adviseBeforeArrayLength(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeThrow(int arg1, Object arg2) {
+        super.adviseBeforeThrow(arg1, arg2);
     }
 
     @Override
     public void adviseBeforeCheckCast(int arg1, Object arg2, Object arg3) {
-        checkAccess(arg2);
-        checkAccess(arg3);
+        super.adviseBeforeCheckCast(arg1, arg2, arg3);
     }
 
     @Override
     public void adviseBeforeInstanceOf(int arg1, Object arg2, Object arg3) {
-        checkAccess(arg2);
-        checkAccess(arg3);
+        super.adviseBeforeInstanceOf(arg1, arg2, arg3);
     }
 
     @Override
     public void adviseBeforeMonitorEnter(int arg1, Object arg2) {
-        checkAccess(arg2);
+        super.adviseBeforeMonitorEnter(arg1, arg2);
     }
 
     @Override
     public void adviseBeforeMonitorExit(int arg1, Object arg2) {
-        checkAccess(arg2);
+        super.adviseBeforeMonitorExit(arg1, arg2);
+    }
+
+    @Override
+    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
+        super.adviseAfterLoad(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
+        super.adviseAfterArrayLoad(arg1, arg2, arg3, arg4);
     }
 
     @Override
     public void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
-        checkAccess(arg2);
+        super.adviseAfterMultiNewArray(arg1, arg2, arg3);
         adviseAfterNewArray(arg1, arg2, arg3[0]);
     }
 
     @Override
     public void adviseAfterMethodEntry(int arg1, Object arg2, MethodActor arg3) {
-        checkAccess(arg2);
+        super.adviseAfterMethodEntry(arg1, arg2, arg3);
     }
 
 // END GENERATED CODE

@@ -51,7 +51,7 @@ public class ThreadLocalVMAdviceHandlerGenerator {
     private static void generate(Method m) {
         String name = m.getName();
         out.printf("    @Override%n");
-        generateSignature(m, null);
+        int argCount = generateSignature(m, null);
         out.printf(" {%n");
         if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
             out.println("        state.writeID(arg2, ObjectID.fromWord(Address.fromInt(VmThread.current().uuid)));");
@@ -59,35 +59,13 @@ public class ThreadLocalVMAdviceHandlerGenerator {
                 out.println("        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);");
             }
         } else {
-            Class< ? >[] params = m.getParameterTypes();
-            for (int i = 1; i < params.length; i++) {
-                Class< ? > param = params[i];
-                int argId = i + 1;
-                switch (i) {
-                    case 2:
-                        if (param == Object.class) {
-                            out.printf("        checkAccess(arg%d);%n", argId);
-                        }
-                        break;
-
-                    default:
-                        // Currently, the static tuple is passed to Get/Put/Invoke/Static but the
-                        // classloader id of the class is is checked by ClassLoaderIdOfMemberActor
-                        if (param == Object.class && !isGetPutStatic(name)) {
-                            out.printf("        checkAccess(arg%d);%n", argId);
-                        }
-
-                }
-            }
+            out.printf("        super.%s(", m.getName());
+            generateInvokeArgs(argCount);
             if (name.contains("MultiNewArray")) {
                 out.println("        adviseAfterNewArray(arg1, arg2, arg3[0]);");
             }
         }
         out.printf("    }%n%n");
-    }
-
-    private static boolean isGetPutStatic(String name) {
-        return name.contains("GetStatic") || name.contains("PutStatic") || name.contains("InvokeStatic");
     }
 
 }
