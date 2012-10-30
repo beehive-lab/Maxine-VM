@@ -25,7 +25,9 @@ package com.oracle.max.vm.ext.vma.handlers.util.objstate;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 
-
+/**
+ * The code in this package is included in the boot image in every VMA image.
+ */
 public class Package extends BootImagePackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {

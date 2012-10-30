@@ -22,7 +22,7 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.tl.h;
 
-import com.oracle.max.vm.ext.vma.handlers.*;
+import com.oracle.max.vm.ext.vma.handlers.util.*;
 import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.program.*;
