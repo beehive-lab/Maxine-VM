@@ -30,7 +30,6 @@ import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.T1XTemplateGenerator.*;
 import com.oracle.max.vm.ext.t1x.amd64.*;
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.options.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;

@@ -11,7 +11,6 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.nul.h{NullVMAdviceHandler.java"/>
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.tl.h{ThreadLocalVMAdviceHandler.java"/>
     </selectedElements>
 </jardesc>
