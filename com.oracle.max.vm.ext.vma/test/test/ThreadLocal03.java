@@ -47,6 +47,20 @@ public class ThreadLocal03 extends Thread {
         VALUE2
     }
 
+    private static class ThreadLocal03Child extends ThreadLocal03 {
+        public Object result;
+
+        ThreadLocal03Child(int tt) {
+            super(tt);
+        }
+
+        @Override
+        public void run() {
+            result = new Object();
+        }
+
+    }
+
     /**
      * Poor man's enum to avoid object clutter in run.
      */
@@ -63,6 +77,7 @@ public class ThreadLocal03 extends Thread {
         static final int FIELDWRITE = 9;
         static final int SWITCH = 10;
         static final int OPCOUNT = 11;
+        static final int CHILD = 11; // not included in OPCOUNT
         static final int NOOP = -1;
 
         static String toString(int tt) {
@@ -79,6 +94,7 @@ public class ThreadLocal03 extends Thread {
                 case FIELDREAD: return "FIELDREAD";
                 case FIELDWRITE: return "FIELDWRITE";
                 case SWITCH: return "SWITCH";
+                case CHILD: return "CHILD";
                 default: return "???";
                 // Checkstyle: resume
 
@@ -134,6 +150,14 @@ public class ThreadLocal03 extends Thread {
                 object = data;
                 intArray = new int[1];
                 anEnum = AnEnum.VALUE2;
+                ThreadLocal03Child child = new ThreadLocal03Child(ThreadType.CHILD);
+                child.start();
+                try {
+                    child.join();
+                    @SuppressWarnings("unused")
+                    Object result = child.result;
+                } catch (Exception ex) {
+                }
                 break;
 
             case ThreadType.SYNC:
@@ -198,6 +222,7 @@ public class ThreadLocal03 extends Thread {
                 }
                 break;
             }
+
         }
     }
 
