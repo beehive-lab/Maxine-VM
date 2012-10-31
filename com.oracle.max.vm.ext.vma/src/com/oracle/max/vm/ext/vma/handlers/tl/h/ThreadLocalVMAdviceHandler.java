@@ -40,9 +40,22 @@ import com.sun.max.vm.thread.*;
  */
 public class ThreadLocalVMAdviceHandler extends ObjectStateAdapter {
 
+    private static class Data {
+        private String threadName;
+        private long allocCount;
+        private long outAccessCount;
+        private long inAccessCount;
+
+        Data(String threadName) {
+            this.threadName = threadName;
+        }
+
+    }
+
+    private static boolean verbose;
     private static final int REPORTED_BIT = 0;
     private IdBitSetObjectState state;
-    private String[] threadNames;
+    private Data[] threadData;
 
     @Override
     protected void unseenObject(Object obj) {
@@ -54,16 +67,36 @@ public class ThreadLocalVMAdviceHandler extends ObjectStateAdapter {
         super.initialise(phase);
         if (phase == MaxineVM.Phase.RUNNING) {
             state = new SimpleObjectState();
-            threadNames = new String[1024];
-            threadNames[0] = "UNKNOWN";
+            threadData = new Data[1024];
+            threadData[0] = new Data("UNKNOWN");
         } else if (phase == MaxineVM.Phase.TERMINATING) {
-            // TODO
+            for (int i = 0; i < threadData.length; i++) {
+                Data data = threadData[i];
+                if (data != null) {
+                    Log.print("Thread ");
+                    Log.print(data.threadName);
+                    Log.print(" alloc count: ");
+                    Log.print(data.allocCount);
+                    Log.print(", local access by others: ");
+                    Log.print(data.inAccessCount);
+                    Log.print(", external access by this: ");
+                    Log.println(data.outAccessCount);
+                }
+            }
         }
 
     }
 
     public static void onLoad(String args) {
         VMAJavaRunScheme.registerAdviceHandler(new ThreadLocalVMAdviceHandler());
+        if (args != null) {
+            String[] argsArray = args.split(",");
+            for (int i = 0; i < argsArray.length; i++) {
+                if (argsArray[i].equals("verbose")) {
+                    verbose = true;
+                }
+            }
+        }
     }
 
     /**
@@ -75,36 +108,51 @@ public class ThreadLocalVMAdviceHandler extends ObjectStateAdapter {
         if (obj == null) {
             return;
         }
-        if (state.readId(obj).toLong() != VmThread.current().uuid) {
+        int cuuid = VmThread.current().uuid;
+        int ouuid = (int) state.readId(obj).toLong();
+        if (ouuid != cuuid) {
+            // non thread local access
             if (state.readBit(obj, REPORTED_BIT) == 0) {
                 state.writeBit(obj, REPORTED_BIT, 1);
-                // non thread local access
-                boolean lockDisabledSafepoints = Log.lock();
-                try {
-                    Log.print("object ");
-                    Log.print(ObjectAccess.readClassActor(obj).name());
-                    Log.print(" created by ");
-                    Log.print(threadNames[(int) state.readId(obj).toLong()]);
-                    Log.print(" is accessed by ");
-                    Log.println(VmThread.current().getName());
-                } finally {
-                    Log.unlock(lockDisabledSafepoints);
+                Data cdata = threadData[cuuid];
+                cdata.outAccessCount++;
+                Data odata = threadData[ouuid];
+                odata.inAccessCount++;
+                if (verbose) {
+                    boolean lockDisabledSafepoints = Log.lock();
+                    try {
+                        Log.print("object ");
+                        Log.print(ObjectAccess.readClassActor(obj).name());
+                        Log.print(" created by ");
+                        Log.print(threadData[ouuid].threadName);
+                        Log.print(" is accessed by ");
+                        Log.println(cdata.threadName);
+                    } finally {
+                        Log.unlock(lockDisabledSafepoints);
+                    }
                 }
             }
         }
     }
 
+    private void recordNew(Object obj) {
+        int uuid = VmThread.current().uuid;
+        state.writeID(obj, ObjectID.fromWord(Address.fromInt(uuid)));
+        Data data = threadData[uuid];
+        data.allocCount++;
+    }
+
     @Override
     public void adviseBeforeThreadStarting(VmThread vmThread) {
         int uuid = vmThread.uuid;
-        if (uuid >= threadNames.length) {
-            synchronized (threadNames) {
-                String[] newThreadNames = new String[threadNames.length * 2];
-                System.arraycopy(threadNames, 0, newThreadNames, 0, threadNames.length);
-                threadNames = newThreadNames;
+        if (uuid >= threadData.length) {
+            synchronized (threadData) {
+                Data[] newThreadNames = new Data[threadData.length * 2];
+                System.arraycopy(threadData, 0, newThreadNames, 0, threadData.length);
+                threadData = newThreadNames;
             }
         }
-        threadNames[uuid] = vmThread.getName();
+        threadData[uuid] = new Data(VmThread.current().getName());
     }
 
     @Override
@@ -129,27 +177,22 @@ public class ThreadLocalVMAdviceHandler extends ObjectStateAdapter {
 
     @Override
     public void adviseAfterNew(int arg1, Object arg2) {
-        state.writeID(arg2, ObjectID.fromWord(Address.fromInt(VmThread.current().uuid)));
+        recordNew(arg2);
     }
 
     @Override
     public void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
-        state.writeID(arg2, ObjectID.fromWord(Address.fromInt(VmThread.current().uuid)));
+        recordNew(arg2);
         MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);
     }
 
     @Override
-    public void adviseBeforeConstLoad(int arg1, float arg2) {
-        super.adviseBeforeConstLoad(arg1, arg2);
+    public void adviseBeforeLoad(int arg1, int arg2) {
+        super.adviseBeforeLoad(arg1, arg2);
     }
 
     @Override
     public void adviseBeforeConstLoad(int arg1, Object arg2) {
-        super.adviseBeforeConstLoad(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(int arg1, double arg2) {
         super.adviseBeforeConstLoad(arg1, arg2);
     }
 
@@ -159,8 +202,13 @@ public class ThreadLocalVMAdviceHandler extends ObjectStateAdapter {
     }
 
     @Override
-    public void adviseBeforeLoad(int arg1, int arg2) {
-        super.adviseBeforeLoad(arg1, arg2);
+    public void adviseBeforeConstLoad(int arg1, double arg2) {
+        super.adviseBeforeConstLoad(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, float arg2) {
+        super.adviseBeforeConstLoad(arg1, arg2);
     }
 
     @Override

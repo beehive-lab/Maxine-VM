@@ -54,7 +54,7 @@ public class ThreadLocalVMAdviceHandlerGenerator {
         int argCount = generateSignature(m, null);
         out.printf(" {%n");
         if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
-            out.println("        state.writeID(arg2, ObjectID.fromWord(Address.fromInt(VmThread.current().uuid)));");
+            out.println("        recordNew(arg2);");
             if (name.equals("adviseAfterNewArray")) {
                 out.println("        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);");
             }
