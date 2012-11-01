@@ -231,6 +231,7 @@ public class VMAOptions {
         VMOptions.addFieldOption("-XX:", "VMA", "enable advising");
         VMOptions.addFieldOption("-XX:", "VMACI", "regex for classes to instrument");
         VMOptions.addFieldOption("-XX:", "VMACX", "regex for classes not to instrument");
+        VMOptions.addFieldOption("-XX:", "VMAXJDK", "do not instrument any JDK classes");
         VMOptions.addFieldOption("-XX:", "VMATI", "regex for threads to include");
         VMOptions.addFieldOption("-XX:", "VMATX", "regex for threads to exclude");
         VMOptions.addFieldOption("-XX:", "VMABI", "regex for bytecodes to match");
@@ -250,6 +251,11 @@ public class VMAOptions {
      * {@link Pattern regex pattern} defining specific classes to exclude from instrumentation.
      */
     private static String VMACX;
+
+    /**
+     * Convenience option to specify the exclusion of all JDK classes.
+     */
+    private static boolean VMAXJDK;
 
     private static String VMATI;
     private static String VMATX;
@@ -358,6 +364,9 @@ public class VMAOptions {
         if (VMA && phase == MaxineVM.Phase.RUNNING) {
             // always exclude advising packages and key JDK classes
             String xPattern = X_PATTERN;
+            if (VMAXJDK) {
+                xPattern += "|java.*|sun.*";
+            }
             if (VMACX != null) {
                 xPattern += "|" + VMACX;
             }

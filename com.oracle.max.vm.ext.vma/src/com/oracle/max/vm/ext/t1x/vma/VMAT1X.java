@@ -90,7 +90,7 @@ public class VMAT1X extends T1X {
 
     @Override
     public TargetMethod compile(ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
-        if (instrumenting && VMAOptions.instrumentForAdvising(method)) {
+        if (instrumenting && !method.holder().isReflectionStub() && VMAOptions.instrumentForAdvising(method)) {
             return super.compile(method, isDeopt, install, stats);
         } else {
             return stdT1X.compile(method, false, install, stats);
