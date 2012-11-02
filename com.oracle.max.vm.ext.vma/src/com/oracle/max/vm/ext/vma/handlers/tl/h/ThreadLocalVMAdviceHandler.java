@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.tl.h;
 
+import java.io.*;
+
 import com.oracle.max.vm.ext.vma.handlers.util.*;
 import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
@@ -70,17 +72,33 @@ public class ThreadLocalVMAdviceHandler extends ObjectStateAdapter {
             threadData = new Data[1024];
             threadData[0] = new Data("UNKNOWN");
         } else if (phase == MaxineVM.Phase.TERMINATING) {
-            for (int i = 0; i < threadData.length; i++) {
-                Data data = threadData[i];
-                if (data != null) {
-                    Log.print("Thread ");
-                    Log.print(data.threadName);
-                    Log.print(" alloc count: ");
-                    Log.print(data.allocCount);
-                    Log.print(", local access by others: ");
-                    Log.print(data.inAccessCount);
-                    Log.print(", external access by this: ");
-                    Log.println(data.outAccessCount);
+            PrintStream ps = System.out;
+            try {
+                String logpathProperty = System.getProperty("max.test.logpathbase");
+                if (logpathProperty != null) {
+                    ps = new PrintStream(new FileOutputStream(logpathProperty + ".vma"));
+                }
+                for (int i = 0; i < threadData.length; i++) {
+                    Data data = threadData[i];
+                    if (data != null) {
+                        ps.print("Thread ");
+                        ps.print(data.threadName);
+                        ps.print(" alloc count: ");
+                        ps.print(data.allocCount);
+                        ps.print(", local access by others: ");
+                        ps.print(data.inAccessCount);
+                        ps.print(", external access by this: ");
+                        ps.println(data.outAccessCount);
+                    }
+                }
+            } catch (IOException ex) {
+                System.err.println(ex);
+            } finally {
+                if (ps != null) {
+                    try {
+                        ps.close();
+                    } catch (Exception ex) {
+                    }
                 }
             }
         }
