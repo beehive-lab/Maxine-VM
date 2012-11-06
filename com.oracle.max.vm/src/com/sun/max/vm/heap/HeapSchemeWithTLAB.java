@@ -323,6 +323,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return initialTlabSize;
     }
 
+    protected void setInitialTlabSize(Size size) {
+        initialTlabSize = size;
+    }
+
     public void refillTLAB(Pointer tlab, Size size) {
         final Pointer etla = ETLA.load(currentTLA());
         refillTLAB(etla, tlab, size);

@@ -62,13 +62,13 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     static boolean AlwaysFullGC;
     static boolean ForceCleanCardsAfterMinorGC;
     static private int BreakAfterGCCount;
-
+    static private Size LargeObjectSizeThreshold = Size.K.times(512);
     public static boolean OldSpaceDirtyCardsStats;
 
     /**
      * Knob for the fixed ratio resizing policy.
      */
-    static int YoungGenHeapPercent = 30;
+    static int YoungGenHeapPercent = 40;
     /**
      * Expected default percentage of survivors. Used to estimate old generation growth at minor collection and decide when to trigger a full GC.
      * Default value is arbitrary at the moment.
@@ -81,6 +81,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         VMOptions.addFieldOption("-XX:", "ForceCleanCardsAfterMinorGC", GenSSHeapScheme.class, "Force cleaning of old space dirty card after GC", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "OldSpaceDirtyCardsStats", GenSSHeapScheme.class, "Print stats on old space dirty cards", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "BreakAfterGCCount", GenSSHeapScheme.class, "Break at every GC after GC count", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "LargeObjectSizeThreshold", GenSSHeapScheme.class, "Threshold for being treated as a large object", Phase.PRISTINE);
     }
 
     static final class GenSSGCRequest  extends GCRequest {
@@ -282,7 +283,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
     /**
-     * Old generation, organized as a semi-space.
+     * Old generation, organized as two semi-spaces.
      */
     @INSPECTED
     final ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>> oldSpace;
@@ -300,6 +301,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      */
     @INSPECTED
     private final GenSSHeapSizingPolicy resizingPolicy;
+
+    /**
+     * Size threshold for considering an object as "large" and allocating it specially.
+     */
+    private Size largeObjectSizeThreshold;
 
     /**
      * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
@@ -894,17 +900,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         return System.currentTimeMillis() - lastFullGCTime;
     }
 
-    /**
-     * Size threshold for considering an object as "large" and allocating it specially.
-     *
-     * @return a size in bytes.
-     */
-    private Size largeObjectSizeThreshold() {
-        final Size threshold = resizingPolicy.minYoungGenSize().unsignedShiftedRight(1);
-        final Size defaultThreshold = Size.K.times(512);
-        return defaultThreshold.greaterThan(threshold) ? threshold : defaultThreshold;
-    }
-
     @Override
     protected void allocateHeapAndGCStorage() {
         final Size reservedSpace = Size.K.times(reservedVirtualSpaceKB());
@@ -932,8 +927,16 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             // Use immortal memory for now.
             Heap.enableImmortalMemoryAllocation();
             resizingPolicy.initialize(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
+            // Initialize large object size threshold. No greater than half the minimum young gen size.
+            final Size threshold = resizingPolicy.minYoungGenSize().unsignedShiftedRight(1);
+            largeObjectSizeThreshold = LargeObjectSizeThreshold.greaterThan(threshold) ? threshold : LargeObjectSizeThreshold;
+            if (largeObjectSizeThreshold.lessThan(initialTlabSize())) {
+                // Set to nearest power of two.
+                final Size newTLABSize = Size.fromLong(Long.highestOneBit(largeObjectSizeThreshold.toLong()));
+                setInitialTlabSize(newTLABSize);
+            }
             youngSpace.initialize(firstUnusedByteAddress, resizingPolicy.maxYoungGenSize(), resizingPolicy.initialYoungGenSize());
-            youngSpace.allocator().initialize(youngSpace.space.start(), youngSpace.space.committedSize(), largeObjectSizeThreshold());
+            youngSpace.allocator().initialize(youngSpace.space.start(), youngSpace.space.committedSize(), largeObjectSizeThreshold);
             Address startOfOldSpace = youngSpace.space.end().alignUp(pageSize);
             oldSpace.initialize(startOfOldSpace, resizingPolicy.maxOldGenSize(), resizingPolicy.initialOldGenSize());
             // Set old space's allocator size limit to the max old space size  to never call allocate large, but always refill instead.
@@ -983,12 +986,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         } finally {
             Heap.disableImmortalMemoryAllocation();
         }
-    }
-
-    @Override
-    protected void reportTotalGCTimes() {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -1166,7 +1163,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 Log.print(" GC #");
                 Log.print(invocationCount);
             }
-            Log.print(", root scan=");
+            Log.print(": root scan=");
             Log.print(rootScanTime);
             Log.print(", boot heap scan=");
             Log.print(bootHeapScanTime);
@@ -1192,7 +1189,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                     Log.print(" (Full) ");
                 }
             }
-            Log.print(" total=");
+            Log.print(": total=");
             Log.println(gcTime);
         }
     }

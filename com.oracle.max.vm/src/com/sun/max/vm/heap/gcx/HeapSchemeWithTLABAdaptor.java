@@ -91,7 +91,6 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
     }
 
     abstract protected void allocateHeapAndGCStorage();
-    abstract protected void reportTotalGCTimes();
 
     private static final TimerMetric heapStartupTime = new TimerMetric(new SingleUseTimer(Clock.SYSTEM_MILLISECONDS));
 
@@ -106,7 +105,6 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (Heap.logGCTime()) {
                 heapStartupTime.report("allocateHeapAndGCStorage", Log.out);
-                reportTotalGCTimes();
                 VirtualMemory.reportMetrics();
             }
         }
