@@ -35,7 +35,7 @@ public class DebugQuery extends QueryBase {
         TraceRun traceRun = traceRuns.get(traceFocus);
         for (int i = 0; i < traceRun.adviceRecordList.size(); i++) {
             AdviceRecord ar = traceRun.adviceRecordList.get(i);
-            int j = ProcessLog.getRecordListIndex(traceRun.adviceRecordList, ar);
+            int j = AdviceRecordHelper.getRecordListIndex(traceRun.adviceRecordList, ar);
             if (i != j) {
                 System.err.println("failed to locate AdviceRecord: " + i);
             }

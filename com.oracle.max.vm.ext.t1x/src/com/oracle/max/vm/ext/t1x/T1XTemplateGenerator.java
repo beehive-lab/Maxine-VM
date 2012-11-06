@@ -84,6 +84,11 @@ public class T1XTemplateGenerator {
         void startMethodGeneration();
 
         /**
+         * Called at the end of a template method generation (but not helper methods).
+         */
+        void endTemplateMethodGeneration(T1XTemplateTag tag);
+
+        /**
          * Ability to add additional arguments to a template signature.
          * @param comma {@code true} iff a comma should precede additional params
          * @return string defining the additional parameters
@@ -93,7 +98,7 @@ public class T1XTemplateGenerator {
         /**
          * Companion method to {@link #suffixParams(boolean) for forwarding extra params to nested calls.
          * @param comma {@code true} iff a comma should precede additional params
-         * @returnstring defining the additional arguments
+         * @return string defining the additional arguments
          */
         String suffixArgs(boolean comma);
     }
@@ -389,6 +394,15 @@ public class T1XTemplateGenerator {
         }
     }
 
+    /**
+     * Notify advice hook that a template method is completed.
+     */
+    public void endTemplateMethodGeneration() {
+        if (adviceHook != null) {
+            adviceHook.endTemplateMethodGeneration(currentTemplateTag);
+        }
+    }
+
     public String suffixParams(boolean comma) {
         if (adviceHook != null) {
             return adviceHook.suffixParams(comma);
@@ -431,6 +445,7 @@ public class T1XTemplateGenerator {
         generateAfterAdvice();
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public void generateLoadExceptionTemplate() {
@@ -442,6 +457,7 @@ public class T1XTemplateGenerator {
         out.println("        return exception;");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> PUTFIELD_TEMPLATE_TAGS = tags("PUTFIELD$");
@@ -458,6 +474,15 @@ public class T1XTemplateGenerator {
     }
 
     /**
+     * For VMA override with {@link FieldActor} instead of {@code offset}.
+     */
+    protected void generatePutFieldTemplateBody(Kind k, String m) {
+        out.printf("    public static void putfield%s(@Slot(%d) Object object, int offset, @Slot(0) %s value%s) {%n", ur(k), k.stackSlots, rs(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        TupleAccess.%srite%s(object, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+    }
+
+    /**
      * Generate the resolved and unresolved {@code PUTFIELD} template tag for given type.
      */
     public void generatePutFieldTemplate(Kind k) {
@@ -465,11 +490,10 @@ public class T1XTemplateGenerator {
         final String m = k == REFERENCE ? "noninlineW" : "w";
         startMethodGeneration();
         generateTemplateTag("PUTFIELD$%s$resolved", lr(k));
-        out.printf("    public static void putfield%s(@Slot(%d) Object object, int offset, @Slot(0) %s value%s) {%n", ur(k), objectSlot, rs(k), suffixParams(true));
-        generateBeforeAdvice(k);
-        out.printf("        TupleAccess.%srite%s(object, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+        generatePutFieldTemplateBody(k, m);
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
 
         startMethodGeneration();
         generateTemplateTag("PUTFIELD$%s", lr(k));
@@ -492,6 +516,7 @@ public class T1XTemplateGenerator {
         out.printf("        }%n");
         out.printf("    }%n");
         out.printf("%n");
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> PUTSTATIC_TEMPLATE_TAGS = tags("PUTSTATIC$");
@@ -507,6 +532,15 @@ public class T1XTemplateGenerator {
     }
 
     /**
+     * For VMA override with {@link FieldActor} instead of {@code offset}.
+     */
+    protected void generatePutStaticTemplateBody(Kind k, String m) {
+        out.printf("    public static void putstatic%s(Object staticTuple, int offset, @Slot(0) %s value%s) {%n", ur(k), rs(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        TupleAccess.%srite%s(staticTuple, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+    }
+
+    /**
      * Generate the resolved and unresolved {@code PUTSTATIC} template tag for given type.
      * @param k type
      */
@@ -514,11 +548,10 @@ public class T1XTemplateGenerator {
         final String m = k == REFERENCE ? "noninlineW" : "w";
         startMethodGeneration();
         generateTemplateTag("PUTSTATIC$%s$init", lr(k));
-        out.printf("    public static void putstatic%s(Object staticTuple, int offset, @Slot(0) %s value%s) {%n", ur(k), rs(k), suffixParams(true));
-        generateBeforeAdvice(k);
-        out.printf("        TupleAccess.%srite%s(staticTuple, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+        generatePutStaticTemplateBody(k, m);
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
 
         startMethodGeneration();
         generateTemplateTag("PUTSTATIC$%s", lr(k));
@@ -542,6 +575,7 @@ public class T1XTemplateGenerator {
         out.printf("        }%n");
         out.printf("    }%n");
         out.printf("%n");
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> GETFIELD_TEMPLATE_TAGS = tags("GETFIELD$");
@@ -558,18 +592,26 @@ public class T1XTemplateGenerator {
     }
 
     /**
+     * For VMA override with {@link FieldActor} instead of {@code offset}.
+     */
+    protected void generateGetFieldTemplateBody(Kind k) {
+        out.printf("    public static %s getfield%s(@Slot(0) Object object, int offset%s) {%n", rs(k), u(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        %s result = TupleAccess.read%s(object, offset);%n", j(k), u(k));
+    }
+
+    /**
      * Generate the resolved and unresolved {@code GETFIELD} template tag for given type.
      * @param k type
      */
     public void generateGetFieldTemplate(Kind k) {
         startMethodGeneration();
         generateTemplateTag("GETFIELD$%s$resolved", lr(k));
-        out.printf("    public static %s getfield%s(@Slot(0) Object object, int offset%s) {%n", rs(k), u(k), suffixParams(true));
-        generateBeforeAdvice(k);
-        out.printf("        %s result = TupleAccess.read%s(object, offset);%n", j(k), u(k));
+        generateGetFieldTemplateBody(k);
         out.printf("        return %s;%n", toStackKindCast(k, "result"));
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
 
         startMethodGeneration();
         generateTemplateTag("GETFIELD$%s", lr(k));
@@ -594,6 +636,7 @@ public class T1XTemplateGenerator {
         out.printf("        }%n");
         out.printf("    }%n");
         out.printf("%n");
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> GETSTATIC_TEMPLATE_TAGS = tags("GETSTATIC$");
@@ -610,10 +653,27 @@ public class T1XTemplateGenerator {
     }
 
     /**
+     * For VMA override with {@link FieldActor} instead of {@code offset}.
+     */
+    protected void generateGetStaticTemplateBody(Kind k) {
+        out.printf("    public static %s getstatic%s(Object staticTuple, int offset%s) {%n", rs(k), u(k), suffixParams(true));
+        generateBeforeAdvice(k);
+        out.printf("        %s result = TupleAccess.read%s(staticTuple, offset);%n", j(k), u(k));
+    }
+
+    /**
      * Generate the resolved and unresolved {@code GETFIELD} template tag for given type.
      * @param k type
      */
     public void generateGetStaticTemplate(Kind k) {
+        startMethodGeneration();
+        generateTemplateTag("GETSTATIC$%s$init", lr(k));
+        generateGetStaticTemplateBody(k);
+        out.printf("        return %s;%n", toStackKindCast(k, "result"));
+        out.printf("    }%n");
+        newLine();
+        endTemplateMethodGeneration();
+
         startMethodGeneration();
         generateTemplateTag("GETSTATIC$%s", lr(k));
         out.printf("    public static %s getstatic%s(ResolutionGuard.InPool guard%s) {%n", rs(k), ur(k), suffixParams(true));
@@ -638,15 +698,7 @@ public class T1XTemplateGenerator {
         out.printf("        }%n");
         out.printf("    }%n");
         out.printf("%n");
-
-        startMethodGeneration();
-        generateTemplateTag("GETSTATIC$%s$init", lr(k));
-        out.printf("    public static %s getstatic%s(Object staticTuple, int offset%s) {%n", rs(k), u(k), suffixParams(true));
-        generateBeforeAdvice(k);
-        out.printf("        %s result = TupleAccess.read%s(staticTuple, offset);%n", j(k), u(k));
-        out.printf("        return %s;%n", toStackKindCast(k, "result"));
-        out.printf("    }%n");
-        newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> ALOAD_TEMPLATE_TAGS = EnumSet.of(IALOAD, LALOAD, FALOAD, DALOAD, AALOAD, BALOAD, CALOAD, SALOAD);
@@ -672,9 +724,11 @@ public class T1XTemplateGenerator {
         out.printf("        ArrayAccess.checkIndex(array, index);%n");
         generateBeforeAdvice(k);
         out.printf("        %s result = ArrayAccess.get%s(array, index);%n", j(k), u(k));
+        generateAfterAdvice(k);
         out.printf("        return %s;%n", toStackKindCast(k, "result"));
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> ASTORE_TEMPLATE_TAGS = EnumSet.of(IASTORE, LASTORE, FASTORE, DASTORE, AASTORE, BASTORE, CASTORE, SASTORE);
@@ -708,6 +762,7 @@ public class T1XTemplateGenerator {
         out.printf("        ArrayAccess.set%s(array, index, %s);%n", u(k), fromStackKindCast(k, "value"));
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> NEW_TEMPLATE_TAGS = EnumSet.of(NEW, NEW$init);
@@ -725,8 +780,8 @@ public class T1XTemplateGenerator {
      * Generate the requested {@code NEW} template.
      */
     public void generateNewTemplate(T1XTemplateTag tag) {
+        startMethodGeneration();
         if (tag == T1XTemplateTag.NEW) {
-            startMethodGeneration();
             generateTemplateTag(tag.name());
             out.printf("    public static Object new_(ResolutionGuard guard%s) {%n", suffixParams(true));
             out.printf("        Object object = resolveClassForNewAndCreate(guard);%n");
@@ -735,7 +790,6 @@ public class T1XTemplateGenerator {
             out.printf("    }%n");
             newLine();
         } else {
-            startMethodGeneration();
             generateTemplateTag(tag.name());
             out.printf("    public static Object %s(DynamicHub hub%s) {%n", tag == T1XTemplateTag.NEW$init ? "new_" : "new_hybrid", suffixParams(true));
             out.printf("        Object object = Heap.create%s(hub);%n", tag == T1XTemplateTag.NEW$init ? "Tuple" : "Hybrid");
@@ -744,6 +798,7 @@ public class T1XTemplateGenerator {
             out.printf("    }%n");
             newLine();
         }
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> NEWARRAY_TEMPLATE_TAGS = EnumSet.of(NEWARRAY);
@@ -757,6 +812,7 @@ public class T1XTemplateGenerator {
         out.printf("        return array;%n");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> ANEWARRAY_TEMPLATE_TAGS = EnumSet.of(ANEWARRAY, ANEWARRAY$resolved);
@@ -796,6 +852,7 @@ public class T1XTemplateGenerator {
         out.printf("        return array;%n");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> MULTIANEWARRAY_TEMPLATE_TAGS = EnumSet.of(MULTIANEWARRAY, MULTIANEWARRAY$resolved);
@@ -833,6 +890,7 @@ public class T1XTemplateGenerator {
         out.printf("        return Reference.fromJava(array);%n");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> CHECKCAST_TEMPLATE_TAGS = EnumSet.of(CHECKCAST, CHECKCAST$resolved);
@@ -841,8 +899,8 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #CHECKCAST_TEMPLATE_TAGS}.
      */
     public void generateCheckcastTemplates() {
-        generateCheckcastTemplate("");
         generateCheckcastTemplate("resolved");
+        generateCheckcastTemplate("");
         generateResolveAndCheckCast();
     }
 
@@ -873,6 +931,9 @@ public class T1XTemplateGenerator {
         out.printf("        return object;%n", m, arg);
         out.printf("    }%n");
         newLine();
+        if (isResolved) {
+            endTemplateMethodGeneration();
+        }
     }
 
     public void generateResolveAndCheckCast() {
@@ -884,6 +945,7 @@ public class T1XTemplateGenerator {
         out.printf("        Snippets.checkCast(classActor, object);%n");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> INSTANCEOF_TEMPLATE_TAGS = EnumSet.of(INSTANCEOF, INSTANCEOF$resolved);
@@ -920,6 +982,7 @@ public class T1XTemplateGenerator {
         out.printf("        return UnsafeCast.asByte(Snippets.instanceOf(classActor, object));%n");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public void generateArraylengthTemplate() {
@@ -931,6 +994,7 @@ public class T1XTemplateGenerator {
         out.printf("        return length;%n");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public void generateAThrowTemplate() {
@@ -941,6 +1005,19 @@ public class T1XTemplateGenerator {
         out.printf("        Throw.raise(object);%n");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
+    }
+
+    public void generateReThrowTemplate() {
+        startMethodGeneration();
+        generateTemplateTag("RETHROW_EXCEPTION");
+        out.printf("    public static void rethrowException(%s) {%n", suffixParams(false));
+        out.printf("        Throwable throwable = VmThread.current().loadExceptionForHandler();%n");
+        generateBeforeAdvice(NULL_ARGS);
+        out.printf("        Throw.raise(throwable);%n");
+        out.printf("    }%n");
+        newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> MONITOR_TEMPLATE_TAGS = EnumSet.of(MONITORENTER, MONITOREXIT);
@@ -965,6 +1042,7 @@ public class T1XTemplateGenerator {
         out.printf("        Monitor.%s(object);%n", tag);
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> LOCK_TEMPLATE_TAGS = EnumSet.of(LOCK, UNLOCK);
@@ -983,6 +1061,7 @@ public class T1XTemplateGenerator {
         out.printf("        Monitor.%s(object);%n", tag == LOCK ? "enter" : "exit");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     private static EnumSet<T1XTemplateTag> tags(String prefix) {
@@ -1050,6 +1129,7 @@ public class T1XTemplateGenerator {
         }
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     /**
@@ -1098,6 +1178,7 @@ public class T1XTemplateGenerator {
         out.printf("            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());%n");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
 
@@ -1157,6 +1238,7 @@ public class T1XTemplateGenerator {
         out.printf("        return resolve%sMethod(guard);%n", toFirstUpper(variant));
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
 
@@ -1186,6 +1268,7 @@ public class T1XTemplateGenerator {
         out.printf("        return %svalue;%n", cast);
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
 
@@ -1215,6 +1298,7 @@ public class T1XTemplateGenerator {
         out.printf("        return %svalue;%n", cast);
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
 
@@ -1244,6 +1328,7 @@ public class T1XTemplateGenerator {
         out.printf("        return %s;%n", arg2);
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
 
@@ -1273,6 +1358,7 @@ public class T1XTemplateGenerator {
         out.printf("        return %s;%n", arg2);
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> NEG_TEMPLATE_TAGS = EnumSet.of(INEG, LNEG, FNEG, DNEG);
@@ -1319,6 +1405,7 @@ public class T1XTemplateGenerator {
         }
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> DYADIC_TEMPLATE_TAGS = EnumSet.of(IADD, LADD, FADD, DADD, ISUB, LSUB, FSUB, DSUB, IMUL, LMUL, FMUL, DMUL, IDIV, LDIV, FDIV, DDIV, ISHL, LSHL, ISHR,
@@ -1360,6 +1447,7 @@ public class T1XTemplateGenerator {
         out.printf("        return value1 %s value2;%n", algOp(op));
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public void generateReturnTemplates() {
@@ -1389,6 +1477,7 @@ public class T1XTemplateGenerator {
             out.printf("        if (ObjectAccess.readClassActor(object).hasFinalizer()) {%n");
             out.printf("            SpecialReferenceManager.registerFinalizee(object);%n");
             out.printf("        }%n");
+            generateBeforeAdvice(k);
         } else {
             if (unlock.length() > 0) {
                 // need to advise the implicit monitorexit
@@ -1404,6 +1493,7 @@ public class T1XTemplateGenerator {
         }
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     public static final EnumSet<T1XTemplateTag> CMP_TEMPLATE_TAGS = EnumSet.of(LCMP, FCMPL, FCMPG, DCMPL, DCMPG);
@@ -1433,6 +1523,7 @@ public class T1XTemplateGenerator {
         out.printf("        return result;%n");
         out.printf("    }%n");
         newLine();
+        endTemplateMethodGeneration();
     }
 
     /**
@@ -1503,6 +1594,7 @@ public class T1XTemplateGenerator {
         generateCheckcastTemplates();
         generateArraylengthTemplate();
         generateAThrowTemplate();
+        generateReThrowTemplate();
         generateMonitorTemplates();
         generateInstanceofTemplates();
         generateReturnTemplate(VOID, "registerFinalizer");

@@ -26,7 +26,6 @@ package com.oracle.max.vma.tools.qa.queries;
 import java.io.*;
 
 import com.oracle.max.vma.tools.qa.*;
-import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 /**
  * Helper class for queries that report by object instance.
@@ -34,7 +33,7 @@ import com.oracle.max.vma.tools.qa.TransientVMAdviceHandlerTypes.*;
 
 public class DataByObjectQueryHelper extends QueryBase {
 
-    static void showDataOnTD(TraceRun traceRun, ObjectRecord td,
+    void showDataOnTD(TraceRun traceRun, ObjectRecord td,
             PrintStream ps, String[] args) {
 
         boolean showThread = false;
@@ -49,22 +48,12 @@ public class DataByObjectQueryHelper extends QueryBase {
         }
         ps.println(td.toString(traceRun, true, showThread, true, true, true, true));
 
-        for (int i = 0; i < td.getAdviceRecords().size(); i++) {
-            AdviceRecord ar =  td.getAdviceRecords().get(i);
-            if (showAllAccesses) {
-                ps.println("  field " + getQualName(ar) + " accessed (" + AdviceRecordHelper.accessType(ar) + ") at "
-                        + ms(traceRun.relTime(ar.time)) + " in thread " + ar.thread);
+        if (showAllAccesses) {
+            for (int i = 0; i < td.getAdviceRecords().size(); i++) {
+                AdviceRecordHelper.print(this, traceRun, ps, td.getAdviceRecords().get(i), i, 0, true);
             }
         }
 
     }
-
-    private static String getQualName(AdviceRecord ar) {
-        ObjectFieldAdviceRecord far = (ObjectFieldAdviceRecord) ar;
-        ObjectRecord or = (ObjectRecord) far.value;
-        FieldRecord fr = (FieldRecord) far.field;
-        return or.getClassName() + "." + fr.getName();
-    }
-
 
 }

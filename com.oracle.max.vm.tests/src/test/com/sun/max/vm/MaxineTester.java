@@ -151,6 +151,12 @@ public class MaxineTester {
      */
     private static String insitu = "insitu";
 
+    /**
+     * Set to the config-specific absolute path for {@code stdout} etc.
+     * Can be used to create other, test-specific paths.
+     */
+    public static final String LOGPATH_PROPERTY = "max.test.logpathbase";
+
     public static void main(String[] args) {
         try {
             options.parseArguments(args);
@@ -707,7 +713,7 @@ public class MaxineTester {
             return;
         }
         List<String> maxvmConfigs = maxvmConfigListOption.getValue();
-        List<String> maxVMOptions = maxVMArgsOption.getValue();
+        List<String> maxVMOptions = quoteCheck(maxVMArgsOption.getValue());
         ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, maxVMOptions, imageDir, command, outputDir, workingDir, inputFile);
         printStartOfRefvm(testName);
         ExternalCommand.Result refResult = commands[0].exec(false, javaRunTimeOutOption.getValue());
@@ -727,6 +733,29 @@ public class MaxineTester {
             }
         }
         printEndOfTest(testName);
+    }
+
+    private static List<String> quoteCheck(List<String> args) {
+        String[] arrayList = new String[args.size()];
+        args.toArray(arrayList);
+        for (int i = 0; i < arrayList.length; i++) {
+            String arg = arrayList[i];
+            if (arg.charAt(0) == '\'') {
+                continue;
+            }
+            boolean quote = false;
+            for (int j = 0; j < arg.length(); j++) {
+                char ch = arg.charAt(j);
+                if (ch == '*' || ch == '|' || ch == '&' || ch == '?') {
+                    quote = true;
+                    break;
+                }
+            }
+            if (quote) {
+                arrayList[i] = "'" + arg + "'";
+            }
+        }
+        return Arrays.asList(arrayList);
     }
 
     private static void printStartOfRefvm(String testName) {
@@ -1168,6 +1197,7 @@ public class MaxineTester {
         JavaCommand maxvmCommand = command.copy();
         maxvmCommand.addVMOptions(MaxineTesterConfiguration.getVMOptions(config));
         maxvmCommand.addVMOptions(maxVMOptions.toArray(new String[maxVMOptions.size()]));
+        maxvmCommand.addSystemProperty(LOGPATH_PROPERTY, logs.base.getAbsolutePath());
         String[] envp = null;
         if (OS.current() == OS.LINUX) {
             // Since the executable may not be in the default location, then the -rpath linker option used when

@@ -32,6 +32,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.oracle.max.vm.ext.t1x.*;
@@ -42,6 +43,16 @@ import com.oracle.max.vm.ext.t1x.*;
 public class VMAdviceAfterTemplateSource {
 
 // START GENERATED CODE
+    @T1X_TEMPLATE(AALOAD)
+    public static Reference aaload(@Slot(1) Object array, @Slot(0) int index, int bci) {
+        ArrayAccess.checkIndex(array, index);
+        Object result = ArrayAccess.getObject(array, index);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterArrayLoad(bci, array, index, result);
+        }
+        return Reference.fromJava(result);
+    }
+
     @T1X_TEMPLATE(NEW)
     public static Object new_(ResolutionGuard guard, int bci) {
         Object object = resolveClassForNewAndCreate(guard);
@@ -122,6 +133,15 @@ public class VMAdviceAfterTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterMethodEntry(bci, receiver, methodActor);
         }
+    }
+
+    @T1X_TEMPLATE(ALOAD)
+    public static Reference aload(int index, int localOffset, int bci) {
+        Reference value = VMRegister.getAbiFramePointer().readReference(localOffset);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterLoad(bci, index, value);
+        }
+        return value;
     }
 
 // END GENERATED CODE

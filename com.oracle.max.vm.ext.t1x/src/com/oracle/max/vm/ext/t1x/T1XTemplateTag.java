@@ -372,6 +372,7 @@ public enum T1XTemplateTag {
     INVOKEINTERFACE$adviseafter(-1),
     INVOKESPECIAL$adviseafter(-1),
     INVOKESTATIC$adviseafter(-1);
+
     // END VMA additions
 
     public static final EnumMap<KindEnum, T1XTemplateTag> PUTSTATICS = makeKindMap(Bytecodes.PUTSTATIC);

@@ -142,7 +142,7 @@ public class InlinedMethodDependencyProcessor extends DependencyProcessor {
         } else {
             inlineeMIndex = -inlineeMIndex - 1;
             int inlineeHolderID = dependencies.packed[i++];
-            inlineeHolder = inlineVisitor != null ? ClassID.toClassActor(inlineeHolderID) : null;
+            inlineeHolder = inlineVisitor != null ? ClassIDManager.toClassActor(inlineeHolderID) : null;
         }
         if (inlineVisitor != null) {
             ClassMethodActor inliningMethod = dependencies.targetMethod.classMethodActor;

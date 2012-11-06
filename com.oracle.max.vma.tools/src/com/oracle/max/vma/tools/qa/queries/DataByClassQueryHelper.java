@@ -103,7 +103,7 @@ public class DataByClassQueryHelper extends QueryBase {
 
         ps.print(indent + "Objects organized by class");
         if (sort_lt) {
-            ps.print(", sorted by lifetime");
+            ps.print(", sorted by effective lifetime");
         } else if (sort_mlt) {
             ps.print(", sorted by modify-lifetime");
         }
@@ -159,7 +159,7 @@ public class DataByClassQueryHelper extends QueryBase {
         String idIndent = indent + INDENT_TWO;
         for (int i = 0; i < ods.length; i++) {
             ObjectRecord td = ods[i];
-            long lifeTime = td.getLifeTime(traceRun.lastTime);
+            long lifeTime = td.getEffectiveLifeTime();
             long immutableTime = lifeTime - td.getModifyLifeTime();
             double percentImmutableTime = percent(immutableTime, lifeTime);
             if (percentImmutableTime >= percentile) {

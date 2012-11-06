@@ -44,12 +44,6 @@ import com.sun.max.annotate.*;
  *
  * The generating thread (name) is added as the first argument to all the methods.
  *
- * The API is designed to avoid object allocation as far as possible. For example it would be convenient
- * to encapsulate a class name and the class loader id as a (value) object and, similarly, for (qualified) field
- * and method names. However, measurements showed that that would place a significant load on the heap just
- * to pass those values.
- *
- *
  */
 @HOSTED_ONLY
 public class VMATextStoreGenerator {
@@ -71,29 +65,33 @@ public class VMATextStoreGenerator {
 
     private static void generate(Method m) {
         final String name = m.getName();
-        out.printf("    public abstract void %s(long time, String threadName%s", getMethodNameRenamingObject(m),
+        out.printf("    void %s(long time, String threadName%s", getMethodNameRenamingObject(m),
                         AdviceGeneratorHelper.isBytecodeAdviceMethod(m) || m.getName().contains("ReturnByThrow") ? ", int bci" : "");
         if (name.endsWith("ConstLoad")) {
             out.printf(", %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("GetField")) {
-            out.print(", long objId, String className, long clId, String fieldName");
+            out.print(", long objId, String shortFieldName");
             getFieldDone = true;
         } else if (name.endsWith("PutField")) {
-            out.printf(", long objId, String className, long clId, String fieldName, %s value", getLastParameterNameHandlingObject(m));
+            out.printf(", long objId, String shortFieldName, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("GetStatic")) {
-            out.print(", String className, long clId, String fieldName");
+            out.print(", String shortFieldName");
             getStaticDone = true;
         } else if (name.endsWith("PutStatic")) {
-            out.printf(", String className, long clId, String fieldName, %s value", getLastParameterNameHandlingObject(m));
-        } else if (name.endsWith("ArrayLoad")) {
+            out.printf(", String shortFieldName, %s value", getLastParameterNameHandlingObject(m));
+        } else if (name.endsWith("BeforeArrayLoad")) {
             out.print(", long objId, int index");
             arrayLoadDone = true;
+        } else if (name.endsWith("AfterArrayLoad")) {
+            out.printf(", long objId, int index, %s value", getLastParameterNameHandlingObject(m));
+        } else if (name.endsWith("AfterLoad")) {
+            out.printf(", int index, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("ArrayStore")) {
             out.printf(", long objId, int index, %s value", getLastParameterNameHandlingObject(m));
-        } else if (name.endsWith("Store")) {
+        } else if (name.endsWith("BeforeStore")) {
             out.printf(", int index, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.contains("New")) {
-            out.print(", long objId, String className, long clId");
+            out.print(", long objId, String shortClassName");
             if (name.contains("NewArray")) {
                 out.print(", int length");
             }
@@ -113,13 +111,13 @@ public class VMATextStoreGenerator {
                 out.printf(", %s value", getLastParameterNameHandlingObject(m));
             }
         } else if (name.contains("Invoke") || name.contains("MethodEntry")) {
-            out.print(", long objId, String className, long clId, String methodName");
+            out.print(", long objId, String shortMethodName");
         } else if (name.endsWith("ArrayLength")) {
             out.print(", long objId, int length");
         } else if (name.contains("Monitor") || name.contains("Throw")) {
             out.print(", long objId");
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
-            out.print(", long objId, String className, long clId");
+            out.print(", long objId, String shortClassName");
         } else if (name.contains("Thread")) {
             // drop VmThread arg
         } else {
@@ -133,7 +131,7 @@ public class VMATextStoreGenerator {
         out.printf(");%n%n");
     }
 
-    private static String getLastParameterNameHandlingObject(Method m) {
+    public static String getLastParameterNameHandlingObject(Method m) {
         String result = getLastParameterName(m);
         if (result.equals("Object")) {
             result = "long";
