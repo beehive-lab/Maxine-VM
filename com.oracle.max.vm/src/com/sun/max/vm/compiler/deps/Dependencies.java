@@ -79,7 +79,7 @@ public final class Dependencies {
      */
     public static abstract class DependencyVisitor {
         public DependencyVisitor() {
-            this(ClassID.NULL_CLASS_ID);
+            this(ClassIDManager.NULL_CLASS_ID);
         }
 
         public DependencyVisitor(int classID) {
@@ -88,7 +88,7 @@ public final class Dependencies {
 
         /**
          * Only the dependencies for the context class whose identifier matches this field are
-         * iterated. If this field is {@link ClassID#NULL_CLASS_ID}, then all dependencies
+         * iterated. If this field is {@link ClassIDManager#NULL_CLASS_ID}, then all dependencies
          * are iterated.
          */
         protected int classID;
@@ -311,7 +311,7 @@ public final class Dependencies {
         }
         classHierarchyLock.readLock().lock();
         try {
-            FatalError.check(ClassID.largestClassId() <= Short.MAX_VALUE, "Support for 1 << 16 number of classes not supported yet");
+            FatalError.check(ClassIDManager.largestClassId() <= Short.MAX_VALUE, "Support for 1 << 16 number of classes not supported yet");
             HashMap<ClassActor, ClassDeps> packedDeps = new HashMap<ClassActor, ClassDeps>(10);
             for (Assumption a : assumptions) {
                 ClassActor contextClassActor = (ClassActor) ((ContextAssumption) a).context;
@@ -429,8 +429,8 @@ public final class Dependencies {
         while (i < packed.length) {
             int contextClassID = packed[i++];
             int flags = packed[i++];
-            final ClassActor contextClassActor = ClassID.toClassActor(contextClassID);
-            if (visitor.classID == ClassID.NULL_CLASS_ID || visitor.classID == contextClassID) {
+            final ClassActor contextClassActor = ClassIDManager.toClassActor(contextClassID);
+            if (visitor.classID == ClassIDManager.NULL_CLASS_ID || visitor.classID == contextClassID) {
                 if (!visitor.nextContextClass(contextClassActor, prev)) {
                     return;
                 }

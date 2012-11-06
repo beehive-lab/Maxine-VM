@@ -23,7 +23,7 @@
 package com.sun.max.vm.actor.holder;
 
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.actor.holder.ClassID.*;
+import static com.sun.max.vm.actor.holder.ClassIDManager.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
@@ -118,7 +118,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     /**
      * Unique class actor identifier (i.e., class id). Simplifies the implementation of type checking, interface dispatch, etc.
      *
-     * @see ClassID
+     * @see ClassIDManager
      */
     @INSPECTED
     public final int id;
@@ -141,7 +141,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
     /**
      * Holds the class id of the unique concrete sub-type of
-     * this class actor, {@link ClassID#NULL_CLASS_ID} if the class has
+     * this class actor, {@link ClassIDManager#NULL_CLASS_ID} if the class has
      * no concrete sub-type, or the class id of the java.lang.Object class
      * (@link {@link #HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK}
      * if there are multiple concrete sub-types.
@@ -234,11 +234,11 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         if (isHosted() && componentClassActor != null && componentClassActor.kind == Kind.LONG && componentClassActor.arrayClassIDs != null) {
             assert name.equals(DarkMatter.DARK_MATTER_CLASS_NAME);
             // Special case Dark Matter class.
-            this.id = ClassID.allocate();
+            this.id = ClassIDManager.allocate();
         } else {
             this.id = elementClassActor().makeID(numberOfDimensions());
         }
-        ClassID.register(this);
+        ClassIDManager.register(this);
         this.typeDescriptor = typeDescriptor;
         this.superClassActor = superClassActor;
         this.sourceFileName = sourceFileName;
@@ -452,7 +452,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         if (hasSubclass()) {
             int classId = firstSubclassActorId;
             do {
-                ClassActor sub = ClassID.toClassActor(classId);
+                ClassActor sub = ClassIDManager.toClassActor(classId);
                 cont = c.doClass(sub);
                 if (cont) {
                     cont = sub.allSubclassesDo(c);
@@ -471,9 +471,9 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      * @return {@code true} if indeed all classes were addressed, {@code false} if {@code c} terminated traversal prematurely.
      */
     public static boolean allClassesDo(Closure c) {
-        final int largestClassID = ClassID.largestClassId();
+        final int largestClassID = ClassIDManager.largestClassId();
         for (int id = 0; id <= largestClassID; ++id) {
-            final ClassActor ca = ClassID.toClassActor(id);
+            final ClassActor ca = ClassIDManager.toClassActor(id);
             if (ca != null && !c.doClass(ca)) {
                 return false;
             }
@@ -491,9 +491,9 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      * prematurely.
      */
     public static boolean allNonInstanceClassesDo(Closure c) {
-        final int largestClassID = ClassID.largestClassId();
+        final int largestClassID = ClassIDManager.largestClassId();
         for (int id = 0; id <= largestClassID; ++id) {
-            final ClassActor ca = ClassID.toClassActor(id);
+            final ClassActor ca = ClassIDManager.toClassActor(id);
             if (ca != null && !ca.isInstanceClass() && !c.doClass(ca)) {
                 return false;
             }
@@ -633,24 +633,24 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
     protected final synchronized int makeID(int numberOfDimensions) {
         if (numberOfDimensions <= 0) {
-            return ClassID.allocate();
+            return ClassIDManager.allocate();
         }
 
         if (arrayClassIDs == null) {
             arrayClassIDs = new int[numberOfDimensions];
             for (int i = 0; i < numberOfDimensions; i++) {
-                arrayClassIDs[i] = ClassID.allocate();
+                arrayClassIDs[i] = ClassIDManager.allocate();
                 if (isHosted()) {
-                    ClassID.recordArrayClassID(this, i, arrayClassIDs[i]);
+                    ClassIDManager.recordArrayClassID(this, i, arrayClassIDs[i]);
                 }
             }
         } else if (arrayClassIDs.length < numberOfDimensions) {
             final int[] a = new int[numberOfDimensions];
             Ints.copyAll(arrayClassIDs, a);
             for (int i = arrayClassIDs.length; i < a.length; i++) {
-                a[i] = ClassID.allocate();
+                a[i] = ClassIDManager.allocate();
                 if (isHosted()) {
-                    ClassID.recordArrayClassID(this, i, a[i]);
+                    ClassIDManager.recordArrayClassID(this, i, a[i]);
                 }
             }
             arrayClassIDs = a;
@@ -1502,7 +1502,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      * interface ids implemented or extended by this class.
      *
      * @param set a set used to collect up the ids. This will be created if {@code null}.
-     * @see ClassID
+     * @see ClassIDManager
      */
     protected void gatherSuperClassActorIds(HashSet<Integer> set) {
         set.add(isInterface() ? -id : id);
@@ -1740,7 +1740,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     }
 
     public static ClassActor read(DataInputStream stream) throws IOException {
-        return ClassID.toClassActor(stream.readInt());
+        return ClassIDManager.toClassActor(stream.readInt());
     }
 
     // Inspector support for generated stubs:

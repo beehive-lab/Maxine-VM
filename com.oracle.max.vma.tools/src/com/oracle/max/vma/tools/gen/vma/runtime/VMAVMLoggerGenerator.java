@@ -27,8 +27,8 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.objstate.*;
 import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
+import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
 /**
@@ -36,8 +36,11 @@ import com.oracle.max.vma.tools.gen.vma.*;
  *
  * Provision is made to log "time" as the first argument of the log record. A handler may choose to ignore this field,
  * when generating log records.
+ *
  */
 public class VMAVMLoggerGenerator {
+    private static final String TRACE_PREFIX = "trace";
+
     public static void main(String[] args) throws Exception {
         createGenerator(VMAVMLoggerGenerator.class);
         generateAutoComment();
@@ -48,22 +51,22 @@ public class VMAVMLoggerGenerator {
                 generateImpl(m);
             }
         }
-        generateImpl(ObjectStateHandlerAdaptor.class.getDeclaredMethod("unseenObject", Object.class));
-        generateImpl(ObjectStateHandler.RemovalTracker.class.getDeclaredMethod("removed", long.class));
+
+        Method unseenObject = ObjectStateAdapter.class.getDeclaredMethod("unseenObject", Object.class);
+        generateImpl(unseenObject);
         out.printf("%s}%n%n", INDENT4);
 
 
         out.printf("%s@HOSTED_ONLY%n", INDENT4);
         out.printf("%s@VMLoggerInterface(hidden = true, traceThread = true)%n", INDENT4);
-        out.printf("%sprivate interface VMAVMLoggerInterface {%n", INDENT4);
+        out.printf("%spublic interface VMAVMLoggerInterface {%n", INDENT4);
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
             if (name.startsWith("advise")) {
-                generateInterface(m);
+                generate(m, null);
             }
         }
-        generateInterface(ObjectStateHandlerAdaptor.class.getDeclaredMethod("unseenObject", Object.class));
-        generateInterface(ObjectStateHandler.RemovalTracker.class.getDeclaredMethod("removed", long.class));
+        generateIntf(unseenObject);
         out.printf("%s}%n", INDENT4);
         AdviceGeneratorHelper.updateSource(VMAVMLogger.class, null, "// START GENERATED INTERFACE", "// END GENERATED INTERFACE", false);
     }
@@ -79,37 +82,90 @@ public class VMAVMLoggerGenerator {
         }
     }
 
-    private static class IntfArgumentsPrefix extends ArgumentsPrefix {
-        @Override
-        public int prefixArguments() {
-            out.print("long arg1");
-            return 1;
-        }
+    private static void generateIntf(Method m) {
+        generate(m, null);
     }
-
-    private static class ImplArgumentsPrefix extends ArgumentsPrefix {
-        @Override
-        public int prefixArguments() {
-            out.print("int threadId, long arg1");
-            return 1;
-        }
-    }
-
-    private static final IntfArgumentsPrefix intfArgumentsPrefix = new IntfArgumentsPrefix();
-    private static final ImplArgumentsPrefix implArgumentsPrefix = new ImplArgumentsPrefix();
 
     private static void generateImpl(Method m) {
-        out.print(INDENT8);
-        out.println("@Override");
-        int argCount = generateSignature(INDENT8, "protected", new MyMethodNameOverride(m), null, implArgumentsPrefix);
-        out.println(" {");
-        out.printf("%sstoreAdaptor(threadId).%s(", INDENT12, m.getName());
-        generateInvokeArgs(argCount);
-        out.printf("%s}%n", INDENT8);
+        generate(m, TRACE_PREFIX);
     }
 
-    private static void generateInterface(Method m) {
-        generateSignature(INDENT8, null, new MethodNameOverride(m), null, intfArgumentsPrefix);
-        out.printf(";%n%n");
+    private static void generate(Method m, String tracePrefix) {
+        final String name = m.getName();
+        if (name.contains("Multi")) {
+            return;
+        }
+        if (tracePrefix != null) {
+            out.printf("%s@Override%n", INDENT8);
+        }
+
+        final String methodName = tracePrefix == null ? name : tracePrefix + toFirstUpper(name);
+        String threadId = tracePrefix == null ? "" : "int threadId, ";
+        String protectedTag = tracePrefix == null ? "" : "protected ";
+        boolean bci = AdviceGeneratorHelper.isBytecodeAdviceMethod(m) || m.getName().contains("ReturnByThrow");
+        boolean isGetPutStatic = false;
+        Class<?>[] params = m.getParameterTypes();
+        out.printf("%s%svoid %s(%slong time%s", INDENT8, protectedTag, methodName, threadId, bci ? ", int bci" : "");
+        if (name.contains("New") || name.contains("unseen") ||
+            name.contains("CheckCast") || name.contains("InstanceOf")) {
+            out.print(", ObjectID arg1, ClassID arg2");
+            if (name.contains("NewArray")) {
+                out.print(", int length");
+            }
+        } else if (name.contains("PutField") || name.contains("GetField")) {
+            out.print(", ObjectID arg1, FieldID arg2");
+            if (name.contains("PutField")) {
+                Class<?> lastParam = params[params.length - 1];
+                out.printf(", %s arg3", convertParamType(lastParam.getSimpleName()));
+            }
+        } else if (name.contains("PutStatic") || name.contains("GetStatic")) {
+            isGetPutStatic = true;
+            out.print(", FieldID arg1");
+            if (name.contains("PutStatic")) {
+                Class<?> lastParam = params[params.length - 1];
+                out.printf(", %s arg2", convertParamType(lastParam.getSimpleName()));
+            }
+        } else if (name.contains("dead")) {
+            out.print(", ObjectID arg1");
+        } else {
+            // skip bci
+            for (int i = 1; i < params.length; i++) {
+                Class< ? > param = params[i];
+                out.printf(", %s %s", convertParamType(param.getSimpleName()), "arg" + i);
+            }
+        }
+        out.printf(")");
+
+        if (tracePrefix == null) {
+            out.println(";");
+        } else {
+            out.println(" {");
+            int argc = m.getParameterTypes().length;
+            out.printf("%sstoreAdaptor(threadId).%s(time%s%s", INDENT12, m.getName(),
+                            bci ? ", bci" : "", bci ? argc > 1 ? ", " : "" : "");
+            if (name.contains("New") || name.contains("unseen") ||
+                name.contains("CheckCast") || name.contains("InstanceOf")) {
+                out.printf("%sarg1, arg2", name.contains("unseen") ? ", " : "");
+                if (name.contains("NewArray")) {
+                    out.print(", length");
+                }
+                out.printf(");%n");
+            } else if (name.contains("dead")) {
+                out.print(", arg1);\n");
+            } else {
+                generateInvokeArgs(argc - (isGetPutStatic ? 2 : 1), 1);
+            }
+            out.printf("%s}%n%n", INDENT8);
+        }
+    }
+
+    private static String convertParamType(String name) {
+        if (name.equals("Object") || name.equals("Throwable")) {
+            return "ObjectID";
+        } else if (name.equals("MethodActor")) {
+            return "MethodID";
+        } else {
+            return name;
+        }
     }
 }

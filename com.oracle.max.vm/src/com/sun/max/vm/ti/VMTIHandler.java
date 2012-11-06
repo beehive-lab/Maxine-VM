@@ -131,13 +131,6 @@ public interface VMTIHandler {
     void endGC();
 
     /**
-     * Indicates that the object at address {@code cell} is a survivor of the GC in progress, i.e. remains live.
-     * The implementation of this method should be fast and <b>must not</b> allocate.
-     * @param cell
-     */
-    void objectSurviving(Pointer cell);
-
-    /**
      * An exception is being raised.
      * @param throwable the {@link Throwable} being raised
      * @param sp stackpointer

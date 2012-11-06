@@ -31,6 +31,14 @@ public abstract class MemberRecord extends NamedRecord {
         this.cr = cr;
     }
 
+    public void setClassRecord(ClassRecord cr) {
+        this.cr = cr;
+    }
+
+    public ClassRecord getClassRecord() {
+        return cr;
+    }
+
     public String getQualName() {
         String result = "";
         if (cr != null) {

@@ -25,22 +25,54 @@ package com.oracle.max.vma.tools.gen.store.txt;
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.oracle.max.vm.ext.vma.store.txt.sbps.*;
 import com.oracle.max.vma.tools.gen.vma.*;
+import com.sun.max.annotate.*;
 
+/**
+ * Handles the short form generation, and implementing the {@link VMANSFTextStore} interface.
+ */
+@HOSTED_ONLY
 public class SBPSVMATextStoreGenerator {
 
     public static void main(String[] args) throws Exception {
         createGenerator(SBPSVMATextStoreGenerator.class);
         generateAutoComment();
+        initNSFMethodMap();
         for (Method m : VMATextStore.class.getMethods()) {
-            if (m.getName().startsWith("advise")) {
+            String name = m.getName();
+            if (name.startsWith("advise") && !isNSFMethodName(name)) {
                 generate(m);
             }
         }
+        out.println("// Generating VMANSFTextStoreIntf methods\n");
+
+        for (Method m : nsfMethods) {
+            generate(m);
+        }
         AdviceGeneratorHelper.updateSource(SBPSVMATextStore.class, null, false);
+    }
+
+    private static Set<Method> nsfMethods = new HashSet<Method>();
+
+    private static void initNSFMethodMap() {
+        for (Method m : VMANSFTextStoreIntf.class.getMethods()) {
+            if (m.getDeclaringClass() == VMANSFTextStoreIntf.class) {
+                nsfMethods.add(m);
+            }
+        }
+    }
+
+    private static boolean isNSFMethodName(String name) {
+        for (Method m : nsfMethods) {
+            if (m.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean hasBci(String name) {
@@ -61,34 +93,42 @@ public class SBPSVMATextStoreGenerator {
             out.printf("    }%n%n");
             return;
         }
-        out.printf("        store_%s(", m.getName());
+        if (name.contains("New")  ||
+            name.contains("CheckCast") || name.contains("InstanceOf") || name.contains("unseen")) {
+            out.printf("%sString classShortForm = getClassShortForm(arg5, arg6);%n", INDENT8);
+        } else if (name.contains("GetField") || name.contains("PutField") || name.contains("Invoke") || name.contains("MethodEntry")) {
+            out.printf("%sgetClassShortForm(arg5, arg6);%n", INDENT8);
+        } else if (name.contains("GetStatic") || name.contains("PutStatic")) {
+            out.printf("%sgetClassShortForm(arg4, arg5);%n", INDENT8);
+        }
+        out.printf("        super.%s(", m.getName());
         out.printf("arg1, getThreadShortForm(arg2)%s", hasBci(name) ? ", arg3" : "");
         if (name.contains("GetField") || name.contains("PutField")) {
-            out.print(", checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getFieldShortForm(arg5, arg6, arg7)");
+            out.print(", checkRepeatId(arg4, arg2), getFieldShortForm(arg5, arg6, arg7)");
             if (name.contains("PutField")) {
                 out.print(", arg8");
             }
             out.printf(");%n");
         } else if (name.contains("GetStatic") || name.contains("PutStatic")) {
-            out.print(", getClassShortForm(arg4, arg5), arg5, getFieldShortForm(arg4, arg5, arg6)");
+            out.print(", getFieldShortForm(arg4, arg5, arg6)");
             if (name.contains("PutStatic")) {
                 out.print(", arg7");
             }
             out.printf(");%n");
         } else if (name.contains("ArrayLoad") || name.contains("ArrayStore")) {
             out.print(",  checkRepeatId(arg4, arg2), arg5");
-            if (name.contains("ArrayStore")) {
+            if (name.contains("ArrayStore") || name.contains("AfterArrayLoad")) {
                 out.print(", arg6");
             }
             out.printf(");%n");
         } else if (name.contains("New")) {
-            out.print(", checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6");
+            out.print(", checkRepeatId(arg4, arg2), classShortForm");
             if (name.contains("NewArray")) {
                 out.print(", arg7");
             }
             out.printf(");%n");
         } else if (name.contains("Invoke") || name.contains("MethodEntry")) {
-            out.print(", checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6, getMethodShortForm(arg5, arg6, arg7)");
+            out.print(", checkRepeatId(arg4, arg2), getMethodShortForm(arg5, arg6, arg7)");
             out.printf(");%n");
         } else if (name.contains("Monitor") || name.contains("Throw")) {
             out.print(", checkRepeatId(arg4, arg2)");
@@ -96,9 +136,8 @@ public class SBPSVMATextStoreGenerator {
                 out.print(", arg5");
             }
             out.printf(");%n");
-        } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
-            out.print(", checkRepeatId(arg4, arg2), getClassShortForm(arg5, arg6), arg6");
-            out.printf(");%n");
+        } else if (name.contains("CheckCast") || name.contains("InstanceOf") || name.contains("unseen")) {
+            out.println(", checkRepeatId(arg4, arg2), classShortForm);");
         } else {
             Class<?>[] params = m.getParameterTypes();
             for (int argc = 4; argc <= params.length; argc++) {

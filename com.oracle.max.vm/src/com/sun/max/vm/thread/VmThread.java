@@ -110,6 +110,7 @@ public class VmThread {
         }
     };
 
+    private static java.util.concurrent.atomic.AtomicInteger nextUUid = new java.util.concurrent.atomic.AtomicInteger(1);
     public static final ThreadGroup systemThreadGroup;
     public static final ThreadGroup mainThreadGroup;
     public static final VmThread referenceHandlerThread;
@@ -233,6 +234,11 @@ public class VmThread {
     private Throwable terminationCause;
     private int id;
     private int parkState;
+    /**
+     * Guaranteed unique for the lifetime of the VM.
+     */
+    public final int uuid;
+
 
     /**
      * Denotes if this thread was started as a daemon. This property is only set once a thread
@@ -949,6 +955,7 @@ public class VmThread {
      * Creates an unbound VmThread that will be bound later.
      */
     public VmThread() {
+        uuid = nextUUid.getAndIncrement();
     }
 
     /**
@@ -957,6 +964,7 @@ public class VmThread {
      * @param javaThread if not {@code null}, then the created VmThread is bound to {@code javaThread}
      */
     public VmThread(Thread javaThread) {
+        this();
         if (javaThread != null) {
             setJavaThread(javaThread, JDK_java_lang_Thread.getName(javaThread));
         }
@@ -1074,6 +1082,8 @@ public class VmThread {
      * of -1.
      *
      * This value is identical to the {@link VmThreadLocal#ID} value of a running thread.
+     *
+     * N.B. This value is only guaranteed unique among the currently active threads, @see #uuid
      */
     public final int id() {
         return id;

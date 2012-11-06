@@ -23,7 +23,7 @@
 
 package com.oracle.max.vma.tools.log;
 
-import static com.oracle.max.vm.ext.vma.store.txt.CVMATextStore.*;
+import static com.oracle.max.vm.ext.vma.store.txt.VMATextStoreFormat.*;
 
 import java.io.*;
 import java.util.*;
@@ -48,7 +48,8 @@ public class ConvertLog {
 
     private static boolean toAbsTime;
     private static boolean toRelTime;
-    private static boolean verbose = false;
+    private static boolean verbose;
+    private static boolean timeChange;
     private static PrintStream out;
 
     public static void main(String[] args) throws Exception {
@@ -66,8 +67,10 @@ public class ConvertLog {
                 verbose = true;
             } else if (arg.equals("-abstime")) {
                 toAbsTime = true;
+                timeChange = true;
             } else if (arg.equals("-reltime")) {
                 toRelTime = true;
+                timeChange = true;
             } else if (arg.equals("-batch")) {
                 command = new BatchCommand();
             } else if (arg.equals("-unbatch")) {
@@ -78,6 +81,10 @@ public class ConvertLog {
                 command = new ReadableCommand();
             } else if (arg.equals("-merge")) {
                 command = new MergeCommand();
+            } else if (arg.equals("-textkey")) {
+                command = new TextKeyCommand();
+            } else if (arg.equals("-stats")) {
+                command = new StatsCommand();
             } else {
                 usage();
             }
@@ -122,15 +129,13 @@ public class ConvertLog {
     private static void processLogFiles(File[] inFiles, String outFile, Command command) throws IOException {
         try {
             out = outFile == null ? System.out : new PrintStream(new FileOutputStream(outFile));
-            long chunkStartTime = System.currentTimeMillis();
-            long processStartTime = chunkStartTime;
-            command.convertLineNumber = 1;
+            command.startTiming();
 
             for (File inFile : inFiles) {
                 BufferedReader r = null;
                 try {
                     r = new BufferedReader(new FileReader(inFile));
-
+                    boolean checked = false;
                     while (true) {
                         final String line = r.readLine();
                         if (line == null) {
@@ -139,14 +144,11 @@ public class ConvertLog {
                         if (line.length() == 0) {
                             continue;
                         }
-
-                        command.visitLine(line);
-                        command.convertLineNumber++;
-                        if (verbose && ((command.convertLineNumber % 100000) == 0)) {
-                            long endTime = System.currentTimeMillis();
-                            System.out.printf("processed %d traces in %d ms (%d)%n", command.convertLineNumber, endTime - processStartTime, endTime - chunkStartTime);
-                            chunkStartTime = endTime;
+                        if (!checked) {
+                            command.checkStoreHeader(line);
+                            checked = true;
                         }
+                        command.visitLine(line);
                     }
                 } finally {
                     if (r != null) {
@@ -165,21 +167,52 @@ public class ConvertLog {
         }
     }
 
-    public static String[] split(String line) {
-        int ix = line.indexOf('"');
-        if (ix > 0) {
-            // T "name" id, because thread names can have spaces
-            int iy = line.indexOf('"', ix + 1);
-            String[] lineParts = new String[3];
-            lineParts[0] = "T";
-            lineParts[1] = line.substring(ix + 1, iy);
-            lineParts[2] = line.substring(iy + 2);
-            return lineParts;
-        } else {
-            return line.split(" ");
-        }
+    public static String[] split(boolean textKeyMode, String line) {
+        return split(textKeyMode, line, false);
     }
 
+    /**
+     * Splits the line into space separated components, handling quoted thread names as a special case.
+     * @param textKeyMode {@code true} iff file is in {@link VMATextStoreFormat#TEXT_KEY} mode
+     * @param line the line to be split
+     * @param insertThread iff {@code true} allocate an extra slot for an inserted thread field,
+     *                     for converting per-thread files without a thread field
+     */
+    private static String[] split(boolean textKeyMode, String line, boolean insertThread) {
+        int count = insertThread ? 2 : 1; // 1 extra for the to-be-inserted thread field
+        for (int i = 0; i < line.length(); i++) {
+            if (line.charAt(i) == ' ') {
+                count++;
+            }
+        }
+        String[] result = new String[count];
+        int ix = line.indexOf(' ');
+        int iy = 0;
+        count = 0;
+        boolean hasThread = false;
+        while (ix > 0) {
+            result[count] = line.substring(iy, ix);
+            count++;
+            if (count == 1) {
+                VMATextStoreFormat.Key key = VMATextStoreFormat.getCommand(textKeyMode, result[0]);
+                if (key == Key.THREAD_DEFINITION) {
+                    // handle quoted thread names with spaces
+                    iy = line.indexOf('"', 3);
+                    result[1] = line.substring(3, iy);
+                    result[2] = line.substring(iy + 2);
+                    return result;
+                } else {
+                    hasThread = VMATextStoreFormat.hasTimeAndThread(key);
+                }
+            } else if (insertThread && hasThread && count == 2) {
+                count++;
+            }
+            iy = ix + 1;
+            ix = line.indexOf(' ', iy);
+        }
+        result[count] = line.substring(iy);
+        return result;
+    }
     private static String concat(String[] lineParts) {
         return concat(lineParts, null, 0);
     }
@@ -203,13 +236,39 @@ public class ConvertLog {
     }
 
     private static abstract class Command {
-        int convertLineNumber;
+        boolean textKeyMode;
+        protected long  chunkStartTime;
+        protected long processStartTime;
+        int convertRecordCount;
+
+        void checkStoreHeader(String line) {
+            String[] recordParts = split(false, line);
+            assert recordParts.length == 4;
+            textKeyMode = (Integer.parseInt(recordParts[3]) & TEXT_KEY) != 0;
+            assert VMATextStoreFormat.getCommand(textKeyMode, recordParts[0]) == Key.INITIALIZE_STORE;
+        }
+
+        public void startTiming() {
+            chunkStartTime = System.currentTimeMillis();
+            processStartTime = chunkStartTime;
+
+        }
+
+        protected void logTiming() {
+            convertRecordCount++;
+            if (verbose && ((convertRecordCount % 100000) == 0)) {
+                long endTime = System.currentTimeMillis();
+                System.out.printf("processed %d traces in %d ms (%d)%n", convertRecordCount, endTime - processStartTime, endTime - chunkStartTime);
+                chunkStartTime = endTime;
+            }
+        }
 
         void execute(File[] files, String logFileOut) {
 
         }
 
         void visitLine(String line) {
+            logTiming();
         }
 
         void finish() {
@@ -226,8 +285,9 @@ public class ConvertLog {
 
         @Override
         void visitLine(String line) {
+            super.visitLine(line);
             setCommand(line);
-            if (CVMATextStore.hasTime(command)) {
+            if (VMATextStoreFormat.hasTime(command)) {
                 lineTime = Long.parseLong(lineParts[1]);
                 lineAbsTime = logUsesAbsTime ? lineTime : lineAbsTime + lineTime;
             } else if (command == Key.INITIALIZE_STORE || command == Key.THREAD_SWITCH || command == Key.FINALIZE_STORE) {
@@ -236,8 +296,8 @@ public class ConvertLog {
         }
 
         void setCommand(String line) {
-            lineParts = line.split(" ");
-            command = commandMap.get(lineParts[0]);
+            lineParts = split(textKeyMode, line);
+            command = VMATextStoreFormat.getCommand(textKeyMode, lineParts[0]);
         }
 
         void checkTimeFormat() {
@@ -308,7 +368,7 @@ public class ConvertLog {
             for (int i = 0; i < linesArray.length; i++) {
                 String line;
                 String[] lineParts = linesArray[i].lineParts;
-                if (CVMATextStore.hasTime(commandMap.get(lineParts[0]))) {
+                if (VMATextStoreFormat.hasTime(VMATextStoreFormat.getCommand(textKeyMode, lineParts[0]))) {
                     line = fixupTime(linesArray[i], lastTime);
                     lastTime = linesArray[i].time;
                 } else {
@@ -361,8 +421,8 @@ public class ConvertLog {
         @Override
         void visitLine(String line) {
             super.visitLine(line);
-            if (CVMATextStore.hasTime(command)) {
-                if (CVMATextStore.hasTimeAndThread(command)) {
+            if (VMATextStoreFormat.hasTime(command)) {
+                if (VMATextStoreFormat.hasTimeAndThread(command)) {
                     // thread is in lineParts[2]
                     BatchData batch = batchMap.get(lineParts[2]);
                     if (batch == null) {
@@ -452,6 +512,9 @@ public class ConvertLog {
                 pushRecord.pushRecord(recordParts);
             } else {
                 out.println(ConvertLog.concat(recordParts));
+                if (verbose) {
+                    logTiming();
+                }
             }
 
         }
@@ -464,10 +527,13 @@ public class ConvertLog {
             Record record;
             int lineNumber;
             String threadShortForm;
+            String line;
 
             FileInfo(File file) throws IOException {
                 this.file = file;
                 this.reader = new BufferedReader(new FileReader(file));
+                line = reader.readLine();
+                checkStoreHeader(line);
             }
 
             @Override
@@ -475,17 +541,19 @@ public class ConvertLog {
                 return file.getName() + ": " + lastAbsTime;
             }
 
-            String readRecord() throws IOException {
-                String line = reader.readLine();
+            void readRecord() throws IOException {
+                if (line == null) {
+                    line = reader.readLine();
+                }
                 record = new Record(line);
                 lineNumber++;
-                return line;
+                line = null;
             }
 
             long outputRecordAndNext(long previousTime) throws IOException {
-                if (CVMATextStore.hasTime(record.command)) {
+                if (VMATextStoreFormat.hasTime(record.command)) {
                     record.adjustRelTime(previousTime);
-                    if (CVMATextStore.hasTimeAndThread(record.command)) {
+                    if (VMATextStoreFormat.hasTimeAndThread(record.command)) {
                         // need to insert the thread at slot 2
                         assert record.timedLine.lineParts[2] == null;
                         record.timedLine.lineParts[2] = threadShortForm;
@@ -505,9 +573,9 @@ public class ConvertLog {
                 final Key command;
 
                 Record(String line) {
-                    String[] parts = split(line);
-                    command = commandMap.get(parts[0]);
-                    if (CVMATextStore.hasTime(command)) {
+                    String[] parts = split(textKeyMode, line, true);
+                    command = VMATextStoreFormat.getCommand(textKeyMode, parts[0]);
+                    if (VMATextStoreFormat.hasTime(command)) {
                         long thisTime = Long.parseLong(parts[1]);
                         lastAbsTime = logUsesAbsTime ? thisTime : lastAbsTime + thisTime;
                     } else if (command == Key.INITIALIZE_STORE || command == Key.FINALIZE_STORE) {
@@ -529,41 +597,6 @@ public class ConvertLog {
                  * Splits the record into space separated components and leaves an empty slot for the thread short form
                  * to be inserted on output.
                  */
-                private String[] split(String line) {
-                    int count = 2; // 1 extra for the to-be-inserted thread field
-                    for (int i = 0; i < line.length(); i++) {
-                        if (line.charAt(i) == ' ') {
-                            count++;
-                        }
-                    }
-                    String[] result = new String[count];
-                    int ix = line.indexOf(' ');
-                    int iy = 0;
-                    count = 0;
-                    boolean hasThread = false;
-                    while (ix > 0) {
-                        result[count] = line.substring(iy, ix);
-                        count++;
-                        if (count == 1) {
-                            CVMATextStore.Key key = CVMATextStore.commandMap.get(result[0]);
-                            if (key == Key.THREAD_DEFINITION) {
-                                // handle quoted thread names with spaces
-                                iy = line.indexOf('"', 3);
-                                result[1] = line.substring(3, iy);
-                                result[2] = line.substring(iy + 2);
-                                return result;
-                            } else {
-                                hasThread = CVMATextStore.hasTimeAndThread(key);
-                            }
-                        } else if (hasThread && count == 2) {
-                            count++;
-                        }
-                        iy = ix + 1;
-                        ix = line.indexOf(' ', iy);
-                    }
-                    result[count] = line.substring(iy);
-                    return result;
-                }
 
                 @Override
                 public String toString() {
@@ -631,7 +664,7 @@ public class ConvertLog {
                 // Earliest is the INITIALIZE_STORE for the merged file
                 // The resulting merge file is not per thread, nor batched
                 long previousTime = fileInfos[0].record.timedLine.time;
-                miscOut(new String[] {"IL", Long.toString(previousTime), "false", "0"});  // new INITIALIZE_STORE
+                miscOut(new String[] {VMATextStoreFormat.getString(textKeyMode, Key.INITIALIZE_STORE), Long.toString(previousTime), "false", textKeyMode ? "4" : "0"});  // new INITIALIZE_STORE
 
                 // Read first real record and sort
                 for (FileInfo fileInfo : fileInfos) {
@@ -642,6 +675,10 @@ public class ConvertLog {
                 LinkedList<FileInfo> fileInfoList = new LinkedList<FileInfo>();
                 for (FileInfo fileInfo : fileInfos) {
                     fileInfoList.add(fileInfo);
+                }
+
+                if (verbose) {
+                    startTiming();
                 }
 
                 // Starting with file containing earliest record, copy records to the output
@@ -693,7 +730,7 @@ public class ConvertLog {
                     previousTime = last.outputRecordAndNext(previousTime);
                     lastRecordAbsTime = last.record.time();
                 }
-                miscOut(new String[] {"FL", Long.toString(lastRecordAbsTime)});
+                miscOut(new String[] {VMATextStoreFormat.getString(textKeyMode, Key.FINALIZE_STORE), Long.toString(lastRecordAbsTime)});
 
             } catch (IOException ex) {
                 System.err.println(ex);
@@ -709,6 +746,40 @@ public class ConvertLog {
         }
 
     }
+
+    private static class StatsCommand extends BasicCommand {
+        private long lineLengths;
+
+        @Override
+        void visitLine(String line) {
+            super.visitLine(line);
+            lineLengths += line.length();
+        }
+
+        @Override
+        void finish() {
+            System.out.printf("Average line length %d%n", lineLengths / convertRecordCount);
+        }
+    }
+
+    private static class TextKeyCommand extends BasicCommand {
+        @Override
+        void visitLine(String line) {
+            super.visitLine(line);
+            if (textKeyMode) {
+                out.println(line);
+            } else {
+                lineParts[0] = VMATextStoreFormat.getString(true, command);
+                final StringBuilder sb = new StringBuilder(lineParts[0]);
+                for (int i = 1; i < lineParts.length; i++) {
+                    sb.append(' ');
+                    sb.append(lineParts[i]);
+                }
+                out.println(sb.toString());
+            }
+        }
+    }
+
     /**
      * Clones a log. Used to convert from rel/abs time and vice-versa.
      *
@@ -717,11 +788,11 @@ public class ConvertLog {
         @Override
         void visitLine(String line) {
             super.visitLine(line);
-            if ((logUsesAbsTime && toAbsTime) || (!logUsesAbsTime && toRelTime)) {
+            if (!timeChange || (logUsesAbsTime && toAbsTime) || (!logUsesAbsTime && toRelTime)) {
                 // no change
                 out.println(line);
             } else {
-                if (CVMATextStore.hasTime(command)) {
+                if (VMATextStoreFormat.hasTime(command)) {
                     if (logUsesAbsTime) {
                         // to relative
                         ProgramError.unexpected("abs to rel not implemented");
@@ -737,7 +808,7 @@ public class ConvertLog {
                         line = sb.toString();
                     }
                 } else if (command == Key.INITIALIZE_STORE) {
-                    line = lineParts[0] + " " + lineAbsTime + " " + !logUsesAbsTime;
+                    line = lineParts[0] + " " + lineAbsTime + " " + !logUsesAbsTime + lineParts[2];
                 }
                 out.println(line);
             }
@@ -876,14 +947,14 @@ public class ConvertLog {
             String threadArg = perThread ? perThreadString : arg2;
             String objIdArg = "???";
 
-            if (CVMATextStore.hasTime(command)) {
+            if (VMATextStoreFormat.hasTime(command)) {
                 String atTime = "@" + timeArg;
                 out.printf("%-10s ", atTime);
             } else {
                 out.printf("%-11c", ' ');
             }
 
-            if (CVMATextStore.hasId(command)) {
+            if (VMATextStoreFormat.hasId(command)) {
                 if (arg(OBJ_ID_INDEX).charAt(0) == REPEAT_ID) {
                     objIdArg = lastId.get(threadArg);
                 } else {
@@ -893,15 +964,15 @@ public class ConvertLog {
             }
             out.printf("%s ", command);
 
-            if (CVMATextStore.hasBci(command)) {
-                out.printf("%s ", bciArg);
+            if (VMATextStoreFormat.hasBci(command)) {
+                out.printf("bci: %s ", bciArg);
             }
 
-            if (CVMATextStore.hasTimeAndThread(command)) {
+            if (VMATextStoreFormat.hasTimeAndThread(command)) {
                 printThreadId(threadArg);
             }
 
-            if (CVMATextStore.hasId(command)) {
+            if (VMATextStoreFormat.hasId(command)) {
                 printObjId(objIdArg);
             }
 
@@ -910,7 +981,9 @@ public class ConvertLog {
                 case INITIALIZE_STORE:
                     int mode = Integer.parseInt(linePart(3));
                     perThread = (mode & PER_THREAD) != 0;
-                    out.printf("%s %s %s,%s", timeArg, Boolean.parseBoolean(linePart(2)) ? "abs time" : "rel time", (mode & BATCHED) != 0 ? "Batched" : "Unbatched", (mode & PER_THREAD) != 0 ? "Per Thread" : "Shared");
+                    out.printf("%s %s %s,%s,%s", timeArg, Boolean.parseBoolean(linePart(2)) ? "abs time" : "rel time",
+                                    (mode & BATCHED) != 0 ? "Batched" : "Unbatched", (mode & PER_THREAD) != 0 ? "Per Thread" : "Shared",
+                                    (mode & TEXT_KEY) != 0 ? "TextKey" : "CodeKey");
                     break;
 
                 case THREAD_SWITCH:
@@ -980,17 +1053,17 @@ public class ConvertLog {
 
                 case ADVISE_BEFORE_GET_STATIC:
                 case ADVISE_BEFORE_PUT_STATIC:
-                    printClassIdAndFieldId(arg(STATIC_CLASSNAME_INDEX), arg(STATIC_CLASSNAME_INDEX + 1));
+                    printFieldId(arg(STATIC_FIELDNAME_INDEX));
                     if (command == Key.ADVISE_BEFORE_PUT_STATIC) {
-                        printValue(arg(STATIC_CLASSNAME_INDEX + 2), arg(STATIC_CLASSNAME_INDEX + 3));
+                        printValue(arg(STATIC_FIELDNAME_INDEX + 1), arg(STATIC_FIELDNAME_INDEX + 2));
                     }
                     break;
 
                 case ADVISE_BEFORE_GET_FIELD:
                 case ADVISE_BEFORE_PUT_FIELD:
-                    printClassIdAndFieldId(arg(ID_CLASSNAME_INDEX), arg(ID_CLASSNAME_INDEX + 1));
+                    printFieldId(arg(ID_FIELDNAME_INDEX));
                     if (command == Key.ADVISE_BEFORE_PUT_FIELD) {
-                        printValue(arg(ID_CLASSNAME_INDEX + 2), arg(ID_CLASSNAME_INDEX + 3));
+                        printValue(arg(ID_FIELDNAME_INDEX + 1), arg(ID_FIELDNAME_INDEX + 2));
                     }
                     break;
 
@@ -1035,7 +1108,7 @@ public class ConvertLog {
                 case ADVISE_BEFORE_INVOKE_STATIC:
                 case ADVISE_BEFORE_INVOKE_VIRTUAL:
                 case ADVISE_BEFORE_INVOKE_SPECIAL:
-                    printClassIdAndMethodId(arg(ID_CLASSNAME_INDEX), arg(ID_CLASSNAME_INDEX + 1));
+                    printMethodId(arg(ID_MEMBERNAME_INDEX));
                     break;
 
 
@@ -1080,23 +1153,8 @@ public class ConvertLog {
             out.printf(" cid:%s", klass);
         }
 
-        private static void printClassIdAndClId(String klass, String clId) {
-            printClassId(klass);
-            printClId(clId);
-        }
-
         private static void printClId(String clId) {
             out.printf(" clid:%s", clId);
-        }
-
-        private static void printClassIdAndMethodId(String klass, String method) {
-            printClassId(klass);
-            printMethodId(method);
-        }
-
-        private static void printClassIdAndFieldId(String klass, String field) {
-            printClassId(klass);
-            printFieldId(field);
         }
 
         private static void printFieldId(String field) {

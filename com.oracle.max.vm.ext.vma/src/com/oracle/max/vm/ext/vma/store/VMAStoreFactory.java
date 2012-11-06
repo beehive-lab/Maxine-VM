@@ -22,35 +22,44 @@
  */
 package com.oracle.max.vm.ext.vma.store;
 
-import com.oracle.max.vm.ext.vma.store.txt.*;
 import com.oracle.max.vm.ext.vma.store.txt.sbps.*;
 
 /**
- * Factory for controlling which subclass of {@link VMATextStore} is used.
+ * Factory for controlling which subclass of {@link VMAStore} is used.
  *
- * The default choice is the appropriate variant of {@link SBPSVMATextStore}, based
- * on whether per-thread stores are in ooeration, but the choice
+ * The default choice {@link SBPSVMATextStore}, but the choice
  * can be changed with the {@link LOGCLASS_PROPERTY} system property,
  * which should be the fully qualified name of the class.
+ *
+ * It can also be changed by invoking {@link setClass} prior to a call to {@link #create}.
  */
 
 public class VMAStoreFactory {
-    public static final String STORECLASS_PROPERTY = "max.vma.storeclass";
+    public static final String STORECLASS_PROPERTY = "max.vma.store.class";
 
-    public static VMATextStore create(boolean perThread) {
-        VMATextStore result = null;
-        final String logClass = System.getProperty(STORECLASS_PROPERTY);
-        if (logClass == null) {
-            result = perThread ? new SBPSVMATextStore() : new SBPSLockedVMATextStore();
-        } else {
-            try {
-                result = (CVMATextStore) Class.forName(logClass).newInstance();
-            } catch (Exception exception) {
-                System.err.println("Error instantiating " + logClass + ": "
-                        + exception);
+    private static Class<? extends VMAStore> storeClass;
+
+    @SuppressWarnings("unchecked")
+    public static VMAStore create(boolean perThread) {
+        VMAStore result = null;
+        try {
+            if (storeClass == null) {
+                final String storeClassProperty = System.getProperty(STORECLASS_PROPERTY);
+                if (storeClassProperty == null) {
+                    storeClass = SBPSVMATextStore.class;
+                } else {
+                    storeClass = (Class< ? extends VMAStore>) Class.forName(storeClassProperty);
+                }
             }
+            result = storeClass.newInstance();
+        } catch (Exception exception) {
+            System.err.println("Error instantiating " + storeClass.getName() + ": " + exception);
         }
         return result;
+    }
+
+    public static void setClass(Class<? extends VMAStore> storeClass) {
+        VMAStoreFactory.storeClass = storeClass;
     }
 
 }

@@ -50,7 +50,7 @@ public class SyncStoreVMAdviceHandlerGenerator {
 
     private static void generate(Method m) {
         out.printf("    @Override%n");
-        int argCount = generateSignature(m, null);
+        int argCount = generateSignature(m, "synchronized");
         out.printf(" {%n");
         if (m.getName().contains("MultiNewArray")) {
             out.printf("        adviseAfterNewArray(arg1, arg2, arg3[0]);%n");

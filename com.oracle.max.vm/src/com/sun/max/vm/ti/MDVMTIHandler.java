@@ -231,13 +231,6 @@ class MDVMTIHandler implements VMTIHandler {
     }
 
     @Override
-    public void objectSurviving(Pointer cell) {
-        for (int i = 0; i < eventHandlers.length; i++) {
-            eventHandlers[i].objectSurviving(cell);
-        }
-    }
-
-    @Override
     public void methodCompiled(ClassMethodActor classMethodActor) {
         for (int i = 0; i < eventHandlers.length; i++) {
             eventHandlers[i].methodCompiled(classMethodActor);
