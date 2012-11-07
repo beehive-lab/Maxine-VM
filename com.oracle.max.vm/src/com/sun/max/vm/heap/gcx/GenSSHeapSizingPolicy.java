@@ -26,6 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.HeapScheme.GCRequest;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
@@ -51,6 +52,21 @@ import com.sun.max.vm.runtime.*;
  * An out of memory situation occurs when the minimum size for a young generation is met.
  */
 public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
+    /**
+     * Knob for turning off shrinking of the heap.
+     */
+    private static boolean DisableHeapShrink = false;
+    /**
+     * Knob for specifying the percentage of heap space used for the young generation.
+     * The percentage is only change when entering degraded mode (wherein the size of the young generation is decreased to give up more space to the old generation).
+     */
+    private static int YoungGenHeapPercent = 40;
+
+    static {
+        VMOptions.addFieldOption("-XX:", "DisableHeapShrink", GenSSHeapSizingPolicy.class, "Disable shrinking the heap when true", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "YoungGenHeapPercent", GenSSHeapSizingPolicy.class, "Percentage of heap size that must be used by young gen", Phase.PRISTINE);
+    }
+
      /**
      * Minimal size of the young generation (5% of the effective heap size).
      */
@@ -118,6 +134,12 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      */
     private boolean normalMode = true;
 
+    /**
+     * When set to true, disable shrinking the heap.
+     * This flag is automatically set if the vm options specify an initial heap size equal to the max heap size, or if the DisableHeapShrink options is set to true.
+     */
+    private boolean disableHeapShrink = false;
+
     private boolean outOfMemory = false;
 
     @INSPECTED
@@ -161,10 +183,9 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      * than a old generation semi-space, or the worst case evacuation for a minor collection cannot be supported.
      *
      * @param heapSpace  total space available for a heap
-     * @param youngGenHeapPercentage the percentage of the heap the young generation occupies
      * @return the effective heap size
      */
-    private Size computeEffectiveHeapSize(Size heapSpace, int youngGenHeapPercentage) {
+    private Size computeEffectiveHeapSize(Size heapSpace) {
         return alignUp(heapSpace.times(100).dividedBy(200 - youngGenHeapPercentage));
     }
 
@@ -187,19 +208,19 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      * @param initSize initial amount of memory available to the heap
      * @param maxSize maximum amount of memory available to the heap
      * @param log2Alignment alignment constraints that each space of the heap should satisfy.
-     * @param youngGenMaxHeapPercentage maximum percentage of effective heap size the young generation should occupy
      */
-    public void initialize(Size initSize, Size maxSize, int youngGenMaxHeapPercentage, int log2Alignment) {
+    public void initialize(Size initSize, Size maxSize, int log2Alignment) {
+        int youngGenMaxHeapPercentage = YoungGenHeapPercent;
         // Run validation of heap sizing parameters.
         FatalError.check(youngGenMaxHeapPercentage > 0 && youngGenMaxHeapPercentage < 100, "Not a valid percentage of heap size");
         FatalError.check(log2Alignment > 0 && log2Alignment < Word.widthValue().numberOfBits, "Not a valid log2 alignment");
         this.youngGenMaxHeapPercentage = youngGenMaxHeapPercentage;
         this.log2Alignment = log2Alignment;
         this.unitSize = Size.fromInt(1).shiftedLeft(log2Alignment);
-
-        Size initHS = computeEffectiveHeapSize(initSize, youngGenMaxHeapPercentage);
+        this.disableHeapShrink = (initSize == maxSize) || DisableHeapShrink;
+        Size initHS = computeEffectiveHeapSize(initSize);
         initHeapSize = initHS.lessThan(minEffectiveHeapSize()) ? minEffectiveHeapSize() : initHS;
-        maxHeapSize = computeEffectiveHeapSize(maxSize, youngGenMaxHeapPercentage);
+        maxHeapSize = computeEffectiveHeapSize(maxSize);
         minYoungGenDelta = alignUp(percent(maxHeapSize, 1));
         if (maxHeapSize.lessThan(minEffectiveHeapSize())) {
             Log.printToPowerOfTwoUnits(maxSize);
@@ -208,9 +229,8 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
             Log.print(")");
             MaxineVM.exit(-1);
         }
-
-        heapSize = initHeapSize;
         youngGenHeapPercentage = youngGenMaxHeapPercentage;
+        heapSize = initHeapSize;
         maxHeapOldGenSize = maxHeapSize.minus(minYoungGenSize());
         if (logger.enabled()) {
             logger.logInitializeHeap(heapSize.toLong(), initialYoungGenSize().toLong(), initialOldGenSize().toLong(), maxHeapSize.toLong(), percent(maxHeapSize, youngGenMaxHeapPercentage).toLong(), maxHeapOldGenSize.toLong());
@@ -422,6 +442,9 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         // Trying to be smarter requires providing here the actual size requested by the mutator.
         if (!(oldGenMutatorOverflow || outOfMemory) && freeHeapSpace.greaterThan(maxFreeHeapSpace) && maxFreeHeapSpace.greaterEqual(estimatedEvacuation)) {
             if (normalMode) {
+                if (disableHeapShrink) {
+                    return false;
+                }
                 Size newHeapSize = alignUp(usedSpace.plus(maxFreeHeapSpace));
                 Size delta = newHeapSize.minus(heapSize);
                 heapSize = newHeapSize;
@@ -429,10 +452,8 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
                     logger.logShrinkHeap(heapSize.toLong(), youngGenSize().toLong(), oldGenSize().toLong(), delta.toLong());
                 }
                 return true;
-            } else {
-                // TODO
-                // for now, do nothing.
             }
+            // If degraded mode, do nothing.
             return false;
         }
         // Should we grow ?
