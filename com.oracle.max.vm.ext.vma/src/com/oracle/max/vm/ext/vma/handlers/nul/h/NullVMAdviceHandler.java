@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.vma.handlers.nul.h;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
 
@@ -37,6 +38,10 @@ import com.sun.max.vm.thread.*;
  *
  */
 public class NullVMAdviceHandler extends VMAdviceHandler {
+
+    public static void onLoad(String args) {
+        VMAJavaRunScheme.registerAdviceHandler(new NullVMAdviceHandler());
+    }
 
 // START GENERATED CODE
 // EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
