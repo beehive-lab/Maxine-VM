@@ -66,17 +66,12 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     public static boolean OldSpaceDirtyCardsStats;
 
     /**
-     * Knob for the fixed ratio resizing policy.
-     */
-    static int YoungGenHeapPercent = 40;
-    /**
      * Expected default percentage of survivors. Used to estimate old generation growth at minor collection and decide when to trigger a full GC.
      * Default value is arbitrary at the moment.
      */
     static private int minSurvivingPercent = 15;
 
     static {
-        VMOptions.addFieldOption("-XX:", "YoungGenHeapPercent", GenSSHeapScheme.class, "Fixed percentage of heap size that must be used by young gen", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "AlwaysFullGC", GenSSHeapScheme.class, "Always do full GC when true", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "ForceCleanCardsAfterMinorGC", GenSSHeapScheme.class, "Force cleaning of old space dirty card after GC", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "OldSpaceDirtyCardsStats", GenSSHeapScheme.class, "Print stats on old space dirty cards", Phase.PRISTINE);
@@ -138,7 +133,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
                 if (satisfied) {
                     Log.println(" freed enough--");
                 } else {
-                    Log.print("Young free space = ");
+                    Log.print("oom = ");
+                    Log.print(outOfMemory);
+                    Log.print(", # requested bytes = ");
+                    Log.printToPowerOfTwoUnits(requestedBytes);
+                    Log.print(", Young free space = ");
                     Log.printToPowerOfTwoUnits(youngGenFreeSpace);
                     Log.print(", Old free space = ");
                     Log.printToPowerOfTwoUnits(oldGenFreeSpace);
@@ -926,7 +925,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         try {
             // Use immortal memory for now.
             Heap.enableImmortalMemoryAllocation();
-            resizingPolicy.initialize(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
+            resizingPolicy.initialize(initSize, maxSize, log2Alignment);
             // Initialize large object size threshold. No greater than half the minimum young gen size.
             final Size threshold = resizingPolicy.minYoungGenSize().unsignedShiftedRight(1);
             largeObjectSizeThreshold = LargeObjectSizeThreshold.greaterThan(threshold) ? threshold : LargeObjectSizeThreshold;
