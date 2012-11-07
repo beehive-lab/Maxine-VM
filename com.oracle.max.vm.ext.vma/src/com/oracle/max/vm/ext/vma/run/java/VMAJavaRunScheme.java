@@ -465,7 +465,7 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             Iterator<TargetMethod> iter = deoptMethods.iterator();
             while (iter.hasNext()) {
                 TargetMethod tm = iter.next();
-                boolean instrument = true;
+                boolean instrument = !tm.classMethodActor.holder().isReflectionStub();
                 try {
                     vm().compilationBroker.compile(tm.classMethodActor, Nature.BASELINE, false, true);
                 } catch (Throwable t) {
