@@ -27,13 +27,13 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.tl.h.*;
+import com.oracle.max.vm.ext.vma.handlers.sf.h.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
 
-public class ThreadLocalVMAdviceHandlerGenerator extends SuperAdviceHandlerGenerator {
+public class StableFieldVMAdviceHandlerGenerator extends SuperAdviceHandlerGenerator {
     public static void main(String[] args) throws Exception {
-        ThreadLocalVMAdviceHandlerGenerator self = (ThreadLocalVMAdviceHandlerGenerator) createGenerator(ThreadLocalVMAdviceHandlerGenerator.class);
+        StableFieldVMAdviceHandlerGenerator self = (StableFieldVMAdviceHandlerGenerator) createGenerator(StableFieldVMAdviceHandlerGenerator.class);
         generateAutoComment();
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
@@ -46,17 +46,26 @@ public class ThreadLocalVMAdviceHandlerGenerator extends SuperAdviceHandlerGener
                 self.generateTrailer(m);
             }
         }
-        AdviceGeneratorHelper.updateSource(ThreadLocalVMAdviceHandler.class, null, false);
+        AdviceGeneratorHelper.updateSource(StableFieldVMAdviceHandler.class, null, false);
     }
 
     @Override
     protected void generate(Method m, int argCount) {
         String name = m.getName();
-        if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
-            out.println("        recordNew(arg2);");
-            return;
-        }
         super.generate(m, argCount);
+        if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
+            out.println("        recordNew(arg2, " + (name.equals("adviseAfterNew") ? "false" : "true") + ");");
+        } else if (name.equals("adviseBeforePutField")) {
+            out.println("        recordPutField(arg2, arg3);");
+        } else if (name.equals("adviseAfterMethodEntry")) {
+            out.println("        recordMethodEntry(arg2, arg3);");
+        } else if (name.contains("Return")) {
+            out.printf("        recordReturn(%s);%n", name.contains("Throw") ? "arg3" : "1");
+        } else if (name.equals("adviseBeforeInvokeSpecial")) {
+            out.println("        recordInvokeSpecial(arg2, arg3);");
+        } else if (name.contains("adviseBeforeArrayStore")) {
+            out.println("        recordArrayStore(arg2);");
+        }
     }
 
 }

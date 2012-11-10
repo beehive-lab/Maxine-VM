@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.layout.xohm.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -44,8 +43,9 @@ public class SimpleObjectState extends IdBitSetObjectState {
     private static final AtomicLong nextId = new AtomicLong(0);
     private static final int BITMASK_SHIFT = 56;
     private static final int BITMASK_MASK = 0xFF;
-    private static final long IDMASK =       0xFFFFFFFFFFFFFFL;
+    private static final long ID_MASK =      0xFFFFFFFFFFFFFFL;
     private static final long SIGNEXTEND = 0xFF00000000000000L;
+    private static final long SHIFTED_BITMASK_MASK = SIGNEXTEND;
     private static final long SIGNBIT = 1L << (BITMASK_SHIFT - 1);
 
     @Override
@@ -57,7 +57,7 @@ public class SimpleObjectState extends IdBitSetObjectState {
     public ObjectID assignId(Reference objRef) {
         long idAndMask = readIdAndMaskAsLong(objRef);
         long objId = nextId.incrementAndGet();
-        writeId(objRef, Address.fromLong(idAndMask | objId));
+        writeState(objRef, Address.fromLong(idAndMask | objId));
         return ObjectID.fromWord(Address.fromLong(objId));
     }
 
@@ -66,7 +66,7 @@ public class SimpleObjectState extends IdBitSetObjectState {
         long idAndMask = readIdAndMaskAsLong(obj);
         long objId = nextUnseenId.decrementAndGet();
         // have to create a 56 bit negative number
-        writeId(Reference.fromJava(obj), Address.fromLong(objId & IDMASK | idAndMask));
+        writeState(Reference.fromJava(obj), Address.fromLong(objId & ID_MASK | idAndMask));
         return ObjectID.fromWord(Address.fromLong(objId));
     }
 
@@ -75,17 +75,12 @@ public class SimpleObjectState extends IdBitSetObjectState {
         if (obj == null) {
             return ObjectID.fromWord(Word.zero());
         }
-        long id =  readIdAndMaskAsLong(obj) & IDMASK;
+        long id =  readIdAndMaskAsLong(obj) & ID_MASK;
         // check negative
         if ((id & SIGNBIT) != 0) {
             id = id | SIGNEXTEND;
         }
         return ObjectID.fromWord(Address.fromLong(id));
-    }
-
-    @INLINE
-    void writeId(Reference objRef, Word id) {
-        XOhmGeneralLayout.Static.writeXtra(objRef, id);
     }
 
     @INLINE
@@ -118,17 +113,18 @@ public class SimpleObjectState extends IdBitSetObjectState {
         long mask = 1 << n;
         if (value == 0) {
             mask = ~mask & 0xFF;
-            idAndMask = idAndMask & (mask << BITMASK_SHIFT);
+            idAndMask = idAndMask & ((mask << BITMASK_SHIFT) | ID_MASK);
         } else {
             idAndMask = idAndMask | (mask << BITMASK_SHIFT);
         }
 
-        writeId(objRef, Address.fromLong(idAndMask));
+        writeState(objRef, Address.fromLong(idAndMask));
     }
 
     @Override
     public void writeID(Object obj, ObjectID id) {
-        writeId(Reference.fromJava(obj), id);
+        long idAndBits = readIdAndMaskAsLong(obj) & SHIFTED_BITMASK_MASK;
+        writeState(Reference.fromJava(obj), id.asAddress().or(idAndBits));
     }
 
 }

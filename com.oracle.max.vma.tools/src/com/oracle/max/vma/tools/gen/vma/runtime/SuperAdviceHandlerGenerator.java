@@ -26,37 +26,36 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.lang.reflect.*;
 
-import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.handlers.tl.h.*;
-import com.oracle.max.vma.tools.gen.vma.*;
+import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 
+/**
+ * Useful superclass for method implementations that need to call "super.xxx", e.g.,
+ * any handler using {@link ObjectStateAdapter}. Also handles {@code MultiNewArray}.
+ */
+public abstract class SuperAdviceHandlerGenerator {
 
-public class ThreadLocalVMAdviceHandlerGenerator extends SuperAdviceHandlerGenerator {
-    public static void main(String[] args) throws Exception {
-        ThreadLocalVMAdviceHandlerGenerator self = (ThreadLocalVMAdviceHandlerGenerator) createGenerator(ThreadLocalVMAdviceHandlerGenerator.class);
-        generateAutoComment();
-        for (Method m : VMAdviceHandler.class.getMethods()) {
-            String name = m.getName();
-            if (name.startsWith("advise")) {
-                if (name.contains("GC") ||
-                    name.contains("ThreadStarting") || name.contains("ThreadTerminating")) {
-                    continue;
-                }
-                self.generate(m, self.generateHeader(m));
-                self.generateTrailer(m);
-            }
-        }
-        AdviceGeneratorHelper.updateSource(ThreadLocalVMAdviceHandler.class, null, false);
+    protected int generateHeader(Method m) {
+        out.printf("    @Override%n");
+        int argCount = generateSignature(m, null);
+        out.printf(" {%n");
+        return argCount;
     }
 
-    @Override
     protected void generate(Method m, int argCount) {
         String name = m.getName();
-        if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
-            out.println("        recordNew(arg2);");
-            return;
+        if (name.contains("MultiNewArray")) {
+            out.println("        adviseAfterNewArray(arg1, arg2, arg3[0]);");
+        } else {
+            out.printf("        super.%s(", name);
+            generateInvokeArgs(argCount);
         }
-        super.generate(m, argCount);
+    }
+
+    protected void generateTrailer(Method m) {
+        if (m.getName().equals("adviseAfterNewArray")) {
+            out.println("        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);");
+        }
+        out.printf("    }%n%n");
     }
 
 }

@@ -22,41 +22,14 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.util.objstate;
 
-import com.sun.max.vm.jni.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.unsafe.*;
 
 /**
- * Support for associating unique identifiers with objects.
- * Separate methods are defined for "seen" and "unseen" objects, of which the former
- * are expected to dominate. A "seen" object is one that the advice handler observed the
- * creation of through one of the {@code NEW} bytecodes. An "unseen" object is one
- * that is passed as an argument to a handler, but its creation was not advised.
+ * Support associating an arbitrary number of scalar variables with an object.
+ * Client has to reserve the number of variable slots ahead of time, defaults to zero.
  */
-public interface ObjectId {
-    /**
-     * Create and assign a unique id for a "seen" object.
-     */
-    ObjectID assignId(Object obj);
-
-    /**
-     * Create and assign a unique id for a "seen" object via its reference.
-     */
-    ObjectID assignId(Reference objRef);
-
-    /**
-     * Create a unique id for an "unseen" object.
-     */
-    ObjectID assignUnseenId(Object obj);
-
-    /**
-     * Return the unique id for given object or zero if {@code obj == null}.
-     * @param obj
-     */
-    ObjectID readId(Object obj);
-
-    /**
-     * Allows the "id" field to be used for arbitrary purposes.
-     */
-    void writeID(Object obj, ObjectID id);
-
+public interface ObjectVars {
+    void reserve(int slots);
+    void writeVar(Object obj, int slot, Word value);
+    Word readVar(Object obj, int slot);
 }
