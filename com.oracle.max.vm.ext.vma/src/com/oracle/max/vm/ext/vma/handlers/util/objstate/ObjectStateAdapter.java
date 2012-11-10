@@ -37,21 +37,32 @@ import com.sun.max.vm.reference.*;
  * passed as arguments to the advice methods. Handles "unseen" objects by invoking {@link #unseenObject}
  * which must be implemented by the concrete subclass.
  *
- * Currently hard-wires {@link SimpleObjectStateHandler} as the {@link ObjectState} implementation.
+ * By default hard-wires {@link SimpleObjectStateHandler} as the {@link ObjectState} implementation,
+ * but a subclass can override this by calling {@link #setObjectState(IdBitSetObjectState)}.
  *
  */
 
 public abstract class ObjectStateAdapter extends VMAdviceHandler {
 
-    protected SimpleObjectState state;
+    public static final String STATE_PROPERTY = "max.vma.state.class";
+
+    protected IdBitSetObjectState state;
 
     @Override
     public void initialise(MaxineVM.Phase phase) {
         super.initialise(phase);
-        if ((phase == MaxineVM.Phase.BOOTSTRAPPING) ||
-            (phase == MaxineVM.Phase.RUNNING && state == null)) {
+        if ((phase == MaxineVM.Phase.BOOTSTRAPPING || phase == MaxineVM.Phase.RUNNING) && state == null) {
             state = new SimpleObjectState();
         }
+    }
+
+    /**
+     * Allows a handler to override the default state implementation.
+     * Should be called before {@code super.initialise}.
+     * @param state
+     */
+    protected void setObjectState(IdBitSetObjectState state) {
+        this.state = state;
     }
 
     /**

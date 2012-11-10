@@ -461,7 +461,6 @@ public class ThreadLocalVMAdviceHandler extends ObjectStateAdapter {
 
     @Override
     public void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
-        super.adviseAfterMultiNewArray(arg1, arg2, arg3);
         adviseAfterNewArray(arg1, arg2, arg3[0]);
     }
 

@@ -67,12 +67,12 @@ public class AdviceGeneratorHelper {
         out.printf("// EDIT AND RUN %s.main() TO MODIFY%n%n", generatingClassName);
     }
 
-    public static void createGenerator(Class<?> klass) {
+    public static Object createGenerator(Class<?> klass) throws Exception {
         generatingClassName = klass.getSimpleName();
         bsOut = new ByteArrayOutputStream();
         out = new PrintStream(bsOut);
         t1xTemplateGen = new VMAdviceTemplateGenerator(out);
-
+        return klass.newInstance();
     }
 
     public static boolean isBytecodeAdviceMethod(Method m) {
