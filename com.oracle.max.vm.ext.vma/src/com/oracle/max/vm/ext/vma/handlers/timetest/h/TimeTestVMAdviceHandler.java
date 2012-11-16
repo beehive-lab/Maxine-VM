@@ -52,8 +52,7 @@ public class TimeTestVMAdviceHandler extends ObjectStateAdapter {
     private static long startWallTime;
     private static int checkInterval;
     private static TimeInfo[] timeInfoArray;
-    private static int timeInfoIndex
-    ;
+    private static int timeInfoIndex;
 
     public static void onLoad(String args) {
         VMAJavaRunScheme.registerAdviceHandler(new TimeTestVMAdviceHandler());
@@ -98,7 +97,6 @@ public class TimeTestVMAdviceHandler extends ObjectStateAdapter {
                     TimeInfo ti = timeInfoArray[i];
                     long diffW = ti.wallTime - pti.wallTime;
                     long diffT = ti.timeModeTime - pti.timeModeTime;
-                    assert diffT > 0 && diffW > 0;
                     ps.printf("id: %d, w: %d, w/id %f, wi/idi %f%n", ti.timeModeTime, ti.wallTime,
                                     (double) ti.wallTime / (double) ti.timeModeTime,
                                     (double) diffW / (double) diffT);
