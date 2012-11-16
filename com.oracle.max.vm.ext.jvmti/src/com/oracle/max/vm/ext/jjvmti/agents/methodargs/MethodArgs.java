@@ -26,6 +26,7 @@ import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
 
 import java.lang.reflect.*;
+import java.util.*;
 import java.util.regex.*;
 
 import com.oracle.max.vm.ext.jjvmti.agents.util.*;
@@ -89,6 +90,8 @@ public class MethodArgs extends NullJJVMTICallbacks implements JJVMTI.EventCallb
 
         methodArgs.setEventNotificationMode(JVMTI_ENABLE, E.METHOD_ENTRY, null);
         methodArgs.setEventNotificationMode(JVMTI_ENABLE, E.METHOD_EXIT, null);
+        methodArgs.addCapabilities(EnumSet.of(JVMTICapabilities.E.CAN_ACCESS_LOCAL_VARIABLES,
+                        JVMTICapabilities.E.CAN_GET_SYNTHETIC_ATTRIBUTE));
     }
 
     private static void usage() {
