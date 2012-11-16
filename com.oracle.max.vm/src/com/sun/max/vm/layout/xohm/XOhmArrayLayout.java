@@ -55,11 +55,11 @@ public class XOhmArrayLayout extends XOhmGeneralLayout implements ArrayLayout {
     }
 
     public HeaderField[] headerFields() {
-        return new HeaderField[] {HeaderField.HUB, HeaderField.MISC, XHeaderField.XTRA, HeaderField.LENGTH};
+        return XHeaderField.headerFields(true, xtraCount);
     }
 
     XOhmArrayLayout(Kind elementKind) {
-        lengthOffset = xOffset + Word.size();
+        lengthOffset = xOffset + (xtraCount * Word.size());
         headerSize = lengthOffset + Word.size();
         this.elementKind = elementKind;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,16 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.util.objstate;
+package com.oracle.max.vm.ext.vma.handlers.util.tl;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.thread.*;
 
 /**
- * Support associating an arbitrary number of scalar variables with an object.
- * Client has to reserve the number of variable slots in the boot image build
- * by setting system property {@code max.vm.layout.xohm.words=N + 1}, N defaults to zero.
+ * Provides one reference-valued entry in the {@link VmThreadLocal} area for use by handlers.
  */
-public interface ObjectVars {
-    void writeVar(Object obj, int slot, Word value);
-    Word readVar(Object obj, int slot);
+public class VMAThreadLocal {
+    public static final String VMA_HANDLER_TL_NAME = "VMA_HANDLER_TL";
+    public static final VmThreadLocal VMA_HANDLER_TL = new VmThreadLocal(VMA_HANDLER_TL_NAME, true, "VMA Handler Use");
+
+    public static Object get() {
+        return VMA_HANDLER_TL.loadRef(VmThread.currentTLA());
+    }
+
+    public static void put(Object obj) {
+        VMA_HANDLER_TL.store3(Reference.fromJava(obj));
+    }
+
 }

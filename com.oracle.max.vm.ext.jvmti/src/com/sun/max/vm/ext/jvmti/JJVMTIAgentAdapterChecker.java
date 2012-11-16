@@ -622,6 +622,10 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
+    public void iterateThroughHeapMax(int arg0, ClassActor arg1, HeapCallbacks arg2, Object arg3) {
+    }
+
+    @Override
     public void notifyFramePop(Thread arg0, int arg1) {
         checkCap(CAN_GENERATE_FRAME_POP_EVENTS);
     }

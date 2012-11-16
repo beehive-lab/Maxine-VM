@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,41 +23,36 @@
 package com.oracle.max.vm.ext.vma.handlers.util.objstate;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.xohm.*;
 import com.sun.max.vm.reference.*;
 
-/**
- * The basic implementation of state used by handlers for storing
- * miscellaneous data about an object. The state is stored as a single
- * {@link Word} value in a VMA-specific word in the object header.
- * The value must not be a reference, as this word is not scanned by the GC.
- */
-public abstract class ObjectState {
-    /**
-     * Read and return the state value for {@code obj}. assert: {@code obj != null}.
-     */
-    public Word readState(Object obj) {
-        return readState(Reference.fromJava(obj));
+public class VarsObjectState extends SimpleObjectState implements ObjectVars {
+
+    private final int slots;
+
+    public VarsObjectState() {
+        LayoutScheme scheme = VMConfiguration.activeConfig().layoutScheme();
+        slots = ((XOhmGeneralLayout) scheme.generalLayout).xtraCount - 1;
     }
 
-    /**
-     * Variant using a {@link Reference}.
-     */
-    public Word readState(Reference objRef) {
-        return XOhmGeneralLayout.Static.readXtra(objRef, 0);
+    @Override
+    public void writeVar(Object obj, int slot, Word value) {
+        checkIndex(slot);
+        XOhmGeneralLayout.Static.writeXtra(Reference.fromJava(obj), slot + 1, value);
     }
 
-    /**
-     * Update the state value for {@code obj} to {@code state}. assert: {@code obj != null}
-     */
-    public void writeState(Object obj, Word state) {
-        writeState(Reference.fromJava(obj), state);
+    @Override
+    public Word readVar(Object obj, int slot) {
+        checkIndex(slot);
+        return XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj), slot + 1);
     }
 
-    /**
-     * Variant using a {@link Reference}.
-     */
-    public void writeState(Reference objRef, Word state) {
-        XOhmGeneralLayout.Static.writeXtra(objRef, 0, state);
+    private void checkIndex(int slot) {
+        if (slot >= slots) {
+            throw new ArrayIndexOutOfBoundsException(slot);
+        }
     }
+
 }

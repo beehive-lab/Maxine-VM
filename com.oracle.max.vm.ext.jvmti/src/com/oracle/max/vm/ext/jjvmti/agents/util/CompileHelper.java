@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,16 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.util.objstate;
+package com.oracle.max.vm.ext.jjvmti.agents.util;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 
-/**
- * Support associating an arbitrary number of scalar variables with an object.
- * Client has to reserve the number of variable slots in the boot image build
- * by setting system property {@code max.vm.layout.xohm.words=N + 1}, N defaults to zero.
- */
-public interface ObjectVars {
-    void writeVar(Object obj, int slot, Word value);
-    Word readVar(Object obj, int slot);
+
+public class CompileHelper {
+
+    public static void forceCompile(Class<?> klass, String methodName) {
+        forceCompile(klass, methodName, null);
+    }
+
+    public static void forceCompile(Class<?> klass, String methodName, Nature nature) {
+        ClassActor.fromJava(klass).findLocalClassMethodActor(
+                        SymbolTable.makeSymbol(methodName), null).makeTargetMethod(nature);
+    }
 }

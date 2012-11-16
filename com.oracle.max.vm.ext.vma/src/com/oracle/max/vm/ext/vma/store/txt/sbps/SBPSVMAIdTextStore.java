@@ -61,7 +61,7 @@ public abstract class SBPSVMAIdTextStore implements VMAIdTextStoreIntf {
      * {@code true} iff storing absolute time.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    private static VMAOptions.TimeMode timeMode;
+    private static VMATimeMode timeMode;
 
     @CONSTANT_WHEN_NOT_ZERO
     private static File storeFileDir;

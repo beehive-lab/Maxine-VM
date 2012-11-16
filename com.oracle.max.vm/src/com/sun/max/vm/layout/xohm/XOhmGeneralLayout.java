@@ -39,30 +39,47 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A variant of {@link OhmGeneralLayout} with extra header word..
+ * A variant of {@link OhmGeneralLayout} with variable number of extra header words.
  * eXtended, Origin, Header, Mixed.
  *
- * Header words in tuples: hub, misc, xtra.
- * Header words in arrays: hub, misc, xtra, length.
+ * Header words in tuples: hub, misc, xtra1, xtra2, ...
+ * Header words in arrays: hub, misc, xtra1, xtra2, ..., length.
  */
 public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
+
+    private static final String XOHM_WORDS_PROPERTY = "max.vm.layout.xohm.words";
 
     /**
      * One more word in the header to record extra info.
      */
     public static class XHeaderField extends HeaderField {
         /**
-         * The header word in which the extra analysis info is encoded.
+         * The header word(s) in which the extra analysis info is encoded.
          */
-        public static final XHeaderField XTRA = new XHeaderField("XTRA", "extra word");
+        public final int slot;
 
-        public XHeaderField(String name, String description) {
-            super(name, description);
+        public XHeaderField(int slot, String description) {
+            super("XTRA" + slot, description);
+            this.slot = slot;
         }
 
         @Override
         public String toString() {
             return name;
+        }
+
+        static HeaderField[] headerFields(boolean isArray, int xtraCount) {
+            HeaderField[] result = new HeaderField[(isArray ? 3 : 2) + xtraCount];
+            result[0] = HeaderField.HUB;
+            result[1] = HeaderField.MISC;
+            for (int i = 0; i < xtraCount; i++) {
+                result[i + 2] = new XHeaderField(i, "extra word " + i);
+            }
+            if (isArray) {
+                result[result.length - 1] = HeaderField.LENGTH;
+            }
+            return result;
+
         }
     }
 
@@ -72,32 +89,32 @@ public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     public static class Static {
         @ACCESSOR(Pointer.class)
         @INLINE
-        public static Word readXtra(Pointer origin) {
-            return ((XOhmGeneralLayout) Layout.generalLayout()).readXtra(origin);
+        public static Word readXtra(Pointer origin, int slot) {
+            return ((XOhmGeneralLayout) Layout.generalLayout()).readXtra(origin, slot);
         }
 
         @ACCESSOR(Reference.class)
         @INLINE
-        public static Word readXtra(Reference reference) {
-            return ((XOhmGeneralLayout) Layout.generalLayout()).readXtra(reference);
+        public static Word readXtra(Reference reference, int slot) {
+            return ((XOhmGeneralLayout) Layout.generalLayout()).readXtra(reference, slot);
         }
 
         @ACCESSOR(Pointer.class)
         @INLINE
-        public static void writeXtra(Pointer origin, Word value) {
-            ((XOhmGeneralLayout) Layout.generalLayout()).writeXtra(origin, value);
+        public static void writeXtra(Pointer origin, int slot, Word value) {
+            ((XOhmGeneralLayout) Layout.generalLayout()).writeXtra(origin, slot, value);
         }
 
         @ACCESSOR(Reference.class)
         @INLINE
-        public static void writeXtra(Reference reference, Word value) {
-            ((XOhmGeneralLayout) Layout.generalLayout()).writeXtra(reference, value);
+        public static void writeXtra(Reference reference, int slot, Word value) {
+            ((XOhmGeneralLayout) Layout.generalLayout()).writeXtra(reference, slot, value);
         }
 
         @ACCESSOR(Reference.class)
         @INLINE
-        public static Word compareAndSwapXtra(Reference reference, Word expectedValue, Word newValue) {
-            return ((XOhmGeneralLayout) Layout.generalLayout()).compareAndSwapXtra(reference, expectedValue, newValue);
+        public static Word compareAndSwapXtra(Reference reference, int slot, Word expectedValue, Word newValue) {
+            return ((XOhmGeneralLayout) Layout.generalLayout()).compareAndSwapXtra(reference, slot, expectedValue, newValue);
         }
     }
 
@@ -119,18 +136,25 @@ public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     final int hubOffset = 0;
 
     /**
-     * The offset of the xtra field.
-     */
-    final int xOffset;
-
-    /**
      * The offset of the extras (such as monitor and hashCode info).
      */
     final int miscOffset;
 
+    /**
+     * The offset of the first xtra field.
+     */
+    final int xOffset;
+
+    /**
+     * The number of xtra words.
+     */
+    public final int xtraCount;
+
     public XOhmGeneralLayout() {
         miscOffset = hubOffset + Word.size();
         xOffset = miscOffset + Word.size();
+        final String countProp = System.getProperty(XOHM_WORDS_PROPERTY);
+        xtraCount = countProp == null ? 1 : Integer.parseInt(countProp);
     }
 
     @INLINE
@@ -146,10 +170,10 @@ public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     public Offset getOffsetFromOrigin(HeaderField headerField) {
         if (headerField == HeaderField.HUB) {
             return Offset.fromInt(hubOffset);
-        } else if (headerField == XHeaderField.XTRA) {
-            return Offset.fromInt(xOffset);
         } else if (headerField == HeaderField.MISC) {
             return Offset.fromInt(miscOffset);
+        } else if (headerField instanceof XHeaderField) {
+            return Offset.fromInt(xOffset + ((XHeaderField) headerField).slot * Word.size());
         }
         throw new IllegalArgumentException(getClass().getSimpleName() + " does not know about header field: " + headerField);
     }
@@ -216,17 +240,32 @@ public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE
     public final Word readXtra(Accessor accessor) {
-        return accessor.readWord(xOffset);
+        return readXtra(accessor, 0);
+    }
+
+    @INLINE
+    public final Word readXtra(Accessor accessor, int slot) {
+        return accessor.readWord(xOffset + slot * Word.size());
     }
 
     @INLINE
     public final void writeXtra(Accessor accessor, Word value) {
-        accessor.writeWord(xOffset, value);
+        writeXtra(accessor, 0, value);
+    }
+
+    @INLINE
+    public final void writeXtra(Accessor accessor, int slot, Word value) {
+        accessor.writeWord(xOffset + slot * Word.size(), value);
     }
 
     @INLINE
     public final Word compareAndSwapXtra(Accessor accessor, Word expectedValue, Word newValue) {
-        return accessor.compareAndSwapWord(xOffset, expectedValue, newValue);
+        return compareAndSwapXtra(accessor, 0, expectedValue, newValue);
+    }
+
+    @INLINE
+    public final Word compareAndSwapXtra(Accessor accessor, int slot, Word expectedValue, Word newValue) {
+        return accessor.compareAndSwapWord(xOffset + slot * Word.size(), expectedValue, newValue);
     }
 
     @INLINE

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,16 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.util.objstate;
+package com.oracle.max.vm.ext.vma.handlers.util.tl;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
 /**
- * Support associating an arbitrary number of scalar variables with an object.
- * Client has to reserve the number of variable slots in the boot image build
- * by setting system property {@code max.vm.layout.xohm.words=N + 1}, N defaults to zero.
+ * The code in this package is included in the boot image in every VMA image.
  */
-public interface ObjectVars {
-    void writeVar(Object obj, int slot, Word value);
-    Word readVar(Object obj, int slot);
+public class Package extends BootImagePackage {
+    public Package() {
+        if (isPartOfMaxineVM()) {
+            registerThreadLocal(VMAThreadLocal.class, VMAThreadLocal.VMA_HANDLER_TL_NAME);
+        }
+    }
+
+    private boolean isPartOfMaxineVM() {
+        return isPartOfMaxineVM(VMConfiguration.activeConfig());
+    }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java");
+    }
+
 }
