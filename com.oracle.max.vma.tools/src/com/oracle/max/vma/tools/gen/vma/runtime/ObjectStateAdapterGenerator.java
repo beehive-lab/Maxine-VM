@@ -67,7 +67,8 @@ public class ObjectStateAdapterGenerator {
             out.printf("        final Reference objRef = Reference.fromJava(arg2);%n");
             out.printf("        final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));%n");
             out.printf("        state.assignId(objRef);%n");
-            out.printf("        checkId(hub.classActor.classLoader);%n");
+            out.printf("        checkClassLoaderId(hub.classActor);%n");
+            out.printf("        visit(arg2);%n");
         } else {
             String checkMethod = null;
             if (name.contains("CheckCast") || name.contains("InstanceOf")) {
@@ -85,7 +86,7 @@ public class ObjectStateAdapterGenerator {
                             out.printf("        check%s(arg%d);%n", checkMethod, argId);
                         } else {
                             if (param == Object.class) {
-                                out.printf("        checkId(arg%d);%n", argId);
+                                out.printf("        visit(arg%d);%n", argId);
                             }
                         }
                         break;
@@ -94,7 +95,7 @@ public class ObjectStateAdapterGenerator {
                         // Currently, the static tuple is passed to Get/Put/Invoke/Static but the
                         // classloader id of the class is is checked by ClassLoaderIdOfMemberActor
                         if (param == Object.class && !isGetPutStatic(name)) {
-                            out.printf("        checkId(arg%d);%n", argId);
+                            out.printf("        visit(arg%d);%n", argId);
                         }
 
                 }

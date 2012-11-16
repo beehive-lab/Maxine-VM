@@ -163,8 +163,8 @@ public class JVMTIHeapFunctions {
         }
 
         class CBCVJava extends CBCV {
-            private final JJVMTI.HeapCallbacks heapCallbacks;
-            private final Object userData;
+            protected final JJVMTI.HeapCallbacks heapCallbacks;
+            protected final Object userData;
 
             CBCVJava(JVMTI.Env env, int heapFilter, Class klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData) {
                 super(env, heapFilter, klass);
@@ -180,6 +180,18 @@ public class JVMTIHeapFunctions {
             }
         }
 
+        class CBCVJavaMax extends CBCVJava {
+            CBCVJavaMax(JVMTI.Env env, int heapFilter, Class klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData) {
+                super(env, heapFilter, klass, heapCallbacks, userData);
+            }
+
+            @Override
+            protected int doCallback(Object object, Class objectClass) {
+                return heapCallbacks.heapIterationMax(object, userData);
+            }
+        }
+
+
         IterateThroughHeapVmOperation(JVMTI.Env env, int heapFilter, Class klass, Pointer callbacks, Word userData) {
             super("JVMTI_IterateThroughHeap", null, Mode.Safepoint, false);
             this.cbcv = new CBCVNative(env, heapFilter, klass, callbacks, userData);
@@ -188,6 +200,11 @@ public class JVMTIHeapFunctions {
         IterateThroughHeapVmOperation(JVMTI.Env env, int heapFilter, Class klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData) {
             super("JVMTI_IterateThroughHeap", null, Mode.Safepoint, false);
             this.cbcv = new CBCVJava(env, heapFilter, klass, heapCallbacks, userData);
+        }
+
+        IterateThroughHeapVmOperation(JVMTI.Env env, int heapFilter, Class klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData, boolean max) {
+            super("JVMTI_IterateThroughHeapMax", null, Mode.Safepoint, false);
+            this.cbcv = new CBCVJavaMax(env, heapFilter, klass, heapCallbacks, userData);
         }
 
         @Override
@@ -214,6 +231,11 @@ public class JVMTIHeapFunctions {
 
     static void iterateThroughHeap(JVMTI.Env jvmtiEnv, int heapFilter, ClassActor klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData) {
         IterateThroughHeapVmOperation op = new IterateThroughHeapVmOperation(jvmtiEnv, heapFilter, klass == null ? null : klass.toJava(), heapCallbacks, userData);
+        op.submit();
+    }
+
+    static void iterateThroughHeapMax(JVMTI.Env jvmtiEnv, int heapFilter, ClassActor klass, JJVMTI.HeapCallbacks heapCallbacks, Object userData) {
+        IterateThroughHeapVmOperation op = new IterateThroughHeapVmOperation(jvmtiEnv, heapFilter, klass == null ? null : klass.toJava(), heapCallbacks, userData, true);
         op.submit();
     }
 

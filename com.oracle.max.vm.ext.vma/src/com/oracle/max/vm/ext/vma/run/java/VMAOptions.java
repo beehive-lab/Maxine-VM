@@ -25,7 +25,6 @@ package com.oracle.max.vm.ext.vma.run.java;
 import static com.oracle.max.vm.ext.vma.VMABytecodes.*;
 import static com.oracle.max.vm.ext.vma.run.java.VMAOptions.AdviceModeOption.*;
 
-import java.util.concurrent.atomic.*;
 import java.util.regex.Pattern;
 
 import com.oracle.max.vm.ext.vma.*;
@@ -275,40 +274,7 @@ public class VMAOptions {
 
     private static String VMATime;
 
-    public enum TimeMode {
-        NONE,
-        WALL {
-            @Override
-            public long getTime() {
-                return System.nanoTime();
-            }
-        },
-
-        UID {
-            @Override
-            public long getTime() {
-                return uuid.getAndIncrement();
-            }
-        };
-
-        private static AtomicLong uuid = new AtomicLong();
-
-        private boolean absolute;
-
-        public boolean isAbsolute() {
-            return absolute;
-        }
-
-        public void setAbsolute() {
-            absolute = true;
-        }
-
-        public long getTime() {
-            return 0;
-        }
-    }
-
-    private static TimeMode timeMode = TimeMode.WALL;
+    private static VMATimeMode timeMode = VMATimeMode.WALLNS;
 
     private static Pattern classInclusionPattern;
     private static Pattern classExclusionPattern;
@@ -429,17 +395,17 @@ public class VMAOptions {
 
             if (VMATime != null) {
                 if (VMATime.startsWith("wall")) {
-                    timeMode = TimeMode.WALL;
+                    timeMode = VMATime.startsWith("wallns") ? VMATimeMode.WALLNS : VMATimeMode.WALLMS;
                     if (VMATime.endsWith("abs")) {
                         timeMode.setAbsolute();
                     }
-                } else if (VMATime.startsWith("uid")) {
-                    timeMode = TimeMode.UID;
+                } else if (VMATime.startsWith("id")) {
+                    timeMode = VMATime.startsWith("ida") ? VMATimeMode.IDATOMIC : VMATimeMode.ID;
                     if (VMATime.endsWith("abs")) {
                         timeMode.setAbsolute();
                     }
                 } else if (VMATime.equals("none")) {
-                    timeMode = TimeMode.NONE;
+                    timeMode = VMATimeMode.NONE;
                 } else {
                     Log.println("VMA: unknown time mode: " + VMATime);
                     MaxineVM.native_exit(1);
@@ -456,7 +422,7 @@ public class VMAOptions {
         return VMA;
     }
 
-    public static TimeMode getTimeMode() {
+    public static VMATimeMode getTimeMode() {
         return timeMode;
     }
 

@@ -816,5 +816,11 @@ public class JJVMTIAgentAdapter extends JJVMTIAgentAdapterChecker implements JJV
         JVMTIHeapFunctions.iterateThroughHeap(env, filter, classActor, heapCallbacks, userData);
     }
 
+    @Override
+    public void iterateThroughHeapMax(int filter, ClassActor classActor, HeapCallbacks heapCallbacks, Object userData) throws JJVMTIException {
+        super.iterateThroughHeapMax(filter, classActor, heapCallbacks, userData);
+        JVMTIHeapFunctions.iterateThroughHeapMax(env, filter, classActor, heapCallbacks, userData);
+    }
+
 
 }

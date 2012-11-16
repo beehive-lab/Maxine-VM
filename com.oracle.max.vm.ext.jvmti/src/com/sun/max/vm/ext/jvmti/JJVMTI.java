@@ -312,6 +312,12 @@ public interface JJVMTI {
          * @return visit control flags
          */
         int heapIteration(Object classTag, long size, Object objectTag, int length, Object userData);
+
+        /**
+         * A Maxine-specific variant that just passes the object, which is much simpler and more
+         * efficient for the client.
+         */
+        int heapIterationMax(Object object, Object userData);
     }
 
     /*
@@ -467,6 +473,10 @@ public interface JJVMTI {
     @JJVMTI_FUNCTION(cap = CAN_TAG_OBJECTS)
     void iterateThroughHeap(int filter, ClassActor classActor, HeapCallbacks heapCallbacks, Object userData) throws JJVMTIException;
 
+    /**
+     * Maxine-specific version invokes {@link HeapCallbacks#heapIteration(Object, Object)}.
+     */
+    void iterateThroughHeapMax(int filter, ClassActor classActor, HeapCallbacks heapCallbacks, Object userData) throws JJVMTIException;
 
     void disposeEnvironment() throws JJVMTIException;
 

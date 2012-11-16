@@ -73,10 +73,21 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
     protected abstract void unseenObject(Object obj);
 
     /**
+     * All advice methods that pass application objects invoke this method on the object.
+     * The default behavior is to check for an assigned id, but this can be overridden
+     * by a subclass. The important distinction between this method and {@link #checkId}
+     * itself, is that the latter also checks the id of the class loader associated with the object.
+     * N.B. visit is called for New and NewArray even though the default behavior is irrelevant.
+     */
+    protected void visit(Object obj) {
+        checkId(obj);
+    }
+
+    /**
      * Ensure that {@code obj} has a valid unique id.
      * @param obj
      */
-    protected void checkId(Object obj) {
+    private void checkId(Object obj) {
         if (obj != null) {
             ObjectID id = state.readId(obj);
             if (id.isZero()) {
@@ -84,27 +95,31 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
                 // check the classloader also
                 final Reference objRef = Reference.fromJava(obj);
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
-                checkId(hub.classActor.classLoader);
+                checkClassLoaderId(hub.classActor);
                 unseenObject(obj);
             }
         }
     }
 
+    private void checkClassLoaderId(ClassActor classActor) {
+        checkId(classActor.classLoader);
+    }
+
     private void checkClassLoaderIdOfStaticTuple(Object staticTuple) {
-        checkId(ObjectAccess.readClassActor(staticTuple).classLoader);
+        checkClassLoaderId(ObjectAccess.readClassActor(staticTuple));
     }
 
     private void checkClassLoaderIdOfMemberActor(MemberActor ma) {
-        checkId(ma.holder().classLoader);
+        checkClassLoaderId(ma.holder());
     }
 
     private void checkClassLoaderIdOfClassActor(Object obj) {
         ClassActor ca = UnsafeCast.asClassActor(obj);
-        checkId(ca.classLoader);
+        checkId(ca);
     }
 
 // START GENERATED CODE
-// EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
+// EDIT AND RUN ObjectStateAdapterGenerator.main() TO MODIFY
 
     @Override
     public void adviseBeforeReturnByThrow(int arg1, Throwable arg2, int arg3) {
@@ -115,7 +130,8 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
         final Reference objRef = Reference.fromJava(arg2);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
         state.assignId(objRef);
-        checkId(hub.classActor.classLoader);
+        checkClassLoaderId(hub.classActor);
+        visit(arg2);
     }
 
     @Override
@@ -123,7 +139,8 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
         final Reference objRef = Reference.fromJava(arg2);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
         state.assignId(objRef);
-        checkId(hub.classActor.classLoader);
+        checkClassLoaderId(hub.classActor);
+        visit(arg2);
     }
 
     @Override
@@ -132,7 +149,7 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
 
     @Override
     public void adviseBeforeConstLoad(int arg1, Object arg2) {
-        checkId(arg2);
+        visit(arg2);
     }
 
     @Override
@@ -149,12 +166,12 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
 
     @Override
     public void adviseBeforeArrayLoad(int arg1, Object arg2, int arg3) {
-        checkId(arg2);
+        visit(arg2);
     }
 
     @Override
     public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
-        checkId(arg3);
+        visit(arg3);
     }
 
     @Override
@@ -171,23 +188,23 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
 
     @Override
     public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
-        checkId(arg2);
-        checkId(arg4);
+        visit(arg2);
+        visit(arg4);
     }
 
     @Override
     public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, long arg4) {
-        checkId(arg2);
+        visit(arg2);
     }
 
     @Override
     public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
-        checkId(arg2);
+        visit(arg2);
     }
 
     @Override
     public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
-        checkId(arg2);
+        visit(arg2);
     }
 
     @Override
@@ -224,8 +241,8 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
 
     @Override
     public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
-        checkId(arg3);
-        checkId(arg4);
+        visit(arg3);
+        visit(arg4);
     }
 
     @Override
@@ -234,7 +251,7 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
 
     @Override
     public void adviseBeforeReturn(int arg1, Object arg2) {
-        checkId(arg2);
+        visit(arg2);
     }
 
     @Override
@@ -280,44 +297,44 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
 
     @Override
     public void adviseBeforeGetField(int arg1, Object arg2, FieldActor arg3) {
-        checkId(arg2);
+        visit(arg2);
         checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, Object arg4) {
-        checkId(arg2);
+        visit(arg2);
         checkClassLoaderIdOfMemberActor(arg3);
-        checkId(arg4);
+        visit(arg4);
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
-        checkId(arg2);
+        visit(arg2);
         checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, double arg4) {
-        checkId(arg2);
+        visit(arg2);
         checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
-        checkId(arg2);
+        visit(arg2);
         checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforeInvokeVirtual(int arg1, Object arg2, MethodActor arg3) {
-        checkId(arg2);
+        visit(arg2);
         checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforeInvokeSpecial(int arg1, Object arg2, MethodActor arg3) {
-        checkId(arg2);
+        visit(arg2);
         checkClassLoaderIdOfMemberActor(arg3);
     }
 
@@ -328,61 +345,61 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
 
     @Override
     public void adviseBeforeInvokeInterface(int arg1, Object arg2, MethodActor arg3) {
-        checkId(arg2);
+        visit(arg2);
         checkClassLoaderIdOfMemberActor(arg3);
     }
 
     @Override
     public void adviseBeforeArrayLength(int arg1, Object arg2, int arg3) {
-        checkId(arg2);
+        visit(arg2);
     }
 
     @Override
     public void adviseBeforeThrow(int arg1, Object arg2) {
-        checkId(arg2);
+        visit(arg2);
     }
 
     @Override
     public void adviseBeforeCheckCast(int arg1, Object arg2, Object arg3) {
-        checkId(arg2);
+        visit(arg2);
         checkClassLoaderIdOfClassActor(arg3);
     }
 
     @Override
     public void adviseBeforeInstanceOf(int arg1, Object arg2, Object arg3) {
-        checkId(arg2);
+        visit(arg2);
         checkClassLoaderIdOfClassActor(arg3);
     }
 
     @Override
     public void adviseBeforeMonitorEnter(int arg1, Object arg2) {
-        checkId(arg2);
+        visit(arg2);
     }
 
     @Override
     public void adviseBeforeMonitorExit(int arg1, Object arg2) {
-        checkId(arg2);
+        visit(arg2);
     }
 
     @Override
     public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
-        checkId(arg3);
+        visit(arg3);
     }
 
     @Override
     public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
-        checkId(arg2);
-        checkId(arg4);
+        visit(arg2);
+        visit(arg4);
     }
 
     @Override
     public void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
-        checkId(arg2);
+        visit(arg2);
     }
 
     @Override
     public void adviseAfterMethodEntry(int arg1, Object arg2, MethodActor arg3) {
-        checkId(arg2);
+        visit(arg2);
         checkClassLoaderIdOfMemberActor(arg3);
     }
 

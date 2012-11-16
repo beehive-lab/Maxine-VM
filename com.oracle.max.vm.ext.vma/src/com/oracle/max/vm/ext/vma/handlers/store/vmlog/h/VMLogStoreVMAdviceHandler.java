@@ -28,7 +28,6 @@ import com.oracle.max.vm.ext.vma.handlers.store.sync.h.*;
 import com.oracle.max.vm.ext.vma.handlers.util.*;
 import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
-import com.oracle.max.vm.ext.vma.run.java.VMAOptions.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -82,7 +81,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateAdapter {
     private VMLog vmaVMLog;
 
     private VMAVMLoggerStoreAdapter storeAdapter;
-    private VMAOptions.TimeMode timeMode;
+    private VMATimeMode timeMode;
 
     /**
      * Per-thread {@link VMLog} flusher. No locking necessary as every thread has its own adaptor/store.
@@ -140,7 +139,7 @@ public class VMLogStoreVMAdviceHandler extends ObjectStateAdapter {
             }
             VMAVMLogger.logger.storeAdaptor = storeAdapter;
             timeMode = VMAOptions.getTimeMode();
-            ProgramError.check(timeMode != TimeMode.NONE, "VMATime must be wall or uid");
+            ProgramError.check(timeMode != VMATimeMode.NONE, "VMATime must be wall or id");
             VMAVMLogger.logger.enable(true);
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             // the VMA log for the main thread is flushed by adviseBeforeThreadTerminating

@@ -22,17 +22,23 @@
  */
 package com.oracle.max.vm.ext.vma.handlers.sf.h;
 
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.oracle.max.vm.ext.jjvmti.agents.util.*;
 import com.oracle.max.vm.ext.vma.handlers.util.*;
 import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
+import com.oracle.max.vm.ext.vma.handlers.util.tl.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
+import com.sun.max.vm.ext.jvmti.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.thread.*;
@@ -46,7 +52,8 @@ import com.sun.max.vm.thread.*;
  *
  * This handler attempts to discover such fields.
  *
- * A {@code NEW} is immediately followed by the {@code INVOKESPECIAL} of the constructor.
+ * A {@code NEW} is followed by the {@code INVOKESPECIAL} of the constructor, with
+ * possible interleaved execution due to argument evaluation..
  * We are interested in determining when the constructor ends since any mutations prior
  * this this point are considered initializers and not mutations.
  *
@@ -54,18 +61,104 @@ import com.sun.max.vm.thread.*;
  * and, of course, create other objects. Therefore we need to track method entry and return
  * for each {@code NEW} in a thread, detecting the return from the initial {@code INVOKESPECIAL}.
  * This analysis would be slightly easier if we could get <i>after</i> advice for {@code INVOKESPECIAL},
- * but that is currently not possible.
+ * but that is currently not possible (T1X limitation).
  *
  * There is an offline version of this analysis in the {@code QueryAnalysis} tool.
  * The benefit of an online analysis is that does not require storage of vast quantities
- * of advice traces. The cost is the additional data that is required to be created at
+ * (gigabytes) of advice traces. The cost is the additional data that is required to be created at
  * runtime.
+ *
+ * Currently this analysis does not scale as it has a very crude technique for detecting the death
+ * of an object that involves maintaining an array indexed by object id. Better than a weak reference map
+ * but still a scaling problem.
  *
  */
 public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
 
+    private static final String LIFETIMES_SIZE_PROPERTY = "max.vma.handler.sf.ltsize";
+    private static final String LOGFILE_PROPERTY = "max.vma.handler.sf.file";
+    private static final String DEAD_PROPERTY = "max.vma.handler.sf.dead";
+    private static final String DEFAULT_LOGFILE = "sfhandler.vma";
+    private static final int DEFAULT_LIFETIMES_SIZE = 32768;
     private static final int MODIFIED_BIT = 0;
     private static final int UNDER_CONSTRUCTION_BIT = 1;
+
+
+    /**
+     * Absolute abstract time of the start of the run, used when time is being reported in relative mode.
+     */
+    private long startTime;
+    private static AccessInfo[] accessInfo;
+
+    private static class AccessInfo {
+        int classId;
+        /**
+         * The time at which the object is constructed, zero means unused.
+         * This is the time of the NEW for an array or an object whose constructor
+         * we cannot track, otherwise it is the end of the constructor.
+         *
+         */
+        long constructed;
+        /**
+         * The last time a field or array member was modified, not including during construction.
+         */
+        long lastModified;
+        /**
+         * except during GC, 0 means object is alive
+         * < 0 during GC means object live at end of last GC.
+         * > 0 means object is dead at that GC time
+         */
+        long death;
+        /**
+         * This field may not be set and its interpretation can vary.
+         * If "object access" bytecodes are advised, then it records the last
+         * time the state of the object was accessed. If "object use"
+         * bytecodes are advised, then it records the last time the object
+         * reference was loaded.
+         */
+        long lastAccessed;
+
+        /**
+         * From end of construction to death.
+         */
+        long lifeTime() {
+            return death - constructed;
+        }
+
+        /**
+         * From end of construction to last access (or death if not known).
+         */
+        long effectiveLifeTime() {
+            return lastAccessed == 0 ? lifeTime() : lastAccessed - constructed;
+        }
+
+        /**
+         * From last modification to death.
+         */
+        long stableLifeTime() {
+            return death - (lastModified == 0 ? constructed : lastModified);
+        }
+
+        /**
+         * From last modification to last access (or death if not known).
+         * @return
+         */
+        long effectiveStableLifeTime() {
+            return (lastAccessed == 0 ? stableLifeTime() : lastAccessed) - (lastModified == 0 ? constructed : lastModified);
+        }
+
+    }
+
+    public static double percent(long a, long b) {
+        if (a == 0) {
+            return 0.0;
+        } else if (b == 0) {
+            return 100.0;
+        } else {
+            return (double) (a * 100) / (double) b;
+        }
+    }
+
 
     private static class ClassData {
         long instances;
@@ -75,7 +168,6 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
     private static class ObjInit {
         Object obj;
         int callDepth;
-
     }
 
     /**
@@ -127,17 +219,38 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
         }
     }
 
-    private static class InitTrackerThreadLocal extends ThreadLocal<InitTracker> {
-        @Override
-        protected InitTracker initialValue() {
-            return new InitTracker();
-        }
+    @INTRINSIC(UNSAFE_CAST)
+    private static native InitTracker asInitTracker(Object obj);
+
+    private static InitTracker getInitTracker() {
+        return asInitTracker(VMAThreadLocal.get());
     }
 
-    private static final InitTrackerThreadLocal initTrackerTL = new InitTrackerThreadLocal();
+    private class AfterGCJVMTIHandler extends NullJJVMTICallbacks implements JJVMTI.HeapCallbacks {
 
-    private BitSet modified;
-    private ConcurrentHashMap<ClassActor, ClassData> classActors;
+        @Override
+        public int heapIteration(Object classTag, long size, Object objectTag, int length, Object userData) {
+            assert false;
+            return 0;
+        }
+
+        @Override
+        public int heapIterationMax(Object object, Object userData) {
+            long objId = state.readId(object).toLong();
+            if (objId > 0) {
+                accessInfo[(int) objId].death = -1;
+            }
+            return JVMTIConstants.JVMTI_VISIT_OBJECTS;
+        }
+
+    }
+
+    /**
+     * Non-null when we are trying to determine object death by comparing before/after heap state.
+     */
+    private static AfterGCJVMTIHandler deadHandler;
+
+    private static ConcurrentHashMap<ClassActor, ClassData> classActors;
 
     public static void onLoad(String args) {
         VMAJavaRunScheme.registerAdviceHandler(new StableFieldVMAdviceHandler());
@@ -145,26 +258,95 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
 
     @Override
     public void initialise(MaxineVM.Phase phase) {
+        super.setObjectState(state);
         super.initialise(phase);
-        if (phase == MaxineVM.Phase.RUNNING) {
-            modified = new BitSet(32768);
-            classActors = new ConcurrentHashMap<ClassActor, ClassData>();
-        } else if (phase == MaxineVM.Phase.TERMINATING) {
-            PrintStream ps = System.out;
-            for (Map.Entry<ClassActor, ClassData> entry : classActors.entrySet()) {
-                ps.printf("%40s %d %d%n", entry.getKey().name(), entry.getValue().instances, entry.getValue().mcount);
+        if (phase == MaxineVM.Phase.BOOTSTRAPPING || phase == MaxineVM.Phase.RUNNING) {
+            if (classActors == null) {
+                classActors = new ConcurrentHashMap<ClassActor, ClassData>();
             }
+            if (accessInfo == null) {
+                String prop = System.getProperty(LIFETIMES_SIZE_PROPERTY);
+                int ltSize = DEFAULT_LIFETIMES_SIZE;
+                if (prop != null) {
+                    ltSize = Integer.parseInt(prop);
+                }
+                accessInfo = new AccessInfo[ltSize];
+                for (int i = 0; i < accessInfo.length; i++) {
+                    accessInfo[i] = new AccessInfo();
+                }
+            }
+            String prop = System.getProperty(DEAD_PROPERTY);
+            boolean handleDead = prop == null || !prop.equals("false");
 
-            for (int b = 0; b < modified.length(); b++) {
+            if (handleDead) {
+                if (deadHandler == null) {
+                    deadHandler = (AfterGCJVMTIHandler) JJVMTIAgentAdapter.register(new AfterGCJVMTIHandler());
+                }
+            } else {
+                deadHandler = null;
+            }
+            if (phase == MaxineVM.Phase.RUNNING) {
+                if (deadHandler != null) {
+                    // the heapIteration method must be compiled before iterateThroughHeap is called,
+                    // as allocation is disabled inside iterateThroughHeap
+                    CompileHelper.forceCompile(AfterGCJVMTIHandler.class, "heapIterationMax", Nature.OPT);
+                }
+                timeMode = VMAOptions.getTimeMode();
+                startTime = timeMode.getTime();
+            }
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            long endTime = time();
+            PrintStream ps = null;
+            try {
+                String prop = System.getProperty(LOGFILE_PROPERTY);
+                if (prop == null) {
+                    prop = DEFAULT_LOGFILE;
+                } else {
+                    if (prop.length() == 0) {
+                        ps = System.out;
+                    }
+                }
+                if (ps == null) {
+                    ps = new PrintStream(new FileOutputStream(prop));
+                }
+                for (Map.Entry<ClassActor, ClassData> entry : classActors.entrySet()) {
+                    ClassActor ca = entry.getKey();
+                    ps.printf("%s, total instances %d, # mutable %d%n", ca.name(), entry.getValue().instances, entry.getValue().mcount);
 
+                    for (int i = 1; i < accessInfo.length; i++) {
+                        AccessInfo lt = accessInfo[i];
+                        if (ca.id == lt.classId) {
+                            if (lt.constructed > 0) {
+                                // all objects considered dead at end of run
+                                if (lt.death == 0) {
+                                    lt.death = endTime - startTime;
+                                }
+                                ps.printf("%d: c %d, d %d, lm %d, la %d, stable for %f (%f)%n",
+                                                i, lt.constructed, lt.death, lt.lastModified, lt.lastAccessed,
+                                                percent(lt.stableLifeTime(), lt.lifeTime()),
+                                                percent(lt.effectiveStableLifeTime(), lt.effectiveLifeTime()));
+                            }
+                        }
+                    }
+                }
+            } catch (IOException ex) {
+                if (ps != null) {
+                    ps.close();
+                }
             }
         }
     }
 
+    private VMATimeMode timeMode;
+
+    private long time() {
+        long time = timeMode.getTime();
+        return timeMode.isAbsolute() ? time : time - startTime;
+    }
+
     @Override
     protected void unseenObject(Object obj) {
-        // TODO Auto-generated method stub
-
+        // not interested
     }
 
     @Override
@@ -173,19 +355,46 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
 
     @Override
     public void adviseAfterGC() {
+        if (deadHandler == null) {
+            return;
+        }
+        long time = time();
+        // survivors have their death time set to -1
+        deadHandler.iterateThroughHeapMax(0, null, deadHandler, null);
+        for (int i = 1; i < accessInfo.length; i++) {
+            AccessInfo lt = accessInfo[i];
+            if (lt.constructed > 0) {
+                if (lt.death == 0) {
+                    // hasn't died before but didn't survive last GC
+                    lt.death = time;
+                } else if (lt.death < 0) {
+                    // reset
+                    lt.death = 0;
+                }
+            }
+        }
     }
 
     @Override
     public void adviseBeforeThreadStarting(VmThread vmThread) {
-        initTrackerTL.get();
+        VMAThreadLocal.put(new InitTracker());
     }
 
     @Override
     public void adviseBeforeThreadTerminating(VmThread vmThread) {
     }
 
+    public void advanceTime() {
+        if (timeMode.canAdvance) {
+            timeMode.advance(1);
+        }
+    }
+
     private void recordNew(Object obj, boolean isArray) {
+        AccessInfo info = accessInfo[(int) state.readId(obj).toLong()];
+        info.constructed = time();
         ClassActor ca = ObjectAccess.readClassActor(obj);
+        info.classId = ca.id;
         ClassData data = classActors.get(ca);
         if (data == null) {
             data = new ClassData();
@@ -197,8 +406,7 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
         }
         data.instances++;
         if (!isArray) {
-            state.writeBit(obj, UNDER_CONSTRUCTION_BIT, 1);
-            InitTracker it = initTrackerTL.get();
+            InitTracker it = getInitTracker();
             it.push(obj);
         }
     }
@@ -215,13 +423,15 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
         int id = (int) objId.toLong();
         if (id > 0) {
             if (state.readBit(obj, UNDER_CONSTRUCTION_BIT) == 0) {
+                AccessInfo info = accessInfo[id];
+                long time = time();
+                info.lastModified = info.lastAccessed = time;
                 if (state.readBit(obj, MODIFIED_BIT) == 0) {
                     state.writeBit(obj, MODIFIED_BIT, 1);
                     ClassData data = classActors.get(ObjectAccess.readClassActor(obj));
                     data.mcount++;
                 }
             }
-            modified.set(id);
         }
 
     }
@@ -241,10 +451,28 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
      * Would not be necessary if we had {@code AFTER} advice for {@code INVOKESPECIAL}.
      */
     private void recordMethodEntry(Object obj, MethodActor ma) {
-        ObjInit objInit = initTrackerTL.get().peek();
-        if (objInit != null) {
+        ObjInit objInit = getInitTracker().peek();
+        if (initialInit(objInit, obj, ma)) {
+            // mark object as under construction
+            state.writeBit(objInit.obj, UNDER_CONSTRUCTION_BIT, 1);
+            objInit.callDepth++;
+        } else if (underConstruction(objInit)) {
             objInit.callDepth++;
         }
+    }
+
+    /**
+     * Returns {@code true} iff the top object on the init stack is marked with {@link #UNDER_CONSTRUCTION_BIT}.
+     */
+    private boolean underConstruction(ObjInit objInit) {
+        return objInit != null && state.readBit(objInit.obj, UNDER_CONSTRUCTION_BIT) != 0;
+    }
+
+    /**
+     * Returns {@code true} iff this is the initial call to {@code <init>} for the given object.
+     */
+    private boolean initialInit(ObjInit objInit, Object obj, MethodActor ma) {
+        return objInit != null && objInit.obj == obj && objInit.callDepth == 0 && ma.isInitializer();
     }
 
     /**
@@ -252,28 +480,45 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
      * instrumented. if not, we can't track it.
      */
     private void recordInvokeSpecial(Object obj, MethodActor ma) {
-        InitTracker it = initTrackerTL.get();
+        InitTracker it = getInitTracker();
         ObjInit objInit = it.peek();
-        if (objInit != null && objInit.obj == obj && objInit.callDepth == 0) {
-            // check if this method is instrumented, if not can't track this NEW
+        if (initialInit(objInit, obj, ma)) {
+            // Check if this method is instrumented, if not can't track this NEW
             if (!VMAOptions.instrumentForAdvising((ClassMethodActor) ma)) {
                 it.pop();
-                state.writeBit(objInit.obj, UNDER_CONSTRUCTION_BIT, 0);
                 objInit.obj = null;
+            }
+            // Can't mark as under construction until we actually enter the <init> method
+            // because of (VM) calls that may occur between now and then, that might
+            // invoke instrumented JDK methods. This would cause an erroneous
+            // match for the end of the constructor in recordReturn because calldepth==0
+        } else if (objInit == null || objInit.obj != obj) {
+            // Some other object
+            recordAccess(obj);
+        }
+    }
+
+    private void recordAccess(Object obj) {
+        ObjectID objId = state.readId(obj);
+        int id = (int) objId.toLong();
+        if (id > 0) {
+            if (state.readBit(obj, UNDER_CONSTRUCTION_BIT) == 0) {
+                accessInfo[id].lastAccessed = time();
             }
         }
     }
 
 
     private void recordReturn(int popDepth) {
-        InitTracker it = initTrackerTL.get();
+        InitTracker it = getInitTracker();
         ObjInit objInit = it.peek();
-        if (objInit != null) {
+        if (underConstruction(objInit)) {
             assert objInit.callDepth > 0;
             objInit.callDepth -= popDepth;
             if (objInit.callDepth == 0) {
                 it.pop();
                 state.writeBit(objInit.obj, UNDER_CONSTRUCTION_BIT, 0);
+                accessInfo[(int) state.readId(objInit.obj).toLong()].constructed = time();
                 objInit.obj = null;
             }
         }
@@ -285,300 +530,378 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
     @Override
     public void adviseBeforeReturnByThrow(int arg1, Throwable arg2, int arg3) {
         super.adviseBeforeReturnByThrow(arg1, arg2, arg3);
+        advanceTime();
         recordReturn(arg3);
-    }
-
-    @Override
-    public void adviseAfterNew(int arg1, Object arg2) {
-        super.adviseAfterNew(arg1, arg2);
-        recordNew(arg2, false);
-    }
-
-    @Override
-    public void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
-        super.adviseAfterNewArray(arg1, arg2, arg3);
-        recordNew(arg2, true);
-        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
-        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
-        recordPutField(arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, Object arg4) {
-        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
-        recordPutField(arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, double arg4) {
-        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
-        recordPutField(arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
-        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
-        recordPutField(arg2, arg3);
-    }
-
-    @Override
-    public void adviseAfterMethodEntry(int arg1, Object arg2, MethodActor arg3) {
-        super.adviseAfterMethodEntry(arg1, arg2, arg3);
-        recordMethodEntry(arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeInvokeSpecial(int arg1, Object arg2, MethodActor arg3) {
-        super.adviseBeforeInvokeSpecial(arg1, arg2, arg3);
-        recordInvokeSpecial(arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
-        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-        recordArrayStore(arg2);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
-        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-        recordArrayStore(arg2);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, long arg4) {
-        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-        recordArrayStore(arg2);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
-        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-        recordArrayStore(arg2);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(int arg1, long arg2) {
-        super.adviseBeforeConstLoad(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(int arg1, double arg2) {
-        super.adviseBeforeConstLoad(arg1, arg2);
     }
 
     @Override
     public void adviseBeforeConstLoad(int arg1, float arg2) {
         super.adviseBeforeConstLoad(arg1, arg2);
+        advanceTime();
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, long arg2) {
+        super.adviseBeforeConstLoad(arg1, arg2);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeConstLoad(int arg1, Object arg2) {
         super.adviseBeforeConstLoad(arg1, arg2);
+        advanceTime();
+        recordAccess(arg2);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, double arg2) {
+        super.adviseBeforeConstLoad(arg1, arg2);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeLoad(int arg1, int arg2) {
         super.adviseBeforeLoad(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, float arg3) {
-        super.adviseBeforeStore(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
-        super.adviseBeforeStore(arg1, arg2, arg3);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeStore(int arg1, int arg2, long arg3) {
         super.adviseBeforeStore(arg1, arg2, arg3);
+        advanceTime();
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, int arg2, float arg3) {
+        super.adviseBeforeStore(arg1, arg2, arg3);
+        advanceTime();
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
+        super.adviseBeforeStore(arg1, arg2, arg3);
+        advanceTime();
+        recordAccess(arg3);
     }
 
     @Override
     public void adviseBeforeStore(int arg1, int arg2, double arg3) {
         super.adviseBeforeStore(arg1, arg2, arg3);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeArrayLoad(int arg1, Object arg2, int arg3) {
         super.adviseBeforeArrayLoad(arg1, arg2, arg3);
+        advanceTime();
+        recordAccess(arg2);
     }
 
     @Override
     public void adviseBeforeStackAdjust(int arg1, int arg2) {
         super.adviseBeforeStackAdjust(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
-        super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
         super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
+        advanceTime();
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
+        super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
         super.adviseBeforeOperation(arg1, arg2, arg3, arg4);
-    }
-
-    @Override
-    public void adviseBeforeConversion(int arg1, int arg2, long arg3) {
-        super.adviseBeforeConversion(arg1, arg2, arg3);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeConversion(int arg1, int arg2, double arg3) {
         super.adviseBeforeConversion(arg1, arg2, arg3);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeConversion(int arg1, int arg2, float arg3) {
         super.adviseBeforeConversion(arg1, arg2, arg3);
+        advanceTime();
     }
 
     @Override
-    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
-        super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+    public void adviseBeforeConversion(int arg1, int arg2, long arg3) {
+        super.adviseBeforeConversion(arg1, arg2, arg3);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
         super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+        advanceTime();
+    }
+
+    @Override
+    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
+        super.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+        advanceTime();
+        recordAccess(arg3);
+        recordAccess(arg4);
     }
 
     @Override
     public void adviseBeforeGoto(int arg1, int arg2) {
         super.adviseBeforeGoto(arg1, arg2);
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1) {
-        super.adviseBeforeReturn(arg1);
-        recordReturn(1);
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, float arg2) {
-        super.adviseBeforeReturn(arg1, arg2);
-        recordReturn(1);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeReturn(int arg1, double arg2) {
         super.adviseBeforeReturn(arg1, arg2);
+        advanceTime();
+        recordReturn(1);
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1) {
+        super.adviseBeforeReturn(arg1);
+        advanceTime();
         recordReturn(1);
     }
 
     @Override
     public void adviseBeforeReturn(int arg1, long arg2) {
         super.adviseBeforeReturn(arg1, arg2);
+        advanceTime();
+        recordReturn(1);
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1, float arg2) {
+        super.adviseBeforeReturn(arg1, arg2);
+        advanceTime();
         recordReturn(1);
     }
 
     @Override
     public void adviseBeforeReturn(int arg1, Object arg2) {
         super.adviseBeforeReturn(arg1, arg2);
+        advanceTime();
         recordReturn(1);
+        recordAccess(arg2);
     }
 
     @Override
     public void adviseBeforeGetStatic(int arg1, Object arg2, FieldActor arg3) {
         super.adviseBeforeGetStatic(arg1, arg2, arg3);
-    }
-
-    @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
-        super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, double arg4) {
         super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, Object arg4) {
         super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
+        advanceTime();
+        recordAccess(arg4);
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
         super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
+        advanceTime();
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeGetField(int arg1, Object arg2, FieldActor arg3) {
         super.adviseBeforeGetField(arg1, arg2, arg3);
+        advanceTime();
+        recordAccess(arg2);
     }
 
     @Override
     public void adviseBeforeInvokeVirtual(int arg1, Object arg2, MethodActor arg3) {
         super.adviseBeforeInvokeVirtual(arg1, arg2, arg3);
+        advanceTime();
+        recordAccess(arg2);
     }
 
     @Override
     public void adviseBeforeInvokeStatic(int arg1, Object arg2, MethodActor arg3) {
         super.adviseBeforeInvokeStatic(arg1, arg2, arg3);
+        advanceTime();
     }
 
     @Override
     public void adviseBeforeInvokeInterface(int arg1, Object arg2, MethodActor arg3) {
         super.adviseBeforeInvokeInterface(arg1, arg2, arg3);
+        advanceTime();
+        recordAccess(arg2);
     }
 
     @Override
     public void adviseBeforeArrayLength(int arg1, Object arg2, int arg3) {
         super.adviseBeforeArrayLength(arg1, arg2, arg3);
+        advanceTime();
+        recordAccess(arg2);
     }
 
     @Override
     public void adviseBeforeThrow(int arg1, Object arg2) {
         super.adviseBeforeThrow(arg1, arg2);
+        advanceTime();
+        recordAccess(arg2);
     }
 
     @Override
     public void adviseBeforeCheckCast(int arg1, Object arg2, Object arg3) {
         super.adviseBeforeCheckCast(arg1, arg2, arg3);
+        advanceTime();
+        recordAccess(arg2);
     }
 
     @Override
     public void adviseBeforeInstanceOf(int arg1, Object arg2, Object arg3) {
         super.adviseBeforeInstanceOf(arg1, arg2, arg3);
+        advanceTime();
+        recordAccess(arg2);
     }
 
     @Override
     public void adviseBeforeMonitorEnter(int arg1, Object arg2) {
         super.adviseBeforeMonitorEnter(arg1, arg2);
+        advanceTime();
+        recordAccess(arg2);
     }
 
     @Override
     public void adviseBeforeMonitorExit(int arg1, Object arg2) {
         super.adviseBeforeMonitorExit(arg1, arg2);
+        advanceTime();
+        recordAccess(arg2);
     }
 
     @Override
     public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
         super.adviseAfterLoad(arg1, arg2, arg3);
+        advanceTime();
+        recordAccess(arg3);
     }
 
     @Override
     public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
         super.adviseAfterArrayLoad(arg1, arg2, arg3, arg4);
+        advanceTime();
+        recordAccess(arg2);
+        recordAccess(arg4);
     }
 
     @Override
     public void adviseAfterMultiNewArray(int arg1, Object arg2, int[] arg3) {
         adviseAfterNewArray(arg1, arg2, arg3[0]);
+        advanceTime();
+        recordAccess(arg2);
+    }
+
+    @Override
+    public void adviseAfterNew(int arg1, Object arg2) {
+        super.adviseAfterNew(arg1, arg2);
+        advanceTime();
+        recordNew(arg2, false);
+    }
+
+    @Override
+    public void adviseAfterNewArray(int arg1, Object arg2, int arg3) {
+        super.adviseAfterNewArray(arg1, arg2, arg3);
+        advanceTime();
+        recordNew(arg2, true);
+        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, Object arg4) {
+        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
+        advanceTime();
+        recordPutField(arg2, arg3);
+        recordAccess(arg4);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
+        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
+        advanceTime();
+        recordPutField(arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
+        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
+        advanceTime();
+        recordPutField(arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, double arg4) {
+        super.adviseBeforePutField(arg1, arg2, arg3, arg4);
+        advanceTime();
+        recordPutField(arg2, arg3);
+    }
+
+    @Override
+    public void adviseAfterMethodEntry(int arg1, Object arg2, MethodActor arg3) {
+        super.adviseAfterMethodEntry(arg1, arg2, arg3);
+        advanceTime();
+        recordMethodEntry(arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeInvokeSpecial(int arg1, Object arg2, MethodActor arg3) {
+        super.adviseBeforeInvokeSpecial(arg1, arg2, arg3);
+        advanceTime();
+        recordInvokeSpecial(arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+        advanceTime();
+        recordArrayStore(arg2);
+        recordAccess(arg4);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, long arg4) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+        advanceTime();
+        recordArrayStore(arg2);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+        advanceTime();
+        recordArrayStore(arg2);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+        advanceTime();
+        recordArrayStore(arg2);
     }
 
 // END GENERATED CODE

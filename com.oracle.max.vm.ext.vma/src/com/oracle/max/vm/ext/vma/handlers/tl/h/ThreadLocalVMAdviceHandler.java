@@ -122,7 +122,7 @@ public class ThreadLocalVMAdviceHandler extends ObjectStateAdapter {
      * a different thread.
      */
     @Override
-    protected void checkId(Object obj) {
+    protected void visit(Object obj) {
         if (obj == null) {
             return;
         }

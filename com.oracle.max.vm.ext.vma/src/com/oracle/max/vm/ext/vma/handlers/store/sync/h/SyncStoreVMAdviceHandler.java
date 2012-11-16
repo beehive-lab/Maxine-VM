@@ -47,7 +47,7 @@ import com.sun.max.vm.thread.*;
 public class SyncStoreVMAdviceHandler extends ObjectStateAdapter {
 
     private VMAdviceHandlerTextStoreAdapter storeAdaptor;
-    private VMAOptions.TimeMode timeMode;
+    private VMATimeMode timeMode;
 
     public static void onLoad(String args) {
         VMAJavaRunScheme.registerAdviceHandler(new SyncStoreVMAdviceHandler());
