@@ -43,7 +43,7 @@ public class MissingConstructorQuery extends QueryBase {
             while (iter.hasNext()) {
                 String id = iter.next();
                 ObjectRecord td = traceRun.missingConstructors.get(id);
-                ps.printf("  %s%n", td.toString(traceRun, true, true, false, false, false, false));
+                ps.printf("  %s%n", td.toString(traceRun, true, true, false, false, false));
             }
         }
         return null;

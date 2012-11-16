@@ -46,7 +46,7 @@ public class DataByObjectQueryHelper extends QueryBase {
                 showThread = true;
             }
         }
-        ps.println(td.toString(traceRun, true, showThread, true, true, true, true));
+        ps.println(td.toString(traceRun, true, showThread, true, true, true));
 
         if (showAllAccesses) {
             for (int i = 0; i < td.getAdviceRecords().size(); i++) {

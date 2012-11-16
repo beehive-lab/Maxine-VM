@@ -98,8 +98,8 @@ public class ObjectRecord {
         return "(" + klass.getName() + ") " + getId();
     }
 
-    public String toString(TraceRun traceRun, boolean showClass, boolean showThread, boolean showCt, boolean showEc,
-                    boolean showLt, boolean showMlt) {
+    public String toString(TraceRun traceRun, boolean showClass, boolean showThread, boolean showCt, boolean showLAt,
+                    boolean showLMt) {
         StringBuilder result = new StringBuilder(id);
         if (showClass) {
             result.append(", ");
@@ -110,20 +110,16 @@ public class ObjectRecord {
             result.append(thread);
         }
         if (showCt) {
-            result.append(", ct ");
-            result.append(TimeFunctions.formatTime(getBeginCreationTime() - traceRun.startTime));
-        }
-        if (showEc) {
-            result.append(", ec ");
+            result.append(", c ");
             result.append(TimeFunctions.formatTime(getEndCreationTime() - traceRun.startTime));
         }
-        if (showLt) {
+        if (showLAt) {
             result.append(", la ");
             result.append(TimeFunctions.formatTime(getLastAccessTime() - traceRun.startTime));
         }
-        if (showLt) {
-            result.append(", mlt ");
-            result.append(TimeFunctions.formatTime(getModifyLifeTime()));
+        if (showLMt) {
+            result.append(", lm ");
+            result.append(TimeFunctions.formatTime(getLastModifyTime() - traceRun.startTime));
         }
         // no support for object death
         // result.append(removalRecord == null ? ", alive" : ", dead");
@@ -178,7 +174,7 @@ public class ObjectRecord {
     }
 
     /**
-     * The time at which constructor execution is complete.
+     * The time at which constructor execution is complete, or the creation time if an array or not available.
      */
     public long getEndCreationTime() {
         return endCreationRecord.time;

@@ -170,7 +170,7 @@ public class DataByClassQueryHelper extends QueryBase {
                 String immutableForArg = percent ?
                     (TimeFunctions.ftime(percentImmutableTime, TimeFunctions.format6d) + "%") :
                     Long.toString(immutableTime);
-                ps.printf("%s%s, immutable for %s%n", idIndent, td.toString(traceRun, false, showThread, true, true, true, true), immutableForArg);
+                ps.printf("%s%s, stable for %s%n", idIndent, td.toString(traceRun, false, showThread, true, true, true), immutableForArg);
             }
         }
 
