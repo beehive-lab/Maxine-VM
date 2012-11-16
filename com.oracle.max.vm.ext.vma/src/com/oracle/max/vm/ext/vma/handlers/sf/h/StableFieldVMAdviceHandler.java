@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.max.vm.ext.jjvmti.agents.util.*;
+import com.oracle.max.vm.ext.vma.handlers.cbc.h.*;
 import com.oracle.max.vm.ext.vma.handlers.util.*;
 import com.oracle.max.vm.ext.vma.handlers.util.objstate.*;
 import com.oracle.max.vm.ext.vma.handlers.util.tl.*;
@@ -39,45 +40,56 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.ext.jvmti.*;
+import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A <i>stable</i> field is one that retains a single value for a long period of time.
- * Evidently, a {@code final} field is the ultimate stable field. However, experimentally,
- * many fields are either not marked {@code final} when they could be, or the field
- * is modified shortly after the constructor exits, by a <i>setter</i>, and then is stable
- * for the rest of its life.
+ * A <i>stable</i> field is one that retains a single value for a long period of time. Evidently, a {@code final} field
+ * is the ultimate stable field. However, experimentally, many fields are either not marked {@code final} when they
+ * could be, or the field is modified shortly after the constructor exits, by a <i>setter</i>, and then is stable for
+ * the rest of its life.
  *
  * This handler attempts to discover such fields.
  *
- * A {@code NEW} is followed by the {@code INVOKESPECIAL} of the constructor, with
- * possible interleaved execution due to argument evaluation..
- * We are interested in determining when the constructor ends since any mutations prior
- * this this point are considered initializers and not mutations.
+ * A {@code NEW} is followed by the {@code INVOKESPECIAL} of the constructor, with possible interleaved execution due to
+ * argument evaluation. We are interested in determining when the constructor ends since any mutations prior this this
+ * point are considered initializers and not mutations.
  *
- * This constructor may call sibling or superclass constructors, invoke arbitrary other methods
- * and, of course, create other objects. Therefore we need to track method entry and return
- * for each {@code NEW} in a thread, detecting the return from the initial {@code INVOKESPECIAL}.
- * This analysis would be slightly easier if we could get <i>after</i> advice for {@code INVOKESPECIAL},
- * but that is currently not possible (T1X limitation).
+ * This constructor may call sibling or superclass constructors, invoke arbitrary other methods and, of course, create
+ * other objects. Therefore we need to track method entry and return for each {@code NEW} in a thread, detecting the
+ * return from the initial {@code INVOKESPECIAL}. This analysis would be slightly easier if we could get <i>after</i>
+ * advice for {@code INVOKESPECIAL}, but that is currently not possible (T1X limitation).
  *
- * There is an offline version of this analysis in the {@code QueryAnalysis} tool.
- * The benefit of an online analysis is that does not require storage of vast quantities
- * (gigabytes) of advice traces. The cost is the additional data that is required to be created at
- * runtime.
+ * Currently this analysis does not scale as it requires an array indexed by {@link ObjectID#toLong()} to record the
+ * access/modification time information and , since object ids are not reused, the size of this array needs to be large
+ * enough to hold all the objects allocated by the application. The required size of the array can be estimated by
+ * running {@link CBCVMAdviceHandler} and looking at the total number of {@code NEW/NEWARRAY} bytecodes.
  *
- * Currently this analysis does not scale as it has a very crude technique for detecting the death
- * of an object that involves maintaining an array indexed by object id. Better than a weak reference map
- * but still a scaling problem.
+ * Determining that an object is dead, i.e. not reachable and collected by the GC, depends on support from the garbage
+ * collector. Using a weak reference per object is very expensive and puts a large strain on the collector. Optionally,
+ * this handler attempts to determine object death by iterating the heap after a GC and detecting objects that did not
+ * survive the collection. This is inaccurate for a generational collector unless it is forced into "always full gc"
+ * mode, but works reasonably well for the {@link SemiSpaceHeapScheme}. Arguably the time of the "last access" to an
+ * object is a more interesting measure. However, it is not equivalent to unreachable, especially for an interactive
+ * application.
+ *
+ * There is an offline version of this analysis in the {@code QueryAnalysis} tool. The benefit of an online analysis is
+ * that does not require storage of vast quantities (gigabytes) of advice traces. The cost is the additional data that
+ * is required to be created at runtime.
+ *
+ * This handler should be run with the {@code objectuse} VMA configuration for the most accurate results.
+ *
+ * Output is sent to the file defined by the property {@link @#DEFAULT_LOGFILE}.
  *
  */
 public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
 
-    private static final String LIFETIMES_SIZE_PROPERTY = "max.vma.handler.sf.ltsize";
-    private static final String LOGFILE_PROPERTY = "max.vma.handler.sf.file";
+    private static final String IDMAX_PROPERTY = "max.vma.handler.sf.idmax";
     private static final String DEAD_PROPERTY = "max.vma.handler.sf.dead";
+    private static final String SUMMARY_PROPERTY = "max.vma.handler.sf.summary";
+    private static final String LOGFILE_PROPERTY = "max.vma.handler.sf.file";
     private static final String DEFAULT_LOGFILE = "sfhandler.vma";
     private static final int DEFAULT_LIFETIMES_SIZE = 32768;
     private static final int MODIFIED_BIT = 0;
@@ -90,6 +102,10 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
     private long startTime;
     private static AccessInfo[] accessInfo;
 
+    /**
+     * The information stored per object in {@link #accessInfo}.
+     * N.B. Access to the {@code lastModified/lastAccessed} fields is unsynchronized.
+     */
     private static class AccessInfo {
         int classId;
         /**
@@ -105,7 +121,7 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
         long lastModified;
         /**
          * except during GC, 0 means object is alive
-         * < 0 during GC means object live at end of last GC.
+         * < 0 after AfterGC analysis means object live at end of last GC.
          * > 0 means object is dead at that GC time
          */
         long death;
@@ -114,7 +130,7 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
          * If "object access" bytecodes are advised, then it records the last
          * time the state of the object was accessed. If "object use"
          * bytecodes are advised, then it records the last time the object
-         * reference was loaded.
+         * reference was loaded/stored.
          */
         long lastAccessed;
 
@@ -171,7 +187,9 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
     }
 
     /**
-     * Every thread that is being advised has an instance of this.
+     * Every thread that is being advised has an instance of this, which is stored
+     * in the {@link VMAThreadLocal} area for fast access. It maintains salient information
+     * on the call stack during an object constructor execution.
      */
     private static class InitTracker {
         ObjInit[] stack = new ObjInit[16];
@@ -220,12 +238,17 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
     }
 
     @INTRINSIC(UNSAFE_CAST)
-    private static native InitTracker asInitTracker(Object obj);
+    private static InitTracker asInitTracker(Object obj) {
+        return (InitTracker) obj;
+    }
 
     private static InitTracker getInitTracker() {
         return asInitTracker(VMAThreadLocal.get());
     }
 
+    /**
+     * {@link JJVMTI} handler to iterate the heap to detect live objects.
+     */
     private class AfterGCJVMTIHandler extends NullJJVMTICallbacks implements JJVMTI.HeapCallbacks {
 
         @Override
@@ -238,6 +261,7 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
         public int heapIterationMax(Object object, Object userData) {
             long objId = state.readId(object).toLong();
             if (objId > 0) {
+                // Mark object as live
                 accessInfo[(int) objId].death = -1;
             }
             return JVMTIConstants.JVMTI_VISIT_OBJECTS;
@@ -265,7 +289,7 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
                 classActors = new ConcurrentHashMap<ClassActor, ClassData>();
             }
             if (accessInfo == null) {
-                String prop = System.getProperty(LIFETIMES_SIZE_PROPERTY);
+                String prop = System.getProperty(IDMAX_PROPERTY);
                 int ltSize = DEFAULT_LIFETIMES_SIZE;
                 if (prop != null) {
                     ltSize = Integer.parseInt(prop);
@@ -276,7 +300,7 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
                 }
             }
             String prop = System.getProperty(DEAD_PROPERTY);
-            boolean handleDead = prop == null || !prop.equals("false");
+            boolean handleDead = prop != null;
 
             if (handleDead) {
                 if (deadHandler == null) {
@@ -309,22 +333,25 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
                 if (ps == null) {
                     ps = new PrintStream(new FileOutputStream(prop));
                 }
+
+                boolean summary = System.getProperty(SUMMARY_PROPERTY) != null;
+
                 for (Map.Entry<ClassActor, ClassData> entry : classActors.entrySet()) {
                     ClassActor ca = entry.getKey();
                     ps.printf("%s, total instances %d, # mutable %d%n", ca.name(), entry.getValue().instances, entry.getValue().mcount);
 
-                    for (int i = 1; i < accessInfo.length; i++) {
-                        AccessInfo lt = accessInfo[i];
-                        if (ca.id == lt.classId) {
-                            if (lt.constructed > 0) {
-                                // all objects considered dead at end of run
-                                if (lt.death == 0) {
-                                    lt.death = endTime - startTime;
+                    if (!summary) {
+                        for (int i = 1; i < accessInfo.length; i++) {
+                            AccessInfo lt = accessInfo[i];
+                            if (ca.id == lt.classId) {
+                                if (lt.constructed > 0) {
+                                    // all objects considered dead at end of run
+                                    if (lt.death == 0) {
+                                        lt.death = endTime;
+                                    }
+                                    ps.printf("%d: c %d, d %d, lm %d, la %d, stable for %f (%f)%n", i, lt.constructed, lt.death, lt.lastModified, lt.lastAccessed,
+                                                    percent(lt.stableLifeTime(), lt.lifeTime()), percent(lt.effectiveStableLifeTime(), lt.effectiveLifeTime()));
                                 }
-                                ps.printf("%d: c %d, d %d, lm %d, la %d, stable for %f (%f)%n",
-                                                i, lt.constructed, lt.death, lt.lastModified, lt.lastAccessed,
-                                                percent(lt.stableLifeTime(), lt.lifeTime()),
-                                                percent(lt.effectiveStableLifeTime(), lt.effectiveLifeTime()));
                             }
                         }
                     }
