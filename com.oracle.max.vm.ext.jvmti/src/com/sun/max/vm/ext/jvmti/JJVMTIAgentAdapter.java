@@ -84,6 +84,11 @@ public class JJVMTIAgentAdapter extends JJVMTIAgentAdapterChecker implements JJV
     }
 
     @Override
+    public void includeMaxVMClasses() {
+        JVMTI.JVMTI_VM = true;
+    }
+
+    @Override
     public void setEventNotificationMode(int mode, E event, Thread thread) throws JJVMTIException {
         super.setEventNotificationMode(mode, event, thread);
         int error = JVMTIEvents.setEventNotificationMode(env, mode, event, thread);

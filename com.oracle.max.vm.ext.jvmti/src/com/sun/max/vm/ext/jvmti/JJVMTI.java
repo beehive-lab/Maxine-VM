@@ -628,4 +628,9 @@ public interface JJVMTI {
 
     void retransformClasses(ClassActor[] klasses) throws JJVMTIException;
 
+    /**
+     * Maxine-specific call to include VM classes in the analysis, which are usually suppressed.
+     */
+    void includeMaxVMClasses();
+
 }

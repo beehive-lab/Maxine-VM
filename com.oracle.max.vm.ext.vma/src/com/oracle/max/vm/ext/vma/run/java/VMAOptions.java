@@ -72,6 +72,14 @@ public class VMAOptions {
     }
 
     /**
+     * A handler can register an instance of this to perform a handler-specific check
+     * for instrumenting a method.
+     */
+    public interface SpecificInstrumentChecker {
+        boolean instrument(MethodActor methodActor);
+    }
+
+    /**
      * Object creation.
      */
     private static final BM[] NEW_BM = new BM[] {
@@ -184,7 +192,7 @@ public class VMAOptions {
 
     private static final BM[] OBJECT_USE = compose(OBJECT_ACCESS, USE_BM);
 
-    enum StdConfig {
+    public enum StdConfig {
         NULL("null", new BM[0]),
         LIFETIME_USE("objectuse", OBJECT_USE),
         LIFETIME_ACCESS("objectaccess", OBJECT_ACCESS),
@@ -207,6 +215,47 @@ public class VMAOptions {
         }
     }
 
+    /**
+     * A handler can call this to check that the VM is being run with a config that
+     * is compatible with {@code config}.
+     * @param config
+     * @param force force configuration
+     */
+    public static boolean checkConfig(StdConfig config, boolean force) {
+        boolean result = true;
+        for (BM bm : config.bytecodesToApply) {
+            if (!bytecodeApply[bm.bytecode.ordinal()][bm.adviceModeOption.ordinal()]) {
+                result = false;
+                break;
+            }
+        }
+        if (!result && force) {
+            result = true;
+            initBytecodesToApply(false);
+            setConfig(config);
+        }
+        return result;
+    }
+
+    private static void setConfig(StdConfig config) {
+        for (BM ab : config.bytecodesToApply) {
+            for (AdviceMode am : AdviceMode.values()) {
+                boolean isApplied = ab.isApplied(am);
+                if (isApplied) {
+                    bytecodeApply[ab.bytecode.ordinal()][am.ordinal()] = isApplied;
+                }
+            }
+        }
+    }
+
+    private static void initBytecodesToApply(boolean defValue) {
+        for (VMABytecodes b : VMABytecodes.values()) {
+            for (AdviceMode am : AdviceMode.values()) {
+                bytecodeApply[b.ordinal()][am.ordinal()] = defValue;
+            }
+        }
+    }
+
     private static BM[] compose(BM[] ... bms) {
         int length = 0;
         for (BM[] bm : bms) {
@@ -223,13 +272,12 @@ public class VMAOptions {
     }
 
     private static final String VMA_PKG_PATTERN = "com\\.oracle\\.max\\.vm\\.ext\\.vma\\..*";
-    private static final String JDK_X_PATTERN = "sun.misc.FloatingDecimal";
-    private static final String X_PATTERN = VMA_PKG_PATTERN + "|" + JDK_X_PATTERN;
+    private static final String X_PATTERN = VMA_PKG_PATTERN;
 
     static {
         VMOptions.addFieldOption("-XX:", "VMA", "enable advising");
-        VMOptions.addFieldOption("-XX:", "VMACI", "regex for classes to instrument");
-        VMOptions.addFieldOption("-XX:", "VMACX", "regex for classes not to instrument");
+        VMOptions.addFieldOption("-XX:", "VMAMI", "regex for methods to instrument");
+        VMOptions.addFieldOption("-XX:", "VMAMX", "regex for methods not to instrument");
         VMOptions.addFieldOption("-XX:", "VMAXJDK", "do not instrument any JDK classes");
         VMOptions.addFieldOption("-XX:", "VMATI", "regex for threads to include");
         VMOptions.addFieldOption("-XX:", "VMATX", "regex for threads to exclude");
@@ -241,15 +289,18 @@ public class VMAOptions {
     }
 
     /**
-     * {@link Pattern regex pattern} defining specific classes to instrument.
-     * If this option is set, only these classes are instrumented, otherwise
-     * all classes are instrumented.
+     * {@link Pattern regex pattern} defining specific methods to instrument.
+     * If this option is set, only these methods are candidates for instrumentation, otherwise
+     * all methods are candidates.
+     * Syntax of a method pattern is {@code classpattern#methodpattern}.
+     * The {@code #methodpattern} may be replaced with {@code .*} to indicate all methods.
      */
-    private static String VMACI;
+    private static String VMAMI;
     /**
-     * {@link Pattern regex pattern} defining specific classes to exclude from instrumentation.
+     * {@link Pattern regex pattern} defining specific methods to exclude from instrumentation.
+     * These modify the candidates for inclusion specified by {@link #VMAMI}.
      */
-    private static String VMACX;
+    private static String VMAMX;
 
     /**
      * Convenience option to specify the exclusion of all JDK classes.
@@ -276,8 +327,8 @@ public class VMAOptions {
 
     private static VMATimeMode timeMode = VMATimeMode.WALLNS;
 
-    private static Pattern classInclusionPattern;
-    private static Pattern classExclusionPattern;
+    private static Pattern methodInclusionPattern;
+    private static Pattern methodExclusionPattern;
 
     private static Pattern threadInclusionPattern;
     private static Pattern threadExclusionPattern;
@@ -319,6 +370,12 @@ public class VMAOptions {
      */
     private static final String VMA_TEMPLATES_PROPERTY = "max.vma.templates";
 
+    private static SpecificInstrumentChecker specificInstrumentChecker;
+
+    public void registerSpecificInstrumentChecker(SpecificInstrumentChecker checker) {
+        specificInstrumentChecker = checker;
+    }
+
     /**
      * Check options.
      *
@@ -328,24 +385,26 @@ public class VMAOptions {
     public static boolean initialize(MaxineVM.Phase phase) {
         // We execute the setup code below if and only if VMA is set.
         if (VMA && phase == MaxineVM.Phase.RUNNING) {
-            // always exclude advising packages and key JDK classes
+            // always exclude advising packages
             String xPattern = X_PATTERN;
+            // optionally exclude JDK
             if (VMAXJDK) {
                 xPattern += "|java.*|sun.*";
             }
-            if (VMACX != null) {
-                xPattern += "|" + VMACX;
+
+            if (VMAMX != null) {
+                xPattern += "|" + VMAMX;
             }
-            if (VMACI != null) {
-                classInclusionPattern = Pattern.compile(VMACI);
+            if (VMAMI != null) {
+                methodInclusionPattern = Pattern.compile(VMAMI);
             }
-            classExclusionPattern = Pattern.compile(xPattern);
+            methodExclusionPattern = Pattern.compile(xPattern);
 
             if (VMATI != null) {
                 threadInclusionPattern = Pattern.compile(VMATI);
             }
             if (VMATX != null) {
-                threadExclusionPattern = Pattern.compile(VMATI);
+                threadExclusionPattern = Pattern.compile(VMATX);
             }
 
 
@@ -360,24 +419,13 @@ public class VMAOptions {
                         }
                     }
                     if (stdConfig == null) {
-                        error(vmaConfig + " is not a standard VMA configuration");
+                        VMAJavaRunScheme.fail(vmaConfig + " is not a standard VMA configuration");
                     }
-                    for (BM ab : stdConfig.bytecodesToApply) {
-                        for (AdviceMode am : AdviceMode.values()) {
-                            boolean isApplied = ab.isApplied(am);
-                            if (isApplied) {
-                                bytecodeApply[ab.bytecode.ordinal()][am.ordinal()] = isApplied;
-                            }
-                        }
-                    }
+                    setConfig(stdConfig);
                 }
             } else {
                 // setup default values
-                for (VMABytecodes b : VMABytecodes.values()) {
-                    for (AdviceMode am : AdviceMode.values()) {
-                        bytecodeApply[b.ordinal()][am.ordinal()] = VMABI == null ? true : false;
-                    }
-                }
+                initBytecodesToApply(VMABI == null ? true : false);
 
                 if (VMABI != null) {
                     Pattern bytecodeInclusionPattern = Pattern.compile(VMABI);
@@ -443,27 +491,26 @@ public class VMAOptions {
         }
     }
 
-    public static boolean instrumentClass(String className) {
-        if (!initialized) {
-            return false;
+    static boolean instrumentMethod(ClassMethodActor methodActor) {
+        if (specificInstrumentChecker != null && specificInstrumentChecker.instrument(methodActor)) {
+            return true;
         }
-        boolean include = classInclusionPattern == null || classInclusionPattern.matcher(className).matches();
+        String matchName = methodActor.format("%H#%n(%p)");
+        boolean include = methodInclusionPattern == null || methodInclusionPattern.matcher(matchName).matches();
         if (include) {
-            include = !classExclusionPattern.matcher(className).matches();
+            include = !methodExclusionPattern.matcher(matchName).matches();
         }
         return include;
     }
 
     /**
      * Check if given method should be instrumented for advising.
-     * Currently limited to per class not per method.
      * @param cma
      */
     public static boolean instrumentForAdvising(ClassMethodActor cma) {
         boolean include = initialized && VMA;
         if (include) {
-            final String className = cma.holder().typeDescriptor.toJavaString();
-            include = instrumentClass(className);
+            include = instrumentMethod(cma);
         }
         if (logger.enabled()) {
             logger.logInstrument(cma, include);
@@ -487,11 +534,6 @@ public class VMAOptions {
      */
     public static boolean[] getVMATemplateOptions(int opcode) {
         return bytecodeApply[opcode];
-    }
-
-    private static void error(String msg) {
-        Log.println(msg);
-        MaxineVM.native_exit(1);
     }
 
     @VMLoggerInterface
