@@ -215,16 +215,16 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
         }
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
-                JDKDeopt.run();
-                // Check for sample mode
-                checkSampleMode();
                 if (adviceHandler != null) {
                     adviceHandler.initialise(phase);
-                    advising = true;
                 } else {
                     Log.println("no VMA handler defined");
                     MaxineVM.exit(-1);
                 }
+                JDKDeopt.run();
+                // Check for sample mode
+                checkSampleMode();
+                advising = true;
             }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (advising) {
@@ -385,8 +385,8 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
         }
     }
 
-    private static void fail(String m) {
-        Log.println("VMA: ");
+    public static void fail(String m) {
+        Log.print("VMA: ");
         Log.println(m);
         MaxineVM.native_exit(1);
     }
@@ -403,18 +403,20 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             Collection<ClassActor> bootClassActors = ClassRegistry.BOOT_CLASS_REGISTRY.getClassActors();
             ArrayList<TargetMethod> deoptMethods = new ArrayList<TargetMethod>();
             for (ClassActor classActor : bootClassActors) {
-                String className = classActor.qualifiedName();
-                if (VMAOptions.instrumentClass(className)) {
-                    for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
+                for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
+                    if (VMAOptions.instrumentMethod(staticMethodActor)) {
                         checkDeopt(staticMethodActor, deoptMethods);
                     }
-                    for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
+                }
+                for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
+                    if (VMAOptions.instrumentMethod(virtualMethodActor)) {
                         checkDeopt(virtualMethodActor, deoptMethods);
                     }
                 }
             }
 
             if (deoptMethods.size() == 0) {
+                VMAOptions.logger.logJdkDeopt("no JDK deopt needed");
                 return;
             }
 

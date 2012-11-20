@@ -575,6 +575,10 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
+    public void includeMaxVMClasses() {
+    }
+
+    @Override
     public void interruptThread(Thread arg0) {
         checkCap(CAN_SIGNAL_THREAD);
     }
