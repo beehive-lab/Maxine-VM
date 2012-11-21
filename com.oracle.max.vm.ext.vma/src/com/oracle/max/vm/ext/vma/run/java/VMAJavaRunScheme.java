@@ -114,9 +114,14 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             "VM_ADVISING", false, "For use by VM advising framework");
 
     /**
-     * Set to true when {@link VMAOptions.VMA} is set AND the VM is in a state to start advising.
+     * Set to {@code true} when {@link VMAOptions.VMA} is set AND the VM is in a state to start advising.
      */
     private static boolean advising;
+
+    /**
+     * Set to {@code true} when the VM is ready to start instrumenting methods for advice.
+     */
+    private static boolean instrumenting;
 
     @CONSTANT_WHEN_NOT_ZERO
     private static VMLog vmaVMLog;
@@ -215,24 +220,26 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
         }
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
-                JDKDeopt.run();
-                // Check for sample mode
-                checkSampleMode();
+                VMAOptions.initialize(phase);
                 if (adviceHandler != null) {
                     adviceHandler.initialise(phase);
-                    advising = true;
                 } else {
                     Log.println("no VMA handler defined");
                     MaxineVM.exit(-1);
                 }
+                instrumenting = true;
+                JDKDeopt.run();
+                // Check for sample mode
+                checkSampleMode();
+                advising = true;
             }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (advising) {
                 disableAdvising();
                 // N.B. daemon threads may still be running and invoking advice.
-                // There is nothing we can do about that as they may be in the act
-                // of logging so disabling advising for them would be meaningless.
-                // This has to be dealt with in the handler.
+                // There is nothing we can do about that as they may be in the process
+                // of invoking advice so disabling advising for them here would be meaningless.
+                // This has to be dealt with in the handler if it matters.
                 adviceHandler.initialise(phase);
             }
         }
@@ -265,6 +272,11 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
     @INLINE
     public static boolean isVMAdvising() {
         return advising;
+    }
+
+    @INLINE
+    static boolean isInstrumenting() {
+        return instrumenting;
     }
 
     /**
@@ -385,8 +397,8 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
         }
     }
 
-    private static void fail(String m) {
-        Log.println("VMA: ");
+    public static void fail(String m) {
+        Log.print("VMA: ");
         Log.println(m);
         MaxineVM.native_exit(1);
     }
@@ -403,18 +415,20 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             Collection<ClassActor> bootClassActors = ClassRegistry.BOOT_CLASS_REGISTRY.getClassActors();
             ArrayList<TargetMethod> deoptMethods = new ArrayList<TargetMethod>();
             for (ClassActor classActor : bootClassActors) {
-                String className = classActor.qualifiedName();
-                if (VMAOptions.instrumentClass(className)) {
-                    for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
+                for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
+                    if (VMAOptions.instrumentMethod(staticMethodActor)) {
                         checkDeopt(staticMethodActor, deoptMethods);
                     }
-                    for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
+                }
+                for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
+                    if (VMAOptions.instrumentMethod(virtualMethodActor)) {
                         checkDeopt(virtualMethodActor, deoptMethods);
                     }
                 }
             }
 
             if (deoptMethods.size() == 0) {
+                VMAOptions.logger.logJdkDeopt("no JDK deopt needed");
                 return;
             }
 
@@ -465,7 +479,7 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             Iterator<TargetMethod> iter = deoptMethods.iterator();
             while (iter.hasNext()) {
                 TargetMethod tm = iter.next();
-                boolean instrument = true;
+                boolean instrument = !tm.classMethodActor.holder().isReflectionStub();
                 try {
                     vm().compilationBroker.compile(tm.classMethodActor, Nature.BASELINE, false, true);
                 } catch (Throwable t) {

@@ -34,7 +34,7 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class ObjectState {
     /**
-     * Read and return the state value or zero if {@code obj == null}.
+     * Read and return the state value for {@code obj}. assert: {@code obj != null}.
      */
     public Word readState(Object obj) {
         return readState(Reference.fromJava(obj));
@@ -44,7 +44,7 @@ public abstract class ObjectState {
      * Variant using a {@link Reference}.
      */
     public Word readState(Reference objRef) {
-        return XOhmGeneralLayout.Static.readXtra(objRef);
+        return XOhmGeneralLayout.Static.readXtra(objRef, 0);
     }
 
     /**
@@ -58,6 +58,6 @@ public abstract class ObjectState {
      * Variant using a {@link Reference}.
      */
     public void writeState(Reference objRef, Word state) {
-        XOhmGeneralLayout.Static.writeXtra(objRef, state);
+        XOhmGeneralLayout.Static.writeXtra(objRef, 0, state);
     }
 }

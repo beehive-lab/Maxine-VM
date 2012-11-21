@@ -26,7 +26,7 @@
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.sbps.{SBPSVMATextStore.java"/>
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.sbps.{SBPSVMAIdTextStore.java"/>
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.store.txt.{ShortFormHandler.java"/>
-        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.{MultiNewArrayHelper.java"/>
+        <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.util.{MultiNewArrayHelper.java"/>
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.util.objstate.{ObjectId.java"/>
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.util.objstate.{ObjectBitSet.java"/>
         <javaElement handleIdentifier="=com.oracle.max.vm.ext.vma/src&lt;com.oracle.max.vm.ext.vma.handlers.util.objstate.{IdBitSetObjectState.java"/>

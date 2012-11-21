@@ -26,7 +26,7 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Support for unique identifiers for objects, using the {@link ObjectState} word.
+ * Support for associating unique identifiers with objects.
  * Separate methods are defined for "seen" and "unseen" objects, of which the former
  * are expected to dominate. A "seen" object is one that the advice handler observed the
  * creation of through one of the {@code NEW} bytecodes. An "unseen" object is one

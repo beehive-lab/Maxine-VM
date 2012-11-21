@@ -56,7 +56,7 @@ public final class XOhmTupleLayout extends XOhmGeneralLayout implements TupleLay
         return hub.tupleSize;
     }
 
-    private final int headerSize = 4 * Word.size();
+    private final int headerSize = (2 + xtraCount) * Word.size();
 
     @INLINE
     public int headerSize() {
@@ -64,7 +64,7 @@ public final class XOhmTupleLayout extends XOhmGeneralLayout implements TupleLay
     }
 
     public HeaderField[] headerFields() {
-        return new HeaderField[] {HeaderField.HUB, HeaderField.MISC, XHeaderField.XTRA};
+        return XHeaderField.headerFields(false, xtraCount);
     }
 
     @INLINE

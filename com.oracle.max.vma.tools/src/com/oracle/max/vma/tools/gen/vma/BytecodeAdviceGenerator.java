@@ -87,7 +87,7 @@ public class BytecodeAdviceGenerator {
     private static ByteArrayOutputStream logByteOutput;
     private static PrintStream logOutput;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         boolean checkOnly = false;
         for (String arg : args) {
             if (arg.equals("-log")) {

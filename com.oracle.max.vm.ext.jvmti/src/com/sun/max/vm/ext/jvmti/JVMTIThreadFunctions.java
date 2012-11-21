@@ -208,7 +208,7 @@ public class JVMTIThreadFunctions {
             frameInfo[i] = new FrameInfo();
         }
         JavaThreadListStackTraceVisitor stackTraceVisitor = new JavaThreadListStackTraceVisitor(vmThread, startDepth, maxFrameCount, frameInfo);
-        new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor).submit();
+        SingleThreadStackTraceVmOperation.invoke(vmThread, stackTraceVisitor);
         if (stackTraceVisitor.frameBufferIndex < frameInfo.length) {
             FrameInfo[] newFrameInfo = new FrameInfo[stackTraceVisitor.frameBufferIndex];
             System.arraycopy(frameInfo, 0, newFrameInfo, 0, stackTraceVisitor.frameBufferIndex);

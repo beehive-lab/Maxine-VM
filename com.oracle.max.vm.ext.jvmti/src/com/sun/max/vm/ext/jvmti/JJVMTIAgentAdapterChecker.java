@@ -575,6 +575,10 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
+    public void includeMaxVMClasses(boolean arg0) {
+    }
+
+    @Override
     public void interruptThread(Thread arg0) {
         checkCap(CAN_SIGNAL_THREAD);
     }
@@ -619,6 +623,10 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     @Override
     public void iterateThroughHeap(int arg0, ClassActor arg1, HeapCallbacks arg2, Object arg3) {
         checkCap(CAN_TAG_OBJECTS);
+    }
+
+    @Override
+    public void iterateThroughHeapMax(int arg0, ClassActor arg1, HeapCallbacks arg2, Object arg3) {
     }
 
     @Override

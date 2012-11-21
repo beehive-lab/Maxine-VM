@@ -49,9 +49,14 @@ public class VMAStaticBytecodeAdviceGenerator {
         int argCount = generateSignature(m, "static");
         out.printf(" {%n");
         out.printf("        disableAdvising();%n");
-        out.printf("        adviceHandler().%s(", m.getName());
+        out.println("        try {");
+        out.printf("            adviceHandler().%s(", m.getName());
         generateInvokeArgs(argCount);
-        out.printf("        enableAdvising();%n");
+        out.println("        } catch (Throwable t) {");
+        out.println("            debug(t);");
+        out.println("        } finally {");
+        out.printf("            enableAdvising();%n");
+        out.println("        }");
         out.printf("    }%n%n");
     }
 
