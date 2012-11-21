@@ -14,60 +14,6 @@ library@NB3_BUTTONS@path=com.oracle.max.tele.ins/NB3B.jar
 
 library@TESTS_JASMIN_CLASSES@path=com.oracle.max.tests/jasmin_classes
 
-project@com.oracle.max.graal.hotspot@sourceDirs=src
-project@com.oracle.max.graal.hotspot@dependencies=com.oracle.max.asmdis,com.oracle.max.graal.snippets
-project@com.oracle.max.graal.hotspot@checkstyle=com.oracle.max.graal.graph
-project@com.oracle.max.graal.hotspot@javaCompliance=1.6
-
-project@com.oracle.max.graal.examples@sourceDirs=src
-project@com.oracle.max.graal.examples@dependencies=com.oracle.max.graal.compiler,com.oracle.max.asmdis
-project@com.oracle.max.graal.examples@checkstyle=com.oracle.max.graal.graph
-project@com.oracle.max.graal.examples@javaCompliance=1.6
-
-project@com.oracle.max.graal.examples.safeadd@sourceDirs=src
-project@com.oracle.max.graal.examples.safeadd@dependencies=com.oracle.max.graal.compiler,com.oracle.max.asmdis
-project@com.oracle.max.graal.examples.safeadd@checkstyle=com.oracle.max.graal.graph
-project@com.oracle.max.graal.examples.safeadd@javaCompliance=1.6
-
-project@com.oracle.max.graal.examples.vectorlib@sourceDirs=src
-project@com.oracle.max.graal.examples.vectorlib@dependencies=com.oracle.max.graal.compiler,com.oracle.max.asmdis
-project@com.oracle.max.graal.examples.vectorlib@checkstyle=com.oracle.max.graal.graph
-project@com.oracle.max.graal.examples.vectorlib@javaCompliance=1.6
-
-project@com.oracle.max.graal.graph@sourceDirs=src
-project@com.oracle.max.graal.graph@dependencies=JUNIT
-project@com.oracle.max.graal.graph@javaCompliance=1.6
-
-project@com.oracle.max.graal.snippets@sourceDirs=src,test
-project@com.oracle.max.graal.snippets@dependencies=com.oracle.max.graal.compiler
-project@com.oracle.max.graal.snippets@checkstyle=com.oracle.max.graal.graph
-project@com.oracle.max.graal.snippets@javaCompliance=1.6
-
-project@com.oracle.max.graal.nodes@sourceDirs=src,test
-project@com.oracle.max.graal.nodes@dependencies=com.oracle.max.cri,com.oracle.max.graal.graph
-project@com.oracle.max.graal.nodes@checkstyle=com.oracle.max.graal.graph
-project@com.oracle.max.graal.nodes@javaCompliance=1.6
-
-project@com.oracle.max.graal.extensions@sourceDirs=src,test
-project@com.oracle.max.graal.extensions@dependencies=com.oracle.max.cri,com.oracle.max.graal.graph
-project@com.oracle.max.graal.extensions@checkstyle=com.oracle.max.graal.graph
-project@com.oracle.max.graal.extensions@javaCompliance=1.6
-
-project@com.oracle.max.graal.graphviz@sourceDirs=src,test
-project@com.oracle.max.graal.graphviz@dependencies=com.oracle.max.graal.graph
-project@com.oracle.max.graal.graphviz@checkstyle=com.oracle.max.graal.graph
-project@com.oracle.max.graal.graphviz@javaCompliance=1.6
-
-project@com.oracle.max.graal.compiler@sourceDirs=src
-project@com.oracle.max.graal.compiler@dependencies=com.oracle.max.graal.extensions,com.oracle.max.asm,com.oracle.max.graal.nodes,com.oracle.max.graal.graphviz
-project@com.oracle.max.graal.compiler@checkstyle=com.oracle.max.graal.graph
-project@com.oracle.max.graal.compiler@javaCompliance=1.6
-
-project@com.oracle.max.graal.compiler.tests@sourceDirs=src
-project@com.oracle.max.graal.compiler.tests@dependencies=com.oracle.max.graal.compiler
-project@com.oracle.max.graal.compiler.tests@checkstyle=com.oracle.max.graal.graph
-project@com.oracle.max.graal.compiler.tests@javaCompliance=1.6
-
 project@com.oracle.max.tele.ins@sourceDirs=src,test
 project@com.oracle.max.tele.ins@dependencies=com.oracle.max.tele.vm,JLF_ICONS,NB3_BUTTONS
 project@com.oracle.max.tele.ins@checkstyle=com.oracle.max.base
@@ -123,7 +69,8 @@ project@com.oracle.max.tools@checkstyle=com.oracle.max.base
 project@com.oracle.max.tools@javaCompliance=1.6
 
 project@com.oracle.max.vm.ext.maxri@sourceDirs=src
-project@com.oracle.max.vm.ext.maxri@dependencies=com.oracle.max.vm,com.oracle.max.graal.nodes,com.oracle.max.hcfdis
+#project@com.oracle.max.vm.ext.maxri@dependencies=com.oracle.max.vm,com.oracle.max.graal.nodes,com.oracle.max.hcfdis
+project@com.oracle.max.vm.ext.maxri@dependencies=com.oracle.max.vm,com.oracle.max.hcfdis
 project@com.oracle.max.vm.ext.maxri@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.maxri@javaCompliance=1.6
 
@@ -131,16 +78,6 @@ project@com.oracle.max.vm.ext.c1x@sourceDirs=src
 project@com.oracle.max.vm.ext.c1x@dependencies=com.oracle.max.vm.ext.maxri,com.oracle.max.c1x
 project@com.oracle.max.vm.ext.c1x@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.c1x@javaCompliance=1.6
-
-project@com.oracle.max.vm.ext.graal@sourceDirs=src
-project@com.oracle.max.vm.ext.graal@dependencies=com.oracle.max.graal.snippets,com.oracle.max.vm.ext.maxri
-project@com.oracle.max.vm.ext.graal@checkstyle=com.oracle.max.base
-project@com.oracle.max.vm.ext.graal@javaCompliance=1.6
-
-project@com.oracle.max.vm.ext.c1xgraal@sourceDirs=src
-project@com.oracle.max.vm.ext.c1xgraal@dependencies=com.oracle.max.vm.ext.graal,com.oracle.max.vm.ext.c1x
-project@com.oracle.max.vm.ext.c1xgraal@checkstyle=com.oracle.max.base
-project@com.oracle.max.vm.ext.c1xgraal@javaCompliance=1.6
 
 project@com.oracle.max.vm.ext.t1x@sourceDirs=src
 project@com.oracle.max.vm.ext.t1x@dependencies=com.oracle.max.vm.ext.maxri
