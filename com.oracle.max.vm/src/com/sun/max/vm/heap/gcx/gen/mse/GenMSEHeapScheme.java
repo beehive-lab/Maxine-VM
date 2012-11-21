@@ -475,11 +475,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         return heapAccount;
     }
 
-    @Override
-    protected void reportTotalGCTimes() {
-        // TODO
-    }
-
     @HOSTED_ONLY
     public XirWriteBarrierGenerator barrierGenerator(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
         if (writeBarrierSpec.equals(TUPLE_POST_BARRIER)) {

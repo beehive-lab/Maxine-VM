@@ -193,9 +193,9 @@ public class TransientVMAdviceHandlerTypes {
         }
 
         public static final EnumSet<RecordType> MODIFY_OPERATIONS = EnumSet.of(
-                        RecordType.PutFieldLong, RecordType.PutFieldFloat, RecordType.PutFieldDouble,
-                        RecordType.PutStaticLong, RecordType.PutStaticFloat, RecordType.PutStaticDouble,
-                        RecordType.ArrayStoreLong, RecordType.ArrayStoreFloat, RecordType.ArrayStoreDouble);
+            RecordType.PutFieldLong, RecordType.PutFieldFloat, RecordType.PutFieldDouble, RecordType.PutFieldObject,
+            RecordType.PutStaticLong, RecordType.PutStaticFloat, RecordType.PutStaticDouble, RecordType.PutStaticObject,
+            RecordType.ArrayStoreLong, RecordType.ArrayStoreFloat, RecordType.ArrayStoreDouble, RecordType.ArrayStoreObject);
 
         public static final RecordType[] RECORD_TYPE_VALUES = RecordType.values();
 

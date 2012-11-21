@@ -25,7 +25,6 @@ package com.oracle.max.vm.ext.vma.run.java;
 import static com.oracle.max.vm.ext.vma.VMABytecodes.*;
 import static com.oracle.max.vm.ext.vma.run.java.VMAOptions.AdviceModeOption.*;
 
-import java.util.concurrent.atomic.*;
 import java.util.regex.Pattern;
 
 import com.oracle.max.vm.ext.vma.*;
@@ -51,14 +50,14 @@ import com.sun.max.vm.thread.*;
  */
 public class VMAOptions {
 
-    enum AdviceModeOption {
+    public enum AdviceModeOption {
         B, A, BA;
     }
 
-    static class BM {
+    public static class BM {
         VMABytecodes bytecode;
         AdviceModeOption adviceModeOption;
-        BM(VMABytecodes bytecode, AdviceModeOption adviceModeOption) {
+        public BM(VMABytecodes bytecode, AdviceModeOption adviceModeOption) {
             this.bytecode = bytecode;
             this.adviceModeOption = adviceModeOption;
         }
@@ -73,9 +72,18 @@ public class VMAOptions {
     }
 
     /**
+     * A handler can register an instance of this to perform a handler-specific check
+     * for instrumenting a method. If an instance of this class is registered, it
+     * completely overrides the normal regex based checks for instrumentation.
+     */
+    public interface SpecificInstrumentChecker {
+        boolean instrument(MethodActor methodActor);
+    }
+
+    /**
      * Object creation.
      */
-    private static final BM[] NEW_BM = new BM[] {
+    public static final BM[] NEW_BM = new BM[] {
         new BM(NEW, A), new BM(NEWARRAY, A), new BM(ANEWARRAY, A),
         new BM(MULTIANEWARRAY, A)
     };
@@ -83,18 +91,18 @@ public class VMAOptions {
     /**
      * Getting a field of an object or a class (static).
      */
-    private static final BM[] GETFIELD_BM = new BM[] {new BM(GETFIELD, B), new BM(GETSTATIC, B)};
+    public static final BM[] GETFIELD_BM = new BM[] {new BM(GETFIELD, B), new BM(GETSTATIC, B)};
 
     /**
      * An array load.
      */
-    private static final BM[] ARRAYLOAD_BM = new BM[] {new BM(IALOAD, B), new BM(LALOAD, B), new BM(FALOAD, B),
+    public static final BM[] ARRAYLOAD_BM = new BM[] {new BM(IALOAD, B), new BM(LALOAD, B), new BM(FALOAD, B),
         new BM(DALOAD, B), new BM(AALOAD, B), new BM(BALOAD, B), new BM(CALOAD, B), new BM(SALOAD, B)};
 
     /**
      * Method invocation (before).
      */
-    private static final BM[] BEFORE_INVOKE_BM = new BM[] {
+    public static final BM[] BEFORE_INVOKE_BM = new BM[] {
         new BM(INVOKEVIRTUAL, B), new BM(INVOKEINTERFACE, B),
         new BM(INVOKESTATIC, B), new BM(INVOKESPECIAL, B)
     };
@@ -102,12 +110,12 @@ public class VMAOptions {
     /**
      * IF operations on objects.
      */
-    private static final BM[] IFOBJECT_BM = new BM[] {new BM(IF_ACMPNE, B), new BM(IF_ACMPEQ, B), new BM(IFNULL, B), new BM(IFNONNULL, B)};
+    public static final BM[] IFOBJECT_BM = new BM[] {new BM(IF_ACMPNE, B), new BM(IF_ACMPEQ, B), new BM(IFNULL, B), new BM(IFNONNULL, B)};
 
     /**
      * Monitor entry/exit.
      */
-    private static final BM[] MONITOR_BM = new BM[] {new BM(MONITORENTER, B), new BM(MONITOREXIT, B)};
+    public static final BM[] MONITOR_BM = new BM[] {new BM(MONITORENTER, B), new BM(MONITOREXIT, B)};
 
     /**
      * Casts.
@@ -117,13 +125,13 @@ public class VMAOptions {
     /**
      * Throw.
      */
-    private static final BM[] THROW_BM = new BM[] {new BM(ATHROW, B)};
+    public static final BM[] THROW_BM = new BM[] {new BM(ATHROW, B)};
 
     /**
      * A read, where this is defined as any access to the object's state (fields, array elements or class metadata).
      * The latter encompasses many bytecodes, e.g. method invocation, checkcast, etc.
      */
-    private static final BM[] READ_BM = compose(GETFIELD_BM, ARRAYLOAD_BM, new BM[] {new BM(ARRAYLENGTH, B)},
+    public static final BM[] READ_BM = compose(GETFIELD_BM, ARRAYLOAD_BM, new BM[] {new BM(ARRAYLENGTH, B)},
                                         BEFORE_INVOKE_BM, MONITOR_BM, CAST_BM, THROW_BM);
 
     /**
@@ -134,30 +142,30 @@ public class VMAOptions {
     /**
      * Writing a field of an object or a class (static).
      */
-    private static final BM[] PUTFIELD_BM = new BM[] {new BM(PUTFIELD, B), new BM(PUTSTATIC, B)};
+    public static final BM[] PUTFIELD_BM = new BM[] {new BM(PUTFIELD, B), new BM(PUTSTATIC, B)};
 
     /**
      * Array store.
      */
-    private static final BM[] ARRAYSTORE_BM = new BM[] {new BM(IASTORE, B), new BM(LASTORE, B), new BM(FASTORE, B),
+    public static final BM[] ARRAYSTORE_BM = new BM[] {new BM(IASTORE, B), new BM(LASTORE, B), new BM(FASTORE, B),
         new BM(DASTORE, B), new BM(AASTORE, B), new BM(BASTORE, B), new BM(CASTORE, B), new BM(SASTORE, B)};
 
     /**
      * A write, defined similarly to read.
      */
-    private static final BM[] WRITE_BM = compose(ARRAYSTORE_BM, PUTFIELD_BM);
+    public static final BM[] WRITE_BM = compose(ARRAYSTORE_BM, PUTFIELD_BM);
 
     /**
      * Method entry.
      */
-    private static final BM[] METHOD_ENTRY_BM = new BM[] {
+    public static final BM[] METHOD_ENTRY_BM = new BM[] {
         new BM(MENTRY, A),
     };
 
     /**
      * Method exit, defined as the various forms of {@code RETURN}.
      */
-    private static final BM[] METHOD_EXIT_BM = new BM[] {
+    public static final BM[] METHOD_EXIT_BM = new BM[] {
         new BM(IRETURN, B), new BM(LRETURN, B), new BM(FRETURN, B),
         new BM(DRETURN, B), new BM(ARETURN, B), new BM(RETURN, B)
     };
@@ -165,14 +173,14 @@ public class VMAOptions {
     /**
      * Method entry and exit.
      */
-    private static final BM[] METHOD_ENTRY_EXIT_BM = compose(METHOD_ENTRY_BM, METHOD_EXIT_BM);
+    public static final BM[] METHOD_ENTRY_EXIT_BM = compose(METHOD_ENTRY_BM, METHOD_EXIT_BM);
 
     /**
      * Enables determination of the begin/end of object construction.
      * If we had INVOKE after advice this could be streamlined, but absent that we
      * need all method entries and returns.
      */
-    private static final BM[] CONSTRUCTOR_BM = METHOD_ENTRY_EXIT_BM;
+    public static final BM[] CONSTRUCTOR_BM = METHOD_ENTRY_EXIT_BM;
 
     /*
     private static final BM[] AFTERINVOKE_BM = new BM[] {
@@ -181,34 +189,78 @@ public class VMAOptions {
     };
     */
 
-    private static final BM[] OBJECT_ACCESS = compose(NEW_BM, CONSTRUCTOR_BM, READ_BM, WRITE_BM);
+    public static final BM[] OBJECT_ACCESS = compose(NEW_BM, CONSTRUCTOR_BM, READ_BM, WRITE_BM);
 
-    private static final BM[] OBJECT_USE = compose(OBJECT_ACCESS, USE_BM);
+    public static final BM[] OBJECT_USE = compose(OBJECT_ACCESS, USE_BM);
 
-    enum StdConfig {
-        NULL("null", new BM[0]),
-        LIFETIME_USE("objectuse", OBJECT_USE),
-        LIFETIME_ACCESS("objectaccess", OBJECT_ACCESS),
-        READ("read", compose(NEW_BM, READ_BM)),
-        WRITE("write", compose(NEW_BM, WRITE_BM)),
-        MONITOR("monitor", MONITOR_BM),
-        BEFOREINVOKE("beforeinvoke", BEFORE_INVOKE_BM),
-//        AFTERINVOKE("afterinvoke", AFTERINVOKE_BM),
-        INVOKE("invoke", BEFORE_INVOKE_BM),
-        ENTRY("entry", METHOD_ENTRY_BM),
-        EXIT("exit", METHOD_EXIT_BM),
-        ENTRYEXIT("entryexit", METHOD_ENTRY_EXIT_BM);
-
+    public static class Config {
         private String name;
         private BM[] bytecodesToApply;
 
-        private StdConfig(String name, BM[] bytecodesToApply) {
+        public Config(String name, BM[] bytecodesToApply) {
             this.name = name;
             this.bytecodesToApply = bytecodesToApply;
         }
     }
 
-    private static BM[] compose(BM[] ... bms) {
+    public static final Config[] STD_CONFIGS = new Config[] {
+        new Config("null", new BM[0]),
+        new Config("objectuse", OBJECT_USE),
+        new Config("objectaccess", OBJECT_ACCESS),
+        new Config("read", compose(NEW_BM, READ_BM)),
+        new Config("write", compose(NEW_BM, WRITE_BM)),
+        new Config("monitor", MONITOR_BM),
+        new Config("beforeinvoke", BEFORE_INVOKE_BM),
+//        new Config("afterinvoke", AFTERINVOKE_BM),
+        new Config("invoke", BEFORE_INVOKE_BM),
+        new Config("entry", METHOD_ENTRY_BM),
+        new Config("exit", METHOD_EXIT_BM),
+        new Config("entryexit", METHOD_ENTRY_EXIT_BM)
+    };
+
+    /**
+     * A handler can call this to check that the VM is being run with a config that
+     * is compatible with {@code config}, and optionally override any existing config.
+     * @param config
+     * @param override override the configuration with {@code config}
+     */
+    public static boolean checkConfig(Config config, boolean override) {
+        boolean result = true;
+        if (override) {
+            initBytecodesToApply(false);
+            setConfig(config);
+            logBytecodeApply();
+            return true;
+        }
+        for (BM bm : config.bytecodesToApply) {
+            if (!bytecodeApply[bm.bytecode.ordinal()][bm.adviceModeOption.ordinal()]) {
+                result = false;
+                break;
+            }
+        }
+        return result;
+    }
+
+    private static void setConfig(Config config) {
+        for (BM ab : config.bytecodesToApply) {
+            for (AdviceMode am : AdviceMode.values()) {
+                boolean isApplied = ab.isApplied(am);
+                if (isApplied) {
+                    bytecodeApply[ab.bytecode.ordinal()][am.ordinal()] = isApplied;
+                }
+            }
+        }
+    }
+
+    private static void initBytecodesToApply(boolean defValue) {
+        for (VMABytecodes b : VMABytecodes.values()) {
+            for (AdviceMode am : AdviceMode.values()) {
+                bytecodeApply[b.ordinal()][am.ordinal()] = defValue;
+            }
+        }
+    }
+
+    public static BM[] compose(BM[] ... bms) {
         int length = 0;
         for (BM[] bm : bms) {
             length += bm.length;
@@ -224,13 +276,13 @@ public class VMAOptions {
     }
 
     private static final String VMA_PKG_PATTERN = "com\\.oracle\\.max\\.vm\\.ext\\.vma\\..*";
-    private static final String JDK_X_PATTERN = "sun.misc.FloatingDecimal";
-    private static final String X_PATTERN = VMA_PKG_PATTERN + "|" + JDK_X_PATTERN;
+    private static final String X_PATTERN = VMA_PKG_PATTERN;
 
     static {
         VMOptions.addFieldOption("-XX:", "VMA", "enable advising");
-        VMOptions.addFieldOption("-XX:", "VMACI", "regex for classes to instrument");
-        VMOptions.addFieldOption("-XX:", "VMACX", "regex for classes not to instrument");
+        VMOptions.addFieldOption("-XX:", "VMAMI", "regex for methods to instrument");
+        VMOptions.addFieldOption("-XX:", "VMAMX", "regex for methods not to instrument");
+        VMOptions.addFieldOption("-XX:", "VMAXJDK", "do not instrument any JDK classes");
         VMOptions.addFieldOption("-XX:", "VMATI", "regex for threads to include");
         VMOptions.addFieldOption("-XX:", "VMATX", "regex for threads to exclude");
         VMOptions.addFieldOption("-XX:", "VMABI", "regex for bytecodes to match");
@@ -241,15 +293,23 @@ public class VMAOptions {
     }
 
     /**
-     * {@link Pattern regex pattern} defining specific classes to instrument.
-     * If this option is set, only these classes are instrumented, otherwise
-     * all classes are instrumented.
+     * {@link Pattern regex pattern} defining specific methods to instrument.
+     * If this option is set, only these methods are candidates for instrumentation, otherwise
+     * all methods are candidates.
+     * Syntax of a method pattern is {@code classpattern#methodpattern}.
+     * The {@code #methodpattern} may be replaced with {@code .*} to indicate all methods.
      */
-    private static String VMACI;
+    private static String VMAMI;
     /**
-     * {@link Pattern regex pattern} defining specific classes to exclude from instrumentation.
+     * {@link Pattern regex pattern} defining specific methods to exclude from instrumentation.
+     * These modify the candidates for inclusion specified by {@link #VMAMI}.
      */
-    private static String VMACX;
+    private static String VMAMX;
+
+    /**
+     * Convenience option to specify the exclusion of all JDK classes.
+     */
+    private static boolean VMAXJDK;
 
     private static String VMATI;
     private static String VMATX;
@@ -269,43 +329,10 @@ public class VMAOptions {
 
     private static String VMATime;
 
-    public enum TimeMode {
-        NONE,
-        WALL {
-            @Override
-            public long getTime() {
-                return System.nanoTime();
-            }
-        },
+    private static VMATimeMode timeMode = VMATimeMode.WALLNS;
 
-        UID {
-            @Override
-            public long getTime() {
-                return uuid.getAndIncrement();
-            }
-        };
-
-        private static AtomicLong uuid = new AtomicLong();
-
-        private boolean absolute;
-
-        public boolean isAbsolute() {
-            return absolute;
-        }
-
-        public void setAbsolute() {
-            absolute = true;
-        }
-
-        public long getTime() {
-            return 0;
-        }
-    }
-
-    private static TimeMode timeMode = TimeMode.WALL;
-
-    private static Pattern classInclusionPattern;
-    private static Pattern classExclusionPattern;
+    private static Pattern methodInclusionPattern;
+    private static Pattern methodExclusionPattern;
 
     private static Pattern threadInclusionPattern;
     private static Pattern threadExclusionPattern;
@@ -333,121 +360,111 @@ public class VMAOptions {
     static String VMASample;
 
     /**
-     * Set true once {@link #initialize} has been called.
+     * If not {@code null} a handler-specific checker for which methods to instrument.
      */
-    private static boolean initialized;
+    private static SpecificInstrumentChecker specificInstrumentChecker;
 
-    /**
-     * The {@link VMAdviceHandler} handler class name.
-     */
-    private static String handlerClassName;
-
-    /**
-     * Not currently interpreted, but could allow a different template class to be built into the boot image.
-     */
-    private static final String VMA_TEMPLATES_PROPERTY = "max.vma.templates";
-
-    /**
-     * Check options.
-     *
-     * @param phase
-     * @return true iff advising is enabled, i.e. {@link #VMA == true}
-     */
-    public static boolean initialize(MaxineVM.Phase phase) {
-        // We execute the setup code below if and only if VMA is set.
-        if (VMA && phase == MaxineVM.Phase.RUNNING) {
-            // always exclude advising packages and key JDK classes
-            String xPattern = X_PATTERN;
-            if (VMACX != null) {
-                xPattern += "|" + VMACX;
-            }
-            if (VMACI != null) {
-                classInclusionPattern = Pattern.compile(VMACI);
-            }
-            classExclusionPattern = Pattern.compile(xPattern);
-
-            if (VMATI != null) {
-                threadInclusionPattern = Pattern.compile(VMATI);
-            }
-            if (VMATX != null) {
-                threadExclusionPattern = Pattern.compile(VMATI);
-            }
-
-
-            if (VMAConfig != null) {
-                String[] vmaConfigs = VMAConfig.split(",");
-                for (String vmaConfig : vmaConfigs) {
-                    StdConfig stdConfig = null;
-                    for (StdConfig c : StdConfig.values()) {
-                        if (c.name.equals(vmaConfig)) {
-                            stdConfig = c;
-                            break;
-                        }
-                    }
-                    if (stdConfig == null) {
-                        error(vmaConfig + " is not a standard VMA configuration");
-                    }
-                    for (BM ab : stdConfig.bytecodesToApply) {
-                        for (AdviceMode am : AdviceMode.values()) {
-                            boolean isApplied = ab.isApplied(am);
-                            if (isApplied) {
-                                bytecodeApply[ab.bytecode.ordinal()][am.ordinal()] = isApplied;
-                            }
-                        }
-                    }
-                }
-            } else {
-                // setup default values
-                for (VMABytecodes b : VMABytecodes.values()) {
-                    for (AdviceMode am : AdviceMode.values()) {
-                        bytecodeApply[b.ordinal()][am.ordinal()] = VMABI == null ? true : false;
-                    }
-                }
-
-                if (VMABI != null) {
-                    Pattern bytecodeInclusionPattern = Pattern.compile(VMABI);
-                    for (VMABytecodes b : VMABytecodes.values()) {
-                        matchBytecode(bytecodeInclusionPattern, b, bytecodeApply[b.ordinal()], true);
-                    }
-                }
-                if (VMABX != null) {
-                    Pattern bytecodeExclusionPattern = Pattern.compile(VMABX);
-                    for (VMABytecodes b : VMABytecodes.values()) {
-                        matchBytecode(bytecodeExclusionPattern, b, bytecodeApply[b.ordinal()], false);
-                    }
-                }
-            }
-
-            if (VMATime != null) {
-                if (VMATime.startsWith("wall")) {
-                    timeMode = TimeMode.WALL;
-                    if (VMATime.endsWith("abs")) {
-                        timeMode.setAbsolute();
-                    }
-                } else if (VMATime.startsWith("uid")) {
-                    timeMode = TimeMode.UID;
-                    if (VMATime.endsWith("abs")) {
-                        timeMode.setAbsolute();
-                    }
-                } else if (VMATime.equals("none")) {
-                    timeMode = TimeMode.NONE;
-                } else {
-                    Log.println("VMA: unknown time mode: " + VMATime);
-                    MaxineVM.native_exit(1);
-                }
-            }
-            if (logger.enabled()) {
-                for (VMABytecodes b : VMABytecodes.values()) {
-                    boolean[] state = bytecodeApply[b.ordinal()];
-                    logger.logBytecodeSetting(b, state[0], state[1]);
-                }
-            }
-            initialized = true;
-        }
-        return VMA;
+    public static void registerSpecificInstrumentChecker(SpecificInstrumentChecker checker) {
+        specificInstrumentChecker = checker;
     }
 
-    public static TimeMode getTimeMode() {
+    /**
+     * Check options and set up the default {@link #bytecodeApply} based on the options,
+     * and compile the {@link Pattern patterns} for method inclusion/exclusion.
+     * This is called in the {@link MaxineVM.Phase#RUNNING running phase} only if {@link #VMA} is {@code true}.
+     * N.B. A handler may override these settings in its initialize method.
+     *
+     */
+    public static void initialize(MaxineVM.Phase phase) {
+        assert VMA && phase == MaxineVM.Phase.RUNNING;
+
+        // always exclude advising packages
+        String xPattern = X_PATTERN;
+        // optionally exclude JDK
+        if (VMAXJDK) {
+            xPattern += "|java.*|sun.*";
+        }
+
+        if (VMAMX != null) {
+            xPattern += "|" + VMAMX;
+        }
+        if (VMAMI != null) {
+            methodInclusionPattern = Pattern.compile(VMAMI);
+        }
+        methodExclusionPattern = Pattern.compile(xPattern);
+
+        if (VMATI != null) {
+            threadInclusionPattern = Pattern.compile(VMATI);
+        }
+        if (VMATX != null) {
+            threadExclusionPattern = Pattern.compile(VMATX);
+        }
+
+        if (VMAConfig != null) {
+            String[] vmaConfigs = VMAConfig.split(",");
+            for (String vmaConfig : vmaConfigs) {
+                Config stdConfig = null;
+                for (Config c : STD_CONFIGS) {
+                    if (c.name.equals(vmaConfig)) {
+                        stdConfig = c;
+                        break;
+                    }
+                }
+                if (stdConfig == null) {
+                    VMAJavaRunScheme.fail(vmaConfig + " is not a standard VMA configuration");
+                }
+                setConfig(stdConfig);
+            }
+        } else {
+            // setup default values
+            initBytecodesToApply(VMABI == null ? true : false);
+
+            if (VMABI != null) {
+                Pattern bytecodeInclusionPattern = Pattern.compile(VMABI);
+                for (VMABytecodes b : VMABytecodes.values()) {
+                    matchBytecode(bytecodeInclusionPattern, b, bytecodeApply[b.ordinal()], true);
+                }
+            }
+            if (VMABX != null) {
+                Pattern bytecodeExclusionPattern = Pattern.compile(VMABX);
+                for (VMABytecodes b : VMABytecodes.values()) {
+                    matchBytecode(bytecodeExclusionPattern, b, bytecodeApply[b.ordinal()], false);
+                }
+            }
+        }
+
+        if (VMATime != null) {
+            if (VMATime.startsWith("wall")) {
+                timeMode = VMATime.startsWith("wallns") ? VMATimeMode.WALLNS : VMATimeMode.WALLMS;
+                if (VMATime.endsWith("abs")) {
+                    timeMode.setAbsolute();
+                }
+            } else if (VMATime.startsWith("id")) {
+                timeMode = VMATime.startsWith("ida") ? VMATimeMode.IDATOMIC : VMATimeMode.ID;
+                if (VMATime.endsWith("abs")) {
+                    timeMode.setAbsolute();
+                }
+            } else if (VMATime.equals("none")) {
+                timeMode = VMATimeMode.NONE;
+            } else {
+                Log.println("VMA: unknown time mode: " + VMATime);
+                MaxineVM.native_exit(1);
+            }
+        }
+
+        logBytecodeApply();
+    }
+
+    private static void logBytecodeApply() {
+        if (logger.enabled()) {
+            for (VMABytecodes b : VMABytecodes.values()) {
+                boolean[] state = bytecodeApply[b.ordinal()];
+                logger.logBytecodeSetting(b, state[0], state[1]);
+            }
+        }
+    }
+
+    public static VMATimeMode getTimeMode() {
         return timeMode;
     }
 
@@ -468,27 +485,26 @@ public class VMAOptions {
         }
     }
 
-    public static boolean instrumentClass(String className) {
-        if (!initialized) {
-            return false;
+    static boolean instrumentMethod(ClassMethodActor methodActor) {
+        if (specificInstrumentChecker != null) {
+            return specificInstrumentChecker.instrument(methodActor);
         }
-        boolean include = classInclusionPattern == null || classInclusionPattern.matcher(className).matches();
+        String matchName = methodActor.format("%H#%n(%p)");
+        boolean include = methodInclusionPattern == null || methodInclusionPattern.matcher(matchName).matches();
         if (include) {
-            include = !classExclusionPattern.matcher(className).matches();
+            include = !methodExclusionPattern.matcher(matchName).matches();
         }
         return include;
     }
 
     /**
      * Check if given method should be instrumented for advising.
-     * Currently limited to per class not per method.
      * @param cma
      */
     public static boolean instrumentForAdvising(ClassMethodActor cma) {
-        boolean include = initialized && VMA;
+        boolean include = VMAJavaRunScheme.isInstrumenting();
         if (include) {
-            final String className = cma.holder().typeDescriptor.toJavaString();
-            include = instrumentClass(className);
+            include = instrumentMethod(cma);
         }
         if (logger.enabled()) {
             logger.logInstrument(cma, include);
@@ -512,11 +528,6 @@ public class VMAOptions {
      */
     public static boolean[] getVMATemplateOptions(int opcode) {
         return bytecodeApply[opcode];
-    }
-
-    private static void error(String msg) {
-        Log.println(msg);
-        MaxineVM.native_exit(1);
     }
 
     @VMLoggerInterface

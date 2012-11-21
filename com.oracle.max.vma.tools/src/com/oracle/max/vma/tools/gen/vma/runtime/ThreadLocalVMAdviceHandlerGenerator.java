@@ -31,9 +31,9 @@ import com.oracle.max.vm.ext.vma.handlers.tl.h.*;
 import com.oracle.max.vma.tools.gen.vma.*;
 
 
-public class ThreadLocalVMAdviceHandlerGenerator {
+public class ThreadLocalVMAdviceHandlerGenerator extends SuperAdviceHandlerGenerator {
     public static void main(String[] args) throws Exception {
-        createGenerator(ThreadLocalVMAdviceHandlerGenerator.class);
+        ThreadLocalVMAdviceHandlerGenerator self = (ThreadLocalVMAdviceHandlerGenerator) createGenerator(ThreadLocalVMAdviceHandlerGenerator.class);
         generateAutoComment();
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
@@ -42,30 +42,21 @@ public class ThreadLocalVMAdviceHandlerGenerator {
                     name.contains("ThreadStarting") || name.contains("ThreadTerminating")) {
                     continue;
                 }
-                generate(m);
+                self.generate(m, self.generateHeader(m));
+                self.generateTrailer(m);
             }
         }
         AdviceGeneratorHelper.updateSource(ThreadLocalVMAdviceHandler.class, null, false);
     }
 
-    private static void generate(Method m) {
+    @Override
+    protected void generate(Method m, int argCount) {
         String name = m.getName();
-        out.printf("    @Override%n");
-        int argCount = generateSignature(m, null);
-        out.printf(" {%n");
         if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
             out.println("        recordNew(arg2);");
-            if (name.equals("adviseAfterNewArray")) {
-                out.println("        MultiNewArrayHelper.handleMultiArray(this, arg1, arg2);");
-            }
-        } else {
-            out.printf("        super.%s(", m.getName());
-            generateInvokeArgs(argCount);
-            if (name.contains("MultiNewArray")) {
-                out.println("        adviseAfterNewArray(arg1, arg2, arg3[0]);");
-            }
+            return;
         }
-        out.printf("    }%n%n");
+        super.generate(m, argCount);
     }
 
 }

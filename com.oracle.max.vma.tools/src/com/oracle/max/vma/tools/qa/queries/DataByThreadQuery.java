@@ -64,7 +64,7 @@ public class DataByThreadQuery extends QueryBase {
                 for (int i = 0; i < thObjectsArray.length; i++) {
                     ObjectRecord td = thObjectsArray[i];
                     if (!summary) {
-                        ps.println(td.toString(traceRun, true, false, true, true, true, true));
+                        ps.println(td.toString(traceRun, true, false, true, true, true));
                     }
                     if (td.getDeletionTime() == 0) {
                         totalLiveObjects++;

@@ -30,11 +30,11 @@ import java.security.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.oracle.max.vm.ext.jjvmti.agents.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.ext.jvmti.*;
 
 /**
@@ -128,8 +128,7 @@ public class EventDelivery extends JJVMTIAgentAdapter implements JJVMTI.EventCal
         }
 
         // prevents recursion and deadlock when code eviction first occurs (which holds a lock preventing compilation)
-        ClassActor.fromJava(EventDelivery.class).findLocalClassMethodActor(
-                        SymbolTable.makeSymbol("compiledMethodUnload"), null).makeTargetMethod();
+        CompileHelper.forceCompile(EventDelivery.class, "compiledMethodUnload");
 
         Pattern eventsPattern = Pattern.compile(pattern);
 

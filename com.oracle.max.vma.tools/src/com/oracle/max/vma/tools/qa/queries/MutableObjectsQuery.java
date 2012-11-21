@@ -54,7 +54,7 @@ public class MutableObjectsQuery extends QueryBase {
                 for (int i = 0; i < a.size(); i++) {
                     ObjectRecord td = a.get(i);
                     if (td.getModifyLifeTime() > 0) {
-                        ps.printf("  %s%n", td.toString(traceRun, false, false, true, true, true, true));
+                        ps.printf("  %s%n", td.toString(traceRun, false, false, true, true, true));
                         for (int j = 0; j < td.getAdviceRecords().size(); j++) {
                             AdviceRecord ar = td.getAdviceRecords().get(j);
                             if (AdviceRecordHelper.accessType(ar) == AccessType.WRITE && ar.time > td.getEndCreationTime()) {

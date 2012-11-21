@@ -81,11 +81,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         super.initialize(phase);
     }
 
-    @Override
-    protected void reportTotalGCTimes() {
-        collect.reportTotalGCTimes();
-    }
-
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, etc.).
      */

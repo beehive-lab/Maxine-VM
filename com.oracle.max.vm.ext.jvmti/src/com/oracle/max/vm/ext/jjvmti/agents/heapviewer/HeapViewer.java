@@ -32,7 +32,6 @@ import java.util.EnumSet;
 import com.oracle.max.vm.ext.jjvmti.agents.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.classfile.constant.SymbolTable;
 import com.sun.max.vm.ext.jvmti.*;
 
 /**
@@ -111,8 +110,7 @@ public class HeapViewer extends NullJJVMTICallbacks implements JJVMTI.HeapCallba
             heapViewer.setEventNotificationMode(JVMTI_ENABLE, E.DATA_DUMP_REQUEST, null); // TODO
             // the heapIteration method must be compiled before iterateThroughHeap is called,
             // as allocation is disabled inside iterateThroughHeap
-            ClassActor.fromJava(HeapViewer.class).findLocalClassMethodActor(
-                    SymbolTable.makeSymbol("heapIteration"), null).makeTargetMethod();
+            CompileHelper.forceCompile(HeapViewer.class, "heapIteration");
         } catch (JJVMTIException ex) {
             fail("initialization error: " + JVMTIError.getName(ex.error));
         }
@@ -189,5 +187,10 @@ public class HeapViewer extends NullJJVMTICallbacks implements JJVMTI.HeapCallba
         return JVMTI_VISIT_OBJECTS;
     }
 
+    @Override
+    public int heapIterationMax(Object obj, Object userData) {
+        // unused
+        return JVMTI_VISIT_OBJECTS;
+    }
 
 }

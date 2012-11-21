@@ -84,6 +84,11 @@ public class JJVMTIAgentAdapter extends JJVMTIAgentAdapterChecker implements JJV
     }
 
     @Override
+    public void includeMaxVMClasses(boolean include) {
+        JVMTI.JVMTI_VM = include;
+    }
+
+    @Override
     public void setEventNotificationMode(int mode, E event, Thread thread) throws JJVMTIException {
         super.setEventNotificationMode(mode, event, thread);
         int error = JVMTIEvents.setEventNotificationMode(env, mode, event, thread);
@@ -814,6 +819,12 @@ public class JJVMTIAgentAdapter extends JJVMTIAgentAdapterChecker implements JJV
     public void iterateThroughHeap(int filter, ClassActor classActor, HeapCallbacks heapCallbacks, Object userData) throws JJVMTIException {
         super.iterateThroughHeap(filter, classActor, heapCallbacks, userData);
         JVMTIHeapFunctions.iterateThroughHeap(env, filter, classActor, heapCallbacks, userData);
+    }
+
+    @Override
+    public void iterateThroughHeapMax(int filter, ClassActor classActor, HeapCallbacks heapCallbacks, Object userData) throws JJVMTIException {
+        super.iterateThroughHeapMax(filter, classActor, heapCallbacks, userData);
+        JVMTIHeapFunctions.iterateThroughHeapMax(env, filter, classActor, heapCallbacks, userData);
     }
 
 
