@@ -57,7 +57,6 @@ public class VMAT1X extends T1X {
     private static final Class<?> BeforeAfterTemplateSourceClass = VMAdviceBeforeAfterTemplateSource.class;
     private static final Class<?> BeforeTemplateSourceClass = VMAdviceBeforeTemplateSource.class;
     private static final Class<?> AfterTemplateSourceClass = VMAdviceAfterTemplateSource.class;
-    private boolean instrumenting;
     T1XTemplate[]  beforeTemplates;
     T1XTemplate[]  afterTemplates;
     Class<?> templateSource = BeforeAfterTemplateSourceClass;
@@ -74,7 +73,6 @@ public class VMAT1X extends T1X {
 
     @Override
     public void initialize(Phase phase) {
-        instrumenting = VMAOptions.initialize(phase);
         stdT1X.initialize(phase);
         if (isHosted() && phase == Phase.HOSTED_COMPILING) {
             super.initialize(phase);
@@ -90,7 +88,7 @@ public class VMAT1X extends T1X {
 
     @Override
     public TargetMethod compile(ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
-        if (instrumenting && !method.holder().isReflectionStub() && VMAOptions.instrumentForAdvising(method)) {
+        if (!method.holder().isReflectionStub() && VMAOptions.instrumentForAdvising(method)) {
             return super.compile(method, isDeopt, install, stats);
         } else {
             return stdT1X.compile(method, false, install, stats);

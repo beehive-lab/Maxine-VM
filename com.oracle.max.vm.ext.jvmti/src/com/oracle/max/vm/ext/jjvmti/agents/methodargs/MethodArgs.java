@@ -123,7 +123,7 @@ public class MethodArgs extends NullJJVMTICallbacks implements JJVMTI.EventCallb
                     for (int i = 0; i < params.length; i++) {
                         Class< ? > param = (Class) params[i];
                         int index = methodActor.isStatic() ? i : i + 1;
-                        System.out.printf("param %d, name %s, type %s, value ", index, lve[index].name, lve[index].signature);
+                        System.out.printf("param %d, name %s, type %s, slot %d, value ", index, lve[index].name, lve[index].signature, lve[index].slot);
                         int slot = lve[index].slot;
                         if (Object.class.isAssignableFrom(param)) {
                             Object paramValue = getLocalObject(null, 0, slot);
