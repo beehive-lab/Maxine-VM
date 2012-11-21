@@ -1,5 +1,5 @@
 library@JDK_TOOLS@path=${JAVA_HOME}/lib/tools.jar
-library@JDK_TOOLS@optional=true
+#library@JDK_TOOLS@optional=true
 
 library@JUNIT@path=${HOME}/.maxine/junit-4.8.jar
 library@JUNIT@urls=http://repo1.maven.org/maven2/junit/junit/4.8/junit-4.8.jar
