@@ -575,7 +575,7 @@ public class JJVMTIAgentAdapterChecker implements JJVMTI {
     }
 
     @Override
-    public void includeMaxVMClasses() {
+    public void includeMaxVMClasses(boolean arg0) {
     }
 
     @Override

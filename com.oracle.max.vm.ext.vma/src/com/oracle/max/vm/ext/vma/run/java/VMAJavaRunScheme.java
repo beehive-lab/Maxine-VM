@@ -114,9 +114,14 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             "VM_ADVISING", false, "For use by VM advising framework");
 
     /**
-     * Set to true when {@link VMAOptions.VMA} is set AND the VM is in a state to start advising.
+     * Set to {@code true} when {@link VMAOptions.VMA} is set AND the VM is in a state to start advising.
      */
     private static boolean advising;
+
+    /**
+     * Set to {@code true} when the VM is ready to start instrumenting methods for advice.
+     */
+    private static boolean instrumenting;
 
     @CONSTANT_WHEN_NOT_ZERO
     private static VMLog vmaVMLog;
@@ -215,12 +220,14 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
         }
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
+                VMAOptions.initialize(phase);
                 if (adviceHandler != null) {
                     adviceHandler.initialise(phase);
                 } else {
                     Log.println("no VMA handler defined");
                     MaxineVM.exit(-1);
                 }
+                instrumenting = true;
                 JDKDeopt.run();
                 // Check for sample mode
                 checkSampleMode();
@@ -230,9 +237,9 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
             if (advising) {
                 disableAdvising();
                 // N.B. daemon threads may still be running and invoking advice.
-                // There is nothing we can do about that as they may be in the act
-                // of logging so disabling advising for them would be meaningless.
-                // This has to be dealt with in the handler.
+                // There is nothing we can do about that as they may be in the process
+                // of invoking advice so disabling advising for them here would be meaningless.
+                // This has to be dealt with in the handler if it matters.
                 adviceHandler.initialise(phase);
             }
         }
@@ -265,6 +272,11 @@ public class VMAJavaRunScheme extends JavaRunScheme implements JVMTIException.VM
     @INLINE
     public static boolean isVMAdvising() {
         return advising;
+    }
+
+    @INLINE
+    static boolean isInstrumenting() {
+        return instrumenting;
     }
 
     /**

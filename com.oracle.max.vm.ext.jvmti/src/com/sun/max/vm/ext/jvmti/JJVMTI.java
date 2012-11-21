@@ -631,6 +631,6 @@ public interface JJVMTI {
     /**
      * Maxine-specific call to include VM classes in the analysis, which are usually suppressed.
      */
-    void includeMaxVMClasses();
+    void includeMaxVMClasses(boolean include);
 
 }

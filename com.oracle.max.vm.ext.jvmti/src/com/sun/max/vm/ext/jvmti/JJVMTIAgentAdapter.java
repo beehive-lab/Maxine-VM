@@ -84,8 +84,8 @@ public class JJVMTIAgentAdapter extends JJVMTIAgentAdapterChecker implements JJV
     }
 
     @Override
-    public void includeMaxVMClasses() {
-        JVMTI.JVMTI_VM = true;
+    public void includeMaxVMClasses(boolean include) {
+        JVMTI.JVMTI_VM = include;
     }
 
     @Override
