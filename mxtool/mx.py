@@ -486,8 +486,9 @@ class Suite:
                 _projects[p.name] = p
         for l in self.libs:
             existing = _libs.get(l.name)
-            if existing is not None:
-                abort('cannot redefine library  ' + l.name)
+            # Temp fix for suites that define same library
+            # if existing is not None:
+                # abort('cannot redefine library  ' + l.name)
             _libs[l.name] = l
 
 class XMLElement(xml.dom.minidom.Element):
