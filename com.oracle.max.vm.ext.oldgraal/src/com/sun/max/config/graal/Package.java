@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,12 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.c1xgraal;
+package com.sun.max.config.graal;
 
 import java.util.*;
 
-import com.oracle.max.criutils.*;
 import com.oracle.graal.phases.*;
+import com.oracle.max.criutils.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
@@ -34,18 +34,14 @@ import com.sun.max.vm.hosted.*;
 public class Package extends BootImagePackage {
 
     public Package() {
-        super("com.oracle.max.vm.ext.c1xgraal.**",
+        super("com.oracle.max.vm.ext.graal.**",
               "com.oracle.graal.compiler.**",
               "com.oracle.graal.graph.**",
               //"com.oracle.graal.graphviz.**",
               "com.oracle.graal.nodes.**",
               "com.oracle.graal.phases.**",
               "com.oracle.graal.snippets.**");
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return CompilationBroker.optName().contains("C1XGraal");
+        JavaPrototype.addObjectIdentityMapContributor(new GraalObjectMapContributor());
     }
 
     public static class GraalObjectMapContributor implements JavaPrototype.ObjectIdentityMapContributor {
@@ -56,6 +52,11 @@ public class Package extends BootImagePackage {
                 objectMap.put(CompilationPrinter.globalOut(), JavaPrototype.NULL);
             }
         }
+    }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return CompilationBroker.optName().contains("OldGraal");
     }
 
     @Override
