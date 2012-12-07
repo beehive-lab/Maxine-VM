@@ -82,6 +82,11 @@ public class CompilationBroker {
      */
     public final RuntimeCompiler optimizingCompiler;
 
+    /**
+     * Other compilers registered with {@link #addCompiler}.
+     */
+    private HashMap<String, RuntimeCompiler> altCompilers;
+
     private static boolean opt;
     private static boolean GCOnRecompilation;
     private static boolean FailOverCompilation = true;
@@ -185,6 +190,8 @@ public class CompilationBroker {
      */
     public static final String COMPILATION_BROKER_CLASS_PROPERTY_NAME = "max.CompilationBroker.class";
 
+    private static CompilationBroker singleton;
+
     /**
      * Creates the single {@link CompilationBroker} instance to be used by the VM.
      * This factory-style instantiation allows a subclass of {@link CompilationBroker} to
@@ -196,14 +203,15 @@ public class CompilationBroker {
     public static CompilationBroker create() {
         final String className = System.getProperty(COMPILATION_BROKER_CLASS_PROPERTY_NAME);
         if (className == null) {
-            return new CompilationBroker();
+            singleton = new CompilationBroker();
         } else {
             try {
-                return (CompilationBroker) Class.forName(className).newInstance();
+                singleton =  (CompilationBroker) Class.forName(className).newInstance();
             } catch (Exception exception) {
                 throw FatalError.unexpected("Error instantiating " + className, exception);
             }
         }
+        return singleton;
     }
 
     /**
@@ -234,6 +242,13 @@ public class CompilationBroker {
         } catch (Exception e) {
             throw FatalError.unexpected("Error instantiating compiler " + name, e);
         }
+    }
+
+    public static void addCompiler(String name, String className) {
+        if (singleton.altCompilers == null) {
+            singleton.altCompilers = new HashMap<String, RuntimeCompiler>();
+        }
+        singleton.altCompilers.put(name, instantiateCompiler(className));
     }
 
     /**
@@ -458,6 +473,11 @@ public class CompilationBroker {
                     } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
                         compiler = baselineCompiler;
                         reason = "CompileCommand";
+                    } else if (altCompilers != null) {
+                        compiler = altCompilers.get(compilerName);
+                        if (compiler != null) {
+                            reason = "CompileCommand";
+                        }
                     }
                 }
                 if (reason == null) {
