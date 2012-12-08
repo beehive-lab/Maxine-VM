@@ -26,7 +26,7 @@ import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.oracle.max.vm.ext.c1x.*;
-import com.oracle.max.vm.ext.graal.*;
+import com.oracle.max.vm.ext.oldgraal.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
