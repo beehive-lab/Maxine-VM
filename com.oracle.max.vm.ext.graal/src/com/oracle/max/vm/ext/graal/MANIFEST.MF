@@ -1,2 +1,2 @@
 Manifest-Version: 1.0
-VMExtension-Class: com.oracle.max.vm.ext.graal.Graal
+VMExtension-Class: com.oracle.max.vm.ext.graal.MaxGraal

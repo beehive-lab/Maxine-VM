@@ -20,8 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.oracle.max.vm.ext.graal;
+
+import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
@@ -29,166 +30,144 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
-import com.sun.max.program.*;
+import com.oracle.graal.api.meta.ProfilingInfo.ExceptionSeen;
+import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
  * Likely temporary indirect between a {@link MethodActor} and a {@link ResolvedJavaMethod},
  * since {@code MethodActor} already implements the old {@link RiResolvedMethod} interface.
  */
-public class MaxResolvedJavaMethod implements ResolvedJavaMethod {
+public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJavaMethod {
 
-    private static ConcurrentHashMap<MethodActor, MaxResolvedJavaMethod> map = new ConcurrentHashMap<MethodActor, MaxResolvedJavaMethod>();
-
-    private MethodActor methodActor;
-
-    static ResolvedJavaMethod get(MethodActor methodActor) {
-        MaxResolvedJavaMethod result = map.get(methodActor);
-        if (result == null) {
-            result = new MaxResolvedJavaMethod(methodActor);
-            map.put(methodActor, result);
-        }
-        return result;
+    protected MaxResolvedJavaMethod(RiResolvedMethod riResolvedMethod) {
+        super(riResolvedMethod);
     }
 
-    private MaxResolvedJavaMethod(MethodActor methodActor) {
-        this.methodActor = methodActor;
+    private RiResolvedMethod riResolvedMethod() {
+        return (RiResolvedMethod) riMethod;
     }
 
-    @Override
-    public String getName() {
-        unimplemented();
-        return null;
+    static MaxResolvedJavaMethod get(RiResolvedMethod riMethod) {
+        return (MaxResolvedJavaMethod) MaxJavaMethod.get(riMethod);
     }
 
-    @Override
-    public Signature getSignature() {
-        unimplemented();
-        return null;
+    static RiResolvedMethod get(ResolvedJavaMethod resolvedJavaMethod) {
+        return (RiResolvedMethod) MaxJavaMethod.get(resolvedJavaMethod);
     }
 
     @Override
     public byte[] getCode() {
-        unimplemented();
-        return null;
+        return riResolvedMethod().code();
     }
 
     @Override
     public int getCodeSize() {
-        unimplemented();
-        return 0;
+        return riResolvedMethod().codeSize();
     }
 
     @Override
     public int getCompiledCodeSize() {
-        unimplemented();
+        unimplemented("ResolvedMethod.getCompiledCodeSize");
         return 0;
     }
 
     @Override
     public int getCompilationComplexity() {
-        unimplemented();
+        unimplemented("ResolvedMethod.getCompilationComplexity");
         return 0;
     }
 
     @Override
     public ResolvedJavaType getDeclaringClass() {
-        unimplemented();
-        return null;
+        return MaxResolvedJavaType.get(riResolvedMethod().holder());
     }
 
     @Override
     public int getMaxLocals() {
-        unimplemented();
-        return 0;
+        return riResolvedMethod().maxLocals();
     }
 
     @Override
     public int getMaxStackSize() {
-        unimplemented();
-        return 0;
+        return riResolvedMethod().maxStackSize();
     }
 
     @Override
     public int getModifiers() {
-        unimplemented();
-        return 0;
+        return riResolvedMethod().accessFlags();
     }
 
     @Override
     public boolean isClassInitializer() {
-        unimplemented();
-        return false;
+        return riResolvedMethod().isClassInitializer();
     }
 
     @Override
     public boolean isConstructor() {
-        unimplemented();
-        return false;
+        return riResolvedMethod().isConstructor();
     }
 
     @Override
     public boolean canBeStaticallyBound() {
-        unimplemented();
-        return false;
+        return riResolvedMethod().canBeStaticallyBound();
     }
 
     @Override
     public ExceptionHandler[] getExceptionHandlers() {
-        unimplemented();
-        return null;
+        RiExceptionHandler[] riExHandlers = riResolvedMethod().exceptionHandlers();
+        ExceptionHandler[] exHandlers = new ExceptionHandler[riExHandlers.length];
+        for (int i = 0; i < riExHandlers.length; i++) {
+            RiExceptionHandler riEx = riExHandlers[i];
+            exHandlers[i] = new ExceptionHandler(riEx.startBCI(), riEx.endBCI(), riEx.handlerBCI(),
+                            riEx.catchTypeCPI(), MaxJavaType.get(riEx.catchType()));
+        }
+        return exHandlers;
     }
 
     @Override
     public StackTraceElement asStackTraceElement(int bci) {
-        unimplemented();
+        unimplemented("ResolvedMethod.asStackTraceElement");
         return null;
     }
 
     @Override
     public ProfilingInfo getProfilingInfo() {
-        unimplemented();
-        return null;
+        // We do not want to deal with exception handling right now, so just assume nothing throws an exception...
+        return DefaultProfilingInfo.get(ExceptionSeen.FALSE);
     }
+
+    private final Map<Object, Object> compilerStorage = new ConcurrentHashMap<Object, Object>();
 
     @Override
     public Map<Object, Object> getCompilerStorage() {
-        unimplemented();
-        return null;
+        return compilerStorage;
     }
 
     @Override
     public ConstantPool getConstantPool() {
-        unimplemented();
-        return null;
+        return MaxConstantPool.get(riResolvedMethod().getConstantPool());
     }
 
     @Override
     public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-        unimplemented();
-        return null;
+        return riResolvedMethod().getAnnotation(annotationClass);
     }
 
     @Override
     public Annotation[][] getParameterAnnotations() {
-        unimplemented();
-        return null;
+        return riResolvedMethod().getParameterAnnotations();
     }
 
     @Override
     public Type[] getGenericParameterTypes() {
-        unimplemented();
-        return null;
+        return riResolvedMethod().getGenericParameterTypes();
     }
 
     @Override
     public boolean canBeInlined() {
-        unimplemented();
+        // TODO implement properly. for now we want the invoke
         return false;
-    }
-
-    private static void unimplemented() {
-        ProgramError.unexpected("unimplemented");
     }
 
 }

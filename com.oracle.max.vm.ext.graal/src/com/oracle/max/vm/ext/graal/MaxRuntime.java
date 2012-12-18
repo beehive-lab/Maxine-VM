@@ -21,137 +21,221 @@
  * questions.
  */
 package com.oracle.max.vm.ext.graal;
+
+import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
-import com.oracle.graal.api.code.RuntimeCall.Descriptor;
+import com.oracle.graal.api.code.RuntimeCallTarget.Descriptor;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.calc.*;
+import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.snippets.*;
+import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 
 
 
 public class MaxRuntime implements GraalCodeCacheProvider {
 
+    private final Map<Class< ? extends Node>, LoweringProvider> lowerings = new HashMap<>();
+
+    MaxTargetDescription maxTargetDescription;
+
+    MaxRuntime(MaxTargetDescription maxTargetDescription) {
+        this.maxTargetDescription = maxTargetDescription;
+    }
+
     @Override
     public InstalledCode addMethod(ResolvedJavaMethod method, CompilationResult compResult, CodeInfo[] info) {
-        unimplemented();
+        unimplemented("addMethod");
         return null;
     }
 
     @Override
     public int getSizeOfLockData() {
-        unimplemented();
+        unimplemented("getSizeOfLockData");
         return 0;
     }
 
     @Override
     public String disassemble(CodeInfo code, CompilationResult tm) {
-        unimplemented();
+        unimplemented("disassemble");
         return null;
     }
 
     @Override
-    public RegisterConfig lookupRegisterConfig(JavaMethod method) {
-        unimplemented();
-        return null;
+    public RegisterConfig lookupRegisterConfig(ResolvedJavaMethod method) {
+        return MaxRegisterConfig.get(vm().registerConfigs.getRegisterConfig((ClassMethodActor) MaxJavaMethod.get(method)));
     }
 
     @Override
     public int getCustomStackAreaSize() {
-        unimplemented();
         return 0;
     }
 
     @Override
     public int getMinimumOutgoingSize() {
-        unimplemented();
         return 0;
     }
 
     @Override
-    public Object lookupCallTarget(Object target) {
-        unimplemented();
-        return null;
+    public Object lookupCallTarget(Object callTarget) {
+        /*
+        if (callTarget instanceof SubstrateRuntimeCall) {
+            return metaAccess.lookupJavaMethod(((SubstrateRuntimeCall) callTarget).getDescriptor().getMethod());
+        }
+        */
+        return callTarget;
     }
 
     @Override
-    public RuntimeCall lookupRuntimeCall(Descriptor descriptor) {
-        unimplemented();
+    public RuntimeCallTarget lookupRuntimeCall(Descriptor descriptor) {
+        unimplemented("lookupRuntimeCall");
         return null;
     }
 
     @Override
     public int encodeDeoptActionAndReason(DeoptimizationAction action, DeoptimizationReason reason) {
-        unimplemented();
+        unimplemented("encodeDeoptActionAndReason");
         return 0;
     }
 
     @Override
     public boolean needsDataPatch(Constant constant) {
-        unimplemented();
+        unimplemented("needsDataPatch");
         return false;
     }
 
     @Override
     public ResolvedJavaType lookupJavaType(Class< ? > clazz) {
-        unimplemented();
-        return null;
+        return MaxResolvedJavaType.get(ClassActor.fromJava(clazz));
     }
 
     @Override
     public ResolvedJavaMethod lookupJavaMethod(Method reflectionMethod) {
-        unimplemented();
-        return null;
+        return MaxResolvedJavaMethod.get(MethodActor.fromJava(reflectionMethod));
     }
 
     @Override
     public ResolvedJavaField lookupJavaField(Field reflectionField) {
-        unimplemented();
-        return null;
+        return MaxResolvedJavaField.get(FieldActor.fromJava(reflectionField));
     }
 
     @Override
     public ResolvedJavaType lookupJavaType(Constant constant) {
-        unimplemented();
+        if (constant.getKind() == Kind.Object) {
+            Object o = constant.asObject();
+            if (o != null) {
+                return MaxResolvedJavaType.get(ClassActor.fromJava(o.getClass()));
+            }
+        }
         return null;
     }
 
     @Override
     public boolean constantEquals(Constant x, Constant y) {
-        unimplemented();
-        return false;
-    }
-
-    @Override
-    public int lookupArrayLength(Constant array) {
-        unimplemented();
-        return 0;
-    }
-
-    @Override
-    public void lower(Node n, LoweringTool tool) {
-        unimplemented();
-
-    }
-
-    @Override
-    public StructuredGraph intrinsicGraph(ResolvedJavaMethod caller, int bci, ResolvedJavaMethod method, List< ? extends Node> parameters) {
-        unimplemented();
-        return null;
-    }
-
-    private static void unimplemented() {
-        ProgramError.unexpected("unimplemented");
+        assert x.getKind() == Kind.Object && y.getKind() == Kind.Object;
+        return x.asObject() == y.asObject();
     }
 
     @Override
     public ResolvedJavaMethod lookupJavaConstructor(Constructor reflectionConstructor) {
-        unimplemented();
+        unimplemented("lookupJavaConstructor");
         return null;
     }
+
+    @Override
+    public int lookupArrayLength(Constant array) {
+        return Array.getLength(array.asObject());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void lower(Node n, LoweringTool tool) {
+        LoweringProvider lowering = lowerings.get(n.getClass());
+        ProgramError.check(lowering != null, "missing lowering for node: " + n.getClass().getSimpleName());
+        lowering.lower(n, tool);
+    }
+
+    @Override
+    public StructuredGraph intrinsicGraph(ResolvedJavaMethod caller, int bci, ResolvedJavaMethod method, List< ? extends Node> parameters) {
+        unimplemented("intrinsicGraph");
+        return null;
+    }
+
+    public void init() {
+        // Snippets cannot have optimistic assumptions.
+        Assumptions assumptions = new Assumptions(false);
+        SnippetInstaller installer = new SnippetInstaller(this, assumptions, maxTargetDescription);
+        GraalIntrinsics.installIntrinsics(installer);
+        installer.install(NewSnippets.class);
+
+        lowerings.put(InvokeNode.class, new InvokeLowering());
+        lowerings.put(InvokeWithExceptionNode.class, new InvokeLowering());
+        NewSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
+    }
+
+    protected class InvokeLowering implements LoweringProvider<FixedNode> {
+
+        @Override
+        public void lower(FixedNode node, LoweringTool tool) {
+            StructuredGraph graph = (StructuredGraph) node.graph();
+            Invoke invoke = (Invoke) node;
+            if (invoke.callTarget() instanceof MethodCallTargetNode) {
+                MethodCallTargetNode callTarget = invoke.methodCallTarget();
+                NodeInputList<ValueNode> parameters = callTarget.arguments();
+                ValueNode receiver = parameters.size() <= 0 ? null : parameters.get(0);
+                if (!callTarget.isStatic() && receiver.kind() == Kind.Object && !receiver.objectStamp().nonNull()) {
+                    IsNullNode isNull = graph.unique(new IsNullNode(receiver));
+                    graph.addBeforeFixed(node, graph.add(new FixedGuardNode(isNull, DeoptimizationReason.NullCheckException, null, true, invoke.leafGraphId())));
+                }
+                Kind[] signature = MetaUtil.signatureToKinds(callTarget.targetMethod().getSignature(), callTarget.isStatic() ? null : callTarget.targetMethod().getDeclaringClass().getKind());
+                CallingConvention.Type callType = CallingConvention.Type.JavaCall;
+
+                CallTargetNode loweredCallTarget = null;
+                switch (callTarget.invokeKind()) {
+                    case Static:
+                    case Special:
+                        loweredCallTarget = graph.add(new DirectCallTargetNode(parameters, callTarget.returnStamp(), signature, callTarget.targetMethod(), callType));
+                        break;
+                    case Virtual:
+                        /*
+                    case Interface:
+                        ClassMethodActor method = (ClassMethodActor) callTarget.targetMethod();
+                        if (method.getImplementations().length == 0) {
+                            // We are calling an abstract method with no implementation, i.e., the closed-world analysis
+                            // showed that there is no concrete receiver ever allocated. This must be dead code.
+                            graph.addBeforeFixed(node, graph.add(new FixedGuardNode(ConstantNode.forBoolean(true, graph), DeoptimizationReason.UnreachedCode, null, true, invoke.leafGraphId())));
+                            return;
+                        }
+                        int vtableEntryOffset = NumUtil.safeToInt(hubLayout.getArrayElementOffset(method.getVTableIndex()));
+
+                        ReadNode hub = graph.add(new ReadNode(receiver, LocationNode.create(LocationNode.FINAL_LOCATION, Kind.Object, objectLayout.hubOffset(), graph), StampFactory.objectNonNull()));
+                        LocationNode entryLoc = LocationNode.create(LocationNode.FINAL_LOCATION, target.wordKind, vtableEntryOffset, graph);
+                        ReadNode entry = graph.add(new ReadNode(hub, entryLoc, StampFactory.forKind(target.wordKind)));
+                        loweredCallTarget = graph.add(new IndirectCallTargetNode(entry, parameters, callTarget.returnStamp(), signature, callTarget.targetMethod(), callType));
+
+                        graph.addBeforeFixed(node, hub);
+                        graph.addAfterFixed(hub, entry);
+                        break;
+                        */
+                    default:
+                        ProgramError.unknownCase();
+                }
+                callTarget.replaceAndDelete(loweredCallTarget);
+            }
+        }
+    }
+
 
 }

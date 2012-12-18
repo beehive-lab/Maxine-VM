@@ -103,6 +103,27 @@ public final class CiBitMap implements Serializable {
     }
 
     /**
+     * Helper method for converting from a {@link BitSet}.
+     *
+     * @param bitmap the array from {@code BitSet}
+     * @param wordsInUse the logical number of words of {@code bitmap} in use
+     * @return
+     */
+    public static CiBitMap fromLongs(long[] bitmap, int wordsInUse) {
+        CiBitMap bm = new CiBitMap(64 * wordsInUse);
+        if (wordsInUse > 0) {
+            bm.low = bitmap[0];
+            if (wordsInUse > 1) {
+                bm.extra = new long[wordsInUse - 1];
+                for (int i = 1; i < wordsInUse; i++) {
+                    bm.extra[i - 1] = bitmap[i];
+                }
+            }
+        }
+        return bm;
+    }
+
+    /**
      * Constructs a new bit map with the specified length.
      *
      * @param length the length of the bitmap
