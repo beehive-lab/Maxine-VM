@@ -22,10 +22,9 @@
  */
 
 package com.oracle.max.vm.ext.graal;
-import static com.sun.max.vm.MaxineVM.*;
-
 import java.util.concurrent.*;
 
+import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.compiler.*;
 import com.oracle.graal.graph.*;
@@ -34,7 +33,10 @@ import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.PhasePlan.PhasePosition;
+import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -43,7 +45,7 @@ import com.sun.max.vm.compiler.target.*;
 /**
  * Integration of the Graal compiler into Maxine's compilation framework.
  */
-public class Graal implements RuntimeCompiler {
+public class MaxGraal implements RuntimeCompiler {
 
     private static class MaxGraphCache implements GraphCache {
 
@@ -61,51 +63,65 @@ public class Graal implements RuntimeCompiler {
     }
 
     private static final String NAME = "Graal";
+    // The singleton instance of this compiler
+    private static MaxGraal singleton;
+
     private GraalCompiler compiler;
     public MaxRuntime runtime;
     private OptimisticOptimizations optimisticOpts;
     private MaxGraphCache cache;
 
     public static void onLoad(String args) {
-
+        createCompiler();
     }
 
     @Override
     public void initialize(Phase phase) {
-        if (isHosted() && phase == Phase.HOSTED_COMPILING) {
-            createCompiler();
-        }
-
-        if (phase == Phase.STARTING && compiler == null) {
-            createCompiler();
-        }
-
+        // In extension mode, this is only called in the RUNNING phase,
+        // at which point there is nothing else to do.
     }
 
-    private void createCompiler() {
-        if (compiler == null) {
-            runtime = new MaxRuntime();
-            MaxTargetDescription td = new MaxTargetDescription();
-            compiler = new GraalCompiler(runtime, td, new MaxAMD64Backend(runtime, td));
-            optimisticOpts = OptimisticOptimizations.ALL;
-            cache = new MaxGraphCache();
-            CompilationBroker.addCompiler(NAME, "com.oracle.max.vm.ext.graal.Graal");
-        }
+    private static void createCompiler() {
+        singleton = (MaxGraal) CompilationBroker.addCompiler(NAME, "com.oracle.max.vm.ext.graal.MaxGraal");
+        MaxTargetDescription td = new MaxTargetDescription();
+        singleton.runtime = new MaxRuntime(td);
+        singleton.compiler = new GraalCompiler(singleton.runtime, td, new MaxAMD64Backend(singleton.runtime, td));
+        singleton.optimisticOpts = OptimisticOptimizations.ALL;
+        singleton.cache = new MaxGraphCache();
+        singleton.runtime.init();
+    }
+
+    @NEVER_INLINE
+    static void unimplemented(String methodName) {
+        ProgramError.unexpected("unimplemented: " + methodName);
     }
 
     @Override
     public TargetMethod compile(ClassMethodActor methodActor, boolean isDeopt, boolean install, CiStatistics stats) {
-        PhasePlan phasePlan = new PhasePlan();
-        ResolvedJavaMethod method = MaxResolvedJavaMethod.get(methodActor);
+        try {
+            PhasePlan phasePlan = new PhasePlan();
+            ResolvedJavaMethod method = MaxResolvedJavaMethod.get(methodActor);
 
-        StructuredGraph graph = (StructuredGraph) method.getCompilerStorage().get(Graph.class);
-        if (graph == null) {
-            GraphBuilderPhase graphBuilderPhase = new GraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(), optimisticOpts);
-            phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
-            graph = new StructuredGraph(method);
+            StructuredGraph graph = (StructuredGraph) method.getCompilerStorage().get(Graph.class);
+            if (graph == null) {
+                GraphBuilderPhase graphBuilderPhase = new GraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(), optimisticOpts);
+                phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
+                graph = new StructuredGraph(method);
+            }
+            CompilationResult result = compiler.compileMethod(method, graph, cache, phasePlan, optimisticOpts);
+            MaxTargetMethod graalTM = new MaxTargetMethod(methodActor, MaxCiTargetMethod.create(result), true);
+            // compile with C1X for comparison
+            TargetMethod c1xTM = CompilationBroker.singleton.optimizingCompiler.compile(methodActor, isDeopt, install, stats);
+            compare(graalTM, c1xTM);
+            return graalTM;
+        } catch (Throwable t) {
+            ProgramError.unexpected(t);
+            return null;
         }
-        compiler.compileMethod(method, graph, cache, phasePlan, optimisticOpts);
-        return null;
+    }
+
+    private static void compare(TargetMethod grallTM, TargetMethod c1xTM) {
+
     }
 
     @Override

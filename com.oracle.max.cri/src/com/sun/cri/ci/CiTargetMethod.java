@@ -54,7 +54,7 @@ public class CiTargetMethod implements Serializable {
     public static class Safepoint extends Site implements Comparable<Safepoint> {
         public final CiDebugInfo debugInfo;
 
-        Safepoint(int pcOffset, CiDebugInfo debugInfo) {
+        public Safepoint(int pcOffset, CiDebugInfo debugInfo) {
             super(pcOffset);
             this.debugInfo = debugInfo;
         }

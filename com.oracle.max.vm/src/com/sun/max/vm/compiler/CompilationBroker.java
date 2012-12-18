@@ -90,6 +90,7 @@ public class CompilationBroker {
     private static boolean opt;
     private static boolean GCOnRecompilation;
     private static boolean FailOverCompilation = true;
+    private static boolean VMExtOpt = true;
     static int PrintCodeCacheMetrics;
 
     static {
@@ -98,6 +99,7 @@ public class CompilationBroker {
         addFieldOption("-XX:", "GCOnRecompilation", "Force GC before every re-compilation.");
         addFieldOption("-XX:", "FailOverCompilation", "Retry failed compilations with another compiler (if available).");
         addFieldOption("-XX:", "PrintCodeCacheMetrics", "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
+        addFieldOption("-XX:", "VMExtOpt", "Compile VM extensions with optimizing compiler (default: true");
     }
 
     @RESET
@@ -190,7 +192,7 @@ public class CompilationBroker {
      */
     public static final String COMPILATION_BROKER_CLASS_PROPERTY_NAME = "max.CompilationBroker.class";
 
-    private static CompilationBroker singleton;
+    public static CompilationBroker singleton;
 
     /**
      * Creates the single {@link CompilationBroker} instance to be used by the VM.
@@ -235,7 +237,6 @@ public class CompilationBroker {
         }
     }
 
-    @HOSTED_ONLY
     public static RuntimeCompiler instantiateCompiler(String name) {
         try {
             return (RuntimeCompiler) Class.forName(name).newInstance();
@@ -244,11 +245,13 @@ public class CompilationBroker {
         }
     }
 
-    public static void addCompiler(String name, String className) {
+    public static RuntimeCompiler addCompiler(String name, String className) {
         if (singleton.altCompilers == null) {
             singleton.altCompilers = new HashMap<String, RuntimeCompiler>();
         }
-        singleton.altCompilers.put(name, instantiateCompiler(className));
+        RuntimeCompiler compiler = instantiateCompiler(className);
+        singleton.altCompilers.put(name, compiler);
+        return compiler;
     }
 
     /**
@@ -288,6 +291,11 @@ public class CompilationBroker {
         optimizingCompiler.initialize(phase);
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);
+        }
+        if (altCompilers != null) {
+            for (RuntimeCompiler altCompiler : altCompilers.values()) {
+                altCompiler.initialize(phase);
+            }
         }
 
         if (isHosted()) {
@@ -488,7 +496,7 @@ public class CompilationBroker {
                         if (VMTI.handler().hasBreakpoints(cma)) {
                             reason = "vmti";
                             compiler = baselineCompiler;
-                        } else if (!isDeopt && cma.isVM()) {
+                        } else if (!isDeopt && cma.isVM() && VMExtOpt) {
                             // compile VM extensions with the opt compiler (cf isHosted)
                             reason = "vm";
                             compiler = optimizingCompiler;
