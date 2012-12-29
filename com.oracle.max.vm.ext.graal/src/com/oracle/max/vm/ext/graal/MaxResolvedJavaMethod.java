@@ -32,6 +32,7 @@ import java.util.concurrent.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.api.meta.ProfilingInfo.ExceptionSeen;
 import com.sun.cri.ri.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
@@ -127,8 +128,8 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public StackTraceElement asStackTraceElement(int bci) {
-        unimplemented("ResolvedMethod.asStackTraceElement");
-        return null;
+        ClassMethodActor cma = (ClassMethodActor) riMethod;
+        return new StackTraceElement(cma.format("%H"), riResolvedMethod().name(), cma.sourceFileName(), cma.codeAttribute().lineNumberTable().findLineNumber(bci));
     }
 
     @Override

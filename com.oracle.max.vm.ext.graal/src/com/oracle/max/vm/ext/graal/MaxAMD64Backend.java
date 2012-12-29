@@ -97,7 +97,7 @@ public class MaxAMD64Backend extends Backend {
                 generator.adapt(callee, os);
                 byte[] bytes = os.toByteArray();
                 for (byte b : bytes) {
-                    asm.codeBuffer.emitByte(b);
+                    asm.codeBuffer.emitByte(b & 0xFF);
                 }
             }
 
