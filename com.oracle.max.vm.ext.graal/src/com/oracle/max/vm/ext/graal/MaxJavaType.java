@@ -28,6 +28,7 @@ import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.api.meta.Kind;
 import com.sun.cri.ri.*;
 
 
@@ -83,7 +84,10 @@ public class MaxJavaType implements JavaType {
 
     @Override
     public ResolvedJavaType resolve(ResolvedJavaType accessingClass) {
-        unimplemented("MaxType.resolve");
+        if (this instanceof ResolvedJavaType) {
+            return (ResolvedJavaType) this;
+        }
+        unimplemented("JavaType.resolve");
         return null;
     }
 

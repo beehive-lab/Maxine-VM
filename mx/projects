@@ -1,12 +1,14 @@
 library@JDK_TOOLS@path=${JAVA_HOME}/lib/tools.jar
-#library@JDK_TOOLS@optional=true
+library@JDK_TOOLS@optional=true
+
+library@JDK_XTOOLS@path=${JAVA_HOME}/lib/xtools.jar
 
 library@JUNIT@path=${HOME}/.maxine/junit-4.8.jar
 library@JUNIT@urls=http://repo1.maven.org/maven2/junit/junit/4.8/junit-4.8.jar
 library@JUNIT@eclipse.container=org.eclipse.jdt.junit.JUNIT_CONTAINER/4
 
-library@CHECKSTYLE@path=${HOME}/.maxine/checkstyle-5.4-all.jar
-library@CHECKSTYLE@urls=jar:http://sourceforge.net/projects/checkstyle/files/checkstyle/5.4/checkstyle-5.4-bin.zip/download!/checkstyle-5.4/checkstyle-5.4-all.jar
+library@CHECKSTYLE@path=${HOME}/.maxine/checkstyle-5.5-all.jar
+library@CHECKSTYLE@urls=jar:http://sourceforge.net/projects/checkstyle/files/checkstyle/5.5/checkstyle-5.5-bin.zip/download!/checkstyle-5.5/checkstyle-5.5-all.jar
 
 library@JLF_ICONS@path=com.oracle.max.tele.ins/jlfgr-1_0.jar
 
@@ -80,7 +82,7 @@ project@com.oracle.max.vm.ext.c1x@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.c1x@javaCompliance=1.6
 
 project@com.oracle.max.vm.ext.graal@sourceDirs=src
-project@com.oracle.max.vm.ext.graal@dependencies=com.oracle.max.vm.ext.maxri,com.oracle.graal.api.meta,com.oracle.graal.api.code,com.oracle.graal.amd64,com.oracle.graal.compiler,com.oracle.graal.compiler.amd64,com.oracle.graal.snippets,com.oracle.max.vm
+project@com.oracle.max.vm.ext.graal@dependencies=com.oracle.max.vm.ext.maxri,com.oracle.graal.api.meta,com.oracle.graal.api.code,com.oracle.graal.amd64,com.oracle.graal.compiler,com.oracle.graal.compiler.amd64,com.oracle.graal.printer,com.oracle.graal.snippets,com.oracle.max.vm
 project@com.oracle.max.vm.ext.graal@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.graal@javaCompliance=1.6
 

@@ -711,7 +711,7 @@ def wikidoc(args):
 
     mx.javadoc(args, parser=ArgumentParser('mx wikidoc'), docDir='wikidoc', includeDeps=False, stdDoclet=False)
 
-def mx_init():
+def mx_init(suite):
     mx.add_argument('--vmdir', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
 
     commands = {
@@ -747,7 +747,7 @@ def mx_init():
         'vm': [vm, '[options] [class | -jar jarfile]  [args...]'],
         'wikidoc': [wikidoc, '[options]']
     }
-    mx.commands.update(commands)
+    mx.update_commands(suite, commands)
 
 def mx_post_parse_cmd_line(opts):
     global _vmdir

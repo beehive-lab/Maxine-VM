@@ -84,8 +84,8 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public boolean isPrimitive() {
-        unimplemented("MaxResolvedType.isPrimitive");
-        return false;
+        ClassActor ca = (ClassActor) riType;
+        return ca.isPrimitiveClassActor();
     }
 
     @Override
@@ -159,8 +159,8 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public ResolvedJavaMethod resolveMethod(ResolvedJavaMethod method) {
-        unimplemented("MaxResolvedType.resolveMethod");
-        return null;
+        MaxResolvedJavaMethod maxMethod = (MaxResolvedJavaMethod) method;
+        return MaxResolvedJavaMethod.get(riResolvedType().resolveMethodImpl((RiResolvedMethod) maxMethod.riMethod));
     }
 
     @Override

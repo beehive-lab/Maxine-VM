@@ -29,13 +29,16 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
+import com.oracle.graal.api.code.CodeUtil.RefMapFormatter;
 import com.oracle.graal.api.code.RuntimeCallTarget.Descriptor;
+import com.oracle.graal.api.code.CompilationResult.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.printer.*;
 import com.oracle.graal.snippets.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.max.program.*;
@@ -68,9 +71,50 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     }
 
     @Override
-    public String disassemble(CodeInfo code, CompilationResult tm) {
-        unimplemented("disassemble");
-        return null;
+    public String disassemble(CodeInfo info, CompilationResult tm) {
+        byte[] code = info.getCode();
+        HexCodeFile hcf = new HexCodeFile(code, info.getStart(), maxTargetDescription.arch.getName(), maxTargetDescription.wordSize * 8);
+        if (tm != null) {
+            HexCodeFile.addAnnotations(hcf, tm.getAnnotations());
+            addExceptionHandlersComment(tm, hcf);
+            Register fp = RegisterMap.toGraal(vm().registerConfigs.standard.frame);
+            RefMapFormatter slotFormatter = new RefMapFormatter(maxTargetDescription.arch, maxTargetDescription.wordSize, fp, 0);
+            for (Safepoint safepoint : tm.getSafepoints()) {
+                if (safepoint instanceof Call) {
+                    Call call = (Call) safepoint;
+                    if (call.debugInfo != null) {
+                        hcf.addComment(call.pcOffset + call.size, CodeUtil.append(new StringBuilder(100), call.debugInfo, slotFormatter).toString());
+                    }
+                } else {
+                    if (safepoint.debugInfo != null) {
+                        hcf.addComment(safepoint.pcOffset, CodeUtil.append(new StringBuilder(100), safepoint.debugInfo, slotFormatter).toString());
+                    }
+                    addOperandComment(hcf, safepoint.pcOffset, "{safepoint}");
+                }
+            }
+            for (DataPatch site : tm.getDataReferences()) {
+                hcf.addOperandComment(site.pcOffset, "{" + site.constant + "}");
+            }
+        }
+        return hcf.toEmbeddedString();
+    }
+
+    private static void addExceptionHandlersComment(CompilationResult tm, HexCodeFile hcf) {
+        if (!tm.getExceptionHandlers().isEmpty()) {
+            String nl = HexCodeFile.NEW_LINE;
+            StringBuilder buf = new StringBuilder("------ Exception Handlers ------").append(nl);
+            for (CompilationResult.ExceptionHandler e : tm.getExceptionHandlers()) {
+                buf.append("    ").append(e.pcOffset).append(" -> ").append(e.handlerPos).append(nl);
+                hcf.addComment(e.pcOffset, "[exception -> " + e.handlerPos + "]");
+                hcf.addComment(e.handlerPos, "[exception handler for " + e.pcOffset + "]");
+            }
+            hcf.addComment(0, buf.toString());
+        }
+    }
+
+    private static void addOperandComment(HexCodeFile hcf, int pos, String comment) {
+        String oldValue = hcf.addOperandComment(pos, comment);
+        assert oldValue == null : "multiple comments for operand of instruction at " + pos + ": " + comment + ", " + oldValue;
     }
 
     @Override
@@ -98,10 +142,38 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         return callTarget;
     }
 
+    private class MaxRuntimeCallTarget implements RuntimeCallTarget {
+        private final Descriptor descriptor;
+        private final CallingConvention callingConvention;
+
+        MaxRuntimeCallTarget(Descriptor descriptor) {
+            this.descriptor = descriptor;
+            RegisterConfig registerConfig = MaxRegisterConfig.get(MaxineVM.vm().registerConfigs.standard);
+            this.callingConvention = registerConfig.getCallingConvention(CallingConvention.Type.RuntimeCall, descriptor.getResultKind(), descriptor.getArgumentKinds(),
+                            maxTargetDescription, false);
+        }
+
+        @Override
+        public CallingConvention getCallingConvention() {
+            return callingConvention;
+        }
+
+        @Override
+        public long getMaxCallTargetOffset() {
+            // TODO Check
+            return -1;
+        }
+
+        @Override
+        public Descriptor getDescriptor() {
+            return descriptor;
+        }
+
+    }
+
     @Override
     public RuntimeCallTarget lookupRuntimeCall(Descriptor descriptor) {
-        unimplemented("lookupRuntimeCall");
-        return null;
+        return new MaxRuntimeCallTarget(descriptor);
     }
 
     @Override
@@ -165,12 +237,6 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         LoweringProvider lowering = lowerings.get(n.getClass());
         ProgramError.check(lowering != null, "missing lowering for node: " + n.getClass().getSimpleName());
         lowering.lower(n, tool);
-    }
-
-    @Override
-    public StructuredGraph intrinsicGraph(ResolvedJavaMethod caller, int bci, ResolvedJavaMethod method, List< ? extends Node> parameters) {
-        unimplemented("intrinsicGraph");
-        return null;
     }
 
     public void init() {

@@ -56,7 +56,8 @@ public class MaxSignature implements Signature {
 
     @Override
     public JavaType getParameterType(int index, ResolvedJavaType accessingClass) {
-        return MaxJavaType.get(riSignature.argumentTypeAt(index, MaxResolvedJavaType.get(accessingClass)));
+        RiResolvedType accessingType = accessingClass == null ? null : MaxResolvedJavaType.get(accessingClass);
+        return MaxJavaType.get(riSignature.argumentTypeAt(index, accessingType));
     }
 
     @Override
@@ -66,7 +67,8 @@ public class MaxSignature implements Signature {
 
     @Override
     public JavaType getReturnType(ResolvedJavaType accessingClass) {
-        return MaxJavaType.get(riSignature.returnType(MaxResolvedJavaType.get(accessingClass)));
+        RiResolvedType accessingType = accessingClass == null ? null : MaxResolvedJavaType.get(accessingClass);
+        return MaxJavaType.get(riSignature.returnType(accessingType));
     }
 
     @Override

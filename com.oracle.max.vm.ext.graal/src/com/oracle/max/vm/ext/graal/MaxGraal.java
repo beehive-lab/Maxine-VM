@@ -22,17 +22,20 @@
  */
 
 package com.oracle.max.vm.ext.graal;
+import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.compiler.*;
+import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.PhasePlan.PhasePosition;
+import com.oracle.graal.printer.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -41,6 +44,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Integration of the Graal compiler into Maxine's compilation framework.
@@ -72,7 +76,14 @@ public class MaxGraal implements RuntimeCompiler {
     private MaxGraphCache cache;
 
     public static void onLoad(String args) {
-        createCompiler();
+        // Graal uses the context class loader during snippet instrinsification
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(VMClassLoader.VM_CLASS_LOADER);
+            createCompiler();
+        } finally {
+            Thread.currentThread().setContextClassLoader(cl);
+        }
     }
 
     @Override
@@ -96,9 +107,20 @@ public class MaxGraal implements RuntimeCompiler {
         ProgramError.unexpected("unimplemented: " + methodName);
     }
 
+    private static DebugConfig makeDebugConfig(boolean dump) {
+        if (dump) {
+            Debug.enable();
+            return Debug.fixedConfig(false, true, false, false, Arrays.asList(new GraphPrinterDumpHandler(), new CFGPrinterObserver()), System.out);
+        } else {
+            return Debug.fixedConfig(false, false, false, false, new ArrayList<DebugDumpHandler>(), System.out);
+        }
+    }
+
     @Override
     public TargetMethod compile(ClassMethodActor methodActor, boolean isDeopt, boolean install, CiStatistics stats) {
         try {
+            DebugConfig debugConfig = makeDebugConfig(true);
+            Debug.setConfig(debugConfig);
             PhasePlan phasePlan = new PhasePlan();
             ResolvedJavaMethod method = MaxResolvedJavaMethod.get(methodActor);
 
