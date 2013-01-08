@@ -48,6 +48,9 @@ import com.sun.max.vm.type.*;
 
 /**
  * Integration of the Graal compiler into Maxine's compilation framework.
+ * Currently the compiler is loaded as a VM extension and not included in the boot image.
+ * Amongst other things, this means that Graal options cannot be set on the command line,
+ * but just be set using {@code -vmextension:jar=args}.
  */
 public class MaxGraal implements RuntimeCompiler {
 
@@ -76,7 +79,10 @@ public class MaxGraal implements RuntimeCompiler {
     private MaxGraphCache cache;
 
     public static void onLoad(String args) {
-        // Graal uses the context class loader during snippet instrinsification
+        // Graal options are passed as a comma separated list in args
+        MaxGraalOptions.initialize(args);
+        // Graal uses the context class loader during snippet instrinsification, so
+        // we must override the default to be the VM class loader
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(VMClassLoader.VM_CLASS_LOADER);
@@ -90,6 +96,7 @@ public class MaxGraal implements RuntimeCompiler {
     public void initialize(Phase phase) {
         // In extension mode, this is only called in the RUNNING phase,
         // at which point there is nothing else to do.
+        MaxGraalOptions.initialize();
     }
 
     private static void createCompiler() {
