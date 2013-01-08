@@ -43,7 +43,7 @@ import com.sun.max.vm.runtime.*;
  * (see all fixme comments below). This would make allocation in survivor space independent of details of the card table RSet.
  */
 public class EvacuatorToCardSpace extends Evacuator {
-    @FOLD
+    @Fold
     private static Size evacuationBufferHeadroom() {
         return minObjectSize();
     }

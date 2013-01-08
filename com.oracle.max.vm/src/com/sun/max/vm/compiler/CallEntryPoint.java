@@ -87,7 +87,7 @@ public enum CallEntryPoint {
      * @return the number of bytes that must be added to the address of a target method's first instruction to obtain
      *         the address of this entry point
      */
-    @FOLD
+    @Fold
     public int offset() {
         return offset;
     }
@@ -105,7 +105,7 @@ public enum CallEntryPoint {
      * @return the number of bytes that must be added to the address of a target method's first instruction to obtain
      *         the address of this entry point
      */
-    @FOLD
+    @Fold
     public int offsetInCallee() {
         return offsetInCallee;
     }

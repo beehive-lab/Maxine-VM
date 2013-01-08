@@ -628,7 +628,7 @@ public final class Log {
          * Starting with JDK 7 update 6, the String class no longer has the offset and count fields.
          * We want to support both String variants (this is necessary until we drop support for JDK 6).
          */
-        @FOLD
+        @Fold
         private static boolean stringHasOffset() {
             try {
                 String.class.getDeclaredField("offset");

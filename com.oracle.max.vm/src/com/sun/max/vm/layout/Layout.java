@@ -46,7 +46,7 @@ public final class Layout {
      *
      * @return  the layout scheme in use
      */
-    @FOLD
+    @Fold
     public static LayoutScheme layoutScheme() {
         return vmConfig().layoutScheme();
     }
@@ -57,7 +57,7 @@ public final class Layout {
      *
      * @return the general layout scheme in use
      */
-    @FOLD
+    @Fold
     public static GeneralLayout generalLayout() {
         return layoutScheme().generalLayout;
     }
@@ -113,7 +113,7 @@ public final class Layout {
      * Access to <strong>tuple object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static TupleLayout tupleLayout() {
         return layoutScheme().tupleLayout;
     }
@@ -122,7 +122,7 @@ public final class Layout {
      * Access to <strong>hybrid object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static HybridLayout hybridLayout() {
         return layoutScheme().hybridLayout;
     }
@@ -131,7 +131,7 @@ public final class Layout {
      * Access to <strong>array object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static ArrayLayout arrayLayout() {
         return layoutScheme().arrayLayout;
     }
@@ -232,7 +232,7 @@ public final class Layout {
         return arrayLayout().originToCell(origin);
     }
 
-    @FOLD
+    @Fold
     private static ReferenceScheme referenceScheme() {
         return vmConfig().referenceScheme();
     }
@@ -462,7 +462,7 @@ public final class Layout {
      * Access to <strong>byte array object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static ArrayLayout byteArrayLayout() {
         return layoutScheme().byteArrayLayout;
     }
@@ -499,7 +499,7 @@ public final class Layout {
      * Access to <strong>boolean array object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static ArrayLayout booleanArrayLayout() {
         return layoutScheme().booleanArrayLayout;
     }
@@ -536,7 +536,7 @@ public final class Layout {
      * Access to <strong>short array object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static ArrayLayout shortArrayLayout() {
         return layoutScheme().shortArrayLayout;
     }
@@ -573,7 +573,7 @@ public final class Layout {
      * Access to <strong>char array object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static ArrayLayout charArrayLayout() {
         return layoutScheme().charArrayLayout;
     }
@@ -610,7 +610,7 @@ public final class Layout {
      * Access to <strong>int array object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static ArrayLayout intArrayLayout() {
         return layoutScheme().intArrayLayout;
     }
@@ -647,7 +647,7 @@ public final class Layout {
      * Access to <strong>float array object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static ArrayLayout floatArrayLayout() {
         return layoutScheme().floatArrayLayout;
     }
@@ -684,7 +684,7 @@ public final class Layout {
      * Access to <strong>long array object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static ArrayLayout longArrayLayout() {
         return layoutScheme().longArrayLayout;
     }
@@ -721,7 +721,7 @@ public final class Layout {
      * Access to <strong>double array object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static ArrayLayout doubleArrayLayout() {
         return layoutScheme().doubleArrayLayout;
     }
@@ -758,7 +758,7 @@ public final class Layout {
      * Access to <strong>word array object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static ArrayLayout wordArrayLayout() {
         return layoutScheme().wordArrayLayout;
     }
@@ -795,7 +795,7 @@ public final class Layout {
      * Access to <strong>reference array object</strong> layout information in the
      * context of the current {@linkplain VMConfiguration VM configuration}.
      */
-    @FOLD
+    @Fold
     public static ArrayLayout referenceArrayLayout() {
         return layoutScheme().referenceArrayLayout;
     }
@@ -859,7 +859,7 @@ public final class Layout {
     /**
      * Word index to a cell's hub from its origin.
      */
-    @FOLD
+    @Fold
     public static int hubIndex() {
         return generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
     }
@@ -867,7 +867,7 @@ public final class Layout {
     /**
      * Word index to the first element of a reference array from its origin.
      */
-    @FOLD
+    @Fold
     static public int firstElementIndex() {
         return referenceArrayLayout().getElementOffsetInCell(0).toInt() >> Kind.REFERENCE.width.log2numberOfBytes;
     }

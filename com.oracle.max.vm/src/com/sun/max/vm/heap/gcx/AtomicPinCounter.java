@@ -33,7 +33,7 @@ import com.sun.max.vm.runtime.*;
 public final class AtomicPinCounter {
     private volatile int pinnedCounter = 0;
 
-    @FOLD
+    @Fold
     private static int pinnedCounterOffset() {
         return ClassActor.fromJava(AtomicPinCounter.class).findLocalInstanceFieldActor("pinnedCounter").offset();
     }

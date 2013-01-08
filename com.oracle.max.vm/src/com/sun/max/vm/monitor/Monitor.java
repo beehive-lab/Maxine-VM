@@ -43,7 +43,7 @@ public final class Monitor {
         VMOptions.addFieldOption("-XX:", "TraceMonitors", "Trace (slow-path) monitor operations.");
     }
 
-    @FOLD
+    @Fold
     private static MonitorScheme monitorScheme() {
         return vmConfig().monitorScheme();
     }

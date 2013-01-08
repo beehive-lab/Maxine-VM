@@ -414,7 +414,7 @@ public final class JniHandles {
      * This method is compile-time evaluated so that the first parameter to
      * {@link Intrinsics#alloca(int, boolean)} is a compile-time constant.
      */
-    @FOLD
+    @Fold
     public static int handlesCount(SignatureDescriptor sig) {
         int res = 0;
         for (int i = 0; i < sig.numberOfParameters(); i++) {

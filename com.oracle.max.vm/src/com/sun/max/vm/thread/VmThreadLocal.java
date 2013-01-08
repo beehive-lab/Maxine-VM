@@ -676,7 +676,7 @@ public class VmThreadLocal implements FormatWithToString {
         etla.setWord(index, value);
     }
 
-    @FOLD
+    @Fold
     private static int tlaOffset(int n) {
         return tlaSize().toInt() * n;
     }

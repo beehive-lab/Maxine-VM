@@ -63,7 +63,7 @@ public final class DynamicHub extends Hub {
      * The interface index is used to index the {@link ClassActor#iToV()} table.
      * @return the first valid interface index
      */
-    @FOLD
+    @Fold
     public static int firstValidInterfaceIndex() {
         return 1;
     }

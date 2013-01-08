@@ -85,7 +85,7 @@ public class WordUtil {
     /**
      * The CiKind to use for Word in back-end operation that relate to processor instructions, which is architecture specific.
      */
-    @FOLD
+    @Fold
     public static CiKind archKind() {
         if (Word.width() == 64) {
             return CiKind.Long;
@@ -96,7 +96,7 @@ public class WordUtil {
     /**
      * The CiKind to use for Word in front-end operation where a Word is part of the Object type hierarchy.
      */
-    @FOLD
+    @Fold
     public static CiKind javaKind() {
         return CiKind.Object;
     }

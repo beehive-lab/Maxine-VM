@@ -111,22 +111,22 @@ public class Word {
         return Address.max();
     }
 
-    @FOLD
+    @Fold
     public static Endianness endianness() {
         return platform().endianness();
     }
 
-    @FOLD
+    @Fold
     public static WordWidth widthValue() {
         return platform().wordWidth();
     }
 
-    @FOLD
+    @Fold
     public static int width() {
         return widthValue().numberOfBits;
     }
 
-    @FOLD
+    @Fold
     public static int size() {
         return widthValue().numberOfBytes;
     }

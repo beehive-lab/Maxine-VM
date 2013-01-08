@@ -47,12 +47,12 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
      * appended to a TLAB to fill unused space before a TLAB refill.
      * The headroom is used to compute a soft limit that'll be used as the tlab's top.
      */
-    @FOLD
+    @Fold
     protected static Size tlabHeadroom() {
         return minObjectSize();
     }
 
-    @FOLD
+    @Fold
     protected static int tlabHeadroomNumWords() {
         return tlabHeadroom().unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
     }

@@ -158,7 +158,7 @@ public final class JDK_java_lang_ClassLoader {
         Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));
     }
 
-    @FOLD
+    @Fold
     private static boolean findBootstrapClassHasCheckedException() {
         TypeDescriptor[] checkedExceptions = ClassRegistry.ClassLoader_findBootstrapClass.checkedExceptions();
         if (checkedExceptions.length != 0) {

@@ -59,12 +59,12 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      */
     protected Size sizeLimit;
 
-    @FOLD
+    @Fold
     public static int topOffset() {
         return ClassActor.fromJava(BaseAtomicBumpPointerAllocator.class).findLocalInstanceFieldActor("top").offset();
     }
 
-    @FOLD
+    @Fold
     public static Size headroom() {
         return ClassActor.fromJava(Object.class).dynamicHub().tupleSize;
     }

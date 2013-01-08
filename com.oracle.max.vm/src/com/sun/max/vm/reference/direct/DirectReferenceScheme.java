@@ -50,7 +50,7 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
     @INTRINSIC(UNSAFE_CAST)
     private static native Reference toReference(Pointer origin);
 
-    @FOLD
+    @Fold
     private static HeapScheme heapScheme() {
         return vmConfig().heapScheme();
     }

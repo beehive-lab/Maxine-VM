@@ -63,7 +63,7 @@ public final class RegionTable {
     @HOSTED_ONLY
     static final int TableOffset = ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
 
-    @FOLD
+    @Fold
     static int tableOffset() {
         return ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
     }
