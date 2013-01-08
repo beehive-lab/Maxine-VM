@@ -568,7 +568,7 @@ public class Snippets {
 
     private static ClassMethodActor blockOnThreadLockMethod;
 
-    @FOLD
+    @Fold
     public static ClassMethodActor blockOnThreadLockMethod() {
         if (MaxineVM.isHosted()) {
             synchronized (Snippets.class) {

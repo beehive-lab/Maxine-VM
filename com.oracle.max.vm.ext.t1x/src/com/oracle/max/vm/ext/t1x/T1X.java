@@ -628,7 +628,7 @@ public class T1X implements RuntimeCompiler {
     /**
      * Determines if the target ISA is AMD64.
      */
-    @FOLD
+    @Fold
     public static boolean isAMD64() {
         return platform().isa == ISA.AMD64;
     }

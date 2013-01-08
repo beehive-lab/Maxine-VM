@@ -51,17 +51,17 @@ import com.sun.max.vm.type.*;
  * TODO: check above assumption.
  */
 public class DebugHeap {
-    @FOLD
+    @Fold
     public static boolean isTagging() {
         return MaxineVM.isDebug() && vmConfig().heapScheme().supportsTagging();
     }
 
-    @FOLD
+    @Fold
     public static boolean isPadding() {
         return MaxineVM.isDebug() && vmConfig().heapScheme().supportsPadding();
     }
 
-    @FOLD
+    @Fold
     private static int hubIndex() {
         return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
     }

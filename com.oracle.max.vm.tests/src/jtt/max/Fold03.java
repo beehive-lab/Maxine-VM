@@ -34,7 +34,7 @@ public class Fold03 {
         return flong(10, 10) && fdouble(0.0d, 0.0d);
     }
 
-    @FOLD
+    @Fold
     static boolean flong(long x, long y) {
         int j = 2;
         for (int i = 0; i < 100; i++) {
@@ -43,7 +43,7 @@ public class Fold03 {
         return x == y;
     }
 
-    @FOLD
+    @Fold
     static boolean fdouble(double x, double y) {
         int j = 2;
         for (int i = 0; i < 100; i++) {

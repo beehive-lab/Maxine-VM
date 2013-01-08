@@ -285,7 +285,7 @@ public final class Pointer extends Address implements Accessor {
         return super.unsignedShiftedRight(nBits).asPointer();
     }
 
-    @FOLD
+    @Fold
     private static boolean risc() {
         return Platform.platform().isa.category == ISA.Category.RISC;
     }

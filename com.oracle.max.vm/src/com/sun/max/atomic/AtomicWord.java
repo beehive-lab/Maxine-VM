@@ -136,7 +136,7 @@ public class AtomicWord {
         return get().toHexString();
     }
 
-    @FOLD
+    @Fold
     public static int valueOffset() {
         return ClassActor.fromJava(AtomicWord.class).findLocalInstanceFieldActor("value").offset();
     }

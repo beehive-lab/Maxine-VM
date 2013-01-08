@@ -124,7 +124,7 @@ public enum JavaFrameAnchor {
     /**
      * Gets the storage size of a {@link JavaFrameAnchor}.
      */
-    @FOLD
+    @Fold
     public static int size() {
         return VALUES.size() * Word.size();
     }

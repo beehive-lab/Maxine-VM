@@ -97,7 +97,7 @@ public class SpecialReferenceManager {
         JavaMonitorManager.bindStickyMonitor(REFERENCE_LOCK);
     }
 
-    @FOLD
+    @Fold
     public static int referentIndex() {
         return JDK.java_lang_ref_Reference.classActor().findLocalInstanceFieldActor("referent").offset() >>  Word.widthValue().log2numberOfBytes;
     }

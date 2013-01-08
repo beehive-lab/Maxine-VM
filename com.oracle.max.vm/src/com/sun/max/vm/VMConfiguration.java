@@ -245,7 +245,7 @@ public final class VMConfiguration {
      * Convenience method for accessing the configuration associated with the
      * current {@linkplain MaxineVM#vm() VM} context.
      */
-    @FOLD
+    @Fold
     public static VMConfiguration vmConfig() {
         return vm().config;
     }
@@ -270,7 +270,7 @@ public final class VMConfiguration {
     /**
      * Use {@link MaxineVM#isDebug()} instead of calling this directly.
      */
-    @FOLD
+    @Fold
     public boolean debugging() {
         return buildLevel == BuildLevel.DEBUG;
     }

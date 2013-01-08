@@ -44,7 +44,7 @@ public class Log2RegionToByteMapTable {
      * Offset to the {@link #table} variable.
      * This is primarily used to bypass write-barrier when setting the variable.
      */
-    @FOLD
+    @Fold
     public static int tableOffset() {
         return ClassActor.fromJava(Log2RegionToByteMapTable.class).findLocalInstanceFieldActor("table").offset();
     }

@@ -277,7 +277,7 @@ public final class MaxineVM {
     }
 
     @LOCAL_SUBSTITUTION
-    @FOLD
+    @Fold
     public static boolean isHosted_() {
         return false;
     }
@@ -286,7 +286,7 @@ public final class MaxineVM {
      * Determines if this is a {@link BuildLevel#DEBUG debug} build of the VM.
      * @return {@code true} if this is a debug build
      */
-    @FOLD
+    @Fold
     public static boolean isDebug() {
         return vm().config.debugging();
     }

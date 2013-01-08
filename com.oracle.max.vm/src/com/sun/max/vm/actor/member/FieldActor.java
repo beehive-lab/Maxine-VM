@@ -730,7 +730,7 @@ public class FieldActor extends MemberActor implements RiResolvedField {
         return FieldID.toFieldActor(FieldID.fromWord(Word.read(stream)));
     }
 
-    @FOLD
+    @Fold
     public static FieldActor findInstance(Class javaClass, String name) {
         return ClassActor.fromJava(javaClass).findLocalInstanceFieldActor(name);
     }

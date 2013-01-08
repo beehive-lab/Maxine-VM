@@ -38,7 +38,7 @@ public abstract class Reference implements Accessor {
     protected Reference() {
     }
 
-    @FOLD
+    @Fold
     private static ReferenceScheme referenceScheme() {
         return vmConfig().referenceScheme();
     }

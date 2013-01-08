@@ -154,7 +154,7 @@ public abstract class Hub extends Hybrid {
         return Layout.hybridLayout().firstAvailableWordArrayIndex(tupleSize);
     }
 
-    @FOLD
+    @Fold
     public static int getFirstWordIndex() {
         return firstWordIndex;
     }

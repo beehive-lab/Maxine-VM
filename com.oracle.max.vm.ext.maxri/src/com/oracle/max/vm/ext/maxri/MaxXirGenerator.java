@@ -161,37 +161,37 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     public final List<XirTemplate> stubs = new ArrayList<XirTemplate>();
 
-    @FOLD
+    @Fold
     int hubOffset() {
         return generalLayout().getOffsetFromOrigin(Layout.HeaderField.HUB).toInt();
     }
 
-    @FOLD
+    @Fold
     int hubFirstWordIndex() {
         return Hub.getFirstWordIndex();
     }
 
-    @FOLD
+    @Fold
     int offsetOfFirstArrayElement() {
         return byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
     }
 
-    @FOLD
+    @Fold
     int offsetOfMTableStartIndex() {
         return FieldActor.findInstance(Hub.class, "mTableStartIndex").offset();
     }
 
-    @FOLD
+    @Fold
     int offsetOfMTableLength() {
         return FieldActor.findInstance(Hub.class, "mTableLength").offset();
     }
 
-    @FOLD
+    @Fold
     int offsetOfTupleSize() {
         return FieldActor.findInstance(Hub.class, "tupleSize").offset();
     }
 
-    @FOLD
+    @Fold
     int minObjectAlignmentMask() {
         return vmConfig().heapScheme().objectAlignment() - 1;
     }

@@ -34,7 +34,7 @@ public class Fold02 {
         return fint(10, 10) && ffloat(0.1f, 0.1f) && fobj(null, null);
     }
 
-    @FOLD
+    @Fold
     static boolean fint(int x, int y) {
         int j = 2;
         for (int i = 0; i < 100; i++) {
@@ -43,7 +43,7 @@ public class Fold02 {
         return x == y;
     }
 
-    @FOLD
+    @Fold
     static boolean ffloat(float x, float y) {
         int j = 2;
         for (int i = 0; i < 100; i++) {
@@ -52,7 +52,7 @@ public class Fold02 {
         return x == y;
     }
 
-    @FOLD
+    @Fold
     static boolean fobj(Object x, Object y) {
         int j = 2;
         for (int i = 0; i < 100; i++) {

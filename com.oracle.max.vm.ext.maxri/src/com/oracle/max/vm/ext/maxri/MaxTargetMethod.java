@@ -151,7 +151,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      * Gets the size (in bytes) of a bit map covering all the registers that may store references.
      * The bit position of a register in the bit map is the register's {@linkplain CiRegister#encoding encoding}.
      */
-    @FOLD
+    @Fold
     public static int regRefMapSize() {
         return ByteArrayBitMap.computeBitMapSize(target().arch.registerReferenceMapBitCount);
     }

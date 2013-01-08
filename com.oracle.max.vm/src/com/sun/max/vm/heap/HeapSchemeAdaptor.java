@@ -85,12 +85,12 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         }
     }
 
-    @FOLD
+    @Fold
     protected static DynamicHub objectHub() {
         return ClassRegistry.OBJECT.dynamicHub();
     }
 
-    @FOLD
+    @Fold
     protected static DynamicHub byteArrayHub() {
         return ClassRegistry.BYTE_ARRAY.dynamicHub();
     }
@@ -98,7 +98,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     /**
      * Size in bytes of an java.lang.Object instance, presumably the minimum object size.
      */
-    @FOLD
+    @Fold
     public static Size minObjectSize() {
         return objectHub().tupleSize;
     }
@@ -106,17 +106,17 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     /**
      * Number of words of an java.lang.Object instance, presumably the minimum number of words.
      */
-    @FOLD
+    @Fold
     public static int minObjectWords() {
         return minObjectSize().unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
     }
 
-    @FOLD
+    @Fold
     public static Size byteArrayHeaderSize() {
         return Layout.byteArrayLayout().getArraySize(Kind.BYTE, 0);
     }
 
-    @FOLD
+    @Fold
     public static int numByteArrayHeaderWords() {
         return byteArrayHeaderSize().unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
     }

@@ -271,7 +271,7 @@ public final class Heap {
     @INSPECTED
     public static final BootHeapRegion bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), HEAP_BOOT_NAME);
 
-    @FOLD
+    @Fold
     private static HeapScheme heapScheme() {
         return vmConfig().heapScheme();
     }

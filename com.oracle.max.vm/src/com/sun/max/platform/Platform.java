@@ -265,7 +265,7 @@ public final class Platform {
      * Gets the current platform context. The initial value is created by {@link Platform#createDefaultPlatform()}.
      * It can be subsequently modified by {@link #set(Platform)}.
      */
-    @FOLD
+    @Fold
     public static Platform platform() {
         return current;
     }
@@ -273,7 +273,7 @@ public final class Platform {
     /**
      * Gets the {@linkplain #target target} associated with the {@linkplain #platform() current} platform context.
      */
-    @FOLD
+    @Fold
     public static CiTarget target() {
         assert current.target != null;
         return current.target;

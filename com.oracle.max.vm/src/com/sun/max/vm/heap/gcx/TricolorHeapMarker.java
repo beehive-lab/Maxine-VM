@@ -546,7 +546,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         overflowScanWithRescanMapState = new OverflowScanWithRescanMapState(this);
     }
 
-    @FOLD
+    @Fold
     private static Size markBitmapHeaderSize() {
         return Layout.longArrayLayout().getArraySize(Kind.LONG, 0);
     }

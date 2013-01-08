@@ -47,12 +47,12 @@ import com.sun.max.vm.type.*;
  * TODO (ld) need to revisit the visibility of this class.
  */
 public class HeapFreeChunk {
-    @FOLD
+    @Fold
     public static final DynamicHub heapFreeChunkHub() {
         return ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
     }
 
-    @FOLD
+    @Fold
     public static Size heapFreeChunkHeaderSize() {
         return HeapFreeChunk.heapFreeChunkHub().tupleSize;
     }
@@ -60,7 +60,7 @@ public class HeapFreeChunk {
     /**
      * Index of the word storing "next" field of the heap free chunk.
      */
-    @FOLD
+    @Fold
     protected static int nextIndex() {
         return ClassRegistry.findField(HeapFreeChunk.class, "next").offset() >> Word.widthValue().log2numberOfBytes;
     }
@@ -68,7 +68,7 @@ public class HeapFreeChunk {
     /**
      * Index of the word storing "size" field of the heap free chunk.
      */
-    @FOLD
+    @Fold
     protected static int sizeIndex() {
         return ClassRegistry.findField(HeapFreeChunk.class, "size").offset() >> Word.widthValue().log2numberOfBytes;
     }
@@ -83,7 +83,7 @@ public class HeapFreeChunk {
         return a.equals(deadSpaceMark());
     }
 
-    @FOLD
+    @Fold
     public static Address deadSpaceMark() {
         return Memory.zappedMarker();
     }
