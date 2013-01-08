@@ -27,6 +27,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import javax.management.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.management.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;

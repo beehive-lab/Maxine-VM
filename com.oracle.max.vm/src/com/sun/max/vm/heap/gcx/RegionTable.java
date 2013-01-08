@@ -25,6 +25,7 @@ package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;

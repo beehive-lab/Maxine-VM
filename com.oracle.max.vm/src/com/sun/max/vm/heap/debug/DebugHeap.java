@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.debug;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;

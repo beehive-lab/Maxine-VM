@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import com.sun.max.annotate.*;
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;

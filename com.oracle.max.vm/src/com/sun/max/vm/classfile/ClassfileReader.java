@@ -40,6 +40,7 @@ import java.util.concurrent.*;
 import java.util.jar.*;
 import java.util.zip.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;

@@ -34,6 +34,7 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.SafepointsBuilder;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
