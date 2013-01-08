@@ -22,7 +22,7 @@
  */
 package jtt.max;
 
-import com.sun.max.annotate.*;
+import com.oracle.graal.snippets.Snippet.Fold;
 
 /*
  * @Harness: java

@@ -24,7 +24,7 @@ package com.sun.max.vm.actor.holder;
 
 import static com.sun.max.vm.MaxineVM.*;
 
-import com.sun.max.annotate.*;
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
