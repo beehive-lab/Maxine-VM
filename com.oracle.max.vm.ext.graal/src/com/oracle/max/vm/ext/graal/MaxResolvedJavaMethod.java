@@ -32,7 +32,7 @@ import java.util.concurrent.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.api.meta.ProfilingInfo.ExceptionSeen;
 import com.sun.cri.ri.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
@@ -167,8 +167,12 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public boolean canBeInlined() {
-        // TODO implement properly. for now we want the invoke
-        return false;
+        return riResolvedMethod().getAnnotation(NEVER_INLINE.class) == null;
+    }
+
+    @Override
+    public String toString() {
+        return riMethod.toString();
     }
 
 }

@@ -100,6 +100,7 @@ public class CompilationBroker {
         addFieldOption("-XX:", "FailOverCompilation", "Retry failed compilations with another compiler (if available).");
         addFieldOption("-XX:", "PrintCodeCacheMetrics", "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
         addFieldOption("-XX:", "VMExtOpt", "Compile VM extensions with optimizing compiler (default: true");
+        addFieldOption("-XX:", "AddCompiler", "Add a compiler, Name:Class");
     }
 
     @RESET
@@ -166,6 +167,8 @@ public class CompilationBroker {
     public boolean isDeoptSupported() {
         return baselineCompiler != null;
     }
+
+    private static String AddCompiler;
 
     private static final String OPTIMIZING_COMPILER_PROPERTY = CompilationBroker.class.getSimpleName() + "." + optimizingCompilerOption.getName();
     private static final String BASELINE_COMPILER_PROPERTY = CompilationBroker.class.getSimpleName() + "." + baselineCompilerOption.getName();
@@ -291,6 +294,11 @@ public class CompilationBroker {
         optimizingCompiler.initialize(phase);
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);
+        }
+        if (AddCompiler != null) {
+            String[] nameAndClass = AddCompiler.split(":");
+            addCompiler(nameAndClass[0], nameAndClass[1]);
+            AddCompiler = null;
         }
         if (altCompilers != null) {
             for (RuntimeCompiler altCompiler : altCompilers.values()) {

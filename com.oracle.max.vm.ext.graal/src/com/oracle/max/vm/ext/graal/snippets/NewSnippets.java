@@ -22,8 +22,6 @@
  */
 package com.oracle.max.vm.ext.graal.snippets;
 
-import static com.oracle.graal.nodes.extended.UnsafeArrayCastNode.*;
-import static com.oracle.graal.nodes.extended.UnsafeCastNode.*;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
@@ -35,30 +33,17 @@ import com.oracle.graal.graph.Node.NodeIntrinsic;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.snippets.*;
 import com.oracle.graal.snippets.Snippet.ConstantParameter;
 import com.oracle.graal.snippets.Snippet.Parameter;
 import com.oracle.graal.snippets.SnippetTemplate.Arguments;
 import com.oracle.graal.snippets.SnippetTemplate.Key;
 import com.oracle.max.vm.ext.graal.*;
-import com.oracle.max.vm.ext.graal.snippets.SnippetRuntime.SnippetRuntimeCall;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 
 public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
-
-    public static final SnippetRuntimeCall SLOW_NEW_INSTANCE = SnippetRuntime.findMethod(Heap.class, "createTuple", true);
-
-    public static final class FastAllocationFailed extends Exception {
-
-        private static final long serialVersionUID = 7534280321994894161L;
-        public static final FastAllocationFailed INSTANCE = new FastAllocationFailed();
-
-        private FastAllocationFailed() {
-        }
-    }
 
     private final VMConfiguration vmConfig;
 
@@ -101,10 +86,9 @@ public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
         }
     }
 
-    @Snippet
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object newInstanceSnippet(@Parameter("hub") DynamicHub hub, @ConstantParameter("fillContents") boolean fillContents) {
-        Object result = runtimeCall(SLOW_NEW_INSTANCE, hub);
-        return unsafeCast(result, StampFactory.forNodeIntrinsic());
+        return Heap.createTuple(hub);
     }
 
     /*
