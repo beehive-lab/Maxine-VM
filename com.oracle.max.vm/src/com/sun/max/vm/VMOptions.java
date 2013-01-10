@@ -562,8 +562,8 @@ public class VMOptions {
                 int defaultValue = field.getInt(null);
                 option = new IntFieldOption(prefix + name + "=", defaultValue, help, field);
                 register(option, phase);
-            } else if (fieldType == float.class) {
-                float defaultValue = field.getFloat(null);
+            } else if (fieldType == float.class || fieldType == double.class) {
+                float defaultValue = fieldType == double.class ? new Double(field.getDouble(null)).floatValue() : field.getFloat(null);
                 option = new FloatFieldOption(prefix + name + "=", defaultValue, help, field);
                 register(option, phase);
             } else if (fieldType == Size.class) {

@@ -25,7 +25,6 @@ package com.sun.max.vm.compiler;
 import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.type.*;
 

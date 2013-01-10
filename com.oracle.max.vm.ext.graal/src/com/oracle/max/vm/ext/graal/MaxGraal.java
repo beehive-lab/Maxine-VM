@@ -40,6 +40,7 @@ import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -92,15 +93,27 @@ public class MaxGraal implements RuntimeCompiler {
         }
     }
 
+    public static MaxRuntime runtime() {
+        assert singleton != null && singleton.runtime != null;
+        return singleton.runtime;
+    }
+
     @Override
     public void initialize(Phase phase) {
         // In extension mode, this is only called in the RUNNING phase,
         // at which point there is nothing else to do.
-        MaxGraalOptions.initialize();
+        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+            MaxGraalOptions.initialize();
+            createCompiler();
+        }
     }
 
     private static void createCompiler() {
         singleton = (MaxGraal) CompilationBroker.addCompiler(NAME, "com.oracle.max.vm.ext.graal.MaxGraal");
+        singleton.enabledDebugConfig = Debug.fixedConfig(false, true, false, false, Arrays.asList(new GraphPrinterDumpHandler(), new CFGPrinterObserver()), System.out);
+        singleton.disabledDebugConfig = Debug.fixedConfig(false, false, false, false, new ArrayList<DebugDumpHandler>(), System.out);
+        Debug.enable();
+        Debug.setConfig(singleton.enabledDebugConfig);
         MaxTargetDescription td = new MaxTargetDescription();
         singleton.runtime = new MaxRuntime(td);
         singleton.compiler = new GraalCompiler(singleton.runtime, td, new MaxAMD64Backend(singleton.runtime, td));
@@ -114,20 +127,12 @@ public class MaxGraal implements RuntimeCompiler {
         ProgramError.unexpected("unimplemented: " + methodName);
     }
 
-    private static DebugConfig makeDebugConfig(boolean dump) {
-        if (dump) {
-            Debug.enable();
-            return Debug.fixedConfig(false, true, false, false, Arrays.asList(new GraphPrinterDumpHandler(), new CFGPrinterObserver()), System.out);
-        } else {
-            return Debug.fixedConfig(false, false, false, false, new ArrayList<DebugDumpHandler>(), System.out);
-        }
-    }
+    private DebugConfig enabledDebugConfig;
+    private DebugConfig disabledDebugConfig;
 
     @Override
     public TargetMethod compile(ClassMethodActor methodActor, boolean isDeopt, boolean install, CiStatistics stats) {
         try {
-            DebugConfig debugConfig = makeDebugConfig(true);
-            Debug.setConfig(debugConfig);
             PhasePlan phasePlan = new PhasePlan();
             ResolvedJavaMethod method = MaxResolvedJavaMethod.get(methodActor);
 
