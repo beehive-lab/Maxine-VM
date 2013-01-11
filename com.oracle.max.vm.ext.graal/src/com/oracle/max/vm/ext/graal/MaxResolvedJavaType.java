@@ -105,7 +105,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public boolean isAssignableFrom(ResolvedJavaType other) {
-        return riResolvedType().isSubtypeOf(MaxResolvedJavaType.get(other));
+        return (MaxResolvedJavaType.get(other)).isSubtypeOf(riResolvedType());
     }
 
     @Override
