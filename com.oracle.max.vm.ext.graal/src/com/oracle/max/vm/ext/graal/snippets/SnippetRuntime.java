@@ -25,9 +25,7 @@ package com.oracle.max.vm.ext.graal.snippets;
 
 import java.lang.reflect.*;
 
-import com.oracle.graal.api.meta.*;
 import com.oracle.graal.api.code.RuntimeCallTarget.Descriptor;
-
 
 public class SnippetRuntime {
 
@@ -42,20 +40,14 @@ public class SnippetRuntime {
         assert foundMethod != null : "did not find method " + declaringClass.getName() + "." + methodName;
         assert Modifier.isStatic(foundMethod.getModifiers());
 
-        Kind resultKind = Kind.fromJavaClass(foundMethod.getReturnType());
-        Kind[] arguments = new Kind[foundMethod.getParameterTypes().length];
-        for (int i = 0; i < arguments.length; i++) {
-            arguments[i] = Kind.fromJavaClass(foundMethod.getParameterTypes()[i]);
-        }
-
-        return new SnippetRuntimeCall(foundMethod, hasSideEffects, resultKind, arguments);
+        return new SnippetRuntimeCall(foundMethod, hasSideEffects, foundMethod.getReturnType(), foundMethod.getParameterTypes());
     }
 
     public static class SnippetRuntimeCall extends Descriptor {
 
         private final Method method;
 
-        public SnippetRuntimeCall(Method method, boolean hasSideEffect, Kind resultKind, Kind[] arguments) {
+        public SnippetRuntimeCall(Method method, boolean hasSideEffect, Class resultKind, Class[] arguments) {
             super(method.getName(), hasSideEffect, resultKind, arguments);
             this.method = method;
         }

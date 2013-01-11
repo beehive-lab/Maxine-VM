@@ -149,7 +149,9 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         MaxRuntimeCallTarget(Descriptor descriptor) {
             this.descriptor = descriptor;
             RegisterConfig registerConfig = MaxRegisterConfig.get(MaxineVM.vm().registerConfigs.standard);
-            this.callingConvention = registerConfig.getCallingConvention(CallingConvention.Type.RuntimeCall, descriptor.getResultKind(), descriptor.getArgumentKinds(),
+            JavaType resType = lookupJavaType(descriptor.getResultType());
+            JavaType[] argTypes = MetaUtil.lookupJavaTypes(MaxRuntime.this, descriptor.getArgumentTypes());
+            this.callingConvention = registerConfig.getCallingConvention(CallingConvention.Type.RuntimeCall, resType, argTypes,
                             maxTargetDescription, false);
         }
 
@@ -265,7 +267,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
                     IsNullNode isNull = graph.unique(new IsNullNode(receiver));
                     graph.addBeforeFixed(node, graph.add(new FixedGuardNode(isNull, DeoptimizationReason.NullCheckException, null, true, invoke.leafGraphId())));
                 }
-                Kind[] signature = MetaUtil.signatureToKinds(callTarget.targetMethod().getSignature(), callTarget.isStatic() ? null : callTarget.targetMethod().getDeclaringClass().getKind());
+                JavaType[] signature = MetaUtil.signatureToTypes(callTarget.targetMethod().getSignature(), callTarget.isStatic() ? null : callTarget.targetMethod().getDeclaringClass());
                 CallingConvention.Type callType = CallingConvention.Type.JavaCall;
 
                 CallTargetNode loweredCallTarget = null;

@@ -69,15 +69,15 @@ public class MaxRegisterConfig implements RegisterConfig {
     }
 
     @Override
-    public CallingConvention getCallingConvention(Type type, Kind returnKind, Kind[] parameters, TargetDescription target, boolean stackOnly) {
+    public CallingConvention getCallingConvention(Type type, JavaType returnType, JavaType[] parameters, TargetDescription target, boolean stackOnly) {
         CiKind[] ciParameters = new CiKind[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
-            ciParameters[i] = KindMap.toCiKind(parameters[i]);
+            ciParameters[i] = KindMap.toCiKind(parameters[i].getKind());
         }
         // assert: this will be functionally equivalent to "target"
         CiTarget ciTarget = Platform.platform().target;
         CiCallingConvention ciConv = riRegisterConfig.getCallingConvention(toCiType(type), ciParameters, ciTarget, stackOnly);
-        Value returnLocation = returnKind == Kind.Void ? Value.ILLEGAL : getReturnRegister(returnKind).asValue(returnKind);
+        Value returnLocation = returnType.getKind() == Kind.Void ? Value.ILLEGAL : getReturnRegister(returnType.getKind()).asValue(returnType.getKind());
         CiValue[] ciValues = ciConv.locations;
         Value[] values = new Value[ciValues.length];
         for (int i = 0; i < ciValues.length; i++) {
