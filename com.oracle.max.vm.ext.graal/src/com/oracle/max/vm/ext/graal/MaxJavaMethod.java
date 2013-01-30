@@ -26,6 +26,7 @@ import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ri.*;
+import com.sun.max.vm.actor.member.*;
 
 
 public class MaxJavaMethod implements JavaMethod {
@@ -57,6 +58,20 @@ public class MaxJavaMethod implements JavaMethod {
 
     @Override
     public String getName() {
+        if (this instanceof MaxResolvedJavaMethod) {
+            MethodActor m = (MethodActor) riMethod;
+            // When installing snippets the Fold annotation causes the method
+            // to be looked by name in the Java class using standard reflection
+            // in the Graal core. . LOCAL_SUBSTITUTION methods
+            // have their name copied from the substitutee, which means, e.g.
+            // that a Fold of MaxineVM.isHosted_ will actually invoke MaxineVM.isHosted,
+            // which is quite wrong. So we fix that up here. It is not (yet) clear
+            // whether it is safe to always do this or if we should restrict it
+            // to snippet installation, or even to the fold itelf (latter requires Graal change).
+            if (m.isLocalSubstitute() && (m.flags() & MethodActor.FOLD) != 0) {
+                return riMethod.name() + "_";
+            }
+        }
         return riMethod.name();
     }
 

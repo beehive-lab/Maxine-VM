@@ -26,11 +26,15 @@ package com.oracle.max.vm.ext.graal;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
+import com.oracle.max.vm.ext.graal.MaxRuntime.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.vm.*;
 
 
 public class MaxConstantPool implements ConstantPool {
+
+    private static MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration;
 
     private RiConstantPool riConstantPool;
 
@@ -50,9 +54,31 @@ public class MaxConstantPool implements ConstantPool {
         this.riConstantPool = constantPool;
     }
 
+    static void setGraphBuilderConfig(MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration) {
+        MaxConstantPool.maxSnippetGraphBuilderConfiguration = maxSnippetGraphBuilderConfiguration;
+    }
+
     @Override
     public void loadReferencedType(int cpi, int opcode) {
-        riConstantPool.loadReferencedType(cpi, opcode);
+        // The default eager resolution for snippets can cause a HostOnly errors
+        // for a field/method/class access that is guarded by isHosted and so will (eventually) fold away
+        try {
+            riConstantPool.loadReferencedType(cpi, opcode);
+        } catch (HostOnlyFieldError ex) {
+            checkHostedError(ex);
+        } catch (HostOnlyMethodError ex) {
+            checkHostedError(ex);
+        } catch (HostOnlyClassError ex) {
+            checkHostedError(ex);
+        }
+    }
+
+    private static void checkHostedError(Error ex) throws Error {
+        if (maxSnippetGraphBuilderConfiguration != null) {
+            // Ignore during snippet installation
+        } else {
+            throw ex;
+        }
     }
 
     @Override

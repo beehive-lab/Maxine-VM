@@ -97,7 +97,21 @@ public class ConstantMap {
             return null;
         }
         CiConstant result = graalToCi.get(constant);
-        ProgramError.check(result != null, "null in toCiConstant");
+        if (result == null) {
+            CiKind ciKind = KindMap.toCiKind(constant.getKind());
+            switch (ciKind) {
+                case Boolean: result = CiConstant.forBoolean(constant.asBoolean()); break;
+                case Byte: result = CiConstant.forByte((byte) constant.asInt()); break;
+                case Char: result = CiConstant.forChar((char) constant.asInt()); break;
+                case Short: result = CiConstant.forShort((short) constant.asInt()); break;
+                case Jsr: result = CiConstant.forJsr(constant.asInt()); break;
+                case Long: result = CiConstant.forLong(constant.asLong()); break;
+                case Float: result = CiConstant.forFloat(constant.asFloat()); break;
+                case Double: result = CiConstant.forDouble(constant.asDouble()); break;
+                case Object: result = CiConstant.forObject(constant.asObject()); break;
+            }
+            graalToCi.put(constant,  result);
+        }
         return result;
     }
 

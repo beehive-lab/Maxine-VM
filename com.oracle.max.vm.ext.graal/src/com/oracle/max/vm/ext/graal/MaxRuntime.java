@@ -34,10 +34,12 @@ import com.oracle.graal.api.code.RuntimeCallTarget.Descriptor;
 import com.oracle.graal.api.code.CompilationResult.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
+import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.phases.common.*;
 import com.oracle.graal.printer.*;
 import com.oracle.graal.snippets.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
@@ -241,12 +243,79 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         lowering.lower(n, tool);
     }
 
+    static class MaxSnippetGraphBuilderConfiguration extends GraphBuilderConfiguration {
+
+        boolean ignoreHostOnlyError;
+
+        public MaxSnippetGraphBuilderConfiguration() {
+            super(ResolvePolicy.EagerForSnippets, null);
+        }
+
+        @Override
+        public boolean unresolvedForSnippetsIsError() {
+            // This prevents an assertion error in GraphBuilderPhase when we return an unresolved field
+            return false;
+        }
+
+    }
+
+    private static class MaxSnippetInstallerCustomizer extends SnippetInstaller.DefaultCustomizer {
+        private MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration;
+
+        MaxSnippetInstallerCustomizer(MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration) {
+            this.maxSnippetGraphBuilderConfiguration = maxSnippetGraphBuilderConfiguration;
+        }
+
+        @Override
+        public GraphBuilderConfiguration getConfig() {
+            return maxSnippetGraphBuilderConfiguration;
+        }
+
+        @Override
+        public void afterBuild(SnippetInstaller si, StructuredGraph graph) {
+            new MaxIntrinsicsPhase().apply(graph);
+            new MaxWordTypeRewriterPhase.MaxInvokeRewriter(si.runtime, si.target.wordKind).apply(graph);
+            super.afterBuild(si, graph);
+        }
+
+        @Override
+        public void afterInline(SnippetInstaller si, StructuredGraph graph) {
+            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(si.runtime, si.target.wordKind).apply(graph);
+            new CanonicalizerPhase(si.target, si.runtime, si.assumptions).apply(graph);
+            new MaxIntrinsicsPhase().apply(graph);
+        }
+
+        @Override
+        public void beforeFinal(SnippetInstaller si, StructuredGraph graph, final ResolvedJavaMethod method, final boolean isSubstitutionSnippet) {
+            new SnippetIntrinsificationPhase(si.runtime, si.pool, SnippetTemplate.hasConstantParameter(method)).apply(graph);
+
+            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(si.runtime, si.target.wordKind).apply(graph);
+
+            // This only gets done once right at the end
+            new MaxWordTypeRewriterPhase.MaxUnsafeCastRewriter(si.runtime, si.target.wordKind).apply(graph);
+
+            // safe (I believe and important) to do this for Maxine snippets
+            new SnippetFrameStateCleanupPhase().apply(graph);
+            new DeadCodeEliminationPhase().apply(graph);
+
+            new InsertStateAfterPlaceholderPhase().apply(graph);
+
+        }
+
+    }
+
     public void init() {
         // Snippets cannot have optimistic assumptions.
         Assumptions assumptions = new Assumptions(false);
         SnippetInstaller installer = new SnippetInstaller(this, assumptions, maxTargetDescription);
         GraalIntrinsics.installIntrinsics(installer);
-        installer.install(NewSnippets.class);
+        MaxIntrinsics.initialize(this, maxTargetDescription);
+        MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration = new MaxSnippetGraphBuilderConfiguration();
+        MaxConstantPool.setGraphBuilderConfig(maxSnippetGraphBuilderConfiguration);
+        SnippetInstaller maxInstaller = new SnippetInstaller(this, assumptions, maxTargetDescription, new MaxSnippetInstallerCustomizer(maxSnippetGraphBuilderConfiguration));
+        maxInstaller.install(TestSnippets.class);
+        maxInstaller.install(NewSnippets.class);
+        MaxConstantPool.setGraphBuilderConfig(null);
 
         lowerings.put(InvokeNode.class, new InvokeLowering());
         lowerings.put(InvokeWithExceptionNode.class, new InvokeLowering());

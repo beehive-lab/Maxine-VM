@@ -209,4 +209,9 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         return MaxResolvedJavaField.get(ca.findInstanceFieldActor((int) offset));
     }
 
+    @Override
+    public String toString() {
+        return riType.toString();
+    }
+
 }
