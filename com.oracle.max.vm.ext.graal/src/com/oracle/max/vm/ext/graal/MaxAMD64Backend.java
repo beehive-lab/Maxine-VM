@@ -28,7 +28,6 @@ import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 import java.io.*;
 
 import com.oracle.graal.api.code.*;
-import com.oracle.graal.api.code.CompilationResult.Mark;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.asm.*;
 import com.oracle.graal.asm.amd64.*;
@@ -40,6 +39,7 @@ import com.oracle.graal.lir.asm.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.phases.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -47,21 +47,51 @@ import com.sun.max.vm.compiler.target.*;
 
 public class MaxAMD64Backend extends Backend {
 
-    public static final String MARK_PROLOGUE_PUSHED_RBP = "PROLOGUE_PUSHED_RBP";
-    public static final String MARK_PROLOGUE_SAVED_RSP = "PROLOGUE_SAVED_RSP";
-    public static final String MARK_PROLOGUE_SAVED_REGS = "PROLOGUE_SAVED_REGS";
-    public static final String MARK_EPILOGUE_START = "EPILOGUE_START";
-    public static final String MARK_EPILOGUE_INCD_RSP = "EPILOGUE_INCD_RSP";
-    public static final String MARK_EPILOGUE_POPPED_RBP = "EPILOGUE_POPPED_RBP";
-
     protected static class MaxAMD64LIRGenerator extends AMD64LIRGenerator {
         public MaxAMD64LIRGenerator(StructuredGraph graph, CodeCacheProvider runtime, TargetDescription target, FrameMap frameMap, ResolvedJavaMethod method, LIR lir) {
             super(graph, runtime, target, frameMap, method, lir);
         }
 
         @Override
-        public void visitSafepointNode(SafepointNode i) {
-            // No safepoints yet.
+        public void visitSafepointNode(SafepointNode node) {
+            if (node instanceof MaxSafepointNode) {
+                MaxSafepointNode maxSafepointNode = (MaxSafepointNode) node;
+                switch (maxSafepointNode.op) {
+                    case SAFEPOINT_POLL: {
+                        //emitSafepointPoll(this);
+                        break;
+                    }
+                    case HERE: {
+                        /*
+                        gen.setResult(this, gen.emitLea(new CiAddress(CiKind.Byte, AMD64.rip.asValue())));
+                        FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind());
+                        LIRDebugInfo info = gen.stateFor(stateDuring);
+                        gen.append(AMD64SafepointOpcode.SAFEPOINT.create(info));
+                        */
+                        break;
+                    }
+                    case INFO: {
+                        /*
+                        FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind());
+                        LIRDebugInfo info = gen.stateFor(stateDuring);
+                        gen.append(AMD64SafepointOpcode.SAFEPOINT.create(info));
+                        */
+                        break;
+                    }
+                    case BREAKPOINT: {
+                        /*
+                        gen.append(AMD64BreakpointOpcode.BREAKPOINT.create());
+                        */
+                        break;
+                    }
+                    case PAUSE: {
+                        break;
+                    }
+                }
+
+            } else {
+                assert false; // is this even possible?
+            }
         }
 
         @Override

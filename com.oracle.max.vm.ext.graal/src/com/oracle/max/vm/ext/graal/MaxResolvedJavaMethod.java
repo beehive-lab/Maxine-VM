@@ -45,7 +45,7 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         super(riResolvedMethod);
     }
 
-    private RiResolvedMethod riResolvedMethod() {
+    RiResolvedMethod riResolvedMethod() {
         return (RiResolvedMethod) riMethod;
     }
 
