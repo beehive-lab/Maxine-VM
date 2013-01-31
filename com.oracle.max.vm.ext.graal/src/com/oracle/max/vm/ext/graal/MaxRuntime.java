@@ -313,8 +313,8 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration = new MaxSnippetGraphBuilderConfiguration();
         MaxConstantPool.setGraphBuilderConfig(maxSnippetGraphBuilderConfiguration);
         SnippetInstaller maxInstaller = new SnippetInstaller(this, assumptions, maxTargetDescription, new MaxSnippetInstallerCustomizer(maxSnippetGraphBuilderConfiguration));
-        maxInstaller.install(TestSnippets.class);
-        maxInstaller.install(NewSnippets.class);
+        maxInstaller.installSnippets(TestSnippets.class);
+        maxInstaller.installSnippets(NewSnippets.class);
         MaxConstantPool.setGraphBuilderConfig(null);
 
         lowerings.put(InvokeNode.class, new InvokeLowering());
@@ -372,6 +372,12 @@ public class MaxRuntime implements GraalCodeCacheProvider {
                 callTarget.replaceAndDelete(loweredCallTarget);
             }
         }
+    }
+
+    @Override
+    public Signature parseMethodDescriptor(String methodDescriptor) {
+        MaxGraal.unimplemented("parseMethodDescriptor");
+        return null;
     }
 
 

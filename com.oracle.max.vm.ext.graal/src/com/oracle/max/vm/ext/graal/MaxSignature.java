@@ -81,4 +81,9 @@ public class MaxSignature implements Signature {
         return riSignature.argumentSlots(withReceiver);
     }
 
+    @Override
+    public String getMethodDescriptor() {
+        return riSignature.asString();
+    }
+
 }

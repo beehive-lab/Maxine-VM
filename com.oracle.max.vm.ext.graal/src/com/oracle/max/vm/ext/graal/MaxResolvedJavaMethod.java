@@ -175,4 +175,12 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         return riMethod.toString();
     }
 
+    @Override
+    public LineNumberTable getLineNumberTable() {
+//        ClassMethodActor cma = (ClassMethodActor) riResolvedMethod();
+//        return cma.codeAttribute().lineNumberTable();
+        MaxGraal.unimplemented("getLineNumberTable");
+        return null;
+    }
+
 }
