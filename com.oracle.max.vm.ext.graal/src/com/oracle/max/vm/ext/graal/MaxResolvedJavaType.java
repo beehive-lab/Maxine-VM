@@ -214,4 +214,10 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         return riType.toString();
     }
 
+    @Override
+    public String getSourceFileName() {
+        ClassActor ca = (ClassActor) riType;
+        return ca.sourceFileName;
+    }
+
 }
