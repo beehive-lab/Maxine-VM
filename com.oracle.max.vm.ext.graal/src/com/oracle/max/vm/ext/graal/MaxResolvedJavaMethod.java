@@ -22,8 +22,6 @@
  */
 package com.oracle.max.vm.ext.graal;
 
-import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
-
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -53,8 +51,8 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         return (MaxResolvedJavaMethod) MaxJavaMethod.get(riMethod);
     }
 
-    static RiResolvedMethod get(ResolvedJavaMethod resolvedJavaMethod) {
-        return (RiResolvedMethod) MaxJavaMethod.get(resolvedJavaMethod);
+    public static RiResolvedMethod getRiResolvedMethod(ResolvedJavaMethod resolvedJavaMethod) {
+        return (RiResolvedMethod) MaxJavaMethod.getRiMethod(resolvedJavaMethod);
     }
 
     @Override
@@ -69,13 +67,13 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public int getCompiledCodeSize() {
-        unimplemented("ResolvedMethod.getCompiledCodeSize");
+        // TODO implement properly
         return 0;
     }
 
     @Override
     public int getCompilationComplexity() {
-        unimplemented("ResolvedMethod.getCompilationComplexity");
+        // TODO implement properly
         return 0;
     }
 
@@ -175,12 +173,144 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         return riMethod.toString();
     }
 
+    private static Map<RiMethod, LineNumberTable> lineNumberTableMap = new HashMap<>();
+
+    private static class LineNumberTableImpl implements LineNumberTable {
+        int[] lineNumberEntries;
+        int[] bciEntries;
+        com.sun.max.vm.classfile.LineNumberTable maxLnt;
+
+        LineNumberTableImpl(com.sun.max.vm.classfile.LineNumberTable maxLnt) {
+            this.maxLnt = maxLnt;
+            com.sun.max.vm.classfile.LineNumberTable.Entry[] entries = maxLnt.entries();
+            lineNumberEntries = new int[entries.length];
+            bciEntries = new int[entries.length];
+            int i = 0;
+            for (com.sun.max.vm.classfile.LineNumberTable.Entry entry : entries) {
+                lineNumberEntries[i] = entry.lineNumber();
+                bciEntries[i] = entry.bci();
+                i++;
+            }
+        }
+
+        @Override
+        public int[] getLineNumberEntries() {
+            return lineNumberEntries;
+        }
+
+        @Override
+        public int[] getBciEntries() {
+            return bciEntries;
+        }
+
+        @Override
+        public int getLineNumber(int bci) {
+            return maxLnt.findLineNumber(bci);
+        }
+
+    }
+
     @Override
     public LineNumberTable getLineNumberTable() {
-//        ClassMethodActor cma = (ClassMethodActor) riResolvedMethod();
-//        return cma.codeAttribute().lineNumberTable();
-        MaxGraal.unimplemented("getLineNumberTable");
-        return null;
+        LineNumberTable lnt = lineNumberTableMap.get(riMethod);
+        if (lnt == null) {
+            ClassMethodActor cma = (ClassMethodActor) riResolvedMethod();
+            com.sun.max.vm.classfile.LineNumberTable maxLnt = cma.codeAttribute().lineNumberTable();
+            lnt = new LineNumberTableImpl(maxLnt);
+            lineNumberTableMap.put(riMethod, lnt);
+        }
+        return lnt;
+    }
+
+    private static Map<RiMethod, LocalVariableTable> localVariableTableMap = new HashMap<>();
+
+    private static class LocalVariableTableImpl implements LocalVariableTable {
+
+        private static class LocalImpl implements Local {
+
+            com.sun.max.vm.classfile.LocalVariableTable.Entry entry;
+
+            LocalImpl(com.sun.max.vm.classfile.LocalVariableTable.Entry entry) {
+                this.entry = entry;
+            }
+
+            @Override
+            public int getStartBCI() {
+                return entry.startBCI();
+            }
+
+            @Override
+            public int getEndBCI() {
+                /// TODO
+                MaxGraal.unimplemented("Local.getEndBCI");
+                return 0;
+            }
+
+            @Override
+            public int getSlot() {
+                return entry.slot();
+            }
+
+            @Override
+            public String getName() {
+                /// TODO
+                MaxGraal.unimplemented("Local.getName");
+                return null;
+            }
+
+            @Override
+            public ResolvedJavaType getType() {
+                /// TODO
+                MaxGraal.unimplemented("Local.getType");
+                return null;
+            }
+
+        }
+
+        private com.sun.max.vm.classfile.LocalVariableTable maxLvt;
+
+        LocalVariableTableImpl(com.sun.max.vm.classfile.LocalVariableTable maxLvt) {
+            this.maxLvt = maxLvt;
+        }
+
+        @Override
+        public Local[] getLocals() {
+            com.sun.max.vm.classfile.LocalVariableTable.Entry[] entries = maxLvt.entries();
+            LocalImpl[] result = new LocalImpl[entries.length];
+            for (int i = 0; i < entries.length; i++) {
+                result[i] = new LocalImpl(entries[i]);
+            }
+            return result;
+        }
+
+        @Override
+        public Local[] getLocalsAt(int bci) {
+            // TODO
+            MaxGraal.unimplemented("LocalVariableTable.getLocalsAt");
+            return null;
+        }
+
+        @Override
+        public Local getLocal(int slot, int bci) {
+            com.sun.max.vm.classfile.LocalVariableTable.Entry entry = maxLvt.findLocalVariable(slot, bci);
+            if (entry == null) {
+                return null;
+            }
+            return new LocalImpl(entry);
+        }
+
+    }
+
+    @Override
+    public LocalVariableTable getLocalVariableTable() {
+        LocalVariableTable lvt = localVariableTableMap.get(riMethod);
+        if (lvt == null) {
+            ClassMethodActor cma = (ClassMethodActor) riResolvedMethod();
+            com.sun.max.vm.classfile.LocalVariableTable maxLvt = cma.codeAttribute().localVariableTable();
+            lvt = new LocalVariableTableImpl(maxLvt);
+            localVariableTableMap.put(riMethod, lvt);
+        }
+        return lvt;
     }
 
 }

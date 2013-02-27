@@ -53,7 +53,7 @@ public class MaxIntrinsics {
 
     static class PointerReadOffsetIntrinsic extends MaxIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode offset) {
-            return graph.add(new UnsafeLoadNode(StampFactory.declared((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())), pointer, 0, offset, method.getSignature().getReturnKind()));
+            return graph.add(new UnsafeLoadNode(stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())), pointer, 0, offset, method.getSignature().getReturnKind()));
         }
     }
 
@@ -65,13 +65,21 @@ public class MaxIntrinsics {
 
     static class PointerReadIndexIntrinsic extends MaxIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode displacement, ValueNode index) {
-            return graph.add(new UnsafeLoadNode(StampFactory.declared((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())), pointer, displacement.asConstant().asInt(), index, method.getSignature().getReturnKind()));
+            return graph.add(new UnsafeLoadNode(stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())), pointer, displacement.asConstant().asInt(), index, method.getSignature().getReturnKind()));
         }
     }
 
     static class PointerWriteIndexIntrinsic  extends MaxIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode displacement, ValueNode index, ValueNode value) {
             return graph.add(new UnsafeStoreNode(pointer, displacement.asConstant().asInt(), index, value, value.kind()));
+        }
+    }
+
+    private static Stamp stampFor(ResolvedJavaType resolvedJavaType) {
+        if (resolvedJavaType.isPrimitive()) {
+            return StampFactory.forKind(resolvedJavaType.getKind());
+        } else {
+            return StampFactory.declared(resolvedJavaType);
         }
     }
 

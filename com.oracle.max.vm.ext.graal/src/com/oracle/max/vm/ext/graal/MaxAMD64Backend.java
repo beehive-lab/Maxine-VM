@@ -209,7 +209,7 @@ public class MaxAMD64Backend extends Backend {
     @Override
     public void emitCode(TargetMethodAssembler tasm, ResolvedJavaMethod method, LIR lir) {
         MaxAMD64FrameContext maxFrameContext = (MaxAMD64FrameContext) tasm.frameContext;
-        maxFrameContext.callee = (ClassMethodActor) MaxResolvedJavaMethod.get(method);
+        maxFrameContext.callee = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(method);
         lir.emitCode(tasm);
     }
 

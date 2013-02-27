@@ -48,6 +48,10 @@ public class MaxJavaField implements JavaField {
         return result;
     }
 
+    public static RiField getRiField(JavaField javaField) {
+        return ((MaxJavaField) javaField).riField;
+    }
+
     protected MaxJavaField(RiField riField) {
         this.riField = riField;
     }

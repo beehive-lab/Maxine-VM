@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.graal.api.code.*;
-import com.sun.cri.ci.*;
+import com.oracle.graal.api.meta.*;
+import com.oracle.graal.graph.*;
+import com.oracle.graal.nodes.*;
 
+@NodeInfo(nameTemplate = "LoadUnresolvedField#{p#field/s}")
+public class LoadUnresolvedFieldNode extends AccessUnresolvedFieldNode {
 
-public class MaxCodePos {
-    static CiCodePos toCi(BytecodePosition gCodePos) {
-        if (gCodePos == null) {
-            return null;
-        }
-        return new CiCodePos(toCi(gCodePos.getCaller()), MaxResolvedJavaMethod.getRiResolvedMethod(gCodePos.getMethod()), gCodePos.getBCI());
+    public LoadUnresolvedFieldNode(ValueNode object, JavaField field) {
+        super(object, field);
     }
+
 }

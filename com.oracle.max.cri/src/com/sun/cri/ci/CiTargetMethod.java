@@ -100,7 +100,7 @@ public class CiTargetMethod implements Serializable {
          */
         public final boolean direct;
 
-        Call(Object target, int pcOffset, int size, boolean direct, CiDebugInfo debugInfo) {
+        public Call(Object target, int pcOffset, int size, boolean direct, CiDebugInfo debugInfo) {
             super(pcOffset, debugInfo);
             this.size = size;
             this.target = target;
@@ -425,7 +425,7 @@ public class CiTargetMethod implements Serializable {
         addSafepoint(new Safepoint(codePos, debugInfo));
     }
 
-    private void addSafepoint(Safepoint safepoint) {
+    protected void addSafepoint(Safepoint safepoint) {
         // The safepoints list must always be sorted
         if (!safepoints.isEmpty() && safepoints.get(safepoints.size() - 1).pcOffset >= safepoint.pcOffset) {
             // This re-sorting should be very rare

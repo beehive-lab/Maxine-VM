@@ -85,7 +85,7 @@ public class CompilationBroker {
     /**
      * Other compilers registered with {@link #addCompiler}.
      */
-    private HashMap<String, RuntimeCompiler> altCompilers;
+    private HashMap<String, RuntimeCompiler> altCompilers = new HashMap<String, RuntimeCompiler>();
 
     private static boolean opt;
     private static boolean GCOnRecompilation;
@@ -249,9 +249,6 @@ public class CompilationBroker {
     }
 
     public static RuntimeCompiler addCompiler(String name, String className) {
-        if (singleton.altCompilers == null) {
-            singleton.altCompilers = new HashMap<String, RuntimeCompiler>();
-        }
         RuntimeCompiler compiler = instantiateCompiler(className);
         singleton.altCompilers.put(name, compiler);
         return compiler;
@@ -295,14 +292,17 @@ public class CompilationBroker {
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);
         }
-        if (AddCompiler != null) {
-            String[] nameAndClass = AddCompiler.split(":");
-            addCompiler(nameAndClass[0], nameAndClass[1]);
-            AddCompiler = null;
-        }
-        if (altCompilers != null) {
-            for (RuntimeCompiler altCompiler : altCompilers.values()) {
-                altCompiler.initialize(phase);
+
+        if (phase == MaxineVM.Phase.HOSTED_COMPILING || phase == MaxineVM.Phase.STARTING) {
+            if (AddCompiler != null) {
+                String[] nameAndClass = AddCompiler.split(":");
+                addCompiler(nameAndClass[0], nameAndClass[1]);
+                AddCompiler = null;
+            }
+            if (altCompilers != null) {
+                for (RuntimeCompiler altCompiler : altCompilers.values()) {
+                    altCompiler.initialize(phase);
+                }
             }
         }
 

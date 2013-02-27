@@ -55,6 +55,29 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
         }
     }
 
+
+    /**
+     * Removes the actual type of {@link Word} subclass instances and converts them to {@link #wordkind}.
+     * This can only be done when the object'ness, e.g., method invocation, of the instance is no longer needed.
+     */
+    public static class KindRewriter extends MaxWordTypeRewriterPhase {
+        public KindRewriter(MetaAccessProvider metaAccess, Kind wordKind) {
+            super(metaAccess, wordKind);
+        }
+
+        @Override
+        protected void run(StructuredGraph graph) {
+            for (Node n : GraphOrder.forwardGraph(graph)) {
+                if (n instanceof ValueNode) {
+                    ValueNode vn = (ValueNode) n;
+                    if (isWord(vn)) {
+                        changeToWord(vn);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Remove unnecessary checks for {@code null} on {@link Word} subclasses.
      * Also remove null checks on access to {@link Hub} and subclasses.
@@ -188,19 +211,29 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
         if (node.stamp() == StampFactory.forWord()) {
             return true;
         }
-        if (node.kind() == Kind.Object) {
+        if (node.kind() == Kind.Object && node.objectStamp().type() != null) {
             return isWord(node.objectStamp().type());
         }
         return false;
     }
 
-    public boolean isWord(ResolvedJavaType type) {
+    protected boolean isWord(ResolvedJavaType type) {
         RiType riType = ((MaxResolvedJavaType) type).riType;
         if (!(riType instanceof ClassActor)) {
             return false;
         }
         ClassActor actor = (ClassActor) riType;
         return actor.kind == com.sun.max.vm.type.Kind.WORD;
+    }
+
+    protected void changeToWord(ValueNode valueNode) {
+        if (valueNode.isConstant() && valueNode.asConstant().getKind() == Kind.Object) {
+            assert false;
+//            ((StructuredGraph) valueNode.graph()).replaceFloating((ConstantNode) valueNode, newConstant);
+        } else {
+            assert !(valueNode instanceof ConstantNode) : "boxed Word constants should not appear in a snippet graph: " + valueNode + ", stamp: " + valueNode.stamp();
+            valueNode.setStamp(StampFactory.forKind(wordKind));
+        }
     }
 
 }

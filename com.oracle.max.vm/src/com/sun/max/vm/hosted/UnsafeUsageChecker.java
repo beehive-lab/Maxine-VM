@@ -88,6 +88,13 @@ public class UnsafeUsageChecker {
     }
 
     /**
+     * External addition to {@link #whitelist}.
+     */
+    public static void addWhiteList(String className) {
+        whitelist.add(className);
+    }
+
+    /**
      * Called by the class loader for every loaded method. Note that we also need to analyze static class initializers that
      * are not present in the boot image because they were already executed during boot image generation. This method must
      * be called before this filtering.  Because of that, there is no ClassActor or MethodActor available yet.

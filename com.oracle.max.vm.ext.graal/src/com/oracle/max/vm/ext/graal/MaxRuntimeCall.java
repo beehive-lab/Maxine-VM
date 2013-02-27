@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,23 @@
  */
 package com.oracle.max.vm.ext.graal;
 
-import com.oracle.graal.api.code.*;
-import com.sun.cri.ci.*;
+import java.lang.reflect.*;
 
+import com.oracle.graal.api.code.RuntimeCallTarget.*;
+import com.sun.max.vm.actor.member.*;
 
-public class MaxCodePos {
-    static CiCodePos toCi(BytecodePosition gCodePos) {
-        if (gCodePos == null) {
-            return null;
-        }
-        return new CiCodePos(toCi(gCodePos.getCaller()), MaxResolvedJavaMethod.getRiResolvedMethod(gCodePos.getMethod()), gCodePos.getBCI());
+/**
+ * Simple extension of {@link Descriptor} that remembers the {@link MetgodActor}.
+ */
+public class MaxRuntimeCall extends Descriptor {
+    private final MethodActor methodActor;
+
+    public MaxRuntimeCall(String methodName, Method method, boolean hasSideEffect, Class resultKind, Class[] arguments) {
+        super(methodName, hasSideEffect, resultKind, arguments);
+        this.methodActor = MethodActor.fromJava(method);
+    }
+
+    public MethodActor getMethodActor() {
+        return methodActor;
     }
 }

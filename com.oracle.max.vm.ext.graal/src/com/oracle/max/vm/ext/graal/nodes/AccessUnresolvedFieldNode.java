@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.graal.api.code.*;
-import com.sun.cri.ci.*;
+import com.oracle.graal.api.meta.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 
 
-public class MaxCodePos {
-    static CiCodePos toCi(BytecodePosition gCodePos) {
-        if (gCodePos == null) {
-            return null;
-        }
-        return new CiCodePos(toCi(gCodePos.getCaller()), MaxResolvedJavaMethod.getRiResolvedMethod(gCodePos.getMethod()), gCodePos.getBCI());
+public abstract class AccessUnresolvedFieldNode extends FixedWithNextNode implements Lowerable {
+
+    @Input private ValueNode object;
+    protected final JavaField field;
+
+    protected AccessUnresolvedFieldNode(ValueNode object, JavaField field) {
+        super(StampFactory.forKind(field.getKind()));
+        this.field = field;
+        this.object = object;
     }
+
+    public ValueNode object() {
+        return object;
+    }
+
+    public JavaField field() {
+        return field;
+    }
+
+    @Override
+    public void lower(LoweringTool tool) {
+        tool.getRuntime().lower(this, tool);
+    }
+
 }

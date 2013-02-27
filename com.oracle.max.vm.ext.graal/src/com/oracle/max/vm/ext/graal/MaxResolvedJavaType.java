@@ -42,8 +42,8 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         return (MaxResolvedJavaType) MaxJavaType.get(riResolvedType);
     }
 
-    public static RiResolvedType get(ResolvedJavaType resolvedJavaType) {
-        return (RiResolvedType) MaxJavaType.get(resolvedJavaType);
+    public static RiResolvedType getRiResolvedType(ResolvedJavaType resolvedJavaType) {
+        return (RiResolvedType) MaxJavaType.getRiType(resolvedJavaType);
     }
 
     private RiResolvedType riResolvedType() {
@@ -105,7 +105,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public boolean isAssignableFrom(ResolvedJavaType other) {
-        return (MaxResolvedJavaType.get(other)).isSubtypeOf(riResolvedType());
+        return (MaxResolvedJavaType.getRiResolvedType(other)).isSubtypeOf(riResolvedType());
     }
 
     @Override
@@ -165,7 +165,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public ResolvedJavaMethod findUniqueConcreteMethod(ResolvedJavaMethod method) {
-        RiResolvedMethod riMethod = riResolvedType().uniqueConcreteMethod(MaxResolvedJavaMethod.get(method));
+        RiResolvedMethod riMethod = riResolvedType().uniqueConcreteMethod(MaxResolvedJavaMethod.getRiResolvedMethod(method));
         if (riMethod == null) {
             return null;
         } else {

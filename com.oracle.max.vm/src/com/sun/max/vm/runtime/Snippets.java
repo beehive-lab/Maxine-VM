@@ -147,6 +147,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @RUNTIME_ENTRY
     private static void resolveStaticFieldForReading0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -171,6 +172,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @RUNTIME_ENTRY
     private static void resolveStaticFieldForWriting0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -287,6 +289,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @RUNTIME_ENTRY
     private static void resolveInstanceFieldForReading0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -311,6 +314,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @RUNTIME_ENTRY
     private static void resolveInstanceFieldForWriting0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;

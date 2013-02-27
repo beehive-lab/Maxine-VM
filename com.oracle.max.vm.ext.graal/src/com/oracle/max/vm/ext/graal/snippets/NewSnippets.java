@@ -33,6 +33,7 @@ import com.oracle.graal.graph.Node.NodeIntrinsic;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.snippets.*;
 import com.oracle.graal.snippets.Snippet.ConstantParameter;
 import com.oracle.graal.snippets.Snippet.Parameter;
@@ -50,7 +51,6 @@ public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
     @NodeIntrinsic(value = RuntimeCallNode.class)
     public static native Object runtimeCall(@ConstantNodeParameter Descriptor descriptor, DynamicHub hub);
 
-    @SuppressWarnings("unused")
     public static void registerLowerings(VMConfiguration config, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         new NewSnippets(config, targetDescription, runtime, assumptions, lowerings);
     }
@@ -77,7 +77,7 @@ public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
 
         @Override
         public void lower(NewInstanceNode node, LoweringTool tool) {
-            ClassActor type = (ClassActor) MaxResolvedJavaType.get(node.instanceClass());
+            ClassActor type = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.instanceClass());
             Key key = new Key(newInstance);
             key.add("fillContents", node.fillContents());
             Arguments args = new Arguments();
@@ -88,7 +88,8 @@ public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object newInstanceSnippet(@Parameter("hub") DynamicHub hub, @ConstantParameter("fillContents") boolean fillContents) {
-        return Heap.createTuple(hub);
+        return UnsafeCastNode.unsafeCast(Heap.createTuple(hub), StampFactory.forNodeIntrinsic());
+//        return Heap.createTuple(hub);
     }
 
     /*

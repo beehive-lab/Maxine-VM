@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,30 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.oracle.max.vm.ext.graal;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
+import com.oracle.graal.api.meta.*;
+import com.oracle.graal.java.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
 
-
-public class Package extends BootImagePackage {
-
-    public static final String GRAAL_BOOTIMAGE_PROPERTY = "max.vm.graal.inboot";
-
-    public Package() {
-        super("com.oracle.graal.compiler.**",
-              "com.oracle.graal.graph.**",
-              //"com.oracle.graal.graphviz.**",
-              "com.oracle.graal.nodes.**",
-              "com.oracle.graal.phases.**",
-              "com.oracle.graal.snippets.**");
-    }
+public class MaxDeoptCustomizer extends GraphBuilderPhase.DeoptCustomizer {
 
     @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return System.getProperty(GRAAL_BOOTIMAGE_PROPERTY) != null;
+    public void unresolvedField(GraphBuilderPhase phase, ValueNode receiver, JavaField field) {
+        LoadUnresolvedFieldNode node = currentGraph(phase).add(new LoadUnresolvedFieldNode(receiver, field));
+        ValueNode valueNode = append(phase, node);
+        frameState(phase).push(field.getKind().getStackKind(), valueNode);
     }
-
 
 }
