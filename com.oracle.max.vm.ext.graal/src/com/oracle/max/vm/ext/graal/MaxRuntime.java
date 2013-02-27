@@ -37,6 +37,7 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.common.*;
@@ -121,7 +122,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     @Override
     public RegisterConfig lookupRegisterConfig(ResolvedJavaMethod method) {
-        return MaxRegisterConfig.get(vm().registerConfigs.getRegisterConfig((ClassMethodActor) MaxJavaMethod.get(method)));
+        return MaxRegisterConfig.get(vm().registerConfigs.getRegisterConfig((ClassMethodActor) MaxJavaMethod.getRiMethod(method)));
     }
 
     @Override
@@ -144,40 +145,10 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         return callTarget;
     }
 
-    private class MaxRuntimeCallTarget implements RuntimeCallTarget {
-        private final Descriptor descriptor;
-        private final CallingConvention callingConvention;
-
-        MaxRuntimeCallTarget(Descriptor descriptor) {
-            this.descriptor = descriptor;
-            RegisterConfig registerConfig = MaxRegisterConfig.get(MaxineVM.vm().registerConfigs.standard);
-            JavaType resType = lookupJavaType(descriptor.getResultType());
-            JavaType[] argTypes = MetaUtil.lookupJavaTypes(MaxRuntime.this, descriptor.getArgumentTypes());
-            this.callingConvention = registerConfig.getCallingConvention(CallingConvention.Type.RuntimeCall, resType, argTypes,
-                            maxTargetDescription, false);
-        }
-
-        @Override
-        public CallingConvention getCallingConvention() {
-            return callingConvention;
-        }
-
-        @Override
-        public long getMaxCallTargetOffset() {
-            // TODO Check
-            return -1;
-        }
-
-        @Override
-        public Descriptor getDescriptor() {
-            return descriptor;
-        }
-
-    }
 
     @Override
     public RuntimeCallTarget lookupRuntimeCall(Descriptor descriptor) {
-        return new MaxRuntimeCallTarget(descriptor);
+        return MaxRuntimeCallsMap.get(descriptor);
     }
 
     @Override
@@ -188,7 +159,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     @Override
     public boolean needsDataPatch(Constant constant) {
-        unimplemented("needsDataPatch");
+        // TODO when might this be true?
         return false;
     }
 
@@ -212,6 +183,13 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         if (constant.getKind() == Kind.Object) {
             Object o = constant.asObject();
             if (o != null) {
+                // When running isHosted, StaticTuple is an issue as it is HOSTED_ONLY
+                // so shows up as null, which causes an assertion failure later
+                if (MaxineVM.isHosted()) {
+                    if (o.getClass() == StaticTuple.class) {
+                        return MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
+                    }
+                }
                 return MaxResolvedJavaType.get(ClassActor.fromJava(o.getClass()));
             }
         }
@@ -291,8 +269,10 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
             new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(si.runtime, si.target.wordKind).apply(graph);
 
-            // This only gets done once right at the end
+            // These only get done once right at the end
             new MaxWordTypeRewriterPhase.MaxUnsafeCastRewriter(si.runtime, si.target.wordKind).apply(graph);
+            new MaxSlowpathRewriterPhase(si.runtime).apply(graph);
+            new MaxWordTypeRewriterPhase.KindRewriter(si.runtime, si.target.wordKind).apply(graph);
 
             // safe (I believe and important) to do this for Maxine snippets
             new SnippetFrameStateCleanupPhase().apply(graph);
@@ -310,16 +290,47 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         SnippetInstaller installer = new SnippetInstaller(this, assumptions, maxTargetDescription);
         GraalIntrinsics.installIntrinsics(installer);
         MaxIntrinsics.initialize(this, maxTargetDescription);
+        MaxRuntimeCallsMap.initialize(this);
         MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration = new MaxSnippetGraphBuilderConfiguration();
         MaxConstantPool.setGraphBuilderConfig(maxSnippetGraphBuilderConfiguration);
         SnippetInstaller maxInstaller = new SnippetInstaller(this, assumptions, maxTargetDescription, new MaxSnippetInstallerCustomizer(maxSnippetGraphBuilderConfiguration));
         maxInstaller.installSnippets(TestSnippets.class);
         maxInstaller.installSnippets(NewSnippets.class);
+        maxInstaller.installSnippets(FieldSnippets.class);
         MaxConstantPool.setGraphBuilderConfig(null);
 
         lowerings.put(InvokeNode.class, new InvokeLowering());
         lowerings.put(InvokeWithExceptionNode.class, new InvokeLowering());
+        lowerings.put(UnsafeLoadNode.class, new UnsafeLoadLowering());
+        lowerings.put(UnsafeStoreNode.class, new UnsafeStoreLowering());
         NewSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
+        FieldSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
+    }
+
+    protected class UnsafeLoadLowering implements LoweringProvider<UnsafeLoadNode> {
+
+        @Override
+        public void lower(UnsafeLoadNode node, LoweringTool tool) {
+            StructuredGraph graph = (StructuredGraph) node.graph();
+            assert node.kind() != Kind.Illegal;
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, node.accessKind(), node.displacement(), node.offset(), graph, false);
+            ReadNode memoryRead = graph.add(new ReadNode(node.object(), location, node.stamp()));
+            // An unsafe read must not floating outside its block as may float above an explicit null check on its object.
+            memoryRead.dependencies().add(BeginNode.prevBegin(node));
+            graph.replaceFixedWithFixed(node, memoryRead);
+        }
+    }
+
+    protected class UnsafeStoreLowering implements LoweringProvider<UnsafeStoreNode> {
+
+        @Override
+        public void lower(UnsafeStoreNode node, LoweringTool tool) {
+            StructuredGraph graph = (StructuredGraph) node.graph();
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, node.accessKind(), node.displacement(), node.offset(), graph, false);
+            WriteNode write = graph.add(new WriteNode(node.object(), node.value(), location));
+            write.setStateAfter(node.stateAfter());
+            graph.replaceFixedWithFixed(node, write);
+        }
     }
 
     protected class InvokeLowering implements LoweringProvider<FixedNode> {
@@ -334,7 +345,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
                 ValueNode receiver = parameters.size() <= 0 ? null : parameters.get(0);
                 if (!callTarget.isStatic() && receiver.kind() == Kind.Object && !receiver.objectStamp().nonNull()) {
                     IsNullNode isNull = graph.unique(new IsNullNode(receiver));
-                    graph.addBeforeFixed(node, graph.add(new FixedGuardNode(isNull, DeoptimizationReason.NullCheckException, null, true, invoke.leafGraphId())));
+                    graph.addBeforeFixed(node, graph.add(new FixedGuardNode(isNull, DeoptimizationReason.NullCheckException, null, true)));
                 }
                 JavaType[] signature = MetaUtil.signatureToTypes(callTarget.targetMethod().getSignature(), callTarget.isStatic() ? null : callTarget.targetMethod().getDeclaringClass());
                 CallingConvention.Type callType = CallingConvention.Type.JavaCall;
@@ -377,6 +388,18 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     @Override
     public Signature parseMethodDescriptor(String methodDescriptor) {
         MaxGraal.unimplemented("parseMethodDescriptor");
+        return null;
+    }
+
+    @Override
+    public TargetDescription getTarget() {
+        return maxTargetDescription;
+    }
+
+    @Override
+    public Constant readUnsafeConstant(Kind kind, Object base, long displacement) {
+        // TODO
+        MaxGraal.unimplemented("MaxRuntime.readUnsafeConstant");
         return null;
     }
 

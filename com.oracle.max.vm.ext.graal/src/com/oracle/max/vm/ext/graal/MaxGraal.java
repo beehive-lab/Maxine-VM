@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,7 +20,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.oracle.max.vm.ext.graal;
 import java.util.*;
 import java.util.concurrent.*;
@@ -42,18 +41,26 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Integration of the Graal compiler into Maxine's compilation framework.
- * Currently the compiler is loaded as a VM extension and not included in the boot image.
- * Amongst other things, this means that Graal options cannot be set on the command line,
- * but just be set using {@code -vmextension:jar=args}.
+ * Integration of the Graal compiler into Maxine's compilation framework. The compiler can be loaded as a VM extension
+ * or included in the boot image. In extension mode, the Graal options cannot be set on the command line, but can be set
+ * using {@code -vmextension:jar=args}. N.B. Currently, loading as an extension does not work because the snippet
+ * installer needs to access {@link HOSTED_ONLY} fields of VM classes.
+ *
+ * When included in the boot image, it is necessary to call {@link FieldIntrospection#rescanAllFieldOffsets()} on VM startup as the
+ * {@link NodeClass} field offsets calculated during boot image construction are those of the host VM. In principle this
+ * could be fixed up during boot image creation, as per the JDK classes, but as Graal provides a method to do it, and
+ * the necessary fixup is quite complicated, we do it on VM startup.
  */
 public class MaxGraal implements RuntimeCompiler {
+
+    private static final String IGV_PROPERTY = "max.vm.graal.igv";
 
     private static class MaxGraphCache implements GraphCache {
 
@@ -74,11 +81,26 @@ public class MaxGraal implements RuntimeCompiler {
     // The singleton instance of this compiler
     private static MaxGraal singleton;
 
-    private GraalCompiler compiler;
+    private GraalCompiler graalCompiler;
     public MaxRuntime runtime;
     private OptimisticOptimizations optimisticOpts;
     private MaxGraphCache cache;
 
+    /**
+     * Hack option to compile given tests after boot image generation (ease of debugging).
+     */
+    private static String MaxGraalTests;
+
+    public MaxGraal() {
+        if (singleton == null) {
+            singleton = this;
+        }
+    }
+
+    /**
+     * Entry point when loaded as a VM extension.
+     * This occurs in the {@link MaxineVM.Phase#RUNNING} phase.
+     */
     public static void onLoad(String args) {
         // Graal options are passed as a comma separated list in args
         MaxGraalOptions.initialize(args);
@@ -87,7 +109,8 @@ public class MaxGraal implements RuntimeCompiler {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(VMClassLoader.VM_CLASS_LOADER);
-            createCompiler();
+            // This sets singleton
+            new MaxGraal().initialize(MaxineVM.Phase.RUNNING);
         } finally {
             Thread.currentThread().setContextClassLoader(cl);
         }
@@ -98,28 +121,86 @@ public class MaxGraal implements RuntimeCompiler {
         return singleton.runtime;
     }
 
+    /**
+     * See {@link CompilationBroker#initialize(Phase).
+     * When an added compiler only called in {@link MaxineVM.Phase#HOSTED_COMPILING} and {@link MaxineVM.Phase#STARTING} phases,
+     * <i>after</i> {@link CompilationBroker#addCompiler} has been called.
+     */
     @Override
     public void initialize(Phase phase) {
-        // In extension mode, this is only called in the RUNNING phase,
-        // at which point there is nothing else to do.
-        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+        if (phase == MaxineVM.Phase.HOSTED_COMPILING) {
             MaxGraalOptions.initialize();
-            createCompiler();
+            createGraalCompiler(phase);
+            VMOptions.addFieldOption("-XX:", "MaxGraalTests", "list of test methods to compile");
+            testsHack();
+        } else if (phase == MaxineVM.Phase.STARTING) {
+            // This is the obvious place to do this but it is too early in the startup without
+            // more classes related to annotations being in the boot image, because bootclasspath is not setup
+            // rescanAllFieldOffsets()
+        } else if (phase == MaxineVM.Phase.RUNNING) {
+            // -vmextension case
+            CompilationBroker.addCompiler(NAME, "com.oracle.max.vm.ext.graal.MaxGraal");
+            // N.B. the previous call will invoke our constructor but it will not change singleton
+            createGraalCompiler(phase);
         }
     }
 
-    private static void createCompiler() {
-        singleton = (MaxGraal) CompilationBroker.addCompiler(NAME, "com.oracle.max.vm.ext.graal.MaxGraal");
-        singleton.enabledDebugConfig = Debug.fixedConfig(false, true, false, false, Arrays.asList(new GraphPrinterDumpHandler(), new CFGPrinterObserver()), System.out);
-        singleton.disabledDebugConfig = Debug.fixedConfig(false, false, false, false, new ArrayList<DebugDumpHandler>(), System.out);
-        Debug.enable();
-        Debug.setConfig(singleton.enabledDebugConfig);
+    private static boolean rescanAllFieldOffsetsDone;
+
+    private static void rescanAllFieldOffsets() {
+        if (rescanAllFieldOffsetsDone) {
+            return;
+        }
+        try {
+            FieldIntrospection.rescanAllFieldOffsets(new FieldIntrospection.DefaultCalcOffset());
+            rescanAllFieldOffsetsDone = true;
+        } catch (Throwable t) {
+            Log.println("FieldIntrospection.rescanAllFieldOffsets failed: " + t);
+            MaxineVM.exit(-1);
+        }
+    }
+
+    private void checkDebugConfig() {
+        String igvProp = System.getProperty(IGV_PROPERTY);
+        if (igvProp != null && igvProp.equals("false")) {
+            Debug.setConfig(disabledDebugConfig);
+        } else {
+            Debug.enable();
+            Debug.setConfig(enabledDebugConfig);
+        }
+    }
+
+    private void createGraalCompiler(Phase phase) {
+        enabledDebugConfig = Debug.fixedConfig(false, true, false, false, Arrays.asList(new GraphPrinterDumpHandler(), new CFGPrinterObserver()), System.out);
+        disabledDebugConfig = Debug.fixedConfig(false, false, false, false, new ArrayList<DebugDumpHandler>(), System.out);
+        checkDebugConfig();
         MaxTargetDescription td = new MaxTargetDescription();
-        singleton.runtime = new MaxRuntime(td);
-        singleton.compiler = new GraalCompiler(singleton.runtime, td, new MaxAMD64Backend(singleton.runtime, td));
-        singleton.optimisticOpts = OptimisticOptimizations.ALL;
-        singleton.cache = new MaxGraphCache();
-        singleton.runtime.init();
+        runtime = new MaxRuntime(td);
+        graalCompiler = new GraalCompiler(runtime, td, new MaxAMD64Backend(runtime, td));
+        optimisticOpts = OptimisticOptimizations.ALL;
+        cache = new MaxGraphCache();
+        runtime.init();
+    }
+
+    /** Hack to compile some tests during boot image generation - easier debugging.
+     *
+     */
+    private void testsHack() {
+        if (MaxGraalTests != null) {
+            String[] tests = MaxGraalTests.split(",");
+            for (String test : tests) {
+                try {
+                    Class< ? > testClass = Class.forName(test);
+                    ClassActor testClassActor = ClassActor.fromJava(testClass);
+                    MethodActor[] methods = testClassActor.getLocalMethodActorsArray();
+                    for (MethodActor methodActor : methods) {
+                        compile((ClassMethodActor) methodActor, false, true, null);
+                    }
+                } catch (ClassNotFoundException ex) {
+                    System.err.println("failed to find test class: " + test);
+                }
+            }
+        }
     }
 
     @NEVER_INLINE
@@ -130,23 +211,32 @@ public class MaxGraal implements RuntimeCompiler {
     private DebugConfig enabledDebugConfig;
     private DebugConfig disabledDebugConfig;
 
+    private static final MaxDeoptCustomizer maxDeoptCustomizer = new MaxDeoptCustomizer();
+
     @Override
     public TargetMethod compile(ClassMethodActor methodActor, boolean isDeopt, boolean install, CiStatistics stats) {
+        rescanAllFieldOffsets();
+        // compile with C1X/T1X for comparison
+        TargetMethod c1xTM = CompilationBroker.singleton.optimizingCompiler.compile(methodActor, isDeopt, install, stats);
+        TargetMethod t1xTM = CompilationBroker.singleton.baselineCompiler.compile(methodActor, isDeopt, install, stats);
+        defaultCompilations(c1xTM, t1xTM);
         try {
+            if (!MaxineVM.isHosted()) {
+                checkDebugConfig();
+            }
             PhasePlan phasePlan = new PhasePlan();
             ResolvedJavaMethod method = MaxResolvedJavaMethod.get(methodActor);
 
             StructuredGraph graph = (StructuredGraph) method.getCompilerStorage().get(Graph.class);
             if (graph == null) {
-                GraphBuilderPhase graphBuilderPhase = new GraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(), optimisticOpts);
+                GraphBuilderPhase graphBuilderPhase = new GraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(),
+                                optimisticOpts, maxDeoptCustomizer);
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
                 graph = new StructuredGraph(method);
             }
-            CompilationResult result = compiler.compileMethod(method, graph, cache, phasePlan, optimisticOpts);
-            MaxTargetMethod graalTM = new MaxTargetMethod(methodActor, MaxCiTargetMethod.create(result), true);
-            // compile with C1X for comparison
-            TargetMethod c1xTM = CompilationBroker.singleton.optimizingCompiler.compile(methodActor, isDeopt, install, stats);
-            compare(graalTM, c1xTM);
+            CompilationResult result = graalCompiler.compileMethod(method, graph, cache, phasePlan, optimisticOpts);
+            MaxTargetMethod graalTM = GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
+            compare(graalTM, c1xTM, t1xTM);
             return graalTM;
         } catch (Throwable t) {
             ProgramError.unexpected(t);
@@ -154,7 +244,13 @@ public class MaxGraal implements RuntimeCompiler {
         }
     }
 
-    private static void compare(TargetMethod grallTM, TargetMethod c1xTM) {
+    @NEVER_INLINE
+    private static void compare(TargetMethod graalTM, TargetMethod c1xTM, TargetMethod t1xTM) {
+
+    }
+
+    @NEVER_INLINE
+    private static void defaultCompilations(TargetMethod c1xTM, TargetMethod t1xTM) {
 
     }
 

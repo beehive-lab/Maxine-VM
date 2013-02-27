@@ -28,6 +28,7 @@ import java.util.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.runtime.*;
 
 
@@ -97,7 +98,7 @@ public class MaxIntrinsicImpl {
         return offset;
     }
 
-//    @HOSTED_ONLY
+    @HOSTED_ONLY
     private Method getCreateGraphMethod() {
         try {
             return getClass().getMethod("createGraph", StructuredGraph.class, ResolvedJavaMethod.class, NodeList.class);
@@ -106,7 +107,7 @@ public class MaxIntrinsicImpl {
         }
     }
 
-//    @HOSTED_ONLY
+    @HOSTED_ONLY
     protected MaxIntrinsicImpl() {
         Method createGraphMethod = getCreateGraphMethod();
         // Only look for "create(...)" if createGraph() was not overidden

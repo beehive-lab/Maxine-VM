@@ -29,8 +29,7 @@ import com.oracle.max.vm.ext.graal.*;
 import com.sun.max.annotate.*;
 
 /**
- * Slow path calls in methods (transitively) referenced from snippets should be annotated with {@link NEVER_INLINE}.
- * Perhaps a specific {@code SLOWPATH} annotation would be better...
+ * Slow path calls in methods (transitively) referenced from snippets should be annotated with {@link NEVER_INLINE} or {@link RUNTIME_ENTRY}.
  */
 public class MaxSnippetInliningPolicy extends DefaultSnippetInliningPolicy {
 
@@ -40,7 +39,7 @@ public class MaxSnippetInliningPolicy extends DefaultSnippetInliningPolicy {
 
     @Override
     public boolean shouldInline(ResolvedJavaMethod method, ResolvedJavaMethod caller) {
-        if (method.getAnnotation(NEVER_INLINE.class) != null) {
+        if (method.getAnnotation(NEVER_INLINE.class) != null || method.getAnnotation(RUNTIME_ENTRY.class) != null) {
             return false;
         }
         return super.shouldInline(method, caller);

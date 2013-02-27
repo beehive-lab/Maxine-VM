@@ -40,21 +40,31 @@ public class KindMap {
      */
     private static com.sun.cri.ci.CiKind[] graalToCi;
 
+    /**
+     * Maps a Maxine kind to a Graal kind.
+     * Indexed by {@link com.sun.max.vm.type.KindEnum#ordinal()}.
+     */
+    private static com.oracle.graal.api.meta.Kind[] maxToGraal;
+
     static {
         graalToCi = new com.sun.cri.ci.CiKind[com.oracle.graal.api.meta.Kind.values().length];
         ciToGraal = new com.oracle.graal.api.meta.Kind[com.sun.cri.ci.CiKind.VALUES.length];
+        maxToGraal = new com.oracle.graal.api.meta.Kind[com.sun.max.vm.type.KindEnum.values().length];
         for (com.oracle.graal.api.meta.Kind graalKind : com.oracle.graal.api.meta.Kind.values()) {
             graalToCi[graalKind.ordinal()] = null;
         }
-        for (com.sun.cri.ci.CiKind maxKind : com.sun.cri.ci.CiKind.VALUES) {
-            ciToGraal[maxKind.ordinal()] = null;
+        for (com.sun.cri.ci.CiKind ciKind : com.sun.cri.ci.CiKind.VALUES) {
+            ciToGraal[ciKind.ordinal()] = null;
+        }
+        for (com.sun.max.vm.type.KindEnum maxKind : com.sun.max.vm.type.KindEnum.values()) {
+            maxToGraal[maxKind.ordinal()] = null;
         }
     }
 
     public static com.oracle.graal.api.meta.Kind toGraalKind(com.sun.cri.ci.CiKind maxKind) {
         com.oracle.graal.api.meta.Kind result = ciToGraal[maxKind.ordinal()];
         if (result == null) {
-            // CheckStyle : Stop
+            // Checkstyle: stop
             switch (maxKind) {
                 case Boolean: result = com.oracle.graal.api.meta.Kind.Boolean; break;
                 case Byte: result = com.oracle.graal.api.meta.Kind.Byte; break;
@@ -69,8 +79,29 @@ public class KindMap {
                 case Jsr: result = com.oracle.graal.api.meta.Kind.Jsr; break;
                 case Illegal: result = com.oracle.graal.api.meta.Kind.Illegal; break;
             }
-            // CheckStyle : Resume
+            // Checkstyle: resume
             ciToGraal[maxKind.ordinal()] = result;
+        }
+        return result;
+    }
+
+    public static com.oracle.graal.api.meta.Kind toGraalKind(com.sun.max.vm.type.Kind maxKind) {
+        com.oracle.graal.api.meta.Kind result = maxToGraal[maxKind.asEnum.ordinal()];
+        if (result == null) {
+            // Checkstyle: stop
+            switch (maxKind.asEnum) {
+                case BOOLEAN: result = com.oracle.graal.api.meta.Kind.Boolean; break;
+                case BYTE: result = com.oracle.graal.api.meta.Kind.Byte; break;
+                case CHAR: result = com.oracle.graal.api.meta.Kind.Char; break;
+                case SHORT: result = com.oracle.graal.api.meta.Kind.Short; break;
+                case INT: result = com.oracle.graal.api.meta.Kind.Int; break;
+                case LONG: result = com.oracle.graal.api.meta.Kind.Long; break;
+                case FLOAT: result = com.oracle.graal.api.meta.Kind.Float; break;
+                case DOUBLE: result = com.oracle.graal.api.meta.Kind.Double; break;
+                case VOID: result = com.oracle.graal.api.meta.Kind.Void; break;
+                case REFERENCE: result = com.oracle.graal.api.meta.Kind.Object; break;
+                // Checkstyle: resume
+            }
         }
         return result;
     }
@@ -78,7 +109,7 @@ public class KindMap {
     public static com.sun.cri.ci.CiKind toCiKind(com.oracle.graal.api.meta.Kind graalKind) {
         com.sun.cri.ci.CiKind result = graalToCi[graalKind.ordinal()];
         if (result == null) {
-            // Checkstyle : stop
+            // Checkstyle: stop
             switch (graalKind) {
                 case Boolean: result = com.sun.cri.ci.CiKind.Boolean; break;
                 case Byte: result = com.sun.cri.ci.CiKind.Byte; break;
@@ -93,7 +124,7 @@ public class KindMap {
                 case Jsr: result = com.sun.cri.ci.CiKind.Jsr; break;
                 case Illegal: result = com.sun.cri.ci.CiKind.Illegal; break;
             }
-            // Checkstyle : resume
+            // Checkstyle: resume
             graalToCi[graalKind.ordinal()] = result;
         }
         return result;

@@ -24,8 +24,10 @@ package com.oracle.max.vm.ext.graal;
 
 import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 
+import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ci.*;
+import com.sun.max.unsafe.*;
 
 
 public class ValueMap {
@@ -40,6 +42,9 @@ public class ValueMap {
         } else if (ciValue instanceof CiRegisterValue) {
             CiRegisterValue ciReg = (CiRegisterValue) ciValue;
             result = RegisterMap.toGraal(ciReg.reg).asValue(KindMap.toGraalKind(ciReg.kind));
+        } else if (ciValue instanceof CiStackSlot) {
+            CiStackSlot ciStackSlot = (CiStackSlot) ciValue;
+            result = StackSlot.get(KindMap.toGraalKind(ciStackSlot.kind), ciStackSlot.index() * Word.size(), ciStackSlot.inCallerFrame());
         } else {
             unimplemented("ValueMap.toGraal");
         }

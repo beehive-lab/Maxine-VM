@@ -24,9 +24,12 @@ package com.sun.max.vm.jdk;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
+import com.sun.max.vm.*;
 
 /**
  * Facilitates fast conversion of a {@link BitSet} to a {@link CiBitMap},
@@ -42,13 +45,33 @@ public class BitSetProxy {
     private long[] words;
 
     public static long[] words(BitSet bitSet) {
-        BitSetProxy bitSetProxy = BitSetProxy.asBitSetProxy(bitSet);
-        return bitSetProxy.words;
+        if (MaxineVM.isHosted()) {
+            return (long[]) getFieldValue(bitSet, "words");
+        } else {
+            BitSetProxy bitSetProxy = BitSetProxy.asBitSetProxy(bitSet);
+            return bitSetProxy.words;
+        }
     }
 
     public static int wordsInUse(BitSet bitSet) {
-        BitSetProxy bitSetProxy = BitSetProxy.asBitSetProxy(bitSet);
-        return bitSetProxy.wordsInUse;
+        if (MaxineVM.isHosted()) {
+            return (Integer) getFieldValue(bitSet, "wordsInUse");
+        } else {
+            BitSetProxy bitSetProxy = BitSetProxy.asBitSetProxy(bitSet);
+            return bitSetProxy.wordsInUse;
+        }
+    }
+
+    @HOSTED_ONLY
+    private static Object getFieldValue(BitSet bitSet, String fieldName) {
+        try {
+            Field wordsField = BitSet.class.getDeclaredField(fieldName);
+            wordsField.setAccessible(true);
+            return wordsField.get(bitSet);
+        } catch (Exception ex) {
+            ProgramError.unexpected("BitSetProxy error: " + ex);
+            return null;
+        }
     }
 
 }

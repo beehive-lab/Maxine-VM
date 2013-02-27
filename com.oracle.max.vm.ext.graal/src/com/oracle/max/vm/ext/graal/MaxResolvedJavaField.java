@@ -41,8 +41,12 @@ public class MaxResolvedJavaField extends MaxJavaField implements ResolvedJavaFi
         return (RiResolvedField) riField;
     }
 
-    static MaxResolvedJavaField get(RiResolvedField riResolvedField) {
+    public static MaxResolvedJavaField get(RiResolvedField riResolvedField) {
         return (MaxResolvedJavaField) MaxJavaField.get(riResolvedField);
+    }
+
+    public static RiResolvedField getRiResolvedField(ResolvedJavaField resolvedJavaField) {
+        return (RiResolvedField) MaxJavaField.getRiField(resolvedJavaField);
     }
 
     @Override
@@ -76,6 +80,11 @@ public class MaxResolvedJavaField extends MaxJavaField implements ResolvedJavaFi
     public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
         unimplemented("MaxResolvedJavaField.getAnnotation");
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return riField.toString();
     }
 
 }

@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.runtime;
 
+import java.lang.reflect.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -95,6 +97,24 @@ public class CriticalMethod {
         this.classMethodActor = classMethodActor;
         this.callEntryPoint = callEntryPoint;
         MaxineVM.registerCriticalMethod(this);
+    }
+
+    /**
+     * Create a new critical entrypoint for the specified method {@link java.lang.reflect.Method}.
+     * @param method
+     */
+    @HOSTED_ONLY
+    public CriticalMethod(Method method) {
+        this(method.getDeclaringClass(), method.getName(), SignatureDescriptor.create(method.getReturnType(), method.getParameterTypes()));
+    }
+
+    /**
+     * Create a new critical entrypoint for the specified method {@link java.lang.reflect.Method} in specified class.
+     * @param method
+     */
+    @HOSTED_ONLY
+    public CriticalMethod(Class javaClass, Method method) {
+        this(javaClass, method.getName(), SignatureDescriptor.create(method.getReturnType(), method.getParameterTypes()));
     }
 
     /**

@@ -48,7 +48,7 @@ public class MaxJavaMethod implements JavaMethod {
         return result;
     }
 
-    static RiMethod get(JavaMethod javaMethod) {
+    public static RiMethod getRiMethod(JavaMethod javaMethod) {
         return ((MaxJavaMethod) javaMethod).riMethod;
     }
 

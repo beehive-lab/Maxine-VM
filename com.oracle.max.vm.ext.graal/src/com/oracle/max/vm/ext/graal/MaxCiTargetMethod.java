@@ -25,7 +25,7 @@ package com.oracle.max.vm.ext.graal;
 import java.util.*;
 
 import com.oracle.graal.api.code.CompilationResult;
-import com.sun.cri.ci.CiTargetMethod;
+import com.sun.cri.ci.*;
 import com.sun.max.vm.compiler.deopt.*;
 /**
  * Represents a Graal {@link CompilationResult} as a {@link CiTargetMethod}.
@@ -38,17 +38,37 @@ public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
         return result;
     }
 
+    // TODO remove
+    private byte[] codeCopy;
+
     protected MaxCiTargetMethod(CompilationResult gCompilation) {
         // Safepoints
         List<CompilationResult.Safepoint> gSafepoints = gCompilation.getSafepoints();
-        List<CiTargetMethod.Safepoint> ciSafepoints = new ArrayList<>();
         for (com.oracle.graal.api.code.CompilationResult.Safepoint gSafepoint : gSafepoints) {
-            CiTargetMethod.Safepoint ciSafepoint = new CiTargetMethod.Safepoint(
-                            gSafepoint.pcOffset, MaxDebugInfo.toCi(gSafepoint.debugInfo));
-            ciSafepoints.add(ciSafepoint);
+            CiDebugInfo ciDebugInfo = MaxDebugInfo.toCi(gSafepoint.debugInfo);
+            if (gSafepoint instanceof com.oracle.graal.api.code.CompilationResult.Call) {
+                com.oracle.graal.api.code.CompilationResult.Call gCall = (com.oracle.graal.api.code.CompilationResult.Call) gSafepoint;
+                Object target;
+                if (gCall.target instanceof MaxRuntimeCallTarget) {
+                    target = ((MaxRuntimeCallTarget) gCall.target).getMethodActor();
+                } else {
+                    target = gCall.target;
+                }
+                Call call = new Call(target, gCall.pcOffset, gCall.size, gCall.direct, ciDebugInfo);
+                this.addSafepoint(call);
+            } else {
+                this.addSafepoint(new Safepoint(gSafepoint.pcOffset, ciDebugInfo));
+            }
         }
         // Code
-        this.setTargetCode(gCompilation.getTargetCode(), gCompilation.getTargetCodeSize());
+        byte[] graalCode = gCompilation.getTargetCode();
+        codeCopy = Arrays.copyOf(graalCode, graalCode.length);
+        this.setTargetCode(graalCode, gCompilation.getTargetCodeSize());
+        // Data
+        List<CompilationResult.DataPatch> dataReferences = gCompilation.getDataReferences();
+        for (com.oracle.graal.api.code.CompilationResult.DataPatch dataPatch : dataReferences) {
+            this.recordDataReference(dataPatch.pcOffset, ConstantMap.toCi(dataPatch.constant), dataPatch.alignment);
+        }
         // Misc
 //        this.setCustomStackAreaOffset(gCompilation.getCustomStackAreaOffset());
         this.setCustomStackAreaOffset(Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET); // TODO figure out how Graal should get this

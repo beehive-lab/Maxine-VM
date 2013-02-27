@@ -41,5 +41,6 @@
         <javaElement handleIdentifier="=com.oracle.graal.api.test"/>
         <javaElement handleIdentifier="=com.oracle.graal.debug"/>
         <javaElement handleIdentifier="=com.oracle.graal.printer"/>
+        <javaElement handleIdentifier="=com.oracle.graal.word"/>
     </selectedElements>
 </jardesc>

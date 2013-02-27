@@ -415,7 +415,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
         if (end.greaterThan(tlabEnd)) {
-            return slowPathAllocate(size, etla, oldAllocationMark, tlabEnd);
+            return doSlowPathAllocate(size, etla, oldAllocationMark, tlabEnd);
         }
         TLAB_MARK.store(etla, end);
 
@@ -425,9 +425,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return cell;
     }
 
+    @RUNTIME_ENTRY
     public final Pointer slowPathAllocate(Size size, Pointer etla) {
         globalTlabStats.inlinedSlowPathAllocateCount++;
-        return slowPathAllocate(size, etla, TLAB_MARK.load(etla), TLAB_TOP.load(etla));
+        return doSlowPathAllocate(size, etla, TLAB_MARK.load(etla), TLAB_TOP.load(etla));
     }
 
     /**
@@ -443,7 +444,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     @NEVER_INLINE
-    private Pointer slowPathAllocate(Size size, final Pointer etla, final Pointer oldAllocationMark, final Pointer tlabEnd) {
+    private Pointer doSlowPathAllocate(Size size, final Pointer etla, final Pointer oldAllocationMark, final Pointer tlabEnd) {
         globalTlabStats.runtimeSlowPathAllocateCount++;
         // Slow path may be taken because of a genuine refill request, because allocation was disabled,
         // or because allocation in immortal heap was requested.
