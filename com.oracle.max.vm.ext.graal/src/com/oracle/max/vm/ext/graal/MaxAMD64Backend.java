@@ -27,6 +27,7 @@ import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 
 import java.io.*;
 
+import com.oracle.graal.amd64.*;
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.asm.*;
@@ -159,7 +160,7 @@ public class MaxAMD64Backend extends Backend {
          *            a slot "up" the stack above RSP).
          */
         private static void bangStackWithOffset(TargetMethodAssembler tasm, AMD64MacroAssembler masm, int offset) {
-            masm.movq(new Address(tasm.target.wordKind, rsp.asValue(), -offset), rax);
+            masm.movq(new AMD64Address(tasm.target.wordKind, rsp.asValue(), -offset), rax);
         }
 
 
@@ -176,7 +177,7 @@ public class MaxAMD64Backend extends Backend {
             CalleeSaveLayout csl = tasm.frameMap.registerConfig.getCalleeSaveLayout();
 
             if (csl != null && csl.size != 0) {
-                tasm.targetMethod.setRegisterRestoreEpilogueOffset(asm.codeBuffer.position());
+                tasm.compilationResult.setRegisterRestoreEpilogueOffset(asm.codeBuffer.position());
                 // saved all registers, restore all registers
                 int frameToCSA = tasm.frameMap.offsetToCalleeSaveArea();
                 asm.restore(csl, frameToCSA);
@@ -202,7 +203,7 @@ public class MaxAMD64Backend extends Backend {
         FrameContext frameContext = new MaxAMD64FrameContext();
         TargetMethodAssembler tasm = new TargetMethodAssembler(target, runtime(), frameMap, masm, frameContext, lir.stubs);
         tasm.setFrameSize(frameMap.frameSize());
-        tasm.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
+        tasm.compilationResult.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
         return tasm;
     }
 

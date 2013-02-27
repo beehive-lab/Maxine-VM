@@ -121,8 +121,12 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     }
 
     @Override
-    public RegisterConfig lookupRegisterConfig(ResolvedJavaMethod method) {
-        return MaxRegisterConfig.get(vm().registerConfigs.getRegisterConfig((ClassMethodActor) MaxJavaMethod.getRiMethod(method)));
+    public RegisterConfig lookupRegisterConfig() {
+        // TODO this method used to take a ResolvedJavaMethod as an argument
+        // Maxine has different register configs for VM_ENTRY_POINT methods and "standard" methods,
+        // which will need to be adderess when Graal is nused for the boot image.
+        //return MaxRegisterConfig.get(vm().registerConfigs.getRegisterConfig((ClassMethodActor) MaxJavaMethod.getRiMethod(method)));
+        return MaxRegisterConfig.get(vm().registerConfigs.standard);
     }
 
     @Override
@@ -134,17 +138,6 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     public int getMinimumOutgoingSize() {
         return 0;
     }
-
-    @Override
-    public Object lookupCallTarget(Object callTarget) {
-        /*
-        if (callTarget instanceof SubstrateRuntimeCall) {
-            return metaAccess.lookupJavaMethod(((SubstrateRuntimeCall) callTarget).getDescriptor().getMethod());
-        }
-        */
-        return callTarget;
-    }
-
 
     @Override
     public RuntimeCallTarget lookupRuntimeCall(Descriptor descriptor) {
@@ -259,7 +252,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         @Override
         public void afterInline(SnippetInstaller si, StructuredGraph graph) {
             new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(si.runtime, si.target.wordKind).apply(graph);
-            new CanonicalizerPhase(si.target, si.runtime, si.assumptions).apply(graph);
+            new CanonicalizerPhase(si.runtime, si.assumptions).apply(graph);
             new MaxIntrinsicsPhase().apply(graph);
         }
 
@@ -313,7 +306,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         public void lower(UnsafeLoadNode node, LoweringTool tool) {
             StructuredGraph graph = (StructuredGraph) node.graph();
             assert node.kind() != Kind.Illegal;
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, node.accessKind(), node.displacement(), node.offset(), graph, false);
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, node.accessKind(), node.displacement(), node.offset(), graph, 1);
             ReadNode memoryRead = graph.add(new ReadNode(node.object(), location, node.stamp()));
             // An unsafe read must not floating outside its block as may float above an explicit null check on its object.
             memoryRead.dependencies().add(BeginNode.prevBegin(node));
@@ -326,7 +319,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         @Override
         public void lower(UnsafeStoreNode node, LoweringTool tool) {
             StructuredGraph graph = (StructuredGraph) node.graph();
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, node.accessKind(), node.displacement(), node.offset(), graph, false);
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, node.accessKind(), node.displacement(), node.offset(), graph, 1);
             WriteNode write = graph.add(new WriteNode(node.object(), node.value(), location));
             write.setStateAfter(node.stateAfter());
             graph.replaceFixedWithFixed(node, write);

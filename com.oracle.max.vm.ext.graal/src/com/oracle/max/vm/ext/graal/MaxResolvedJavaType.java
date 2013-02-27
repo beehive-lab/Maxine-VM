@@ -26,6 +26,7 @@ package com.oracle.max.vm.ext.graal;
 import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 
 import java.lang.annotation.*;
+import java.net.*;
 
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ri.*;
@@ -218,6 +219,30 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     public String getSourceFileName() {
         ClassActor ca = (ClassActor) riType;
         return ca.sourceFileName;
+    }
+
+    @Override
+    public URL getClassFilePath() {
+        return null;
+    }
+
+    @Override
+    public boolean isLocal() {
+        return ((ClassActor) riType).toJava().isLocalClass();
+    }
+
+    @Override
+    public boolean isMember() {
+        return ((ClassActor) riType).toJava().isMemberClass();
+    }
+
+    @Override
+    public ResolvedJavaType getEnclosingType() {
+        Class<?> enclosingClass = ((ClassActor) riType).toJava().getEnclosingClass();
+        if (enclosingClass == null) {
+            return null;
+        }
+        return MaxResolvedJavaType.get(ClassActor.fromJava(enclosingClass));
     }
 
 }

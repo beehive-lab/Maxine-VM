@@ -97,7 +97,7 @@ public class MaxIntrinsics {
 
     static class ReadRegisterIntrinsic extends MaxIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, int registerId) {
-            RegisterConfig registerConfig = MaxGraal.runtime().lookupRegisterConfig(method);
+            RegisterConfig registerConfig = MaxGraal.runtime().lookupRegisterConfig();
             Register register = registerConfig.getRegisterForRole(registerId);
             if (register == null) {
                 throw new GraalInternalError("Unsupported READREG operand " + registerId);

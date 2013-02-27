@@ -216,7 +216,7 @@ public class FieldSnippetsGenerator {
     }
 
     private boolean hasFieldOp(Kind kind) {
-        return !(kind == Kind.Void || kind == Kind.Jsr || kind == Kind.Illegal);
+        return !(kind == Kind.Void || kind == Kind.Illegal);
     }
 
     public static void main(String[] args) throws IOException {

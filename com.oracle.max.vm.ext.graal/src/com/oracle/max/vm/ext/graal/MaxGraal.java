@@ -27,6 +27,7 @@ import java.util.concurrent.*;
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.compiler.*;
+import com.oracle.graal.compiler.target.*;
 import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
@@ -81,8 +82,8 @@ public class MaxGraal implements RuntimeCompiler {
     // The singleton instance of this compiler
     private static MaxGraal singleton;
 
-    private GraalCompiler graalCompiler;
-    public MaxRuntime runtime;
+    private MaxRuntime runtime;
+    private Backend backend;
     private OptimisticOptimizations optimisticOpts;
     private MaxGraphCache cache;
 
@@ -176,7 +177,7 @@ public class MaxGraal implements RuntimeCompiler {
         checkDebugConfig();
         MaxTargetDescription td = new MaxTargetDescription();
         runtime = new MaxRuntime(td);
-        graalCompiler = new GraalCompiler(runtime, td, new MaxAMD64Backend(runtime, td));
+        backend = new MaxAMD64Backend(runtime, td);
         optimisticOpts = OptimisticOptimizations.ALL;
         cache = new MaxGraphCache();
         runtime.init();
@@ -234,7 +235,8 @@ public class MaxGraal implements RuntimeCompiler {
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
                 graph = new StructuredGraph(method);
             }
-            CompilationResult result = graalCompiler.compileMethod(method, graph, cache, phasePlan, optimisticOpts);
+            CompilationResult result = GraalCompiler.compileMethod(runtime, backend, runtime.maxTargetDescription,
+                            method, graph, cache, phasePlan, optimisticOpts);
             MaxTargetMethod graalTM = GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
             compare(graalTM, c1xTM, t1xTM);
             return graalTM;
