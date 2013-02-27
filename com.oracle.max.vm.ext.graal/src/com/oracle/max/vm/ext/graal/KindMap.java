@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import com.sun.max.program.*;
+
 /**
  * Map from {@link CiKind} to Graal {@link Kind}.
  */
@@ -76,7 +78,7 @@ public class KindMap {
                 case Double: result = com.oracle.graal.api.meta.Kind.Double; break;
                 case Void: result = com.oracle.graal.api.meta.Kind.Void; break;
                 case Object: result = com.oracle.graal.api.meta.Kind.Object; break;
-                case Jsr: result = com.oracle.graal.api.meta.Kind.Jsr; break;
+                case Jsr: ProgramError.unexpected("Jsr Kind"); break;
                 case Illegal: result = com.oracle.graal.api.meta.Kind.Illegal; break;
             }
             // Checkstyle: resume
@@ -121,7 +123,6 @@ public class KindMap {
                 case Double: result = com.sun.cri.ci.CiKind.Double; break;
                 case Void: result = com.sun.cri.ci.CiKind.Void; break;
                 case Object: result = com.sun.cri.ci.CiKind.Object; break;
-                case Jsr: result = com.sun.cri.ci.CiKind.Jsr; break;
                 case Illegal: result = com.sun.cri.ci.CiKind.Illegal; break;
             }
             // Checkstyle: resume

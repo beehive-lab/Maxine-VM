@@ -74,19 +74,20 @@ public class ConstantMap {
         Constant result = ciToGraal.get(ciConstant);
         if (result == null) {
             com.oracle.graal.api.meta.Kind graalKind = KindMap.toGraalKind(ciConstant.kind);
+            // Checkstyle: stop
             switch (graalKind) {
                 case Boolean: result = Constant.forBoolean(ciConstant.asBoolean()); break;
                 case Byte: result = Constant.forByte((byte) ciConstant.asInt()); break;
                 case Char: result = Constant.forChar((char) ciConstant.asInt()); break;
                 case Short: result = Constant.forShort((short) ciConstant.asInt()); break;
                 case Int: result = Constant.forInt(ciConstant.asInt()); break;
-                case Jsr: result = Constant.forJsr(ciConstant.asJsr()); break;
                 case Long: result = Constant.forLong(ciConstant.asLong()); break;
                 case Float: result = Constant.forFloat(ciConstant.asFloat()); break;
                 case Double: result = Constant.forDouble(ciConstant.asDouble()); break;
                 case Object: result = Constant.forObject(ciConstant.asObject()); break;
 
             }
+            // Checkstyle: resume
             ciToGraal.put(ciConstant, result);
         }
         return result;
@@ -99,6 +100,7 @@ public class ConstantMap {
         CiConstant result = graalToCi.get(constant);
         if (result == null) {
             CiKind ciKind = KindMap.toCiKind(constant.getKind());
+            // Checkstyle: stop
             switch (ciKind) {
                 case Boolean: result = CiConstant.forBoolean(constant.asBoolean()); break;
                 case Byte: result = CiConstant.forByte((byte) constant.asInt()); break;
@@ -110,6 +112,7 @@ public class ConstantMap {
                 case Double: result = CiConstant.forDouble(constant.asDouble()); break;
                 case Object: result = CiConstant.forObject(constant.asObject()); break;
             }
+            // Checkstyle: resume
             graalToCi.put(constant,  result);
         }
         return result;
