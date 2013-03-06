@@ -29,6 +29,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -628,7 +629,7 @@ public final class Log {
          * Starting with JDK 7 update 6, the String class no longer has the offset and count fields.
          * We want to support both String variants (this is necessary until we drop support for JDK 6).
          */
-        @FOLD
+        @Fold
         private static boolean stringHasOffset() {
             try {
                 String.class.getDeclaredField("offset");

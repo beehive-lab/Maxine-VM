@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,49 +20,53 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package com.sun.max.config.graal;
 
-import java.util.*;
-
-import com.oracle.max.criutils.*;
-import com.oracle.max.graal.compiler.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
+
 
 public class Package extends BootImagePackage {
 
+    public static final String GRAAL_BOOTIMAGE_PROPERTY = "max.vm.graal.inboot";
+
     public Package() {
-        super("com.oracle.max.vm.ext.graal.**",
-              "com.oracle.max.graal.compiler.**",
-              "com.oracle.max.graal.graph.**",
-              //"com.oracle.max.graal.graphviz.**",
-              "com.oracle.max.graal.nodes.**",
-              "com.oracle.max.graal.snippets.**");
-        JavaPrototype.addObjectIdentityMapContributor(new GraalObjectMapContributor());
+        super("com.oracle.graal.alloc.*",
+              "com.oracle.graal.amd64.*",
+              "com.oracle.graal.api.*",
+              "com.oracle.graal.api.code.*",
+              "com.oracle.graal.api.meta.*",
+              "com.oracle.graal.bytecode.*",
+              "com.oracle.graal.compiler.*",
+              "com.oracle.graal.compiler.alloc.*",
+              "com.oracle.graal.compiler.amd64.*",
+              "com.oracle.graal.compiler.gen.*",
+              "com.oracle.graal.compiler.target.*",
+              "com.oracle.graal.debug.*",
+              "com.oracle.graal.graph.**",
+              "com.oracle.graal.java.*",
+              "com.oracle.graal.lir.**",
+              "com.oracle.graal.loop.*",
+              "com.oracle.graal.nodes.**",
+              "com.oracle.graal.phases.**",
+              "com.oracle.graal.printer.*",
+              "com.oracle.graal.snippets.*",
+              "com.oracle.graal.virtual.*"
+              );
+
     }
 
-    public static class GraalObjectMapContributor implements JavaPrototype.ObjectIdentityMapContributor {
-        @Override
-        public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
-            objectMap.put(TTY.out(), new LogStream(Log.os));
-            if (GraalOptions.PrintCFGToFile) {
-                objectMap.put(CompilationPrinter.globalOut(), JavaPrototype.NULL);
-            }
-        }
+    @Override
+    public void loading() {
+        UnsafeUsageChecker.addWhiteList("com.oracle.graal.snippets.SnippetCounter");
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return CompilationBroker.optName().contains("Graal");
+        return System.getProperty(GRAAL_BOOTIMAGE_PROPERTY) != null;
     }
 
-    @Override
-    protected boolean includesClass(String className) {
-        if (className.startsWith("com.oracle.max.graal.compiler.tests.")) {
-            return false;
-        }
-        return super.includesClass(className);
-    }
+
 }

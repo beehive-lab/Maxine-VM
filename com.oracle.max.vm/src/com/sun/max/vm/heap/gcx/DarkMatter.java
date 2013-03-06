@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -83,12 +84,12 @@ public final class DarkMatter {
      * Variable-less class used to format the smallest possible dark-matter (i.e., two-words space).
      */
     public static class SmallestDarkMatter {
-        @FOLD
+        @Fold
         static DynamicHub hub() {
             return ClassActor.fromJava(SmallestDarkMatter.class).dynamicHub();
         }
 
-        @FOLD
+        @Fold
         static Word hubOrigin() {
             return Reference.fromJava(hub()).toOrigin();
         }
@@ -184,22 +185,22 @@ public final class DarkMatter {
         }
     }
 
-    @FOLD
+    @Fold
     public static Size minSize() {
         return SmallestDarkMatter.hub().tupleSize;
     }
 
-    @FOLD
+    @Fold
     private static DynamicHub hub() {
         return DARK_MATTER_ARRAY.dynamicHub();
     }
 
-    @FOLD
+    @Fold
     private static Size darkMatterHeaderSize() {
         return Layout.longArrayLayout().getArraySize(Kind.LONG, 0);
     }
 
-    @FOLD
+    @Fold
     private static Word hubOrigin() {
         return Reference.fromJava(hub()).toOrigin();
     }
@@ -242,7 +243,7 @@ public final class DarkMatter {
         }
     }
 
-    @FOLD
+    @Fold
     private static Size maxDarkMatterSize() {
         return Size.G.shiftedLeft(Word.widthValue().log2numberOfBytes);
     }

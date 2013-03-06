@@ -25,6 +25,7 @@ package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -63,7 +64,7 @@ public final class RegionTable {
     @HOSTED_ONLY
     static final int TableOffset = ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
 
-    @FOLD
+    @Fold
     static int tableOffset() {
         return ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
     }

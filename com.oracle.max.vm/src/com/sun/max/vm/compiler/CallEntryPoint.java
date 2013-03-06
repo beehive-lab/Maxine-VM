@@ -26,6 +26,7 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.util.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
@@ -87,7 +88,7 @@ public enum CallEntryPoint {
      * @return the number of bytes that must be added to the address of a target method's first instruction to obtain
      *         the address of this entry point
      */
-    @FOLD
+    @Fold
     public int offset() {
         return offset;
     }
@@ -105,7 +106,7 @@ public enum CallEntryPoint {
      * @return the number of bytes that must be added to the address of a target method's first instruction to obtain
      *         the address of this entry point
      */
-    @FOLD
+    @Fold
     public int offsetInCallee() {
         return offsetInCallee;
     }

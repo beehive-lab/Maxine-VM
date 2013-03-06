@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,33 +22,30 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.max.graal.cri.*;
-import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.graal.nodes.extended.*;
-import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.graal.api.meta.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.extended.*;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 
-/**
- * Load of a value from a location specified as an offset relative to an object.
- */
-public class ExtendedUnsafeLoadNode extends ExtendedUnsafeNode implements Lowerable {
 
-    public ExtendedUnsafeLoadNode(ValueNode object, ValueNode displacement, ValueNode index, CiKind kind) {
-        super(object, displacement, index, kind);
+public class ExtendedUnsafeLoadNode extends ExtendedUnsafeAccessNode implements Lowerable {
+
+    private ExtendedUnsafeLoadNode(Stamp stamp, ValueNode object, ValueNode displacement, ValueNode offset, Kind accessKind) {
+        super(stamp, object, displacement, offset, accessKind);
+    }
+
+    public static FixedWithNextNode create(Stamp stamp, ValueNode object, ValueNode displacement, ValueNode offset, Kind accessKind) {
+        if (displacement.isConstant()) {
+            return new UnsafeLoadNode(stamp, object, displacement.asConstant().asInt(), offset, accessKind);
+        } else {
+            return new ExtendedUnsafeLoadNode(stamp, object, displacement, offset, accessKind);
+        }
     }
 
     @Override
-    public void lower(CiLoweringTool tool) {
-        assert kind() != CiKind.Illegal;
-        LocationNode location = createLocation();
-        ReadNode memoryRead = graph().unique(new ReadNode(kind(), object(), location));
-        if (object().kind() == CiKind.Object) {
-            memoryRead.setGuard((GuardNode) tool.createGuard(graph().unique(new NullCheckNode(object(), false))));
-        }
-        FixedNode next = next();
-        setNext(null);
-        memoryRead.setNext(next);
-        replaceAndDelete(memoryRead);
+    public void lower(LoweringTool tool) {
+        tool.getRuntime().lower(this, tool);
     }
+
 }

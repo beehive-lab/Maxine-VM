@@ -29,6 +29,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -265,7 +266,7 @@ public final class Platform {
      * Gets the current platform context. The initial value is created by {@link Platform#createDefaultPlatform()}.
      * It can be subsequently modified by {@link #set(Platform)}.
      */
-    @FOLD
+    @Fold
     public static Platform platform() {
         return current;
     }
@@ -273,7 +274,7 @@ public final class Platform {
     /**
      * Gets the {@linkplain #target target} associated with the {@linkplain #platform() current} platform context.
      */
-    @FOLD
+    @Fold
     public static CiTarget target() {
         assert current.target != null;
         return current.target;

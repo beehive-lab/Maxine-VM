@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.debug;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -51,17 +52,17 @@ import com.sun.max.vm.type.*;
  * TODO: check above assumption.
  */
 public class DebugHeap {
-    @FOLD
+    @Fold
     public static boolean isTagging() {
         return MaxineVM.isDebug() && vmConfig().heapScheme().supportsTagging();
     }
 
-    @FOLD
+    @Fold
     public static boolean isPadding() {
         return MaxineVM.isDebug() && vmConfig().heapScheme().supportsPadding();
     }
 
-    @FOLD
+    @Fold
     private static int hubIndex() {
         return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
     }

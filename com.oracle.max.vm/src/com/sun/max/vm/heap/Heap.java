@@ -30,6 +30,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -271,7 +272,7 @@ public final class Heap {
     @INSPECTED
     public static final BootHeapRegion bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), HEAP_BOOT_NAME);
 
-    @FOLD
+    @Fold
     private static HeapScheme heapScheme() {
         return vmConfig().heapScheme();
     }

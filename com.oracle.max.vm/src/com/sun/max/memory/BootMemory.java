@@ -22,6 +22,7 @@
  */
 package com.sun.max.memory;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -54,7 +55,7 @@ public final class BootMemory {
     /**
      * The offset of the byte array data from the byte array object's origin.
      */
-    @FOLD
+    @Fold
     private static Offset dataOffset() {
         return Layout.byteArrayLayout().getElementOffsetFromOrigin(0);
     }

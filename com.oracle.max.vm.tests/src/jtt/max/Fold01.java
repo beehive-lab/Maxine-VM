@@ -22,7 +22,7 @@
  */
 package jtt.max;
 
-import com.sun.max.annotate.*;
+import com.oracle.graal.snippets.Snippet.Fold;
 
 /*
  * @Harness: java
@@ -34,7 +34,7 @@ public class Fold01 {
         return result();
     }
 
-    @FOLD
+    @Fold
     static boolean result() {
         int j = 2;
         for (int i = 0; i < 100; i++) {

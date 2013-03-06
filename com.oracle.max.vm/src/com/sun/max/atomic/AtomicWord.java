@@ -21,6 +21,7 @@
  * questions.
  */
 package com.sun.max.atomic;
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -136,7 +137,7 @@ public class AtomicWord {
         return get().toHexString();
     }
 
-    @FOLD
+    @Fold
     public static int valueOffset() {
         return ClassActor.fromJava(AtomicWord.class).findLocalInstanceFieldActor("value").offset();
     }
