@@ -376,6 +376,9 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("HASHSEED_OFFSET", "hashSeed").makeOptional(),
         JDK.java_util_HashMap_Holder,
             new FieldOffsetRecomputation("HASHSEED_OFFSET", JDK.java_util_HashMap, "hashSeed").makeOptional(),
+        // Added in JDK 7 update 15
+        JDK.java_net_InetSocketAddress,
+            new FieldOffsetRecomputation("FIELDS_OFFSET", "holder").makeOptional(),
     };
     // Checkstyle: resume
 

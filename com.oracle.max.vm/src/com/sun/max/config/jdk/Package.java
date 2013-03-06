@@ -84,7 +84,9 @@ public class Package extends BootImagePackage {
         // Some other classes would also directly reference NativePRNG, so exclude them too.
         HostedBootClassLoader.omitClass("java.nio.file.TempFileHelper");
         // The static initializer loads the native network library
-        HostedBootClassLoader.omitClass("java.net.InetAddress");
+        // However, InetSocketAddress needs unsafe fields fixing up, which requires this class
+        // to be loaded. Loading the network library appears to be harmless.
+        //HostedBootClassLoader.omitClass("java.net.InetAddress");
         // The static initializer loads and initializes native libraries
         HostedBootClassLoader.omitClass("sun.nio.ch.FileDispatcherImpl");
         HostedBootClassLoader.omitClass("sun.nio.ch.FileChannelImpl");
