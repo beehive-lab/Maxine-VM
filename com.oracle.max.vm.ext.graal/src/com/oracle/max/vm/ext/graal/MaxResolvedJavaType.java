@@ -35,6 +35,8 @@ import com.sun.max.vm.actor.holder.*;
 
 public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType {
 
+    private static MaxResolvedJavaType objectType;
+
     protected MaxResolvedJavaType(RiResolvedType riResolvedType) {
         super(riResolvedType);
     }
@@ -45,6 +47,13 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     public static RiResolvedType getRiResolvedType(ResolvedJavaType resolvedJavaType) {
         return (RiResolvedType) MaxJavaType.getRiType(resolvedJavaType);
+    }
+
+    private static MaxResolvedJavaType getObject() {
+        if (objectType == null) {
+            objectType = MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
+        }
+        return objectType;
     }
 
     private RiResolvedType riResolvedType() {
@@ -133,8 +142,26 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public ResolvedJavaType findLeastCommonAncestor(ResolvedJavaType otherType) {
-        unimplemented("MaxResolvedType.findLeastCommonAncestor");
-        return null;
+        ClassActor thisTypeActor = (ClassActor) riResolvedType();
+        ClassActor otherTypeActor = (ClassActor) MaxResolvedJavaType.getRiResolvedType(otherType);
+        return findLeastCommonAncestor(thisTypeActor, otherTypeActor);
+    }
+
+    private ResolvedJavaType findLeastCommonAncestor(ClassActor thisTypeActor, ClassActor otherTypeActor) {
+        if (thisTypeActor.isPrimitiveClassActor() || otherTypeActor.isPrimitiveClassActor()) {
+            return null;
+        }
+        if (thisTypeActor.isArrayClass() || otherTypeActor.isArrayClass()) {
+            return getObject();
+        }
+        if (thisTypeActor == otherTypeActor) {
+            return MaxResolvedJavaType.get(thisTypeActor.superClassActor);
+        }
+        if (thisTypeActor.superClassActor == null || otherTypeActor.superClassActor == null) {
+            return getObject();
+        }
+        // Both types are subclasses of Object
+        return findLeastCommonAncestor(thisTypeActor.superClassActor, otherTypeActor.superClassActor);
     }
 
     @Override
@@ -207,6 +234,12 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     @Override
     public ResolvedJavaField findInstanceFieldWithOffset(long offset) {
         ClassActor ca = (ClassActor) riType;
+        // TODO I don't understand yet how this can happen but evidently UnsafeLoad nodes
+        // can show up with MaxUnsafeCastNodes whose nonNull field is true and the node type is a Word type.
+        // This causes a search for a field, which, of course, does not exist. Returning null is a workaround.
+        if (MaxWordTypeRewriterPhase.isWord(this)) {
+            return null;
+        }
         return MaxResolvedJavaField.get(ca.findInstanceFieldActor((int) offset));
     }
 

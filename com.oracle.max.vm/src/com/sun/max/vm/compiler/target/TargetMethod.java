@@ -954,6 +954,7 @@ public abstract class TargetMethod extends MemoryRegion {
                         fixupCallSite(callPos, callee.codeAt(offset));
                     }
                 } else {
+                    FatalError.breakpoint();
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
                         linkedAll = false;
@@ -983,7 +984,12 @@ public abstract class TargetMethod extends MemoryRegion {
     public final TargetMethod getTargetMethod(Object o) {
         TargetMethod result = null;
         if (o instanceof ClassMethodActor) {
-            result = ((ClassMethodActor) o).currentTargetMethod();
+            ClassMethodActor cma = (ClassMethodActor) o;
+            if (cma == classMethodActor) {
+                // recursive call
+                return this;
+            }
+            result = cma.currentTargetMethod();
         } else if (o instanceof TargetMethod) {
             result = (TargetMethod) o;
         }

@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.graal.nodes;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.extended.*;
+import com.oracle.max.vm.ext.graal.*;
 
 /**
  * Handles Maxine's {@link UNSAFE_CAST} annotation; currently just a placeholder.
@@ -32,7 +33,10 @@ import com.oracle.graal.nodes.extended.*;
 public class MaxUnsafeCastNode extends UnsafeCastNode {
 
     public MaxUnsafeCastNode(ValueNode object, ResolvedJavaType toType) {
-        super(object, toType, false, false);
+        // The Reference type is most certainly exact; recording that is important to allow
+        // method calls through the Accessor interface to be converted (and inlined) correctly.
+        //
+        super(object, toType, MaxWordTypeRewriterPhase.isWordOrReference(toType), false);
     }
 
 }

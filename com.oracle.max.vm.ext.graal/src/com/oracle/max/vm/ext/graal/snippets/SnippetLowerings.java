@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,13 @@ import java.lang.reflect.*;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.nodes.*;
 import com.oracle.graal.snippets.*;
+import com.oracle.graal.snippets.SnippetTemplate.Arguments;
 import com.oracle.graal.snippets.SnippetTemplate.Cache;
+import com.oracle.graal.snippets.SnippetTemplate.Key;
+import com.sun.max.annotate.*;
+import com.sun.max.vm.runtime.*;
 
 public abstract class SnippetLowerings {
 
@@ -35,13 +40,32 @@ public abstract class SnippetLowerings {
     protected final Assumptions assumptions;
     protected final Cache cache;
 
+    public abstract static class Lowering {
+        protected final ResolvedJavaMethod snippet;
+
+        protected Lowering(SnippetLowerings snippetLowererings, String methodName) {
+            this.snippet = snippetLowererings.findSnippet(snippetLowererings.getClass(), methodName);
+        }
+
+        protected Lowering() {
+            snippet = null;
+        }
+    }
+
     public SnippetLowerings(MetaAccessProvider runtime, Assumptions assumptions, TargetDescription target) {
         this.runtime = runtime;
         this.assumptions = assumptions;
         this.cache = new Cache(runtime, target);
+
+        // All the RUNTIME_ENTRY methods are critical
+        for (Method method : getClass().getDeclaredMethods()) {
+            if (method.isAnnotationPresent(RUNTIME_ENTRY.class)) {
+                new CriticalMethod(method);
+            }
+        }
     }
 
-    public ResolvedJavaMethod findSnippet(Class< ? extends SnippetsInterface> clazz, String name) {
+    public ResolvedJavaMethod findSnippet(Class< ? extends SnippetLowerings> clazz, String name) {
         Method found = null;
         for (Method method : clazz.getDeclaredMethods()) {
             if (method.getName().equals(name)) {
@@ -52,5 +76,9 @@ public abstract class SnippetLowerings {
         assert found != null : "did not find method " + name;
         assert found.getAnnotation(Snippet.class) != null;
         return runtime.lookupJavaMethod(found);
+    }
+
+    public void instantiate(FixedWithNextNode node, Key key, Arguments args) {
+        cache.get(key, assumptions).instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
     }
 }

@@ -1953,7 +1953,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
-            return ((HeapSchemeWithTLAB) vmConfig().heapScheme()).slowPathAllocate(Size.fromInt(size), etla);
+            return ((HeapSchemeWithTLAB) vmConfig().heapScheme()).c1xSlowPathAllocate(Size.fromInt(size), etla);
         }
 
         public static Pointer flushLog(Pointer logTail) {

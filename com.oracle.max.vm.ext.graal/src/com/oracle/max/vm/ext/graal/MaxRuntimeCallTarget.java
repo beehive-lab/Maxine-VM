@@ -26,6 +26,7 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 
 class MaxRuntimeCallTarget implements RuntimeCallTarget {
@@ -38,6 +39,12 @@ class MaxRuntimeCallTarget implements RuntimeCallTarget {
         RegisterConfig registerConfig = MaxRegisterConfig.get(MaxineVM.vm().registerConfigs.standard);
         JavaType resType = MaxRuntimeCallsMap.runtime.lookupJavaType(descriptor.getResultType());
         JavaType[] argTypes = MetaUtil.lookupJavaTypes(MaxRuntimeCallsMap.runtime, descriptor.getArgumentTypes());
+        if (descriptor.getMethodActor() instanceof VirtualMethodActor) {
+            JavaType[] newArgTypes = new JavaType[argTypes.length + 1];
+            System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
+            newArgTypes[0] = MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
+            argTypes = newArgTypes;
+        }
         this.callingConvention = registerConfig.getCallingConvention(CallingConvention.Type.RuntimeCall, resType, argTypes,
                         MaxRuntimeCallsMap.runtime.getTarget(), false);
     }
@@ -55,6 +62,10 @@ class MaxRuntimeCallTarget implements RuntimeCallTarget {
 
     @Override
     public Descriptor getDescriptor() {
+        return descriptor;
+    }
+
+    public MaxRuntimeCall getMaxRuntimeCall() {
         return descriptor;
     }
 

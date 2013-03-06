@@ -20,20 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
-import com.oracle.max.vm.ext.graal.nodes.*;
+import com.oracle.graal.nodes.extended.*;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 
-public class MaxDeoptCustomizer extends GraphBuilderPhase.DeoptCustomizer {
+
+public class ExtendedUnsafeLoadNode extends ExtendedUnsafeAccessNode implements Lowerable {
+
+    private ExtendedUnsafeLoadNode(Stamp stamp, ValueNode object, ValueNode displacement, ValueNode offset, Kind accessKind) {
+        super(stamp, object, displacement, offset, accessKind);
+    }
+
+    public static FixedWithNextNode create(Stamp stamp, ValueNode object, ValueNode displacement, ValueNode offset, Kind accessKind) {
+        if (displacement.isConstant()) {
+            return new UnsafeLoadNode(stamp, object, displacement.asConstant().asInt(), offset, accessKind);
+        } else {
+            return new ExtendedUnsafeLoadNode(stamp, object, displacement, offset, accessKind);
+        }
+    }
 
     @Override
-    public void unresolvedField(GraphBuilderPhase phase, ValueNode receiver, JavaField field) {
-        LoadUnresolvedFieldNode node = currentGraph(phase).add(new LoadUnresolvedFieldNode(receiver, field));
-        ValueNode valueNode = append(phase, node);
-        frameState(phase).push(field.getKind().getStackKind(), valueNode);
+    public void lower(LoweringTool tool) {
+        tool.getRuntime().lower(this, tool);
     }
 
 }

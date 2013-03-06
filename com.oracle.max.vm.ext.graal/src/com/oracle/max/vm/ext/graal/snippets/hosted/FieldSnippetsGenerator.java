@@ -38,6 +38,9 @@ import com.sun.max.io.*;
 @HOSTED_ONLY
 public class FieldSnippetsGenerator {
 
+    private static final String UNSAFE_CAST_BEFORE = "UnsafeCastNode.unsafeCast(";
+    private static final String UNSAFE_CAST_AFTER = ", StampFactory.forNodeIntrinsic())";
+
     private static final String STORE_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
         "    public static void store#UKIND#FieldSnippet(@Parameter(\"object\") Object object,\n" + "" +
@@ -62,7 +65,7 @@ public class FieldSnippetsGenerator {
         "        if (isVolatile) {\n" +
         "            memoryBarrier(JMM_POST_VOLATILE_READ);\n" +
         "        }\n" +
-        "        return result;\n" +
+        "        return #UCB#result#UCA#;\n" +
         "    }\n\n";
 
     private static final String RESOLVE_LOAD_FIELD_METHOD =
@@ -100,7 +103,7 @@ public class FieldSnippetsGenerator {
     private static final String LOAD_UNRESOLVED_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
         "    public static #KIND# load#UKIND#Unresolved#MODE#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard, @Parameter(\"object\") Object object) {\n" +
-        "        return resolveAndGet#MODE##UKIND#(guard, object);\n" +
+        "        return #UCB#resolveAndGet#MODE##UKIND#(guard, object)#UCA#;\n" +
         "    }\n\n";
 
 
@@ -115,7 +118,7 @@ public class FieldSnippetsGenerator {
     private static final String LOAD_UNRESOLVED_STATIC_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
         "    public static #KIND# load#UKIND#Unresolved#MODE#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard) {\n" +
-        "        return resolveAndGet#MODE##UKIND#(guard);\n" +
+        "        return #UCB#resolveAndGet#MODE##UKIND#(guard)#UCA#;\n" +
         "    }\n\n";
 
 
@@ -166,15 +169,15 @@ public class FieldSnippetsGenerator {
         ArrayList<String> addSnippets = new ArrayList<>();
         for (Kind kind : Kind.values()) {
             if (hasFieldOp(kind)) {
-                out.print(replaceKinds(LOAD_FIELD_SNIPPET, kind));
+                out.print(replaceUCast(replaceKinds(LOAD_FIELD_SNIPPET, kind), kind));
                 out.print(replaceKinds(STORE_FIELD_SNIPPET, kind));
                 // Unresolved variants
                 out.print(replaceKinds(RESOLVE_LOAD_FIELD_METHOD, kind));
                 out.print(replaceKinds(RESOLVE_LOAD_STATIC_METHOD, kind));
                 out.print(replaceKinds(RESOLVE_STORE_FIELD_METHOD, kind));
                 out.print(replaceKinds(RESOLVE_STORE_STATIC_METHOD, kind));
-                out.print(replace(replaceKinds(LOAD_UNRESOLVED_FIELD_SNIPPET, kind), "#MODE#", "Field"));
-                out.print(replace(replaceKinds(LOAD_UNRESOLVED_STATIC_SNIPPET, kind), "#MODE#", "Static"));
+                out.print(replace(replaceUCast(replaceKinds(LOAD_UNRESOLVED_FIELD_SNIPPET, kind), kind), "#MODE#", "Field"));
+                out.print(replace(replaceUCast(replaceKinds(LOAD_UNRESOLVED_STATIC_SNIPPET, kind), kind), "#MODE#", "Static"));
                 out.print(replace(replaceKinds(STORE_UNRESOLVED_FIELD_SNIPPET, kind), "#MODE#", "Field"));
                 out.print(replace(replaceKinds(STORE_UNRESOLVED_STATIC_SNIPPET, kind), "#MODE#", "Static"));
 
@@ -191,6 +194,12 @@ public class FieldSnippetsGenerator {
             out.print(addSnippet);
         }
         out.print("    }\n");
+    }
+
+    private String replaceUCast(String template, Kind kind) {
+        String ucb = kind != Kind.Object ? "" : UNSAFE_CAST_BEFORE;
+        String uca = kind != Kind.Object ? "" : UNSAFE_CAST_AFTER;
+        return replace(replace(template, "#UCA#", uca), "#UCB#", ucb);
     }
 
     /**

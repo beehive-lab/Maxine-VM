@@ -36,9 +36,6 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.calc.*;
-import com.oracle.graal.nodes.extended.*;
-import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.common.*;
 import com.oracle.graal.printer.*;
@@ -230,7 +227,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     }
 
-    private static class MaxSnippetInstallerCustomizer extends SnippetInstaller.DefaultCustomizer {
+    private static class MaxSnippetInstallerCustomizer implements SnippetInstaller.Customizer {
         private MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration;
 
         MaxSnippetInstallerCustomizer(MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration) {
@@ -246,7 +243,9 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         public void afterBuild(SnippetInstaller si, StructuredGraph graph) {
             new MaxIntrinsicsPhase().apply(graph);
             new MaxWordTypeRewriterPhase.MaxInvokeRewriter(si.runtime, si.target.wordKind).apply(graph);
-            super.afterBuild(si, graph);
+            new SnippetIntrinsificationPhase(si.runtime, si.pool, true).apply(graph);
+            // need constant propagation for folded methods
+            new CanonicalizerPhase(si.runtime, si.assumptions).apply(graph);
         }
 
         @Override
@@ -260,11 +259,12 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         public void beforeFinal(SnippetInstaller si, StructuredGraph graph, final ResolvedJavaMethod method, final boolean isSubstitutionSnippet) {
             new SnippetIntrinsificationPhase(si.runtime, si.pool, SnippetTemplate.hasConstantParameter(method)).apply(graph);
 
-            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(si.runtime, si.target.wordKind).apply(graph);
-
             // These only get done once right at the end
             new MaxWordTypeRewriterPhase.MaxUnsafeCastRewriter(si.runtime, si.target.wordKind).apply(graph);
             new MaxSlowpathRewriterPhase(si.runtime).apply(graph);
+            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(si.runtime, si.target.wordKind).apply(graph);
+
+            // The replaces all Word based types with long
             new MaxWordTypeRewriterPhase.KindRewriter(si.runtime, si.target.wordKind).apply(graph);
 
             // safe (I believe and important) to do this for Maxine snippets
@@ -272,6 +272,14 @@ public class MaxRuntime implements GraalCodeCacheProvider {
             new DeadCodeEliminationPhase().apply(graph);
 
             new InsertStateAfterPlaceholderPhase().apply(graph);
+        }
+
+        @Override
+        public void afterAllInlines(SnippetInstaller si, StructuredGraph graph) {
+            new SnippetIntrinsificationPhase(si.runtime, si.pool, true).apply(graph);
+
+            new DeadCodeEliminationPhase().apply(graph);
+            new CanonicalizerPhase(si.runtime, si.assumptions).apply(graph);
 
         }
 
@@ -290,92 +298,18 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         maxInstaller.installSnippets(TestSnippets.class);
         maxInstaller.installSnippets(NewSnippets.class);
         maxInstaller.installSnippets(FieldSnippets.class);
+        maxInstaller.installSnippets(TypeSnippets.class);
+        maxInstaller.installSnippets(MaxInvokeLowerings.class);
+        maxInstaller.installSnippets(ArithmeticSnippets.class);
         MaxConstantPool.setGraphBuilderConfig(null);
 
-        lowerings.put(InvokeNode.class, new InvokeLowering());
-        lowerings.put(InvokeWithExceptionNode.class, new InvokeLowering());
-        lowerings.put(UnsafeLoadNode.class, new UnsafeLoadLowering());
-        lowerings.put(UnsafeStoreNode.class, new UnsafeStoreLowering());
+        MaxUnsafeAccessLowerings.registerLowerings(lowerings);
+        MaxInvokeLowerings.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
         NewSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
         FieldSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
-    }
-
-    protected class UnsafeLoadLowering implements LoweringProvider<UnsafeLoadNode> {
-
-        @Override
-        public void lower(UnsafeLoadNode node, LoweringTool tool) {
-            StructuredGraph graph = (StructuredGraph) node.graph();
-            assert node.kind() != Kind.Illegal;
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, node.accessKind(), node.displacement(), node.offset(), graph, 1);
-            ReadNode memoryRead = graph.add(new ReadNode(node.object(), location, node.stamp()));
-            // An unsafe read must not floating outside its block as may float above an explicit null check on its object.
-            memoryRead.dependencies().add(BeginNode.prevBegin(node));
-            graph.replaceFixedWithFixed(node, memoryRead);
-        }
-    }
-
-    protected class UnsafeStoreLowering implements LoweringProvider<UnsafeStoreNode> {
-
-        @Override
-        public void lower(UnsafeStoreNode node, LoweringTool tool) {
-            StructuredGraph graph = (StructuredGraph) node.graph();
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, node.accessKind(), node.displacement(), node.offset(), graph, 1);
-            WriteNode write = graph.add(new WriteNode(node.object(), node.value(), location));
-            write.setStateAfter(node.stateAfter());
-            graph.replaceFixedWithFixed(node, write);
-        }
-    }
-
-    protected class InvokeLowering implements LoweringProvider<FixedNode> {
-
-        @Override
-        public void lower(FixedNode node, LoweringTool tool) {
-            StructuredGraph graph = (StructuredGraph) node.graph();
-            Invoke invoke = (Invoke) node;
-            if (invoke.callTarget() instanceof MethodCallTargetNode) {
-                MethodCallTargetNode callTarget = invoke.methodCallTarget();
-                NodeInputList<ValueNode> parameters = callTarget.arguments();
-                ValueNode receiver = parameters.size() <= 0 ? null : parameters.get(0);
-                if (!callTarget.isStatic() && receiver.kind() == Kind.Object && !receiver.objectStamp().nonNull()) {
-                    IsNullNode isNull = graph.unique(new IsNullNode(receiver));
-                    graph.addBeforeFixed(node, graph.add(new FixedGuardNode(isNull, DeoptimizationReason.NullCheckException, null, true)));
-                }
-                JavaType[] signature = MetaUtil.signatureToTypes(callTarget.targetMethod().getSignature(), callTarget.isStatic() ? null : callTarget.targetMethod().getDeclaringClass());
-                CallingConvention.Type callType = CallingConvention.Type.JavaCall;
-
-                CallTargetNode loweredCallTarget = null;
-                switch (callTarget.invokeKind()) {
-                    case Static:
-                    case Special:
-                        loweredCallTarget = graph.add(new DirectCallTargetNode(parameters, callTarget.returnStamp(), signature, callTarget.targetMethod(), callType));
-                        break;
-                    case Virtual:
-                        /*
-                    case Interface:
-                        ClassMethodActor method = (ClassMethodActor) callTarget.targetMethod();
-                        if (method.getImplementations().length == 0) {
-                            // We are calling an abstract method with no implementation, i.e., the closed-world analysis
-                            // showed that there is no concrete receiver ever allocated. This must be dead code.
-                            graph.addBeforeFixed(node, graph.add(new FixedGuardNode(ConstantNode.forBoolean(true, graph), DeoptimizationReason.UnreachedCode, null, true, invoke.leafGraphId())));
-                            return;
-                        }
-                        int vtableEntryOffset = NumUtil.safeToInt(hubLayout.getArrayElementOffset(method.getVTableIndex()));
-
-                        ReadNode hub = graph.add(new ReadNode(receiver, LocationNode.create(LocationNode.FINAL_LOCATION, Kind.Object, objectLayout.hubOffset(), graph), StampFactory.objectNonNull()));
-                        LocationNode entryLoc = LocationNode.create(LocationNode.FINAL_LOCATION, target.wordKind, vtableEntryOffset, graph);
-                        ReadNode entry = graph.add(new ReadNode(hub, entryLoc, StampFactory.forKind(target.wordKind)));
-                        loweredCallTarget = graph.add(new IndirectCallTargetNode(entry, parameters, callTarget.returnStamp(), signature, callTarget.targetMethod(), callType));
-
-                        graph.addBeforeFixed(node, hub);
-                        graph.addAfterFixed(hub, entry);
-                        break;
-                        */
-                    default:
-                        ProgramError.unknownCase();
-                }
-                callTarget.replaceAndDelete(loweredCallTarget);
-            }
-        }
+        TypeSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
+        ArithmeticSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
+        TestSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
     }
 
     @Override

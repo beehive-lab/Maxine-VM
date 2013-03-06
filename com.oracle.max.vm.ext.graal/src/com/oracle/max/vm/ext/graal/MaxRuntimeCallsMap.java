@@ -33,8 +33,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.heap.*;
-
+import com.sun.max.vm.runtime.*;
 
 public class MaxRuntimeCallsMap {
 
@@ -63,27 +62,30 @@ public class MaxRuntimeCallsMap {
         return method.isAnnotationPresent(RUNTIME_ENTRY.class) || method.isAnnotationPresent(NEVER_INLINE.class);
     }
 
-
+    @RUNTIME_ENTRY
+    private static void unwindException(Object throwable) throws Throwable {
+        Throw.raise(UnsafeCast.asThrowable(throwable));
+    }
 
     @HOSTED_ONLY
     static void initialize(MaxRuntime runtime) {
         MaxRuntimeCallsMap.runtime = runtime;
         try {
-            createCiRuntimeCall(CiRuntimeCall.RegisterFinalizer);
-            createCiRuntimeCall(CiRuntimeCall.CreateNullPointerException);
-            createCiRuntimeCall(CiRuntimeCall.CreateOutOfBoundsException);
-            MethodActor slowPathAllocate = MethodActor.fromJava(HeapSchemeWithTLAB.class.getDeclaredMethod("slowPathAllocate", Size.class, Pointer.class));
-            createRuntimeCall("slowPathAllocate", slowPathAllocate);
+            createCiRuntimeCall(CiRuntimeCall.RegisterFinalizer, null);
+            createCiRuntimeCall(CiRuntimeCall.CreateNullPointerException, null);
+            createCiRuntimeCall(CiRuntimeCall.CreateOutOfBoundsException, null);
+            Method unwindException = MaxRuntimeCallsMap.class.getDeclaredMethod("unwindException", Object.class);
+            createRuntimeCall(unwindException.getName(), MethodActor.fromJava(unwindException));
+            new CriticalMethod(unwindException);
         } catch (Exception ex) {
             ProgramError.unexpected(ex);
         }
     }
 
     @HOSTED_ONLY
-    private static void createCiRuntimeCall(CiRuntimeCall call) {
+    private static void createCiRuntimeCall(CiRuntimeCall call, String overrideName) {
         ClassMethodActor cma = MaxRuntimeCalls.getClassMethodActor(call);
-        String callName = call.name();
-        createRuntimeCall(toFirstLower(callName), cma);
+        createRuntimeCall(overrideName != null ? overrideName : toFirstLower(call.name()), cma);
     }
 
     /**
@@ -98,13 +100,13 @@ public class MaxRuntimeCallsMap {
 
 
     @HOSTED_ONLY
-    private static void createRuntimeCall(String methodName, MethodActor cma) {
+    private static MaxRuntimeCall createRuntimeCall(String methodName, MethodActor cma) {
         Method method = cma.toJava();
         MaxRuntimeCall maxRuntimeCall = new MaxRuntimeCall(methodName, method, true, method.getReturnType(), method.getParameterTypes());
         MaxRuntimeCallTarget maxRuntimeCallTarget = new MaxRuntimeCallTarget(maxRuntimeCall);
         map.put(maxRuntimeCall, maxRuntimeCallTarget);
         actorMap.put(cma, maxRuntimeCallTarget);
-
+        return maxRuntimeCall;
     }
 
     /**
@@ -116,7 +118,7 @@ public class MaxRuntimeCallsMap {
         return map.get(descriptor);
     }
 
-    public static Descriptor get(ClassMethodActor cma) {
+    public static MaxRuntimeCall get(ClassMethodActor cma) {
         MaxRuntimeCallTarget maxRuntimeCallTarget = actorMap.get(cma);
         if (maxRuntimeCallTarget == null) {
             MaxRuntimeCall maxRuntimeCall = findMethod(cma.holder().javaClass(), cma.name(), true);
@@ -124,7 +126,7 @@ public class MaxRuntimeCallsMap {
             map.put(maxRuntimeCall, maxRuntimeCallTarget);
             actorMap.put(cma, maxRuntimeCallTarget);
         }
-        return maxRuntimeCallTarget.getDescriptor();
+        return maxRuntimeCallTarget.getMaxRuntimeCall();
     }
 
 }

@@ -28,7 +28,9 @@ import java.lang.annotation.*;
 import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 
 import com.oracle.graal.api.meta.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.vm.compiler.*;
 
 
 public class MaxResolvedJavaField extends MaxJavaField implements ResolvedJavaField {
@@ -67,7 +69,12 @@ public class MaxResolvedJavaField extends MaxJavaField implements ResolvedJavaFi
 
     @Override
     public Constant readConstantValue(Constant receiver) {
-        return ConstantMap.toGraal(riResolvedField().constantValue(ConstantMap.toCi(receiver)));
+        CiConstant ciConstant = riResolvedField().constantValue(ConstantMap.toCi(receiver));
+        if (ciConstant != null && ciConstant.kind == CiKind.Object && ciConstant.asObject() instanceof WordUtil.WrappedWord) {
+            WordUtil.WrappedWord wrappedWord = (WordUtil.WrappedWord) ciConstant.asObject();
+            ciConstant = wrappedWord.archConstant();
+        }
+        return ConstantMap.toGraal(ciConstant);
     }
 
     @Override

@@ -315,5 +315,12 @@ public class MaxineIntrinsicIDs {
      * </pre>
      */
     public static final String CMP_BYTECODE = p + "CMP_BYTECODE";
+
+    /**
+     * A vehicle for testing snippets.
+     * TODO remove when debugged
+     */
+    public static final String TEST_SNIPPET_1 = p + "TEST_SNIPPET_1";
+    public static final String TEST_SNIPPET_2 = p + "TEST_SNIPPET_2";
 }
 

@@ -22,37 +22,19 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.graal.api.meta.*;
-import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 
-@NodeInfo(nameTemplate = "StoreUnresolvedField#{p#field/s}")
-public class StoreUnresolvedFieldNode extends AccessUnresolvedFieldNode implements StateSplit {
+public class UnresolvedInvokeNode extends InvokeNode {
 
-    @Input private ValueNode value;
+    @Input ValueNode method;
 
-    public StoreUnresolvedFieldNode(ValueNode object, JavaField field, ValueNode value) {
-        super(object, field);
+    public UnresolvedInvokeNode(ValueNode method, CallTargetNode callTarget, int bci) {
+        super(callTarget, bci);
+        this.method = method;
     }
 
-    @Input(notDataflow = true) private FrameState stateAfter;
-
-    public FrameState stateAfter() {
-        return stateAfter;
-    }
-
-    public void setStateAfter(FrameState x) {
-        assert x == null || x.isAlive() : "frame state must be in a graph";
-        updateUsages(stateAfter, x);
-        stateAfter = x;
-    }
-
-    public boolean hasSideEffect() {
-        return true;
-    }
-
-    public ValueNode value() {
-        return value;
+    public ValueNode method() {
+        return method;
     }
 
 }

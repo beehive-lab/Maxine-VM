@@ -190,6 +190,7 @@ public class MaxAMD64Backend extends Backend {
 
     MaxAMD64Backend(CodeCacheProvider runtime, TargetDescription target) {
         super(runtime, target);
+        AMD64AsmOptions.UseNormalNop = true; // TODO temp help for looking at code in Inspector
     }
 
     @Override

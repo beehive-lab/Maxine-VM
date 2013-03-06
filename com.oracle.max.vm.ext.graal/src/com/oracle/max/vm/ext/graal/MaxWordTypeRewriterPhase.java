@@ -93,7 +93,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
             for (Node n : GraphOrder.forwardGraph(graph)) {
                 if (n instanceof ValueNode) {
                     if (isFixedGuardNullCheck(n)) {
-                        removeWordNullCheck(graph, (FixedGuardNode) n);
+                        removeNullCheck(graph, (FixedGuardNode) n);
                     } else if (isUncheckedAccess(n)) {
                         removeUnCheckedAccess(graph, (IfNode) n);
                     }
@@ -109,12 +109,12 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
             return false;
         }
 
-        private void removeWordNullCheck(StructuredGraph graph, FixedGuardNode fixedGuardNode) {
+        private void removeNullCheck(StructuredGraph graph, FixedGuardNode fixedGuardNode) {
             IsNullNode isNullNode = (IsNullNode) fixedGuardNode.condition();
             ValueNode object = isNullNode.object();
-            // Check for an Word object
+            // Check for a Word object, a Reference object, or a Hub or a nonNull object (can arise from runtime call rewrites)
             ResolvedJavaType objectType = object.objectStamp().type();
-            if (object.kind() == Kind.Object && (wordBaseType.isAssignableFrom(objectType) || objectType == referenceType)) {
+            if (object.objectStamp().nonNull() || (objectType != null && (isWordOrReference(objectType) || hubType.isAssignableFrom(objectType)))) {
                 graph.removeFixed(fixedGuardNode);
                 GraphUtil.killWithUnusedFloatingInputs(isNullNode);
             }
@@ -217,13 +217,25 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
         return false;
     }
 
-    protected boolean isWord(ResolvedJavaType type) {
+    public static boolean isWord(ResolvedJavaType type) {
         RiType riType = ((MaxResolvedJavaType) type).riType;
         if (!(riType instanceof ClassActor)) {
             return false;
         }
         ClassActor actor = (ClassActor) riType;
         return actor.kind == com.sun.max.vm.type.Kind.WORD;
+    }
+
+    public static Kind checkWord(JavaType javaType) {
+        if (javaType instanceof ResolvedJavaType && isWord((ResolvedJavaType) javaType)) {
+            return Kind.Long;
+        } else {
+            return javaType.getKind();
+        }
+    }
+
+    public static boolean isWordOrReference(ResolvedJavaType objectType) {
+        return wordBaseType.isAssignableFrom(objectType) || objectType == referenceType;
     }
 
     protected void changeToWord(ValueNode valueNode) {

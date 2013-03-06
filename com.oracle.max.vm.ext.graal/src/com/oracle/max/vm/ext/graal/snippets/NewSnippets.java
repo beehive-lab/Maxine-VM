@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,33 +25,32 @@ package com.oracle.max.vm.ext.graal.snippets;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
-import com.oracle.graal.api.code.RuntimeCallTarget.Descriptor;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
-import com.oracle.graal.graph.Node.ConstantNodeParameter;
-import com.oracle.graal.graph.Node.NodeIntrinsic;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.snippets.*;
-import com.oracle.graal.snippets.Snippet.ConstantParameter;
 import com.oracle.graal.snippets.Snippet.Parameter;
 import com.oracle.graal.snippets.SnippetTemplate.Arguments;
 import com.oracle.graal.snippets.SnippetTemplate.Key;
 import com.oracle.max.vm.ext.graal.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.runtime.*;
 
 public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
 
     private final VMConfiguration vmConfig;
 
-    @NodeIntrinsic(value = RuntimeCallNode.class)
-    public static native Object runtimeCall(@ConstantNodeParameter Descriptor descriptor, DynamicHub hub);
-
-    public static void registerLowerings(VMConfiguration config, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public static void registerLowerings(VMConfiguration config, TargetDescription targetDescription, MetaAccessProvider runtime,
+                    Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         new NewSnippets(config, targetDescription, runtime, assumptions, lowerings);
     }
 
@@ -59,121 +58,121 @@ public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
         super(runtime, assumptions, targetDescription);
         this.vmConfig = vmConfig;
 
-        lowerings.put(NewInstanceNode.class, new NewInstanceLowering());
+        lowerings.put(NewInstanceNode.class, new NewInstanceLowering(this));
+        lowerings.put(UnresolvedNewInstanceNode.class, new UnresolvedNewInstanceLowering(this));
+        lowerings.put(NewArrayNode.class, new NewArrayLowering(this));
+        lowerings.put(UnresolvedNewArrayNode.class, new UnresolvedNewArrayLowering(this));
         /*
-        lowerings.put(NewObjectArrayNode.class, new NewArrayLowering());
-        lowerings.put(NewPrimitiveArrayNode.class, new NewArrayLowering());
         lowerings.put(NewMultiArrayNode.class, new NewMultiArrayLowering());
-        lowerings.put(NewInnerMultiArrayNode.class, new LoweredNewMultiArrayLowering());
-        lowerings.put(FastAllocateNode.class, new FastAllocateLowering());
-        lowerings.put(FormatObjectNode.class, new FormatObjectLowering());
-        lowerings.put(FormatArrayNode.class, new FormatArrayLowering());
         */
     }
 
-    protected class NewInstanceLowering implements LoweringProvider<NewInstanceNode> {
+    protected class NewInstanceLowering extends Lowering implements LoweringProvider<NewInstanceNode> {
 
-        private final ResolvedJavaMethod newInstance = findSnippet(NewSnippets.class, "newInstanceSnippet");
+        NewInstanceLowering(NewSnippets newSnippets) {
+            super(newSnippets, "newInstanceSnippet");
+        }
 
         @Override
         public void lower(NewInstanceNode node, LoweringTool tool) {
             ClassActor type = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.instanceClass());
-            Key key = new Key(newInstance);
-            key.add("fillContents", node.fillContents());
+            Key key = new Key(snippet);
             Arguments args = new Arguments();
             args.add("hub", type.dynamicHub());
-            cache.get(key, assumptions).instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
+            instantiate(node, key, args);
+        }
+    }
+
+    protected class UnresolvedNewInstanceLowering extends Lowering implements LoweringProvider<UnresolvedNewInstanceNode> {
+
+        protected UnresolvedNewInstanceLowering(NewSnippets newSnippets) {
+            super(newSnippets, "unresolvedNewInstanceSnippet");
+        }
+
+        @Override
+        public void lower(UnresolvedNewInstanceNode node, LoweringTool tool) {
+            UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) MaxJavaType.getRiType(node.javaType());
+            ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
+            Key key = new Key(snippet);
+            Arguments args = new Arguments();
+            args.add("guard", guard);
+            instantiate(node, key, args);
+        }
+
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static Object newInstanceSnippet(@Parameter("hub") DynamicHub hub) {
+        return UnsafeCastNode.unsafeCast(Heap.createTuple(hub), StampFactory.forNodeIntrinsic());
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static Object unresolvedNewInstanceSnippet(@Parameter("guard") ResolutionGuard.InPool guard) {
+        return UnsafeCastNode.unsafeCast(resolveClassForNewAndCreate(guard), StampFactory.forNodeIntrinsic());
+    }
+
+    @RUNTIME_ENTRY
+    private static Object resolveClassForNewAndCreate(ResolutionGuard guard) {
+        final ClassActor classActor = Snippets.resolveClassForNew(guard);
+        Snippets.makeClassInitialized(classActor);
+        final Object tuple = Snippets.createTupleOrHybrid(classActor);
+        return tuple;
+    }
+
+    protected class NewArrayLowering extends Lowering implements LoweringProvider<NewArrayNode> {
+
+        protected NewArrayLowering(NewSnippets newSnippets) {
+            super(newSnippets, "newArraySnippet");
+        }
+
+        @Override
+        public void lower(NewArrayNode node, LoweringTool tool) {
+            ClassActor type = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.elementType().getArrayClass());
+            Key key = new Key(snippet);
+            Arguments args = new Arguments();
+            args.add("hub", type.dynamicHub());
+            args.add("length", node.length());
+            instantiate(node, key, args);
         }
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object newInstanceSnippet(@Parameter("hub") DynamicHub hub, @ConstantParameter("fillContents") boolean fillContents) {
-        return UnsafeCastNode.unsafeCast(Heap.createTuple(hub), StampFactory.forNodeIntrinsic());
-//        return Heap.createTuple(hub);
+    public static Object newArraySnippet(@Parameter("hub") DynamicHub hub, @Parameter("length") int length) {
+        if (length < 0) {
+            Throw.negativeArraySizeException(length);
+        }
+        Object result = Heap.createArray(hub, length);
+        return UnsafeArrayCastNode.unsafeArrayCast(result, length, StampFactory.forNodeIntrinsic());
     }
 
-    /*
-    protected class NewArrayLowering implements LoweringProvider<NewArrayNode> {
+    protected class UnresolvedNewArrayLowering extends Lowering implements LoweringProvider<UnresolvedNewArrayNode> {
 
-        private final ResolvedJavaMethod newArray = findSnippet(NewSnippets.class, "newArraySnippet");
+        public UnresolvedNewArrayLowering(NewSnippets newSnippets) {
+            super(newSnippets, "unresolvedNewArraySnippet");
+        }
 
         @Override
-        public void lower(NewArrayNode node, LoweringTool tool) {
-            ClassActor type = (ClassActor) ((ClassActor) node.elementType()).arrayOf();
-            Key key = new Key(newArray);
-            key.add("layoutEncoding", type.dynamicHub().getLayoutEncoding());
-            key.add("fillContents", node.fillContents());
+        public void lower(UnresolvedNewArrayNode node, LoweringTool tool) {
+            UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) MaxJavaType.getRiType(node.elementType());
+            ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
+            Key key = new Key(snippet);
             Arguments args = new Arguments();
-            args.add("hub", type.dynamicHub());
+            args.add("guard", guard);
             args.add("length", node.length());
-            cache.get(key, assumptions).instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
-        }
-    }
-    */
-
-    /**
-     * Maximum array length for which fast path allocation is used.
-     */
-    /*
-    private static final int MAX_ARRAY_FAST_PATH_ALLOCATION_LENGTH = 0x00FFFFFF;
-
-    @Snippet
-    public static Object newArraySnippet(@Parameter("hub") DynamicHub hub, @Parameter("length") int length, @ConstantParameter("layoutEncoding") int layoutEncoding,
-                    @ConstantParameter("fillContents") boolean fillContents) {
-        Object result;
-        try {
-            if (aboveThan(length, MAX_ARRAY_FAST_PATH_ALLOCATION_LENGTH)) {
-                // This handles both negative array sizes and very large array sizes.
-                throw FastAllocationFailed.INSTANCE;
-            }
-            // Note: layoutEncoding is passed in as a @ConstantParameter so that much of the array size computation can
-            // be folded away early when preparing the snippet.
-            Word size = Word.fromLong(LayoutEncoding.arraySize(layoutEncoding, length, getVMConfig().getObjectLayout()));
-            Word memory = fastAllocateImpl(size);
-            result = formatArrayImpl(memory, hub, length, layoutEncoding, size, fillContents);
-        } catch (FastAllocationFailed ex) {
-            result = runtimeCall(SLOW_NEW_ARRAY, hub, length);
-        }
-        return unsafeArrayCast(result, length, StampFactory.forNodeIntrinsic());
-    }
-
-    @Snippet
-    public static Word fastAllocateSnippet(@Parameter("size") Word size) {
-        try {
-            return fastAllocateImpl(size);
-        } catch (FastAllocationFailed ex) {
-            return Word.zero();
+            instantiate(node, key, args);
         }
     }
 
-    @Snippet
-    public static Object formatObjectSnippet(@Parameter("memory") Word memory, @Parameter("hub") DynamicHub hub) {
-        Word size = Word.fromLong(LayoutEncoding.instanceSize(hub.getLayoutEncoding()));
-        return formatObjectImpl(memory, hub, size, true);
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static Object unresolvedNewArraySnippet(@Parameter("guard") ResolutionGuard.InPool guard, @Parameter("length") int length) {
+        return UnsafeCastNode.unsafeCast(resolveClassForNewArrayAndCreate(guard, length), StampFactory.forNodeIntrinsic());
     }
 
-    @Snippet
-    public static Object formatArraySnippet(@Parameter("memory") Word memory, @Parameter("hub") DynamicHub hub, @Parameter("length") int length) {
-        int layoutEncoding = hub.getLayoutEncoding();
-        Word size = Word.fromLong(LayoutEncoding.arraySize(layoutEncoding, length, getVMConfig().getObjectLayout()));
-        return formatArrayImpl(memory, hub, length, layoutEncoding, size, true);
+    @RUNTIME_ENTRY
+    private static Object resolveClassForNewArrayAndCreate(ResolutionGuard guard, int length) {
+        ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(guard));
+        return Snippets.createArray(arrayClassActor, length);
     }
 
-    @Snippet
-    public static Object newMultiArraySnippet(@Parameter("hub") DynamicHub hub, @Parameter("length") int length, @ConstantParameter("layoutEncoding") int layoutEncoding,
-                    @ConstantParameter("innerDimensions") int innerDimensions, @Parameter("newMultiArray") Object newMultiArray) {
-        Object result = newArraySnippet(hub, length, layoutEncoding, innerDimensions == 0);
-
-        if (innerDimensions > 0) {
-            Word offset = Word.fromLong(LayoutEncoding.firstArrayElementOffset(layoutEncoding));
-            Word size = Word.fromLong(LayoutEncoding.arraySize(layoutEncoding, length, getVMConfig().getObjectLayout()));
-            while (offset.below(size)) {
-                storeObject(result, 0, offset.toLong(), newInnerMultiArray(newMultiArray, innerDimensions));
-                offset = offset.plus(getVMConfig().getObjectLayout().getObjectSize());
-            }
-        }
-        return result;
-    }
-*/
 }
 
