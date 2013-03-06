@@ -271,6 +271,8 @@ public final class JDKInterceptor {
         JDK.java_io_UnixFileSystem,
             new ExpiringCacheField("cache"),
             new ExpiringCacheField("javaHomePrefixCache"),
+        JDK.java_net_InetSocketAddress,
+            new FieldOffsetRecomputation("FIELDS_OFFSET", "holder"),
         JDK.java_util_concurrent_locks_AbstractQueuedSynchronizer,
             new FieldOffsetRecomputation("stateOffset", "state"),
             new FieldOffsetRecomputation("headOffset", "head"),

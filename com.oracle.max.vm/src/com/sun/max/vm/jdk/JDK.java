@@ -64,6 +64,7 @@ public class JDK {
     public static final ClassRef java_io_Serializable                = new ClassRef(java.io.Serializable.class);
     public static final ClassRef java_io_UnixFileSystem              = new ClassRef("java.io.UnixFileSystem", true);
     public static final ClassRef java_io_ExpiringCache               = new ClassRef("java.io.ExpiringCache");
+    public static final ClassRef java_net_InetSocketAddress          = new ClassRef("java.net.InetSocketAddress", true);
 
     public static final ClassRef java_nio_DirectByteBuffer           = new LazyClassRef("java.nio.DirectByteBuffer");
     public static final ClassRef java_nio_DirectCharBufferS          = new LazyClassRef("java.nio.DirectCharBufferS");
