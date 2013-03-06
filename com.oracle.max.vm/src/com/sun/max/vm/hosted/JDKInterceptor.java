@@ -271,8 +271,6 @@ public final class JDKInterceptor {
         JDK.java_io_UnixFileSystem,
             new ExpiringCacheField("cache"),
             new ExpiringCacheField("javaHomePrefixCache"),
-        JDK.java_net_InetSocketAddress,
-            new FieldOffsetRecomputation("FIELDS_OFFSET", "holder"),
         JDK.java_util_concurrent_locks_AbstractQueuedSynchronizer,
             new FieldOffsetRecomputation("stateOffset", "state"),
             new FieldOffsetRecomputation("headOffset", "head"),
@@ -378,6 +376,9 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("HASHSEED_OFFSET", "hashSeed").makeOptional(),
         JDK.java_util_HashMap_Holder,
             new FieldOffsetRecomputation("HASHSEED_OFFSET", JDK.java_util_HashMap, "hashSeed").makeOptional(),
+        // Added in JDK 7 update 15
+        JDK.java_net_InetSocketAddress,
+            new FieldOffsetRecomputation("FIELDS_OFFSET", "holder").makeOptional(),
     };
     // Checkstyle: resume
 
