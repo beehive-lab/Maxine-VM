@@ -54,7 +54,7 @@ public class MaxJavaType implements JavaType {
         return result;
     }
 
-    static RiType getRiType(JavaType javaType) {
+    public static RiType getRiType(JavaType javaType) {
         return ((MaxJavaType) javaType).riType;
     }
 

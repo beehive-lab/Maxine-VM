@@ -77,7 +77,8 @@ public class MaxRegisterConfig implements RegisterConfig {
         // assert: this will be functionally equivalent to "target"
         CiTarget ciTarget = Platform.platform().target;
         CiCallingConvention ciConv = riRegisterConfig.getCallingConvention(toCiType(type), ciParameters, ciTarget, stackOnly);
-        Value returnLocation = returnType.getKind() == Kind.Void ? Value.ILLEGAL : getReturnRegister(returnType.getKind()).asValue(returnType.getKind());
+        Kind returnKind = MaxWordTypeRewriterPhase.checkWord(returnType);
+        Value returnLocation = returnType.getKind() == Kind.Void ? Value.ILLEGAL : getReturnRegister(returnKind).asValue(returnKind);
         CiValue[] ciValues = ciConv.locations;
         Value[] values = new Value[ciValues.length];
         for (int i = 0; i < ciValues.length; i++) {
@@ -104,6 +105,7 @@ public class MaxRegisterConfig implements RegisterConfig {
     }
 
     private static CiCallingConvention.Type toCiType(Type type) {
+        // Checkstyle: stop
         switch (type) {
             case JavaCall: return CiCallingConvention.Type.JavaCall;
             case JavaCallee: return CiCallingConvention.Type.JavaCallee;
@@ -111,15 +113,18 @@ public class MaxRegisterConfig implements RegisterConfig {
             case NativeCall: return CiCallingConvention.Type.NativeCall;
             default: return null;
         }
+        // Checkstyle: resume
     }
 
     private static CiRegister.RegisterFlag toCiFlag(RegisterFlag flag) {
+        // Checkstyle: stop
         switch (flag) {
             case CPU: return CiRegister.RegisterFlag.CPU;
             case Byte: return CiRegister.RegisterFlag.Byte;
             case FPU: return CiRegister.RegisterFlag.FPU;
             default: return null;
         }
+        // Checkstyle: resume
     }
 
     private static RegisterFlag toGraalFlag(CiRegister.RegisterFlag flag) {

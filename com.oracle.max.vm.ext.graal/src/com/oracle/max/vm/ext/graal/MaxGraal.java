@@ -21,6 +21,7 @@
  * questions.
  */
 package com.oracle.max.vm.ext.graal;
+
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -44,6 +45,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
@@ -86,6 +88,8 @@ public class MaxGraal implements RuntimeCompiler {
     private Backend backend;
     private OptimisticOptimizations optimisticOpts;
     private MaxGraphCache cache;
+
+    private static boolean MaxGraalCompare = true;
 
     /**
      * Hack option to compile given tests after boot image generation (ease of debugging).
@@ -133,6 +137,7 @@ public class MaxGraal implements RuntimeCompiler {
             MaxGraalOptions.initialize();
             createGraalCompiler(phase);
             VMOptions.addFieldOption("-XX:", "MaxGraalTests", "list of test methods to compile");
+            VMOptions.addFieldOption("-XX:", "MaxGraalCompare", "compare compiled code against C1X/T1X");
             testsHack();
         } else if (phase == MaxineVM.Phase.STARTING) {
             // This is the obvious place to do this but it is too early in the startup without
@@ -190,19 +195,33 @@ public class MaxGraal implements RuntimeCompiler {
         if (MaxGraalTests != null) {
             String[] tests = MaxGraalTests.split(",");
             for (String test : tests) {
+                String[] classAndMethod = test.split(":");
                 try {
-                    Class< ? > testClass = Class.forName(test);
+                    Class< ? > testClass = Class.forName(classAndMethod[0]);
                     ClassActor testClassActor = ClassActor.fromJava(testClass);
-                    MethodActor[] methods = testClassActor.getLocalMethodActorsArray();
-                    for (MethodActor methodActor : methods) {
+                    MethodActor[] methodActors;
+                    if (classAndMethod[1].equals("*")) {
+                        methodActors = testClassActor.getLocalMethodActorsArray();
+                    } else {
+                        MethodActor methodActor = testClassActor.findLocalClassMethodActor(SymbolTable.makeSymbol(classAndMethod[1]), null);
+                        if (methodActor == null) {
+                            throw new NoSuchMethodError(classAndMethod[1]);
+                        }
+                        methodActors = new MethodActor[1];
+                        methodActors[0] = methodActor;
+                    }
+                    for (MethodActor methodActor : methodActors) {
                         compile((ClassMethodActor) methodActor, false, true, null);
                     }
                 } catch (ClassNotFoundException ex) {
                     System.err.println("failed to find test class: " + test);
+                } catch (NoSuchMethodError ex) {
+                    System.err.println("failed to find test method: " + test);
                 }
             }
         }
     }
+
 
     @NEVER_INLINE
     static void unimplemented(String methodName) {
@@ -212,15 +231,19 @@ public class MaxGraal implements RuntimeCompiler {
     private DebugConfig enabledDebugConfig;
     private DebugConfig disabledDebugConfig;
 
-    private static final MaxDeoptCustomizer maxDeoptCustomizer = new MaxDeoptCustomizer();
+    private static final MaxUnresolvedCustomizer maxDeoptCustomizer = new MaxUnresolvedCustomizer();
 
     @Override
     public TargetMethod compile(ClassMethodActor methodActor, boolean isDeopt, boolean install, CiStatistics stats) {
         rescanAllFieldOffsets();
-        // compile with C1X/T1X for comparison
-        TargetMethod c1xTM = CompilationBroker.singleton.optimizingCompiler.compile(methodActor, isDeopt, install, stats);
-        TargetMethod t1xTM = CompilationBroker.singleton.baselineCompiler.compile(methodActor, isDeopt, install, stats);
-        defaultCompilations(c1xTM, t1xTM);
+        TargetMethod c1xTM = null;
+        TargetMethod t1xTM = null;
+        if (MaxGraalCompare) {
+            // compile with C1X/T1X for comparison
+            c1xTM = CompilationBroker.singleton.optimizingCompiler.compile(methodActor, isDeopt, install, stats);
+            t1xTM = CompilationBroker.singleton.baselineCompiler.compile(methodActor, isDeopt, install, stats);
+            defaultCompilations(c1xTM, t1xTM);
+        }
         try {
             if (!MaxineVM.isHosted()) {
                 checkDebugConfig();
@@ -233,12 +256,18 @@ public class MaxGraal implements RuntimeCompiler {
                 GraphBuilderPhase graphBuilderPhase = new GraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(),
                                 optimisticOpts, maxDeoptCustomizer);
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
+                if (MaxineVM.isHosted()) {
+                    MaxIntrinsicsPhase maxIntrinsicsPhase = new MaxIntrinsicsPhase();
+                    phasePlan.addPhase(PhasePosition.AFTER_PARSING, maxIntrinsicsPhase);
+                }
                 graph = new StructuredGraph(method);
             }
             CompilationResult result = GraalCompiler.compileMethod(runtime, backend, runtime.maxTargetDescription,
                             method, graph, cache, phasePlan, optimisticOpts);
             MaxTargetMethod graalTM = GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
-            compare(graalTM, c1xTM, t1xTM);
+            if (MaxGraalCompare) {
+                compare(graalTM, c1xTM, t1xTM);
+            }
             return graalTM;
         } catch (Throwable t) {
             ProgramError.unexpected(t);

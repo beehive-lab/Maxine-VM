@@ -25,14 +25,15 @@ package com.oracle.max.vm.ext.graal.snippets;
 import static com.oracle.graal.api.code.MemoryBarriers.*;
 import static com.oracle.graal.nodes.extended.MembarNode.*;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.snippets.*;
 import com.oracle.graal.snippets.Snippet.ConstantParameter;
 import com.oracle.graal.snippets.Snippet.Parameter;
@@ -97,15 +98,9 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         lowerings.put(LoadUnresolvedFieldNode.class, loadUnresolvedFieldLowering);
         lowerings.put(StoreUnresolvedFieldNode.class, storeUnresolvedFieldLowering);
 
-        // All the RUNTIME_ENTRY methods are critical
-        for (Method method : FieldSnippets.class.getDeclaredMethods()) {
-            if (method.isAnnotationPresent(RUNTIME_ENTRY.class)) {
-                new CriticalMethod(method);
-            }
-        }
     }
 
-    protected abstract class FieldLowering {
+    protected abstract class FieldLowering extends Lowering {
         protected final ResolvedJavaMethod[] snippets = new ResolvedJavaMethod[Kind.values().length];
 
         void setSnippet(Kind kind, ResolvedJavaMethod snippet) {
@@ -124,7 +119,7 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
             args.add("object", isStatic ? fieldActor.holder().staticTuple() : node.object());
             args.add("offset", fieldActor.offset());
             storeFieldArg(node, args);
-            cache.get(key, assumptions).instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
+            instantiate(node, key, args);
         }
 
         protected void storeFieldArg(AccessFieldNode node, Arguments args) {
@@ -172,7 +167,7 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
                 args.add("object", node.object());
             }
             storeFieldArg(node, args);
-            cache.get(key, assumptions).instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
+            instantiate(node, key, args);
         }
 
         protected void storeFieldArg(AccessUnresolvedFieldNode node, Arguments args) {
@@ -799,7 +794,7 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         resolveAndPutStaticDouble(guard, value);
     }
 
-//    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object loadObjectFieldSnippet(@Parameter("object") Object object,
             @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
         if (isVolatile) {
@@ -809,10 +804,10 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         if (isVolatile) {
             memoryBarrier(JMM_POST_VOLATILE_READ);
         }
-        return result;
+        return UnsafeCastNode.unsafeCast(result, StampFactory.forNodeIntrinsic());
     }
 
-//    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void storeObjectFieldSnippet(@Parameter("object") Object object,
             @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") Object value) {
         if (isVolatile) {
@@ -854,12 +849,12 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object loadObjectUnresolvedFieldSnippet(@Parameter("guard") ResolutionGuard.InPool guard, @Parameter("object") Object object) {
-        return resolveAndGetFieldObject(guard, object);
+        return UnsafeCastNode.unsafeCast(resolveAndGetFieldObject(guard, object), StampFactory.forNodeIntrinsic());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object loadObjectUnresolvedStaticSnippet(@Parameter("guard") ResolutionGuard.InPool guard) {
-        return resolveAndGetStaticObject(guard);
+        return UnsafeCastNode.unsafeCast(resolveAndGetStaticObject(guard), StampFactory.forNodeIntrinsic());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -926,8 +921,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         loadUnresolvedStaticLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "loadDoubleUnresolvedStaticSnippet"));
         storeUnresolvedFieldLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "storeDoubleUnresolvedFieldSnippet"));
         storeUnresolvedStaticLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "storeDoubleUnresolvedStaticSnippet"));
-//        loadFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "loadObjectFieldSnippet"));
-//        storeFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "storeObjectFieldSnippet"));
+        loadFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "loadObjectFieldSnippet"));
+        storeFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "storeObjectFieldSnippet"));
         loadUnresolvedFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "loadObjectUnresolvedFieldSnippet"));
         loadUnresolvedStaticLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "loadObjectUnresolvedStaticSnippet"));
         storeUnresolvedFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "storeObjectUnresolvedFieldSnippet"));

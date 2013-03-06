@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.graal;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
+import static com.oracle.max.vm.ext.graal.MaxWordTypeRewriterPhase.checkWord;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -34,9 +35,11 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
+import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
@@ -53,7 +56,8 @@ public class MaxIntrinsics {
 
     static class PointerReadOffsetIntrinsic extends MaxIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode offset) {
-            return graph.add(new UnsafeLoadNode(stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())), pointer, 0, offset, method.getSignature().getReturnKind()));
+            return graph.add(new UnsafeLoadNode(stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())),
+                            pointer, 0, offset, checkWord(method.getSignature().getReturnType(null))));
         }
     }
 
@@ -65,17 +69,50 @@ public class MaxIntrinsics {
 
     static class PointerReadIndexIntrinsic extends MaxIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode displacement, ValueNode index) {
-            return graph.add(new UnsafeLoadNode(stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())), pointer, displacement.asConstant().asInt(), index, method.getSignature().getReturnKind()));
+            Signature sig = method.getSignature();
+            Kind dataKind = sig.getReturnKind();
+            ValueNode scaledIndex = scaledIndex(graph, dataKind, index);
+            return graph.add(ExtendedUnsafeLoadNode.create(stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())), pointer,
+                            displacement, scaledIndex, checkWord(method.getSignature().getReturnType(null))));
         }
     }
 
     static class PointerWriteIndexIntrinsic  extends MaxIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode displacement, ValueNode index, ValueNode value) {
-            return graph.add(new UnsafeStoreNode(pointer, displacement.asConstant().asInt(), index, value, value.kind()));
+            Signature sig = method.getSignature();
+            Kind dataKind = sig.getParameterKind(sig.getParameterCount(false) - 1);
+            ValueNode scaledIndex = scaledIndex(graph, dataKind, index);
+            return graph.add(ExtendedUnsafeStoreNode.create(pointer, displacement, scaledIndex, value, value.kind()));
         }
     }
 
-    private static Stamp stampFor(ResolvedJavaType resolvedJavaType) {
+    /**
+     * Have to convert {@code index} into an offset by scaling by size of {@code dataKind}.
+     */
+    private static ValueNode scaledIndex(StructuredGraph graph, Kind dataKind, ValueNode index) {
+        int kindSizeAsShift = kindSizeAsShift(dataKind);
+        if (kindSizeAsShift == 0) {
+            return index;
+        } else {
+            LeftShiftNode result = new LeftShiftNode(Kind.Int, index, ConstantNode.forInt(kindSizeAsShift, graph));
+            graph.add(result);
+            return result;
+        }
+    }
+
+    private static int kindSizeAsShift(Kind kind) {
+        // Checkstyle: stop
+        switch (kind) {
+            case Byte: return 0;
+            case Short: case Char: return 1;
+            case Int: case Float: return 2;
+            case Long: case Double: case Object: return 3;
+            default: assert false; return -1;
+        // Checkstyle: stop
+        }
+    }
+
+    public static Stamp stampFor(ResolvedJavaType resolvedJavaType) {
         if (resolvedJavaType.isPrimitive()) {
             return StampFactory.forKind(resolvedJavaType.getKind());
         } else {
@@ -139,6 +176,20 @@ public class MaxIntrinsics {
     }
 
     /**
+     * This is a vehicle for testing a snippet instantiation in hosted mode.
+     */
+    private static class TestIntrinsic1 extends MaxIntrinsicImpl {
+        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode arg1) {
+            return TestSnippets.createTestSnippet1(graph, method, arg1);
+        }
+    }
+    private static class TestIntrinsic2 extends MaxIntrinsicImpl {
+        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode arg1, ValueNode arg2) {
+            return TestSnippets.createTestSnippet2(graph, method, arg1, arg2);
+        }
+    }
+
+    /**
      * Registry that maps intrinsic ID strings to implementation objects.
      * Intrinsic ID strings can either be explicitly defined as String constants, or inferred from the
      * fully qualified name and signature of a method.
@@ -197,6 +248,10 @@ public class MaxIntrinsics {
 
     public static void initialize(MaxRuntime runtime, MaxTargetDescription target) {
         registry = new Registry();
+
+        registry.add(TEST_SNIPPET_1, new TestIntrinsic1()); // TODO remove when debugged
+        registry.add(TEST_SNIPPET_2, new TestIntrinsic2()); // TODO remove when debugged
+
         registry.add(UNSAFE_CAST, new UnsafeCastIntrinsic());
         registry.add(READREG, new ReadRegisterIntrinsic());
 /*

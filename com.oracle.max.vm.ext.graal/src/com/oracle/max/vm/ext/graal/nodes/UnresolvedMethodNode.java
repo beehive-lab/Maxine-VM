@@ -23,36 +23,34 @@
 package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 
-@NodeInfo(nameTemplate = "StoreUnresolvedField#{p#field/s}")
-public class StoreUnresolvedFieldNode extends AccessUnresolvedFieldNode implements StateSplit {
 
-    @Input private ValueNode value;
+public class UnresolvedMethodNode extends FixedWithNextNode implements Lowerable{
 
-    public StoreUnresolvedFieldNode(ValueNode object, JavaField field, ValueNode value) {
-        super(object, field);
+    private InvokeKind invokeKind;
+    private JavaMethod javaMethod;
+
+    public UnresolvedMethodNode(InvokeKind invokeKind, JavaMethod javaMethod) {
+        super(StampFactory.forVoid());
+        this.invokeKind = invokeKind;
+        this.javaMethod = javaMethod;
     }
 
-    @Input(notDataflow = true) private FrameState stateAfter;
-
-    public FrameState stateAfter() {
-        return stateAfter;
+    public InvokeKind invokeKind() {
+        return invokeKind;
     }
 
-    public void setStateAfter(FrameState x) {
-        assert x == null || x.isAlive() : "frame state must be in a graph";
-        updateUsages(stateAfter, x);
-        stateAfter = x;
+    public JavaMethod javaMethod() {
+        return javaMethod;
     }
 
-    public boolean hasSideEffect() {
-        return true;
-    }
-
-    public ValueNode value() {
-        return value;
+    @Override
+    public void lower(LoweringTool tool) {
+        tool.getRuntime().lower(this, tool);
     }
 
 }

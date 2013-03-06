@@ -23,36 +23,44 @@
 package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.type.*;
+import com.sun.max.vm.intrinsics.*;
 
-@NodeInfo(nameTemplate = "StoreUnresolvedField#{p#field/s}")
-public class StoreUnresolvedFieldNode extends AccessUnresolvedFieldNode implements StateSplit {
+/**
+ * A variant of {@link UnsafeAccessNode} that allows a {@link ValueNode} displacement for the
+ * {@link MaxineIntrinsicIDs#PREAD_IDX} and {@link MaxineIntrinsicIDs#PWRITE_IDX} intrinsics.
+ */
+public class ExtendedUnsafeAccessNode extends FixedWithNextNode {
 
-    @Input private ValueNode value;
-
-    public StoreUnresolvedFieldNode(ValueNode object, JavaField field, ValueNode value) {
-        super(object, field);
+    protected ExtendedUnsafeAccessNode(Stamp stamp, ValueNode object, ValueNode displacement, ValueNode offset, Kind accessKind) {
+        super(stamp);
+        assert accessKind != null;
+        this.object = object;
+        this.displacement = displacement;
+        this.offset = offset;
+        this.accessKind = accessKind;
     }
 
-    @Input(notDataflow = true) private FrameState stateAfter;
+    @Input protected ValueNode object;
+    @Input protected ValueNode offset;
+    @Input protected ValueNode displacement;
+    private final Kind accessKind;
 
-    public FrameState stateAfter() {
-        return stateAfter;
+    public ValueNode object() {
+        return object;
     }
 
-    public void setStateAfter(FrameState x) {
-        assert x == null || x.isAlive() : "frame state must be in a graph";
-        updateUsages(stateAfter, x);
-        stateAfter = x;
+    public ValueNode displacement() {
+        return displacement;
     }
 
-    public boolean hasSideEffect() {
-        return true;
+    public ValueNode offset() {
+        return offset;
     }
 
-    public ValueNode value() {
-        return value;
+    public Kind accessKind() {
+        return accessKind;
     }
 
 }

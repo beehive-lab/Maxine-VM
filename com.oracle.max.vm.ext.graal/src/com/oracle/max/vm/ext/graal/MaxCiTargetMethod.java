@@ -51,6 +51,8 @@ public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
                 Object target;
                 if (gCall.target instanceof MaxRuntimeCallTarget) {
                     target = ((MaxRuntimeCallTarget) gCall.target).getMethodActor();
+                } else if (gCall.target instanceof MaxResolvedJavaMethod) {
+                    target = MaxResolvedJavaMethod.getRiResolvedMethod((MaxResolvedJavaMethod) gCall.target);
                 } else {
                     target = gCall.target;
                 }

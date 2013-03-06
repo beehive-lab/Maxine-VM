@@ -103,7 +103,13 @@ public class MaxConstantPool implements ConstantPool {
 
     @Override
     public Object lookupConstant(int cpi) {
-        return ConstantMap.toGraal((CiConstant) riConstantPool.lookupConstant(cpi));
+        Object result = riConstantPool.lookupConstant(cpi);
+        if (result instanceof CiConstant) {
+            return ConstantMap.toGraal((CiConstant) result);
+        } else {
+            return MaxJavaType.get((RiType) result);
+        }
+
     }
 
 }

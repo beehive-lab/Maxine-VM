@@ -23,36 +23,28 @@
 package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.extended.*;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 
-@NodeInfo(nameTemplate = "StoreUnresolvedField#{p#field/s}")
-public class StoreUnresolvedFieldNode extends AccessUnresolvedFieldNode implements StateSplit {
 
-    @Input private ValueNode value;
-
-    public StoreUnresolvedFieldNode(ValueNode object, JavaField field, ValueNode value) {
-        super(object, field);
+public class ExtendedUnsafeStoreNode extends ExtendedUnsafeAccessNode implements Lowerable {
+    private ExtendedUnsafeStoreNode(ValueNode object, ValueNode displacement, ValueNode offset, ValueNode value, Kind accessKind) {
+        super(StampFactory.forVoid(), object, displacement, offset, accessKind);
     }
 
-    @Input(notDataflow = true) private FrameState stateAfter;
-
-    public FrameState stateAfter() {
-        return stateAfter;
+    public static FixedWithNextNode create(ValueNode object, ValueNode displacement, ValueNode offset, ValueNode value, Kind accessKind) {
+        if (displacement.isConstant()) {
+            return new UnsafeStoreNode(StampFactory.forVoid(), object, displacement.asConstant().asInt(), offset, value, accessKind);
+        } else {
+            return new ExtendedUnsafeStoreNode(object, displacement, offset, value, accessKind);
+        }
     }
 
-    public void setStateAfter(FrameState x) {
-        assert x == null || x.isAlive() : "frame state must be in a graph";
-        updateUsages(stateAfter, x);
-        stateAfter = x;
-    }
-
-    public boolean hasSideEffect() {
-        return true;
-    }
-
-    public ValueNode value() {
-        return value;
+    @Override
+    public void lower(LoweringTool tool) {
+        tool.getRuntime().lower(this, tool);
     }
 
 }
