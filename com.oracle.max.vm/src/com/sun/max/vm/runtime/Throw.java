@@ -337,6 +337,7 @@ public final class Throw {
      * @param object the object whose type is not assignable to {@code classActor}
      */
     @NEVER_INLINE
+    @RUNTIME_ENTRY(exactType = true, nonNull = true)
     public static ClassCastException classCastException(ClassActor classActor, Object object) {
         FatalError.check(object != null && classActor != null, "Arguments for raising a ClassCastException cannot be null");
         throw new ClassCastException(object.getClass().getName() + " is not assignable to " + classActor.name);
@@ -347,6 +348,10 @@ public final class Throw {
         throw new NullPointerException();
     }
 
+    @NEVER_INLINE
+    public static ArithmeticException arithmeticException() {
+        throw new ArithmeticException();
+    }
     /**
      * Raises an {@code NegativeArraySizeException}. This is out-of-line to reduce the amount
      * of code inlined on the fast path for an array allocation.

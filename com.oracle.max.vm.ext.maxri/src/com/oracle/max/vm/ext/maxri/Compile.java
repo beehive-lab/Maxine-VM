@@ -86,7 +86,7 @@ public class Compile {
 
     static {
         // add all the compiler options
-        addFieldOptions("G", "com.oracle.max.graal.compiler.GraalOptions");
+//        addFieldOptions("G", "com.oracle.max.graal.compiler.GraalOptions");
         addFieldOptions("C1X", "com.sun.c1x.C1XOptions");
         addFieldOptions("T1X", "com.oracle.max.vm.ext.t1x.T1XOptions");
 

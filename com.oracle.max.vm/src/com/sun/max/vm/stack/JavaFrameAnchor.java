@@ -26,6 +26,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -124,7 +125,7 @@ public enum JavaFrameAnchor {
     /**
      * Gets the storage size of a {@link JavaFrameAnchor}.
      */
-    @FOLD
+    @Fold
     public static int size() {
         return VALUES.size() * Word.size();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,45 +22,29 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.max.graal.cri.*;
-import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.graal.nodes.extended.*;
-import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.graal.api.meta.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.extended.*;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 
-/**
- * Store of a value at a location specified as an offset relative to an object.
- */
-public class ExtendedUnsafeStoreNode extends ExtendedUnsafeNode implements Lowerable {
 
-    @Input private ValueNode value;
-
-    public ExtendedUnsafeStoreNode(ValueNode object, ValueNode displacement, ValueNode index, ValueNode value, CiKind kind) {
-        super(object, displacement, index, kind);
-        this.object = object;
-        this.displacement = displacement;
-        this.index = index;
-        this.value = value;
+public class ExtendedUnsafeStoreNode extends ExtendedUnsafeAccessNode implements Lowerable {
+    private ExtendedUnsafeStoreNode(ValueNode object, ValueNode displacement, ValueNode offset, ValueNode value, Kind accessKind) {
+        super(StampFactory.forVoid(), object, displacement, offset, accessKind);
     }
 
-    public ValueNode value() {
-        return value;
+    public static FixedWithNextNode create(ValueNode object, ValueNode displacement, ValueNode offset, ValueNode value, Kind accessKind) {
+        if (displacement.isConstant()) {
+            return new UnsafeStoreNode(StampFactory.forVoid(), object, displacement.asConstant().asInt(), offset, value, accessKind);
+        } else {
+            return new ExtendedUnsafeStoreNode(object, displacement, offset, value, accessKind);
+        }
     }
 
     @Override
-    public void lower(CiLoweringTool tool) {
-        LocationNode location = createLocation();
-        WriteNode write = graph().add(new WriteNode(object(), value(), location));
-        FixedNode next = next();
-        setNext(null);
-        if (object().kind() == CiKind.Object) {
-            write.setGuard((GuardNode) tool.createGuard(graph().unique(new NullCheckNode(object(), false))));
-        }
-        // TODO(tw): add Maxine-specific write barrier
-        write.setNext(next);
-        write.setStateAfter(stateAfter());
-        replaceAtPredecessors(write);
-        safeDelete();
+    public void lower(LoweringTool tool) {
+        tool.getRuntime().lower(this, tool);
     }
+
 }

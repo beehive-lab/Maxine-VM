@@ -87,6 +87,10 @@ public final class CiStackSlot extends CiValue {
         return index < 0 ? -(index + 1) : index;
     }
 
+    public int rawIndex() {
+        return index;
+    }
+
     @Override
     public int hashCode() {
         return kind.ordinal() + index;

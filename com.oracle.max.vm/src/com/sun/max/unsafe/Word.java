@@ -30,6 +30,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
 import com.sun.max.lang.*;
@@ -111,22 +112,22 @@ public class Word {
         return Address.max();
     }
 
-    @FOLD
+    @Fold
     public static Endianness endianness() {
         return platform().endianness();
     }
 
-    @FOLD
+    @Fold
     public static WordWidth widthValue() {
         return platform().wordWidth();
     }
 
-    @FOLD
+    @Fold
     public static int width() {
         return widthValue().numberOfBits;
     }
 
-    @FOLD
+    @Fold
     public static int size() {
         return widthValue().numberOfBytes;
     }

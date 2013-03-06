@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -59,12 +60,12 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      */
     protected Size sizeLimit;
 
-    @FOLD
+    @Fold
     public static int topOffset() {
         return ClassActor.fromJava(BaseAtomicBumpPointerAllocator.class).findLocalInstanceFieldActor("top").offset();
     }
 
-    @FOLD
+    @Fold
     public static Size headroom() {
         return ClassActor.fromJava(Object.class).dynamicHub().tupleSize;
     }

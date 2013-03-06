@@ -40,6 +40,7 @@ import java.util.concurrent.*;
 import java.util.jar.*;
 import java.util.zip.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -932,7 +933,7 @@ public final class ClassfileReader {
                                 ProgramError.check(descriptor.numberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + anno +
                                     " to a method with exactly one parameter: " + memberString(name, descriptor));
                             }
-                        } else if (annotation.annotationType() == FOLD.class) {
+                        } else if (annotation.annotationType() == Fold.class) {
                             flags |= FOLD;
                         } else if (annotation.annotationType() == LOCAL_SUBSTITUTION.class) {
                             // process any class-local substitutions

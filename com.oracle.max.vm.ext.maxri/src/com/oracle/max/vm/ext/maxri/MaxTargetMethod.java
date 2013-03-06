@@ -31,6 +31,7 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
@@ -64,7 +65,7 @@ import com.sun.max.vm.type.*;
  * the Maxine VM compiled by a compiler written against the
  * CRI project.
  */
-public final class MaxTargetMethod extends TargetMethod implements Cloneable {
+public class MaxTargetMethod extends TargetMethod implements Cloneable {
 
     /**
      * An array of pairs denoting the code positions protected by an exception handler.
@@ -95,6 +96,8 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
 
+    private CiTargetMethod debugCiTargetMethod;
+
     public MaxTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         assert classMethodActor != null;
@@ -108,6 +111,8 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
         if (isHosted()) {
             // Save the target method for later gathering of calls and duplication
             this.bootstrappingCiTargetMethod = ciTargetMethod;
+        } else {
+            debugCiTargetMethod = ciTargetMethod;
         }
 
         for (Mark mark : ciTargetMethod.marks) {
@@ -151,7 +156,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      * Gets the size (in bytes) of a bit map covering all the registers that may store references.
      * The bit position of a register in the bit map is the register's {@linkplain CiRegister#encoding encoding}.
      */
-    @FOLD
+    @Fold
     public static int regRefMapSize() {
         return ByteArrayBitMap.computeBitMapSize(target().arch.registerReferenceMapBitCount);
     }

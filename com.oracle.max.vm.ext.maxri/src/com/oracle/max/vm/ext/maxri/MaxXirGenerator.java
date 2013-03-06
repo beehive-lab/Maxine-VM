@@ -33,6 +33,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -161,37 +162,37 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     public final List<XirTemplate> stubs = new ArrayList<XirTemplate>();
 
-    @FOLD
+    @Fold
     int hubOffset() {
         return generalLayout().getOffsetFromOrigin(Layout.HeaderField.HUB).toInt();
     }
 
-    @FOLD
+    @Fold
     int hubFirstWordIndex() {
         return Hub.getFirstWordIndex();
     }
 
-    @FOLD
+    @Fold
     int offsetOfFirstArrayElement() {
         return byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
     }
 
-    @FOLD
+    @Fold
     int offsetOfMTableStartIndex() {
         return FieldActor.findInstance(Hub.class, "mTableStartIndex").offset();
     }
 
-    @FOLD
+    @Fold
     int offsetOfMTableLength() {
         return FieldActor.findInstance(Hub.class, "mTableLength").offset();
     }
 
-    @FOLD
+    @Fold
     int offsetOfTupleSize() {
         return FieldActor.findInstance(Hub.class, "tupleSize").offset();
     }
 
-    @FOLD
+    @Fold
     int minObjectAlignmentMask() {
         return vmConfig().heapScheme().objectAlignment() - 1;
     }
@@ -1952,7 +1953,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
-            return ((HeapSchemeWithTLAB) vmConfig().heapScheme()).slowPathAllocate(Size.fromInt(size), etla);
+            return ((HeapSchemeWithTLAB) vmConfig().heapScheme()).c1xSlowPathAllocate(Size.fromInt(size), etla);
         }
 
         public static Pointer flushLog(Pointer logTail) {

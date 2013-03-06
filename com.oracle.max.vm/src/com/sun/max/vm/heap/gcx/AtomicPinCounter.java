@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import com.sun.max.annotate.*;
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -33,7 +33,7 @@ import com.sun.max.vm.runtime.*;
 public final class AtomicPinCounter {
     private volatile int pinnedCounter = 0;
 
-    @FOLD
+    @Fold
     private static int pinnedCounterOffset() {
         return ClassActor.fromJava(AtomicPinCounter.class).findLocalInstanceFieldActor("pinnedCounter").offset();
     }

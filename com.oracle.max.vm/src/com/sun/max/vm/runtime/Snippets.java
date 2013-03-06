@@ -30,6 +30,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
 
+import com.oracle.graal.snippets.Snippet.Fold;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -146,6 +147,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @RUNTIME_ENTRY
     private static void resolveStaticFieldForReading0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -170,6 +172,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @RUNTIME_ENTRY
     private static void resolveStaticFieldForWriting0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -286,6 +289,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @RUNTIME_ENTRY
     private static void resolveInstanceFieldForReading0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -310,6 +314,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @RUNTIME_ENTRY
     private static void resolveInstanceFieldForWriting0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -568,7 +573,7 @@ public class Snippets {
 
     private static ClassMethodActor blockOnThreadLockMethod;
 
-    @FOLD
+    @Fold
     public static ClassMethodActor blockOnThreadLockMethod() {
         if (MaxineVM.isHosted()) {
             synchronized (Snippets.class) {

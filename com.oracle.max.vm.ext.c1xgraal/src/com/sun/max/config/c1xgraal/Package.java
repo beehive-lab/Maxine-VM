@@ -25,7 +25,7 @@ package com.sun.max.config.c1xgraal;
 import java.util.*;
 
 import com.oracle.max.criutils.*;
-import com.oracle.max.graal.compiler.*;
+import com.oracle.graal.phases.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
@@ -35,11 +35,12 @@ public class Package extends BootImagePackage {
 
     public Package() {
         super("com.oracle.max.vm.ext.c1xgraal.**",
-              "com.oracle.max.graal.compiler.**",
-              "com.oracle.max.graal.graph.**",
-              //"com.oracle.max.graal.graphviz.**",
-              "com.oracle.max.graal.nodes.**",
-              "com.oracle.max.graal.snippets.**");
+              "com.oracle.graal.compiler.**",
+              "com.oracle.graal.graph.**",
+              //"com.oracle.graal.graphviz.**",
+              "com.oracle.graal.nodes.**",
+              "com.oracle.graal.phases.**",
+              "com.oracle.graal.snippets.**");
     }
 
     @Override
@@ -51,7 +52,7 @@ public class Package extends BootImagePackage {
         @Override
         public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
             objectMap.put(TTY.out(), new LogStream(Log.os));
-            if (GraalOptions.PrintCFGToFile) {
+            if (GraalOptions.PrintCFG) {
                 objectMap.put(CompilationPrinter.globalOut(), JavaPrototype.NULL);
             }
         }

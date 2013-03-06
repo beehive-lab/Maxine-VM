@@ -90,7 +90,7 @@ public abstract class UnresolvedType implements RiType {
     }
 
     /**
-     * An unresolved type corresponding to a type descriptor and an accessing class.
+     * An unresolved type corresponding to a type descriptor and an accessing class (which may be be null).
      */
     public static final class ByAccessingClass extends UnresolvedType {
         public final ClassActor accessingClass;
@@ -103,8 +103,15 @@ public abstract class UnresolvedType implements RiType {
         public boolean equals(Object o) {
             if (o instanceof ByAccessingClass) {
                 ByAccessingClass other = (ByAccessingClass) o;
-                return typeDescriptor.equals(other.typeDescriptor) &&
-                       accessingClass.equals(other.accessingClass);
+                if (!typeDescriptor.equals(other.typeDescriptor)) {
+                    return false;
+                } else {
+                    if (accessingClass == null) {
+                        return other.accessingClass == null;
+                    } else {
+                        return accessingClass.equals(other.accessingClass);
+                    }
+                }
             }
             return false;
         }

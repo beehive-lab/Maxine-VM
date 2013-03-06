@@ -32,6 +32,7 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
@@ -1001,6 +1002,17 @@ public final class ConstantPool implements RiConstantPool {
 
     @Override
     public void loadReferencedType(int cpi, int bytecode) {
-        // TODO(tw): Implement this for Maxine.
+        PoolConstant pc = constants[cpi];
+        ClassActor holder = null;
+        if (pc instanceof FieldRefConstant) {
+            FieldRefConstant frc = (FieldRefConstant) pc;
+            holder = frc.resolve(this, cpi).holder();
+        } else if (pc instanceof MethodRefConstant) {
+            MethodRefConstant mrc = (MethodRefConstant) pc;
+            holder = mrc.resolve(this, cpi).holder();
+        }
+        if (holder != null) {
+            Classes.initialize(holder.toJava());
+        }
     }
 }
