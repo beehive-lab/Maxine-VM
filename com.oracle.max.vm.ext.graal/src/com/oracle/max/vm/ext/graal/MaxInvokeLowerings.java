@@ -28,7 +28,6 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.graal.nodes.spi.*;
@@ -44,7 +43,21 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
 
-
+/**
+ * Maxine attempts to do as much lowering as possible with {@link Snippet snippets} to leverage the
+ * meta-circularity and share code between compilers (write-once).
+ * Method invocation is one place where this cannot be done completely as there is no way to
+ * express the actual invocation in a snippet that would not cause a cycle (amongst other issues).
+ * However, the selection of the method code address for virtual/interface methods is handled
+ * by a snippet, by inserting a {@link SelectMethod} node before the {@code InvokeNode}, which is
+ * subsequently lowered using a snippet. The value returned by the snippet is fed into the
+ * {@link IndirectCallTargetNode} that is the lowering for the incoming {@link MethodCallTargetNode}.
+ * Therefore the code here would not need to changed if a different implementation was chosen for the
+ * virtual method table.
+ *
+ * Unresolved methods are handled in a similar fashion, by inserting a node that is lowered by a snippet
+ * to do the resolution. This is actually done in {@link MaxUnresolvedCustomizer#unresolvedInvoke}.
+ */
 class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
 
     private MaxInvokeLowerings(MetaAccessProvider runtime,
@@ -53,6 +66,7 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
         lowerings.put(InvokeNode.class, new InvokeLowering());
         lowerings.put(InvokeWithExceptionNode.class, new InvokeLowering());
         lowerings.put(UnresolvedMethodNode.class, new UnresolvedMethodLowering(this));
+        lowerings.put(SelectMethodNode.class, new SelectMethodLowering(this));
     }
 
     static void registerLowerings(VMConfiguration config, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions,
@@ -70,10 +84,8 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
                 MethodCallTargetNode callTarget = invoke.methodCallTarget();
                 NodeInputList<ValueNode> parameters = callTarget.arguments();
                 ValueNode receiver = parameters.size() <= 0 ? null : parameters.get(0);
-                if (!callTarget.isStatic() && receiver.kind() == Kind.Object && !receiver.objectStamp().nonNull()) {
-                    IsNullNode isNull = graph.unique(new IsNullNode(receiver));
-                    graph.addBeforeFixed(node, graph.add(new FixedGuardNode(isNull, DeoptimizationReason.NullCheckException, null, true)));
-                }
+                // For Virtual/Interface calls an explicit null check is not needed as loading the
+                // address from the vtable/itable acts as an implicit null check.
                 JavaType[] signature = MetaUtil.signatureToTypes(callTarget.targetMethod().getSignature(), callTarget.isStatic() ? null : callTarget.targetMethod().getDeclaringClass());
                 CallingConvention.Type callType = CallingConvention.Type.JavaCall;
 
@@ -84,26 +96,13 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
                         loweredCallTarget = graph.add(new DirectCallTargetNode(parameters, callTarget.returnStamp(), signature, callTarget.targetMethod(), callType));
                         break;
                     case Virtual:
-                        /*
                     case Interface:
-                        ClassMethodActor method = (ClassMethodActor) callTarget.targetMethod();
-                        if (method.getImplementations().length == 0) {
-                            // We are calling an abstract method with no implementation, i.e., the closed-world analysis
-                            // showed that there is no concrete receiver ever allocated. This must be dead code.
-                            graph.addBeforeFixed(node, graph.add(new FixedGuardNode(ConstantNode.forBoolean(true, graph), DeoptimizationReason.UnreachedCode, null, true, invoke.leafGraphId())));
-                            return;
-                        }
-                        int vtableEntryOffset = NumUtil.safeToInt(hubLayout.getArrayElementOffset(method.getVTableIndex()));
-
-                        ReadNode hub = graph.add(new ReadNode(receiver, LocationNode.create(LocationNode.FINAL_LOCATION, Kind.Object, objectLayout.hubOffset(), graph), StampFactory.objectNonNull()));
-                        LocationNode entryLoc = LocationNode.create(LocationNode.FINAL_LOCATION, target.wordKind, vtableEntryOffset, graph);
-                        ReadNode entry = graph.add(new ReadNode(hub, entryLoc, StampFactory.forKind(target.wordKind)));
+                        // Insert a SelectMethodNode that will compute the address from the vtable/itable
+                        MethodActor cma = (MethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(callTarget.targetMethod());
+                        SelectMethodNode entry = new SelectMethodNode(callTarget.invokeKind(), cma, receiver);
+                        graph.addBeforeFixed(node, graph.add(entry));
                         loweredCallTarget = graph.add(new IndirectCallTargetNode(entry, parameters, callTarget.returnStamp(), signature, callTarget.targetMethod(), callType));
-
-                        graph.addBeforeFixed(node, hub);
-                        graph.addAfterFixed(hub, entry);
                         break;
-                        */
                     default:
                         ProgramError.unknownCase();
                 }
@@ -112,6 +111,35 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
         }
     }
 
+    private class SelectMethodLowering extends Lowering implements LoweringProvider<SelectMethodNode> {
+        protected final ResolvedJavaMethod[] snippets = new ResolvedJavaMethod[InvokeKind.values().length];
+
+        SelectMethodLowering(MaxInvokeLowerings invokeSnippets) {
+            super();
+            snippets[InvokeKind.Virtual.ordinal()] = invokeSnippets.findSnippet(MaxInvokeLowerings.class, "selectVirtualMethodSnippet");
+            snippets[InvokeKind.Interface.ordinal()] = invokeSnippets.findSnippet(MaxInvokeLowerings.class, "selectInterfaceMethodSnippet");
+        }
+
+        @Override
+        public void lower(SelectMethodNode node, LoweringTool tool) {
+            Key key = new Key(snippets[node.invokeKind().ordinal()]);
+            Arguments args = new Arguments();
+            args.add("receiver", node.receiver());
+            args.add("method", node.methodActor());
+            instantiate(node, key, args);
+        }
+
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static com.sun.max.unsafe.Address selectVirtualMethodSnippet(@Parameter("receiver") Object receiver, @Parameter("method") VirtualMethodActor declaredMethod) {
+        return Snippets.selectNonPrivateVirtualMethod(receiver, declaredMethod).asAddress();
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static com.sun.max.unsafe.Address selectInterfaceMethodSnippet(@Parameter("receiver") Object receiver, @Parameter("method") InterfaceMethodActor declaredMethod) {
+        return Snippets.selectInterfaceMethod(receiver, declaredMethod).asAddress();
+    }
 
 
     private class UnresolvedMethodLowering extends Lowering implements LoweringProvider<UnresolvedMethodNode> {
@@ -176,6 +204,5 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
     private static StaticMethodActor resolveStaticMethod(ResolutionGuard.InPool guard) {
         return Snippets.resolveStaticMethod(guard);
     }
-
 
 }
