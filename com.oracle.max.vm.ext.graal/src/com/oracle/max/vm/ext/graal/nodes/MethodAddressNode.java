@@ -28,24 +28,37 @@ import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 
+/**
+ * Node that is created as part of the {@link InvokeNode} lowering that allows a snippet to be used to return the entry
+ * address of the method, for example by accessing the vTable/iTable structure.
+ *
+ * The {@link #methodActor} input is either a {@link ConstantNode} for a resolved method or the input from a node that
+ * handles the resolution. The {@link #receiver} is null for a static method.
+ */
+public class MethodAddressNode extends FixedWithNextNode implements Lowerable {
 
-public class UnresolvedMethodNode extends FixedWithNextNode implements Lowerable{
+    @Input ValueNode receiver;
+    @Input ValueNode methodActor;
 
     private InvokeKind invokeKind;
-    private JavaMethod javaMethod;
 
-    public UnresolvedMethodNode(InvokeKind invokeKind, JavaMethod javaMethod) {
-        super(StampFactory.forVoid());
+    public MethodAddressNode(InvokeKind invokeKind, ValueNode methodActor, ValueNode receiver) {
+        super(StampFactory.forKind(Kind.Long));
         this.invokeKind = invokeKind;
-        this.javaMethod = javaMethod;
+        this.receiver = receiver;
+        this.methodActor = methodActor;
     }
 
     public InvokeKind invokeKind() {
         return invokeKind;
     }
 
-    public JavaMethod javaMethod() {
-        return javaMethod;
+    public ValueNode methodActor() {
+        return methodActor;
+    }
+
+    public ValueNode receiver() {
+        return receiver;
     }
 
     @Override
