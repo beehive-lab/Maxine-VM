@@ -216,11 +216,11 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         boolean ignoreHostOnlyError;
 
         public MaxSnippetGraphBuilderConfiguration() {
-            super(ResolvePolicy.EagerForSnippets, null);
+            super(true, true);
         }
 
         @Override
-        public boolean unresolvedForSnippetsIsError() {
+        public boolean unresolvedIsError() {
             // This prevents an assertion error in GraphBuilderPhase when we return an unresolved field
             return false;
         }
@@ -256,7 +256,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         }
 
         @Override
-        public void beforeFinal(SnippetInstaller si, StructuredGraph graph, final ResolvedJavaMethod method, final boolean isSubstitutionSnippet) {
+        public void beforeFinal(SnippetInstaller si, StructuredGraph graph, final ResolvedJavaMethod method) {
             new SnippetIntrinsificationPhase(si.runtime, si.pool, SnippetTemplate.hasConstantParameter(method)).apply(graph);
 
             // These only get done once right at the end
@@ -267,7 +267,6 @@ public class MaxRuntime implements GraalCodeCacheProvider {
             // The replaces all Word based types with long
             new MaxWordTypeRewriterPhase.KindRewriter(si.runtime, si.target.wordKind).apply(graph);
 
-            // safe (I believe and important) to do this for Maxine snippets
             new SnippetFrameStateCleanupPhase().apply(graph);
             new DeadCodeEliminationPhase().apply(graph);
 

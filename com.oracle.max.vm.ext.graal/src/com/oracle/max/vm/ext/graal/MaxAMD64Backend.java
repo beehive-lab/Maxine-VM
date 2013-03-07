@@ -41,6 +41,7 @@ import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.phases.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -105,6 +106,11 @@ public class MaxAMD64Backend extends Backend {
             unimplemented("MaxAMD64LIRGenerator.visitBreakpointNode");
         }
 
+        @Override
+        public void emitUnwind(Value operand) {
+            unimplemented("MaxAMD64LIRGenerator.emitUnwind");
+        }
+
     }
 
     protected static class MaxAMD64FrameContext implements FrameContext {
@@ -142,10 +148,10 @@ public class MaxAMD64Backend extends Backend {
             }
 
             if (!callee.isVmEntryPoint()) {
-                int lastFramePage = frameSize / tasm.target.pageSize;
+                int lastFramePage = frameSize / Platform.platform().pageSize;
                 // emit multiple stack bangs for methods with frames larger than a page
                 for (int i = 0; i <= lastFramePage; i++) {
-                    int offset = (i + GraalOptions.StackShadowPages) * tasm.target.pageSize;
+                    int offset = (i + GraalOptions.StackShadowPages) * Platform.platform().pageSize;
                     // Deduct 'frameSize' to handle frames larger than the shadow
                     bangStackWithOffset(tasm, asm, offset - frameSize);
                 }
