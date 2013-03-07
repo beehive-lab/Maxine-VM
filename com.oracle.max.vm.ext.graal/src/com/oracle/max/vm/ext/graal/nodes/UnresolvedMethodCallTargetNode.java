@@ -24,55 +24,31 @@ package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
-import com.oracle.graal.nodes.type.*;
+import com.oracle.graal.nodes.java.*;
+import com.oracle.max.vm.ext.graal.*;
 
-public class UnresolvedMethodCallTargetNode extends CallTargetNode {
+/**
+ * Denotes an unresolved method call target.
+ * The resolved {@link #resolvedMethodActor}, which is produced by an {@link ResolveMethod} node is
+ * used in an {@link IndirectCallTargetNode}.
+ *
+ * In order to subclass {@link MethodCallTargetNode} and avoid replicating a lot of logic,
+ * we fake a {@link ResolvedJavaMethod} that has just enough functionality to get by.
+ * This means, of course, that {@link MethodCallTargetNode} does not really need an actual {@link ResolvedJavaMethod}.
+ */
+public class UnresolvedMethodCallTargetNode extends MethodCallTargetNode  {
 
-    @Input ValueNode methodValue;
-
-    private final JavaType returnType;
-    private JavaMethod targetMethod;
-    private InvokeKind invokeKind;
+    @Input ValueNode resolvedMethodActor;
 
     public UnresolvedMethodCallTargetNode(InvokeKind invokeKind, JavaMethod targetMethod,
                     ValueNode[] arguments, JavaType returnType, ValueNode methodValue) {
-        super(arguments);
-        this.returnType = returnType;
-        this.targetMethod = targetMethod;
-        this.invokeKind = invokeKind;
-        this.methodValue = methodValue;
+        super(invokeKind, MaxResolvedJavaMethod.getFake(targetMethod), arguments, returnType);
+        this.resolvedMethodActor = methodValue;
     }
 
-    /**
-     * Gets the target method for this invocation instruction.
-     *
-     * @return the target method
-     */
-    public JavaMethod targetMethod() {
-        return targetMethod;
+    public ValueNode resolvedMethodActor()  {
+        return resolvedMethodActor;
     }
 
-    public InvokeKind invokeKind() {
-        return invokeKind;
-    }
-
-    @Override
-    public Stamp returnStamp() {
-        Kind returnKind = targetMethod.getSignature().getReturnKind();
-        if (returnKind == Kind.Object && returnType instanceof ResolvedJavaType) {
-            return StampFactory.declared((ResolvedJavaType) returnType);
-        } else {
-            return StampFactory.forKind(returnKind);
-        }
-    }
-
-    @Override
-    public String targetName() {
-        if (targetMethod() == null) {
-            return "??Invalid!";
-        }
-        return targetMethod().getName();
-    }
 
 }

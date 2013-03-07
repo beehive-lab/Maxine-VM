@@ -26,6 +26,7 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.api.meta.ResolvedJavaType.Representation;
 import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.max.vm.ext.graal.nodes.*;
 
@@ -68,11 +69,11 @@ public class MaxUnresolvedCustomizer extends GraphBuilderPhase.UnresolvedCustomi
         ValueNode[] args = frameState(phase).popArguments(javaMethod.getSignature().getParameterSlots(withReceiver),
                         javaMethod.getSignature().getParameterCount(withReceiver));
         // This node is a placeholder for resolving the method
-        UnresolvedMethodNode methodNode = new UnresolvedMethodNode(invokeKind, javaMethod);
-        currentGraph(phase).add(methodNode);
-        append(phase, methodNode);
+        ResolveMethodNode resolveMethodNode = new ResolveMethodNode(invokeKind, javaMethod);
+        currentGraph(phase).add(resolveMethodNode);
+        append(phase, resolveMethodNode);
         UnresolvedMethodCallTargetNode callTarget = new UnresolvedMethodCallTargetNode(invokeKind, javaMethod, args,
-                        javaMethod.getSignature().getReturnType(null), methodNode);
+                        javaMethod.getSignature().getReturnType(null), resolveMethodNode);
         currentGraph(phase).add(callTarget);
         // TODO InvokeWithExceptionNode
         InvokeNode invokeNode = new InvokeNode(callTarget, phase.bci());
