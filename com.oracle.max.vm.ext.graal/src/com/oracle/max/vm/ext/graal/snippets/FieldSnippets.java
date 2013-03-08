@@ -40,6 +40,7 @@ import com.oracle.graal.snippets.Snippet.Parameter;
 import com.oracle.graal.snippets.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -64,7 +65,8 @@ import com.sun.max.vm.runtime.*;
  *
  * Unresolved snippets are more complex, as we can't access the static tuple until the resolution has occurred,
  * and the runtime calls in the (historic) {@link Snippets} class to do the resolution are different for static
- * and instance fields. So there are separate snippets for instance and static fields.
+ * and instance fields. So there are separate snippets for instance and static fields. There is an intermediate
+ * state where the field is resolved but the class may need to be initialized.
  *
  * However, once the resolution is done, the resolved snippet can be invoked (as runtime code) to handle the field access.
  */
@@ -84,14 +86,27 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
 
         LoadUnresolvedFieldLowering loadUnresolvedFieldLowering = new LoadUnresolvedFieldLowering();
         StoreUnresolvedFieldLowering storeUnresolvedFieldLowering = new StoreUnresolvedFieldLowering();
+
         LoadUnresolvedFieldLowering loadUnresolvedStaticFieldLowering = new LoadUnresolvedFieldLowering();
         StoreUnresolvedFieldLowering storeUnresolvedStaticFieldLowering = new StoreUnresolvedFieldLowering();
-        addSnippets(loadFieldLowering, storeFieldLowering, loadUnresolvedFieldLowering, storeUnresolvedFieldLowering,
-                        loadUnresolvedStaticFieldLowering, storeUnresolvedStaticFieldLowering);
 
-        // Can only register one lowering class per node, so the static variants have to be handled in an ad hoc way
+        LoadUnresolvedFieldLowering loadHolderInitStaticFieldLowering = new LoadUnresolvedFieldLowering();
+        StoreUnresolvedFieldLowering storeHolderInitStaticFieldLowering = new StoreUnresolvedFieldLowering();
+        LoadUnresolvedFieldLowering loadHolderInitInstanceFieldLowering = new LoadUnresolvedFieldLowering();
+        StoreUnresolvedFieldLowering storeHolderInitInstanceFieldLowering = new StoreUnresolvedFieldLowering();
+
+        // Can only register one lowering class per node, so the static/init variants have to be handled in an ad hoc way
         loadUnresolvedFieldLowering.staticFieldLowering = loadUnresolvedStaticFieldLowering;
+        loadUnresolvedFieldLowering.initHolderStaticLowering = loadHolderInitStaticFieldLowering;
+        loadUnresolvedFieldLowering.initHolderFieldLowering = loadHolderInitInstanceFieldLowering;
+
         storeUnresolvedFieldLowering.staticFieldLowering = storeUnresolvedStaticFieldLowering;
+        storeUnresolvedFieldLowering.initHolderStaticLowering = storeHolderInitStaticFieldLowering;
+        storeUnresolvedFieldLowering.initHolderFieldLowering = storeHolderInitInstanceFieldLowering;
+
+
+        addSnippets(loadFieldLowering, storeFieldLowering, loadUnresolvedFieldLowering, storeUnresolvedFieldLowering);
+
 
         lowerings.put(LoadFieldNode.class, loadFieldLowering);
         lowerings.put(StoreFieldNode.class, storeFieldLowering);
@@ -154,15 +169,31 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
          * Holds the snippet methods for the static variants.
          */
         UnresolvedFieldLowering staticFieldLowering;
+        /**
+         * Holds the snippet for class initialization and static variant.
+         */
+        UnresolvedFieldLowering initHolderStaticLowering;
+        /**
+         * Holds the snippet for class initialization and instance variant.
+         */
+        UnresolvedFieldLowering initHolderFieldLowering;
 
         void lower(AccessUnresolvedFieldNode node) {
-            UnresolvedField unresolvedField = (UnresolvedField) MaxJavaField.getRiField(node.field());
-            ResolutionGuard.InPool guard = unresolvedField.constantPool.makeResolutionGuard(unresolvedField.cpi);
+            Key key;
+            Arguments args = new Arguments();
             boolean isStatic = node.object() == null;
             int ord = node.kind().ordinal();
-            Key key = new Key(isStatic ? staticFieldLowering.snippets[ord] : snippets[ord]);
-            Arguments args = new Arguments();
-            args.add("guard", guard);
+            RiField riField = MaxJavaField.getRiField(node.field());
+            if (riField instanceof FieldActor) {
+                // resolved but may need class initialization
+                key = new Key(isStatic ? initHolderStaticLowering.snippets[ord] : initHolderFieldLowering.snippets[ord]);
+                args.add("f", riField);
+            } else {
+                UnresolvedField unresolvedField = (UnresolvedField) riField;
+                ResolutionGuard.InPool guard = unresolvedField.constantPool.makeResolutionGuard(unresolvedField.cpi);
+                key = new Key(isStatic ? staticFieldLowering.snippets[ord] : snippets[ord]);
+                args.add("guard", guard);
+            }
             if (!isStatic) {
                 args.add("object", node.object());
             }
@@ -191,6 +222,10 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
             lower(node);
         }
 
+        @Override
+        protected void storeFieldArg(AccessUnresolvedFieldNode node, Arguments args) {
+            args.add("value", ((StoreUnresolvedFieldNode) node).value());
+        }
     }
 
 // START GENERATED CODE
@@ -222,29 +257,71 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     public static boolean resolveAndGetFieldBoolean(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadBooleanFieldSnippet(object, f.offset(), f.isVolatile());
+        return holderInitAndGetFieldBoolean(f, object);
     }
 
     @RUNTIME_ENTRY
     public static boolean resolveAndGetStaticBoolean(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadBooleanFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return holderInitAndGetStaticBoolean(f);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutFieldBoolean(ResolutionGuard.InPool guard, Object object, boolean value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        Snippets.makeHolderInitialized(f);
-        storeBooleanFieldSnippet(object, f.offset(), f.isVolatile(), value);
+        holderInitAndPutFieldBoolean(f, object, value);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutStaticBoolean(ResolutionGuard.InPool guard, boolean value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
+        holderInitAndPutStaticBoolean(f, value);
+    }
+
+    @RUNTIME_ENTRY
+    public static boolean holderInitAndGetFieldBoolean(FieldActor f, Object object) {
+        Snippets.makeHolderInitialized(f);
+        return loadBooleanFieldSnippet(object, f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static boolean holderInitAndGetStaticBoolean(FieldActor f) {
+        Snippets.makeHolderInitialized(f);
+        return loadBooleanFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutFieldBoolean(FieldActor f, Object object, boolean value) {
+        Snippets.makeHolderInitialized(f);
+        storeBooleanFieldSnippet(object, f.offset(), f.isVolatile(), value);
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutStaticBoolean(FieldActor f, boolean value) {
         Snippets.makeHolderInitialized(f);
         storeBooleanFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static boolean loadBooleanHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object) {
+        return holderInitAndGetFieldBoolean(f, object);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static boolean loadBooleanHolderInitStaticSnippet(@Parameter("f") FieldActor f) {
+        return holderInitAndGetStaticBoolean(f);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeBooleanHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object,
+            @Parameter("value") boolean value) {
+        holderInitAndPutFieldBoolean(f, object, value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeBooleanHolderInitStaticSnippet(@Parameter("f") FieldActor f,
+            @Parameter("value") boolean value) {
+        holderInitAndPutStaticBoolean(f, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -297,29 +374,71 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     public static byte resolveAndGetFieldByte(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadByteFieldSnippet(object, f.offset(), f.isVolatile());
+        return holderInitAndGetFieldByte(f, object);
     }
 
     @RUNTIME_ENTRY
     public static byte resolveAndGetStaticByte(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadByteFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return holderInitAndGetStaticByte(f);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutFieldByte(ResolutionGuard.InPool guard, Object object, byte value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        Snippets.makeHolderInitialized(f);
-        storeByteFieldSnippet(object, f.offset(), f.isVolatile(), value);
+        holderInitAndPutFieldByte(f, object, value);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutStaticByte(ResolutionGuard.InPool guard, byte value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
+        holderInitAndPutStaticByte(f, value);
+    }
+
+    @RUNTIME_ENTRY
+    public static byte holderInitAndGetFieldByte(FieldActor f, Object object) {
+        Snippets.makeHolderInitialized(f);
+        return loadByteFieldSnippet(object, f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static byte holderInitAndGetStaticByte(FieldActor f) {
+        Snippets.makeHolderInitialized(f);
+        return loadByteFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutFieldByte(FieldActor f, Object object, byte value) {
+        Snippets.makeHolderInitialized(f);
+        storeByteFieldSnippet(object, f.offset(), f.isVolatile(), value);
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutStaticByte(FieldActor f, byte value) {
         Snippets.makeHolderInitialized(f);
         storeByteFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static byte loadByteHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object) {
+        return holderInitAndGetFieldByte(f, object);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static byte loadByteHolderInitStaticSnippet(@Parameter("f") FieldActor f) {
+        return holderInitAndGetStaticByte(f);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeByteHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object,
+            @Parameter("value") byte value) {
+        holderInitAndPutFieldByte(f, object, value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeByteHolderInitStaticSnippet(@Parameter("f") FieldActor f,
+            @Parameter("value") byte value) {
+        holderInitAndPutStaticByte(f, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -372,29 +491,71 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     public static short resolveAndGetFieldShort(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadShortFieldSnippet(object, f.offset(), f.isVolatile());
+        return holderInitAndGetFieldShort(f, object);
     }
 
     @RUNTIME_ENTRY
     public static short resolveAndGetStaticShort(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadShortFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return holderInitAndGetStaticShort(f);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutFieldShort(ResolutionGuard.InPool guard, Object object, short value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        Snippets.makeHolderInitialized(f);
-        storeShortFieldSnippet(object, f.offset(), f.isVolatile(), value);
+        holderInitAndPutFieldShort(f, object, value);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutStaticShort(ResolutionGuard.InPool guard, short value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
+        holderInitAndPutStaticShort(f, value);
+    }
+
+    @RUNTIME_ENTRY
+    public static short holderInitAndGetFieldShort(FieldActor f, Object object) {
+        Snippets.makeHolderInitialized(f);
+        return loadShortFieldSnippet(object, f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static short holderInitAndGetStaticShort(FieldActor f) {
+        Snippets.makeHolderInitialized(f);
+        return loadShortFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutFieldShort(FieldActor f, Object object, short value) {
+        Snippets.makeHolderInitialized(f);
+        storeShortFieldSnippet(object, f.offset(), f.isVolatile(), value);
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutStaticShort(FieldActor f, short value) {
         Snippets.makeHolderInitialized(f);
         storeShortFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static short loadShortHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object) {
+        return holderInitAndGetFieldShort(f, object);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static short loadShortHolderInitStaticSnippet(@Parameter("f") FieldActor f) {
+        return holderInitAndGetStaticShort(f);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeShortHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object,
+            @Parameter("value") short value) {
+        holderInitAndPutFieldShort(f, object, value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeShortHolderInitStaticSnippet(@Parameter("f") FieldActor f,
+            @Parameter("value") short value) {
+        holderInitAndPutStaticShort(f, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -447,29 +608,71 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     public static char resolveAndGetFieldChar(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadCharFieldSnippet(object, f.offset(), f.isVolatile());
+        return holderInitAndGetFieldChar(f, object);
     }
 
     @RUNTIME_ENTRY
     public static char resolveAndGetStaticChar(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadCharFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return holderInitAndGetStaticChar(f);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutFieldChar(ResolutionGuard.InPool guard, Object object, char value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        Snippets.makeHolderInitialized(f);
-        storeCharFieldSnippet(object, f.offset(), f.isVolatile(), value);
+        holderInitAndPutFieldChar(f, object, value);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutStaticChar(ResolutionGuard.InPool guard, char value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
+        holderInitAndPutStaticChar(f, value);
+    }
+
+    @RUNTIME_ENTRY
+    public static char holderInitAndGetFieldChar(FieldActor f, Object object) {
+        Snippets.makeHolderInitialized(f);
+        return loadCharFieldSnippet(object, f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static char holderInitAndGetStaticChar(FieldActor f) {
+        Snippets.makeHolderInitialized(f);
+        return loadCharFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutFieldChar(FieldActor f, Object object, char value) {
+        Snippets.makeHolderInitialized(f);
+        storeCharFieldSnippet(object, f.offset(), f.isVolatile(), value);
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutStaticChar(FieldActor f, char value) {
         Snippets.makeHolderInitialized(f);
         storeCharFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static char loadCharHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object) {
+        return holderInitAndGetFieldChar(f, object);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static char loadCharHolderInitStaticSnippet(@Parameter("f") FieldActor f) {
+        return holderInitAndGetStaticChar(f);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeCharHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object,
+            @Parameter("value") char value) {
+        holderInitAndPutFieldChar(f, object, value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeCharHolderInitStaticSnippet(@Parameter("f") FieldActor f,
+            @Parameter("value") char value) {
+        holderInitAndPutStaticChar(f, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -522,29 +725,71 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     public static int resolveAndGetFieldInt(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadIntFieldSnippet(object, f.offset(), f.isVolatile());
+        return holderInitAndGetFieldInt(f, object);
     }
 
     @RUNTIME_ENTRY
     public static int resolveAndGetStaticInt(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadIntFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return holderInitAndGetStaticInt(f);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutFieldInt(ResolutionGuard.InPool guard, Object object, int value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        Snippets.makeHolderInitialized(f);
-        storeIntFieldSnippet(object, f.offset(), f.isVolatile(), value);
+        holderInitAndPutFieldInt(f, object, value);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutStaticInt(ResolutionGuard.InPool guard, int value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
+        holderInitAndPutStaticInt(f, value);
+    }
+
+    @RUNTIME_ENTRY
+    public static int holderInitAndGetFieldInt(FieldActor f, Object object) {
+        Snippets.makeHolderInitialized(f);
+        return loadIntFieldSnippet(object, f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static int holderInitAndGetStaticInt(FieldActor f) {
+        Snippets.makeHolderInitialized(f);
+        return loadIntFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutFieldInt(FieldActor f, Object object, int value) {
+        Snippets.makeHolderInitialized(f);
+        storeIntFieldSnippet(object, f.offset(), f.isVolatile(), value);
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutStaticInt(FieldActor f, int value) {
         Snippets.makeHolderInitialized(f);
         storeIntFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static int loadIntHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object) {
+        return holderInitAndGetFieldInt(f, object);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static int loadIntHolderInitStaticSnippet(@Parameter("f") FieldActor f) {
+        return holderInitAndGetStaticInt(f);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeIntHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object,
+            @Parameter("value") int value) {
+        holderInitAndPutFieldInt(f, object, value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeIntHolderInitStaticSnippet(@Parameter("f") FieldActor f,
+            @Parameter("value") int value) {
+        holderInitAndPutStaticInt(f, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -597,29 +842,71 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     public static float resolveAndGetFieldFloat(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadFloatFieldSnippet(object, f.offset(), f.isVolatile());
+        return holderInitAndGetFieldFloat(f, object);
     }
 
     @RUNTIME_ENTRY
     public static float resolveAndGetStaticFloat(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadFloatFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return holderInitAndGetStaticFloat(f);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutFieldFloat(ResolutionGuard.InPool guard, Object object, float value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        Snippets.makeHolderInitialized(f);
-        storeFloatFieldSnippet(object, f.offset(), f.isVolatile(), value);
+        holderInitAndPutFieldFloat(f, object, value);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutStaticFloat(ResolutionGuard.InPool guard, float value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
+        holderInitAndPutStaticFloat(f, value);
+    }
+
+    @RUNTIME_ENTRY
+    public static float holderInitAndGetFieldFloat(FieldActor f, Object object) {
+        Snippets.makeHolderInitialized(f);
+        return loadFloatFieldSnippet(object, f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static float holderInitAndGetStaticFloat(FieldActor f) {
+        Snippets.makeHolderInitialized(f);
+        return loadFloatFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutFieldFloat(FieldActor f, Object object, float value) {
+        Snippets.makeHolderInitialized(f);
+        storeFloatFieldSnippet(object, f.offset(), f.isVolatile(), value);
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutStaticFloat(FieldActor f, float value) {
         Snippets.makeHolderInitialized(f);
         storeFloatFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static float loadFloatHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object) {
+        return holderInitAndGetFieldFloat(f, object);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static float loadFloatHolderInitStaticSnippet(@Parameter("f") FieldActor f) {
+        return holderInitAndGetStaticFloat(f);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeFloatHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object,
+            @Parameter("value") float value) {
+        holderInitAndPutFieldFloat(f, object, value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeFloatHolderInitStaticSnippet(@Parameter("f") FieldActor f,
+            @Parameter("value") float value) {
+        holderInitAndPutStaticFloat(f, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -672,29 +959,71 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     public static long resolveAndGetFieldLong(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadLongFieldSnippet(object, f.offset(), f.isVolatile());
+        return holderInitAndGetFieldLong(f, object);
     }
 
     @RUNTIME_ENTRY
     public static long resolveAndGetStaticLong(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadLongFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return holderInitAndGetStaticLong(f);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutFieldLong(ResolutionGuard.InPool guard, Object object, long value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        Snippets.makeHolderInitialized(f);
-        storeLongFieldSnippet(object, f.offset(), f.isVolatile(), value);
+        holderInitAndPutFieldLong(f, object, value);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutStaticLong(ResolutionGuard.InPool guard, long value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
+        holderInitAndPutStaticLong(f, value);
+    }
+
+    @RUNTIME_ENTRY
+    public static long holderInitAndGetFieldLong(FieldActor f, Object object) {
+        Snippets.makeHolderInitialized(f);
+        return loadLongFieldSnippet(object, f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static long holderInitAndGetStaticLong(FieldActor f) {
+        Snippets.makeHolderInitialized(f);
+        return loadLongFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutFieldLong(FieldActor f, Object object, long value) {
+        Snippets.makeHolderInitialized(f);
+        storeLongFieldSnippet(object, f.offset(), f.isVolatile(), value);
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutStaticLong(FieldActor f, long value) {
         Snippets.makeHolderInitialized(f);
         storeLongFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static long loadLongHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object) {
+        return holderInitAndGetFieldLong(f, object);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static long loadLongHolderInitStaticSnippet(@Parameter("f") FieldActor f) {
+        return holderInitAndGetStaticLong(f);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeLongHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object,
+            @Parameter("value") long value) {
+        holderInitAndPutFieldLong(f, object, value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeLongHolderInitStaticSnippet(@Parameter("f") FieldActor f,
+            @Parameter("value") long value) {
+        holderInitAndPutStaticLong(f, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -747,29 +1076,71 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     public static double resolveAndGetFieldDouble(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadDoubleFieldSnippet(object, f.offset(), f.isVolatile());
+        return holderInitAndGetFieldDouble(f, object);
     }
 
     @RUNTIME_ENTRY
     public static double resolveAndGetStaticDouble(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadDoubleFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return holderInitAndGetStaticDouble(f);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutFieldDouble(ResolutionGuard.InPool guard, Object object, double value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        Snippets.makeHolderInitialized(f);
-        storeDoubleFieldSnippet(object, f.offset(), f.isVolatile(), value);
+        holderInitAndPutFieldDouble(f, object, value);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutStaticDouble(ResolutionGuard.InPool guard, double value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
+        holderInitAndPutStaticDouble(f, value);
+    }
+
+    @RUNTIME_ENTRY
+    public static double holderInitAndGetFieldDouble(FieldActor f, Object object) {
+        Snippets.makeHolderInitialized(f);
+        return loadDoubleFieldSnippet(object, f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static double holderInitAndGetStaticDouble(FieldActor f) {
+        Snippets.makeHolderInitialized(f);
+        return loadDoubleFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutFieldDouble(FieldActor f, Object object, double value) {
+        Snippets.makeHolderInitialized(f);
+        storeDoubleFieldSnippet(object, f.offset(), f.isVolatile(), value);
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutStaticDouble(FieldActor f, double value) {
         Snippets.makeHolderInitialized(f);
         storeDoubleFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static double loadDoubleHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object) {
+        return holderInitAndGetFieldDouble(f, object);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static double loadDoubleHolderInitStaticSnippet(@Parameter("f") FieldActor f) {
+        return holderInitAndGetStaticDouble(f);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeDoubleHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object,
+            @Parameter("value") double value) {
+        holderInitAndPutFieldDouble(f, object, value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeDoubleHolderInitStaticSnippet(@Parameter("f") FieldActor f,
+            @Parameter("value") double value) {
+        holderInitAndPutStaticDouble(f, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -822,29 +1193,71 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     public static Object resolveAndGetFieldObject(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadObjectFieldSnippet(object, f.offset(), f.isVolatile());
+        return holderInitAndGetFieldObject(f, object);
     }
 
     @RUNTIME_ENTRY
     public static Object resolveAndGetStaticObject(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
-        Snippets.makeHolderInitialized(f);
-        return loadObjectFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return holderInitAndGetStaticObject(f);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutFieldObject(ResolutionGuard.InPool guard, Object object, Object value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        Snippets.makeHolderInitialized(f);
-        storeObjectFieldSnippet(object, f.offset(), f.isVolatile(), value);
+        holderInitAndPutFieldObject(f, object, value);
     }
 
     @RUNTIME_ENTRY
     public static void resolveAndPutStaticObject(ResolutionGuard.InPool guard, Object value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
+        holderInitAndPutStaticObject(f, value);
+    }
+
+    @RUNTIME_ENTRY
+    public static Object holderInitAndGetFieldObject(FieldActor f, Object object) {
+        Snippets.makeHolderInitialized(f);
+        return loadObjectFieldSnippet(object, f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static Object holderInitAndGetStaticObject(FieldActor f) {
+        Snippets.makeHolderInitialized(f);
+        return loadObjectFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutFieldObject(FieldActor f, Object object, Object value) {
+        Snippets.makeHolderInitialized(f);
+        storeObjectFieldSnippet(object, f.offset(), f.isVolatile(), value);
+    }
+
+    @RUNTIME_ENTRY
+    public static void holderInitAndPutStaticObject(FieldActor f, Object value) {
         Snippets.makeHolderInitialized(f);
         storeObjectFieldSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static Object loadObjectHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object) {
+        return UnsafeCastNode.unsafeCast(holderInitAndGetFieldObject(f, object), StampFactory.forNodeIntrinsic());
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static Object loadObjectHolderInitStaticSnippet(@Parameter("f") FieldActor f) {
+        return UnsafeCastNode.unsafeCast(holderInitAndGetStaticObject(f), StampFactory.forNodeIntrinsic());
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeObjectHolderInitFieldSnippet(@Parameter("f") FieldActor f, @Parameter("object") Object object,
+            @Parameter("value") Object value) {
+        holderInitAndPutFieldObject(f, object, value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void storeObjectHolderInitStaticSnippet(@Parameter("f") FieldActor f,
+            @Parameter("value") Object value) {
+        holderInitAndPutStaticObject(f, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -869,64 +1282,100 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         resolveAndPutStaticObject(guard, value);
     }
 
+    @HOSTED_ONLY
     private void addSnippets(
             LoadFieldLowering loadFieldLowering, StoreFieldLowering storeFieldLowering,
-            LoadUnresolvedFieldLowering loadUnresolvedFieldLowering, StoreUnresolvedFieldLowering storeUnresolvedFieldLowering,
-            LoadUnresolvedFieldLowering loadUnresolvedStaticLowering, StoreUnresolvedFieldLowering storeUnresolvedStaticLowering) {
+            LoadUnresolvedFieldLowering loadUnresolvedFieldLowering, StoreUnresolvedFieldLowering storeUnresolvedFieldLowering) {
         loadFieldLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "loadBooleanFieldSnippet"));
         storeFieldLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "storeBooleanFieldSnippet"));
         loadUnresolvedFieldLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "loadBooleanUnresolvedFieldSnippet"));
-        loadUnresolvedStaticLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "loadBooleanUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "loadBooleanUnresolvedStaticSnippet"));
         storeUnresolvedFieldLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "storeBooleanUnresolvedFieldSnippet"));
-        storeUnresolvedStaticLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "storeBooleanUnresolvedStaticSnippet"));
+        storeUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "storeBooleanUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "loadBooleanHolderInitFieldSnippet"));
+        loadUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "loadBooleanHolderInitStaticSnippet"));
+        storeUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "storeBooleanHolderInitFieldSnippet"));
+        storeUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Boolean, findSnippet(FieldSnippets.class, "storeBooleanHolderInitStaticSnippet"));
         loadFieldLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "loadByteFieldSnippet"));
         storeFieldLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "storeByteFieldSnippet"));
         loadUnresolvedFieldLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "loadByteUnresolvedFieldSnippet"));
-        loadUnresolvedStaticLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "loadByteUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "loadByteUnresolvedStaticSnippet"));
         storeUnresolvedFieldLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "storeByteUnresolvedFieldSnippet"));
-        storeUnresolvedStaticLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "storeByteUnresolvedStaticSnippet"));
+        storeUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "storeByteUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "loadByteHolderInitFieldSnippet"));
+        loadUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "loadByteHolderInitStaticSnippet"));
+        storeUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "storeByteHolderInitFieldSnippet"));
+        storeUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Byte, findSnippet(FieldSnippets.class, "storeByteHolderInitStaticSnippet"));
         loadFieldLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "loadShortFieldSnippet"));
         storeFieldLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "storeShortFieldSnippet"));
         loadUnresolvedFieldLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "loadShortUnresolvedFieldSnippet"));
-        loadUnresolvedStaticLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "loadShortUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "loadShortUnresolvedStaticSnippet"));
         storeUnresolvedFieldLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "storeShortUnresolvedFieldSnippet"));
-        storeUnresolvedStaticLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "storeShortUnresolvedStaticSnippet"));
+        storeUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "storeShortUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "loadShortHolderInitFieldSnippet"));
+        loadUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "loadShortHolderInitStaticSnippet"));
+        storeUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "storeShortHolderInitFieldSnippet"));
+        storeUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Short, findSnippet(FieldSnippets.class, "storeShortHolderInitStaticSnippet"));
         loadFieldLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "loadCharFieldSnippet"));
         storeFieldLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "storeCharFieldSnippet"));
         loadUnresolvedFieldLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "loadCharUnresolvedFieldSnippet"));
-        loadUnresolvedStaticLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "loadCharUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "loadCharUnresolvedStaticSnippet"));
         storeUnresolvedFieldLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "storeCharUnresolvedFieldSnippet"));
-        storeUnresolvedStaticLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "storeCharUnresolvedStaticSnippet"));
+        storeUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "storeCharUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "loadCharHolderInitFieldSnippet"));
+        loadUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "loadCharHolderInitStaticSnippet"));
+        storeUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "storeCharHolderInitFieldSnippet"));
+        storeUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Char, findSnippet(FieldSnippets.class, "storeCharHolderInitStaticSnippet"));
         loadFieldLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "loadIntFieldSnippet"));
         storeFieldLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "storeIntFieldSnippet"));
         loadUnresolvedFieldLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "loadIntUnresolvedFieldSnippet"));
-        loadUnresolvedStaticLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "loadIntUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "loadIntUnresolvedStaticSnippet"));
         storeUnresolvedFieldLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "storeIntUnresolvedFieldSnippet"));
-        storeUnresolvedStaticLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "storeIntUnresolvedStaticSnippet"));
+        storeUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "storeIntUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "loadIntHolderInitFieldSnippet"));
+        loadUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "loadIntHolderInitStaticSnippet"));
+        storeUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "storeIntHolderInitFieldSnippet"));
+        storeUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Int, findSnippet(FieldSnippets.class, "storeIntHolderInitStaticSnippet"));
         loadFieldLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "loadFloatFieldSnippet"));
         storeFieldLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "storeFloatFieldSnippet"));
         loadUnresolvedFieldLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "loadFloatUnresolvedFieldSnippet"));
-        loadUnresolvedStaticLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "loadFloatUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "loadFloatUnresolvedStaticSnippet"));
         storeUnresolvedFieldLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "storeFloatUnresolvedFieldSnippet"));
-        storeUnresolvedStaticLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "storeFloatUnresolvedStaticSnippet"));
+        storeUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "storeFloatUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "loadFloatHolderInitFieldSnippet"));
+        loadUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "loadFloatHolderInitStaticSnippet"));
+        storeUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "storeFloatHolderInitFieldSnippet"));
+        storeUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Float, findSnippet(FieldSnippets.class, "storeFloatHolderInitStaticSnippet"));
         loadFieldLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "loadLongFieldSnippet"));
         storeFieldLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "storeLongFieldSnippet"));
         loadUnresolvedFieldLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "loadLongUnresolvedFieldSnippet"));
-        loadUnresolvedStaticLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "loadLongUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "loadLongUnresolvedStaticSnippet"));
         storeUnresolvedFieldLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "storeLongUnresolvedFieldSnippet"));
-        storeUnresolvedStaticLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "storeLongUnresolvedStaticSnippet"));
+        storeUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "storeLongUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "loadLongHolderInitFieldSnippet"));
+        loadUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "loadLongHolderInitStaticSnippet"));
+        storeUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "storeLongHolderInitFieldSnippet"));
+        storeUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Long, findSnippet(FieldSnippets.class, "storeLongHolderInitStaticSnippet"));
         loadFieldLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "loadDoubleFieldSnippet"));
         storeFieldLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "storeDoubleFieldSnippet"));
         loadUnresolvedFieldLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "loadDoubleUnresolvedFieldSnippet"));
-        loadUnresolvedStaticLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "loadDoubleUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "loadDoubleUnresolvedStaticSnippet"));
         storeUnresolvedFieldLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "storeDoubleUnresolvedFieldSnippet"));
-        storeUnresolvedStaticLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "storeDoubleUnresolvedStaticSnippet"));
+        storeUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "storeDoubleUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "loadDoubleHolderInitFieldSnippet"));
+        loadUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "loadDoubleHolderInitStaticSnippet"));
+        storeUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "storeDoubleHolderInitFieldSnippet"));
+        storeUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Double, findSnippet(FieldSnippets.class, "storeDoubleHolderInitStaticSnippet"));
         loadFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "loadObjectFieldSnippet"));
         storeFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "storeObjectFieldSnippet"));
         loadUnresolvedFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "loadObjectUnresolvedFieldSnippet"));
-        loadUnresolvedStaticLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "loadObjectUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "loadObjectUnresolvedStaticSnippet"));
         storeUnresolvedFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "storeObjectUnresolvedFieldSnippet"));
-        storeUnresolvedStaticLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "storeObjectUnresolvedStaticSnippet"));
+        storeUnresolvedFieldLowering.staticFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "storeObjectUnresolvedStaticSnippet"));
+        loadUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "loadObjectHolderInitFieldSnippet"));
+        loadUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "loadObjectHolderInitStaticSnippet"));
+        storeUnresolvedFieldLowering.initHolderFieldLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "storeObjectHolderInitFieldSnippet"));
+        storeUnresolvedFieldLowering.initHolderStaticLowering.setSnippet(Kind.Object, findSnippet(FieldSnippets.class, "storeObjectHolderInitStaticSnippet"));
     }
 // END GENERATED CODE
 

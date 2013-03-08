@@ -33,6 +33,7 @@ public class StoreUnresolvedFieldNode extends AccessUnresolvedFieldNode implemen
 
     public StoreUnresolvedFieldNode(ValueNode object, JavaField field, ValueNode value) {
         super(object, field);
+        this.value = value;
     }
 
     @Input(notDataflow = true) private FrameState stateAfter;

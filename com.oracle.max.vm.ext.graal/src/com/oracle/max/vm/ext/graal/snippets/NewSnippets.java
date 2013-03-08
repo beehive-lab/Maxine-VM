@@ -37,6 +37,7 @@ import com.oracle.graal.snippets.SnippetTemplate.Arguments;
 import com.oracle.graal.snippets.SnippetTemplate.Key;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -84,6 +85,7 @@ public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
     }
 
     protected class UnresolvedNewInstanceLowering extends Lowering implements LoweringProvider<UnresolvedNewInstanceNode> {
+        private ResolvedJavaMethod initializeClassAndNewSnippet = findSnippet(NewSnippets.class, "initializeClassAndNewSnippet");
 
         protected UnresolvedNewInstanceLowering(NewSnippets newSnippets) {
             super(newSnippets, "unresolvedNewInstanceSnippet");
@@ -91,11 +93,19 @@ public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
 
         @Override
         public void lower(UnresolvedNewInstanceNode node, LoweringTool tool) {
-            UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) MaxJavaType.getRiType(node.javaType());
-            ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
-            Key key = new Key(snippet);
+            Key key;
             Arguments args = new Arguments();
-            args.add("guard", guard);
+            // The class may be resolved but just not initialized
+            RiType riType = MaxJavaType.getRiType(node.javaType());
+            if (riType instanceof ClassActor) {
+                key = new Key(initializeClassAndNewSnippet);
+                args.add("classActor", riType);
+            } else {
+                UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) riType;
+                ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
+                key = new Key(snippet);
+                args.add("guard", guard);
+            }
             instantiate(node, key, args);
         }
 
@@ -111,12 +121,22 @@ public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
         return UnsafeCastNode.unsafeCast(resolveClassForNewAndCreate(guard), StampFactory.forNodeIntrinsic());
     }
 
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static Object initializeClassAndNewSnippet(@Parameter("classActor") ClassActor classActor) {
+        return initializeClassAndNew(classActor);
+    }
+
     @RUNTIME_ENTRY
-    private static Object resolveClassForNewAndCreate(ResolutionGuard guard) {
-        final ClassActor classActor = Snippets.resolveClassForNew(guard);
+    private static Object initializeClassAndNew(ClassActor classActor) {
         Snippets.makeClassInitialized(classActor);
         final Object tuple = Snippets.createTupleOrHybrid(classActor);
         return tuple;
+    }
+
+    @RUNTIME_ENTRY
+    private static Object resolveClassForNewAndCreate(ResolutionGuard guard) {
+        final ClassActor classActor = Snippets.resolveClassForNew(guard);
+        return initializeClassAndNew(classActor);
     }
 
     protected class NewArrayLowering extends Lowering implements LoweringProvider<NewArrayNode> {
