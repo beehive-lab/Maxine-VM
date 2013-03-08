@@ -38,7 +38,7 @@ public final class InspectableCompilationInfo {
      * Maximum number of chars that may be written by the inspector into the char array, identifying classes requiring
      * inspector notification upon method compilation.
      */
-    public static final int BREAKPOINT_DESCRIPTORS_ARRAY_LENGTH = 500;
+    public static final int BREAKPOINT_DESCRIPTORS_ARRAY_LENGTH = 1000;
 
     /**
      * Array into which the Inspector writes space-terminated type descriptors of all classes that currently require inspector

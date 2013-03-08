@@ -26,10 +26,14 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.api.meta.ResolvedJavaType.Representation;
 import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.max.vm.ext.graal.nodes.*;
 
+/**
+ * A customizer to insert nodes that cause unresolved entities to be resolved explicitly at runtime,
+ * as opposed to falling back to deoptimization. This may not be the best approach but it is what
+ * C1X/T1X do, so we follow that approach for now.
+ */
 public class MaxUnresolvedCustomizer extends GraphBuilderPhase.UnresolvedCustomizer {
 
     @Override
