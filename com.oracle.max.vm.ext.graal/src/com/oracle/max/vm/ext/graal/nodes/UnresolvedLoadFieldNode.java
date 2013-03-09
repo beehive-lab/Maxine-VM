@@ -26,10 +26,10 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 
-@NodeInfo(nameTemplate = "LoadUnresolvedField#{p#field/s}")
-public class LoadUnresolvedFieldNode extends AccessUnresolvedFieldNode {
+@NodeInfo(nameTemplate = "UnresolvedLoadField#{p#field/s}")
+public class UnresolvedLoadFieldNode extends UnresolvedAccessFieldNode {
 
-    public LoadUnresolvedFieldNode(ValueNode object, JavaField field) {
+    public UnresolvedLoadFieldNode(ValueNode object, JavaField field) {
         super(object, field);
     }
 

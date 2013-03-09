@@ -23,33 +23,37 @@
 package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.nodes.type.*;
 
+@NodeInfo(nameTemplate = "UnresolvedStoreField#{p#field/s}")
+public class UnresolvedStoreFieldNode extends UnresolvedAccessFieldNode implements StateSplit {
 
-public abstract class AccessUnresolvedFieldNode extends FixedWithNextNode implements Lowerable {
+    @Input private ValueNode value;
 
-    @Input private ValueNode object;
-    protected final JavaField field;
-
-    protected AccessUnresolvedFieldNode(ValueNode object, JavaField field) {
-        super(StampFactory.forKind(field.getKind()));
-        this.field = field;
-        this.object = object;
+    public UnresolvedStoreFieldNode(ValueNode object, JavaField field, ValueNode value) {
+        super(object, field);
+        this.value = value;
     }
 
-    public ValueNode object() {
-        return object;
+    @Input(notDataflow = true) private FrameState stateAfter;
+
+    public FrameState stateAfter() {
+        return stateAfter;
     }
 
-    public JavaField field() {
-        return field;
+    public void setStateAfter(FrameState x) {
+        assert x == null || x.isAlive() : "frame state must be in a graph";
+        updateUsages(stateAfter, x);
+        stateAfter = x;
     }
 
-    @Override
-    public void lower(LoweringTool tool) {
-        tool.getRuntime().lower(this, tool);
+    public boolean hasSideEffect() {
+        return true;
+    }
+
+    public ValueNode value() {
+        return value;
     }
 
 }
