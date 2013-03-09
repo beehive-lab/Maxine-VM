@@ -38,13 +38,13 @@ public class MaxUnresolvedCustomizer extends GraphBuilderPhase.UnresolvedCustomi
 
     @Override
     public void unresolvedGetField(GraphBuilderPhase phase, JavaField field, ValueNode receiver) {
-        LoadUnresolvedFieldNode node = currentGraph(phase).add(new LoadUnresolvedFieldNode(receiver, field));
+        UnresolvedLoadFieldNode node = currentGraph(phase).add(new UnresolvedLoadFieldNode(receiver, field));
         frameState(phase).push(field.getKind().getStackKind(), append(phase, node));
     }
 
     @Override
     protected void unresolvedPutField(GraphBuilderPhase phase, JavaField field, ValueNode receiver, ValueNode value) {
-        StoreUnresolvedFieldNode node = currentGraph(phase).add(new StoreUnresolvedFieldNode(receiver, field, value));
+        UnresolvedStoreFieldNode node = currentGraph(phase).add(new UnresolvedStoreFieldNode(receiver, field, value));
         append(phase, node);
     }
 
