@@ -37,6 +37,7 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.PhasePlan.PhasePosition;
 import com.oracle.graal.printer.*;
+import com.oracle.max.vm.ext.graal.amd64.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -224,7 +225,7 @@ public class MaxGraal implements RuntimeCompiler {
 
 
     @NEVER_INLINE
-    static void unimplemented(String methodName) {
+    public static void unimplemented(String methodName) {
         ProgramError.unexpected("unimplemented: " + methodName);
     }
 
