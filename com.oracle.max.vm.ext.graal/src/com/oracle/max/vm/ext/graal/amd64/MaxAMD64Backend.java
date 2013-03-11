@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.oracle.max.vm.ext.graal.amd64;
 
 import static com.oracle.graal.amd64.AMD64.*;
 import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
@@ -40,6 +40,7 @@ import com.oracle.graal.lir.asm.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.phases.*;
+import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.actor.member.*;
@@ -58,6 +59,7 @@ public class MaxAMD64Backend extends Backend {
         public void visitSafepointNode(SafepointNode node) {
             if (node instanceof MaxSafepointNode) {
                 MaxSafepointNode maxSafepointNode = (MaxSafepointNode) node;
+                MaxGraal.unimplemented("MaxSafepointNode");
                 switch (maxSafepointNode.op) {
                     case SAFEPOINT_POLL: {
                         //emitSafepointPoll(this);
@@ -92,7 +94,9 @@ public class MaxAMD64Backend extends Backend {
                 }
 
             } else {
-                assert false; // is this even possible?
+                // generic Graal safepoint
+                LIRFrameState info = state();
+                append(new MaxAMD64SafepointOp(info));
             }
         }
 
@@ -194,7 +198,7 @@ public class MaxAMD64Backend extends Backend {
 
     }
 
-    MaxAMD64Backend(CodeCacheProvider runtime, TargetDescription target) {
+    public MaxAMD64Backend(CodeCacheProvider runtime, TargetDescription target) {
         super(runtime, target);
         AMD64AsmOptions.UseNormalNop = true; // TODO temp help for looking at code in Inspector
     }
