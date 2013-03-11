@@ -541,8 +541,14 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
          */
         protected void copyField(TeleObject teleObject, Object newTuple, FieldActor fieldActor) {
             if (!fieldActor.isInjected()) {
-                final Field field = fieldActor.toJava();
-                field.setAccessible(true);
+                Field field = null;
+                try {
+                    field = fieldActor.toJava();
+                    field.setAccessible(true);
+                } catch (NoSuchFieldError ex) {
+                    // this is a hidden to reflection field like Throwable.backtrace, such fields should be avoided explicitly
+                    return;
+                }
                 try {
                     final Value value = teleObject.readFieldValue(fieldActor);
                     final Object newJavaValue;
