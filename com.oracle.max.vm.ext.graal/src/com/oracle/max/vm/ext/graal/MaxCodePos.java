@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.graal;
 
 import com.oracle.graal.api.code.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 
 public class MaxCodePos {
@@ -31,6 +32,15 @@ public class MaxCodePos {
         if (gCodePos == null) {
             return null;
         }
-        return new CiCodePos(toCi(gCodePos.getCaller()), MaxResolvedJavaMethod.getRiResolvedMethod(gCodePos.getMethod()), gCodePos.getBCI());
+        CiCodePos caller = toCi(gCodePos.getCaller());
+        RiResolvedMethod method = MaxResolvedJavaMethod.getRiResolvedMethod(gCodePos.getMethod());
+        int bci = gCodePos.getBCI();
+        if (gCodePos instanceof BytecodeFrame) {
+            BytecodeFrame bytecodeFrame = (BytecodeFrame) gCodePos;
+            return new CiFrame((CiFrame) caller, method, bci, bytecodeFrame.rethrowException,
+                            ValueMap.toCi(bytecodeFrame.values), bytecodeFrame.numLocals, bytecodeFrame.numStack, bytecodeFrame.numLocks);
+        } else {
+            return new CiCodePos(caller, method, bci);
+        }
     }
 }
