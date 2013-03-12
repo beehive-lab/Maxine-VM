@@ -30,6 +30,7 @@ import java.util.*;
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
+import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
@@ -40,6 +41,7 @@ import com.oracle.graal.snippets.Snippet.Parameter;
 import com.oracle.graal.snippets.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
@@ -76,6 +78,11 @@ import com.sun.max.vm.runtime.*;
  * Further we consistently use {@code Get#MODE#Field} where, {@code #MODE} is either {@code Instance} or {@code Static}.
  * Any action qualifier, e.g. {@code resolve} prefixes a name. The {@link Kind} of the access is used as a suffix,
  * e.g., {@code resolveGetStaticBoolean}.
+ *
+ * The {@code Object} field load/store operations may, depending on the {@link HeapScheme} in use, involve read/write
+ * barriers. These may themselves involve loading fields from objects controlled by the {@link HeapScheme}, that
+ * may be {@link CONSTANT_WHEN_NOT_ZERO} at runtime. The resolved field lowering handles this situation explicitly but there
+ * is evidently an opportunity to transform the snippet on VM startup to replace the field access with the runtime constant.
  */
 public class FieldSnippets extends SnippetLowerings implements SnippetsInterface {
 
@@ -134,6 +141,19 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
 
         void lower(AccessFieldNode node) {
             FieldActor fieldActor = (FieldActor) MaxResolvedJavaField.getRiResolvedField(node.field());
+            /*
+             * Check for access to fields that are CONSTANT_WHEN_NOT_ZERO with a constant receiver.
+             * Most important for the biasedtableAddress of the CardTable for GenSSHeapScheme
+             * May not be the best place to do this.
+             */
+            if (fieldActor.isConstantWhenNotZero() && node.object().isConstant()) {
+                CiConstant value = fieldActor.constantValue(ConstantMap.toCi(node.object().asConstant()));
+                if (value != null) {
+                    StructuredGraph graph = (StructuredGraph) node.graph();
+                    node.replaceAndDelete(graph.add(ConstantNode.forConstant(ConstantMap.toGraal(value), runtime, graph)));
+                    return;
+                }
+            }
             boolean isStatic = node.isStatic();
             Key key = new Key(snippets[KindMap.toGraalKind(fieldActor.kind).ordinal()]);
             key.add("isVolatile", fieldActor.isVolatile());
