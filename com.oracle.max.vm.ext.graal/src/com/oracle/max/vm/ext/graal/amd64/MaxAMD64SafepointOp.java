@@ -44,7 +44,7 @@ public class MaxAMD64SafepointOp extends AMD64LIRInstruction {
         int pos = masm.codeBuffer.position();
         tasm.recordSafepoint(pos, state);
         byte[] safepointCode = MaxineVM.vm().safepointPoll.code;
-        masm.codeBuffer.emitBytes(safepointCode, pos);
+        masm.codeBuffer.emitBytes(safepointCode, 0, safepointCode.length);
     }
 
 }
