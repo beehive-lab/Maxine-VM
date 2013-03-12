@@ -33,7 +33,6 @@ import com.sun.max.unsafe.*;
 public class ValueMap {
 
     public static Value toGraal(CiValue ciValue) {
-        Value result = null;
         if (ciValue == null) {
             return null;
         }
@@ -41,18 +40,40 @@ public class ValueMap {
             return ConstantMap.toGraal((CiConstant) ciValue);
         } else if (ciValue instanceof CiRegisterValue) {
             CiRegisterValue ciReg = (CiRegisterValue) ciValue;
-            result = RegisterMap.toGraal(ciReg.reg).asValue(KindMap.toGraalKind(ciReg.kind));
+            return RegisterMap.toGraal(ciReg.reg).asValue(KindMap.toGraalKind(ciReg.kind));
         } else if (ciValue instanceof CiStackSlot) {
             CiStackSlot ciStackSlot = (CiStackSlot) ciValue;
-            result = StackSlot.get(KindMap.toGraalKind(ciStackSlot.kind), ciStackSlot.index() * Word.size(), ciStackSlot.inCallerFrame());
+            return StackSlot.get(KindMap.toGraalKind(ciStackSlot.kind), ciStackSlot.index() * Word.size(), ciStackSlot.inCallerFrame());
         } else {
             unimplemented("ValueMap.toGraal");
         }
-        return result;
+        return null;
     }
 
     public static CiValue toCi(Value value) {
-        unimplemented("ValueMap.toCi");
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Constant) {
+            return ConstantMap.toCi((Constant) value);
+        } else if (value instanceof RegisterValue) {
+            return RegisterMap.toCi(((RegisterValue) value).getRegister()).asValue();
+        } else if (value instanceof StackSlot) {
+            StackSlot stackSlot = (StackSlot) value;
+            return CiStackSlot.get(KindMap.toCiKind(stackSlot.getKind()), stackSlot.getRawOffset() / Word.size(), stackSlot.isInCallerFrame());
+        } else if (value.getKind() == Kind.Illegal) {
+            return CiValue.IllegalValue;
+        } else {
+            unimplemented("ValueMap.toCi");
+        }
         return null;
+    }
+
+    public static CiValue[] toCi(Value[] values) {
+        CiValue[] result = new CiValue[values.length];
+        for (int i = 0; i < values.length; i++) {
+            result[i] = toCi(values[i]);
+        }
+        return result;
     }
 }
