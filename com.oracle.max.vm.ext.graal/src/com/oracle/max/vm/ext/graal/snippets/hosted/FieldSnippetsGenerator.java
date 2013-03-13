@@ -28,26 +28,23 @@ import java.util.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.max.annotate.*;
-import com.sun.max.ide.*;
-import com.sun.max.io.*;
-
 
 /**
  * Generates the boilerplate for {@link FieldSnippets}.
  *
  * We try to be consistent on naming. Problematic because the bytecode names are GET/PUT/STATIC and GET/PUT/FIELD yet
  * we also refer to them to as "static fields" and "instance fields", which is more natural. There is also existing
- * code in Maxine that uses names "InstanceField" and "StaticField", so we follow this approach. TODO actually implement it!
+ * code in Maxine that uses names "InstanceField" and "StaticField", so we follow this approach.
  */
 @HOSTED_ONLY
-public class FieldSnippetsGenerator {
+public class FieldSnippetsGenerator extends SnippetsGenerator {
 
     private static final String UNSAFE_CAST_BEFORE = "UnsafeCastNode.unsafeCast(";
     private static final String UNSAFE_CAST_AFTER = ", StampFactory.forNodeIntrinsic())";
 
     private static final String PUT_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static void putField#UKIND#Snippet(@Parameter(\"object\") Object object,\n" + "" +
+        "    private static void putField#UKIND#Snippet(@Parameter(\"object\") Object object,\n" + "" +
         "            @Parameter(\"offset\") int offset, @ConstantParameter(\"isVolatile\") boolean isVolatile, @Parameter(\"value\") #KIND# value) {\n" +
         "        if (isVolatile) {\n" +
         "            memoryBarrier(JMM_PRE_VOLATILE_WRITE);\n" +
@@ -60,7 +57,7 @@ public class FieldSnippetsGenerator {
 
     private static final String GET_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static #KIND# getField#UKIND#Snippet(@Parameter(\"object\") Object object,\n" +
+        "    private static #KIND# getField#UKIND#Snippet(@Parameter(\"object\") Object object,\n" +
         "            @Parameter(\"offset\") int offset, @ConstantParameter(\"isVolatile\") boolean isVolatile) {\n" +
         "        if (isVolatile) {\n" +
         "            memoryBarrier(JMM_PRE_VOLATILE_READ);\n" +
@@ -74,70 +71,70 @@ public class FieldSnippetsGenerator {
 
     private static final String HOLDER_INIT_GET_FIELD_METHOD =
         "    @RUNTIME_ENTRY\n" +
-        "    public static #KIND# holderInitAndGetInstanceField#UKIND#(FieldActor f, Object object) {\n" +
+        "    private static #KIND# holderInitAndGetInstanceField#UKIND#(FieldActor f, Object object) {\n" +
         "        Snippets.makeHolderInitialized(f);\n" +
         "        return getField#UKIND#Snippet(object, f.offset(), f.isVolatile());\n" +
         "    }\n\n";
 
     private static final String HOLDER_INIT_GET_STATIC_METHOD =
         "    @RUNTIME_ENTRY\n" +
-        "    public static #KIND# holderInitAndGetStaticField#UKIND#(FieldActor f) {\n" +
+        "    private static #KIND# holderInitAndGetStaticField#UKIND#(FieldActor f) {\n" +
         "        Snippets.makeHolderInitialized(f);\n" +
         "        return getField#UKIND#Snippet(f.holder().staticTuple(), f.offset(), f.isVolatile());\n" +
         "    }\n\n";
 
     private static final String HOLDER_INIT_PUT_FIELD_METHOD =
         "    @RUNTIME_ENTRY\n" +
-        "    public static void holderInitAndPutInstanceField#UKIND#(FieldActor f, Object object, #KIND# value) {\n" +
+        "    private static void holderInitAndPutInstanceField#UKIND#(FieldActor f, Object object, #KIND# value) {\n" +
         "        Snippets.makeHolderInitialized(f);\n" +
         "        putField#UKIND#Snippet(object, f.offset(), f.isVolatile(), value);\n" +
         "    }\n\n";
 
     private static final String HOLDER_INIT_PUT_STATIC_METHOD =
         "    @RUNTIME_ENTRY\n" +
-        "    public static void holderInitAndPutStaticField#UKIND#(FieldActor f, #KIND# value) {\n" +
+        "    private static void holderInitAndPutStaticField#UKIND#(FieldActor f, #KIND# value) {\n" +
         "        Snippets.makeHolderInitialized(f);\n" +
         "        putField#UKIND#Snippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);\n" +
         "    }\n\n";
 
     private static final String RESOLVE_LOAD_FIELD_METHOD =
          "    @RUNTIME_ENTRY\n" +
-         "    public static #KIND# resolveAndGetInstanceField#UKIND#(ResolutionGuard.InPool guard, Object object) {\n" +
+         "    private static #KIND# resolveAndGetInstanceField#UKIND#(ResolutionGuard.InPool guard, Object object) {\n" +
          "        FieldActor f = Snippets.resolveInstanceFieldForReading(guard);\n" +
          "        return holderInitAndGetInstanceField#UKIND#(f, object);\n" +
          "    }\n\n";
 
     private static final String RESOLVE_LOAD_STATIC_METHOD =
          "    @RUNTIME_ENTRY\n" +
-         "    public static #KIND# resolveAndGetStaticField#UKIND#(ResolutionGuard.InPool guard) {\n" +
+         "    private static #KIND# resolveAndGetStaticField#UKIND#(ResolutionGuard.InPool guard) {\n" +
          "        FieldActor f = Snippets.resolveStaticFieldForReading(guard);\n" +
          "        return holderInitAndGetStaticField#UKIND#(f);\n" +
          "    }\n\n";
 
     private static final String RESOLVE_STORE_FIELD_METHOD =
          "    @RUNTIME_ENTRY\n" +
-         "    public static void resolveAndPutInstanceField#UKIND#(ResolutionGuard.InPool guard, Object object, #KIND# value) {\n" +
+         "    private static void resolveAndPutInstanceField#UKIND#(ResolutionGuard.InPool guard, Object object, #KIND# value) {\n" +
          "        FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);\n" +
          "        holderInitAndPutInstanceField#UKIND#(f, object, value);\n" +
          "    }\n\n";
 
     private static final String RESOLVE_STORE_STATIC_METHOD =
          "    @RUNTIME_ENTRY\n" +
-         "    public static void resolveAndPutStaticField#UKIND#(ResolutionGuard.InPool guard, #KIND# value) {\n" +
+         "    private static void resolveAndPutStaticField#UKIND#(ResolutionGuard.InPool guard, #KIND# value) {\n" +
          "        FieldActor f = Snippets.resolveStaticFieldForWriting(guard);\n" +
          "        holderInitAndPutStaticField#UKIND#(f, value);\n" +
          "    }\n\n";
 
     private static final String GET_UNRESOLVED_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static #KIND# resolveAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard, @Parameter(\"object\") Object object) {\n" +
+        "    private static #KIND# resolveAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard, @Parameter(\"object\") Object object) {\n" +
         "        return #UCB#resolveAndGet#UMODE#Field#UKIND#(guard, object)#UCA#;\n" +
         "    }\n\n";
 
 
     private static final String PUT_UNRESOLVED_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static void resolveAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard, @Parameter(\"object\") Object object,\n" +
+        "    private static void resolveAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard, @Parameter(\"object\") Object object,\n" +
         "            @Parameter(\"value\") #KIND# value) {\n" +
         "        resolveAndPut#UMODE#Field#UKIND#(guard, object, value);\n" +
         "    }\n\n";
@@ -145,28 +142,28 @@ public class FieldSnippetsGenerator {
 
     private static final String GET_UNRESOLVED_STATIC_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static #KIND# resolveAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard) {\n" +
+        "    private static #KIND# resolveAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard) {\n" +
         "        return #UCB#resolveAndGet#UMODE#Field#UKIND#(guard)#UCA#;\n" +
         "    }\n\n";
 
 
     private static final String PUT_UNRESOLVED_STATIC_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static void resolveAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard,\n" +
+        "    private static void resolveAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard,\n" +
         "            @Parameter(\"value\") #KIND# value) {\n" +
         "        resolveAndPut#UMODE#Field#UKIND#(guard, value);\n" +
         "    }\n\n";
 
     private static final String GET_HOLDER_INIT_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static #KIND# holderInitAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f, @Parameter(\"object\") Object object) {\n" +
+        "    private static #KIND# holderInitAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f, @Parameter(\"object\") Object object) {\n" +
         "        return #UCB#holderInitAndGet#UMODE#Field#UKIND#(f, object)#UCA#;\n" +
         "    }\n\n";
 
 
     private static final String PUT_HOLDER_INIT_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static void holderInitAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f, @Parameter(\"object\") Object object,\n" +
+        "    private static void holderInitAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f, @Parameter(\"object\") Object object,\n" +
         "            @Parameter(\"value\") #KIND# value) {\n" +
         "        holderInitAndPut#UMODE#Field#UKIND#(f, object, value);\n" +
         "    }\n\n";
@@ -174,14 +171,14 @@ public class FieldSnippetsGenerator {
 
     private static final String GET_HOLDER_INIT_STATIC_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static #KIND# holderInitAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f) {\n" +
+        "    private static #KIND# holderInitAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f) {\n" +
         "        return #UCB#holderInitAndGet#UMODE#Field#UKIND#(f)#UCA#;\n" +
         "    }\n\n";
 
 
     private static final String PUT_HOLDER_INIT_STATIC_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static void holderInitAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f,\n" +
+        "    private static void holderInitAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f,\n" +
         "            @Parameter(\"value\") #KIND# value) {\n" +
         "        holderInitAndPut#UMODE#Field#UKIND#(f, value);\n" +
         "    }\n\n";
@@ -224,25 +221,11 @@ public class FieldSnippetsGenerator {
     private static final String ADD_HOLDER_INIT_STATIC_STORE_SNIPPET =
         "        storeUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, findSnippet(FieldSnippets.class, \"holderInitAndPut#UMODE#Field#UKIND#Snippet\"));\n";
 
-    private PrintStream out;
-
-    private FieldSnippetsGenerator(PrintStream out) {
-        this.out = out;
-    }
-
-    private static boolean generate(boolean checkOnly, Class target) throws IOException {
-        File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm.ext.graal/src");
-        File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        new FieldSnippetsGenerator(new PrintStream(baos)).doGenerate();
-        ReadableSource content = ReadableSource.Static.fromString(baos.toString());
-        return Files.updateGeneratedContent(outputFile, content, "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
-    }
-
-    private void doGenerate() {
+    @Override
+    protected void doGenerate() throws IOException {
         ArrayList<String> addSnippets = new ArrayList<>();
         for (Kind kind : Kind.values()) {
-            if (hasFieldOp(kind)) {
+            if (notVoidOrIllegal(kind)) {
                 out.print(replaceUCast(replaceKinds(GET_FIELD_SNIPPET, kind), kind));
                 out.print(replaceKinds(PUT_FIELD_SNIPPET, kind));
                 // Unresolved variants
@@ -292,41 +275,14 @@ public class FieldSnippetsGenerator {
         return replace(replace(template, "#UCA#", uca), "#UCB#", ucb);
     }
 
-    /**
-     * Returns the argument with first character upper-cased.
-     * @param s
-     */
-    private static String toFirstUpper(String s) {
-        if (s.length() == 0) {
-            return s;
-        } else {
-            return s.substring(0, 1).toUpperCase() + s.substring(1);
-        }
-    }
-
-    private String replaceKinds(String template, Kind kind) {
-        String uJavaName = toFirstUpper(kind.getJavaName());
-        String result = replace(template, "#UKIND#", uJavaName);
-        return replace(result, "#KIND#", kind.getJavaName());
-    }
-
     private String replaceModes(String template, String mode) {
         String uMode = toFirstUpper(mode);
         String result = replace(template, "#UMODE#", uMode);
         return replace(result, "#MODE#", mode);
     }
 
-    private String replace(String template, String param, String arg) {
-        return template.replaceAll(param, arg);
-    }
-
-    private boolean hasFieldOp(Kind kind) {
-        return !(kind == Kind.Void || kind == Kind.Illegal);
-    }
-
     public static void main(String[] args) throws IOException {
-        if (generate(false, FieldSnippets.class)) {
-            System.out.println("Source for " + FieldSnippets.class + " was updated");
+        if (new FieldSnippetsGenerator().generate(false, FieldSnippets.class)) {
             System.exit(1);
         }
     }

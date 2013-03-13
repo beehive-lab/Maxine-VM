@@ -301,6 +301,13 @@ public final class Throw {
         }
     }
 
+    /*
+     * The following out-of-line methods for allocating and throwing an exception
+     * have the exception type as the return type despiote, evidently, never returning.
+     * This allows the use of the idiom "throw Throw.xxxException" to tell the compiler
+     * that code past the throw is never reached.
+     */
+
     /**
      * Raises an {@code ArrayIndexOutOfBoundsException}. This is out-of-line to reduce the amount
      * of code inlined on the fast path for an array bounds check.
@@ -309,7 +316,7 @@ public final class Throw {
      * @param index the index that is out of the bounds of {@code array}
      */
     @NEVER_INLINE
-    public static ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException(Object array, int index) {
+    public static ArrayIndexOutOfBoundsException throwArrayIndexOutOfBoundsException(Object array, int index) {
         FatalError.check(array != null, "Arguments for raising an ArrayIndexOutOfBoundsException cannot be null");
         throw new ArrayIndexOutOfBoundsException("Index: " + index + ", Array length: " + readArrayLength(array));
     }
@@ -322,7 +329,7 @@ public final class Throw {
      * @param value the value whose type is not assignable to the component type of {@code array}
      */
     @NEVER_INLINE
-    public static ArrayStoreException arrayStoreException(Object array, Object value) {
+    public static ArrayStoreException throwArrayStoreException(Object array, Object value) {
         FatalError.check(array != null && value != null, "Arguments for raising an ArrayStoreException cannot be null");
         final ClassActor arrayClassActor = MaxineVM.isHosted() ? ClassActor.fromJava(array.getClass()) : ObjectAccess.readClassActor(array);
         final ClassActor componentClassActor = arrayClassActor.componentClassActor();
@@ -338,18 +345,18 @@ public final class Throw {
      */
     @NEVER_INLINE
     @RUNTIME_ENTRY(exactType = true, nonNull = true)
-    public static ClassCastException classCastException(ClassActor classActor, Object object) {
+    public static ClassCastException throwClassCastException(ClassActor classActor, Object object) {
         FatalError.check(object != null && classActor != null, "Arguments for raising a ClassCastException cannot be null");
         throw new ClassCastException(object.getClass().getName() + " is not assignable to " + classActor.name);
     }
 
     @NEVER_INLINE
-    public static NullPointerException nullPointerException() {
+    public static ArithmeticException throwNullPointerException() {
         throw new NullPointerException();
     }
 
     @NEVER_INLINE
-    public static ArithmeticException arithmeticException() {
+    public static void throwArithmeticException() {
         throw new ArithmeticException();
     }
     /**
@@ -359,7 +366,7 @@ public final class Throw {
      * @param length the negative array length
      */
     @NEVER_INLINE
-    public static NegativeArraySizeException negativeArraySizeException(int length) {
+    public static NegativeArraySizeException throwNegativeArraySizeException(int length) {
         throw new NegativeArraySizeException(String.valueOf(length));
     }
 

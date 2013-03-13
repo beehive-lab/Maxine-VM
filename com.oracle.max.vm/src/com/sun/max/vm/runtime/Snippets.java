@@ -80,12 +80,13 @@ public class Snippets {
     @INLINE
     public static Object createArray(ClassActor arrayClassActor, int length) {
         if (length < 0) {
-            throw Throw.negativeArraySizeException(length);
+            throw Throw.throwNegativeArraySizeException(length);
+        } else {
+            if (MaxineVM.isHosted()) {
+                return Array.newInstance(arrayClassActor.componentClassActor().toJava(), length);
+            }
+            return Heap.createArray(arrayClassActor.dynamicHub(), length);
         }
-        if (MaxineVM.isHosted()) {
-            return Array.newInstance(arrayClassActor.componentClassActor().toJava(), length);
-        }
-        return Heap.createArray(arrayClassActor.dynamicHub(), length);
     }
 
     public static Object createMultiReferenceArray(ClassActor classActor, int[] lengths) {
@@ -662,10 +663,10 @@ public class Snippets {
     public static void checkCast(ClassActor classActor, Object object) {
         if (MaxineVM.isHosted()) {
             if (object != null && !classActor.toJava().isAssignableFrom(object.getClass())) {
-                throw Throw.classCastException(classActor, object);
+                Throw.throwClassCastException(classActor, object);
             }
         } else if (!classActor.isNullOrInstance(object)) {
-            throw Throw.classCastException(classActor, object);
+            Throw.throwClassCastException(classActor, object);
         }
     }
 

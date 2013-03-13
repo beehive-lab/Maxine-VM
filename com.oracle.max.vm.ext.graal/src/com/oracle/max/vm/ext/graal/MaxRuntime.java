@@ -35,9 +35,7 @@ import com.oracle.graal.api.code.CompilationResult.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
-import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.phases.common.*;
 import com.oracle.graal.printer.*;
 import com.oracle.graal.snippets.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
@@ -227,63 +225,6 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     }
 
-    private static class MaxSnippetInstallerCustomizer implements SnippetInstaller.Customizer {
-        private MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration;
-
-        MaxSnippetInstallerCustomizer(MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration) {
-            this.maxSnippetGraphBuilderConfiguration = maxSnippetGraphBuilderConfiguration;
-        }
-
-        @Override
-        public GraphBuilderConfiguration getConfig() {
-            return maxSnippetGraphBuilderConfiguration;
-        }
-
-        @Override
-        public void afterBuild(SnippetInstaller si, StructuredGraph graph) {
-            new MaxIntrinsicsPhase().apply(graph);
-            new MaxWordTypeRewriterPhase.MaxInvokeRewriter(si.runtime, si.target.wordKind).apply(graph);
-            new SnippetIntrinsificationPhase(si.runtime, si.pool, true).apply(graph);
-            // need constant propagation for folded methods
-            new CanonicalizerPhase(si.runtime, si.assumptions).apply(graph);
-        }
-
-        @Override
-        public void afterInline(SnippetInstaller si, StructuredGraph graph) {
-            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(si.runtime, si.target.wordKind).apply(graph);
-            new CanonicalizerPhase(si.runtime, si.assumptions).apply(graph);
-            new MaxIntrinsicsPhase().apply(graph);
-        }
-
-        @Override
-        public void beforeFinal(SnippetInstaller si, StructuredGraph graph, final ResolvedJavaMethod method) {
-            new SnippetIntrinsificationPhase(si.runtime, si.pool, SnippetTemplate.hasConstantParameter(method)).apply(graph);
-
-            // These only get done once right at the end
-            new MaxWordTypeRewriterPhase.MaxUnsafeCastRewriter(si.runtime, si.target.wordKind).apply(graph);
-            new MaxSlowpathRewriterPhase(si.runtime).apply(graph);
-            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(si.runtime, si.target.wordKind).apply(graph);
-
-            // The replaces all Word based types with long
-            new MaxWordTypeRewriterPhase.KindRewriter(si.runtime, si.target.wordKind).apply(graph);
-
-            new SnippetFrameStateCleanupPhase().apply(graph);
-            new DeadCodeEliminationPhase().apply(graph);
-
-            new InsertStateAfterPlaceholderPhase().apply(graph);
-        }
-
-        @Override
-        public void afterAllInlines(SnippetInstaller si, StructuredGraph graph) {
-            new SnippetIntrinsificationPhase(si.runtime, si.pool, true).apply(graph);
-
-            new DeadCodeEliminationPhase().apply(graph);
-            new CanonicalizerPhase(si.runtime, si.assumptions).apply(graph);
-
-        }
-
-    }
-
     public void init() {
         // Snippets cannot have optimistic assumptions.
         Assumptions assumptions = new Assumptions(false);
@@ -293,10 +234,12 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         MaxRuntimeCallsMap.initialize(this);
         MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration = new MaxSnippetGraphBuilderConfiguration();
         MaxConstantPool.setGraphBuilderConfig(maxSnippetGraphBuilderConfiguration);
-        SnippetInstaller maxInstaller = new SnippetInstaller(this, assumptions, maxTargetDescription, new MaxSnippetInstallerCustomizer(maxSnippetGraphBuilderConfiguration));
+        SnippetInstaller maxInstaller = new MaxSnippetInstaller(this, assumptions, maxTargetDescription,
+                        maxSnippetGraphBuilderConfiguration);
         maxInstaller.installSnippets(TestSnippets.class);
         maxInstaller.installSnippets(NewSnippets.class);
         maxInstaller.installSnippets(FieldSnippets.class);
+        maxInstaller.installSnippets(ArraySnippets.class);
         maxInstaller.installSnippets(TypeSnippets.class);
         maxInstaller.installSnippets(MaxInvokeLowerings.class);
         maxInstaller.installSnippets(ArithmeticSnippets.class);
@@ -306,6 +249,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         MaxInvokeLowerings.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
         NewSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
         FieldSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
+        ArraySnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
         TypeSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
         ArithmeticSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
         TestSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);

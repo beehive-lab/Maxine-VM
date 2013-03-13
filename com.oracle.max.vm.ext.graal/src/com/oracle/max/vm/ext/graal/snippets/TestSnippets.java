@@ -270,7 +270,7 @@ public class TestSnippets extends SnippetLowerings implements SnippetsInterface 
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object testThrow(@Parameter("actor") ClassActor testClassActor, @Parameter("object") Object object) {
-        throw Throw.classCastException(testClassActor, object);
+        throw Throw.throwClassCastException(testClassActor, object);
     }
 
 }

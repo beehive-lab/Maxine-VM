@@ -53,7 +53,7 @@ import com.sun.max.vm.runtime.*;
  * table.
  *
  * Unresolved methods are handled in a similar fashion, by inserting a node that is lowered by a snippet to do the
- * resolution. This is actually done in {@link MaxUnresolvedCustomizer#unresolvedInvoke}.
+ * resolution. This is actually done in {@link MaxGraphBuilderPhase#unresolvedInvoke}.
  */
 class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
 

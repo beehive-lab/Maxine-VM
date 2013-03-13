@@ -2003,7 +2003,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static Object allocateMultiArrayN(ResolutionGuard guard, int[] lengths) {
             for (int length : lengths) {
                 if (length < 0) {
-                    Throw.negativeArraySizeException(length);
+                    Throw.throwNegativeArraySizeException(length);
                 }
             }
             ClassActor actor = Snippets.resolveClass(guard);
@@ -2054,7 +2054,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static void unresolvedCheckcast(Object object, ResolutionGuard guard) {
             final ClassActor classActor = Snippets.resolveClass(guard);
             if (!ObjectAccess.readHub(object).isSubClassHub(classActor)) {
-                Throw.classCastException(classActor, object);
+                Throw.throwClassCastException(classActor, object);
             }
         }
 
@@ -2070,15 +2070,15 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static void throwClassCastException(DynamicHub hub, Object object) {
-            Throw.classCastException(hub.classActor, object);
+            Throw.throwClassCastException(hub.classActor, object);
         }
 
         public static void throwArrayIndexOutOfBoundsException(Object array, int index) {
-            Throw.arrayIndexOutOfBoundsException(array, index);
+            Throw.throwArrayIndexOutOfBoundsException(array, index);
         }
 
         public static void throwNegativeArraySizeException(int length) {
-            Throw.negativeArraySizeException(length);
+            Throw.throwNegativeArraySizeException(length);
         }
 
         public static void monitorEnter(Object o) {
