@@ -27,88 +27,93 @@ import com.oracle.graal.api.meta.ResolvedJavaType.Representation;
 import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
+import com.oracle.graal.phases.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 
 /**
- * A customizer to insert nodes that cause unresolved entities to be resolved explicitly at runtime,
+ * A customized graph builder to insert nodes that cause unresolved entities to be resolved explicitly at runtime,
  * as opposed to falling back to deoptimization. This may not be the best approach but it is what
  * C1X/T1X do, so we follow that approach for now.
  */
-public class MaxUnresolvedCustomizer extends GraphBuilderPhase.UnresolvedCustomizer {
+public class MaxGraphBuilderPhase extends GraphBuilderPhase {
 
-    @Override
-    public void unresolvedGetField(GraphBuilderPhase phase, JavaField field, ValueNode receiver) {
-        UnresolvedLoadFieldNode node = currentGraph(phase).add(new UnresolvedLoadFieldNode(receiver, field));
-        frameState(phase).push(field.getKind().getStackKind(), append(phase, node));
+    public MaxGraphBuilderPhase(MetaAccessProvider runtime, GraphBuilderConfiguration graphBuilderConfig, OptimisticOptimizations optimisticOpts) {
+        super(runtime, graphBuilderConfig, optimisticOpts);
     }
 
     @Override
-    protected void unresolvedPutField(GraphBuilderPhase phase, JavaField field, ValueNode receiver, ValueNode value) {
-        UnresolvedStoreFieldNode node = currentGraph(phase).add(new UnresolvedStoreFieldNode(receiver, field, value));
-        append(phase, node);
+    public void handleUnresolvedLoadField(JavaField field, ValueNode receiver) {
+        UnresolvedLoadFieldNode node = currentGraph.add(new UnresolvedLoadFieldNode(receiver, field));
+        frameState.push(field.getKind().getStackKind(), append(node));
     }
 
     @Override
-    protected void unresolvedNewInstance(GraphBuilderPhase phase, JavaType type) {
+    protected void handleUnresolvedStoreField(JavaField field, ValueNode value, ValueNode receiver) {
+        UnresolvedStoreFieldNode node = currentGraph.add(new UnresolvedStoreFieldNode(receiver, field, value));
+        append(node);
+    }
+
+    @Override
+    protected void handleUnresolvedNewInstance(JavaType type) {
         UnresolvedTypeNode node = new UnresolvedNewInstanceNode(type);
-        currentGraph(phase).add(node);
-        frameState(phase).push(Kind.Object, append(phase, node));
+        currentGraph.add(node);
+        frameState.push(Kind.Object, append(node));
     }
 
     @Override
-    protected void unresolvedNewArray(GraphBuilderPhase phase, JavaType type, ValueNode length) {
+    protected void handleUnresolvedNewObjectArray(JavaType type, ValueNode length) {
         UnresolvedNewArrayNode node = new UnresolvedNewArrayNode(type, length);
-        currentGraph(phase).add(node);
-        frameState(phase).push(Kind.Object, append(phase, node));
+        currentGraph.add(node);
+        frameState.push(Kind.Object, append(node));
     }
 
     @Override
-    protected void unresolvedNewMultiArrayType(GraphBuilderPhase phase, JavaType type, ValueNode[] dims) {
+    protected void handleUnresolvedNewMultiArray(JavaType type, ValueNode[] dims) {
         assert false;
 
     }
     @Override
-    protected void unresolvedInvoke(GraphBuilderPhase phase, JavaMethod javaMethod, InvokeKind invokeKind) {
+    protected void handleUnresolvedInvoke(JavaMethod javaMethod, InvokeKind invokeKind) {
         boolean withReceiver = invokeKind != InvokeKind.Static;
-        ValueNode[] args = frameState(phase).popArguments(javaMethod.getSignature().getParameterSlots(withReceiver),
+        ValueNode[] args = frameState.popArguments(javaMethod.getSignature().getParameterSlots(withReceiver),
                         javaMethod.getSignature().getParameterCount(withReceiver));
         // This node is a placeholder for resolving the method
         ResolveMethodNode resolveMethodNode = new ResolveMethodNode(invokeKind, javaMethod);
-        currentGraph(phase).add(resolveMethodNode);
-        append(phase, resolveMethodNode);
+        currentGraph.add(resolveMethodNode);
+        append(resolveMethodNode);
         UnresolvedMethodCallTargetNode callTarget = new UnresolvedMethodCallTargetNode(invokeKind, javaMethod, args,
                         javaMethod.getSignature().getReturnType(null), resolveMethodNode);
-        currentGraph(phase).add(callTarget);
+        currentGraph.add(callTarget);
         // TODO InvokeWithExceptionNode
-        InvokeNode invokeNode = new InvokeNode(callTarget, phase.bci());
-        currentGraph(phase).add(invokeNode);
+        InvokeNode invokeNode = new InvokeNode(callTarget, bci());
+        currentGraph.add(invokeNode);
         Kind returnKind = javaMethod.getSignature().getReturnKind();
-        frameState(phase).pushReturn(returnKind, appendWithBCI(phase, invokeNode));
+        frameState.pushReturn(returnKind, appendWithBCI(invokeNode));
     }
 
     @Override
-    protected void unresolvedCheckCast(GraphBuilderPhase phase, JavaType type, ValueNode object) {
+    protected void handleUnresolvedCheckCast(JavaType type, ValueNode object) {
         UnresolvedTypeNode node = new UnresolvedCheckCastNode(type, object);
-        currentGraph(phase).add(node);
-        frameState(phase).apush(append(phase, node));
+        currentGraph.add(node);
+        frameState.apush(append(node));
     }
 
     @Override
-    protected void unresolvedInstanceOf(GraphBuilderPhase phase, JavaType type, ValueNode object) {
+    protected void handleUnresolvedInstanceOf(JavaType type, ValueNode object) {
         UnresolvedTypeNode node = new UnresolvedInstanceOfNode(type, object);
-        currentGraph(phase).add(node);
-        frameState(phase).ipush(append(phase, node));
+        currentGraph.add(node);
+        frameState.ipush(append(node));
     }
 
     @Override
-    protected void unresolvedLoadConstant(GraphBuilderPhase phase, JavaType type) {
+    protected void handleUnresolvedLoadConstant(JavaType type) {
         UnresolvedLoadConstantNode node = new UnresolvedLoadConstantNode(type);
-        currentGraph(phase).add(node);
-        frameState(phase).apush(append(phase, node));
+        currentGraph.add(node);
+        frameState.apush(append(node));
     }
 
     @Override
-    protected void unresolvedExceptionCatchType(GraphBuilderPhase phase, JavaType type, Representation representation) {
+    protected void handleUnresolvedExceptionType(Representation representation, JavaType type) {
         assert false;
     }
 

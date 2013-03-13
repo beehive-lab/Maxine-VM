@@ -30,16 +30,20 @@ import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.api.meta.ProfilingInfo.ExceptionSeen;
+import com.oracle.graal.bytecode.*;
 import com.oracle.graal.nodes.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
  * Likely temporary indirect between a {@link MethodActor} and a {@link ResolvedJavaMethod},
  * since {@code MethodActor} already implements the old {@link RiResolvedMethod} interface.
  */
 public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJavaMethod {
+
+    private int compilationComplexity;
 
     protected MaxResolvedJavaMethod(RiResolvedMethod riResolvedMethod) {
         super(riResolvedMethod);
@@ -69,14 +73,28 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public int getCompiledCodeSize() {
-        // TODO implement properly
-        return 0;
+        TargetMethod tm = ((ClassMethodActor) riResolvedMethod()).currentTargetMethod();
+        if (tm == null) {
+            return 0;
+        } else {
+            return tm.codeLength();
+        }
     }
 
     @Override
     public int getCompilationComplexity() {
-        // TODO implement properly
-        return 0;
+        if (compilationComplexity <= 0 && getCodeSize() > 0) {
+            BytecodeStream s = new BytecodeStream(getCode());
+            int result = 0;
+            int currentBC;
+            while ((currentBC = s.currentBC()) != Bytecodes.END) {
+                result += Bytecodes.compilationComplexity(currentBC);
+                s.next();
+            }
+            assert result > 0;
+            compilationComplexity = result;
+        }
+        return compilationComplexity;
     }
 
     @Override

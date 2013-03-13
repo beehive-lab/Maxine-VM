@@ -159,7 +159,7 @@ public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object newArraySnippet(@Parameter("hub") DynamicHub hub, @Parameter("length") int length) {
         if (length < 0) {
-            Throw.negativeArraySizeException(length);
+            Throw.throwNegativeArraySizeException(length);
         }
         Object result = Heap.createArray(hub, length);
         return UnsafeArrayCastNode.unsafeArrayCast(result, length, StampFactory.forNodeIntrinsic());

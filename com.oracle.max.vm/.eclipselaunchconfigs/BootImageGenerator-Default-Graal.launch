@@ -56,5 +56,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.vm.hosted.BootImageGenerator"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 --XX:AddCompiler=Graal:com.oracle.max.vm.ext.graal.MaxGraal -threads=1"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.oracle.max.vm"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xss2m -Xms1G -Xmx2G -Dmax.trace.noconsoles -Dmax.ir.trace=xxx -Dmax.vm.graal.inboot -Dmax.vm.graal.igv=false"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xss2m -Xms1G -Xmx2G -Dmax.trace.noconsoles -Dmax.ir.trace=xxx -Dmax.vm.graal.inboot"/>
 </launchConfiguration>

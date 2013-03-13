@@ -60,7 +60,11 @@ public class ValueMap {
             return RegisterMap.toCi(((RegisterValue) value).getRegister()).asValue();
         } else if (value instanceof StackSlot) {
             StackSlot stackSlot = (StackSlot) value;
-            return CiStackSlot.get(KindMap.toCiKind(stackSlot.getKind()), stackSlot.getRawOffset() / Word.size(), stackSlot.isInCallerFrame());
+            int rawOffset = stackSlot.getRawOffset();
+            if (rawOffset < 0) {
+                rawOffset = -rawOffset;
+            }
+            return CiStackSlot.get(KindMap.toCiKind(stackSlot.getKind()), rawOffset / Word.size(), stackSlot.isInCallerFrame());
         } else if (value.getKind() == Kind.Illegal) {
             return CiValue.IllegalValue;
         } else {

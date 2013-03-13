@@ -91,7 +91,7 @@ public class TypeSnippets extends SnippetLowerings implements SnippetsInterface 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void nullCheckSnippet(@Parameter("cond") boolean cond) {
         if (cond) {
-            Throw.nullPointerException();
+            Throw.throwNullPointerException();
         }
     }
 

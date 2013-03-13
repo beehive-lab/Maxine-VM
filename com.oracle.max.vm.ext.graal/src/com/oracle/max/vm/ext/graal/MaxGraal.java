@@ -22,14 +22,12 @@
  */
 package com.oracle.max.vm.ext.graal;
 
-import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.compiler.*;
 import com.oracle.graal.compiler.target.*;
-import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
@@ -63,8 +61,6 @@ import com.sun.max.vm.type.*;
  * the necessary fixup is quite complicated, we do it on VM startup.
  */
 public class MaxGraal implements RuntimeCompiler {
-
-    private static final String IGV_PROPERTY = "max.vm.graal.igv";
 
     private static class MaxGraphCache implements GraphCache {
 
@@ -142,8 +138,8 @@ public class MaxGraal implements RuntimeCompiler {
             testsHack();
         } else if (phase == MaxineVM.Phase.STARTING) {
             // This is the obvious place to do this but it is too early in the startup without
-            // more classes related to annotations being in the boot image, because bootclasspath is not setup
-            // rescanAllFieldOffsets()
+            // more classes related to annotations being in the boot image, because bootclasspath is not setup,
+            // to call rescanAllFieldOffsets()
         } else if (phase == MaxineVM.Phase.RUNNING) {
             // -vmextension case
             CompilationBroker.addCompiler(NAME, "com.oracle.max.vm.ext.graal.MaxGraal");
@@ -167,26 +163,25 @@ public class MaxGraal implements RuntimeCompiler {
         }
     }
 
-    private void checkDebugConfig() {
-        String igvProp = System.getProperty(IGV_PROPERTY);
-        if (igvProp != null && igvProp.equals("false")) {
-            Debug.setConfig(disabledDebugConfig);
-        } else {
-            Debug.enable();
-            Debug.setConfig(enabledDebugConfig);
-        }
-    }
-
     private void createGraalCompiler(Phase phase) {
-        enabledDebugConfig = Debug.fixedConfig(false, true, false, false, Arrays.asList(new GraphPrinterDumpHandler(), new CFGPrinterObserver()), System.out);
-        disabledDebugConfig = Debug.fixedConfig(false, false, false, false, new ArrayList<DebugDumpHandler>(), System.out);
-        checkDebugConfig();
+        DebugEnvironment.initialize(System.out);
         MaxTargetDescription td = new MaxTargetDescription();
         runtime = new MaxRuntime(td);
         backend = new MaxAMD64Backend(runtime, td);
         optimisticOpts = OptimisticOptimizations.ALL;
         cache = new MaxGraphCache();
+        changeInlineLimits();
         runtime.init();
+    }
+
+    /**
+     * Graal's inlining limits are very aggressive, too high for the Maxine environment.
+     * So we dial them down here.
+     */
+    private static void changeInlineLimits() {
+        GraalOptions.NormalBytecodeSize = 30;
+        GraalOptions.NormalComplexity = 30;
+        GraalOptions.NormalCompiledCodeSize = 150;
     }
 
     /** Hack to compile some tests during boot image generation - easier debugging.
@@ -229,10 +224,7 @@ public class MaxGraal implements RuntimeCompiler {
         ProgramError.unexpected("unimplemented: " + methodName);
     }
 
-    private DebugConfig enabledDebugConfig;
-    private DebugConfig disabledDebugConfig;
-
-    private static final MaxUnresolvedCustomizer maxDeoptCustomizer = new MaxUnresolvedCustomizer();
+//     private DebugConfig disabledDebugConfig;
 
     @Override
     public TargetMethod compile(ClassMethodActor methodActor, boolean isDeopt, boolean install, CiStatistics stats) {
@@ -246,16 +238,13 @@ public class MaxGraal implements RuntimeCompiler {
             defaultCompilations(c1xTM, t1xTM);
         }
         try {
-            if (!MaxineVM.isHosted()) {
-                checkDebugConfig();
-            }
             PhasePlan phasePlan = new PhasePlan();
             ResolvedJavaMethod method = MaxResolvedJavaMethod.get(methodActor);
 
             StructuredGraph graph = (StructuredGraph) method.getCompilerStorage().get(Graph.class);
             if (graph == null) {
-                GraphBuilderPhase graphBuilderPhase = new GraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(),
-                                optimisticOpts, maxDeoptCustomizer);
+                GraphBuilderPhase graphBuilderPhase = new MaxGraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(),
+                                optimisticOpts);
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
                 if (MaxineVM.isHosted()) {
                     MaxIntrinsicsPhase maxIntrinsicsPhase = new MaxIntrinsicsPhase();
@@ -264,7 +253,7 @@ public class MaxGraal implements RuntimeCompiler {
                 graph = new StructuredGraph(method);
             }
             CompilationResult result = GraalCompiler.compileMethod(runtime, backend, runtime.maxTargetDescription,
-                            method, graph, cache, phasePlan, optimisticOpts);
+                            method, graph, cache, phasePlan, optimisticOpts, new SpeculationLog());
             MaxTargetMethod graalTM = GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
             if (MaxGraalCompare) {
                 compare(graalTM, c1xTM, t1xTM);
