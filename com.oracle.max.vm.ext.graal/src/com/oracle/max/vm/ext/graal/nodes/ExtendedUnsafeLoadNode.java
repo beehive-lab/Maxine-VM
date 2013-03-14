@@ -29,6 +29,9 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 
 
+/**
+ * As {@link UnsafeLoadNode} but allows a non-constant displacement.
+ */
 public class ExtendedUnsafeLoadNode extends ExtendedUnsafeAccessNode implements Lowerable {
 
     private ExtendedUnsafeLoadNode(Stamp stamp, ValueNode object, ValueNode displacement, ValueNode offset, Kind accessKind) {

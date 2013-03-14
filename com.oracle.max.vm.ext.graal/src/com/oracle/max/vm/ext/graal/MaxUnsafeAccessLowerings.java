@@ -43,6 +43,7 @@ class MaxUnsafeAccessLowerings {
         lowerings.put(UnsafeStoreNode.class, unsafeStoreLowering);
 
         lowerings.put(ExtendedUnsafeLoadNode.class, new ExtendedUnsafeLoadLowering(unsafeLoadLowering));
+        lowerings.put(ExtendedUnsafeStoreNode.class, new ExtendedUnsafeStoreLowering(unsafeStoreLowering));
     }
 
     private static class UnsafeLoadLowering implements LoweringProvider<UnsafeLoadNode> {
@@ -69,11 +70,17 @@ class MaxUnsafeAccessLowerings {
         @Override
         public void lower(UnsafeStoreNode node, LoweringTool tool) {
             StructuredGraph graph = (StructuredGraph) node.graph();
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, node.accessKind(), node.displacement(), node.offset(), graph, 1);
-            WriteNode write = graph.add(new WriteNode(node.object(), node.value(), location));
-            write.setStateAfter(node.stateAfter());
+            lower(graph, node, node.stamp(), node.object(), node.offset(), node.value(), node.displacement(), node.accessKind(), node.stateAfter());
+        }
+
+        void lower(StructuredGraph graph, FixedWithNextNode node, Stamp stamp, ValueNode object, ValueNode offset, ValueNode value,
+                        int displacement, Kind accessKind, FrameState stateAfter) {
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, accessKind, displacement, offset, graph, 1);
+            WriteNode write = graph.add(new WriteNode(object, value, location));
+            write.setStateAfter(stateAfter);
             graph.replaceFixedWithFixed(node, write);
         }
+
     }
 
     private static class ExtendedUnsafeLoadLowering implements LoweringProvider<ExtendedUnsafeLoadNode> {
@@ -97,10 +104,20 @@ class MaxUnsafeAccessLowerings {
 
     private static class ExtendedUnsafeStoreLowering implements LoweringProvider<ExtendedUnsafeStoreNode> {
 
+        private final UnsafeStoreLowering unsafeStoreLowering;
+
+        ExtendedUnsafeStoreLowering(UnsafeStoreLowering unsafeStoreLowering) {
+            this.unsafeStoreLowering = unsafeStoreLowering;
+        }
+
         @Override
         public void lower(ExtendedUnsafeStoreNode node, LoweringTool tool) {
-            // TODO Auto-generated method stub
-
+            if (node.displacement().isConstant()) {
+                unsafeStoreLowering.lower((StructuredGraph) node.graph(), node, node.stamp(), node.object(), node.offset(),
+                                node.value(), node.displacement().asConstant().asInt(), node.accessKind(), node.stateAfter());
+            } else {
+                FatalError.unimplemented();
+            }
         }
 
     }
