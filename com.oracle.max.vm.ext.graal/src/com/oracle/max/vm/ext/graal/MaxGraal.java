@@ -50,15 +50,18 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Integration of the Graal compiler into Maxine's compilation framework. The compiler can be loaded as a VM extension
- * or included in the boot image. In extension mode, the Graal options cannot be set on the command line, but can be set
- * using {@code -vmextension:jar=args}. N.B. Currently, loading as an extension does not work because the snippet
- * installer needs to access {@link HOSTED_ONLY} fields of VM classes.
+ * Integration of the Graal compiler into Maxine's compilation framework. The compiler must be included in the boot image,
+ * as the snippet generation needs access to things that are not available to a VM extension (i.e., {@link HOSTED_ONLY} fields of VM classes).
+ * Currently the compiler is added to the set of compilers known the {@link CompilationBroker} and does not displace {@link C1X}.
  *
- * When included in the boot image, it is necessary to call {@link FieldIntrospection#rescanAllFieldOffsets()} on VM startup as the
+ * It is necessary to call {@link FieldIntrospection#rescanAllFieldOffsets()} on VM startup as the
  * {@link NodeClass} field offsets calculated during boot image construction are those of the host VM. In principle this
  * could be fixed up during boot image creation, as per the JDK classes, but as Graal provides a method to do it, and
  * the necessary fixup is quite complicated, we do it on VM startup.
+ *
+ * The Graal debug environment similarly needs to be re-established when the VM runs. It is setup for
+ * debugging snippet installation in the boot image generation, but the config is stored in a thread local
+ * so it does to survive in the target VM.
  */
 public class MaxGraal implements RuntimeCompiler {
 
@@ -86,35 +89,9 @@ public class MaxGraal implements RuntimeCompiler {
     private OptimisticOptimizations optimisticOpts;
     private MaxGraphCache cache;
 
-    private static boolean MaxGraalCompare = true;
-
-    /**
-     * Hack option to compile given tests after boot image generation (ease of debugging).
-     */
-    private static String MaxGraalTests;
-
     public MaxGraal() {
         if (singleton == null) {
             singleton = this;
-        }
-    }
-
-    /**
-     * Entry point when loaded as a VM extension.
-     * This occurs in the {@link MaxineVM.Phase#RUNNING} phase.
-     */
-    public static void onLoad(String args) {
-        // Graal options are passed as a comma separated list in args
-        MaxGraalOptions.initialize(args);
-        // Graal uses the context class loader during snippet instrinsification, so
-        // we must override the default to be the VM class loader
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(VMClassLoader.VM_CLASS_LOADER);
-            // This sets singleton
-            new MaxGraal().initialize(MaxineVM.Phase.RUNNING);
-        } finally {
-            Thread.currentThread().setContextClassLoader(cl);
         }
     }
 
@@ -137,26 +114,25 @@ public class MaxGraal implements RuntimeCompiler {
             VMOptions.addFieldOption("-XX:", "MaxGraalCompare", "compare compiled code against C1X/T1X");
             testsHack();
         } else if (phase == MaxineVM.Phase.STARTING) {
-            // This is the obvious place to do this but it is too early in the startup without
-            // more classes related to annotations being in the boot image, because bootclasspath is not setup,
-            // to call rescanAllFieldOffsets()
+            // This is the obvious place to call rescanAllFieldOffsets() but it is too early in the startup without
+            // more classes related to annotations being in the boot image, because bootclasspath is not setup.
+            // So it is done lazily when the first compile is initiated.
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            // -vmextension case
-            CompilationBroker.addCompiler(NAME, "com.oracle.max.vm.ext.graal.MaxGraal");
-            // N.B. the previous call will invoke our constructor but it will not change singleton
-            createGraalCompiler(phase);
+            // Would be called if the compiler was registered as the default optimizing compiler.
         }
     }
 
-    private static boolean rescanAllFieldOffsetsDone;
+    private static boolean lazyRuntimeInitDone;
 
-    private static void rescanAllFieldOffsets() {
-        if (rescanAllFieldOffsetsDone) {
+    private static void lazyRunTimeInit() {
+        if (lazyRuntimeInitDone) {
             return;
         }
         try {
             FieldIntrospection.rescanAllFieldOffsets(new FieldIntrospection.DefaultCalcOffset());
-            rescanAllFieldOffsetsDone = true;
+            // This sets up the debug environment for the running VM
+            DebugEnvironment.initialize(System.out);
+            lazyRuntimeInitDone = true;
         } catch (Throwable t) {
             Log.println("FieldIntrospection.rescanAllFieldOffsets failed: " + t);
             MaxineVM.exit(-1);
@@ -164,6 +140,7 @@ public class MaxGraal implements RuntimeCompiler {
     }
 
     private void createGraalCompiler(Phase phase) {
+        // This sets up the debug environment for the boot image build
         DebugEnvironment.initialize(System.out);
         MaxTargetDescription td = new MaxTargetDescription();
         runtime = new MaxRuntime(td);
@@ -184,51 +161,14 @@ public class MaxGraal implements RuntimeCompiler {
         GraalOptions.NormalCompiledCodeSize = 150;
     }
 
-    /** Hack to compile some tests during boot image generation - easier debugging.
-     *
-     */
-    private void testsHack() {
-        if (MaxGraalTests != null) {
-            String[] tests = MaxGraalTests.split(",");
-            for (String test : tests) {
-                String[] classAndMethod = test.split(":");
-                try {
-                    Class< ? > testClass = Class.forName(classAndMethod[0]);
-                    ClassActor testClassActor = ClassActor.fromJava(testClass);
-                    MethodActor[] methodActors;
-                    if (classAndMethod[1].equals("*")) {
-                        methodActors = testClassActor.getLocalMethodActorsArray();
-                    } else {
-                        MethodActor methodActor = testClassActor.findLocalClassMethodActor(SymbolTable.makeSymbol(classAndMethod[1]), null);
-                        if (methodActor == null) {
-                            throw new NoSuchMethodError(classAndMethod[1]);
-                        }
-                        methodActors = new MethodActor[1];
-                        methodActors[0] = methodActor;
-                    }
-                    for (MethodActor methodActor : methodActors) {
-                        compile((ClassMethodActor) methodActor, false, true, null);
-                    }
-                } catch (ClassNotFoundException ex) {
-                    System.err.println("failed to find test class: " + test);
-                } catch (NoSuchMethodError ex) {
-                    System.err.println("failed to find test method: " + test);
-                }
-            }
-        }
-    }
-
-
     @NEVER_INLINE
     public static void unimplemented(String methodName) {
         ProgramError.unexpected("unimplemented: " + methodName);
     }
 
-//     private DebugConfig disabledDebugConfig;
-
     @Override
     public TargetMethod compile(ClassMethodActor methodActor, boolean isDeopt, boolean install, CiStatistics stats) {
-        rescanAllFieldOffsets();
+        lazyRunTimeInit();
         TargetMethod c1xTM = null;
         TargetMethod t1xTM = null;
         if (MaxGraalCompare) {
@@ -284,5 +224,55 @@ public class MaxGraal implements RuntimeCompiler {
     public boolean matches(String compilerName) {
         return compilerName.equals(NAME);
     }
+
+    /**
+     * Hack option to compile given tests after boot image generation (ease of debugging).
+     */
+    private static String MaxGraalTests;
+
+    /**
+     * Prevents compilation (and comparison with C1X/T1X) when {@code false}.
+     * Important in boot image mode, as multiple compilations of the same method
+     * cause an assertion error.
+     */
+    private static boolean MaxGraalCompare = true;
+
+    /**
+     * Hack to compile some tests during boot image generation - easier debugging.
+     *
+     */
+    private void testsHack() {
+        if (MaxGraalTests != null) {
+            String[] tests = MaxGraalTests.split(",");
+            for (String test : tests) {
+                String[] classAndMethod = test.split(":");
+                try {
+                    Class< ? > testClass = Class.forName(classAndMethod[0]);
+                    ClassActor testClassActor = ClassActor.fromJava(testClass);
+                    MethodActor[] methodActors;
+                    if (classAndMethod[1].equals("*")) {
+                        methodActors = testClassActor.getLocalMethodActorsArray();
+                    } else {
+                        MethodActor methodActor = testClassActor.findLocalClassMethodActor(SymbolTable.makeSymbol(classAndMethod[1]), null);
+                        if (methodActor == null) {
+                            throw new NoSuchMethodError(classAndMethod[1]);
+                        }
+                        methodActors = new MethodActor[1];
+                        methodActors[0] = methodActor;
+                    }
+                    for (MethodActor methodActor : methodActors) {
+                        compile((ClassMethodActor) methodActor, false, true, null);
+                    }
+                } catch (ClassNotFoundException ex) {
+                    System.err.println("failed to find test class: " + test);
+                } catch (NoSuchMethodError ex) {
+                    System.err.println("failed to find test method: " + test);
+                }
+            }
+        }
+    }
+
+
+
 
 }

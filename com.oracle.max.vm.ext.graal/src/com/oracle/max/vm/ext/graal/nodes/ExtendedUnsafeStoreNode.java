@@ -28,10 +28,18 @@ import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 
-
+/**
+ * As {@link UnsafeStoreNode} but allows a non-constant displacement.
+ */
 public class ExtendedUnsafeStoreNode extends ExtendedUnsafeAccessNode implements Lowerable {
+
+    @Input ValueNode value;
+    @Input(notDataflow = true) private FrameState stateAfter;
+
+
     private ExtendedUnsafeStoreNode(ValueNode object, ValueNode displacement, ValueNode offset, ValueNode value, Kind accessKind) {
         super(StampFactory.forVoid(), object, displacement, offset, accessKind);
+        this.value = value;
     }
 
     public static FixedWithNextNode create(ValueNode object, ValueNode displacement, ValueNode offset, ValueNode value, Kind accessKind) {
@@ -40,6 +48,24 @@ public class ExtendedUnsafeStoreNode extends ExtendedUnsafeAccessNode implements
         } else {
             return new ExtendedUnsafeStoreNode(object, displacement, offset, value, accessKind);
         }
+    }
+
+    public FrameState stateAfter() {
+        return stateAfter;
+    }
+
+    public void setStateAfter(FrameState x) {
+        assert x == null || x.isAlive() : "frame state must be in a graph";
+        updateUsages(stateAfter, x);
+        stateAfter = x;
+    }
+
+    public boolean hasSideEffect() {
+        return true;
+    }
+
+    public ValueNode value() {
+        return value;
     }
 
     @Override
