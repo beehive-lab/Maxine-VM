@@ -31,6 +31,7 @@ import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.util.*;
 import com.oracle.max.vm.ext.graal.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -48,20 +49,17 @@ public class MaxSlowpathRewriterPhase extends Phase {
 
     @Override
     protected void run(StructuredGraph graph) {
-        for (Node n : GraphOrder.forwardGraph(graph)) {
-            if (n instanceof Invoke) {
-                Invoke invoke = (Invoke) n;
-                MethodCallTargetNode callTarget = invoke.methodCallTarget();
-                ClassMethodActor cma = (ClassMethodActor) MaxJavaMethod.getRiMethod(callTarget.targetMethod());
-                MaxRuntimeCall call = MaxRuntimeCallsMap.get(cma);
-                ValueNode[] args = new ValueNode[callTarget.arguments().size()];
-                RuntimeCallNode runtimeCallNode = new RuntimeCallNode(call, callTarget.arguments().toArray(args));
-                RUNTIME_ENTRY runTimeEntry = call.getMethodActor().getAnnotation(RUNTIME_ENTRY.class);
-                boolean exactType = runTimeEntry == null ? false : runTimeEntry.exactType();
-                boolean nonNull = runTimeEntry == null ? false : runTimeEntry.nonNull();
-                runtimeCallNode.setStamp(stampFor(runtime.lookupJavaType(call.getResultType()), exactType, nonNull));
-                invoke.intrinsify(invoke.graph().add(runtimeCallNode));
-            }
+        for (Invoke invoke : graph.getInvokes()) {
+            MethodCallTargetNode callTarget = invoke.methodCallTarget();
+            ClassMethodActor cma = (ClassMethodActor) MaxJavaMethod.getRiMethod(callTarget.targetMethod());
+            MaxRuntimeCall call = MaxRuntimeCallsMap.get(cma);
+            ValueNode[] args = new ValueNode[callTarget.arguments().size()];
+            RuntimeCallNode runtimeCallNode = new RuntimeCallNode(call, callTarget.arguments().toArray(args));
+            RUNTIME_ENTRY runTimeEntry = call.getMethodActor().getAnnotation(RUNTIME_ENTRY.class);
+            boolean exactType = runTimeEntry == null ? false : runTimeEntry.exactType();
+            boolean nonNull = runTimeEntry == null ? false : runTimeEntry.nonNull();
+            runtimeCallNode.setStamp(stampFor(runtime.lookupJavaType(call.getResultType()), exactType, nonNull));
+            invoke.intrinsify(invoke.graph().add(runtimeCallNode));
         }
     }
 

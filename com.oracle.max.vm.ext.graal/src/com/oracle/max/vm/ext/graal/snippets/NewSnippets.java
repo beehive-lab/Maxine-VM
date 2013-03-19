@@ -40,7 +40,6 @@ import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
@@ -48,17 +47,15 @@ import com.sun.max.vm.runtime.*;
 
 public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
 
-    private final VMConfiguration vmConfig;
-
-    public static void registerLowerings(VMConfiguration config, TargetDescription targetDescription, MetaAccessProvider runtime,
-                    Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        new NewSnippets(config, targetDescription, runtime, assumptions, lowerings);
+    @HOSTED_ONLY
+    public NewSnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        super(runtime, assumptions, targetDescription);
     }
 
-    private NewSnippets(VMConfiguration vmConfig, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        super(runtime, assumptions, targetDescription);
-        this.vmConfig = vmConfig;
-
+    @Override
+    @HOSTED_ONLY
+    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription,
+                    Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(NewInstanceNode.class, new NewInstanceLowering(this));
         lowerings.put(UnresolvedNewInstanceNode.class, new UnresolvedNewInstanceLowering(this));
         lowerings.put(NewArrayNode.class, new NewArrayLowering(this));

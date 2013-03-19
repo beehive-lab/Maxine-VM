@@ -144,6 +144,18 @@ public class MaxIntrinsics {
         }
     }
 
+    static class WriteRegisterIntrinsic extends MaxIntrinsicImpl {
+        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, int registerId, ValueNode value) {
+            RegisterConfig registerConfig = MaxGraal.runtime().lookupRegisterConfig();
+            Register register = registerConfig.getRegisterForRole(registerId);
+            if (register == null) {
+                throw new GraalInternalError("Unsupported WRITEREG operand " + registerId);
+            }
+            MaxWriteRegisterNode writeRegister = graph.add(new MaxWriteRegisterNode(register, value));
+            return writeRegister;
+        }
+    }
+
     static class UnsafeCastIntrinsic extends MaxIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode value) {
             JavaType toType = method.getSignature().getReturnType(method.getDeclaringClass());
@@ -254,20 +266,19 @@ public class MaxIntrinsics {
 
         registry.add(UNSAFE_CAST, new UnsafeCastIntrinsic());
         registry.add(READREG, new ReadRegisterIntrinsic());
-/*
         registry.add(WRITEREG, new WriteRegisterIntrinsic());
+        /*
         registry.add(IFLATCHBITREAD, new NotImplementedIntrinsic());
 */
         registry.add(PREAD_OFF, new PointerReadOffsetIntrinsic());
         registry.add(PREAD_IDX, new PointerReadIndexIntrinsic());
         registry.add(PWRITE_OFF, new PointerWriteOffsetIntrinsic());
         registry.add(PWRITE_IDX, new PointerWriteIndexIntrinsic());
-        /*
+/*
         registry.add(PCMPSWP, new PointerCompareAndSwapIntrinsic());
-
-        registry.add(SAFEPOINT_POLL, new SafepointIntrinsic(SafepointNode.Op.SAFEPOINT_POLL));
-        registry.add(INFO, new SafepointIntrinsic(SafepointNode.Op.INFO));
 */
+        registry.add(SAFEPOINT_POLL, new SafepointIntrinsic(MaxSafepointNode.Op.SAFEPOINT_POLL));
+        registry.add(INFO, new SafepointIntrinsic(MaxSafepointNode.Op.INFO));
         registry.add(HERE, new SafepointIntrinsic(MaxSafepointNode.Op.HERE));
 /*
         registry.add(UNCOMMON_TRAP, new UncommonTrapIntrinsic());

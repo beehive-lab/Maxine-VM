@@ -363,19 +363,16 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
         @Override
         public int getCodeSize() {
-            MaxGraal.unimplemented("Fake.getCodeSize");
             return 0;
         }
 
         @Override
         public int getCompiledCodeSize() {
-            MaxGraal.unimplemented("Fake.getCompiledCodeSize");
             return 0;
         }
 
         @Override
         public int getCompilationComplexity() {
-            MaxGraal.unimplemented("Fake.getCompilationComplexity");
             return 0;
         }
 
@@ -411,13 +408,12 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
         @Override
         public boolean canBeStaticallyBound() {
-            MaxGraal.unimplemented("Fake.");
             return false;
         }
 
         @Override
         public ExceptionHandler[] getExceptionHandlers() {
-            MaxGraal.unimplemented("Fake.canBeStaticallyBound");
+            MaxGraal.unimplemented("Fake.getExceptionHandlers");
             return null;
         }
 

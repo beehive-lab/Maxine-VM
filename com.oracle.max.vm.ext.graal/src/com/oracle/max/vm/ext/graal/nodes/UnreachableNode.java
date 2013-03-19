@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,41 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.graal.api.meta.*;
+
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 
-public class MaxSafepointNode extends SafepointNode  {
-    public static enum Op {
-        SAFEPOINT_POLL, HERE, INFO, BREAKPOINT, PAUSE
+public final class UnreachableNode extends FixedWithNextNode implements Simplifiable {
+
+    public UnreachableNode() {
+        super(StampFactory.object());
     }
 
-    public final Op op;
-
-    public MaxSafepointNode(Op op) {
-        super(StampFactory.forKind(op == Op.HERE ? Kind.Long : Kind.Void));
-        this.op = op;
+    @Override
+    public void simplify(SimplifierTool tool) {
+        tool.deleteBranch(next());
+        replaceAtPredecessor(graph().add(new DeadEndNode()));
+        safeDelete();
     }
 
+    static class DeadEndNode extends ControlSplitNode implements LIRLowerable {
+
+        public DeadEndNode() {
+            super(StampFactory.forVoid());
+        }
+
+        @Override
+        public void generate(LIRGeneratorTool generator) {
+            // No code to emit since this node represents an unreachable code path.
+        }
+
+        @Override
+        public double probability(BeginNode successor) {
+            throw new IllegalArgumentException("Node has no successors");
+        }
+    }
+
+    @NodeIntrinsic
+    public static native RuntimeException unreachable();
 }

@@ -44,7 +44,6 @@ import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.object.*;
@@ -87,14 +86,13 @@ import com.sun.max.vm.runtime.*;
 public class FieldSnippets extends SnippetLowerings implements SnippetsInterface {
 
     @HOSTED_ONLY
-    public static void registerLowerings(VMConfiguration config, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        new FieldSnippets(config, targetDescription, runtime, assumptions, lowerings);
+    public FieldSnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        super(runtime, assumptions, targetDescription);
     }
 
+    @Override
     @HOSTED_ONLY
-    private FieldSnippets(VMConfiguration vmConfig, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        super(runtime, assumptions, targetDescription);
-
+    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         LoadFieldLowering loadFieldLowering = new LoadFieldLowering();
         StoreFieldLowering storeFieldLowering = new StoreFieldLowering();
 
@@ -126,7 +124,6 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         lowerings.put(StoreFieldNode.class, storeFieldLowering);
         lowerings.put(UnresolvedLoadFieldNode.class, unresolvedLoadFieldLowering);
         lowerings.put(UnresolvedStoreFieldNode.class, unresolvedStoreFieldLowering);
-
     }
 
     protected abstract class FieldLowering extends Lowering {
@@ -256,9 +253,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     }
 
 // START GENERATED CODE
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static boolean getFieldBooleanSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+    @INLINE
+    private static boolean getFieldBoolean(Object object, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
         }
@@ -269,9 +265,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         return result;
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldBooleanSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") boolean value) {
+    @INLINE
+    private static void putFieldBoolean(Object object, int offset, boolean isVolatile, boolean value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
         }
@@ -279,6 +274,18 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         if (isVolatile) {
             memoryBarrier(JMM_POST_VOLATILE_READ);
         }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static boolean getFieldBooleanSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+        return getFieldBoolean(object, offset, isVolatile);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void putFieldBooleanSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") boolean value) {
+        putFieldBoolean(object, offset, isVolatile, value);
     }
 
     @RUNTIME_ENTRY
@@ -308,25 +315,25 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     private static boolean holderInitAndGetInstanceFieldBoolean(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
-        return getFieldBooleanSnippet(object, f.offset(), f.isVolatile());
+        return getFieldBoolean(object, f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static boolean holderInitAndGetStaticFieldBoolean(FieldActor f) {
         Snippets.makeHolderInitialized(f);
-        return getFieldBooleanSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return getFieldBoolean(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutInstanceFieldBoolean(FieldActor f, Object object, boolean value) {
         Snippets.makeHolderInitialized(f);
-        putFieldBooleanSnippet(object, f.offset(), f.isVolatile(), value);
+        putFieldBoolean(object, f.offset(), f.isVolatile(), value);
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutStaticFieldBoolean(FieldActor f, boolean value) {
         Snippets.makeHolderInitialized(f);
-        putFieldBooleanSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+        putFieldBoolean(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -373,9 +380,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         resolveAndPutStaticFieldBoolean(guard, value);
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static byte getFieldByteSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+    @INLINE
+    private static byte getFieldByte(Object object, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
         }
@@ -386,9 +392,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         return result;
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldByteSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") byte value) {
+    @INLINE
+    private static void putFieldByte(Object object, int offset, boolean isVolatile, byte value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
         }
@@ -396,6 +401,18 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         if (isVolatile) {
             memoryBarrier(JMM_POST_VOLATILE_READ);
         }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static byte getFieldByteSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+        return getFieldByte(object, offset, isVolatile);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void putFieldByteSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") byte value) {
+        putFieldByte(object, offset, isVolatile, value);
     }
 
     @RUNTIME_ENTRY
@@ -425,25 +442,25 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     private static byte holderInitAndGetInstanceFieldByte(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
-        return getFieldByteSnippet(object, f.offset(), f.isVolatile());
+        return getFieldByte(object, f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static byte holderInitAndGetStaticFieldByte(FieldActor f) {
         Snippets.makeHolderInitialized(f);
-        return getFieldByteSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return getFieldByte(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutInstanceFieldByte(FieldActor f, Object object, byte value) {
         Snippets.makeHolderInitialized(f);
-        putFieldByteSnippet(object, f.offset(), f.isVolatile(), value);
+        putFieldByte(object, f.offset(), f.isVolatile(), value);
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutStaticFieldByte(FieldActor f, byte value) {
         Snippets.makeHolderInitialized(f);
-        putFieldByteSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+        putFieldByte(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -490,9 +507,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         resolveAndPutStaticFieldByte(guard, value);
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static short getFieldShortSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+    @INLINE
+    private static short getFieldShort(Object object, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
         }
@@ -503,9 +519,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         return result;
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldShortSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") short value) {
+    @INLINE
+    private static void putFieldShort(Object object, int offset, boolean isVolatile, short value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
         }
@@ -513,6 +528,18 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         if (isVolatile) {
             memoryBarrier(JMM_POST_VOLATILE_READ);
         }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static short getFieldShortSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+        return getFieldShort(object, offset, isVolatile);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void putFieldShortSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") short value) {
+        putFieldShort(object, offset, isVolatile, value);
     }
 
     @RUNTIME_ENTRY
@@ -542,25 +569,25 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     private static short holderInitAndGetInstanceFieldShort(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
-        return getFieldShortSnippet(object, f.offset(), f.isVolatile());
+        return getFieldShort(object, f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static short holderInitAndGetStaticFieldShort(FieldActor f) {
         Snippets.makeHolderInitialized(f);
-        return getFieldShortSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return getFieldShort(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutInstanceFieldShort(FieldActor f, Object object, short value) {
         Snippets.makeHolderInitialized(f);
-        putFieldShortSnippet(object, f.offset(), f.isVolatile(), value);
+        putFieldShort(object, f.offset(), f.isVolatile(), value);
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutStaticFieldShort(FieldActor f, short value) {
         Snippets.makeHolderInitialized(f);
-        putFieldShortSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+        putFieldShort(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -607,9 +634,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         resolveAndPutStaticFieldShort(guard, value);
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static char getFieldCharSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+    @INLINE
+    private static char getFieldChar(Object object, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
         }
@@ -620,9 +646,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         return result;
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldCharSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") char value) {
+    @INLINE
+    private static void putFieldChar(Object object, int offset, boolean isVolatile, char value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
         }
@@ -630,6 +655,18 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         if (isVolatile) {
             memoryBarrier(JMM_POST_VOLATILE_READ);
         }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static char getFieldCharSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+        return getFieldChar(object, offset, isVolatile);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void putFieldCharSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") char value) {
+        putFieldChar(object, offset, isVolatile, value);
     }
 
     @RUNTIME_ENTRY
@@ -659,25 +696,25 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     private static char holderInitAndGetInstanceFieldChar(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
-        return getFieldCharSnippet(object, f.offset(), f.isVolatile());
+        return getFieldChar(object, f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static char holderInitAndGetStaticFieldChar(FieldActor f) {
         Snippets.makeHolderInitialized(f);
-        return getFieldCharSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return getFieldChar(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutInstanceFieldChar(FieldActor f, Object object, char value) {
         Snippets.makeHolderInitialized(f);
-        putFieldCharSnippet(object, f.offset(), f.isVolatile(), value);
+        putFieldChar(object, f.offset(), f.isVolatile(), value);
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutStaticFieldChar(FieldActor f, char value) {
         Snippets.makeHolderInitialized(f);
-        putFieldCharSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+        putFieldChar(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -724,9 +761,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         resolveAndPutStaticFieldChar(guard, value);
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static int getFieldIntSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+    @INLINE
+    private static int getFieldInt(Object object, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
         }
@@ -737,9 +773,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         return result;
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldIntSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") int value) {
+    @INLINE
+    private static void putFieldInt(Object object, int offset, boolean isVolatile, int value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
         }
@@ -747,6 +782,18 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         if (isVolatile) {
             memoryBarrier(JMM_POST_VOLATILE_READ);
         }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static int getFieldIntSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+        return getFieldInt(object, offset, isVolatile);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void putFieldIntSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") int value) {
+        putFieldInt(object, offset, isVolatile, value);
     }
 
     @RUNTIME_ENTRY
@@ -776,25 +823,25 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     private static int holderInitAndGetInstanceFieldInt(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
-        return getFieldIntSnippet(object, f.offset(), f.isVolatile());
+        return getFieldInt(object, f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static int holderInitAndGetStaticFieldInt(FieldActor f) {
         Snippets.makeHolderInitialized(f);
-        return getFieldIntSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return getFieldInt(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutInstanceFieldInt(FieldActor f, Object object, int value) {
         Snippets.makeHolderInitialized(f);
-        putFieldIntSnippet(object, f.offset(), f.isVolatile(), value);
+        putFieldInt(object, f.offset(), f.isVolatile(), value);
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutStaticFieldInt(FieldActor f, int value) {
         Snippets.makeHolderInitialized(f);
-        putFieldIntSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+        putFieldInt(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -841,9 +888,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         resolveAndPutStaticFieldInt(guard, value);
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static float getFieldFloatSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+    @INLINE
+    private static float getFieldFloat(Object object, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
         }
@@ -854,9 +900,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         return result;
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldFloatSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") float value) {
+    @INLINE
+    private static void putFieldFloat(Object object, int offset, boolean isVolatile, float value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
         }
@@ -864,6 +909,18 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         if (isVolatile) {
             memoryBarrier(JMM_POST_VOLATILE_READ);
         }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static float getFieldFloatSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+        return getFieldFloat(object, offset, isVolatile);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void putFieldFloatSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") float value) {
+        putFieldFloat(object, offset, isVolatile, value);
     }
 
     @RUNTIME_ENTRY
@@ -893,25 +950,25 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     private static float holderInitAndGetInstanceFieldFloat(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
-        return getFieldFloatSnippet(object, f.offset(), f.isVolatile());
+        return getFieldFloat(object, f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static float holderInitAndGetStaticFieldFloat(FieldActor f) {
         Snippets.makeHolderInitialized(f);
-        return getFieldFloatSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return getFieldFloat(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutInstanceFieldFloat(FieldActor f, Object object, float value) {
         Snippets.makeHolderInitialized(f);
-        putFieldFloatSnippet(object, f.offset(), f.isVolatile(), value);
+        putFieldFloat(object, f.offset(), f.isVolatile(), value);
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutStaticFieldFloat(FieldActor f, float value) {
         Snippets.makeHolderInitialized(f);
-        putFieldFloatSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+        putFieldFloat(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -958,9 +1015,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         resolveAndPutStaticFieldFloat(guard, value);
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static long getFieldLongSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+    @INLINE
+    private static long getFieldLong(Object object, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
         }
@@ -971,9 +1027,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         return result;
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldLongSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") long value) {
+    @INLINE
+    private static void putFieldLong(Object object, int offset, boolean isVolatile, long value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
         }
@@ -981,6 +1036,18 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         if (isVolatile) {
             memoryBarrier(JMM_POST_VOLATILE_READ);
         }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static long getFieldLongSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+        return getFieldLong(object, offset, isVolatile);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void putFieldLongSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") long value) {
+        putFieldLong(object, offset, isVolatile, value);
     }
 
     @RUNTIME_ENTRY
@@ -1010,25 +1077,25 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     private static long holderInitAndGetInstanceFieldLong(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
-        return getFieldLongSnippet(object, f.offset(), f.isVolatile());
+        return getFieldLong(object, f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static long holderInitAndGetStaticFieldLong(FieldActor f) {
         Snippets.makeHolderInitialized(f);
-        return getFieldLongSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return getFieldLong(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutInstanceFieldLong(FieldActor f, Object object, long value) {
         Snippets.makeHolderInitialized(f);
-        putFieldLongSnippet(object, f.offset(), f.isVolatile(), value);
+        putFieldLong(object, f.offset(), f.isVolatile(), value);
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutStaticFieldLong(FieldActor f, long value) {
         Snippets.makeHolderInitialized(f);
-        putFieldLongSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+        putFieldLong(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -1075,9 +1142,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         resolveAndPutStaticFieldLong(guard, value);
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static double getFieldDoubleSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+    @INLINE
+    private static double getFieldDouble(Object object, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
         }
@@ -1088,9 +1154,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         return result;
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldDoubleSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") double value) {
+    @INLINE
+    private static void putFieldDouble(Object object, int offset, boolean isVolatile, double value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
         }
@@ -1098,6 +1163,18 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         if (isVolatile) {
             memoryBarrier(JMM_POST_VOLATILE_READ);
         }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static double getFieldDoubleSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+        return getFieldDouble(object, offset, isVolatile);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void putFieldDoubleSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") double value) {
+        putFieldDouble(object, offset, isVolatile, value);
     }
 
     @RUNTIME_ENTRY
@@ -1127,25 +1204,25 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     private static double holderInitAndGetInstanceFieldDouble(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
-        return getFieldDoubleSnippet(object, f.offset(), f.isVolatile());
+        return getFieldDouble(object, f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static double holderInitAndGetStaticFieldDouble(FieldActor f) {
         Snippets.makeHolderInitialized(f);
-        return getFieldDoubleSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return getFieldDouble(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutInstanceFieldDouble(FieldActor f, Object object, double value) {
         Snippets.makeHolderInitialized(f);
-        putFieldDoubleSnippet(object, f.offset(), f.isVolatile(), value);
+        putFieldDouble(object, f.offset(), f.isVolatile(), value);
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutStaticFieldDouble(FieldActor f, double value) {
         Snippets.makeHolderInitialized(f);
-        putFieldDoubleSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+        putFieldDouble(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -1192,9 +1269,8 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         resolveAndPutStaticFieldDouble(guard, value);
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static Object getFieldObjectSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+    @INLINE
+    private static Object getFieldObject(Object object, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
         }
@@ -1202,12 +1278,11 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         if (isVolatile) {
             memoryBarrier(JMM_POST_VOLATILE_READ);
         }
-        return UnsafeCastNode.unsafeCast(result, StampFactory.forNodeIntrinsic());
+        return result;
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldObjectSnippet(@Parameter("object") Object object,
-            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") Object value) {
+    @INLINE
+    private static void putFieldObject(Object object, int offset, boolean isVolatile, Object value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
         }
@@ -1215,6 +1290,18 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
         if (isVolatile) {
             memoryBarrier(JMM_POST_VOLATILE_READ);
         }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static Object getFieldObjectSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile) {
+        return UnsafeCastNode.unsafeCast(getFieldObject(object, offset, isVolatile), StampFactory.forNodeIntrinsic());
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void putFieldObjectSnippet(@Parameter("object") Object object,
+            @Parameter("offset") int offset, @ConstantParameter("isVolatile") boolean isVolatile, @Parameter("value") Object value) {
+        putFieldObject(object, offset, isVolatile, value);
     }
 
     @RUNTIME_ENTRY
@@ -1244,25 +1331,25 @@ public class FieldSnippets extends SnippetLowerings implements SnippetsInterface
     @RUNTIME_ENTRY
     private static Object holderInitAndGetInstanceFieldObject(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
-        return getFieldObjectSnippet(object, f.offset(), f.isVolatile());
+        return getFieldObject(object, f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static Object holderInitAndGetStaticFieldObject(FieldActor f) {
         Snippets.makeHolderInitialized(f);
-        return getFieldObjectSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile());
+        return getFieldObject(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutInstanceFieldObject(FieldActor f, Object object, Object value) {
         Snippets.makeHolderInitialized(f);
-        putFieldObjectSnippet(object, f.offset(), f.isVolatile(), value);
+        putFieldObject(object, f.offset(), f.isVolatile(), value);
     }
 
     @RUNTIME_ENTRY
     private static void holderInitAndPutStaticFieldObject(FieldActor f, Object value) {
         Snippets.makeHolderInitialized(f);
-        putFieldObjectSnippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
+        putFieldObject(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)

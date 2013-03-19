@@ -381,6 +381,7 @@ public class VmThread {
      * <li>Reprotects the yellow zone if the raising process unprotected it.</li>
      * </ol>
      */
+    @RUNTIME_ENTRY
     public final Throwable loadExceptionForHandler() {
         SafepointPoll.enable();
         SafepointPoll.safepointPoll();

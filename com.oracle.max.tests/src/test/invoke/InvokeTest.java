@@ -25,10 +25,16 @@ public class InvokeTest {
                 callArgs[i] = Integer.parseInt(argI);
             } else if (param == long.class) {
                 callArgs[i] = Long.parseLong(argI);
+            } else if (param == String.class) {
+                callArgs[i] = argI;
             } else if (param == Object.class) {
                 callArgs[i] = argI;
             } else if (Object.class.isAssignableFrom(param)) {
                 callArgs[i] = Class.forName(argI).newInstance();
+            } else if (param == float.class) {
+                callArgs[i] = Float.parseFloat(argI);
+            } else if (param == double.class) {
+                callArgs[i] = Double.parseDouble(argI);
             }
         }
 

@@ -37,7 +37,6 @@ import com.oracle.graal.snippets.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
@@ -46,14 +45,13 @@ import com.sun.max.vm.runtime.*;
 public class TypeSnippets extends SnippetLowerings implements SnippetsInterface {
 
     @HOSTED_ONLY
-    public static void registerLowerings(VMConfiguration config, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        new TypeSnippets(config, targetDescription, runtime, assumptions, lowerings);
+    public TypeSnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        super(runtime, assumptions, targetDescription);
     }
 
+    @Override
     @HOSTED_ONLY
-    private TypeSnippets(VMConfiguration vmConfig, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        super(runtime, assumptions, targetDescription);
-
+    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(CheckCastNode.class, new CheckCastLowering(this));
         lowerings.put(UnresolvedCheckCastNode.class, new UnresolvedCheckCastLowering(this));
         lowerings.put(InstanceOfNode.class, new InstanceOfLowering(runtime, assumptions, targetDescription, TypeSnippets.class));

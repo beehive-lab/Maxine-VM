@@ -23,9 +23,11 @@
 package com.oracle.max.vm.ext.graal.snippets;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.snippets.*;
 import com.oracle.graal.snippets.SnippetTemplate.Arguments;
@@ -34,7 +36,7 @@ import com.oracle.graal.snippets.SnippetTemplate.Key;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.runtime.*;
 
-public abstract class SnippetLowerings {
+public abstract class SnippetLowerings implements SnippetsInterface {
 
     protected final MetaAccessProvider runtime;
     protected final Assumptions assumptions;
@@ -78,7 +80,14 @@ public abstract class SnippetLowerings {
         return runtime.lookupJavaMethod(found);
     }
 
-    public void instantiate(FixedWithNextNode node, Key key, Arguments args) {
-        cache.get(key, assumptions).instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
+    public Map<Node, Node> instantiate(FixedNode node, Key key, Arguments args) {
+        return cache.get(key, assumptions).instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
     }
+
+    public abstract void registerLowerings(
+                    CodeCacheProvider runtime, TargetDescription targetDescription,
+                    Assumptions assumptions,
+                    Map<Class< ? extends Node>, LoweringProvider> lowerings);
+
+
 }

@@ -33,20 +33,20 @@ import com.oracle.graal.snippets.*;
 import com.oracle.graal.snippets.Snippet.Parameter;
 import com.oracle.graal.snippets.SnippetTemplate.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.object.*;
 
 
 public class ArraySnippets extends SnippetLowerings implements SnippetsInterface {
 
     @HOSTED_ONLY
-    public static void registerLowerings(VMConfiguration config, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        new ArraySnippets(config, targetDescription, runtime, assumptions, lowerings);
+    public ArraySnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        super(runtime, assumptions, targetDescription);
     }
 
+    @Override
     @HOSTED_ONLY
-    private ArraySnippets(VMConfiguration vmConfig, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        super(runtime, assumptions, targetDescription);
+    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        lowerings.put(ArrayLengthNode.class, new ArrayLengthLowering(this));
 
         LoadIndexedLowering loadIndexedLowering = new LoadIndexedLowering();
         StoreIndexedLowering storeIndexedLowering = new StoreIndexedLowering();
@@ -54,6 +54,27 @@ public class ArraySnippets extends SnippetLowerings implements SnippetsInterface
 
         lowerings.put(LoadIndexedNode.class, loadIndexedLowering);
         lowerings.put(StoreIndexedNode.class, storeIndexedLowering);
+    }
+
+    protected class ArrayLengthLowering extends Lowering implements LoweringProvider<ArrayLengthNode> {
+
+        ArrayLengthLowering(ArraySnippets newSnippets) {
+            super(newSnippets, "arrayLengthSnippet");
+        }
+
+        @Override
+        public void lower(ArrayLengthNode node, LoweringTool tool) {
+            Key key = new Key(snippet);
+            Arguments args = new Arguments();
+            args.add("array", node.array());
+            instantiate(node, key, args);
+        }
+
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static int arrayLengthSnippet(@Parameter("array") Object array) {
+        return ArrayAccess.readArrayLength(array);
     }
 
     protected abstract class IndexedLowering extends Lowering {
