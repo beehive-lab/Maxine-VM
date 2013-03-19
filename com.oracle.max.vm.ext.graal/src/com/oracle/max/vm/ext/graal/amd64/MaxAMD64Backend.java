@@ -220,20 +220,21 @@ public class MaxAMD64Backend extends Backend {
     }
 
     @Override
-    public TargetMethodAssembler newAssembler(FrameMap frameMap, LIR lir) {
-        AbstractAssembler masm = new AMD64MacroAssembler(target, frameMap.registerConfig);
-        FrameContext frameContext = new MaxAMD64FrameContext();
-        TargetMethodAssembler tasm = new TargetMethodAssembler(target, runtime(), frameMap, masm, frameContext);
-        tasm.setFrameSize(frameMap.frameSize());
-        tasm.compilationResult.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
-        return tasm;
+    public void emitCode(TargetMethodAssembler tasm, ResolvedJavaMethod method, LIRGenerator lirGen) {
+        MaxAMD64FrameContext maxFrameContext = (MaxAMD64FrameContext) tasm.frameContext;
+        maxFrameContext.callee = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(method);
+        lirGen.lir.emitCode(tasm);
     }
 
     @Override
-    public void emitCode(TargetMethodAssembler tasm, ResolvedJavaMethod method, LIR lir) {
-        MaxAMD64FrameContext maxFrameContext = (MaxAMD64FrameContext) tasm.frameContext;
-        maxFrameContext.callee = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(method);
-        lir.emitCode(tasm);
+    public TargetMethodAssembler newAssembler(LIRGenerator lirGen, CompilationResult compilationResult) {
+        FrameMap frameMap = lirGen.frameMap();
+        AbstractAssembler masm = new AMD64MacroAssembler(target, frameMap.registerConfig);
+        FrameContext frameContext = new MaxAMD64FrameContext();
+        TargetMethodAssembler tasm = new TargetMethodAssembler(target, runtime(), frameMap, masm, frameContext, null);
+        tasm.setFrameSize(frameMap.frameSize());
+        // TODO tasm.compilationResult.setCustomStackAreaOffset(frameMap.offsetForStackSlot(???));
+        return tasm;
     }
 
 }

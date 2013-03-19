@@ -82,7 +82,7 @@ project@com.oracle.max.vm.ext.c1x@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.c1x@javaCompliance=1.6
 
 project@com.oracle.max.vm.ext.graal@sourceDirs=src
-project@com.oracle.max.vm.ext.graal@dependencies=com.oracle.max.vm.ext.maxri,com.oracle.graal.api.meta,com.oracle.graal.api.code,com.oracle.graal.amd64,com.oracle.graal.compiler,com.oracle.graal.compiler.amd64,com.oracle.graal.printer,com.oracle.graal.snippets,com.oracle.max.vm
+project@com.oracle.max.vm.ext.graal@dependencies=com.oracle.max.vm.ext.maxri,com.oracle.graal.api.meta,com.oracle.graal.api.code,com.oracle.graal.amd64,com.oracle.graal.compiler,com.oracle.graal.compiler.amd64,com.oracle.graal.printer,com.oracle.graal.snippets,com.oracle.graal.snippets.amd64,com.oracle.max.vm
 project@com.oracle.max.vm.ext.graal@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.graal@javaCompliance=1.7
 

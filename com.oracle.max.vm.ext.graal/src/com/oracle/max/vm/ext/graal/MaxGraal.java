@@ -22,7 +22,6 @@
  */
 package com.oracle.max.vm.ext.graal;
 
-import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.code.*;
@@ -146,10 +145,8 @@ public class MaxGraal implements RuntimeCompiler {
         MaxTargetDescription td = new MaxTargetDescription();
         runtime = new MaxRuntime(td);
         backend = new MaxAMD64Backend(runtime, td);
-        EnumSet<Optimization> optimizations = EnumSet.allOf(Optimization.class);
         // We want exception handlers generated
-        optimizations.remove(Optimization.UseExceptionProbability);
-        optimisticOpts = new OptimisticOptimizations(optimizations);
+        optimisticOpts = OptimisticOptimizations.ALL.remove(Optimization.UseExceptionProbability);
         cache = new MaxGraphCache();
         changeInlineLimits();
         runtime.init();
