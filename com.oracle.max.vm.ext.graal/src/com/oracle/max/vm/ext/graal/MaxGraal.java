@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.code.*;
@@ -33,6 +34,7 @@ import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
+import com.oracle.graal.phases.OptimisticOptimizations.Optimization;
 import com.oracle.graal.phases.PhasePlan.PhasePosition;
 import com.oracle.graal.printer.*;
 import com.oracle.max.vm.ext.graal.amd64.*;
@@ -47,7 +49,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Integration of the Graal compiler into Maxine's compilation framework. The compiler must be included in the boot image,
@@ -145,7 +146,10 @@ public class MaxGraal implements RuntimeCompiler {
         MaxTargetDescription td = new MaxTargetDescription();
         runtime = new MaxRuntime(td);
         backend = new MaxAMD64Backend(runtime, td);
-        optimisticOpts = OptimisticOptimizations.ALL;
+        EnumSet<Optimization> optimizations = EnumSet.allOf(Optimization.class);
+        // We want exception handlers generated
+        optimizations.remove(Optimization.UseExceptionProbability);
+        optimisticOpts = new OptimisticOptimizations(optimizations);
         cache = new MaxGraphCache();
         changeInlineLimits();
         runtime.init();

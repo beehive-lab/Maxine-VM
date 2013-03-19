@@ -46,17 +46,17 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
+@HOSTED_ONLY
 public class TestSnippets extends SnippetLowerings implements SnippetsInterface {
 
-    private TestSnippets(VMConfiguration config, TargetDescription target, MetaAccessProvider runtime, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public TestSnippets(CodeCacheProvider runtime, TargetDescription target, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, assumptions, target);
-//        lowerings.put(TestSnippetNode1.class, new TestSnippetLowering1(this));
-//        lowerings.put(TestSnippetNode2.class, new TestSnippetLowering2(this));
     }
 
-    @HOSTED_ONLY
-    public static void registerLowerings(VMConfiguration config, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        new TestSnippets(config, targetDescription, runtime, assumptions, lowerings);
+    @Override
+    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+//      lowerings.put(TestSnippetNode1.class, new TestSnippetLowering1(this));
+//      lowerings.put(TestSnippetNode2.class, new TestSnippetLowering2(this));
     }
 
     private static Object testSnippet(ClassActor actor, Object object) {

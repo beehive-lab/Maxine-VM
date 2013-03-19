@@ -28,6 +28,7 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.graal.nodes.spi.*;
@@ -37,10 +38,10 @@ import com.oracle.graal.snippets.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Maxine attempts to do as much lowering as possible with {@link Snippet snippets} to leverage the meta-circularity and
@@ -57,18 +58,22 @@ import com.sun.max.vm.runtime.*;
  */
 class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
 
-    private MaxInvokeLowerings(MetaAccessProvider runtime,
-                    Assumptions assumptions, TargetDescription target, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    @HOSTED_ONLY
+    public MaxInvokeLowerings(CodeCacheProvider runtime, TargetDescription target,
+                    Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, assumptions, target);
+    }
+
+    @Override
+    @HOSTED_ONLY
+    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions,
+                    Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(InvokeNode.class, new InvokeLowering());
         lowerings.put(InvokeWithExceptionNode.class, new InvokeLowering());
         lowerings.put(ResolveMethodNode.class, new UnresolvedMethodLowering(this));
         lowerings.put(MethodAddressNode.class, new MethodAddressLowering(this));
-    }
-
-    static void registerLowerings(VMConfiguration config, TargetDescription targetDescription, MetaAccessProvider runtime, Assumptions assumptions,
-                    Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        new MaxInvokeLowerings(runtime, assumptions, targetDescription, lowerings);
+        lowerings.put(ExceptionObjectNode.class, new ExceptionObjectLowering(this));
+        lowerings.put(UnwindNode.class, new UnwindLowering(this));
     }
 
     private class InvokeLowering implements LoweringProvider<FixedNode> {
@@ -245,6 +250,68 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
     @RUNTIME_ENTRY(nonNull = true)
     private static StaticMethodActor resolveStaticMethod(ResolutionGuard.InPool guard) {
         return Snippets.resolveStaticMethod(guard);
+    }
+
+    protected class ExceptionObjectLowering extends Lowering implements LoweringProvider<ExceptionObjectNode> {
+
+        ExceptionObjectLowering(MaxInvokeLowerings invokeSnippets) {
+            super(invokeSnippets, "loadExceptionObjectSnippet");
+        }
+
+        @Override
+        public void lower(ExceptionObjectNode node, LoweringTool tool) {
+            Key key = new Key(snippet);
+            Arguments args = new Arguments();
+            Map<Node, Node> map = instantiate(node, key, args);
+            // TODO figure out if this hack is remotely correct.
+            // The snippet instantiation clones the stateAfter of the ExceptionObjectNode into the RuntimeCallNode
+            // and this definitely causes problems in visitRuntimeCallNode.
+            for (Node snode : map.values()) {
+                if (snode instanceof RuntimeCallNode) {
+                    ((RuntimeCallNode) snode).setStateAfter(null);
+                    break;
+                }
+            }
+        }
+
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static Throwable loadExceptionObjectSnippet() {
+        return loadExceptionForHandler(VmThread.current());
+    }
+
+    @RUNTIME_ENTRY(nonNull = true)
+    private static Throwable loadExceptionForHandler(VmThread vmThread) {
+        // this aborts the VM if the stored exception object is null
+        return vmThread.loadExceptionForHandler();
+    }
+
+    protected class UnwindLowering extends Lowering implements LoweringProvider<UnwindNode> {
+
+        UnwindLowering(MaxInvokeLowerings invokeSnippets) {
+            super(invokeSnippets, "rethrowExceptionSnippet");
+        }
+
+        @Override
+        public void lower(UnwindNode node, LoweringTool tool) {
+            Key key = new Key(snippet);
+            Arguments args = new Arguments();
+            instantiate(node, key, args);
+        }
+
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void rethrowExceptionSnippet() {
+        rethrowException(VmThread.current());
+        throw UnreachableNode.unreachable();
+    }
+
+    @RUNTIME_ENTRY
+    private static void rethrowException(VmThread vmThread) {
+        Throwable throwable =  vmThread.loadExceptionForHandler();
+        Throw.raise(throwable);
     }
 
 }

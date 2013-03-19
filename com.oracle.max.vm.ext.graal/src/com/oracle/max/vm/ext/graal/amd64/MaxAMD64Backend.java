@@ -58,10 +58,10 @@ public class MaxAMD64Backend extends Backend {
         public void visitSafepointNode(SafepointNode node) {
             if (node instanceof MaxSafepointNode) {
                 MaxSafepointNode maxSafepointNode = (MaxSafepointNode) node;
-                MaxGraal.unimplemented("MaxSafepointNode");
                 switch (maxSafepointNode.op) {
                     case SAFEPOINT_POLL: {
-                        //emitSafepointPoll(this);
+                        // explicit request for safepoint in code
+                        emitSafepoint();
                         break;
                     }
                     case HERE: {
@@ -71,6 +71,7 @@ public class MaxAMD64Backend extends Backend {
                         LIRDebugInfo info = gen.stateFor(stateDuring);
                         gen.append(AMD64SafepointOpcode.SAFEPOINT.create(info));
                         */
+                        unimplemented("MaxSafepointNode.HERE");
                         break;
                     }
                     case INFO: {
@@ -79,12 +80,14 @@ public class MaxAMD64Backend extends Backend {
                         LIRDebugInfo info = gen.stateFor(stateDuring);
                         gen.append(AMD64SafepointOpcode.SAFEPOINT.create(info));
                         */
+                        unimplemented("MaxSafepointNode.INFO");
                         break;
                     }
                     case BREAKPOINT: {
                         /*
                         gen.append(AMD64BreakpointOpcode.BREAKPOINT.create());
                         */
+                        unimplemented("MaxSafepointNode.BREAKPOINT");
                         break;
                     }
                     case PAUSE: {
@@ -94,9 +97,13 @@ public class MaxAMD64Backend extends Backend {
 
             } else {
                 // generic Graal safepoint
-                LIRFrameState info = state();
-                append(new MaxAMD64SafepointOp(info));
+                emitSafepoint();
             }
+        }
+
+        private void emitSafepoint() {
+            LIRFrameState info = state();
+            append(new MaxAMD64SafepointOp(info));
         }
 
         @Override

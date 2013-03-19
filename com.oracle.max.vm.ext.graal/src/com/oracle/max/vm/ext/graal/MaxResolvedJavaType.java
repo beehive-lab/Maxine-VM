@@ -29,6 +29,7 @@ import java.lang.annotation.*;
 import java.net.*;
 
 import com.oracle.graal.api.meta.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.holder.*;
 
@@ -60,11 +61,20 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         return (RiResolvedType) riType;
     }
 
+    private static com.sun.cri.ri.RiType.Representation toCiRepresentation(Representation r) {
+        // Checkstyle: stop
+        switch (r) {
+            case JavaClass: return com.sun.cri.ri.RiType.Representation.JavaClass;
+            case ObjectHub: return com.sun.cri.ri.RiType.Representation.ObjectHub;
+            default: return null;
+        }
+        // Checkstyle: resume
+    }
+
     @Override
     public Constant getEncoding(Representation r) {
-        unimplemented("MaxResolvedType.getEncoding");
-        //return riResolvedType.getEncoding(r);
-        return null;
+        CiConstant encoding = ((ClassActor) riResolvedType()).getEncoding(toCiRepresentation(r));
+        return ConstantMap.toGraal(encoding);
     }
 
     @Override

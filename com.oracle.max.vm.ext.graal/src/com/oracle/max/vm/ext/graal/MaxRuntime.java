@@ -39,6 +39,7 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.printer.*;
 import com.oracle.graal.snippets.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
+import com.oracle.max.vm.ext.graal.snippets.amd64.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -234,25 +235,20 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         MaxRuntimeCallsMap.initialize(this);
         MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration = new MaxSnippetGraphBuilderConfiguration();
         MaxConstantPool.setGraphBuilderConfig(maxSnippetGraphBuilderConfiguration);
-        SnippetInstaller maxInstaller = new MaxSnippetInstaller(this, assumptions, maxTargetDescription,
-                        maxSnippetGraphBuilderConfiguration);
-        maxInstaller.installSnippets(TestSnippets.class);
-        maxInstaller.installSnippets(NewSnippets.class);
-        maxInstaller.installSnippets(FieldSnippets.class);
-        maxInstaller.installSnippets(ArraySnippets.class);
-        maxInstaller.installSnippets(TypeSnippets.class);
-        maxInstaller.installSnippets(MaxInvokeLowerings.class);
-        maxInstaller.installSnippets(ArithmeticSnippets.class);
+        MaxSnippetInstaller maxInstaller = new MaxSnippetInstaller(this, assumptions, maxTargetDescription,
+                        maxSnippetGraphBuilderConfiguration, lowerings);
+        maxInstaller.installAndRegister(TestSnippets.class);
+        maxInstaller.installAndRegister(NewSnippets.class);
+        maxInstaller.installAndRegister(FieldSnippets.class);
+        maxInstaller.installAndRegister(ArraySnippets.class);
+        maxInstaller.installAndRegister(TypeSnippets.class);
+        maxInstaller.installAndRegister(MaxInvokeLowerings.class);
+        maxInstaller.installAndRegister(ArithmeticSnippets.class);
+        maxInstaller.installAndRegister(AMD64ConvertSnippetsWrapper.class);
+
         MaxConstantPool.setGraphBuilderConfig(null);
 
         MaxUnsafeAccessLowerings.registerLowerings(lowerings);
-        MaxInvokeLowerings.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
-        NewSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
-        FieldSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
-        ArraySnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
-        TypeSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
-        ArithmeticSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
-        TestSnippets.registerLowerings(VMConfiguration.activeConfig(), maxTargetDescription, this, assumptions, lowerings);
     }
 
     @Override

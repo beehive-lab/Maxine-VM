@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.snippets;
+package com.oracle.max.vm.ext.graal.snippets.amd64;
 
 import java.util.*;
 
@@ -28,36 +28,35 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.snippets.*;
-import com.sun.max.annotate.*;
+import com.oracle.max.vm.ext.graal.snippets.*;
 
 /**
- * We are required to provide a lowering for the div/rem nodes, but we take the default {@link LIRLowering}.
+ * Wrapper class to conform to Maxine's snippet installation framework.
  */
-public final class ArithmeticSnippets extends SnippetLowerings implements SnippetsInterface {
+public class AMD64ConvertSnippetsWrapper extends SnippetLowerings {
 
-    @HOSTED_ONLY
-    public ArithmeticSnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public AMD64ConvertSnippetsWrapper(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, assumptions, targetDescription);
     }
 
     @Override
-    @HOSTED_ONLY
     public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription,
                     Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        lowerings.put(IntegerDivNode.class, new IdentityLowering());
-        lowerings.put(IntegerRemNode.class, new IdentityLowering());
-        lowerings.put(UnsignedDivNode.class, new IdentityLowering());
-        lowerings.put(UnsignedRemNode.class, new IdentityLowering());
+        lowerings.put(ConvertNode.class, new ConvertLowering(new AMD64ConvertSnippets.Templates(runtime, assumptions, targetDescription)));
     }
 
-    protected class IdentityLowering implements LoweringProvider<Node> {
+    protected class ConvertLowering extends Lowering implements LoweringProvider<ConvertNode> {
+        private final AMD64ConvertSnippets.Templates snippets;
+
+        ConvertLowering(AMD64ConvertSnippets.Templates snippets) {
+            this.snippets = snippets;
+        }
 
         @Override
-        public void lower(Node node, LoweringTool tool) {
-            // do nothing and leave node unchanged.
+        public void lower(ConvertNode node, LoweringTool tool) {
+            snippets.lower(node, tool);
         }
+
     }
+
 }
-
-

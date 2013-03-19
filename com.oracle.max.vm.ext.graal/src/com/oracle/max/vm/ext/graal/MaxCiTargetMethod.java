@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.graal.api.code.CompilationResult;
 import com.sun.cri.ci.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.deopt.*;
 /**
  * Represents a Graal {@link CompilationResult} as a {@link CiTargetMethod}.
@@ -74,6 +75,12 @@ public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
         for (com.oracle.graal.api.code.CompilationResult.DataPatch dataPatch : dataReferences) {
             this.recordDataReference(dataPatch.pcOffset, ConstantMap.toCi(dataPatch.constant), dataPatch.alignment);
         }
+        // Exception handlers
+        List<CompilationResult.ExceptionHandler> exceptionHandlers = gCompilation.getExceptionHandlers();
+        for (CompilationResult.ExceptionHandler e : exceptionHandlers) {
+            this.recordExceptionHandler(e.pcOffset, -1, -1, e.handlerPos, -1, ClassActor.fromJava(Throwable.class));
+        }
+
         // Misc
 //        this.setCustomStackAreaOffset(gCompilation.getCustomStackAreaOffset());
         this.setCustomStackAreaOffset(Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET); // TODO figure out how Graal should get this

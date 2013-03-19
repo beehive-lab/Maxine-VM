@@ -42,10 +42,9 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
     private static final String UNSAFE_CAST_BEFORE = "UnsafeCastNode.unsafeCast(";
     private static final String UNSAFE_CAST_AFTER = ", StampFactory.forNodeIntrinsic())";
 
-    private static final String PUT_FIELD_SNIPPET =
-        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static void putField#UKIND#Snippet(@Parameter(\"object\") Object object,\n" + "" +
-        "            @Parameter(\"offset\") int offset, @ConstantParameter(\"isVolatile\") boolean isVolatile, @Parameter(\"value\") #KIND# value) {\n" +
+    private static final String PUT_FIELD_METHOD =
+        "    @INLINE\n" +
+        "    private static void putField#UKIND#(Object object, int offset, boolean isVolatile, #KIND# value) {\n" +
         "        if (isVolatile) {\n" +
         "            memoryBarrier(JMM_PRE_VOLATILE_WRITE);\n" +
         "        }\n" +
@@ -55,10 +54,9 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
         "        }\n" +
         "    }\n\n";
 
-    private static final String GET_FIELD_SNIPPET =
-        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static #KIND# getField#UKIND#Snippet(@Parameter(\"object\") Object object,\n" +
-        "            @Parameter(\"offset\") int offset, @ConstantParameter(\"isVolatile\") boolean isVolatile) {\n" +
+    private static final String GET_FIELD_METHOD =
+        "    @INLINE\n" +
+        "    private static #KIND# getField#UKIND#(Object object, int offset, boolean isVolatile) {\n" +
         "        if (isVolatile) {\n" +
         "            memoryBarrier(JMM_PRE_VOLATILE_READ);\n" +
         "        }\n" +
@@ -66,35 +64,49 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
         "        if (isVolatile) {\n" +
         "            memoryBarrier(JMM_POST_VOLATILE_READ);\n" +
         "        }\n" +
-        "        return #UCB#result#UCA#;\n" +
+        "        return result;\n" +
+        "    }\n\n";
+
+    private static final String PUT_FIELD_SNIPPET =
+        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
+        "    private static void putField#UKIND#Snippet(@Parameter(\"object\") Object object,\n" + "" +
+        "            @Parameter(\"offset\") int offset, @ConstantParameter(\"isVolatile\") boolean isVolatile, @Parameter(\"value\") #KIND# value) {\n" +
+        "        putField#UKIND#(object, offset, isVolatile, value);\n" +
+        "    }\n\n";
+
+    private static final String GET_FIELD_SNIPPET =
+        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
+        "    private static #KIND# getField#UKIND#Snippet(@Parameter(\"object\") Object object,\n" +
+        "            @Parameter(\"offset\") int offset, @ConstantParameter(\"isVolatile\") boolean isVolatile) {\n" +
+        "        return #UCB#getField#UKIND#(object, offset, isVolatile)#UCA#;\n" +
         "    }\n\n";
 
     private static final String HOLDER_INIT_GET_FIELD_METHOD =
         "    @RUNTIME_ENTRY\n" +
         "    private static #KIND# holderInitAndGetInstanceField#UKIND#(FieldActor f, Object object) {\n" +
         "        Snippets.makeHolderInitialized(f);\n" +
-        "        return getField#UKIND#Snippet(object, f.offset(), f.isVolatile());\n" +
+        "        return getField#UKIND#(object, f.offset(), f.isVolatile());\n" +
         "    }\n\n";
 
     private static final String HOLDER_INIT_GET_STATIC_METHOD =
         "    @RUNTIME_ENTRY\n" +
         "    private static #KIND# holderInitAndGetStaticField#UKIND#(FieldActor f) {\n" +
         "        Snippets.makeHolderInitialized(f);\n" +
-        "        return getField#UKIND#Snippet(f.holder().staticTuple(), f.offset(), f.isVolatile());\n" +
+        "        return getField#UKIND#(f.holder().staticTuple(), f.offset(), f.isVolatile());\n" +
         "    }\n\n";
 
     private static final String HOLDER_INIT_PUT_FIELD_METHOD =
         "    @RUNTIME_ENTRY\n" +
         "    private static void holderInitAndPutInstanceField#UKIND#(FieldActor f, Object object, #KIND# value) {\n" +
         "        Snippets.makeHolderInitialized(f);\n" +
-        "        putField#UKIND#Snippet(object, f.offset(), f.isVolatile(), value);\n" +
+        "        putField#UKIND#(object, f.offset(), f.isVolatile(), value);\n" +
         "    }\n\n";
 
     private static final String HOLDER_INIT_PUT_STATIC_METHOD =
         "    @RUNTIME_ENTRY\n" +
         "    private static void holderInitAndPutStaticField#UKIND#(FieldActor f, #KIND# value) {\n" +
         "        Snippets.makeHolderInitialized(f);\n" +
-        "        putField#UKIND#Snippet(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);\n" +
+        "        putField#UKIND#(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);\n" +
         "    }\n\n";
 
     private static final String RESOLVE_LOAD_FIELD_METHOD =
@@ -226,6 +238,8 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
         ArrayList<String> addSnippets = new ArrayList<>();
         for (Kind kind : Kind.values()) {
             if (notVoidOrIllegal(kind)) {
+                out.print(replaceKinds(GET_FIELD_METHOD, kind));
+                out.print(replaceKinds(PUT_FIELD_METHOD, kind));
                 out.print(replaceUCast(replaceKinds(GET_FIELD_SNIPPET, kind), kind));
                 out.print(replaceKinds(PUT_FIELD_SNIPPET, kind));
                 // Unresolved variants

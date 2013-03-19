@@ -22,20 +22,30 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.graal.api.meta.*;
+import com.oracle.graal.api.code.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 
-public class MaxSafepointNode extends SafepointNode  {
-    public static enum Op {
-        SAFEPOINT_POLL, HERE, INFO, BREAKPOINT, PAUSE
+
+public class MaxWriteRegisterNode extends FixedWithNextNode implements LIRLowerable {
+
+    @Input ValueNode value;
+    private final Register register;
+
+    public MaxWriteRegisterNode(Register register, ValueNode value) {
+        super(StampFactory.forVoid());
+        this.register = register;
+        this.value = value;
     }
 
-    public final Op op;
+    public ValueNode value() {
+        return value;
+    }
 
-    public MaxSafepointNode(Op op) {
-        super(StampFactory.forKind(op == Op.HERE ? Kind.Long : Kind.Void));
-        this.op = op;
+    @Override
+    public void generate(LIRGeneratorTool generator) {
+        generator.emitMove(register.asValue(value.kind()), generator.operand(value));
     }
 
 }

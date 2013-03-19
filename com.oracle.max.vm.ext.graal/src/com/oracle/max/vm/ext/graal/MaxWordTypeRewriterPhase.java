@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.graal;
 
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
@@ -178,9 +179,22 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
                     }
                 }
                 if (delete) {
+                    logReplace(unsafeCastNode, object);
                     graph.replaceFloating(unsafeCastNode, object);
                 }
             }
+
+        }
+
+        private static final String MAX_UNSAFE_CAST_REPLACE = "MaxUnsafeCastReplace";
+
+        private static void logReplace(final MaxUnsafeCastNode unsafeCastNode, final ValueNode castee) {
+            Debug.scope(MAX_UNSAFE_CAST_REPLACE, new Runnable() {
+
+                public void run() {
+                    Debug.log("MaxUnsafeCast: replacing %s with %s", unsafeCastNode.stamp(), castee.stamp());
+                }
+            });
 
         }
     }

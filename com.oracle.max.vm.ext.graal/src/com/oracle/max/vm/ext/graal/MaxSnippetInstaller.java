@@ -22,9 +22,13 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import java.lang.reflect.*;
+import java.util.*;
+
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.debug.*;
+import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.phases.*;
@@ -32,14 +36,31 @@ import com.oracle.graal.phases.common.*;
 import com.oracle.graal.snippets.*;
 import com.oracle.max.vm.ext.graal.MaxRuntime.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
+import com.sun.max.program.*;
 
 class MaxSnippetInstaller extends SnippetInstaller {
     private MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration;
+    Map<Class< ? extends Node>, LoweringProvider> lowerings;
 
     MaxSnippetInstaller(MetaAccessProvider runtime, Assumptions assumptions, TargetDescription target,
-                    MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration) {
+                    MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration,
+                    Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, assumptions, target);
         this.maxSnippetGraphBuilderConfiguration = maxSnippetGraphBuilderConfiguration;
+        this.lowerings = lowerings;
+    }
+
+    public void installAndRegister(Class< ? extends SnippetLowerings> clazz) {
+        installSnippets(clazz);
+        // assumption is that it is ok to register the lowerings incrementally
+        try {
+            Constructor< ? > cons = clazz.getDeclaredConstructor(CodeCacheProvider.class, TargetDescription.class, Assumptions.class, Map.class);
+            Object[] args = new Object[] {runtime, target, assumptions, lowerings};
+            SnippetLowerings snippetLowerings = (SnippetLowerings) cons.newInstance(args);
+            snippetLowerings.registerLowerings((CodeCacheProvider) runtime, target, assumptions, lowerings);
+        } catch (Exception ex) {
+            ProgramError.unexpected("MaxSnippetInstaller: problem: " + ex + " in: " + clazz);
+        }
     }
 
     @Override
