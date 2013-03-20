@@ -84,11 +84,9 @@ public class MaxGraphBuilderPhase extends GraphBuilderPhase {
         UnresolvedMethodCallTargetNode callTarget = new UnresolvedMethodCallTargetNode(invokeKind, javaMethod, args,
                         javaMethod.getSignature().getReturnType(null), resolveMethodNode);
         currentGraph.add(callTarget);
-        // TODO InvokeWithExceptionNode
-        InvokeNode invokeNode = new InvokeNode(callTarget, bci());
-        currentGraph.add(invokeNode);
-        Kind returnKind = javaMethod.getSignature().getReturnKind();
-        frameState.pushReturn(returnKind, appendWithBCI(invokeNode));
+        Invoke invoke = createInvokeNode(callTarget, javaMethod.getSignature().getReturnKind());
+        // Can't inline an unresolved method
+        invoke.setUseForInlining(false);
     }
 
     @Override

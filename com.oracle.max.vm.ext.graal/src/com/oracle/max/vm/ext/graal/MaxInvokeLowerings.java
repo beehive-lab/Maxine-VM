@@ -290,27 +290,27 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
     protected class UnwindLowering extends Lowering implements LoweringProvider<UnwindNode> {
 
         UnwindLowering(MaxInvokeLowerings invokeSnippets) {
-            super(invokeSnippets, "rethrowExceptionSnippet");
+            super(invokeSnippets, "throwExceptionSnippet");
         }
 
         @Override
         public void lower(UnwindNode node, LoweringTool tool) {
             Key key = new Key(snippet);
             Arguments args = new Arguments();
+            args.add("throwable", node.exception());
             instantiate(node, key, args);
         }
 
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void rethrowExceptionSnippet() {
-        rethrowException();
+    private static void throwExceptionSnippet(@Parameter("throwable") Throwable throwable) {
+        throwException(throwable);
         throw UnreachableNode.unreachable();
     }
 
     @RUNTIME_ENTRY
-    private static void rethrowException() {
-        Throwable throwable =  VmThread.current().loadExceptionForHandler();
+    private static void throwException(Throwable throwable) {
         Throw.raise(throwable);
     }
 
