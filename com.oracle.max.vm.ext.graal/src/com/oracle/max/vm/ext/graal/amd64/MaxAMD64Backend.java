@@ -231,7 +231,7 @@ public class MaxAMD64Backend extends Backend {
         FrameMap frameMap = lirGen.frameMap();
         AbstractAssembler masm = new AMD64MacroAssembler(target, frameMap.registerConfig);
         FrameContext frameContext = new MaxAMD64FrameContext();
-        TargetMethodAssembler tasm = new TargetMethodAssembler(target, runtime(), frameMap, masm, frameContext, null);
+        TargetMethodAssembler tasm = new TargetMethodAssembler(target, runtime(), frameMap, masm, frameContext, compilationResult);
         tasm.setFrameSize(frameMap.frameSize());
         // TODO tasm.compilationResult.setCustomStackAreaOffset(frameMap.offsetForStackSlot(???));
         return tasm;

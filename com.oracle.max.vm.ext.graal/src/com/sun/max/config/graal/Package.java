@@ -53,6 +53,7 @@ public class Package extends BootImagePackage {
               "com.oracle.graal.phases.**",
               "com.oracle.graal.printer.*",
               "com.oracle.graal.snippets.*",
+              "com.oracle.graal.snippets.amd64.*",
               "com.oracle.graal.virtual.*"
               );
 
