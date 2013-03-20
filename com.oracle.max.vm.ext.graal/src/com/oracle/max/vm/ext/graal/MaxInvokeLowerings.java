@@ -278,13 +278,13 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static Throwable loadExceptionObjectSnippet() {
-        return loadExceptionForHandler(VmThread.current());
+        return loadExceptionForHandler();
     }
 
     @RUNTIME_ENTRY(nonNull = true)
-    private static Throwable loadExceptionForHandler(VmThread vmThread) {
+    private static Throwable loadExceptionForHandler() {
         // this aborts the VM if the stored exception object is null
-        return vmThread.loadExceptionForHandler();
+        return VmThread.current().loadExceptionForHandler();
     }
 
     protected class UnwindLowering extends Lowering implements LoweringProvider<UnwindNode> {
@@ -304,13 +304,13 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void rethrowExceptionSnippet() {
-        rethrowException(VmThread.current());
+        rethrowException();
         throw UnreachableNode.unreachable();
     }
 
     @RUNTIME_ENTRY
-    private static void rethrowException(VmThread vmThread) {
-        Throwable throwable =  vmThread.loadExceptionForHandler();
+    private static void rethrowException() {
+        Throwable throwable =  VmThread.current().loadExceptionForHandler();
         Throw.raise(throwable);
     }
 
