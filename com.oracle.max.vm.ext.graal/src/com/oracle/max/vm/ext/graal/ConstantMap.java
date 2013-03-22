@@ -106,6 +106,7 @@ public class ConstantMap {
                 case Byte: result = CiConstant.forByte((byte) constant.asInt()); break;
                 case Char: result = CiConstant.forChar((char) constant.asInt()); break;
                 case Short: result = CiConstant.forShort((short) constant.asInt()); break;
+                case Int: result = CiConstant.forInt(constant.asInt()); break;
                 case Jsr: result = CiConstant.forJsr(constant.asInt()); break;
                 case Long: result = CiConstant.forLong(constant.asLong()); break;
                 case Float: result = CiConstant.forFloat(constant.asFloat()); break;
@@ -118,19 +119,4 @@ public class ConstantMap {
         return result;
     }
 
-
-    /*
-    private static class CiConstantProxy {
-        @INTRINSIC(UNSAFE_CAST) public static native CiConstantProxy asCiConstantProxy(Object object);
-
-        @ALIAS(declaringClass = CiConstant.class)
-        private Object object;
-        @ALIAS(declaringClass = CiConstant.class)
-        private long primitive;
-    }
-    */
-
-    public static void main(String[] args) {
-        System.console();
-    }
 }
