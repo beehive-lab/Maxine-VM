@@ -36,7 +36,7 @@ public class ArraySnippetsGenerator extends SnippetsGenerator {
     private static final String LOAD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
         "    public static #KIND# #K#aloadSnippet(@Parameter(\"array\") Object array, @Parameter(\"index\") int index) {\n" +
-        "        ArrayAccess.checkIndex(array, index);\n" +
+        "        checkIndex(array, index);\n" +
         "        return ArrayAccess.get#UKIND#(array, index);\n" +
         "    }\n\n";
 
@@ -44,7 +44,8 @@ public class ArraySnippetsGenerator extends SnippetsGenerator {
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
         "    public static void #K#astoreSnippet(@Parameter(\"array\") Object array, @Parameter(\"index\") int index,\n" +
         "            @Parameter(\"value\") #KIND# value) {\n" +
-        "        ArrayAccess.checkIndex(array, index);\n" +
+        "        checkIndex(array, index);\n" +
+        "#CHECK_SET#" +
         "        ArrayAccess.set#UKIND#(array, index, value);\n" +
         "    }\n\n";
 
@@ -64,7 +65,9 @@ public class ArraySnippetsGenerator extends SnippetsGenerator {
         for (Kind kind : Kind.values()) {
             if (notVoidOrIllegal(kind)) {
                 out.print(replace(replaceKinds(LOAD_SNIPPET, kind), "#K#", String.valueOf(kind.getTypeChar())));
-                out.print(replace(replaceKinds(STORE_SNIPPET, kind), "#K#", String.valueOf(kind.getTypeChar())));
+                String s = replace(replaceKinds(STORE_SNIPPET, kind), "#K#", String.valueOf(kind.getTypeChar()));
+                s = replace(s, "#CHECK_SET#", kind == Kind.Object ? "        checkSetObject(array, value);\n" : "");
+                out.print(s);
                 addSnippets.add(replace(replaceKinds(ADD_LOAD_SNIPPET, kind), "#K#", String.valueOf(kind.getTypeChar())));
                 addSnippets.add(replace(replaceKinds(ADD_STORE_SNIPPET, kind), "#K#", String.valueOf(kind.getTypeChar())));
             }
