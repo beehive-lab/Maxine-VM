@@ -149,6 +149,8 @@ public class MaxGraal implements RuntimeCompiler {
         optimisticOpts = OptimisticOptimizations.ALL.remove(Optimization.UseExceptionProbability);
         cache = new MaxGraphCache();
         changeInlineLimits();
+        // Disable for now as it causes problems in DebugInfo
+        GraalOptions.PartialEscapeAnalysis = false;
         runtime.init();
     }
 
