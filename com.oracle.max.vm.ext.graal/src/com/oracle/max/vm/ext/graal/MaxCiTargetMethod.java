@@ -54,9 +54,9 @@ public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
                     target = ((MaxRuntimeCallTarget) gCall.target).getMethodActor();
                 } else if (gCall.target instanceof MaxResolvedJavaMethod) {
                     target = MaxResolvedJavaMethod.getRiResolvedMethod((MaxResolvedJavaMethod) gCall.target);
-                } else if (gCall.target instanceof MaxResolvedJavaMethod.Unresolved) {
+                } else if (gCall.target instanceof /*MaxResolvedJavaMethod.Unresolved*/MaxJavaMethod) {
                     // This is the current hack for unresolved methods
-                    target = MaxResolvedJavaMethod.getRiMethod((MaxJavaMethod) gCall.target);
+                    target = MaxJavaMethod.getRiMethod((MaxJavaMethod) gCall.target);
                 } else {
                     target = gCall.target;
                 }

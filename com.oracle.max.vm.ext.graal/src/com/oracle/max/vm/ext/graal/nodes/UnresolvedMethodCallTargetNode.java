@@ -25,16 +25,12 @@ package com.oracle.max.vm.ext.graal.nodes;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
-import com.oracle.max.vm.ext.graal.*;
 
 /**
  * Denotes an unresolved method call target.
  * The resolved {@link #resolvedMethodActor}, which is produced by an {@link ResolveMethod} node is
  * used in an {@link IndirectCallTargetNode}.
  *
- * In order to subclass {@link MethodCallTargetNode} and avoid replicating a lot of logic,
- * we fake a {@link ResolvedJavaMethod} that has just enough functionality to get by.
- * This means, of course, that {@link MethodCallTargetNode} does not really need an actual {@link ResolvedJavaMethod}.
  */
 public class UnresolvedMethodCallTargetNode extends MethodCallTargetNode  {
 
@@ -42,7 +38,7 @@ public class UnresolvedMethodCallTargetNode extends MethodCallTargetNode  {
 
     public UnresolvedMethodCallTargetNode(InvokeKind invokeKind, JavaMethod targetMethod,
                     ValueNode[] arguments, JavaType returnType, ValueNode methodValue) {
-        super(invokeKind, MaxResolvedJavaMethod.getFake(targetMethod), arguments, returnType);
+        super(invokeKind, targetMethod, arguments, returnType);
         this.resolvedMethodActor = methodValue;
     }
 
