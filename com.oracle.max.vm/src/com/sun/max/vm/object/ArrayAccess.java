@@ -76,7 +76,7 @@ public final class ArrayAccess {
     public static void checkIndex(Object array, int index) {
         // note that we must read the array length first (implicit null check has precedence over bounds check)
         if (UnsignedMath.aboveOrEqual(index, readArrayLength(array))) {
-            Throw.throwArrayIndexOutOfBoundsException(array, index);
+            throw Throw.throwArrayIndexOutOfBoundsException(array, index);
         }
     }
 
@@ -94,18 +94,18 @@ public final class ArrayAccess {
             final Class componentType = arrayClass.getComponentType();
             if (value != null) {
                 if (!componentType.isInstance(value)) {
-                    Throw.throwArrayStoreException(array, value);
+                    throw Throw.throwArrayStoreException(array, value);
                 }
             } else {
                 if (Word.class.isAssignableFrom(componentType)) {
-                    Throw.throwArrayStoreException(array, value);
+                    throw Throw.throwArrayStoreException(array, value);
                 }
             }
         } else {
             if (value != null) {
                 final ClassActor arrayClassActor = ObjectAccess.readClassActor(array);
                 if (!arrayClassActor.componentClassActor().isNonNullInstance(value)) {
-                    Throw.throwArrayStoreException(array, value);
+                    throw Throw.throwArrayStoreException(array, value);
                 }
             }
         }
