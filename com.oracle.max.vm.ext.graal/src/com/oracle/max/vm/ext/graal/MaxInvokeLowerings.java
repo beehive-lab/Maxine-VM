@@ -88,8 +88,8 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
                 ValueNode receiver = parameters.size() <= 0 ? null : parameters.get(0);
                 // For Virtual/Interface calls an explicit null check is not needed as loading the
                 // address from the vtable/itable acts as an implicit null check.
-                JavaType[] signature = MetaUtil.signatureToTypes(callTarget.targetMethod().getSignature(),
-                                callTarget.isStatic() ? null : callTarget.targetMethod().getDeclaringClass());
+                JavaType[] signature = MetaUtil.signatureToTypes(callTarget.targetJavaMethod().getSignature(),
+                                callTarget.isStatic() ? null : callTarget.targetJavaMethod().getDeclaringClass());
                 CallingConvention.Type callType = CallingConvention.Type.JavaCall;
 
                 CallTargetNode loweredCallTarget = null;
@@ -103,7 +103,7 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
                             graph.addBeforeFixed(node, graph.add(entry));
 
                             loweredCallTarget = graph.add(new IndirectCallTargetNode(entry, parameters, callTarget.returnStamp(),
-                                            signature, callTarget.targetMethod(), callType));
+                                            signature, callTarget.targetJavaMethod(), callType));
                         } else {
                             loweredCallTarget = graph.add(new DirectCallTargetNode(parameters, callTarget.returnStamp(),
                                             signature, callTarget.targetMethod(), callType));
@@ -121,7 +121,7 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
                         MethodAddressNode entry = new MethodAddressNode(callTarget.invokeKind(), methodActor, receiver);
                         graph.addBeforeFixed(node, graph.add(entry));
                         loweredCallTarget = graph.add(new IndirectCallTargetNode(entry, parameters, callTarget.returnStamp(),
-                                        signature, callTarget.targetMethod(), callType));
+                                        signature, callTarget.targetJavaMethod(), callType));
                         break;
                 }
                 callTarget.replaceAndDelete(loweredCallTarget);
