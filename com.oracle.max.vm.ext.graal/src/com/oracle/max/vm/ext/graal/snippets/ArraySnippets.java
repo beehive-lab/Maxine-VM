@@ -32,8 +32,12 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.snippets.*;
 import com.oracle.graal.snippets.Snippet.Parameter;
 import com.oracle.graal.snippets.SnippetTemplate.*;
+import com.oracle.max.cri.intrinsics.UnsignedMath;
+import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
 
 
 public class ArraySnippets extends SnippetLowerings implements SnippetsInterface {
@@ -117,121 +121,149 @@ public class ArraySnippets extends SnippetLowerings implements SnippetsInterface
         }
     }
 
+    /**
+     * Functionally equivalent to {@link ArrayAccess.checkIndex}.
+     * However, is Graal-specific by way of the {@code throw UnreachableNode.unreachable();},
+     * which is important to avoid unnecessary checks.
+     */
+    private static void checkIndex(Object array, int index) {
+        // note that we must read the array length first (implicit null check has precedence over bounds check)
+        if (UnsignedMath.aboveOrEqual(index, ArrayAccess.readArrayLength(array))) {
+            Throw.throwArrayIndexOutOfBoundsException(array, index);
+            throw UnreachableNode.unreachable();
+        }
+    }
+
+    /**
+     * {@see checkIndex}.
+     */
+    private static void checkSetObject(Object array, Object value) {
+        if (value != null) {
+            final ClassActor arrayClassActor = ObjectAccess.readClassActor(array);
+            if (!arrayClassActor.componentClassActor().isNonNullInstance(value)) {
+                Throw.throwArrayStoreException(array, value);
+                throw UnreachableNode.unreachable();
+            }
+        }
+    }
+
+
 // START GENERATED CODE
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static boolean zaloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         return ArrayAccess.getBoolean(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void zastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
             @Parameter("value") boolean value) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         ArrayAccess.setBoolean(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static byte baloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         return ArrayAccess.getByte(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void bastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
             @Parameter("value") byte value) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         ArrayAccess.setByte(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static short saloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         return ArrayAccess.getShort(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void sastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
             @Parameter("value") short value) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         ArrayAccess.setShort(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static char caloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         return ArrayAccess.getChar(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void castoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
             @Parameter("value") char value) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         ArrayAccess.setChar(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static int ialoadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         return ArrayAccess.getInt(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void iastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
             @Parameter("value") int value) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         ArrayAccess.setInt(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static float faloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         return ArrayAccess.getFloat(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void fastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
             @Parameter("value") float value) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         ArrayAccess.setFloat(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static long jaloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         return ArrayAccess.getLong(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void jastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
             @Parameter("value") long value) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         ArrayAccess.setLong(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static double daloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         return ArrayAccess.getDouble(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void dastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
             @Parameter("value") double value) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         ArrayAccess.setDouble(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object aaloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
         return ArrayAccess.getObject(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void aastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
             @Parameter("value") Object value) {
-        ArrayAccess.checkIndex(array, index);
+        checkIndex(array, index);
+        checkSetObject(array, value);
         ArrayAccess.setObject(array, index, value);
     }
 
