@@ -27,7 +27,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
-import com.oracle.graal.snippets.Snippet.Fold;
+import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;

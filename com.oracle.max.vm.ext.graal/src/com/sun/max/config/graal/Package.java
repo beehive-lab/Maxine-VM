@@ -52,8 +52,8 @@ public class Package extends BootImagePackage {
               "com.oracle.graal.nodes.**",
               "com.oracle.graal.phases.**",
               "com.oracle.graal.printer.*",
-              "com.oracle.graal.snippets.*",
-              "com.oracle.graal.snippets.amd64.*",
+              "com.oracle.graal.replacements.*",
+              "com.oracle.graal.replacements.amd64.*",
               "com.oracle.graal.virtual.*"
               );
 
@@ -61,7 +61,7 @@ public class Package extends BootImagePackage {
 
     @Override
     public void loading() {
-        UnsafeUsageChecker.addWhiteList("com.oracle.graal.snippets.SnippetCounter");
+        UnsafeUsageChecker.addWhiteList("com.oracle.graal.replacements.SnippetCounter");
     }
 
     @Override

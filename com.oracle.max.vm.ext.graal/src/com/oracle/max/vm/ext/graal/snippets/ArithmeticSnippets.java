@@ -28,13 +28,12 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.snippets.*;
 import com.sun.max.annotate.*;
 
 /**
  * We are required to provide a lowering for the div/rem nodes, but we take the default {@link LIRLowering}.
  */
-public final class ArithmeticSnippets extends SnippetLowerings implements SnippetsInterface {
+public final class ArithmeticSnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
     public ArithmeticSnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {

@@ -29,14 +29,14 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
-import com.oracle.graal.snippets.*;
-import com.oracle.graal.snippets.SnippetTemplate.Arguments;
-import com.oracle.graal.snippets.SnippetTemplate.Cache;
-import com.oracle.graal.snippets.SnippetTemplate.Key;
+import com.oracle.graal.replacements.*;
+import com.oracle.graal.replacements.SnippetTemplate.Arguments;
+import com.oracle.graal.replacements.SnippetTemplate.Cache;
+import com.oracle.graal.replacements.SnippetTemplate.Key;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.CriticalMethod;
 
-public abstract class SnippetLowerings implements SnippetsInterface {
+public abstract class SnippetLowerings implements Snippets {
 
     protected final MetaAccessProvider runtime;
     protected final Assumptions assumptions;

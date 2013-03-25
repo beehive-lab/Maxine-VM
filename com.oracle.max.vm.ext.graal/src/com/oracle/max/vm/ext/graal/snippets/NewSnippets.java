@@ -31,10 +31,10 @@ import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
-import com.oracle.graal.snippets.*;
-import com.oracle.graal.snippets.Snippet.Parameter;
-import com.oracle.graal.snippets.SnippetTemplate.Arguments;
-import com.oracle.graal.snippets.SnippetTemplate.Key;
+import com.oracle.graal.replacements.*;
+import com.oracle.graal.replacements.Snippet.Parameter;
+import com.oracle.graal.replacements.SnippetTemplate.Arguments;
+import com.oracle.graal.replacements.SnippetTemplate.Key;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ri.*;
@@ -44,8 +44,9 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.Snippets;
 
-public class NewSnippets extends SnippetLowerings implements SnippetsInterface {
+public class NewSnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
     public NewSnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {

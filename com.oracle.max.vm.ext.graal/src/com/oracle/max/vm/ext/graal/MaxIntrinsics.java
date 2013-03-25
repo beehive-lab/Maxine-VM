@@ -33,6 +33,7 @@ import java.util.concurrent.*;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.api.replacements.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
@@ -323,7 +324,7 @@ public class MaxIntrinsics {
                 }
                 ResolvedJavaMethod graalMethod = graalSnippet(com.oracle.graal.api.code.UnsignedMath.class, graalMethodName, m);
                 MaxResolvedJavaMethod maxMethod = MaxResolvedJavaMethod.get(MethodActor.fromJava(m));
-                maxMethod.getCompilerStorage().put(Graph.class, graalMethod.getCompilerStorage().get(Graph.class));
+                maxMethod.getCompilerStorage().put(Graph.class, graalMethod.getCompilerStorage().get(MethodSubstitution.class));
                 registry.add(maxMethod.riMethod, new GraalSnippetIntrinsic(maxMethod));
             }
         }

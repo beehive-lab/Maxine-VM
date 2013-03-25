@@ -30,7 +30,7 @@ import static com.sun.max.vm.thread.VmThread.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.graal.snippets.Snippet.Fold;
+import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.cri.ci.CiKind.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;

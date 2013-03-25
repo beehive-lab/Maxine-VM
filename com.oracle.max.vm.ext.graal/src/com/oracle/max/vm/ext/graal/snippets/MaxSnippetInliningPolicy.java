@@ -24,7 +24,7 @@ package com.oracle.max.vm.ext.graal.snippets;
 
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.extended.*;
-import com.oracle.graal.snippets.Snippet.DefaultSnippetInliningPolicy;
+import com.oracle.graal.replacements.Snippet.DefaultSnippetInliningPolicy;
 import com.oracle.max.vm.ext.graal.*;
 import com.sun.max.annotate.*;
 

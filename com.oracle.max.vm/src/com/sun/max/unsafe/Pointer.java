@@ -26,7 +26,7 @@ import static com.sun.max.memory.Memory.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
-import com.oracle.graal.snippets.Snippet.Fold;
+import com.oracle.graal.replacements.Snippet.Fold;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;

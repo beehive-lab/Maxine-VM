@@ -64,11 +64,6 @@ public class MaxRegisterConfig implements RegisterConfig {
     }
 
     @Override
-    public Register getScratchRegister() {
-        return RegisterMap.toGraal(riRegisterConfig.getScratchRegister());
-    }
-
-    @Override
     public CallingConvention getCallingConvention(Type type, JavaType returnType, JavaType[] parameters, TargetDescription target, boolean stackOnly) {
         CiKind[] ciParameters = new CiKind[parameters.length];
         for (int i = 0; i < parameters.length; i++) {

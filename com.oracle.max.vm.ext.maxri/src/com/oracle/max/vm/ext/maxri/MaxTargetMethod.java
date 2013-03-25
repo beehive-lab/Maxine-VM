@@ -31,7 +31,7 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
-import com.oracle.graal.snippets.Snippet.Fold;
+import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;

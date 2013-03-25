@@ -29,9 +29,9 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.snippets.*;
-import com.oracle.graal.snippets.Snippet.Parameter;
-import com.oracle.graal.snippets.SnippetTemplate.*;
+import com.oracle.graal.replacements.*;
+import com.oracle.graal.replacements.Snippet.Parameter;
+import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.cri.intrinsics.UnsignedMath;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
@@ -40,7 +40,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
 
-public class ArraySnippets extends SnippetLowerings implements SnippetsInterface {
+public class ArraySnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
     public ArraySnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {

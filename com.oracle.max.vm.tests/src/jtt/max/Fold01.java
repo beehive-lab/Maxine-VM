@@ -22,7 +22,7 @@
  */
 package jtt.max;
 
-import com.oracle.graal.snippets.Snippet.Fold;
+import com.oracle.graal.replacements.Snippet.Fold;
 
 /*
  * @Harness: java

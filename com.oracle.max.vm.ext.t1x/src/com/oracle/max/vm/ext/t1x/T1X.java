@@ -35,7 +35,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.graal.snippets.Snippet.Fold;
+import com.oracle.graal.replacements.Snippet.Fold;
 import com.oracle.max.criutils.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.bytecode.*;

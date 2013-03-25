@@ -37,7 +37,7 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.printer.*;
-import com.oracle.graal.snippets.*;
+import com.oracle.graal.replacements.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.oracle.max.vm.ext.graal.snippets.amd64.*;
 import com.sun.max.program.*;
@@ -58,7 +58,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     }
 
     @Override
-    public InstalledCode addMethod(ResolvedJavaMethod method, CompilationResult compResult, CodeInfo[] info) {
+    public InstalledCode addMethod(ResolvedJavaMethod method, CompilationResult compResult) {
         unimplemented("addMethod");
         return null;
     }
@@ -70,9 +70,9 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     }
 
     @Override
-    public String disassemble(CodeInfo info, CompilationResult tm) {
-        byte[] code = info.getCode();
-        HexCodeFile hcf = new HexCodeFile(code, info.getStart(), maxTargetDescription.arch.getName(), maxTargetDescription.wordSize * 8);
+    public String disassemble(CompilationResult tm, InstalledCode installedCode) {
+        byte[] code = installedCode.getCode();
+        HexCodeFile hcf = new HexCodeFile(code, installedCode.getStart(), maxTargetDescription.arch.getName(), maxTargetDescription.wordSize * 8);
         if (tm != null) {
             HexCodeFile.addAnnotations(hcf, tm.getAnnotations());
             addExceptionHandlersComment(tm, hcf);
@@ -229,8 +229,8 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     public void init() {
         // Snippets cannot have optimistic assumptions.
         Assumptions assumptions = new Assumptions(false);
-        SnippetInstaller installer = new SnippetInstaller(this, assumptions, maxTargetDescription);
-        GraalIntrinsics.installIntrinsics(installer);
+        ReplacementsInstaller installer = new ReplacementsInstaller(this, assumptions, maxTargetDescription);
+        new GraalMethodSubstitutions().installReplacements(installer);
         MaxIntrinsics.initialize(this, maxTargetDescription);
         MaxRuntimeCallsMap.initialize(this);
         MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration = new MaxSnippetGraphBuilderConfiguration();

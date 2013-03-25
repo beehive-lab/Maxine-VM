@@ -29,7 +29,7 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
-import com.oracle.graal.snippets.amd64.*;
+import com.oracle.graal.replacements.amd64.*;
 
 /**
  * Wrapper class to conform to Maxine's snippet installation framework.
