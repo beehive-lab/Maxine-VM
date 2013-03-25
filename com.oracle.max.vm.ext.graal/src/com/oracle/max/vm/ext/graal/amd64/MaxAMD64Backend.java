@@ -27,6 +27,7 @@ import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 
 import java.io.*;
 
+import com.oracle.graal.amd64.*;
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.asm.*;
@@ -35,6 +36,7 @@ import com.oracle.graal.compiler.gen.*;
 import com.oracle.graal.compiler.amd64.*;
 import com.oracle.graal.compiler.target.*;
 import com.oracle.graal.lir.*;
+import com.oracle.graal.lir.amd64.*;
 import com.oracle.graal.lir.asm.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
@@ -45,7 +47,6 @@ import com.sun.max.platform.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-
 
 public class MaxAMD64Backend extends Backend {
 
@@ -124,6 +125,20 @@ public class MaxAMD64Backend extends Backend {
         @Override
         public void emitDeoptimize(DeoptimizationAction action, DeoptimizationReason reason) {
             unimplemented("MaxAMD64LIRGenerator.emitDeoptimize");
+        }
+
+        @Override
+        protected void emitDirectCall(DirectCallTargetNode callTarget, Value result, Value[] parameters, Value[] temps, LIRFrameState callState) {
+            append(new AMD64Call.DirectCallOp((ResolvedJavaMethod) callTarget.target(), result, parameters, temps, callState));
+        }
+
+        @Override
+        protected void emitIndirectCall(IndirectCallTargetNode callTarget, Value result, Value[] parameters, Value[] temps, LIRFrameState callState) {
+            // The current register allocator cannot handle variables at call sites, need a fixed
+            // register.
+            Value targetAddress = AMD64.rax.asValue();
+            emitMove(targetAddress, operand(callTarget.computedAddress()));
+            append(new AMD64Call.IndirectCallOp(callTarget.target(), result, parameters, temps, targetAddress, callState));
         }
 
     }

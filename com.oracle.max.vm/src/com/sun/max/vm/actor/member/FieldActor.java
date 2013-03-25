@@ -32,7 +32,7 @@ import java.lang.reflect.*;
 
 import sun.reflect.*;
 
-import com.oracle.graal.snippets.Snippet.Fold;
+import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.*;

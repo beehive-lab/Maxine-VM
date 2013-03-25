@@ -27,7 +27,7 @@ import static com.sun.max.vm.MaxineVM.*;
 import java.io.*;
 import java.util.*;
 
-import com.oracle.graal.snippets.Snippet.Fold;
+import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
 import com.sun.max.platform.*;

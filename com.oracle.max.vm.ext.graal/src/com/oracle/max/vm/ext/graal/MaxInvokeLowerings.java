@@ -32,15 +32,16 @@ import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.snippets.*;
-import com.oracle.graal.snippets.Snippet.*;
-import com.oracle.graal.snippets.SnippetTemplate.*;
+import com.oracle.graal.replacements.*;
+import com.oracle.graal.replacements.Snippet.*;
+import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.Snippets;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -56,7 +57,7 @@ import com.sun.max.vm.thread.*;
  * Unresolved methods are handled in a similar fashion, by inserting a node that is lowered by a snippet to do the
  * resolution. This is actually done in {@link MaxGraphBuilderPhase#unresolvedInvoke}.
  */
-class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
+class MaxInvokeLowerings extends SnippetLowerings {
 
     @HOSTED_ONLY
     public MaxInvokeLowerings(CodeCacheProvider runtime, TargetDescription target,
@@ -260,6 +261,14 @@ class MaxInvokeLowerings extends SnippetLowerings implements SnippetsInterface {
 
         @Override
         public void lower(ExceptionObjectNode node, LoweringTool tool) {
+            // Workaround - can't replace an ExceptionObjectNode with a RuntimeCallNode
+            StructuredGraph graph = (StructuredGraph) node.graph();
+            DispatchBeginNode dispatch = graph.add(new DispatchBeginNode());
+            InvokeWithExceptionNode invokeNode = (InvokeWithExceptionNode) node.predecessor();
+            invokeNode.setExceptionEdge(dispatch);
+            dispatch.setNext(node);
+            dispatch.setStateAfter(invokeNode.stateAfter().duplicate());
+
             Key key = new Key(snippet);
             Arguments args = new Arguments();
             Map<Node, Node> map = instantiate(node, key, args);

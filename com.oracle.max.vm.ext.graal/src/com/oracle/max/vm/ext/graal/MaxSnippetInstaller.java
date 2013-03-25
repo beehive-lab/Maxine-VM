@@ -33,12 +33,12 @@ import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
-import com.oracle.graal.snippets.*;
+import com.oracle.graal.replacements.*;
 import com.oracle.max.vm.ext.graal.MaxRuntime.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.max.program.*;
 
-class MaxSnippetInstaller extends SnippetInstaller {
+class MaxSnippetInstaller extends ReplacementsInstaller {
     private MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration;
     Map<Class< ? extends Node>, LoweringProvider> lowerings;
 
@@ -74,7 +74,7 @@ class MaxSnippetInstaller extends SnippetInstaller {
 
         new MaxIntrinsicsPhase().apply(graph);
         new MaxWordTypeRewriterPhase.MaxInvokeRewriter(runtime, target.wordKind).apply(graph);
-        new SnippetIntrinsificationPhase(runtime, pool).apply(graph);
+        new NodeIntrinsificationPhase(runtime, pool).apply(graph);
         // need constant propagation for folded methods
         new CanonicalizerPhase(runtime, assumptions).apply(graph);
 
@@ -90,7 +90,7 @@ class MaxSnippetInstaller extends SnippetInstaller {
 
     @Override
     protected void finalizeGraph(ResolvedJavaMethod method, StructuredGraph graph) {
-        new SnippetIntrinsificationPhase(runtime, pool).apply(graph);
+        new NodeIntrinsificationPhase(runtime, pool).apply(graph);
 
         // These only get done once right at the end
         new MaxWordTypeRewriterPhase.MaxUnsafeCastRewriter(runtime, target.wordKind).apply(graph);
@@ -108,7 +108,7 @@ class MaxSnippetInstaller extends SnippetInstaller {
 
     @Override
     public void afterInlining(StructuredGraph graph) {
-        new SnippetIntrinsificationPhase(runtime, pool).apply(graph);
+        new NodeIntrinsificationPhase(runtime, pool).apply(graph);
 
         new DeadCodeEliminationPhase().apply(graph);
         new CanonicalizerPhase(runtime, assumptions).apply(graph);

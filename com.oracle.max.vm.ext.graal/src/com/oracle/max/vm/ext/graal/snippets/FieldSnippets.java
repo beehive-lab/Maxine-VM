@@ -35,10 +35,10 @@ import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
-import com.oracle.graal.snippets.*;
-import com.oracle.graal.snippets.Snippet.ConstantParameter;
-import com.oracle.graal.snippets.Snippet.Parameter;
-import com.oracle.graal.snippets.SnippetTemplate.*;
+import com.oracle.graal.replacements.*;
+import com.oracle.graal.replacements.Snippet.ConstantParameter;
+import com.oracle.graal.replacements.Snippet.Parameter;
+import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ci.*;
@@ -48,6 +48,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.Snippets;
 
 /**
  * Snippets for field access, resolved and unresolved. The unresolved field lowerings use similar code
@@ -83,7 +84,7 @@ import com.sun.max.vm.runtime.*;
  * may be {@link CONSTANT_WHEN_NOT_ZERO} at runtime. The resolved field lowering handles this situation explicitly but there
  * is evidently an opportunity to transform the snippet on VM startup to replace the field access with the runtime constant.
  */
-public class FieldSnippets extends SnippetLowerings implements SnippetsInterface {
+public class FieldSnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
     public FieldSnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {

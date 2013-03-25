@@ -24,7 +24,7 @@ package com.sun.max.vm.jni;
 
 import java.lang.ref.*;
 
-import com.oracle.graal.snippets.Snippet.Fold;
+import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;

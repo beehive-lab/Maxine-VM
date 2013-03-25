@@ -30,7 +30,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
 
-import com.oracle.graal.snippets.Snippet.Fold;
+import com.oracle.graal.replacements.Snippet.Fold;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
