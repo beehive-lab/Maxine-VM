@@ -97,7 +97,7 @@ class MaxSnippetInstaller extends ReplacementsInstaller {
         new MaxSlowpathRewriterPhase(runtime).apply(graph);
         new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, target.wordKind).apply(graph);
 
-        // The replaces all Word based types with long
+        // The replaces all Word based types with target.wordKind
         new MaxWordTypeRewriterPhase.KindRewriter(runtime, target.wordKind).apply(graph);
 
         new SnippetFrameStateCleanupPhase().apply(graph);

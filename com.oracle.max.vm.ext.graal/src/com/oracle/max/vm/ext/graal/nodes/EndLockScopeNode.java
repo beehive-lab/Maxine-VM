@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,40 +23,25 @@
 package com.oracle.max.vm.ext.graal.nodes;
 
 
-import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.compiler.gen.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.type.*;
 
-public final class UnreachableNode extends FixedWithNextNode implements Simplifiable {
+/**
+ * Intrinsic for closing a {@linkplain BeginLockScopeNode scope} binding a stack-based lock with an
+ * object.
+ */
+public final class EndLockScopeNode extends LockScopeNode implements MonitorExit {
 
-    public UnreachableNode() {
-        super(StampFactory.object());
+    public EndLockScopeNode() {
+        super(StampFactory.forVoid());
     }
 
     @Override
-    public void simplify(SimplifierTool tool) {
-        tool.deleteBranch(next());
-        replaceAtPredecessor(graph().add(new DeadEndNode()));
-        safeDelete();
-    }
-
-    public static class DeadEndNode extends ControlSplitNode implements LIRLowerable {
-
-        public DeadEndNode() {
-            super(StampFactory.forVoid());
-        }
-
-        @Override
-        public void generate(LIRGeneratorTool generator) {
-            // No code to emit since this node represents an unreachable code path.
-        }
-
-        @Override
-        public double probability(BeginNode successor) {
-            throw new IllegalArgumentException("Node has no successors");
-        }
+    public void generate(LIRGenerator gen) {
+        gen.unlock();
     }
 
     @NodeIntrinsic
-    public static native RuntimeException unreachable();
+    public static native void endLockScope();
 }

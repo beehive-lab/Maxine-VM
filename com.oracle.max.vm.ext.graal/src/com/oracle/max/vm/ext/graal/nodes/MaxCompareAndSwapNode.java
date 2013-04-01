@@ -22,41 +22,28 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.nodes.type.*;
+import com.oracle.max.vm.ext.graal.amd64.MaxAMD64Backend.MaxAMD64LIRGenerator;
 
-public final class UnreachableNode extends FixedWithNextNode implements Simplifiable {
+/**
+ * Maxine a different style of compare and swap to the default Graal node, which returns {@code boolean),,
+ * and instead returns either the expected value or the old value, depending on the success of the operation.
+ */
+public class MaxCompareAndSwapNode extends CompareAndSwapNode {
 
-    public UnreachableNode() {
-        super(StampFactory.object());
+    public MaxCompareAndSwapNode(ValueNode object, int displacement, ValueNode offset, ValueNode expected, ValueNode newValue) {
+        super(object, displacement, offset, expected, newValue);
+        setStamp(expected.stamp());
     }
 
     @Override
-    public void simplify(SimplifierTool tool) {
-        tool.deleteBranch(next());
-        replaceAtPredecessor(graph().add(new DeadEndNode()));
-        safeDelete();
+    public void generate(LIRGeneratorTool gen) {
+        MaxAMD64LIRGenerator maxGen = (MaxAMD64LIRGenerator) gen;
+        maxGen.visitMaxCompareAndSwap(this);
     }
 
-    public static class DeadEndNode extends ControlSplitNode implements LIRLowerable {
 
-        public DeadEndNode() {
-            super(StampFactory.forVoid());
-        }
 
-        @Override
-        public void generate(LIRGeneratorTool generator) {
-            // No code to emit since this node represents an unreachable code path.
-        }
-
-        @Override
-        public double probability(BeginNode successor) {
-            throw new IllegalArgumentException("Node has no successors");
-        }
-    }
-
-    @NodeIntrinsic
-    public static native RuntimeException unreachable();
 }

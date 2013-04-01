@@ -193,6 +193,7 @@ public class MaxGraal implements RuntimeCompiler {
                     MaxIntrinsicsPhase maxIntrinsicsPhase = new MaxIntrinsicsPhase();
                     phasePlan.addPhase(PhasePosition.AFTER_PARSING, maxIntrinsicsPhase);
                 }
+                phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxWordTypeRewriterPhase.KindRewriter(runtime, runtime.maxTargetDescription.wordKind));
                 graph = new StructuredGraph(method);
             }
             CompilationResult result = GraalCompiler.compileMethod(runtime, backend, runtime.maxTargetDescription,

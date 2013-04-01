@@ -25,9 +25,12 @@ package com.oracle.max.vm.ext.graal;
 
 import java.lang.annotation.*;
 
+import sun.reflect.*;
+
 import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.java.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.compiler.*;
@@ -71,8 +74,16 @@ public class MaxResolvedJavaField extends MaxJavaField implements ResolvedJavaFi
     public Constant readConstantValue(Constant receiver) {
         CiConstant ciConstant = riResolvedField().constantValue(ConstantMap.toCi(receiver));
         if (ciConstant != null && ciConstant.kind == CiKind.Object && ciConstant.asObject() instanceof WordUtil.WrappedWord) {
-            WordUtil.WrappedWord wrappedWord = (WordUtil.WrappedWord) ciConstant.asObject();
-            ciConstant = wrappedWord.archConstant();
+            // This is a bit Catch-22. If we are processing bytecodes, then returning the archConstant
+            // risks a mismatch with maxStackSize, as a long is two stack slots. But if we are in the lowering
+            // phase, we must return the archConstant otherwise we risk a kind mismatch on, say, a plus operation.
+            // Unfortunately, there is no obvious hook in Graal to allow the wrapped constant to be rewritten
+            // in the lowering phase, except explicitly after every possible lowering.
+            Class<?> caller = Reflection.getCallerClass(2);
+            if (caller != GraphBuilderPhase.class) {
+                WordUtil.WrappedWord wrappedWord = (WordUtil.WrappedWord) ciConstant.asObject();
+                ciConstant = wrappedWord.archConstant();
+            }
         }
         return ConstantMap.toGraal(ciConstant);
     }

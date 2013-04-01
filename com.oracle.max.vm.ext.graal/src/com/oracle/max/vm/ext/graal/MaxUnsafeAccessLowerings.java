@@ -44,6 +44,7 @@ class MaxUnsafeAccessLowerings {
 
         lowerings.put(ExtendedUnsafeLoadNode.class, new ExtendedUnsafeLoadLowering(unsafeLoadLowering));
         lowerings.put(ExtendedUnsafeStoreNode.class, new ExtendedUnsafeStoreLowering(unsafeStoreLowering));
+        lowerings.put(MaxCompareAndSwapNode.class, new MaxCompareAndSwapLowering());
     }
 
     private static class UnsafeLoadLowering implements LoweringProvider<UnsafeLoadNode> {
@@ -120,6 +121,14 @@ class MaxUnsafeAccessLowerings {
             }
         }
 
+    }
+
+    protected static class MaxCompareAndSwapLowering implements LoweringProvider<MaxCompareAndSwapNode> {
+
+        @Override
+        public void lower(MaxCompareAndSwapNode node, LoweringTool tool) {
+            // The MaxCompareAndSwapNode is lowered to LIR instructions.
+        }
     }
 
 }

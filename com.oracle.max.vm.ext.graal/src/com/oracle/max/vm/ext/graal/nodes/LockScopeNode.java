@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,41 +22,30 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-
+import com.oracle.graal.compiler.target.*;
 import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.type.*;
 
-public final class UnreachableNode extends FixedWithNextNode implements Simplifiable {
+/**
+ * Maxine currently does not use stack based locks; however, Graal assumes stack based locking so
+ * {@link BeginLockScopeNode} and {@link EndLockScopeNode} keep it happy.
+ */
+public abstract class LockScopeNode extends AbstractStateSplit implements LIRGenLowerable, MemoryCheckpoint {
 
-    public UnreachableNode() {
-        super(StampFactory.object());
+    protected LockScopeNode(Stamp stamp) {
+        super(stamp);
     }
 
     @Override
-    public void simplify(SimplifierTool tool) {
-        tool.deleteBranch(next());
-        replaceAtPredecessor(graph().add(new DeadEndNode()));
-        safeDelete();
+    public boolean hasSideEffect() {
+        return false;
     }
 
-    public static class DeadEndNode extends ControlSplitNode implements LIRLowerable {
-
-        public DeadEndNode() {
-            super(StampFactory.forVoid());
-        }
-
-        @Override
-        public void generate(LIRGeneratorTool generator) {
-            // No code to emit since this node represents an unreachable code path.
-        }
-
-        @Override
-        public double probability(BeginNode successor) {
-            throw new IllegalArgumentException("Node has no successors");
-        }
+    @Override
+    public Object[] getLocationIdentities() {
+        return new Object[]{LocationNode.ANY_LOCATION};
     }
 
-    @NodeIntrinsic
-    public static native RuntimeException unreachable();
+
 }

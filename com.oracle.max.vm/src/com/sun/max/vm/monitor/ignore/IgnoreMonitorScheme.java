@@ -51,9 +51,6 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
     }
 
     public int makeHashCode(Object object) {
-        if (object == null) {
-            throw new NullPointerException();
-        }
         if (MaxineVM.isHosted()) {
             return createHashCode(object);
         }
@@ -72,18 +69,12 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
     }
 
     public final void monitorEnter(Object object) {
-        if (object == null) {
-            throw new NullPointerException();
-        }
         if (MaxineVM.isHosted()) {
             HostMonitor.enter(object);
         }
     }
 
     public final void monitorExit(Object object) {
-        if (object == null) {
-            throw new NullPointerException();
-        }
         if (MaxineVM.isHosted()) {
             HostMonitor.exit(object);
         }
@@ -124,9 +115,6 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
     }
 
     public boolean threadHoldsMonitor(Object object, VmThread thread) {
-        if (object == null) {
-            throw new NullPointerException();
-        }
         return false;
     }
 

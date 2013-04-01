@@ -113,7 +113,11 @@ public class TypeSnippets extends SnippetLowerings {
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void checkCastSnippet(@Parameter("classActor") ClassActor classActor, @Parameter("object") Object object) {
-        Snippets.checkCast(classActor, object);
+        //Snippets.checkCast(classActor, object);
+        if (!classActor.isNullOrInstance(object)) {
+            Throw.throwClassCastException(classActor, object);
+            throw UnreachableNode.unreachable();
+        }
     }
 
     protected class UnresolvedCheckCastLowering extends Lowering implements LoweringProvider<UnresolvedCheckCastNode> {

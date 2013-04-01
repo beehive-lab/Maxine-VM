@@ -30,6 +30,13 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
 
 /**
+ * This is the public interface to the basic actions on a monitor as required by the bytecode specification,
+ * namely {@code monitorentry} and {@code monitorexit). As the actual monitor implementation is defined by
+ * a {@link MonitorScheme}, the methods in this class essentially delegate to corresponding operations on the
+ * scheme.
+ *
+ * Null checks are (logically) implemented at this level, as they are a common requirement for all schemes.
+ * However, even this is delegated to the scheme implementation.
  */
 public final class Monitor {
     private Monitor() {
@@ -51,16 +58,19 @@ public final class Monitor {
 
     @INLINE
     public static int makeHashCode(Object object) {
+        monitorScheme().nullCheck(object);
         return monitorScheme().makeHashCode(object);
     }
 
     @INLINE
     public static void enter(Object object) {
+        monitorScheme().nullCheck(object);
         monitorScheme().monitorEnter(object);
     }
 
     @INLINE
     public static void exit(Object object) {
+        // Assuming balanced monitors, which Maxine does, no null check is required for exit.
         monitorScheme().monitorExit(object);
     }
 
@@ -76,6 +86,7 @@ public final class Monitor {
 
     @INLINE
     public static boolean threadHoldsMonitor(Object object, VmThread thread) {
+        monitorScheme().nullCheck(object);
         return monitorScheme().threadHoldsMonitor(object, thread);
     }
 }

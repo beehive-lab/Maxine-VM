@@ -65,7 +65,6 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     @Override
     public int getSizeOfLockData() {
-        unimplemented("getSizeOfLockData");
         return 0;
     }
 
@@ -242,6 +241,11 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         maxInstaller.installAndRegister(FieldSnippets.class);
         maxInstaller.installAndRegister(ArraySnippets.class);
         maxInstaller.installAndRegister(TypeSnippets.class);
+        // MonitorSnippets do the null check explicitly, so we don't want the normal explicit null check
+        // in the scheme implementation.
+        boolean explicitNullChecks = VMConfiguration.vmConfig().monitorScheme().setExplicitNullChecks(false);
+        maxInstaller.installAndRegister(MonitorSnippets.class);
+        VMConfiguration.vmConfig().monitorScheme().setExplicitNullChecks(explicitNullChecks);
         maxInstaller.installAndRegister(MaxInvokeLowerings.class);
         maxInstaller.installAndRegister(ArithmeticSnippets.class);
         maxInstaller.installAndRegister(AMD64ConvertSnippetsWrapper.class);
