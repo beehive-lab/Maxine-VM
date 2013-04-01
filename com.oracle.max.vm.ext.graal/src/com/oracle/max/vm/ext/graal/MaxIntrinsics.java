@@ -101,6 +101,12 @@ public class MaxIntrinsics {
         }
     }
 
+    static class PointerCompareAndSwapIntrinsic extends MaxIntrinsicImpl {
+        public ValueNode create(StructuredGraph graph, ValueNode pointer, ValueNode offset, ValueNode expectedValue, ValueNode newValue) {
+            return graph.add(new MaxCompareAndSwapNode(pointer, 0, offset, expectedValue, newValue));
+        }
+    }
+
     private static int kindSizeAsShift(Kind kind) {
         // Checkstyle: stop
         switch (kind) {
@@ -275,9 +281,8 @@ public class MaxIntrinsics {
         registry.add(PREAD_IDX, new PointerReadIndexIntrinsic());
         registry.add(PWRITE_OFF, new PointerWriteOffsetIntrinsic());
         registry.add(PWRITE_IDX, new PointerWriteIndexIntrinsic());
-/*
         registry.add(PCMPSWP, new PointerCompareAndSwapIntrinsic());
-*/
+
         registry.add(SAFEPOINT_POLL, new SafepointIntrinsic(MaxSafepointNode.Op.SAFEPOINT_POLL));
         registry.add(INFO, new SafepointIntrinsic(MaxSafepointNode.Op.INFO));
         registry.add(HERE, new SafepointIntrinsic(MaxSafepointNode.Op.HERE));

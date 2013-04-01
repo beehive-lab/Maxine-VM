@@ -144,7 +144,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
     }
 
     public void monitorExit(Object object) {
-        nullCheck(object);
         if (MaxineVM.isHosted()) {
             HostMonitor.exit(object);
             return;
@@ -224,7 +223,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
     }
 
     public boolean threadHoldsMonitor(Object object, VmThread thread) {
-        nullCheck(object);
         final int lockwordThreadID = encodeCurrentThreadIDForLockword();
         final ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
         if (BiasedLockword64.isBiasedLockword(lockword)) {
@@ -242,7 +240,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
 
         public void monitorEnter(Object object) {
-            nullCheck(object);
             if (MaxineVM.isHosted()) {
                 HostMonitor.enter(object);
                 return;
@@ -294,7 +291,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
 
         public int makeHashCode(Object object) {
-            nullCheck(object);
             if (MaxineVM.isHosted()) {
                 return monitorScheme().createHashCode(object);
             }
@@ -345,7 +341,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
 
         public void monitorEnter(Object object) {
-            nullCheck(object);
             if (MaxineVM.isHosted()) {
                 HostMonitor.enter(object);
                 return;
@@ -424,8 +419,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
 
         public int makeHashCode(Object object) {
-            // This is under construction!
-            nullCheck(object);
             if (MaxineVM.isHosted()) {
                 return monitorScheme().createHashCode(object);
             }

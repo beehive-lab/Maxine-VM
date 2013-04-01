@@ -32,6 +32,7 @@ import com.oracle.graal.api.meta.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 
 
 public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType {
@@ -198,6 +199,13 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     @Override
     public ResolvedJavaMethod resolveMethod(ResolvedJavaMethod method) {
         MaxResolvedJavaMethod maxMethod = (MaxResolvedJavaMethod) method;
+        if (maxMethod.riMethod instanceof InterfaceMethodActor) {
+            ClassActor cma = (ClassActor) riResolvedType();
+            if (cma.allVirtualMethodActors().length == 0) {
+                // implementation not known
+                return null;
+            }
+        }
         return MaxResolvedJavaMethod.get(riResolvedType().resolveMethodImpl((RiResolvedMethod) maxMethod.riMethod));
     }
 

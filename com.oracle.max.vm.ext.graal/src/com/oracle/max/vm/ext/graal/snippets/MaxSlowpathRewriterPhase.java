@@ -23,15 +23,12 @@
 package com.oracle.max.vm.ext.graal.snippets;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.phases.*;
-import com.oracle.graal.phases.util.*;
 import com.oracle.max.vm.ext.graal.*;
-import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 

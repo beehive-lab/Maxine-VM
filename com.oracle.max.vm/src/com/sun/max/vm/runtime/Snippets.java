@@ -663,10 +663,10 @@ public class Snippets {
     public static void checkCast(ClassActor classActor, Object object) {
         if (MaxineVM.isHosted()) {
             if (object != null && !classActor.toJava().isAssignableFrom(object.getClass())) {
-                Throw.throwClassCastException(classActor, object);
+                throw Throw.throwClassCastException(classActor, object);
             }
         } else if (!classActor.isNullOrInstance(object)) {
-            Throw.throwClassCastException(classActor, object);
+            throw Throw.throwClassCastException(classActor, object);
         }
     }
 

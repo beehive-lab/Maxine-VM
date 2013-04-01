@@ -61,6 +61,13 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public byte[] getCode() {
+        MethodActor ma = (MethodActor) riResolvedMethod();
+        if (ma.isNative()) {
+            // Maxine returns the bytecodes for the generated implementation of the method.
+            // This may be correct but it causes verification errors when called in a Dump
+            // TODO deal with this correctly
+            return null;
+        }
         return riResolvedMethod().code();
     }
 

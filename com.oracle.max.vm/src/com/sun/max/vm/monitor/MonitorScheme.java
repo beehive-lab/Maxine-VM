@@ -34,6 +34,21 @@ import com.sun.max.vm.thread.*;
 public interface MonitorScheme extends VMScheme {
 
     /**
+     * If {@code value} is {@code true}, then an explicit check for {@code null}
+     * will be generated, regardless of whether an implicit (hardware) check would suffice.
+     * The default value is {@code true}.
+     * @param value
+     * @return the previous value
+     */
+    boolean setExplicitNullChecks(boolean value);
+
+    /**
+     * Perform a {@code null} check on {@code object}.
+     * @param object the object being acquired
+     */
+    void nullCheck(Object object);
+
+    /**
      * Translate a monitorenter bytecode.
      * @param object the object being acquired
      */

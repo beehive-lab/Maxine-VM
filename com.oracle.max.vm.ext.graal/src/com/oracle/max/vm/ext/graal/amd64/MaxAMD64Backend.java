@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.graal.amd64;
 
 import static com.oracle.graal.amd64.AMD64.*;
+import static com.oracle.graal.api.code.ValueUtil.*;
 import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 
 import java.io.*;
@@ -32,11 +33,13 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.asm.*;
 import com.oracle.graal.asm.amd64.*;
+import com.oracle.graal.asm.amd64.AMD64Address.*;
 import com.oracle.graal.compiler.gen.*;
 import com.oracle.graal.compiler.amd64.*;
 import com.oracle.graal.compiler.target.*;
 import com.oracle.graal.lir.*;
 import com.oracle.graal.lir.amd64.*;
+import com.oracle.graal.lir.amd64.AMD64Move.*;
 import com.oracle.graal.lir.asm.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
@@ -50,7 +53,7 @@ import com.sun.max.vm.compiler.target.*;
 
 public class MaxAMD64Backend extends Backend {
 
-    protected static class MaxAMD64LIRGenerator extends AMD64LIRGenerator {
+    public static class MaxAMD64LIRGenerator extends AMD64LIRGenerator {
         public MaxAMD64LIRGenerator(StructuredGraph graph, CodeCacheProvider runtime, TargetDescription target, FrameMap frameMap, ResolvedJavaMethod method, LIR lir) {
             super(graph, runtime, target, frameMap, method, lir);
         }
@@ -105,6 +108,34 @@ public class MaxAMD64Backend extends Backend {
         private void emitSafepoint() {
             LIRFrameState info = state();
             append(new MaxAMD64SafepointOp(info));
+        }
+
+        public void visitMaxCompareAndSwap(MaxCompareAndSwapNode node) {
+            // This code up to the setResuklt is identical to AMD64LIRGenerator.visitCompareAndSwap
+            Kind kind = node.newValue().kind();
+            assert kind == node.expected().kind();
+
+            Value expected = loadNonConst(operand(node.expected()));
+            Variable newValue = load(operand(node.newValue()));
+
+            AMD64AddressValue address;
+            int displacement = node.displacement();
+            Value index = operand(node.offset());
+            if (isConstant(index) && NumUtil.isInt(asConstant(index).asLong() + displacement)) {
+                assert !runtime.needsDataPatch(asConstant(index));
+                displacement += (int) asConstant(index).asLong();
+                address = new AMD64AddressValue(kind, load(operand(node.object())), displacement);
+            } else {
+                address = new AMD64AddressValue(kind, load(operand(node.object())), load(index), Scale.Times1, displacement);
+            }
+
+            RegisterValue rax = AMD64.rax.asValue(kind);
+            emitMove(rax, expected);
+            append(new CompareAndSwapOp(rax, address, rax, newValue));
+            Variable result = newVariable(node.kind());
+            emitMove(result, rax);
+
+            setResult(node, result);
         }
 
         @Override
