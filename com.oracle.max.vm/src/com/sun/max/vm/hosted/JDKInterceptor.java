@@ -402,6 +402,16 @@ public final class JDKInterceptor {
         return getInterceptedField(field.getDeclaringClass().getName(), field.getName());
     }
 
+    public static void addInterceptedField(String className, InterceptedField interceptedField) {
+        Map<String, InterceptedField> map = interceptedFieldMap.get(className);
+        if (map == null) {
+            map = new HashMap<String, InterceptedField>();
+            interceptedFieldMap.put(className, map);
+        }
+        FatalError.check(map.put(interceptedField.getName(), interceptedField) == null,
+                        "attempted redefinition of intercepted field: " + className + "." + interceptedField.getName());
+    }
+
     private static InterceptedField getInterceptedField(String className, String fieldName) {
         final Map<String, InterceptedField> map = interceptedFieldMap.get(className);
         if (map != null) {
@@ -662,12 +672,12 @@ public final class JDKInterceptor {
      * An intercepted field whose boot image value is the {@linkplain FieldActor#offset() offset} of another field.
      * This facility is required to fix up field values obtained via {@link Unsafe#fieldOffset(Field)}.
      */
-    private static class FieldOffsetRecomputation extends InterceptedField {
+    public static class FieldOffsetRecomputation extends InterceptedField {
         private final String fieldName;
-        FieldOffsetRecomputation(String offsetFieldName, String fieldName) {
+        private FieldOffsetRecomputation(String offsetFieldName, String fieldName) {
             this(offsetFieldName, null, fieldName);
         }
-        FieldOffsetRecomputation(String offsetFieldName, ClassRef classRef, String fieldName) {
+        public FieldOffsetRecomputation(String offsetFieldName, ClassRef classRef, String fieldName) {
             super(offsetFieldName);
             this.fieldName = fieldName;
             this.classRef = classRef;

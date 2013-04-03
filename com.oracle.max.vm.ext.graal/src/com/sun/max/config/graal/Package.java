@@ -26,6 +26,7 @@ package com.sun.max.config.graal;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jdk.*;
 
 
 public class Package extends BootImagePackage {
@@ -59,9 +60,16 @@ public class Package extends BootImagePackage {
 
     }
 
+    private static final String MEMBARNODE_CLASSNAME = "com.oracle.graal.nodes.extended.MembarNode";
+
     @Override
     public void loading() {
-        UnsafeUsageChecker.addWhiteList("com.oracle.graal.replacements.SnippetCounter");
+        if (this.name().equals("com.oracle.graal.replacements")) {
+            UnsafeUsageChecker.addWhiteList("com.oracle.graal.replacements.SnippetCounter");
+        } else if (this.name().equals("com.oracle.graal.nodes.extended")) {
+            JDKInterceptor.addInterceptedField(MEMBARNODE_CLASSNAME,
+                            new JDKInterceptor.FieldOffsetRecomputation("dummyOffset", new JDK.ClassRef(MEMBARNODE_CLASSNAME), "dummy"));
+        }
     }
 
     @Override

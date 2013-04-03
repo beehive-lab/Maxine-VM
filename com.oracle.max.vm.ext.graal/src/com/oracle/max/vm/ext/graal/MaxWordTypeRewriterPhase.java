@@ -37,22 +37,28 @@ import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ri.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.reference.*;
 
 
 public abstract class MaxWordTypeRewriterPhase extends Phase {
 
-    private final Kind wordKind;
     private static ResolvedJavaType wordBaseType;
     private static ResolvedJavaType referenceType;
     private static ResolvedJavaType hubType;
+    private static ResolvedJavaType wrappedWordType;
+
+    private final Kind wordKind;
+    private MetaAccessProvider metaAccess;
 
     public MaxWordTypeRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
         this.wordKind = wordKind;
+        this.metaAccess = metaAccess;
         if (wordBaseType == null) {
             wordBaseType = metaAccess.lookupJavaType(Word.class);
             referenceType = metaAccess.lookupJavaType(Reference.class);
             hubType = metaAccess.lookupJavaType(Hub.class);
+            wrappedWordType = metaAccess.lookupJavaType(WordUtil.WrappedWord.class);
         }
     }
 
@@ -232,6 +238,9 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
     }
 
     public static boolean isWord(ResolvedJavaType type) {
+        if (type == wrappedWordType) {
+            return true;
+        }
         RiType riType = ((MaxResolvedJavaType) type).riType;
         if (!(riType instanceof ClassActor)) {
             return false;
@@ -254,8 +263,10 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
 
     protected void changeToWord(ValueNode valueNode) {
         if (valueNode.isConstant() && valueNode.asConstant().getKind() == Kind.Object) {
-            assert false;
-//            ((StructuredGraph) valueNode.graph()).replaceFloating((ConstantNode) valueNode, newConstant);
+            StructuredGraph graph = (StructuredGraph) valueNode.graph();
+            ConstantNode constantNode = (ConstantNode) valueNode;
+            WordUtil.WrappedWord wrappedWord = (WordUtil.WrappedWord) constantNode.value.asObject();
+            graph.replaceFloating(constantNode, ConstantNode.forConstant(ConstantMap.toGraal(wrappedWord.archConstant()), metaAccess, graph));
         } else {
             assert !(valueNode instanceof ConstantNode) : "boxed Word constants should not appear in a snippet graph: " + valueNode + ", stamp: " + valueNode.stamp();
             valueNode.setStamp(StampFactory.forKind(wordKind));
