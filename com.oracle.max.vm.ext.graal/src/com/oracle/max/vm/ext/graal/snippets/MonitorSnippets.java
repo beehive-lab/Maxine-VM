@@ -93,22 +93,7 @@ public class MonitorSnippets extends SnippetLowerings {
                 if (n instanceof LockScopeNode) {
                     LockScopeNode end = (LockScopeNode) n;
                     end.setStateAfter(stateAfter);
-                } else if (n instanceof RuntimeCallNode) {
-                    // TODO resolve this hack, which nulls out the stateAfter of the
-                    // MonitorEnterNode that was assigned to all RuntimeCallNodes in the snippet
-                    // and (incorrectly) has numLocks != 0 for the null pointer check throw.
-                    RuntimeCallNode rcn = (RuntimeCallNode) n;
-                    if (rcn.next() instanceof UnreachableNode.DeadEndNode) {
-                        rcn.setStateAfter(null);
-                    } else if (node instanceof MonitorExitNode) {
-                        // this (slowPathExit) call has the stateAfter of the MonitorExitNode
-                        // which has numLocks--, but this is earlier in the graph than the
-                        // EndLockScopeNode, so it will cause a mismatched monitor error.
-                        FrameState newStateAfter = stateAfter.duplicateModified(stateAfter.bci, stateAfter.rethrowException(), Kind.Object);
-                        rcn.setStateAfter(newStateAfter);
-                    }
                 }
-
             }
         }
     }

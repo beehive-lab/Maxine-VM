@@ -64,11 +64,6 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     }
 
     @Override
-    public int getSizeOfLockData() {
-        return 0;
-    }
-
-    @Override
     public String disassemble(CompilationResult tm, InstalledCode installedCode) {
         byte[] code = installedCode.getCode();
         HexCodeFile hcf = new HexCodeFile(code, installedCode.getStart(), maxTargetDescription.arch.getName(), maxTargetDescription.wordSize * 8);

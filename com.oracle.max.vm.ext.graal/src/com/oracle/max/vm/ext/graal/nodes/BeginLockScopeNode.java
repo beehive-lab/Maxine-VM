@@ -45,7 +45,6 @@ public final class BeginLockScopeNode extends LockScopeNode implements MonitorEn
 
     @Override
     public void generate(LIRGenerator gen) {
-        gen.lock();
     }
 
     @NodeIntrinsic

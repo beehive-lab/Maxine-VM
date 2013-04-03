@@ -39,7 +39,6 @@ public final class EndLockScopeNode extends LockScopeNode implements MonitorExit
 
     @Override
     public void generate(LIRGenerator gen) {
-        gen.unlock();
     }
 
     @NodeIntrinsic
