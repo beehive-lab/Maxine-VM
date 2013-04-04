@@ -85,6 +85,7 @@ public class Package extends BootImagePackage {
         HostedBootClassLoader.omitClass("java.nio.file.TempFileHelper");
         // The static initializer loads the native network library
         HostedBootClassLoader.omitClass("java.net.InetAddress");
+        HostedBootClassLoader.omitClass("java.net.InetSocketAddress");
         // The static initializer loads and initializes native libraries
         HostedBootClassLoader.omitClass("sun.nio.ch.FileDispatcherImpl");
         HostedBootClassLoader.omitClass("sun.nio.ch.FileChannelImpl");
