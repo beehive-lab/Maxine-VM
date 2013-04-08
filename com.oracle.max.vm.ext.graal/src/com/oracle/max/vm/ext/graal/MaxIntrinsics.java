@@ -33,12 +33,13 @@ import java.util.concurrent.*;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.api.replacements.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.extended.*;
+import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
+import com.oracle.graal.replacements.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.cri.ri.*;
@@ -265,7 +266,7 @@ public class MaxIntrinsics {
         return registry;
     }
 
-    public static void initialize(MaxRuntime runtime, MaxTargetDescription target) {
+    public static void initialize(MaxRuntime runtime, Replacements replacements, MaxTargetDescription target) {
         registry = new Registry();
 
         registry.add(TEST_SNIPPET_1, new TestIntrinsic1()); // TODO remove when debugged
@@ -295,13 +296,15 @@ public class MaxIntrinsics {
 
         registry.add(CMP_BYTECODE, new NormalizeCompareIntrinsic());
 */
-        mapUnsignedMathIntrinsics();
+        mapUnsignedMathIntrinsics(replacements);
     }
 
     /**
      * Map all cri.UnsignedMath intrinsics to appropriate Graal instrinsic.
      */
-    private static void mapUnsignedMathIntrinsics() {
+    private static void mapUnsignedMathIntrinsics(Replacements replacements) {
+        new GraalMethodSubstitutions().registerReplacements(replacements);
+
         Method[] methods = com.oracle.max.cri.intrinsics.UnsignedMath.class.getDeclaredMethods();
         for (Method m : methods) {
             INTRINSIC intrinsic = m.getAnnotation(INTRINSIC.class);
@@ -328,8 +331,9 @@ public class MaxIntrinsics {
                         break;
                 }
                 ResolvedJavaMethod graalMethod = graalSnippet(com.oracle.graal.api.code.UnsignedMath.class, graalMethodName, m);
+                StructuredGraph graph = replacements.getMethodSubstitution(graalMethod);
                 MaxResolvedJavaMethod maxMethod = MaxResolvedJavaMethod.get(MethodActor.fromJava(m));
-                maxMethod.getCompilerStorage().put(Graph.class, graalMethod.getCompilerStorage().get(MethodSubstitution.class));
+                maxMethod.getCompilerStorage().put(Graph.class, graph);
                 registry.add(maxMethod.riMethod, new GraalSnippetIntrinsic(maxMethod));
             }
         }

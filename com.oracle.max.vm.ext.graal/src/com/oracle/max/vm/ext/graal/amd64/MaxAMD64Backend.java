@@ -42,7 +42,6 @@ import com.oracle.graal.lir.amd64.*;
 import com.oracle.graal.lir.amd64.AMD64Move.*;
 import com.oracle.graal.lir.asm.*;
 import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.phases.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
@@ -65,7 +64,7 @@ public class MaxAMD64Backend extends Backend {
                 switch (maxSafepointNode.op) {
                     case SAFEPOINT_POLL: {
                         // explicit request for safepoint in code
-                        emitSafepoint();
+                        emitSafepoint(node);
                         break;
                     }
                     case HERE: {
@@ -101,12 +100,12 @@ public class MaxAMD64Backend extends Backend {
 
             } else {
                 // generic Graal safepoint
-                emitSafepoint();
+                emitSafepoint(node);
             }
         }
 
-        private void emitSafepoint() {
-            LIRFrameState info = state();
+        private void emitSafepoint(SafepointNode node) {
+            LIRFrameState info = state(node);
             append(new MaxAMD64SafepointOp(info));
         }
 
@@ -139,11 +138,6 @@ public class MaxAMD64Backend extends Backend {
         }
 
         @Override
-        public void visitExceptionObject(ExceptionObjectNode i) {
-            unimplemented("MaxAMD64LIRGenerator.visitExceptionObject");
-        }
-
-        @Override
         public void visitBreakpointNode(BreakpointNode i) {
             unimplemented("MaxAMD64LIRGenerator.visitBreakpointNode");
         }
@@ -151,11 +145,6 @@ public class MaxAMD64Backend extends Backend {
         @Override
         public void emitUnwind(Value operand) {
             unimplemented("MaxAMD64LIRGenerator.emitUnwind");
-        }
-
-        @Override
-        public void emitDeoptimize(DeoptimizationAction action, DeoptimizationReason reason) {
-            append(new MaxAMD64DeoptimizeOp(action, reason, state()));
         }
 
         @Override
@@ -170,6 +159,11 @@ public class MaxAMD64Backend extends Backend {
             Value targetAddress = AMD64.rax.asValue();
             emitMove(targetAddress, operand(callTarget.computedAddress()));
             append(new AMD64Call.IndirectCallOp(callTarget.target(), result, parameters, temps, targetAddress, callState));
+        }
+
+        @Override
+        public void emitDeoptimize(DeoptimizationAction action, DeoptimizingNode deopting) {
+            append(new MaxAMD64DeoptimizeOp(action, deopting.getDeoptimizationReason(), state(deopting)));
         }
 
     }

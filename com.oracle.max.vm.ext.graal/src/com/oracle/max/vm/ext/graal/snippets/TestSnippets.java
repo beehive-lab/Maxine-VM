@@ -48,12 +48,12 @@ import com.sun.max.vm.runtime.*;
 @HOSTED_ONLY
 public class TestSnippets extends SnippetLowerings {
 
-    public TestSnippets(CodeCacheProvider runtime, TargetDescription target, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        super(runtime, assumptions, target);
+    public TestSnippets(CodeCacheProvider runtime, Replacements replacements, TargetDescription target, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        super(runtime, replacements, target);
     }
 
     @Override
-    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
 //      lowerings.put(TestSnippetNode1.class, new TestSnippetLowering1(this));
 //      lowerings.put(TestSnippetNode2.class, new TestSnippetLowering2(this));
     }

@@ -84,6 +84,7 @@ public class MaxGraal implements RuntimeCompiler {
 
     private MaxRuntime runtime;
     private Backend backend;
+    private Replacements replacements;
     private OptimisticOptimizations optimisticOpts;
     private MaxGraphCache cache;
 
@@ -146,7 +147,7 @@ public class MaxGraal implements RuntimeCompiler {
         changeInlineLimits();
         // Disable for now as it causes problems in DebugInfo
         GraalOptions.PartialEscapeAnalysis = false;
-        runtime.init();
+        replacements = runtime.init();
     }
 
     /**
@@ -181,7 +182,7 @@ public class MaxGraal implements RuntimeCompiler {
             phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxWordTypeRewriterPhase.KindRewriter(runtime, runtime.maxTargetDescription.wordKind));
             graph = new StructuredGraph(method);
         }
-        CompilationResult result = GraalCompiler.compileMethod(runtime, backend, runtime.maxTargetDescription, method, graph, cache, phasePlan, optimisticOpts, new SpeculationLog());
+        CompilationResult result = GraalCompiler.compileMethod(runtime, replacements, backend, runtime.maxTargetDescription, method, graph, cache, phasePlan, optimisticOpts, new SpeculationLog());
         MaxTargetMethod graalTM = GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
         return graalTM;
     }

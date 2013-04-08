@@ -48,16 +48,16 @@ import com.sun.max.vm.runtime.Snippets;
 public class TypeSnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
-    public TypeSnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        super(runtime, assumptions, targetDescription);
+    public TypeSnippets(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        super(runtime, replacements, targetDescription);
     }
 
     @Override
     @HOSTED_ONLY
-    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(CheckCastNode.class, new CheckCastLowering(this));
         lowerings.put(UnresolvedCheckCastNode.class, new UnresolvedCheckCastLowering(this));
-        lowerings.put(InstanceOfNode.class, new InstanceOfLowering(runtime, assumptions, targetDescription, TypeSnippets.class));
+        lowerings.put(InstanceOfNode.class, new InstanceOfLowering(runtime, replacements, targetDescription, TypeSnippets.class));
         lowerings.put(UnresolvedInstanceOfNode.class, new UnresolvedInstanceOfLowering(this));
         lowerings.put(UnresolvedLoadConstantNode.class, new UnresolvedLoadConstantLowering(this));
         lowerings.put(FixedGuardNode.class, new FixedGuardLowering(this));
@@ -162,8 +162,8 @@ public class TypeSnippets extends SnippetLowerings {
     protected class InstanceOfLowering extends InstanceOfSnippetsTemplates<TypeSnippets> implements LoweringProvider<FloatingNode> {
         private final ResolvedJavaMethod instanceOf = findSnippet(TypeSnippets.class, "instanceOfSnippet");
 
-        InstanceOfLowering(MetaAccessProvider runtime, Assumptions assumptions, TargetDescription target, Class<TypeSnippets> snippetsClass) {
-            super(runtime, assumptions, target, snippetsClass);
+        InstanceOfLowering(MetaAccessProvider runtime, Replacements replacements, TargetDescription target, Class<TypeSnippets> snippetsClass) {
+            super(runtime, replacements, target, snippetsClass);
         }
 
         @Override

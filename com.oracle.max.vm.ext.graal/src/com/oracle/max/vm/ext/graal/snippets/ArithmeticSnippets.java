@@ -36,14 +36,14 @@ import com.sun.max.annotate.*;
 public final class ArithmeticSnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
-    public ArithmeticSnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        super(runtime, assumptions, targetDescription);
+    public ArithmeticSnippets(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        super(runtime, replacements, targetDescription);
     }
 
     @Override
     @HOSTED_ONLY
-    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription,
-                    Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements,
+                    TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(IntegerDivNode.class, new IdentityLowering());
         lowerings.put(IntegerRemNode.class, new IdentityLowering());
         lowerings.put(UnsignedDivNode.class, new IdentityLowering());

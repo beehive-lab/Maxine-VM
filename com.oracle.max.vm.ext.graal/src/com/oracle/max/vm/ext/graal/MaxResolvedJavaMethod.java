@@ -28,7 +28,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.api.meta.ProfilingInfo.ExceptionSeen;
 import com.oracle.graal.bytecode.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -157,8 +156,8 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public ProfilingInfo getProfilingInfo() {
-        // We do not want to deal with exception handling right now, so just assume nothing throws an exception...
-        return DefaultProfilingInfo.get(ExceptionSeen.FALSE);
+        // TODO
+        return DefaultProfilingInfo.get(ProfilingInfo.TriState.FALSE);
     }
 
     private final Map<Object, Object> compilerStorage = new ConcurrentHashMap<Object, Object>();
@@ -340,6 +339,12 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
             localVariableTableMap.put(riMethod, lvt);
         }
         return lvt;
+    }
+
+    @Override
+    public void reprofile() {
+        // TODO Auto-generated method stub
+
     }
 
 }
