@@ -126,7 +126,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     @Override
     public int getMinimumOutgoingSize() {
-        return 0;
+        return maxTargetDescription.wordSize; // for deopt
     }
 
     @Override

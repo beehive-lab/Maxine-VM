@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import static com.oracle.graal.amd64.AMD64.*;
+
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -29,9 +31,10 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.code.CallingConvention.Type;
 import com.oracle.graal.api.code.Register.RegisterFlag;
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.max.platform.*;
+import com.sun.max.vm.compiler.deopt.*;
 
 
 public class MaxRegisterConfig implements RegisterConfig {
@@ -39,6 +42,8 @@ public class MaxRegisterConfig implements RegisterConfig {
     private static ConcurrentHashMap<RiRegisterConfig, RegisterConfig> map = new ConcurrentHashMap<RiRegisterConfig, RegisterConfig>();
 
     private RiRegisterConfig riRegisterConfig;
+    private final Register[] javaGeneralParameterRegisters;
+    private Register[] xmmParameterRegisters = {xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
 
     static RegisterConfig get(RiRegisterConfig riRegisterConfig) {
         RegisterConfig result = map.get(riRegisterConfig);
@@ -51,6 +56,12 @@ public class MaxRegisterConfig implements RegisterConfig {
 
     private MaxRegisterConfig(RiRegisterConfig riRegisterConfig) {
         this.riRegisterConfig = riRegisterConfig;
+        CiRegister[] jRegs = riRegisterConfig.getCallingConventionRegisters(CiCallingConvention.Type.JavaCall, CiRegister.RegisterFlag.CPU);
+        javaGeneralParameterRegisters = new Register[jRegs.length];
+        for (int i = 0; i < jRegs.length; i++) {
+            CiRegister ciReg = jRegs[i];
+            javaGeneralParameterRegisters[i] = RegisterMap.toGraal(ciReg);
+        }
     }
 
     @Override
@@ -64,22 +75,55 @@ public class MaxRegisterConfig implements RegisterConfig {
     }
 
     @Override
-    public CallingConvention getCallingConvention(Type type, JavaType returnType, JavaType[] parameters, TargetDescription target, boolean stackOnly) {
-        CiKind[] ciParameters = new CiKind[parameters.length];
-        for (int i = 0; i < parameters.length; i++) {
-            ciParameters[i] = KindMap.toCiKind(parameters[i].getKind());
+    public CallingConvention getCallingConvention(Type type, JavaType returnType, JavaType[] parameterTypes, TargetDescription target, boolean stackOnly) {
+        assert type != Type.NativeCall;
+        return callingConvention(javaGeneralParameterRegisters, returnType, parameterTypes, type, target, stackOnly);
+    }
+
+    private CallingConvention callingConvention(Register[] generalParameterRegisters, JavaType returnType, JavaType[] parameterTypes, Type type, TargetDescription target, boolean stackOnly) {
+        Value[] locations = new Value[parameterTypes.length];
+
+        int currentGeneral = 0;
+        int currentXMM = 0;
+        // Account for the word at the bottom of the frame used for saving an overwritten return address during deoptimization
+        int currentStackOffset = type == Type.NativeCall ? 0 : Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET + target.wordSize;
+
+        for (int i = 0; i < parameterTypes.length; i++) {
+            final Kind kind = parameterTypes[i].getKind();
+
+            switch (kind) {
+                case Byte:
+                case Boolean:
+                case Short:
+                case Char:
+                case Int:
+                case Long:
+                case Object:
+                    if (!stackOnly && currentGeneral < generalParameterRegisters.length) {
+                        Register register = generalParameterRegisters[currentGeneral++];
+                        locations[i] = register.asValue(kind);
+                    }
+                    break;
+                case Float:
+                case Double:
+                    if (!stackOnly && currentXMM < xmmParameterRegisters.length) {
+                        Register register = xmmParameterRegisters[currentXMM++];
+                        locations[i] = register.asValue(kind);
+                    }
+                    break;
+                default:
+                    throw GraalInternalError.shouldNotReachHere();
+            }
+
+            if (locations[i] == null) {
+                locations[i] = StackSlot.get(kind.getStackKind(), currentStackOffset, !type.out);
+                currentStackOffset += Math.max(target.sizeInBytes(kind), target.wordSize);
+            }
         }
-        // assert: this will be functionally equivalent to "target"
-        CiTarget ciTarget = Platform.platform().target;
-        CiCallingConvention ciConv = riRegisterConfig.getCallingConvention(toCiType(type), ciParameters, ciTarget, stackOnly);
-        Kind returnKind = MaxWordTypeRewriterPhase.checkWord(returnType);
-        Value returnLocation = returnType.getKind() == Kind.Void ? Value.ILLEGAL : getReturnRegister(returnKind).asValue(returnKind);
-        CiValue[] ciValues = ciConv.locations;
-        Value[] values = new Value[ciValues.length];
-        for (int i = 0; i < ciValues.length; i++) {
-            values[i] = ValueMap.toGraal(ciValues[i]);
-        }
-        return new CallingConvention(ciConv.stackSize, returnLocation, values);
+
+        Kind returnKind = returnType == null ? Kind.Void : MaxWordTypeRewriterPhase.checkWord(returnType);
+        Value returnLocation = returnKind == Kind.Void ? Value.ILLEGAL : getReturnRegister(returnKind).asValue(returnKind);
+        return new CallingConvention(currentStackOffset, returnLocation, locations);
     }
 
     private static ConcurrentHashMap<Type, Register[]> callingConventionRegistersMap =

@@ -29,8 +29,10 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.Snippet.Parameter;
 import com.oracle.graal.replacements.SnippetTemplate.*;
@@ -91,6 +93,7 @@ public class TypeSnippets extends SnippetLowerings {
     private static void nullCheckSnippet(@Parameter("cond") boolean cond) {
         if (cond) {
             Throw.throwNullPointerException();
+            throw UnreachableNode.unreachable();
         }
     }
 
@@ -103,6 +106,7 @@ public class TypeSnippets extends SnippetLowerings {
         public void lower(CheckCastNode node, LoweringTool tool) {
             ClassActor classActor = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.type());
             Key key = new Key(snippet);
+            //boolean checkNull = !node.object().stamp().nonNull(); TODO use this
             Arguments args = new Arguments();
             args.add("classActor", classActor);
             args.add("object", node.object());
@@ -112,12 +116,14 @@ public class TypeSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void checkCastSnippet(@Parameter("classActor") ClassActor classActor, @Parameter("object") Object object) {
+    private static Object checkCastSnippet(@Parameter("classActor") ClassActor classActor, @Parameter("object") Object object) {
         //Snippets.checkCast(classActor, object);
         if (!classActor.isNullOrInstance(object)) {
             Throw.throwClassCastException(classActor, object);
             throw UnreachableNode.unreachable();
         }
+        BeginNode anchorNode = BeginNode.anchor(StampFactory.forNodeIntrinsic());
+        return UnsafeCastNode.unsafeCast(object, StampFactory.forNodeIntrinsic(), anchorNode);
     }
 
     protected class UnresolvedCheckCastLowering extends Lowering implements LoweringProvider<UnresolvedCheckCastNode> {
@@ -143,9 +149,14 @@ public class TypeSnippets extends SnippetLowerings {
     }
 
     @RUNTIME_ENTRY
-    private static void resolveAndCheckCast(ResolutionGuard.InPool guard, Object object) {
+    private static Object resolveAndCheckCast(ResolutionGuard.InPool guard, Object object) {
         ClassActor classActor = Snippets.resolveClass(guard);
-        Snippets.checkCast(classActor, object);
+        if (!classActor.isNullOrInstance(object)) {
+            Throw.throwClassCastException(classActor, object);
+            throw UnreachableNode.unreachable();
+        }
+        BeginNode anchorNode = BeginNode.anchor(StampFactory.forNodeIntrinsic());
+        return UnsafeCastNode.unsafeCast(object, StampFactory.forNodeIntrinsic(), anchorNode);
     }
 
     protected class InstanceOfLowering extends InstanceOfSnippetsTemplates<TypeSnippets> implements LoweringProvider<FloatingNode> {

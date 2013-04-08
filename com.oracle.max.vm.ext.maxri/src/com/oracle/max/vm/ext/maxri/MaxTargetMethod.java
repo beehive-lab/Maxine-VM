@@ -185,7 +185,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     /**
-     * @return the number of bytes in {@link #refMaps} corresponding to one safepoint.
+     * @return the size (in bytes) of the frame reference map plus the register reference map.
      */
     public int totalRefMapSize() {
         return regRefMapSize() + frameRefMapSize();

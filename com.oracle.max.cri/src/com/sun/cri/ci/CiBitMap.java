@@ -94,22 +94,19 @@ public final class CiBitMap implements Serializable {
     }
 
     /**
-     * Converts a {@code long} to a {@link CiBitMap}.
-     */
-    public static CiBitMap fromLong(long bitmap) {
-        CiBitMap bm = new CiBitMap(64);
-        bm.low = bitmap;
-        return bm;
-    }
-
-    /**
      * Helper method for converting from a {@link BitSet}.
+     * Unfortunately, a {@link BitSet} does not record the "logical" size
+     * whereas {@code CiBitMap} does and this is exploited in
+     * the {@link #copyTo(byte[], int, int)} method. Experience
+     * says that simply using {@code wordsInUse} to size the
+     * {@code CiBitMap} can later cause array bound errors in {@code copyTo}.
      *
      * @param bitmap the array from {@code BitSet}
      * @param wordsInUse the logical number of words of {@code bitmap} in use
      * @return
      */
     public static CiBitMap fromLongs(long[] bitmap, int wordsInUse) {
+        int lastWordInUseIndex = 0;
         CiBitMap bm = new CiBitMap(64 * wordsInUse);
         if (wordsInUse > 0) {
             bm.low = bitmap[0];
@@ -118,7 +115,18 @@ public final class CiBitMap implements Serializable {
                 for (int i = 1; i < wordsInUse; i++) {
                     bm.extra[i - 1] = bitmap[i];
                 }
+                lastWordInUseIndex = wordsInUse - 1;
             }
+            // compute a logical size based on the set bits
+            long lastWordInUse = bitmap[lastWordInUseIndex];
+            int lastSize = 0;
+            for (int i = 0; i < 64; i++) {
+                long bit = 1L << i;
+                if ((lastWordInUse & bit) != 0) {
+                    lastSize = i + 1;
+                }
+            }
+            bm.size = 64 * lastWordInUseIndex + lastSize;
         }
         return bm;
     }

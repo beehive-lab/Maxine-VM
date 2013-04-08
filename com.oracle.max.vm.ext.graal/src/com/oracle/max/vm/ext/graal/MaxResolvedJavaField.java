@@ -83,9 +83,9 @@ public class MaxResolvedJavaField extends MaxJavaField implements ResolvedJavaFi
 
             // In practice MaxineVM.isHosted() is an efficient proxy for checking that GraphBuilderPhase
             // is the caller, as this only happens during snippet/boot image generation
-            // Class<?> caller = Reflection.getCallerClass(2);
-            // if (caller != GraphBuilderPhase.class) {
-            if (!MaxineVM.isHosted()) {
+            Class<?> caller = Reflection.getCallerClass(2);
+            if (caller != GraphBuilderPhase.class) {
+//            if (!MaxineVM.isHosted()) {
                 WordUtil.WrappedWord wrappedWord = (WordUtil.WrappedWord) ciConstant.asObject();
                 ciConstant = wrappedWord.archConstant();
             }

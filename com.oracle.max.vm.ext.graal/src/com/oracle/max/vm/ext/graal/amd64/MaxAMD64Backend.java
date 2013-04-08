@@ -155,7 +155,7 @@ public class MaxAMD64Backend extends Backend {
 
         @Override
         public void emitDeoptimize(DeoptimizationAction action, DeoptimizationReason reason) {
-            unimplemented("MaxAMD64LIRGenerator.emitDeoptimize");
+            append(new MaxAMD64DeoptimizeOp(action, reason, state()));
         }
 
         @Override
