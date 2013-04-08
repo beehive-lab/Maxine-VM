@@ -67,6 +67,11 @@ public class MaxRuntimeCallsMap {
         Throw.raise(UnsafeCast.asThrowable(throwable));
     }
 
+    @RUNTIME_ENTRY
+    private static void deoptimize() {
+        FatalError.unexpected("Deoptimize not implemented");
+    }
+
     @HOSTED_ONLY
     static void initialize(MaxRuntime runtime) {
         MaxRuntimeCallsMap.runtime = runtime;
@@ -77,6 +82,10 @@ public class MaxRuntimeCallsMap {
             Method unwindException = MaxRuntimeCallsMap.class.getDeclaredMethod("unwindException", Object.class);
             createRuntimeCall(unwindException.getName(), MethodActor.fromJava(unwindException));
             new CriticalMethod(unwindException);
+            Method deoptimize = MaxRuntimeCallsMap.class.getDeclaredMethod("deoptimize");
+            createRuntimeCall(deoptimize.getName(), MethodActor.fromJava(deoptimize));
+            new CriticalMethod(deoptimize);
+
         } catch (Exception ex) {
             ProgramError.unexpected(ex);
         }

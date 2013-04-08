@@ -190,7 +190,11 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public boolean canBeInlined() {
-        return riResolvedMethod().getAnnotation(NEVER_INLINE.class) == null;
+        boolean hasHandlers = riResolvedMethod().exceptionHandlers().length != 0;
+        // Currently we don't inline methods with exception handlers because
+        // they generate a DeoptimizeNode.
+        // TODO fix
+        return riResolvedMethod().getAnnotation(NEVER_INLINE.class) == null || hasHandlers;
     }
 
     @Override

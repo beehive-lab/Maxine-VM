@@ -38,8 +38,8 @@ public class InvokeTest {
             }
         }
 
-        testMethod.invoke(null, callArgs);
-
+        Object result = testMethod.invoke(null, callArgs);
+        System.out.println("Result: " + result);
     }
 
     private static Method findMethod(String className, String methodName) throws Exception {

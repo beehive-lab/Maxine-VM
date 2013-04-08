@@ -240,7 +240,7 @@ class MaxInvokeLowerings extends SnippetLowerings {
 
     @RUNTIME_ENTRY(nonNull = true)
     private static InterfaceMethodActor resolveInterfaceMethod(ResolutionGuard.InPool guard) {
-        return resolveInterfaceMethod(guard);
+        return Snippets.resolveInterfaceMethod(guard);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
