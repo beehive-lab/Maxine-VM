@@ -120,11 +120,6 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     }
 
     @Override
-    public int getCustomStackAreaSize() {
-        return 0;
-    }
-
-    @Override
     public int getMinimumOutgoingSize() {
         return maxTargetDescription.wordSize; // for deopt
     }
@@ -220,34 +215,34 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     }
 
-    public void init() {
+    public Replacements init() {
         // Snippets cannot have optimistic assumptions.
         Assumptions assumptions = new Assumptions(false);
-        ReplacementsInstaller installer = new ReplacementsInstaller(this, assumptions, maxTargetDescription);
-        new GraalMethodSubstitutions().installReplacements(installer);
-        MaxIntrinsics.initialize(this, maxTargetDescription);
         MaxRuntimeCallsMap.initialize(this);
         MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration = new MaxSnippetGraphBuilderConfiguration();
         MaxConstantPool.setGraphBuilderConfig(maxSnippetGraphBuilderConfiguration);
-        MaxSnippetInstaller maxInstaller = new MaxSnippetInstaller(this, assumptions, maxTargetDescription,
+        MaxReplacementsImpl maxReplacements = new MaxReplacementsImpl(this, assumptions, maxTargetDescription,
                         maxSnippetGraphBuilderConfiguration, lowerings);
-        maxInstaller.installAndRegister(TestSnippets.class);
-        maxInstaller.installAndRegister(NewSnippets.class);
-        maxInstaller.installAndRegister(FieldSnippets.class);
-        maxInstaller.installAndRegister(ArraySnippets.class);
-        maxInstaller.installAndRegister(TypeSnippets.class);
+        MaxIntrinsics.initialize(this, maxReplacements, maxTargetDescription);
+        maxReplacements.installAndRegisterSnippets(TestSnippets.class);
+        maxReplacements.installAndRegisterSnippets(NewSnippets.class);
+        maxReplacements.installAndRegisterSnippets(FieldSnippets.class);
+        maxReplacements.installAndRegisterSnippets(ArraySnippets.class);
+        maxReplacements.installAndRegisterSnippets(TypeSnippets.class);
         // MonitorSnippets do the null check explicitly, so we don't want the normal explicit null check
         // in the scheme implementation.
         boolean explicitNullChecks = VMConfiguration.vmConfig().monitorScheme().setExplicitNullChecks(false);
-        maxInstaller.installAndRegister(MonitorSnippets.class);
+        maxReplacements.installAndRegisterSnippets(MonitorSnippets.class);
         VMConfiguration.vmConfig().monitorScheme().setExplicitNullChecks(explicitNullChecks);
-        maxInstaller.installAndRegister(MaxInvokeLowerings.class);
-        maxInstaller.installAndRegister(ArithmeticSnippets.class);
-        maxInstaller.installAndRegister(AMD64ConvertSnippetsWrapper.class);
+        maxReplacements.installAndRegisterSnippets(MaxInvokeLowerings.class);
+        maxReplacements.installAndRegisterSnippets(ArithmeticSnippets.class);
+        maxReplacements.installAndRegisterSnippets(AMD64ConvertSnippetsWrapper.class);
 
         MaxConstantPool.setGraphBuilderConfig(null);
 
         MaxUnsafeAccessLowerings.registerLowerings(lowerings);
+
+        return maxReplacements;
     }
 
     @Override

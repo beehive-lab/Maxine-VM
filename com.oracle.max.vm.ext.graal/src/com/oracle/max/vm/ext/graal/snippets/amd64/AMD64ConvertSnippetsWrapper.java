@@ -36,14 +36,14 @@ import com.oracle.graal.replacements.amd64.*;
  */
 public class AMD64ConvertSnippetsWrapper extends SnippetLowerings {
 
-    public AMD64ConvertSnippetsWrapper(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        super(runtime, assumptions, targetDescription);
+    public AMD64ConvertSnippetsWrapper(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        super(runtime, replacements, targetDescription);
     }
 
     @Override
-    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription,
-                    Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        lowerings.put(ConvertNode.class, new ConvertLowering(new AMD64ConvertSnippets.Templates(runtime, assumptions, targetDescription)));
+    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements,
+                    TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        lowerings.put(ConvertNode.class, new ConvertLowering(new AMD64ConvertSnippets.Templates(runtime, replacements, targetDescription)));
     }
 
     protected class ConvertLowering extends Lowering implements LoweringProvider<ConvertNode> {

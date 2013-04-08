@@ -60,20 +60,20 @@ import com.sun.max.vm.thread.*;
 class MaxInvokeLowerings extends SnippetLowerings {
 
     @HOSTED_ONLY
-    public MaxInvokeLowerings(CodeCacheProvider runtime, TargetDescription target,
-                    Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        super(runtime, assumptions, target);
+    public MaxInvokeLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription target,
+                    Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        super(runtime, replacements, target);
     }
 
     @Override
     @HOSTED_ONLY
-    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions,
+    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription,
                     Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(InvokeNode.class, new InvokeLowering());
         lowerings.put(InvokeWithExceptionNode.class, new InvokeLowering());
         lowerings.put(ResolveMethodNode.class, new UnresolvedMethodLowering(this));
         lowerings.put(MethodAddressNode.class, new MethodAddressLowering(this));
-        lowerings.put(ExceptionObjectNode.class, new ExceptionObjectLowering(this));
+        lowerings.put(LoadExceptionObjectNode.class, new LoadExceptionObjectLowering(this));
         lowerings.put(UnwindNode.class, new UnwindLowering(this));
     }
 
@@ -253,27 +253,19 @@ class MaxInvokeLowerings extends SnippetLowerings {
         return Snippets.resolveStaticMethod(guard);
     }
 
-    protected class ExceptionObjectLowering extends Lowering implements LoweringProvider<ExceptionObjectNode> {
+    protected class LoadExceptionObjectLowering extends Lowering implements LoweringProvider<LoadExceptionObjectNode> {
 
-        ExceptionObjectLowering(MaxInvokeLowerings invokeSnippets) {
+        LoadExceptionObjectLowering(MaxInvokeLowerings invokeSnippets) {
             super(invokeSnippets, "loadExceptionObjectSnippet");
         }
 
         @Override
-        public void lower(ExceptionObjectNode node, LoweringTool tool) {
-            // Workaround - can't replace an ExceptionObjectNode with a RuntimeCallNode
-            StructuredGraph graph = (StructuredGraph) node.graph();
-            DispatchBeginNode dispatch = graph.add(new DispatchBeginNode());
-            InvokeWithExceptionNode invokeNode = (InvokeWithExceptionNode) node.predecessor();
-            invokeNode.setExceptionEdge(dispatch);
-            dispatch.setNext(node);
-            dispatch.setStateAfter(invokeNode.stateAfter().duplicate());
-
+        public void lower(LoadExceptionObjectNode node, LoweringTool tool) {
             Key key = new Key(snippet);
             Arguments args = new Arguments();
             Map<Node, Node> map = instantiate(node, key, args);
             // TODO figure out if this hack is remotely correct.
-            // The snippet instantiation clones the stateAfter of the ExceptionObjectNode into the RuntimeCallNode
+            // The snippet instantiation clones the stateAfter of the LoadExceptionObjectNode into the RuntimeCallNode
             // and this definitely causes problems in visitRuntimeCallNode.
             for (Node snode : map.values()) {
                 if (snode instanceof RuntimeCallNode) {

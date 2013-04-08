@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
+import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
@@ -49,14 +50,14 @@ import com.sun.max.vm.runtime.Snippets;
 public class NewSnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
-    public NewSnippets(CodeCacheProvider runtime, TargetDescription targetDescription, Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
-        super(runtime, assumptions, targetDescription);
+    public NewSnippets(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+        super(runtime, replacements, targetDescription);
     }
 
     @Override
     @HOSTED_ONLY
-    public void registerLowerings(CodeCacheProvider runtime, TargetDescription targetDescription,
-                    Assumptions assumptions, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements,
+                    TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(NewInstanceNode.class, new NewInstanceLowering(this));
         lowerings.put(UnresolvedNewInstanceNode.class, new UnresolvedNewInstanceLowering(this));
         lowerings.put(NewArrayNode.class, new NewArrayLowering(this));
@@ -160,7 +161,8 @@ public class NewSnippets extends SnippetLowerings {
             Throw.throwNegativeArraySizeException(length);
         }
         Object result = Heap.createArray(hub, length);
-        return UnsafeArrayCastNode.unsafeArrayCast(result, length, StampFactory.forNodeIntrinsic());
+        BeginNode anchorNode = BeginNode.anchor(StampFactory.forNodeIntrinsic());
+        return UnsafeArrayCastNode.unsafeArrayCast(result, length, StampFactory.forNodeIntrinsic(), anchorNode);
     }
 
     protected class UnresolvedNewArrayLowering extends Lowering implements LoweringProvider<UnresolvedNewArrayNode> {
