@@ -565,12 +565,18 @@ public class CompiledPrototype extends Prototype {
                 processInvalidatedTargetMethods();
                 final MethodActor methodActor = worklist.poll();
                 if (needsCompilation(methodActor)) {
-                    TargetMethod targetMethod;
+                    TargetMethod targetMethod = null;
                     try {
                         targetMethod = cb.compile((ClassMethodActor) methodActor, null);
                     } catch (Throwable error) {
-                        throw reportCompilationError(methodActor, error);
+//                        throw reportCompilationError(methodActor, error);
+                        try {
+                            reportCompilationError(methodActor, error);
+                        } catch (ProgramError | FatalError ex) {
+                            continue;
+                        }
                     }
+                    assert targetMethod != null;
                     processNewTargetMethod(targetMethod);
                     ++totalCompilations;
                     if (totalCompilations % 200 == 0) {
