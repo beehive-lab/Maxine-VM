@@ -23,7 +23,6 @@
 package com.oracle.max.vm.ext.graal.snippets;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.replacements.Snippet.DefaultSnippetInliningPolicy;
 import com.oracle.max.vm.ext.graal.*;
 import com.sun.max.annotate.*;
@@ -34,7 +33,7 @@ import com.sun.max.annotate.*;
 public class MaxSnippetInliningPolicy extends DefaultSnippetInliningPolicy {
 
     public MaxSnippetInliningPolicy() {
-        super(MaxGraal.runtime(), new BoxingMethodPool(MaxGraal.runtime()));
+        super(MaxGraal.runtime());
     }
 
     @Override

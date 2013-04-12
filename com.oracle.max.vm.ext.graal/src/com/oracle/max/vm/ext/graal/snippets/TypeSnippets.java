@@ -34,7 +34,6 @@ import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
-import com.oracle.graal.replacements.Snippet.Parameter;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
@@ -57,7 +56,7 @@ public class TypeSnippets extends SnippetLowerings {
     public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(CheckCastNode.class, new CheckCastLowering(this));
         lowerings.put(UnresolvedCheckCastNode.class, new UnresolvedCheckCastLowering(this));
-        lowerings.put(InstanceOfNode.class, new InstanceOfLowering(runtime, replacements, targetDescription, TypeSnippets.class));
+        lowerings.put(InstanceOfNode.class, new InstanceOfLowering(runtime, replacements, targetDescription));
         lowerings.put(UnresolvedInstanceOfNode.class, new UnresolvedInstanceOfLowering(this));
         lowerings.put(UnresolvedLoadConstantNode.class, new UnresolvedLoadConstantLowering(this));
         lowerings.put(UnresolvedLoadClassActorNode.class, new UnresolvedLoadClassActorLowering(this));
@@ -72,26 +71,25 @@ public class TypeSnippets extends SnippetLowerings {
 
         @Override
         public void lower(FixedGuardNode node, LoweringTool tool) {
-            Key key = null;
+            Arguments args = null;
             switch (node.getReason()) {
                 case NullCheckException: {
-                    key = new Key(snippet);
+                    args = new Arguments(snippet);
                     break;
                 }
                 default:
                     FatalError.unexpected("FixedGuardLowering: Unexpected reason: " + node.getReason());
             }
-            Arguments args = new Arguments();
             ValueNode trueValue = ConstantNode.forBoolean(node.isNegated(), node.graph());
             ValueNode falseValue = ConstantNode.forBoolean(!node.isNegated(), node.graph());
             args.add("cond", node.graph().unique(new ConditionalNode(node.condition(), trueValue, falseValue)));
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
 
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void nullCheckSnippet(@Parameter("cond") boolean cond) {
+    private static void nullCheckSnippet(boolean cond) {
         if (cond) {
             Throw.throwNullPointerException();
             throw UnreachableNode.unreachable();
@@ -104,10 +102,10 @@ public class TypeSnippets extends SnippetLowerings {
             super(snippets, string);
         }
 
-        protected KeyArgs createGuard(UnresolvedTypeNode node) {
+        protected Arguments createGuard(UnresolvedTypeNode node) {
             UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) MaxJavaType.getRiType(node.javaType());
             ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
-            return new KeyArgs(new Key(snippet), Arguments.arguments("guard", guard));
+            return new Arguments(snippet).add("guard", guard);
          }
     }
 
@@ -119,18 +117,17 @@ public class TypeSnippets extends SnippetLowerings {
         @Override
         public void lower(CheckCastNode node, LoweringTool tool) {
             ClassActor classActor = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.type());
-            Key key = new Key(snippet);
+            Arguments args = new Arguments(snippet);
             //boolean checkNull = !node.object().stamp().nonNull(); TODO use this
-            Arguments args = new Arguments();
             args.add("classActor", classActor);
             args.add("object", node.object());
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
 
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static Object checkCastSnippet(@Parameter("classActor") ClassActor classActor, @Parameter("object") Object object) {
+    private static Object checkCastSnippet(ClassActor classActor, Object object) {
         //Snippets.checkCast(classActor, object);
         if (!classActor.isNullOrInstance(object)) {
             Throw.throwClassCastException(classActor, object);
@@ -147,14 +144,14 @@ public class TypeSnippets extends SnippetLowerings {
 
         @Override
         public void lower(UnresolvedCheckCastNode node, LoweringTool tool) {
-            KeyArgs keyArgs = createGuard(node);
-            keyArgs.args.add("object", node.object());
-            instantiate(node, keyArgs.key, keyArgs.args);
+            Arguments args = createGuard(node);
+            args.add("object", node.object());
+            instantiate(node, args);
         }
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void unresolvedCheckCastSnippet(@Parameter("guard") ResolutionGuard.InPool guard, @Parameter("object") Object object) {
+    private static void unresolvedCheckCastSnippet(ResolutionGuard.InPool guard, Object object) {
         resolveAndCheckCast(guard, object);
     }
 
@@ -169,29 +166,27 @@ public class TypeSnippets extends SnippetLowerings {
         return UnsafeCastNode.unsafeCast(object, StampFactory.forNodeIntrinsic(), anchorNode);
     }
 
-    protected class InstanceOfLowering extends InstanceOfSnippetsTemplates<TypeSnippets> implements LoweringProvider<FloatingNode> {
-        private final ResolvedJavaMethod instanceOf = findSnippet(TypeSnippets.class, "instanceOfSnippet");
+    protected class InstanceOfLowering extends InstanceOfSnippetsTemplates implements LoweringProvider<FloatingNode> {
+        private final SnippetInfo instanceOf = snippet(TypeSnippets.class, "instanceOfSnippet");
 
-        InstanceOfLowering(MetaAccessProvider runtime, Replacements replacements, TargetDescription target, Class<TypeSnippets> snippetsClass) {
-            super(runtime, replacements, target, snippetsClass);
+        InstanceOfLowering(MetaAccessProvider runtime, Replacements replacements, TargetDescription target) {
+            super(runtime, replacements, target);
         }
 
         @Override
-        protected KeyAndArguments getKeyAndArguments(InstanceOfUsageReplacer replacer, LoweringTool tool) {
+        protected Arguments makeArguments(InstanceOfUsageReplacer replacer, LoweringTool tool) {
             InstanceOfNode node = (InstanceOfNode) replacer.instanceOf;
             ClassActor classActor = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.type());
             ValueNode object = node.object();
-            Key key = new Key(instanceOf);
-            Arguments args = new Arguments();
+            Arguments args = new Arguments(instanceOf);
             args.add("classActor", classActor);
             args.add("object", object);
-
-            return new KeyAndArguments(key, args);
+            return args;
         }
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static boolean instanceOfSnippet(@Parameter("classActor") ClassActor classActor, @Parameter("object") Object object) {
+    private static boolean instanceOfSnippet(ClassActor classActor, Object object) {
         return Snippets.instanceOf(classActor, object);
     }
 
@@ -202,14 +197,14 @@ public class TypeSnippets extends SnippetLowerings {
 
         @Override
         public void lower(UnresolvedInstanceOfNode node, LoweringTool tool) {
-            KeyArgs keyArgs = createGuard(node);
-            keyArgs.args.add("object", node.object());
-            instantiate(node, keyArgs.key, keyArgs.args);
+            Arguments args = createGuard(node);
+            args.add("object", node.object());
+            instantiate(node, args);
         }
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static boolean unresolvedInstanceOfSnippet(@Parameter("guard") ResolutionGuard.InPool guard, @Parameter("object") Object object) {
+    private static boolean unresolvedInstanceOfSnippet(ResolutionGuard.InPool guard, Object object) {
         return resolveAndCheckInstanceOf(guard, object);
     }
 
@@ -226,13 +221,13 @@ public class TypeSnippets extends SnippetLowerings {
 
         @Override
         public void lower(UnresolvedLoadConstantNode node, LoweringTool tool) {
-            KeyArgs keyArgs = createGuard(node);
-            instantiate(node, keyArgs.key, keyArgs.args);
+            Arguments args = createGuard(node);
+            instantiate(node, args);
         }
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static Class<?> unresolvedLoadConstantSnippet(@Parameter("guard") ResolutionGuard.InPool guard) {
+    private static Class<?> unresolvedLoadConstantSnippet(ResolutionGuard.InPool guard) {
         return resolveClass(guard);
     }
 
@@ -249,13 +244,13 @@ public class TypeSnippets extends SnippetLowerings {
 
         @Override
         public void lower(UnresolvedLoadClassActorNode node, LoweringTool tool) {
-            KeyArgs keyArgs = createGuard(node);
-            instantiate(node, keyArgs.key, keyArgs.args);
+            Arguments args = createGuard(node);
+            instantiate(node, args);
         }
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static ClassActor unresolvedLoadClassActorSnippet(@Parameter("guard") ResolutionGuard.InPool guard) {
+    private static ClassActor unresolvedLoadClassActorSnippet(ResolutionGuard.InPool guard) {
         return resolveClassActor(guard);
     }
 

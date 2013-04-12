@@ -69,15 +69,13 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
 
     private static final String PUT_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static void putField#UKIND#Snippet(@Parameter(\"object\") Object object,\n" + "" +
-        "            @Parameter(\"offset\") int offset, @ConstantParameter(\"isVolatile\") boolean isVolatile, @Parameter(\"value\") #KIND# value) {\n" +
+        "    private static void putField#UKIND#Snippet(Object object, int offset, @ConstantParameter boolean isVolatile, #KIND# value) {\n" +
         "        putField#UKIND#(object, offset, isVolatile, value);\n" +
         "    }\n\n";
 
     private static final String GET_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static #KIND# getField#UKIND#Snippet(@Parameter(\"object\") Object object,\n" +
-        "            @Parameter(\"offset\") int offset, @ConstantParameter(\"isVolatile\") boolean isVolatile) {\n" +
+        "    private static #KIND# getField#UKIND#Snippet(Object object, int offset, @ConstantParameter boolean isVolatile) {\n" +
         "        return #UCB#getField#UKIND#(object, offset, isVolatile)#UCA#;\n" +
         "    }\n\n";
 
@@ -139,59 +137,55 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
 
     private static final String GET_UNRESOLVED_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static #KIND# resolveAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard, @Parameter(\"object\") Object object) {\n" +
+        "    private static #KIND# resolveAndGet#UMODE#Field#UKIND#Snippet(ResolutionGuard.InPool guard, Object object) {\n" +
         "        return #UCB#resolveAndGet#UMODE#Field#UKIND#(guard, object)#UCA#;\n" +
         "    }\n\n";
 
 
     private static final String PUT_UNRESOLVED_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static void resolveAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard, @Parameter(\"object\") Object object,\n" +
-        "            @Parameter(\"value\") #KIND# value) {\n" +
+        "    private static void resolveAndPut#UMODE#Field#UKIND#Snippet(ResolutionGuard.InPool guard, Object object, #KIND# value) {\n" +
         "        resolveAndPut#UMODE#Field#UKIND#(guard, object, value);\n" +
         "    }\n\n";
 
 
     private static final String GET_UNRESOLVED_STATIC_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static #KIND# resolveAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard) {\n" +
+        "    private static #KIND# resolveAndGet#UMODE#Field#UKIND#Snippet(ResolutionGuard.InPool guard) {\n" +
         "        return #UCB#resolveAndGet#UMODE#Field#UKIND#(guard)#UCA#;\n" +
         "    }\n\n";
 
 
     private static final String PUT_UNRESOLVED_STATIC_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static void resolveAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"guard\") ResolutionGuard.InPool guard,\n" +
-        "            @Parameter(\"value\") #KIND# value) {\n" +
+        "    private static void resolveAndPut#UMODE#Field#UKIND#Snippet(ResolutionGuard.InPool guard, #KIND# value) {\n" +
         "        resolveAndPut#UMODE#Field#UKIND#(guard, value);\n" +
         "    }\n\n";
 
     private static final String GET_HOLDER_INIT_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static #KIND# holderInitAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f, @Parameter(\"object\") Object object) {\n" +
+        "    private static #KIND# holderInitAndGet#UMODE#Field#UKIND#Snippet(FieldActor f, Object object) {\n" +
         "        return #UCB#holderInitAndGet#UMODE#Field#UKIND#(f, object)#UCA#;\n" +
         "    }\n\n";
 
 
     private static final String PUT_HOLDER_INIT_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static void holderInitAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f, @Parameter(\"object\") Object object,\n" +
-        "            @Parameter(\"value\") #KIND# value) {\n" +
+        "    private static void holderInitAndPut#UMODE#Field#UKIND#Snippet(FieldActor f, Object object, #KIND# value) {\n" +
         "        holderInitAndPut#UMODE#Field#UKIND#(f, object, value);\n" +
         "    }\n\n";
 
 
     private static final String GET_HOLDER_INIT_STATIC_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static #KIND# holderInitAndGet#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f) {\n" +
+        "    private static #KIND# holderInitAndGet#UMODE#Field#UKIND#Snippet(FieldActor f) {\n" +
         "        return #UCB#holderInitAndGet#UMODE#Field#UKIND#(f)#UCA#;\n" +
         "    }\n\n";
 
 
     private static final String PUT_HOLDER_INIT_STATIC_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static void holderInitAndPut#UMODE#Field#UKIND#Snippet(@Parameter(\"f\") FieldActor f,\n" +
-        "            @Parameter(\"value\") #KIND# value) {\n" +
+        "    private static void holderInitAndPut#UMODE#Field#UKIND#Snippet(FieldActor f, #KIND# value) {\n" +
         "        holderInitAndPut#UMODE#Field#UKIND#(f, value);\n" +
         "    }\n\n";
 
@@ -203,35 +197,35 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
         "            UnresolvedLoadFieldLowering loadUnresolvedFieldLowering, UnresolvedStoreFieldLowering storeUnresolvedFieldLowering) {\n";
 
     private static final String ADD_LOAD_SNIPPET =
-        "        loadFieldLowering.setSnippet(Kind.#UKIND#, findSnippet(FieldSnippets.class, \"getField#UKIND#Snippet\"));\n";
+        "        loadFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"getField#UKIND#Snippet\"));\n";
 
     private static final String ADD_STORE_SNIPPET =
-        "        storeFieldLowering.setSnippet(Kind.#UKIND#, findSnippet(FieldSnippets.class, \"putField#UKIND#Snippet\"));\n";
+        "        storeFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"putField#UKIND#Snippet\"));\n";
 
 
     private static final String ADD_UNRESOLVED_LOAD_SNIPPET =
-        "        loadUnresolvedFieldLowering.setSnippet(Kind.#UKIND#, findSnippet(FieldSnippets.class, \"resolveAndGet#UMODE#Field#UKIND#Snippet\"));\n";
+        "        loadUnresolvedFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"resolveAndGet#UMODE#Field#UKIND#Snippet\"));\n";
 
     private static final String ADD_UNRESOLVED_STORE_SNIPPET =
-        "        storeUnresolvedFieldLowering.setSnippet(Kind.#UKIND#, findSnippet(FieldSnippets.class, \"resolveAndPut#UMODE#Field#UKIND#Snippet\"));\n";
+        "        storeUnresolvedFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"resolveAndPut#UMODE#Field#UKIND#Snippet\"));\n";
 
     private static final String ADD_UNRESOLVED_STATIC_LOAD_SNIPPET =
-        "        loadUnresolvedFieldLowering.#MODE#FieldLowering.setSnippet(Kind.#UKIND#, findSnippet(FieldSnippets.class, \"resolveAndGet#UMODE#Field#UKIND#Snippet\"));\n";
+        "        loadUnresolvedFieldLowering.#MODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"resolveAndGet#UMODE#Field#UKIND#Snippet\"));\n";
 
     private static final String ADD_UNRESOLVED_STATIC_STORE_SNIPPET =
-        "        storeUnresolvedFieldLowering.#MODE#FieldLowering.setSnippet(Kind.#UKIND#, findSnippet(FieldSnippets.class, \"resolveAndPut#UMODE#Field#UKIND#Snippet\"));\n";
+        "        storeUnresolvedFieldLowering.#MODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"resolveAndPut#UMODE#Field#UKIND#Snippet\"));\n";
 
     private static final String ADD_HOLDER_INIT_LOAD_SNIPPET =
-        "        loadUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, findSnippet(FieldSnippets.class, \"holderInitAndGet#UMODE#Field#UKIND#Snippet\"));\n";
+        "        loadUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"holderInitAndGet#UMODE#Field#UKIND#Snippet\"));\n";
 
     private static final String ADD_HOLDER_INIT_STORE_SNIPPET =
-        "        storeUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, findSnippet(FieldSnippets.class, \"holderInitAndPut#UMODE#Field#UKIND#Snippet\"));\n";
+        "        storeUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"holderInitAndPut#UMODE#Field#UKIND#Snippet\"));\n";
 
     private static final String ADD_HOLDER_INIT_STATIC_LOAD_SNIPPET =
-        "        loadUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, findSnippet(FieldSnippets.class, \"holderInitAndGet#UMODE#Field#UKIND#Snippet\"));\n";
+        "        loadUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"holderInitAndGet#UMODE#Field#UKIND#Snippet\"));\n";
 
     private static final String ADD_HOLDER_INIT_STATIC_STORE_SNIPPET =
-        "        storeUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, findSnippet(FieldSnippets.class, \"holderInitAndPut#UMODE#Field#UKIND#Snippet\"));\n";
+        "        storeUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"holderInitAndPut#UMODE#Field#UKIND#Snippet\"));\n";
 
     @Override
     protected void doGenerate() throws IOException {

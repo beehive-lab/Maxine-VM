@@ -31,23 +31,17 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.replacements.*;
-import com.oracle.graal.replacements.SnippetTemplate.Arguments;
-import com.oracle.graal.replacements.SnippetTemplate.Cache;
-import com.oracle.graal.replacements.SnippetTemplate.Key;
+import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.runtime.CriticalMethod;
 
-public abstract class SnippetLowerings implements Snippets {
-
-    protected final MetaAccessProvider runtime;
-    protected final Replacements replacements;
-    protected final Cache cache;
+public abstract class SnippetLowerings extends AbstractTemplates implements Snippets {
 
     public abstract static class Lowering {
-        protected final ResolvedJavaMethod snippet;
+        protected final SnippetInfo snippet;
 
         protected Lowering(SnippetLowerings snippetLowererings, String methodName) {
-            this.snippet = snippetLowererings.findSnippet(snippetLowererings.getClass(), methodName);
+            this.snippet = snippetLowererings.snippet(snippetLowererings.getClass(), methodName);
         }
 
         protected Lowering() {
@@ -55,20 +49,8 @@ public abstract class SnippetLowerings implements Snippets {
         }
     }
 
-    protected static class KeyArgs {
-        Key key;
-        Arguments args;
-
-        KeyArgs(Key key, Arguments args) {
-            this.key = key;
-            this.args = args;
-        }
-    }
-
     public SnippetLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription target) {
-        this.runtime = runtime;
-        this.replacements = replacements;
-        this.cache = new Cache(runtime, replacements, target);
+        super(runtime, replacements, target);
 
         // All the RUNTIME_ENTRY methods are critical, and
         // we want the graphs for all @Snippet methods built at image build time
@@ -80,24 +62,10 @@ public abstract class SnippetLowerings implements Snippets {
             }
         }
 
-
     }
 
-    public ResolvedJavaMethod findSnippet(Class< ? extends SnippetLowerings> clazz, String name) {
-        Method found = null;
-        for (Method method : clazz.getDeclaredMethods()) {
-            if (method.getName().equals(name)) {
-                assert found == null : "found more than one method " + name;
-                found = method;
-            }
-        }
-        assert found != null : "did not find method " + name;
-        assert found.getAnnotation(Snippet.class) != null;
-        return runtime.lookupJavaMethod(found);
-    }
-
-    public Map<Node, Node> instantiate(FixedNode node, Key key, Arguments args) {
-        return cache.get(key).instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
+    public Map<Node, Node> instantiate(FixedNode node, Arguments args) {
+        return template(args).instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
     }
 
     public abstract void registerLowerings(

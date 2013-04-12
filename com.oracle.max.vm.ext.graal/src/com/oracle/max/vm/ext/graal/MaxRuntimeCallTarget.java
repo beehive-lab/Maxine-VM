@@ -73,4 +73,9 @@ class MaxRuntimeCallTarget implements RuntimeCallTarget {
         return descriptor.getMethodActor();
     }
 
+    @Override
+    public boolean preservesRegisters() {
+        return false;
+    }
+
 }

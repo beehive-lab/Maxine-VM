@@ -52,7 +52,8 @@ public class JDK {
     public static final ClassRef java_lang_Throwable                 = new ClassRef(Throwable.class);
     public static final ClassRef java_lang_Terminator                = new ClassRef("java.lang.Terminator");
 
-    public static final ClassRef java_lang_invoke_MethodType = new LazyClassRef("java.lang.invoke.MethodType");
+    public static final ClassRef java_lang_invoke_MethodType         = new LazyClassRef("java.lang.invoke.MethodType");
+//    public static final ClassRef java_lang_invoke_CallSite           = new LazyClassRef("java.lang.invoke.CallSite");
 
     public static final ClassRef java_lang_ref_Finalizer                   = new ClassRef("java.lang.ref.Finalizer");
     public static final ClassRef java_lang_ref_Finalizer$FinalizerThread   = new ClassRef("java.lang.ref.Finalizer$FinalizerThread");

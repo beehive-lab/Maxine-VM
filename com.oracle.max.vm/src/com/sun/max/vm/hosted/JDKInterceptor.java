@@ -371,6 +371,8 @@ public final class JDKInterceptor {
         JDK.java_lang_invoke_MethodType,
             new FieldOffsetRecomputation("ptypesOffset", "ptypes"),
             new FieldOffsetRecomputation("rtypeOffset", "rtype"),
+//        JDK.java_lang_invoke_CallSite,
+//            new FieldOffsetRecomputation("TARGET_OFFSET", "target"),
         // The following fields have been added in JDK 7 update 6
         JDK.java_util_Hashtable,
             new FieldOffsetRecomputation("HASHSEED_OFFSET", "hashSeed").makeOptional(),

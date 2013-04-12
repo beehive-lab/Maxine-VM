@@ -68,9 +68,9 @@ public class MonitorSnippets extends SnippetLowerings {
     }
 
     protected class MonitorLowering extends Lowering {
-        private final ResolvedJavaMethod monitorEliminatedSnippet;
+        private final SnippetInfo monitorEliminatedSnippet;
 
-        MonitorLowering(MonitorSnippets snippets, String snippetName, ResolvedJavaMethod monitorEliminatedSnippet) {
+        MonitorLowering(MonitorSnippets snippets, String snippetName, SnippetInfo monitorEliminatedSnippet) {
             super(snippets, snippetName);
             this.monitorEliminatedSnippet = monitorEliminatedSnippet;
         }
@@ -78,16 +78,15 @@ public class MonitorSnippets extends SnippetLowerings {
         void lower(AccessMonitorNode node) {
             FrameState stateAfter = node.stateAfter();
             boolean eliminated = node.eliminated();
-            Key key = new Key(eliminated ? monitorEliminatedSnippet : snippet);
+            Arguments args = new Arguments(eliminated ? monitorEliminatedSnippet : snippet);
             boolean checkNull = !node.object().stamp().nonNull();
-            Arguments args = new Arguments();
             if (!eliminated) {
                 args.add("receiver", node.object());
             }
             if (node instanceof MonitorEnterNode && !eliminated) {
-                key.add("checkNull", checkNull);
+                args.addConst("checkNull", checkNull);
             }
-            Map<Node, Node> nodes = instantiate(node, key, args);
+            Map<Node, Node> nodes = instantiate(node, args);
             for (Node n : nodes.values()) {
                 if (n instanceof LockScopeNode) {
                     LockScopeNode end = (LockScopeNode) n;
@@ -100,7 +99,7 @@ public class MonitorSnippets extends SnippetLowerings {
     protected class MonitorEnterLowering extends MonitorLowering implements LoweringProvider<MonitorEnterNode> {
 
         MonitorEnterLowering(MonitorSnippets snippets) {
-            super(snippets, "monitorEnterSnippet", snippets.findSnippet(MonitorSnippets.class, "monitorEnterEliminated"));
+            super(snippets, "monitorEnterSnippet", snippets.snippet(MonitorSnippets.class, "monitorEnterEliminated"));
         }
 
         @Override
@@ -111,7 +110,7 @@ public class MonitorSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void monitorEnterSnippet(@Parameter("receiver") Object receiver, @ConstantParameter("checkNull") boolean checkNull) {
+    private static void monitorEnterSnippet(Object receiver, @ConstantParameter boolean checkNull) {
         if (checkNull && receiver == null) {
             Throw.throwNullPointerException();
             throw UnreachableNode.unreachable();
@@ -128,7 +127,7 @@ public class MonitorSnippets extends SnippetLowerings {
     protected class MonitorExitLowering extends MonitorLowering implements LoweringProvider<MonitorExitNode> {
 
         MonitorExitLowering(MonitorSnippets snippets) {
-            super(snippets, "monitorExitSnippet", snippets.findSnippet(MonitorSnippets.class, "monitorExitEliminated"));
+            super(snippets, "monitorExitSnippet", snippets.snippet(MonitorSnippets.class, "monitorExitEliminated"));
         }
 
         @Override
@@ -139,7 +138,7 @@ public class MonitorSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void monitorExitSnippet(@Parameter("receiver") Object receiver) {
+    private static void monitorExitSnippet(Object receiver) {
         Monitor.exit(receiver);
         EndLockScopeNode.endLockScope();
     }

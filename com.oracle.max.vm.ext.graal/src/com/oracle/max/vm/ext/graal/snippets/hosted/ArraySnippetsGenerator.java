@@ -35,15 +35,14 @@ public class ArraySnippetsGenerator extends SnippetsGenerator {
 
     private static final String LOAD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static #KIND# #K#aloadSnippet(@Parameter(\"array\") Object array, @Parameter(\"index\") int index) {\n" +
+        "    public static #KIND# #K#aloadSnippet(Object array, int index) {\n" +
         "        checkIndex(array, index);\n" +
         "        return ArrayAccess.get#UKIND#(array, index);\n" +
         "    }\n\n";
 
     private static final String STORE_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    public static void #K#astoreSnippet(@Parameter(\"array\") Object array, @Parameter(\"index\") int index,\n" +
-        "            @Parameter(\"value\") #KIND# value) {\n" +
+        "    public static void #K#astoreSnippet(Object array, int index, #KIND# value) {\n" +
         "        checkIndex(array, index);\n" +
         "#CHECK_SET#" +
         "        ArrayAccess.set#UKIND#(array, index, value);\n" +
@@ -54,10 +53,10 @@ public class ArraySnippetsGenerator extends SnippetsGenerator {
         "    private void addSnippets(LoadIndexedLowering loadIndexedLowering, StoreIndexedLowering storeIndexedLowering) {\n";
 
     private static final String ADD_LOAD_SNIPPET =
-        "        loadIndexedLowering.setSnippet(Kind.#UKIND#, findSnippet(ArraySnippets.class, \"#K#aloadSnippet\"));\n";
+        "        loadIndexedLowering.setSnippet(Kind.#UKIND#, snippet(ArraySnippets.class, \"#K#aloadSnippet\"));\n";
 
     private static final String ADD_STORE_SNIPPET =
-        "        storeIndexedLowering.setSnippet(Kind.#UKIND#, findSnippet(ArraySnippets.class, \"#K#astoreSnippet\"));\n";
+        "        storeIndexedLowering.setSnippet(Kind.#UKIND#, snippet(ArraySnippets.class, \"#K#astoreSnippet\"));\n";
 
     @Override
     protected void doGenerate() throws IOException {

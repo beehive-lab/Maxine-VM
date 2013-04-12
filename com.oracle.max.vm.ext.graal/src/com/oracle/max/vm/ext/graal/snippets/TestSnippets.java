@@ -34,7 +34,6 @@ import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
-import com.oracle.graal.replacements.Snippet.Parameter;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.sun.max.annotate.*;
@@ -106,10 +105,9 @@ public class TestSnippets extends SnippetLowerings {
 
         @Override
         public void lower(TestSnippetNode1 node, LoweringTool tool) {
-            Key key = new Key(snippet);
-            Arguments args = new Arguments();
+            Arguments args = new Arguments(snippet);
             args.add("object", node.arg1);
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
 
     }
@@ -122,11 +120,10 @@ public class TestSnippets extends SnippetLowerings {
 
         @Override
         public void lower(TestSnippetNode2 node, LoweringTool tool) {
-            Key key = new Key(snippet);
-            Arguments args = new Arguments();
+            Arguments args = new Arguments(snippet);
             args.add("actor", node.arg2);
             args.add("object", node.arg1);
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
 
     }
@@ -154,7 +151,7 @@ public class TestSnippets extends SnippetLowerings {
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static int testIsHostedArg(@Parameter("a") int a, @Parameter("b") int b) {
+    public static int testIsHostedArg(int a, int b) {
         if (MaxineVM.isHosted()) {
             return a;
         } else {
@@ -168,17 +165,17 @@ public class TestSnippets extends SnippetLowerings {
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static com.sun.max.unsafe.Address testWordAsAddress(@Parameter("word") com.sun.max.unsafe.Word word) {
+    public static com.sun.max.unsafe.Address testWordAsAddress(com.sun.max.unsafe.Word word) {
         return word.asAddress();
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static long testAddressToLong(@Parameter("address") com.sun.max.unsafe.Address address) {
+    public static long testAddressToLong(com.sun.max.unsafe.Address address) {
         return address.toLong();
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static boolean testUnsignedAboveThan(@Parameter("a") long a, @Parameter("b") long b) {
+    public static boolean testUnsignedAboveThan(long a, long b) {
         return com.oracle.max.cri.intrinsics.UnsignedMath.aboveThan(a, b);
     }
 
@@ -198,82 +195,82 @@ public class TestSnippets extends SnippetLowerings {
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static com.sun.max.unsafe.Offset testOffsetFromLong(@Parameter("value") long value) {
+    public static com.sun.max.unsafe.Offset testOffsetFromLong(long value) {
         return Offset.fromLong(value);
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static com.sun.max.unsafe.Offset testOffsetFromInt(@Parameter("value") int value) {
+    public static com.sun.max.unsafe.Offset testOffsetFromInt(int value) {
         return Offset.fromInt(value);
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static com.sun.max.unsafe.Offset testOffsetPlusOffset(@Parameter("word") com.sun.max.unsafe.Offset offset, @Parameter("addend") Offset addend) {
+    public static com.sun.max.unsafe.Offset testOffsetPlusOffset(com.sun.max.unsafe.Offset offset, Offset addend) {
         return offset.plus(addend);
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static com.sun.max.unsafe.Offset testOffsetPlus(@Parameter("word") com.sun.max.unsafe.Offset offset, @Parameter("value") int value) {
+    public static com.sun.max.unsafe.Offset testOffsetPlus(com.sun.max.unsafe.Offset offset, int value) {
         return offset.plus(value);
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static com.sun.max.unsafe.Address testAddressPlus(@Parameter("word") com.sun.max.unsafe.Address address, @Parameter("value") int value) {
+    public static com.sun.max.unsafe.Address testAddressPlus(com.sun.max.unsafe.Address address, int value) {
         return address.plus(value);
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Reference testRefFromJava(@Parameter("object") Object object) {
+    public static Reference testRefFromJava(Object object) {
         return Reference.fromJava(object);
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object testRefFromOrigin(@Parameter("origin") Pointer origin) {
+    public static Object testRefFromOrigin(Pointer origin) {
         return Reference.fromOrigin(origin).toJava();
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Pointer testTupleCellToOrigin(@Parameter("cell") Pointer cell) {
+    public static Pointer testTupleCellToOrigin(Pointer cell) {
         return Layout.tupleCellToOrigin(cell);
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void testWriteHubReference(@Parameter("origin") Pointer origin, @Parameter("ref") Reference ref) {
+    public static void testWriteHubReference(Pointer origin, Reference ref) {
         Layout.writeHubReference(origin, ref);
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Reference testReadHubReference(@Parameter("origin") Pointer origin) {
+    public static Reference testReadHubReference(Pointer origin) {
         return Layout.readHubReference(origin);
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Size testHubAccess(@Parameter("hub") Hub hub) {
+    public static Size testHubAccess(Hub hub) {
         return hub.tupleSize;
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static long testTupleAccess_readLong(@Parameter("object") Object staticTuple, @Parameter("offset") int offset) {
+    public static long testTupleAccess_readLong(Object staticTuple, int offset) {
         return TupleAccess.readLong(staticTuple, offset);
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static boolean testIsSubClassHub(@Parameter("hub") Hub hub, @Parameter("actor") ClassActor testClassActor) {
+    public static boolean testIsSubClassHub(Hub hub, ClassActor testClassActor) {
         return hub.isSubClassHub(testClassActor);
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object testUnsafeCast(@Parameter("object") Object object) {
+    public static Object testUnsafeCast(Object object) {
         return UnsafeCastNode.unsafeCast(Reference.fromJava(object), StampFactory.forNodeIntrinsic());
     }
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object testThrow(@Parameter("actor") ClassActor testClassActor, @Parameter("object") Object object) {
+    public static Object testThrow(ClassActor testClassActor, Object object) {
         throw Throw.throwClassCastException(testClassActor, object);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void testWrite(@Parameter("p") Pointer p, @Parameter("offset") int offset, @Parameter("value") short value) {
+    public static void testWrite(Pointer p, int offset, short value) {
         p.writeShort(offset, value);
     }
 

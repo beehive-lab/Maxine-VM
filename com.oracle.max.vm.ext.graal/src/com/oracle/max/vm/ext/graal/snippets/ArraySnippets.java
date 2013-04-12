@@ -30,7 +30,6 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.replacements.*;
-import com.oracle.graal.replacements.Snippet.Parameter;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.cri.intrinsics.UnsignedMath;
 import com.oracle.max.vm.ext.graal.nodes.*;
@@ -68,33 +67,31 @@ public class ArraySnippets extends SnippetLowerings {
 
         @Override
         public void lower(ArrayLengthNode node, LoweringTool tool) {
-            Key key = new Key(snippet);
-            Arguments args = new Arguments();
+            Arguments args = new Arguments(snippet);
             args.add("array", node.array());
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
 
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static int arrayLengthSnippet(@Parameter("array") Object array) {
+    public static int arrayLengthSnippet(Object array) {
         return ArrayAccess.readArrayLength(array);
     }
 
     protected abstract class IndexedLowering extends Lowering {
-        protected final ResolvedJavaMethod[] snippets = new ResolvedJavaMethod[Kind.values().length];
+        protected final SnippetInfo[] snippets = new SnippetInfo[Kind.values().length];
 
-        void setSnippet(Kind kind, ResolvedJavaMethod snippet) {
+        void setSnippet(Kind kind, SnippetInfo snippet) {
             snippets[kind.ordinal()] = snippet;
         }
 
         void lower(AccessIndexedNode node) {
-            Key key = new Key(snippets[node.elementKind().ordinal()]);
-            Arguments args = new Arguments();
+            Arguments args = new Arguments(snippets[node.elementKind().ordinal()]);
             args.add("array", node.array());
             args.add("index", node.index());
             storeIndexedArg(node, args);
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
 
         protected void storeIndexedArg(AccessIndexedNode node, Arguments args) {
@@ -150,118 +147,109 @@ public class ArraySnippets extends SnippetLowerings {
 
 // START GENERATED CODE
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static boolean zaloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
+    public static boolean zaloadSnippet(Object array, int index) {
         checkIndex(array, index);
         return ArrayAccess.getBoolean(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void zastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
-            @Parameter("value") boolean value) {
+    public static void zastoreSnippet(Object array, int index, boolean value) {
         checkIndex(array, index);
         ArrayAccess.setBoolean(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static byte baloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
+    public static byte baloadSnippet(Object array, int index) {
         checkIndex(array, index);
         return ArrayAccess.getByte(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void bastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
-            @Parameter("value") byte value) {
+    public static void bastoreSnippet(Object array, int index, byte value) {
         checkIndex(array, index);
         ArrayAccess.setByte(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static short saloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
+    public static short saloadSnippet(Object array, int index) {
         checkIndex(array, index);
         return ArrayAccess.getShort(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void sastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
-            @Parameter("value") short value) {
+    public static void sastoreSnippet(Object array, int index, short value) {
         checkIndex(array, index);
         ArrayAccess.setShort(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static char caloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
+    public static char caloadSnippet(Object array, int index) {
         checkIndex(array, index);
         return ArrayAccess.getChar(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void castoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
-            @Parameter("value") char value) {
+    public static void castoreSnippet(Object array, int index, char value) {
         checkIndex(array, index);
         ArrayAccess.setChar(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static int ialoadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
+    public static int ialoadSnippet(Object array, int index) {
         checkIndex(array, index);
         return ArrayAccess.getInt(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void iastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
-            @Parameter("value") int value) {
+    public static void iastoreSnippet(Object array, int index, int value) {
         checkIndex(array, index);
         ArrayAccess.setInt(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static float faloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
+    public static float faloadSnippet(Object array, int index) {
         checkIndex(array, index);
         return ArrayAccess.getFloat(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void fastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
-            @Parameter("value") float value) {
+    public static void fastoreSnippet(Object array, int index, float value) {
         checkIndex(array, index);
         ArrayAccess.setFloat(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static long jaloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
+    public static long jaloadSnippet(Object array, int index) {
         checkIndex(array, index);
         return ArrayAccess.getLong(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void jastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
-            @Parameter("value") long value) {
+    public static void jastoreSnippet(Object array, int index, long value) {
         checkIndex(array, index);
         ArrayAccess.setLong(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static double daloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
+    public static double daloadSnippet(Object array, int index) {
         checkIndex(array, index);
         return ArrayAccess.getDouble(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void dastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
-            @Parameter("value") double value) {
+    public static void dastoreSnippet(Object array, int index, double value) {
         checkIndex(array, index);
         ArrayAccess.setDouble(array, index, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object aaloadSnippet(@Parameter("array") Object array, @Parameter("index") int index) {
+    public static Object aaloadSnippet(Object array, int index) {
         checkIndex(array, index);
         return ArrayAccess.getObject(array, index);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void aastoreSnippet(@Parameter("array") Object array, @Parameter("index") int index,
-            @Parameter("value") Object value) {
+    public static void aastoreSnippet(Object array, int index, Object value) {
         checkIndex(array, index);
         checkSetObject(array, value);
         ArrayAccess.setObject(array, index, value);
@@ -269,24 +257,24 @@ public class ArraySnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
     private void addSnippets(LoadIndexedLowering loadIndexedLowering, StoreIndexedLowering storeIndexedLowering) {
-        loadIndexedLowering.setSnippet(Kind.Boolean, findSnippet(ArraySnippets.class, "zaloadSnippet"));
-        storeIndexedLowering.setSnippet(Kind.Boolean, findSnippet(ArraySnippets.class, "zastoreSnippet"));
-        loadIndexedLowering.setSnippet(Kind.Byte, findSnippet(ArraySnippets.class, "baloadSnippet"));
-        storeIndexedLowering.setSnippet(Kind.Byte, findSnippet(ArraySnippets.class, "bastoreSnippet"));
-        loadIndexedLowering.setSnippet(Kind.Short, findSnippet(ArraySnippets.class, "saloadSnippet"));
-        storeIndexedLowering.setSnippet(Kind.Short, findSnippet(ArraySnippets.class, "sastoreSnippet"));
-        loadIndexedLowering.setSnippet(Kind.Char, findSnippet(ArraySnippets.class, "caloadSnippet"));
-        storeIndexedLowering.setSnippet(Kind.Char, findSnippet(ArraySnippets.class, "castoreSnippet"));
-        loadIndexedLowering.setSnippet(Kind.Int, findSnippet(ArraySnippets.class, "ialoadSnippet"));
-        storeIndexedLowering.setSnippet(Kind.Int, findSnippet(ArraySnippets.class, "iastoreSnippet"));
-        loadIndexedLowering.setSnippet(Kind.Float, findSnippet(ArraySnippets.class, "faloadSnippet"));
-        storeIndexedLowering.setSnippet(Kind.Float, findSnippet(ArraySnippets.class, "fastoreSnippet"));
-        loadIndexedLowering.setSnippet(Kind.Long, findSnippet(ArraySnippets.class, "jaloadSnippet"));
-        storeIndexedLowering.setSnippet(Kind.Long, findSnippet(ArraySnippets.class, "jastoreSnippet"));
-        loadIndexedLowering.setSnippet(Kind.Double, findSnippet(ArraySnippets.class, "daloadSnippet"));
-        storeIndexedLowering.setSnippet(Kind.Double, findSnippet(ArraySnippets.class, "dastoreSnippet"));
-        loadIndexedLowering.setSnippet(Kind.Object, findSnippet(ArraySnippets.class, "aaloadSnippet"));
-        storeIndexedLowering.setSnippet(Kind.Object, findSnippet(ArraySnippets.class, "aastoreSnippet"));
+        loadIndexedLowering.setSnippet(Kind.Boolean, snippet(ArraySnippets.class, "zaloadSnippet"));
+        storeIndexedLowering.setSnippet(Kind.Boolean, snippet(ArraySnippets.class, "zastoreSnippet"));
+        loadIndexedLowering.setSnippet(Kind.Byte, snippet(ArraySnippets.class, "baloadSnippet"));
+        storeIndexedLowering.setSnippet(Kind.Byte, snippet(ArraySnippets.class, "bastoreSnippet"));
+        loadIndexedLowering.setSnippet(Kind.Short, snippet(ArraySnippets.class, "saloadSnippet"));
+        storeIndexedLowering.setSnippet(Kind.Short, snippet(ArraySnippets.class, "sastoreSnippet"));
+        loadIndexedLowering.setSnippet(Kind.Char, snippet(ArraySnippets.class, "caloadSnippet"));
+        storeIndexedLowering.setSnippet(Kind.Char, snippet(ArraySnippets.class, "castoreSnippet"));
+        loadIndexedLowering.setSnippet(Kind.Int, snippet(ArraySnippets.class, "ialoadSnippet"));
+        storeIndexedLowering.setSnippet(Kind.Int, snippet(ArraySnippets.class, "iastoreSnippet"));
+        loadIndexedLowering.setSnippet(Kind.Float, snippet(ArraySnippets.class, "faloadSnippet"));
+        storeIndexedLowering.setSnippet(Kind.Float, snippet(ArraySnippets.class, "fastoreSnippet"));
+        loadIndexedLowering.setSnippet(Kind.Long, snippet(ArraySnippets.class, "jaloadSnippet"));
+        storeIndexedLowering.setSnippet(Kind.Long, snippet(ArraySnippets.class, "jastoreSnippet"));
+        loadIndexedLowering.setSnippet(Kind.Double, snippet(ArraySnippets.class, "daloadSnippet"));
+        storeIndexedLowering.setSnippet(Kind.Double, snippet(ArraySnippets.class, "dastoreSnippet"));
+        loadIndexedLowering.setSnippet(Kind.Object, snippet(ArraySnippets.class, "aaloadSnippet"));
+        storeIndexedLowering.setSnippet(Kind.Object, snippet(ArraySnippets.class, "aastoreSnippet"));
     }
 // END GENERATED CODE
 
