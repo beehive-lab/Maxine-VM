@@ -292,7 +292,26 @@ def image(args):
             imageArgs += [arg]
         i += 1
 
-    mx.run_java(systemProps + ['-cp', mx.classpath(), 'com.sun.max.vm.hosted.BootImageGenerator', '-trace=1', '-run=java'] + imageArgs)
+    mx.run_java(systemProps + ['-cp', sanitized_classpath(), 'com.sun.max.vm.hosted.BootImageGenerator', '-trace=1', '-run=java'] + imageArgs)
+    
+def sanitized_classpath():
+    """Remove Graal test projects from the classpath"""
+    cp = mx.classpath()
+    cp_list = cp.split(os.pathsep)
+    sanitized_list = []
+    for entry in cp_list:
+        include = True;
+        if entry.find("com.oracle.graal") != -1:
+            dirname = os.path.dirname(entry)
+            basename = os.path.basename(dirname)
+            bl = basename.split(".")
+            last = bl[len(bl) - 1]
+            if last == "test":
+                include = False
+        if include:
+            sanitized_list.append(entry)
+    result = os.pathsep.join(sanitized_list)
+    return result
 
 def inspect(args):
     """launch a given program under the Inspector
@@ -601,7 +620,7 @@ def test(args):
     with open(console, 'w', 0) as f:
         tee = Tee(f)
         java = mx.java()
-        mx.run_java(['-cp', mx.classpath(), 'test.com.sun.max.vm.MaxineTester', '-output-dir=maxine-tester',
+        mx.run_java(['-cp', sanitized_classpath(), 'test.com.sun.max.vm.MaxineTester', '-output-dir=maxine-tester',
                       '-refvm=' + java.java, '-refvm-args=' + ' '.join(java.java_args)] + args, out=tee.eat, err=subprocess.STDOUT)
 
 def verify(args):
