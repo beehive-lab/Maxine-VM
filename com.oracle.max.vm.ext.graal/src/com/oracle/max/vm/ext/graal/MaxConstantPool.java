@@ -112,4 +112,9 @@ public class MaxConstantPool implements ConstantPool {
 
     }
 
+    @Override
+    public Object lookupAppendix(int cpi, int opcode) {
+        return null;
+    }
+
 }

@@ -37,7 +37,6 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.printer.*;
-import com.oracle.graal.replacements.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.oracle.max.vm.ext.graal.snippets.amd64.*;
 import com.sun.max.program.*;
@@ -72,17 +71,17 @@ public class MaxRuntime implements GraalCodeCacheProvider {
             addExceptionHandlersComment(tm, hcf);
             Register fp = RegisterMap.toGraal(vm().registerConfigs.standard.frame);
             RefMapFormatter slotFormatter = new RefMapFormatter(maxTargetDescription.arch, maxTargetDescription.wordSize, fp, 0);
-            for (Safepoint safepoint : tm.getSafepoints()) {
-                if (safepoint instanceof Call) {
-                    Call call = (Call) safepoint;
+            for (Infopoint infopoint : tm.getInfopoints()) {
+                if (infopoint instanceof Call) {
+                    Call call = (Call) infopoint;
                     if (call.debugInfo != null) {
                         hcf.addComment(call.pcOffset + call.size, CodeUtil.append(new StringBuilder(100), call.debugInfo, slotFormatter).toString());
                     }
                 } else {
-                    if (safepoint.debugInfo != null) {
-                        hcf.addComment(safepoint.pcOffset, CodeUtil.append(new StringBuilder(100), safepoint.debugInfo, slotFormatter).toString());
+                    if (infopoint.debugInfo != null) {
+                        hcf.addComment(infopoint.pcOffset, CodeUtil.append(new StringBuilder(100), infopoint.debugInfo, slotFormatter).toString());
                     }
-                    addOperandComment(hcf, safepoint.pcOffset, "{safepoint}");
+                    addOperandComment(hcf, infopoint.pcOffset, "{safepoint}");
                 }
             }
             for (DataPatch site : tm.getDataReferences()) {
@@ -260,6 +259,12 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     public Constant readUnsafeConstant(Kind kind, Object base, long displacement) {
         // TODO
         MaxGraal.unimplemented("MaxRuntime.readUnsafeConstant");
+        return null;
+    }
+
+    @Override
+    public InstalledCode addMethod(ResolvedJavaMethod method, CompilationResult compResult, Graph graph) {
+        MaxGraal.unimplemented("MaxRuntime.addMethod");
         return null;
     }
 

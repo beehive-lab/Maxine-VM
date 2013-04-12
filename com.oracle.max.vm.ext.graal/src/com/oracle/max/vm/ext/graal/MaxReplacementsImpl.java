@@ -35,7 +35,6 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
 import com.oracle.graal.replacements.*;
-import com.oracle.graal.replacements.ReplacementsImpl.*;
 import com.oracle.max.vm.ext.graal.MaxRuntime.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.max.program.*;
@@ -53,7 +52,6 @@ class MaxReplacementsImpl extends ReplacementsImpl {
     }
 
     public void installAndRegisterSnippets(Class< ? extends SnippetLowerings> clazz) {
-        registerSnippets(clazz);
         // assumption is that it is ok to register the lowerings incrementally
         try {
             Constructor< ? > cons = clazz.getDeclaredConstructor(CodeCacheProvider.class, Replacements.class, TargetDescription.class, Map.class);
@@ -87,7 +85,7 @@ class MaxReplacementsImpl extends ReplacementsImpl {
 
             new MaxIntrinsicsPhase().apply(graph);
             new MaxWordTypeRewriterPhase.MaxInvokeRewriter(runtime, target.wordKind).apply(graph);
-            new NodeIntrinsificationPhase(runtime, pool()).apply(graph);
+            new NodeIntrinsificationPhase(runtime).apply(graph);
             // need constant propagation for folded methods
             new CanonicalizerPhase(runtime, assumptions).apply(graph);
 
@@ -103,7 +101,7 @@ class MaxReplacementsImpl extends ReplacementsImpl {
 
         @Override
         protected void finalizeGraph(StructuredGraph graph) {
-            new NodeIntrinsificationPhase(runtime, pool()).apply(graph);
+            new NodeIntrinsificationPhase(runtime).apply(graph);
 
             // These only get done once right at the end
             new MaxWordTypeRewriterPhase.MaxUnsafeCastRewriter(runtime, target.wordKind).apply(graph);
@@ -121,7 +119,7 @@ class MaxReplacementsImpl extends ReplacementsImpl {
 
         @Override
         public void afterInlining(StructuredGraph graph) {
-            new NodeIntrinsificationPhase(runtime, pool()).apply(graph);
+            new NodeIntrinsificationPhase(runtime).apply(graph);
 
             new DeadCodeEliminationPhase().apply(graph);
             new CanonicalizerPhase(runtime, assumptions).apply(graph);

@@ -69,6 +69,9 @@ public class Package extends BootImagePackage {
         } else if (this.name().equals("com.oracle.graal.nodes.extended")) {
             JDKInterceptor.addInterceptedField(MEMBARNODE_CLASSNAME,
                             new JDKInterceptor.FieldOffsetRecomputation("dummyOffset", new JDK.ClassRef(MEMBARNODE_CLASSNAME), "dummy"));
+        } else if (this.name().equals("com.oracle.graal.api.code")) {
+            // java.lang.invoke.CallSite causes unresolved problems in the boot image
+            HostedBootClassLoader.omitClass("java.lang.invoke.CallSite");
         }
     }
 

@@ -44,11 +44,11 @@ public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
 
     protected MaxCiTargetMethod(CompilationResult gCompilation) {
         // Safepoints
-        List<CompilationResult.Safepoint> gSafepoints = gCompilation.getSafepoints();
-        for (com.oracle.graal.api.code.CompilationResult.Safepoint gSafepoint : gSafepoints) {
-            CiDebugInfo ciDebugInfo = MaxDebugInfo.toCi(gSafepoint.debugInfo);
-            if (gSafepoint instanceof com.oracle.graal.api.code.CompilationResult.Call) {
-                com.oracle.graal.api.code.CompilationResult.Call gCall = (com.oracle.graal.api.code.CompilationResult.Call) gSafepoint;
+        List<CompilationResult.Infopoint> gInfopoints = gCompilation.getInfopoints();
+        for (com.oracle.graal.api.code.CompilationResult.Infopoint gInfopoint : gInfopoints) {
+            CiDebugInfo ciDebugInfo = MaxDebugInfo.toCi(gInfopoint.debugInfo);
+            if (gInfopoint instanceof com.oracle.graal.api.code.CompilationResult.Call) {
+                com.oracle.graal.api.code.CompilationResult.Call gCall = (com.oracle.graal.api.code.CompilationResult.Call) gInfopoint;
                 Object target;
                 if (gCall.target instanceof MaxRuntimeCallTarget) {
                     target = ((MaxRuntimeCallTarget) gCall.target).getMethodActor();
@@ -63,7 +63,7 @@ public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
                 Call call = new Call(target, gCall.pcOffset, gCall.size, gCall.direct, ciDebugInfo);
                 this.addSafepoint(call);
             } else {
-                this.addSafepoint(new Safepoint(gSafepoint.pcOffset, ciDebugInfo));
+                this.addSafepoint(new Safepoint(gInfopoint.pcOffset, ciDebugInfo));
             }
         }
         // Code

@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal.amd64;
 
+import com.oracle.graal.api.code.*;
 import com.oracle.graal.asm.amd64.*;
 import com.oracle.graal.lir.*;
 import com.oracle.graal.lir.LIRInstruction.*;
@@ -42,7 +43,7 @@ public class MaxAMD64SafepointOp extends AMD64LIRInstruction {
     @Override
     public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
         int pos = masm.codeBuffer.position();
-        tasm.recordSafepoint(pos, state);
+        tasm.recordInfopoint(pos, state, InfopointReason.SAFEPOINT);
         byte[] safepointCode = MaxineVM.vm().safepointPoll.code;
         masm.codeBuffer.emitBytes(safepointCode, 0, safepointCode.length);
     }

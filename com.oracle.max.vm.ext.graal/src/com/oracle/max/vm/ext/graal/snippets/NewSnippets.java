@@ -22,8 +22,6 @@
  */
 package com.oracle.max.vm.ext.graal.snippets;
 
-import static com.oracle.graal.replacements.Snippet.Varargs.*;
-
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
@@ -36,8 +34,7 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.Snippet.*;
-import com.oracle.graal.replacements.SnippetTemplate.Arguments;
-import com.oracle.graal.replacements.SnippetTemplate.Key;
+import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.graal.replacements.nodes.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
@@ -78,15 +75,14 @@ public class NewSnippets extends SnippetLowerings {
         @Override
         public void lower(NewInstanceNode node, LoweringTool tool) {
             ClassActor type = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.instanceClass());
-            Key key = new Key(snippet);
-            Arguments args = new Arguments();
+            Arguments args = new Arguments(snippet);
             args.add("hub", type.dynamicHub());
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
     }
 
     protected class UnresolvedNewInstanceLowering extends Lowering implements LoweringProvider<UnresolvedNewInstanceNode> {
-        private ResolvedJavaMethod initializeClassAndNewSnippet = findSnippet(NewSnippets.class, "initializeClassAndNewSnippet");
+        private SnippetInfo initializeClassAndNewSnippet = snippet(NewSnippets.class, "initializeClassAndNewSnippet");
 
         protected UnresolvedNewInstanceLowering(NewSnippets newSnippets) {
             super(newSnippets, "unresolvedNewInstanceSnippet");
@@ -94,36 +90,35 @@ public class NewSnippets extends SnippetLowerings {
 
         @Override
         public void lower(UnresolvedNewInstanceNode node, LoweringTool tool) {
-            Key key;
-            Arguments args = new Arguments();
+            Arguments args;
             // The class may be resolved but just not initialized
             RiType riType = MaxJavaType.getRiType(node.javaType());
             if (riType instanceof ClassActor) {
-                key = new Key(initializeClassAndNewSnippet);
+                args = new Arguments(initializeClassAndNewSnippet);
                 args.add("classActor", riType);
             } else {
                 UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) riType;
                 ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
-                key = new Key(snippet);
+                args = new Arguments(snippet);
                 args.add("guard", guard);
             }
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
 
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object newInstanceSnippet(@Parameter("hub") DynamicHub hub) {
+    public static Object newInstanceSnippet(DynamicHub hub) {
         return UnsafeCastNode.unsafeCast(Heap.createTuple(hub), StampFactory.forNodeIntrinsic());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object unresolvedNewInstanceSnippet(@Parameter("guard") ResolutionGuard.InPool guard) {
+    public static Object unresolvedNewInstanceSnippet(ResolutionGuard.InPool guard) {
         return UnsafeCastNode.unsafeCast(resolveClassForNewAndCreate(guard), StampFactory.forNodeIntrinsic());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object initializeClassAndNewSnippet(@Parameter("classActor") ClassActor classActor) {
+    public static Object initializeClassAndNewSnippet(ClassActor classActor) {
         return initializeClassAndNew(classActor);
     }
 
@@ -149,16 +144,15 @@ public class NewSnippets extends SnippetLowerings {
         @Override
         public void lower(NewArrayNode node, LoweringTool tool) {
             ClassActor type = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.elementType().getArrayClass());
-            Key key = new Key(snippet);
-            Arguments args = new Arguments();
+            Arguments args = new Arguments(snippet);
             args.add("hub", type.dynamicHub());
             args.add("length", node.length());
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object newArraySnippet(@Parameter("hub") DynamicHub hub, @Parameter("length") int length) {
+    public static Object newArraySnippet(DynamicHub hub, int length) {
         if (length < 0) {
             Throw.throwNegativeArraySizeException(length);
             throw UnreachableNode.unreachable();
@@ -178,16 +172,15 @@ public class NewSnippets extends SnippetLowerings {
         public void lower(UnresolvedNewArrayNode node, LoweringTool tool) {
             UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) MaxJavaType.getRiType(node.elementType());
             ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
-            Key key = new Key(snippet);
-            Arguments args = new Arguments();
+            Arguments args = new Arguments(snippet);
             args.add("guard", guard);
             args.add("length", node.length());
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object unresolvedNewArraySnippet(@Parameter("guard") ResolutionGuard.InPool guard, @Parameter("length") int length) {
+    public static Object unresolvedNewArraySnippet(ResolutionGuard.InPool guard, int length) {
         return UnsafeCastNode.unsafeCast(resolveClassForNewArrayAndCreate(guard, length), StampFactory.forNodeIntrinsic());
     }
 
@@ -206,28 +199,28 @@ public class NewSnippets extends SnippetLowerings {
         @Override
         public void lower(NewMultiArrayNode node, LoweringTool tool) {
             ClassActor arrayClassActor = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.type());
-            Key key = new Key(snippet);
-            Arguments args = Arguments.arguments("arrayClassActor", arrayClassActor);
-            dimensions(key, args, node.dimensions());
-            instantiate(node, key, args);
+            Arguments args = new Arguments(snippet);
+            args.add("arrayClassActor", arrayClassActor);
+            dimensions(args, node.dimensions());
+            instantiate(node, args);
         }
 
     }
 
-    private static void dimensions(Key key, Arguments args, NodeList<ValueNode> dimensions) {
+    private static void dimensions(Arguments args, NodeList<ValueNode> dimensions) {
         int rank = dimensions.size();
         ValueNode[] dims = new ValueNode[rank];
         for (int i = 0; i < rank; i++) {
             dims[i] = dimensions.get(i);
         }
-        key.add("dimensions", vargargs(new int[rank], StampFactory.forKind(Kind.Int))).add("rank", rank);
-        args.add("dimensions", dims);
+        args.addConst("rank", rank);
+        args.addVarargs("dimensions", int.class, StampFactory.forKind(Kind.Int), dims);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object newMultiArraySnippet(@Parameter("arrayClassActor") ClassActor arrayClassActor,
-                    @ConstantParameter("rank") int rank,
-                    @VarargsParameter("dimensions") int[] dimensions) {
+    public static Object newMultiArraySnippet(ClassActor arrayClassActor,
+                    @ConstantParameter int rank,
+                    @VarargsParameter int[] dimensions) {
         int[] dims = new int[rank];
         ExplodeLoopNode.explodeLoop();
         for (int i = 0; i < rank; i++) {
@@ -256,10 +249,10 @@ public class NewSnippets extends SnippetLowerings {
 
         @Override
         public void lower(UnresolvedNewMultiArrayNode node, LoweringTool tool) {
-            Key key = new Key(snippet);
-            Arguments args = Arguments.arguments("arrayClassActor", node.resolvedClassActor());
-            dimensions(key, args, node.dimensions());
-            instantiate(node, key, args);
+            Arguments args = new Arguments(snippet);
+            args.add("arrayClassActor", node.resolvedClassActor());
+            dimensions(args, node.dimensions());
+            instantiate(node, args);
         }
     }
 

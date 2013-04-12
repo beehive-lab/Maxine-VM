@@ -259,7 +259,7 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     private static class LocalVariableTableImpl implements LocalVariableTable {
 
-        private static class LocalImpl implements Local {
+        private class LocalImpl implements Local {
 
             com.sun.max.vm.classfile.LocalVariableTable.Entry entry;
 
@@ -286,9 +286,7 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
             @Override
             public String getName() {
-                /// TODO
-                MaxGraal.unimplemented("Local.getName");
-                return null;
+                return entry.name(constantPool).string;
             }
 
             @Override
@@ -300,9 +298,11 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
         }
 
+        private com.sun.max.vm.classfile.constant.ConstantPool constantPool;
         private com.sun.max.vm.classfile.LocalVariableTable maxLvt;
 
-        LocalVariableTableImpl(com.sun.max.vm.classfile.LocalVariableTable maxLvt) {
+        LocalVariableTableImpl(com.sun.max.vm.classfile.constant.ConstantPool constantPool, com.sun.max.vm.classfile.LocalVariableTable maxLvt) {
+            this.constantPool = constantPool;
             this.maxLvt = maxLvt;
         }
 
@@ -340,7 +340,7 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         if (lvt == null) {
             ClassMethodActor cma = (ClassMethodActor) riResolvedMethod();
             com.sun.max.vm.classfile.LocalVariableTable maxLvt = cma.codeAttribute().localVariableTable();
-            lvt = new LocalVariableTableImpl(maxLvt);
+            lvt = new LocalVariableTableImpl(cma.codeAttribute().cp, maxLvt);
             localVariableTableMap.put(riMethod, lvt);
         }
         return lvt;

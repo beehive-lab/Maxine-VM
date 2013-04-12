@@ -33,7 +33,6 @@ import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.replacements.*;
-import com.oracle.graal.replacements.Snippet.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
@@ -134,69 +133,66 @@ class MaxInvokeLowerings extends SnippetLowerings {
      * Lowers a {@link MethodAddressNode} using a snippet that returns the entry point of the method.
      */
     private class MethodAddressLowering extends Lowering implements LoweringProvider<MethodAddressNode> {
-        protected final ResolvedJavaMethod[] snippets = new ResolvedJavaMethod[InvokeKind.values().length];
+        protected final SnippetInfo[] snippets = new SnippetInfo[InvokeKind.values().length];
 
         MethodAddressLowering(MaxInvokeLowerings invokeSnippets) {
             super();
             for (InvokeKind invokeKind : InvokeKind.values()) {
-                snippets[invokeKind.ordinal()] = invokeSnippets.findSnippet(MaxInvokeLowerings.class,
+                snippets[invokeKind.ordinal()] = invokeSnippets.snippet(MaxInvokeLowerings.class,
                                 "addressFor" + invokeKind.name() + "MethodSnippet");
             }
         }
 
         @Override
         public void lower(MethodAddressNode node, LoweringTool tool) {
-            Key key = new Key(snippets[node.invokeKind().ordinal()]);
-            Arguments args = new Arguments();
+            Arguments args = new Arguments(snippets[node.invokeKind().ordinal()]);
             if (node.invokeKind() == InvokeKind.Interface || node.invokeKind() == InvokeKind.Virtual) {
                 args.add("receiver", node.receiver());
             }
-            args.add("method", node.methodActor());
-            instantiate(node, key, args);
+            args.add("methodActor", node.methodActor());
+            instantiate(node, args);
         }
 
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static com.sun.max.unsafe.Address addressForSpecialMethodSnippet(@Parameter("method") VirtualMethodActor virtualMethodActor) {
-        return getAddressForSpecialMethodSnippet(virtualMethodActor);
+    private static com.sun.max.unsafe.Address addressForSpecialMethodSnippet(VirtualMethodActor methodActor) {
+        return getAddressForSpecialMethodSnippet(methodActor);
     }
 
     @RUNTIME_ENTRY
-    private static com.sun.max.unsafe.Address getAddressForSpecialMethodSnippet(VirtualMethodActor virtualMethodActor) {
-        return Snippets.makeEntrypoint(virtualMethodActor, com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    private static com.sun.max.unsafe.Address getAddressForSpecialMethodSnippet(VirtualMethodActor methodActor) {
+        return Snippets.makeEntrypoint(methodActor, com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static com.sun.max.unsafe.Address addressForStaticMethodSnippet(@Parameter("method") StaticMethodActor staticMethodActor) {
-        return getAddressForStaticMethodSnippet(staticMethodActor);
+    private static com.sun.max.unsafe.Address addressForStaticMethodSnippet(StaticMethodActor methodActor) {
+        return getAddressForStaticMethodSnippet(methodActor);
     }
 
     @RUNTIME_ENTRY
-    private static com.sun.max.unsafe.Address getAddressForStaticMethodSnippet(StaticMethodActor staticMethodActor) {
-        Snippets.makeHolderInitialized(staticMethodActor);
-        return Snippets.makeEntrypoint(staticMethodActor, com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    private static com.sun.max.unsafe.Address getAddressForStaticMethodSnippet(StaticMethodActor methodActor) {
+        Snippets.makeHolderInitialized(methodActor);
+        return Snippets.makeEntrypoint(methodActor, com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static com.sun.max.unsafe.Address addressForVirtualMethodSnippet(@Parameter("receiver") Object receiver,
-                    @Parameter("method") VirtualMethodActor virtualMethodActor) {
-        return Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
+    private static com.sun.max.unsafe.Address addressForVirtualMethodSnippet(Object receiver, VirtualMethodActor methodActor) {
+        return Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static com.sun.max.unsafe.Address addressForInterfaceMethodSnippet(@Parameter("receiver") Object receiver,
-                    @Parameter("method") InterfaceMethodActor interfaceMethodActor) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+    private static com.sun.max.unsafe.Address addressForInterfaceMethodSnippet(Object receiver, InterfaceMethodActor methodActor) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress();
     }
 
     private class UnresolvedMethodLowering extends Lowering implements LoweringProvider<ResolveMethodNode> {
-        protected final ResolvedJavaMethod[] snippets = new ResolvedJavaMethod[InvokeKind.values().length];
+        protected final SnippetInfo[] snippets = new SnippetInfo[InvokeKind.values().length];
 
         UnresolvedMethodLowering(MaxInvokeLowerings invokeSnippets) {
             super();
             for (InvokeKind invokeKind : InvokeKind.values()) {
-                snippets[invokeKind.ordinal()] = invokeSnippets.findSnippet(MaxInvokeLowerings.class,
+                snippets[invokeKind.ordinal()] = invokeSnippets.snippet(MaxInvokeLowerings.class,
                                 "resolve" + invokeKind.name() + "MethodSnippet");
             }
         }
@@ -205,16 +201,15 @@ class MaxInvokeLowerings extends SnippetLowerings {
         public void lower(ResolveMethodNode node, LoweringTool tool) {
             UnresolvedMethod unresolvedMethod = (UnresolvedMethod) MaxJavaMethod.getRiMethod(node.javaMethod());
             ResolutionGuard.InPool guard = unresolvedMethod.constantPool.makeResolutionGuard(unresolvedMethod.cpi);
-            Key key = new Key(snippets[node.invokeKind().ordinal()]);
-            Arguments args = new Arguments();
+            Arguments args = new Arguments(snippets[node.invokeKind().ordinal()]);
             args.add("guard", guard);
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
 
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static VirtualMethodActor resolveSpecialMethodSnippet(@Parameter("guard") ResolutionGuard.InPool guard) {
+    private static VirtualMethodActor resolveSpecialMethodSnippet(ResolutionGuard.InPool guard) {
         return resolveSpecialMethod(guard);
     }
 
@@ -224,7 +219,7 @@ class MaxInvokeLowerings extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static VirtualMethodActor resolveVirtualMethodSnippet(@Parameter("guard") ResolutionGuard.InPool guard) {
+    private static VirtualMethodActor resolveVirtualMethodSnippet(ResolutionGuard.InPool guard) {
         return resolveVirtualMethod(guard);
     }
 
@@ -234,7 +229,7 @@ class MaxInvokeLowerings extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static InterfaceMethodActor resolveInterfaceMethodSnippet(@Parameter("guard") ResolutionGuard.InPool guard) {
+    private static InterfaceMethodActor resolveInterfaceMethodSnippet(ResolutionGuard.InPool guard) {
         return resolveInterfaceMethod(guard);
     }
 
@@ -244,7 +239,7 @@ class MaxInvokeLowerings extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static StaticMethodActor resolveStaticMethodSnippet(@Parameter("guard") ResolutionGuard.InPool guard) {
+    private static StaticMethodActor resolveStaticMethodSnippet(ResolutionGuard.InPool guard) {
         return resolveStaticMethod(guard);
     }
 
@@ -261,9 +256,8 @@ class MaxInvokeLowerings extends SnippetLowerings {
 
         @Override
         public void lower(LoadExceptionObjectNode node, LoweringTool tool) {
-            Key key = new Key(snippet);
-            Arguments args = new Arguments();
-            Map<Node, Node> map = instantiate(node, key, args);
+            Arguments args = new Arguments(snippet);
+            Map<Node, Node> map = instantiate(node, args);
             // TODO figure out if this hack is remotely correct.
             // The snippet instantiation clones the stateAfter of the LoadExceptionObjectNode into the RuntimeCallNode
             // and this definitely causes problems in visitRuntimeCallNode.
@@ -296,16 +290,15 @@ class MaxInvokeLowerings extends SnippetLowerings {
 
         @Override
         public void lower(UnwindNode node, LoweringTool tool) {
-            Key key = new Key(snippet);
-            Arguments args = new Arguments();
+            Arguments args = new Arguments(snippet);
             args.add("throwable", node.exception());
-            instantiate(node, key, args);
+            instantiate(node, args);
         }
 
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void throwExceptionSnippet(@Parameter("throwable") Throwable throwable) {
+    private static void throwExceptionSnippet(Throwable throwable) {
         throwException(throwable);
         throw UnreachableNode.unreachable();
     }
