@@ -33,6 +33,7 @@ import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
+import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.Snippet.Parameter;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
@@ -45,7 +46,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
-@HOSTED_ONLY
 public class TestSnippets extends SnippetLowerings {
 
     public TestSnippets(CodeCacheProvider runtime, Replacements replacements, TargetDescription target, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
@@ -270,6 +270,11 @@ public class TestSnippets extends SnippetLowerings {
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object testThrow(@Parameter("actor") ClassActor testClassActor, @Parameter("object") Object object) {
         throw Throw.throwClassCastException(testClassActor, object);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void testWrite(@Parameter("p") Pointer p, @Parameter("offset") int offset, @Parameter("value") short value) {
+        p.writeShort(offset, value);
     }
 
 }

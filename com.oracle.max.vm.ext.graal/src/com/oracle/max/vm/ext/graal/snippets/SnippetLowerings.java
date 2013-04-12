@@ -55,6 +55,16 @@ public abstract class SnippetLowerings implements Snippets {
         }
     }
 
+    protected static class KeyArgs {
+        Key key;
+        Arguments args;
+
+        KeyArgs(Key key, Arguments args) {
+            this.key = key;
+            this.args = args;
+        }
+    }
+
     public SnippetLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription target) {
         this.runtime = runtime;
         this.replacements = replacements;

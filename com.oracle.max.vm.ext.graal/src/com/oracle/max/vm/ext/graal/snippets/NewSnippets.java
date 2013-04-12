@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.graal.snippets;
 
+import static com.oracle.graal.replacements.Snippet.Varargs.*;
+
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
@@ -33,9 +35,10 @@ import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
-import com.oracle.graal.replacements.Snippet.Parameter;
+import com.oracle.graal.replacements.Snippet.*;
 import com.oracle.graal.replacements.SnippetTemplate.Arguments;
 import com.oracle.graal.replacements.SnippetTemplate.Key;
+import com.oracle.graal.replacements.nodes.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ri.*;
@@ -62,9 +65,8 @@ public class NewSnippets extends SnippetLowerings {
         lowerings.put(UnresolvedNewInstanceNode.class, new UnresolvedNewInstanceLowering(this));
         lowerings.put(NewArrayNode.class, new NewArrayLowering(this));
         lowerings.put(UnresolvedNewArrayNode.class, new UnresolvedNewArrayLowering(this));
-        /*
-        lowerings.put(NewMultiArrayNode.class, new NewMultiArrayLowering());
-        */
+        lowerings.put(NewMultiArrayNode.class, new NewMultiArrayLowering(this));
+        lowerings.put(UnresolvedNewMultiArrayNode.class, new UnresolvedNewMultiArrayLowering(this));
     }
 
     protected class NewInstanceLowering extends Lowering implements LoweringProvider<NewInstanceNode> {
@@ -159,6 +161,7 @@ public class NewSnippets extends SnippetLowerings {
     public static Object newArraySnippet(@Parameter("hub") DynamicHub hub, @Parameter("length") int length) {
         if (length < 0) {
             Throw.throwNegativeArraySizeException(length);
+            throw UnreachableNode.unreachable();
         }
         Object result = Heap.createArray(hub, length);
         BeginNode anchorNode = BeginNode.anchor(StampFactory.forNodeIntrinsic());
@@ -192,6 +195,72 @@ public class NewSnippets extends SnippetLowerings {
     private static Object resolveClassForNewArrayAndCreate(ResolutionGuard guard, int length) {
         ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(guard));
         return Snippets.createArray(arrayClassActor, length);
+    }
+
+    protected class NewMultiArrayLowering extends Lowering implements LoweringProvider<NewMultiArrayNode> {
+
+        protected NewMultiArrayLowering(NewSnippets newSnippets) {
+            super(newSnippets, "newMultiArraySnippet");
+        }
+
+        @Override
+        public void lower(NewMultiArrayNode node, LoweringTool tool) {
+            ClassActor arrayClassActor = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.type());
+            Key key = new Key(snippet);
+            Arguments args = Arguments.arguments("arrayClassActor", arrayClassActor);
+            dimensions(key, args, node.dimensions());
+            instantiate(node, key, args);
+        }
+
+    }
+
+    private static void dimensions(Key key, Arguments args, NodeList<ValueNode> dimensions) {
+        int rank = dimensions.size();
+        ValueNode[] dims = new ValueNode[rank];
+        for (int i = 0; i < rank; i++) {
+            dims[i] = dimensions.get(i);
+        }
+        key.add("dimensions", vargargs(new int[rank], StampFactory.forKind(Kind.Int))).add("rank", rank);
+        args.add("dimensions", dims);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static Object newMultiArraySnippet(@Parameter("arrayClassActor") ClassActor arrayClassActor,
+                    @ConstantParameter("rank") int rank,
+                    @VarargsParameter("dimensions") int[] dimensions) {
+        int[] dims = new int[rank];
+        ExplodeLoopNode.explodeLoop();
+        for (int i = 0; i < rank; i++) {
+            dims[i] = dimensions[i];
+            if (dimensions[i] < 0) {
+                Throw.throwNegativeArraySizeException(dims[i]);
+                throw UnreachableNode.unreachable();
+            }
+        }
+        Object result = safeCreateMultiReferenceArray(arrayClassActor, dims);
+        BeginNode anchorNode = BeginNode.anchor(StampFactory.forNodeIntrinsic());
+        return UnsafeArrayCastNode.unsafeArrayCast(result, dims[0], StampFactory.forNodeIntrinsic(), anchorNode);
+    }
+
+    @RUNTIME_ENTRY
+    public static Object safeCreateMultiReferenceArray(ClassActor classActor, int[] lengths) {
+        return Snippets.createMultiReferenceArrayAtIndex(0, classActor, lengths);
+    }
+
+
+    protected class UnresolvedNewMultiArrayLowering extends Lowering implements LoweringProvider<UnresolvedNewMultiArrayNode> {
+
+        public UnresolvedNewMultiArrayLowering(NewSnippets newSnippets) {
+            super(newSnippets, "newMultiArraySnippet");
+        }
+
+        @Override
+        public void lower(UnresolvedNewMultiArrayNode node, LoweringTool tool) {
+            Key key = new Key(snippet);
+            Arguments args = Arguments.arguments("arrayClassActor", node.resolvedClassActor());
+            dimensions(key, args, node.dimensions());
+            instantiate(node, key, args);
+        }
     }
 
 }

@@ -1343,6 +1343,10 @@ public class MaxineTester {
             Logs logs = new Logs(imageDir, harnessNameUC + (executions == 0 ? "" : "-" + executions), config);
             JavaCommand command = new JavaCommand((Class) null);
             command.addArgument(nextTestOption);
+            List<String> maxVMOptions = quoteCheck(maxVMArgsOption.getValue());
+            if (maxVMOptions.size() > 0) {
+                command.addVMOptions(maxVMOptions.toArray(new String[maxVMOptions.size()]));
+            }
             int exitValue = runMaxineVM(command, imageDir, null, null, logs, logs.base.getName(), javaTesterTimeOutOption.getValue());
             ImageTestResult result = parseTestOutput(config, logs.get(STDOUT));
             String summary = result.summary;

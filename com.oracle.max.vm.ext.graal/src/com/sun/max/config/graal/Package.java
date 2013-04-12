@@ -25,13 +25,12 @@ package com.sun.max.config.graal;
 
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 
 
 public class Package extends BootImagePackage {
-
-    public static final String GRAAL_BOOTIMAGE_PROPERTY = "max.vm.graal.inboot";
 
     public Package() {
         super("com.oracle.graal.alloc.*",
@@ -54,6 +53,7 @@ public class Package extends BootImagePackage {
               "com.oracle.graal.phases.**",
               "com.oracle.graal.printer.*",
               "com.oracle.graal.replacements.*",
+              "com.oracle.graal.replacements.nodes.*",
               "com.oracle.graal.replacements.amd64.*",
               "com.oracle.graal.virtual.*"
               );
@@ -74,7 +74,7 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return System.getProperty(GRAAL_BOOTIMAGE_PROPERTY) != null;
+        return CompilationBroker.optName().contains("Graal");
     }
 
 

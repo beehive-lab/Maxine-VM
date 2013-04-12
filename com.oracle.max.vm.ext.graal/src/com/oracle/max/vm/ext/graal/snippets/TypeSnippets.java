@@ -60,6 +60,7 @@ public class TypeSnippets extends SnippetLowerings {
         lowerings.put(InstanceOfNode.class, new InstanceOfLowering(runtime, replacements, targetDescription, TypeSnippets.class));
         lowerings.put(UnresolvedInstanceOfNode.class, new UnresolvedInstanceOfLowering(this));
         lowerings.put(UnresolvedLoadConstantNode.class, new UnresolvedLoadConstantLowering(this));
+        lowerings.put(UnresolvedLoadClassActorNode.class, new UnresolvedLoadClassActorLowering(this));
         lowerings.put(FixedGuardNode.class, new FixedGuardLowering(this));
     }
 
@@ -97,6 +98,19 @@ public class TypeSnippets extends SnippetLowerings {
         }
     }
 
+    protected abstract class UnresolvedTypeLowering extends Lowering {
+
+        protected UnresolvedTypeLowering(SnippetLowerings snippets, String string) {
+            super(snippets, string);
+        }
+
+        protected KeyArgs createGuard(UnresolvedTypeNode node) {
+            UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) MaxJavaType.getRiType(node.javaType());
+            ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
+            return new KeyArgs(new Key(snippet), Arguments.arguments("guard", guard));
+         }
+    }
+
     protected class CheckCastLowering extends Lowering implements LoweringProvider<CheckCastNode> {
         CheckCastLowering(TypeSnippets typeSnippets) {
             super(typeSnippets, "checkCastSnippet");
@@ -126,20 +140,16 @@ public class TypeSnippets extends SnippetLowerings {
         return UnsafeCastNode.unsafeCast(object, StampFactory.forNodeIntrinsic(), anchorNode);
     }
 
-    protected class UnresolvedCheckCastLowering extends Lowering implements LoweringProvider<UnresolvedCheckCastNode> {
+    protected class UnresolvedCheckCastLowering extends UnresolvedTypeLowering implements LoweringProvider<UnresolvedCheckCastNode> {
         UnresolvedCheckCastLowering(TypeSnippets typeSnippets) {
             super(typeSnippets, "unresolvedCheckCastSnippet");
         }
 
         @Override
         public void lower(UnresolvedCheckCastNode node, LoweringTool tool) {
-            UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) MaxJavaType.getRiType(node.javaType());
-            ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
-            Key key = new Key(snippet);
-            Arguments args = new Arguments();
-            args.add("object", node.object());
-            args.add("guard", guard);
-            instantiate(node, key, args);
+            KeyArgs keyArgs = createGuard(node);
+            keyArgs.args.add("object", node.object());
+            instantiate(node, keyArgs.key, keyArgs.args);
         }
     }
 
@@ -185,20 +195,16 @@ public class TypeSnippets extends SnippetLowerings {
         return Snippets.instanceOf(classActor, object);
     }
 
-    protected class UnresolvedInstanceOfLowering extends Lowering implements LoweringProvider<UnresolvedInstanceOfNode> {
+    protected class UnresolvedInstanceOfLowering extends UnresolvedTypeLowering implements LoweringProvider<UnresolvedInstanceOfNode> {
         UnresolvedInstanceOfLowering(TypeSnippets typeSnippets) {
             super(typeSnippets, "unresolvedInstanceOfSnippet");
         }
 
         @Override
         public void lower(UnresolvedInstanceOfNode node, LoweringTool tool) {
-            UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) MaxJavaType.getRiType(node.javaType());
-            ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
-            Key key = new Key(snippet);
-            Arguments args = new Arguments();
-            args.add("object", node.object());
-            args.add("guard", guard);
-            instantiate(node, key, args);
+            KeyArgs keyArgs = createGuard(node);
+            keyArgs.args.add("object", node.object());
+            instantiate(node, keyArgs.key, keyArgs.args);
         }
     }
 
@@ -213,19 +219,15 @@ public class TypeSnippets extends SnippetLowerings {
         return Snippets.instanceOf(classActor, object);
     }
 
-    protected class UnresolvedLoadConstantLowering extends Lowering implements LoweringProvider<UnresolvedLoadConstantNode> {
+    protected class UnresolvedLoadConstantLowering extends UnresolvedTypeLowering implements LoweringProvider<UnresolvedLoadConstantNode> {
         UnresolvedLoadConstantLowering(TypeSnippets typeSnippets) {
             super(typeSnippets, "unresolvedLoadConstantSnippet");
         }
 
         @Override
         public void lower(UnresolvedLoadConstantNode node, LoweringTool tool) {
-            UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) MaxJavaType.getRiType(node.javaType());
-            ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
-            Key key = new Key(snippet);
-            Arguments args = new Arguments();
-            args.add("guard", guard);
-            instantiate(node, key, args);
+            KeyArgs keyArgs = createGuard(node);
+            instantiate(node, keyArgs.key, keyArgs.args);
         }
     }
 
@@ -240,7 +242,26 @@ public class TypeSnippets extends SnippetLowerings {
         return classActor.javaClass();
     }
 
+    protected class UnresolvedLoadClassActorLowering extends UnresolvedTypeLowering implements LoweringProvider<UnresolvedLoadClassActorNode> {
+        UnresolvedLoadClassActorLowering(TypeSnippets typeSnippets) {
+            super(typeSnippets, "unresolvedLoadClassActorSnippet");
+        }
 
+        @Override
+        public void lower(UnresolvedLoadClassActorNode node, LoweringTool tool) {
+            KeyArgs keyArgs = createGuard(node);
+            instantiate(node, keyArgs.key, keyArgs.args);
+        }
+    }
 
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static ClassActor unresolvedLoadClassActorSnippet(@Parameter("guard") ResolutionGuard.InPool guard) {
+        return resolveClassActor(guard);
+    }
+
+    @RUNTIME_ENTRY
+    private static ClassActor resolveClassActor(ResolutionGuard.InPool guard) {
+        return Snippets.resolveClass(guard);
+    }
 
 }

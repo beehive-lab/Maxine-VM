@@ -96,7 +96,11 @@ public class Snippets {
         return createMultiReferenceArrayAtIndex(0, classActor, lengths);
     }
 
-    private static Object createMultiReferenceArrayAtIndex(int index, ClassActor arrayClassActor, int[] lengths) {
+    /**
+     * Recursively create a multi-dimensional array.
+     * Assert: {@code lengths} have already been checked for non-negative.
+     */
+    public static Object createMultiReferenceArrayAtIndex(int index, ClassActor arrayClassActor, int[] lengths) {
         final int length = lengths[index];
         final Object result = createNonNegativeSizeArray(arrayClassActor, length);
         if (length > 0) {

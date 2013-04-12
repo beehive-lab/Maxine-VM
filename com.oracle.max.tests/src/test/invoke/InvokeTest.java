@@ -21,7 +21,9 @@ public class InvokeTest {
         for (int i = 0; i < params.length; i++) {
             String argI = args[i + 1];
             Class<?> param = params[i];
-            if (param == int.class) {
+            if (param == boolean.class) {
+                callArgs[i] = Boolean.parseBoolean(argI);
+            } else if (param == int.class) {
                 callArgs[i] = Integer.parseInt(argI);
             } else if (param == long.class) {
                 callArgs[i] = Long.parseLong(argI);

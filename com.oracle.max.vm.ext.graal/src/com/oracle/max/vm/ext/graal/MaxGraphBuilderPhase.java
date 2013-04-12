@@ -69,9 +69,14 @@ public class MaxGraphBuilderPhase extends GraphBuilderPhase {
 
     @Override
     protected void handleUnresolvedNewMultiArray(JavaType type, ValueNode[] dims) {
-        assert false;
-
+        UnresolvedLoadClassActorNode loadConstantNode = new UnresolvedLoadClassActorNode(type);
+        currentGraph.add(loadConstantNode);
+        append(loadConstantNode);
+        UnresolvedNewMultiArrayNode node = new UnresolvedNewMultiArrayNode(loadConstantNode, dims);
+        currentGraph.add(node);
+        frameState.push(Kind.Object, append(node));
     }
+
     @Override
     protected void handleUnresolvedInvoke(JavaMethod javaMethod, InvokeKind invokeKind) {
         boolean withReceiver = invokeKind != InvokeKind.Static;
