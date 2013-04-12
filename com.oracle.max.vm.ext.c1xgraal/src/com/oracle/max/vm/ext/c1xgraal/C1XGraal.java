@@ -80,8 +80,8 @@ public class C1XGraal implements RuntimeCompiler {
 
     public final TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         String name = vm().compilationBroker.compilerFor(method);
-        // The last term forces C1X for any method not explicitly requested as Graal. This is temporary.
-        if (forceC1X(method) || (name != null && name.equals("C1X")) || name == null) {
+        // The first term forces C1X for any method not explicitly requested as Graal. This is temporary.
+        if (name == null || (name != null && name.equals("C1X")) || method.isNative()) {
             return c1x.compile(method, false, install, stats);
         } else {
             TargetMethod c1xTM = null;
@@ -133,18 +133,6 @@ public class C1XGraal implements RuntimeCompiler {
     @NEVER_INLINE
     private static void defaultCompilations(TargetMethod c1xTM, TargetMethod t1xTM) {
 
-    }
-
-    /**
-     * Until Graal can compile everything, this is a mechanism to specify
-     * what it cannot yet handle.
-     */
-    boolean forceC1X(final ClassMethodActor method) {
-        if (isHosted()) {
-            return true;
-            // return !method.isNative();
-        }
-        return DisableGraal;
     }
 
     public Nature nature() {

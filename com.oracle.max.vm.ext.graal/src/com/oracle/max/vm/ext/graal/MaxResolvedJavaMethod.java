@@ -88,15 +88,20 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
     @Override
     public int getCompilationComplexity() {
         if (compilationComplexity <= 0 && getCodeSize() > 0) {
-            BytecodeStream s = new BytecodeStream(getCode());
-            int result = 0;
-            int currentBC;
-            while ((currentBC = s.currentBC()) != Bytecodes.END) {
-                result += Bytecodes.compilationComplexity(currentBC);
-                s.next();
+            byte[] code = getCode();
+            if (code != null) {
+                BytecodeStream s = new BytecodeStream(getCode());
+                int result = 0;
+                int currentBC;
+                while ((currentBC = s.currentBC()) != Bytecodes.END) {
+                    result += Bytecodes.compilationComplexity(currentBC);
+                    s.next();
+                }
+                assert result > 0;
+                compilationComplexity = result;
+            } else {
+                // native
             }
-            assert result > 0;
-            compilationComplexity = result;
         }
         return compilationComplexity;
     }

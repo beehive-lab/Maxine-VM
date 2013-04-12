@@ -65,7 +65,9 @@ public class MaxIntrinsics {
 
     static class PointerWriteOffsetIntrinsic extends MaxIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode offset, ValueNode value) {
-            return graph.add(new UnsafeStoreNode(pointer, 0, offset, value, value.kind()));
+            Signature sig = method.getSignature();
+            Kind dataKind = sig.getParameterKind(sig.getParameterCount(false) - 1);
+            return graph.add(new UnsafeStoreNode(pointer, 0, offset, value, dataKind));
         }
     }
 
@@ -84,7 +86,7 @@ public class MaxIntrinsics {
             Signature sig = method.getSignature();
             Kind dataKind = sig.getParameterKind(sig.getParameterCount(false) - 1);
             ValueNode scaledIndex = scaledIndex(graph, dataKind, index);
-            return graph.add(ExtendedUnsafeStoreNode.create(pointer, displacement, scaledIndex, value, value.kind()));
+            return graph.add(ExtendedUnsafeStoreNode.create(pointer, displacement, scaledIndex, value, dataKind));
         }
     }
 
@@ -173,6 +175,12 @@ public class MaxIntrinsics {
 
             UnsafeCastNode unsafeCastNode = graph.add(new MaxUnsafeCastNode(value, (ResolvedJavaType) toType));
             return unsafeCastNode;
+        }
+    }
+
+    static class AllocaIntrinsic extends MaxIntrinsicImpl {
+        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, int size, boolean refs) {
+            return graph.add(new AllocaNode(size, refs, stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass()))));
         }
     }
 
@@ -287,12 +295,12 @@ public class MaxIntrinsics {
         registry.add(SAFEPOINT_POLL, new SafepointIntrinsic(MaxSafepointNode.Op.SAFEPOINT_POLL));
         registry.add(INFO, new SafepointIntrinsic(MaxSafepointNode.Op.INFO));
         registry.add(HERE, new SafepointIntrinsic(MaxSafepointNode.Op.HERE));
+        registry.add(ALLOCA, new AllocaIntrinsic());
 /*
         registry.add(UNCOMMON_TRAP, new UncommonTrapIntrinsic());
 
         registry.add(PAUSE, new SafepointIntrinsic(SafepointNode.Op.PAUSE));
         registry.add(BREAKPOINT_TRAP, new SafepointIntrinsic(SafepointNode.Op.BREAKPOINT));
-        registry.add(ALLOCA, new AllocaIntrinsic());
 
         registry.add(CMP_BYTECODE, new NormalizeCompareIntrinsic());
 */

@@ -22,14 +22,42 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.graal.api.meta.*;
+import com.oracle.graal.graph.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 
 
-/**
- * Value of this node is the {@link Class} resulting from the resolution.
- */
-public class UnresolvedLoadConstantNode extends UnresolvedTypeNode {
-    public UnresolvedLoadConstantNode(JavaType javaType) {
-        super(javaType);
+public class UnresolvedNewMultiArrayNode extends FixedWithNextNode implements Lowerable {
+
+    @Input ValueNode resolvedClassActor;
+    @Input private final NodeInputList<ValueNode> dimensions;
+
+    public UnresolvedNewMultiArrayNode(ValueNode resolvedClassActor, ValueNode[] dimensions) {
+        super(StampFactory.object());
+        this.resolvedClassActor = resolvedClassActor;
+        this.dimensions = new NodeInputList<>(this, dimensions);
     }
+
+    @Override
+    public void lower(LoweringTool tool) {
+        tool.getRuntime().lower(this, tool);
+    }
+
+    public ValueNode dimension(int index) {
+        return dimensions.get(index);
+    }
+
+    public int dimensionCount() {
+        return dimensions.size();
+    }
+
+    public NodeList<ValueNode> dimensions() {
+        return dimensions;
+    }
+
+    public ValueNode resolvedClassActor() {
+        return resolvedClassActor;
+    }
+
 }

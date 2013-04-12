@@ -46,6 +46,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Integration of the Graal compiler into Maxine's compilation framework. The compiler must be included in the boot image,
@@ -142,7 +143,7 @@ public class MaxGraal implements RuntimeCompiler {
         runtime = new MaxRuntime(td);
         backend = new MaxAMD64Backend(runtime, td);
         // We want exception handlers generated
-        optimisticOpts = OptimisticOptimizations.ALL.remove(Optimization.UseExceptionProbability);
+        optimisticOpts = OptimisticOptimizations.ALL.remove(Optimization.UseExceptionProbability, Optimization.UseExceptionProbabilityForOperations);
         cache = new MaxGraphCache();
         changeInlineLimits();
         // Disable for now as it causes problems in DebugInfo
@@ -182,9 +183,17 @@ public class MaxGraal implements RuntimeCompiler {
             phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxWordTypeRewriterPhase.KindRewriter(runtime, runtime.maxTargetDescription.wordKind));
             graph = new StructuredGraph(method);
         }
-        CompilationResult result = GraalCompiler.compileMethod(runtime, replacements, backend, runtime.maxTargetDescription, method, graph, cache, phasePlan, optimisticOpts, new SpeculationLog());
-        MaxTargetMethod graalTM = GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
-        return graalTM;
+        // Graal sometimes calls Class.forName on its own classes using the context class loader
+        // so we have to override it as VM classes are ordinarily hidden
+        ClassLoader savedContextClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(VMClassLoader.VM_CLASS_LOADER);
+        try {
+            CompilationResult result = GraalCompiler.compileMethod(runtime, replacements, backend, runtime.maxTargetDescription,
+                            method, graph, cache, phasePlan, optimisticOpts, new SpeculationLog());
+            return GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
+        } finally {
+            Thread.currentThread().setContextClassLoader(savedContextClassLoader);
+        }
     }
 
     @Override

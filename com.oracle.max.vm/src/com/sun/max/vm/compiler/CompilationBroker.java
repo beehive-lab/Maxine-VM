@@ -368,8 +368,7 @@ public class CompilationBroker {
         try {
             return compile(cma, nature, isDeopt, false);
         } catch (Throwable t) {
-            // cannot happen
-            return null;
+            throw new RuntimeException("unexpected compilation failure: ", t);
         }
     }
 

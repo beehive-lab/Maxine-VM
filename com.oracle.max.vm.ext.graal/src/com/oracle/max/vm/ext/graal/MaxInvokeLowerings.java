@@ -131,7 +131,7 @@ class MaxInvokeLowerings extends SnippetLowerings {
     }
 
     /**
-     * Lowers a {@link MethodAddressNode} using a snippet that retutrns the entry point of the method.
+     * Lowers a {@link MethodAddressNode} using a snippet that returns the entry point of the method.
      */
     private class MethodAddressLowering extends Lowering implements LoweringProvider<MethodAddressNode> {
         protected final ResolvedJavaMethod[] snippets = new ResolvedJavaMethod[InvokeKind.values().length];

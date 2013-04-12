@@ -24,12 +24,12 @@ package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
 
-
 /**
- * Value of this node is the {@link Class} resulting from the resolution.
+ * Value of this node is the {@link ClassActor} resulting from the resolution.
  */
-public class UnresolvedLoadConstantNode extends UnresolvedTypeNode {
-    public UnresolvedLoadConstantNode(JavaType javaType) {
+public class UnresolvedLoadClassActorNode extends UnresolvedTypeNode {
+    public UnresolvedLoadClassActorNode(JavaType javaType) {
         super(javaType);
     }
+
 }
