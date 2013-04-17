@@ -352,4 +352,16 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     }
 
+    @Override
+    public Constant invoke(Constant receiver, Constant[] arguments) {
+        MaxGraal.unimplemented("MaxResolvedJavaMethod.invoke");
+        return null;
+    }
+
+    @Override
+    public Constant newInstance(Constant[] arguments) {
+        MaxGraal.unimplemented("MaxResolvedJavaMethod.newInstance");
+        return null;
+    }
+
 }
