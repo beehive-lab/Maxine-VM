@@ -117,4 +117,9 @@ public class MaxConstantPool implements ConstantPool {
         return null;
     }
 
+    @Override
+    public int length() {
+        return ((com.sun.max.vm.classfile.constant.ConstantPool) riConstantPool).numberOfConstants();
+    }
+
 }

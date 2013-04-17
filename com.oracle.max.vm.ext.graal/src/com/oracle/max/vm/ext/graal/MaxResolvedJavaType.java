@@ -296,4 +296,22 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         return MaxResolvedJavaType.get(ClassActor.fromJava(enclosingClass));
     }
 
+    @Override
+    public ResolvedJavaMethod[] getDeclaredConstructors() {
+        MaxGraal.unimplemented("MaxResolvedJavaType.getDeclaredConstructors");
+        return null;
+    }
+
+    @Override
+    public ResolvedJavaMethod[] getDeclaredMethods() {
+        MaxGraal.unimplemented("MaxResolvedJavaType.getDeclaredMethods");
+        return null;
+    }
+
+    @Override
+    public Constant newArray(int length) {
+        MaxGraal.unimplemented("MaxResolvedJavaType.newArray");
+        return null;
+    }
+
 }
