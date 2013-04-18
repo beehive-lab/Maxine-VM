@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.graal;
 
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
 import com.sun.max.vm.actor.member.*;
@@ -33,10 +34,14 @@ public class MaxIntrinsicsPhase extends Phase {
     @Override
     protected void run(StructuredGraph graph) {
         for (Invoke invoke : graph.getInvokes()) {
-            MaxResolvedJavaMethod method = (MaxResolvedJavaMethod) invoke.methodCallTarget().targetMethod();
-            MethodActor methodActor = (MethodActor) method.riMethod;
-            if (methodActor.intrinsic() != null) {
-                intrinsify(invoke, method);
+            CallTargetNode callTargetNode = invoke.callTarget();
+            if (callTargetNode instanceof MethodCallTargetNode) {
+                MethodCallTargetNode methodCallTargetNode = (MethodCallTargetNode) callTargetNode;
+                MaxResolvedJavaMethod method = (MaxResolvedJavaMethod) methodCallTargetNode.targetMethod();
+                MethodActor methodActor = (MethodActor) method.riMethod;
+                if (methodActor.intrinsic() != null) {
+                    intrinsify(invoke, method);
+                }
             }
         }
     }
