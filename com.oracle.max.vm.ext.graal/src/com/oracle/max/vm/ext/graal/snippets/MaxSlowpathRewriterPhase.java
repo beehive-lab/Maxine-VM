@@ -34,7 +34,8 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * Rewrites {@link InvokeNode}s to slow path runtime methods in Maxine snippets to {@link RuntimeCall} nodes.
- * Ideally, this would not be necessary
+ * Ideally, this would not be necessary, but method calls within snippets are special in the sense that they
+ * should not be deoptimization points (snipets as microcode).
  */
 public class MaxSlowpathRewriterPhase extends Phase {
 
@@ -47,7 +48,7 @@ public class MaxSlowpathRewriterPhase extends Phase {
     @Override
     protected void run(StructuredGraph graph) {
         for (Invoke invoke : graph.getInvokes()) {
-            MethodCallTargetNode callTarget = invoke.methodCallTarget();
+            MethodCallTargetNode callTarget = (MethodCallTargetNode) invoke.callTarget();
             ClassMethodActor cma = (ClassMethodActor) MaxJavaMethod.getRiMethod(callTarget.targetMethod());
             MaxRuntimeCall call = MaxRuntimeCallsMap.get(cma);
             ValueNode[] args = new ValueNode[callTarget.arguments().size()];
@@ -56,7 +57,7 @@ public class MaxSlowpathRewriterPhase extends Phase {
             boolean exactType = runTimeEntry == null ? false : runTimeEntry.exactType();
             boolean nonNull = runTimeEntry == null ? false : runTimeEntry.nonNull();
             runtimeCallNode.setStamp(stampFor(runtime.lookupJavaType(call.getResultType()), exactType, nonNull));
-            invoke.intrinsify(invoke.graph().add(runtimeCallNode));
+            invoke.intrinsify(callTarget.graph().add(runtimeCallNode));
         }
     }
 

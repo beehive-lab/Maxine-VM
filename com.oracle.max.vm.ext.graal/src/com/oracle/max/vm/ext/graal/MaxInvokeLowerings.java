@@ -83,7 +83,7 @@ class MaxInvokeLowerings extends SnippetLowerings {
             StructuredGraph graph = (StructuredGraph) node.graph();
             Invoke invoke = (Invoke) node;
             if (invoke.callTarget() instanceof MethodCallTargetNode) {
-                MethodCallTargetNode callTarget = invoke.methodCallTarget();
+                MethodCallTargetNode callTarget = (MethodCallTargetNode) invoke.callTarget();
                 NodeInputList<ValueNode> parameters = callTarget.arguments();
                 ValueNode receiver = parameters.size() <= 0 ? null : parameters.get(0);
                 // For Virtual/Interface calls an explicit null check is not needed as loading the
