@@ -84,7 +84,7 @@ class MaxReplacementsImpl extends ReplacementsImpl {
             Debug.dump(graph, "%s: %s", method.getName(), GraphBuilderPhase.class.getSimpleName());
 
             new MaxIntrinsicsPhase().apply(graph);
-            new MaxWordTypeRewriterPhase.MaxInvokeRewriter(runtime, target.wordKind).apply(graph);
+            new MaxWordTypeRewriterPhase.MakeWordFinalRewriter(runtime, target.wordKind).apply(graph);
             new NodeIntrinsificationPhase(runtime).apply(graph);
             // need constant propagation for folded methods
             new CanonicalizerPhase.Instance(runtime, assumptions).apply(graph);

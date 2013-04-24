@@ -26,7 +26,9 @@ package com.oracle.max.vm.ext.graal;
 import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 
 import java.lang.annotation.*;
+import java.lang.reflect.*;
 import java.net.*;
+import java.util.*;
 
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ci.*;
@@ -298,20 +300,31 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public ResolvedJavaMethod[] getDeclaredConstructors() {
-        MaxGraal.unimplemented("MaxResolvedJavaType.getDeclaredConstructors");
-        return null;
+        VirtualMethodActor[] v = ((ClassActor) riType).localVirtualMethodActors();
+        ArrayList<ResolvedJavaMethod> list = new ArrayList<>();
+        int count = 0;
+        for (int i = 0; i < v.length; i++) {
+            if (v[i].isConstructor()) {
+                list.add(MaxResolvedJavaMethod.get(v[i]));
+                count++;
+            }
+        }
+        return list.toArray(new ResolvedJavaMethod[count]);
     }
 
     @Override
     public ResolvedJavaMethod[] getDeclaredMethods() {
-        MaxGraal.unimplemented("MaxResolvedJavaType.getDeclaredMethods");
-        return null;
+        MethodActor[] v = ((ClassActor) riType).getLocalMethodActorsArray();
+        ResolvedJavaMethod[] result = new ResolvedJavaMethod[v.length];
+        for (int i = 0; i < v.length; i++) {
+            result[i] = MaxResolvedJavaMethod.get(v[i]);
+        }
+        return result;
     }
 
     @Override
     public Constant newArray(int length) {
-        MaxGraal.unimplemented("MaxResolvedJavaType.newArray");
-        return null;
+        return Constant.forObject(Array.newInstance(((ClassActor) riType).toJava(), length));
     }
 
 }

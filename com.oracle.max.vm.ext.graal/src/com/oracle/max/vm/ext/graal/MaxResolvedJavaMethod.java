@@ -354,14 +354,42 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public Constant invoke(Constant receiver, Constant[] arguments) {
-        MaxGraal.unimplemented("MaxResolvedJavaMethod.invoke");
-        return null;
+        Method javaMethod = ((MethodActor) riMethod).toJava();
+        javaMethod.setAccessible(true);
+
+        Object[] objArguments = new Object[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            objArguments[i] = arguments[i].asBoxedValue();
+        }
+        Object objReceiver = receiver != null ? receiver.asObject() : null;
+
+        try {
+            Object objResult = javaMethod.invoke(objReceiver, objArguments);
+            return javaMethod.getReturnType() == void.class ? null : Constant.forBoxed(getSignature().getReturnKind(), objResult);
+
+        } catch (IllegalAccessException | InvocationTargetException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 
     @Override
     public Constant newInstance(Constant[] arguments) {
-        MaxGraal.unimplemented("MaxResolvedJavaMethod.newInstance");
-        return null;
+        Constructor javaConstructor = ((MethodActor) riMethod).toJavaConstructor();
+        javaConstructor.setAccessible(true);
+
+        Object[] objArguments = new Object[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            objArguments[i] = arguments[i].asBoxedValue();
+        }
+
+        try {
+            Object objResult = javaConstructor.newInstance(objArguments);
+            assert objResult != null;
+            return Constant.forObject(objResult);
+
+        } catch (IllegalAccessException | InvocationTargetException | InstantiationException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 
 }

@@ -39,9 +39,6 @@ import com.sun.max.annotate.*;
 @HOSTED_ONLY
 public class FieldSnippetsGenerator extends SnippetsGenerator {
 
-    private static final String UNSAFE_CAST_BEFORE = "UnsafeCastNode.unsafeCast(";
-    private static final String UNSAFE_CAST_AFTER = ", StampFactory.forNodeIntrinsic())";
-
     private static final String PUT_FIELD_METHOD =
         "    @INLINE\n" +
         "    private static void putField#UKIND#(Object object, int offset, boolean isVolatile, #KIND# value) {\n" +
@@ -275,12 +272,6 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
             out.print(addSnippet);
         }
         out.print("    }\n");
-    }
-
-    private String replaceUCast(String template, Kind kind) {
-        String ucb = kind != Kind.Object ? "" : UNSAFE_CAST_BEFORE;
-        String uca = kind != Kind.Object ? "" : UNSAFE_CAST_AFTER;
-        return replace(replace(template, "#UCA#", uca), "#UCB#", ucb);
     }
 
     private String replaceModes(String template, String mode) {

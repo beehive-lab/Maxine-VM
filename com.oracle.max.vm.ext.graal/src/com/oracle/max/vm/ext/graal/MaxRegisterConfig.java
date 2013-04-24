@@ -89,7 +89,7 @@ public class MaxRegisterConfig implements RegisterConfig {
         int currentStackOffset = type == Type.NativeCall ? 0 : Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET + target.wordSize;
 
         for (int i = 0; i < parameterTypes.length; i++) {
-            final Kind kind = parameterTypes[i].getKind();
+            final Kind kind = MaxWordTypeRewriterPhase.checkWord(parameterTypes[i]);
 
             switch (kind) {
                 case Byte:
