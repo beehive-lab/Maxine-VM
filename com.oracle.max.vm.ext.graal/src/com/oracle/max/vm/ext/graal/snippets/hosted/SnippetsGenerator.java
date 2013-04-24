@@ -31,6 +31,9 @@ import com.sun.max.io.*;
 
 public abstract class SnippetsGenerator {
 
+    protected static final String UNSAFE_CAST_BEFORE = "UnsafeCastNode.unsafeCast(";
+    protected static final String UNSAFE_CAST_AFTER = ", StampFactory.forNodeIntrinsic())";
+
     protected PrintStream out;
     private ByteArrayOutputStream baos;
 
@@ -72,6 +75,12 @@ public abstract class SnippetsGenerator {
         String uJavaName = toFirstUpper(kind.getJavaName());
         String result = replace(template, "#UKIND#", uJavaName);
         return replace(result, "#KIND#", kind.getJavaName());
+    }
+
+    protected String replaceUCast(String template, Kind kind) {
+        String ucb = kind != Kind.Object ? "" : UNSAFE_CAST_BEFORE;
+        String uca = kind != Kind.Object ? "" : UNSAFE_CAST_AFTER;
+        return replace(replace(template, "#UCA#", uca), "#UCB#", ucb);
     }
 
     protected boolean notVoidOrIllegal(Kind kind) {

@@ -35,9 +35,10 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.OptimisticOptimizations.Optimization;
 import com.oracle.graal.phases.PhasePlan.PhasePosition;
+import com.oracle.graal.phases.common.*;
+import com.oracle.graal.phases.tiers.*;
 import com.oracle.graal.printer.*;
 import com.oracle.max.vm.ext.graal.amd64.*;
-import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
@@ -51,16 +52,17 @@ import com.sun.max.vm.type.*;
 /**
  * Integration of the Graal compiler into Maxine's compilation framework. The compiler must be included in the boot image,
  * as the snippet generation needs access to things that are not available to a VM extension (i.e., {@link HOSTED_ONLY} fields of VM classes).
- * Currently the compiler is added to the set of compilers known the {@link CompilationBroker} and does not displace {@link C1X}.
  *
  * It is necessary to call {@link FieldIntrospection#rescanAllFieldOffsets()} on VM startup as the
  * {@link NodeClass} field offsets calculated during boot image construction are those of the host VM. In principle this
  * could be fixed up during boot image creation, as per the JDK classes, but as Graal provides a method to do it, and
  * the necessary fixup is quite complicated, we do it on VM startup.
+ * TODO: this likely isn't sufficient for the future when Graal is the only compiler, and probably will require the offsets to be
+ * explicitly fixed up in the boot image.
  *
  * The Graal debug environment similarly needs to be re-established when the VM runs. It is setup for
  * debugging snippet installation in the boot image generation, but the config is stored in a thread local
- * so it does to survive in the target VM.
+ * so it does not survive in the boot image.
  */
 public class MaxGraal implements RuntimeCompiler {
 
@@ -83,11 +85,14 @@ public class MaxGraal implements RuntimeCompiler {
     // The singleton instance of this compiler
     private static MaxGraal singleton;
 
+    // Graal doesn't provide an instance that captures all this additioinal state needed
+    // for a compilation. Instead these values are passed to compileMethod.
     private MaxRuntime runtime;
     private Backend backend;
     private Replacements replacements;
     private OptimisticOptimizations optimisticOpts;
     private MaxGraphCache cache;
+    private Suites suites;
 
     public MaxGraal() {
         if (singleton == null) {
@@ -114,6 +119,7 @@ public class MaxGraal implements RuntimeCompiler {
             // This is the obvious place to call rescanAllFieldOffsets() but it is too early in the startup without
             // more classes related to annotations being in the boot image, because bootclasspath is not setup.
             // So it is done lazily when the first compile is initiated.
+            //
         } else if (phase == MaxineVM.Phase.RUNNING) {
             // Would be called if the compiler was registered as the default optimizing compiler.
         }
@@ -148,6 +154,7 @@ public class MaxGraal implements RuntimeCompiler {
         changeInlineLimits();
         // Disable for now as it causes problems in DebugInfo
         GraalOptions.PartialEscapeAnalysis = false;
+        suites = Suites.createSuites(GraalOptions.CompilerConfiguration);
         replacements = runtime.init();
     }
 
@@ -176,11 +183,28 @@ public class MaxGraal implements RuntimeCompiler {
         if (graph == null) {
             GraphBuilderPhase graphBuilderPhase = new MaxGraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(), optimisticOpts);
             phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
+            // Hosted (boot image) compilation is more complex owing to the need to handle the unsafe features of VM programming,
+            // requiring more phases to be run. All this is very similar to what happens in MaxReplacementsImpl
             if (MaxineVM.isHosted()) {
-                MaxIntrinsicsPhase maxIntrinsicsPhase = new MaxIntrinsicsPhase();
-                phasePlan.addPhase(PhasePosition.AFTER_PARSING, maxIntrinsicsPhase);
+                // In Graal, @Fold is purely a snippet notion; we handle Maxine's more general use with similar code.
+                // We do this early to reduce the size of a graph that contains isHosted code.
+                phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxFoldPhase(runtime));
+                // Any folded isHosted code is only removed by a CanonicalizationPhase
+                phasePlan.addPhase(PhasePosition.AFTER_PARSING, new CanonicalizerPhase.Instance(runtime, null));
+                phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxIntrinsicsPhase());
+                phasePlan.addPhase(PhasePosition.AFTER_PARSING,
+                                new MaxWordTypeRewriterPhase.MakeWordFinalRewriter(runtime, runtime.maxTargetDescription.wordKind));
+                // In order to have Maxine's INLINE annotation interpreted, we have to disable the standard inlining phase
+                // and substitute a custom phase that checks the method annotation.
+                phasePlan.disablePhase(InliningPhase.class);
+                phasePlan.addPhase(PhasePosition.HIGH_LEVEL,
+                                new MaxHostedInliningPhase(runtime, replacements, new Assumptions(GraalOptions.OptAssumptions), cache, phasePlan, optimisticOpts));
+                // Important to remove bogus null checks on Word types
+                phasePlan.addPhase(PhasePosition.HIGH_LEVEL, new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, runtime.maxTargetDescription.wordKind));
+                phasePlan.addPhase(PhasePosition.HIGH_LEVEL,
+                                new MaxWordTypeRewriterPhase.KindRewriter(runtime, runtime.maxTargetDescription.wordKind));
+
             }
-            phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxWordTypeRewriterPhase.KindRewriter(runtime, runtime.maxTargetDescription.wordKind));
             graph = new StructuredGraph(method);
         }
         // Graal sometimes calls Class.forName on its own classes using the context class loader
@@ -189,8 +213,10 @@ public class MaxGraal implements RuntimeCompiler {
         Thread.currentThread().setContextClassLoader(VMClassLoader.VM_CLASS_LOADER);
         try {
             CompilationResult result = GraalCompiler.compileMethod(runtime, replacements, backend, runtime.maxTargetDescription,
-                            method, graph, cache, phasePlan, optimisticOpts, new SpeculationLog());
+                            method, graph, cache, phasePlan, optimisticOpts, new SpeculationLog(), suites);
             return GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
+        } catch (Throwable ex) {
+            throw ex;
         } finally {
             Thread.currentThread().setContextClassLoader(savedContextClassLoader);
         }

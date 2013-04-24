@@ -27,8 +27,10 @@ import java.util.*;
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.cri.intrinsics.UnsignedMath;
@@ -87,7 +89,18 @@ public class ArraySnippets extends SnippetLowerings {
         }
 
         void lower(AccessIndexedNode node) {
-            Arguments args = new Arguments(snippets[node.elementKind().ordinal()]);
+            Kind elementKind = node.elementKind();
+            if (node instanceof LoadIndexedNode && elementKind == Kind.Object && ((ObjectStamp) node.stamp()).type() == null) {
+                /* This is bad news as the instantiation will use this stamp in the UnsafeCastNode for the result
+                 * which will get replaced by Reference because, currently, Array.getObject has a return type of Reference.
+                 * The latter is a bug, but don't know how to fix it yet.
+                 * So we take the stamp from the incoming array argument and update the node with the element type.
+                 */
+                ResolvedJavaType type = ((ObjectStamp) node.array().stamp()).type();
+                Stamp elementStamp = StampFactory.declared(type.getComponentType());
+                node.setStamp(elementStamp);
+            }
+            Arguments args = new Arguments(snippets[elementKind.ordinal()]);
             args.add("array", node.array());
             args.add("index", node.index());
             storeIndexedArg(node, args);
@@ -245,7 +258,7 @@ public class ArraySnippets extends SnippetLowerings {
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object aaloadSnippet(Object array, int index) {
         checkIndex(array, index);
-        return ArrayAccess.getObject(array, index);
+        return UnsafeCastNode.unsafeCast(ArrayAccess.getObject(array, index), StampFactory.forNodeIntrinsic());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)

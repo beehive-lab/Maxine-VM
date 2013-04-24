@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.api.meta.ResolvedJavaType.Representation;
 import com.oracle.graal.java.*;
@@ -117,5 +118,11 @@ public class MaxGraphBuilderPhase extends GraphBuilderPhase {
     protected void handleUnresolvedExceptionType(Representation representation, JavaType type) {
         assert false;
     }
+
+    @Override
+    protected FixedGuardNode createFixedGuardNode(LogicNode condition, DeoptimizationReason deoptReason, DeoptimizationAction action, boolean negated) {
+        return new MaxFixedGuardNode(condition, deoptReason, action, negated);
+    }
+
 
 }

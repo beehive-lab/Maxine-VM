@@ -1,0 +1,18 @@
+    private RiTYPE riTYPE;
+
+    private static ConcurrentHashMap<RiTYPE, MaxTYPE> map = new ConcurrentHashMap<RiTYPE, MaxTYPE>();
+
+
+    static MaxTYPE get(RiTYPE TYPE) {
+        MaxTYPE result = map.get(TYPE);
+        if (result == null) {
+            result = new MaxTYPE(TYPE);
+            map.put(TYPE, result);
+        }
+        return result;
+    }
+
+    private MaxTYPE(RiTYPE TYPE) {
+        this.riTYPE = TYPE;
+    }
+

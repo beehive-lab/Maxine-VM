@@ -87,7 +87,7 @@ public class C1XGraal implements RuntimeCompiler {
             TargetMethod c1xTM = null;
             TargetMethod t1xTM = null;
             TargetMethod graalTM = null;
-            if (MaxGraalCompare) {
+            if (!MaxineVM.isHosted() && MaxGraalCompare) {
                 // compile with C1X/T1X for comparison
                 c1xTM = c1x.compile(method, isDeopt, install, stats);
                 t1xTM = CompilationBroker.singleton.baselineCompiler.compile(method, isDeopt, install, stats);
@@ -118,7 +118,7 @@ public class C1XGraal implements RuntimeCompiler {
             } else {
                 graalTM = graal.compile(method, false, install, stats);
             }
-            if (MaxGraalCompare) {
+            if (!MaxineVM.isHosted() && MaxGraalCompare) {
                 compare(graalTM, c1xTM, t1xTM);
             }
             return graalTM;

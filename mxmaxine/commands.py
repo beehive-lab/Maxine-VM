@@ -260,6 +260,7 @@ def image(args):
     Use "mx image -help" to see what other options this command accepts."""
 
     systemProps = []
+    systemProps += ['-Djava.ext.dirs=' + graal_extdirs()]
     imageArgs = []
     i = 0
     while i < len(args):
@@ -292,23 +293,24 @@ def image(args):
             imageArgs += [arg]
         i += 1
 
-    mx.run_java(systemProps + ['-cp', sanitized_classpath(), 'com.sun.max.vm.hosted.BootImageGenerator', '-trace=1', '-run=java'] + imageArgs)
+    print os.getcwd()
     
+    mx.run_java(systemProps + ['-cp', sanitized_classpath(), 'com.sun.max.vm.hosted.BootImageGenerator', '-trace=1', '-run=java'] + imageArgs)
+
+def graal_extdirs():
+    """Return the path to the extension classes directory in the graal tree"""
+    jdkhome = mx.suite("graal").commands.jdkhome()
+    result = join(jdkhome, "jre/lib/ext")
+    return result
+
+# Graal classes are loaded from graal.jar by the extension class loader  
 def sanitized_classpath():
-    """Remove Graal test projects from the classpath"""
+    """Remove Graal projects from the classpath"""
     cp = mx.classpath()
     cp_list = cp.split(os.pathsep)
     sanitized_list = []
     for entry in cp_list:
-        include = True;
-        if entry.find("com.oracle.graal") != -1:
-            dirname = os.path.dirname(entry)
-            basename = os.path.basename(dirname)
-            bl = basename.split(".")
-            last = bl[len(bl) - 1]
-            if last == "test":
-                include = False
-        if include:
+        if entry.find("com.oracle.graal") == -1:
             sanitized_list.append(entry)
     result = os.pathsep.join(sanitized_list)
     return result
@@ -338,6 +340,7 @@ def inspect(args):
     if not isdir(saveClassDir):
         os.makedirs(saveClassDir)
     sysProps = []
+    sysProps += ['-Djava.ext.dirs=' + graal_extdirs()]
     insCP = []
 
     i = 0
@@ -388,7 +391,7 @@ def inspect(args):
 
     mx.expand_project_in_args(vmArgs)
 
-    cmd = mx.java().format_cmd(sysProps + ['-cp', mx.classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
+    cmd = mx.java().format_cmd(sysProps + ['-cp', sanitized_classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
                               insArgs + ['-a=' + ' '.join(vmArgs)])
 
     if mx.get_os() == 'darwin' and not remote:

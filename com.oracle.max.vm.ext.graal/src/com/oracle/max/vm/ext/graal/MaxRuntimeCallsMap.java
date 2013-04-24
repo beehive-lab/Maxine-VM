@@ -79,6 +79,11 @@ public class MaxRuntimeCallsMap {
             createCiRuntimeCall(CiRuntimeCall.RegisterFinalizer, null);
             createCiRuntimeCall(CiRuntimeCall.CreateNullPointerException, null);
             createCiRuntimeCall(CiRuntimeCall.CreateOutOfBoundsException, null);
+            createCiRuntimeCall(CiRuntimeCall.ArithmeticCos, "arithmeticCos");
+            createCiRuntimeCall(CiRuntimeCall.ArithmeticSin, "arithmeticSin");
+            createCiRuntimeCall(CiRuntimeCall.ArithmeticTan, "arithmeticTan");
+            createCiRuntimeCall(CiRuntimeCall.ArithmeticFrem, "arithmeticFrem");
+            createCiRuntimeCall(CiRuntimeCall.ArithmeticDrem, "arithmeticDrem");
             Method unwindException = MaxRuntimeCallsMap.class.getDeclaredMethod("unwindException", Object.class);
             createRuntimeCall(unwindException.getName(), MethodActor.fromJava(unwindException));
             new CriticalMethod(unwindException);

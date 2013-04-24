@@ -44,6 +44,7 @@ import com.sun.max.vm.reference.*;
 public abstract class MaxWordTypeRewriterPhase extends Phase {
 
     private static ResolvedJavaType wordBaseType;
+    private static ResolvedJavaType codePointerType;
     private static ResolvedJavaType referenceType;
     private static ResolvedJavaType hubType;
     private static ResolvedJavaType wrappedWordType;
@@ -58,6 +59,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
             wordBaseType = metaAccess.lookupJavaType(Word.class);
             referenceType = metaAccess.lookupJavaType(Reference.class);
             hubType = metaAccess.lookupJavaType(Hub.class);
+            codePointerType = metaAccess.lookupJavaType(CodePointer.class);
             wrappedWordType = metaAccess.lookupJavaType(WordUtil.WrappedWord.class);
         }
     }
@@ -123,7 +125,11 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
             ResolvedJavaType objectType = object.objectStamp().type();
             if (object.objectStamp().nonNull() || (objectType != null && (isWordOrReference(objectType) || hubType.isAssignableFrom(objectType)))) {
                 graph.removeFixed(fixedGuardNode);
-                GraphUtil.killWithUnusedFloatingInputs(isNullNode);
+                // If the IsNullNode is only used by this FixedGuard node we can also delete that.
+                // N.B. The previous call will have removed the FixedGuard node from the IsNullNode usages
+                if (isNullNode.usages().isEmpty()) {
+                    GraphUtil.killWithUnusedFloatingInputs(isNullNode);
+                }
             }
         }
 
@@ -133,6 +139,10 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
                 if (ifNode.condition() instanceof IsNullNode) {
                     IsNullNode isNullNode = (IsNullNode) ifNode.condition();
                     ResolvedJavaType objectType = isNullNode.object().objectStamp().type();
+                    // the objectType can be unknown
+                    if (objectType == null) {
+                        return false;
+                    }
                     return hubType.isAssignableFrom(objectType);
                 } else {
                     return false;
@@ -209,9 +219,9 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
      * Ensures that all non-final methods on {@link Word} subclasses are treated as final (aka {@link InvokeKind.Special}),
      * to ensure that they are inlined by {@link SnippetInstaller}.
      */
-    static class MaxInvokeRewriter extends MaxWordTypeRewriterPhase {
+    static class MakeWordFinalRewriter extends MaxWordTypeRewriterPhase {
 
-        public MaxInvokeRewriter(MetaAccessProvider metaAccess, Kind wordKind) {
+        public MakeWordFinalRewriter(MetaAccessProvider metaAccess, Kind wordKind) {
             super(metaAccess, wordKind);
         }
 
@@ -258,7 +268,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
     }
 
     public static boolean isWordOrReference(ResolvedJavaType objectType) {
-        return wordBaseType.isAssignableFrom(objectType) || objectType == referenceType;
+        return objectType == referenceType || objectType == codePointerType || wordBaseType.isAssignableFrom(objectType);
     }
 
     protected void changeToWord(ValueNode valueNode) {

@@ -184,6 +184,19 @@ public class MaxIntrinsics {
         }
     }
 
+    static class BitIntrinsic extends MaxIntrinsicImpl {
+        private final boolean forward;
+
+        BitIntrinsic(boolean forward) {
+            this.forward = forward;
+        }
+
+        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode value) {
+            FloatingNode node = graph.unique(new MaxBitScanNode(value, forward));
+            return node;
+        }
+    }
+
     /**
      * Case where a Graal snippet with exactly the same signature already exists, so we simply
      * return the graph for that.
@@ -279,6 +292,9 @@ public class MaxIntrinsics {
 
         registry.add(TEST_SNIPPET_1, new TestIntrinsic1()); // TODO remove when debugged
         registry.add(TEST_SNIPPET_2, new TestIntrinsic2()); // TODO remove when debugged
+
+        registry.add(LSB, new BitIntrinsic(false));
+        registry.add(MSB, new BitIntrinsic(true));
 
         registry.add(UNSAFE_CAST, new UnsafeCastIntrinsic());
         registry.add(READREG, new ReadRegisterIntrinsic());

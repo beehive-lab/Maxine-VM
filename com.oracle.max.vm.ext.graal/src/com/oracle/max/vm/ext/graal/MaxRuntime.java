@@ -236,6 +236,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         maxReplacements.installAndRegisterSnippets(MaxInvokeLowerings.class);
         maxReplacements.installAndRegisterSnippets(ArithmeticSnippets.class);
         maxReplacements.installAndRegisterSnippets(AMD64ConvertSnippetsWrapper.class);
+        maxReplacements.installAndRegisterSnippets(BoxingSnippetsWrapper.class);
 
         MaxConstantPool.setGraphBuilderConfig(null);
 
