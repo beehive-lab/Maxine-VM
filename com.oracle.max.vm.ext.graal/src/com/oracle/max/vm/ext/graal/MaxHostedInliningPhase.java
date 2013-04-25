@@ -53,6 +53,8 @@ public class MaxHostedInliningPhase extends InliningPhase {
                     MethodActor ma = (MethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(methodCallTargetNode.targetMethod());
                     if (ma.isInline()) {
                         return true;
+                    } else if (ma.isIntrinsic()) {
+                        return false;
                     }
                 }
             }
