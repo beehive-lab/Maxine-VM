@@ -64,7 +64,7 @@ import com.sun.max.vm.type.*;
  * debugging snippet installation in the boot image generation, but the config is stored in a thread local
  * so it does not survive in the boot image.
  */
-public class MaxGraal implements RuntimeCompiler {
+public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCompiler {
 
     private static class MaxGraphCache implements GraphCache {
 

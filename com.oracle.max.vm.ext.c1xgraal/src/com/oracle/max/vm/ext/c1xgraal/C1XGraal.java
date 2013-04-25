@@ -25,6 +25,8 @@ package com.oracle.max.vm.ext.c1xgraal;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMOptions.*;
 
+import java.util.*;
+
 import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.sun.cri.ci.*;
@@ -43,7 +45,7 @@ import com.sun.max.vm.runtime.*;
  */
 public class C1XGraal implements RuntimeCompiler {
 
-    static boolean FailOverToC1X/* = true*/;
+    static boolean FailOverToC1X;
     static boolean DisableGraal;
     static {
         addFieldOption("-XX:", "FailOverToC1X", "Retry failed Graal compilations with C1X.");
@@ -65,6 +67,7 @@ public class C1XGraal implements RuntimeCompiler {
     public C1XGraal() {
         this.c1x = new C1X();
         this.graal = new MaxGraal();
+        FailOverToC1X = MaxineVM.isHosted(); // i.e., only when building boot image
     }
 
     @Override
@@ -78,15 +81,51 @@ public class C1XGraal implements RuntimeCompiler {
         }
     }
 
-    public final TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
+    private static class ChoiceName extends ThreadLocal<ChoiceName> {
+        Stack<String> names = new Stack<String>();
+
+        @Override
+        protected ChoiceName initialValue() {
+            return new ChoiceName();
+        }
+
+        void push(String name) {
+            names.push(name);
+        }
+
+        void pop() {
+            names.pop();
+        }
+    }
+
+    private static final ChoiceName choiceNameTL = new ChoiceName();
+    private static final String C1XGraal_C1X = "C1XGraal_C1X";
+    private static final String C1XGraal_Graal = "C1XGraal_Graal";
+
+    @Override
+    public String name(ClassMethodActor classMethodActor) {
+        RuntimeCompiler compiler = chooseCompiler(classMethodActor);
+        return compiler == c1x ? C1XGraal_C1X : C1XGraal_Graal;
+    }
+
+    private RuntimeCompiler chooseCompiler(final ClassMethodActor method) {
         String name = vm().compilationBroker.compilerFor(method);
-        // The first term forces C1X for any method not explicitly requested as Graal. This is temporary.
-        if (name == null || (name != null && name.equals("C1X")) || method.isNative()) {
-            return c1x.compile(method, false, install, stats);
+        // For now use Graal only for methods specified by -XX:CompileCommand
+        if (name == null || name.equals("C1X") || method.isNative()) {
+            return c1x;
+        } else {
+            return graal;
+        }
+    }
+
+    public final TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
+        TargetMethod result = null;
+        RuntimeCompiler compiler = chooseCompiler(method);
+        if (compiler == c1x) {
+            result = c1x.compile(method, false, install, stats);
         } else {
             TargetMethod c1xTM = null;
             TargetMethod t1xTM = null;
-            TargetMethod graalTM = null;
             if (!MaxineVM.isHosted() && MaxGraalCompare) {
                 // compile with C1X/T1X for comparison
                 c1xTM = c1x.compile(method, isDeopt, install, stats);
@@ -96,7 +135,7 @@ public class C1XGraal implements RuntimeCompiler {
 
             if (FailOverToC1X) {
                 try {
-                    graalTM =  graal.compile(method, false, install, stats);
+                    result =  graal.compile(method, false, install, stats);
                 } catch (Throwable t) {
                     String errorMessage = "Compilation of " + method + " by Graal failed";
                     if (VMOptions.verboseOption.verboseCompilation) {
@@ -113,16 +152,16 @@ public class C1XGraal implements RuntimeCompiler {
                         Log.println(": Retrying with C1X...");
                         Log.unlock(lockDisabledSafepoints);
                     }
-                    return c1x.compile(method, false, install, stats);
+                    result = c1x.compile(method, false, install, stats);
                 }
             } else {
-                graalTM = graal.compile(method, false, install, stats);
+                result = graal.compile(method, false, install, stats);
             }
             if (!MaxineVM.isHosted() && MaxGraalCompare) {
-                compare(graalTM, c1xTM, t1xTM);
+                compare(result, c1xTM, t1xTM);
             }
-            return graalTM;
         }
+        return result;
     }
 
     @NEVER_INLINE

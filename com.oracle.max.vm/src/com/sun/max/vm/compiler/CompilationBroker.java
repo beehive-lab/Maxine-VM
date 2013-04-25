@@ -865,7 +865,7 @@ public class CompilationBroker {
      * when a specified compiler can't be found on the class path.
      */
     @HOSTED_ONLY
-    public static class NullCompiler implements RuntimeCompiler {
+    public static class NullCompiler extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCompiler {
 
         public final Nature nature;
 
