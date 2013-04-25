@@ -114,4 +114,15 @@ public interface RuntimeCompiler {
      * VM option.
      */
     boolean matches(String compilerName);
+
+    /**
+     * Return a name for the compiler for, e.g., logging, when compiling {@code classMethodActor}.
+     */
+    String name(ClassMethodActor classMethodActor);
+
+    public static abstract class DefaultNameAdapter implements RuntimeCompiler {
+        public String name(ClassMethodActor classMethodActor) {
+            return getClass().getSimpleName();
+        }
+    }
 }
