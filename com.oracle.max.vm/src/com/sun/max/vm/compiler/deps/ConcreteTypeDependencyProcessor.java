@@ -142,11 +142,13 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
                     return null;
                 } else {
                     // otherwise the array is the unique concrete subtype
-                    return classActor;
+                    // TODO Currently the code to invalidate arrays in the face of a change in the
+                    // type hierarchy is not implemented, so we conservatively return null
+                    return null;
                 }
             } else {
                 // element was final class or primitive
-                return ClassIDManager.toClassActor(classActor.uniqueConcreteType);
+                return classActor;
             }
         }
     }
