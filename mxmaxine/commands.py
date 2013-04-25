@@ -300,8 +300,25 @@ def image(args):
 def graal_extdirs():
     """Return the path to the extension classes directory in the graal tree"""
     jdkhome = mx.suite("graal").commands.jdkhome()
-    result = join(jdkhome, "jre/lib/ext")
+    result = os.path.abspath(join(jdkhome, "jre/lib/ext"))
     return result
+
+def check_cwd_change(args):
+    """Return the current working directory having checked if it is overriden in args"""
+    cwd = os.getcwd()
+    vmArgs = []
+    
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg == '-cwd':
+            cwd = args[i + 1]
+            i += 1
+        else:
+            vmArgs += [arg]
+        i += 1
+    return [cwd, vmArgs]
+
 
 # Graal classes are loaded from graal.jar by the extension class loader  
 def sanitized_classpath():
@@ -310,7 +327,10 @@ def sanitized_classpath():
     cp_list = cp.split(os.pathsep)
     sanitized_list = []
     for entry in cp_list:
-        if entry.find("com.oracle.graal") == -1:
+        include = True
+        if entry.find("com.oracle.graal") >= 0 or entry.find("com.oracle.truffle") >= 0:
+            include = False
+        if include:
             sanitized_list.append(entry)
     result = os.pathsep.join(sanitized_list)
     return result
@@ -342,6 +362,10 @@ def inspect(args):
     sysProps = []
     sysProps += ['-Djava.ext.dirs=' + graal_extdirs()]
     insCP = []
+
+    cwdArgs = check_cwd_change(args)
+    cwd = cwdArgs[0]
+    args = cwdArgs[1]
 
     i = 0
     remote = False
@@ -396,9 +420,9 @@ def inspect(args):
 
     if mx.get_os() == 'darwin' and not remote:
         # The -E option propagates the environment variables into the sudo process
-        mx.run(['sudo', '-E', '-p', 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd)
+        mx.run(['sudo', '-E', '-p', 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd, cwd=cwd)
     else:
-        mx.run(cmd)
+        mx.run(cmd, cwd=cwd)
 
 def inspectoragent(args):
     """launch the Inspector agent
@@ -662,14 +686,18 @@ def vm(args):
 
     Use "mx vm -help" to see what other options this command accepts."""
 
-    mx.expand_project_in_args(args)
+    cwdArgs = check_cwd_change(args)
+    cwd = cwdArgs[0]
+    vmArgs = cwdArgs[1]
+    
+    mx.expand_project_in_args(vmArgs)
     maxvmOptions = os.getenv('MAXVM_OPTIONS', '').split()
 
     debug_port = mx.java().debug_port
     if debug_port is not None:
         maxvmOptions += ['-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=' + str(debug_port)]
 
-    mx.run([join(_vmdir, 'maxvm')] + maxvmOptions + args)
+    mx.run([join(_vmdir, 'maxvm')] + maxvmOptions + vmArgs, cwd=cwd)
 
 _patternHelp="""
     A pattern is a class name pattern followed by an optional method name
