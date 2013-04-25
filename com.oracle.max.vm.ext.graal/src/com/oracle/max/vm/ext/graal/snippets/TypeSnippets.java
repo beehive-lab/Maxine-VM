@@ -152,19 +152,18 @@ public class TypeSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void unresolvedCheckCastSnippet(ResolutionGuard.InPool guard, Object object) {
+    private static Object unresolvedCheckCastSnippet(ResolutionGuard.InPool guard, Object object) {
         resolveAndCheckCast(guard, object);
+        return UnsafeCastNode.unsafeCast(object, StampFactory.forNodeIntrinsic());
     }
 
     @RUNTIME_ENTRY
-    private static Object resolveAndCheckCast(ResolutionGuard.InPool guard, Object object) {
+    private static void resolveAndCheckCast(ResolutionGuard.InPool guard, Object object) {
         ClassActor classActor = Snippets.resolveClass(guard);
         if (!classActor.isNullOrInstance(object)) {
             Throw.throwClassCastException(classActor, object);
             throw UnreachableNode.unreachable();
         }
-        BeginNode anchorNode = BeginNode.anchor(StampFactory.forNodeIntrinsic());
-        return UnsafeCastNode.unsafeCast(object, StampFactory.forNodeIntrinsic(), anchorNode);
     }
 
     protected class InstanceOfLowering extends InstanceOfSnippetsTemplates implements LoweringProvider<FloatingNode> {
