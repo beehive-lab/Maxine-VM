@@ -40,7 +40,7 @@ public class UnresolvedNewMultiArrayNode extends FixedWithNextNode implements Lo
     }
 
     @Override
-    public void lower(LoweringTool tool) {
+    public void lower(LoweringTool tool, LoweringType loweringType) {
         tool.getRuntime().lower(this, tool);
     }
 

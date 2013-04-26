@@ -52,7 +52,7 @@ public class ResolveMethodNode extends FixedWithNextNode implements Lowerable{
     }
 
     @Override
-    public void lower(LoweringTool tool) {
+    public void lower(LoweringTool tool, LoweringType loweringType) {
         tool.getRuntime().lower(this, tool);
     }
 

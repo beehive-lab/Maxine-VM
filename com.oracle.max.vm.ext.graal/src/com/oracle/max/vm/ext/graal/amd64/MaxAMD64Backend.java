@@ -156,7 +156,7 @@ public class MaxAMD64Backend extends Backend {
         protected void emitIndirectCall(IndirectCallTargetNode callTarget, Value result, Value[] parameters, Value[] temps, LIRFrameState callState) {
             // The current register allocator cannot handle variables at call sites, need a fixed
             // register.
-            Value targetAddress = AMD64.rax.asValue();
+            AllocatableValue targetAddress = AMD64.rax.asValue();
             emitMove(targetAddress, operand(callTarget.computedAddress()));
             append(new AMD64Call.IndirectCallOp(callTarget.target(), result, parameters, temps, targetAddress, callState));
         }

@@ -53,7 +53,7 @@ public class AllocaNode extends FixedWithNextNode implements LIRGenLowerable {
     @Override
     public void generate(LIRGenerator gen) {
         StackSlot array = gen.frameMap().allocateStackBlock(size, false);
-        Value result = gen.emitLea(array);
+        Value result = gen.emitAddress(array);
         gen.setResult(this, result);
     }
 

@@ -27,6 +27,7 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.util.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
 import com.oracle.graal.phases.common.InliningUtil.*;
@@ -45,7 +46,7 @@ public class MaxHostedInliningPhase extends InliningPhase {
         }
 
         @Override
-        public boolean isWorthInlining(InlineInfo info) {
+        public boolean isWorthInlining(InlineInfo info, NodesToDoubles nodeProbabilities, NodesToDoubles nodeRelevance) {
             CallTargetNode callTargetNode = info.invoke().callTarget();
             if (callTargetNode instanceof MethodCallTargetNode) {
                 MethodCallTargetNode methodCallTargetNode = (MethodCallTargetNode) callTargetNode;
@@ -58,7 +59,7 @@ public class MaxHostedInliningPhase extends InliningPhase {
                     }
                 }
             }
-            return super.isWorthInlining(info);
+            return super.isWorthInlining(info, nodeRelevance, nodeRelevance);
         }
 
 
