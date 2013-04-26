@@ -33,7 +33,8 @@ import com.sun.max.vm.jdk.*;
 public class Package extends BootImagePackage {
 
     public Package() {
-        super("com.oracle.graal.alloc.*",
+        super("com.oracle.max.vm.ext.graal.**",
+              "com.oracle.graal.alloc.*",
               "com.oracle.graal.amd64.*",
               "com.oracle.graal.api.*",
               "com.oracle.graal.api.code.*",
