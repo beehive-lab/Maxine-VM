@@ -107,7 +107,7 @@ public class TypeSnippets extends SnippetLowerings {
             UnresolvedType.InPool unresolvedType = (UnresolvedType.InPool) MaxJavaType.getRiType(node.javaType());
             ResolutionGuard.InPool guard = unresolvedType.pool.makeResolutionGuard(unresolvedType.cpi);
             return new Arguments(snippet).add("guard", guard);
-         }
+        }
     }
 
     protected class CheckCastLowering extends Lowering implements LoweringProvider<CheckCastNode> {

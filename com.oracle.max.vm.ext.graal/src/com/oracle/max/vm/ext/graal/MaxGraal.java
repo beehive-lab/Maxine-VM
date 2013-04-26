@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import java.lang.reflect.*;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.code.*;
@@ -30,6 +31,7 @@ import com.oracle.graal.compiler.*;
 import com.oracle.graal.compiler.target.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
+import com.oracle.graal.lir.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
@@ -41,28 +43,29 @@ import com.oracle.graal.printer.*;
 import com.oracle.max.vm.ext.graal.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Integration of the Graal compiler into Maxine's compilation framework. The compiler must be included in the boot image,
- * as the snippet generation needs access to things that are not available to a VM extension (i.e., {@link HOSTED_ONLY} fields of VM classes).
+ * Integration of the Graal compiler into Maxine's compilation framework.
  *
- * It is necessary to call {@link FieldIntrospection#rescanAllFieldOffsets()} on VM startup as the
- * {@link NodeClass} field offsets calculated during boot image construction are those of the host VM. In principle this
- * could be fixed up during boot image creation, as per the JDK classes, but as Graal provides a method to do it, and
- * the necessary fixup is quite complicated, we do it on VM startup.
- * TODO: this likely isn't sufficient for the future when Graal is the only compiler, and probably will require the offsets to be
- * explicitly fixed up in the boot image.
+ * Graal makes sophisticated use of {@link Unsafe} field offsets in its graph manipulations, and provides
+ * a method {@link FieldIntrospection#rescanAllFieldOffsets()} to (re)compute the offsets. Since these differ
+ * between the host VM and Maxine, they have to be recomputed. Graal stores the offsets in arrays
+ * held in {@link FieldIntrospection} and {@link NodeClass}, so the usual {@link JDKInterceptor} mechanismn isn't useful.
+ * So the fix up is done in the {@link MaxineVM.Phase#SERIALIZING_IMAGE} phase before the data objects are created,
+ * and, importantly, after all compilation is complete!
  *
- * The Graal debug environment similarly needs to be re-established when the VM runs. It is setup for
- * debugging snippet installation in the boot image generation, but the config is stored in a thread local
- * so it does not survive in the boot image.
+ * The Graal debug environment similarly needs to be re-established when the VM runs. It is setup for debugging snippet
+ * installation in the boot image generation, but the config is stored in a thread local so it does not survive in the
+ * boot image. We establish it in the {@link MaxineVM.Phase#STARTING} phase, as compilations can happen after that.
  */
 public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCompiler {
 
@@ -105,40 +108,47 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         return singleton.runtime;
     }
 
-    /**
-     * See {@link CompilationBroker#initialize(Phase).
-     * When an added compiler only called in {@link MaxineVM.Phase#HOSTED_COMPILING} and {@link MaxineVM.Phase#STARTING} phases,
-     * <i>after</i> {@link CompilationBroker#addCompiler} has been called.
-     */
+    private static class TraceDefaultAndSetMaxineFieldOffset extends FieldIntrospection.DefaultCalcOffset {
+        @Override
+        public long getOffset(Field field) {
+            long hostOffset = super.getOffset(field);
+            long maxOffset = FieldActor.fromJava(field).offset();
+            Trace.line(2, field.getDeclaringClass().getName() + "." + field.getName() + " has host offset: " + hostOffset + ", Maxine offset: " + maxOffset);
+            return maxOffset;
+        }
+
+    }
+
     @Override
     public void initialize(Phase phase) {
         if (phase == MaxineVM.Phase.HOSTED_COMPILING) {
             MaxGraalOptions.initialize();
             createGraalCompiler(phase);
+        } else if (phase == MaxineVM.Phase.SERIALIZING_IMAGE) {
+            TraceNodeClasses.scan();
+            FieldIntrospection.rescanAllFieldOffsets(new TraceDefaultAndSetMaxineFieldOffset());
         } else if (phase == MaxineVM.Phase.STARTING) {
-            // This is the obvious place to call rescanAllFieldOffsets() but it is too early in the startup without
-            // more classes related to annotations being in the boot image, because bootclasspath is not setup.
-            // So it is done lazily when the first compile is initiated.
-            //
-        } else if (phase == MaxineVM.Phase.RUNNING) {
-            // Would be called if the compiler was registered as the default optimizing compiler.
+            // Compilations can occur after this, so set up the debug environment
+            DebugEnvironment.initialize(System.out);
         }
     }
 
-    private static boolean lazyRuntimeInitDone;
-
-    private static void lazyRunTimeInit() {
-        if (lazyRuntimeInitDone) {
-            return;
+    private static class TraceNodeClasses extends FieldIntrospection {
+        TraceNodeClasses() {
+            super(null);
         }
-        try {
-            FieldIntrospection.rescanAllFieldOffsets(new FieldIntrospection.DefaultCalcOffset());
-            // This sets up the debug environment for the running VM
-            DebugEnvironment.initialize(System.out);
-            lazyRuntimeInitDone = true;
-        } catch (Throwable t) {
-            Log.println("FieldIntrospection.rescanAllFieldOffsets failed: " + t);
-            MaxineVM.exit(-1);
+
+        public static void scan() {
+            Trace.line(2, "NodeClass.allClasses");
+            for (FieldIntrospection nodeClass : allClasses.values()) {
+                Trace.line(2, nodeClass);
+            }
+        }
+
+        @Override
+        protected void rescanFieldOffsets(CalcOffset calc) {
+
+
         }
     }
 
@@ -156,6 +166,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         GraalOptions.PartialEscapeAnalysis = false;
         suites = Suites.createSuites(GraalOptions.CompilerConfiguration);
         replacements = runtime.init();
+        GraalBoot.forceValues();
     }
 
     /**
@@ -175,7 +186,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
 
     @Override
     public TargetMethod compile(ClassMethodActor methodActor, boolean isDeopt, boolean install, CiStatistics stats) {
-        lazyRunTimeInit();
         PhasePlan phasePlan = new PhasePlan();
         ResolvedJavaMethod method = MaxResolvedJavaMethod.get(methodActor);
 
@@ -230,6 +240,38 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     @Override
     public boolean matches(String compilerName) {
         return compilerName.equals(NAME);
+    }
+
+    /**
+     * Since we are not yet compiling the boot image with Graal, a lot of node types are not being included in the
+     * image, which causes problems when trying to compile with Graal at runtime early in the bootstrap, so we force
+     * them to be included here.
+     */
+    private static class GraalBoot {
+
+        @SuppressWarnings("unchecked")
+        static void forceValues() {
+            for (BootImagePackage p : VMConfiguration.activeConfig().bootImagePackages) {
+                if (p.name().contains("com.oracle.graal.nodes") || p.name().contains("com.oracle.max.vm.ext.graal.nodes") || p.name().contains("com.oracle.graal.lir")) {
+                    String[] classes = p.listClasses(JavaPrototype.javaPrototype().packageLoader().classpath);
+                    for (String className : classes) {
+                        try {
+                            Class< ? > klass = Class.forName(className);
+                            if (Node.class.isAssignableFrom(klass)) {
+                                NodeClass.get(klass);
+                            } else if (LIRInstruction.class.isAssignableFrom(klass) && klass != LIRInstruction.class) {
+                                LIRInstructionClass.get((Class< ? extends LIRInstruction>) klass);
+                            } else if (CompositeValue.class.isAssignableFrom(klass)) {
+                                CompositeValueClass.get((Class< ? extends CompositeValue>) klass);
+                            }
+                        } catch (Exception ex) {
+                            throw ProgramError.unexpected();
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
 }
