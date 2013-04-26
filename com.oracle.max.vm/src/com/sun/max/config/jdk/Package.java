@@ -28,7 +28,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.run.java.*;
 
 /**
  * Redirection for the standard set of JDK packages to include in the image.
@@ -85,12 +84,8 @@ public class Package extends BootImagePackage {
         // Some other classes would also directly reference NativePRNG, so exclude them too.
         HostedBootClassLoader.omitClass("java.nio.file.TempFileHelper");
         // The static initializer loads the native network library
-        // However, InetSocketAddress needs unsafe fields fixing up, which requires this class
-        // to be loaded. Loading the network library appears to be harmless, so long as we register the class
-        // for reinitialization. TODO figure out why InetSocketAddress is being included
-        // and fix that, which would be the best solution.
-        //HostedBootClassLoader.omitClass("java.net.InetAddress");
-        JavaRunScheme.registerClassForReInit("java.net.InetAddress");
+        HostedBootClassLoader.omitClass("java.net.InetAddress");
+        HostedBootClassLoader.omitClass("java.net.InetSocketAddress");
         // The static initializer loads and initializes native libraries
         HostedBootClassLoader.omitClass("sun.nio.ch.FileDispatcherImpl");
         HostedBootClassLoader.omitClass("sun.nio.ch.FileChannelImpl");
