@@ -81,7 +81,7 @@ public class MaxRegisterConfig implements RegisterConfig {
     }
 
     private CallingConvention callingConvention(Register[] generalParameterRegisters, JavaType returnType, JavaType[] parameterTypes, Type type, TargetDescription target, boolean stackOnly) {
-        Value[] locations = new Value[parameterTypes.length];
+        AllocatableValue[] locations = new AllocatableValue[parameterTypes.length];
 
         int currentGeneral = 0;
         int currentXMM = 0;
@@ -122,7 +122,7 @@ public class MaxRegisterConfig implements RegisterConfig {
         }
 
         Kind returnKind = returnType == null ? Kind.Void : MaxWordTypeRewriterPhase.checkWord(returnType);
-        Value returnLocation = returnKind == Kind.Void ? Value.ILLEGAL : getReturnRegister(returnKind).asValue(returnKind);
+        AllocatableValue returnLocation = returnKind == Kind.Void ? Value.ILLEGAL : getReturnRegister(returnKind).asValue(returnKind);
         return new CallingConvention(currentStackOffset, returnLocation, locations);
     }
 

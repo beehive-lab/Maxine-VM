@@ -29,6 +29,6 @@ import com.sun.max.platform.*;
 
 public class MaxTargetDescription extends TargetDescription {
     MaxTargetDescription() {
-        super(new AMD64(), true, 16, Platform.platform().pageSize, false);
+        super(new AMD64(2, 0), true, 16, Platform.platform().pageSize, false);
     }
 }

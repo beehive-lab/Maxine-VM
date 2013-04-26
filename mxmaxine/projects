@@ -1,3 +1,5 @@
+suite=maxine
+
 library@JDK_TOOLS@path=${JAVA_HOME}/lib/tools.jar
 library@JDK_TOOLS@optional=true
 

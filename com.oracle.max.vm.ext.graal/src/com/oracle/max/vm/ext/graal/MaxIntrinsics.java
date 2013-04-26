@@ -320,14 +320,14 @@ public class MaxIntrinsics {
 
         registry.add(CMP_BYTECODE, new NormalizeCompareIntrinsic());
 */
-        mapUnsignedMathIntrinsics(replacements);
+        mapUnsignedMathIntrinsics(runtime, replacements, target);
     }
 
     /**
      * Map all cri.UnsignedMath intrinsics to appropriate Graal instrinsic.
      */
-    private static void mapUnsignedMathIntrinsics(Replacements replacements) {
-        new GraalMethodSubstitutions().registerReplacements(replacements);
+    private static void mapUnsignedMathIntrinsics(MaxRuntime runtime, Replacements replacements, MaxTargetDescription target) {
+        new GraalMethodSubstitutions().registerReplacements(runtime, replacements, target);
 
         Method[] methods = com.oracle.max.cri.intrinsics.UnsignedMath.class.getDeclaredMethods();
         for (Method m : methods) {

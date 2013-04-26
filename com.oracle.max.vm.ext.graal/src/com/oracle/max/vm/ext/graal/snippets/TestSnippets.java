@@ -75,7 +75,7 @@ public class TestSnippets extends SnippetLowerings {
         }
 
         @Override
-        public void lower(LoweringTool tool) {
+        public void lower(LoweringTool tool, LoweringType loweringType) {
             tool.getRuntime().lower(this, tool);
         }
     }
@@ -91,7 +91,7 @@ public class TestSnippets extends SnippetLowerings {
         }
 
         @Override
-        public void lower(LoweringTool tool) {
+        public void lower(LoweringTool tool, LoweringType loweringType) {
             tool.getRuntime().lower(this, tool);
         }
 
