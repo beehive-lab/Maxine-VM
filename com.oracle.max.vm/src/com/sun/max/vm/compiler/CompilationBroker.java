@@ -90,7 +90,7 @@ public class CompilationBroker {
     private static boolean opt;
     private static boolean GCOnRecompilation;
     private static boolean FailOverCompilation = true;
-    private static boolean VMExtOpt = true;
+    private static boolean VMExtOpt;
     static int PrintCodeCacheMetrics;
 
     static {
@@ -99,7 +99,7 @@ public class CompilationBroker {
         addFieldOption("-XX:", "GCOnRecompilation", "Force GC before every re-compilation.");
         addFieldOption("-XX:", "FailOverCompilation", "Retry failed compilations with another compiler (if available).");
         addFieldOption("-XX:", "PrintCodeCacheMetrics", "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
-        addFieldOption("-XX:", "VMExtOpt", "Compile VM extensions with optimizing compiler (default: true");
+        addFieldOption("-XX:", "VMExtOpt", "Compile VM extensions with optimizing compiler (default: false");
         addFieldOption("-XX:", "AddCompiler", "Add a compiler, Name:Class");
     }
 
