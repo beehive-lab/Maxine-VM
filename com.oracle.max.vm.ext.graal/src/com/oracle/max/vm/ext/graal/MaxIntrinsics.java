@@ -40,12 +40,14 @@ import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
+import com.oracle.graal.replacements.nodes.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.runtime.*;
 
 public class MaxIntrinsics {
 
@@ -66,8 +68,7 @@ public class MaxIntrinsics {
     static class PointerWriteOffsetIntrinsic extends MaxIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode offset, ValueNode value) {
             Signature sig = method.getSignature();
-            Kind dataKind = sig.getParameterKind(sig.getParameterCount(false) - 1);
-            return graph.add(new UnsafeStoreNode(pointer, 0, offset, value, dataKind));
+            return graph.add(new UnsafeStoreNode(pointer, 0, offset, value, checkWord(sig.getParameterType(sig.getParameterCount(false) - 1, null))));
         }
     }
 
@@ -86,7 +87,7 @@ public class MaxIntrinsics {
             Signature sig = method.getSignature();
             Kind dataKind = sig.getParameterKind(sig.getParameterCount(false) - 1);
             ValueNode scaledIndex = scaledIndex(graph, dataKind, index);
-            return graph.add(ExtendedUnsafeStoreNode.create(pointer, displacement, scaledIndex, value, dataKind));
+            return graph.add(ExtendedUnsafeStoreNode.create(pointer, displacement, scaledIndex, value, checkWord(sig.getParameterType(sig.getParameterCount(false) - 1, null))));
         }
     }
 
@@ -149,8 +150,10 @@ public class MaxIntrinsics {
             if (register == null) {
                 throw new GraalInternalError("Unsupported READREG operand " + registerId);
             }
-            MaxReadRegisterNode readRegister = graph.add(new MaxReadRegisterNode(register, (ResolvedJavaType) method.getSignature().getReturnType(null)));
-            return readRegister;
+            ReadRegisterNode readRegisterNode = new ReadRegisterNode(register, registerId == VMRegister.LATCH, false);
+            readRegisterNode.setStamp(StampFactory.declared((ResolvedJavaType) method.getSignature().getReturnType(null), false));
+            graph.add(readRegisterNode);
+            return readRegisterNode;
         }
     }
 
@@ -161,7 +164,7 @@ public class MaxIntrinsics {
             if (register == null) {
                 throw new GraalInternalError("Unsupported WRITEREG operand " + registerId);
             }
-            MaxWriteRegisterNode writeRegister = graph.add(new MaxWriteRegisterNode(register, value));
+            WriteRegisterNode writeRegister = graph.add(new WriteRegisterNode(register, value));
             return writeRegister;
         }
     }

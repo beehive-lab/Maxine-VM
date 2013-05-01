@@ -56,6 +56,8 @@ public class MaxHostedInliningPhase extends InliningPhase {
                         return true;
                     } else if (ma.isIntrinsic()) {
                         return false;
+                    } else if (ma.isNeverInline()) {
+                        return false;
                     }
                 }
             }

@@ -77,7 +77,11 @@ public class MaxIntrinsicImpl {
                 if (!node.isConstant()) {
                     throw new GraalInternalError("intrinsic parameter " + (i - offset) + " must be compile time constant for invoke " + method);
                 }
-                actualParams[i] = node.asConstant().asBoxedValue();
+                Object boxedValue = node.asConstant().asBoxedValue();
+                if (formalParams[i] == boolean.class) {
+                    boxedValue = ((Integer) boxedValue) == 0 ? Boolean.FALSE : Boolean.TRUE;
+                }
+                actualParams[i] = boxedValue;
             } else {
                 actualParams[i] = node;
             }

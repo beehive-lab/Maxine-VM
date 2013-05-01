@@ -28,6 +28,8 @@ import com.oracle.graal.lir.*;
 import com.oracle.graal.lir.LIRInstruction.*;
 import com.oracle.graal.lir.amd64.*;
 import com.oracle.graal.lir.asm.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
+import com.oracle.max.vm.ext.graal.nodes.MaxSafepointNode.Op;
 import com.sun.max.vm.*;
 
 
@@ -35,17 +37,21 @@ import com.sun.max.vm.*;
 public class MaxAMD64SafepointOp extends AMD64LIRInstruction {
 
     @State protected LIRFrameState state;
+    private final MaxSafepointNode.Op op;
 
-    public MaxAMD64SafepointOp(LIRFrameState state) {
+    public MaxAMD64SafepointOp(LIRFrameState state, MaxSafepointNode.Op op) {
         this.state = state;
+        this.op = op;
     }
 
     @Override
     public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
         int pos = masm.codeBuffer.position();
         tasm.recordInfopoint(pos, state, InfopointReason.SAFEPOINT);
-        byte[] safepointCode = MaxineVM.vm().safepointPoll.code;
-        masm.codeBuffer.emitBytes(safepointCode, 0, safepointCode.length);
+        if (op == Op.SAFEPOINT_POLL) {
+            byte[] safepointCode = MaxineVM.vm().safepointPoll.code;
+            masm.codeBuffer.emitBytes(safepointCode, 0, safepointCode.length);
+        }
     }
 
 }

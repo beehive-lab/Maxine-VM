@@ -102,7 +102,7 @@ public class KindMap {
                 case DOUBLE: result = com.oracle.graal.api.meta.Kind.Double; break;
                 case VOID: result = com.oracle.graal.api.meta.Kind.Void; break;
                 case REFERENCE: result = com.oracle.graal.api.meta.Kind.Object; break;
-                case WORD: result = com.oracle.graal.api.meta.Kind.Long; break;
+                case WORD: result = com.oracle.graal.api.meta.Kind.Object; break;
             }
             // Checkstyle: resume
         }

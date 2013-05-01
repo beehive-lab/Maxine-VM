@@ -156,7 +156,8 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
     @Override
     public StackTraceElement asStackTraceElement(int bci) {
         ClassMethodActor cma = (ClassMethodActor) riMethod;
-        return new StackTraceElement(cma.format("%H"), riResolvedMethod().name(), cma.sourceFileName(), cma.codeAttribute().lineNumberTable().findLineNumber(bci));
+        return new StackTraceElement(cma.format("%H"), riResolvedMethod().name(), cma.sourceFileName(),
+                        cma.codeAttribute() == null ? -1 : cma.codeAttribute().lineNumberTable().findLineNumber(bci));
     }
 
     @Override

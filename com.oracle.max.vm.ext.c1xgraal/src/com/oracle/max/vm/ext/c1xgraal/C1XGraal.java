@@ -50,6 +50,7 @@ public class C1XGraal implements RuntimeCompiler {
     static {
         addFieldOption("-XX:", "FailOverToC1X", "Retry failed Graal compilations with C1X.");
         addFieldOption("-XX:", "MaxGraalCompare", "compare compiled code against C1X/T1X");
+        addFieldOption("-XX:", "MaxGraalForBoot", "use Graal for boot image");
     }
 
     /**
@@ -58,6 +59,8 @@ public class C1XGraal implements RuntimeCompiler {
      * cause an assertion error.
      */
     private static boolean MaxGraalCompare = true;
+
+    private static boolean MaxGraalForBoot;
 
     private MaxGraal graal;
     private C1X c1x;
@@ -113,6 +116,10 @@ public class C1XGraal implements RuntimeCompiler {
             // TODO fix this limitation
             return c1x;
         }
+        if (method.isTemplate()) {
+            // TODO fix this limitation
+            return c1x;
+        }
         if (name != null) {
             if (name.equals("Graal")) {
                 return graal;
@@ -123,7 +130,7 @@ public class C1XGraal implements RuntimeCompiler {
             }
         } else {
             // unspecified
-            if (MaxineVM.isHosted()) {
+            if (MaxineVM.isHosted() && !MaxGraalForBoot) {
                 // not for boot image yet
                 return c1x;
             } else {

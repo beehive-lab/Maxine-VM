@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import java.util.*;
+
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
@@ -35,6 +37,7 @@ import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.util.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ri.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.*;
@@ -51,6 +54,8 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
 
     private final Kind wordKind;
     private MetaAccessProvider metaAccess;
+
+    private static boolean graphCheck = true;
 
     public MaxWordTypeRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
         this.wordKind = wordKind;
@@ -76,6 +81,9 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
 
         @Override
         protected void run(StructuredGraph graph) {
+            if (graphCheck) {
+                validateVisit(graph);
+            }
             for (Node n : GraphOrder.forwardGraph(graph)) {
                 if (n instanceof ValueNode) {
                     ValueNode vn = (ValueNode) n;
@@ -85,6 +93,57 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
                 }
             }
         }
+
+        private void validateVisit(StructuredGraph graph) {
+            HashSet<Node> fMap = new HashSet<>();
+            HashSet<Node> nMap = new HashSet<>();
+            for (Node n : GraphOrder.forwardGraph(graph)) {
+                fMap.add(n);
+            }
+            for (Node n : graph.getNodes()) {
+                nMap.add(n);
+            }
+            if (fMap.size() != nMap.size()) {
+                HashSet<Node> missing = new HashSet<>();
+                for (Node n : nMap) {
+                    if (!fMap.contains(n)) {
+                        missing.add(n);
+                    }
+                }
+                Trace.line(1, "WARNING: graph visit different for " + graph.method());
+            }
+            //sortedPrint("forwardGraph", fMap);
+            //sortedPrint("getNodes", nMap);
+
+
+        }
+
+        private void sortedPrint(String name, HashSet<Node> map) {
+            System.out.println(name + ", size: " + map.size());
+            Node[] mapArray = new Node[map.size()];
+            map.toArray(mapArray);
+            Arrays.sort(mapArray, new NodeCompare());
+            for (Node n : mapArray) {
+                System.out.println(n);
+            }
+            System.out.println();
+        }
+
+        private static class NodeCompare implements Comparator<Node> {
+
+            @Override
+            public int compare(Node o1, Node o2) {
+                if (o1.getId() < o2.getId()) {
+                    return -1;
+                } else if (o1.getId() > o2.getId()) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+
+        }
+
     }
 
     /**
@@ -103,8 +162,6 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
                 if (n instanceof ValueNode) {
                     if (isFixedGuardNullCheck(n)) {
                         removeNullCheck(graph, (FixedGuardNode) n);
-                    } else if (isUncheckedAccess(n)) {
-                        removeUnCheckedAccess(graph, (IfNode) n);
                     }
                 }
             }
@@ -131,31 +188,6 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
                     GraphUtil.killWithUnusedFloatingInputs(isNullNode);
                 }
             }
-        }
-
-        private boolean isUncheckedAccess(Node n) {
-            if (n instanceof IfNode) {
-                IfNode ifNode = (IfNode) n;
-                if (ifNode.condition() instanceof IsNullNode) {
-                    IsNullNode isNullNode = (IsNullNode) ifNode.condition();
-                    ResolvedJavaType objectType = isNullNode.object().objectStamp().type();
-                    // the objectType can be unknown
-                    if (objectType == null) {
-                        return false;
-                    }
-                    return hubType.isAssignableFrom(objectType);
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        }
-
-        private void removeUnCheckedAccess(StructuredGraph graph, IfNode ifNode) {
-            IsNullNode isNullNode = (IsNullNode) ifNode.condition();
-            graph.removeSplitPropagate(ifNode, ifNode.falseSuccessor());
-            GraphUtil.killWithUnusedFloatingInputs(isNullNode);
         }
 
     }
@@ -237,7 +269,6 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
     }
 
     public boolean isWord(ValueNode node) {
-        node.inferStamp();
         if (node.stamp() == StampFactory.forWord()) {
             return true;
         }
