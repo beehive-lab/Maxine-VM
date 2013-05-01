@@ -133,25 +133,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         }
     }
 
-    private static class TraceNodeClasses extends FieldIntrospection {
-        TraceNodeClasses() {
-            super(null);
-        }
-
-        public static void scan() {
-            Trace.line(2, "NodeClass.allClasses");
-            for (FieldIntrospection nodeClass : allClasses.values()) {
-                Trace.line(2, nodeClass);
-            }
-        }
-
-        @Override
-        protected void rescanFieldOffsets(CalcOffset calc) {
-
-
-        }
-    }
-
     private void createGraalCompiler(Phase phase) {
         // This sets up the debug environment for the boot image build
         DebugEnvironment.initialize(System.out);
@@ -204,6 +185,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxIntrinsicsPhase());
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING,
                                 new MaxWordTypeRewriterPhase.MakeWordFinalRewriter(runtime, runtime.maxTargetDescription.wordKind));
+
                 // In order to have Maxine's INLINE annotation interpreted, we have to disable the standard inlining phase
                 // and substitute a custom phase that checks the method annotation.
                 phasePlan.disablePhase(InliningPhase.class);
@@ -211,7 +193,11 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                                 new MaxHostedInliningPhase(runtime, replacements, new Assumptions(GraalOptions.OptAssumptions), cache, phasePlan, optimisticOpts));
                 // Important to remove bogus null checks on Word types
                 phasePlan.addPhase(PhasePosition.HIGH_LEVEL, new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, runtime.maxTargetDescription.wordKind));
-                phasePlan.addPhase(PhasePosition.HIGH_LEVEL,
+                // intrinsics are (obviously) not inlined, so they are left in the graph and need to be rewritten now
+                phasePlan.addPhase(PhasePosition.HIGH_LEVEL, new MaxIntrinsicsPhase());
+
+                // Always the very last thing, rewrite Word types
+                phasePlan.addPhase(PhasePosition.LOW_LEVEL,
                                 new MaxWordTypeRewriterPhase.KindRewriter(runtime, runtime.maxTargetDescription.wordKind));
 
             }
@@ -240,6 +226,23 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     @Override
     public boolean matches(String compilerName) {
         return compilerName.equals(NAME);
+    }
+
+    private static class TraceNodeClasses extends FieldIntrospection {
+        TraceNodeClasses() {
+            super(null);
+        }
+
+        public static void scan() {
+            Trace.line(2, "NodeClass.allClasses");
+            for (FieldIntrospection nodeClass : allClasses.values()) {
+                Trace.line(2, nodeClass);
+            }
+        }
+
+        @Override
+        protected void rescanFieldOffsets(CalcOffset calc) {
+        }
     }
 
     /**

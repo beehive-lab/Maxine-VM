@@ -32,6 +32,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.oracle.graal.replacements.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -767,7 +768,8 @@ public class CompiledPrototype extends Prototype {
     private boolean needsCompilation(MethodActor methodActor) {
         if (methodActor instanceof ClassMethodActor &&
             !methodActor.isAbstract() &&
-            !methodActor.isIntrinsic()) {
+            !methodActor.isIntrinsic() &&
+            !isSnippet(methodActor)) {
 
             String holderName = methodActor.holder().typeDescriptor.toJavaString();
             if (matches(holderName, compilationBlacklist) && !matches(holderName, compilationWhitelist)) {
@@ -782,6 +784,11 @@ public class CompiledPrototype extends Prototype {
 
     private static final List<String> compilationBlacklist = new ArrayList<String>();
     private static final List<String> compilationWhitelist = new ArrayList<String>();
+
+    private static boolean isSnippet(MethodActor methodActor) {
+        Snippet snippet = methodActor.getAnnotation(Snippet.class);
+        return snippet != null;
+    }
 
     public static void addCompilationBlacklist(String classPrefix) {
         compilationBlacklist.add(classPrefix);

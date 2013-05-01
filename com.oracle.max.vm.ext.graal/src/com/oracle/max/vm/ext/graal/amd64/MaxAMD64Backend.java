@@ -45,6 +45,7 @@ import com.oracle.graal.nodes.*;
 import com.oracle.graal.phases.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
+import com.oracle.max.vm.ext.graal.nodes.MaxSafepointNode.Op;
 import com.sun.max.platform.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -64,17 +65,17 @@ public class MaxAMD64Backend extends Backend {
                 switch (maxSafepointNode.op) {
                     case SAFEPOINT_POLL: {
                         // explicit request for safepoint in code
-                        emitSafepoint(node);
+                        emitSafepoint(node, maxSafepointNode.op);
                         break;
                     }
+
                     case HERE: {
-                        /*
-                        gen.setResult(this, gen.emitLea(new CiAddress(CiKind.Byte, AMD64.rip.asValue())));
-                        FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind());
-                        LIRDebugInfo info = gen.stateFor(stateDuring);
-                        gen.append(AMD64SafepointOpcode.SAFEPOINT.create(info));
-                        */
-                        unimplemented("MaxSafepointNode.HERE");
+                        RegisterValue rip = AMD64.rip.asValue(node.kind());
+                        Variable result = newVariable(node.kind());
+                        AMD64AddressValue here = emitAddress(rip, 0, Constant.INT_0, 0);
+                        emitMove(result, here);
+                        setResult(node, result);
+                        emitSafepoint(node, maxSafepointNode.op);
                         break;
                     }
                     case INFO: {
@@ -100,13 +101,13 @@ public class MaxAMD64Backend extends Backend {
 
             } else {
                 // generic Graal safepoint
-                emitSafepoint(node);
+                emitSafepoint(node, Op.SAFEPOINT_POLL);
             }
         }
 
-        private void emitSafepoint(SafepointNode node) {
+        private void emitSafepoint(SafepointNode node, MaxSafepointNode.Op op) {
             LIRFrameState info = state(node);
-            append(new MaxAMD64SafepointOp(info));
+            append(new MaxAMD64SafepointOp(info, op));
         }
 
         public void visitMaxCompareAndSwap(MaxCompareAndSwapNode node) {

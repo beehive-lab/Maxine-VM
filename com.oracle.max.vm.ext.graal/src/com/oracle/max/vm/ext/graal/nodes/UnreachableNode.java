@@ -40,7 +40,7 @@ public final class UnreachableNode extends FixedWithNextNode implements Simplifi
         safeDelete();
     }
 
-    public static class DeadEndNode extends ControlSplitNode implements LIRLowerable {
+    public static class DeadEndNode extends ControlSinkNode implements LIRLowerable {
 
         public DeadEndNode() {
             super(StampFactory.forVoid());
@@ -51,10 +51,6 @@ public final class UnreachableNode extends FixedWithNextNode implements Simplifi
             // No code to emit since this node represents an unreachable code path.
         }
 
-        @Override
-        public double probability(BeginNode successor) {
-            throw new IllegalArgumentException("Node has no successors");
-        }
     }
 
     @NodeIntrinsic
