@@ -28,9 +28,8 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.bytecode.*;
 import com.sun.cri.ri.*;
-import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 
@@ -39,8 +38,6 @@ import com.sun.max.vm.compiler.target.*;
  * since {@code MethodActor} already implements the old {@link RiResolvedMethod} interface.
  */
 public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJavaMethod {
-
-    private int compilationComplexity;
 
     protected MaxResolvedJavaMethod(RiResolvedMethod riResolvedMethod) {
         super(riResolvedMethod);
@@ -83,27 +80,6 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         } else {
             return tm.codeLength();
         }
-    }
-
-    @Override
-    public int getCompilationComplexity() {
-        if (compilationComplexity <= 0 && getCodeSize() > 0) {
-            byte[] code = getCode();
-            if (code != null) {
-                BytecodeStream s = new BytecodeStream(getCode());
-                int result = 0;
-                int currentBC;
-                while ((currentBC = s.currentBC()) != Bytecodes.END) {
-                    result += Bytecodes.compilationComplexity(currentBC);
-                    s.next();
-                }
-                assert result > 0;
-                compilationComplexity = result;
-            } else {
-                // native
-            }
-        }
-        return compilationComplexity;
     }
 
     @Override
@@ -195,11 +171,16 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public boolean canBeInlined() {
-        boolean hasHandlers = riResolvedMethod().exceptionHandlers().length != 0;
-        // Currently we don't inline methods with exception handlers because
-        // they generate a DeoptimizeNode.
-        // TODO fix
-        return riResolvedMethod().getAnnotation(NEVER_INLINE.class) == null || hasHandlers;
+        boolean result = true;
+        // Maxine specific constraints on inlining
+        MethodActor ma = (MethodActor) riResolvedMethod();
+        if (ma.isIntrinsic() || ma.isNeverInline()) {
+            result = false;
+        } else if (!MaxineVM.isHosted() && ma.isVM()) {
+            // Unless we are compiling the boot image, we never inline VM methods
+            result = false;
+        }
+        return result;
     }
 
     @Override
@@ -391,6 +372,20 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         } catch (IllegalAccessException | InvocationTargetException | InstantiationException ex) {
             throw new IllegalArgumentException(ex);
         }
+    }
+
+    @Override
+    public Constant getEncoding() {
+        // TODO Auto-generated method stub
+        MaxGraal.unimplemented("getEncoding");
+        return null;
+    }
+
+    @Override
+    public boolean isInVirtualMethodTable() {
+        // TODO Auto-generated method stub
+        MaxGraal.unimplemented("isInVirtualMethodTable");
+        return false;
     }
 
 }

@@ -44,37 +44,33 @@ public class MaxGraphBuilderPhase extends GraphBuilderPhase {
 
     @Override
     public void handleUnresolvedLoadField(JavaField field, ValueNode receiver) {
-        UnresolvedLoadFieldNode node = currentGraph.add(new UnresolvedLoadFieldNode(receiver, field));
+        UnresolvedLoadFieldNode node = new UnresolvedLoadFieldNode(receiver, field);
         frameState.push(field.getKind().getStackKind(), append(node));
     }
 
     @Override
     protected void handleUnresolvedStoreField(JavaField field, ValueNode value, ValueNode receiver) {
-        UnresolvedStoreFieldNode node = currentGraph.add(new UnresolvedStoreFieldNode(receiver, field, value));
+        UnresolvedStoreFieldNode node = new UnresolvedStoreFieldNode(receiver, field, value);
         append(node);
     }
 
     @Override
     protected void handleUnresolvedNewInstance(JavaType type) {
         UnresolvedTypeNode node = new UnresolvedNewInstanceNode(type);
-        currentGraph.add(node);
         frameState.push(Kind.Object, append(node));
     }
 
     @Override
     protected void handleUnresolvedNewObjectArray(JavaType type, ValueNode length) {
         UnresolvedNewArrayNode node = new UnresolvedNewArrayNode(type, length);
-        currentGraph.add(node);
         frameState.push(Kind.Object, append(node));
     }
 
     @Override
     protected void handleUnresolvedNewMultiArray(JavaType type, ValueNode[] dims) {
         UnresolvedLoadClassActorNode loadConstantNode = new UnresolvedLoadClassActorNode(type);
-        currentGraph.add(loadConstantNode);
         append(loadConstantNode);
         UnresolvedNewMultiArrayNode node = new UnresolvedNewMultiArrayNode(loadConstantNode, dims);
-        currentGraph.add(node);
         frameState.push(Kind.Object, append(node));
     }
 
@@ -85,7 +81,6 @@ public class MaxGraphBuilderPhase extends GraphBuilderPhase {
                         javaMethod.getSignature().getParameterCount(withReceiver));
         // This node is a placeholder for resolving the method
         ResolveMethodNode resolveMethodNode = new ResolveMethodNode(invokeKind, javaMethod);
-        currentGraph.add(resolveMethodNode);
         append(resolveMethodNode);
         UnresolvedMethodCallTargetNode callTarget = new UnresolvedMethodCallTargetNode(invokeKind, javaMethod, args,
                         javaMethod.getSignature().getReturnType(null), resolveMethodNode);
@@ -96,21 +91,18 @@ public class MaxGraphBuilderPhase extends GraphBuilderPhase {
     @Override
     protected void handleUnresolvedCheckCast(JavaType type, ValueNode object) {
         UnresolvedTypeNode node = new UnresolvedCheckCastNode(type, object);
-        currentGraph.add(node);
         frameState.apush(append(node));
     }
 
     @Override
     protected void handleUnresolvedInstanceOf(JavaType type, ValueNode object) {
         UnresolvedTypeNode node = new UnresolvedInstanceOfNode(type, object);
-        currentGraph.add(node);
         frameState.ipush(append(node));
     }
 
     @Override
     protected void handleUnresolvedLoadConstant(JavaType type) {
         UnresolvedLoadConstantNode node = new UnresolvedLoadConstantNode(type);
-        currentGraph.add(node);
         frameState.apush(append(node));
     }
 

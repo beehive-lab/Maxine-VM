@@ -29,24 +29,24 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 
-class MaxRuntimeCallTarget implements RuntimeCallTarget {
-    private final MaxRuntimeCall descriptor;
+class MaxForeignCallLinkage implements ForeignCallLinkage {
+    private final MaxForeignCall descriptor;
     private final CallingConvention callingConvention;
 
     @HOSTED_ONLY
-    MaxRuntimeCallTarget(MaxRuntimeCall descriptor) {
+    MaxForeignCallLinkage(MaxForeignCall descriptor) {
         this.descriptor = descriptor;
         RegisterConfig registerConfig = MaxRegisterConfig.get(MaxineVM.vm().registerConfigs.standard);
-        JavaType resType = MaxRuntimeCallsMap.runtime.lookupJavaType(descriptor.getResultType());
-        JavaType[] argTypes = MetaUtil.lookupJavaTypes(MaxRuntimeCallsMap.runtime, descriptor.getArgumentTypes());
+        JavaType resType = MaxForeignCallsMap.runtime.lookupJavaType(descriptor.getResultType());
+        JavaType[] argTypes = MetaUtil.lookupJavaTypes(MaxForeignCallsMap.runtime, descriptor.getArgumentTypes());
         if (descriptor.getMethodActor() instanceof VirtualMethodActor) {
             JavaType[] newArgTypes = new JavaType[argTypes.length + 1];
             System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
             newArgTypes[0] = MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
             argTypes = newArgTypes;
         }
-        this.callingConvention = registerConfig.getCallingConvention(CallingConvention.Type.RuntimeCall, resType, argTypes,
-                        MaxRuntimeCallsMap.runtime.getTarget(), false);
+        this.callingConvention = registerConfig.getCallingConvention(CallingConvention.Type.JavaCall, resType, argTypes,
+                        MaxForeignCallsMap.runtime.getTarget(), false);
     }
 
     @Override
@@ -61,11 +61,11 @@ class MaxRuntimeCallTarget implements RuntimeCallTarget {
     }
 
     @Override
-    public Descriptor getDescriptor() {
+    public ForeignCallDescriptor getDescriptor() {
         return descriptor;
     }
 
-    public MaxRuntimeCall getMaxRuntimeCall() {
+    public MaxForeignCall getMaxRuntimeCall() {
         return descriptor;
     }
 
@@ -74,8 +74,13 @@ class MaxRuntimeCallTarget implements RuntimeCallTarget {
     }
 
     @Override
-    public boolean preservesRegisters() {
-        return false;
+    public Value[] getTemporaries() {
+        return AllocatableValue.NONE;
+    }
+
+    @Override
+    public boolean destroysRegisters() {
+        return true;
     }
 
 }

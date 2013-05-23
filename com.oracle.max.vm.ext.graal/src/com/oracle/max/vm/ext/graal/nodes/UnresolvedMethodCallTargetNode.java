@@ -34,7 +34,7 @@ import com.oracle.graal.nodes.java.*;
  */
 public class UnresolvedMethodCallTargetNode extends MethodCallTargetNode  {
 
-    @Input ValueNode resolvedMethodActor;
+    @Input private ValueNode resolvedMethodActor;
 
     public UnresolvedMethodCallTargetNode(InvokeKind invokeKind, JavaMethod targetMethod,
                     ValueNode[] arguments, JavaType returnType, ValueNode methodValue) {

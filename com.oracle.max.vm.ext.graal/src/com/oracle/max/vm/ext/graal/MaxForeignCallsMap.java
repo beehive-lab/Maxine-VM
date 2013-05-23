@@ -26,7 +26,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
-import com.oracle.graal.api.code.RuntimeCallTarget.Descriptor;
+import com.oracle.graal.api.meta.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -35,17 +35,17 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 
-public class MaxRuntimeCallsMap {
+public class MaxForeignCallsMap {
 
     static MaxRuntime runtime;
 
-    private static Map<MaxRuntimeCall, MaxRuntimeCallTarget> map = new HashMap<>();
-    private static Map<MethodActor, MaxRuntimeCallTarget> actorMap = new HashMap<>();
+    private static Map<MaxForeignCall, MaxForeignCallLinkage> map = new HashMap<>();
+    private static Map<MethodActor, MaxForeignCallLinkage> actorMap = new HashMap<>();
 
     /**
-     * Creates a {@link MaxRuntimeCall} for a named method in a given class.
+     * Creates a {@link MaxForeignCall} for a named method in a given class.
      */
-    static MaxRuntimeCall findMethod(Class declaringClass, String methodName, boolean hasSideEffects) {
+    static MaxForeignCall findMethod(Class declaringClass, String methodName, boolean hasSideEffects) {
         Method foundMethod = null;
         for (Method method : declaringClass.getDeclaredMethods()) {
             if (method.getName().equals(methodName) && hasRuntimeCallAttributes(method)) {
@@ -55,7 +55,7 @@ public class MaxRuntimeCallsMap {
         }
         assert foundMethod != null : "did not find method " + declaringClass.getName() + "." + methodName;
 
-        return new MaxRuntimeCall(foundMethod.getName(), foundMethod, hasSideEffects, foundMethod.getReturnType(), foundMethod.getParameterTypes());
+        return new MaxForeignCall(foundMethod.getName(), foundMethod, hasSideEffects, foundMethod.getReturnType(), foundMethod.getParameterTypes());
     }
 
     private static boolean hasRuntimeCallAttributes(Method method) {
@@ -74,7 +74,7 @@ public class MaxRuntimeCallsMap {
 
     @HOSTED_ONLY
     static void initialize(MaxRuntime runtime) {
-        MaxRuntimeCallsMap.runtime = runtime;
+        MaxForeignCallsMap.runtime = runtime;
         try {
             createCiRuntimeCall(CiRuntimeCall.RegisterFinalizer, null);
             createCiRuntimeCall(CiRuntimeCall.CreateNullPointerException, null);
@@ -84,10 +84,10 @@ public class MaxRuntimeCallsMap {
             createCiRuntimeCall(CiRuntimeCall.ArithmeticTan, "arithmeticTan");
             createCiRuntimeCall(CiRuntimeCall.ArithmeticFrem, "arithmeticFrem");
             createCiRuntimeCall(CiRuntimeCall.ArithmeticDrem, "arithmeticDrem");
-            Method unwindException = MaxRuntimeCallsMap.class.getDeclaredMethod("unwindException", Object.class);
+            Method unwindException = MaxForeignCallsMap.class.getDeclaredMethod("unwindException", Object.class);
             createRuntimeCall(unwindException.getName(), MethodActor.fromJava(unwindException));
             new CriticalMethod(unwindException);
-            Method deoptimize = MaxRuntimeCallsMap.class.getDeclaredMethod("deoptimize");
+            Method deoptimize = MaxForeignCallsMap.class.getDeclaredMethod("deoptimize");
             createRuntimeCall(deoptimize.getName(), MethodActor.fromJava(deoptimize));
             new CriticalMethod(deoptimize);
 
@@ -114,10 +114,10 @@ public class MaxRuntimeCallsMap {
 
 
     @HOSTED_ONLY
-    private static MaxRuntimeCall createRuntimeCall(String methodName, MethodActor cma) {
+    private static MaxForeignCall createRuntimeCall(String methodName, MethodActor cma) {
         Method method = cma.toJava();
-        MaxRuntimeCall maxRuntimeCall = new MaxRuntimeCall(methodName, method, true, method.getReturnType(), method.getParameterTypes());
-        MaxRuntimeCallTarget maxRuntimeCallTarget = new MaxRuntimeCallTarget(maxRuntimeCall);
+        MaxForeignCall maxRuntimeCall = new MaxForeignCall(methodName, method, true, method.getReturnType(), method.getParameterTypes());
+        MaxForeignCallLinkage maxRuntimeCallTarget = new MaxForeignCallLinkage(maxRuntimeCall);
         map.put(maxRuntimeCall, maxRuntimeCallTarget);
         actorMap.put(cma, maxRuntimeCallTarget);
         return maxRuntimeCall;
@@ -125,18 +125,18 @@ public class MaxRuntimeCallsMap {
 
     /**
      * Gets the {@link RuntimeCallTarget} for a {@link Descriptor}.
-     * @param descriptor must be a {@link MaxRuntimeCall}
+     * @param descriptor must be a {@link MaxForeignCall}
      * @return
      */
-    public static RuntimeCallTarget get(Descriptor descriptor) {
+    public static ForeignCallLinkage get(ForeignCallDescriptor descriptor) {
         return map.get(descriptor);
     }
 
-    public static MaxRuntimeCall get(ClassMethodActor cma) {
-        MaxRuntimeCallTarget maxRuntimeCallTarget = actorMap.get(cma);
+    public static MaxForeignCall get(ClassMethodActor cma) {
+        MaxForeignCallLinkage maxRuntimeCallTarget = actorMap.get(cma);
         if (maxRuntimeCallTarget == null) {
-            MaxRuntimeCall maxRuntimeCall = findMethod(cma.holder().javaClass(), cma.name(), true);
-            maxRuntimeCallTarget = new MaxRuntimeCallTarget(maxRuntimeCall);
+            MaxForeignCall maxRuntimeCall = findMethod(cma.holder().javaClass(), cma.name(), true);
+            maxRuntimeCallTarget = new MaxForeignCallLinkage(maxRuntimeCall);
             map.put(maxRuntimeCall, maxRuntimeCallTarget);
             actorMap.put(cma, maxRuntimeCallTarget);
         }

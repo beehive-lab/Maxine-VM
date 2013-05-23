@@ -30,7 +30,7 @@ import com.oracle.graal.nodes.type.*;
 
 public class UnresolvedNewMultiArrayNode extends FixedWithNextNode implements Lowerable {
 
-    @Input ValueNode resolvedClassActor;
+    @Input private ValueNode resolvedClassActor;
     @Input private final NodeInputList<ValueNode> dimensions;
 
     public UnresolvedNewMultiArrayNode(ValueNode resolvedClassActor, ValueNode[] dimensions) {

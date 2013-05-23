@@ -22,8 +22,6 @@
  */
 package com.oracle.max.vm.ext.graal;
 
-import java.lang.reflect.*;
-
 import com.oracle.graal.phases.*;
 import com.sun.max.vm.*;
 
@@ -42,76 +40,10 @@ public class MaxGraalOptions {
         }
     }
 
-    /**
-     * VM extension variant, options in {@code argList}, no {@code -G:} prefix.
-     * Comma separated list, with value args indicated by {@code arg=value}, boolean args by {@code -arg, +arg}.
-     * @param args
-     */
-    static void initialize(String argList) {
-        if (argList == null) {
-            return;
-        }
-        String[] args = argList.split(",");
-        for (int i = 0; i < args.length; i++) {
-            Class<?> argClass = String.class;
-            boolean booleanValue = false;
-            String stringValue = null;
-            String arg = args[i];
-            String argName = null;
-            if (arg.charAt(0) == '-' || arg.charAt(0) == '+') {
-                argClass = boolean.class;
-                argName = arg.substring(1);
-                booleanValue = arg.charAt(0) == '+';
-            } else {
-                int eqx = arg.indexOf('=');
-                if (eqx > 0) {
-                    argName = arg.substring(0, eqx);
-                    stringValue = arg.substring(eqx + 1);
-                } else {
-                    error("missing argument value: " + arg);
-                }
-            }
-            Field field = findArg(argName);
-            if (field == null) {
-                error("Graal option: " + argName + " not found");
-            }
-            Class declaredArgClass = field.getType();
-            if (declaredArgClass == boolean.class) {
-                if (argClass != boolean.class) {
-                    error("boolean value expected for: " + argName);
-                }
-                try {
-                    field.set(null, booleanValue);
-                } catch (IllegalAccessException ex) {
-                    error("failed to set option: " + argName);
-                }
-            } else if (declaredArgClass == String.class) {
-                if (argClass != String.class) {
-                    error("String value expected for: " + argName);
-                }
-                try {
-                    field.set(null, stringValue);
-                } catch (IllegalAccessException ex) {
-                    error("failed to set option: " + argName);
-                }
-            } else {
-                error("unimplemented option type: " + argName);
-            }
-        }
+    static boolean isPresent(String optionName) {
+        VMOption vmOption = VMOptions.findFieldOption("-G:", optionName);
+        assert vmOption != null;
+        return vmOption.isPresent();
     }
 
-    private static void error(String msg) {
-        System.err.println(msg);
-        MaxineVM.exit(1);
-    }
-
-    private static Field findArg(String argName) {
-        Field[] fields = GraalOptions.class.getDeclaredFields();
-        for (Field field : fields) {
-            if (field.getName().equals(argName)) {
-                return field;
-            }
-        }
-        return null;
-    }
 }

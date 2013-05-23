@@ -42,9 +42,9 @@ public class ExtendedUnsafeAccessNode extends FixedWithNextNode {
         this.accessKind = accessKind;
     }
 
-    @Input protected ValueNode object;
-    @Input protected ValueNode offset;
-    @Input protected ValueNode displacement;
+    @Input private ValueNode object;
+    @Input private ValueNode offset;
+    @Input private ValueNode displacement;
     private final Kind accessKind;
 
     public ValueNode object() {

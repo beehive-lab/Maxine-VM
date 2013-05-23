@@ -23,7 +23,6 @@
 package com.oracle.max.vm.ext.graal.amd64;
 
 import com.oracle.graal.api.code.*;
-import com.oracle.graal.api.code.RuntimeCallTarget.Descriptor;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.asm.amd64.*;
 import com.oracle.graal.lir.*;
@@ -34,7 +33,7 @@ import com.oracle.graal.lir.asm.*;
 @Opcode("DEOPT")
 final class MaxAMD64DeoptimizeOp extends AMD64LIRInstruction {
 
-    public static final Descriptor DEOPTIMIZE = new Descriptor("deoptimize", true, void.class);
+    public static final ForeignCallDescriptor DEOPTIMIZE = new ForeignCallDescriptor("deoptimize", void.class);
 
     private DeoptimizationAction action;
     private DeoptimizationReason reason;
@@ -48,6 +47,6 @@ final class MaxAMD64DeoptimizeOp extends AMD64LIRInstruction {
 
     @Override
     public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-        AMD64Call.directCall(tasm, masm, tasm.runtime.lookupRuntimeCall(DEOPTIMIZE), null, false, info);
+        AMD64Call.directCall(tasm, masm, tasm.runtime.lookupForeignCall(DEOPTIMIZE), null, false, info);
     }
 }

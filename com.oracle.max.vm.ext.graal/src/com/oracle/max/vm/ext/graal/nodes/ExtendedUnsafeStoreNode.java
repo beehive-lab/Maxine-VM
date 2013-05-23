@@ -33,7 +33,7 @@ import com.oracle.graal.nodes.type.*;
  */
 public class ExtendedUnsafeStoreNode extends ExtendedUnsafeAccessNode implements Lowerable {
 
-    @Input ValueNode value;
+    @Input private ValueNode value;
     @Input(notDataflow = true) private FrameState stateAfter;
 
 
