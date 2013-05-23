@@ -59,7 +59,7 @@ import com.sun.max.vm.type.*;
  * Graal makes sophisticated use of {@link Unsafe} field offsets in its graph manipulations, and provides
  * a method {@link FieldIntrospection#rescanAllFieldOffsets()} to (re)compute the offsets. Since these differ
  * between the host VM and Maxine, they have to be recomputed. Graal stores the offsets in arrays
- * held in {@link FieldIntrospection} and {@link NodeClass}, so the usual {@link JDKInterceptor} mechanismn isn't useful.
+ * held in {@link FieldIntrospection} and {@link NodeClass}, so the usual {@link JDKInterceptor} mechanism isn't useful.
  * So the fix up is done in the {@link MaxineVM.Phase#SERIALIZING_IMAGE} phase before the data objects are created,
  * and, importantly, after all compilation is complete!
  *
@@ -144,7 +144,9 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         cache = new MaxGraphCache();
         changeInlineLimits();
         // Disable for now as it causes problems in DebugInfo
-        GraalOptions.PartialEscapeAnalysis = false;
+        if (!MaxGraalOptions.isPresent("PartialEscapeAnalysis")) {
+            GraalOptions.PartialEscapeAnalysis = false;
+        }
         suites = Suites.createSuites(GraalOptions.CompilerConfiguration);
         replacements = runtime.init();
         GraalBoot.forceValues();
@@ -155,9 +157,9 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
      * So we dial them down here.
      */
     private static void changeInlineLimits() {
-        GraalOptions.NormalBytecodeSize = 30;
-        GraalOptions.NormalComplexity = 30;
-        GraalOptions.NormalCompiledCodeSize = 150;
+        if (!MaxGraalOptions.isPresent("MaximumInliningSize")) {
+            GraalOptions.MaximumInliningSize = 100;
+        }
     }
 
     @NEVER_INLINE
@@ -181,7 +183,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                 // We do this early to reduce the size of a graph that contains isHosted code.
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxFoldPhase(runtime));
                 // Any folded isHosted code is only removed by a CanonicalizationPhase
-                phasePlan.addPhase(PhasePosition.AFTER_PARSING, new CanonicalizerPhase.Instance(runtime, null));
+                phasePlan.addPhase(PhasePosition.AFTER_PARSING, new CanonicalizerPhase.Instance(runtime, new Assumptions(GraalOptions.OptAssumptions)));
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxIntrinsicsPhase());
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING,
                                 new MaxWordTypeRewriterPhase.MakeWordFinalRewriter(runtime, runtime.maxTargetDescription.wordKind));
@@ -190,7 +192,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                 // and substitute a custom phase that checks the method annotation.
                 phasePlan.disablePhase(InliningPhase.class);
                 phasePlan.addPhase(PhasePosition.HIGH_LEVEL,
-                                new MaxHostedInliningPhase(runtime, replacements, new Assumptions(GraalOptions.OptAssumptions), cache, phasePlan, optimisticOpts));
+                                new MaxHostedInliningPhase(runtime, null, replacements, new Assumptions(GraalOptions.OptAssumptions), cache, phasePlan, optimisticOpts));
                 // Important to remove bogus null checks on Word types
                 phasePlan.addPhase(PhasePosition.HIGH_LEVEL, new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, runtime.maxTargetDescription.wordKind));
                 // intrinsics are (obviously) not inlined, so they are left in the graph and need to be rewritten now
@@ -205,11 +207,14 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         }
         // Graal sometimes calls Class.forName on its own classes using the context class loader
         // so we have to override it as VM classes are ordinarily hidden
+        // TODO check whether this is still true
         ClassLoader savedContextClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(VMClassLoader.VM_CLASS_LOADER);
         try {
-            CompilationResult result = GraalCompiler.compileMethod(runtime, replacements, backend, runtime.maxTargetDescription,
-                            method, graph, cache, phasePlan, optimisticOpts, new SpeculationLog(), suites);
+            CallingConvention cc = CodeUtil.getCallingConvention(runtime, CallingConvention.Type.JavaCallee, method, false);
+            CompilationResult result = GraalCompiler.compileGraph(graph, cc, method, runtime, replacements, backend,
+                            runtime.maxTargetDescription,
+                            cache, phasePlan, optimisticOpts, new SpeculationLog(), suites);
             return GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
         } catch (Throwable ex) {
             throw ex;

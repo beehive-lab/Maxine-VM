@@ -583,6 +583,24 @@ public class VMOptions {
         }
     }
 
+    /**
+     * Locates an option added by {@link #addFieldOption}.
+     * @param prefix the option prefix
+     * @param name the option name
+     * @return the {@link VMOption} object or {@code null} if not found
+     */
+    public static VMOption findFieldOption(String prefix, String name) {
+        VMOption result = null;
+        for (int i = 0; i < startingPhaseOptions.length; i++) {
+            VMOption vmOption = startingPhaseOptions[i];
+            if (vmOption.name.equals(name) && vmOption.prefix.startsWith(prefix)) {
+                result = vmOption;
+                break;
+            }
+        }
+        return result;
+    }
+
     public static void printHelpForOption(Category category, String prefix, String value, String help) {
         Log.print("    ");
         Log.print(prefix);

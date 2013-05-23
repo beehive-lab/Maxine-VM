@@ -24,17 +24,17 @@ package com.oracle.max.vm.ext.graal;
 
 import java.lang.reflect.*;
 
-import com.oracle.graal.api.code.RuntimeCallTarget.*;
+import com.oracle.graal.api.meta.ForeignCallDescriptor;
 import com.sun.max.vm.actor.member.*;
 
 /**
- * Simple extension of {@link Descriptor} that remembers the {@link MetgodActor}.
+ * Simple extension of {@link ForeignCallDescriptor} that remembers the {@link MethodActor}.
  */
-public class MaxRuntimeCall extends Descriptor {
+public class MaxForeignCall extends ForeignCallDescriptor {
     private final MethodActor methodActor;
 
-    public MaxRuntimeCall(String methodName, Method method, boolean hasSideEffect, Class resultKind, Class[] arguments) {
-        super(methodName, hasSideEffect, resultKind, arguments);
+    public MaxForeignCall(String methodName, Method method, boolean hasSideEffect, Class resultKind, Class[] arguments) {
+        super(methodName, resultKind, arguments);
         this.methodActor = MethodActor.fromJava(method);
     }
 

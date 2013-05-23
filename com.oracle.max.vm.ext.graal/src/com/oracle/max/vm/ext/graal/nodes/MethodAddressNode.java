@@ -37,8 +37,8 @@ import com.oracle.graal.nodes.type.*;
  */
 public class MethodAddressNode extends FixedWithNextNode implements Lowerable {
 
-    @Input ValueNode receiver;
-    @Input ValueNode methodActor;
+    @Input private ValueNode receiver;
+    @Input private ValueNode methodActor;
 
     private InvokeKind invokeKind;
 

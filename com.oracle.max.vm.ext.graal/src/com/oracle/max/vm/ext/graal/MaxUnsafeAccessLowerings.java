@@ -52,7 +52,7 @@ class MaxUnsafeAccessLowerings {
 
         @Override
         public void lower(UnsafeLoadNode node, LoweringTool tool) {
-            StructuredGraph graph = (StructuredGraph) node.graph();
+            StructuredGraph graph = node.graph();
             assert node.kind() != Kind.Illegal;
             lower(graph, node, node.stamp(), node.object(), node.offset(), node.displacement(), node.accessKind());
         }
@@ -61,7 +61,7 @@ class MaxUnsafeAccessLowerings {
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, accessKind, displacement, offset, graph, 1);
             ReadNode memoryRead = graph.add(new ReadNode(object, location, stamp));
             // An unsafe read must not float outside its block as may float above an explicit null check on its object.
-            memoryRead.dependencies().add(BeginNode.prevBegin(node));
+            memoryRead.setGuard(AbstractBeginNode.prevBegin(node));
             graph.replaceFixedWithFixed(node, memoryRead);
 
         }
@@ -71,7 +71,7 @@ class MaxUnsafeAccessLowerings {
 
         @Override
         public void lower(UnsafeStoreNode node, LoweringTool tool) {
-            StructuredGraph graph = (StructuredGraph) node.graph();
+            StructuredGraph graph = node.graph();
             lower(graph, node, node.stamp(), node.object(), node.offset(), node.value(), node.displacement(), node.accessKind(), node.stateAfter());
         }
 
@@ -95,7 +95,7 @@ class MaxUnsafeAccessLowerings {
         @Override
         public void lower(ExtendedUnsafeLoadNode node, LoweringTool tool) {
             if (node.displacement().isConstant()) {
-                unsafeLoadLowering.lower((StructuredGraph) node.graph(), node, node.stamp(), node.object(), node.offset(),
+                unsafeLoadLowering.lower(node.graph(), node, node.stamp(), node.object(), node.offset(),
                                 node.displacement().asConstant().asInt(), node.accessKind());
             } else {
                 FatalError.unimplemented();
@@ -115,7 +115,7 @@ class MaxUnsafeAccessLowerings {
         @Override
         public void lower(ExtendedUnsafeStoreNode node, LoweringTool tool) {
             if (node.displacement().isConstant()) {
-                unsafeStoreLowering.lower((StructuredGraph) node.graph(), node, node.stamp(), node.object(), node.offset(),
+                unsafeStoreLowering.lower(node.graph(), node, node.stamp(), node.object(), node.offset(),
                                 node.value(), node.displacement().asConstant().asInt(), node.accessKind(), node.stateAfter());
             } else {
                 FatalError.unimplemented();

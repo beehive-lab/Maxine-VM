@@ -50,8 +50,8 @@ public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
             if (gInfopoint instanceof com.oracle.graal.api.code.CompilationResult.Call) {
                 com.oracle.graal.api.code.CompilationResult.Call gCall = (com.oracle.graal.api.code.CompilationResult.Call) gInfopoint;
                 Object target;
-                if (gCall.target instanceof MaxRuntimeCallTarget) {
-                    target = ((MaxRuntimeCallTarget) gCall.target).getMethodActor();
+                if (gCall.target instanceof MaxForeignCallLinkage) {
+                    target = ((MaxForeignCallLinkage) gCall.target).getMethodActor();
                 } else if (gCall.target instanceof MaxResolvedJavaMethod) {
                     target = MaxResolvedJavaMethod.getRiResolvedMethod((MaxResolvedJavaMethod) gCall.target);
                 } else if (gCall.target instanceof /*MaxResolvedJavaMethod.Unresolved*/MaxJavaMethod) {

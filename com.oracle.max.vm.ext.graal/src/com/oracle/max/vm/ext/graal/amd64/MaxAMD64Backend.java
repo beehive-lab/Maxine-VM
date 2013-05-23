@@ -54,8 +54,8 @@ import com.sun.max.vm.compiler.target.*;
 public class MaxAMD64Backend extends Backend {
 
     public static class MaxAMD64LIRGenerator extends AMD64LIRGenerator {
-        public MaxAMD64LIRGenerator(StructuredGraph graph, CodeCacheProvider runtime, TargetDescription target, FrameMap frameMap, ResolvedJavaMethod method, LIR lir) {
-            super(graph, runtime, target, frameMap, method, lir);
+        public MaxAMD64LIRGenerator(StructuredGraph graph, CodeCacheProvider runtime, TargetDescription target, FrameMap frameMap, CallingConvention cc, LIR lir) {
+            super(graph, runtime, target, frameMap, cc, lir);
         }
 
         @Override
@@ -256,12 +256,12 @@ public class MaxAMD64Backend extends Backend {
     }
 
     @Override
-    public LIRGenerator newLIRGenerator(StructuredGraph graph, FrameMap frameMap, ResolvedJavaMethod method, LIR lir) {
-        return new MaxAMD64LIRGenerator(graph, runtime(), target, frameMap, method, lir);
+    public LIRGenerator newLIRGenerator(StructuredGraph graph, FrameMap frameMap, CallingConvention cc, LIR lir) {
+        return new MaxAMD64LIRGenerator(graph, runtime(), target, frameMap, cc, lir);
     }
 
     @Override
-    public void emitCode(TargetMethodAssembler tasm, ResolvedJavaMethod method, LIRGenerator lirGen) {
+    public void emitCode(TargetMethodAssembler tasm, LIRGenerator lirGen, ResolvedJavaMethod method) {
         MaxAMD64FrameContext maxFrameContext = (MaxAMD64FrameContext) tasm.frameContext;
         maxFrameContext.callee = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(method);
         lirGen.lir.emitCode(tasm);
@@ -276,6 +276,11 @@ public class MaxAMD64Backend extends Backend {
         tasm.setFrameSize(frameMap.frameSize());
         // TODO tasm.compilationResult.setCustomStackAreaOffset(frameMap.offsetForStackSlot(???));
         return tasm;
+    }
+
+    @Override
+    protected AbstractAssembler createAssembler(FrameMap frameMap) {
+        return new AMD64MacroAssembler(target, frameMap.registerConfig);
     }
 
 }

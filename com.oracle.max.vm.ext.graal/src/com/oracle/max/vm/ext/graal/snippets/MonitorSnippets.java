@@ -25,7 +25,6 @@ package com.oracle.max.vm.ext.graal.snippets;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
-import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
@@ -68,22 +67,16 @@ public class MonitorSnippets extends SnippetLowerings {
     }
 
     protected class MonitorLowering extends Lowering {
-        private final SnippetInfo monitorEliminatedSnippet;
-
-        MonitorLowering(MonitorSnippets snippets, String snippetName, SnippetInfo monitorEliminatedSnippet) {
+        MonitorLowering(MonitorSnippets snippets, String snippetName) {
             super(snippets, snippetName);
-            this.monitorEliminatedSnippet = monitorEliminatedSnippet;
         }
 
         void lower(AccessMonitorNode node) {
             FrameState stateAfter = node.stateAfter();
-            boolean eliminated = node.eliminated();
-            Arguments args = new Arguments(eliminated ? monitorEliminatedSnippet : snippet);
+            Arguments args = new Arguments(snippet);
             boolean checkNull = !node.object().stamp().nonNull();
-            if (!eliminated) {
-                args.add("receiver", node.object());
-            }
-            if (node instanceof MonitorEnterNode && !eliminated) {
+            args.add("receiver", node.object());
+            if (node instanceof MonitorEnterNode) {
                 args.addConst("checkNull", checkNull);
             }
             Map<Node, Node> nodes = instantiate(node, args);
@@ -99,7 +92,7 @@ public class MonitorSnippets extends SnippetLowerings {
     protected class MonitorEnterLowering extends MonitorLowering implements LoweringProvider<MonitorEnterNode> {
 
         MonitorEnterLowering(MonitorSnippets snippets) {
-            super(snippets, "monitorEnterSnippet", snippets.snippet(MonitorSnippets.class, "monitorEnterEliminated"));
+            super(snippets, "monitorEnterSnippet");
         }
 
         @Override
@@ -119,15 +112,10 @@ public class MonitorSnippets extends SnippetLowerings {
         Monitor.enter(receiver);
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static void monitorEnterEliminated() {
-        BeginLockScopeNode.beginLockScope(true);
-    }
-
     protected class MonitorExitLowering extends MonitorLowering implements LoweringProvider<MonitorExitNode> {
 
         MonitorExitLowering(MonitorSnippets snippets) {
-            super(snippets, "monitorExitSnippet", snippets.snippet(MonitorSnippets.class, "monitorExitEliminated"));
+            super(snippets, "monitorExitSnippet");
         }
 
         @Override

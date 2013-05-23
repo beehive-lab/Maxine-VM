@@ -27,9 +27,10 @@ import static com.oracle.graal.amd64.AMD64.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.oracle.graal.amd64.*;
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.code.CallingConvention.Type;
-import com.oracle.graal.api.code.Register.RegisterFlag;
+import com.oracle.graal.api.code.Register.RegisterCategory;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.sun.cri.ci.*;
@@ -39,11 +40,18 @@ import com.sun.max.vm.compiler.deopt.*;
 
 public class MaxRegisterConfig implements RegisterConfig {
 
+    private static Architecture architecture;
+
     private static ConcurrentHashMap<RiRegisterConfig, RegisterConfig> map = new ConcurrentHashMap<RiRegisterConfig, RegisterConfig>();
 
     private RiRegisterConfig riRegisterConfig;
     private final Register[] javaGeneralParameterRegisters;
+    private final Register[] nativeGeneralParameterRegisters;
     private Register[] xmmParameterRegisters = {xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
+
+    static void initialize(Architecture architecture) {
+        MaxRegisterConfig.architecture = architecture;
+    }
 
     static RegisterConfig get(RiRegisterConfig riRegisterConfig) {
         RegisterConfig result = map.get(riRegisterConfig);
@@ -56,12 +64,18 @@ public class MaxRegisterConfig implements RegisterConfig {
 
     private MaxRegisterConfig(RiRegisterConfig riRegisterConfig) {
         this.riRegisterConfig = riRegisterConfig;
-        CiRegister[] jRegs = riRegisterConfig.getCallingConventionRegisters(CiCallingConvention.Type.JavaCall, CiRegister.RegisterFlag.CPU);
-        javaGeneralParameterRegisters = new Register[jRegs.length];
+        javaGeneralParameterRegisters = initParameterRegisters(CiCallingConvention.Type.JavaCall, riRegisterConfig);
+        nativeGeneralParameterRegisters = initParameterRegisters(CiCallingConvention.Type.NativeCall, riRegisterConfig);
+    }
+
+    private static Register[] initParameterRegisters(CiCallingConvention.Type type,  RiRegisterConfig riRegisterConfig) {
+        CiRegister[] jRegs = riRegisterConfig.getCallingConventionRegisters(type, CiRegister.RegisterFlag.CPU);
+        Register[] result = new Register[jRegs.length];
         for (int i = 0; i < jRegs.length; i++) {
             CiRegister ciReg = jRegs[i];
-            javaGeneralParameterRegisters[i] = RegisterMap.toGraal(ciReg);
+            result[i] = RegisterMap.toGraal(ciReg);
         }
+        return result;
     }
 
     @Override
@@ -117,7 +131,7 @@ public class MaxRegisterConfig implements RegisterConfig {
 
             if (locations[i] == null) {
                 locations[i] = StackSlot.get(kind.getStackKind(), currentStackOffset, !type.out);
-                currentStackOffset += Math.max(target.sizeInBytes(kind), target.wordSize);
+                currentStackOffset += Math.max(target.arch.getSizeInBytes(kind), target.wordSize);
             }
         }
 
@@ -126,21 +140,13 @@ public class MaxRegisterConfig implements RegisterConfig {
         return new CallingConvention(currentStackOffset, returnLocation, locations);
     }
 
-    private static ConcurrentHashMap<Type, Register[]> callingConventionRegistersMap =
-                    new ConcurrentHashMap<Type, Register[]>();
-
     @Override
-    public Register[] getCallingConventionRegisters(Type type, RegisterFlag flag) {
-        Register[] regs = callingConventionRegistersMap.get(type);
-        if (regs == null) {
-            CiRegister[] ciRegs = riRegisterConfig.getCallingConventionRegisters(toCiType(type), toCiFlag(flag));
-            regs = new Register[ciRegs.length];
-            for (int i = 0; i < ciRegs.length; i++) {
-                regs[i] = RegisterMap.toGraal(ciRegs[i]);
-            }
-            callingConventionRegistersMap.put(type, regs);
+    public Register[] getCallingConventionRegisters(Type type, Kind kind) {
+        if (architecture.canStoreValue(XMM, kind)) {
+            return xmmParameterRegisters;
         }
-        return regs;
+        assert architecture.canStoreValue(CPU, kind);
+        return type == Type.NativeCall ? nativeGeneralParameterRegisters : javaGeneralParameterRegisters;
     }
 
     private static CiCallingConvention.Type toCiType(Type type) {
@@ -148,32 +154,21 @@ public class MaxRegisterConfig implements RegisterConfig {
         switch (type) {
             case JavaCall: return CiCallingConvention.Type.JavaCall;
             case JavaCallee: return CiCallingConvention.Type.JavaCallee;
-            case RuntimeCall: return CiCallingConvention.Type.RuntimeCall;
             case NativeCall: return CiCallingConvention.Type.NativeCall;
             default: return null;
         }
         // Checkstyle: resume
     }
 
-    private static CiRegister.RegisterFlag toCiFlag(RegisterFlag flag) {
-        // Checkstyle: stop
-        switch (flag) {
-            case CPU: return CiRegister.RegisterFlag.CPU;
-            case Byte: return CiRegister.RegisterFlag.Byte;
-            case FPU: return CiRegister.RegisterFlag.FPU;
-            default: return null;
-        }
-        // Checkstyle: resume
-    }
-
-    private static RegisterFlag toGraalFlag(CiRegister.RegisterFlag flag) {
+    private static RegisterCategory toGraalFlag(CiRegister.RegisterFlag flag) {
         // can't use a switch because can't qualify
         if (flag == CiRegister.RegisterFlag.CPU) {
-            return RegisterFlag.CPU;
+            return AMD64.CPU;
         } else if (flag == CiRegister.RegisterFlag.FPU) {
-            return RegisterFlag.FPU;
+            return AMD64.XMM;
         } else if (flag == CiRegister.RegisterFlag.Byte) {
-            return RegisterFlag.Byte;
+            assert false;
+            return null;
         } else {
             return null;
         }
@@ -193,22 +188,24 @@ public class MaxRegisterConfig implements RegisterConfig {
         return allocatableRegisters;
     }
 
-    private static EnumMap<RegisterFlag, Register[]> categorizedAllocatableRegisters;
+    private final HashMap<PlatformKind, Register[]> categorized = new HashMap<>();
+
     @Override
-    public EnumMap<RegisterFlag, Register[]> getCategorizedAllocatableRegisters() {
-        if (categorizedAllocatableRegisters == null) {
-            EnumMap<CiRegister.RegisterFlag, CiRegister[]> ciRegMap = riRegisterConfig.getCategorizedAllocatableRegisters();
-            categorizedAllocatableRegisters = new EnumMap<RegisterFlag, Register[]>(RegisterFlag.class);
-            for (Map.Entry<CiRegister.RegisterFlag, CiRegister[]> entry : ciRegMap.entrySet()) {
-                CiRegister[] ciRegs = entry.getValue();
-                Register[] regs = new Register[ciRegs.length];
-                for (int i = 0; i < ciRegs.length; i++) {
-                    regs[i] = RegisterMap.toGraal(ciRegs[i]);
-                }
-                categorizedAllocatableRegisters.put(toGraalFlag(entry.getKey()), regs);
+    public Register[] getAllocatableRegisters(PlatformKind kind) {
+        if (categorized.containsKey(kind)) {
+            return categorized.get(kind);
+        }
+
+        ArrayList<Register> list = new ArrayList<>();
+        for (Register reg : getAllocatableRegisters()) {
+            if (architecture.canStoreValue(reg.getRegisterCategory(), kind)) {
+                list.add(reg);
             }
         }
-        return categorizedAllocatableRegisters;
+
+        Register[] ret = list.toArray(new Register[0]);
+        categorized.put(kind, ret);
+        return ret;
     }
 
     private static Register[] callerSaveRegisters;
@@ -237,7 +234,7 @@ public class MaxRegisterConfig implements RegisterConfig {
         for (int i = 0; i < ciRegs.length; i++) {
             regs[i] = RegisterMap.toGraal(ciRegs[i]);
         }
-        return new CalleeSaveLayout(ciSaveLayout.frameOffsetToCSA, ciSaveLayout.size, ciSaveLayout.slotSize, regs);
+        return new CalleeSaveLayout(architecture, ciSaveLayout.frameOffsetToCSA, ciSaveLayout.size, ciSaveLayout.slotSize, regs);
     }
 
     private static RegisterAttributes[] registerAttributes;

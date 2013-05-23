@@ -30,7 +30,6 @@ import java.util.*;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.code.CodeUtil.RefMapFormatter;
-import com.oracle.graal.api.code.RuntimeCallTarget.Descriptor;
 import com.oracle.graal.api.code.CompilationResult.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
@@ -113,7 +112,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     public RegisterConfig lookupRegisterConfig() {
         // TODO this method used to take a ResolvedJavaMethod as an argument
         // Maxine has different register configs for VM_ENTRY_POINT methods and "standard" methods,
-        // which will need to be adderess when Graal is nused for the boot image.
+        // which will need to be addressed when Graal is used for the boot image.
         //return MaxRegisterConfig.get(vm().registerConfigs.getRegisterConfig((ClassMethodActor) MaxJavaMethod.getRiMethod(method)));
         return MaxRegisterConfig.get(vm().registerConfigs.standard);
     }
@@ -124,8 +123,13 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     }
 
     @Override
-    public RuntimeCallTarget lookupRuntimeCall(Descriptor descriptor) {
-        return MaxRuntimeCallsMap.get(descriptor);
+    public ForeignCallLinkage lookupForeignCall(ForeignCallDescriptor descriptor) {
+        return MaxForeignCallsMap.get(descriptor);
+    }
+
+    @Override
+    public boolean hasSideEffect(ForeignCallDescriptor descriptor) {
+        return true;
     }
 
     @Override
@@ -217,7 +221,8 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     public Replacements init() {
         // Snippets cannot have optimistic assumptions.
         Assumptions assumptions = new Assumptions(false);
-        MaxRuntimeCallsMap.initialize(this);
+        MaxRegisterConfig.initialize(maxTargetDescription.arch);
+        MaxForeignCallsMap.initialize(this);
         MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration = new MaxSnippetGraphBuilderConfiguration();
         MaxConstantPool.setGraphBuilderConfig(maxSnippetGraphBuilderConfiguration);
         MaxReplacementsImpl maxReplacements = new MaxReplacementsImpl(this, assumptions, maxTargetDescription,
@@ -234,6 +239,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         maxReplacements.installAndRegisterSnippets(MonitorSnippets.class);
         VMConfiguration.vmConfig().monitorScheme().setExplicitNullChecks(explicitNullChecks);
         maxReplacements.installAndRegisterSnippets(MaxInvokeLowerings.class);
+        maxReplacements.installAndRegisterSnippets(MaxMiscLowerings.class);
         maxReplacements.installAndRegisterSnippets(ArithmeticSnippets.class);
         maxReplacements.installAndRegisterSnippets(AMD64ConvertSnippetsWrapper.class);
         maxReplacements.installAndRegisterSnippets(BoxingSnippetsWrapper.class);
@@ -268,6 +274,5 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         MaxGraal.unimplemented("MaxRuntime.addMethod");
         return null;
     }
-
 
 }

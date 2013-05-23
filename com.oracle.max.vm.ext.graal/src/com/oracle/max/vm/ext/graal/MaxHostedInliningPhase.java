@@ -22,31 +22,32 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import java.util.*;
+
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.nodes.util.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
 import com.oracle.graal.phases.common.InliningUtil.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
- * Custom inlining phase for building the boot image that honors {@link @INLINE}.
+ * Custom inlining phase for building the boot image that honors {@link @INLINE}. {@link NEVER_INLINE}.
  * It otherwise follows the standard policy.
  */
 public class MaxHostedInliningPhase extends InliningPhase {
 
-    private static class MaxInliningDecision extends GreedySizeBasedInliningDecision {
+    private static class MaxGreedyInliningPolicy extends GreedyInliningPolicy {
 
-        public MaxInliningDecision(MetaAccessProvider runtime, Replacements replacements) {
-            super(runtime, replacements, null);
+        public MaxGreedyInliningPolicy(Replacements replacements, Map<Invoke, Double> hints) {
+            super(replacements, hints);
         }
 
         @Override
-        public boolean isWorthInlining(InlineInfo info, NodesToDoubles nodeProbabilities, NodesToDoubles nodeRelevance) {
+        public boolean isWorthInlining(InlineInfo info, int inliningDepth, double probability, double relevance, boolean fullyProcessed) {
             CallTargetNode callTargetNode = info.invoke().callTarget();
             if (callTargetNode instanceof MethodCallTargetNode) {
                 MethodCallTargetNode methodCallTargetNode = (MethodCallTargetNode) callTargetNode;
@@ -61,21 +62,13 @@ public class MaxHostedInliningPhase extends InliningPhase {
                     }
                 }
             }
-            return super.isWorthInlining(info, nodeRelevance, nodeRelevance);
+            return super.isWorthInlining(info, inliningDepth, probability, relevance, fullyProcessed);
         }
-
-
     }
 
-    MaxHostedInliningPhase(MetaAccessProvider runtime, Replacements replacements, Assumptions assumptions,
+    MaxHostedInliningPhase(MetaAccessProvider runtime,  Map<Invoke, Double> hints, Replacements replacements, Assumptions assumptions,
                     GraphCache cache, PhasePlan plan, OptimisticOptimizations optimisticOpts) {
-        super(runtime, replacements, assumptions, cache, plan, createInliningPolicy(runtime, replacements, assumptions, optimisticOpts), optimisticOpts);
-    }
-
-    private static InliningPolicy createInliningPolicy(MetaAccessProvider runtime, Replacements replacements, Assumptions assumptions,
-                    OptimisticOptimizations optimisticOpts) {
-        MaxInliningDecision inliningDecision = new MaxInliningDecision(runtime, replacements);
-        return new CFInliningPolicy(inliningDecision, replacements, assumptions, optimisticOpts);
+        super(runtime, replacements, assumptions, cache, plan, optimisticOpts, hints, new MaxGreedyInliningPolicy(replacements, hints));
     }
 
 }
