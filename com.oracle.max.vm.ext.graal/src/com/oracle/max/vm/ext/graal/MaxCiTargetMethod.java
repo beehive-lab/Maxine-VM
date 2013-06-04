@@ -42,11 +42,19 @@ public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
     // TODO remove
     private byte[] codeCopy;
 
+    private static int returnAddressSize = -1;
+    private static int getReturnAddressSize() {
+        if (returnAddressSize < 0) {
+            returnAddressSize = MaxGraal.runtime().maxTargetDescription.arch.getReturnAddressSize();
+        }
+        return returnAddressSize;
+    }
+
     protected MaxCiTargetMethod(CompilationResult gCompilation) {
         // Safepoints
         List<CompilationResult.Infopoint> gInfopoints = gCompilation.getInfopoints();
         for (com.oracle.graal.api.code.CompilationResult.Infopoint gInfopoint : gInfopoints) {
-            CiDebugInfo ciDebugInfo = MaxDebugInfo.toCi(gInfopoint.debugInfo);
+            CiDebugInfo ciDebugInfo = MaxDebugInfo.toCi(gInfopoint.debugInfo, gCompilation.getFrameSize() + getReturnAddressSize());
             if (gInfopoint instanceof com.oracle.graal.api.code.CompilationResult.Call) {
                 com.oracle.graal.api.code.CompilationResult.Call gCall = (com.oracle.graal.api.code.CompilationResult.Call) gInfopoint;
                 Object target;

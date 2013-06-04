@@ -155,26 +155,22 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public ResolvedJavaType findLeastCommonAncestor(ResolvedJavaType otherType) {
-        ClassActor thisTypeActor = (ClassActor) riResolvedType();
-        ClassActor otherTypeActor = (ClassActor) MaxResolvedJavaType.getRiResolvedType(otherType);
-        return findLeastCommonAncestor(thisTypeActor, otherTypeActor);
-    }
-
-    private ResolvedJavaType findLeastCommonAncestor(ClassActor thisTypeActor, ClassActor otherTypeActor) {
-        if (thisTypeActor.isPrimitiveClassActor() || otherTypeActor.isPrimitiveClassActor()) {
+        if (otherType.isPrimitive()) {
             return null;
+        } else {
+            MaxResolvedJavaType t1 = this;
+            MaxResolvedJavaType t2 = (MaxResolvedJavaType) otherType;
+            while (true) {
+                if (t1.isAssignableFrom(t2)) {
+                    return t1;
+                }
+                if (t2.isAssignableFrom(t1)) {
+                    return t2;
+                }
+                t1 = MaxResolvedJavaType.get(t1.riResolvedType().superType());
+                t2 = MaxResolvedJavaType.get(t2.riResolvedType().superType());
+            }
         }
-        if (thisTypeActor.isArrayClass() || otherTypeActor.isArrayClass()) {
-            return getObject();
-        }
-        if (thisTypeActor == otherTypeActor) {
-            return MaxResolvedJavaType.get(thisTypeActor.superClassActor);
-        }
-        if (thisTypeActor.superClassActor == null || otherTypeActor.superClassActor == null) {
-            return getObject();
-        }
-        // Both types are subclasses of Object
-        return findLeastCommonAncestor(thisTypeActor.superClassActor, otherTypeActor.superClassActor);
     }
 
     @Override

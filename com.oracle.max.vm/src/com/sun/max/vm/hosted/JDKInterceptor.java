@@ -381,6 +381,9 @@ public final class JDKInterceptor {
         // Added in JDK 7 update 15
         JDK.java_net_InetSocketAddress,
             new FieldOffsetRecomputation("FIELDS_OFFSET", "holder").makeOptional(),
+        JDK.java_util_concurrent_ConcurrentLinkedQueue$Node,
+            new FieldOffsetRecomputation("itemOffset", "item"),
+            new FieldOffsetRecomputation("nextOffset", "next"),
     };
     // Checkstyle: resume
 

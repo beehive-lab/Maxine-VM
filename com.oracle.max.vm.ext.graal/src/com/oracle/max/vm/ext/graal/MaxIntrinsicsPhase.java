@@ -37,10 +37,12 @@ public class MaxIntrinsicsPhase extends Phase {
             CallTargetNode callTargetNode = invoke.callTarget();
             if (callTargetNode instanceof MethodCallTargetNode) {
                 MethodCallTargetNode methodCallTargetNode = (MethodCallTargetNode) callTargetNode;
-                MaxResolvedJavaMethod method = (MaxResolvedJavaMethod) methodCallTargetNode.targetMethod();
-                MethodActor methodActor = (MethodActor) method.riMethod;
-                if (methodActor.intrinsic() != null) {
-                    intrinsify(invoke, method);
+                if (methodCallTargetNode.isResolved()) {
+                    MaxResolvedJavaMethod method = (MaxResolvedJavaMethod) methodCallTargetNode.targetMethod();
+                    MethodActor methodActor = (MethodActor) method.riMethod;
+                    if (methodActor.intrinsic() != null) {
+                        intrinsify(invoke, method);
+                    }
                 }
             }
         }
@@ -50,7 +52,7 @@ public class MaxIntrinsicsPhase extends Phase {
         MaxIntrinsicImpl impl = MaxIntrinsics.getRegistry().get(method);
         if (impl != null) {
             FrameState stateAfter = invoke.stateAfter();
-            Object graph = impl.createGraph((StructuredGraph) invoke.callTarget().graph(), method, invoke.callTarget().arguments());
+            Object graph = impl.createGraph(invoke.callTarget().graph(), method, invoke.callTarget().arguments());
             if (graph instanceof ValueNode) {
                 ValueNode node = (ValueNode) graph;
                 invoke.intrinsify(node);

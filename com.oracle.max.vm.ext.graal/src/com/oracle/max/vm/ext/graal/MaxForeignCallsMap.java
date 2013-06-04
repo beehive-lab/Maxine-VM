@@ -22,10 +22,13 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+
+import static com.oracle.max.vm.ext.graal.MaxForeignCallLinkage.RegisterEffect;
+import static com.oracle.max.vm.ext.graal.MaxForeignCallLinkage.Transition;
+
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
@@ -111,13 +114,14 @@ public class MaxForeignCallsMap {
         return s.substring(0, 1).toLowerCase() + s.substring(1);
     }
 
+    private static final LocationIdentity[] ALL_LOCATIONS = new LocationIdentity[] {LocationIdentity.ANY_LOCATION};
 
 
     @HOSTED_ONLY
     private static MaxForeignCall createRuntimeCall(String methodName, MethodActor cma) {
         Method method = cma.toJava();
         MaxForeignCall maxRuntimeCall = new MaxForeignCall(methodName, method, true, method.getReturnType(), method.getParameterTypes());
-        MaxForeignCallLinkage maxRuntimeCallTarget = new MaxForeignCallLinkage(maxRuntimeCall);
+        MaxForeignCallLinkage maxRuntimeCallTarget = new MaxForeignCallLinkage(maxRuntimeCall, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, false, ALL_LOCATIONS);
         map.put(maxRuntimeCall, maxRuntimeCallTarget);
         actorMap.put(cma, maxRuntimeCallTarget);
         return maxRuntimeCall;
@@ -128,7 +132,7 @@ public class MaxForeignCallsMap {
      * @param descriptor must be a {@link MaxForeignCall}
      * @return
      */
-    public static ForeignCallLinkage get(ForeignCallDescriptor descriptor) {
+    public static MaxForeignCallLinkage get(ForeignCallDescriptor descriptor) {
         return map.get(descriptor);
     }
 
@@ -136,7 +140,7 @@ public class MaxForeignCallsMap {
         MaxForeignCallLinkage maxRuntimeCallTarget = actorMap.get(cma);
         if (maxRuntimeCallTarget == null) {
             MaxForeignCall maxRuntimeCall = findMethod(cma.holder().javaClass(), cma.name(), true);
-            maxRuntimeCallTarget = new MaxForeignCallLinkage(maxRuntimeCall);
+            maxRuntimeCallTarget = new MaxForeignCallLinkage(maxRuntimeCall, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, false, ALL_LOCATIONS);
             map.put(maxRuntimeCall, maxRuntimeCallTarget);
             actorMap.put(cma, maxRuntimeCallTarget);
         }

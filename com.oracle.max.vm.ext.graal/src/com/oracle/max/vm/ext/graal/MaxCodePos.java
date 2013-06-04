@@ -28,17 +28,17 @@ import com.sun.cri.ri.*;
 
 
 public class MaxCodePos {
-    static CiCodePos toCi(BytecodePosition gCodePos) {
+    static CiCodePos toCi(BytecodePosition gCodePos, int totalFrameSize) {
         if (gCodePos == null) {
             return null;
         }
-        CiCodePos caller = toCi(gCodePos.getCaller());
+        CiCodePos caller = toCi(gCodePos.getCaller(), totalFrameSize);
         RiResolvedMethod method = MaxResolvedJavaMethod.getRiResolvedMethod(gCodePos.getMethod());
         int bci = gCodePos.getBCI();
         if (gCodePos instanceof BytecodeFrame) {
             BytecodeFrame bytecodeFrame = (BytecodeFrame) gCodePos;
             return new CiFrame((CiFrame) caller, method, bci, bytecodeFrame.rethrowException,
-                            ValueMap.toCi(bytecodeFrame.values), bytecodeFrame.numLocals, bytecodeFrame.numStack, bytecodeFrame.numLocks);
+                            ValueMap.toCi(bytecodeFrame.values, totalFrameSize), bytecodeFrame.numLocals, bytecodeFrame.numStack, bytecodeFrame.numLocks);
         } else {
             return new CiCodePos(caller, method, bci);
         }

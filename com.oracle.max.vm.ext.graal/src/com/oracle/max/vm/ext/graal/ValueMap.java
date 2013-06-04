@@ -50,7 +50,7 @@ public class ValueMap {
         return null;
     }
 
-    public static CiValue toCi(Value value) {
+    public static CiValue toCi(Value value, int totalFrameSize) {
         if (value == null) {
             return null;
         }
@@ -60,11 +60,8 @@ public class ValueMap {
             return RegisterMap.toCi(((RegisterValue) value).getRegister()).asValue();
         } else if (value instanceof StackSlot) {
             StackSlot stackSlot = (StackSlot) value;
-            int rawOffset = stackSlot.getRawOffset();
-            if (rawOffset < 0) {
-                rawOffset = -rawOffset;
-            }
-            return CiStackSlot.get(KindMap.toCiKind(stackSlot.getKind()), rawOffset / Word.size(), stackSlot.isInCallerFrame());
+            int offset = stackSlot.getOffset(totalFrameSize);
+            return CiStackSlot.get(KindMap.toCiKind(stackSlot.getKind()), offset / Word.size(), stackSlot.isInCallerFrame());
         } else if (value.getKind() == Kind.Illegal) {
             return CiValue.IllegalValue;
         } else {
@@ -73,10 +70,10 @@ public class ValueMap {
         return null;
     }
 
-    public static CiValue[] toCi(Value[] values) {
+    public static CiValue[] toCi(Value[] values, int totalFrameSize) {
         CiValue[] result = new CiValue[values.length];
         for (int i = 0; i < values.length; i++) {
-            result[i] = toCi(values[i]);
+            result[i] = toCi(values[i], totalFrameSize);
         }
         return result;
     }

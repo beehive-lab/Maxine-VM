@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.replacements.*;
@@ -71,7 +72,18 @@ public class MaxMiscLowerings extends SnippetLowerings {
         @Override
         public void lower(LoadExceptionObjectNode node, LoweringTool tool) {
             Arguments args = new Arguments(snippet);
-            instantiate(node, args);
+            Map<Node, Node> map = instantiate(node, args);
+            /*
+            // TODO figure out if this hack is remotely correct.
+            // The snippet instantiation clones the stateAfter of the LoadExceptionObjectNode into the ForeignCallNode
+            // and this definitely causes problems in visitForeignCallNode.
+            for (Node snode : map.values()) {
+                if (snode instanceof ForeignCallNode) {
+                    ((ForeignCallNode) snode).setStateAfter(null);
+                    break;
+                }
+            }
+            */
         }
 
     }

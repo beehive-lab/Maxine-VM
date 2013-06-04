@@ -63,8 +63,9 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     @Override
     public String disassemble(CompilationResult tm, InstalledCode installedCode) {
-        byte[] code = installedCode.getCode();
-        HexCodeFile hcf = new HexCodeFile(code, installedCode.getStart(), maxTargetDescription.arch.getName(), maxTargetDescription.wordSize * 8);
+        byte[] code = installedCode == null ? Arrays.copyOf(tm.getTargetCode(), tm.getTargetCodeSize()) : installedCode.getCode();
+        long start = installedCode == null ? 0L : installedCode.getStart();
+        HexCodeFile hcf = new HexCodeFile(code, start, maxTargetDescription.arch.getName(), maxTargetDescription.wordSize * 8);
         if (tm != null) {
             HexCodeFile.addAnnotations(hcf, tm.getAnnotations());
             addExceptionHandlersComment(tm, hcf);
@@ -125,11 +126,6 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     @Override
     public ForeignCallLinkage lookupForeignCall(ForeignCallDescriptor descriptor) {
         return MaxForeignCallsMap.get(descriptor);
-    }
-
-    @Override
-    public boolean hasSideEffect(ForeignCallDescriptor descriptor) {
-        return true;
     }
 
     @Override
@@ -273,6 +269,21 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     public InstalledCode addMethod(ResolvedJavaMethod method, CompilationResult compResult, Graph graph) {
         MaxGraal.unimplemented("MaxRuntime.addMethod");
         return null;
+    }
+
+    @Override
+    public boolean isReexecutable(ForeignCallDescriptor descriptor) {
+        return MaxForeignCallsMap.get(descriptor).isReexecutable();
+    }
+
+    @Override
+    public LocationIdentity[] getKilledLocations(ForeignCallDescriptor descriptor) {
+        return MaxForeignCallsMap.get(descriptor).getKilledLocations();
+    }
+
+    @Override
+    public boolean canDeoptimize(ForeignCallDescriptor descriptor) {
+        return MaxForeignCallsMap.get(descriptor).isLeaf();
     }
 
 }

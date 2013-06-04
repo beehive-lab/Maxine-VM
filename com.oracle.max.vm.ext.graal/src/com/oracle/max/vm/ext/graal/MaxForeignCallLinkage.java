@@ -29,13 +29,40 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 
-class MaxForeignCallLinkage implements ForeignCallLinkage {
+public class MaxForeignCallLinkage implements ForeignCallLinkage {
+    /**
+     * Constants for specifying whether a foreign call destroys or preserves registers. A foreign
+     * call will always destroy {@link MaxForeignCallLinkage#getCallingConvention() its}
+     * {@linkplain ForeignCallLinkage#getTemporaries() temporary} registers.
+     */
+    public enum RegisterEffect {
+        DESTROYS_REGISTERS, PRESERVES_REGISTERS
+    }
+
+    /**
+     * Constants for specifying whether a call is a leaf or not. A leaf function does not lock, GC
+     * or throw exceptions. That is, the thread's execution state during the call is never inspected
+     * by another thread.
+     */
+    public enum Transition {
+        LEAF, NOT_LEAF;
+    }
+
     private final MaxForeignCall descriptor;
     private final CallingConvention callingConvention;
+    private final LocationIdentity[] killedLocations;
+    private final RegisterEffect effect;
+    private final Transition transition;
+    private final boolean reexecutable;
+
 
     @HOSTED_ONLY
-    MaxForeignCallLinkage(MaxForeignCall descriptor) {
+    MaxForeignCallLinkage(MaxForeignCall descriptor, RegisterEffect effect, Transition transition, boolean reexecutable, LocationIdentity[] killedLocations) {
         this.descriptor = descriptor;
+        this.effect = effect;
+        this.transition = transition;
+        this.killedLocations = killedLocations;
+        this.reexecutable = reexecutable;
         RegisterConfig registerConfig = MaxRegisterConfig.get(MaxineVM.vm().registerConfigs.standard);
         JavaType resType = MaxForeignCallsMap.runtime.lookupJavaType(descriptor.getResultType());
         JavaType[] argTypes = MetaUtil.lookupJavaTypes(MaxForeignCallsMap.runtime, descriptor.getArgumentTypes());
@@ -80,7 +107,23 @@ class MaxForeignCallLinkage implements ForeignCallLinkage {
 
     @Override
     public boolean destroysRegisters() {
-        return true;
+        return effect == RegisterEffect.DESTROYS_REGISTERS;
+    }
+
+    public boolean isReexecutable() {
+        return reexecutable;
+    }
+
+    public LocationIdentity[] getKilledLocations() {
+        return killedLocations;
+    }
+
+    /**
+     * Determines if this is call to a function that does not lock, GC or throw exceptions. That is,
+     * the thread's execution state during the call is never inspected by another thread.
+     */
+    public boolean isLeaf() {
+        return transition == Transition.LEAF;
     }
 
 }
