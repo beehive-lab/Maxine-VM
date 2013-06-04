@@ -24,6 +24,8 @@ package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.extended.*;
+import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.sun.max.vm.intrinsics.*;
 
@@ -31,7 +33,7 @@ import com.sun.max.vm.intrinsics.*;
  * A variant of {@link UnsafeAccessNode} that allows a {@link ValueNode} displacement for the
  * {@link MaxineIntrinsicIDs#PREAD_IDX} and {@link MaxineIntrinsicIDs#PWRITE_IDX} intrinsics.
  */
-public class ExtendedUnsafeAccessNode extends FixedWithNextNode {
+public class ExtendedUnsafeAccessNode extends FixedWithNextNode implements Canonicalizable {
 
     protected ExtendedUnsafeAccessNode(Stamp stamp, ValueNode object, ValueNode displacement, ValueNode offset, Kind accessKind) {
         super(stamp);
@@ -63,4 +65,24 @@ public class ExtendedUnsafeAccessNode extends FixedWithNextNode {
         return accessKind;
     }
 
+    @Override
+    public ValueNode canonical(CanonicalizerTool tool) {
+        if (displacement.isConstant()) {
+            int intDisplacement = displacement.asConstant().asInt();
+            FixedWithNextNode replacement = this instanceof ExtendedUnsafeLoadNode ?
+                            new UnsafeLoadNode(this.stamp(), object, intDisplacement, offset, accessKind) :
+                            new UnsafeStoreNode(this.stamp(), object, intDisplacement, offset, ((ExtendedUnsafeStoreNode) this).value(), accessKind);
+
+            return graph().add(replacement);
+        }
+        if (offset().isConstant()) {
+            // switch offset and displacement and use UnsafeXXXNode
+            int constantOffset = offset().asConstant().asInt();
+            FixedWithNextNode replacement = this instanceof ExtendedUnsafeLoadNode ?
+                            new UnsafeLoadNode(this.stamp(), object, constantOffset, displacement, accessKind) :
+                            new UnsafeStoreNode(this.stamp(), object, constantOffset, displacement, ((ExtendedUnsafeStoreNode) this).value(), accessKind);
+            return graph().add(replacement);
+        }
+        return this;
+    }
 }

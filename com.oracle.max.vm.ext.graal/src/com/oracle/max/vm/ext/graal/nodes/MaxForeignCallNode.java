@@ -23,30 +23,20 @@
 package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.compiler.target.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.extended.*;
-import com.oracle.graal.nodes.type.*;
 
-/**
- * Maxine currently does not use stack based locks; however, Graal assumes stack based locking so
- * {@link BeginLockScopeNode} and {@link EndLockScopeNode} keep it happy.
- */
-public abstract class LockScopeNode extends AbstractStateSplit implements LIRGenLowerable, MemoryCheckpoint {
 
-    protected LockScopeNode(Stamp stamp) {
-        super(stamp);
+public class MaxForeignCallNode extends ForeignCallNode {
+
+    public MaxForeignCallNode(MetaAccessProvider runtime, ForeignCallDescriptor descriptor, ValueNode[] arguments) {
+        super(runtime, descriptor, arguments);
+
     }
 
     @Override
-    public boolean hasSideEffect() {
+    public boolean canDeoptimize() {
         return false;
     }
-
-    @Override
-    public LocationIdentity[] getLocationIdentities() {
-        return new LocationIdentity[]{LocationIdentity.ANY_LOCATION};
-    }
-
 
 }

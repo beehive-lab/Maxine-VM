@@ -58,7 +58,7 @@ class MaxUnsafeAccessLowerings {
         }
 
         void lower(StructuredGraph graph, FixedWithNextNode node, Stamp stamp, ValueNode object, ValueNode offset, int displacement, Kind accessKind) {
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, accessKind, displacement, offset, graph, 1);
+            IndexedLocationNode location = IndexedLocationNode.create(LocationIdentity.ANY_LOCATION, accessKind, displacement, offset, graph, 1);
             ReadNode memoryRead = graph.add(new ReadNode(object, location, stamp));
             // An unsafe read must not float outside its block as may float above an explicit null check on its object.
             memoryRead.setGuard(AbstractBeginNode.prevBegin(node));
@@ -77,7 +77,7 @@ class MaxUnsafeAccessLowerings {
 
         void lower(StructuredGraph graph, FixedWithNextNode node, Stamp stamp, ValueNode object, ValueNode offset, ValueNode value,
                         int displacement, Kind accessKind, FrameState stateAfter) {
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, accessKind, displacement, offset, graph, 1);
+            IndexedLocationNode location = IndexedLocationNode.create(LocationIdentity.ANY_LOCATION, accessKind, displacement, offset, graph, 1);
             WriteNode write = graph.add(new WriteNode(object, value, location, WriteBarrierType.NONE));
             write.setStateAfter(stateAfter);
             graph.replaceFixedWithFixed(node, write);

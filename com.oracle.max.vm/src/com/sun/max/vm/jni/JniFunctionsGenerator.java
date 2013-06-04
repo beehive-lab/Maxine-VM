@@ -455,7 +455,7 @@ public class JniFunctionsGenerator {
                    decl.returnType.equals("double")) {
             errReturnValue = "JNI_ERR";
         } else {
-            errReturnValue = "as" + decl.returnType + "(0)";
+            errReturnValue = "as" + decl.returnType + "(0L)";
         }
 
         generateFunction(out, decl, body, "return " + errReturnValue + ";", customizer);

@@ -27,12 +27,12 @@ import com.sun.cri.ci.*;
 
 
 public class MaxDebugInfo {
-    static CiDebugInfo toCi(DebugInfo debugInfo) {
+    static CiDebugInfo toCi(DebugInfo debugInfo, int totalFrameSize) {
         if (debugInfo == null) {
             return null;
         }
         return new CiDebugInfo(
-                      MaxCodePos.toCi(debugInfo.getBytecodePosition()),
+                      MaxCodePos.toCi(debugInfo.getBytecodePosition(), totalFrameSize),
                       MaxBitMap.toCi(debugInfo.getRegisterRefMap()),
                       MaxBitMap.toCi(debugInfo.getFrameRefMap()));
     }

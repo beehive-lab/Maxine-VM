@@ -246,7 +246,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
 
     protected void changeToWord(ValueNode valueNode) {
         if (valueNode.isConstant() && valueNode.asConstant().getKind() == Kind.Object) {
-            StructuredGraph graph = (StructuredGraph) valueNode.graph();
+            StructuredGraph graph = valueNode.graph();
             ConstantNode constantNode = (ConstantNode) valueNode;
             WordUtil.WrappedWord wrappedWord = (WordUtil.WrappedWord) constantNode.value.asObject();
             graph.replaceFloating(constantNode, ConstantNode.forConstant(ConstantMap.toGraal(wrappedWord.archConstant()), metaAccess, graph));

@@ -25,12 +25,9 @@ package com.oracle.max.vm.ext.graal;
 
 import java.lang.annotation.*;
 
-import sun.reflect.*;
-
 import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.java.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.*;
@@ -75,17 +72,11 @@ public class MaxResolvedJavaField extends MaxJavaField implements ResolvedJavaFi
     public Constant readConstantValue(Constant receiver) {
         CiConstant ciConstant = riResolvedField().constantValue(ConstantMap.toCi(receiver));
         if (ciConstant != null && ciConstant.kind == CiKind.Object && ciConstant.asObject() instanceof WordUtil.WrappedWord) {
-            // This is a bit Catch-22. If we are processing bytecodes (GraphBuilderPhase), then returning the archConstant
-            // risks a mismatch with maxStackSize, as a long is two stack slots. But if we are in the lowering
-            // phase, we must return the archConstant otherwise we risk a kind mismatch on, say, a plus operation.
-            // Unfortunately, there is no obvious hook in Graal to allow the wrapped constant to be rewritten
-            // in the lowering phase, except explicitly after every possible lowering.
-
-            // In practice MaxineVM.isHosted() is an efficient proxy for checking that GraphBuilderPhase
-            // is the caller, as this only happens during snippet/boot image generation
-            Class<?> caller = Reflection.getCallerClass(2);
-            if (caller != GraphBuilderPhase.class) {
-//            if (!MaxineVM.isHosted()) {
+            if (MaxineVM.isHosted() && !MaxGraal.inLowTier()) {
+                // Special handling of WrappedWord constants when building the boot image
+                // We want to keep the type in the high level phases in case the constant is used as a receiver
+                // in a (Word) method invocation (which will assert false unless the type is Object).
+            } else {
                 WordUtil.WrappedWord wrappedWord = (WordUtil.WrappedWord) ciConstant.asObject();
                 ciConstant = wrappedWord.archConstant();
             }

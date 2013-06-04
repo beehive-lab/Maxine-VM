@@ -119,6 +119,29 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
 
     }
 
+    /**
+     * A thread local that records whether we are in the {@link PhasePlan#LOW_LEVEL} phase.
+     */
+    private static class InLowTierThreadLocal extends ThreadLocal<Boolean> {
+        @Override
+        public Boolean initialValue() {
+            return Boolean.FALSE;
+        }
+    }
+
+    private static final InLowTierThreadLocal inLowTierThreadLocal = new InLowTierThreadLocal();
+
+    private static class StartingLowTier extends com.oracle.graal.phases.Phase {
+        @Override
+        protected void run(StructuredGraph graph) {
+            inLowTierThreadLocal.set(Boolean.TRUE);
+        }
+    }
+
+    public static boolean inLowTier() {
+        return inLowTierThreadLocal.get();
+    }
+
     @Override
     public void initialize(Phase phase) {
         if (phase == MaxineVM.Phase.HOSTED_COMPILING) {
@@ -127,6 +150,8 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         } else if (phase == MaxineVM.Phase.SERIALIZING_IMAGE) {
             TraceNodeClasses.scan();
             FieldIntrospection.rescanAllFieldOffsets(new TraceDefaultAndSetMaxineFieldOffset());
+            // reset the default
+            GraalOptions.OptPushThroughPi = true;
         } else if (phase == MaxineVM.Phase.STARTING) {
             // Compilations can occur after this, so set up the debug environment
             DebugEnvironment.initialize(System.out);
@@ -146,6 +171,16 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         // Disable for now as it causes problems in DebugInfo
         if (!MaxGraalOptions.isPresent("PartialEscapeAnalysis")) {
             GraalOptions.PartialEscapeAnalysis = false;
+        }
+        if (!MaxGraalOptions.isPresent("OptPushThroughPi")) {
+            /*
+             * When compiling the boot image, this phase (in the MidTier) can replace a genuine object argument to an
+             * IsNullNode with a Word type, when the object is the result of an UNSAFE_CAST from a Word type, which then
+             * gets rewritten to long, and then the graph does not verify. If there was a PhasePosition.MID_LEVEL hook,
+             * we could perhaps fix this by running the KindRewriter before the mid-level suite.
+             * There is no way to disable this phase (unlike InliningPhase) so we do it via an option.
+             */
+            GraalOptions.OptPushThroughPi = false;
         }
         suites = Suites.createSuites(GraalOptions.CompilerConfiguration);
         replacements = runtime.init();
@@ -175,6 +210,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         StructuredGraph graph = (StructuredGraph) method.getCompilerStorage().get(Graph.class);
         if (graph == null) {
             GraphBuilderPhase graphBuilderPhase = new MaxGraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(), optimisticOpts);
+            inLowTierThreadLocal.set(Boolean.FALSE);
             phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
             // Hosted (boot image) compilation is more complex owing to the need to handle the unsafe features of VM programming,
             // requiring more phases to be run. All this is very similar to what happens in MaxReplacementsImpl
@@ -201,6 +237,8 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                 // Always the very last thing, rewrite Word types
                 phasePlan.addPhase(PhasePosition.LOW_LEVEL,
                                 new MaxWordTypeRewriterPhase.KindRewriter(runtime, runtime.maxTargetDescription.wordKind));
+                // An ad hoc mechanism for detecting being in the low tier
+                phasePlan.addPhase(PhasePosition.LOW_LEVEL, new StartingLowTier());
 
             }
             graph = new StructuredGraph(method);
