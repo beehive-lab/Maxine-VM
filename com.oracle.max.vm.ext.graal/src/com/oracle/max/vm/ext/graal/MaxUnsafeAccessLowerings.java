@@ -33,7 +33,6 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
-import com.sun.max.vm.runtime.*;
 
 class MaxUnsafeAccessLowerings {
 
@@ -43,8 +42,6 @@ class MaxUnsafeAccessLowerings {
         UnsafeStoreLowering unsafeStoreLowering = new UnsafeStoreLowering();
         lowerings.put(UnsafeStoreNode.class, unsafeStoreLowering);
 
-        lowerings.put(ExtendedUnsafeLoadNode.class, new ExtendedUnsafeLoadLowering(unsafeLoadLowering));
-        lowerings.put(ExtendedUnsafeStoreNode.class, new ExtendedUnsafeStoreLowering(unsafeStoreLowering));
         lowerings.put(MaxCompareAndSwapNode.class, new MaxCompareAndSwapLowering());
     }
 
@@ -81,45 +78,6 @@ class MaxUnsafeAccessLowerings {
             WriteNode write = graph.add(new WriteNode(object, value, location, WriteBarrierType.NONE));
             write.setStateAfter(stateAfter);
             graph.replaceFixedWithFixed(node, write);
-        }
-
-    }
-
-    private static class ExtendedUnsafeLoadLowering implements LoweringProvider<ExtendedUnsafeLoadNode> {
-        private final UnsafeLoadLowering unsafeLoadLowering;
-
-        ExtendedUnsafeLoadLowering(UnsafeLoadLowering unsafeLoadLowering) {
-            this.unsafeLoadLowering = unsafeLoadLowering;
-        }
-
-        @Override
-        public void lower(ExtendedUnsafeLoadNode node, LoweringTool tool) {
-            if (node.displacement().isConstant()) {
-                unsafeLoadLowering.lower(node.graph(), node, node.stamp(), node.object(), node.offset(),
-                                node.displacement().asConstant().asInt(), node.accessKind());
-            } else {
-                FatalError.unimplemented();
-            }
-        }
-
-    }
-
-    private static class ExtendedUnsafeStoreLowering implements LoweringProvider<ExtendedUnsafeStoreNode> {
-
-        private final UnsafeStoreLowering unsafeStoreLowering;
-
-        ExtendedUnsafeStoreLowering(UnsafeStoreLowering unsafeStoreLowering) {
-            this.unsafeStoreLowering = unsafeStoreLowering;
-        }
-
-        @Override
-        public void lower(ExtendedUnsafeStoreNode node, LoweringTool tool) {
-            if (node.displacement().isConstant()) {
-                unsafeStoreLowering.lower(node.graph(), node, node.stamp(), node.object(), node.offset(),
-                                node.value(), node.displacement().asConstant().asInt(), node.accessKind(), node.stateAfter());
-            } else {
-                FatalError.unimplemented();
-            }
         }
 
     }

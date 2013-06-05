@@ -52,7 +52,7 @@ public class MaxIntrinsicsPhase extends Phase {
         MaxIntrinsicImpl impl = MaxIntrinsics.getRegistry().get(method);
         if (impl != null) {
             FrameState stateAfter = invoke.stateAfter();
-            Object graph = impl.createGraph(invoke.callTarget().graph(), method, invoke.callTarget().arguments());
+            Object graph = impl.createGraph(invoke.asNode(), method, invoke.callTarget().arguments());
             if (graph instanceof ValueNode) {
                 ValueNode node = (ValueNode) graph;
                 invoke.intrinsify(node);

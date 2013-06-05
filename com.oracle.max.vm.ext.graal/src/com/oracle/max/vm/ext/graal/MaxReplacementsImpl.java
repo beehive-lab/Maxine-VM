@@ -104,6 +104,7 @@ class MaxReplacementsImpl extends ReplacementsImpl {
             new NodeIntrinsificationPhase(runtime).apply(graph);
 
             // These only get done once right at the end
+            new MaxWordTypeRewriterPhase.MaxUnsafeAccessRewriter(runtime, target.wordKind).apply(graph);
             new MaxWordTypeRewriterPhase.MaxUnsafeCastRewriter(runtime, target.wordKind).apply(graph);
             new MaxSlowpathRewriterPhase(runtime).apply(graph);
             new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, target.wordKind).apply(graph);
