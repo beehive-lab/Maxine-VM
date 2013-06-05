@@ -46,25 +46,25 @@ public class MaxIntrinsicImpl {
      * <br>
      * This default implementation searches for a method with the name "create" and the following parameter list:
      * <pre>
-     *     ValueNode create([StructureGraph], [ResolvedJavaMethod], { ValueNode | any_type })
+     *     ValueNode create([FixedNode], [ResolvedJavaMethod], { ValueNode | any_type })
      * </pre>
-     * This means that that the graph, method, and runtime parameters are optionally given to the called method.  The args parameter
+     * This means that that the invoke node, method, and runtime parameters are optionally given to the called method.  The args parameter
      * is flattened from the NodeList to individual ValueNode parameters.  If the parameter has any other type, then the
      * node must be a constant, and the constant value is passed instead of the node.
      * <br>
      * Subclasses can also override this method if they want to avoid the reflective method invocation done in this implementation.
      *
-     * @param graph The graph that the intrinsic will be created into.
+     * @param invoke The {@link Invoke} node for the intrinsic method (provides access to the graph and predecessors)
      * @param method The intrinsic method, i.e., the method that has the {@link INTRINSIC} annotation.
      * @param args The arguments of the intrinsic methods, to be used as the parameters of the intrinsic instruction.
      * @return The instruction that should substitute the original method call that is intrinsified, or a graph to be inlined.
      */
-    public Object createGraph(StructuredGraph graph, ResolvedJavaMethod method, NodeList<ValueNode> args) {
+    public Object createGraph(FixedNode invoke, ResolvedJavaMethod method, NodeList<ValueNode> args) {
         Class[] formalParams = createMethod.getParameterTypes();
         Object[] actualParams = new Object[formalParams.length];
 
         int offset = 0;
-        offset = assignParam(offset, formalParams, actualParams, StructuredGraph.class, graph);
+        offset = assignParam(offset, formalParams, actualParams, FixedNode.class, invoke);
         offset = assignParam(offset, formalParams, actualParams, ResolvedJavaMethod.class, method);
 
         if (offset + args.size() != actualParams.length) {
@@ -105,7 +105,7 @@ public class MaxIntrinsicImpl {
     @HOSTED_ONLY
     private Method getCreateGraphMethod() {
         try {
-            return getClass().getMethod("createGraph", StructuredGraph.class, ResolvedJavaMethod.class, NodeList.class);
+            return getClass().getMethod("createGraph", FixedNode.class, ResolvedJavaMethod.class, NodeList.class);
         } catch (Exception e) {
             throw FatalError.unexpected("Could not find createGraph method in hierarchy of " + getClass(), e);
         }

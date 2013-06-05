@@ -53,7 +53,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         return (RiResolvedType) MaxJavaType.getRiType(resolvedJavaType);
     }
 
-    private static MaxResolvedJavaType getObject() {
+    public static MaxResolvedJavaType getJavaLangObject() {
         if (objectType == null) {
             objectType = MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
         }
@@ -249,10 +249,16 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public ResolvedJavaField findInstanceFieldWithOffset(long offset) {
+        // Static tuples are of type Object and UnsafeLoad/StoreNode will try to find a field at the given offset
+        // which cannot possibly succeed, as it has no fields. Perhaps we should find a way to tag StaticTuples
+        if (this == getJavaLangObject()) {
+            return null;
+        }
         ClassActor ca = (ClassActor) riType;
         // TODO I don't understand yet how this can happen but evidently UnsafeLoad nodes
         // can show up with MaxUnsafeCastNodes whose nonNull field is true and the node type is a Word type.
         // This causes a search for a field, which, of course, does not exist. Returning null is a workaround.
+        // N.B. This may not happen any more as MaxUnSafeCastNodes more aggressively removed when possible.
         if (MaxWordTypeRewriterPhase.isWord(this)) {
             return null;
         }

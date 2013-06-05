@@ -27,6 +27,7 @@ import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.graal.nodes.type.*;
@@ -130,6 +131,55 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
                     GraphUtil.killWithUnusedFloatingInputs(isNullNode);
                 }
             }
+        }
+
+    }
+
+    /**
+     * Finds {@link AccessNode} instances that have a chain of {@link MaxUnsafeCastNode}s starting with a
+     * {@link Word} type that lead to a node whose type is {@link java.lang.Object}. Such nodes arise from the
+     * explicit lowering in Maxine's reference scheme, object access logic. Not only are they redundant but
+     * after the {@link Word} type nodes are rewritten as {@code long}, the objectness is lost, which can
+     * cause problems with GC refmaps in the LIR stage.
+     */
+    public static class MaxUnsafeAccessRewriter extends MaxWordTypeRewriterPhase {
+        public MaxUnsafeAccessRewriter(MetaAccessProvider metaAccess, Kind wordKind) {
+            super(metaAccess, wordKind);
+        }
+
+        @Override
+        protected void run(StructuredGraph graph) {
+            for (Node n : GraphOrder.forwardGraph(graph)) {
+                if (n instanceof AccessNode) {
+                    ValueNode object = ((AccessNode) n).object();
+                    if (object instanceof MaxUnsafeCastNode && object.kind() == Kind.Object) {
+                        MaxUnsafeCastNode mn = (MaxUnsafeCastNode) object;
+                        ObjectStamp stamp = mn.objectStamp();
+                        if (wordBaseType.isAssignableFrom(stamp.type())) {
+                            ValueNode endChain = findEndChainOfMaxUnsafeCastNode(mn);
+                            if (endChain.kind() == Kind.Object && endChain.objectStamp().type() == MaxResolvedJavaType.getJavaLangObject()) {
+                                deleteChain(graph, mn, endChain);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+        private ValueNode findEndChainOfMaxUnsafeCastNode(MaxUnsafeCastNode n) {
+            MaxUnsafeCastNode nn = n;
+            while (nn.object() instanceof MaxUnsafeCastNode) {
+                nn = (MaxUnsafeCastNode) nn.object();
+            }
+            return nn.object();
+        }
+
+        private void deleteChain(StructuredGraph graph, MaxUnsafeCastNode n, ValueNode end) {
+            if (n.object() != end) {
+                deleteChain(graph, (MaxUnsafeCastNode) n.object(), end);
+            }
+            graph.replaceFloating(n, n.object());
         }
 
     }

@@ -37,6 +37,7 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.extended.*;
+import com.oracle.graal.nodes.extended.WriteNode.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
@@ -53,41 +54,59 @@ public class MaxIntrinsics {
 
     static class NotImplementedIntrinsic extends MaxIntrinsicImpl {
         @Override
-        public ValueNode createGraph(StructuredGraph graph, ResolvedJavaMethod method, NodeList<ValueNode> args) {
+        public ValueNode createGraph(FixedNode invoke, ResolvedJavaMethod method, NodeList<ValueNode> args) {
             throw new UnsupportedOperationException("intrinsic not implemented");
         }
     }
 
     static class PointerReadOffsetIntrinsic extends MaxIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode offset) {
-            return graph.add(new UnsafeLoadNode(stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())),
-                            pointer, 0, offset, checkWord(method.getSignature().getReturnType(null))));
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, ValueNode pointer, ValueNode offset) {
+            StructuredGraph graph = invoke.graph();
+            IndexedLocationNode location = IndexedLocationNode.create(LocationIdentity.ANY_LOCATION,
+                            checkWord(method.getSignature().getReturnType(null)), 0, offset, graph, 1);
+            ReadNode memoryRead = graph.add(new ReadNode(pointer, location, stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass()))));
+            // An unsafe read must not float outside its block as may float above an explicit null check on its object.
+            memoryRead.setGuard(AbstractBeginNode.prevBegin(invoke));
+            return memoryRead;
         }
     }
 
     static class PointerWriteOffsetIntrinsic extends MaxIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode offset, ValueNode value) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, ValueNode pointer, ValueNode offset, ValueNode value) {
+            StructuredGraph graph = invoke.graph();
             Signature sig = method.getSignature();
-            return graph.add(new UnsafeStoreNode(pointer, 0, offset, value, checkWord(sig.getParameterType(sig.getParameterCount(false) - 1, null))));
+            IndexedLocationNode location = IndexedLocationNode.create(LocationIdentity.ANY_LOCATION,
+                            checkWord(sig.getParameterType(sig.getParameterCount(false) - 1, null)), 0, offset, graph, 1);
+            WriteNode write = graph.add(new WriteNode(pointer, value, location, WriteBarrierType.NONE));
+            return write;
         }
     }
 
     static class PointerReadIndexIntrinsic extends MaxIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode displacement, ValueNode index) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, ValueNode pointer, ValueNode displacement, ValueNode index) {
+            StructuredGraph graph = invoke.graph();
             Signature sig = method.getSignature();
             Kind dataKind = sig.getReturnKind();
             ValueNode scaledIndex = scaledIndex(graph, dataKind, index);
-            return graph.add(ExtendedUnsafeLoadNode.create(stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())), pointer,
-                            displacement, scaledIndex, checkWord(method.getSignature().getReturnType(null))));
+            LocationNode location = ExtendedIndexedLocationNode.create(LocationIdentity.ANY_LOCATION,
+                            checkWord(method.getSignature().getReturnType(null)), displacement, graph, scaledIndex);
+            ReadNode memoryRead = graph.add(new ReadNode(pointer, location, stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass()))));
+            // An unsafe read must not float outside its block as may float above an explicit null check on its object.
+            memoryRead.setGuard(AbstractBeginNode.prevBegin(invoke));
+            return memoryRead;
         }
     }
 
     static class PointerWriteIndexIntrinsic  extends MaxIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode pointer, ValueNode displacement, ValueNode index, ValueNode value) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, ValueNode pointer, ValueNode displacement, ValueNode index, ValueNode value) {
+            StructuredGraph graph = invoke.graph();
             Signature sig = method.getSignature();
             Kind dataKind = sig.getParameterKind(sig.getParameterCount(false) - 1);
             ValueNode scaledIndex = scaledIndex(graph, dataKind, index);
-            return graph.add(ExtendedUnsafeStoreNode.create(pointer, displacement, scaledIndex, value, checkWord(sig.getParameterType(sig.getParameterCount(false) - 1, null))));
+            LocationNode location = ExtendedIndexedLocationNode.create(LocationIdentity.ANY_LOCATION,
+                            checkWord(sig.getParameterType(sig.getParameterCount(false) - 1, null)), displacement, graph, scaledIndex);
+            WriteNode write = graph.add(new WriteNode(pointer, value, location, WriteBarrierType.NONE));
+            return write;
         }
     }
 
@@ -106,7 +125,8 @@ public class MaxIntrinsics {
     }
 
     static class PointerCompareAndSwapIntrinsic extends MaxIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, ValueNode pointer, ValueNode offset, ValueNode expectedValue, ValueNode newValue) {
+        public ValueNode create(FixedNode invoke, ValueNode pointer, ValueNode offset, ValueNode expectedValue, ValueNode newValue) {
+            StructuredGraph graph = invoke.graph();
             return graph.add(new MaxCompareAndSwapNode(pointer, 0, offset, expectedValue, newValue));
         }
     }
@@ -138,13 +158,15 @@ public class MaxIntrinsics {
             this.op = op;
         }
 
-        public ValueNode create(StructuredGraph graph) {
+        public ValueNode create(FixedNode invoke) {
+            StructuredGraph graph = invoke.graph();
             return graph.add(new MaxSafepointNode(op));
         }
     }
 
     static class ReadRegisterIntrinsic extends MaxIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, int registerId) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, int registerId) {
+            StructuredGraph graph = invoke.graph();
             RegisterConfig registerConfig = MaxGraal.runtime().lookupRegisterConfig();
             Register register = registerConfig.getRegisterForRole(registerId);
             if (register == null) {
@@ -158,7 +180,8 @@ public class MaxIntrinsics {
     }
 
     static class WriteRegisterIntrinsic extends MaxIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, int registerId, ValueNode value) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, int registerId, ValueNode value) {
+            StructuredGraph graph = invoke.graph();
             RegisterConfig registerConfig = MaxGraal.runtime().lookupRegisterConfig();
             Register register = registerConfig.getRegisterForRole(registerId);
             if (register == null) {
@@ -170,7 +193,8 @@ public class MaxIntrinsics {
     }
 
     static class UnsafeCastIntrinsic extends MaxIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode value) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, ValueNode value) {
+            StructuredGraph graph = invoke.graph();
             JavaType toType = method.getSignature().getReturnType(method.getDeclaringClass());
             if (!(toType instanceof ResolvedJavaType)) {
                 throw new GraalInternalError("Cannot unsafe cast to an unresolved type: %s", toType);
@@ -182,7 +206,8 @@ public class MaxIntrinsics {
     }
 
     static class AllocaIntrinsic extends MaxIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, int size, boolean refs) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, int size, boolean refs) {
+            StructuredGraph graph = invoke.graph();
             return graph.add(new AllocaNode(size, refs, stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass()))));
         }
     }
@@ -194,7 +219,8 @@ public class MaxIntrinsics {
             this.forward = forward;
         }
 
-        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode value) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, ValueNode value) {
+            StructuredGraph graph = invoke.graph();
             FloatingNode node = graph.unique(new MaxBitScanNode(value, forward));
             return node;
         }
@@ -214,7 +240,7 @@ public class MaxIntrinsics {
         }
 
         @Override
-        public Object createGraph(StructuredGraph graph, ResolvedJavaMethod method, NodeList<ValueNode> args) {
+        public Object createGraph(FixedNode invoke, ResolvedJavaMethod method, NodeList<ValueNode> args) {
             return graalGraph;
         }
     }
@@ -223,12 +249,14 @@ public class MaxIntrinsics {
      * This is a vehicle for testing a snippet instantiation in hosted mode.
      */
     private static class TestIntrinsic1 extends MaxIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode arg1) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, ValueNode arg1) {
+            StructuredGraph graph = invoke.graph();
             return TestSnippets.createTestSnippet1(graph, method, arg1);
         }
     }
     private static class TestIntrinsic2 extends MaxIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, ResolvedJavaMethod method, ValueNode arg1, ValueNode arg2) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, ValueNode arg1, ValueNode arg2) {
+            StructuredGraph graph = invoke.graph();
             return TestSnippets.createTestSnippet2(graph, method, arg1, arg2);
         }
     }
