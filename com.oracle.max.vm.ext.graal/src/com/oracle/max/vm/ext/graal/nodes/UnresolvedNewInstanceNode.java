@@ -23,12 +23,16 @@
 package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.nodes.type.*;
 
-
+/**
+ * Denotes a NEW of an unresolved or uninitialized class.
+ * In the latter case, we will have a {@link ResolvedJavaType} so can set the {@link Stamp} correctly.
+ */
 public class UnresolvedNewInstanceNode extends UnresolvedTypeNode {
 
     public UnresolvedNewInstanceNode(JavaType javaType) {
-        super(javaType);
+        super(javaType, javaType instanceof ResolvedJavaType ? StampFactory.exactNonNull((ResolvedJavaType) javaType) : StampFactory.object());
     }
 
 }

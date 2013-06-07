@@ -377,14 +377,12 @@ public class VmThread {
      * This method also:
      * <ol>
      * <li>Re-enables safepoints (they were disabled in {@link Throw#raise(Throwable, Pointer, Pointer, CodePointer)}).</li>
-     * <li>Executes a safepoint.</li>
      * <li>Reprotects the yellow zone if the raising process unprotected it.</li>
      * </ol>
      */
     @RUNTIME_ENTRY
     public final Throwable loadExceptionForHandler() {
         SafepointPoll.enable();
-        SafepointPoll.safepointPoll();
         Throwable e = exception;
         exception = null;
         FatalError.check(e != null, "Exception object lost during unwinding");

@@ -52,16 +52,27 @@ public abstract class SnippetLowerings extends AbstractTemplates implements Snip
     public SnippetLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription target) {
         super(runtime, replacements, target);
 
-        // All the RUNTIME_ENTRY methods are critical, and
-        // we want the graphs for all @Snippet methods built at image build time
+        // All the RUNTIME_ENTRY methods are critical
         for (Method method : getClass().getDeclaredMethods()) {
             if (method.isAnnotationPresent(RUNTIME_ENTRY.class)) {
                 new CriticalMethod(method);
-            } else if (method.isAnnotationPresent(Snippet.class)) {
+            }
+        }
+        getSnippetGraphs(getClass());
+
+    }
+
+    /**
+     * Forces the graphs for all @Snippet methods in the given class to be built (at image build time).
+     * @param snippetClass
+     */
+    @HOSTED_ONLY
+    protected void getSnippetGraphs(Class<?> snippetClass) {
+        for (Method method : snippetClass.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(Snippet.class)) {
                 replacements.getSnippet(runtime.lookupJavaMethod(method));
             }
         }
-
     }
 
     public Map<Node, Node> instantiate(FixedNode node, Arguments args) {

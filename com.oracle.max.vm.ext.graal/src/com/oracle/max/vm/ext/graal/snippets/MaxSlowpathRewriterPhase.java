@@ -29,14 +29,13 @@ import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.phases.*;
 import com.oracle.max.vm.ext.graal.*;
-import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
  * Rewrites {@link InvokeNode}s to slow path runtime methods in Maxine snippets to {@link ForeignCallNode} nodes.
  * Ideally, this would not be necessary, but method calls within snippets are special in the sense that they
- * should not be deoptimization points (snippets as microcode).
+ * may not be deoptimization points (snippets as microcode).
  */
 public class MaxSlowpathRewriterPhase extends Phase {
 
@@ -51,9 +50,9 @@ public class MaxSlowpathRewriterPhase extends Phase {
         for (Invoke invoke : graph.getInvokes()) {
             MethodCallTargetNode callTarget = (MethodCallTargetNode) invoke.callTarget();
             ClassMethodActor cma = (ClassMethodActor) MaxJavaMethod.getRiMethod(callTarget.targetMethod());
-            MaxForeignCall call = MaxForeignCallsMap.get(cma);
+            MaxForeignCallDescriptor call = MaxForeignCallsMap.get(cma);
             ValueNode[] args = new ValueNode[callTarget.arguments().size()];
-            ForeignCallNode foreignCallNode = new MaxForeignCallNode(runtime, call, callTarget.arguments().toArray(args));
+            ForeignCallNode foreignCallNode = new ForeignCallNode(runtime, call, callTarget.arguments().toArray(args));
             RUNTIME_ENTRY runTimeEntry = call.getMethodActor().getAnnotation(RUNTIME_ENTRY.class);
             boolean exactType = runTimeEntry == null ? false : runTimeEntry.exactType();
             boolean nonNull = runTimeEntry == null ? false : runTimeEntry.nonNull();

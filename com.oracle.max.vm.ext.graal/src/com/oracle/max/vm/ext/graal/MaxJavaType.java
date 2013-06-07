@@ -23,8 +23,6 @@
 
 package com.oracle.max.vm.ext.graal;
 
-import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
-
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;

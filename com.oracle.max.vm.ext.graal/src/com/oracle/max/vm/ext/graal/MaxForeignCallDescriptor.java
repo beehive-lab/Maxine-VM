@@ -20,23 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.nodes;
+package com.oracle.max.vm.ext.graal;
 
-import com.oracle.graal.api.meta.*;
-import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.extended.*;
+import java.lang.reflect.*;
 
+import com.oracle.graal.api.meta.ForeignCallDescriptor;
+import com.sun.max.vm.actor.member.*;
 
-public class MaxForeignCallNode extends ForeignCallNode {
+/**
+ * Simple extension of {@link ForeignCallDescriptor} that remembers the {@link MethodActor}.
+ */
+public class MaxForeignCallDescriptor extends ForeignCallDescriptor {
+    private final MethodActor methodActor;
 
-    public MaxForeignCallNode(MetaAccessProvider runtime, ForeignCallDescriptor descriptor, ValueNode[] arguments) {
-        super(runtime, descriptor, arguments);
-
+    public MaxForeignCallDescriptor(String methodName, Method method, Class resultKind, Class[] arguments) {
+        super(methodName, resultKind, arguments);
+        this.methodActor = MethodActor.fromJava(method);
     }
 
-    @Override
-    public boolean canDeoptimize() {
-        return false;
+    public MethodActor getMethodActor() {
+        return methodActor;
     }
-
 }

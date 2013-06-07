@@ -38,17 +38,25 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 
+/**
+ * Maintains a map from a {@link MaxForeignCallDescriptor} to the {@link MaxForeignCallLinkage}.
+ * A foreign call in Maxine is a call to the the VM runtime and must be annotated with {@link RUNTIME_ENTRY}.
+ * Some calls are created statically, the majority are created dynamically as part of the snippet creation process.
+ * Currently most calls are marked as not reexecutable, destroys registers and not leaf, with the exception of
+ * those that otherwise cause an FrameState assertion (e.g. {@link VmThread#loadExceptionForHandler}.
+ *
+ */
 public class MaxForeignCallsMap {
 
     static MaxRuntime runtime;
 
-    private static Map<MaxForeignCall, MaxForeignCallLinkage> map = new HashMap<>();
+    private static Map<MaxForeignCallDescriptor, MaxForeignCallLinkage> map = new HashMap<>();
     private static Map<MethodActor, MaxForeignCallLinkage> actorMap = new HashMap<>();
 
     /**
-     * Creates a {@link MaxForeignCall} for a named method in a given class.
+     * Creates a {@link MaxForeignCallDescriptor} for a named method in a given class.
      */
-    static MaxForeignCall findMethod(Class declaringClass, String methodName, boolean hasSideEffects) {
+    static MaxForeignCallDescriptor findMethod(Class declaringClass, String methodName) {
         Method foundMethod = null;
         for (Method method : declaringClass.getDeclaredMethods()) {
             if (method.getName().equals(methodName) && hasRuntimeCallAttributes(method)) {
@@ -58,7 +66,7 @@ public class MaxForeignCallsMap {
         }
         assert foundMethod != null : "did not find method " + declaringClass.getName() + "." + methodName;
 
-        return new MaxForeignCall(foundMethod.getName(), foundMethod, hasSideEffects, foundMethod.getReturnType(), foundMethod.getParameterTypes());
+        return new MaxForeignCallDescriptor(foundMethod.getName(), foundMethod, foundMethod.getReturnType(), foundMethod.getParameterTypes());
     }
 
     private static boolean hasRuntimeCallAttributes(Method method) {
@@ -79,19 +87,19 @@ public class MaxForeignCallsMap {
     static void initialize(MaxRuntime runtime) {
         MaxForeignCallsMap.runtime = runtime;
         try {
-            createCiRuntimeCall(CiRuntimeCall.RegisterFinalizer, null);
-            createCiRuntimeCall(CiRuntimeCall.CreateNullPointerException, null);
-            createCiRuntimeCall(CiRuntimeCall.CreateOutOfBoundsException, null);
-            createCiRuntimeCall(CiRuntimeCall.ArithmeticCos, "arithmeticCos");
-            createCiRuntimeCall(CiRuntimeCall.ArithmeticSin, "arithmeticSin");
-            createCiRuntimeCall(CiRuntimeCall.ArithmeticTan, "arithmeticTan");
-            createCiRuntimeCall(CiRuntimeCall.ArithmeticFrem, "arithmeticFrem");
-            createCiRuntimeCall(CiRuntimeCall.ArithmeticDrem, "arithmeticDrem");
+            createCiRuntimeCall(CiRuntimeCall.RegisterFinalizer, null, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.CreateNullPointerException, null, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.CreateOutOfBoundsException, null, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.ArithmeticCos, "arithmeticCos", RegisterEffect.DESTROYS_REGISTERS, Transition.LEAF, true, NO_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.ArithmeticSin, "arithmeticSin", RegisterEffect.DESTROYS_REGISTERS, Transition.LEAF, true, NO_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.ArithmeticTan, "arithmeticTan", RegisterEffect.DESTROYS_REGISTERS, Transition.LEAF, true, NO_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.ArithmeticFrem, "arithmeticFrem", RegisterEffect.DESTROYS_REGISTERS, Transition.LEAF, true, NO_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.ArithmeticDrem, "arithmeticDrem", RegisterEffect.DESTROYS_REGISTERS, Transition.LEAF, true, NO_LOCATIONS);
             Method unwindException = MaxForeignCallsMap.class.getDeclaredMethod("unwindException", Object.class);
-            createRuntimeCall(unwindException.getName(), MethodActor.fromJava(unwindException));
+            createRuntimeCall(unwindException.getName(), MethodActor.fromJava(unwindException), RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, false, ALL_LOCATIONS);
             new CriticalMethod(unwindException);
             Method deoptimize = MaxForeignCallsMap.class.getDeclaredMethod("deoptimize");
-            createRuntimeCall(deoptimize.getName(), MethodActor.fromJava(deoptimize));
+            createRuntimeCall(deoptimize.getName(), MethodActor.fromJava(deoptimize), RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, false, ALL_LOCATIONS);
             new CriticalMethod(deoptimize);
 
         } catch (Exception ex) {
@@ -100,9 +108,11 @@ public class MaxForeignCallsMap {
     }
 
     @HOSTED_ONLY
-    private static void createCiRuntimeCall(CiRuntimeCall call, String overrideName) {
+    private static void createCiRuntimeCall(CiRuntimeCall call, String overrideName,
+                    RegisterEffect effect, Transition transition, boolean reexecutable, LocationIdentity[] killedLocations) {
         ClassMethodActor cma = MaxRuntimeCalls.getClassMethodActor(call);
-        createRuntimeCall(overrideName != null ? overrideName : toFirstLower(call.name()), cma);
+        createRuntimeCall(overrideName != null ? overrideName : toFirstLower(call.name()), cma,
+                        effect, transition, reexecutable, killedLocations);
     }
 
     /**
@@ -115,13 +125,16 @@ public class MaxForeignCallsMap {
     }
 
     private static final LocationIdentity[] ALL_LOCATIONS = new LocationIdentity[] {LocationIdentity.ANY_LOCATION};
+    private static final LocationIdentity[] NO_LOCATIONS = new LocationIdentity[] {};
 
 
     @HOSTED_ONLY
-    private static MaxForeignCall createRuntimeCall(String methodName, MethodActor cma) {
+    private static MaxForeignCallDescriptor createRuntimeCall(String methodName, MethodActor cma,
+                    RegisterEffect effect, Transition transition, boolean reexecutable, LocationIdentity[] killedLocations) {
         Method method = cma.toJava();
-        MaxForeignCall maxRuntimeCall = new MaxForeignCall(methodName, method, true, method.getReturnType(), method.getParameterTypes());
-        MaxForeignCallLinkage maxRuntimeCallTarget = new MaxForeignCallLinkage(maxRuntimeCall, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, false, ALL_LOCATIONS);
+        MaxForeignCallDescriptor maxRuntimeCall = new MaxForeignCallDescriptor(methodName, method, method.getReturnType(), method.getParameterTypes());
+        MaxForeignCallLinkage maxRuntimeCallTarget = new MaxForeignCallLinkage(maxRuntimeCall, effect,
+                        transition, reexecutable, killedLocations);
         map.put(maxRuntimeCall, maxRuntimeCallTarget);
         actorMap.put(cma, maxRuntimeCallTarget);
         return maxRuntimeCall;
@@ -129,18 +142,23 @@ public class MaxForeignCallsMap {
 
     /**
      * Gets the {@link RuntimeCallTarget} for a {@link Descriptor}.
-     * @param descriptor must be a {@link MaxForeignCall}
+     * @param descriptor must be a {@link MaxForeignCallDescriptor}
      * @return
      */
     public static MaxForeignCallLinkage get(ForeignCallDescriptor descriptor) {
         return map.get(descriptor);
     }
 
-    public static MaxForeignCall get(ClassMethodActor cma) {
+    public static MaxForeignCallDescriptor get(ClassMethodActor cma) {
         MaxForeignCallLinkage maxRuntimeCallTarget = actorMap.get(cma);
         if (maxRuntimeCallTarget == null) {
-            MaxForeignCall maxRuntimeCall = findMethod(cma.holder().javaClass(), cma.name(), true);
-            maxRuntimeCallTarget = new MaxForeignCallLinkage(maxRuntimeCall, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, false, ALL_LOCATIONS);
+            MaxForeignCallDescriptor maxRuntimeCall = findMethod(cma.holder().javaClass(), cma.name());
+            Transition transition = Transition.NOT_LEAF;
+            // This is a workaround for a problem with FrameStates for this call in the context of an exception branch
+            if (cma.name().equals("loadExceptionForHandler")) {
+                transition = Transition.LEAF;
+            }
+            maxRuntimeCallTarget = new MaxForeignCallLinkage(maxRuntimeCall, RegisterEffect.DESTROYS_REGISTERS, transition, false, ALL_LOCATIONS);
             map.put(maxRuntimeCall, maxRuntimeCallTarget);
             actorMap.put(cma, maxRuntimeCallTarget);
         }

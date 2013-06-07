@@ -38,6 +38,7 @@ public class AMD64ConvertSnippetsWrapper extends SnippetLowerings {
 
     public AMD64ConvertSnippetsWrapper(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, targetDescription);
+        getSnippetGraphs(AMD64ConvertSnippets.class);
     }
 
     @Override

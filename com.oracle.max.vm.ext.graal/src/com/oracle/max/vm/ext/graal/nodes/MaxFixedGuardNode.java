@@ -42,7 +42,7 @@ public class MaxFixedGuardNode extends FixedGuardNode {
         if (condition() instanceof LogicConstantNode) {
             LogicConstantNode c = (LogicConstantNode) condition();
             if (c.getValue() != isNegated()) {
-                ((StructuredGraph) graph()).removeFixed(this);
+                graph().removeFixed(this);
             }
         }
     }

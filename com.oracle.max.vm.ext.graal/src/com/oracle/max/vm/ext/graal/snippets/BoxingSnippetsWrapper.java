@@ -35,6 +35,7 @@ public class BoxingSnippetsWrapper extends SnippetLowerings {
 
     public BoxingSnippetsWrapper(CodeCacheProvider runtime, Replacements replacements, TargetDescription target, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, target);
+        getSnippetGraphs(BoxingSnippets.class);
     }
 
     @Override

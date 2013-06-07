@@ -283,7 +283,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     @Override
     public boolean canDeoptimize(ForeignCallDescriptor descriptor) {
-        return MaxForeignCallsMap.get(descriptor).isLeaf();
+        return !MaxForeignCallsMap.get(descriptor).isLeaf();
     }
 
 }
