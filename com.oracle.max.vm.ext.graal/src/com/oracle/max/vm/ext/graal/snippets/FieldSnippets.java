@@ -146,7 +146,7 @@ public class FieldSnippets extends SnippetLowerings {
             if (fieldActor.isConstantWhenNotZero() && node.object().isConstant()) {
                 CiConstant value = fieldActor.constantValue(ConstantMap.toCi(node.object().asConstant()));
                 if (value != null) {
-                    StructuredGraph graph = (StructuredGraph) node.graph();
+                    StructuredGraph graph = node.graph();
                     node.replaceAndDelete(graph.add(ConstantNode.forConstant(ConstantMap.toGraal(value), runtime, graph)));
                     return;
                 }

@@ -88,7 +88,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     // The singleton instance of this compiler
     private static MaxGraal singleton;
 
-    // Graal doesn't provide an instance that captures all this additioinal state needed
+    // Graal doesn't provide an instance that captures all this additional state needed
     // for a compilation. Instead these values are passed to compileMethod.
     private MaxRuntime runtime;
     private Backend backend;

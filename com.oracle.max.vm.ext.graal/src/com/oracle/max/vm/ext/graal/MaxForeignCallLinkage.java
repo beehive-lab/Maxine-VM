@@ -48,7 +48,7 @@ public class MaxForeignCallLinkage implements ForeignCallLinkage {
         LEAF, NOT_LEAF;
     }
 
-    private final MaxForeignCall descriptor;
+    private final MaxForeignCallDescriptor descriptor;
     private final CallingConvention callingConvention;
     private final LocationIdentity[] killedLocations;
     private final RegisterEffect effect;
@@ -57,7 +57,7 @@ public class MaxForeignCallLinkage implements ForeignCallLinkage {
 
 
     @HOSTED_ONLY
-    MaxForeignCallLinkage(MaxForeignCall descriptor, RegisterEffect effect, Transition transition, boolean reexecutable, LocationIdentity[] killedLocations) {
+    MaxForeignCallLinkage(MaxForeignCallDescriptor descriptor, RegisterEffect effect, Transition transition, boolean reexecutable, LocationIdentity[] killedLocations) {
         this.descriptor = descriptor;
         this.effect = effect;
         this.transition = transition;
@@ -92,7 +92,7 @@ public class MaxForeignCallLinkage implements ForeignCallLinkage {
         return descriptor;
     }
 
-    public MaxForeignCall getMaxRuntimeCall() {
+    public MaxForeignCallDescriptor getMaxRuntimeCall() {
         return descriptor;
     }
 

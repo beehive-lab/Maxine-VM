@@ -92,19 +92,29 @@ public class ArraySnippets extends SnippetLowerings {
             Kind elementKind = node.elementKind();
             if (node instanceof LoadIndexedNode && elementKind == Kind.Object && ((ObjectStamp) node.stamp()).type() == null) {
                 /* This is bad news as the instantiation will use this stamp in the UnsafeCastNode for the result
-                 * which will get replaced by Reference because, currently, Array.getObject has a return type of Reference.
+                 * which will get replaced by Reference because, currently, Array.getObject actually returns type Reference.
                  * The latter is a bug, but don't know how to fix it yet.
-                 * So we take the stamp from the incoming array argument and update the node with the element type.
+                 * So we (try) to take the stamp from the incoming array argument and update the node with the element type.
                  */
                 ResolvedJavaType type = ((ObjectStamp) node.array().stamp()).type();
-                Stamp elementStamp = StampFactory.declared(type.getComponentType());
-                node.setStamp(elementStamp);
+                if (type != null) {
+                    Stamp elementStamp = StampFactory.declared(type.getComponentType());
+                    node.setStamp(elementStamp);
+                } else {
+                    // TODO hmm, happens with unresolved types, what to do?
+                    problem(node);
+                }
             }
             Arguments args = new Arguments(snippets[elementKind.ordinal()]);
             args.add("array", node.array());
             args.add("index", node.index());
             storeIndexedArg(node, args);
             instantiate(node, args);
+        }
+
+        @NEVER_INLINE
+        private void problem(Node node) {
+
         }
 
         protected void storeIndexedArg(AccessIndexedNode node, Arguments args) {
