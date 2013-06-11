@@ -388,4 +388,10 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         return false;
     }
 
+    @Override
+    public boolean isSynthetic() {
+        MethodActor methodActor = (MethodActor) riMethod;
+        return methodActor.isSynthetic();
+    }
+
 }

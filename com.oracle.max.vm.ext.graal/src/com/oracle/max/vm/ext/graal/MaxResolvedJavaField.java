@@ -31,6 +31,7 @@ import com.oracle.graal.api.meta.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 
 
@@ -99,6 +100,12 @@ public class MaxResolvedJavaField extends MaxJavaField implements ResolvedJavaFi
     @Override
     public String toString() {
         return riField.toString();
+    }
+
+    @Override
+    public boolean isSynthetic() {
+        FieldActor fieldActor = (FieldActor) riField;
+        return fieldActor.isSynthetic();
     }
 
 }

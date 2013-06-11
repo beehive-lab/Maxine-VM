@@ -29,6 +29,7 @@ import com.oracle.graal.options.*;
 import com.oracle.max.vm.ext.graal.hosted.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.hosted.*;
@@ -116,7 +117,7 @@ public class MaxGraalOptions {
             field.setAccessible(true);
             optionMap.put(vmOption, (OptionValue) field.get(null));
         } catch (Exception ex) {
-            assert false : "error reading Graal option value: " + fieldName;
+            Trace.line(0, "WARNING: error reading Graal option value: " + fieldName);
         }
         return vmOption;
     }
@@ -196,7 +197,6 @@ public class MaxGraalOptions {
         register(new VMBooleanOption("-G:+", "LoopUnswitch", ""), com.oracle.graal.phases.GraalOptions.class, "LoopUnswitch");
         register(new VMIntOption("-G:LoopUnswitchMaxIncrease=", 50, ""), com.oracle.graal.phases.GraalOptions.class, "LoopUnswitchMaxIncrease");
         register(new VMIntOption("-G:LoopUnswitchUncertaintyBoost=", 5, ""), com.oracle.graal.phases.GraalOptions.class, "LoopUnswitchUncertaintyBoost");
-        register(new VMIntOption("-G:MatureProfilingInformationThreshold=", 100, ""), com.oracle.graal.phases.GraalOptions.class, "MatureProfilingInformationThreshold");
         register(new VMIntOption("-G:MaximumDesiredSize=", 5000, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumDesiredSize");
         register(new VMIntOption("-G:MaximumEscapeAnalysisArrayLength=", 32, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumEscapeAnalysisArrayLength");
         register(new VMIntOption("-G:MaximumInliningSize=", 300, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumInliningSize");
@@ -212,7 +212,6 @@ public class MaxGraalOptions {
         register(new VMBooleanOption("-G:+", "OptCanonicalizer", ""), com.oracle.graal.phases.GraalOptions.class, "OptCanonicalizer");
         register(new VMBooleanOption("-G:+", "OptConvertDeoptsToGuards", ""), com.oracle.graal.phases.GraalOptions.class, "OptConvertDeoptsToGuards");
         register(new VMBooleanOption("-G:+", "OptDevirtualizeInvokesOptimistically", ""), com.oracle.graal.phases.GraalOptions.class, "OptDevirtualizeInvokesOptimistically");
-        register(new VMBooleanOption("-G:+", "OptEarlyReadElimination", ""), com.oracle.graal.phases.GraalOptions.class, "OptEarlyReadElimination");
         register(new VMBooleanOption("-G:+", "OptEliminateGuards", ""), com.oracle.graal.phases.GraalOptions.class, "OptEliminateGuards");
         register(new VMBooleanOption("-G:+", "OptEliminatePartiallyRedundantGuards", ""), com.oracle.graal.phases.GraalOptions.class, "OptEliminatePartiallyRedundantGuards");
         register(new VMBooleanOption("-G:+", "OptEliminateSafepoints", ""), com.oracle.graal.phases.GraalOptions.class, "OptEliminateSafepoints");
@@ -267,9 +266,9 @@ public class MaxGraalOptions {
         register(new VMBooleanOption("-G:-", "VerifyPhases", ""), com.oracle.graal.phases.GraalOptions.class, "VerifyPhases");
         register(new VMBooleanOption("-G:-", "ZapStackOnMethodEntry", ""), com.oracle.graal.phases.GraalOptions.class, "ZapStackOnMethodEntry");
         // Options from com.oracle.graal.phases.common.InliningPhase
-        register(new VMBooleanOption("-G:-", "AlwaysInlineIntrinsics", "Unconditionally inline intrinsics"), com.oracle.graal.phases.common.InliningPhase.class, "AlwaysInlineIntrinsics");
+        register(new VMBooleanOption("-G:-", "AlwaysInlineIntrinsics", "Unconditionally inline intrinsics"), com.oracle.graal.phases.common.InliningPhase.Options.class, "AlwaysInlineIntrinsics");
         // Options from com.oracle.graal.phases.tiers.Suites
-        register(new VMStringOption("-G:CompilerConfiguration=", false, "basic", "The compiler configuration to use"), com.oracle.graal.phases.tiers.Suites.class, "CompilerConfiguration");
+        register(new VMStringOption("-G:CompilerConfiguration=", false, "basic", "The compiler configuration to use"), com.oracle.graal.phases.tiers.Suites.Options.class, "CompilerConfiguration");
     }
 // END GENERATED CODE
 

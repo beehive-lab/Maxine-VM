@@ -187,10 +187,9 @@ public class MaxGraalOptionsGenerator extends SourceGenerator {
                         defaultValue += ", ";
                     }
                     // Checkstyle: resume
-                    int ix = d.getLocation().lastIndexOf('.');
-                    String klass = d.getLocation().substring(0, ix);
-                    String field = d.getLocation().substring(ix + 1);
-                    out.printf("        register(new VM%sOption(\"%s\", %s%s%s\"%s\"), %s.class, \"%s\");%n", typeName, prefix, name, space, defaultValue, d.getHelp(), klass, field);
+                    String className = d.getDeclaringClass().getName().replace('$', '.');
+                    out.printf("        register(new VM%sOption(\"%s\", %s%s%s\"%s\"), %s, \"%s\");%n",
+                                    typeName, prefix, name, space, defaultValue, d.getHelp(), className + ".class", d.getFieldName());
                 }
             } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException ex) {
                 FatalError.unexpected("error processing " + optionsClass.getName(), ex);
@@ -209,7 +208,8 @@ public class MaxGraalOptionsGenerator extends SourceGenerator {
     }
 
     public static void main(String[] args) throws IOException {
-        if (new MaxGraalOptionsGenerator(null).generate(false, MaxGraalOptions.class)) {
+        boolean check = args.length > 0 && args[0].equals("-check");
+        if (new MaxGraalOptionsGenerator(null).generate(check, MaxGraalOptions.class)) {
             System.exit(1);
         }
     }
