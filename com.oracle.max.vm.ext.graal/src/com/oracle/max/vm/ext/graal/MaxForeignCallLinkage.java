@@ -122,8 +122,8 @@ public class MaxForeignCallLinkage implements ForeignCallLinkage {
      * Determines if this is call to a function that does not lock, GC or throw exceptions. That is,
      * the thread's execution state during the call is never inspected by another thread.
      */
-    public boolean isLeaf() {
-        return transition == Transition.LEAF;
+    public boolean canDeoptimize() {
+        return transition != Transition.LEAF;
     }
 
 }

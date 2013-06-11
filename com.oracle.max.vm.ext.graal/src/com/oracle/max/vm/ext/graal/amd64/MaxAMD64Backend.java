@@ -42,6 +42,8 @@ import com.oracle.graal.lir.amd64.*;
 import com.oracle.graal.lir.amd64.AMD64Move.*;
 import com.oracle.graal.lir.asm.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.calc.*;
+import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.phases.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
@@ -167,6 +169,59 @@ public class MaxAMD64Backend extends Backend {
             append(new MaxAMD64DeoptimizeOp(action, deopting.getDeoptimizationReason(), state(deopting)));
         }
 
+        @Override
+        public Value emitLoad(Kind kind, Value address, DeoptimizingNode deopting) {
+            AMD64AddressValue loadAddress = asAddressValue(address);
+            Variable result = newVariable(kind);
+            append(new LoadOp(kind, result, loadAddress, deopting != null ? state(deopting) : null));
+            return result;
+        }
+
+        @Override
+        public void emitStore(Kind kind, Value address, Value inputVal, DeoptimizingNode deopting) {
+            AMD64AddressValue storeAddress = asAddressValue(address);
+            LIRFrameState state = deopting != null ? state(deopting) : null;
+
+            if (isConstant(inputVal)) {
+                Constant c = asConstant(inputVal);
+                if (canStoreConstant(c)) {
+                    append(new StoreConstantOp(kind, storeAddress, c, state, false));
+                    return;
+                }
+            }
+
+            Variable input = load(inputVal);
+            append(new StoreOp(kind, storeAddress, input, state));
+        }
+
+        @Override
+        public void visitCompareAndSwap(CompareAndSwapNode node) {
+            Kind kind = node.newValue().kind();
+            assert kind == node.expected().kind();
+
+            Value expected = loadNonConst(operand(node.expected()));
+            Variable newValue = load(operand(node.newValue()));
+
+            AMD64AddressValue address;
+            int displacement = node.displacement();
+            Value index = operand(node.offset());
+            if (isConstant(index) && NumUtil.isInt(asConstant(index).asLong() + displacement)) {
+                assert !runtime.needsDataPatch(asConstant(index));
+                displacement += (int) asConstant(index).asLong();
+                address = new AMD64AddressValue(kind, load(operand(node.object())), displacement);
+            } else {
+                address = new AMD64AddressValue(kind, load(operand(node.object())), load(index), Scale.Times1, displacement);
+            }
+
+            RegisterValue rax = AMD64.rax.asValue(kind);
+            emitMove(rax, expected);
+            append(new CompareAndSwapOp(rax, address, rax, newValue));
+
+            Variable result = newVariable(node.kind());
+            append(new AMD64ControlFlow.CondMoveOp(result, Condition.EQ, load(Constant.TRUE), Constant.FALSE));
+            setResult(node, result);
+        }
+
     }
 
     protected static class MaxAMD64FrameContext implements FrameContext {
@@ -207,7 +262,7 @@ public class MaxAMD64Backend extends Backend {
                 int lastFramePage = frameSize / Platform.platform().pageSize;
                 // emit multiple stack bangs for methods with frames larger than a page
                 for (int i = 0; i <= lastFramePage; i++) {
-                    int offset = (i + GraalOptions.StackShadowPages) * Platform.platform().pageSize;
+                    int offset = (i + GraalOptions.StackShadowPages.getValue()) * Platform.platform().pageSize;
                     // Deduct 'frameSize' to handle frames larger than the shadow
                     bangStackWithOffset(tasm, asm, offset - frameSize);
                 }

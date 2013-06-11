@@ -27,9 +27,9 @@ import com.sun.max.annotate.*;
 import com.sun.max.util.timer.*;
 
 /**
- * A {@linkplain VMBooleanXXOption boolean VM} option that enables a timer.
+ * A {@linkplain VMBooleanOption boolean VM} option that enables a timer.
  */
-public class TimerOption extends VMBooleanXXOption {
+public class TimerOption extends VMBooleanOption {
 
     protected final TimerMetric timerMetric;
     protected final String label;

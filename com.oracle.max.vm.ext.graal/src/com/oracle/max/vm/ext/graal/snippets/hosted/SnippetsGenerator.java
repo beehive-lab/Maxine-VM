@@ -22,50 +22,14 @@
  */
 package com.oracle.max.vm.ext.graal.snippets.hosted;
 
-import java.io.*;
-
 import com.oracle.graal.api.meta.*;
-import com.sun.max.ide.*;
-import com.sun.max.io.*;
+import com.oracle.max.vm.ext.graal.hosted.*;
 
 
-public abstract class SnippetsGenerator {
+public abstract class SnippetsGenerator extends SourceGenerator {
 
     protected static final String UNSAFE_CAST_BEFORE = "UnsafeCastNode.unsafeCast(";
     protected static final String UNSAFE_CAST_AFTER = ", StampFactory.forNodeIntrinsic())";
-
-    protected PrintStream out;
-    private ByteArrayOutputStream baos;
-
-    protected SnippetsGenerator() {
-        this.baos = new ByteArrayOutputStream();
-        this.out = new PrintStream(baos);
-    }
-
-
-    protected boolean generate(boolean checkOnly, Class<?> target) throws IOException {
-        File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm.ext.graal/src");
-        File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
-        doGenerate();
-        ReadableSource content = ReadableSource.Static.fromString(baos.toString());
-        boolean result = Files.updateGeneratedContent(outputFile, content, "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
-        if (result) {
-            System.out.println("Source for " + target + (checkOnly ? " would be" : " was") + " updated");
-        }
-        return result;
-    }
-
-    /**
-     * Returns the argument with first character upper-cased.
-     * @param s
-     */
-    protected String toFirstUpper(String s) {
-        if (s.length() == 0) {
-            return s;
-        } else {
-            return s.substring(0, 1).toUpperCase() + s.substring(1);
-        }
-    }
 
     protected String replace(String template, String param, String arg) {
         return template.replaceAll(param, arg);
@@ -86,8 +50,6 @@ public abstract class SnippetsGenerator {
     protected boolean notVoidOrIllegal(Kind kind) {
         return !(kind == Kind.Void || kind == Kind.Illegal);
     }
-
-    protected abstract void doGenerate() throws IOException;
 
 
 }

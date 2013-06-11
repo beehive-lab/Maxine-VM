@@ -272,6 +272,10 @@ public class VMOption {
         return Category.from(prefix);
     }
 
+    public String name() {
+        return name;
+    }
+
     @Override
     public final boolean equals(Object obj) {
         if (obj instanceof VMOption) {

@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import java.util.*;
+
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
@@ -90,8 +92,11 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
     }
 
     /**
-     * Remove unnecessary checks for {@code null} on {@link Word} subclasses.
+     * Remove unnecessary checks for {@code null} on {@link Word} subclasses
      * Also remove null checks on access to {@link Hub} and subclasses.
+     * It is only called during snippet generation and boot image compilation.
+     * These generally arise from inlining a method, where the JVM spec requires
+     * an explicit null check to happen.
      */
     public static class MaxNullCheckRewriter extends MaxWordTypeRewriterPhase {
 
@@ -121,16 +126,58 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
         private void removeNullCheck(StructuredGraph graph, FixedGuardNode fixedGuardNode) {
             IsNullNode isNullNode = (IsNullNode) fixedGuardNode.condition();
             ValueNode object = isNullNode.object();
-            // Check for a Word object, a Reference object, or a Hub or a nonNull object (can arise from runtime call rewrites)
-            ResolvedJavaType objectType = object.objectStamp().type();
-            if (object.objectStamp().nonNull() || (objectType != null && (isWordOrReference(objectType) || hubType.isAssignableFrom(objectType)))) {
+            if (canRemove(object)) {
+                if (fixedGuardNode.usages().isNotEmpty()) {
+                    checkForPiNode(fixedGuardNode);
+                }
                 graph.removeFixed(fixedGuardNode);
                 // If the IsNullNode is only used by this FixedGuard node we can also delete that.
                 // N.B. The previous call will have removed the FixedGuard node from the IsNullNode usages
                 if (isNullNode.usages().isEmpty()) {
                     GraphUtil.killWithUnusedFloatingInputs(isNullNode);
                 }
+            } else {
+                ResolvedJavaType objectType = object.objectStamp().type();
+                Debug.log("%s: nullCheck not removed on %s", objectType == null ? object : objectType.getName(), graph.method());
             }
+        }
+
+        /**
+         * Check if it is safe to remove the null check.
+         * @param object the object that is the subject of the check
+         * @return
+         */
+        private boolean canRemove(ValueNode object) {
+            ResolvedJavaType objectType = object.objectStamp().type();
+            // Check for a Word object, a Reference object, or a Hub or a nonNull object (can arise from runtime call rewrites)
+            if (object.objectStamp().nonNull() || (objectType != null && (isWordOrReference(objectType) || hubType.isAssignableFrom(objectType)))) {
+                return true;
+            } else if (object instanceof LoadFieldNode) {
+                // field loads from Hub objects are guaranteed non-null
+                ResolvedJavaType fieldObjectType = ((LoadFieldNode) object).object().objectStamp().type();
+                return hubType.isAssignableFrom(fieldObjectType);
+            } else {
+                return false;
+            }
+
+        }
+
+        public static void checkForPiNode(FixedGuardNode fixedGuardNode) {
+            // Likely a PiNode inserted during inlining
+            Node usage = getSingleUsage(fixedGuardNode);
+            if (usage.getClass() ==  PiNode.class) {
+                PiNode pi = (PiNode) usage;
+                fixedGuardNode.graph().replaceFloating(pi, pi.object());
+            } else {
+                assert false;
+            }
+
+        }
+
+        private static Node getSingleUsage(Node node) {
+            List<Node> usages = node.usages().snapshot();
+            assert usages.size() == 1;
+            return usages.get(0);
         }
 
     }
@@ -219,24 +266,13 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
                     }
                 }
                 if (delete) {
-                    logReplace(unsafeCastNode, object);
+                    Debug.log("Replacing %s with %s", unsafeCastNode.stamp(), object.stamp());
                     graph.replaceFloating(unsafeCastNode, object);
                 }
             }
 
         }
 
-        private static final String MAX_UNSAFE_CAST_REPLACE = "MaxUnsafeCastReplace";
-
-        private static void logReplace(final MaxUnsafeCastNode unsafeCastNode, final ValueNode castee) {
-            Debug.scope(MAX_UNSAFE_CAST_REPLACE, new Runnable() {
-
-                public void run() {
-                    Debug.log("MaxUnsafeCast: replacing %s with %s", unsafeCastNode.stamp(), castee.stamp());
-                }
-            });
-
-        }
     }
 
     /**

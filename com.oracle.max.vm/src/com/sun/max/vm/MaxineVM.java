@@ -556,6 +556,9 @@ public final class MaxineVM {
     public static native float native_parseFloat(Pointer pointer, float nan);
 
     @C_FUNCTION
+    public static native double native_parseDouble(Pointer pointer, double nan);
+
+    @C_FUNCTION
     public static native void native_exit(int code);
 
     @C_FUNCTION

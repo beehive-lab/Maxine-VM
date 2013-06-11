@@ -35,9 +35,9 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.HeapAccess.WriteBarrierType;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.extended.*;
-import com.oracle.graal.nodes.extended.WriteNode.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
@@ -64,9 +64,9 @@ public class MaxIntrinsics {
             StructuredGraph graph = invoke.graph();
             IndexedLocationNode location = IndexedLocationNode.create(LocationIdentity.ANY_LOCATION,
                             checkWord(method.getSignature().getReturnType(null)), 0, offset, graph, 1);
-            ReadNode memoryRead = graph.add(new ReadNode(pointer, location, stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass()))));
-            // An unsafe read must not float outside its block as may float above an explicit null check on its object.
-            memoryRead.setGuard(AbstractBeginNode.prevBegin(invoke));
+            ReadNode memoryRead = graph.add(new ReadNode(pointer, location,
+                            stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())),
+                            AbstractBeginNode.prevBegin(invoke), WriteBarrierType.NONE, false));
             return memoryRead;
         }
     }
@@ -77,7 +77,7 @@ public class MaxIntrinsics {
             Signature sig = method.getSignature();
             IndexedLocationNode location = IndexedLocationNode.create(LocationIdentity.ANY_LOCATION,
                             checkWord(sig.getParameterType(sig.getParameterCount(false) - 1, null)), 0, offset, graph, 1);
-            WriteNode write = graph.add(new WriteNode(pointer, value, location, WriteBarrierType.NONE));
+            WriteNode write = graph.add(new WriteNode(pointer, value, location, WriteBarrierType.NONE, false));
             return write;
         }
     }
@@ -90,9 +90,9 @@ public class MaxIntrinsics {
             ValueNode scaledIndex = scaledIndex(graph, dataKind, index);
             LocationNode location = ExtendedIndexedLocationNode.create(LocationIdentity.ANY_LOCATION,
                             checkWord(method.getSignature().getReturnType(null)), displacement, graph, scaledIndex);
-            ReadNode memoryRead = graph.add(new ReadNode(pointer, location, stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass()))));
-            // An unsafe read must not float outside its block as may float above an explicit null check on its object.
-            memoryRead.setGuard(AbstractBeginNode.prevBegin(invoke));
+            ReadNode memoryRead = graph.add(new ReadNode(pointer, location,
+                            stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())),
+                            AbstractBeginNode.prevBegin(invoke), WriteBarrierType.NONE, false));
             return memoryRead;
         }
     }
@@ -105,7 +105,7 @@ public class MaxIntrinsics {
             ValueNode scaledIndex = scaledIndex(graph, dataKind, index);
             LocationNode location = ExtendedIndexedLocationNode.create(LocationIdentity.ANY_LOCATION,
                             checkWord(sig.getParameterType(sig.getParameterCount(false) - 1, null)), displacement, graph, scaledIndex);
-            WriteNode write = graph.add(new WriteNode(pointer, value, location, WriteBarrierType.NONE));
+            WriteNode write = graph.add(new WriteNode(pointer, value, location, WriteBarrierType.NONE, false));
             return write;
         }
     }

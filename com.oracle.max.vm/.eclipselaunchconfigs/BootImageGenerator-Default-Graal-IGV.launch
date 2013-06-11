@@ -34,7 +34,7 @@
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/Java SE 1.7.0_17"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.vm.hosted.BootImageGenerator"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -opt=C1XGraal -threads=1 --G:Dump= --G:MethodFilter=*.*"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -opt=C1XGraal -threads=1 --G:Dump= --G:MethodFilter=*.* --G:Log=MaxNullCheckRewriter"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.oracle.max.vm"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xss2m -Xms1G -Xmx2G -Dmax.trace.noconsoles -Dmax.ir.trace=xxx -Djava.ext.dirs=${workspace_loc}/graal/jdk1.7.0_17/product/jre/lib/ext"/>
 </launchConfiguration>
