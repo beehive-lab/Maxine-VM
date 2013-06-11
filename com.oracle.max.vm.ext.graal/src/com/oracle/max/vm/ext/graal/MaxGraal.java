@@ -235,11 +235,14 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                 // intrinsics are (obviously) not inlined, so they are left in the graph and need to be rewritten now
                 phasePlan.addPhase(PhasePosition.HIGH_LEVEL, new MaxIntrinsicsPhase());
 
+                /*
+                 * TODO Need to modify the mid-tier suites to achieve this now as LOW_LEVEL has gone.
                 // Always the very last thing, rewrite Word types
                 phasePlan.addPhase(PhasePosition.LOW_LEVEL,
                                 new MaxWordTypeRewriterPhase.KindRewriter(runtime, runtime.maxTargetDescription.wordKind));
                 // An ad hoc mechanism for detecting being in the low tier
                 phasePlan.addPhase(PhasePosition.LOW_LEVEL, new StartingLowTier());
+                */
 
             }
             graph = new StructuredGraph(method);
