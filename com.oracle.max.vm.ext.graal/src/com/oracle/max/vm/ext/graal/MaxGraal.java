@@ -74,13 +74,13 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         private final ConcurrentMap<ResolvedJavaMethod, StructuredGraph> cache = new ConcurrentHashMap<ResolvedJavaMethod, StructuredGraph>();
 
         @Override
-        public void put(StructuredGraph graph) {
-            cache.put(graph.method(), graph);
+        public StructuredGraph get(ResolvedJavaMethod method) {
+            return cache.get(method);
         }
 
         @Override
-        public StructuredGraph get(ResolvedJavaMethod method) {
-            return cache.get(method);
+        public void put(StructuredGraph graph, boolean hasMatureProfilingInfo) {
+            cache.put(graph.method(), graph);
         }
     }
 
@@ -145,13 +145,13 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     @Override
     public void initialize(Phase phase) {
         if (phase == MaxineVM.Phase.HOSTED_COMPILING) {
-            MaxGraalOptions.initialize();
+            MaxGraalOptions.initialize(phase);
             createGraalCompiler(phase);
         } else if (phase == MaxineVM.Phase.SERIALIZING_IMAGE) {
             TraceNodeClasses.scan();
             FieldIntrospection.rescanAllFieldOffsets(new TraceDefaultAndSetMaxineFieldOffset());
             // reset the default
-            GraalOptions.OptPushThroughPi = true;
+            GraalOptions.OptPushThroughPi.setValue(true);
         } else if (phase == MaxineVM.Phase.STARTING) {
             // Compilations can occur after this, so set up the debug environment
             DebugEnvironment.initialize(System.out);
@@ -170,7 +170,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         changeInlineLimits();
         // Disable for now as it causes problems in DebugInfo
         if (!MaxGraalOptions.isPresent("PartialEscapeAnalysis")) {
-            GraalOptions.PartialEscapeAnalysis = false;
+            GraalOptions.PartialEscapeAnalysis.setValue(false);
         }
         if (!MaxGraalOptions.isPresent("OptPushThroughPi")) {
             /*
@@ -180,9 +180,9 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
              * we could perhaps fix this by running the KindRewriter before the mid-level suite.
              * There is no way to disable this phase (unlike InliningPhase) so we do it via an option.
              */
-            GraalOptions.OptPushThroughPi = false;
+            GraalOptions.OptPushThroughPi.setValue(false);
         }
-        suites = Suites.createSuites(GraalOptions.CompilerConfiguration);
+        suites = Suites.createDefaultSuites();
         replacements = runtime.init();
         GraalBoot.forceValues();
     }
@@ -193,7 +193,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
      */
     private static void changeInlineLimits() {
         if (!MaxGraalOptions.isPresent("MaximumInliningSize")) {
-            GraalOptions.MaximumInliningSize = 100;
+            GraalOptions.MaximumInliningSize.setValue(100);
         }
     }
 
@@ -219,7 +219,8 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                 // We do this early to reduce the size of a graph that contains isHosted code.
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxFoldPhase(runtime));
                 // Any folded isHosted code is only removed by a CanonicalizationPhase
-                phasePlan.addPhase(PhasePosition.AFTER_PARSING, new CanonicalizerPhase.Instance(runtime, new Assumptions(GraalOptions.OptAssumptions)));
+                phasePlan.addPhase(PhasePosition.AFTER_PARSING, new CanonicalizerPhase.Instance(runtime,
+                                new Assumptions(GraalOptions.OptAssumptions.getValue()), GraalOptions.OptCanonicalizeReads.getValue()));
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxIntrinsicsPhase());
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING,
                                 new MaxWordTypeRewriterPhase.MakeWordFinalRewriter(runtime, runtime.maxTargetDescription.wordKind));
@@ -228,7 +229,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                 // and substitute a custom phase that checks the method annotation.
                 phasePlan.disablePhase(InliningPhase.class);
                 phasePlan.addPhase(PhasePosition.HIGH_LEVEL,
-                                new MaxHostedInliningPhase(runtime, null, replacements, new Assumptions(GraalOptions.OptAssumptions), cache, phasePlan, optimisticOpts));
+                                new MaxHostedInliningPhase(runtime, null, replacements, new Assumptions(GraalOptions.OptAssumptions.getValue()), cache, phasePlan, optimisticOpts));
                 // Important to remove bogus null checks on Word types
                 phasePlan.addPhase(PhasePosition.HIGH_LEVEL, new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, runtime.maxTargetDescription.wordKind));
                 // intrinsics are (obviously) not inlined, so they are left in the graph and need to be rewritten now

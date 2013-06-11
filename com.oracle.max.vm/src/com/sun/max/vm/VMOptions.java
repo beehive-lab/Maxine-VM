@@ -126,6 +126,35 @@ public class VMOptions {
     }
 
     /**
+     * A VM option of the form {@code "-XX:name=value"} that updates a {@code float} field when
+     * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
+     */
+    public static final class DoubleFieldOption extends VMDoubleOption {
+
+        public final Field field;
+
+        DoubleFieldOption(String prefix, Double defaultValue, String help, Field field) {
+            super(prefix, defaultValue, help);
+            this.field = field;
+        }
+
+        @Override
+        public boolean parseValue(Pointer optionValue) {
+            boolean result = super.parseValue(optionValue);
+            if (result) {
+                if (MaxineVM.isHosted()) {
+                    setFieldValue(field, getValue());
+                } else {
+                    FieldActor fieldActor = FieldActor.fromJava(field);
+                    Reference.fromJava(fieldActor.holder().staticTuple()).writeDouble(fieldActor.offset(), getValue());
+                }
+                return true;
+            }
+            return result;
+        }
+    }
+
+    /**
      * A VM option of the form {@code "-XX:name=value"} that updates an {@code int} field when
      * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
      */
@@ -198,7 +227,7 @@ public class VMOptions {
      * A VM option of the form {@code "-XX:[+|-]name=value"} that updates a {@code boolean} field when
      * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
      */
-    public static final class BooleanFieldOption extends VMBooleanXXOption {
+    public static final class BooleanFieldOption extends VMBooleanOption {
 
         public final Field field;
 
@@ -350,7 +379,7 @@ public class VMOptions {
             }
         }, MaxineVM.Phase.PRISTINE);
 
-        register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exit") {
+        register(new VMBooleanOption("-XX:-PrintConfiguration", "Show VM configuration details and exit") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 Log.println("  Platform: " + platform());
@@ -363,7 +392,7 @@ public class VMOptions {
             }
         }, MaxineVM.Phase.STARTING);
 
-        register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continue") {
+        register(new VMBooleanOption("-XX:-ShowConfiguration", "Show VM configuration details and continue") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 Log.println("  Platform: " + platform());
@@ -395,7 +424,7 @@ public class VMOptions {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
             int colon = option.prefix.indexOf(':');
             assert colon != -1;
-            final int prefixLength = option instanceof VMBooleanXXOption ? colon + 2 : colon + 1;
+            final int prefixLength = option instanceof VMBooleanOption ? colon + 2 : colon + 1;
             final String name = option.prefix.substring(prefixLength);
             ProgramError.check(Character.isUpperCase(name.charAt(0)), "Option with \"-XX:\" prefix must start with an upper-case letter: " + option);
         }
@@ -581,24 +610,6 @@ public class VMOptions {
         } catch (Exception e) {
             throw ProgramError.unexpected("Error creating VM option for " + field, e);
         }
-    }
-
-    /**
-     * Locates an option added by {@link #addFieldOption}.
-     * @param prefix the option prefix
-     * @param name the option name
-     * @return the {@link VMOption} object or {@code null} if not found
-     */
-    public static VMOption findFieldOption(String prefix, String name) {
-        VMOption result = null;
-        for (int i = 0; i < startingPhaseOptions.length; i++) {
-            VMOption vmOption = startingPhaseOptions[i];
-            if (vmOption.name.equals(name) && vmOption.prefix.startsWith(prefix)) {
-                result = vmOption;
-                break;
-            }
-        }
-        return result;
     }
 
     public static void printHelpForOption(Category category, String prefix, String value, String help) {

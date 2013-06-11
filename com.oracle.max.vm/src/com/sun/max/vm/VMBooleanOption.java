@@ -27,10 +27,9 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Support for HotSpot style boolean options that start with "-XX:+" or "-XX:-".
- * Boolean options are turned on with -XX:+<option> and turned off with -XX:-<option>.
+ * Support for HotSpot style boolean options that start with a prefix (typically "-XX:+" or "-XX:-").
  */
-public class VMBooleanXXOption extends VMOption {
+public class VMBooleanOption extends VMOption {
 
     protected final String inversePrefix;
     protected final int plusOrMinusIndex;
@@ -46,7 +45,7 @@ public class VMBooleanXXOption extends VMOption {
      * @param help the help text for the option
      */
     @HOSTED_ONLY
-    public VMBooleanXXOption(String name, String help) {
+    public VMBooleanOption(String name, String help) {
         this(getXXPrefix(name), name.substring(5), help);
     }
 
@@ -55,13 +54,14 @@ public class VMBooleanXXOption extends VMOption {
      *
      * <b>The caller is responsible for registering this option in the global registry or VM options.</b>
      *
-     * @param prefix a prefix that must end with {@code '+'} or {@code '-'} to indicate te default value of the option
+     * @param prefix a prefix that must end with {@code '+'} or {@code '-'} to indicate the default value of the option
      * @param name the name of the option, including the leading '-' character. The default {@linkplain #getValue()
      *            value} of the option is true or false depending on whether the prefix starts with "-XX:+" or "-XX:-"
      *            respectively.
      * @param help the help text for the option
      */
-    public VMBooleanXXOption(String prefix, String name, String help) {
+    @HOSTED_ONLY
+    public VMBooleanOption(String prefix, String name, String help) {
         super(prefix + name + " ", help);
         plusOrMinusIndex = prefix.length() - 1;
         if (prefix.charAt(plusOrMinusIndex) == '+') {

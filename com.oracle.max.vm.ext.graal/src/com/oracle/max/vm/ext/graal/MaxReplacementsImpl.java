@@ -87,7 +87,7 @@ class MaxReplacementsImpl extends ReplacementsImpl {
             new MaxWordTypeRewriterPhase.MakeWordFinalRewriter(runtime, target.wordKind).apply(graph);
             new NodeIntrinsificationPhase(runtime).apply(graph);
             // need constant propagation for folded methods
-            new CanonicalizerPhase.Instance(runtime, assumptions).apply(graph);
+            new CanonicalizerPhase.Instance(runtime, assumptions, GraalOptions.OptCanonicalizeReads.getValue()).apply(graph);
 
             return graph;
         }
@@ -95,7 +95,7 @@ class MaxReplacementsImpl extends ReplacementsImpl {
         @Override
         public void afterInline(StructuredGraph caller, StructuredGraph callee) {
             new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, target.wordKind).apply(caller);
-            new CanonicalizerPhase.Instance(runtime, assumptions).apply(caller);
+            new CanonicalizerPhase.Instance(runtime, assumptions, GraalOptions.OptCanonicalizeReads.getValue()).apply(caller);
             new MaxIntrinsicsPhase().apply(caller);
         }
 
@@ -123,7 +123,7 @@ class MaxReplacementsImpl extends ReplacementsImpl {
             new NodeIntrinsificationPhase(runtime).apply(graph);
 
             new DeadCodeEliminationPhase().apply(graph);
-            new CanonicalizerPhase.Instance(runtime, assumptions).apply(graph);
+            new CanonicalizerPhase.Instance(runtime, assumptions, GraalOptions.OptCanonicalizeReads.getValue()).apply(graph);
 
         }
     }

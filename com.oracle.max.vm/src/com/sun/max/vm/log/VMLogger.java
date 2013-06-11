@@ -76,8 +76,8 @@ public class VMLogger {
     private final BitSet logOp;
     private final BitSet logOpCLI;
 
-    public final VMBooleanXXOption logOption;
-    public final VMBooleanXXOption traceOption;
+    public final VMBooleanOption logOption;
+    public final VMBooleanOption traceOption;
     public final VMStringOption logIncludeOption;
     public final VMStringOption logExcludeOption;
     private boolean logEnabled;
@@ -118,8 +118,8 @@ public class VMLogger {
         logOpCLI = new BitSet(numOps);
         String logName = "Log" + name;
         String description = optionDescription ==  null ? name : " " + optionDescription;
-        logOption = new VMBooleanXXOption("-XX:-" + logName, "Log" + description);
-        traceOption = new VMBooleanXXOption("-XX:-" + "Trace" + name, "Trace" + description);
+        logOption = new VMBooleanOption("-XX:-" + logName, "Log" + description);
+        traceOption = new VMBooleanOption("-XX:-" + "Trace" + name, "Trace" + description);
         logIncludeOption = new VMStringOption("-XX:" + logName + "Include=", false, null, "list of " + name + " operations to include");
         logExcludeOption = new VMStringOption("-XX:" + logName + "Exclude=", false, null, "list of " + name + " operations to exclude");
         VMOptions.register(logOption, MaxineVM.Phase.PRISTINE);

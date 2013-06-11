@@ -36,6 +36,7 @@ import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
+import com.oracle.max.vm.ext.graal.MaxWordTypeRewriterPhase.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
@@ -76,6 +77,9 @@ public class TypeSnippets extends SnippetLowerings {
             switch (node.getReason()) {
                 case NullCheckException: {
                     args = new Arguments(snippet);
+                    if (node.usages().isNotEmpty()) {
+                        MaxNullCheckRewriter.checkForPiNode(node);
+                    }
                     break;
                 }
                 default:

@@ -152,7 +152,7 @@ public abstract class Trap {
     /**
      * A VM option to enable tracing of traps, both in the C and Java parts of trap handling.
      */
-    private static VMBooleanXXOption TraceTrapsOption = register(new VMBooleanXXOption("-XX:-TraceTraps", "Trace traps.") {
+    private static VMBooleanOption TraceTrapsOption = register(new VMBooleanOption("-XX:-TraceTraps", "Trace traps.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             TraceTraps = TraceTrapsOption.getValue();

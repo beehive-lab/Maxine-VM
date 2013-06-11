@@ -91,7 +91,7 @@ public final class SignalDispatcher extends Thread {
         }
     }
 
-    private static VMBooleanXXOption TraceSignalsOption = register(new VMBooleanXXOption("-XX:-TraceSignals", "Trace traps.") {
+    private static VMBooleanOption TraceSignalsOption = register(new VMBooleanOption("-XX:-TraceSignals", "Trace traps.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             TraceSignals = TraceSignalsOption.getValue();
