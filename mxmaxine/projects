@@ -110,7 +110,7 @@ project@com.oracle.max.elf@javaCompliance=1.6
 project@com.oracle.max.vm@sourceDirs=src,demo
 project@com.oracle.max.vm@dependencies=com.oracle.max.base,JDK_TOOLS,com.oracle.max.asm,com.oracle.graal.replacements
 project@com.oracle.max.vm@checkstyle=com.oracle.max.base
-project@com.oracle.max.vm@javaCompliance=1.6
+project@com.oracle.max.vm@javaCompliance=1.7
 
 project@com.oracle.max.vm.tests@sourceDirs=src
 project@com.oracle.max.vm.tests@dependencies=com.oracle.max.vm,com.oracle.max.tests
