@@ -179,17 +179,17 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Fold
     int offsetOfMTableStartIndex() {
-        return FieldActor.findInstance(Hub.class, "mTableStartIndex").offset();
+        return FieldActor.findInstance(ClassActor.fromJava(Hub.class), "mTableStartIndex").offset();
     }
 
     @Fold
     int offsetOfMTableLength() {
-        return FieldActor.findInstance(Hub.class, "mTableLength").offset();
+        return FieldActor.findInstance(ClassActor.fromJava(Hub.class), "mTableLength").offset();
     }
 
     @Fold
     int offsetOfTupleSize() {
-        return FieldActor.findInstance(Hub.class, "tupleSize").offset();
+        return FieldActor.findInstance(ClassActor.fromJava(Hub.class), "tupleSize").offset();
     }
 
     @Fold
@@ -751,7 +751,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.jeq(store, value, asm.o(null)); // first check if value is null
             valueHub = asm.createTemp("valueHub", CiKind.Object);
             compHub = asm.createTemp("compHub", CiKind.Object);
-            int compHubOffset = FieldActor.findInstance(Hub.class, "componentHub").offset();
+            int compHubOffset = FieldActor.findInstance(ClassActor.fromJava(Hub.class), "componentHub").offset();
             asm.pload(CiKind.Object, compHub, array, asm.i(hubOffset()), !genBoundsCheck);
             asm.pload(CiKind.Object, compHub, compHub, asm.i(compHubOffset), false);
             asm.pload(CiKind.Object, valueHub, value, asm.i(hubOffset()), false);

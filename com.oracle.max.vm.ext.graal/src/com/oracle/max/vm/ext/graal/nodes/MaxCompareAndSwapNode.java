@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.graal.nodes;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.amd64.MaxAMD64Backend.MaxAMD64LIRGenerator;
 
 /**
@@ -33,9 +34,9 @@ import com.oracle.max.vm.ext.graal.amd64.MaxAMD64Backend.MaxAMD64LIRGenerator;
  */
 public class MaxCompareAndSwapNode extends CompareAndSwapNode {
 
-    public MaxCompareAndSwapNode(ValueNode object, int displacement, ValueNode offset, ValueNode expected, ValueNode newValue) {
+    public MaxCompareAndSwapNode(Stamp stamp, ValueNode object, int displacement, ValueNode offset, ValueNode expected, ValueNode newValue) {
         super(object, displacement, offset, expected, newValue);
-        setStamp(expected.stamp());
+        setStamp(stamp);
     }
 
     @Override

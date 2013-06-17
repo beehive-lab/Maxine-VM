@@ -91,7 +91,7 @@ project@com.oracle.max.vm.ext.graal@javaCompliance=1.7
 project@com.oracle.max.vm.ext.c1xgraal@sourceDirs=src
 project@com.oracle.max.vm.ext.c1xgraal@dependencies=com.oracle.max.vm.ext.graal,com.oracle.max.vm.ext.c1x
 project@com.oracle.max.vm.ext.c1xgraal@checkstyle=com.oracle.max.base
-project@com.oracle.max.vm.ext.c1xgraal@javaCompliance=1.6
+project@com.oracle.max.vm.ext.c1xgraal@javaCompliance=1.7
 
 project@com.oracle.max.vm.ext.t1x@sourceDirs=src
 project@com.oracle.max.vm.ext.t1x@dependencies=com.oracle.max.vm.ext.maxri

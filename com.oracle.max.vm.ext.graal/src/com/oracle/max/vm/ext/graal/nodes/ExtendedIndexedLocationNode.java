@@ -23,8 +23,12 @@
 package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.compiler.amd64.*;
 import com.oracle.graal.graph.*;
+import com.oracle.graal.lir.*;
+import com.oracle.graal.lir.amd64.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.calc.ConvertNode.Op;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
@@ -87,9 +91,9 @@ public class ExtendedIndexedLocationNode extends LocationNode implements Canonic
 
     @Override
     public Value generateAddress(LIRGeneratorTool gen, Value base) {
-        // TODO handle non-constant displacement
-        assert false;
-        return null;
+        Value displacementRegister = gen.emitConvert(Op.I2L, gen.operand(displacement));
+        Value v = gen.emitAdd(base, displacementRegister);
+        return gen.emitAddress(v, 0, gen.operand(scaledIndex), 1);
     }
 
 }

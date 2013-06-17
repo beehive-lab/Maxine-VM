@@ -732,8 +732,8 @@ public class FieldActor extends MemberActor implements RiResolvedField {
     }
 
     @Fold
-    public static FieldActor findInstance(Class javaClass, String name) {
-        return ClassActor.fromJava(javaClass).findLocalInstanceFieldActor(name);
+    public static FieldActor findInstance(ClassActor classActor, String name) {
+        return classActor.findLocalInstanceFieldActor(name);
     }
 
     public final int accessFlags() {

@@ -29,7 +29,6 @@ import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ri.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 
@@ -173,11 +172,11 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
     public boolean canBeInlined() {
         boolean result = true;
         // Maxine specific constraints on inlining
-        MethodActor ma = (MethodActor) riResolvedMethod();
+        ClassMethodActor ma = (ClassMethodActor) riResolvedMethod();
         if (ma.isIntrinsic() || ma.isNeverInline()) {
             result = false;
-        } else if (!MaxineVM.isHosted() && ma.isVM()) {
-            // Unless we are compiling the boot image, we never inline VM methods
+        } else if (!MaxGraal.bootCompile() && (ma.isVM() || ma.compilee().isVM())) {
+            // Unless we are compiling a boot image method, we never inline VM methods or substituted JDK methods
             result = false;
         }
         return result;

@@ -54,10 +54,10 @@ public class MaxGraalOptions {
         }
     }
 
-    static boolean isPresent(String optionName) {
+    public static VMOption isPresent(String optionName) {
         VMOption vmOption = getVMOption(optionName);
         assert vmOption != null;
-        return vmOption.isPresent();
+        return vmOption.isPresent() ? vmOption : null;
     }
 
     static void checkandSetOptions() {
@@ -71,13 +71,17 @@ public class MaxGraalOptions {
         }
     }
 
-    private static VMOption getVMOption(String name) {
+    public static VMOption getVMOption(String name) {
         for (VMOption vmOption : optionMap.keySet()) {
             if (vmOption.name().equals(name)) {
                 return vmOption;
             }
         }
         return null;
+    }
+
+    public static OptionValue getOptionValue(VMOption vmOption) {
+        return optionMap.get(vmOption);
     }
 
     private static Map<VMOption, OptionValue> optionMap = new HashMap<>();

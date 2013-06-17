@@ -39,6 +39,7 @@ import com.oracle.graal.phases.util.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ri.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.reference.*;
@@ -52,7 +53,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
     private static ResolvedJavaType hubType;
     private static ResolvedJavaType wrappedWordType;
 
-    private final Kind wordKind;
+    protected final Kind wordKind;
     private MetaAccessProvider metaAccess;
 
     public MaxWordTypeRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
@@ -71,6 +72,8 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
     /**
      * Removes the actual type of {@link Word} subclass instances and converts them to {@link #wordkind}.
      * This can only be done when the object'ness, e.g., method invocation, of the instance is no longer needed.
+     * {@link PhiNode} instances that self-refer but otherwise have Word values are a problem as {@link PhiNode#inferPhiStamp()}
+     * includes itself in the computation, causing a {@link Kind} mismatch, so they have to be treated specially.
      */
     public static class KindRewriter extends MaxWordTypeRewriterPhase {
         public KindRewriter(MetaAccessProvider metaAccess, Kind wordKind) {
@@ -84,6 +87,14 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
                     ValueNode vn = (ValueNode) n;
                     if (isWord(vn)) {
                         changeToWord(vn);
+                        for (Node usage : vn.usages()) {
+                            if (usage instanceof PhiNode) {
+                                PhiNode pn = (PhiNode) usage;
+                                if (pn.stamp().kind() == Kind.Object && ((ObjectStamp) pn.stamp()).type() == null) {
+                                    pn.setStamp(StampFactory.forKind(wordKind));
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -152,10 +163,12 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
             // Check for a Word object, a Reference object, or a Hub or a nonNull object (can arise from runtime call rewrites)
             if (object.objectStamp().nonNull() || (objectType != null && (isWordOrReference(objectType) || hubType.isAssignableFrom(objectType)))) {
                 return true;
-            } else if (object instanceof LoadFieldNode) {
+            } else if (object instanceof LoadFieldNode && ((LoadFieldNode) object).object() != null) {
                 // field loads from Hub objects are guaranteed non-null
                 ResolvedJavaType fieldObjectType = ((LoadFieldNode) object).object().objectStamp().type();
-                return hubType.isAssignableFrom(fieldObjectType);
+                return fieldObjectType ==  null ? false : hubType.isAssignableFrom(fieldObjectType);
+            } else if (isWordPhiReally(object)) {
+                return true;
             } else {
                 return false;
             }
@@ -179,6 +192,46 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
             assert usages.size() == 1;
             return usages.get(0);
         }
+
+        /**
+         * Checks for the special case of a PhiNode that refers to itself and has an indeterminate type, but all its
+         * values are Word types. Have to handle about non-trivial cycles, unfortunately.
+         * @param n
+         * @return {@code true} iff all values (other than {@code this} are {@code Word} types.
+         */
+        private boolean isWordPhiReally(ValueNode n) {
+            if (!(n instanceof ProxyNode || n instanceof PhiNode)) {
+                return false;
+            }
+            visited = new NodeBitMap(n.graph());
+            return isWordPhiReallyX(n);
+        }
+
+        private boolean isWordPhiReallyX(ValueNode n) {
+            if (visited.isMarked(n)) {
+                return false;
+            } else {
+                visited.mark(n);
+            }
+            if (n instanceof ProxyNode) {
+                return isWordPhiReallyX(((ProxyNode) n).value());
+            } else if (n instanceof PhiNode) {
+                PhiNode pn = (PhiNode) n;
+                if (pn.stamp().kind() == Kind.Object && ((ObjectStamp) pn.stamp()).type() == null) {
+                    for (ValueNode vn : pn.values()) {
+                        if (pn != vn && (isWord(vn) || isWordPhiReallyX(vn))) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            } else {
+                return false;
+            }
+        }
+
+        private NodeBitMap visited;
+
 
     }
 
@@ -301,15 +354,17 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
             return true;
         }
         if (node.kind() == Kind.Object && node.objectStamp().type() != null) {
-            return isWord(node.objectStamp().type());
+            ResolvedJavaType type = node.objectStamp().type();
+            if (node instanceof ConstantNode && type == wrappedWordType) {
+                return true;
+            } else {
+                return isMaxineWordType(type);
+            }
         }
         return false;
     }
 
-    public static boolean isWord(ResolvedJavaType type) {
-        if (type == wrappedWordType) {
-            return true;
-        }
+    private static boolean isMaxineWordType(ResolvedJavaType type) {
         RiType riType = ((MaxResolvedJavaType) type).riType;
         if (!(riType instanceof ClassActor)) {
             return false;
@@ -319,7 +374,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
     }
 
     public static Kind checkWord(JavaType javaType) {
-        if (javaType instanceof ResolvedJavaType && isWord((ResolvedJavaType) javaType)) {
+        if (javaType instanceof ResolvedJavaType && isMaxineWordType((ResolvedJavaType) javaType)) {
             return Kind.Long;
         } else {
             return javaType.getKind();
@@ -334,10 +389,17 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
         if (valueNode.isConstant() && valueNode.asConstant().getKind() == Kind.Object) {
             StructuredGraph graph = valueNode.graph();
             ConstantNode constantNode = (ConstantNode) valueNode;
-            WordUtil.WrappedWord wrappedWord = (WordUtil.WrappedWord) constantNode.value.asObject();
-            graph.replaceFloating(constantNode, ConstantNode.forConstant(ConstantMap.toGraal(wrappedWord.archConstant()), metaAccess, graph));
+            Object asObject = constantNode.value.asObject();
+            Constant constant;
+            if (asObject instanceof WordUtil.WrappedWord) {
+                constant = ConstantMap.toGraal(((WordUtil.WrappedWord) asObject).archConstant());
+            } else {
+                // TODO figure out how unwrapped Word constants can appear
+                assert MaxineVM.isHosted();
+                constant = Constant.forLong(((Word) asObject).value);
+            }
+            graph.replaceFloating(constantNode, ConstantNode.forConstant(constant, metaAccess, graph));
         } else {
-            assert !(valueNode instanceof ConstantNode) : "boxed Word constants should not appear in a snippet graph: " + valueNode + ", stamp: " + valueNode.stamp();
             valueNode.setStamp(StampFactory.forKind(wordKind));
         }
     }
