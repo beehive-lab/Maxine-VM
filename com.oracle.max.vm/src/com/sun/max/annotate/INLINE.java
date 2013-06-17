@@ -28,16 +28,27 @@ import java.lang.annotation.*;
  * and the receiver is never null-checked.
  *
  * This annotation exists primarily for annotating methods that <b>must</b> be inlined
- * for semantic reasons as opposed to those that could be inlined for performance reasons.
- * Using this annotation for the latter should be done very rarely and only when
+ * for semantic reasons as opposed to those that could be inlined for performance reasons,
+ * primarily operations on {@link Word} subtypes.
+ *
+ * Using this annotation for performance reasons should be done very rarely and only when
  * profiling highlights a performance bottleneck or such a bottleneck is known <i>a priori</i>.
  *
  * Before checking for this annotation at a call site, the compiler should apply
  * devirtualization first (if applicable). The result of this step is then checked
- * for the annotation. As such, one should always check to the compiler output to
- * ensure applying this annotation to a virtual method does what you expect(ed).
+ * for the annotation. As such, one should always check the compiler output to
+ * ensure applying this annotation to a virtual method does what was expected.
+ *
+ * Historical note. The advice regarding performance inlining has tended to be
+ * ignored, There are situations, depending on the compiler in use, and limitations
+ * in the devirtualization support, where the annotation is ignored by the compiler. Since the
+ * boot image builder checks that there are no calls to {@code INLINE} methods,
+ * this can be a problem. As a workaround, the {@link #must()} can be set to {code false}
+ * in such cases.
+ *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface INLINE {
+    boolean must() default true;
 }

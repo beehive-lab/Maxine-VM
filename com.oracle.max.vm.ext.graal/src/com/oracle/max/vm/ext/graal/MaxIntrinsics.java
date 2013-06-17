@@ -125,9 +125,9 @@ public class MaxIntrinsics {
     }
 
     static class PointerCompareAndSwapIntrinsic extends MaxIntrinsicImpl {
-        public ValueNode create(FixedNode invoke, ValueNode pointer, ValueNode offset, ValueNode expectedValue, ValueNode newValue) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, ValueNode pointer, ValueNode offset, ValueNode expectedValue, ValueNode newValue) {
             StructuredGraph graph = invoke.graph();
-            return graph.add(new MaxCompareAndSwapNode(pointer, 0, offset, expectedValue, newValue));
+            return graph.add(new MaxCompareAndSwapNode(stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())), pointer, 0, offset, expectedValue, newValue));
         }
     }
 

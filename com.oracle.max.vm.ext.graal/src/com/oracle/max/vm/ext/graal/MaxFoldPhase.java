@@ -29,6 +29,7 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.replacements.*;
+import com.oracle.graal.replacements.Snippet.*;
 
 /**
  * Maxine boot image compilation needs {@link @Fold} support, which is normally
@@ -46,8 +47,12 @@ public class MaxFoldPhase extends NodeIntrinsificationPhase {
         // Identical to NodeIntrinsificationPhase.run, save for the check on unresolved methods
         ArrayList<Node> cleanUpReturnList = new ArrayList<>();
         for (MethodCallTargetNode node : graph.getNodes(MethodCallTargetNode.class)) {
-            if (node.isResolved()) {
+            if (node.isResolved() && node.targetMethod().getAnnotation(Fold.class) != null) {
+//                try {
                 tryIntrinsify(node, cleanUpReturnList);
+//                } catch (Exception ex) {
+//                   System.console();
+//                }
             }
         }
 

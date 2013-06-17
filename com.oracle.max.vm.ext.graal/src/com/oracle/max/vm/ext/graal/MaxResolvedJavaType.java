@@ -33,13 +33,17 @@ import java.util.*;
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 
 
 public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType {
 
     private static MaxResolvedJavaType objectType;
+    private static MaxResolvedJavaType wrappedWord;
+    private static MaxResolvedJavaType wordType;
 
     protected MaxResolvedJavaType(RiResolvedType riResolvedType) {
         super(riResolvedType);
@@ -58,6 +62,20 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
             objectType = MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
         }
         return objectType;
+    }
+
+    private static MaxResolvedJavaType getWordType() {
+        if (wordType == null) {
+            wordType = MaxResolvedJavaType.get(ClassActor.fromJava(Word.class));
+        }
+        return wordType;
+    }
+
+    private static boolean isWrappedWord(MaxResolvedJavaType type) {
+        if (wrappedWord == null) {
+            wrappedWord = MaxResolvedJavaType.get(ClassActor.fromJava(WordUtil.WrappedWord.class));
+        }
+        return type == wrappedWord;
     }
 
     private RiResolvedType riResolvedType() {
@@ -153,8 +171,22 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         return null;
     }
 
+    private MaxResolvedJavaType getSuperType() {
+        if (isArray()) {
+            ResolvedJavaType componentType = getComponentType();
+            if (componentType.isPrimitive() || componentType == objectType) {
+                return objectType;
+            }
+            return (MaxResolvedJavaType) ((MaxResolvedJavaType) componentType).getSuperType().getArrayClass();
+        }
+        return MaxResolvedJavaType.get(riResolvedType().superType());
+    }
+
     @Override
     public ResolvedJavaType findLeastCommonAncestor(ResolvedJavaType otherType) {
+        if (isWrappedWord(this) || isWrappedWord((MaxResolvedJavaType) otherType)) {
+            return getWordType();
+        }
         if (otherType.isPrimitive()) {
             return null;
         } else {
@@ -167,8 +199,8 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
                 if (t2.isAssignableFrom(t1)) {
                     return t2;
                 }
-                t1 = MaxResolvedJavaType.get(t1.riResolvedType().superType());
-                t2 = MaxResolvedJavaType.get(t2.riResolvedType().superType());
+                t1 = t1.getSuperType();
+                t2 = t2.getSuperType();
             }
         }
     }
@@ -249,19 +281,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public ResolvedJavaField findInstanceFieldWithOffset(long offset) {
-        // Static tuples are of type Object and UnsafeLoad/StoreNode will try to find a field at the given offset
-        // which cannot possibly succeed, as it has no fields. Perhaps we should find a way to tag StaticTuples
-        if (this == getJavaLangObject()) {
-            return null;
-        }
         ClassActor ca = (ClassActor) riType;
-        // TODO I don't understand yet how this can happen but evidently UnsafeLoad nodes
-        // can show up with MaxUnsafeCastNodes whose nonNull field is true and the node type is a Word type.
-        // This causes a search for a field, which, of course, does not exist. Returning null is a workaround.
-        // N.B. This may not happen any more as MaxUnSafeCastNodes more aggressively removed when possible.
-        if (MaxWordTypeRewriterPhase.isWord(this)) {
-            return null;
-        }
         return MaxResolvedJavaField.get(ca.findInstanceFieldActor((int) offset));
     }
 

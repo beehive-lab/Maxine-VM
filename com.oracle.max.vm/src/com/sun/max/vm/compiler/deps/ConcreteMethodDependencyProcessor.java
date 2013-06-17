@@ -201,6 +201,7 @@ public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
             if (shouldSearchSubTypes(root, method)) {
                 if (root.isInterface()) {
                     // Don't bother for now. Assume can't find concrete method implementation.
+                    // TODO this really needs implementing!
                     return null;
                 }
                 searchInstanceClassTree(root, method);

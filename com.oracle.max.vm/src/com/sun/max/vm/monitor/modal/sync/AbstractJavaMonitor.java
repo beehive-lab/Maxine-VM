@@ -145,12 +145,12 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         }
     }
 
-    @INLINE
+    @INLINE(must = false)
     public final ManagedMonitor next() {
         return next;
     }
 
-    @INLINE
+    @INLINE(must = false)
     public final void setNext(ManagedMonitor next) {
         this.next = next;
     }

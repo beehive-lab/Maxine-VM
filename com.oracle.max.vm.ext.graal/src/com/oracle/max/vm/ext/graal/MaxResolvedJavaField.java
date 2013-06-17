@@ -30,7 +30,6 @@ import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 
@@ -73,7 +72,7 @@ public class MaxResolvedJavaField extends MaxJavaField implements ResolvedJavaFi
     public Constant readConstantValue(Constant receiver) {
         CiConstant ciConstant = riResolvedField().constantValue(ConstantMap.toCi(receiver));
         if (ciConstant != null && ciConstant.kind == CiKind.Object && ciConstant.asObject() instanceof WordUtil.WrappedWord) {
-            if (MaxineVM.isHosted() && !MaxGraal.inLowTier()) {
+            if (MaxGraal.bootCompile() && !MaxGraal.inlineDone()) {
                 // Special handling of WrappedWord constants when building the boot image
                 // We want to keep the type in the high level phases in case the constant is used as a receiver
                 // in a (Word) method invocation (which will assert false unless the type is Object).

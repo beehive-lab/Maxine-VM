@@ -336,13 +336,13 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    private void checkInliningCorrect(Set<MethodActor> methods, MethodActor ignore, boolean inlined, boolean called) {
+    public static void checkInliningCorrect(Set<MethodActor> methods, MethodActor ignore, boolean inlined, boolean called) {
         for (MethodActor ma : methods) {
             if (ma == ignore) {
                 continue;
             }
 
-            boolean mustInline = ma.isInline() || (ma.holder().kind == Kind.WORD && !ma.isStatic());
+            boolean mustInline = mustInline(ma) || (ma.holder().kind == Kind.WORD && !ma.isStatic());
             boolean mustCall = ma.isNeverInline();
             assert !mustInline || !mustCall;
 
@@ -353,6 +353,14 @@ public class CompiledPrototype extends Prototype {
                 throw FatalError.unexpected("Method must be called: " + ma);
             }
         }
+    }
+
+    private static boolean mustInline(MethodActor ma) {
+        if (ma.isInline()) {
+            INLINE inline = ma.getAnnotation(INLINE.class);
+            return inline.must();
+        }
+        return false;
     }
 
     private void traceNewTargetMethod(TargetMethod targetMethod) {
