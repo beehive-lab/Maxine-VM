@@ -61,6 +61,7 @@ public class NewSnippets extends SnippetLowerings {
         lowerings.put(NewInstanceNode.class, new NewInstanceLowering(this));
         lowerings.put(UnresolvedNewInstanceNode.class, new UnresolvedNewInstanceLowering(this));
         lowerings.put(NewArrayNode.class, new NewArrayLowering(this));
+        lowerings.put(DynamicNewArrayNode.class, new DynamicNewArrayLowering(this));
         lowerings.put(UnresolvedNewArrayNode.class, new UnresolvedNewArrayLowering(this));
         lowerings.put(NewMultiArrayNode.class, new NewMultiArrayLowering(this));
         lowerings.put(UnresolvedNewMultiArrayNode.class, new UnresolvedNewMultiArrayLowering(this));
@@ -144,6 +145,24 @@ public class NewSnippets extends SnippetLowerings {
         @Override
         public void lower(NewArrayNode node, LoweringTool tool) {
             ClassActor type = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.elementType().getArrayClass());
+            Arguments args = new Arguments(snippet);
+            args.add("hub", type.dynamicHub());
+            args.add("length", node.length());
+            instantiate(node, args);
+        }
+    }
+
+    protected class DynamicNewArrayLowering extends Lowering implements LoweringProvider<DynamicNewArrayNode> {
+
+        protected DynamicNewArrayLowering(NewSnippets newSnippets) {
+            super(newSnippets, "newArraySnippet");
+        }
+
+        @Override
+        public void lower(DynamicNewArrayNode node, LoweringTool tool) {
+            ResolvedJavaType elementType = node.getElementType().objectStamp().type();
+            assert elementType != null;
+            ClassActor type = (ClassActor) MaxResolvedJavaType.getRiResolvedType(elementType);
             Arguments args = new Arguments(snippet);
             args.add("hub", type.dynamicHub());
             args.add("length", node.length());
