@@ -144,6 +144,7 @@ public class MaxGraalOptions {
         register(new VMBooleanOption("-G:-", "SummarizePerPhase", ""), com.oracle.graal.compiler.GraalDebugConfig.class, "SummarizePerPhase");
         register(new VMStringOption("-G:Time=", false, null, "Scopes to be timed"), com.oracle.graal.compiler.GraalDebugConfig.class, "Time");
         // Options from com.oracle.graal.phases.GraalOptions
+        register(new VMBooleanOption("-G:-", "AOTCompilation", "configure compiler to emit code compatible with AOT requirements for HotSpot"), com.oracle.graal.phases.GraalOptions.class, "AOTCompilation");
         register(new VMBooleanOption("-G:+", "AlignCallsForPatching", ""), com.oracle.graal.phases.GraalOptions.class, "AlignCallsForPatching");
         register(new VMBooleanOption("-G:-", "AlwaysInlineVTableStubs", ""), com.oracle.graal.phases.GraalOptions.class, "AlwaysInlineVTableStubs");
         register(new VMFloatOption("-G:BoostInliningForEscapeAnalysis=", 2.0f, ""), com.oracle.graal.phases.GraalOptions.class, "BoostInliningForEscapeAnalysis");
@@ -157,7 +158,6 @@ public class MaxGraalOptions {
         register(new VMIntOption("-G:CompileTheWorldStartAt=", 1, ""), com.oracle.graal.phases.GraalOptions.class, "CompileTheWorldStartAt");
         register(new VMIntOption("-G:CompileTheWorldStopAt=", 2147483647, ""), com.oracle.graal.phases.GraalOptions.class, "CompileTheWorldStopAt");
         register(new VMBooleanOption("-G:+", "ConditionalElimination", ""), com.oracle.graal.phases.GraalOptions.class, "ConditionalElimination");
-        register(new VMBooleanOption("-G:-", "CullFrameStates", ""), com.oracle.graal.phases.GraalOptions.class, "CullFrameStates");
         register(new VMBooleanOption("-G:-", "DeoptALot", ""), com.oracle.graal.phases.GraalOptions.class, "DeoptALot");
         register(new VMIntOption("-G:DeoptsToDisableOptimisticOptimization=", 40, ""), com.oracle.graal.phases.GraalOptions.class, "DeoptsToDisableOptimisticOptimization");
         register(new VMBooleanOption("-G:-", "DynamicCompilePriority", ""), com.oracle.graal.phases.GraalOptions.class, "DynamicCompilePriority");
@@ -212,7 +212,6 @@ public class MaxGraalOptions {
         register(new VMFloatOption("-G:MinimumPeelProbability=", 0.35f, ""), com.oracle.graal.phases.GraalOptions.class, "MinimumPeelProbability");
         register(new VMBooleanOption("-G:-", "OmitHotExceptionStacktrace", ""), com.oracle.graal.phases.GraalOptions.class, "OmitHotExceptionStacktrace");
         register(new VMBooleanOption("-G:+", "OptAssumptions", ""), com.oracle.graal.phases.GraalOptions.class, "OptAssumptions");
-        register(new VMBooleanOption("-G:+", "OptCanonicalizeReads", ""), com.oracle.graal.phases.GraalOptions.class, "OptCanonicalizeReads");
         register(new VMBooleanOption("-G:+", "OptCanonicalizer", ""), com.oracle.graal.phases.GraalOptions.class, "OptCanonicalizer");
         register(new VMBooleanOption("-G:+", "OptConvertDeoptsToGuards", ""), com.oracle.graal.phases.GraalOptions.class, "OptConvertDeoptsToGuards");
         register(new VMBooleanOption("-G:+", "OptDevirtualizeInvokesOptimistically", ""), com.oracle.graal.phases.GraalOptions.class, "OptDevirtualizeInvokesOptimistically");

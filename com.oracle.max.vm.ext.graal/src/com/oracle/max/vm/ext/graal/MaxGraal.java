@@ -102,6 +102,11 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     private OptimisticOptimizations optimisticOpts;
     private MaxGraphCache cache;
     /**
+     * This used to be a Graal option, now subsumed by {@link AOTCompilation}.
+     * However, {@link Canonicalizer} still uses {@code canonicalizeReads}.
+     */
+    public static final boolean canonicalizeReads = true;
+    /**
      * Standard configuration used for non boot image compilation.
      */
     private Suites suites;
@@ -226,7 +231,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     private void  createBootSuites() {
         bootSuites = Suites.createDefaultSuites();
         PhaseSuite<MidTierContext> midTier = bootSuites.getMidTier();
-        midTier.addPhase(new MaxWordTypeRewriterPhase.KindRewriter(runtime, runtime.maxTargetDescription.wordKind));
+        midTier.appendPhase(new MaxWordTypeRewriterPhase.KindRewriter(runtime, runtime.maxTargetDescription.wordKind));
     }
     /**
      * Graal's inlining limits are very aggressive, too high for the Maxine environment.
@@ -273,7 +278,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxFoldPhase(runtime));
                 // Any folded isHosted code is only removed by a CanonicalizationPhase
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, new CanonicalizerPhase.Instance(runtime,
-                                new Assumptions(GraalOptions.OptAssumptions.getValue()), GraalOptions.OptCanonicalizeReads.getValue()));
+                                new Assumptions(GraalOptions.OptAssumptions.getValue()), canonicalizeReads));
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxIntrinsicsPhase());
                 phasePlan.addPhase(PhasePosition.AFTER_PARSING,
                                 new MaxWordTypeRewriterPhase.MakeWordFinalRewriter(runtime, runtime.maxTargetDescription.wordKind));

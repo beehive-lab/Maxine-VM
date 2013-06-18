@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.graal.api.meta.*;
@@ -48,11 +49,11 @@ public class MaxFoldPhase extends NodeIntrinsificationPhase {
         ArrayList<Node> cleanUpReturnList = new ArrayList<>();
         for (MethodCallTargetNode node : graph.getNodes(MethodCallTargetNode.class)) {
             if (node.isResolved() && node.targetMethod().getAnnotation(Fold.class) != null) {
-//                try {
+                try {
                 tryIntrinsify(node, cleanUpReturnList);
-//                } catch (Exception ex) {
-//                   System.console();
-//                }
+                } catch (Exception ex) {
+                   System.console();
+                }
             }
         }
 
