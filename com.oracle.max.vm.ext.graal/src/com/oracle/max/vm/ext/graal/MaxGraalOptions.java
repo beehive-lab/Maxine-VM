@@ -64,8 +64,20 @@ public class MaxGraalOptions {
         for (Map.Entry<VMOption, OptionValue> entry : optionMap.entrySet()) {
             VMOption vmOption = entry.getKey();
             if (vmOption.isPresent()) {
-                if (vmOption.getClass() == VMStringOption.class) {
-                    entry.getValue().setValue(((VMStringOption) vmOption).getValue());
+                Class<? extends VMOption> optionClass = vmOption.getClass();
+                OptionValue entryValue = entry.getValue();
+                if (optionClass == VMStringOption.class) {
+                    entryValue.setValue(((VMStringOption) vmOption).getValue());
+                } else if (optionClass == VMBooleanOption.class) {
+                    entryValue.setValue(((VMBooleanOption) vmOption).getValue());
+                } else if (optionClass == VMIntOption.class) {
+                    entryValue.setValue(((VMIntOption) vmOption).getValue());
+                } else if (optionClass == VMFloatOption.class) {
+                    entryValue.setValue(((VMFloatOption) vmOption).getValue());
+                } else if (optionClass == VMDoubleOption.class) {
+                    entryValue.setValue(((VMDoubleOption) vmOption).getValue());
+                } else {
+                    MaxGraal.unimplemented(" handling of option class: " + optionClass.getName());
                 }
             }
         }
