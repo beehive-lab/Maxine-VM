@@ -79,6 +79,7 @@ public final class JDK_java_lang_Throwable {
      * @see java.lang.Throwable#fillInStackTrace()
      * @return the throwable with a filled-in stack trace (typically this object)
      */
+    @NEVER_INLINE
     @SUBSTITUTE
     public synchronized Throwable fillInStackTrace() {
         final Throwable throwable = thisThrowable();

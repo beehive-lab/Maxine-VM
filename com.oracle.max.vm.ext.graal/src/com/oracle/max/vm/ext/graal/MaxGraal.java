@@ -43,6 +43,7 @@ import com.oracle.graal.phases.common.*;
 import com.oracle.graal.phases.tiers.*;
 import com.oracle.graal.printer.*;
 import com.oracle.max.vm.ext.graal.amd64.*;
+import com.oracle.max.vm.ext.graal.stubs.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
@@ -219,6 +220,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         suites = Suites.createDefaultSuites();
         createBootSuites();
         replacements = runtime.init();
+        NativeStubGraphBuilder.initialize(optimisticOpts);
         GraalBoot.forceValues();
     }
 
@@ -295,7 +297,11 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                 phasePlan.addPhase(PhasePosition.HIGH_LEVEL, new MaxIntrinsicsPhase());
 
             }
-            graph = new StructuredGraph(method);
+            if (methodActor.isNative()) {
+                graph = new NativeStubGraphBuilder(methodActor).build();
+            } else {
+                graph = new StructuredGraph(method);
+            }
         }
         CallingConvention cc = CodeUtil.getCallingConvention(runtime, CallingConvention.Type.JavaCallee, method, false);
         CompilationResult result = GraalCompiler.compileGraph(graph, cc, method, runtime, replacements, backend,

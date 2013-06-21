@@ -36,7 +36,7 @@ public class MaxJavaType implements JavaType {
 
     private static ConcurrentHashMap<RiType, MaxJavaType> map = new ConcurrentHashMap<RiType, MaxJavaType>();
 
-    static MaxJavaType get(RiType riType) {
+    public static MaxJavaType get(RiType riType) {
         if (riType == null) {
             return null;
         }
