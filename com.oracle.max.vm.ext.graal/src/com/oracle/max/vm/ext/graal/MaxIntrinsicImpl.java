@@ -79,7 +79,11 @@ public class MaxIntrinsicImpl {
                 }
                 Object boxedValue = node.asConstant().asBoxedValue();
                 if (formalParams[i] == boolean.class) {
-                    boxedValue = ((Integer) boxedValue) == 0 ? Boolean.FALSE : Boolean.TRUE;
+                    if (boxedValue instanceof Integer) {
+                        boxedValue = ((Integer) boxedValue) == 0 ? Boolean.FALSE : Boolean.TRUE;
+                    } else {
+                        assert boxedValue instanceof Boolean;
+                    }
                 }
                 actualParams[i] = boxedValue;
             } else {
