@@ -35,6 +35,7 @@ import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
+import com.oracle.max.vm.ext.graal.phases.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -156,7 +157,7 @@ public class MaxInvokeLowerings extends SnippetLowerings {
         return getAddressForSpecialMethodSnippet(methodActor);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static com.sun.max.unsafe.Address getAddressForSpecialMethodSnippet(VirtualMethodActor methodActor) {
         return Snippets.makeEntrypoint(methodActor, com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
@@ -166,7 +167,7 @@ public class MaxInvokeLowerings extends SnippetLowerings {
         return getAddressForStaticMethodSnippet(methodActor);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static com.sun.max.unsafe.Address getAddressForStaticMethodSnippet(StaticMethodActor methodActor) {
         Snippets.makeHolderInitialized(methodActor);
         return Snippets.makeEntrypoint(methodActor, com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT);
@@ -209,7 +210,7 @@ public class MaxInvokeLowerings extends SnippetLowerings {
         return resolveSpecialMethod(guard);
     }
 
-    @RUNTIME_ENTRY(nonNull = true)
+    @SNIPPET_SLOWPATH(nonNull = true)
     private static VirtualMethodActor resolveSpecialMethod(ResolutionGuard.InPool guard) {
         return Snippets.resolveSpecialMethod(guard);
     }
@@ -219,7 +220,7 @@ public class MaxInvokeLowerings extends SnippetLowerings {
         return resolveVirtualMethod(guard);
     }
 
-    @RUNTIME_ENTRY(nonNull = true)
+    @SNIPPET_SLOWPATH(nonNull = true)
     private static VirtualMethodActor resolveVirtualMethod(ResolutionGuard.InPool guard) {
         return Snippets.resolveVirtualMethod(guard);
     }
@@ -229,7 +230,7 @@ public class MaxInvokeLowerings extends SnippetLowerings {
         return resolveInterfaceMethod(guard);
     }
 
-    @RUNTIME_ENTRY(nonNull = true)
+    @SNIPPET_SLOWPATH(nonNull = true)
     private static InterfaceMethodActor resolveInterfaceMethod(ResolutionGuard.InPool guard) {
         return Snippets.resolveInterfaceMethod(guard);
     }
@@ -239,7 +240,7 @@ public class MaxInvokeLowerings extends SnippetLowerings {
         return resolveStaticMethod(guard);
     }
 
-    @RUNTIME_ENTRY(nonNull = true)
+    @SNIPPET_SLOWPATH(nonNull = true)
     private static StaticMethodActor resolveStaticMethod(ResolutionGuard.InPool guard) {
         return Snippets.resolveStaticMethod(guard);
     }

@@ -37,13 +37,18 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Maintains a map from a {@link MaxForeignCallDescriptor} to the {@link MaxForeignCallLinkage}.
- * A foreign call in Maxine is a call to the the VM runtime and must be annotated with {@link RUNTIME_ENTRY}.
+ * A foreign call in Maxine is a call to the the VM runtime and must be annotated with {@link SNIPPET_SLOWPATH}.
  * Some calls are created statically, the majority are created dynamically as part of the snippet creation process.
  * Currently most calls are marked as not reexecutable, destroys registers and not leaf, with the exception of
  * those that otherwise cause an FrameState assertion (e.g. {@link VmThread#loadExceptionForHandler}.
+ *
+ * Ideally this should be much simpler in a meta-circular VM like Maxine. It really should not be necessary to
+ * introduce a completely different method invocation node for what are, module possible deoptimization issues,
+ * nornal Java calls.
  *
  */
 public class MaxForeignCallsMap {
@@ -53,32 +58,12 @@ public class MaxForeignCallsMap {
     private static Map<MaxForeignCallDescriptor, MaxForeignCallLinkage> map = new HashMap<>();
     private static Map<MethodActor, MaxForeignCallLinkage> actorMap = new HashMap<>();
 
-    /**
-     * Creates a {@link MaxForeignCallDescriptor} for a named method in a given class.
-     */
-    static MaxForeignCallDescriptor findMethod(Class declaringClass, String methodName) {
-        Method foundMethod = null;
-        for (Method method : declaringClass.getDeclaredMethods()) {
-            if (method.getName().equals(methodName) && hasRuntimeCallAttributes(method)) {
-                assert foundMethod == null : "found more than one method " + declaringClass.getName() + "." + methodName;
-                foundMethod = method;
-            }
-        }
-        assert foundMethod != null : "did not find method " + declaringClass.getName() + "." + methodName;
-
-        return new MaxForeignCallDescriptor(foundMethod.getName(), foundMethod, foundMethod.getReturnType(), foundMethod.getParameterTypes());
-    }
-
-    private static boolean hasRuntimeCallAttributes(Method method) {
-        return method.isAnnotationPresent(RUNTIME_ENTRY.class) || method.isAnnotationPresent(NEVER_INLINE.class);
-    }
-
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void unwindException(Object throwable) throws Throwable {
         Throw.raise(UnsafeCast.asThrowable(throwable));
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void deoptimize() {
         FatalError.unexpected("Deoptimize not implemented");
     }
@@ -101,6 +86,7 @@ public class MaxForeignCallsMap {
             Method deoptimize = MaxForeignCallsMap.class.getDeclaredMethod("deoptimize");
             createRuntimeCall(deoptimize.getName(), MethodActor.fromJava(deoptimize), RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, false, ALL_LOCATIONS);
             new CriticalMethod(deoptimize);
+            new CriticalMethod(VmThread.class.getDeclaredMethod("throwJniException"));
 
         } catch (Exception ex) {
             ProgramError.unexpected(ex);
@@ -152,7 +138,10 @@ public class MaxForeignCallsMap {
     public static MaxForeignCallDescriptor get(ClassMethodActor cma) {
         MaxForeignCallLinkage maxRuntimeCallTarget = actorMap.get(cma);
         if (maxRuntimeCallTarget == null) {
-            MaxForeignCallDescriptor maxRuntimeCall = findMethod(cma.holder().javaClass(), cma.name());
+            MaxForeignCallDescriptor maxRuntimeCall = findMethod(cma);
+            if (maxRuntimeCall == null) {
+                return null;
+            }
             Transition transition = Transition.NOT_LEAF;
             // This is a workaround for a problem with FrameStates for this call in the context of an exception branch
             if (cma.name().equals("loadExceptionForHandler")) {
@@ -164,5 +153,25 @@ public class MaxForeignCallsMap {
         }
         return maxRuntimeCallTarget.getMaxRuntimeCall();
     }
+
+    /**
+     * Creates a {@link MaxForeignCallDescriptor} for a named method in a given class.
+     */
+    static MaxForeignCallDescriptor findMethod(ClassMethodActor cma) {
+        if (!(cma.isNative() || cma.getAnnotation(SNIPPET_SLOWPATH.class) != null || cma.getAnnotation(NEVER_INLINE.class) != null)) {
+            Trace.line(1, "WARNING: snippet contains an invoke to " + cma.holder().name() + "." + cma.name() + " not annotated with SNIPPET_SLOWPATH or NEVER_INLINE");
+        }
+        if (cma.isInitializer()) {
+            return null;
+        } else {
+            Method foundMethod = cma.toJava();
+            return new MaxForeignCallDescriptor(foundMethod.getName(), foundMethod, foundMethod.getReturnType(), foundMethod.getParameterTypes());
+        }
+    }
+
+    private static boolean hasRuntimeCallAttributes(Method method) {
+        return method.isAnnotationPresent(SNIPPET_SLOWPATH.class) || method.isAnnotationPresent(NEVER_INLINE.class);
+    }
+
 
 }

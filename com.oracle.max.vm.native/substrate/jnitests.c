@@ -94,6 +94,21 @@ Java_jtt_jni_JNI_1IdentityLong_id_1long(JNIEnv *env, jclass c, jlong l) {
     return l;
 }
 
+JNIEXPORT jboolean JNICALL
+Java_jtt_jni_JNI_1FieldBoolean_get_1boolean(JNIEnv *env, jobject obj) {
+    jclass klass = (*env)->GetObjectClass(env, obj);
+    jfieldID field = (*env)->GetFieldID(env, klass, "value", "Z");
+    return (*env)->GetBooleanField(env, obj, field);
+}
+
+JNIEXPORT jobject JNICALL
+Java_jtt_jni_JNI_1GC_jniGC(JNIEnv *env, jobject obj, jobject gcMethod, jclass systemClass) {
+    jmethodID methodID = (*env)->FromReflectedMethod(env, gcMethod);
+    (*env)->CallStaticVoidMethod(env, systemClass, methodID);
+    return obj;
+}
+
+
 JNIEXPORT void JNICALL
 Java_jtt_jni_JNI_1ManyParameters_manyParameters(JNIEnv *env, jclass clazz,
         jobject reflectedMethod,

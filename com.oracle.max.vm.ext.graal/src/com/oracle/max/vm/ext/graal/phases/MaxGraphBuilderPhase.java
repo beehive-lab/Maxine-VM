@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.oracle.max.vm.ext.graal.phases;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;

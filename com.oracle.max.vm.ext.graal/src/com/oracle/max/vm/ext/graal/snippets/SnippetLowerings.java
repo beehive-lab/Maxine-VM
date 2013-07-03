@@ -52,9 +52,9 @@ public abstract class SnippetLowerings extends AbstractTemplates implements Snip
     public SnippetLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription target) {
         super(runtime, replacements, target);
 
-        // All the RUNTIME_ENTRY methods are critical
+        // All the SNIPPET_SLOWPATH methods are critical
         for (Method method : getClass().getDeclaredMethods()) {
-            if (method.isAnnotationPresent(RUNTIME_ENTRY.class)) {
+            if (method.isAnnotationPresent(SNIPPET_SLOWPATH.class)) {
                 new CriticalMethod(method);
             }
         }

@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
+import com.oracle.graal.amd64.*;
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.compiler.gen.*;
@@ -32,26 +33,31 @@ import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.*;
+import com.sun.max.vm.actor.member.*;
 
 /**
  * Represents a call to a native function from within a native method stub.
  */
-public final class NativeCallNode extends AbstractCallNode implements LIRLowerable {
+public final class NativeCallNode extends AbstractCallNode implements DeoptimizingNode, LIRLowerable {
 
     /**
      * The instruction that produces the native function address for this native call.
      */
     @Input private ValueNode address;
+    @Input private FrameState deoptState;
+
+    private ValueNode[] argumentsArray;
 
     /**
      * The native method for this native call.
      */
-    public final ResolvedJavaMethod nativeMethod;
+    public final MethodActor nativeMethodActor;
 
-    public NativeCallNode(ValueNode address, ValueNode[] arguments, Kind returnKind, ResolvedJavaMethod nativeMethod) {
+    public NativeCallNode(ValueNode address, ValueNode[] arguments, Kind returnKind, MethodActor nativeMethodActor) {
         super(StampFactory.forKind(returnKind.getStackKind()), arguments);
-        this.nativeMethod = nativeMethod;
+        this.nativeMethodActor = nativeMethodActor;
         this.address = address;
+        this.argumentsArray = arguments;
     }
 
     public ValueNode address() {
@@ -61,25 +67,23 @@ public final class NativeCallNode extends AbstractCallNode implements LIRLowerab
     @Override
     public void generate(LIRGeneratorTool gen) {
         LIRGenerator lir = (LIRGenerator) gen;
-        FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind());
-        LIRFrameState info = lir.stateFor(stateDuring, null);
+        LIRFrameState state = !canDeoptimize() ? null : lir.stateFor(getDeoptimizationState(), getDeoptimizationReason());
         Value resultOperand = lir.resultOperandFor(this.kind());
         Value callAddress = lir.operand(this.address());
-        CallingConvention cc = CodeUtil.getCallingConvention(MaxGraal.runtime(), CallingConvention.Type.NativeCall, nativeMethod, false);
-//        lir.compilation.frameMap().adjustOutgoingStackSize(cc, NativeCall);
+        Kind[] paramKinds = new Kind[argumentsArray.length];
+        for (int i = 0; i < argumentsArray.length; i++) {
+            paramKinds[i] = argumentsArray[i].kind();
+        }
+        CallingConvention cc = ((MaxRegisterConfig) MaxGraal.runtime().lookupRegisterConfig()).nativeCallingConvention(kind(), paramKinds);
+        lir.frameMap.callsMethod(cc);
+
 
         Value[] argList = lir.visitInvokeArguments(cc, arguments());
 
-        // The callAddress is a possibly long-living virtual register used at the call site.  The register allocator does not like this
-        // because all virtual registers must be spilled at a call site (we don't have callee-saved registers). Therefore, make a
-        // short-lived temporary virtual register where the lifetime is guaranteed to end at the call site.
-        // TODO(cwi) Revisit this when doing SSA-based register allocation, see if there is a way the register allocator can handle it.
-        callAddress = lir.emitMove(callAddress);
+        AllocatableValue targetAddress = AMD64.rax.asValue();
+        lir.emitMove(targetAddress, callAddress);
 
-//        argList.add(callAddress);
-
-//        String target = this.nativeMethod.jniSymbol();
-        lir.append(new AMD64Call.IndirectCallOp(nativeMethod, resultOperand, argList, null, callAddress, info));
+        lir.append(new AMD64Call.IndirectCallOp(MaxResolvedJavaMethod.get(nativeMethodActor), resultOperand, argList, new Value[0], targetAddress, state));
 
         if (ValueUtil.isLegal(resultOperand)) {
             lir.setResult(this, lir.emitMove(resultOperand));
@@ -88,7 +92,38 @@ public final class NativeCallNode extends AbstractCallNode implements LIRLowerab
 
     @Override
     public LocationIdentity[] getLocationIdentities() {
-        // TODO Auto-generated method stub
+        return new LocationIdentity[] {LocationIdentity.ANY_LOCATION};
+    }
+
+    @Override
+    public boolean canDeoptimize() {
+        return !nativeMethodActor.isCFunction();
+    }
+
+    @Override
+    public FrameState getDeoptimizationState() {
+        if (deoptState != null) {
+            return deoptState;
+        } else if (stateAfter() != null && canDeoptimize()) {
+            FrameState stateDuring = stateAfter();
+            if ((stateDuring.stackSize() > 0 && stateDuring.stackAt(stateDuring.stackSize() - 1) == this) || (stateDuring.stackSize() > 1 && stateDuring.stackAt(stateDuring.stackSize() - 2) == this)) {
+                stateDuring = stateDuring.duplicateModified(stateDuring.bci, stateDuring.rethrowException(), this.kind());
+            }
+            setDeoptimizationState(stateDuring);
+            return stateDuring;
+        }
+        return null;
+    }
+
+    @Override
+    public void setDeoptimizationState(FrameState state) {
+        updateUsages(deoptState, state);
+        assert deoptState == null && canDeoptimize() : "shouldn't assign deoptState to " + this;
+        deoptState = state;
+    }
+
+    @Override
+    public DeoptimizationReason getDeoptimizationReason() {
         return null;
     }
 }

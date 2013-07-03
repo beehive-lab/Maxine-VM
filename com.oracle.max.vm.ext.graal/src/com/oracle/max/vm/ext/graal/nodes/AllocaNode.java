@@ -28,36 +28,28 @@ import com.oracle.graal.compiler.gen.*;
 import com.oracle.graal.compiler.target.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.type.*;
-import com.oracle.max.vm.ext.graal.*;
-import com.sun.max.unsafe.*;
 
 
 public class AllocaNode extends FixedWithNextNode implements LIRGenLowerable {
 
-    private final int size;
+    @Input private ValueNode size;
     private final boolean refs;
 
-    public AllocaNode(int size, boolean refs, Stamp stamp) {
+    public AllocaNode(ValueNode size, boolean refs, Stamp stamp) {
         super(stamp);
         this.size = size;
         this.refs = refs;
     }
 
-    public AllocaNode(int rank) {
-        super(StampFactory.declared(MaxGraal.runtime().lookupJavaType(Pointer.class)));
-        this.size = rank * 4;
-        this.refs = false;
-    }
-
-
     @Override
     public void generate(LIRGenerator gen) {
-        StackSlot array = gen.frameMap().allocateStackBlock(size, false);
+        assert size instanceof ConstantNode;
+        StackSlot array = gen.frameMap().allocateStackBlock(((ConstantNode) size).asConstant().asInt(), refs);
         Value result = gen.emitAddress(array);
         gen.setResult(this, result);
     }
 
-    @NodeIntrinsic
-    public static native Pointer allocaDimsArray(@ConstantNodeParameter int rank);
+//    @NodeIntrinsic
+//    public static native Pointer allocaDimsArray(@ConstantNodeParameter int rank);
 
 }

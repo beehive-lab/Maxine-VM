@@ -284,49 +284,49 @@ public class FieldSnippets extends SnippetLowerings {
         putFieldBoolean(object, offset, isVolatile, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static boolean resolveAndGetInstanceFieldBoolean(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         return holderInitAndGetInstanceFieldBoolean(f, object);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static boolean resolveAndGetStaticFieldBoolean(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         return holderInitAndGetStaticFieldBoolean(f);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutInstanceFieldBoolean(ResolutionGuard.InPool guard, Object object, boolean value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         holderInitAndPutInstanceFieldBoolean(f, object, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutStaticFieldBoolean(ResolutionGuard.InPool guard, boolean value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         holderInitAndPutStaticFieldBoolean(f, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static boolean holderInitAndGetInstanceFieldBoolean(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
         return getFieldBoolean(object, f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static boolean holderInitAndGetStaticFieldBoolean(FieldActor f) {
         Snippets.makeHolderInitialized(f);
         return getFieldBoolean(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutInstanceFieldBoolean(FieldActor f, Object object, boolean value) {
         Snippets.makeHolderInitialized(f);
         putFieldBoolean(object, f.offset(), f.isVolatile(), value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutStaticFieldBoolean(FieldActor f, boolean value) {
         Snippets.makeHolderInitialized(f);
         putFieldBoolean(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
@@ -405,49 +405,49 @@ public class FieldSnippets extends SnippetLowerings {
         putFieldByte(object, offset, isVolatile, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static byte resolveAndGetInstanceFieldByte(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         return holderInitAndGetInstanceFieldByte(f, object);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static byte resolveAndGetStaticFieldByte(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         return holderInitAndGetStaticFieldByte(f);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutInstanceFieldByte(ResolutionGuard.InPool guard, Object object, byte value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         holderInitAndPutInstanceFieldByte(f, object, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutStaticFieldByte(ResolutionGuard.InPool guard, byte value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         holderInitAndPutStaticFieldByte(f, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static byte holderInitAndGetInstanceFieldByte(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
         return getFieldByte(object, f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static byte holderInitAndGetStaticFieldByte(FieldActor f) {
         Snippets.makeHolderInitialized(f);
         return getFieldByte(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutInstanceFieldByte(FieldActor f, Object object, byte value) {
         Snippets.makeHolderInitialized(f);
         putFieldByte(object, f.offset(), f.isVolatile(), value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutStaticFieldByte(FieldActor f, byte value) {
         Snippets.makeHolderInitialized(f);
         putFieldByte(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
@@ -526,49 +526,49 @@ public class FieldSnippets extends SnippetLowerings {
         putFieldShort(object, offset, isVolatile, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static short resolveAndGetInstanceFieldShort(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         return holderInitAndGetInstanceFieldShort(f, object);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static short resolveAndGetStaticFieldShort(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         return holderInitAndGetStaticFieldShort(f);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutInstanceFieldShort(ResolutionGuard.InPool guard, Object object, short value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         holderInitAndPutInstanceFieldShort(f, object, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutStaticFieldShort(ResolutionGuard.InPool guard, short value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         holderInitAndPutStaticFieldShort(f, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static short holderInitAndGetInstanceFieldShort(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
         return getFieldShort(object, f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static short holderInitAndGetStaticFieldShort(FieldActor f) {
         Snippets.makeHolderInitialized(f);
         return getFieldShort(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutInstanceFieldShort(FieldActor f, Object object, short value) {
         Snippets.makeHolderInitialized(f);
         putFieldShort(object, f.offset(), f.isVolatile(), value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutStaticFieldShort(FieldActor f, short value) {
         Snippets.makeHolderInitialized(f);
         putFieldShort(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
@@ -647,49 +647,49 @@ public class FieldSnippets extends SnippetLowerings {
         putFieldChar(object, offset, isVolatile, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static char resolveAndGetInstanceFieldChar(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         return holderInitAndGetInstanceFieldChar(f, object);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static char resolveAndGetStaticFieldChar(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         return holderInitAndGetStaticFieldChar(f);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutInstanceFieldChar(ResolutionGuard.InPool guard, Object object, char value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         holderInitAndPutInstanceFieldChar(f, object, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutStaticFieldChar(ResolutionGuard.InPool guard, char value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         holderInitAndPutStaticFieldChar(f, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static char holderInitAndGetInstanceFieldChar(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
         return getFieldChar(object, f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static char holderInitAndGetStaticFieldChar(FieldActor f) {
         Snippets.makeHolderInitialized(f);
         return getFieldChar(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutInstanceFieldChar(FieldActor f, Object object, char value) {
         Snippets.makeHolderInitialized(f);
         putFieldChar(object, f.offset(), f.isVolatile(), value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutStaticFieldChar(FieldActor f, char value) {
         Snippets.makeHolderInitialized(f);
         putFieldChar(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
@@ -768,49 +768,49 @@ public class FieldSnippets extends SnippetLowerings {
         putFieldInt(object, offset, isVolatile, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static int resolveAndGetInstanceFieldInt(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         return holderInitAndGetInstanceFieldInt(f, object);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static int resolveAndGetStaticFieldInt(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         return holderInitAndGetStaticFieldInt(f);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutInstanceFieldInt(ResolutionGuard.InPool guard, Object object, int value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         holderInitAndPutInstanceFieldInt(f, object, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutStaticFieldInt(ResolutionGuard.InPool guard, int value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         holderInitAndPutStaticFieldInt(f, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static int holderInitAndGetInstanceFieldInt(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
         return getFieldInt(object, f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static int holderInitAndGetStaticFieldInt(FieldActor f) {
         Snippets.makeHolderInitialized(f);
         return getFieldInt(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutInstanceFieldInt(FieldActor f, Object object, int value) {
         Snippets.makeHolderInitialized(f);
         putFieldInt(object, f.offset(), f.isVolatile(), value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutStaticFieldInt(FieldActor f, int value) {
         Snippets.makeHolderInitialized(f);
         putFieldInt(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
@@ -889,49 +889,49 @@ public class FieldSnippets extends SnippetLowerings {
         putFieldFloat(object, offset, isVolatile, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static float resolveAndGetInstanceFieldFloat(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         return holderInitAndGetInstanceFieldFloat(f, object);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static float resolveAndGetStaticFieldFloat(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         return holderInitAndGetStaticFieldFloat(f);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutInstanceFieldFloat(ResolutionGuard.InPool guard, Object object, float value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         holderInitAndPutInstanceFieldFloat(f, object, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutStaticFieldFloat(ResolutionGuard.InPool guard, float value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         holderInitAndPutStaticFieldFloat(f, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static float holderInitAndGetInstanceFieldFloat(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
         return getFieldFloat(object, f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static float holderInitAndGetStaticFieldFloat(FieldActor f) {
         Snippets.makeHolderInitialized(f);
         return getFieldFloat(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutInstanceFieldFloat(FieldActor f, Object object, float value) {
         Snippets.makeHolderInitialized(f);
         putFieldFloat(object, f.offset(), f.isVolatile(), value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutStaticFieldFloat(FieldActor f, float value) {
         Snippets.makeHolderInitialized(f);
         putFieldFloat(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
@@ -1010,49 +1010,49 @@ public class FieldSnippets extends SnippetLowerings {
         putFieldLong(object, offset, isVolatile, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static long resolveAndGetInstanceFieldLong(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         return holderInitAndGetInstanceFieldLong(f, object);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static long resolveAndGetStaticFieldLong(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         return holderInitAndGetStaticFieldLong(f);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutInstanceFieldLong(ResolutionGuard.InPool guard, Object object, long value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         holderInitAndPutInstanceFieldLong(f, object, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutStaticFieldLong(ResolutionGuard.InPool guard, long value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         holderInitAndPutStaticFieldLong(f, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static long holderInitAndGetInstanceFieldLong(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
         return getFieldLong(object, f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static long holderInitAndGetStaticFieldLong(FieldActor f) {
         Snippets.makeHolderInitialized(f);
         return getFieldLong(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutInstanceFieldLong(FieldActor f, Object object, long value) {
         Snippets.makeHolderInitialized(f);
         putFieldLong(object, f.offset(), f.isVolatile(), value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutStaticFieldLong(FieldActor f, long value) {
         Snippets.makeHolderInitialized(f);
         putFieldLong(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
@@ -1131,49 +1131,49 @@ public class FieldSnippets extends SnippetLowerings {
         putFieldDouble(object, offset, isVolatile, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static double resolveAndGetInstanceFieldDouble(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         return holderInitAndGetInstanceFieldDouble(f, object);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static double resolveAndGetStaticFieldDouble(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         return holderInitAndGetStaticFieldDouble(f);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutInstanceFieldDouble(ResolutionGuard.InPool guard, Object object, double value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         holderInitAndPutInstanceFieldDouble(f, object, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutStaticFieldDouble(ResolutionGuard.InPool guard, double value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         holderInitAndPutStaticFieldDouble(f, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static double holderInitAndGetInstanceFieldDouble(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
         return getFieldDouble(object, f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static double holderInitAndGetStaticFieldDouble(FieldActor f) {
         Snippets.makeHolderInitialized(f);
         return getFieldDouble(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutInstanceFieldDouble(FieldActor f, Object object, double value) {
         Snippets.makeHolderInitialized(f);
         putFieldDouble(object, f.offset(), f.isVolatile(), value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutStaticFieldDouble(FieldActor f, double value) {
         Snippets.makeHolderInitialized(f);
         putFieldDouble(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);
@@ -1252,49 +1252,49 @@ public class FieldSnippets extends SnippetLowerings {
         putFieldObject(object, offset, isVolatile, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static Object resolveAndGetInstanceFieldObject(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         return holderInitAndGetInstanceFieldObject(f, object);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static Object resolveAndGetStaticFieldObject(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         return holderInitAndGetStaticFieldObject(f);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutInstanceFieldObject(ResolutionGuard.InPool guard, Object object, Object value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
         holderInitAndPutInstanceFieldObject(f, object, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndPutStaticFieldObject(ResolutionGuard.InPool guard, Object value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
         holderInitAndPutStaticFieldObject(f, value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static Object holderInitAndGetInstanceFieldObject(FieldActor f, Object object) {
         Snippets.makeHolderInitialized(f);
         return getFieldObject(object, f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static Object holderInitAndGetStaticFieldObject(FieldActor f) {
         Snippets.makeHolderInitialized(f);
         return getFieldObject(f.holder().staticTuple(), f.offset(), f.isVolatile());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutInstanceFieldObject(FieldActor f, Object object, Object value) {
         Snippets.makeHolderInitialized(f);
         putFieldObject(object, f.offset(), f.isVolatile(), value);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void holderInitAndPutStaticFieldObject(FieldActor f, Object value) {
         Snippets.makeHolderInitialized(f);
         putFieldObject(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);

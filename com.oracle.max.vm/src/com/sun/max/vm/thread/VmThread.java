@@ -380,7 +380,7 @@ public class VmThread {
      * <li>Reprotects the yellow zone if the raising process unprotected it.</li>
      * </ol>
      */
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     public final Throwable loadExceptionForHandler() {
         SafepointPoll.enable();
         Throwable e = exception;
@@ -1297,6 +1297,7 @@ public class VmThread {
      * Raises the pending JNI exception on this thread (if any) and clears it.
      * Called from a {@linkplain NativeStubGenerator JNI stub} after a native function returns.
      */
+    @SNIPPET_SLOWPATH
     public final void throwJniException() throws Throwable {
         final Throwable pendingException = this.jniException;
         if (pendingException != null) {

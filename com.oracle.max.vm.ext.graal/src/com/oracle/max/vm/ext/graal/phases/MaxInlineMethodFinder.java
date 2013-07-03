@@ -20,45 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.oracle.max.vm.ext.graal.phases;
 
-import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
-import com.oracle.graal.replacements.*;
-import com.oracle.graal.replacements.Snippet.*;
+import com.oracle.graal.phases.*;
+import com.oracle.max.vm.ext.graal.*;
+import com.sun.max.vm.actor.member.*;
 
-/**
- * Maxine boot image compilation needs {@link @Fold} support, which is normally
- * restricted to snippets in Graal. We can't just use the snippets {@link NodeIntrinsification}
- * phase because there can be unresolved {@link HOSTED_ONLY} methods in the graph.
- */
-public class MaxFoldPhase extends NodeIntrinsificationPhase {
+public class MaxInlineMethodFinder extends Phase {
 
-    public MaxFoldPhase(MetaAccessProvider runtime) {
-        super(runtime);
+    private static Map<Graph, ArrayList<Node>> inlineMethodsMap = new HashMap<>();
+
+    public static ArrayList<Node> getInvokePredecessors(StructuredGraph graph) {
+        return  inlineMethodsMap.get(graph);
     }
 
     @Override
     protected void run(StructuredGraph graph) {
-        // Identical to NodeIntrinsificationPhase.run, save for the check on unresolved methods
-        ArrayList<Node> cleanUpReturnList = new ArrayList<>();
-        for (MethodCallTargetNode node : graph.getNodes(MethodCallTargetNode.class)) {
-            if (node.isResolved() && node.targetMethod().getAnnotation(Fold.class) != null) {
-                try {
-                tryIntrinsify(node, cleanUpReturnList);
-                } catch (Exception ex) {
-                   System.console();
-                }
+        ArrayList<Node> inlineMethods = new ArrayList<Node>();
+        inlineMethodsMap.put(graph, inlineMethods);
+        for (MethodCallTargetNode callTarget : graph.getNodes(MethodCallTargetNode.class)) {
+            MethodActor callee = (MethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(callTarget.targetMethod());
+            if (callee.isInline()) {
+                Node predecessor = callTarget.invoke().predecessor();
+                assert !(predecessor instanceof Invoke);
+                inlineMethods.add(predecessor);
             }
-        }
-
-        for (Node node : cleanUpReturnList) {
-            cleanUpReturnCheckCast(node);
         }
     }
 

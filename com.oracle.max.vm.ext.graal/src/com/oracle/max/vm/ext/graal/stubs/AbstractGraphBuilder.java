@@ -149,7 +149,7 @@ public abstract class AbstractGraphBuilder {
             stack.add(callNode);
         }
 
-        return graph.add(new FrameState(nativeMethod, INVALID_FRAMESTATE_BCI, locals, stack, new ValueNode[0], false, false));
+        return graph.add(new FrameState(null, INVALID_FRAMESTATE_BCI, locals, stack, new ValueNode[0], false, false));
     }
 
     /**

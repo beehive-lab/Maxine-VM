@@ -35,7 +35,7 @@ public class MaxJavaMethod implements JavaMethod {
 
     private static ConcurrentHashMap<RiMethod, MaxJavaMethod> map = new ConcurrentHashMap<RiMethod, MaxJavaMethod>();
 
-    static MaxJavaMethod get(RiMethod riMethod) {
+    public static MaxJavaMethod get(RiMethod riMethod) {
         MaxJavaMethod result = map.get(riMethod);
         if (result == null) {
             if (riMethod instanceof RiResolvedMethod) {

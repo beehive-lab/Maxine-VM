@@ -26,23 +26,18 @@ import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.util.*;
 
-import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
-import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
+import com.oracle.graal.nodes.util.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
 import com.oracle.max.vm.ext.graal.*;
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.SignatureDescriptor;
 
 /**
@@ -62,151 +57,72 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         StructuredGraph template;
         if (nativeMethod.isCFunction()) {
             if (NativeInterfaces.needsPrologueAndEpilogue(nativeMethod)) {
-                template = cFunctionTemplate;
+                template = NativeStubSnippets.cFunctionTemplate;
             } else {
-                template = noPrologueOrEpilogueTemplate;
+                template = NativeStubSnippets.noPrologueOrEpilogueTemplate;
             }
         } else {
             if (nativeMethod.isSynchronized()) {
-                template = synchronizedTemplate;
+                template = NativeStubSnippets.synchronizedTemplate;
             } else {
-                template = normalTemplate;
+                template = NativeStubSnippets.normalTemplate;
             }
         }
         setGraph(template.copy(nativeMethod.name()));
     }
 
-    /**
-     * Placeholder for the code allocating and initialize the JNI handles for the object arguments of a native method stub.
-     * The call to the method is replaced with a graph produced by {@link InitializeHandlesGraphBuilder}.
-     */
-    static native Pointer initializeHandles();
-    static final ResolvedJavaMethod initializeHandles = MaxResolvedJavaMethod.get(findMethod(NativeStubGraphBuilder.class, "initializeHandles"));
+    private static final ResolvedJavaMethod initializeHandles = MaxResolvedJavaMethod.get(findMethod(NativeStubSnippets.class, "initializeHandles"));
 
-    /**
-     * Placeholder for the real native function call in a template native method stub.
-     * The call to the method is replaced with a graph produced by {@link NativeFunctionCallGraphBuilder}.
-     */
-    static native Object nativeFunctionCall(Address function, Pointer frame, Pointer jniEnv);
-    static final ResolvedJavaMethod nativeFunctionCall = MaxResolvedJavaMethod.get(findMethod(NativeStubGraphBuilder.class, "nativeFunctionCall", Address.class, Pointer.class, Pointer.class));
+    static final ResolvedJavaMethod nativeFunctionCall = MaxResolvedJavaMethod.get(findMethod(NativeStubSnippets.class, "nativeFunctionCall", Address.class, Pointer.class, Pointer.class));
 
-    /**
-     * Stub template for a native method.
-     */
-    @INLINE
-    public static Object template(NativeFunction nativeFunction, String traceName) throws Throwable {
-
-        Pointer handles = initializeHandles();
-
-        Address address = nativeFunction.link();
-        VmThread thread = VmThread.current();
-
-        if (traceName != null) {
-            Log.print("[Thread \"");
-            Log.print(thread.getName());
-            Log.print("\" --> JNI: ");
-            Log.print(traceName);
-            Log.println(']');
-        }
-
-        int jniHandlesTop = thread.jniHandlesTop();
-
-        Object result = nativeFunctionCall(address, handles, VmThread.jniEnv());
-        Snippets.nativeCallEpilogue();
-
-        thread.resetJniHandlesTop(jniHandlesTop);
-
-        if (traceName != null) {
-            Log.print("[Thread \"");
-            Log.print(thread.getName());
-            Log.print("\" <-- JNI: ");
-            Log.print(traceName);
-            Log.println(']');
-        }
-
-        thread.throwJniException();
-
-        return result;
-    }
-
-    /**
-     * Stub template for a synchronized native method.
-     */
-    public static synchronized Object syncTemplate(NativeFunction nativeFunction, String traceName) throws Throwable {
-        return template(nativeFunction, traceName);
-    }
-
-    /**
-     * Stub template for a native method annotated with {@link C_FUNCTION}.
-     */
-    public static Object templateC(NativeFunction nativeFunction, String ignore) {
-        Pointer frame = VMRegister.getCpuStackPointer();
-        Address address = nativeFunction.link();
-        Snippets.nativeCallPrologueForC(nativeFunction);
-        Object result = nativeFunctionCall(address, frame, VmThread.jniEnv());
-        Snippets.nativeCallEpilogueForC();
-        return result;
-    }
-
-    /**
-     * Stub template for a native method that doesn't need a prologue and epilogue around the native function call.
-     *
-     * @see NativeInterfaces#needsPrologueAndEpilogue(MethodActor)
-     */
-    public static Object templateNoPrologueOrEpilogue(NativeFunction nativeFunction, String ignore) {
-        Pointer frame = VMRegister.getCpuStackPointer();
-        Address address = nativeFunction.link();
-        Snippets.nativeCallPrologueForC(nativeFunction);
-        Object result = nativeFunctionCall(address, frame, VmThread.jniEnv());
-        Snippets.nativeCallEpilogueForC();
-        return result;
-    }
-
-    static StructuredGraph normalTemplate;
-    static StructuredGraph synchronizedTemplate;
-    static StructuredGraph cFunctionTemplate;
-    static StructuredGraph noPrologueOrEpilogueTemplate;
 
     /**
      * Builds the graph for the native method stub.
      */
-    public StructuredGraph build() {
+    public StructuredGraph build(final List<Phase> bootPhases) {
         Debug.scope("NativeStubGraphBuilder", new Object[]{nativeMethod}, new Runnable() {
             public void run() {
-                buildGraph();
+                buildGraph(bootPhases);
             }
         });
         return graph;
     }
 
-    private StructuredGraph buildGraph() {
+    private StructuredGraph buildGraph(final List<Phase> bootPhases) {
         SignatureDescriptor sig = nativeMethodActor.descriptor();
 
         Debug.dump(graph, NativeStubGraphBuilder.class.getSimpleName() + ":" + nativeMethod.getName());
 
+        // Replace template parameters with constants
         Iterator<LocalNode> locals = graph.getNodes(LocalNode.class).iterator();
         LocalNode local0 = locals.next();
-        LocalNode local1 = locals.next();
-        assert !locals.hasNext() : "template should have exactly two arguments";
         assert local0.kind() == Kind.Object;
-        assert local1.kind() == Kind.Object;
+        LocalNode local1 = null;
 
-        // Replace template parameters with constants
-        local0.replaceAtUsages(oconst(nativeMethodActor.nativeFunction));
-        local1.replaceAtUsages(JniFunctions.logger.traceEnabled() ? oconst(nativeMethodActor.format("%H.%n(%P)")) : oconst(null));
-        local0.safeDelete();
-        local1.safeDelete();
-
-        ReturnNode returnNode = null;
-        for (Node n : graph.getNodes()) {
-            if (n instanceof ReturnNode) {
-                returnNode = (ReturnNode) n;
-                break;
-            }
+        if (locals.hasNext()) {
+            local1 = locals.next();
+            assert local1.kind() == Kind.Long;
         }
-        assert returnNode != null;
+
+        // The NativeFunction object
+        local0.replaceAtUsages(oconst(nativeMethodActor.nativeFunction));
+        local0.safeDelete();
+
+        if (local1 != null) {
+            // The MethodID
+            local1.replaceAtUsages(ConstantNode.forLong(MethodID.fromMethodActor(nativeMethodActor).asAddress().toLong(), graph));
+            local1.safeDelete();
+        }
 
         Debug.dump(graph, "%s: SpecializeLocals", nativeMethod.getName());
+
+        if (nativeMethodActor.isStatic() && nativeMethodActor.isSynchronized()) {
+            // The template synchronizes on the NativeStubSnippets class, patch that now
+            patchMonitors();
+            Debug.dump(graph, "Patch Monitors");
+        }
+
+        patchReturn();
 
         // Add parameters of native method
         boolean isStatic = nativeMethodActor.isStatic();
@@ -218,26 +134,35 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
                 NodeInputList<ValueNode> arguments = callTarget.arguments();
                 assert arguments.isEmpty();
                 arguments.addAll(createLocals(0, sig, isStatic));
-                StructuredGraph initializeHandlesGraph = new InitializeHandlesGraphBuilder(nativeMethodActor).graph;
-                Debug.dump(initializeHandlesGraph, "InitializeHandles");
-                applyPhasesBeforeInlining(initializeHandlesGraph);
-                InliningUtil.inline(invoke, initializeHandlesGraph, false);
+                NativeStubSnippets.initializeHandlesLowering.lower((InvokeNode) invoke, nativeMethodActor);
             } else if (method == nativeFunctionCall) {
-                // replace call with native function sequence
                 NodeInputList<ValueNode> arguments = callTarget.arguments();
                 arguments.addAll(createLocals(0, sig, isStatic));
-                StructuredGraph nativeFunctionCallGraph = new NativeFunctionCallGraphBuilder(nativeMethodActor).graph;
-                Debug.dump(nativeFunctionCallGraph, "NativeFunctionCall");
-                applyPhasesBeforeInlining(nativeFunctionCallGraph);
-                InliningUtil.inline(invoke, nativeFunctionCallGraph, false);
+                NativeStubSnippets.nativeFunctionCallLowering.lower((InvokeNode) invoke, nativeMethodActor);
             }
         }
 
-        // Fixed the return node to be of the correct kind
-        ReturnNode fixedReturnNode = graph.add(new ReturnNode(returnNode.result()));
-        returnNode.replaceAndDelete(fixedReturnNode);
-
         Debug.dump(graph, "Inlined");
+
+        // No deoptimization points within the stub
+        for (Node node : graph.getNodes()) {
+            if (node instanceof StateSplit) {
+                StateSplit stateSplit = (StateSplit) node;
+                FrameState frameState = stateSplit.stateAfter();
+                if (frameState != null) {
+                    stateSplit.setStateAfter(null);
+                    if (frameState.usages().isEmpty()) {
+                        GraphUtil.killWithUnusedFloatingInputs(frameState);
+                    }
+                }
+            }
+        }
+        Debug.dump(graph,  "StateSplit cleanup");
+
+        // There has to be a FrameState at the start (evidently)
+        graph.start().setStateAfter(graph.add(new FrameState(nativeMethod, 0, new ArrayList<ValueNode>(), 0, 0, false, false, null)));
+
+
         new DeadCodeEliminationPhase().apply(graph);
         Debug.dump(graph, "%s: Final", nativeMethod.getName());
 
@@ -246,46 +171,62 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
     }
 
     /**
-     * Applies a number of phases to a graph before it is inlined into another graph.
+     * Patch the ReturnNode if the method is void.
      */
-    protected void applyPhasesBeforeInlining(StructuredGraph graph) {
-        new MaxFoldPhase(MaxGraal.runtime()).apply(graph);
-        new MaxIntrinsicsPhase().apply(graph);
-        new CanonicalizerPhase.Instance(MaxGraal.runtime(), new Assumptions(GraalOptions.OptAssumptions.getValue()), true);
-    }
+    private void patchReturn() {
+        Kind returnKind = nativeMethod.getSignature().getReturnKind();
+        if (returnKind == Kind.Void) {
+            ReturnNode returnNode = null;
+            for (Node n : graph.getNodes()) {
+                if (n instanceof ReturnNode) {
+                    returnNode = (ReturnNode) n;
+                    break;
+                }
+            }
+            assert returnNode != null;
+            // Fix the return node to be void
+            ReturnNode voidReturnNode = graph.add(new ReturnNode(null));
+            returnNode.replaceAndDelete(voidReturnNode);
+            Debug.dump(graph, "Patch Return");
 
-    @HOSTED_ONLY
-    public static void initialize(OptimisticOptimizations optimisticOptimizations) {
-        if (normalTemplate == null) {
-            // Initialize the templates
-            normalTemplate = createTemplate("template", optimisticOptimizations);
-            synchronizedTemplate = createTemplate("syncTemplate", optimisticOptimizations);
-            cFunctionTemplate = createTemplate("templateC", optimisticOptimizations);
-            noPrologueOrEpilogueTemplate = createTemplate("templateNoPrologueOrEpilogue", optimisticOptimizations);
         }
     }
 
-    @HOSTED_ONLY
-    private static StructuredGraph createTemplate(final String name, final OptimisticOptimizations optimisticOptimizations) {
-        MethodActor methodActor = findMethod(NativeStubGraphBuilder.class, name, NativeFunction.class, String.class);
-        ResolvedJavaMethod method = MaxResolvedJavaMethod.get(methodActor);
-        final StructuredGraph graph = new StructuredGraph(method);
-
-        Debug.scope("NativeStubCreateTemplate", new Object[]{method}, new Runnable() {
-
-            public void run() {
-                new MaxGraphBuilderPhase(MaxGraal.runtime(), GraphBuilderConfiguration.getDefault(), optimisticOptimizations).apply(graph);
-                new MaxFoldPhase(MaxGraal.runtime()).apply(graph);
-                new MaxIntrinsicsPhase().apply(graph);
-                new CanonicalizerPhase.Instance(MaxGraal.runtime(), new Assumptions(GraalOptions.OptAssumptions.getValue()), true).apply(graph);
-                new DeadCodeEliminationPhase().apply(graph);
-
-                Debug.dump(graph, "%s: Final", name);
+    private void patchMonitors() {
+        ValueNode nativeClass = ConstantNode.forObject(nativeMethodActor.holder().toJava(), MaxGraal.runtime(), graph);
+        int count = 0;
+        ValueNode templateObject = null;
+        for (Node n : graph.getNodes()) {
+            if (n instanceof AccessMonitorNode) {
+                AccessMonitorNode an = (AccessMonitorNode) n;
+                templateObject = an.object();
+                AccessMonitorNode replacement = null;
+                FixedNode successor = an.next();
+                if (n instanceof MonitorEnterNode) {
+                    replacement = new MonitorEnterNode(nativeClass, 0);
+                    n.replaceAndDelete(graph.add(replacement));
+                    count++;
+                } else if (n instanceof MonitorExitNode) {
+                    replacement = new MonitorExitNode(nativeClass, 0);
+                    n.replaceAndDelete(graph.add(replacement));
+                    count++;
+                }
+                replacement.setNext(successor);
+                if (count >= 2) {
+                    break;
+                }
             }
+        }
+        templateObject.safeDelete();
+    }
 
-        });
-
-        return graph;
+    /**
+     * Applies the standard boot phases to a graph before it is inlined into another graph.
+     */
+    protected void applyPhasesBeforeInlining(StructuredGraph graph, List<Phase> bootPhases) {
+        for (Phase phase : bootPhases) {
+            phase.apply(graph);
+        }
     }
 
 }

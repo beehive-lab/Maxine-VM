@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.graal;
 import static com.sun.max.vm.VMOptions.*;
 
 import java.lang.reflect.*;
+import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.code.*;
@@ -43,6 +44,7 @@ import com.oracle.graal.phases.common.*;
 import com.oracle.graal.phases.tiers.*;
 import com.oracle.graal.printer.*;
 import com.oracle.max.vm.ext.graal.amd64.*;
+import com.oracle.max.vm.ext.graal.phases.*;
 import com.oracle.max.vm.ext.graal.stubs.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -220,7 +222,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         suites = Suites.createDefaultSuites();
         createBootSuites();
         replacements = runtime.init();
-        NativeStubGraphBuilder.initialize(optimisticOpts);
         GraalBoot.forceValues();
     }
 
@@ -269,36 +270,17 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
 
         StructuredGraph graph = (StructuredGraph) method.getCompilerStorage().get(Graph.class);
         if (graph == null) {
+            List<com.oracle.graal.phases.Phase> bootPhases = null;
             GraphBuilderPhase graphBuilderPhase = new MaxGraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(), optimisticOpts);
             phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
             // Hosted (boot image) compilation is more complex owing to the need to handle the unsafe features of VM programming,
             // requiring more phases to be run. All this is very similar to what happens in MaxReplacementsImpl
-            if (state.bootCompile) {
+            if (state.bootCompile || methodActor.isNative()) {
                 // TODO should be done by modifying bootSuites
-                // In Graal, @Fold is purely a snippet notion; we handle Maxine's more general use with similar code.
-                // We do this early to reduce the size of a graph that contains isHosted code.
-                phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxFoldPhase(runtime));
-                // Any folded isHosted code is only removed by a CanonicalizationPhase
-                phasePlan.addPhase(PhasePosition.AFTER_PARSING, new CanonicalizerPhase.Instance(runtime,
-                                new Assumptions(GraalOptions.OptAssumptions.getValue()), canonicalizeReads));
-                phasePlan.addPhase(PhasePosition.AFTER_PARSING, new MaxIntrinsicsPhase());
-                phasePlan.addPhase(PhasePosition.AFTER_PARSING,
-                                new MaxWordTypeRewriterPhase.MakeWordFinalRewriter(runtime, runtime.maxTargetDescription.wordKind));
-
-                // In order to have Maxine's (must) INLINE annotation interpreted, we have to disable the standard inlining phase
-                // and substitute a custom phase that checks the method annotation.
-                phasePlan.disablePhase(InliningPhase.class);
-                phasePlan.addPhase(PhasePosition.HIGH_LEVEL,
-                                new MaxHostedInliningPhase(runtime, null, replacements, new Assumptions(GraalOptions.OptAssumptions.getValue()), cache, phasePlan, optimisticOpts));
-                phasePlan.addPhase(PhasePosition.HIGH_LEVEL, new InlineDone());
-                // Important to remove bogus null checks on Word types
-                phasePlan.addPhase(PhasePosition.HIGH_LEVEL, new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, runtime.maxTargetDescription.wordKind));
-                // intrinsics are (obviously) not inlined, so they are left in the graph and need to be rewritten now
-                phasePlan.addPhase(PhasePosition.HIGH_LEVEL, new MaxIntrinsicsPhase());
-
+                bootPhases = addBootPhases(phasePlan);
             }
             if (methodActor.isNative()) {
-                graph = new NativeStubGraphBuilder(methodActor).build();
+                graph = new NativeStubGraphBuilder(methodActor).build(bootPhases);
             } else {
                 graph = new StructuredGraph(method);
             }
@@ -308,6 +290,37 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                         runtime.maxTargetDescription,
                         cache, phasePlan, optimisticOpts, new SpeculationLog(), compileSuites);
         return GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
+    }
+
+    public List<com.oracle.graal.phases.Phase> addBootPhases(PhasePlan phasePlan) {
+        // In Graal, @Fold is purely a snippet notion; we handle Maxine's more general use with similar code.
+        // We do this early to reduce the size of a graph that contains isHosted code.
+        ArrayList<com.oracle.graal.phases.Phase> result = new ArrayList<>();
+        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new MaxFoldPhase(runtime)));
+        // Any folded isHosted code is only removed by a CanonicalizationPhase
+        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new CanonicalizerPhase.Instance(runtime,
+                        new Assumptions(GraalOptions.OptAssumptions.getValue()), canonicalizeReads)));
+        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new MaxIntrinsicsPhase()));
+        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING,
+                        new MaxWordTypeRewriterPhase.MakeWordFinalRewriter(runtime, runtime.maxTargetDescription.wordKind)));
+
+        // In order to have Maxine's (must) INLINE annotation interpreted, we have to disable the standard inlining phase
+        // and substitute a custom phase that checks the method annotation.
+        phasePlan.disablePhase(InliningPhase.class);
+        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL,
+                        new MaxHostedInliningPhase(runtime, null, replacements, new Assumptions(GraalOptions.OptAssumptions.getValue()),
+                                        cache, phasePlan, optimisticOpts)));
+        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new InlineDone()));
+        // Important to remove bogus null checks on Word types
+        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, runtime.maxTargetDescription.wordKind, null)));
+        // intrinsics are (obviously) not inlined, so they are left in the graph and need to be rewritten now
+        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new MaxIntrinsicsPhase()));
+        return result;
+    }
+
+    private com.oracle.graal.phases.Phase addPhase(PhasePlan phasePlan, PhasePosition pos, com.oracle.graal.phases.Phase phase) {
+        phasePlan.addPhase(pos, phase);
+        return phase;
     }
 
     @Override
