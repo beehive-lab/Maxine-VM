@@ -81,7 +81,7 @@ public class MaxMiscLowerings extends SnippetLowerings {
         return loadExceptionForHandler();
     }
 
-    @RUNTIME_ENTRY(nonNull = true)
+    @SNIPPET_SLOWPATH(nonNull = true)
     private static Throwable loadExceptionForHandler() {
         // this aborts the VM if the stored exception object is null
         return VmThread.current().loadExceptionForHandler();
@@ -108,7 +108,7 @@ public class MaxMiscLowerings extends SnippetLowerings {
         throw UnreachableNode.unreachable();
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void throwException(Throwable throwable) {
         Throw.raise(throwable);
     }

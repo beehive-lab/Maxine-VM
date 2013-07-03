@@ -271,6 +271,15 @@ public final class FatalError extends Error {
     }
 
     /**
+     * Out of line assertion.
+     * @param condition
+     */
+    @NEVER_INLINE
+    public static void asert(boolean condition) {
+        assert condition;
+    }
+
+    /**
      * Reports that an unimplemented piece of VM functionality was encountered.
      *
      * This method never returns normally.

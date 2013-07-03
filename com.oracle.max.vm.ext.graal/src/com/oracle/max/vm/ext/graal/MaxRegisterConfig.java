@@ -33,6 +33,7 @@ import com.oracle.graal.api.code.CallingConvention.Type;
 import com.oracle.graal.api.code.Register.RegisterCategory;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
+import com.oracle.max.vm.ext.graal.phases.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.compiler.deopt.*;
@@ -94,16 +95,30 @@ public class MaxRegisterConfig implements RegisterConfig {
         return callingConvention(javaGeneralParameterRegisters, returnType, parameterTypes, type, target, stackOnly);
     }
 
+    public CallingConvention nativeCallingConvention(Kind returnKind, Kind[] parameterKinds) {
+        return callingConvention(nativeGeneralParameterRegisters, returnKind, parameterKinds, Type.NativeCall, MaxGraal.runtime().getTarget(), false);
+    }
+
     private CallingConvention callingConvention(Register[] generalParameterRegisters, JavaType returnType, JavaType[] parameterTypes, Type type, TargetDescription target, boolean stackOnly) {
-        AllocatableValue[] locations = new AllocatableValue[parameterTypes.length];
+        Kind[] parameterKinds = new Kind[parameterTypes.length];
+        for (int i = 0; i < parameterTypes.length; i++) {
+            parameterKinds[i] = MaxWordTypeRewriterPhase.checkWord(parameterTypes[i]);
+        }
+        Kind returnKind = returnType == null ? Kind.Void : MaxWordTypeRewriterPhase.checkWord(returnType);
+        return callingConvention(generalParameterRegisters, returnKind, parameterKinds, type, target, stackOnly);
+
+    }
+
+    private CallingConvention callingConvention(Register[] generalParameterRegisters, Kind returnKind, Kind[] parameterKinds, Type type, TargetDescription target, boolean stackOnly) {
+        AllocatableValue[] locations = new AllocatableValue[parameterKinds.length];
 
         int currentGeneral = 0;
         int currentXMM = 0;
         // Account for the word at the bottom of the frame used for saving an overwritten return address during deoptimization
         int currentStackOffset = type == Type.NativeCall ? 0 : Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET + target.wordSize;
 
-        for (int i = 0; i < parameterTypes.length; i++) {
-            final Kind kind = MaxWordTypeRewriterPhase.checkWord(parameterTypes[i]);
+        for (int i = 0; i < parameterKinds.length; i++) {
+            Kind kind = parameterKinds[i];
 
             switch (kind) {
                 case Byte:
@@ -135,7 +150,6 @@ public class MaxRegisterConfig implements RegisterConfig {
             }
         }
 
-        Kind returnKind = returnType == null ? Kind.Void : MaxWordTypeRewriterPhase.checkWord(returnType);
         AllocatableValue returnLocation = returnKind == Kind.Void ? Value.ILLEGAL : getReturnRegister(returnKind).asValue(returnKind);
         return new CallingConvention(currentStackOffset, returnLocation, locations);
     }

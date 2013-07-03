@@ -68,5 +68,6 @@ class InitializeHandlesGraphBuilder extends AbstractGraphBuilder {
         }
 
         append(graph.add(new ReturnNode(handles)));
+
     }
 }

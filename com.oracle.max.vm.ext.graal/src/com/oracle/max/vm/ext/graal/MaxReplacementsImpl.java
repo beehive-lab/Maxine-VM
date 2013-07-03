@@ -31,13 +31,16 @@ import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.max.vm.ext.graal.MaxRuntime.*;
+import com.oracle.max.vm.ext.graal.phases.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.actor.member.*;
 
 class MaxReplacementsImpl extends ReplacementsImpl {
     private MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration;
@@ -83,18 +86,28 @@ class MaxReplacementsImpl extends ReplacementsImpl {
 
             Debug.dump(graph, "%s: %s", method.getName(), GraphBuilderPhase.class.getSimpleName());
 
-            new MaxIntrinsicsPhase().apply(graph);
             new MaxWordTypeRewriterPhase.MakeWordFinalRewriter(runtime, target.wordKind).apply(graph);
-            new NodeIntrinsificationPhase(runtime).apply(graph);
+            new NodeIntrinsificationPhase(runtime).apply(graph); // Fold
             // need constant propagation for folded methods
             new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(graph);
+            new MaxIntrinsicsPhase().apply(graph);
 
             return graph;
         }
 
         @Override
-        public void afterInline(StructuredGraph caller, StructuredGraph callee) {
-            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, target.wordKind).apply(caller);
+        protected Object beforeInline(MethodCallTargetNode callTarget, StructuredGraph calleeGraph) {
+            MethodActor callee = (MethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(callTarget.targetMethod());
+            if (callee.isInline()) {
+                return callTarget.invoke().predecessor();
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public void afterInline(StructuredGraph caller, StructuredGraph callee, Object beforeInlineData) {
+            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, target.wordKind, (Node) beforeInlineData).apply(caller);
             new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(caller);
             new MaxIntrinsicsPhase().apply(caller);
         }
@@ -105,12 +118,14 @@ class MaxReplacementsImpl extends ReplacementsImpl {
 
             // These only get done once right at the end
             new MaxWordTypeRewriterPhase.MaxUnsafeAccessRewriter(runtime, target.wordKind).apply(graph);
-            new MaxWordTypeRewriterPhase.MaxUnsafeCastRewriter(runtime, target.wordKind).apply(graph);
+//            new MaxWordTypeRewriterPhase.MaxUnsafeCastRewriter(runtime, target.wordKind).apply(graph);
             new MaxSlowpathRewriterPhase(runtime).apply(graph);
-            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, target.wordKind).apply(graph);
+            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, target.wordKind, null).apply(graph);
 
             // The replaces all Word based types with target.wordKind
             new MaxWordTypeRewriterPhase.KindRewriter(runtime, target.wordKind).apply(graph);
+            // Remove UnsafeCasts rendered irrelevant by previous phase
+            new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(graph);
 
             new SnippetFrameStateCleanupPhase().apply(graph);
             new DeadCodeEliminationPhase().apply(graph);

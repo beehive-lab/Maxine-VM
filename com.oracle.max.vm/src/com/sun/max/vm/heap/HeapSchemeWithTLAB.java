@@ -425,7 +425,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return cell;
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     public final Pointer c1xSlowPathAllocate(Size size, Pointer etla) {
         globalTlabStats.inlinedSlowPathAllocateCount++;
         return slowPathAllocate(size, etla, TLAB_MARK.load(etla), TLAB_TOP.load(etla));

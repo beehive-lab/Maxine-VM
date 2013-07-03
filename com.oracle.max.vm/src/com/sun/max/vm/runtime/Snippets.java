@@ -152,7 +152,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveStaticFieldForReading0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -177,7 +177,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveStaticFieldForWriting0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -294,7 +294,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveInstanceFieldForReading0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -319,7 +319,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveInstanceFieldForWriting0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -514,7 +514,7 @@ public class Snippets {
     @INLINE
     public static void nativeCallPrologue0(Pointer etla, Word anchor) {
         if (!NATIVE_CALLS_DISABLED.load(currentTLA()).isZero()) {
-            throw FatalError.unexpected("Calling native code while native calls are disabled");
+            FatalError.unexpected("Calling native code while native calls are disabled");
         }
 
         // Update the last Java frame anchor for the current thread:
@@ -605,7 +605,7 @@ public class Snippets {
                     break;
                 }
                 if (oldMutatorState.equals(THREAD_IN_JAVA)) {
-                    throw FatalError.unexpected("Thread transitioned itself from THREAD_IS_FROZEN to THREAD_IN_JAVA -- only the VM operation thread should do that");
+                    FatalError.unexpected("Thread transitioned itself from THREAD_IS_FROZEN to THREAD_IN_JAVA -- only the VM operation thread should do that");
                 }
                 nativeBlockOnThreadLock();
             }

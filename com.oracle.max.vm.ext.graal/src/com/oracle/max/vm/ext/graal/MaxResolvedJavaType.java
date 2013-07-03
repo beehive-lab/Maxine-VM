@@ -44,6 +44,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     private static MaxResolvedJavaType objectType;
     private static MaxResolvedJavaType wrappedWord;
     private static MaxResolvedJavaType wordType;
+    private static MaxResolvedJavaType pointerType;
 
     protected MaxResolvedJavaType(RiResolvedType riResolvedType) {
         super(riResolvedType);
@@ -62,6 +63,13 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
             objectType = MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
         }
         return objectType;
+    }
+
+    public static MaxResolvedJavaType getPointerType() {
+        if (pointerType == null) {
+            pointerType = MaxResolvedJavaType.get(ClassActor.fromJava(Pointer.class));
+        }
+        return pointerType;
     }
 
     private static MaxResolvedJavaType getWordType() {

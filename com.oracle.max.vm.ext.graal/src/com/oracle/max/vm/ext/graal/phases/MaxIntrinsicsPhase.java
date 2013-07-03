@@ -20,12 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.oracle.max.vm.ext.graal.phases;
 
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
+import com.oracle.max.vm.ext.graal.*;
 import com.sun.max.vm.actor.member.*;
 
 
@@ -39,7 +40,7 @@ public class MaxIntrinsicsPhase extends Phase {
                 MethodCallTargetNode methodCallTargetNode = (MethodCallTargetNode) callTargetNode;
                 if (methodCallTargetNode.isResolved()) {
                     MaxResolvedJavaMethod method = (MaxResolvedJavaMethod) methodCallTargetNode.targetMethod();
-                    MethodActor methodActor = (MethodActor) method.riMethod;
+                    MethodActor methodActor = (MethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(method);
                     if (methodActor.intrinsic() != null) {
                         intrinsify(invoke, method);
                     }

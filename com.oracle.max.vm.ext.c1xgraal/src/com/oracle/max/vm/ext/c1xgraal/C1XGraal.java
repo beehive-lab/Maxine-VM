@@ -52,21 +52,13 @@ public class C1XGraal implements RuntimeCompiler {
     static boolean FailOverToC1X = true;
     static {
         addFieldOption("-XX:", "FailOverToC1X", "Retry failed Graal compilations with C1X.");
-        addFieldOption("-XX:", "MaxGraalCompare", "compare compiled code against C1X/T1X");
         addFieldOption("-XX:", "MaxGraalNative", "compile native code with Graal");
     }
 
     /**
-     * Prevents compilation (and comparison with C1X/T1X) when {@code false}.
-     * Important in boot image mode, as multiple compilations of the same method
-     * cause an assertion error.
+     * Temporary option to enable/disable native method compilation by Graal.
      */
-    private static boolean MaxGraalCompare = true;
-
-    /**
-     * Temporary option to enable/disable native methgod compilation by Graal.
-     */
-    private static boolean MaxGraalNative;
+    private static boolean MaxGraalNative = true;
 
     private MaxGraal graal;
     private C1X c1x;
@@ -153,15 +145,6 @@ public class C1XGraal implements RuntimeCompiler {
         if (compiler == c1x) {
             result = c1x.compile(method, false, install, stats);
         } else {
-            TargetMethod c1xTM = null;
-            TargetMethod t1xTM = null;
-            if (!MaxineVM.isHosted() && MaxGraalCompare) {
-                // compile with C1X/T1X for comparison
-                c1xTM = c1x.compile(method, isDeopt, install, stats);
-                t1xTM = CompilationBroker.singleton.baselineCompiler.compile(method, isDeopt, install, stats);
-                defaultCompilations(c1xTM, t1xTM);
-            }
-
             if (FailOverToC1X) {
                 try {
                     result = graal.compile(method, false, install, stats);
@@ -180,21 +163,8 @@ public class C1XGraal implements RuntimeCompiler {
             } else {
                 result = graal.compile(method, false, install, stats);
             }
-            if (!MaxineVM.isHosted() && MaxGraalCompare) {
-                compare(result, c1xTM, t1xTM);
-            }
         }
         return result;
-    }
-
-    @NEVER_INLINE
-    private static void compare(TargetMethod graalTM, TargetMethod c1xTM, TargetMethod t1xTM) {
-
-    }
-
-    @NEVER_INLINE
-    private static void defaultCompilations(TargetMethod c1xTM, TargetMethod t1xTM) {
-
     }
 
     public Nature nature() {
@@ -260,6 +230,9 @@ public class C1XGraal implements RuntimeCompiler {
                     }
 
                     for (MethodActor methodActor : methodActors) {
+//                        if (true) {
+//                            TargetMethod c1xTm = c1x.compile((ClassMethodActor) methodActor, false, false, null);
+//                        }
                         TargetMethod tm = graal.compile((ClassMethodActor) methodActor, false, true, null);
                         validate(tm);
                     }

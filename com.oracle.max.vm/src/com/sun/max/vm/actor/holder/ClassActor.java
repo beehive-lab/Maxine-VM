@@ -1650,7 +1650,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     /**
      * See #2.17.5.
      */
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     public void makeInitialized() {
         if (tryInitialization()) {
             if (superClassActor != null) {

@@ -20,30 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.snippets;
+package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.graal.api.meta.*;
-import com.oracle.graal.replacements.Snippet.DefaultSnippetInliningPolicy;
-import com.oracle.max.vm.ext.graal.*;
-import com.sun.max.annotate.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 
-/**
- * Slow path calls in methods (transitively) referenced from snippets should be annotated with {@link NEVER_INLINE} or {@link SNIPPET_SLOWPATH}.
- * For the former, it is important to check the {@link Actor#NEVER_INLINE} flag (implicitly via {@link ResolvedJavaMethod#canBeInlined()}
- * because an entire class (e.g. {@link com.sun.max.vm.Log} can be annotated and checking just the method annotation will fail.
- */
-public class MaxSnippetInliningPolicy extends DefaultSnippetInliningPolicy {
 
-    public MaxSnippetInliningPolicy() {
-        super(MaxGraal.runtime());
+public class JniUnhandNode extends FixedWithNextNode implements Lowerable {
+    @Input private ValueNode handle;
+
+    public JniUnhandNode(Stamp stamp, ValueNode handle) {
+        super(stamp);
+        this.handle = handle;
+    }
+
+    public ValueNode handle() {
+        return handle;
     }
 
     @Override
-    public boolean shouldInline(ResolvedJavaMethod method, ResolvedJavaMethod caller) {
-        if (!method.canBeInlined() || method.getAnnotation(SNIPPET_SLOWPATH.class) != null) {
-            return false;
-        }
-        return super.shouldInline(method, caller);
+    public void lower(LoweringTool tool, LoweringType loweringType) {
+        tool.getRuntime().lower(this, tool);
     }
 
 }

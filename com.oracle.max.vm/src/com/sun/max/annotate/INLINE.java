@@ -46,6 +46,10 @@ import java.lang.annotation.*;
  * this can be a problem. As a workaround, the {@link #must()} can be set to {code false}
  * in such cases.
  *
+ * Note also the fact that the receiver is never null-checked. This is an important performance
+ * optimization for the VM code but it may not be appropriate in all contexts even in the
+ * VM code; in particular it violates the JVM specification.
+ *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

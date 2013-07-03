@@ -24,7 +24,7 @@ package com.oracle.max.vm.ext.graal;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
-import static com.oracle.max.vm.ext.graal.MaxWordTypeRewriterPhase.checkWord;
+import static com.oracle.max.vm.ext.graal.phases.MaxWordTypeRewriterPhase.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -206,7 +206,7 @@ public class MaxIntrinsics {
     }
 
     static class AllocaIntrinsic extends MaxIntrinsicImpl {
-        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, int size, boolean refs) {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, ValueNode size, boolean refs) {
             StructuredGraph graph = invoke.graph();
             return graph.add(new AllocaNode(size, refs, stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass()))));
         }
@@ -313,7 +313,7 @@ public class MaxIntrinsics {
 
     private static Registry registry;
 
-    static Registry getRegistry() {
+    public static Registry getRegistry() {
         assert registry != null;
         return registry;
     }

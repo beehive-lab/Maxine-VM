@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.oracle.max.vm.ext.graal.phases;
 
 import java.util.*;
 
@@ -36,6 +36,7 @@ import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.nodes.util.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.util.*;
+import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ri.*;
 import com.sun.max.unsafe.*;
@@ -108,11 +109,22 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
      * It is only called during snippet generation and boot image compilation.
      * These generally arise from inlining a method, where the JVM spec requires
      * an explicit null check to happen.
+     *
+     * One special case is after an inlining of method annotated with {@link INLINE}.
+     * The null check is always removed as using {@link INLINE} is a
+     * statement that no null check should be generated.
      */
     public static class MaxNullCheckRewriter extends MaxWordTypeRewriterPhase {
 
-        public MaxNullCheckRewriter(MetaAccessProvider metaAccess, Kind wordKind) {
+        /**
+         * When non-null, indicates that the check is being run after inlining a method,
+         * which typically introduces a null check as per the JVM spec.
+         */
+        Node invokePredecessor;
+
+        public MaxNullCheckRewriter(MetaAccessProvider metaAccess, Kind wordKind, Node invokePredecessor) {
             super(metaAccess, wordKind);
+            this.invokePredecessor = invokePredecessor;
         }
 
         @Override
@@ -137,7 +149,13 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
         private void removeNullCheck(StructuredGraph graph, FixedGuardNode fixedGuardNode) {
             IsNullNode isNullNode = (IsNullNode) fixedGuardNode.condition();
             ValueNode object = isNullNode.object();
-            if (canRemove(object)) {
+            boolean removed;
+            boolean typedRemove = false;
+            boolean removeByInline = cameFromInlineMethod(graph, fixedGuardNode);
+            if (!removeByInline) {
+                typedRemove = canRemove(object);
+            }
+            if (removeByInline || typedRemove) {
                 if (fixedGuardNode.usages().isNotEmpty()) {
                     checkForPiNode(fixedGuardNode);
                 }
@@ -147,10 +165,23 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
                 if (isNullNode.usages().isEmpty()) {
                     GraphUtil.killWithUnusedFloatingInputs(isNullNode);
                 }
+                removed = true;
             } else {
-                ResolvedJavaType objectType = object.objectStamp().type();
-                Debug.log("%s: nullCheck not removed on %s", objectType == null ? object : objectType.getName(), graph.method());
+                removed = false;
             }
+            ResolvedJavaType objectType = object.objectStamp().type();
+            Debug.log("%s: nullCheck %s removed on %s (%s)", graph.method(), removed ? "" : "not", objectType == null ? object : objectType.getName(),
+                            removed ? (removeByInline ? "INLINE" : "TYPE") : "");
+        }
+
+        private boolean cameFromInlineMethod(StructuredGraph graph, FixedGuardNode fixedGuardNode) {
+            if (invokePredecessor == null) {
+                return false;
+            }
+            if (fixedGuardNode.predecessor() == invokePredecessor) {
+                return true;
+            }
+            return false;
         }
 
         /**
@@ -319,7 +350,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
                     }
                 }
                 if (delete) {
-                    Debug.log("Replacing %s with %s", unsafeCastNode.stamp(), object.stamp());
+                    Debug.log("Replacing %s with %s", unsafeCastNode/*.stamp()*/, object/*.stamp()*/);
                     graph.replaceFloating(unsafeCastNode, object);
                 }
             }
@@ -332,7 +363,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
      * Ensures that all non-final methods on {@link Word} subclasses are treated as final (aka {@link InvokeKind.Special}),
      * to ensure that they are inlined by {@link SnippetInstaller}.
      */
-    static class MakeWordFinalRewriter extends MaxWordTypeRewriterPhase {
+    public static class MakeWordFinalRewriter extends MaxWordTypeRewriterPhase {
 
         public MakeWordFinalRewriter(MetaAccessProvider metaAccess, Kind wordKind) {
             super(metaAccess, wordKind);
@@ -365,7 +396,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
     }
 
     private static boolean isMaxineWordType(ResolvedJavaType type) {
-        RiType riType = ((MaxResolvedJavaType) type).riType;
+        RiType riType = MaxResolvedJavaType.getRiType(type);
         if (!(riType instanceof ClassActor)) {
             return false;
         }

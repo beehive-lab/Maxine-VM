@@ -38,6 +38,7 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.printer.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.oracle.max.vm.ext.graal.snippets.amd64.*;
+import com.oracle.max.vm.ext.graal.stubs.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -239,6 +240,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         maxReplacements.installAndRegisterSnippets(ArithmeticSnippets.class);
         maxReplacements.installAndRegisterSnippets(AMD64ConvertSnippetsWrapper.class);
         maxReplacements.installAndRegisterSnippets(BoxingSnippetsWrapper.class);
+        maxReplacements.installAndRegisterSnippets(NativeStubSnippets.class);
 
         MaxConstantPool.setGraphBuilderConfig(null);
 

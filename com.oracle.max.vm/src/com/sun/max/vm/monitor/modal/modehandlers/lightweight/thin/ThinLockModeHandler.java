@@ -85,7 +85,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         return inflatedLockword;
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     protected void slowPathMonitorEnter(Object object, ModalLockword64 lockword, int lockwordThreadID) {
         ModalLockword64 newLockword = lockword;
         int retries = THIN_LOCK_RETRIES;
@@ -134,7 +134,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         }
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     protected void slowPathMonitorExit(Object object, ModalLockword64 lockword, int lockwordThreadID) {
         if (ThinLockword64.isThinLockword(lockword)) {
             ThinLockword64 thinLockword = ThinLockword64.from(lockword);

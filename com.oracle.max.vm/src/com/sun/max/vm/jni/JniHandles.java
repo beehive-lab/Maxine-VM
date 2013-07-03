@@ -158,6 +158,7 @@ public final class JniHandles {
      * equal to or less than its current size.
      */
     @NO_SAFEPOINT_POLLS("cannot stop before pending exception in JNI stub has been processed")
+    @SNIPPET_SLOWPATH
     public void resetTop(int newTop) {
         if (newTop > this.top || newTop < 0) {
             FatalError.unexpected("Cannot reset JNI handle stack to higher stack height");
@@ -282,6 +283,7 @@ public final class JniHandles {
     /**
      * Extracts the object from a given JNI handle. This will return null if {@code jniHandle.isZero() == true}.
      */
+    @SNIPPET_SLOWPATH
     public static Object get(JniHandle jniHandle) {
         final int tag = tag(jniHandle);
         if (tag == Tag.STACK) {

@@ -39,9 +39,6 @@ public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
         return result;
     }
 
-    // TODO remove
-    private byte[] codeCopy;
-
     private static int returnAddressSize = -1;
     private static int getReturnAddressSize() {
         if (returnAddressSize < 0) {
@@ -76,7 +73,6 @@ public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
         }
         // Code
         byte[] graalCode = gCompilation.getTargetCode();
-        codeCopy = Arrays.copyOf(graalCode, graalCode.length);
         this.setTargetCode(graalCode, gCompilation.getTargetCodeSize());
         // Data
         List<CompilationResult.DataPatch> dataReferences = gCompilation.getDataReferences();

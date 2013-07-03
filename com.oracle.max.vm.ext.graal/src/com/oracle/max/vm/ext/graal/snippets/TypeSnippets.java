@@ -36,8 +36,8 @@ import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
-import com.oracle.max.vm.ext.graal.MaxWordTypeRewriterPhase.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
+import com.oracle.max.vm.ext.graal.phases.MaxWordTypeRewriterPhase.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -161,7 +161,7 @@ public class TypeSnippets extends SnippetLowerings {
         return UnsafeCastNode.unsafeCast(object, StampFactory.forNodeIntrinsic());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static void resolveAndCheckCast(ResolutionGuard.InPool guard, Object object) {
         ClassActor classActor = Snippets.resolveClass(guard);
         if (!classActor.isNullOrInstance(object)) {
@@ -212,7 +212,7 @@ public class TypeSnippets extends SnippetLowerings {
         return resolveAndCheckInstanceOf(guard, object);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static boolean resolveAndCheckInstanceOf(ResolutionGuard.InPool guard, Object object) {
         ClassActor classActor = Snippets.resolveClass(guard);
         return Snippets.instanceOf(classActor, object);
@@ -235,7 +235,7 @@ public class TypeSnippets extends SnippetLowerings {
         return resolveClass(guard);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static Class<?> resolveClass(ResolutionGuard.InPool guard) {
         ClassActor classActor = Snippets.resolveClass(guard);
         return classActor.javaClass();
@@ -258,7 +258,7 @@ public class TypeSnippets extends SnippetLowerings {
         return resolveClassActor(guard);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static ClassActor resolveClassActor(ResolutionGuard.InPool guard) {
         return Snippets.resolveClass(guard);
     }

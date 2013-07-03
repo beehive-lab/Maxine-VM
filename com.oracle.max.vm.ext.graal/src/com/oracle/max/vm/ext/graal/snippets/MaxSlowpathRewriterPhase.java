@@ -29,6 +29,7 @@ import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.phases.*;
 import com.oracle.max.vm.ext.graal.*;
+import com.oracle.max.vm.ext.graal.stubs.NativeStubSnippets.NOT_FOREIGN;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -51,13 +52,15 @@ public class MaxSlowpathRewriterPhase extends Phase {
             MethodCallTargetNode callTarget = (MethodCallTargetNode) invoke.callTarget();
             ClassMethodActor cma = (ClassMethodActor) MaxJavaMethod.getRiMethod(callTarget.targetMethod());
             MaxForeignCallDescriptor call = MaxForeignCallsMap.get(cma);
-            ValueNode[] args = new ValueNode[callTarget.arguments().size()];
-            ForeignCallNode foreignCallNode = new ForeignCallNode(runtime, call, callTarget.arguments().toArray(args));
-            RUNTIME_ENTRY runTimeEntry = call.getMethodActor().getAnnotation(RUNTIME_ENTRY.class);
-            boolean exactType = runTimeEntry == null ? false : runTimeEntry.exactType();
-            boolean nonNull = runTimeEntry == null ? false : runTimeEntry.nonNull();
-            foreignCallNode.setStamp(stampFor(runtime.lookupJavaType(call.getResultType()), exactType, nonNull));
-            invoke.intrinsify(callTarget.graph().add(foreignCallNode));
+            if (call != null && cma.getAnnotation(NOT_FOREIGN.class) == null) {
+                ValueNode[] args = new ValueNode[callTarget.arguments().size()];
+                ForeignCallNode foreignCallNode = new ForeignCallNode(runtime, call, callTarget.arguments().toArray(args));
+                SNIPPET_SLOWPATH runTimeEntry = call.getMethodActor().getAnnotation(SNIPPET_SLOWPATH.class);
+                boolean exactType = runTimeEntry == null ? false : runTimeEntry.exactType();
+                boolean nonNull = runTimeEntry == null ? false : runTimeEntry.nonNull();
+                foreignCallNode.setStamp(stampFor(runtime.lookupJavaType(call.getResultType()), exactType, nonNull));
+                invoke.intrinsify(callTarget.graph().add(foreignCallNode));
+            }
         }
     }
 

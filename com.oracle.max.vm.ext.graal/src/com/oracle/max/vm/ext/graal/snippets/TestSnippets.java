@@ -229,7 +229,7 @@ public class TestSnippets extends SnippetLowerings {
         return Reference.fromJava(object);
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    //@Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object testRefToJava(Reference ref) {
         return ref.toJava();
     }
@@ -282,6 +282,16 @@ public class TestSnippets extends SnippetLowerings {
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void testWrite(Pointer p, int offset, short value) {
         p.writeShort(offset, value);
+    }
+
+    //@Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static boolean testAddressEquals(Address a, int b) {
+        return a.equals(b);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static Pointer testGetJniHandle(Pointer handles, int offset, Object value) {
+        return (value == null) ? Pointer.zero() : handles.plus(offset);
     }
 
 }

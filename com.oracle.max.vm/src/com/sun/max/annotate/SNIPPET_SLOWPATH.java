@@ -25,12 +25,12 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Denotes a method that is an entry to the runtime from compiled code.
+ * Denotes a method that, if encountered during Graal snippet creation, will not be inlined.
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
-public @interface RUNTIME_ENTRY {
+public @interface SNIPPET_SLOWPATH {
     /**
      * Returns {@code true} iff the call returns an exact type, i.e., exactly that stated in the return signature.
      */

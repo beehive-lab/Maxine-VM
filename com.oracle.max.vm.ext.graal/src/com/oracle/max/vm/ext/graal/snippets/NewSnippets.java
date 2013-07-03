@@ -123,14 +123,14 @@ public class NewSnippets extends SnippetLowerings {
         return initializeClassAndNew(classActor);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static Object initializeClassAndNew(ClassActor classActor) {
         Snippets.makeClassInitialized(classActor);
         final Object tuple = Snippets.createTupleOrHybrid(classActor);
         return tuple;
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static Object resolveClassForNewAndCreate(ResolutionGuard guard) {
         final ClassActor classActor = Snippets.resolveClassForNew(guard);
         return initializeClassAndNew(classActor);
@@ -203,7 +203,7 @@ public class NewSnippets extends SnippetLowerings {
         return UnsafeCastNode.unsafeCast(resolveClassForNewArrayAndCreate(guard, length), StampFactory.forNodeIntrinsic());
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     private static Object resolveClassForNewArrayAndCreate(ResolutionGuard guard, int length) {
         ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(guard));
         return Snippets.createArray(arrayClassActor, length);
@@ -254,7 +254,7 @@ public class NewSnippets extends SnippetLowerings {
         return UnsafeArrayCastNode.unsafeArrayCast(result, dims[0], StampFactory.forNodeIntrinsic(), anchorNode);
     }
 
-    @RUNTIME_ENTRY
+    @SNIPPET_SLOWPATH
     public static Object safeCreateMultiReferenceArray(ClassActor classActor, int[] lengths) {
         return Snippets.createMultiReferenceArrayAtIndex(0, classActor, lengths);
     }

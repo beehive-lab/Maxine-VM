@@ -434,7 +434,7 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     @INLINE
     public final CodePointer codeAt(int pos) {
-        assert pos >= 0 && pos < codeLength();
+        FatalError.asert(pos >= 0 && pos < codeLength());
         return CodePointer.from(codeStart.plus(pos));
     }
 
@@ -777,20 +777,17 @@ public abstract class TargetMethod extends MemoryRegion {
                         encodedSafepoint = Safepoints.make(safepointPos, causePos, DIRECT_CALL);
                     }
                 } else {
+                    int attrMask = INDIRECT_CALL.mask;
                     if (CallTarget.isTemplateCall(call.target)) {
-                        encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
-                    } else if (CallTarget.isSymbol(call.target)) {
-                        encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL, NATIVE_CALL);
-                        // ClassMethodActor caller = (ClassMethodActor) call.debugInfo.codePos.method;
-                        // (ds) cannot rely on debug info at call since Graal uses templates to produce
-                        // native method stubs and the debug info will be in the context of the template
-                        // source code, not the native method.
-                        ClassMethodActor caller = classMethodActor;
-                        assert caller.isNative();
-                        caller.nativeFunction.setCallSite(this, safepointPos);
-                    } else {
-                        encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL);
+                        attrMask |= TEMPLATE_CALL.mask;
+                    } else if (CallTarget.isSymbol(call.target) || (classMethodActor.isNative() && classMethodActor == call.target)) {
+                        // The first term is for C1X, the second for Graal, which reuses the MethodActor for the
+                        // native method itself to identify the real native function, because Graal's IndirectCall
+                        // requires a ResolvedJavaMethod (as opposed to a String symbol) and there isn't one for the native function (obviously).
+                        attrMask |= NATIVE_CALL.mask;
+                        classMethodActor.nativeFunction.setCallSite(this, safepointPos);
                     }
+                    encodedSafepoint = Safepoints.make(safepointPos, causePos, attrMask);
                 }
             } else {
                 int safepointPos = safepoint.pcOffset;
