@@ -230,9 +230,9 @@ public class C1XGraal implements RuntimeCompiler {
                     }
 
                     for (MethodActor methodActor : methodActors) {
-//                        if (true) {
-//                            TargetMethod c1xTm = c1x.compile((ClassMethodActor) methodActor, false, false, null);
-//                        }
+                        if (true) {
+                            TargetMethod c1xTm = c1x.compile((ClassMethodActor) methodActor, false, true, null);
+                        }
                         TargetMethod tm = graal.compile((ClassMethodActor) methodActor, false, true, null);
                         validate(tm);
                     }

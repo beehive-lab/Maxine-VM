@@ -22,6 +22,9 @@
  */
 package com.oracle.max.vm.ext.graal.stubs;
 
+import static com.oracle.max.vm.ext.graal.nodes.NativeFunctionCallNode.*;
+import static com.oracle.max.vm.ext.graal.nodes.NativeFunctionHandlesNode.*;
+
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -55,8 +58,8 @@ import com.sun.max.vm.thread.*;
 
 /**
  * We use snippet technology to build the template graphs for the various forms of native stub calls.
- * Instantiation, however, is done manually, lowing to the varying number of arguments and their types for
- * native methods.
+ * Instantiation, however, is done partly manually, owing to the varying number of arguments and their types,
+ * and the need to pass a {@link JniHandle} for an object type.
  *
  */
 public class NativeStubSnippets extends SnippetLowerings {
@@ -120,11 +123,7 @@ public class NativeStubSnippets extends SnippetLowerings {
                         noPrologueOrEpilogueTemplate = graph;
                         break;
                     case "initializeHandlesSnippet":
-                        initializeHandlesLowering = new InitializeHandlesLowering(this);
-                        break;
                     case "nativeCallPrologueSnippet":
-                        nativeFunctionCallLowering = new NativeFunctionCallLowering(this);
-                        break;
                     case "getJniHandleSnippet":
                     case "jniUnhandSnippet":
                         break;
@@ -143,6 +142,8 @@ public class NativeStubSnippets extends SnippetLowerings {
     public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(GetJniHandleNode.class, new GetJniHandleLowering(this));
         lowerings.put(JniUnhandNode.class, new JniUnhandLowering(this));
+        lowerings.put(NativeFunctionHandlesNode.class, new InitializeHandlesLowering(this));
+        lowerings.put(NativeFunctionCallNode.class, new NativeFunctionCallLowering());
     }
 
     /**
@@ -162,6 +163,7 @@ public class NativeStubSnippets extends SnippetLowerings {
 
         int jniHandlesTop = thread.jniHandlesTop();
 
+        Snippets.nativeCallPrologue(nativeFunction);
         Object result = nativeFunctionCall(address, handles, VmThread.jniEnv());
         Snippets.nativeCallEpilogue();
 
@@ -223,10 +225,14 @@ public class NativeStubSnippets extends SnippetLowerings {
     abstract class NativeStubLowering extends Lowering {
         protected FixedWithNextNode lastFixedNode;
 
-        NativeStubLowering(NativeStubSnippets nativeStubSnippets, String methodName) {
+        protected NativeStubLowering(NativeStubSnippets nativeStubSnippets, String methodName) {
             super(nativeStubSnippets, methodName);
         }
-        abstract void lower(InvokeNode invoke, ClassMethodActor nativeMethod);
+
+        protected NativeStubLowering() {
+            super();
+        }
+
 
         /**
          * Inserts a node into the control flow of the graph.
@@ -249,19 +255,12 @@ public class NativeStubSnippets extends SnippetLowerings {
      * the method, otherwise it is the receiver object.
      *
      */
-    class InitializeHandlesLowering extends NativeStubLowering {
+    class InitializeHandlesLowering extends NativeStubLowering implements LoweringProvider<NativeFunctionHandlesNode> {
         InitializeHandlesLowering(NativeStubSnippets nativeStubSnippets) {
             super(nativeStubSnippets, "initializeHandlesSnippet");
         }
 
-        @Override
-        void lower(InvokeNode invoke, ClassMethodActor nativeMethod) {
-            Arguments args = new Arguments(snippet);
-            handles(invoke.graph(), args, nativeMethod, invoke.callTarget().arguments());
-            instantiate(invoke, args);
-        }
-
-        void handles(StructuredGraph graph, Arguments args, ClassMethodActor nativeMethodActor, NodeList<ValueNode> nativeArgs) {
+        void handles(StructuredGraph graph, Arguments args, MethodActor nativeMethodActor, NodeList<ValueNode> nativeArgs) {
             // N.B. receiver is already in nativeArgs for non-static
             int handleCount = nativeMethodActor.isStatic() ? 1 : 0;
             for (int i = 0; i < nativeArgs.size(); i++) {
@@ -286,6 +285,13 @@ public class NativeStubSnippets extends SnippetLowerings {
             args.addVarargs("objectArgs", Object.class, StampFactory.forKind(Kind.Object), nativeObjectArgs);
         }
 
+        @Override
+        public void lower(NativeFunctionHandlesNode node, LoweringTool tool) {
+            Arguments args = new Arguments(snippet);
+            handles(node.graph(), args, node.getNativeMethod(), node.arguments());
+            instantiate(node, args);
+        }
+
     }
 
     @Snippet(inlining = StubSnippetInliningPolicy.class)
@@ -306,31 +312,26 @@ public class NativeStubSnippets extends SnippetLowerings {
      * to the native call.
      *
      */
-    class NativeFunctionCallLowering extends NativeStubLowering {
-        NativeFunctionCallLowering(NativeStubSnippets nativeStubSnippets) {
-            super(nativeStubSnippets, "nativeCallPrologueSnippet");
+    class NativeFunctionCallLowering extends NativeStubLowering implements LoweringProvider<NativeFunctionCallNode> {
+
+        NativeFunctionCallLowering() {
+            super();
         }
 
         @Override
-        void lower(InvokeNode invoke, ClassMethodActor nativeMethodActor) {
+        public void lower(NativeFunctionCallNode node, LoweringTool tool) {
+            if (node.specialized()) {
+                // This is the "normal" lowering call, and there is nothing to do.
+                return;
+            }
+            StructuredGraph graph = node.graph();
+            MethodActor nativeMethodActor = node.getNativeMethod();
             boolean isCFunction = nativeMethodActor.isCFunction();
             boolean isStatic = nativeMethodActor.isStatic();
-            Arguments args = new Arguments(snippet);
 
-            FixedNode invokeNext = invoke.next();
-            StructuredGraph graph = invoke.graph();
+            NodeList<ValueNode> callArgs = node.arguments();
 
-            args.add("nativeFunction", nativeMethodActor.nativeFunction);
-            NodeList<ValueNode> callArgs = invoke.callTarget().arguments();
-
-            // Generate the prolog with a snippet (we should do this separately)
-            if (!isCFunction) {
-                instantiate(invoke, args);
-                Debug.dump(invoke.graph(), "After Instantiate");
-            }
-
-            FixedWithNextNode originalResult = (FixedWithNextNode) invokeNext.predecessor();
-            lastFixedNode = originalResult;
+            lastFixedNode = (FixedWithNextNode) node.predecessor();
 
             // Can't make the actual call via a snippet, so have to do manual graph creation
             List<ValueNode> fcnArgsList = new ArrayList<>(callArgs.size() + 1);
@@ -367,7 +368,7 @@ public class NativeStubSnippets extends SnippetLowerings {
                 }
             }
 
-            Debug.dump(invoke.graph(), "After Args");
+            Debug.dump(node.graph(), "After Args");
 
 
             ResolvedJavaMethod nativeMethod = MaxResolvedJavaMethod.get(nativeMethodActor);
@@ -375,36 +376,35 @@ public class NativeStubSnippets extends SnippetLowerings {
                             MaxResolvedJavaType.get(nativeMethodActor.holder()));
             Kind returnKind = nativeMethod.getSignature().getReturnKind();
 
-            ValueNode[] jniArgsArray = fcnArgsList.toArray(new ValueNode[fcnArgsList.size()]);
-            NativeCallNode nativeCall = insertNode(graph.add(new NativeCallNode(function, jniArgsArray, returnKind, nativeMethodActor)));
+            node.updateCall(function, fcnArgsList, returnKind);
             Stamp returnStamp = returnKind == Kind.Object ? StampFactory.declared(returnType) : StampFactory.forKind(returnKind);
-            nativeCall.setStateAfter(graph.add(new FrameState(FrameState.INVALID_FRAMESTATE_BCI)));
-            lastFixedNode = nativeCall;
+            node.setStateAfter(graph.add(new FrameState(FrameState.INVALID_FRAMESTATE_BCI)));
+            lastFixedNode = node;
 
             // Sign extend or zero the upper bits of a return value smaller than an int to
             // preserve the invariant that all such values are represented by an int
             // in the VM. We cannot rely on the native C compiler doing this for us.
             // Also, an object return value must be un-handlized
             // *before* the JNI frame is restored.
-            ValueNode callResult = nativeCall;
+            ValueNode callResult = node;
 
             switch (returnKind) {
                 case Boolean:
                 case Byte: {
-                    callResult = graph.unique(new ConvertNode(ConvertNode.Op.I2B, nativeCall));
+                    callResult = graph.unique(new ConvertNode(ConvertNode.Op.I2B, callResult));
                     break;
                 }
                 case Short: {
-                    callResult = graph.unique(new ConvertNode(ConvertNode.Op.I2S, nativeCall));
+                    callResult = graph.unique(new ConvertNode(ConvertNode.Op.I2S, callResult));
                     break;
                 }
                 case Char: {
-                    callResult = graph.unique(new ConvertNode(ConvertNode.Op.I2C, nativeCall));
+                    callResult = graph.unique(new ConvertNode(ConvertNode.Op.I2C, callResult));
                     break;
                 }
                 case Object: {
                     assert !isCFunction;
-                    callResult = insertNode(graph.add(new JniUnhandNode(returnStamp, nativeCall)));
+                    callResult = insertNode(graph.add(new JniUnhandNode(returnStamp, callResult)));
                     break;
                 }
                 case Void: {
@@ -412,16 +412,20 @@ public class NativeStubSnippets extends SnippetLowerings {
                 }
             }
 
-            Debug.dump(invoke.graph(), "After Invoke");
+            Debug.dump(node.graph(), "After Lowering");
 
-            originalResult.replaceAtUsages(callResult);
+            if (node != callResult) {
+                // change return to use modified callResult
+                for (Node usage : node.usages()) {
+                    if (usage instanceof ReturnNode) {
+                        usage.replaceAndDelete(graph.add(new ReturnNode(callResult)));
+                        break;
+                    }
+                }
+            }
 
         }
-    }
 
-    @Snippet(inlining = StubSnippetInliningPolicy.class)
-    static void nativeCallPrologueSnippet(NativeFunction nativeFunction) {
-        Snippets.nativeCallPrologue(nativeFunction);
     }
 
     private class GetJniHandleLowering extends Lowering implements LoweringProvider<GetJniHandleNode> {
@@ -465,21 +469,6 @@ public class NativeStubSnippets extends SnippetLowerings {
     private static Object jniUnhandSnippet(JniHandle handle) {
         return JniHandles.get(handle);
     }
-
-
-    /**
-     * Placeholder for the code allocating and initialize the JNI handles for the object arguments of a native method stub.
-     * The call to the method is replaced with a graph produced by {@link #initializeHandlesSnippet}.
-     */
-    @NOT_FOREIGN
-    static native Pointer initializeHandles();
-
-    /**
-     * Placeholder for the real native function call in a template native method stub.
-     * The call to the method is replaced with a graph produced by {@link NativeFunctionCallGraphBuilder}.
-     */
-    @NOT_FOREIGN
-    static native Object nativeFunctionCall(Address function, Pointer handles, Pointer jniEnv);
 
 
 }

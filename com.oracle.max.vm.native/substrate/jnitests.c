@@ -108,6 +108,14 @@ Java_jtt_jni_JNI_1GC_jniGC(JNIEnv *env, jobject obj, jobject gcMethod, jclass sy
     return obj;
 }
 
+JNIEXPORT jobject JNICALL
+Java_jtt_jni_JNI_1GCMany_jniGC(JNIEnv *env, jobject obj, jobject gcMethod, jclass systemClass, 
+        jobject o1, jobject o2, jobject o3,jobject o4, jobject o5) {
+    jmethodID methodID = (*env)->FromReflectedMethod(env, gcMethod);
+    (*env)->CallStaticVoidMethod(env, systemClass, methodID);
+    return o5;
+}
+
 
 JNIEXPORT void JNICALL
 Java_jtt_jni_JNI_1ManyParameters_manyParameters(JNIEnv *env, jclass clazz,

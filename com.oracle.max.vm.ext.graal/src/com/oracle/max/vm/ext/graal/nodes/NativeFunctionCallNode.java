@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
+import java.util.*;
+
 import com.oracle.graal.amd64.*;
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
@@ -29,16 +31,18 @@ import com.oracle.graal.compiler.gen.*;
 import com.oracle.graal.lir.*;
 import com.oracle.graal.lir.amd64.*;
 import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
  * Represents a call to a native function from within a native method stub.
+ * Start off life as abstract node in the template created by the {@link NodeIntrinsic},
+ * then becomes specific to the actual native method during lowering, via {@link #updateCall}.
  */
-public final class NativeCallNode extends AbstractCallNode implements DeoptimizingNode, LIRLowerable {
+public final class NativeFunctionCallNode extends NativeFunctionAdapterNode implements DeoptimizingNode, LIRLowerable {
 
     /**
      * The instruction that produces the native function address for this native call.
@@ -46,18 +50,37 @@ public final class NativeCallNode extends AbstractCallNode implements Deoptimizi
     @Input private ValueNode address;
     @Input private FrameState deoptState;
 
-    private ValueNode[] argumentsArray;
+    private boolean specialized;
 
-    /**
-     * The native method for this native call.
-     */
-    public final MethodActor nativeMethodActor;
-
-    public NativeCallNode(ValueNode address, ValueNode[] arguments, Kind returnKind, MethodActor nativeMethodActor) {
+    public NativeFunctionCallNode(ValueNode address, ValueNode[] arguments, Kind returnKind, MethodActor nativeMethodActor) {
         super(StampFactory.forKind(returnKind.getStackKind()), arguments);
         this.nativeMethodActor = nativeMethodActor;
         this.address = address;
-        this.argumentsArray = arguments;
+    }
+
+    /**
+     * Used by the {@link NodeIntrinsic} to create the dummy call in the template.
+     */
+    public NativeFunctionCallNode(ValueNode address, ValueNode handleBase, ValueNode jniEnv) {
+        super(StampFactory.forKind(Kind.Object), new ValueNode[] {address, handleBase, jniEnv});
+    }
+
+    @NodeIntrinsic
+    public static native Object nativeFunctionCall(Address function, Pointer handles, Pointer jniEnv);
+
+    public void updateCall(ValueNode address, List<ValueNode> nativeArguments, Kind returnKind) {
+        setStamp(StampFactory.forKind(returnKind.getStackKind()));
+        this.address = address;
+        arguments().clear();
+        updateUsages(null, address);
+        for (ValueNode arg : nativeArguments) {
+            arguments().add(arg);
+        }
+        specialized = true;
+    }
+
+    public boolean specialized() {
+        return specialized;
     }
 
     public ValueNode address() {
@@ -70,9 +93,9 @@ public final class NativeCallNode extends AbstractCallNode implements Deoptimizi
         LIRFrameState state = !canDeoptimize() ? null : lir.stateFor(getDeoptimizationState(), getDeoptimizationReason());
         Value resultOperand = lir.resultOperandFor(this.kind());
         Value callAddress = lir.operand(this.address());
-        Kind[] paramKinds = new Kind[argumentsArray.length];
-        for (int i = 0; i < argumentsArray.length; i++) {
-            paramKinds[i] = argumentsArray[i].kind();
+        Kind[] paramKinds = new Kind[arguments().size()];
+        for (int i = 0; i < arguments().size(); i++) {
+            paramKinds[i] = arguments().get(i).kind();
         }
         CallingConvention cc = ((MaxRegisterConfig) MaxGraal.runtime().lookupRegisterConfig()).nativeCallingConvention(kind(), paramKinds);
         lir.frameMap.callsMethod(cc);

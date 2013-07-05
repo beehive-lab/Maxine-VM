@@ -22,8 +22,6 @@
  */
 package com.oracle.max.vm.ext.graal.stubs;
 
-import static com.sun.max.vm.type.ClassRegistry.*;
-
 import java.util.*;
 
 import com.oracle.graal.api.meta.*;
@@ -34,8 +32,9 @@ import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.util.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
+import com.oracle.graal.phases.util.*;
 import com.oracle.max.vm.ext.graal.*;
-import com.sun.max.unsafe.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.type.SignatureDescriptor;
@@ -70,11 +69,6 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         }
         setGraph(template.copy(nativeMethod.name()));
     }
-
-    private static final ResolvedJavaMethod initializeHandles = MaxResolvedJavaMethod.get(findMethod(NativeStubSnippets.class, "initializeHandles"));
-
-    static final ResolvedJavaMethod nativeFunctionCall = MaxResolvedJavaMethod.get(findMethod(NativeStubSnippets.class, "nativeFunctionCall", Address.class, Pointer.class, Pointer.class));
-
 
     /**
      * Builds the graph for the native method stub.
@@ -127,18 +121,13 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         // Add parameters of native method
         boolean isStatic = nativeMethodActor.isStatic();
 
-        for (Invoke invoke : graph.getInvokes()) {
-            MethodCallTargetNode callTarget = (MethodCallTargetNode) invoke.callTarget();
-            ResolvedJavaMethod method = callTarget.targetMethod();
-            if (method == initializeHandles) {
-                NodeInputList<ValueNode> arguments = callTarget.arguments();
-                assert arguments.isEmpty();
+        for (Node n : GraphOrder.forwardGraph(graph)) {
+            if (n instanceof NativeFunctionAdapterNode) {
+                NativeFunctionAdapterNode nfNode = (NativeFunctionAdapterNode) n;
+                nfNode.setNativeMethod(nativeMethodActor);
+                NodeInputList<ValueNode> arguments = nfNode.arguments();
                 arguments.addAll(createLocals(0, sig, isStatic));
-                NativeStubSnippets.initializeHandlesLowering.lower((InvokeNode) invoke, nativeMethodActor);
-            } else if (method == nativeFunctionCall) {
-                NodeInputList<ValueNode> arguments = callTarget.arguments();
-                arguments.addAll(createLocals(0, sig, isStatic));
-                NativeStubSnippets.nativeFunctionCallLowering.lower((InvokeNode) invoke, nativeMethodActor);
+                MaxGraal.runtime().lower(nfNode, null);
             }
         }
 
