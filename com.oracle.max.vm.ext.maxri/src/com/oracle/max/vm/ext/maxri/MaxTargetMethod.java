@@ -472,7 +472,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         RiRegisterConfig registerConfig = vm().registerConfigs.trampoline;
         TargetMethod trampoline = callee.targetMethod();
         ClassMethodActor calledMethod = null;
-        TargetMethod targetMethod = current.targetMethod();
+        MaxTargetMethod targetMethod = (MaxTargetMethod) current.targetMethod();
 
         CiCalleeSaveLayout csl = callee.csl();
         Pointer csa = callee.csa();
@@ -512,27 +512,54 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         }
 
         int regIndex = 0;
-        if (!calledMethod.isStatic()) {
+        boolean isStatic = calledMethod.isStatic();
+        if (!isStatic) {
             // set a bit for the receiver object
             int offset = csl.offsetOf(regs[regIndex++]);
             preparer.visitReferenceMapBits(current, csa.plus(offset), 1, 1);
         }
 
+        int overflowParamOffset = -1;
         SignatureDescriptor sig = calledMethod.descriptor();
-        for (int i = 0; i < sig.numberOfParameters() && regIndex < regs.length; ++i) {
+        for (int i = 0; i < sig.numberOfParameters(); ++i) {
             TypeDescriptor arg = sig.parameterDescriptorAt(i);
-            CiRegister reg = regs[regIndex];
             Kind kind = arg.toKind();
-            if (kind.isReference) {
-                // set a bit for this parameter
-                int offset = csl.offsetOf(reg);
-                preparer.visitReferenceMapBits(current, csa.plus(offset), 1, 1);
-            }
-            if (kind != Kind.FLOAT && kind != Kind.DOUBLE) {
-                // Only iterating over the integral arg registers
-                regIndex++;
+            if (regIndex < regs.length) {
+                CiRegister reg = regs[regIndex];
+                if (kind.isReference) {
+                    // set a bit for this parameter
+                    int offset = csl.offsetOf(reg);
+                    preparer.visitReferenceMapBits(current, csa.plus(offset), 1, 1);
+                }
+                if (kind != Kind.FLOAT && kind != Kind.DOUBLE) {
+                    // Only iterating over the integral arg registers
+                    regIndex++;
+                }
+            } else {
+                // Overflow
+                if (overflowParamOffset < 0) {
+                    overflowParamOffset = 0;
+                }
+                if (kind.isReference) {
+                    targetMethod.prepareTrampolineRefMapHandleOverflowParam(current, calledMethod, overflowParamOffset, preparer);
+                }
+                if (kind != Kind.FLOAT && kind != Kind.DOUBLE) {
+                    overflowParamOffset += Word.size();
+                }
             }
         }
+
+    }
+
+    /**
+     * Provides a hook for handling an overflow (stack stored) reference parameter in the reference map.
+     * The default implementation does nothing as C1X handles this in an ad hoc way.
+     * @param current
+     * @param calledMethod
+     * @param offset
+     * @param preparer
+     */
+    protected void prepareTrampolineRefMapHandleOverflowParam(StackFrameCursor current, ClassMethodActor calledMethod, int offset, FrameReferenceMapVisitor preparer) {
     }
 
     /**

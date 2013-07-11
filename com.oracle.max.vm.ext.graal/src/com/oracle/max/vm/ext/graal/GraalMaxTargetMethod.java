@@ -26,6 +26,7 @@ import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.stack.*;
 
 
 public class GraalMaxTargetMethod extends MaxTargetMethod {
@@ -39,4 +40,17 @@ public class GraalMaxTargetMethod extends MaxTargetMethod {
         return new GraalMaxTargetMethod(classMethodActor, ciTargetMethod, install);
     }
 
+    /**
+     * Overflow reference parameters in the caller frame must be placed in the reference map, in case a GC happens
+     * while resolving a trampoline. Such a GC can't happen in a normal Graal VM, as all calls are resolved,
+     * so nothing needs to be done in the caller. Not so in Maxine.
+     *
+     */
+    @Override
+    @NEVER_INLINE
+    protected void prepareTrampolineRefMapHandleOverflowParam(StackFrameCursor current, ClassMethodActor calledMethod, int offset, FrameReferenceMapVisitor preparer) {
+        // This is very ad hoc, as I'm not sure how to find the actual offset in a principled way (with allocation disabled)
+        // The overflow arguments start at offset 8 from sp
+        preparer.visitReferenceMapBits(current, current.sp().plus(8 + offset), 1, 1);
+    }
 }
