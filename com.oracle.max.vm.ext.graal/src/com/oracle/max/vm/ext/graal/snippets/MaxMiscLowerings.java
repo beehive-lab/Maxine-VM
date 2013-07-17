@@ -22,9 +22,11 @@
  */
 package com.oracle.max.vm.ext.graal.snippets;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
+import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
@@ -40,17 +42,35 @@ import com.sun.max.vm.thread.*;
 public class MaxMiscLowerings extends SnippetLowerings {
 
     @HOSTED_ONLY
-    public MaxMiscLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription target,
+    public MaxMiscLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription target,
                     Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, target);
     }
 
     @Override
     @HOSTED_ONLY
-    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public void registerLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(LoadExceptionObjectNode.class, new LoadExceptionObjectLowering(this));
         lowerings.put(UnwindNode.class, new UnwindLowering(this));
         lowerings.put(DeoptimizeNode.class, new DeoptimizeLowering());
+    }
+
+    @Override
+    protected void snippetGraph(Method m, StructuredGraph graph) {
+        if (m.getName().equals("dummy")) {
+            dummyGraph = graph;
+        }
+    }
+
+    private static StructuredGraph dummyGraph;
+
+    public static StructuredGraph dummyGraph() {
+        return dummyGraph;
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void dummy() {
+
     }
 
     protected class DeoptimizeLowering extends Lowering implements LoweringProvider<DeoptimizeNode> {

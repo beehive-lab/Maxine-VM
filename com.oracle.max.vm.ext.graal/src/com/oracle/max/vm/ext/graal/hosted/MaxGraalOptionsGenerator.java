@@ -47,7 +47,7 @@ public class MaxGraalOptionsGenerator extends SourceGenerator {
     private class OptionsClassSearch extends ClassSearch {
 
         final Map<String, Boolean> seenPackages = new HashMap<>();
-        ArrayList<Class< ? >> optionsSources = new ArrayList<Class< ? >>();
+        Set<Class< ? >> optionsSources = new HashSet<Class< ? >>();
 
         @Override
         protected boolean visitClass(boolean isArchiveEntry, String className) {
@@ -121,9 +121,9 @@ public class MaxGraalOptionsGenerator extends SourceGenerator {
         search.run(Classpath.fromSystem(), "com/oracle/graal");
         // Sort
         CClass[] optionClassArray = new CClass[search.optionsSources.size()];
-        for (int i = 0; i < optionClassArray.length; i++) {
-            Class< ? > klass = search.optionsSources.get(i);
-            optionClassArray[i] = new CClass(klass);
+        int ix = 0;
+        for (Class<?> klass : search.optionsSources) {
+            optionClassArray[ix++] = new CClass(klass);
         }
         Arrays.sort(optionClassArray);
 

@@ -27,16 +27,26 @@ import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
 
 
 public class MaxJavaField implements JavaField {
 
-    private static ConcurrentHashMap<RiField, MaxJavaField> map = new ConcurrentHashMap<RiField, MaxJavaField>();
-
     protected RiField riField;
 
+    @RESET
+    private static ConcurrentHashMap<RiField, MaxJavaField> map;
+
+    private static ConcurrentHashMap<RiField, MaxJavaField> getMap() {
+        if (map == null) {
+            map = new ConcurrentHashMap<RiField, MaxJavaField>();
+        }
+        return map;
+    }
+
+
     static MaxJavaField get(RiField riField) {
-        MaxJavaField result = map.get(riField);
+        MaxJavaField result = getMap().get(riField);
         if (result == null) {
             if (riField instanceof RiResolvedField) {
                 result = new MaxResolvedJavaField((RiResolvedField) riField);

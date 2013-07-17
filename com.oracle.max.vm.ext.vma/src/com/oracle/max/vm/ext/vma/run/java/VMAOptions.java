@@ -486,6 +486,9 @@ public class VMAOptions {
     }
 
     static boolean instrumentMethod(ClassMethodActor methodActor) {
+        if (methodActor.holder().isReflectionStub()) {
+            return false;
+        }
         if (specificInstrumentChecker != null) {
             return specificInstrumentChecker.instrument(methodActor);
         }

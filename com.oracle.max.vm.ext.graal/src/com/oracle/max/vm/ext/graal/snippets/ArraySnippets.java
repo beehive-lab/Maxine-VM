@@ -44,13 +44,13 @@ import com.sun.max.vm.runtime.*;
 public class ArraySnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
-    public ArraySnippets(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public ArraySnippets(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, targetDescription);
     }
 
     @Override
     @HOSTED_ONLY
-    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public void registerLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(ArrayLengthNode.class, new ArrayLengthLowering(this));
 
         LoadIndexedLowering loadIndexedLowering = new LoadIndexedLowering();

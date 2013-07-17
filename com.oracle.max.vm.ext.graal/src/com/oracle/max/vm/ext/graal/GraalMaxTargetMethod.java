@@ -40,6 +40,11 @@ public class GraalMaxTargetMethod extends MaxTargetMethod {
         return new GraalMaxTargetMethod(classMethodActor, ciTargetMethod, install);
     }
 
+    @Override
+    protected boolean needsTrampolineRefMapOverflowArgHandling() {
+        return true;
+    }
+
     /**
      * Overflow reference parameters in the caller frame must be placed in the reference map, in case a GC happens
      * while resolving a trampoline. Such a GC can't happen in a normal Graal VM, as all calls are resolved,
@@ -49,8 +54,6 @@ public class GraalMaxTargetMethod extends MaxTargetMethod {
     @Override
     @NEVER_INLINE
     protected void prepareTrampolineRefMapHandleOverflowParam(StackFrameCursor current, ClassMethodActor calledMethod, int offset, FrameReferenceMapVisitor preparer) {
-        // This is very ad hoc, as I'm not sure how to find the actual offset in a principled way (with allocation disabled)
-        // The overflow arguments start at offset 8 from sp
-        preparer.visitReferenceMapBits(current, current.sp().plus(8 + offset), 1, 1);
+        preparer.visitReferenceMapBits(current, current.sp().plus(offset), 1, 1);
     }
 }

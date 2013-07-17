@@ -26,14 +26,47 @@ import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 
 
 public class ConstantMap {
 
-    private static ConcurrentHashMap<CiConstant, Constant> ciToGraal = new ConcurrentHashMap<CiConstant, Constant>();
-    private static ConcurrentHashMap<Constant, CiConstant> graalToCi = new ConcurrentHashMap<Constant, CiConstant>();
+    private static ConcurrentHashMap<CiConstant, Constant> ciToGraalPermMap = new ConcurrentHashMap<CiConstant, Constant>();
+    private static ConcurrentHashMap<Constant, CiConstant> graalToCiPermMap = new ConcurrentHashMap<Constant, CiConstant>();
 
+    @RESET
+    private static ConcurrentHashMap<CiConstant, Constant> ciToGraalMap;
+    @RESET
+    private static ConcurrentHashMap<Constant, CiConstant> graalToCiMap;
+
+    private static ConcurrentHashMap<CiConstant, Constant> getCiToGraalMap() {
+        if (ciToGraalMap == null) {
+            getMaps();
+            ciToGraalMap = new ConcurrentHashMap<CiConstant, Constant>();
+        }
+        return ciToGraalMap;
+    }
+
+    private static ConcurrentHashMap<Constant, CiConstant> getGraalToCiMap() {
+        if (graalToCiMap == null) {
+            getMaps();
+        }
+        return graalToCiMap;
+    }
+
+    private static void getMaps() {
+        ciToGraalMap = new ConcurrentHashMap<CiConstant, Constant>();
+        ciToGraalMap.putAll(ciToGraalPermMap);
+        graalToCiMap = new ConcurrentHashMap<Constant, CiConstant>();
+        graalToCiMap.putAll(graalToCiPermMap);
+    }
+
+    static {
+        MapUtil.populate(Constant.class, Constant.class, new Handler());
+    }
+
+    @HOSTED_ONLY
     private static class Handler extends MapUtil.ClassHandler {
 
         @Override
@@ -56,22 +89,18 @@ public class ConstantMap {
         @Override
         void map(Object object, Object correspondingObject) {
             if (object instanceof Constant) {
-                graalToCi.put((Constant) object, (CiConstant) correspondingObject);
-                ciToGraal.put((CiConstant) correspondingObject, (Constant) object);
+                graalToCiPermMap.put((Constant) object, (CiConstant) correspondingObject);
+                ciToGraalPermMap.put((CiConstant) correspondingObject, (Constant) object);
             }
         }
 
-    }
-
-    static {
-        MapUtil.populate(Constant.class, Constant.class, new Handler());
     }
 
     public static Constant toGraal(CiConstant ciConstant) {
         if (ciConstant == null) {
             return null;
         }
-        Constant result = ciToGraal.get(ciConstant);
+        Constant result = getCiToGraalMap().get(ciConstant);
         if (result == null) {
             com.oracle.graal.api.meta.Kind graalKind = KindMap.toGraalKind(ciConstant.kind);
             // Checkstyle: stop
@@ -88,7 +117,7 @@ public class ConstantMap {
 
             }
             // Checkstyle: resume
-            ciToGraal.put(ciConstant, result);
+            ciToGraalMap.put(ciConstant, result);
         }
         return result;
     }
@@ -97,7 +126,7 @@ public class ConstantMap {
         if (constant == null) {
             return null;
         }
-        CiConstant result = graalToCi.get(constant);
+        CiConstant result = getGraalToCiMap().get(constant);
         if (result == null) {
             CiKind ciKind = KindMap.toCiKind(constant.getKind());
             // Checkstyle: stop
@@ -114,7 +143,7 @@ public class ConstantMap {
                 case Object: result = CiConstant.forObject(constant.asObject()); break;
             }
             // Checkstyle: resume
-            graalToCi.put(constant,  result);
+            graalToCiMap.put(constant,  result);
         }
         return result;
     }

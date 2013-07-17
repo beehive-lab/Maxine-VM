@@ -601,6 +601,7 @@ public class FieldActor extends MemberActor implements RiResolvedField {
         kind.writeErasedValue(reference, offset, value);
     }
 
+    @NEVER_INLINE
     public static FieldActor fromJava(Field javaField) {
         if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toFieldActor(javaField);

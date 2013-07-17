@@ -35,7 +35,7 @@ public class MaxUnsafeCastNode extends UnsafeCastNode {
     public MaxUnsafeCastNode(ValueNode object, ResolvedJavaType toType) {
         // The Reference type is most certainly exact; recording that is important to allow
         // method calls through the Accessor interface to be converted (and inlined) correctly.
-        super(object, toType, MaxWordTypeRewriterPhase.isWordOrReference(toType), false);
+        super(object, toType, MaxWordType.isWordOrReference(toType), false);
     }
 
 }

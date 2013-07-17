@@ -25,7 +25,6 @@ package com.oracle.max.vm.ext.graal.stubs;
 import static com.oracle.max.vm.ext.graal.nodes.NativeFunctionCallNode.*;
 import static com.oracle.max.vm.ext.graal.nodes.NativeFunctionHandlesNode.*;
 
-import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -35,7 +34,6 @@ import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
-import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
@@ -45,6 +43,7 @@ import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.graal.replacements.nodes.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
+import com.oracle.max.vm.ext.graal.phases.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -72,17 +71,6 @@ public class NativeStubSnippets extends SnippetLowerings {
     static NativeFunctionCallLowering nativeFunctionCallLowering;
 
     /**
-     * A workaround for the fact that {@link Invoke} nodes are transformed to {@link ForeignCallNode} nodes
-     * by {@link MaxSlowpathRewriterPhase}. Since {@link #initializeHandles} and {@link #nativeFunctionCall}
-     * are manually adjusted and inlined explicitly, they must stay as {@link Invoke} nodes.
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target({ElementType.METHOD, ElementType.TYPE})
-    public @interface NOT_FOREIGN {
-
-    }
-
-    /**
      * This policy produces exactly the same inlining as the old bytecode based implementation,
      * essentially for comparison purpose. Absent this, inlining proceeds to a significant depth
      * as all calls are inlined by default in snippets. This could only be short circuited by
@@ -102,7 +90,7 @@ public class NativeStubSnippets extends SnippetLowerings {
 
 
     @HOSTED_ONLY
-    public NativeStubSnippets(CodeCacheProvider runtime, Replacements replacements, TargetDescription target,
+    public NativeStubSnippets(MetaAccessProvider runtime, Replacements replacements, TargetDescription target,
                     Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, target);
 
@@ -139,7 +127,7 @@ public class NativeStubSnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
     @Override
-    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public void registerLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(GetJniHandleNode.class, new GetJniHandleLowering(this));
         lowerings.put(JniUnhandNode.class, new JniUnhandLowering(this));
         lowerings.put(NativeFunctionHandlesNode.class, new InitializeHandlesLowering(this));
@@ -374,7 +362,7 @@ public class NativeStubSnippets extends SnippetLowerings {
             ResolvedJavaMethod nativeMethod = MaxResolvedJavaMethod.get(nativeMethodActor);
             ResolvedJavaType returnType = (ResolvedJavaType) nativeMethod.getSignature().getReturnType(
                             MaxResolvedJavaType.get(nativeMethodActor.holder()));
-            Kind returnKind = nativeMethod.getSignature().getReturnKind();
+            Kind returnKind = MaxWordType.checkWord(returnType);
 
             node.updateCall(function, fcnArgsList, returnKind);
             Stamp returnStamp = returnKind == Kind.Object ? StampFactory.declared(returnType) : StampFactory.forKind(returnKind);

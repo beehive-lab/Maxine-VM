@@ -355,8 +355,8 @@ public class VMAdviceHandlerTextStoreAdapter extends VMAStoreAdapter {
         txtStore.adviseBeforeInvokeInterface(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3.holder().name(), state.readId(arg3.holder().classLoader).toLong(), arg3.name());
     }
 
-    public void adviseBeforeArrayLength(long time, int arg1, Object arg2, int arg3) {
-        txtStore.adviseBeforeArrayLength(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3);
+    public void adviseAfterArrayLength(long time, int arg1, Object arg2, int arg3) {
+        txtStore.adviseAfterArrayLength(time, perThread ? null : tng.getThreadName(), arg1, state.readId(arg2).toLong(), arg3);
     }
 
     public void adviseBeforeThrow(long time, int arg1, Object arg2) {

@@ -42,7 +42,7 @@ public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
     private static int returnAddressSize = -1;
     private static int getReturnAddressSize() {
         if (returnAddressSize < 0) {
-            returnAddressSize = MaxGraal.runtime().maxTargetDescription.arch.getReturnAddressSize();
+            returnAddressSize = MaxGraal.runtime().maxTargetDescription().arch.getReturnAddressSize();
         }
         return returnAddressSize;
     }

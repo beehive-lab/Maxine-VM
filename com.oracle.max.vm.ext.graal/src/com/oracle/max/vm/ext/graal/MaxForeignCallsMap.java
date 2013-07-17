@@ -69,7 +69,7 @@ public class MaxForeignCallsMap {
     }
 
     @HOSTED_ONLY
-    static void initialize(MaxRuntime runtime) {
+    public static void initialize(MaxRuntime runtime) {
         MaxForeignCallsMap.runtime = runtime;
         try {
             createCiRuntimeCall(CiRuntimeCall.RegisterFinalizer, null, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);

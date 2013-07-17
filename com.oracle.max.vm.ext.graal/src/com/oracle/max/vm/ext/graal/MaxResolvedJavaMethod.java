@@ -58,10 +58,10 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
     @Override
     public byte[] getCode() {
         MethodActor ma = (MethodActor) riResolvedMethod();
-        if (ma.isNative()) {
+        if (ma.isNative() && ((ClassMethodActor) ma).compilee() == ma) {
             // Maxine (currently) returns the bytecodes for the generated implementation of the method.
             // This may be correct but it causes verification errors when called in a Dump
-            // TODO when graph based stubs work, then code() will return null
+            // TODO when graph based stubs work, and C1X is excised then code() will return null
             return null;
         }
         return ma.code();
@@ -178,6 +178,7 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         if (ma.isIntrinsic() || ma.isNeverInline()) {
             result = false;
         } else if (!MaxGraal.bootCompile() && (ma.isVM())) {
+            // This can happen when we hit a JDK method that has been SUBSTITUTEd
             result = checkInline(ma);
         }
         return result;
@@ -185,7 +186,8 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @NEVER_INLINE
     private boolean checkInline(MethodActor ma) {
-        return true;
+        // possible exceptions that would not provoke the use of unsafe features (and so boot require compiler phases)
+        return false;
     }
 
     @Override
@@ -193,7 +195,15 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         return riMethod.toString();
     }
 
-    private static Map<RiMethod, LineNumberTable> lineNumberTableMap = new HashMap<>();
+    @RESET
+    private static Map<RiMethod, LineNumberTable> lineNumberTableMap;
+
+    private static Map<RiMethod, LineNumberTable>  getLineNumberTableMap() {
+        if (lineNumberTableMap == null) {
+            lineNumberTableMap = new HashMap<>();
+        }
+        return lineNumberTableMap;
+    }
 
     private static class LineNumberTableImpl implements LineNumberTable {
         int[] lineNumberEntries;
@@ -232,7 +242,7 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public LineNumberTable getLineNumberTable() {
-        LineNumberTable lnt = lineNumberTableMap.get(riMethod);
+        LineNumberTable lnt = getLineNumberTableMap().get(riMethod);
         if (lnt == null) {
             ClassMethodActor cma = (ClassMethodActor) riResolvedMethod();
             com.sun.max.vm.classfile.LineNumberTable maxLnt = cma.codeAttribute().lineNumberTable();
@@ -242,7 +252,15 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         return lnt;
     }
 
-    private static Map<RiMethod, LocalVariableTable> localVariableTableMap = new HashMap<>();
+    @RESET
+    private static Map<RiMethod, LocalVariableTable> localVariableTableMap;
+
+    private static Map<RiMethod, LocalVariableTable> getLocalVariableTableMap() {
+        if (localVariableTableMap == null) {
+            localVariableTableMap = new HashMap<>();
+        }
+        return localVariableTableMap;
+    }
 
     private static class LocalVariableTableImpl implements LocalVariableTable {
 
@@ -323,7 +341,7 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public LocalVariableTable getLocalVariableTable() {
-        LocalVariableTable lvt = localVariableTableMap.get(riMethod);
+        LocalVariableTable lvt = getLocalVariableTableMap().get(riMethod);
         if (lvt == null) {
             ClassMethodActor cma = (ClassMethodActor) riResolvedMethod();
             com.sun.max.vm.classfile.LocalVariableTable maxLvt = cma.codeAttribute().localVariableTable();

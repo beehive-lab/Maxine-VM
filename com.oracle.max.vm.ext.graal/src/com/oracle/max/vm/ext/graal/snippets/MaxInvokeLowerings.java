@@ -58,18 +58,18 @@ import com.sun.max.vm.runtime.Snippets;
 public class MaxInvokeLowerings extends SnippetLowerings {
 
     @HOSTED_ONLY
-    public MaxInvokeLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription target,
+    public MaxInvokeLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription target,
                     Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, target);
     }
 
     @Override
     @HOSTED_ONLY
-    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription,
+    public void registerLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription,
                     Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(InvokeNode.class, new InvokeLowering());
         lowerings.put(InvokeWithExceptionNode.class, new InvokeLowering());
-        lowerings.put(ResolveMethodNode.class, new UnresolvedMethodLowering(this));
+        lowerings.put(ResolveMethodNode.class, new ResolveMethodLowering(this));
         lowerings.put(MethodAddressNode.class, new MethodAddressLowering(this));
     }
 
@@ -183,10 +183,10 @@ public class MaxInvokeLowerings extends SnippetLowerings {
         return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress();
     }
 
-    private class UnresolvedMethodLowering extends Lowering implements LoweringProvider<ResolveMethodNode> {
+    private class ResolveMethodLowering extends Lowering implements LoweringProvider<ResolveMethodNode> {
         protected final SnippetInfo[] snippets = new SnippetInfo[InvokeKind.values().length];
 
-        UnresolvedMethodLowering(MaxInvokeLowerings invokeSnippets) {
+        ResolveMethodLowering(MaxInvokeLowerings invokeSnippets) {
             super();
             for (InvokeKind invokeKind : InvokeKind.values()) {
                 snippets[invokeKind.ordinal()] = invokeSnippets.snippet(MaxInvokeLowerings.class,

@@ -50,7 +50,7 @@ public class MaxRegisterConfig implements RegisterConfig {
     private final Register[] nativeGeneralParameterRegisters;
     private Register[] xmmParameterRegisters = {xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
 
-    static void initialize(Architecture architecture) {
+    public static void initialize(Architecture architecture) {
         MaxRegisterConfig.architecture = architecture;
     }
 
@@ -102,9 +102,9 @@ public class MaxRegisterConfig implements RegisterConfig {
     private CallingConvention callingConvention(Register[] generalParameterRegisters, JavaType returnType, JavaType[] parameterTypes, Type type, TargetDescription target, boolean stackOnly) {
         Kind[] parameterKinds = new Kind[parameterTypes.length];
         for (int i = 0; i < parameterTypes.length; i++) {
-            parameterKinds[i] = MaxWordTypeRewriterPhase.checkWord(parameterTypes[i]);
+            parameterKinds[i] = MaxWordType.checkWord(parameterTypes[i]);
         }
-        Kind returnKind = returnType == null ? Kind.Void : MaxWordTypeRewriterPhase.checkWord(returnType);
+        Kind returnKind = returnType == null ? Kind.Void : MaxWordType.checkWord(returnType);
         return callingConvention(generalParameterRegisters, returnKind, parameterKinds, type, target, stackOnly);
 
     }

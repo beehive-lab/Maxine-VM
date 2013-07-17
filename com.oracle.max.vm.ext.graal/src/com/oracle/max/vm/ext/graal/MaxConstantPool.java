@@ -26,7 +26,7 @@ package com.oracle.max.vm.ext.graal;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.max.vm.ext.graal.MaxRuntime.*;
+import com.oracle.max.vm.ext.graal.snippets.MaxReplacementsImpl.MaxSnippetGraphBuilderConfiguration;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.*;
@@ -54,7 +54,7 @@ public class MaxConstantPool implements ConstantPool {
         this.riConstantPool = constantPool;
     }
 
-    static void setGraphBuilderConfig(MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration) {
+    public static void setGraphBuilderConfig(MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration) {
         MaxConstantPool.maxSnippetGraphBuilderConfiguration = maxSnippetGraphBuilderConfiguration;
     }
 

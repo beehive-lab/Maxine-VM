@@ -24,7 +24,7 @@ package com.oracle.max.vm.ext.graal;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
-import static com.oracle.max.vm.ext.graal.phases.MaxWordTypeRewriterPhase.*;
+import static com.oracle.max.vm.ext.graal.phases.MaxWordType.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -226,6 +226,13 @@ public class MaxIntrinsics {
         }
     }
 
+    static class MembarIntrinsic extends MaxIntrinsicImpl {
+        public ValueNode create(FixedNode invoke, ResolvedJavaMethod method, ValueNode value) {
+            StructuredGraph graph = invoke.graph();
+            return graph.add(new MembarNode(value.asConstant().asInt()));
+        }
+    }
+
     /**
      * Case where a Graal snippet with exactly the same signature already exists, so we simply
      * return the graph for that.
@@ -343,6 +350,7 @@ public class MaxIntrinsics {
         registry.add(INFO, new SafepointIntrinsic(MaxSafepointNode.Op.INFO));
         registry.add(HERE, new SafepointIntrinsic(MaxSafepointNode.Op.HERE));
         registry.add(ALLOCA, new AllocaIntrinsic());
+        registry.add(MEMBAR, new MembarIntrinsic());
 /*
         registry.add(UNCOMMON_TRAP, new UncommonTrapIntrinsic());
 

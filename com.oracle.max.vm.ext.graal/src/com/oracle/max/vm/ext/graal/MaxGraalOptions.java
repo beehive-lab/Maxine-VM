@@ -36,30 +36,37 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * Adapter for Graal compiler options using standard Maxine {@link VMOptions} machinery.
- * The set of Graal options is automatically generated and proxy fields in this class
- * are registered using {@link VMOptions#addFieldOptions}. Any options that are present
- * on the command line are forwarded to the Graal options from these values.
+ * Adapter for Graal compiler options using standard Maxine {@link VMOptions} machinery. A set of {@link VMOption}s that
+ * parallel the Graal options is automatically generated and registered with the VM. Any options that are present on the
+ * command line are forwarded to the Graal options from the Maxine options.
  */
 public class MaxGraalOptions {
 
-    /**
-     * Hosted variant, options on command line.
-     */
+    private static Map<VMOption, OptionValue> optionMap = new HashMap<>();
+
     static void initialize(Phase phase) {
         if (MaxineVM.isHosted() && phase == Phase.HOSTED_COMPILING) {
             checkandSetOptions();
-        } else if (phase == Phase.STARTING) {
+        } else if (phase == Phase.RUNNING) {
             checkandSetOptions();
         }
     }
 
+    /**
+     * Checks whether the option {@code name} was set and returns the {@link VMOption} if so, else {@code null}.
+     * N.B. This <b>does</b> not consult or set the associated Graal option.
+     * @param optionName
+     * @return
+     */
     public static VMOption isPresent(String optionName) {
         VMOption vmOption = getVMOption(optionName);
         assert vmOption != null;
         return vmOption.isPresent() ? vmOption : null;
     }
 
+    /**
+     * Checks the Maxine proxy options and forwards those that were set to the associated Graal options.
+     */
     static void checkandSetOptions() {
         for (Map.Entry<VMOption, OptionValue> entry : optionMap.entrySet()) {
             VMOption vmOption = entry.getKey();
@@ -83,6 +90,9 @@ public class MaxGraalOptions {
         }
     }
 
+    /**
+     * Returns the {@link VMOption} correspond to {@code name}.
+     */
     public static VMOption getVMOption(String name) {
         for (VMOption vmOption : optionMap.keySet()) {
             if (vmOption.name().equals(name)) {
@@ -95,8 +105,6 @@ public class MaxGraalOptions {
     public static OptionValue getOptionValue(VMOption vmOption) {
         return optionMap.get(vmOption);
     }
-
-    private static Map<VMOption, OptionValue> optionMap = new HashMap<>();
 
     // check that options are up to date wrt to Graal
 

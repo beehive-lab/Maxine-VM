@@ -350,7 +350,7 @@ public abstract class ObjectStateAdapter extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeArrayLength(int arg1, Object arg2, int arg3) {
+    public void adviseAfterArrayLength(int arg1, Object arg2, int arg3) {
         visit(arg2);
     }
 

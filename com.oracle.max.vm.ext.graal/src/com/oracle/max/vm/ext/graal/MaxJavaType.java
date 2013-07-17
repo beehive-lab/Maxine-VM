@@ -27,6 +27,7 @@ import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.classfile.constant.*;
 
 
@@ -34,13 +35,21 @@ public class MaxJavaType implements JavaType {
 
     protected RiType riType;
 
-    private static ConcurrentHashMap<RiType, MaxJavaType> map = new ConcurrentHashMap<RiType, MaxJavaType>();
+    @RESET
+    private static ConcurrentHashMap<RiType, MaxJavaType> map;
+
+    private static ConcurrentHashMap<RiType, MaxJavaType> getMap() {
+        if (map == null) {
+            map = new ConcurrentHashMap<RiType, MaxJavaType>();
+        }
+        return map;
+    }
 
     public static MaxJavaType get(RiType riType) {
         if (riType == null) {
             return null;
         }
-        MaxJavaType result = map.get(riType);
+        MaxJavaType result = getMap().get(riType);
         if (result == null) {
             if (riType instanceof RiResolvedType) {
                 result = new MaxResolvedJavaType((RiResolvedType) riType);
