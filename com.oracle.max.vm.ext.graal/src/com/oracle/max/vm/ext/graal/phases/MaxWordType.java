@@ -34,7 +34,6 @@ import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.nodes.util.*;
-import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.util.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
@@ -46,7 +45,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.reference.*;
 
 
-public abstract class MaxWordTypeRewriterPhase extends Phase {
+public class MaxWordType {
 
     private static ResolvedJavaType wordBaseType;
     private static ResolvedJavaType codePointerType;
@@ -54,18 +53,25 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
     private static ResolvedJavaType hubType;
     private static ResolvedJavaType wrappedWordType;
 
-    protected final Kind wordKind;
-    private MetaAccessProvider metaAccess;
+    public static abstract class Phase extends com.oracle.graal.phases.Phase {
 
-    public MaxWordTypeRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
-        this.wordKind = wordKind;
-        this.metaAccess = metaAccess;
-        if (wordBaseType == null) {
-            wordBaseType = metaAccess.lookupJavaType(Word.class);
-            referenceType = metaAccess.lookupJavaType(Reference.class);
-            hubType = metaAccess.lookupJavaType(Hub.class);
-            codePointerType = metaAccess.lookupJavaType(CodePointer.class);
-            wrappedWordType = metaAccess.lookupJavaType(WordUtil.WrappedWord.class);
+        protected final Kind wordKind;
+        protected MetaAccessProvider metaAccess;
+
+        public Phase(MetaAccessProvider metaAccess, Kind wordKind) {
+            this.wordKind = wordKind;
+            this.metaAccess = metaAccess;
+            initializeTypes();
+        }
+
+        private void initializeTypes() {
+            if (wordBaseType == null) {
+                wordBaseType = metaAccess.lookupJavaType(Word.class);
+                referenceType = metaAccess.lookupJavaType(Reference.class);
+                hubType = metaAccess.lookupJavaType(Hub.class);
+                codePointerType = metaAccess.lookupJavaType(CodePointer.class);
+                wrappedWordType = metaAccess.lookupJavaType(WordUtil.WrappedWord.class);
+            }
         }
     }
 
@@ -76,8 +82,8 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
      * {@link PhiNode} instances that self-refer but otherwise have Word values are a problem as {@link PhiNode#inferPhiStamp()}
      * includes itself in the computation, causing a {@link Kind} mismatch, so they have to be treated specially.
      */
-    public static class KindRewriter extends MaxWordTypeRewriterPhase {
-        public KindRewriter(MetaAccessProvider metaAccess, Kind wordKind) {
+    public static class KindRewriterPhase extends Phase {
+        public KindRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
             super(metaAccess, wordKind);
         }
 
@@ -101,6 +107,25 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
             }
         }
 
+        private void changeToWord(ValueNode valueNode) {
+            if (valueNode.isConstant() && valueNode.asConstant().getKind() == Kind.Object) {
+                StructuredGraph graph = valueNode.graph();
+                ConstantNode constantNode = (ConstantNode) valueNode;
+                Object asObject = constantNode.value.asObject();
+                Constant constant;
+                if (asObject instanceof WordUtil.WrappedWord) {
+                    constant = ConstantMap.toGraal(((WordUtil.WrappedWord) asObject).archConstant());
+                } else {
+                    // TODO figure out how unwrapped Word constants can appear
+                    assert MaxineVM.isHosted();
+                    constant = Constant.forLong(((Word) asObject).value);
+                }
+                graph.replaceFloating(constantNode, ConstantNode.forConstant(constant, metaAccess, graph));
+            } else {
+                valueNode.setStamp(StampFactory.forKind(wordKind));
+            }
+        }
+
     }
 
     /**
@@ -114,7 +139,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
      * The null check is always removed as using {@link INLINE} is a
      * statement that no null check should be generated.
      */
-    public static class MaxNullCheckRewriter extends MaxWordTypeRewriterPhase {
+    public static class MaxNullCheckRewriterPhase extends Phase {
 
         /**
          * When non-null, indicates that the check is being run after inlining a method,
@@ -122,7 +147,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
          */
         Node invokePredecessor;
 
-        public MaxNullCheckRewriter(MetaAccessProvider metaAccess, Kind wordKind, Node invokePredecessor) {
+        public MaxNullCheckRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind, Node invokePredecessor) {
             super(metaAccess, wordKind);
             this.invokePredecessor = invokePredecessor;
         }
@@ -273,8 +298,8 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
      * after the {@link Word} type nodes are rewritten as {@code long}, the objectness is lost, which can
      * cause problems with GC refmaps in the LIR stage.
      */
-    public static class MaxUnsafeAccessRewriter extends MaxWordTypeRewriterPhase {
-        public MaxUnsafeAccessRewriter(MetaAccessProvider metaAccess, Kind wordKind) {
+    public static class MaxUnsafeAccessRewriterPhase extends Phase {
+        public MaxUnsafeAccessRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
             super(metaAccess, wordKind);
         }
 
@@ -316,56 +341,12 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
     }
 
     /**
-     * Remove unnecessary {@link MaxUnsafeCastNode} instances.
-     */
-    public static class MaxUnsafeCastRewriter extends MaxWordTypeRewriterPhase {
-
-        public MaxUnsafeCastRewriter(MetaAccessProvider metaAccess, Kind wordKind) {
-            super(metaAccess, wordKind);
-        }
-
-        @Override
-        protected void run(StructuredGraph graph) {
-            for (MaxUnsafeCastNode unsafeCastNode : graph.getNodes().filter(MaxUnsafeCastNode.class).snapshot()) {
-                boolean delete = false;
-                ValueNode object = unsafeCastNode.object();
-                if (!unsafeCastNode.isDeleted()) {
-                    Kind kind = unsafeCastNode.kind();
-                    if (object.stamp() == unsafeCastNode.stamp()) {
-                        delete = true;
-                    } else if (kind == Kind.Object && object.kind() == Kind.Object) {
-                        ObjectStamp my = unsafeCastNode.objectStamp();
-                        ObjectStamp other = object.objectStamp();
-
-                        if (my.type().isAssignableFrom(other.type())) {
-                            delete = true;
-                        } else if (wordBaseType.isAssignableFrom(my.type()) && wordBaseType.isAssignableFrom(other.type())) {
-                            // Word subclasses are freely assignable to one another in Maxine
-                            delete = true;
-                        }
-                    } else if (kind == Kind.Long && object.kind() == Kind.Object && wordBaseType.isAssignableFrom(object.objectStamp().type())) {
-                        delete = true;
-                    } else if (kind == Kind.Object && object.kind() == Kind.Long && wordBaseType.isAssignableFrom(unsafeCastNode.objectStamp().type())) {
-                        delete = true;
-                    }
-                }
-                if (delete) {
-                    Debug.log("Replacing %s with %s", unsafeCastNode/*.stamp()*/, object/*.stamp()*/);
-                    graph.replaceFloating(unsafeCastNode, object);
-                }
-            }
-
-        }
-
-    }
-
-    /**
      * Ensures that all non-final methods on {@link Word} subclasses are treated as final (aka {@link InvokeKind.Special}),
      * to ensure that they are inlined by {@link SnippetInstaller}.
      */
-    public static class MakeWordFinalRewriter extends MaxWordTypeRewriterPhase {
+    public static class MakeWordFinalRewriterPhase extends Phase {
 
-        public MakeWordFinalRewriter(MetaAccessProvider metaAccess, Kind wordKind) {
+        public MakeWordFinalRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
             super(metaAccess, wordKind);
         }
 
@@ -380,7 +361,7 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
         }
     }
 
-    public boolean isWord(ValueNode node) {
+    public static boolean isWord(ValueNode node) {
         if (node.stamp() == StampFactory.forWord()) {
             return true;
         }
@@ -416,23 +397,5 @@ public abstract class MaxWordTypeRewriterPhase extends Phase {
         return objectType == referenceType || objectType == codePointerType || wordBaseType.isAssignableFrom(objectType);
     }
 
-    protected void changeToWord(ValueNode valueNode) {
-        if (valueNode.isConstant() && valueNode.asConstant().getKind() == Kind.Object) {
-            StructuredGraph graph = valueNode.graph();
-            ConstantNode constantNode = (ConstantNode) valueNode;
-            Object asObject = constantNode.value.asObject();
-            Constant constant;
-            if (asObject instanceof WordUtil.WrappedWord) {
-                constant = ConstantMap.toGraal(((WordUtil.WrappedWord) asObject).archConstant());
-            } else {
-                // TODO figure out how unwrapped Word constants can appear
-                assert MaxineVM.isHosted();
-                constant = Constant.forLong(((Word) asObject).value);
-            }
-            graph.replaceFloating(constantNode, ConstantNode.forConstant(constant, metaAccess, graph));
-        } else {
-            valueNode.setStamp(StampFactory.forKind(wordKind));
-        }
-    }
 
 }

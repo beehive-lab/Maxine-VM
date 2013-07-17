@@ -265,6 +265,9 @@ public final class DataPrototype extends Prototype {
         final Address mark = heapRegion.getAllocationMark();
         final List<Object> mutableHeapObjects = new ArrayList<Object>(graphPrototype.objects().size());
         for (Object object : graphPrototype.objects()) {
+            if (object instanceof StaticTuple && object.toString().contains("staticTuple-DataModel")) {
+                System.console();
+            }
             final ClassInfo classInfo = graphPrototype.classInfoFor(object);
             if (classInfo.containsMutableReferences(object) == objectsWithMutableReferences) {
                 Address cell = objectToCell.get(object);

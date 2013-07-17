@@ -74,6 +74,8 @@ public class Package extends BootImagePackage {
         } else if (this.name().equals("com.oracle.graal.api.code")) {
             // java.lang.invoke.CallSite causes unresolved problems in the boot image
             HostedBootClassLoader.omitClass("java.lang.invoke.CallSite");
+        } else if (this.name().equals("com.oracle.graal.debug")) {
+            JDKInterceptor.resetField("com.oracle.graal.debug.Debug", "ENABLED");
         }
     }
 

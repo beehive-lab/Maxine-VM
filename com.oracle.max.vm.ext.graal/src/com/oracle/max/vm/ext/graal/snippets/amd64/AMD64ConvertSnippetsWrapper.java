@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.graal.snippets.amd64;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
+import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.spi.*;
@@ -36,13 +37,13 @@ import com.oracle.graal.replacements.amd64.*;
  */
 public class AMD64ConvertSnippetsWrapper extends SnippetLowerings {
 
-    public AMD64ConvertSnippetsWrapper(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public AMD64ConvertSnippetsWrapper(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, targetDescription);
         getSnippetGraphs(AMD64ConvertSnippets.class);
     }
 
     @Override
-    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements,
+    public void registerLowerings(MetaAccessProvider runtime, Replacements replacements,
                     TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(ConvertNode.class, new ConvertLowering(new AMD64ConvertSnippets.Templates(runtime, replacements, targetDescription)));
     }

@@ -33,27 +33,32 @@ import com.oracle.graal.api.code.CodeUtil.RefMapFormatter;
 import com.oracle.graal.api.code.CompilationResult.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
-import com.oracle.graal.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.printer.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
-import com.oracle.max.vm.ext.graal.snippets.amd64.*;
-import com.oracle.max.vm.ext.graal.stubs.*;
+import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-
-
+import com.sun.max.vm.object.*;
 
 public class MaxRuntime implements GraalCodeCacheProvider {
 
     private final Map<Class< ? extends Node>, LoweringProvider> lowerings = new HashMap<>();
 
-    MaxTargetDescription maxTargetDescription;
+    private final MaxTargetDescription maxTargetDescription;
 
     MaxRuntime(MaxTargetDescription maxTargetDescription) {
         this.maxTargetDescription = maxTargetDescription;
+    }
+
+    public Map<Class< ? extends Node>, LoweringProvider> lowerings() {
+        return lowerings;
+    }
+
+    public MaxTargetDescription maxTargetDescription() {
+        return maxTargetDescription;
     }
 
     @Override
@@ -161,14 +166,27 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         if (constant.getKind() == Kind.Object) {
             Object o = constant.asObject();
             if (o != null) {
-                // When running isHosted, StaticTuple is an issue as it is HOSTED_ONLY
-                // so shows up as null, which causes an assertion failure later
+                // StaticTuples (which are constants) are a special case.
                 if (MaxineVM.isHosted()) {
-                    if (o.getClass() == StaticTuple.class) {
-                        return MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
+                   // When running isHosted, StaticTuple is HOSTED_ONLY
+                   // so shows up as null, which causes an assertion failure later
+                    Class<?> klass = o.getClass();
+                    if (klass == StaticTuple.class) {
+                        return MaxResolvedJavaType.getJavaLangObject();
+                    } else {
+                        return MaxResolvedJavaType.get(ClassActor.fromJava(klass));
+                    }
+                } else {
+                    // Maxine's getClass() on a static tuple returns the class corresponding to the static tuple.
+                    // If the class happens to be abstract, then ObjectStamp will object when the ConstantNode
+                    // is created (e.g. when lowering an AccessFieldNode). The type really doesn't matter anyway.
+                    Hub hub = ObjectAccess.readHub(o);
+                    if (hub instanceof StaticHub) {
+                        return MaxResolvedJavaType.getJavaLangObject();
+                    } else {
+                        return MaxResolvedJavaType.get(hub.classActor);
                     }
                 }
-                return MaxResolvedJavaType.get(ClassActor.fromJava(o.getClass()));
             }
         }
         return null;
@@ -195,58 +213,15 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     @Override
     public void lower(Node n, LoweringTool tool) {
         LoweringProvider lowering = lowerings.get(n.getClass());
-        ProgramError.check(lowering != null, "missing lowering for node: " + n.getClass().getSimpleName());
+        if (lowering == null) {
+            missingLowering(n);
+        }
         lowering.lower(n, tool);
     }
 
-    static class MaxSnippetGraphBuilderConfiguration extends GraphBuilderConfiguration {
-
-        boolean ignoreHostOnlyError;
-
-        public MaxSnippetGraphBuilderConfiguration() {
-            super(true, true);
-        }
-
-        @Override
-        public boolean unresolvedIsError() {
-            // This prevents an assertion error in GraphBuilderPhase when we return an unresolved field
-            return false;
-        }
-
-    }
-
-    public Replacements init() {
-        // Snippets cannot have optimistic assumptions.
-        Assumptions assumptions = new Assumptions(false);
-        MaxRegisterConfig.initialize(maxTargetDescription.arch);
-        MaxForeignCallsMap.initialize(this);
-        MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration = new MaxSnippetGraphBuilderConfiguration();
-        MaxConstantPool.setGraphBuilderConfig(maxSnippetGraphBuilderConfiguration);
-        MaxReplacementsImpl maxReplacements = new MaxReplacementsImpl(this, assumptions, maxTargetDescription,
-                        maxSnippetGraphBuilderConfiguration, lowerings);
-        MaxIntrinsics.initialize(this, maxReplacements, maxTargetDescription);
-        maxReplacements.installAndRegisterSnippets(TestSnippets.class);
-        maxReplacements.installAndRegisterSnippets(NewSnippets.class);
-        maxReplacements.installAndRegisterSnippets(FieldSnippets.class);
-        maxReplacements.installAndRegisterSnippets(ArraySnippets.class);
-        maxReplacements.installAndRegisterSnippets(TypeSnippets.class);
-        // MonitorSnippets do the null check explicitly, so we don't want the normal explicit null check
-        // in the scheme implementation.
-        boolean explicitNullChecks = VMConfiguration.vmConfig().monitorScheme().setExplicitNullChecks(false);
-        maxReplacements.installAndRegisterSnippets(MonitorSnippets.class);
-        VMConfiguration.vmConfig().monitorScheme().setExplicitNullChecks(explicitNullChecks);
-        maxReplacements.installAndRegisterSnippets(MaxInvokeLowerings.class);
-        maxReplacements.installAndRegisterSnippets(MaxMiscLowerings.class);
-        maxReplacements.installAndRegisterSnippets(ArithmeticSnippets.class);
-        maxReplacements.installAndRegisterSnippets(AMD64ConvertSnippetsWrapper.class);
-        maxReplacements.installAndRegisterSnippets(BoxingSnippetsWrapper.class);
-        maxReplacements.installAndRegisterSnippets(NativeStubSnippets.class);
-
-        MaxConstantPool.setGraphBuilderConfig(null);
-
-        MaxUnsafeAccessLowerings.registerLowerings(lowerings);
-
-        return maxReplacements;
+    @NEVER_INLINE
+    private static void missingLowering(Node n) {
+        ProgramError.unexpected("missing lowering for node: " + n.getClass().getSimpleName());
     }
 
     @Override

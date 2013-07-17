@@ -589,6 +589,9 @@ public class GraphPrototype extends Prototype {
         // add the class actor object
         add(javaClass, classActor, "classActor");
         // walk the static fields of the class
+        if (javaClass.getSimpleName().equals("DataModel")) {
+            System.console();
+        }
         walkFields(javaClass, makeClassInfo(javaClass).staticFields);
     }
 

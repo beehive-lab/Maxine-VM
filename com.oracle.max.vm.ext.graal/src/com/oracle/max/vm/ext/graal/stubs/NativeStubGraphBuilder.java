@@ -30,7 +30,6 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.util.*;
-import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
 import com.oracle.graal.phases.util.*;
 import com.oracle.max.vm.ext.graal.*;
@@ -43,7 +42,8 @@ import com.sun.max.vm.type.SignatureDescriptor;
  * A utility class for generating a native method stub (as a compiler graph) implementing
  * the transition from Java to native code. This process is very similar to using snippets
  * to lower high-level nodes. However, since the number and types of the arguments to a native method
- * are variable, we cannot just use the snippet instantiation mechanism directly.
+ * are variable, we cannot just use the snippet instantiation mechanism directly. Instead we use a mixture
+ * of snippets and manual graph building.
  */
 public class NativeStubGraphBuilder extends AbstractGraphBuilder {
 
@@ -73,16 +73,16 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
     /**
      * Builds the graph for the native method stub.
      */
-    public StructuredGraph build(final List<Phase> bootPhases) {
+    public StructuredGraph build() {
         Debug.scope("NativeStubGraphBuilder", new Object[]{nativeMethod}, new Runnable() {
             public void run() {
-                buildGraph(bootPhases);
+                buildGraph();
             }
         });
         return graph;
     }
 
-    private StructuredGraph buildGraph(final List<Phase> bootPhases) {
+    private StructuredGraph buildGraph() {
         SignatureDescriptor sig = nativeMethodActor.descriptor();
 
         Debug.dump(graph, NativeStubGraphBuilder.class.getSimpleName() + ":" + nativeMethod.getName());
@@ -209,13 +209,5 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         templateObject.safeDelete();
     }
 
-    /**
-     * Applies the standard boot phases to a graph before it is inlined into another graph.
-     */
-    protected void applyPhasesBeforeInlining(StructuredGraph graph, List<Phase> bootPhases) {
-        for (Phase phase : bootPhases) {
-            phase.apply(graph);
-        }
-    }
 
 }

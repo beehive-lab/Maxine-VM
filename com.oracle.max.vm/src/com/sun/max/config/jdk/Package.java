@@ -129,6 +129,6 @@ public class Package extends BootImagePackage {
         CompiledPrototype.addCompilationWhitelist("java.net.URL");
         CompiledPrototype.addCompilationWhitelist("java.net.Parts");
 
-        CompiledPrototype.registerVMEntryPoint("com.sun.max.vm.jdk.BitSetProxy.*");
+        CompiledPrototype.registerVMEntryPoint("com.sun.max.vm.jdk.BitSetProxy.*"); // TODO move
     }
 }

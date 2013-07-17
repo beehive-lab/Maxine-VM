@@ -781,8 +781,8 @@ public class StableFieldVMAdviceHandler extends ObjectStateAdapter {
     }
 
     @Override
-    public void adviseBeforeArrayLength(int arg1, Object arg2, int arg3) {
-        super.adviseBeforeArrayLength(arg1, arg2, arg3);
+    public void adviseAfterArrayLength(int arg1, Object arg2, int arg3) {
+        super.adviseAfterArrayLength(arg1, arg2, arg3);
         advanceTime();
         recordAccess(arg2);
     }

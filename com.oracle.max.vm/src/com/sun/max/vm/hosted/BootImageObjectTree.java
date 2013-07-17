@@ -303,12 +303,12 @@ public final class BootImageObjectTree {
             final Object object = objectPoolIndices[i];
             final int address = allocationMap.get(object).toInt();
             final long size = ObjectAccess.size(object).toLong();
-            String toString;
-            try {
-                toString = object.toString();
-            } catch (Exception e) {
-                toString = "<error calling toString()>: " + e.toString();
-            }
+            String toString = null;
+//            try {
+//                toString = object.toString();
+//            } catch (Exception e) {
+//                toString = "<error calling toString()>: " + e.toString();
+//            }
 
             dataOutputStream.writeInt(classPool.get(object.getClass()));
             dataOutputStream.writeInt(address);
@@ -316,14 +316,19 @@ public final class BootImageObjectTree {
             if (toString == null) {
                 dataOutputStream.writeByte(TO_STRING_TAG.NULL.ordinal());
             } else {
-                final String defaultToString = object.getClass().getName() + '@' + Integer.toHexString(object.hashCode());
+                try {
+                final String defaultToString =  + '@' + Integer.toHexString(object.hashCode());
                 if (toString.equals(defaultToString)) {
                     dataOutputStream.writeByte(TO_STRING_TAG.DEFAULT.ordinal());
                 } else {
                     dataOutputStream.writeByte(TO_STRING_TAG.CUSTOM.ordinal());
                     dataOutputStream.writeUTF(Strings.truncate(toString, MAX_OBJECT_TOSTRING_LENGTH));
                 }
+                } catch (NullPointerException ex) {
+                    System.console();
+                }
             }
+
         }
 
         int counter = 0;

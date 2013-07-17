@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.graal.snippets;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
+import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
@@ -55,13 +56,13 @@ import com.sun.max.vm.runtime.*;
 public class MonitorSnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
-    public MonitorSnippets(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public MonitorSnippets(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, targetDescription);
     }
 
     @Override
     @HOSTED_ONLY
-    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public void registerLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(MonitorEnterNode.class, new MonitorEnterLowering(this));
         lowerings.put(MonitorExitNode.class, new MonitorExitLowering(this));
     }

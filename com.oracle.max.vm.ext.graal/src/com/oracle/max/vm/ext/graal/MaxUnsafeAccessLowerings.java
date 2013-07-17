@@ -34,9 +34,9 @@ import com.oracle.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 
-class MaxUnsafeAccessLowerings {
+public class MaxUnsafeAccessLowerings {
 
-    static void registerLowerings(Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public static void registerLowerings(Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         UnsafeLoadLowering unsafeLoadLowering = new UnsafeLoadLowering();
         lowerings.put(UnsafeLoadNode.class, unsafeLoadLowering);
         UnsafeStoreLowering unsafeStoreLowering = new UnsafeStoreLowering();

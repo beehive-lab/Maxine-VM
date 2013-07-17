@@ -37,7 +37,7 @@ import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
-import com.oracle.max.vm.ext.graal.phases.MaxWordTypeRewriterPhase.*;
+import com.oracle.max.vm.ext.graal.phases.MaxWordType.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -48,13 +48,13 @@ import com.sun.max.vm.runtime.Snippets;
 public class TypeSnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
-    public TypeSnippets(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public TypeSnippets(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, targetDescription);
     }
 
     @Override
     @HOSTED_ONLY
-    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public void registerLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(CheckCastNode.class, new CheckCastLowering(this));
         lowerings.put(UnresolvedCheckCastNode.class, new UnresolvedCheckCastLowering(this));
         lowerings.put(InstanceOfNode.class, new InstanceOfLowering(runtime, replacements, targetDescription));
@@ -78,7 +78,7 @@ public class TypeSnippets extends SnippetLowerings {
                 case NullCheckException: {
                     args = new Arguments(snippet);
                     if (node.usages().isNotEmpty()) {
-                        MaxNullCheckRewriter.checkForPiNode(node);
+                        MaxNullCheckRewriterPhase.checkForPiNode(node);
                     }
                     break;
                 }

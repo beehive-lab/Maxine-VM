@@ -122,8 +122,6 @@ public abstract class BytecodeAdvice {
 
     public abstract void adviseBeforeInvokeInterface(int bci, Object object, MethodActor methodActor);
 
-    public abstract void adviseBeforeArrayLength(int bci, Object array, int length);
-
     public abstract void adviseBeforeThrow(int bci, Object object);
 
     public abstract void adviseBeforeCheckCast(int bci, Object object, Object classActor);
@@ -141,6 +139,8 @@ public abstract class BytecodeAdvice {
     public abstract void adviseAfterNew(int bci, Object object);
 
     public abstract void adviseAfterNewArray(int bci, Object object, int length);
+
+    public abstract void adviseAfterArrayLength(int bci, Object array, int length);
 
     public abstract void adviseAfterMultiNewArray(int bci, Object object, int[] lengths);
 

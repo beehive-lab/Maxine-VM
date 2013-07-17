@@ -26,6 +26,7 @@ import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 
 
@@ -33,10 +34,19 @@ public class MaxJavaMethod implements JavaMethod {
 
     protected RiMethod riMethod;
 
-    private static ConcurrentHashMap<RiMethod, MaxJavaMethod> map = new ConcurrentHashMap<RiMethod, MaxJavaMethod>();
+    @RESET
+    private static ConcurrentHashMap<RiMethod, MaxJavaMethod> map;
+
+    private static ConcurrentHashMap<RiMethod, MaxJavaMethod> getMap() {
+        if (map == null) {
+            map = new ConcurrentHashMap<RiMethod, MaxJavaMethod>();
+        }
+        return map;
+    }
+
 
     public static MaxJavaMethod get(RiMethod riMethod) {
-        MaxJavaMethod result = map.get(riMethod);
+        MaxJavaMethod result = getMap().get(riMethod);
         if (result == null) {
             if (riMethod instanceof RiResolvedMethod) {
                 result = new MaxResolvedJavaMethod((RiResolvedMethod) riMethod);

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.oracle.max.vm.ext.graal.snippets;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -36,34 +36,55 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
 import com.oracle.graal.replacements.*;
-import com.oracle.max.vm.ext.graal.MaxRuntime.*;
+import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.phases.*;
-import com.oracle.max.vm.ext.graal.snippets.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 
-class MaxReplacementsImpl extends ReplacementsImpl {
+/**
+ * Customized snippet building for Maxine.
+  */
+public class MaxReplacementsImpl extends ReplacementsImpl {
+    public static class MaxSnippetGraphBuilderConfiguration extends GraphBuilderConfiguration {
+
+        boolean ignoreHostOnlyError;
+
+        public MaxSnippetGraphBuilderConfiguration() {
+            super(true, true);
+        }
+
+        @Override
+        public boolean unresolvedIsError() {
+            // This prevents an assertion error in GraphBuilderPhase when we return an unresolved field
+            return false;
+        }
+
+    }
+
     private MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration;
     Map<Class< ? extends Node>, LoweringProvider> lowerings;
 
     MaxReplacementsImpl(MetaAccessProvider runtime, Assumptions assumptions, TargetDescription target,
-                    MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration,
-                    Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+                    MaxSnippetGraphBuilderConfiguration maxSnippetGraphBuilderConfiguration) {
         super(runtime, assumptions, target);
         this.maxSnippetGraphBuilderConfiguration = maxSnippetGraphBuilderConfiguration;
-        this.lowerings = lowerings;
+        this.lowerings = ((MaxRuntime) runtime).lowerings();
     }
 
     public void installAndRegisterSnippets(Class< ? extends SnippetLowerings> clazz) {
         // assumption is that it is ok to register the lowerings incrementally
         try {
-            Constructor< ? > cons = clazz.getDeclaredConstructor(CodeCacheProvider.class, Replacements.class, TargetDescription.class, Map.class);
+            Constructor< ? > cons = clazz.getDeclaredConstructor(MetaAccessProvider.class, Replacements.class, TargetDescription.class, Map.class);
             Object[] args = new Object[] {runtime, this, target, lowerings};
             SnippetLowerings snippetLowerings = (SnippetLowerings) cons.newInstance(args);
-            snippetLowerings.registerLowerings((CodeCacheProvider) runtime, this, target, lowerings);
+            snippetLowerings.registerLowerings(runtime, this, target, lowerings);
         } catch (Exception ex) {
             ProgramError.unexpected("MaxReplacementsImpl: problem: " + ex + " in: " + clazz);
         }
+    }
+
+    public Map<Class< ? extends Node>, LoweringProvider> lowerings() {
+        return lowerings;
     }
 
     @Override
@@ -86,7 +107,7 @@ class MaxReplacementsImpl extends ReplacementsImpl {
 
             Debug.dump(graph, "%s: %s", method.getName(), GraphBuilderPhase.class.getSimpleName());
 
-            new MaxWordTypeRewriterPhase.MakeWordFinalRewriter(runtime, target.wordKind).apply(graph);
+            new MaxWordType.MakeWordFinalRewriterPhase(runtime, target.wordKind).apply(graph);
             new NodeIntrinsificationPhase(runtime).apply(graph); // Fold
             // need constant propagation for folded methods
             new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(graph);
@@ -107,7 +128,7 @@ class MaxReplacementsImpl extends ReplacementsImpl {
 
         @Override
         public void afterInline(StructuredGraph caller, StructuredGraph callee, Object beforeInlineData) {
-            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, target.wordKind, (Node) beforeInlineData).apply(caller);
+            new MaxWordType.MaxNullCheckRewriterPhase(runtime, target.wordKind, (Node) beforeInlineData).apply(caller);
             new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(caller);
             new MaxIntrinsicsPhase().apply(caller);
         }
@@ -117,13 +138,13 @@ class MaxReplacementsImpl extends ReplacementsImpl {
             new NodeIntrinsificationPhase(runtime).apply(graph);
 
             // These only get done once right at the end
-            new MaxWordTypeRewriterPhase.MaxUnsafeAccessRewriter(runtime, target.wordKind).apply(graph);
+            new MaxWordType.MaxUnsafeAccessRewriterPhase(runtime, target.wordKind).apply(graph);
 //            new MaxWordTypeRewriterPhase.MaxUnsafeCastRewriter(runtime, target.wordKind).apply(graph);
             new MaxSlowpathRewriterPhase(runtime).apply(graph);
-            new MaxWordTypeRewriterPhase.MaxNullCheckRewriter(runtime, target.wordKind, null).apply(graph);
+            new MaxWordType.MaxNullCheckRewriterPhase(runtime, target.wordKind, null).apply(graph);
 
             // The replaces all Word based types with target.wordKind
-            new MaxWordTypeRewriterPhase.KindRewriter(runtime, target.wordKind).apply(graph);
+            new MaxWordType.KindRewriterPhase(runtime, target.wordKind).apply(graph);
             // Remove UnsafeCasts rendered irrelevant by previous phase
             new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(graph);
 

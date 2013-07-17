@@ -296,8 +296,8 @@ public class SBPSVMATextStore extends SBPSVMAIdTextStore implements VMANSFTextSt
     }
 
     @Override
-    public void adviseBeforeArrayLength(long arg1, String arg2, int arg3, long arg4, int arg5) {
-        super.adviseBeforeArrayLength(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
+    public void adviseAfterArrayLength(long arg1, String arg2, int arg3, long arg4, int arg5) {
+        super.adviseAfterArrayLength(arg1, getThreadShortForm(arg2), arg3, arg4, arg5);
     }
 
     @Override

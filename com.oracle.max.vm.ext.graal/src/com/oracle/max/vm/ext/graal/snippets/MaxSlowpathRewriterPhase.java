@@ -29,7 +29,6 @@ import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.phases.*;
 import com.oracle.max.vm.ext.graal.*;
-import com.oracle.max.vm.ext.graal.stubs.NativeStubSnippets.NOT_FOREIGN;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -52,7 +51,7 @@ public class MaxSlowpathRewriterPhase extends Phase {
             MethodCallTargetNode callTarget = (MethodCallTargetNode) invoke.callTarget();
             ClassMethodActor cma = (ClassMethodActor) MaxJavaMethod.getRiMethod(callTarget.targetMethod());
             MaxForeignCallDescriptor call = MaxForeignCallsMap.get(cma);
-            if (call != null && cma.getAnnotation(NOT_FOREIGN.class) == null) {
+            if (call != null) {
                 ValueNode[] args = new ValueNode[callTarget.arguments().size()];
                 ForeignCallNode foreignCallNode = new ForeignCallNode(runtime, call, callTarget.arguments().toArray(args));
                 SNIPPET_SLOWPATH runTimeEntry = call.getMethodActor().getAnnotation(SNIPPET_SLOWPATH.class);

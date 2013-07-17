@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.graal.snippets;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
+import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
@@ -33,13 +34,13 @@ import com.oracle.graal.replacements.*;
 
 public class BoxingSnippetsWrapper extends SnippetLowerings {
 
-    public BoxingSnippetsWrapper(CodeCacheProvider runtime, Replacements replacements, TargetDescription target, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public BoxingSnippetsWrapper(MetaAccessProvider runtime, Replacements replacements, TargetDescription target, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, target);
         getSnippetGraphs(BoxingSnippets.class);
     }
 
     @Override
-    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public void registerLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(BoxNode.class, new BoxingLowering(new BoxingSnippets.Templates(runtime, replacements, targetDescription)));
         lowerings.put(UnboxNode.class, new UnboxingLowering(new BoxingSnippets.Templates(runtime, replacements, targetDescription)));
 

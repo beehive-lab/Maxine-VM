@@ -24,8 +24,10 @@ package com.oracle.max.vm.ext.graal;
 
 import java.lang.reflect.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 
+@HOSTED_ONLY
 public class MapUtil {
 
     static abstract class ClassHandler {

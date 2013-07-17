@@ -50,13 +50,13 @@ import com.sun.max.vm.runtime.Snippets;
 public class NewSnippets extends SnippetLowerings {
 
     @HOSTED_ONLY
-    public NewSnippets(CodeCacheProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
+    public NewSnippets(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, targetDescription);
     }
 
     @Override
     @HOSTED_ONLY
-    public void registerLowerings(CodeCacheProvider runtime, Replacements replacements,
+    public void registerLowerings(MetaAccessProvider runtime, Replacements replacements,
                     TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(NewInstanceNode.class, new NewInstanceLowering(this));
         lowerings.put(UnresolvedNewInstanceNode.class, new UnresolvedNewInstanceLowering(this));
@@ -226,7 +226,7 @@ public class NewSnippets extends SnippetLowerings {
 
     }
 
-    private static void dimensions(Arguments args, NodeList<ValueNode> dimensions) {
+    public static void dimensions(Arguments args, NodeList<ValueNode> dimensions) {
         int rank = dimensions.size();
         ValueNode[] dims = new ValueNode[rank];
         for (int i = 0; i < rank; i++) {

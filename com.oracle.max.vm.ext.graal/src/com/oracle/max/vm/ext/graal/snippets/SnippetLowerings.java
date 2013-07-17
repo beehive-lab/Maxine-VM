@@ -70,9 +70,16 @@ public abstract class SnippetLowerings extends AbstractTemplates implements Snip
     protected void getSnippetGraphs(Class<?> snippetClass) {
         for (Method method : snippetClass.getDeclaredMethods()) {
             if (method.isAnnotationPresent(Snippet.class)) {
-                replacements.getSnippet(runtime.lookupJavaMethod(method));
+                snippetGraph(method, replacements.getSnippet(runtime.lookupJavaMethod(method)));
             }
         }
+    }
+
+    /**
+     * Informs a subclass of the graph for snippet method {@code m}.
+     */
+    protected void snippetGraph(Method m, StructuredGraph graph) {
+
     }
 
     public Map<Node, Node> instantiate(FixedNode node, Arguments args) {
@@ -80,7 +87,7 @@ public abstract class SnippetLowerings extends AbstractTemplates implements Snip
     }
 
     public abstract void registerLowerings(
-                    CodeCacheProvider runtime, Replacements replacements,
+                    MetaAccessProvider runtime, Replacements replacements,
                     TargetDescription targetDescription,
                     Map<Class< ? extends Node>, LoweringProvider> lowerings);
 

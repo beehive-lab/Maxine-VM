@@ -22,20 +22,26 @@
  */
 package com.oracle.max.vm.ext.graal.phases;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.replacements.*;
-import com.oracle.graal.replacements.Snippet.*;
+import com.oracle.max.vm.ext.graal.*;
+import com.sun.max.vm.actor.member.*;
 
 /**
  * Maxine boot image compilation needs {@link @Fold} support, which is normally
  * restricted to snippets in Graal. We can't just use the snippets {@link NodeIntrinsification}
  * phase because there can be unresolved {@link HOSTED_ONLY} methods in the graph.
+ *
+ * Also Maxine tags some methods as foldable (e.g. hidden SWITCH_TABLE methods) as foldable,
+ * but they are not annotated, so we need a Maxine-specific check.
+ *
+ * N.B. Not all foldable methods fold successfully, which is ok, they just get compiled.
  */
 public class MaxFoldPhase extends NodeIntrinsificationPhase {
 
@@ -45,14 +51,16 @@ public class MaxFoldPhase extends NodeIntrinsificationPhase {
 
     @Override
     protected void run(StructuredGraph graph) {
-        // Identical to NodeIntrinsificationPhase.run, save for the check on unresolved methods
+        // Identical to NodeIntrinsificationPhase.run, save for the check on unresolved methods and
+        // Maxine-specific fold check.
         ArrayList<Node> cleanUpReturnList = new ArrayList<>();
         for (MethodCallTargetNode node : graph.getNodes(MethodCallTargetNode.class)) {
-            if (node.isResolved() && node.targetMethod().getAnnotation(Fold.class) != null) {
+            if (node.isResolved() && isFoldable(node.targetMethod())) {
                 try {
-                tryIntrinsify(node, cleanUpReturnList);
-                } catch (Exception ex) {
-                   System.console();
+                    tryIntrinsify(node, cleanUpReturnList);
+                    Debug.log("folding %s", node.targetMethod());
+                } catch (Throwable ex) {
+                    System.console();
                 }
             }
         }
@@ -60,6 +68,12 @@ public class MaxFoldPhase extends NodeIntrinsificationPhase {
         for (Node node : cleanUpReturnList) {
             cleanUpReturnCheckCast(node);
         }
+    }
+
+    @Override
+    protected boolean isFoldable(ResolvedJavaMethod method) {
+        MethodActor cma = (MethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(method);
+        return MethodActor.isDeclaredFoldable(cma.flags());
     }
 
 }
