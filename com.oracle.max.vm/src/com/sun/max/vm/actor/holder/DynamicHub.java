@@ -24,7 +24,7 @@ package com.sun.max.vm.actor.holder;
 
 import static com.sun.max.vm.MaxineVM.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -63,7 +63,7 @@ public final class DynamicHub extends Hub {
      * The interface index is used to index the {@link ClassActor#iToV()} table.
      * @return the first valid interface index
      */
-    @Fold
+    @FOLD
     public static int firstValidInterfaceIndex() {
         return 1;
     }

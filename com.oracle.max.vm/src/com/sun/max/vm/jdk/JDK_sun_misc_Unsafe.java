@@ -795,7 +795,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public boolean compareAndSwapObject(Object object, long offset, Object expected, Object value) {
-        return Reference.fromJava(object).compareAndSwapReference(Offset.fromLong(offset), Reference.fromJava(expected), Reference.fromJava(value)) == expected;
+        return Reference.fromJava(object).compareAndSwapReference(Offset.fromLong(offset), Reference.fromJava(expected), Reference.fromJava(value)).equals(expected);
     }
 
     /**
@@ -821,7 +821,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public boolean compareAndSwapLong(Object object, long offset, long expected, long value) {
-        return Reference.fromJava(object).compareAndSwapWord(Offset.fromLong(offset), Address.fromLong(expected), Address.fromLong(value)) == Address.fromLong(expected);
+        return Reference.fromJava(object).compareAndSwapWord(Offset.fromLong(offset), Address.fromLong(expected), Address.fromLong(value)).equals(Address.fromLong(expected));
     }
 
     /**

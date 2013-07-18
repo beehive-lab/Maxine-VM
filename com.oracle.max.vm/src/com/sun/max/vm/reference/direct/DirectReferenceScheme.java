@@ -27,7 +27,6 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -51,7 +50,7 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
     @INTRINSIC(UNSAFE_CAST)
     private static native Reference toReference(Pointer origin);
 
-    @Fold
+    @FOLD
     private static HeapScheme heapScheme() {
         return vmConfig().heapScheme();
     }

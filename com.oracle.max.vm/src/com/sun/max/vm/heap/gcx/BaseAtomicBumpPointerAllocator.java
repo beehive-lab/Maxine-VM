@@ -24,7 +24,6 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -60,12 +59,12 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      */
     protected Size sizeLimit;
 
-    @Fold
+    @FOLD
     public static int topOffset() {
         return ClassActor.fromJava(BaseAtomicBumpPointerAllocator.class).findLocalInstanceFieldActor("top").offset();
     }
 
-    @Fold
+    @FOLD
     public static Size headroom() {
         return ClassActor.fromJava(Object.class).dynamicHub().tupleSize;
     }
@@ -235,7 +234,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 // Already at end
                 return cell.asPointer();
             }
-        } while(thisAddress.compareAndSwapWord(topOffset(), cell, hardLimit) != cell);
+        } while(!thisAddress.compareAndSwapWord(topOffset(), cell, hardLimit).equals(cell));
         return cell.asPointer();
     }
 
@@ -257,7 +256,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
             if (!cell.equals(oldTop)) {
                 return false;
             }
-        } while(thisAddress.compareAndSwapWord(topOffset(), oldTop, retiredTop) != oldTop);
+        } while(!thisAddress.compareAndSwapWord(topOffset(), oldTop, retiredTop).equals(oldTop));
         return true;
     }
 
@@ -388,7 +387,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 cell = top.asPointer();
                 newTop = cell.plus(size);
             }
-        } while (thisAddress.compareAndSwapWord(topOffset(), cell, newTop) != cell);
+        } while (!thisAddress.compareAndSwapWord(topOffset(), cell, newTop).equals(cell));
         return cell;
     }
 

@@ -45,6 +45,7 @@ import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.Snippets;
@@ -152,7 +153,7 @@ public class FieldSnippets extends SnippetLowerings {
                 }
             }
             boolean isStatic = node.isStatic();
-            Arguments args = new Arguments(snippets[KindMap.toGraalKind(fieldActor.kind).ordinal()]);
+            Arguments args = new Arguments(snippets[KindMap.toGraalKind(WordUtil.ciKind(fieldActor.kind, true)).ordinal()]);
             args.add("object", isStatic ? fieldActor.holder().staticTuple() : node.object());
             args.add("offset", fieldActor.offset());
             args.addConst("isVolatile", fieldActor.isVolatile());

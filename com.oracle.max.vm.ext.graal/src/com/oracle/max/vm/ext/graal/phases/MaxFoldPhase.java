@@ -55,7 +55,8 @@ public class MaxFoldPhase extends NodeIntrinsificationPhase {
         // Maxine-specific fold check.
         ArrayList<Node> cleanUpReturnList = new ArrayList<>();
         for (MethodCallTargetNode node : graph.getNodes(MethodCallTargetNode.class)) {
-            if (node.isResolved() && isFoldable(node.targetMethod())) {
+            if (node.isResolved()) {
+                // Always true for snippets
                 try {
                     tryIntrinsify(node, cleanUpReturnList);
                     Debug.log("folding %s", node.targetMethod());
@@ -73,7 +74,7 @@ public class MaxFoldPhase extends NodeIntrinsificationPhase {
     @Override
     protected boolean isFoldable(ResolvedJavaMethod method) {
         MethodActor cma = (MethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(method);
-        return MethodActor.isDeclaredFoldable(cma.flags());
+        return MethodActor.isDeclaredFoldable(cma.flags()) || super.isFoldable(method);
     }
 
 }

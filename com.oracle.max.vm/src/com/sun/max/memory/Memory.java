@@ -27,7 +27,6 @@ import static com.sun.max.vm.MaxineVM.*;
 import java.nio.*;
 import java.util.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -267,7 +266,7 @@ public final class Memory {
         setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), zappedMarker());
     }
 
-    @Fold
+    @FOLD
     public static Address zappedMarker() {
         return Address.fromLong(ZAPPED_MARKER);
     }

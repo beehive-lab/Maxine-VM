@@ -75,6 +75,29 @@ public class MaxWordType {
         }
     }
 
+    /**
+     * Sloppy programming an result in an "==" on {@code Word} types, which creates an {@link ObjectEqualsNode}.
+     * If we rewrite the arguments, the node will then not verify. We could convert the node in {@link KindRewritePhase}, but
+     * we'd prefer to force the code to be cleaned up.
+     */
+    public static class CheckWordObjectEqualsPhase extends Phase {
+        public CheckWordObjectEqualsPhase(MetaAccessProvider metaAccess, Kind wordKind) {
+            super(metaAccess, wordKind);
+        }
+
+        @Override
+        protected void run(StructuredGraph graph) {
+            for (Node n : GraphOrder.forwardGraph(graph)) {
+                if (n instanceof ObjectEqualsNode) {
+                    ObjectEqualsNode on = (ObjectEqualsNode) n;
+                    if (isWord(on.x()) || isWord(on.y())) {
+                        assert false : "== used on Word types, replace with Word.equals";
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * Removes the actual type of {@link Word} subclass instances and converts them to {@link #wordkind}.

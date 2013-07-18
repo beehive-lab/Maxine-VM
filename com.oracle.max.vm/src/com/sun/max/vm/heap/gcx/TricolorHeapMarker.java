@@ -21,7 +21,6 @@
  * questions.
  */
 package com.sun.max.vm.heap.gcx;
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -547,7 +546,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         overflowScanWithRescanMapState = new OverflowScanWithRescanMapState(this);
     }
 
-    @Fold
+    @FOLD
     private static Size markBitmapHeaderSize() {
         return Layout.longArrayLayout().getArraySize(Kind.LONG, 0);
     }

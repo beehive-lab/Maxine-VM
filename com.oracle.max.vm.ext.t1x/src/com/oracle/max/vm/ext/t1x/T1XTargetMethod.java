@@ -34,7 +34,6 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.SafepointsBuilder;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -401,7 +400,7 @@ public class T1XTargetMethod extends TargetMethod {
      * Gets the size (in bytes) of a bit map covering all the registers that may store references.
      * The bit position of a register in the bit map is the register's {@linkplain CiRegister#encoding encoding}.
      */
-    @Fold
+    @FOLD
     static int regRefMapSize() {
         return ByteArrayBitMap.computeBitMapSize(target().arch.registerReferenceMapBitCount);
     }

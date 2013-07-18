@@ -108,7 +108,7 @@ public class MaxReplacementsImpl extends ReplacementsImpl {
             Debug.dump(graph, "%s: %s", method.getName(), GraphBuilderPhase.class.getSimpleName());
 
             new MaxWordType.MakeWordFinalRewriterPhase(runtime, target.wordKind).apply(graph);
-            new NodeIntrinsificationPhase(runtime).apply(graph); // Fold
+            new MaxFoldPhase(runtime).apply(graph);
             // need constant propagation for folded methods
             new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(graph);
             new MaxIntrinsicsPhase().apply(graph);
@@ -135,7 +135,7 @@ public class MaxReplacementsImpl extends ReplacementsImpl {
 
         @Override
         protected void finalizeGraph(StructuredGraph graph) {
-            new NodeIntrinsificationPhase(runtime).apply(graph);
+            new MaxFoldPhase(runtime).apply(graph);
 
             // These only get done once right at the end
             new MaxWordType.MaxUnsafeAccessRewriterPhase(runtime, target.wordKind).apply(graph);
@@ -156,7 +156,7 @@ public class MaxReplacementsImpl extends ReplacementsImpl {
 
         @Override
         public void afterInlining(StructuredGraph graph) {
-            new NodeIntrinsificationPhase(runtime).apply(graph);
+            new MaxFoldPhase(runtime).apply(graph);
 
             new DeadCodeEliminationPhase().apply(graph);
             new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(graph);

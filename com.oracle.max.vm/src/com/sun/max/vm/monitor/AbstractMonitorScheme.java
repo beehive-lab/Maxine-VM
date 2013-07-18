@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.monitor;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
@@ -47,7 +46,7 @@ public abstract class AbstractMonitorScheme extends AbstractVMScheme implements 
         return oldValue;
     }
 
-    @Fold
+    @FOLD
     private boolean explicitNullChecks() {
         return explicitNullChecks;
     }

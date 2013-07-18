@@ -24,7 +24,6 @@ package com.sun.max.vm.jni;
 
 import java.lang.ref.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -417,7 +416,7 @@ public final class JniHandles {
      * This method is compile-time evaluated so that the first parameter to
      * {@link Intrinsics#alloca(int, boolean)} is a compile-time constant.
      */
-    @Fold
+    @FOLD
     public static int handlesCount(SignatureDescriptor sig) {
         int res = 0;
         for (int i = 0; i < sig.numberOfParameters(); i++) {

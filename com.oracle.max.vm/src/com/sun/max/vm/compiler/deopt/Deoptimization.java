@@ -571,9 +571,9 @@ public class Deoptimization extends VmOperation {
             if (current.isTopFrame()) {
                 // Ensure that the top frame of the walk is the method being deoptimized
                 assert tm == current.targetMethod();
-                assert ip.asPointer() == current.ipAsPointer();
-                assert sp == current.sp();
-                assert fp == current.fp();
+                assert ip.asPointer().equals(current.ipAsPointer());
+                assert sp.equals(current.sp());
+                assert fp.equals(current.fp());
                 return true;
             }
 

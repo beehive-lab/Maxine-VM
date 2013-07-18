@@ -217,7 +217,7 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
         this.youngGenMaxHeapPercentage = youngGenMaxHeapPercentage;
         this.log2Alignment = log2Alignment;
         this.unitSize = Size.fromInt(1).shiftedLeft(log2Alignment);
-        this.disableHeapShrink = (initSize == maxSize) || DisableHeapShrink;
+        this.disableHeapShrink = (initSize.equals(maxSize)) || DisableHeapShrink;
         Size initHS = computeEffectiveHeapSize(initSize);
         initHeapSize = initHS.lessThan(minEffectiveHeapSize()) ? minEffectiveHeapSize() : initHS;
         maxHeapSize = computeEffectiveHeapSize(maxSize);

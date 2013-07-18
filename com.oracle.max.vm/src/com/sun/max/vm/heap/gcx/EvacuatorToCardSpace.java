@@ -24,7 +24,6 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -44,7 +43,7 @@ import com.sun.max.vm.runtime.*;
  * (see all fixme comments below). This would make allocation in survivor space independent of details of the card table RSet.
  */
 public class EvacuatorToCardSpace extends Evacuator {
-    @Fold
+    @FOLD
     private static Size evacuationBufferHeadroom() {
         return minObjectSize();
     }

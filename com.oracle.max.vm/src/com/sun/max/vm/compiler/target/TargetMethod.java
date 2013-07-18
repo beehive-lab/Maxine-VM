@@ -1325,7 +1325,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * Determines if this method was marked to survive {@linkplain CodeEviction code eviction}.
      */
     public final boolean isMarked() {
-        return oldStart == Address.allOnes().asAddress();
+        return oldStart.equals(Address.allOnes().asAddress());
     }
 
     /**

@@ -30,7 +30,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -578,7 +577,7 @@ public class Snippets {
 
     private static ClassMethodActor blockOnThreadLockMethod;
 
-    @Fold
+    @FOLD
     public static ClassMethodActor blockOnThreadLockMethod() {
         if (MaxineVM.isHosted()) {
             synchronized (Snippets.class) {

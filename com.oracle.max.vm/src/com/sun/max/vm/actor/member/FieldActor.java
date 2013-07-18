@@ -32,7 +32,6 @@ import java.lang.reflect.*;
 
 import sun.reflect.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.*;
@@ -732,7 +731,7 @@ public class FieldActor extends MemberActor implements RiResolvedField {
         return FieldID.toFieldActor(FieldID.fromWord(Word.read(stream)));
     }
 
-    @Fold
+    @FOLD
     public static FieldActor findInstance(ClassActor classActor, String name) {
         return classActor.findLocalInstanceFieldActor(name);
     }

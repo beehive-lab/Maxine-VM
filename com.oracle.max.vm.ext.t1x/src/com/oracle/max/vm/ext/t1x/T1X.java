@@ -35,7 +35,6 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.oracle.max.criutils.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.bytecode.*;
@@ -629,7 +628,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     /**
      * Determines if the target ISA is AMD64.
      */
-    @Fold
+    @FOLD
     public static boolean isAMD64() {
         return platform().isa == ISA.AMD64;
     }
