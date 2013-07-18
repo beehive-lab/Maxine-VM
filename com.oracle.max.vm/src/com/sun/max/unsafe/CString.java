@@ -555,7 +555,7 @@ public final class CString {
             parseError = true;
             return -1;
         } else {
-            return ptr == pointer ? result : -result;
+            return ptr.equals(pointer) ? result : -result;
         }
 
     }

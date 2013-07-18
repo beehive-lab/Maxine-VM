@@ -30,7 +30,6 @@ import static com.sun.max.vm.thread.VmThread.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.cri.ci.CiKind.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
@@ -677,7 +676,7 @@ public class VmThreadLocal implements FormatWithToString {
         etla.setWord(index, value);
     }
 
-    @Fold
+    @FOLD
     private static int tlaOffset(int n) {
         return tlaSize().toInt() * n;
     }

@@ -31,7 +31,6 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
 import com.sun.max.lang.*;
@@ -278,7 +277,7 @@ public final class MaxineVM {
     }
 
     @LOCAL_SUBSTITUTION
-    @Fold
+    @FOLD
     public static boolean isHosted_() {
         return false;
     }
@@ -287,7 +286,7 @@ public final class MaxineVM {
      * Determines if this is a {@link BuildLevel#DEBUG debug} build of the VM.
      * @return {@code true} if this is a debug build
      */
-    @Fold
+    @FOLD
     public static boolean isDebug() {
         return vm().config.debugging();
     }

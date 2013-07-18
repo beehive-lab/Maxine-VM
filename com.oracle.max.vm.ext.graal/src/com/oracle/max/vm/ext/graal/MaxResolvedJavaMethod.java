@@ -58,10 +58,13 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
     @Override
     public byte[] getCode() {
         MethodActor ma = (MethodActor) riResolvedMethod();
-        if (ma.isNative() && ((ClassMethodActor) ma).compilee() == ma) {
-            // Maxine (currently) returns the bytecodes for the generated implementation of the method.
-            // This may be correct but it causes verification errors when called in a Dump
-            // TODO when graph based stubs work, and C1X is excised then code() will return null
+        /*
+         * Native methods may have been SUBSTITUTEd in which case we want to return the substituted
+         * bytecodes and "code" handles that. However, in the mixed C1X/Graal world, a native method
+         * also may be implemented by a bytecode stub which does not verify, so can't use ma.compilee() != ma
+         * to detect substitution.
+         */
+        if (ma.isNative() && METHOD_SUBSTITUTIONS.Static.findSubstituteFor((ClassMethodActor) ma) == null) {
             return null;
         }
         return ma.code();

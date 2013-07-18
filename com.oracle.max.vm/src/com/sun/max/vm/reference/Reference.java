@@ -24,7 +24,6 @@ package com.sun.max.vm.reference;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.layout.*;
@@ -39,7 +38,7 @@ public class Reference implements Accessor {
     protected Reference() {
     }
 
-    @Fold
+    @FOLD
     private static ReferenceScheme referenceScheme() {
         return vmConfig().referenceScheme();
     }

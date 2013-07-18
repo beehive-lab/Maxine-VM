@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,44 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jtt.max;
+package com.sun.max.annotate;
+import java.lang.annotation.*;
 
-import com.sun.max.annotate.*;
-
-/*
- * @Harness: java
- * @Runs: 0=true
+/**
+ * Every thus annotated method must have no arguments (apart from a receiver for a non-static method).
+ * It must also be purely functional (without side-effects)
+ * and idempotent (not influenced by any changing state).
+ *
+ * If the method is static, it is to be meta-evaluated unconditionally by the compiler.
+ * If the method is non-static, it will be meta-evaluated whenever its receiver is known at compile time.
  */
-public class Fold02 {
-
-    public static boolean test(int arg) {
-        return fint(10, 10) && ffloat(0.1f, 0.1f) && fobj(null, null);
-    }
-
-    @FOLD
-    static boolean fint(int x, int y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
-        }
-        return x == y;
-    }
-
-    @FOLD
-    static boolean ffloat(float x, float y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
-        }
-        return x == y;
-    }
-
-    @FOLD
-    static boolean fobj(Object x, Object y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
-        }
-        return x == y;
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface FOLD {
 }

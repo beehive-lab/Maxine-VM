@@ -33,7 +33,6 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -162,37 +161,37 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     public final List<XirTemplate> stubs = new ArrayList<XirTemplate>();
 
-    @Fold
+    @FOLD
     int hubOffset() {
         return generalLayout().getOffsetFromOrigin(Layout.HeaderField.HUB).toInt();
     }
 
-    @Fold
+    @FOLD
     int hubFirstWordIndex() {
         return Hub.getFirstWordIndex();
     }
 
-    @Fold
+    @FOLD
     int offsetOfFirstArrayElement() {
         return byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
     }
 
-    @Fold
+    @FOLD
     int offsetOfMTableStartIndex() {
         return FieldActor.findInstance(ClassActor.fromJava(Hub.class), "mTableStartIndex").offset();
     }
 
-    @Fold
+    @FOLD
     int offsetOfMTableLength() {
         return FieldActor.findInstance(ClassActor.fromJava(Hub.class), "mTableLength").offset();
     }
 
-    @Fold
+    @FOLD
     int offsetOfTupleSize() {
         return FieldActor.findInstance(ClassActor.fromJava(Hub.class), "tupleSize").offset();
     }
 
-    @Fold
+    @FOLD
     int minObjectAlignmentMask() {
         return vmConfig().heapScheme().objectAlignment() - 1;
     }

@@ -24,7 +24,6 @@ package com.sun.max.vm.heap.gcx.rset.ctbl;
 
 import java.util.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -45,7 +44,7 @@ public class Log2RegionToByteMapTable {
      * Offset to the {@link #table} variable.
      * This is primarily used to bypass write-barrier when setting the variable.
      */
-    @Fold
+    @FOLD
     public static int tableOffset() {
         return ClassActor.fromJava(Log2RegionToByteMapTable.class).findLocalInstanceFieldActor("table").offset();
     }

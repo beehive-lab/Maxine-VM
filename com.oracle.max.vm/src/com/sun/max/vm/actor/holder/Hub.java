@@ -25,7 +25,6 @@ package com.sun.max.vm.actor.holder;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -155,7 +154,7 @@ public abstract class Hub extends Hybrid {
         return Layout.hybridLayout().firstAvailableWordArrayIndex(tupleSize);
     }
 
-    @Fold
+    @FOLD
     public static int getFirstWordIndex() {
         return firstWordIndex;
     }

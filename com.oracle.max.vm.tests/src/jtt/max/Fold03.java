@@ -22,7 +22,8 @@
  */
 package jtt.max;
 
-import com.oracle.graal.replacements.Snippet.Fold;
+import com.sun.max.annotate.*;
+
 
 /*
  * @Harness: java
@@ -34,7 +35,7 @@ public class Fold03 {
         return flong(10, 10) && fdouble(0.0d, 0.0d);
     }
 
-    @Fold
+    @FOLD
     static boolean flong(long x, long y) {
         int j = 2;
         for (int i = 0; i < 100; i++) {
@@ -43,7 +44,7 @@ public class Fold03 {
         return x == y;
     }
 
-    @Fold
+    @FOLD
     static boolean fdouble(double x, double y) {
         int j = 2;
         for (int i = 0; i < 100; i++) {

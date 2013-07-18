@@ -118,7 +118,7 @@ public final class ImmortalHeap {
             if (end.greaterThan(immortalHeap.end())) {
                 FatalError.unexpected("Out of memory error in immortal memory region");
             }
-        } while (immortalHeap.mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
+        } while (!immortalHeap.mark.compareAndSwap(oldAllocationMark, end).equals(oldAllocationMark));
 
         // Zero the allocated chunk
         Memory.clearWords(cell, sizeWordAligned.dividedBy(Word.size()).toInt());

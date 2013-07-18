@@ -27,7 +27,6 @@ import static com.sun.max.vm.MaxineVM.*;
 import java.io.*;
 import java.util.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
 import com.sun.max.platform.*;
@@ -246,7 +245,7 @@ public final class VMConfiguration {
      * Convenience method for accessing the configuration associated with the
      * current {@linkplain MaxineVM#vm() VM} context.
      */
-    @Fold
+    @FOLD
     public static VMConfiguration vmConfig() {
         return vm().config;
     }
@@ -271,7 +270,7 @@ public final class VMConfiguration {
     /**
      * Use {@link MaxineVM#isDebug()} instead of calling this directly.
      */
-    @Fold
+    @FOLD
     public boolean debugging() {
         return buildLevel == BuildLevel.DEBUG;
     }

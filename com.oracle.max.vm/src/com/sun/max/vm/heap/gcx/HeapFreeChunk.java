@@ -24,7 +24,6 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -48,12 +47,12 @@ import com.sun.max.vm.type.*;
  * TODO (ld) need to revisit the visibility of this class.
  */
 public class HeapFreeChunk {
-    @Fold
+    @FOLD
     public static final DynamicHub heapFreeChunkHub() {
         return ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
     }
 
-    @Fold
+    @FOLD
     public static Size heapFreeChunkHeaderSize() {
         return HeapFreeChunk.heapFreeChunkHub().tupleSize;
     }
@@ -61,7 +60,7 @@ public class HeapFreeChunk {
     /**
      * Index of the word storing "next" field of the heap free chunk.
      */
-    @Fold
+    @FOLD
     protected static int nextIndex() {
         return ClassRegistry.findField(HeapFreeChunk.class, "next").offset() >> Word.widthValue().log2numberOfBytes;
     }
@@ -69,7 +68,7 @@ public class HeapFreeChunk {
     /**
      * Index of the word storing "size" field of the heap free chunk.
      */
-    @Fold
+    @FOLD
     protected static int sizeIndex() {
         return ClassRegistry.findField(HeapFreeChunk.class, "size").offset() >> Word.widthValue().log2numberOfBytes;
     }
@@ -84,7 +83,7 @@ public class HeapFreeChunk {
         return a.equals(deadSpaceMark());
     }
 
-    @Fold
+    @FOLD
     public static Address deadSpaceMark() {
         return Memory.zappedMarker();
     }

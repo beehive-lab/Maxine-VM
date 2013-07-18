@@ -24,7 +24,6 @@ package com.sun.max.vm.monitor;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
@@ -51,7 +50,7 @@ public final class Monitor {
         VMOptions.addFieldOption("-XX:", "TraceMonitors", "Trace (slow-path) monitor operations.");
     }
 
-    @Fold
+    @FOLD
     private static MonitorScheme monitorScheme() {
         return vmConfig().monitorScheme();
     }

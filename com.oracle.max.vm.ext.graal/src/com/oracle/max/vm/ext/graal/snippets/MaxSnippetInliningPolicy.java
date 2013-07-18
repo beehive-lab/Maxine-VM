@@ -26,6 +26,7 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.replacements.Snippet.DefaultSnippetInliningPolicy;
 import com.oracle.max.vm.ext.graal.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.actor.member.*;
 
 /**
  * Slow path calls in methods (transitively) referenced from snippets should be annotated with {@link NEVER_INLINE} or {@link SNIPPET_SLOWPATH}.
@@ -41,6 +42,10 @@ public class MaxSnippetInliningPolicy extends DefaultSnippetInliningPolicy {
     @Override
     public boolean shouldInline(ResolvedJavaMethod method, ResolvedJavaMethod caller) {
         if (!method.canBeInlined() || method.getAnnotation(SNIPPET_SLOWPATH.class) != null) {
+            return false;
+        }
+        MethodActor ma = (MethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(method);
+        if (MethodActor.isDeclaredFoldable(ma.flags())) {
             return false;
         }
         return super.shouldInline(method, caller);

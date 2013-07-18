@@ -31,7 +31,6 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
@@ -157,7 +156,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
      * Gets the size (in bytes) of a bit map covering all the registers that may store references.
      * The bit position of a register in the bit map is the register's {@linkplain CiRegister#encoding encoding}.
      */
-    @Fold
+    @FOLD
     public static int regRefMapSize() {
         return ByteArrayBitMap.computeBitMapSize(target().arch.registerReferenceMapBitCount);
     }
@@ -633,7 +632,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
 
             int catchPos = posFor(catchAddress);
             if (invalidated() != null) {
-                assert current.sp().readWord(DEOPT_RETURN_ADDRESS_OFFSET) == current.ipAsPointer() : "real caller IP should have been saved in rescue slot";
+                assert current.sp().readWord(DEOPT_RETURN_ADDRESS_OFFSET).equals(current.ipAsPointer()) : "real caller IP should have been saved in rescue slot";
                 Pointer returnAddress = callee.targetMethod().returnAddressPointer(callee).readWord(0).asPointer();
                 assert Stub.isDeoptStubEntry(returnAddress, Code.codePointerToTargetMethod(returnAddress)) :
                     "the return address of a method that was on the stack when marked for deoptimization should have been patched with a deopt stub";

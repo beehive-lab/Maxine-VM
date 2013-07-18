@@ -27,7 +27,6 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import java.security.*;
 import java.util.*;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -159,7 +158,7 @@ public final class JDK_java_lang_ClassLoader {
         Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));
     }
 
-    @Fold
+    @FOLD
     private static boolean findBootstrapClassHasCheckedException() {
         TypeDescriptor[] checkedExceptions = ClassRegistry.ClassLoader_findBootstrapClass.checkedExceptions();
         if (checkedExceptions.length != 0) {

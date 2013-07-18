@@ -117,11 +117,14 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     @Override
     public RegisterConfig lookupRegisterConfig() {
-        // TODO this method used to take a ResolvedJavaMethod as an argument
         // Maxine has different register configs for VM_ENTRY_POINT methods and "standard" methods,
-        // which will need to be addressed when Graal is used for the boot image.
-        //return MaxRegisterConfig.get(vm().registerConfigs.getRegisterConfig((ClassMethodActor) MaxJavaMethod.getRiMethod(method)));
-        return MaxRegisterConfig.get(vm().registerConfigs.standard);
+        // which must be addressed when Graal is used to compile the boot image.
+        ClassMethodActor cma = MaxGraal.methodBeingCompiled();
+        if (cma == null) {
+            return MaxRegisterConfig.get(vm().registerConfigs.standard);
+        } else {
+            return MaxRegisterConfig.get(vm().registerConfigs.getRegisterConfig(cma));
+        }
     }
 
     @Override

@@ -22,9 +22,9 @@
  */
 package com.sun.max.vm.compiler;
 
-import com.oracle.graal.replacements.Snippet.Fold;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.type.*;
 
@@ -85,7 +85,7 @@ public class WordUtil {
     /**
      * The CiKind to use for Word in back-end operation that relate to processor instructions, which is architecture specific.
      */
-    @Fold
+    @FOLD
     public static CiKind archKind() {
         if (Word.width() == 64) {
             return CiKind.Long;
@@ -96,7 +96,7 @@ public class WordUtil {
     /**
      * The CiKind to use for Word in front-end operation where a Word is part of the Object type hierarchy.
      */
-    @Fold
+    @FOLD
     public static CiKind javaKind() {
         return CiKind.Object;
     }
