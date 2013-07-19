@@ -22,7 +22,6 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
@@ -47,12 +46,6 @@ public class NativeFunctionAdapterNode extends AbstractCallNode implements Lower
 
     public MethodActor getNativeMethod() {
         return nativeMethodActor;
-    }
-
-    @Override
-    public LocationIdentity[] getLocationIdentities() {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     @Override

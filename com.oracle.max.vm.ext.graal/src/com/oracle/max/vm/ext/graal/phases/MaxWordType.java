@@ -178,38 +178,35 @@ public class MaxWordType {
         @Override
         protected void run(StructuredGraph graph) {
             for (Node n : GraphOrder.forwardGraph(graph)) {
-                if (n instanceof ValueNode) {
-                    if (isFixedGuardNullCheck(n)) {
-                        removeNullCheck(graph, (FixedGuardNode) n);
-                    }
+                if (isGuardingPiNullCheck(n)) {
+                    removeNullCheck(graph, (GuardingPiNode) n);
                 }
             }
         }
 
-        private boolean isFixedGuardNullCheck(Node n) {
-            if (n instanceof FixedGuardNode) {
-                FixedGuardNode fn = (FixedGuardNode) n;
+        private boolean isGuardingPiNullCheck(Node n) {
+            if (n instanceof GuardingPiNode) {
+                GuardingPiNode fn = (GuardingPiNode) n;
                 return fn.condition() instanceof IsNullNode;
             }
             return false;
         }
 
-        private void removeNullCheck(StructuredGraph graph, FixedGuardNode fixedGuardNode) {
-            IsNullNode isNullNode = (IsNullNode) fixedGuardNode.condition();
+        private void removeNullCheck(StructuredGraph graph, GuardingPiNode guardingPiNode) {
+            IsNullNode isNullNode = (IsNullNode) guardingPiNode.condition();
             ValueNode object = isNullNode.object();
             boolean removed;
             boolean typedRemove = false;
-            boolean removeByInline = cameFromInlineMethod(graph, fixedGuardNode);
+            boolean removeByInline = cameFromInlineMethod(graph, guardingPiNode);
             if (!removeByInline) {
                 typedRemove = canRemove(object);
             }
             if (removeByInline || typedRemove) {
-                if (fixedGuardNode.usages().isNotEmpty()) {
-                    checkForPiNode(fixedGuardNode);
-                }
-                graph.removeFixed(fixedGuardNode);
-                // If the IsNullNode is only used by this FixedGuard node we can also delete that.
-                // N.B. The previous call will have removed the FixedGuard node from the IsNullNode usages
+                assert guardingPiNode.object() == isNullNode.object();
+                guardingPiNode.replaceAtUsages(isNullNode.object());
+                graph.removeFixed(guardingPiNode);
+                // If the IsNullNode is only used by this GuardingPiNode node we can also delete that.
+                // N.B. The previous call will have removed the GuardingPiNode node from the IsNullNode usages
                 if (isNullNode.usages().isEmpty()) {
                     GraphUtil.killWithUnusedFloatingInputs(isNullNode);
                 }
@@ -222,11 +219,11 @@ public class MaxWordType {
                             removed ? (removeByInline ? "INLINE" : "TYPE") : "");
         }
 
-        private boolean cameFromInlineMethod(StructuredGraph graph, FixedGuardNode fixedGuardNode) {
+        private boolean cameFromInlineMethod(StructuredGraph graph, GuardingPiNode guardingPiNode) {
             if (invokePredecessor == null) {
                 return false;
             }
-            if (fixedGuardNode.predecessor() == invokePredecessor) {
+            if (guardingPiNode.predecessor() == invokePredecessor) {
                 return true;
             }
             return false;
@@ -252,24 +249,6 @@ public class MaxWordType {
                 return false;
             }
 
-        }
-
-        public static void checkForPiNode(FixedGuardNode fixedGuardNode) {
-            // Likely a PiNode inserted during inlining
-            Node usage = getSingleUsage(fixedGuardNode);
-            if (usage.getClass() ==  PiNode.class) {
-                PiNode pi = (PiNode) usage;
-                fixedGuardNode.graph().replaceFloating(pi, pi.object());
-            } else {
-                assert false;
-            }
-
-        }
-
-        private static Node getSingleUsage(Node node) {
-            List<Node> usages = node.usages().snapshot();
-            assert usages.size() == 1;
-            return usages.get(0);
         }
 
         /**

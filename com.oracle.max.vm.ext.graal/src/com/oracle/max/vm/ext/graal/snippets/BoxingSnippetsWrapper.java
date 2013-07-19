@@ -55,7 +55,7 @@ public class BoxingSnippetsWrapper extends SnippetLowerings {
 
         @Override
         public void lower(BoxNode node, LoweringTool tool) {
-            snippets.lower(node);
+            snippets.lower(node, tool);
 
         }
     }
@@ -69,7 +69,7 @@ public class BoxingSnippetsWrapper extends SnippetLowerings {
 
         @Override
         public void lower(UnboxNode node, LoweringTool tool) {
-            snippets.lower(node);
+            snippets.lower(node, tool);
 
         }
     }

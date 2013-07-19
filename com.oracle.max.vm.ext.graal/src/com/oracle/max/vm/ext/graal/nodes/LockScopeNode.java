@@ -32,7 +32,7 @@ import com.oracle.graal.nodes.type.*;
  * Maxine currently does not use stack based locks; however, Graal assumes stack based locking so
  * {@link BeginLockScopeNode} and {@link EndLockScopeNode} keep it happy.
  */
-public abstract class LockScopeNode extends AbstractStateSplit implements LIRGenLowerable, MemoryCheckpoint {
+public abstract class LockScopeNode extends AbstractStateSplit implements LIRGenLowerable, MemoryCheckpoint.Multi {
 
     protected LockScopeNode(Stamp stamp) {
         super(stamp);

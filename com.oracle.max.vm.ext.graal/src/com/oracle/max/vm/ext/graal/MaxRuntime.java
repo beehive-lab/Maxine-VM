@@ -239,7 +239,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     }
 
     @Override
-    public Constant readUnsafeConstant(Kind kind, Object base, long displacement) {
+    public Constant readUnsafeConstant(Kind kind, Object base, long displacement, boolean compressedPointer) {
         // TODO
         MaxGraal.unimplemented("MaxRuntime.readUnsafeConstant");
         return null;

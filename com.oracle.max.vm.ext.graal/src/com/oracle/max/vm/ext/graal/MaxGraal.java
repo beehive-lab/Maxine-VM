@@ -360,7 +360,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         CallingConvention cc = CodeUtil.getCallingConvention(runtime, CallingConvention.Type.JavaCallee, method, false);
         CompilationResult result = GraalCompiler.compileGraph(graph, cc, method, runtime, replacements, backend,
                         runtime.maxTargetDescription(),
-                        cache, phasePlan, optimisticOpts, new SpeculationLog(), compileSuites);
+                        cache, phasePlan, optimisticOpts, new SpeculationLog(), compileSuites, new CompilationResult());
         return GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
     }
 
