@@ -48,6 +48,7 @@ public class Package extends BootImagePackage {
               "com.oracle.graal.debug.*",
               "com.oracle.graal.graph.**",
               "com.oracle.graal.java.*",
+              "com.oracle.graal.java.decompiler.*",
               "com.oracle.graal.lir.*",
               "com.oracle.graal.lir.amd64.*",
               "com.oracle.graal.loop.*",
@@ -57,7 +58,8 @@ public class Package extends BootImagePackage {
               "com.oracle.graal.replacements.*",
               "com.oracle.graal.replacements.nodes.*",
               "com.oracle.graal.replacements.amd64.*",
-              "com.oracle.graal.virtual.*"
+              "com.oracle.graal.virtual.*",
+              "com.oracle.graal.virtual.phases.ea.*"
               );
 
     }

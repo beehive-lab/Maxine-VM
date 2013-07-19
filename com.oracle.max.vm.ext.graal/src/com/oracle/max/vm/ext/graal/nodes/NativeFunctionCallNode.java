@@ -114,11 +114,6 @@ public final class NativeFunctionCallNode extends NativeFunctionAdapterNode impl
     }
 
     @Override
-    public LocationIdentity[] getLocationIdentities() {
-        return new LocationIdentity[] {LocationIdentity.ANY_LOCATION};
-    }
-
-    @Override
     public boolean canDeoptimize() {
         return !nativeMethodActor.isCFunction();
     }

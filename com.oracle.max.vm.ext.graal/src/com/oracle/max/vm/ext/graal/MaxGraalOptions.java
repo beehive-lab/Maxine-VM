@@ -178,9 +178,9 @@ public class MaxGraalOptions {
         register(new VMIntOption("-G:CompileTheWorldStartAt=", 1, ""), com.oracle.graal.phases.GraalOptions.class, "CompileTheWorldStartAt");
         register(new VMIntOption("-G:CompileTheWorldStopAt=", 2147483647, ""), com.oracle.graal.phases.GraalOptions.class, "CompileTheWorldStopAt");
         register(new VMBooleanOption("-G:+", "ConditionalElimination", ""), com.oracle.graal.phases.GraalOptions.class, "ConditionalElimination");
+        register(new VMStringOption("-G:DecompileAfterPhase=", false, null, "Sets a phase after which the decompiler dumps the graph, -G:Dump= required"), com.oracle.graal.phases.GraalOptions.class, "DecompileAfterPhase");
         register(new VMBooleanOption("-G:-", "DeoptALot", ""), com.oracle.graal.phases.GraalOptions.class, "DeoptALot");
         register(new VMIntOption("-G:DeoptsToDisableOptimisticOptimization=", 40, ""), com.oracle.graal.phases.GraalOptions.class, "DeoptsToDisableOptimisticOptimization");
-        register(new VMBooleanOption("-G:-", "DynamicCompilePriority", ""), com.oracle.graal.phases.GraalOptions.class, "DynamicCompilePriority");
         register(new VMBooleanOption("-G:-", "EscapeAnalysisHistogram", ""), com.oracle.graal.phases.GraalOptions.class, "EscapeAnalysisHistogram");
         register(new VMIntOption("-G:EscapeAnalysisIterations=", 2, ""), com.oracle.graal.phases.GraalOptions.class, "EscapeAnalysisIterations");
         register(new VMStringOption("-G:EscapeAnalyzeOnly=", false, null, ""), com.oracle.graal.phases.GraalOptions.class, "EscapeAnalyzeOnly");
@@ -189,12 +189,14 @@ public class MaxGraalOptions {
         register(new VMBooleanOption("-G:+", "ExitVMOnException", ""), com.oracle.graal.phases.GraalOptions.class, "ExitVMOnException");
         register(new VMBooleanOption("-G:+", "FullUnroll", ""), com.oracle.graal.phases.GraalOptions.class, "FullUnroll");
         register(new VMIntOption("-G:FullUnrollMaxNodes=", 300, ""), com.oracle.graal.phases.GraalOptions.class, "FullUnrollMaxNodes");
+        register(new VMIntOption("-G:GCDebugStartCycle=", -1, ""), com.oracle.graal.phases.GraalOptions.class, "GCDebugStartCycle");
         register(new VMBooleanOption("-G:-", "GenAssertionCode", ""), com.oracle.graal.phases.GraalOptions.class, "GenAssertionCode");
         register(new VMBooleanOption("-G:+", "GenLoopSafepoints", ""), com.oracle.graal.phases.GraalOptions.class, "GenLoopSafepoints");
         register(new VMBooleanOption("-G:+", "GenSafepoints", ""), com.oracle.graal.phases.GraalOptions.class, "GenSafepoints");
         register(new VMIntOption("-G:GraphCacheSize=", 1000, ""), com.oracle.graal.phases.GraalOptions.class, "GraphCacheSize");
         register(new VMBooleanOption("-G:-", "HotSpotPrintCompilation", ""), com.oracle.graal.phases.GraalOptions.class, "HotSpotPrintCompilation");
         register(new VMBooleanOption("-G:-", "HotSpotPrintInlining", ""), com.oracle.graal.phases.GraalOptions.class, "HotSpotPrintInlining");
+        register(new VMBooleanOption("-G:-", "InlineEverything", ""), com.oracle.graal.phases.GraalOptions.class, "InlineEverything");
         register(new VMBooleanOption("-G:+", "InlineMegamorphicCalls", "Enable inlining of megamorphic calls"), com.oracle.graal.phases.GraalOptions.class, "InlineMegamorphicCalls");
         register(new VMBooleanOption("-G:+", "InlineMonomorphicCalls", "Enable inlining of monomorphic calls"), com.oracle.graal.phases.GraalOptions.class, "InlineMonomorphicCalls");
         register(new VMBooleanOption("-G:+", "InlinePolymorphicCalls", "Enable inlining of polymorphic calls"), com.oracle.graal.phases.GraalOptions.class, "InlinePolymorphicCalls");
@@ -221,7 +223,7 @@ public class MaxGraalOptions {
         register(new VMBooleanOption("-G:+", "LoopUnswitch", ""), com.oracle.graal.phases.GraalOptions.class, "LoopUnswitch");
         register(new VMIntOption("-G:LoopUnswitchMaxIncrease=", 50, ""), com.oracle.graal.phases.GraalOptions.class, "LoopUnswitchMaxIncrease");
         register(new VMIntOption("-G:LoopUnswitchUncertaintyBoost=", 5, ""), com.oracle.graal.phases.GraalOptions.class, "LoopUnswitchUncertaintyBoost");
-        register(new VMIntOption("-G:MaximumDesiredSize=", 5000, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumDesiredSize");
+        register(new VMIntOption("-G:MaximumDesiredSize=", 20000, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumDesiredSize");
         register(new VMIntOption("-G:MaximumEscapeAnalysisArrayLength=", 32, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumEscapeAnalysisArrayLength");
         register(new VMIntOption("-G:MaximumInliningSize=", 300, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumInliningSize");
         register(new VMIntOption("-G:MaximumRecursiveInlining=", 1, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumRecursiveInlining");
@@ -257,6 +259,7 @@ public class MaxGraalOptions {
         register(new VMBooleanOption("-G:-", "PrintCompilation", ""), com.oracle.graal.phases.GraalOptions.class, "PrintCompilation");
         register(new VMStringOption("-G:PrintFilter=", false, null, ""), com.oracle.graal.phases.GraalOptions.class, "PrintFilter");
         register(new VMBooleanOption("-G:-", "PrintGraphCache", ""), com.oracle.graal.phases.GraalOptions.class, "PrintGraphCache");
+        register(new VMBooleanOption("-G:-", "PrintGraphProbabilities", "outputs probabilities for fixed nodes during binary graph dumping"), com.oracle.graal.phases.GraalOptions.class, "PrintGraphProbabilities");
         register(new VMBooleanOption("-G:-", "PrintIRWithLIR", ""), com.oracle.graal.phases.GraalOptions.class, "PrintIRWithLIR");
         register(new VMStringOption("-G:PrintIdealGraphAddress=", false, "127.0.0.1", ""), com.oracle.graal.phases.GraalOptions.class, "PrintIdealGraphAddress");
         register(new VMBooleanOption("-G:-", "PrintIdealGraphFile", ""), com.oracle.graal.phases.GraalOptions.class, "PrintIdealGraphFile");
@@ -291,7 +294,9 @@ public class MaxGraalOptions {
         // Options from com.oracle.graal.phases.common.InliningPhase
         register(new VMBooleanOption("-G:-", "AlwaysInlineIntrinsics", "Unconditionally inline intrinsics"), com.oracle.graal.phases.common.InliningPhase.Options.class, "AlwaysInlineIntrinsics");
         // Options from com.oracle.graal.phases.tiers.Suites
-        register(new VMStringOption("-G:CompilerConfiguration=", false, "basic", "The compiler configuration to use"), com.oracle.graal.phases.tiers.Suites.Options.class, "CompilerConfiguration");
+        register(new VMStringOption("-G:CompilerConfiguration=", false, "", "The compiler configuration to use"), com.oracle.graal.phases.tiers.Suites.Options.class, "CompilerConfiguration");
+        // Options from com.oracle.graal.virtual.phases.ea.PartialEscapePhase
+        register(new VMBooleanOption("-G:+", "OptEarlyReadElimination", ""), com.oracle.graal.virtual.phases.ea.PartialEscapePhase.class, "OptEarlyReadElimination");
     }
 // END GENERATED CODE
 
