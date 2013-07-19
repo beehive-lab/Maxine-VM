@@ -20,14 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.vma;
+package com.oracle.max.vm.ext.vma.graal;
 
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.PhasePlan.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
-import com.oracle.max.vm.ext.graal.vma.phases.*;
-import com.oracle.max.vm.ext.graal.vma.snippets.*;
+import com.oracle.max.vm.ext.vma.graal.phases.*;
+import com.oracle.max.vm.ext.vma.graal.snippets.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.vm.actor.member.*;
 
