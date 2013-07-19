@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.vma.phases;
+package com.oracle.max.vm.ext.vma.graal.phases;
 
 import java.util.*;
 
@@ -31,8 +31,8 @@ import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.util.*;
 import com.oracle.max.vm.ext.graal.*;
-import com.oracle.max.vm.ext.graal.vma.nodes.*;
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.graal.nodes.*;
 
 /**
  * Phase adds requested {@link AdviceNode} nodes to the graph.

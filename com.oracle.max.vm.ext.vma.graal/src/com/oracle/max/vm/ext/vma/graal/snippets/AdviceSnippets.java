@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.vma.snippets;
+package com.oracle.max.vm.ext.vma.graal.snippets;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -41,8 +41,8 @@ import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.graal.replacements.nodes.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
-import com.oracle.max.vm.ext.graal.vma.nodes.*;
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.graal.nodes.*;
 import com.oracle.max.vm.ext.vma.runtime.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
