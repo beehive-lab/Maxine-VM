@@ -37,7 +37,6 @@ import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
-import com.oracle.max.vm.ext.graal.phases.MaxWordType.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -67,21 +66,43 @@ public class TypeSnippets extends SnippetLowerings {
 
     protected class FixedGuardLowering extends Lowering implements LoweringProvider<FixedGuardNode> {
 
+        SnippetInfo[] snippets = new SnippetInfo[DeoptimizationReason.values().length];
+
+        @HOSTED_ONLY
         FixedGuardLowering(TypeSnippets typeSnippets) {
-            super(typeSnippets, "nullCheckSnippet");
+            super();
+            for (DeoptimizationReason r : DeoptimizationReason.values()) {
+                SnippetInfo snippetInfo = null;
+                switch (r) {
+                    case NullCheckException:
+                        snippetInfo = snippet(TypeSnippets.class, "nullCheckSnippet");
+                        break;
+                    case ClassCastException:
+                        snippetInfo = snippet(TypeSnippets.class, "classCastCheckSnippet");
+                        break;
+                    default:
+
+                }
+                snippets[r.ordinal()] = snippetInfo;
+            }
         }
 
         @Override
         public void lower(FixedGuardNode node, LoweringTool tool) {
-            Arguments args = null;
+            Arguments args = new Arguments(snippets[node.getReason().ordinal()]);
+            if (node.usages().isNotEmpty()) {
+                // Happens because PushThroughPiPhase is suppressed, and the instantiate will fail
+                // unless the PiNode is removed.
+                checkForPiNode(node);
+            }
             switch (node.getReason()) {
                 case NullCheckException: {
-                    args = new Arguments(snippet);
-                    if (node.usages().isNotEmpty()) {
-                        MaxNullCheckRewriterPhase.checkForPiNode(node);
-                    }
                     break;
                 }
+
+                case ClassCastException:
+                    break;
+
                 default:
                     FatalError.unexpected("FixedGuardLowering: Unexpected reason: " + node.getReason());
             }
@@ -91,6 +112,24 @@ public class TypeSnippets extends SnippetLowerings {
             instantiate(node, args);
         }
 
+        public void checkForPiNode(FixedGuardNode fixedGuardNode) {
+            Node usage = getSingleUsage(fixedGuardNode);
+            if (usage.getClass() ==  PiNode.class) {
+                PiNode pi = (PiNode) usage;
+                fixedGuardNode.graph().replaceFloating(pi, pi.object());
+            } else {
+                assert false;
+            }
+
+        }
+
+        private Node getSingleUsage(Node node) {
+            List<Node> usages = node.usages().snapshot();
+            assert usages.size() == 1;
+            return usages.get(0);
+        }
+
+
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -99,6 +138,20 @@ public class TypeSnippets extends SnippetLowerings {
             Throw.throwNullPointerException();
             throw UnreachableNode.unreachable();
         }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void classCastCheckSnippet(boolean cond) {
+        if (cond) {
+            throwClassCastException();
+            //Throw.throwClassCastException(classActor, object);
+            throw UnreachableNode.unreachable();
+        }
+    }
+
+    @SNIPPET_SLOWPATH
+    private static void throwClassCastException() {
+        throw new ClassCastException();
     }
 
     protected abstract class UnresolvedTypeLowering extends Lowering {

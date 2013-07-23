@@ -795,7 +795,9 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public boolean compareAndSwapObject(Object object, long offset, Object expected, Object value) {
-        return Reference.fromJava(object).compareAndSwapReference(Offset.fromLong(offset), Reference.fromJava(expected), Reference.fromJava(value)).equals(expected);
+        Reference result = Reference.fromJava(object).compareAndSwapReference(Offset.fromLong(offset), Reference.fromJava(expected), Reference.fromJava(value));
+        // must do Word equality check
+        return result.toOrigin().equals(Reference.fromJava(expected).toOrigin());
     }
 
     /**

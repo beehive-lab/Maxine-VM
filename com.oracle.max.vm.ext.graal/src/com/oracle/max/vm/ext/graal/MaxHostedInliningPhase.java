@@ -32,12 +32,19 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
 import com.oracle.graal.phases.common.InliningUtil.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
  * Custom inlining phase for building the boot image that honors {@link @INLINE}. {@link NEVER_INLINE}.
  * It otherwise follows the standard policy.
+ *
+ * Handling the no null-check semantics of {@link INLINE} is tricky as there is no hook in the actual inlining mechanism
+ * where we can get control, unlike when processing snippets. So when we detect such a method we record the predecessor
+ * of the {@link Invoke} in the graph and fix them all up at the end.
+ *
  */
+@HOSTED_ONLY
 public class MaxHostedInliningPhase extends InliningPhase {
 
     private static class MaxGreedyInliningPolicy extends GreedyInliningPolicy {
@@ -54,6 +61,9 @@ public class MaxHostedInliningPhase extends InliningPhase {
                 if (methodCallTargetNode.isResolved()) {
                     MethodActor ma = (MethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(methodCallTargetNode.targetMethod());
                     if (ma.isInline()) {
+                        if (!ma.isStatic()) {
+                            ((ExactInlineInfo) info).suppressNullCheck();
+                        }
                         return true;
                     } else if (ma.isIntrinsic()) {
                         return false;

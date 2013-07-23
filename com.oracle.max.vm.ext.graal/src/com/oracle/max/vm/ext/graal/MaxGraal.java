@@ -329,7 +329,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         Suites compileSuites;
 
         if ((MaxineVM.isHosted() && (MaxGraalForBoot || methodActor.toString().startsWith("jtt.max"))) ||
-                        (methodActor.isNative() && methodActor.compilee() != methodActor)) {
+                        substitutedNativeMethod(methodActor)) {
             // The (temporary) check for MaxGraalForBoot prevents test compilations being treated as boot image code.
             // N.B. Native methods that have been substituted are effectively boot compilations and are not all
             // compiled into the boot image (perhaps they should be).
@@ -341,6 +341,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         }
 
         StructuredGraph graph = (StructuredGraph) method.getCompilerStorage().get(Graph.class);
+        Double tailDuplicationProbability = GraalOptions.TailDuplicationProbability.getValue();
         if (graph == null) {
             GraphBuilderPhase graphBuilderPhase = new MaxGraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(), optimisticOpts);
             phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
@@ -353,15 +354,24 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
             }
             if (methodActor.compilee().isNative()) {
                 graph = new NativeStubGraphBuilder(methodActor).build();
+                GraalOptions.TailDuplicationProbability.setValue(2.0);
             } else {
                 graph = new StructuredGraph(method);
             }
         }
         CallingConvention cc = CodeUtil.getCallingConvention(runtime, CallingConvention.Type.JavaCallee, method, false);
-        CompilationResult result = GraalCompiler.compileGraph(graph, cc, method, runtime, replacements, backend,
+        try {
+            CompilationResult result = GraalCompiler.compileGraph(graph, cc, method, runtime, replacements, backend,
                         runtime.maxTargetDescription(),
                         cache, phasePlan, optimisticOpts, new SpeculationLog(), compileSuites, new CompilationResult());
-        return GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
+            return GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
+        } finally {
+            GraalOptions.TailDuplicationProbability.setValue(tailDuplicationProbability);
+        }
+    }
+
+    private static boolean substitutedNativeMethod(ClassMethodActor methodActor) {
+        return methodActor.isNative() && methodActor.compilee() != methodActor;
     }
 
     /**
@@ -378,6 +388,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     protected void addCustomSnippets(MaxReplacementsImpl maxReplacementsImpl) {
     }
 
+    @HOSTED_ONLY
     public List<com.oracle.graal.phases.Phase> addBootPhases(PhasePlan phasePlan) {
         Kind wordKind = runtime.maxTargetDescription().wordKind;
         ArrayList<com.oracle.graal.phases.Phase> result = new ArrayList<>();
@@ -400,7 +411,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                                         cache, phasePlan, optimisticOpts)));
         result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new InlineDone()));
         // Important to remove bogus null checks on Word types
-        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new MaxWordType.MaxNullCheckRewriterPhase(runtime, wordKind, null)));
+        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new MaxWordType.MaxNullCheckRewriterPhase(runtime, wordKind)));
         // intrinsics are (obviously) not inlined, so they are left in the graph and need to be rewritten now
         result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new MaxIntrinsicsPhase()));
         // The replaces all Word based types with target.wordKind

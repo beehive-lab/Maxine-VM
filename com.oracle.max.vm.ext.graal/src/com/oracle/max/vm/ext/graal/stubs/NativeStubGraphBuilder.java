@@ -67,7 +67,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
                 template = NativeStubSnippets.normalTemplate;
             }
         }
-        setGraph(template.copy(nativeMethod.name()));
+        setGraph(template.copy(nativeMethod.name(), MaxResolvedJavaMethod.get(nativeMethod)));
     }
 
     /**

@@ -170,6 +170,10 @@ public class MaxWordType {
          */
         Node invokePredecessor;
 
+        public MaxNullCheckRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
+            this(metaAccess, wordKind, null);
+        }
+
         public MaxNullCheckRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind, Node invokePredecessor) {
             super(metaAccess, wordKind);
             this.invokePredecessor = invokePredecessor;
