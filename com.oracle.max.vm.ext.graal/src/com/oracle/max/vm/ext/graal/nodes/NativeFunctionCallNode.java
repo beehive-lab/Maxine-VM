@@ -33,6 +33,7 @@ import com.oracle.graal.lir.amd64.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
+import com.oracle.graal.phases.common.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -41,6 +42,9 @@ import com.sun.max.vm.actor.member.*;
  * Represents a call to a native function from within a native method stub.
  * Start off life as abstract node in the template created by the {@link NodeIntrinsic},
  * then becomes specific to the actual native method during lowering, via {@link #updateCall}.
+ *
+ * {@link TailDuplicationPhase TailDuplication} is suppressed for native methods because
+ * the node cloning does not work correctly in the face of the argument specialization in {@link #updateCall}.
  */
 public final class NativeFunctionCallNode extends NativeFunctionAdapterNode implements DeoptimizingNode, LIRLowerable {
 

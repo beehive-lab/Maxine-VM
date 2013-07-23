@@ -141,7 +141,7 @@ public class MaxReplacementsImpl extends ReplacementsImpl {
             new MaxWordType.MaxUnsafeAccessRewriterPhase(runtime, target.wordKind).apply(graph);
 //            new MaxWordTypeRewriterPhase.MaxUnsafeCastRewriter(runtime, target.wordKind).apply(graph);
             new MaxSlowpathRewriterPhase(runtime).apply(graph);
-            new MaxWordType.MaxNullCheckRewriterPhase(runtime, target.wordKind, null).apply(graph);
+            new MaxWordType.MaxNullCheckRewriterPhase(runtime, target.wordKind).apply(graph);
 
             // The replaces all Word based types with target.wordKind
             new MaxWordType.KindRewriterPhase(runtime, target.wordKind).apply(graph);

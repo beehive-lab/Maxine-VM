@@ -45,7 +45,7 @@ public class MaxRegisterConfig implements RegisterConfig {
 
     private static ConcurrentHashMap<RiRegisterConfig, RegisterConfig> map = new ConcurrentHashMap<RiRegisterConfig, RegisterConfig>();
 
-    private RiRegisterConfig riRegisterConfig;
+    private CiRegisterConfig ciRegisterConfig;
     private final Register[] javaGeneralParameterRegisters;
     private final Register[] nativeGeneralParameterRegisters;
     private Register[] xmmParameterRegisters = {xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
@@ -54,17 +54,17 @@ public class MaxRegisterConfig implements RegisterConfig {
         MaxRegisterConfig.architecture = architecture;
     }
 
-    static RegisterConfig get(RiRegisterConfig riRegisterConfig) {
-        RegisterConfig result = map.get(riRegisterConfig);
+    static RegisterConfig get(CiRegisterConfig ciRegisterConfig) {
+        RegisterConfig result = map.get(ciRegisterConfig);
         if (result == null) {
-            result = new MaxRegisterConfig(riRegisterConfig);
-            map.put(riRegisterConfig, result);
+            result = new MaxRegisterConfig(ciRegisterConfig);
+            map.put(ciRegisterConfig, result);
         }
         return result;
     }
 
-    private MaxRegisterConfig(RiRegisterConfig riRegisterConfig) {
-        this.riRegisterConfig = riRegisterConfig;
+    private MaxRegisterConfig(CiRegisterConfig riRegisterConfig) {
+        this.ciRegisterConfig = riRegisterConfig;
         javaGeneralParameterRegisters = initParameterRegisters(CiCallingConvention.Type.JavaCall, riRegisterConfig);
         nativeGeneralParameterRegisters = initParameterRegisters(CiCallingConvention.Type.NativeCall, riRegisterConfig);
     }
@@ -81,12 +81,12 @@ public class MaxRegisterConfig implements RegisterConfig {
 
     @Override
     public Register getReturnRegister(Kind kind) {
-        return RegisterMap.toGraal(riRegisterConfig.getReturnRegister(KindMap.toCiKind(kind)));
+        return RegisterMap.toGraal(ciRegisterConfig.getReturnRegister(KindMap.toCiKind(kind)));
     }
 
     @Override
     public Register getFrameRegister() {
-        return RegisterMap.toGraal(riRegisterConfig.getFrameRegister());
+        return RegisterMap.toGraal(ciRegisterConfig.getFrameRegister());
     }
 
     @Override
@@ -114,8 +114,7 @@ public class MaxRegisterConfig implements RegisterConfig {
 
         int currentGeneral = 0;
         int currentXMM = 0;
-        // Account for the word at the bottom of the frame used for saving an overwritten return address during deoptimization
-        int currentStackOffset = type == Type.NativeCall ? 0 : Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET + target.wordSize;
+        int currentStackOffset = ciRegisterConfig.stackArg0Offsets[type.ordinal()];
 
         for (int i = 0; i < parameterKinds.length; i++) {
             Kind kind = parameterKinds[i];
@@ -193,7 +192,7 @@ public class MaxRegisterConfig implements RegisterConfig {
     @Override
     public Register[] getAllocatableRegisters() {
         if (allocatableRegisters == null) {
-            CiRegister[] ciRegs = riRegisterConfig.getAllocatableRegisters();
+            CiRegister[] ciRegs = ciRegisterConfig.getAllocatableRegisters();
             allocatableRegisters = new Register[ciRegs.length];
             for (int i = 0; i < ciRegs.length; i++) {
                 allocatableRegisters[i] = RegisterMap.toGraal(ciRegs[i]);
@@ -227,7 +226,7 @@ public class MaxRegisterConfig implements RegisterConfig {
     @Override
     public Register[] getCallerSaveRegisters() {
         if (callerSaveRegisters == null) {
-            CiRegister[] ciRegs = riRegisterConfig.getCallerSaveRegisters();
+            CiRegister[] ciRegs = ciRegisterConfig.getCallerSaveRegisters();
             callerSaveRegisters = new Register[ciRegs.length];
             for (int i = 0; i < ciRegs.length; i++) {
                 callerSaveRegisters[i] = RegisterMap.toGraal(ciRegs[i]);
@@ -238,7 +237,7 @@ public class MaxRegisterConfig implements RegisterConfig {
 
     @Override
     public CalleeSaveLayout getCalleeSaveLayout() {
-        CiCalleeSaveLayout ciSaveLayout = riRegisterConfig.getCalleeSaveLayout();
+        CiCalleeSaveLayout ciSaveLayout = ciRegisterConfig.getCalleeSaveLayout();
         if (ciSaveLayout == null) {
             return null;
         }
@@ -256,7 +255,7 @@ public class MaxRegisterConfig implements RegisterConfig {
     @Override
     public RegisterAttributes[] getAttributesMap() {
         if (registerAttributes == null) {
-            RiRegisterAttributes[] riAttrs = riRegisterConfig.getAttributesMap();
+            RiRegisterAttributes[] riAttrs = ciRegisterConfig.getAttributesMap();
             registerAttributes = new RegisterAttributes[riAttrs.length];
             for (int i = 0; i < riAttrs.length; i++) {
                 RiRegisterAttributes riAttr = riAttrs[i];
@@ -268,7 +267,7 @@ public class MaxRegisterConfig implements RegisterConfig {
 
     @Override
     public Register getRegisterForRole(int id) {
-        return RegisterMap.toGraal(riRegisterConfig.getRegisterForRole(id));
+        return RegisterMap.toGraal(ciRegisterConfig.getRegisterForRole(id));
     }
 
 }

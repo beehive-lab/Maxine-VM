@@ -144,7 +144,8 @@ public class FieldSnippets extends SnippetLowerings {
              * Most important for the biasedtableAddress of the CardTable for GenSSHeapScheme
              * May not be the best place to do this.
              */
-            if (fieldActor.isConstantWhenNotZero() && node.object() != null && node.object().isConstant()) {
+            if (fieldActor.isConstantWhenNotZero() && node.object() != null && node.object().isConstant() &&
+                            node.object().asConstant().isNonNull()) {
                 CiConstant value = fieldActor.constantValue(ConstantMap.toCi(node.object().asConstant()));
                 if (value != null) {
                     StructuredGraph graph = node.graph();
