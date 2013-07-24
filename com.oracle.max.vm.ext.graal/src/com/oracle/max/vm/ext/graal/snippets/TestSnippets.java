@@ -289,7 +289,7 @@ public class TestSnippets extends SnippetLowerings {
         return a.equals(b);
     }
 
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    //@Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Pointer testGetJniHandle(Pointer handles, int offset, Object value) {
         return (value == null) ? Pointer.zero() : handles.plus(offset);
     }

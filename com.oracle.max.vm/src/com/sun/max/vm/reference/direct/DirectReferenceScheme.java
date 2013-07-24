@@ -63,9 +63,19 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
     @INTRINSIC(UNSAFE_CAST)
     private static native Reference toReference(Object origin);
 
+    /**
+     * An explicit statement that a {@link Reference} is <b>not</b> an {@link java.lang.Object Object}
+     * even through the compiler will allow the assignment without a cast, and they happen to have the same
+     * representation in this implementation.
+     */
+    @INTRINSIC(UNSAFE_CAST)
+    private static Object toObject(Reference reference) {
+        return reference;
+    }
+
     @INLINE
     public Object toJava(Reference reference) {
-        return reference;
+        return toObject(reference);
     }
 
     @INLINE
