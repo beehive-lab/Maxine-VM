@@ -37,6 +37,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.reference.*;
 
 
 public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType {
@@ -45,6 +46,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     private static MaxResolvedJavaType wrappedWord;
     private static MaxResolvedJavaType wordType;
     private static MaxResolvedJavaType pointerType;
+    private static MaxResolvedJavaType referenceType;
 
     protected MaxResolvedJavaType(RiResolvedType riResolvedType) {
         super(riResolvedType);
@@ -70,6 +72,13 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
             pointerType = MaxResolvedJavaType.get(ClassActor.fromJava(Pointer.class));
         }
         return pointerType;
+    }
+
+    public static MaxResolvedJavaType getReferenceType() {
+        if (referenceType == null) {
+            referenceType = MaxResolvedJavaType.get(ClassActor.fromJava(Reference.class));
+        }
+        return referenceType;
     }
 
     private static MaxResolvedJavaType getWordType() {

@@ -36,7 +36,6 @@ import com.oracle.graal.graph.*;
 import com.oracle.max.vm.ext.graal.phases.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.max.vm.compiler.deopt.*;
 
 
 public class MaxRegisterConfig implements RegisterConfig {
@@ -114,7 +113,7 @@ public class MaxRegisterConfig implements RegisterConfig {
 
         int currentGeneral = 0;
         int currentXMM = 0;
-        int currentStackOffset = ciRegisterConfig.stackArg0Offsets[type.ordinal()];
+        int currentStackOffset = ciRegisterConfig.stackArg0Offsets[toCiType(type).ordinal()];
 
         for (int i = 0; i < parameterKinds.length; i++) {
             Kind kind = parameterKinds[i];
