@@ -94,19 +94,19 @@ public class CompilationBroker {
     static int PrintCodeCacheMetrics;
 
     static {
-        addFieldOption("-X", "opt", "Select optimizing compiler whenever possible.");
-        addFieldOption("-XX:", "RCT", "Set the recompilation threshold for methods. Use 0 to disable recompilation. (default: " + RCT + ").");
-        addFieldOption("-XX:", "GCOnRecompilation", "Force GC before every re-compilation.");
-        addFieldOption("-XX:", "FailOverCompilation", "Retry failed compilations with another compiler (if available).");
-        addFieldOption("-XX:", "PrintCodeCacheMetrics", "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
-        addFieldOption("-XX:", "VMExtOpt", "Compile VM extensions with optimizing compiler (default: false");
-        addFieldOption("-XX:", "AddCompiler", "Add a compiler, Name:Class");
+        addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
+        addFieldOption("-XX:", "RCT", CompilationBroker.class, "Set the recompilation threshold for methods. Use 0 to disable recompilation. (default: " + RCT + ").");
+        addFieldOption("-XX:", "GCOnRecompilation", CompilationBroker.class, "Force GC before every re-compilation.");
+        addFieldOption("-XX:", "FailOverCompilation", CompilationBroker.class, "Retry failed compilations with another compiler (if available).");
+        addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
+        addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
+        addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
     }
 
     @RESET
     static String CompileCommand;
     static {
-        VMOptions.addFieldOption("-XX:", "CompileCommand",
+        VMOptions.addFieldOption("-XX:", "CompileCommand", CompilationBroker.class,
             "Specify which compiler to use for methods matching given patterns. For example, " +
             "'-XX:CompileCommand=test.output:T1X,com.acme.util.Strings:Graal' specifies that " +
             "any method whose fully qualified name contains the substring 'test.output' " +

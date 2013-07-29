@@ -55,7 +55,7 @@ public final class DynamicLinker {
     private static final String JNI_ONLOAD = "JNI_OnLoad";
     public static boolean TraceDL;
     static {
-        VMOptions.addFieldOption("-XX:", "TraceDL", "Trace Dynamic Linker calls.");
+        VMOptions.addFieldOption("-XX:", "TraceDL", DynamicLinker.class, "Trace Dynamic Linker calls.");
     }
 
     private DynamicLinker() {

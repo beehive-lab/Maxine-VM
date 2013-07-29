@@ -518,19 +518,6 @@ public class VMOptions {
      *
      * @param prefix the prefix to use for the option (e.g. {@code "-XX:"} or {@code "-C1X:"})
      * @param name the name of the option
-     * @param help the help text for the option
-     */
-    @HOSTED_ONLY
-    public static VMOption addFieldOption(String prefix, String name, String help) {
-        Class declaringClass = Reflection.getCallerClass(2);
-        return addFieldOption(prefix, name, Classes.getDeclaredField(declaringClass, name), help, MaxineVM.Phase.STARTING);
-    }
-
-    /**
-     * Creates and registers a VM option whose value is stored in a given non-final {@code static} field.
-     *
-     * @param prefix the prefix to use for the option (e.g. {@code "-XX:"} or {@code "-C1X:"})
-     * @param name the name of the option
      * @param declaringClass the class in which a field named {@code name} backing the option
      * @param help the help text for the option
      */

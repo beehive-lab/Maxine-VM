@@ -174,7 +174,7 @@ public final class SignalDispatcher extends Thread {
      */
     static boolean SerializeSignals = true;
     static {
-        VMOptions.addFieldOption("-XX:", "SerializeSignals",
+        VMOptions.addFieldOption("-XX:", "SerializeSignals", SignalDispatcher.class,
             "Run Java signal handlers on a single thread.");
     }
 

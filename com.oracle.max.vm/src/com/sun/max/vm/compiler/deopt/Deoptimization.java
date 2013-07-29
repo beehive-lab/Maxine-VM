@@ -102,7 +102,7 @@ public class Deoptimization extends VmOperation {
      */
     public static int DeoptimizeALot;
     static {
-        VMOptions.addFieldOption("-XX:", "UseDeopt", "Enable deoptimization.");
+        VMOptions.addFieldOption("-XX:", "UseDeopt", Deoptimization.class, "Enable deoptimization.");
         VMOptions.addFieldOption("-XX:", "DeoptimizeALot", Deoptimization.class,
             "Invalidate and deoptimize a selection of executing optimized methods every <n> milliseconds. " +
             "A value of 0 disables this mechanism.");

@@ -40,7 +40,7 @@ final class JDK_java_lang_ref_Finalizer {
 
     private static boolean TraceFinalization;
     static {
-        VMOptions.addFieldOption("-XX:", "TraceFinalization", "Trace calls to Object.finalize() by the finalization subsystem.");
+        VMOptions.addFieldOption("-XX:", "TraceFinalization", JDK_java_lang_ref_Finalizer.class, "Trace calls to Object.finalize() by the finalization subsystem.");
     }
 
     private JDK_java_lang_ref_Finalizer() {

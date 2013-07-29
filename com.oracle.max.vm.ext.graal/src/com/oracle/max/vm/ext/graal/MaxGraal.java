@@ -97,7 +97,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         }
     }
     static {
-        addFieldOption("-XX:", "MaxGraalForBoot", "use Graal for boot image");
+        addFieldOption("-XX:", "MaxGraalForBoot", MaxGraal.class, "use Graal for boot image");
     }
 
     public static boolean MaxGraalForBoot;
