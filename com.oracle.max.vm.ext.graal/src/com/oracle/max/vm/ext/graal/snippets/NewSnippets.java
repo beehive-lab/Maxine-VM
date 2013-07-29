@@ -41,9 +41,11 @@ import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.Snippets;
 
@@ -68,18 +70,39 @@ public class NewSnippets extends SnippetLowerings {
     }
 
     protected class NewInstanceLowering extends Lowering implements LoweringProvider<NewInstanceNode> {
+        @HOSTED_ONLY
+        private SnippetInfo hybridSnippet = snippet(NewSnippets.class, "newHybridInstanceSnippet");
 
+        @HOSTED_ONLY
         NewInstanceLowering(NewSnippets newSnippets) {
             super(newSnippets, "newInstanceSnippet");
         }
 
         @Override
         public void lower(NewInstanceNode node, LoweringTool tool) {
-            ClassActor type = (ClassActor) MaxResolvedJavaType.getRiResolvedType(node.instanceClass());
-            Arguments args = new Arguments(snippet);
-            args.add("hub", type.dynamicHub());
+            ResolvedJavaType javaType = node.instanceClass();
+            ClassActor classActor = (ClassActor) MaxResolvedJavaType.getRiResolvedType(javaType);
+            SnippetInfo snippetToUse = snippet;
+            if (MaxineVM.isHosted()) {
+                // Have to special case Hybrids
+                if (classActor instanceof HybridClassActor) {
+                    snippetToUse = hybridSnippet;
+                }
+            }
+            Arguments args = new Arguments(snippetToUse);
+            args.add("hub", classActor.dynamicHub());
             instantiate(node, args);
         }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static Object newInstanceSnippet(DynamicHub hub) {
+        return UnsafeCastNode.unsafeCast(Heap.createTuple(hub), StampFactory.forNodeIntrinsic());
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static Object newHybridInstanceSnippet(DynamicHub hub) {
+        return UnsafeCastNode.unsafeCast(Heap.createHybrid(hub), StampFactory.forNodeIntrinsic());
     }
 
     protected class UnresolvedNewInstanceLowering extends Lowering implements LoweringProvider<UnresolvedNewInstanceNode> {
@@ -106,11 +129,6 @@ public class NewSnippets extends SnippetLowerings {
             instantiate(node, args);
         }
 
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    public static Object newInstanceSnippet(DynamicHub hub) {
-        return UnsafeCastNode.unsafeCast(Heap.createTuple(hub), StampFactory.forNodeIntrinsic());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -152,24 +170,6 @@ public class NewSnippets extends SnippetLowerings {
         }
     }
 
-    protected class DynamicNewArrayLowering extends Lowering implements LoweringProvider<DynamicNewArrayNode> {
-
-        protected DynamicNewArrayLowering(NewSnippets newSnippets) {
-            super(newSnippets, "newArraySnippet");
-        }
-
-        @Override
-        public void lower(DynamicNewArrayNode node, LoweringTool tool) {
-            ResolvedJavaType elementType = node.getElementType().objectStamp().type();
-            assert elementType != null;
-            ClassActor type = (ClassActor) MaxResolvedJavaType.getRiResolvedType(elementType);
-            Arguments args = new Arguments(snippet);
-            args.add("hub", type.dynamicHub());
-            args.add("length", node.length());
-            instantiate(node, args);
-        }
-    }
-
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object newArraySnippet(DynamicHub hub, int length) {
         if (length < 0) {
@@ -179,6 +179,33 @@ public class NewSnippets extends SnippetLowerings {
         Object result = Heap.createArray(hub, length);
         BeginNode anchorNode = BeginNode.anchor(StampFactory.forNodeIntrinsic());
         return UnsafeArrayCastNode.unsafeArrayCast(result, length, StampFactory.forNodeIntrinsic(), anchorNode);
+    }
+
+    /**
+     * Maxine {@link SUBSTITUTE substitutes} {@link Array#newInstance} but Graal trumps that with {@link ArraySubstitutions}
+     * which creates a {@link DynamicNewArrayNode}. Canonicalization handles the case where the class is determined to be constant,
+     * so this lowering only happens when the class really is a runtime value, or {@code void) which is not handled by the
+     * canonicalization, and is required to throw {@link IllegalArgumentException}.
+     */
+    protected class DynamicNewArrayLowering extends Lowering implements LoweringProvider<DynamicNewArrayNode> {
+
+        protected DynamicNewArrayLowering(NewSnippets newSnippets) {
+            super(newSnippets, "newDynamicArraySnippet");
+        }
+
+        @Override
+        public void lower(DynamicNewArrayNode node, LoweringTool tool) {
+            Arguments args = new Arguments(snippet);
+            args.add("javaComponentClass", node.getElementType());
+            args.add("length", node.length());
+            instantiate(node, args);
+        }
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static Object newDynamicArraySnippet(Class javaComponentClass, int length) {
+        // The null check is baked into the DynamicArrayNode creation
+        return JDK_java_lang_reflect_Array.nonNullNewArray(javaComponentClass, length);
     }
 
     protected class UnresolvedNewArrayLowering extends Lowering implements LoweringProvider<UnresolvedNewArrayNode> {

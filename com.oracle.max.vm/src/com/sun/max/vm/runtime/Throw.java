@@ -360,9 +360,16 @@ public final class Throw {
 
     @NEVER_INLINE
     @SNIPPET_SLOWPATH(exactType = true, nonNull = true)
+    public static IllegalArgumentException throwIllegalArgumentException() {
+        throw new IllegalArgumentException();
+    }
+
+    @NEVER_INLINE
+    @SNIPPET_SLOWPATH(exactType = true, nonNull = true)
     public static void throwArithmeticException() {
         throw new ArithmeticException();
     }
+
     /**
      * Raises an {@code NegativeArraySizeException}. This is out-of-line to reduce the amount
      * of code inlined on the fast path for an array allocation.

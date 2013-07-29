@@ -72,7 +72,7 @@ public class MaxResolvedJavaField extends MaxJavaField implements ResolvedJavaFi
     public Constant readConstantValue(Constant receiver) {
         CiConstant ciConstant = riResolvedField().constantValue(ConstantMap.toCi(receiver));
         if (ciConstant != null && ciConstant.kind == CiKind.Object && ciConstant.asObject() instanceof WordUtil.WrappedWord) {
-            if (MaxGraal.bootCompile() && !MaxGraal.inlineDone()) {
+            if (MaxGraal.bootCompile() && !MaxGraal.archWordKind()) {
                 // Special handling of WrappedWord constants when building the boot image
                 // We want to keep the type in the high level phases in case the constant is used as a receiver
                 // in a (Word) method invocation (which will assert false unless the type is Object).

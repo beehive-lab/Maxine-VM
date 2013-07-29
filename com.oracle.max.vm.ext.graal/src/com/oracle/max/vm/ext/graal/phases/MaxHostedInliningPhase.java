@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.oracle.max.vm.ext.graal.phases;
 
 import java.util.*;
 
@@ -32,6 +32,7 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
 import com.oracle.graal.phases.common.InliningUtil.*;
+import com.oracle.max.vm.ext.graal.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 

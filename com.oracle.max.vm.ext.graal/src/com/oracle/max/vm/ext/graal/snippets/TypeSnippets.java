@@ -61,7 +61,7 @@ public class TypeSnippets extends SnippetLowerings {
         lowerings.put(UnresolvedLoadConstantNode.class, new UnresolvedLoadConstantLowering(this));
         lowerings.put(UnresolvedLoadClassActorNode.class, new UnresolvedLoadClassActorLowering(this));
         lowerings.put(FixedGuardNode.class, new FixedGuardLowering(this));
-        lowerings.put(MaxFixedGuardNode.class, new FixedGuardLowering(this));
+        lowerings.put(FixedGuardNode.class, new FixedGuardLowering(this));
     }
 
     protected class FixedGuardLowering extends Lowering implements LoweringProvider<FixedGuardNode> {

@@ -20,31 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.nodes;
+package com.oracle.max.vm.ext.graal.phases;
+
+import java.util.*;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.phases.*;
+import com.oracle.graal.phases.common.*;
 
 /**
- * The use of this subclass instead of {@link FixedGuardNode} prevents a {@link DeoptimizeNode} being created
- * in {@link #simplify}.
+ * In order to have Maxine's (must) INLINE annotation interpreted, we have to disable the standard inlining phase
+ * and substitute a custom phase that checks the method annotation.
  */
-public class MaxFixedGuardNode extends FixedGuardNode {
-
-    public MaxFixedGuardNode(LogicNode condition, DeoptimizationReason deoptReason, DeoptimizationAction action, boolean negated) {
-        super(condition, deoptReason, action, negated);
-    }
-
+public class MaxHostedInliningPhaseFactory extends InliningPhaseFactory {
     @Override
-    public void simplify(SimplifierTool tool) {
-        if (condition() instanceof LogicConstantNode) {
-            LogicConstantNode c = (LogicConstantNode) condition();
-            if (c.getValue() != isNegated()) {
-                graph().removeFixed(this);
-            }
-        }
+    protected InliningPhase newInliningPhase(MetaAccessProvider runtime, Map<Invoke, Double> hints, Replacements replacements, Assumptions assumptions, GraphCache cache, PhasePlan plan,
+                    OptimisticOptimizations optimisticOpts) {
+        return new MaxHostedInliningPhase(runtime, hints, replacements, assumptions, cache, plan, optimisticOpts);
     }
 
 }

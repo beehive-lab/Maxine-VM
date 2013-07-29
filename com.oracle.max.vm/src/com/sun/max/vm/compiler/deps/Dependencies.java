@@ -491,7 +491,7 @@ public final class Dependencies {
 
     @Override
     public String toString() {
-        return toString(false);
+        return toString(true);
     }
 
     public String toString(boolean verbose) {

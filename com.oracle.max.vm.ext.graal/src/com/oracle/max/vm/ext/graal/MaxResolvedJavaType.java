@@ -201,6 +201,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public ResolvedJavaType findLeastCommonAncestor(ResolvedJavaType otherType) {
+        // TODO handle Word types completely (not just WrappedWord)
         if (isWrappedWord(this) || isWrappedWord((MaxResolvedJavaType) otherType)) {
             return getWordType();
         }

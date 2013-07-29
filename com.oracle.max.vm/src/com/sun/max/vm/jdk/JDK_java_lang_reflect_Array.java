@@ -39,7 +39,7 @@ import com.sun.max.vm.value.*;
  * JDK's reflection mechanisms.
  */
 @METHOD_SUBSTITUTIONS(Array.class)
-final class JDK_java_lang_reflect_Array {
+public final class JDK_java_lang_reflect_Array {
 
     private JDK_java_lang_reflect_Array() {
     }
@@ -395,6 +395,11 @@ final class JDK_java_lang_reflect_Array {
         if (javaComponentClass == null) {
             throw new NullPointerException();
         }
+        return nonNullNewArray(javaComponentClass, length);
+    }
+
+    @SNIPPET_SLOWPATH
+    public static Object nonNullNewArray(Class javaComponentClass, int length) throws NegativeArraySizeException {
         if (javaComponentClass == Void.TYPE) {
             throw new IllegalArgumentException();
         }
