@@ -385,7 +385,7 @@ public abstract class Trap {
 
     public static boolean DeoptOnImplicitException;
     static {
-        VMOptions.addFieldOption("-XX:", "DeoptOnImplicitException", "Deoptimize on implicit exception occuring in optimized code.");
+        VMOptions.addFieldOption("-XX:", "DeoptOnImplicitException", Trap.class, "Deoptimize on implicit exception occuring in optimized code.");
     }
 
     /**

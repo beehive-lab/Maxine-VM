@@ -47,7 +47,7 @@ public final class Monitor {
     public static boolean TraceMonitors;
 
     static {
-        VMOptions.addFieldOption("-XX:", "TraceMonitors", "Trace (slow-path) monitor operations.");
+        VMOptions.addFieldOption("-XX:", "TraceMonitors", Monitor.class, "Trace (slow-path) monitor operations.");
     }
 
     @FOLD

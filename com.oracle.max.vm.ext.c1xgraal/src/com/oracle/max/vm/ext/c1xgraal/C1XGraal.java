@@ -44,8 +44,8 @@ public class C1XGraal implements RuntimeCompiler {
 
     static boolean FailOverToC1X = true;
     static {
-        addFieldOption("-XX:", "FailOverToC1X", "Retry failed Graal compilations with C1X.");
-        addFieldOption("-XX:", "MaxGraalNative", "compile native code with Graal");
+        addFieldOption("-XX:", "FailOverToC1X", C1XGraal.class, "Retry failed Graal compilations with C1X.");
+        addFieldOption("-XX:", "MaxGraalNative", C1XGraal.class, "compile native code with Graal");
     }
 
     /**

@@ -33,7 +33,7 @@ public class TypeCheckingVerifier extends ClassVerifier {
 
     public static boolean FailOverToOldVerifier = true;
     static {
-        VMOptions.addFieldOption("-XX:", "FailOverToOldVerifier",
+        VMOptions.addFieldOption("-XX:", "FailOverToOldVerifier", TypeCheckingVerifier.class,
             "Fail over to old verifier when the new type checker fails.");
     }
 

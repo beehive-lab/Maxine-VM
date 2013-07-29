@@ -706,7 +706,7 @@ public final class ClassfileReader {
                 return new Annotation[0];
             }
         }
-        Class holder = Classes.forName(classDescriptor.toJavaString(), false, ClassfileReader.class.getClassLoader());
+        Class<?> holder = Classes.forName(classDescriptor.toJavaString(), false, ClassfileReader.class.getClassLoader());
         Annotation[] annotations;
         if (name.equals(SymbolTable.INIT)) {
             SignatureDescriptor sig = (SignatureDescriptor) descriptor;
@@ -715,7 +715,12 @@ public final class ClassfileReader {
             annotations = Classes.getDeclaredField(holder, name.string).getAnnotations();
         } else {
             SignatureDescriptor sig = (SignatureDescriptor) descriptor;
-            annotations = Classes.getDeclaredMethod(holder, name.string, sig.resolveParameterTypes(ClassfileReader.class.getClassLoader())).getAnnotations();
+            try {
+                annotations = holder.getDeclaredMethod(name.string, sig.resolveParameterTypes(ClassfileReader.class.getClassLoader())).getAnnotations();
+            } catch (NoSuchMethodException noSuchMethodException) {
+                Trace.line(1, "getAnnotations: method " + holder.getName() + "." + name.string + " is hidden to relection");
+                annotations = new Annotation[0];
+            }
         }
         return annotations;
     }

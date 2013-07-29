@@ -279,17 +279,17 @@ public class VMAOptions {
     private static final String X_PATTERN = VMA_PKG_PATTERN;
 
     static {
-        VMOptions.addFieldOption("-XX:", "VMA", "enable advising");
-        VMOptions.addFieldOption("-XX:", "VMAMI", "regex for methods to instrument");
-        VMOptions.addFieldOption("-XX:", "VMAMX", "regex for methods not to instrument");
-        VMOptions.addFieldOption("-XX:", "VMAXJDK", "do not instrument any JDK classes");
-        VMOptions.addFieldOption("-XX:", "VMATI", "regex for threads to include");
-        VMOptions.addFieldOption("-XX:", "VMATX", "regex for threads to exclude");
-        VMOptions.addFieldOption("-XX:", "VMABI", "regex for bytecodes to match");
-        VMOptions.addFieldOption("-XX:", "VMABX", "regex for bytecodes to not match");
-        VMOptions.addFieldOption("-XX:", "VMAConfig", "use pre-defined configuration");
-        VMOptions.addFieldOption("-XX:", "VMATime", "specify how time is recorded");
-        VMOptions.addFieldOption("-XX:", "VMASample", "run in sample mode; interval,period");
+        VMOptions.addFieldOption("-XX:", "VMA", VMAOptions.class, "enable advising");
+        VMOptions.addFieldOption("-XX:", "VMAMI", VMAOptions.class, "regex for methods to instrument");
+        VMOptions.addFieldOption("-XX:", "VMAMX", VMAOptions.class, "regex for methods not to instrument");
+        VMOptions.addFieldOption("-XX:", "VMAXJDK", VMAOptions.class, "do not instrument any JDK classes");
+        VMOptions.addFieldOption("-XX:", "VMATI", VMAOptions.class, "regex for threads to include");
+        VMOptions.addFieldOption("-XX:", "VMATX", VMAOptions.class, "regex for threads to exclude");
+        VMOptions.addFieldOption("-XX:", "VMABI", VMAOptions.class, "regex for bytecodes to match");
+        VMOptions.addFieldOption("-XX:", "VMABX", VMAOptions.class, "regex for bytecodes to not match");
+        VMOptions.addFieldOption("-XX:", "VMAConfig", VMAOptions.class, "use pre-defined configuration");
+        VMOptions.addFieldOption("-XX:", "VMATime", VMAOptions.class, "specify how time is recorded");
+        VMOptions.addFieldOption("-XX:", "VMASample", VMAOptions.class, "run in sample mode; interval,period");
     }
 
     /**

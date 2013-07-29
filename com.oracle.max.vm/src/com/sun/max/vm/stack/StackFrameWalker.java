@@ -57,7 +57,7 @@ public abstract class StackFrameWalker {
      */
     public static boolean TraceStackWalk;
     static {
-        VMOptions.addFieldOption("-XX:", "TraceStackWalk", "Trace every stack walk");
+        VMOptions.addFieldOption("-XX:", "TraceStackWalk", StackFrameWalker.class, "Trace every stack walk");
     }
 
     /**

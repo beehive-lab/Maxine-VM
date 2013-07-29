@@ -309,7 +309,7 @@ public class JVMTI {
                 jvmtiEnv.bootClassPathAdd[j] = 0;
             }
         }
-        VMOptions.addFieldOption("-XX:", "JVMTI_VM", "Include VM classes in JVMTI results.");
+        VMOptions.addFieldOption("-XX:", "JVMTI_VM", JVMTI.class, "Include VM classes in JVMTI results.");
     }
 
     /**

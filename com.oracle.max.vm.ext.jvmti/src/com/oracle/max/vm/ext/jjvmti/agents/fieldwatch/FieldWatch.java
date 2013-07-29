@@ -46,7 +46,7 @@ public class FieldWatch  extends NullJJVMTICallbacks {
     static {
         fieldWatch = (FieldWatch) JJVMTIAgentAdapter.register(new FieldWatch());
         if (MaxineVM.isHosted()) {
-            VMOptions.addFieldOption("-XX:", "FieldWatchArgs", "arguments for fieldwatch JJVMTI agent");
+            VMOptions.addFieldOption("-XX:", "FieldWatchArgs", FieldWatch.class, "arguments for fieldwatch JJVMTI agent");
         }
     }
 
