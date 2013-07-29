@@ -113,7 +113,8 @@ public class MaxGraphBuilderPhase extends GraphBuilderPhase {
 
     @Override
     protected FixedGuardNode createFixedGuardNode(LogicNode condition, DeoptimizationReason deoptReason, DeoptimizationAction action, boolean negated) {
-        return new MaxFixedGuardNode(condition, deoptReason, action, negated);
+        // FixedGuardNode.suppressDeoptimization negates the need for this
+        return new FixedGuardNode(condition, deoptReason, action, negated);
     }
 
 

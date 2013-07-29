@@ -139,6 +139,9 @@ public final class DependenciesManager {
      * @param classActor the class to be added to the global class hierarchy
      */
     public static void addToHierarchy(ClassActor classActor) {
+        if (classActor.name().contains("URLClassPath$Loader$1") || classActor.name().contains("URLClassPath$FileLoader")) {
+            System.console();
+        }
         boolean refreshTables = false;
         classHierarchyLock.writeLock().lock();
         try {
@@ -256,7 +259,7 @@ public final class DependenciesManager {
         private static void traceAddRemove(int id, ClassActor type, String kind) {
             printPrefix();
             Dependencies deps = Dependencies.fromId(id);
-            Log.println(kind + " dependency from " + deps + " to " + type);
+            Log.println(kind + " dependency from " + deps.toString(false) + " to " + type);
         }
 
         private static StringBuilder invalidateSB(TargetMethod targetMethod, String iKind) {

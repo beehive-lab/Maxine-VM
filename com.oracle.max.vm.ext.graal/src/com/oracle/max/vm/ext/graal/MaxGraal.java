@@ -51,6 +51,7 @@ import com.oracle.max.vm.ext.graal.amd64.*;
 import com.oracle.max.vm.ext.graal.phases.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.oracle.max.vm.ext.graal.stubs.*;
+import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
@@ -60,6 +61,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
@@ -155,8 +157,8 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
 
     private static class State {
         MaxGraal maxGraal;
-        boolean inlineDone;
         boolean bootCompile;
+        boolean archWordKind; // only set when bootCompile==true
         ClassMethodActor methodActor; // only set when bootCompile==true
     }
 
@@ -172,18 +174,18 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
 
     private static final StateThreadLocal stateThreadLocal = new StateThreadLocal();
 
-    private static class InlineDone extends com.oracle.graal.phases.Phase {
+    private static class WordKindRewritten extends com.oracle.graal.phases.Phase {
 
         @Override
         protected void run(StructuredGraph graph) {
             // Checkstyle: stop
-            stateThreadLocal.get().inlineDone = true;
+            stateThreadLocal.get().archWordKind = true;
             // Checkstyle: resume
         }
     }
 
-    public static boolean inlineDone() {
-        return stateThreadLocal.get().inlineDone;
+    public static boolean archWordKind() {
+        return stateThreadLocal.get().archWordKind;
     }
 
     public static boolean bootCompile() {
@@ -269,6 +271,8 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         optimisticOpts = OptimisticOptimizations.ALL.remove(Optimization.UseExceptionProbability, Optimization.UseExceptionProbabilityForOperations);
         cache = new MaxGraphCache();
         changeInlineLimits();
+        // Prevent DeoptimizeNodes since we don't handle them yet
+        FixedGuardNode.suppressDeoptimize();
         // Disable for now as it causes problems in DebugInfo
         if (MaxGraalOptions.isPresent("PartialEscapeAnalysis") == null) {
             GraalOptions.PartialEscapeAnalysis.setValue(false);
@@ -283,6 +287,11 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
              */
             GraalOptions.OptPushThroughPi.setValue(false);
         }
+        // Hacks for Maxine inlining
+        InliningPhaseFactory.registerFactory(new MaxHostedInliningPhaseFactory());
+        GraalCompiler.setMaxineHackDisableCE(true);
+        JDKInterceptor.resetField("com.oracle.graal.phases.common.InliningPhaseFactory", "instance");
+        JDKInterceptor.resetField("com.oracle.graal.compiler.GraalCompiler", "maxineHackDisableCE");
         suites = Suites.createDefaultSuites();
         createBootSuites();
         // For snippet creation we need bootCompile==true for inlining of VM methods
@@ -298,7 +307,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
      * the {@link ServiceLoader} which doesn't fit the Maxine build model well.
      */
     @HOSTED_ONLY
-    private void  createBootSuites() {
+    private void createBootSuites() {
         bootSuites = Suites.createDefaultSuites();
         PhaseSuite<MidTierContext> midTier = bootSuites.getMidTier();
         midTier.appendPhase(new MaxWordType.KindRewriterPhase(runtime, runtime.maxTargetDescription().wordKind));
@@ -324,9 +333,12 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         PhasePlan phasePlan = new PhasePlan();
         ResolvedJavaMethod method = MaxResolvedJavaMethod.get(methodActor);
         State state = setMaxGraal();
-        state.inlineDone = false;
+        state.archWordKind = false;
         state.bootCompile = false;
         Suites compileSuites;
+        if (methodActor.format("%H.%n").equals("sun.misc.Resource.getBytes")) {
+            System.console();
+        }
 
         if ((MaxineVM.isHosted() && (MaxGraalForBoot || methodActor.toString().startsWith("jtt.max"))) ||
                         substitutedNativeMethod(methodActor)) {
@@ -347,7 +359,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
             phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
             addCustomPhase(methodActor, phasePlan);
             // Hosted (boot image) compilation is more complex owing to the need to handle the unsafe features of VM programming,
-            // requiring more phases to be run. All this is very similar to what happens in MaxReplacementsImpl.
+            // requiring more phases to be run, all very similar to what happens in MaxReplacementsImpl.
             if (state.bootCompile) {
                 // TODO should be done by modifying bootSuites
                 addBootPhases(phasePlan);
@@ -361,10 +373,20 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         }
         CallingConvention cc = CodeUtil.getCallingConvention(runtime, CallingConvention.Type.JavaCallee, method, false);
         try {
-            CompilationResult result = GraalCompiler.compileGraph(graph, cc, method, runtime, replacements, backend,
-                        runtime.maxTargetDescription(),
-                        cache, phasePlan, optimisticOpts, new SpeculationLog(), compileSuites, new CompilationResult());
-            return GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
+            do {
+                CompilationResult result = GraalCompiler.compileGraph(graph, cc, method, runtime, replacements, backend, runtime.maxTargetDescription(), cache, phasePlan, optimisticOpts,
+                                new SpeculationLog(), compileSuites, new CompilationResult());
+                Dependencies deps = Dependencies.validateDependencies(MaxAssumptions.toCiAssumptions(methodActor, result.getAssumptions()));
+                if (deps != Dependencies.INVALID) {
+                    MaxTargetMethod maxTargetMethod = GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
+                    if (deps != null) {
+                        Dependencies.registerValidatedTarget(deps, maxTargetMethod);
+                    }
+                    return maxTargetMethod;
+                }
+                // Loop back and recompile.
+                graph = new StructuredGraph(method);
+            } while (true);
         } finally {
             GraalOptions.TailDuplicationProbability.setValue(tailDuplicationProbability);
         }
@@ -403,19 +425,14 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING,
                         new MaxWordType.MakeWordFinalRewriterPhase(runtime, wordKind)));
 
-        // In order to have Maxine's (must) INLINE annotation interpreted, we have to disable the standard inlining phase
-        // and substitute a custom phase that checks the method annotation.
-        phasePlan.disablePhase(InliningPhase.class);
-        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL,
-                        new MaxHostedInliningPhase(runtime, null, replacements, new Assumptions(GraalOptions.OptAssumptions.getValue()),
-                                        cache, phasePlan, optimisticOpts)));
-        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new InlineDone()));
         // Important to remove bogus null checks on Word types
         result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new MaxWordType.MaxNullCheckRewriterPhase(runtime, wordKind)));
         // intrinsics are (obviously) not inlined, so they are left in the graph and need to be rewritten now
         result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new MaxIntrinsicsPhase()));
         // The replaces all Word based types with target.wordKind
         result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new MaxWordType.KindRewriterPhase(runtime, wordKind)));
+        // marker phase indicating that previous phase has happened in this compilation
+        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new WordKindRewritten()));
         // Remove UnsafeCasts rendered irrelevant by previous phase
         result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new CanonicalizerPhase.Instance(runtime,
                         new Assumptions(GraalOptions.OptAssumptions.getValue()), canonicalizeReads)));
