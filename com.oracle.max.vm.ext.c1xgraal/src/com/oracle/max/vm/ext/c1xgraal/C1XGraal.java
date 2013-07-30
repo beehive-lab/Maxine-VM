@@ -45,13 +45,13 @@ public class C1XGraal implements RuntimeCompiler {
     static boolean FailOverToC1X = true;
     static {
         addFieldOption("-XX:", "FailOverToC1X", C1XGraal.class, "Retry failed Graal compilations with C1X.");
-        addFieldOption("-XX:", "MaxGraalNative", C1XGraal.class, "compile native code with Graal");
+        addFieldOption("-XX:", "GraalForNative", C1XGraal.class, "compile native code with Graal");
     }
 
     /**
      * Temporary option to enable/disable native method compilation by Graal.
      */
-    private static boolean MaxGraalNative = true;
+    private static boolean GraalForNative = true;
 
     private MaxGraal graal;
     private C1X c1x;
@@ -84,7 +84,7 @@ public class C1XGraal implements RuntimeCompiler {
 
     private RuntimeCompiler chooseCompiler(final ClassMethodActor method) {
         String name = vm().compilationBroker.compilerFor(method);
-        if (method.isNative() && !MaxGraalNative) {
+        if (method.isNative() && !GraalForNative) {
             // TODO fix this limitation
             return c1x;
         }
@@ -102,7 +102,7 @@ public class C1XGraal implements RuntimeCompiler {
             }
         } else {
             // unspecified
-            if (MaxineVM.isHosted() && !MaxGraal.MaxGraalForBoot) {
+            if (MaxineVM.isHosted() && !MaxGraal.GraalForBoot) {
                 // not for boot image yet
                 return c1x;
             } else {
