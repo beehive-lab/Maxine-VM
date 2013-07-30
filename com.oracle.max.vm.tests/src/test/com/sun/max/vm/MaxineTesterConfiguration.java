@@ -63,6 +63,7 @@ public class MaxineTesterConfiguration {
     static final List<String> zeeSpecjvm2008Tests = new LinkedList<String>();
     static final List<String> zeeShootoutTests = new LinkedList<String>();
     static final Map<String, String[]> zeeC1XTests = new TreeMap<String, String[]>();
+    static final Map<String, String[]> zeeGraalTests = new TreeMap<String, String[]>();
     static final List<String> zeeMaxvmConfigs = new LinkedList<String>();
 
     static final Map<String, Expectation[]> configResultMap = new HashMap<String, Expectation[]>();
@@ -118,7 +119,6 @@ public class MaxineTesterConfiguration {
         output(Classes.forName("test.output.WeakReferenceTest04"),                  RAND_ALL);
         output(Classes.forName("test.output.GCTest8"),                                       RAND_ALL);
         output(Classes.forName("test.output.CatchOutOfMemory"),                     RAND_ALL);
-        output(Classes.forName("test.output.ManyOpenedFilesTest"),                  FAIL_DARWIN);
 
         vmoutput(findOutputTests("test.vm.output."));
 
@@ -350,6 +350,8 @@ public class MaxineTesterConfiguration {
         c1xTest("opt1", "-J-Dmax.c1x.optlevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt2", "-J-Dmax.c1x.optlevel=2", "^jtt", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt3", "-J-Dmax.c1x.optlevel=3", "^jtt", "^com.sun.c1x", "^com.sun.cri");
+
+        graalTest("default", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.exbytecode.", "!jtt.jni.", "^com.oracle.vm.ext.graal");
     }
 
     private static void output(Class javaClass, Expectation... results) {
@@ -423,6 +425,10 @@ public class MaxineTesterConfiguration {
         zeeC1XTests.put(name, params);
     }
 
+    private static void graalTest(String name, String... params) {
+        zeeGraalTests.put(name, params);
+    }
+
     private static void maxvmConfig(String name, String... params) {
         zeeMaxvmConfigs.add(name);
         maxvmParams.put(name, params);
@@ -443,7 +449,7 @@ public class MaxineTesterConfiguration {
         if (platform.cpu == CPU.SPARCV9) {
             return "jtt-c1xc1x,jtt-c1xt1x,jtt-t1xc1x,jtt-t1xt1x";
         }
-        return "jtt-c1xc1x,jtt-t1xc1x,jtt-c1xt1x,jtt-t1xt1x";
+        return "jtt-c1xc1x,jtt-t1xc1x,jtt-c1xt1x,jtt-t1xt1x,jtt-c1xgraal";
     }
 
     public static List<String> defaultVMOutputImageConfigs() {

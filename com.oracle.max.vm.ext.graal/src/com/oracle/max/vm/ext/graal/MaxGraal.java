@@ -97,14 +97,14 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         }
     }
     static {
-        addFieldOption("-XX:", "MaxGraalForBoot", MaxGraal.class, "use Graal for boot image");
+        addFieldOption("-XX:", "GraalForBoot", MaxGraal.class, "use Graal for boot image");
     }
 
-    public static boolean MaxGraalForBoot;
+    public static boolean GraalForBoot;
 
     private static final String NAME = "Graal";
 
-    // Graal doesn't provide an instance that captures all this additional state needed
+    // GraalCompiler doesn't provide an instance that captures all this additional state needed
     // for a compilation. Instead these values are passed to compileMethod.
     protected MaxRuntime runtime;
     private Backend backend;
@@ -336,11 +336,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         state.archWordKind = false;
         state.bootCompile = false;
         Suites compileSuites;
-        if (methodActor.format("%H.%n").equals("sun.misc.Resource.getBytes")) {
-            System.console();
-        }
-
-        if ((MaxineVM.isHosted() && (MaxGraalForBoot || methodActor.toString().startsWith("jtt.max"))) ||
+        if ((MaxineVM.isHosted() && (GraalForBoot || methodActor.toString().startsWith("jtt.max"))) ||
                         substitutedNativeMethod(methodActor)) {
             // The (temporary) check for MaxGraalForBoot prevents test compilations being treated as boot image code.
             // N.B. Native methods that have been substituted are effectively boot compilations and are not all
@@ -452,6 +448,11 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     @Override
     public boolean matches(String compilerName) {
         return compilerName.equals(NAME);
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
     }
 
     private static class TraceNodeClasses extends FieldIntrospection {

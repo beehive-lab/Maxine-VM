@@ -58,9 +58,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationBroker.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
@@ -71,7 +69,7 @@ import com.sun.max.vm.value.*;
  * This includes access to runtime features such as class and method representations,
  * constant pools, as well as some compiler tuning.
  */
-public class MaxRuntime implements RiRuntime /*GraalRuntime*/ {
+public class MaxRuntime implements RiRuntime {
 
     private static MaxRuntime instance = new MaxRuntime();
 
@@ -83,22 +81,6 @@ public class MaxRuntime implements RiRuntime /*GraalRuntime*/ {
     public static MaxRuntime runtime() {
         return instance;
     }
-
-    /**
-     * Factory method for getting a Graal runtime instance. This method is called via reflection.
-     */
-    /*
-    public static GraalRuntime getGraalRuntime() {
-        if (MaxineVM.isHosted() && vm() == null) {
-            RuntimeCompiler.optimizingCompilerOption.setValue(NullOptCompiler.class.getName());
-            RuntimeCompiler.baselineCompilerOption.setValue(NullBaselineCompiler.class.getName());
-            VMConfigurator.installStandard(BuildLevel.PRODUCT);
-            JavaPrototype.initialize(false);
-        }
-        return runtime();
-    }
-    */
-
 
     private MaxRuntime() {
     }

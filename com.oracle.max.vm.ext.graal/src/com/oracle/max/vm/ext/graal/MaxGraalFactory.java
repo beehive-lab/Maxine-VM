@@ -61,7 +61,7 @@ public class MaxGraalFactory {
     }
 
     /**
-     * Creates a MaxGraal object.
+     * Creates a {@link MaxGraal} instance.
      */
     public static MaxGraal create() {
         return instance.newMaxGraal();

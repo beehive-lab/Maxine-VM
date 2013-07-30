@@ -95,12 +95,15 @@ def gate(args):
     a state that would be accepted for integration into the main repository."""
     
     check = True
+    testArgs = []
    
     i = 0
     while i < len(args):
         arg = args[i]
         if arg == '-nocheck':
             check = False
+        else:
+            testArgs += [arg]
         i += 1
 
     if check:
@@ -137,8 +140,8 @@ def gate(args):
 
     mx.log('Running MaxineTester...')
 
-    test(['-image-configs=java', '-fail-fast'] + args)
-    test(['-image-configs=ss', '-tests=output:Hello+Catch+GC+WeakRef+Final', '-fail-fast'] + args)
+    test(['-image-configs=java', '-fail-fast'] + testArgs)
+    test(['-image-configs=ss', '-tests=output:Hello+Catch+GC+WeakRef+Final', '-fail-fast'] + testArgs)
 
 def hcfdis(args):
     """disassembles HexCodeFiles embedded in text files
@@ -581,6 +584,7 @@ def test(args):
         tee = Tee(f)
         java = mx.java()
         mx.run_java(['-cp', sanitized_classpath(), 'test.com.sun.max.vm.MaxineTester', '-output-dir=maxine-tester',
+                      '-graal-ext-dirs=' + graal_extdirs(),
                       '-refvm=' + java.java, '-refvm-args=' + ' '.join(java.java_args)] + args, out=tee.eat, err=subprocess.STDOUT)
 
 def verify(args):
