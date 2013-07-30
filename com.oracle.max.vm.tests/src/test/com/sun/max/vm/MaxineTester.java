@@ -432,7 +432,11 @@ public class MaxineTester {
     }
 
     private static boolean addTestResult(String testName, String failure) {
-        return addTestResult(testName, failure, MaxineTesterConfiguration.expectedResult(testName, null));
+        return addTestResult(testName, failure, (String) null);
+    }
+
+    private static boolean addTestResult(String testName, String failure, String config) {
+        return addTestResult(testName, failure, MaxineTesterConfiguration.expectedResult(testName, config));
     }
 
     /**
@@ -687,6 +691,10 @@ public class MaxineTester {
         javaCommand.addArgument("-vmdir=" + imageDir);
         javaCommand.addArgument("-trace=1");
         javaCommand.addVMOptions(defaultJVMOptions());
+        if (imageConfig.contains("graal")) {
+            // One of the Graal options depends on -ea, which we assume to be on
+            javaCommand.addVMOptions(new String[] {"-ea"});
+        }
         javaCommand.addClasspath(System.getProperty("java.class.path"));
         javaCommand.addSystemProperty("java.ext.dirs", graalExtDirsOption.getValue());
         final String[] javaArgs = javaCommand.getExecArgs(javaExecutableOption.getValue());
@@ -1415,7 +1423,7 @@ public class MaxineTester {
                         Matcher matcher = JTImageHarness.TEST_BEGIN_LINE.matcher(line);
                         if (matcher.matches()) {
                             if (lastTest != null) {
-                                addTestResult(lastTest, null);
+                                addTestResult(lastTest, null, config);
                             }
                             lastTestNumber = matcher.group(1);
                             lastTest = matcher.group(2);
@@ -1424,7 +1432,7 @@ public class MaxineTester {
 
                         } else if (line.startsWith("Done: ")) {
                             if (lastTest != null) {
-                                addTestResult(lastTest, null);
+                                addTestResult(lastTest, null, config);
                             }
                             lastTest = null;
                             lastTestNumber = null;
@@ -1437,7 +1445,7 @@ public class MaxineTester {
                         } else if (line.contains("failed")) {
                             // found a line with "failed"--probably a failed test
                             if (lastTest != null) {
-                                if (!addTestResult(lastTest, line)) {
+                                if (!addTestResult(lastTest, line, config)) {
                                     // add the line if it was not an expected failure
                                     failedLines.add(line);
                                 }
@@ -1447,7 +1455,7 @@ public class MaxineTester {
                         }
                     }
                     if (lastTest != null) {
-                        addTestResult(lastTest, "never returned a result");
+                        addTestResult(lastTest, "never returned a result", config);
                         failedLines.add("\t" + lastTestNumber + ", " + lastTest + ": crashed or hung the VM");
                     }
                     if (failedLines.isEmpty()) {

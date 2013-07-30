@@ -55,6 +55,8 @@ public class MaxineTesterConfiguration {
     static final Expectation PASS_SOLARIS_AMD64 = new Expectation(OS.SOLARIS, CPU.AMD64, ExpectedResult.PASS);
     static final Expectation PASS_DARWIN_AMD64 = new Expectation(OS.DARWIN, CPU.AMD64, ExpectedResult.PASS);
 
+    static final Expectation JTT_FAIL_GRAAL = new Expectation(null, null, "jtt-c1xgraal", ExpectedResult.FAIL);
+
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
     static final List<Class> zeeVMOutputTests = new LinkedList<Class>();
     static final List<String> zeeDacapo2006Tests = new LinkedList<String>();
@@ -110,8 +112,6 @@ public class MaxineTesterConfiguration {
         // Refine expectation for certain output tests
         output(Classes.forName("test.output.AWTFont"),                  FAIL_DARWIN);
         output(Classes.forName("test.output.GCTest7"),                  RAND_DARWIN);
-//        output(test.output.MegaThreads.class,              RAND_ALL);
-//        output(test.output.SafepointWhileInJava.class,     RAND_LINUX);
         output(Classes.forName("test.output.WeakReferenceTest01"),                  RAND_ALL);
         output(Classes.forName("test.output.WeakReferenceTest02"),                  RAND_ALL);
         output(Classes.forName("test.output.WeakReferenceTest03"),                  RAND_ALL);
@@ -134,15 +134,14 @@ public class MaxineTesterConfiguration {
 
         vmoutput(findOutputTests("test.vm.output."));
 
-//        jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
-//        jtt(jtt.except.BC_invokespecial01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
-//        jtt(jtt.except.BC_invokevirtual02.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
-//        jtt(jtt.optimize.NCE_FlowSensitive02.class, RAND_ALL); // Fails on all but C1X due to missing explicit null pointer checks
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.hotspot.Test6959129.class,     FAIL_ALL);
-//        jtt(jtt.threads.Thread_isInterrupted05.class,     RAND_LINUX);
-//        jtt(jtt.jdk.EnumMap01.class,                      RAND_ALL);
-//        jtt(jtt.jdk.EnumMap02.class,                      RAND_ALL);
+
+        jtt(jtt.except.BC_checkcast5.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.BC_checkcast6.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.StackTrace_CCE_00.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.StackTrace_NPE_00.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.StackTrace_NPE_01.class, JTT_FAIL_GRAAL);
 
         dacapo2006("antlr");
         dacapo2006("bloat");
@@ -276,7 +275,7 @@ public class MaxineTesterConfiguration {
 
         imageConfig("java", "-run=java");
         imageConfig("c1xgraal", opt_c1xgraal);
-        imageConfig("c1xgraal-boot", opt_c1xgraal, "--XX:+MaxGraalForBoot");
+        imageConfig("c1xgraal-boot", opt_c1xgraal, "--XX:+GraalForBoot");
         imageConfig("jtt-t1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCallerT1X);
         imageConfig("jtt-c1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeT1X, "--XX:+FailOverCompilation");
         imageConfig("jtt-t1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCallerT1X, testCalleeT1X, "--XX:+FailOverCompilation");
@@ -526,7 +525,7 @@ public class MaxineTesterConfiguration {
         if (expect != null) {
             final Platform platform = Platform.platform();
             for (Expectation e : expect) {
-                if (e.matches(platform)) {
+                if (e.matches(platform, config)) {
                     return e.expectedResult;
                 }
             }
@@ -544,18 +543,30 @@ public class MaxineTesterConfiguration {
     private static class Expectation {
         private final OS os; // null indicates all OSs
         private final CPU processor; // null indicates all processors
+        private final String config; // null indicates all configs
         private final ExpectedResult expectedResult;
 
         Expectation(OS os, CPU pm, ExpectedResult e) {
+            this(os, pm, null, e);
+        }
+
+        Expectation(OS os, CPU pm, String config, ExpectedResult e) {
             this.os = os;
             this.processor = pm;
+            this.config = config;
             expectedResult = e;
         }
 
         public boolean matches(Platform platform) {
+            return matches(platform, this.config);
+        }
+
+        public boolean matches(Platform platform, String config) {
             if (os == null || os == platform.os) {
                 if (processor == null || processor == platform.cpu) {
-                    return true;
+                    if (this.config == null || this.config.equals(config)) {
+                        return true;
+                    }
                 }
             }
             return false;
@@ -567,6 +578,8 @@ public class MaxineTesterConfiguration {
             buffer.append(os == null ? "ANY" : os.toString());
             buffer.append("/");
             buffer.append(processor == null ? "ANY" : processor.toString());
+            buffer.append("/");
+            buffer.append(config == null ? "ANY" : config);
             buffer.append(" = ");
             buffer.append(expectedResult);
             return buffer.toString();
