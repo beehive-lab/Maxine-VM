@@ -340,32 +340,39 @@ public final class MaxineVM {
         final String pkgName = getPackageName(javaClass);
 
         // Direct part of definition
+        // There are potential deadlock issues when one compiler thread is involved in JDK
+        // class initialization and another is checking annotations on the same class.
+        // Since no JDK classes are HOSTED_ONLY, PLATFORM or JDK_VERSION, we suppress the check immediately
 
-        if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
-            result = true;
-        } else if (pkgName.endsWith(".hosted")) {
-            // May want to replace this 'magic' interpretation of ".hosted"
-            // with a sentinel class (e.g. HOSTED_ONLY_PACKAGE).
-            result = true;
-        } else if (!Platform.platform().isAcceptedBy(javaClass.getAnnotation(PLATFORM.class))) {
-            result = true;
-        } else if (!JDK.thisVersionOrNewer(javaClass.getAnnotation(JDK_VERSION.class))) {
-            result = true;
-        } else {
+        ClassLoader cl = javaClass.getClassLoader();
 
-            // Indirect part of definition, cover all the possible cases
-
-            if (javaClass.isArray()) {
-                final Class< ? > componentClass = javaClass.getComponentType();
-                result = isHostedOnly(componentClass);
+        if (cl != null) {
+            if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
+                result = true;
+            } else if (pkgName.endsWith(".hosted")) {
+                // May want to replace this 'magic' interpretation of ".hosted"
+                // with a sentinel class (e.g. HOSTED_ONLY_PACKAGE).
+                result = true;
+            } else if (!Platform.platform().isAcceptedBy(javaClass.getAnnotation(PLATFORM.class))) {
+                result = true;
+            } else if (!JDK.thisVersionOrNewer(javaClass.getAnnotation(JDK_VERSION.class))) {
+                result = true;
             } else {
-                final Class superClass = javaClass.getSuperclass();
-                if (superClass != null && isHostedOnly(superClass)) {
-                    result = true;
+
+                // Indirect part of definition, cover all the possible cases
+
+                if (javaClass.isArray()) {
+                    final Class< ? > componentClass = javaClass.getComponentType();
+                    result = isHostedOnly(componentClass);
                 } else {
-                    final Class< ? > enclosingClass = getEnclosingClass(javaClass);
-                    if (enclosingClass != null && isHostedOnly(enclosingClass)) {
+                    final Class superClass = javaClass.getSuperclass();
+                    if (superClass != null && isHostedOnly(superClass)) {
                         result = true;
+                    } else {
+                        final Class< ? > enclosingClass = getEnclosingClass(javaClass);
+                        if (enclosingClass != null && isHostedOnly(enclosingClass)) {
+                            result = true;
+                        }
                     }
                 }
             }

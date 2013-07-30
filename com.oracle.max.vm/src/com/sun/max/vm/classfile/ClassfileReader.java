@@ -885,7 +885,7 @@ public final class ClassfileReader {
                 Class accessor = null;
 
                 boolean classHasNeverInlineAnnotation = false;
-                if (MaxineVM.isHosted()) {
+                if (MaxineVM.isHosted() && classLoader != HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER) {
                     for (Annotation annotation : getAnnotations(null, null)) {
                         if (annotation.annotationType() == NEVER_INLINE.class) {
                             classHasNeverInlineAnnotation = true;
@@ -894,7 +894,7 @@ public final class ClassfileReader {
                     }
                 }
 
-                if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
+                if (MaxineVM.isHosted() && classLoader != HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER && runtimeVisibleAnnotationsBytes != null) {
                     for (Annotation annotation : getAnnotations(name, descriptor)) {
                         if (annotation.annotationType() == HOSTED_ONLY.class) {
                             continue nextMethod;
