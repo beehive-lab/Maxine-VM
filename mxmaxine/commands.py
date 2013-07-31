@@ -205,9 +205,8 @@ def image(args):
             name = arg.lstrip('@')
             configs = _configs()
             if not name in configs:
-                mx.log('Invalid image configuration: ' + name)
-                help(['image'])
-                mx.abort()
+                mx.log()
+                mx.abort('Invalid image configuration: ' + name)
             values = configs[name].split(',')
             del args[i]
             args[i:i] = values
@@ -216,9 +215,7 @@ def image(args):
             name = arg.lstrip('-')
             i += 1
             if i == len(args):
-                mx.log('Missing value for ' + arg)
-                help(['image'])
-                mx.abort()
+                mx.abort('Missing value for ' + arg)
             value = args[i]
             systemProps += ['-Dmax.' + name + '=' + value]
         elif arg.startswith('--XX:LogFile='):
@@ -229,8 +226,6 @@ def image(args):
             imageArgs += [arg]
         i += 1
 
-    print os.getcwd()
-    
     mx.run_java(systemProps + ['-cp', sanitized_classpath(), 'com.sun.max.vm.hosted.BootImageGenerator', '-trace=1', '-run=java'] + imageArgs)
 
 def graal_extdirs():
