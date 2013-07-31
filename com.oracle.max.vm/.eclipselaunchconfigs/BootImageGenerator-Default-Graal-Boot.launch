@@ -35,7 +35,7 @@
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 7 [1.7.0_17]"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.vm.hosted.BootImageGenerator"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -opt=C1XGraal -threads=1 --XX:+GraalForBoot --G:+DumpOnError"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -opt=C1XGraal --XX:+GraalForBoot --G:+DumpOnError"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.oracle.max.vm"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xms2G -Xmx3G -Djava.ext.dirs=${workspace_loc}/graal/jdk1.7.0_17/product/jre/lib/ext"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xms2G -Xmx3G -Djava.ext.dirs=${workspace_loc}/graal/jdk1.7.0_25/product/jre/lib/ext"/>
 </launchConfiguration>

@@ -25,7 +25,6 @@ package com.oracle.max.vm.ext.graal.phases;
 import java.util.*;
 
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.debug.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
@@ -57,12 +56,7 @@ public class MaxFoldPhase extends NodeIntrinsificationPhase {
         for (MethodCallTargetNode node : graph.getNodes(MethodCallTargetNode.class)) {
             if (node.isResolved()) {
                 // Always true for snippets
-                try {
-                    tryIntrinsify(node, cleanUpReturnList);
-                    Debug.log("folding %s", node.targetMethod());
-                } catch (Throwable ex) {
-                    System.console();
-                }
+                tryIntrinsify(node, cleanUpReturnList);
             }
         }
 

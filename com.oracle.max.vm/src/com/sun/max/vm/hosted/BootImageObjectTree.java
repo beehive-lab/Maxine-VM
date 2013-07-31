@@ -262,8 +262,9 @@ public final class BootImageObjectTree {
      *                where to save the tree
      * @param links
      *                the traversed links of the graph that describe the tree to be saved
+     * @param doToString TODO
      */
-    public static void saveTree(DataOutputStream dataOutputStream, Set<Map.Entry<Object, Link>> links, Map<Object, Address> allocationMap) throws IOException {
+    public static void saveTree(DataOutputStream dataOutputStream, Set<Map.Entry<Object, Link>> links, Map<Object, Address> allocationMap, boolean doToString) throws IOException {
         final Map<Class, Integer> classPool = new HashMap<Class, Integer>();
         final Map<Object, Integer> objectPool = new IdentityHashMap<Object, Integer>();
         final Class[] classPoolIndices = new Class[links.size()];
@@ -304,11 +305,13 @@ public final class BootImageObjectTree {
             final int address = allocationMap.get(object).toInt();
             final long size = ObjectAccess.size(object).toLong();
             String toString = null;
-//            try {
-//                toString = object.toString();
-//            } catch (Exception e) {
-//                toString = "<error calling toString()>: " + e.toString();
-//            }
+            if (doToString) {
+                try {
+                    toString = object.toString();
+                } catch (Exception e) {
+                    toString = "<error calling toString()>: " + e.toString();
+                }
+            }
 
             dataOutputStream.writeInt(classPool.get(object.getClass()));
             dataOutputStream.writeInt(address);
@@ -316,16 +319,12 @@ public final class BootImageObjectTree {
             if (toString == null) {
                 dataOutputStream.writeByte(TO_STRING_TAG.NULL.ordinal());
             } else {
-                try {
-                final String defaultToString =  + '@' + Integer.toHexString(object.hashCode());
+                final String defaultToString = object.getClass().getName() + '@' + Integer.toHexString(object.hashCode());
                 if (toString.equals(defaultToString)) {
                     dataOutputStream.writeByte(TO_STRING_TAG.DEFAULT.ordinal());
                 } else {
                     dataOutputStream.writeByte(TO_STRING_TAG.CUSTOM.ordinal());
                     dataOutputStream.writeUTF(Strings.truncate(toString, MAX_OBJECT_TOSTRING_LENGTH));
-                }
-                } catch (NullPointerException ex) {
-                    System.console();
                 }
             }
 
@@ -354,7 +353,7 @@ public final class BootImageObjectTree {
     }
 
     /**
-     * Loads a tree that was saved by {@linkplain #saveTree(DataOutputStream, Set, Map) this method}.
+     * Loads a tree that was saved by {@linkplain #saveTree(DataOutputStream, Set, Map, boolean) this method}.
      *
      * @param dataInputStream
      *                a stream containing a saved tree

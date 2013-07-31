@@ -215,6 +215,8 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         } else if (phase == MaxineVM.Phase.SERIALIZING_IMAGE) {
             TraceNodeClasses.scan();
             FieldIntrospection.rescanAllFieldOffsets(new TraceDefaultAndSetMaxineFieldOffset());
+            // The above call causes a crash when using toString/hashCode on Graal node instances
+            BootImageGenerator.treeStringOption.setValue(false);
             // reset the default
             GraalOptions.OptPushThroughPi.setValue(true);
         } else if (phase == MaxineVM.Phase.RUNNING) {
