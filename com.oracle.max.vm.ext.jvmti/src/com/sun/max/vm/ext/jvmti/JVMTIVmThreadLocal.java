@@ -63,6 +63,7 @@ public class JVMTIVmThreadLocal {
      * @param bit
      * @return {@code true} iff the bit is set.
      */
+    @INLINE
     static boolean bitIsSet(Pointer tla, int bit) {
         return JVMTI_STATE.load(tla).and(bit).isNotZero();
     }
@@ -73,6 +74,7 @@ public class JVMTIVmThreadLocal {
      * @param bit
      * @return {@code true} iff the bit is set.
      */
+    @INLINE
     public static boolean bitIsSet(int bit) {
         return bitIsSet(ETLA.load(currentTLA()), bit);
     }
