@@ -210,9 +210,13 @@ public class NativeStubSnippets extends SnippetLowerings {
         return result;
     }
 
-    abstract class NativeStubLowering extends Lowering {
-        protected FixedWithNextNode lastFixedNode;
+    private static class LastFixedNodeThreadLocal extends ThreadLocal<FixedWithNextNode> {
 
+    }
+
+    private static final LastFixedNodeThreadLocal lastFixedNodeTL = new LastFixedNodeThreadLocal();
+
+    abstract class NativeStubLowering extends Lowering {
         protected NativeStubLowering(NativeStubSnippets nativeStubSnippets, String methodName) {
             super(nativeStubSnippets, methodName);
         }
@@ -221,12 +225,22 @@ public class NativeStubSnippets extends SnippetLowerings {
             super();
         }
 
+        protected FixedWithNextNode lastFixedNode() {
+            FixedWithNextNode r = lastFixedNodeTL.get();
+            assert r != null;
+            return r;
+        }
+
+        protected void setLastFixedNode(FixedWithNextNode val) {
+            lastFixedNodeTL.set(val);
+        }
+
 
         /**
          * Inserts a node into the control flow of the graph.
          */
         protected <T extends FixedWithNextNode> T insertNode(T node) {
-            assert lastFixedNode != null;
+            FixedWithNextNode lastFixedNode = lastFixedNode();
             FixedWithNextNode oldNext = (FixedWithNextNode) lastFixedNode.next();
             oldNext.replaceAtPredecessor(node);
             node.setNext(oldNext);
@@ -319,7 +333,7 @@ public class NativeStubSnippets extends SnippetLowerings {
 
             NodeList<ValueNode> callArgs = node.arguments();
 
-            lastFixedNode = (FixedWithNextNode) node.predecessor();
+            setLastFixedNode((FixedWithNextNode) node.predecessor());
 
             // Can't make the actual call via a snippet, so have to do manual graph creation
             List<ValueNode> fcnArgsList = new ArrayList<>(callArgs.size() + 1);
@@ -367,7 +381,7 @@ public class NativeStubSnippets extends SnippetLowerings {
             node.updateCall(function, fcnArgsList, returnKind);
             Stamp returnStamp = returnKind == Kind.Object ? StampFactory.declared(returnType) : StampFactory.forKind(returnKind);
             node.setStateAfter(graph.add(new FrameState(FrameState.INVALID_FRAMESTATE_BCI)));
-            lastFixedNode = node;
+            setLastFixedNode(node);
 
             // Sign extend or zero the upper bits of a return value smaller than an int to
             // preserve the invariant that all such values are represented by an int
