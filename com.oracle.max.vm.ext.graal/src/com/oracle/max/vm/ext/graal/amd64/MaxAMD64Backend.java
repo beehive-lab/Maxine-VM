@@ -37,6 +37,7 @@ import com.oracle.graal.asm.amd64.AMD64Address.*;
 import com.oracle.graal.compiler.gen.*;
 import com.oracle.graal.compiler.amd64.*;
 import com.oracle.graal.compiler.target.*;
+import com.oracle.graal.graph.*;
 import com.oracle.graal.lir.*;
 import com.oracle.graal.lir.amd64.*;
 import com.oracle.graal.lir.amd64.AMD64Move.*;
@@ -45,10 +46,12 @@ import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.phases.*;
+import com.oracle.graal.replacements.nodes.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.nodes.MaxSafepointNode.Op;
 import com.sun.max.platform.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -148,6 +151,35 @@ public class MaxAMD64Backend extends Backend {
         @Override
         public void emitUnwind(Value operand) {
             unimplemented("MaxAMD64LIRGenerator.emitUnwind");
+        }
+
+        /**
+         * There is a problem when building the boot image with frame states containing R14.
+         * We null them out here to prevent an assertion error in {@link DebugInfoBuilder#build}.
+         * These methods will never deoptimize and, even if they did, R14 is guaranteed to be set.
+         *
+         */
+        @Override
+        public LIRFrameState stateForWithExceptionEdge(FrameState state, DeoptimizationReason reason, LabelRef exceptionEdge) {
+            if (MaxineVM.isHosted()) {
+                fixupReadRegisterState(state);
+                FrameState outerState = state.outerFrameState();
+                while (outerState != null) {
+                    fixupReadRegisterState(outerState);
+                    outerState = outerState.outerFrameState();
+                }
+            }
+            return super.stateForWithExceptionEdge(state, reason, exceptionEdge);
+        }
+
+        private static void fixupReadRegisterState(FrameState state) {
+            NodeInputList<ValueNode> values = state.values();
+            for (int i = 0; i < values.size(); i++) {
+                ValueNode valueNode = values.get(i);
+                if (valueNode instanceof ReadRegisterNode) {
+                    values.set(i,  null);
+                }
+            }
         }
 
         @Override

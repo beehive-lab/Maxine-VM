@@ -30,10 +30,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.*;
-
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.debug.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.unsafe.*;
@@ -47,6 +44,7 @@ import com.sun.max.vm.reference.*;
 public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType {
 
     private static MaxResolvedJavaType objectType;
+    private static ClassActor objectClassActor;
     private static MaxResolvedJavaType wrappedWordType;
     private static MaxResolvedJavaType wordType;
     private static MaxResolvedJavaType pointerType;
@@ -54,7 +52,8 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     private static MaxResolvedJavaType codePointerType;
 
     public static void init() {
-        objectType = MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
+        objectClassActor = ClassActor.fromJava(Object.class);
+        objectType = MaxResolvedJavaType.get(objectClassActor);
         pointerType = MaxResolvedJavaType.get(ClassActor.fromJava(Pointer.class));
         referenceType = MaxResolvedJavaType.get(ClassActor.fromJava(Reference.class));
         wordType = MaxResolvedJavaType.get(ClassActor.fromJava(Word.class));
@@ -291,13 +290,24 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public ResolvedJavaMethod resolveMethod(ResolvedJavaMethod method) {
+        // It is not clear whether it is required that method is actually a member of this type.
+        // Certainly, ConditionalElimination.node can call it (as of 8/2/13) when that is not the
+        // case. Currently ClassActor.resolveMethodImpl expects this invariant, so we must
+        // check explicitly. Also if we are dealing with interfaces, the implementation may not be
+        // known and, again, resolveMethodImpl doesn't expect that.
         MaxResolvedJavaMethod maxMethod = (MaxResolvedJavaMethod) method;
-        if (maxMethod.riMethod instanceof InterfaceMethodActor) {
-            ClassActor cma = (ClassActor) riResolvedType();
-            if (cma.allVirtualMethodActors().length == 0) {
-                // implementation not known
-                return null;
+        ClassActor classActor = (ClassActor) riType;
+        MethodActor methodActor = (MethodActor) maxMethod.riMethod;
+        VirtualMethodActor match = null;
+        // name/descriptor are canonical, so identity comparison ok
+        for (VirtualMethodActor vma : classActor.allVirtualMethodActors()) {
+            if (vma.name == methodActor.name && vma.descriptor == methodActor.descriptor) {
+                match = vma;
+                break;
             }
+        }
+        if (match == null) {
+            return null;
         }
         return MaxResolvedJavaMethod.get(riResolvedType().resolveMethodImpl((RiResolvedMethod) maxMethod.riMethod));
     }
