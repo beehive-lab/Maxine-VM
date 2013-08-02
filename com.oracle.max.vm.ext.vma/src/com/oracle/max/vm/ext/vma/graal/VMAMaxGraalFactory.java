@@ -25,7 +25,7 @@ package com.oracle.max.vm.ext.vma.graal;
 import com.oracle.max.vm.ext.graal.*;
 
 
-public class VMAGraalFactory extends MaxGraalFactory {
+public class VMAMaxGraalFactory extends MaxGraalFactory {
     @Override
     protected MaxGraal newMaxGraal() {
         return new VMAMaxGraal();

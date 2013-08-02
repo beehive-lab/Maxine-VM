@@ -67,12 +67,15 @@ public class VMAPhaseGenerator {
     private static void createMap(Method m) {
         String name = m.getName();
         String nodeClassName = null;
+        String unresolvedNodeClassName = null;
         if (name.contains("MethodEntry")) {
             nodeClassName = "StartNode";
         } else if (name.contains("PutField") || name.contains("PutStatic")) {
             nodeClassName = "StoreFieldNode";
+            unresolvedNodeClassName = "UnresolvedStoreFieldNode";
         } else if (name.contains("GetField") || name.contains("GetStatic")) {
             nodeClassName = "LoadFieldNode";
+            unresolvedNodeClassName = "UnresolvedLoadFieldNode";
         } else if (name.contains("ArrayLoad")) {
             nodeClassName = "LoadIndexedNode";
         } else if (name.contains("ArrayStore")) {
@@ -98,19 +101,26 @@ public class VMAPhaseGenerator {
         }
 
         if (nodeClassName != null) {
-            EnumSet<AdviceMode> x = map.get(nodeClassName);
-            if (x == null) {
-                x = EnumSet.noneOf(AdviceMode.class);
-                map.put(nodeClassName, x);
-            }
-            if (name.contains("Before")) {
-                x.add(AdviceMode.BEFORE);
-            } else if (name.contains("After")) {
-                x.add(AdviceMode.AFTER);
-            } else {
-                assert false;
-            }
-
+            addNodeClass(name, nodeClassName);
         }
+        if (unresolvedNodeClassName != null) {
+            addNodeClass(name, unresolvedNodeClassName);
+        }
+    }
+
+    private static void addNodeClass(String name, String nodeClassName) {
+        EnumSet<AdviceMode> x = map.get(nodeClassName);
+        if (x == null) {
+            x = EnumSet.noneOf(AdviceMode.class);
+            map.put(nodeClassName, x);
+        }
+        if (name.contains("Before")) {
+            x.add(AdviceMode.BEFORE);
+        } else if (name.contains("After")) {
+            x.add(AdviceMode.AFTER);
+        } else {
+            assert false;
+        }
+
     }
 }

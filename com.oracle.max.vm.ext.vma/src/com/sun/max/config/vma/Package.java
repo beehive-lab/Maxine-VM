@@ -34,7 +34,7 @@ public class Package extends BootImagePackage {
         super(
             "com.oracle.max.vm.ext.vma.**",
             "com.oracle.max.vm.ext.t1x.vma.*",
-            "com.oracle.max.vm.ext.c1x.vma.*"
+            "com.oracle.max.vm.ext.vma.graal.*"
         );
     }
 

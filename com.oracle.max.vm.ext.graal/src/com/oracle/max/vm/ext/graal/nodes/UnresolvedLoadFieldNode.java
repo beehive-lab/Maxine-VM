@@ -29,8 +29,8 @@ import com.oracle.graal.nodes.*;
 @NodeInfo(nameTemplate = "UnresolvedLoadField#{p#field/s}")
 public class UnresolvedLoadFieldNode extends UnresolvedAccessFieldNode {
 
-    public UnresolvedLoadFieldNode(ValueNode object, JavaField field) {
-        super(object, field);
+    public UnresolvedLoadFieldNode(ValueNode object, JavaField field, boolean isStatic, ValueNode resolvedFieldActor) {
+        super(object, field, isStatic, resolvedFieldActor);
     }
 
 }

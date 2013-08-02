@@ -31,6 +31,7 @@ import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.util.*;
 import com.oracle.max.vm.ext.graal.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.graal.nodes.*;
 
@@ -85,17 +86,19 @@ public class AdvicePhase extends Phase {
 
     static {
         nodeMap.put(NodeClass.get(LoadIndexedNode.class), AdviceMode.BEFORE_AFTER_SET);
-        nodeMap.put(NodeClass.get(StartNode.class), AdviceMode.AFTER_SET);
-        nodeMap.put(NodeClass.get(ReturnNode.class), AdviceMode.BEFORE_SET);
-        nodeMap.put(NodeClass.get(ArrayLengthNode.class), AdviceMode.AFTER_SET);
-        nodeMap.put(NodeClass.get(InvokeWithExceptionNode.class), AdviceMode.BEFORE_SET);
         nodeMap.put(NodeClass.get(NewArrayNode.class), AdviceMode.AFTER_SET);
-        nodeMap.put(NodeClass.get(IfNode.class), AdviceMode.BEFORE_SET);
         nodeMap.put(NodeClass.get(StoreIndexedNode.class), AdviceMode.BEFORE_SET);
-        nodeMap.put(NodeClass.get(LoadFieldNode.class), AdviceMode.BEFORE_SET);
-        nodeMap.put(NodeClass.get(StoreFieldNode.class), AdviceMode.BEFORE_SET);
         nodeMap.put(NodeClass.get(NewMultiArrayNode.class), AdviceMode.AFTER_SET);
         nodeMap.put(NodeClass.get(NewInstanceNode.class), AdviceMode.AFTER_SET);
+        nodeMap.put(NodeClass.get(StartNode.class), AdviceMode.AFTER_SET);
+        nodeMap.put(NodeClass.get(ReturnNode.class), AdviceMode.BEFORE_SET);
+        nodeMap.put(NodeClass.get(InvokeWithExceptionNode.class), AdviceMode.BEFORE_SET);
+        nodeMap.put(NodeClass.get(ArrayLengthNode.class), AdviceMode.AFTER_SET);
+        nodeMap.put(NodeClass.get(IfNode.class), AdviceMode.BEFORE_SET);
+        nodeMap.put(NodeClass.get(UnresolvedLoadFieldNode.class), AdviceMode.BEFORE_SET);
+        nodeMap.put(NodeClass.get(LoadFieldNode.class), AdviceMode.BEFORE_SET);
+        nodeMap.put(NodeClass.get(StoreFieldNode.class), AdviceMode.BEFORE_SET);
+        nodeMap.put(NodeClass.get(UnresolvedStoreFieldNode.class), AdviceMode.BEFORE_SET);
     }
 // END GENERATED CODE
 
