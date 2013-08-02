@@ -24,16 +24,20 @@
 package com.oracle.max.vm.ext.graal;
 
 import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
+import static com.sun.max.vm.type.KindEnum.*;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.debug.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -43,10 +47,20 @@ import com.sun.max.vm.reference.*;
 public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType {
 
     private static MaxResolvedJavaType objectType;
-    private static MaxResolvedJavaType wrappedWord;
+    private static MaxResolvedJavaType wrappedWordType;
     private static MaxResolvedJavaType wordType;
     private static MaxResolvedJavaType pointerType;
     private static MaxResolvedJavaType referenceType;
+    private static MaxResolvedJavaType codePointerType;
+
+    public static void init() {
+        objectType = MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
+        pointerType = MaxResolvedJavaType.get(ClassActor.fromJava(Pointer.class));
+        referenceType = MaxResolvedJavaType.get(ClassActor.fromJava(Reference.class));
+        wordType = MaxResolvedJavaType.get(ClassActor.fromJava(Word.class));
+        codePointerType = MaxResolvedJavaType.get(ClassActor.fromJava(CodePointer.class));
+        wrappedWordType = MaxResolvedJavaType.get(ClassActor.fromJava(WordUtil.WrappedWord.class));
+    }
 
     protected MaxResolvedJavaType(RiResolvedType riResolvedType) {
         super(riResolvedType);
@@ -61,38 +75,18 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     }
 
     public static MaxResolvedJavaType getJavaLangObject() {
-        if (objectType == null) {
-            objectType = MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
-        }
+        assert objectType != null;
         return objectType;
     }
 
     public static MaxResolvedJavaType getPointerType() {
-        if (pointerType == null) {
-            pointerType = MaxResolvedJavaType.get(ClassActor.fromJava(Pointer.class));
-        }
+        assert pointerType != null;
         return pointerType;
     }
 
     public static MaxResolvedJavaType getReferenceType() {
-        if (referenceType == null) {
-            referenceType = MaxResolvedJavaType.get(ClassActor.fromJava(Reference.class));
-        }
+        assert referenceType != null;
         return referenceType;
-    }
-
-    private static MaxResolvedJavaType getWordType() {
-        if (wordType == null) {
-            wordType = MaxResolvedJavaType.get(ClassActor.fromJava(Word.class));
-        }
-        return wordType;
-    }
-
-    private static boolean isWrappedWord(MaxResolvedJavaType type) {
-        if (wrappedWord == null) {
-            wrappedWord = MaxResolvedJavaType.get(ClassActor.fromJava(WordUtil.WrappedWord.class));
-        }
-        return type == wrappedWord;
     }
 
     private RiResolvedType riResolvedType() {
@@ -200,26 +194,77 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     }
 
     @Override
-    public ResolvedJavaType findLeastCommonAncestor(ResolvedJavaType otherType) {
-        // TODO handle Word types completely (not just WrappedWord)
-        if (isWrappedWord(this) || isWrappedWord((MaxResolvedJavaType) otherType)) {
-            return getWordType();
-        }
+    public ResolvedJavaType findLeastCommonAncestor(final ResolvedJavaType otherType) {
+        final MaxResolvedJavaType thisType = this;
+        return findLeastCommonAncestor(thisType, otherType);
+        /*
+        return Debug.scope("MaxResolvedJavaType", new Callable<ResolvedJavaType>() {
+
+            public ResolvedJavaType call() throws Exception {
+                ResolvedJavaType result = findLeastCommonAncestor(thisType, otherType);
+                Debug.log("findLeastCommonAncestor %s, %s -> %s", thisType, otherType, result);
+                return result;
+            }
+
+        });
+        */
+    }
+
+    private static ResolvedJavaType findLeastCommonAncestor(MaxResolvedJavaType thisType, ResolvedJavaType otherTypeA) {
+        MaxResolvedJavaType otherType = (MaxResolvedJavaType) otherTypeA;
+
         if (otherType.isPrimitive()) {
             return null;
-        } else {
-            MaxResolvedJavaType t1 = this;
-            MaxResolvedJavaType t2 = (MaxResolvedJavaType) otherType;
-            while (true) {
-                if (t1.isAssignableFrom(t2)) {
-                    return t1;
-                }
-                if (t2.isAssignableFrom(t1)) {
-                    return t2;
-                }
-                t1 = t1.getSuperType();
-                t2 = t2.getSuperType();
+        }
+
+        if (MaxineVM.isHosted()) {
+            if (thisType == wrappedWordType) {
+                thisType = wordType;
             }
+            if (otherType == wrappedWordType) {
+                otherType = wordType;
+            }
+
+            com.sun.max.vm.type.KindEnum thisKind = ((ClassActor) thisType.riType).kind.asEnum;
+            com.sun.max.vm.type.KindEnum otherKind = ((ClassActor) otherType.riType).kind.asEnum;
+
+            // Word types occupy a parallel universe; they have their own hierarchy but they do not mix with other types
+            if ((thisKind == WORD && otherKind != WORD) || (otherKind == WORD && thisKind != WORD)) {
+                return null;
+            }
+            // Reference and CodePointer types are singletons and do not mix with anything else
+            if (thisType == referenceType || otherType == referenceType) {
+                if (thisType == otherType) {
+                    return thisType;
+                } else {
+                    return null;
+                }
+            }
+            if (thisType == codePointerType || otherType == codePointerType) {
+                if (thisType == otherType) {
+                    return thisType;
+                } else {
+                    return null;
+                }
+            }
+        }
+
+        if (thisType == objectType || otherType == objectType) {
+            return objectType;
+        }
+
+        // now the normal algorithm looking up the class hierarchy, checking assignability
+        MaxResolvedJavaType t1 = thisType;
+        MaxResolvedJavaType t2 = otherType;
+        while (true) {
+            if (t1.isAssignableFrom(t2)) {
+                return t1;
+            }
+            if (t2.isAssignableFrom(t1)) {
+                return t2;
+            }
+            t1 = t1.getSuperType();
+            t2 = t2.getSuperType();
         }
     }
 

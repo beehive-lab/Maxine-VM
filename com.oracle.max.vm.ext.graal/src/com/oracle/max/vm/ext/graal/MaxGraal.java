@@ -35,6 +35,8 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.api.meta.Kind;
 import com.oracle.graal.compiler.*;
 import com.oracle.graal.compiler.target.*;
+import com.oracle.graal.debug.*;
+import com.oracle.graal.debug.internal.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
 import com.oracle.graal.lir.*;
@@ -98,9 +100,15 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     }
     static {
         addFieldOption("-XX:", "GraalForBoot", MaxGraal.class, "use Graal for boot image");
+        addFieldOption("-XX:", "GraalForNative", MaxGraal.class, "compile native code with Graal");
     }
 
     public static boolean GraalForBoot;
+    /**
+     * Temporary option to enable/disable native method compilation by Graal.
+     */
+    public static boolean GraalForNative = true;
+
 
     private static final String NAME = "Graal";
 
@@ -126,6 +134,12 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
      * Customized suites for compiling the boot image.
      */
     private Suites bootSuites;
+
+    /**
+     * To propagate to multiple compiler threads in boot image generation.
+     */
+    @HOSTED_ONLY
+    private DebugConfig hostedDebugConfig;
 
     /**
      * Gets the {@link MaxRuntime} associated with the compiler that is currently active in the current thread.
@@ -215,14 +229,15 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         } else if (phase == MaxineVM.Phase.SERIALIZING_IMAGE) {
             TraceNodeClasses.scan();
             FieldIntrospection.rescanAllFieldOffsets(new TraceDefaultAndSetMaxineFieldOffset());
-            // The above call causes a crash when using toString/hashCode on Graal node instances
+            // The above call causes a crash when using toString/hashCode on Graal node instances,
+            // due to the field offsets having been rewritten.
             BootImageGenerator.treeStringOption.setValue(false);
             // reset the default
             GraalOptions.OptPushThroughPi.setValue(true);
         } else if (phase == MaxineVM.Phase.RUNNING) {
             cache = new MaxGraphCache();
             // Compilations can occur after this, so set up the debug environment and check options.
-            if (MaxGraalOptions.isPresent("Dump") != null) {
+            if (MaxGraalOptions.isPresent("Dump") != null && GraalForNative) {
                 dumpWorkAround();
             }
             // Now we can actually set the Graal options and initialize the Debug environment
@@ -265,7 +280,8 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     private void createGraalCompiler(Phase phase) {
         State state = setMaxGraal();
          // This sets up the debug environment for the boot image build
-        DebugEnvironment.initialize(System.out);
+        DebugEnvironment.initialize(Trace.stream());
+        hostedDebugConfig = DebugScope.getConfig();
         MaxTargetDescription td = new MaxTargetDescription();
         runtime = new MaxRuntime(td);
         backend = new MaxAMD64Backend(runtime, td);
@@ -275,8 +291,9 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         changeInlineLimits();
         // Prevent DeoptimizeNodes since we don't handle them yet
         FixedGuardNode.suppressDeoptimize();
-        // Disable for now as it causes problems in DebugInfo
+        // Unless explicitly set (by a wizard user) suppress some options that cause problems
         if (MaxGraalOptions.isPresent("PartialEscapeAnalysis") == null) {
+            // causes problems in Maxine DebugInfo (doesn't understand virtualized objects)
             GraalOptions.PartialEscapeAnalysis.setValue(false);
         }
         if (MaxGraalOptions.isPresent("OptPushThroughPi") == null) {
@@ -289,15 +306,21 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
              */
             GraalOptions.OptPushThroughPi.setValue(false);
         }
+        if (MaxGraalOptions.isPresent("OptTailDuplication") == null) {
+            // causes a problem with native methods because the NativeFunctionCallNode gets duplicated
+            // from its initial state as the template method. Disabling it completely is overkill
+            // but there is no easy way to disable it selectively at the moment.
+            GraalOptions.OptTailDuplication.setValue(false);
+        }
         // Hacks for Maxine inlining
         InliningPhaseFactory.registerFactory(new MaxHostedInliningPhaseFactory());
-        GraalCompiler.setMaxineHackDisableCE(true);
         JDKInterceptor.resetField("com.oracle.graal.phases.common.InliningPhaseFactory", "instance");
-        JDKInterceptor.resetField("com.oracle.graal.compiler.GraalCompiler", "maxineHackDisableCE");
+        // This suite creation honors the option setting customization made above
         suites = Suites.createDefaultSuites();
         createBootSuites();
         // For snippet creation we need bootCompile==true for inlining of VM methods
         state.bootCompile = true;
+        MaxResolvedJavaType.init();
         replacements = MaxSnippets.initialize(runtime);
         addCustomSnippets(replacements);
         GraalBoot.forceValues();
@@ -351,43 +374,42 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         }
 
         StructuredGraph graph = (StructuredGraph) method.getCompilerStorage().get(Graph.class);
-        Double tailDuplicationProbability = GraalOptions.TailDuplicationProbability.getValue();
         if (graph == null) {
             GraphBuilderPhase graphBuilderPhase = new MaxGraphBuilderPhase(runtime, GraphBuilderConfiguration.getDefault(), optimisticOpts);
             phasePlan.addPhase(PhasePosition.AFTER_PARSING, graphBuilderPhase);
             addCustomPhase(methodActor, phasePlan);
             // Hosted (boot image) compilation is more complex owing to the need to handle the unsafe features of VM programming,
             // requiring more phases to be run, all very similar to what happens in MaxReplacementsImpl.
-            if (state.bootCompile) {
+            if (MaxineVM.isHosted() && state.bootCompile) {
                 // TODO should be done by modifying bootSuites
                 addBootPhases(phasePlan);
+                // need to propagate the Debug configuration if this is a new compiler thread
+                DebugConfig threadDebugConfig = DebugScope.getConfig();
+                if (threadDebugConfig == null) {
+                    DebugScope.getInstance().setConfig(hostedDebugConfig);
+                }
             }
             if (methodActor.compilee().isNative()) {
                 graph = new NativeStubGraphBuilder(methodActor).build();
-                GraalOptions.TailDuplicationProbability.setValue(2.0);
             } else {
                 graph = new StructuredGraph(method);
             }
         }
         CallingConvention cc = CodeUtil.getCallingConvention(runtime, CallingConvention.Type.JavaCallee, method, false);
-        try {
-            do {
-                CompilationResult result = GraalCompiler.compileGraph(graph, cc, method, runtime, replacements, backend, runtime.maxTargetDescription(), cache, phasePlan, optimisticOpts,
-                                new SpeculationLog(), compileSuites, new CompilationResult());
-                Dependencies deps = Dependencies.validateDependencies(MaxAssumptions.toCiAssumptions(methodActor, result.getAssumptions()));
-                if (deps != Dependencies.INVALID) {
-                    MaxTargetMethod maxTargetMethod = GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
-                    if (deps != null) {
-                        Dependencies.registerValidatedTarget(deps, maxTargetMethod);
-                    }
-                    return maxTargetMethod;
+        do {
+            CompilationResult result = GraalCompiler.compileGraph(graph, cc, method, runtime, replacements, backend, runtime.maxTargetDescription(), cache, phasePlan, optimisticOpts,
+                            new SpeculationLog(), compileSuites, new CompilationResult());
+            Dependencies deps = Dependencies.validateDependencies(MaxAssumptions.toCiAssumptions(methodActor, result.getAssumptions()));
+            if (deps != Dependencies.INVALID) {
+                MaxTargetMethod maxTargetMethod = GraalMaxTargetMethod.create(methodActor, MaxCiTargetMethod.create(result), true);
+                if (deps != null) {
+                    Dependencies.registerValidatedTarget(deps, maxTargetMethod);
                 }
-                // Loop back and recompile.
-                graph = new StructuredGraph(method);
-            } while (true);
-        } finally {
-            GraalOptions.TailDuplicationProbability.setValue(tailDuplicationProbability);
-        }
+                return maxTargetMethod;
+            }
+            // Loop back and recompile.
+            graph = new StructuredGraph(method);
+        } while (true);
     }
 
     private static boolean substitutedNativeMethod(ClassMethodActor methodActor) {

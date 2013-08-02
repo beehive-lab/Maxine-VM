@@ -31,8 +31,8 @@ public class UnresolvedStoreFieldNode extends UnresolvedAccessFieldNode implemen
 
     @Input private ValueNode value;
 
-    public UnresolvedStoreFieldNode(ValueNode object, JavaField field, ValueNode value) {
-        super(object, field);
+    public UnresolvedStoreFieldNode(ValueNode object, JavaField field, boolean isStatic, ValueNode resolvedFieldActor, ValueNode value) {
+        super(object, field, isStatic, resolvedFieldActor);
         this.value = value;
     }
 

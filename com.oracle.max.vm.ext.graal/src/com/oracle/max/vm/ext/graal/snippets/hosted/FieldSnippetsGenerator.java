@@ -76,116 +76,17 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
         "        return #UCB#getField#UKIND#(object, offset, isVolatile)#UCA#;\n" +
         "    }\n\n";
 
-    private static final String HOLDER_INIT_GET_FIELD_METHOD =
-        "    @RUNTIME_ENTRY\n" +
-        "    private static #KIND# holderInitAndGetInstanceField#UKIND#(FieldActor f, Object object) {\n" +
-        "        Snippets.makeHolderInitialized(f);\n" +
-        "        return getField#UKIND#(object, f.offset(), f.isVolatile());\n" +
-        "    }\n\n";
-
-    private static final String HOLDER_INIT_GET_STATIC_METHOD =
-        "    @RUNTIME_ENTRY\n" +
-        "    private static #KIND# holderInitAndGetStaticField#UKIND#(FieldActor f) {\n" +
-        "        Snippets.makeHolderInitialized(f);\n" +
-        "        return getField#UKIND#(f.holder().staticTuple(), f.offset(), f.isVolatile());\n" +
-        "    }\n\n";
-
-    private static final String HOLDER_INIT_PUT_FIELD_METHOD =
-        "    @RUNTIME_ENTRY\n" +
-        "    private static void holderInitAndPutInstanceField#UKIND#(FieldActor f, Object object, #KIND# value) {\n" +
-        "        Snippets.makeHolderInitialized(f);\n" +
-        "        putField#UKIND#(object, f.offset(), f.isVolatile(), value);\n" +
-        "    }\n\n";
-
-    private static final String HOLDER_INIT_PUT_STATIC_METHOD =
-        "    @RUNTIME_ENTRY\n" +
-        "    private static void holderInitAndPutStaticField#UKIND#(FieldActor f, #KIND# value) {\n" +
-        "        Snippets.makeHolderInitialized(f);\n" +
-        "        putField#UKIND#(f.holder().staticTuple(), f.offset(), f.isVolatile(), value);\n" +
-        "    }\n\n";
-
-    private static final String RESOLVE_LOAD_FIELD_METHOD =
-         "    @RUNTIME_ENTRY\n" +
-         "    private static #KIND# resolveAndGetInstanceField#UKIND#(ResolutionGuard.InPool guard, Object object) {\n" +
-         "        FieldActor f = Snippets.resolveInstanceFieldForReading(guard);\n" +
-         "        return holderInitAndGetInstanceField#UKIND#(f, object);\n" +
-         "    }\n\n";
-
-    private static final String RESOLVE_LOAD_STATIC_METHOD =
-         "    @RUNTIME_ENTRY\n" +
-         "    private static #KIND# resolveAndGetStaticField#UKIND#(ResolutionGuard.InPool guard) {\n" +
-         "        FieldActor f = Snippets.resolveStaticFieldForReading(guard);\n" +
-         "        return holderInitAndGetStaticField#UKIND#(f);\n" +
-         "    }\n\n";
-
-    private static final String RESOLVE_STORE_FIELD_METHOD =
-         "    @RUNTIME_ENTRY\n" +
-         "    private static void resolveAndPutInstanceField#UKIND#(ResolutionGuard.InPool guard, Object object, #KIND# value) {\n" +
-         "        FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);\n" +
-         "        holderInitAndPutInstanceField#UKIND#(f, object, value);\n" +
-         "    }\n\n";
-
-    private static final String RESOLVE_STORE_STATIC_METHOD =
-         "    @RUNTIME_ENTRY\n" +
-         "    private static void resolveAndPutStaticField#UKIND#(ResolutionGuard.InPool guard, #KIND# value) {\n" +
-         "        FieldActor f = Snippets.resolveStaticFieldForWriting(guard);\n" +
-         "        holderInitAndPutStaticField#UKIND#(f, value);\n" +
-         "    }\n\n";
+    private static final String PUT_UNRESOLVED_FIELD_SNIPPET =
+                    "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
+                    "    private static void putUnresolvedField#UKIND#Snippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor, #KIND# value) {\n" +
+                    "        putField#UKIND#(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile(), value);\n" +
+                    "    }\n\n";
 
     private static final String GET_UNRESOLVED_FIELD_SNIPPET =
-        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static #KIND# resolveAndGet#UMODE#Field#UKIND#Snippet(ResolutionGuard.InPool guard, Object object) {\n" +
-        "        return #UCB#resolveAndGet#UMODE#Field#UKIND#(guard, object)#UCA#;\n" +
-        "    }\n\n";
-
-
-    private static final String PUT_UNRESOLVED_FIELD_SNIPPET =
-        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static void resolveAndPut#UMODE#Field#UKIND#Snippet(ResolutionGuard.InPool guard, Object object, #KIND# value) {\n" +
-        "        resolveAndPut#UMODE#Field#UKIND#(guard, object, value);\n" +
-        "    }\n\n";
-
-
-    private static final String GET_UNRESOLVED_STATIC_SNIPPET =
-        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static #KIND# resolveAndGet#UMODE#Field#UKIND#Snippet(ResolutionGuard.InPool guard) {\n" +
-        "        return #UCB#resolveAndGet#UMODE#Field#UKIND#(guard)#UCA#;\n" +
-        "    }\n\n";
-
-
-    private static final String PUT_UNRESOLVED_STATIC_SNIPPET =
-        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static void resolveAndPut#UMODE#Field#UKIND#Snippet(ResolutionGuard.InPool guard, #KIND# value) {\n" +
-        "        resolveAndPut#UMODE#Field#UKIND#(guard, value);\n" +
-        "    }\n\n";
-
-    private static final String GET_HOLDER_INIT_FIELD_SNIPPET =
-        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static #KIND# holderInitAndGet#UMODE#Field#UKIND#Snippet(FieldActor f, Object object) {\n" +
-        "        return #UCB#holderInitAndGet#UMODE#Field#UKIND#(f, object)#UCA#;\n" +
-        "    }\n\n";
-
-
-    private static final String PUT_HOLDER_INIT_FIELD_SNIPPET =
-        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static void holderInitAndPut#UMODE#Field#UKIND#Snippet(FieldActor f, Object object, #KIND# value) {\n" +
-        "        holderInitAndPut#UMODE#Field#UKIND#(f, object, value);\n" +
-        "    }\n\n";
-
-
-    private static final String GET_HOLDER_INIT_STATIC_SNIPPET =
-        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static #KIND# holderInitAndGet#UMODE#Field#UKIND#Snippet(FieldActor f) {\n" +
-        "        return #UCB#holderInitAndGet#UMODE#Field#UKIND#(f)#UCA#;\n" +
-        "    }\n\n";
-
-
-    private static final String PUT_HOLDER_INIT_STATIC_SNIPPET =
-        "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static void holderInitAndPut#UMODE#Field#UKIND#Snippet(FieldActor f, #KIND# value) {\n" +
-        "        holderInitAndPut#UMODE#Field#UKIND#(f, value);\n" +
-        "    }\n\n";
-
+                    "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
+                    "    private static #KIND# getUnresolvedField#UKIND#Snippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor) {\n" +
+                    "        return #UCB#getField#UKIND#(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile())#UCA#;\n" +
+                    "    }\n\n";
 
     private static final String ADD_SNIPPETS_DECL =
         "    @HOSTED_ONLY\n" +
@@ -194,35 +95,14 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
         "            UnresolvedLoadFieldLowering loadUnresolvedFieldLowering, UnresolvedStoreFieldLowering storeUnresolvedFieldLowering) {\n";
 
     private static final String ADD_LOAD_SNIPPET =
-        "        loadFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"getField#UKIND#Snippet\"));\n";
+        "        loadFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"getField#UKIND#Snippet\"));\n" +
+        "        loadUnresolvedFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"getUnresolvedField#UKIND#Snippet\"));\n";
 
     private static final String ADD_STORE_SNIPPET =
-        "        storeFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"putField#UKIND#Snippet\"));\n";
+        "        storeFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"putField#UKIND#Snippet\"));\n" +
+        "        storeUnresolvedFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"putUnresolvedField#UKIND#Snippet\"));\n";
 
 
-    private static final String ADD_UNRESOLVED_LOAD_SNIPPET =
-        "        loadUnresolvedFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"resolveAndGet#UMODE#Field#UKIND#Snippet\"));\n";
-
-    private static final String ADD_UNRESOLVED_STORE_SNIPPET =
-        "        storeUnresolvedFieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"resolveAndPut#UMODE#Field#UKIND#Snippet\"));\n";
-
-    private static final String ADD_UNRESOLVED_STATIC_LOAD_SNIPPET =
-        "        loadUnresolvedFieldLowering.#MODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"resolveAndGet#UMODE#Field#UKIND#Snippet\"));\n";
-
-    private static final String ADD_UNRESOLVED_STATIC_STORE_SNIPPET =
-        "        storeUnresolvedFieldLowering.#MODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"resolveAndPut#UMODE#Field#UKIND#Snippet\"));\n";
-
-    private static final String ADD_HOLDER_INIT_LOAD_SNIPPET =
-        "        loadUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"holderInitAndGet#UMODE#Field#UKIND#Snippet\"));\n";
-
-    private static final String ADD_HOLDER_INIT_STORE_SNIPPET =
-        "        storeUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"holderInitAndPut#UMODE#Field#UKIND#Snippet\"));\n";
-
-    private static final String ADD_HOLDER_INIT_STATIC_LOAD_SNIPPET =
-        "        loadUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"holderInitAndGet#UMODE#Field#UKIND#Snippet\"));\n";
-
-    private static final String ADD_HOLDER_INIT_STATIC_STORE_SNIPPET =
-        "        storeUnresolvedFieldLowering.initHolder#UMODE#FieldLowering.setSnippet(Kind.#UKIND#, snippet(FieldSnippets.class, \"holderInitAndPut#UMODE#Field#UKIND#Snippet\"));\n";
 
     @Override
     protected void doGenerate() throws IOException {
@@ -234,37 +114,11 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
                 out.print(replaceUCast(replaceKinds(GET_FIELD_SNIPPET, kind), kind));
                 out.print(replaceKinds(PUT_FIELD_SNIPPET, kind));
                 // Unresolved variants
-                out.print(replaceKinds(RESOLVE_LOAD_FIELD_METHOD, kind));
-                out.print(replaceKinds(RESOLVE_LOAD_STATIC_METHOD, kind));
-                out.print(replaceKinds(RESOLVE_STORE_FIELD_METHOD, kind));
-                out.print(replaceKinds(RESOLVE_STORE_STATIC_METHOD, kind));
-
-                out.print(replaceKinds(HOLDER_INIT_GET_FIELD_METHOD, kind));
-                out.print(replaceKinds(HOLDER_INIT_GET_STATIC_METHOD, kind));
-                out.print(replaceKinds(HOLDER_INIT_PUT_FIELD_METHOD, kind));
-                out.print(replaceKinds(HOLDER_INIT_PUT_STATIC_METHOD, kind));
-
-                out.print(replaceModes(replaceUCast(replaceKinds(GET_HOLDER_INIT_FIELD_SNIPPET, kind), kind), "instance"));
-                out.print(replaceModes(replaceUCast(replaceKinds(GET_HOLDER_INIT_STATIC_SNIPPET, kind), kind), "static"));
-                out.print(replaceModes(replaceKinds(PUT_HOLDER_INIT_FIELD_SNIPPET, kind), "instance"));
-                out.print(replaceModes(replaceKinds(PUT_HOLDER_INIT_STATIC_SNIPPET, kind), "static"));
-
-                out.print(replaceModes(replaceUCast(replaceKinds(GET_UNRESOLVED_FIELD_SNIPPET, kind), kind), "instance"));
-                out.print(replaceModes(replaceUCast(replaceKinds(GET_UNRESOLVED_STATIC_SNIPPET, kind), kind), "static"));
-                out.print(replaceModes(replaceKinds(PUT_UNRESOLVED_FIELD_SNIPPET, kind), "instance"));
-                out.print(replaceModes(replaceKinds(PUT_UNRESOLVED_STATIC_SNIPPET, kind), "static"));
+                out.print(replaceUCast(replaceKinds(GET_UNRESOLVED_FIELD_SNIPPET, kind), kind));
+                out.print(replaceKinds(PUT_UNRESOLVED_FIELD_SNIPPET, kind));
 
                 addSnippets.add(replaceKinds(ADD_LOAD_SNIPPET, kind));
                 addSnippets.add(replaceKinds(ADD_STORE_SNIPPET, kind));
-                addSnippets.add(replaceModes(replaceKinds(ADD_UNRESOLVED_LOAD_SNIPPET, kind), "instance"));
-                addSnippets.add(replaceModes(replaceKinds(ADD_UNRESOLVED_STATIC_LOAD_SNIPPET, kind), "static"));
-                addSnippets.add(replaceModes(replaceKinds(ADD_UNRESOLVED_STORE_SNIPPET, kind), "instance"));
-                addSnippets.add(replaceModes(replaceKinds(ADD_UNRESOLVED_STATIC_STORE_SNIPPET, kind), "static"));
-
-                addSnippets.add(replaceModes(replaceKinds(ADD_HOLDER_INIT_LOAD_SNIPPET, kind), "instance"));
-                addSnippets.add(replaceModes(replaceKinds(ADD_HOLDER_INIT_STATIC_LOAD_SNIPPET, kind), "static"));
-                addSnippets.add(replaceModes(replaceKinds(ADD_HOLDER_INIT_STORE_SNIPPET, kind), "instance"));
-                addSnippets.add(replaceModes(replaceKinds(ADD_HOLDER_INIT_STATIC_STORE_SNIPPET, kind), "static"));
             }
         }
         out.print(ADD_SNIPPETS_DECL);

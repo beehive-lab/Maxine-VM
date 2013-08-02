@@ -73,11 +73,17 @@ public class VMASnippetsGenerator {
 
     }
 
-    private static void generateStatic(Method m) {
+    private static void generateStatic(Method method) {
+        String name = method.getName();
         out.printf("    @Snippet(inlining = MaxSnippetInliningPolicy.class)%n");
-        int argCount = generateSignature(INDENT4, "private", new SnippetsMethodNameOverride(m), "static", null);
+        int argCount = generateSignature(INDENT4, "private", new SnippetsMethodNameOverride(method), "static", null);
         out.printf(" {%n");
-        out.printf("        VMAStaticBytecodeAdvice.%s(", m.getName());
+        if (name.contains("PutStatic") || name.contains("GetStatic")) {
+            out.println("        if (arg2 == null) {");
+            out.println("            arg2 = arg3.holder().staticTuple();");
+            out.println("        }");
+        }
+        out.printf("        VMAStaticBytecodeAdvice.%s(", method.getName());
         generateInvokeArgs(argCount);
         out.printf("    }%n%n");
     }

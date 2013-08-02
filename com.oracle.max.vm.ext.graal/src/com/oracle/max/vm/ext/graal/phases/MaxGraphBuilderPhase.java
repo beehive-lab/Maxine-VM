@@ -34,7 +34,7 @@ import com.oracle.max.vm.ext.graal.nodes.*;
 /**
  * A customized graph builder to insert nodes that cause unresolved entities to be resolved explicitly at runtime,
  * as opposed to falling back to deoptimization. This may not be the best approach but it is what
- * C1X/T1X do, so we follow that approach for now.
+ * C1X does, so we follow that approach for now.
  */
 public class MaxGraphBuilderPhase extends GraphBuilderPhase {
 
@@ -44,13 +44,19 @@ public class MaxGraphBuilderPhase extends GraphBuilderPhase {
 
     @Override
     public void handleUnresolvedLoadField(JavaField field, ValueNode receiver) {
-        UnresolvedLoadFieldNode node = new UnresolvedLoadFieldNode(receiver, field);
+        boolean isStatic = receiver == null;
+        ResolveFieldNode resolveFieldNode = new ResolveFieldNode(true, field, isStatic);
+        append(resolveFieldNode);
+        UnresolvedLoadFieldNode node = new UnresolvedLoadFieldNode(receiver, field, isStatic, resolveFieldNode);
         frameState.push(field.getKind().getStackKind(), append(node));
     }
 
     @Override
     protected void handleUnresolvedStoreField(JavaField field, ValueNode value, ValueNode receiver) {
-        UnresolvedStoreFieldNode node = new UnresolvedStoreFieldNode(receiver, field, value);
+        boolean isStatic = receiver == null;
+        ResolveFieldNode resolveFieldNode = new ResolveFieldNode(false, field, isStatic);
+        append(resolveFieldNode);
+        UnresolvedStoreFieldNode node = new UnresolvedStoreFieldNode(receiver, field, isStatic, resolveFieldNode, value);
         append(node);
     }
 

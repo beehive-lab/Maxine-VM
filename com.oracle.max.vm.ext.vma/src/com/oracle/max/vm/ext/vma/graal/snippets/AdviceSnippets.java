@@ -37,9 +37,11 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.Snippet.ConstantParameter;
 import com.oracle.graal.replacements.Snippet.VarargsParameter;
+import com.oracle.graal.replacements.SnippetTemplate.Arguments;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.graal.replacements.nodes.*;
 import com.oracle.max.vm.ext.graal.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.graal.nodes.*;
@@ -54,10 +56,12 @@ import com.sun.max.vm.actor.member.*;
  */
 public class AdviceSnippets extends SnippetLowerings {
     private Map<NodeClass, AdviceLowering> adviceLowerings = new HashMap<NodeClass, AdviceLowering>();
+    private SnippetInfo noopSnippet;
 
     @HOSTED_ONLY
     public AdviceSnippets(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         super(runtime, replacements, targetDescription);
+        noopSnippet = snippet(AdviceSnippets.class, "noopSnippet");
     }
 
     @Override
@@ -66,8 +70,13 @@ public class AdviceSnippets extends SnippetLowerings {
                     Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(AdviceNode.class, new GenericAdviceLowering());
         adviceLowerings.put(NodeClass.get(StartNode.class), new StartAdviceLowering());
-        adviceLowerings.put(NodeClass.get(LoadFieldNode.class), new LoadFieldAdviceLowering());
-        adviceLowerings.put(NodeClass.get(StoreFieldNode.class), new StoreFieldAdviceLowering());
+
+        LoadFieldAdviceLowering loadFieldAdviceLowering = new LoadFieldAdviceLowering();
+        adviceLowerings.put(NodeClass.get(LoadFieldNode.class), loadFieldAdviceLowering);
+        StoreFieldAdviceLowering storeFieldAdviceLowering = new StoreFieldAdviceLowering();
+        adviceLowerings.put(NodeClass.get(StoreFieldNode.class), storeFieldAdviceLowering);
+        adviceLowerings.put(NodeClass.get(UnresolvedLoadFieldNode.class), new UnresolvedLoadFieldAdviceLowering(loadFieldAdviceLowering));
+        adviceLowerings.put(NodeClass.get(UnresolvedStoreFieldNode.class), new UnresolvedStoreFieldAdviceLowering(storeFieldAdviceLowering));
         adviceLowerings.put(NodeClass.get(LoadIndexedNode.class), new LoadIndexedAdviceLowering());
         adviceLowerings.put(NodeClass.get(StoreIndexedNode.class), new StoreIndexedAdviceLowering());
         adviceLowerings.put(NodeClass.get(ReturnNode.class), new ReturnAdviceLowering());
@@ -92,18 +101,13 @@ public class AdviceSnippets extends SnippetLowerings {
     }
 
     private abstract class AdviceLowering {
-        protected SnippetInfo noopSnippet;
-
-        AdviceLowering() {
-            noopSnippet = snippet(AdviceSnippets.class, "noopSnippet");
-        }
 
         abstract Arguments lower(AdviceNode adviceNode, Node advisedNode);
 
         protected String kindTag(Kind kind) {
             String s = null;
             switch (kind) {
-                case Int: case Boolean: case Short: case Char: case Long:
+                case Int: case Boolean: case Byte: case Short: case Char: case Long:
                     s = "Long";
                     break;
                 case Float: case Double: case Object:
@@ -233,7 +237,6 @@ public class AdviceSnippets extends SnippetLowerings {
                 for (AdviceMode adviceMode : AdviceMode.values()) {
                     String adviceModeString = adviceModeString(adviceMode);
                     for (Kind kind : Kind.values()) {
-                        setSnippet(adviceMode, isStatic, kind, noopSnippet);
                         if (adviceMode == AdviceMode.AFTER) {
                             continue;
                         }
@@ -269,8 +272,8 @@ public class AdviceSnippets extends SnippetLowerings {
         Arguments lower(AdviceNode adviceNode, Node node) {
             AccessFieldNode fieldNode = (AccessFieldNode) node;
             FieldActor fieldActor = (FieldActor) MaxResolvedJavaField.getRiResolvedField(fieldNode.field());
-            SnippetInfo snippetInfo = getSnippet(adviceNode.adviceMode(), fieldNode.isStatic(), KindMap.toGraalKind(fieldActor.kind));
-            if (snippetInfo == noopSnippet) {
+            SnippetInfo snippetInfo = getSnippet(adviceNode.adviceMode(), fieldNode.isStatic(), fieldNode.field().getKind());
+            if (snippetInfo == null) {
                 return new Arguments(noopSnippet);
             }
             Arguments args = createArgsAndSetBci(node, snippetInfo);
@@ -292,6 +295,55 @@ public class AdviceSnippets extends SnippetLowerings {
         @Override
         protected void storeFieldArg(AccessFieldNode fieldNode, Arguments args) {
             args.add("arg4", ((StoreFieldNode) fieldNode).value());
+        }
+
+    }
+
+    private class UnresolvedFieldAdviceLowering extends AdviceLowering {
+        private final FieldAdviceLowering fieldAdviceLowering;
+
+        UnresolvedFieldAdviceLowering(FieldAdviceLowering fieldAdviceLowering) {
+            this.fieldAdviceLowering = fieldAdviceLowering;
+        }
+
+        @Override
+        Arguments lower(AdviceNode adviceNode, Node node) {
+            UnresolvedAccessFieldNode fieldNode = (UnresolvedAccessFieldNode) node;
+            SnippetInfo snippetInfo = fieldAdviceLowering.getSnippet(adviceNode.adviceMode(), fieldNode.isStatic(), fieldNode.javaField().getKind());
+            debug(snippetInfo);
+            if (snippetInfo == null) {
+                return new Arguments(noopSnippet);
+            }
+            Arguments args = createArgsAndSetBci(node, snippetInfo);
+            args.add("arg2", fieldNode.isStatic() ? null : fieldNode.object());
+            args.add("arg3", fieldNode.resolvedFieldActor());
+            storeFieldArg(fieldNode, args);
+            return args;
+        }
+
+        @NEVER_INLINE
+        private void debug(SnippetInfo s) {  }
+
+        protected void storeFieldArg(UnresolvedAccessFieldNode fieldNode, Arguments args) {
+        }
+    }
+
+    private class UnresolvedLoadFieldAdviceLowering extends UnresolvedFieldAdviceLowering {
+
+        UnresolvedLoadFieldAdviceLowering(FieldAdviceLowering fieldAdviceLowering) {
+            super(fieldAdviceLowering);
+        }
+
+    }
+
+    private class UnresolvedStoreFieldAdviceLowering extends UnresolvedFieldAdviceLowering {
+        UnresolvedStoreFieldAdviceLowering(FieldAdviceLowering fieldAdviceLowering) {
+            super(fieldAdviceLowering);
+        }
+
+        @Override
+        protected void storeFieldArg(UnresolvedAccessFieldNode fieldNode, Arguments args) {
+            args.add("arg4", ((UnresolvedStoreFieldNode) fieldNode).value());
         }
 
     }
@@ -471,33 +523,53 @@ public class AdviceSnippets extends SnippetLowerings {
 // EDIT AND RUN VMASnippetsGenerator.main() TO MODIFY
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void adviseBeforeIfObjectSnippet(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
+        VMAStaticBytecodeAdvice.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void adviseBeforeIfIntSnippet(int arg1, int arg2, int arg3, int arg4, int arg5) {
+        VMAStaticBytecodeAdvice.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void adviseBeforeGetStaticSnippet(int arg1, Object arg2, FieldActor arg3) {
+        if (arg2 == null) {
+            arg2 = arg3.holder().staticTuple();
+        }
         VMAStaticBytecodeAdvice.adviseBeforeGetStatic(arg1, arg2, arg3);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforePutStaticLongSnippet(int arg1, Object arg2, FieldActor arg3, long arg4) {
+    private static void adviseBeforePutStaticObjectSnippet(int arg1, Object arg2, FieldActor arg3, Object arg4) {
+        if (arg2 == null) {
+            arg2 = arg3.holder().staticTuple();
+        }
         VMAStaticBytecodeAdvice.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void adviseBeforePutStaticFloatSnippet(int arg1, Object arg2, FieldActor arg3, float arg4) {
+        if (arg2 == null) {
+            arg2 = arg3.holder().staticTuple();
+        }
         VMAStaticBytecodeAdvice.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void adviseBeforePutStaticDoubleSnippet(int arg1, Object arg2, FieldActor arg3, double arg4) {
+        if (arg2 == null) {
+            arg2 = arg3.holder().staticTuple();
+        }
         VMAStaticBytecodeAdvice.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforePutStaticObjectSnippet(int arg1, Object arg2, FieldActor arg3, Object arg4) {
+    private static void adviseBeforePutStaticLongSnippet(int arg1, Object arg2, FieldActor arg3, long arg4) {
+        if (arg2 == null) {
+            arg2 = arg3.holder().staticTuple();
+        }
         VMAStaticBytecodeAdvice.adviseBeforePutStatic(arg1, arg2, arg3, arg4);
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforePutFieldFloatSnippet(int arg1, Object arg2, FieldActor arg3, float arg4) {
-        VMAStaticBytecodeAdvice.adviseBeforePutField(arg1, arg2, arg3, arg4);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -506,12 +578,17 @@ public class AdviceSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforePutFieldDoubleSnippet(int arg1, Object arg2, FieldActor arg3, double arg4) {
+    private static void adviseBeforePutFieldFloatSnippet(int arg1, Object arg2, FieldActor arg3, float arg4) {
         VMAStaticBytecodeAdvice.adviseBeforePutField(arg1, arg2, arg3, arg4);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void adviseBeforePutFieldObjectSnippet(int arg1, Object arg2, FieldActor arg3, Object arg4) {
+        VMAStaticBytecodeAdvice.adviseBeforePutField(arg1, arg2, arg3, arg4);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void adviseBeforePutFieldDoubleSnippet(int arg1, Object arg2, FieldActor arg3, double arg4) {
         VMAStaticBytecodeAdvice.adviseBeforePutField(arg1, arg2, arg3, arg4);
     }
 
@@ -533,11 +610,6 @@ public class AdviceSnippets extends SnippetLowerings {
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void adviseBeforeInvokeInterfaceSnippet(int arg1, Object arg2, MethodActor arg3) {
         VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(arg1, arg2, arg3);
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseAfterArrayLengthSnippet(int arg1, Object arg2, int arg3) {
-        VMAStaticBytecodeAdvice.adviseAfterArrayLength(arg1, arg2, arg3);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -566,17 +638,22 @@ public class AdviceSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void adviseAfterLoadSnippet(int arg1, int arg2, Object arg3) {
+        VMAStaticBytecodeAdvice.adviseAfterLoad(arg1, arg2, arg3);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void adviseAfterArrayLoadSnippet(int arg1, Object arg2, int arg3, Object arg4) {
+        VMAStaticBytecodeAdvice.adviseAfterArrayLoad(arg1, arg2, arg3, arg4);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void adviseBeforeLoadSnippet(int arg1, int arg2) {
         VMAStaticBytecodeAdvice.adviseBeforeLoad(arg1, arg2);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforeStoreSnippet(int arg1, int arg2, float arg3) {
-        VMAStaticBytecodeAdvice.adviseBeforeStore(arg1, arg2, arg3);
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforeStoreSnippet(int arg1, int arg2, double arg3) {
+    private static void adviseBeforeStoreSnippet(int arg1, int arg2, long arg3) {
         VMAStaticBytecodeAdvice.adviseBeforeStore(arg1, arg2, arg3);
     }
 
@@ -586,18 +663,13 @@ public class AdviceSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforeStoreSnippet(int arg1, int arg2, long arg3) {
+    private static void adviseBeforeStoreSnippet(int arg1, int arg2, double arg3) {
         VMAStaticBytecodeAdvice.adviseBeforeStore(arg1, arg2, arg3);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforeConstLoadSnippet(int arg1, float arg2) {
-        VMAStaticBytecodeAdvice.adviseBeforeConstLoad(arg1, arg2);
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforeConstLoadSnippet(int arg1, Object arg2) {
-        VMAStaticBytecodeAdvice.adviseBeforeConstLoad(arg1, arg2);
+    private static void adviseBeforeStoreSnippet(int arg1, int arg2, float arg3) {
+        VMAStaticBytecodeAdvice.adviseBeforeStore(arg1, arg2, arg3);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -607,6 +679,16 @@ public class AdviceSnippets extends SnippetLowerings {
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void adviseBeforeConstLoadSnippet(int arg1, long arg2) {
+        VMAStaticBytecodeAdvice.adviseBeforeConstLoad(arg1, arg2);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void adviseBeforeConstLoadSnippet(int arg1, Object arg2) {
+        VMAStaticBytecodeAdvice.adviseBeforeConstLoad(arg1, arg2);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void adviseBeforeConstLoadSnippet(int arg1, float arg2) {
         VMAStaticBytecodeAdvice.adviseBeforeConstLoad(arg1, arg2);
     }
 
@@ -621,11 +703,6 @@ public class AdviceSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforeArrayStoreLongSnippet(int arg1, Object arg2, int arg3, long arg4) {
-        VMAStaticBytecodeAdvice.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void adviseBeforeArrayStoreDoubleSnippet(int arg1, Object arg2, int arg3, double arg4) {
         VMAStaticBytecodeAdvice.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
     }
@@ -636,12 +713,17 @@ public class AdviceSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void adviseBeforeArrayStoreLongSnippet(int arg1, Object arg2, int arg3, long arg4) {
+        VMAStaticBytecodeAdvice.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void adviseBeforeStackAdjustSnippet(int arg1, int arg2) {
         VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(arg1, arg2);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforeOperationSnippet(int arg1, int arg2, long arg3, long arg4) {
+    private static void adviseBeforeOperationSnippet(int arg1, int arg2, double arg3, double arg4) {
         VMAStaticBytecodeAdvice.adviseBeforeOperation(arg1, arg2, arg3, arg4);
     }
 
@@ -651,7 +733,7 @@ public class AdviceSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforeOperationSnippet(int arg1, int arg2, double arg3, double arg4) {
+    private static void adviseBeforeOperationSnippet(int arg1, int arg2, long arg3, long arg4) {
         VMAStaticBytecodeAdvice.adviseBeforeOperation(arg1, arg2, arg3, arg4);
     }
 
@@ -706,16 +788,6 @@ public class AdviceSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseAfterLoadSnippet(int arg1, int arg2, Object arg3) {
-        VMAStaticBytecodeAdvice.adviseAfterLoad(arg1, arg2, arg3);
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseAfterArrayLoadSnippet(int arg1, Object arg2, int arg3, Object arg4) {
-        VMAStaticBytecodeAdvice.adviseAfterArrayLoad(arg1, arg2, arg3, arg4);
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void adviseAfterNewSnippet(int arg1, Object arg2) {
         VMAStaticBytecodeAdvice.adviseAfterNew(arg1, arg2);
     }
@@ -726,18 +798,13 @@ public class AdviceSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void adviseAfterArrayLengthSnippet(int arg1, Object arg2, int arg3) {
+        VMAStaticBytecodeAdvice.adviseAfterArrayLength(arg1, arg2, arg3);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void adviseAfterMethodEntrySnippet(int arg1, Object arg2, MethodActor arg3) {
         VMAStaticBytecodeAdvice.adviseAfterMethodEntry(arg1, arg2, arg3);
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforeIfObjectSnippet(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
-        VMAStaticBytecodeAdvice.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void adviseBeforeIfIntSnippet(int arg1, int arg2, int arg3, int arg4, int arg5) {
-        VMAStaticBytecodeAdvice.adviseBeforeIf(arg1, arg2, arg3, arg4, arg5);
     }
 
 // END GENERATED CODE

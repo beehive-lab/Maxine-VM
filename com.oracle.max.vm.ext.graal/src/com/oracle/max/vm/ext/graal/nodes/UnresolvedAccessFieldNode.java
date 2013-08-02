@@ -31,21 +31,35 @@ import com.oracle.graal.nodes.type.*;
 public abstract class UnresolvedAccessFieldNode extends FixedWithNextNode implements Lowerable {
 
     @Input private ValueNode object;
-    protected final JavaField field;
+    @Input private ValueNode resolvedFieldActor;
 
-    protected UnresolvedAccessFieldNode(ValueNode object, JavaField field) {
+    protected final JavaField field;
+    protected final boolean isStatic;
+
+    protected UnresolvedAccessFieldNode(ValueNode object, JavaField field, boolean isStatic, ValueNode resolvedFieldActor) {
         super(StampFactory.forKind(field.getKind()));
         this.field = field;
         this.object = object;
+        this.isStatic = isStatic;
+        this.resolvedFieldActor = resolvedFieldActor;
     }
 
     public ValueNode object() {
         return object;
     }
 
-    public JavaField field() {
+    public JavaField javaField() {
         return field;
     }
+
+    public boolean isStatic() {
+        return isStatic;
+    }
+
+    public ValueNode resolvedFieldActor()  {
+        return resolvedFieldActor;
+    }
+
 
     @Override
     public void lower(LoweringTool tool, LoweringType loweringType) {

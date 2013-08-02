@@ -35,14 +35,26 @@ import com.oracle.graal.nodes.type.*;
 public class ResolveFieldNode extends FixedWithNextNode implements Lowerable {
 
     private JavaField javaField;
+    private boolean load;
+    private boolean isStatic;
 
-    public ResolveFieldNode(JavaField javaField) {
+    public ResolveFieldNode(boolean load, JavaField javaField, boolean isStatic) {
         super(StampFactory.forKind(Kind.Object));
+        this.load = load;
         this.javaField = javaField;
+        this.isStatic = isStatic;
     }
 
     public JavaField javaField() {
         return javaField;
+    }
+
+    public boolean isLoad() {
+        return load;
+    }
+
+    public boolean isStatic() {
+        return isStatic;
     }
 
     public void lower(LoweringTool tool, LoweringType loweringType) {
