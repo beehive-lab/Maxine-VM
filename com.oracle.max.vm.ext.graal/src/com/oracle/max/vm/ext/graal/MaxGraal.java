@@ -224,7 +224,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         if (phase == MaxineVM.Phase.HOSTED_COMPILING) {
             MaxGraalOptions.initialize(phase);
             createGraalCompiler(phase);
-            forceJDKSubstitutedNatives();
+            forceJDKSubstitutedMethods();
             CompiledPrototype.registerNeedsCompilationCallback(new NoSnippetCompilation());
         } else if (phase == MaxineVM.Phase.SERIALIZING_IMAGE) {
             TraceNodeClasses.scan();
@@ -328,7 +328,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     /**
      * Create the custom suites for boot image compilation.
      * We could do this with a custom {@link CompilerConfiguration} but that involves jar files
-     * the {@link ServiceLoader} which doesn't fit the Maxine build model well.
+     * using the {@link ServiceLoader} which doesn't fit the Maxine build model well.
      */
     @HOSTED_ONLY
     private void createBootSuites() {
@@ -360,15 +360,13 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         state.archWordKind = false;
         state.bootCompile = false;
         Suites compileSuites;
-        if ((MaxineVM.isHosted() && (GraalForBoot || methodActor.toString().startsWith("jtt.max"))) ||
-                        substitutedNativeMethod(methodActor)) {
-            // The (temporary) check for MaxGraalForBoot prevents test compilations being treated as boot image code.
-            // N.B. Native methods that have been substituted are effectively boot compilations and are not all
-            // compiled into the boot image (perhaps they should be).
+        if (MaxineVM.isHosted() && (GraalForBoot || methodActor.toString().startsWith("jtt.max"))) {
+            // The (temporary) check for GraalForBoot prevents test compilations being treated as boot image code.
             compileSuites = bootSuites;
             state.bootCompile = true;
             state.methodActor = methodActor;
         } else {
+            assert !substitutedMethod(methodActor);
             compileSuites = suites;
         }
 
@@ -411,8 +409,8 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         } while (true);
     }
 
-    private static boolean substitutedNativeMethod(ClassMethodActor methodActor) {
-        return methodActor.isNative() && methodActor.compilee() != methodActor;
+    private static boolean substitutedMethod(ClassMethodActor methodActor) {
+        return methodActor.compilee() != methodActor;
     }
 
     /**
@@ -496,25 +494,27 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     }
 
     /**
-     * With Graal it is not currently possible to compile code at runtime that uses Maxine annotations.
-     * Not all the substituted native methods in the JDK are compiled into the boot image because they
+     * With Graal it is not currently possible to compile code at runtime that uses Maxine annotations,
+     * as the spedcial boot compilations are not enabled (they could be at additional compile time cost).
+     * Not all the substituted methods in the JDK are compiled into the boot image because they
      * are not used by boot image code (e.g. several in sun.misc.Unsafe). So we force them in here.
      * (C1X's inlining is such that it "gets away" with not interpreting the Maxine annotations.)
      *
      */
-    private void forceJDKSubstitutedNatives() {
+    private void forceJDKSubstitutedMethods() {
         for (ClassActor ca : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
-            forceJDKSubstitutedNatives(ca.toJava());
+            forceJDKSubstitutedMethods(ca.toJava());
         }
     }
 
-    private void forceJDKSubstitutedNatives(Class<?> klass) {
+    private void forceJDKSubstitutedMethods(Class< ? > klass) {
         for (Method m : klass.getDeclaredMethods()) {
-            if (Modifier.isNative(m.getModifiers())) {
-                ClassMethodActor methodActor = ClassMethodActor.fromJava(m);
-                ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(methodActor);
+            MethodActor methodActor = MethodActor.fromJava(m);
+            if (methodActor instanceof ClassMethodActor) {
+                ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
+                ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(classMethodActor);
                 if (substitute != null) {
-                    CompiledPrototype.registerVMEntryPoint(methodActor);
+                    CompiledPrototype.registerVMEntryPoint(classMethodActor);
                 }
             }
         }

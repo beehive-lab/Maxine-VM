@@ -22,7 +22,6 @@
  */
 package com.oracle.max.vm.ext.graal.snippets;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.graal.api.code.*;
