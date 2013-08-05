@@ -252,7 +252,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
      * which will cause native stubs in the JDK network library to be created and compiled, which will
      * try to open the network printer (irrespective of the {@code -G:MethodFilter} setting)...
      * So we check if the option is set and, if so, open a socket to force the stub compilations before
-     * initializing the DebugEnvironment. We actually dump a dummy graph to keep IGV happy.
+     * initializing the DebugEnvironment.
      */
     private static void dumpWorkAround() {
         try {
@@ -260,9 +260,8 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
             VMStringOption hostOption = (VMStringOption) MaxGraalOptions.isPresent("PrintIdealGraphAddress");
             String host = hostOption == null ? GraalOptions.PrintIdealGraphAddress.getValue() : hostOption.getValue();
             VMIntOption portOption = (VMIntOption) MaxGraalOptions.isPresent("PrintIdealGraphPort");
-            int port = portOption == null ? GraalOptions.PrintIdealGraphPort.getValue() : portOption.getValue();
+            int port = portOption == null ? GraalOptions.PrintBinaryGraphPort.getValue() : portOption.getValue();
             BinaryGraphPrinter printer = new BinaryGraphPrinter(SocketChannel.open(new InetSocketAddress(host, port)));
-            printer.print(MaxMiscLowerings.dummyGraph(), "dummy", null);
             printer.close();
         } catch (Exception ex) {
         }

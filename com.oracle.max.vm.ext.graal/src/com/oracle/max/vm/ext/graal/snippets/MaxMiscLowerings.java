@@ -55,24 +55,6 @@ public class MaxMiscLowerings extends SnippetLowerings {
         lowerings.put(DeoptimizeNode.class, new DeoptimizeLowering());
     }
 
-    @Override
-    protected void snippetGraph(Method m, StructuredGraph graph) {
-        if (m.getName().equals("dummy")) {
-            dummyGraph = graph;
-        }
-    }
-
-    private static StructuredGraph dummyGraph;
-
-    public static StructuredGraph dummyGraph() {
-        return dummyGraph;
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void dummy() {
-
-    }
-
     protected class DeoptimizeLowering extends Lowering implements LoweringProvider<DeoptimizeNode> {
 
         @Override
