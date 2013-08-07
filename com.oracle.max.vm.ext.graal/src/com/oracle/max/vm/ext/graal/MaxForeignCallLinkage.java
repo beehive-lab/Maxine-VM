@@ -49,7 +49,8 @@ public class MaxForeignCallLinkage implements ForeignCallLinkage {
     }
 
     private final MaxForeignCallDescriptor descriptor;
-    private final CallingConvention callingConvention;
+    private final CallingConvention outGoingCallingConvention;
+    private final CallingConvention incomingCallingConvention;
     private final LocationIdentity[] killedLocations;
     private final RegisterEffect effect;
     private final Transition transition;
@@ -72,13 +73,10 @@ public class MaxForeignCallLinkage implements ForeignCallLinkage {
             newArgTypes[0] = MaxResolvedJavaType.get(ClassActor.fromJava(Object.class));
             argTypes = newArgTypes;
         }
-        this.callingConvention = registerConfig.getCallingConvention(CallingConvention.Type.JavaCall, resType, argTypes,
+        this.outGoingCallingConvention = registerConfig.getCallingConvention(CallingConvention.Type.JavaCall, resType, argTypes,
                         MaxForeignCallsMap.runtime.getTarget(), false);
-    }
-
-    @Override
-    public CallingConvention getCallingConvention() {
-        return callingConvention;
+        this.incomingCallingConvention = registerConfig.getCallingConvention(CallingConvention.Type.JavaCallee, resType, argTypes,
+                        MaxForeignCallsMap.runtime.getTarget(), false);
     }
 
     @Override
@@ -124,6 +122,14 @@ public class MaxForeignCallLinkage implements ForeignCallLinkage {
      */
     public boolean canDeoptimize() {
         return transition != Transition.LEAF;
+    }
+
+    public CallingConvention getOutgoingCallingConvention() {
+        return outGoingCallingConvention;
+    }
+
+    public CallingConvention getIncomingCallingConvention() {
+        return incomingCallingConvention;
     }
 
 }

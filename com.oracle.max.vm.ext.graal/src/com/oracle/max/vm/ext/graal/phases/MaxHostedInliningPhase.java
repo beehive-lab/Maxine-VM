@@ -22,14 +22,9 @@
  */
 package com.oracle.max.vm.ext.graal.phases;
 
-import java.util.*;
-
-import com.oracle.graal.api.code.*;
-import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.common.*;
 import com.oracle.graal.phases.common.InliningUtil.*;
 import com.oracle.max.vm.ext.graal.*;
@@ -50,12 +45,12 @@ public class MaxHostedInliningPhase extends InliningPhase {
 
     private static class MaxGreedyInliningPolicy extends GreedyInliningPolicy {
 
-        public MaxGreedyInliningPolicy(Replacements replacements, Map<Invoke, Double> hints) {
-            super(replacements, hints);
+        public MaxGreedyInliningPolicy() {
+            super(null);
         }
 
         @Override
-        public boolean isWorthInlining(InlineInfo info, int inliningDepth, double probability, double relevance, boolean fullyProcessed) {
+        public boolean isWorthInlining(Replacements replacements, InlineInfo info, int inliningDepth, double probability, double relevance, boolean fullyProcessed) {
             CallTargetNode callTargetNode = info.invoke().callTarget();
             if (callTargetNode instanceof MethodCallTargetNode) {
                 MethodCallTargetNode methodCallTargetNode = (MethodCallTargetNode) callTargetNode;
@@ -73,13 +68,12 @@ public class MaxHostedInliningPhase extends InliningPhase {
                     }
                 }
             }
-            return super.isWorthInlining(info, inliningDepth, probability, relevance, fullyProcessed);
+            return super.isWorthInlining(replacements, info, inliningDepth, probability, relevance, fullyProcessed);
         }
     }
 
-    MaxHostedInliningPhase(MetaAccessProvider runtime,  Map<Invoke, Double> hints, Replacements replacements, Assumptions assumptions,
-                    GraphCache cache, PhasePlan plan, OptimisticOptimizations optimisticOpts) {
-        super(runtime, replacements, assumptions, cache, plan, optimisticOpts, hints, new MaxGreedyInliningPolicy(replacements, hints));
+    public MaxHostedInliningPhase() {
+        super(new MaxGreedyInliningPolicy());
     }
 
 }

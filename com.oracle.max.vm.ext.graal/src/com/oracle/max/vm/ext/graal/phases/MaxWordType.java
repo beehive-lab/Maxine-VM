@@ -32,6 +32,8 @@ import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.nodes.util.*;
+import com.oracle.graal.phases.*;
+import com.oracle.graal.phases.tiers.*;
 import com.oracle.graal.phases.util.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
@@ -40,49 +42,16 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.reference.*;
 
 
 public class MaxWordType {
 
-    private static ResolvedJavaType wordBaseType;
-    private static ResolvedJavaType codePointerType;
-    private static ResolvedJavaType referenceType;
-    private static ResolvedJavaType hubType;
-    private static ResolvedJavaType wrappedWordType;
-
-    public static abstract class Phase extends com.oracle.graal.phases.Phase {
-
-        protected final Kind wordKind;
-        protected MetaAccessProvider metaAccess;
-
-        public Phase(MetaAccessProvider metaAccess, Kind wordKind) {
-            this.wordKind = wordKind;
-            this.metaAccess = metaAccess;
-            initializeTypes();
-        }
-
-        private void initializeTypes() {
-            if (wordBaseType == null) {
-                wordBaseType = metaAccess.lookupJavaType(Word.class);
-                referenceType = metaAccess.lookupJavaType(Reference.class);
-                hubType = metaAccess.lookupJavaType(Hub.class);
-                codePointerType = metaAccess.lookupJavaType(CodePointer.class);
-                wrappedWordType = metaAccess.lookupJavaType(WordUtil.WrappedWord.class);
-            }
-        }
-    }
-
-    /**
+   /**
      * Sloppy programming an result in an "==" on {@code Word} types, which creates an {@link ObjectEqualsNode}.
      * If we rewrite the arguments, the node will then not verify. We could convert the node in {@link KindRewritePhase}, but
      * we'd prefer to force the code to be cleaned up.
      */
-    public static class CheckWordObjectEqualsPhase extends Phase {
-        public CheckWordObjectEqualsPhase(MetaAccessProvider metaAccess, Kind wordKind) {
-            super(metaAccess, wordKind);
-        }
-
+    public static class CheckWordObjectEqualsPhase extends com.oracle.graal.phases.Phase {
         @Override
         protected void run(StructuredGraph graph) {
             for (Node n : GraphOrder.forwardGraph(graph)) {
@@ -103,23 +72,20 @@ public class MaxWordType {
      * {@link PhiNode} instances that self-refer but otherwise have Word values are a problem as {@link PhiNode#inferPhiStamp()}
      * includes itself in the computation, causing a {@link Kind} mismatch, so they have to be treated specially.
      */
-    public static class KindRewriterPhase extends Phase {
-        public KindRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
-            super(metaAccess, wordKind);
-        }
+    public static class KindRewriterPhase extends BasePhase<PhaseContext> {
 
         @Override
-        protected void run(StructuredGraph graph) {
+        protected void run(StructuredGraph graph, PhaseContext context) {
             for (Node n : GraphOrder.forwardGraph(graph)) {
                 if (n instanceof ValueNode) {
                     ValueNode vn = (ValueNode) n;
                     if (isWord(vn)) {
-                        changeToWord(vn);
+                        changeToWord(vn, context);
                         for (Node usage : vn.usages()) {
                             if (usage instanceof PhiNode) {
                                 PhiNode pn = (PhiNode) usage;
                                 if (pn.stamp().kind() == Kind.Object && ((ObjectStamp) pn.stamp()).type() == null) {
-                                    pn.setStamp(StampFactory.forKind(wordKind));
+                                    pn.setStamp(StampFactory.forKind(MaxGraal.runtime().maxTargetDescription().wordKind));
                                 }
                             }
                         }
@@ -128,7 +94,7 @@ public class MaxWordType {
             }
         }
 
-        private void changeToWord(ValueNode valueNode) {
+        private void changeToWord(ValueNode valueNode, PhaseContext context) {
             if (valueNode.isConstant() && valueNode.asConstant().getKind() == Kind.Object) {
                 StructuredGraph graph = valueNode.graph();
                 ConstantNode constantNode = (ConstantNode) valueNode;
@@ -141,9 +107,9 @@ public class MaxWordType {
                     assert MaxineVM.isHosted();
                     constant = Constant.forLong(((Word) asObject).value);
                 }
-                graph.replaceFloating(constantNode, ConstantNode.forConstant(constant, metaAccess, graph));
+                graph.replaceFloating(constantNode, ConstantNode.forConstant(constant, context.getRuntime(), graph));
             } else {
-                valueNode.setStamp(StampFactory.forKind(wordKind));
+                valueNode.setStamp(StampFactory.forKind(MaxGraal.runtime().maxTargetDescription().wordKind));
             }
         }
 
@@ -168,12 +134,11 @@ public class MaxWordType {
          */
         Node invokePredecessor;
 
-        public MaxNullCheckRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
-            this(metaAccess, wordKind, null);
+        public MaxNullCheckRewriterPhase() {
+
         }
 
-        public MaxNullCheckRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind, Node invokePredecessor) {
-            super(metaAccess, wordKind);
+        public MaxNullCheckRewriterPhase(Node invokePredecessor) {
             this.invokePredecessor = invokePredecessor;
         }
 
@@ -239,12 +204,12 @@ public class MaxWordType {
         private boolean canRemove(ValueNode object) {
             ResolvedJavaType objectType = object.objectStamp().type();
             // Check for a Word object, a Reference object, or a Hub or a nonNull object (can arise from runtime call rewrites)
-            if (object.objectStamp().nonNull() || (objectType != null && (isWordOrReference(objectType) || hubType.isAssignableFrom(objectType)))) {
+            if (object.objectStamp().nonNull() || (objectType != null && (isWordOrReference(objectType) || MaxResolvedJavaType.getHubType().isAssignableFrom(objectType)))) {
                 return true;
             } else if (object instanceof LoadFieldNode && ((LoadFieldNode) object).object() != null) {
                 // field loads from Hub objects are guaranteed non-null
                 ResolvedJavaType fieldObjectType = ((LoadFieldNode) object).object().objectStamp().type();
-                return fieldObjectType ==  null ? false : hubType.isAssignableFrom(fieldObjectType);
+                return fieldObjectType ==  null ? false : MaxResolvedJavaType.getHubType().isAssignableFrom(fieldObjectType);
             } else if (isWordPhiReally(object)) {
                 return true;
             } else {
@@ -303,9 +268,6 @@ public class MaxWordType {
      * cause problems with GC refmaps in the LIR stage.
      */
     public static class MaxUnsafeAccessRewriterPhase extends Phase {
-        public MaxUnsafeAccessRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
-            super(metaAccess, wordKind);
-        }
 
         @Override
         protected void run(StructuredGraph graph) {
@@ -315,7 +277,7 @@ public class MaxWordType {
                     if (object instanceof MaxUnsafeCastNode && object.kind() == Kind.Object) {
                         MaxUnsafeCastNode mn = (MaxUnsafeCastNode) object;
                         ObjectStamp stamp = mn.objectStamp();
-                        if (wordBaseType.isAssignableFrom(stamp.type())) {
+                        if (MaxResolvedJavaType.getWordType().isAssignableFrom(stamp.type())) {
                             ValueNode endChain = findEndChainOfMaxUnsafeCastNode(mn);
                             if (endChain.kind() == Kind.Object && endChain.objectStamp().type() == MaxResolvedJavaType.getJavaLangObject()) {
                                 deleteChain(graph, mn, endChain);
@@ -348,11 +310,7 @@ public class MaxWordType {
      * Ensures that all non-final methods on {@link Word} subclasses are treated as final (aka {@link InvokeKind.Special}),
      * to ensure that they are inlined by {@link SnippetInstaller}.
      */
-    public static class MakeWordFinalRewriterPhase extends Phase {
-
-        public MakeWordFinalRewriterPhase(MetaAccessProvider metaAccess, Kind wordKind) {
-            super(metaAccess, wordKind);
-        }
+    public static class MakeWordFinalRewriterPhase extends com.oracle.graal.phases.Phase {
 
         @Override
         protected void run(StructuredGraph graph) {
@@ -371,7 +329,7 @@ public class MaxWordType {
         }
         if (node.kind() == Kind.Object && node.objectStamp().type() != null) {
             ResolvedJavaType type = node.objectStamp().type();
-            if (node instanceof ConstantNode && type == wrappedWordType) {
+            if (node instanceof ConstantNode && type == MaxResolvedJavaType.getWrappedWordType()) {
                 return true;
             } else {
                 return isMaxineWordType(type);
@@ -398,7 +356,9 @@ public class MaxWordType {
     }
 
     public static boolean isWordOrReference(ResolvedJavaType objectType) {
-        return objectType == referenceType || objectType == codePointerType || wordBaseType.isAssignableFrom(objectType);
+        return objectType == MaxResolvedJavaType.getReferenceType() ||
+                        objectType == MaxResolvedJavaType.getCodePointerType() ||
+                        MaxResolvedJavaType.getWordType().isAssignableFrom(objectType);
     }
 
 

@@ -50,6 +50,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     private static MaxResolvedJavaType pointerType;
     private static MaxResolvedJavaType referenceType;
     private static MaxResolvedJavaType codePointerType;
+    private static MaxResolvedJavaType hubType;
 
     public static void init() {
         objectClassActor = ClassActor.fromJava(Object.class);
@@ -59,6 +60,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         wordType = MaxResolvedJavaType.get(ClassActor.fromJava(Word.class));
         codePointerType = MaxResolvedJavaType.get(ClassActor.fromJava(CodePointer.class));
         wrappedWordType = MaxResolvedJavaType.get(ClassActor.fromJava(WordUtil.WrappedWord.class));
+        hubType = MaxResolvedJavaType.get(ClassActor.fromJava(Hub.class));
     }
 
     protected MaxResolvedJavaType(RiResolvedType riResolvedType) {
@@ -83,9 +85,29 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         return pointerType;
     }
 
+    public static MaxResolvedJavaType getWordType() {
+        assert wordType != null;
+        return wordType;
+    }
+
     public static MaxResolvedJavaType getReferenceType() {
         assert referenceType != null;
         return referenceType;
+    }
+
+    public static MaxResolvedJavaType getCodePointerType() {
+        assert codePointerType != null;
+        return codePointerType;
+    }
+
+    public static MaxResolvedJavaType getWrappedWordType() {
+        assert wrappedWordType != null;
+        return wrappedWordType;
+    }
+
+    public static MaxResolvedJavaType getHubType() {
+        assert hubType != null;
+        return hubType;
     }
 
     private RiResolvedType riResolvedType() {

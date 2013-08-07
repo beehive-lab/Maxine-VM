@@ -148,9 +148,6 @@ public class MaxGraalOptions {
 
 // START GENERATED CODE
     static {
-        // Options from com.oracle.graal.compiler.GraalCompiler
-        register(new VMBooleanOption("-G:+", "Inline", "Enable inlining"), com.oracle.graal.compiler.GraalCompiler.class, "Inline");
-        register(new VMBooleanOption("-G:+", "VerifyUsageWithEquals", ""), com.oracle.graal.compiler.GraalCompiler.class, "VerifyUsageWithEquals");
         // Options from com.oracle.graal.compiler.GraalDebugConfig
         register(new VMBooleanOption("-G:+", "Debug", "Enable scope-based debugging"), com.oracle.graal.compiler.GraalDebugConfig.class, "DebugEnabled");
         register(new VMBooleanOption("-G:+", "DetailedAsserts", "Enable expensive assertions"), com.oracle.graal.compiler.GraalDebugConfig.class, "DetailedAsserts");
@@ -163,6 +160,9 @@ public class MaxGraalOptions {
         register(new VMBooleanOption("-G:-", "SummarizeDebugValues", ""), com.oracle.graal.compiler.GraalDebugConfig.class, "SummarizeDebugValues");
         register(new VMBooleanOption("-G:-", "SummarizePerPhase", ""), com.oracle.graal.compiler.GraalDebugConfig.class, "SummarizePerPhase");
         register(new VMStringOption("-G:Time=", false, null, "Scopes to be timed"), com.oracle.graal.compiler.GraalDebugConfig.class, "Time");
+        // Options from com.oracle.graal.compiler.phases.HighTier
+        register(new VMBooleanOption("-G:+", "Inline", "Enable inlining"), com.oracle.graal.compiler.phases.HighTier.class, "Inline");
+        register(new VMBooleanOption("-G:+", "VerifyUsageWithEquals", ""), com.oracle.graal.compiler.phases.HighTier.class, "VerifyUsageWithEquals");
         // Options from com.oracle.graal.phases.GraalOptions
         register(new VMBooleanOption("-G:-", "AOTCompilation", "configure compiler to emit code compatible with AOT requirements for HotSpot"), com.oracle.graal.phases.GraalOptions.class, "AOTCompilation");
         register(new VMBooleanOption("-G:+", "AlignCallsForPatching", ""), com.oracle.graal.phases.GraalOptions.class, "AlignCallsForPatching");
@@ -226,12 +226,13 @@ public class MaxGraalOptions {
         register(new VMIntOption("-G:MaximumDesiredSize=", 20000, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumDesiredSize");
         register(new VMIntOption("-G:MaximumEscapeAnalysisArrayLength=", 32, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumEscapeAnalysisArrayLength");
         register(new VMIntOption("-G:MaximumInliningSize=", 300, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumInliningSize");
-        register(new VMIntOption("-G:MaximumRecursiveInlining=", 1, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumRecursiveInlining");
+        register(new VMIntOption("-G:MaximumRecursiveInlining=", 5, ""), com.oracle.graal.phases.GraalOptions.class, "MaximumRecursiveInlining");
         register(new VMDoubleOption("-G:MegamorphicInliningMinMethodProbability=", 0.33, ""), com.oracle.graal.phases.GraalOptions.class, "MegamorphicInliningMinMethodProbability");
         register(new VMBooleanOption("-G:+", "MemoryAwareScheduling", ""), com.oracle.graal.phases.GraalOptions.class, "MemoryAwareScheduling");
         register(new VMDoubleOption("-G:MinTableSwitchDensity=", 0.5, ""), com.oracle.graal.phases.GraalOptions.class, "MinTableSwitchDensity");
         register(new VMIntOption("-G:MinimumJumpTableSize=", 5, ""), com.oracle.graal.phases.GraalOptions.class, "MinimumJumpTableSize");
         register(new VMFloatOption("-G:MinimumPeelProbability=", 0.35f, ""), com.oracle.graal.phases.GraalOptions.class, "MinimumPeelProbability");
+        register(new VMBooleanOption("-G:-", "NewMemoryAwareScheduling", ""), com.oracle.graal.phases.GraalOptions.class, "NewMemoryAwareScheduling");
         register(new VMBooleanOption("-G:-", "OmitHotExceptionStacktrace", ""), com.oracle.graal.phases.GraalOptions.class, "OmitHotExceptionStacktrace");
         register(new VMBooleanOption("-G:+", "OptAssumptions", ""), com.oracle.graal.phases.GraalOptions.class, "OptAssumptions");
         register(new VMBooleanOption("-G:+", "OptCanonicalizer", ""), com.oracle.graal.phases.GraalOptions.class, "OptCanonicalizer");
@@ -272,7 +273,6 @@ public class MaxGraalOptions {
         register(new VMFloatOption("-G:RelevanceCapForInlining=", 1.0f, ""), com.oracle.graal.phases.GraalOptions.class, "RelevanceCapForInlining");
         register(new VMBooleanOption("-G:+", "RemoveNeverExecutedCode", ""), com.oracle.graal.phases.GraalOptions.class, "RemoveNeverExecutedCode");
         register(new VMBooleanOption("-G:-", "ResolveClassBeforeStaticInvoke", ""), com.oracle.graal.phases.GraalOptions.class, "ResolveClassBeforeStaticInvoke");
-        register(new VMIntOption("-G:SafepointPollOffset=", 256, ""), com.oracle.graal.phases.GraalOptions.class, "SafepointPollOffset");
         register(new VMIntOption("-G:SmallCompiledLowLevelGraphSize=", 300, ""), com.oracle.graal.phases.GraalOptions.class, "SmallCompiledLowLevelGraphSize");
         register(new VMBooleanOption("-G:-", "SnippetCounters", ""), com.oracle.graal.phases.GraalOptions.class, "SnippetCounters");
         register(new VMIntOption("-G:StackShadowPages=", 2, ""), com.oracle.graal.phases.GraalOptions.class, "StackShadowPages");

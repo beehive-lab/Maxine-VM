@@ -43,7 +43,6 @@ import com.oracle.graal.lir.amd64.*;
 import com.oracle.graal.lir.amd64.AMD64Move.*;
 import com.oracle.graal.lir.asm.*;
 import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.replacements.nodes.*;
@@ -226,32 +225,9 @@ public class MaxAMD64Backend extends Backend {
             append(new StoreOp(kind, storeAddress, input, state));
         }
 
-        @Override
-        public void visitCompareAndSwap(CompareAndSwapNode node) {
-            Kind kind = node.newValue().kind();
-            assert kind == node.expected().kind();
-
-            Value expected = loadNonConst(operand(node.expected()));
-            Variable newValue = load(operand(node.newValue()));
-
-            AMD64AddressValue address;
-            int displacement = node.displacement();
-            Value index = operand(node.offset());
-            if (isConstant(index) && NumUtil.isInt(asConstant(index).asLong() + displacement)) {
-                assert !runtime.needsDataPatch(asConstant(index));
-                displacement += (int) asConstant(index).asLong();
-                address = new AMD64AddressValue(kind, load(operand(node.object())), displacement);
-            } else {
-                address = new AMD64AddressValue(kind, load(operand(node.object())), load(index), Scale.Times1, displacement);
-            }
-
-            RegisterValue rax = AMD64.rax.asValue(kind);
-            emitMove(rax, expected);
-            append(new CompareAndSwapOp(rax, address, rax, newValue));
-
-            Variable result = newVariable(node.kind());
-            append(new AMD64ControlFlow.CondMoveOp(result, Condition.EQ, load(Constant.TRUE), Constant.FALSE));
-            setResult(node, result);
+        public void visitCompareAndSwap(LoweredCompareAndSwapNode i, Value address) {
+            // Since we use MaxCompareAndSwapNode, this should never happen
+            MaxGraal.unimplemented("visitCompareAndSwap");
         }
 
     }
@@ -368,6 +344,11 @@ public class MaxAMD64Backend extends Backend {
     @Override
     protected AbstractAssembler createAssembler(FrameMap frameMap) {
         return new AMD64MacroAssembler(target, frameMap.registerConfig);
+    }
+
+    @Override
+    public FrameMap newFrameMap() {
+        return new AMD64FrameMap(runtime(), target, runtime().lookupRegisterConfig());
     }
 
 }

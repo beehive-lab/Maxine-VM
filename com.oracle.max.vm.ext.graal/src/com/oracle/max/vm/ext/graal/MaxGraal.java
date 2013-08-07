@@ -32,7 +32,6 @@ import java.util.concurrent.*;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.api.meta.Kind;
 import com.oracle.graal.compiler.*;
 import com.oracle.graal.compiler.target.*;
 import com.oracle.graal.debug.*;
@@ -49,6 +48,7 @@ import com.oracle.graal.phases.common.*;
 import com.oracle.graal.phases.tiers.*;
 import com.oracle.graal.printer.*;
 import com.oracle.graal.replacements.*;
+import com.oracle.graal.virtual.phases.ea.*;
 import com.oracle.max.vm.ext.graal.amd64.*;
 import com.oracle.max.vm.ext.graal.phases.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
@@ -129,10 +129,11 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     /**
      * Standard configuration used for non boot image compilation.
      */
-    private Suites suites;
+    private Suites defaultSuites;
     /**
      * Customized suites for compiling the boot image.
      */
+    @HOSTED_ONLY
     private Suites bootSuites;
 
     /**
@@ -290,33 +291,9 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         changeInlineLimits();
         // Prevent DeoptimizeNodes since we don't handle them yet
         FixedGuardNode.suppressDeoptimize();
-        // Unless explicitly set (by a wizard user) suppress some options that cause problems
-        if (MaxGraalOptions.isPresent("PartialEscapeAnalysis") == null) {
-            // causes problems in Maxine DebugInfo (doesn't understand virtualized objects)
-            GraalOptions.PartialEscapeAnalysis.setValue(false);
-        }
-        if (MaxGraalOptions.isPresent("OptPushThroughPi") == null) {
-            /*
-             * When compiling the boot image, this phase (in the MidTier) can replace a genuine object argument to an
-             * IsNullNode with a Word type, when the object is the result of an UNSAFE_CAST from a Word type, which then
-             * gets rewritten to long, and then the graph does not verify. If there was a PhasePosition.MID_LEVEL hook,
-             * we could perhaps fix this by running the KindRewriter before the mid-level suite.
-             * There is no way to disable this phase (unlike InliningPhase) so we do it via an option.
-             */
-            GraalOptions.OptPushThroughPi.setValue(false);
-        }
-        if (MaxGraalOptions.isPresent("OptTailDuplication") == null) {
-            // causes a problem with native methods because the NativeFunctionCallNode gets duplicated
-            // from its initial state as the template method. Disabling it completely is overkill
-            // but there is no easy way to disable it selectively at the moment.
-            GraalOptions.OptTailDuplication.setValue(false);
-        }
-        // Hacks for Maxine inlining
-        InliningPhaseFactory.registerFactory(new MaxHostedInliningPhaseFactory());
-        JDKInterceptor.resetField("com.oracle.graal.phases.common.InliningPhaseFactory", "instance");
         // This suite creation honors the option setting customization made above
-        suites = Suites.createDefaultSuites();
-        createBootSuites();
+        defaultSuites = createDefaultSuites();
+        bootSuites = createBootSuites();
         // For snippet creation we need bootCompile==true for inlining of VM methods
         state.bootCompile = true;
         MaxResolvedJavaType.init();
@@ -326,20 +303,80 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     }
 
     /**
+     * MaxGraal's default suites which, for now, have some small modifications.
+     */
+    @HOSTED_ONLY
+    private Suites createDefaultSuites() {
+        Suites suites = Suites.createDefaultSuites();
+        PhaseSuite<HighTierContext> highTier = suites.getHighTier();
+        // TailDuplicationcauses a problem with native methods because the NativeFunctionCallNode gets duplicated
+        // from its initial state as the template method. Disabling it completely is overkill but simple.
+        highTier.findPhase(TailDuplicationPhase.class).remove();
+        // causes problems in Maxine DebugInfo (doesn't understand virtualized objects)
+        highTier.findPhase(PartialEscapePhase.class).remove();
+        // This is only needed for the boot image but historically has been disabled everywhere TODO revisit
+        /*
+         * When compiling the boot image, this phase (in the MidTier) can replace a genuine object argument to an
+         * IsNullNode with a Word type, when the object is the result of an UNSAFE_CAST from a Word type, which then
+         * gets rewritten to long, and then the graph does not verify. If there was a PhasePosition.MID_LEVEL hook,
+         * we could perhaps fix this by running the KindRewriter before the mid-level suite.
+         */
+        PhaseSuite<MidTierContext> midTier = suites.getMidTier();
+        midTier.findPhase(PushThroughPiPhase.class).remove();
+        return suites;
+    }
+
+    /**
      * Create the custom suites for boot image compilation.
      * We could do this with a custom {@link CompilerConfiguration} but that involves jar files
      * using the {@link ServiceLoader} which doesn't fit the Maxine build model well.
      */
     @HOSTED_ONLY
-    private void createBootSuites() {
-        bootSuites = Suites.createDefaultSuites();
-        PhaseSuite<MidTierContext> midTier = bootSuites.getMidTier();
-        midTier.appendPhase(new MaxWordType.KindRewriterPhase(runtime, runtime.maxTargetDescription().wordKind));
+    private Suites createBootSuites() {
+        Suites suites = createDefaultSuites();
+        PhaseSuite<HighTierContext> highTier = suites.getHighTier();
+        // Replace the normal InliningPhase
+        ListIterator<BasePhase<? super HighTierContext>> highIter = highTier.findPhase(InliningPhase.class);
+        highIter.remove();
+        highIter.add(new MaxHostedInliningPhase());
+        highIter = highTier.findPhase(CleanTypeProfileProxyPhase.class);
+        // Add the Maxine specific phases that used to run in the old HIGH_LEVEL PhasePosition
+        highIter.add(new MaxWordType.MaxNullCheckRewriterPhase());
+        highIter.add(new MaxIntrinsicsPhase());
+        highIter.add(new MaxWordType.KindRewriterPhase());
+        highIter.add(new WordKindRewritten());
+        highIter.add(new CanonicalizerPhase(canonicalizeReads));
+
+        PhaseSuite<MidTierContext> midTier = suites.getMidTier();
+        midTier.appendPhase(new MaxWordType.KindRewriterPhase());
+        return suites;
+    }
+
+    @HOSTED_ONLY
+    public List<com.oracle.graal.phases.Phase> addBootPhases(PhasePlan phasePlan) {
+        ArrayList<com.oracle.graal.phases.Phase> result = new ArrayList<>();
+        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new MaxWordType.CheckWordObjectEqualsPhase()));
+        // In Graal, @Fold is purely a snippet notion; we handle Maxine's more general use with similar code.
+        // We do this early to reduce the size of a graph that contains isHosted code.
+        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new MaxFoldPhase(runtime)));
+        // Any folded isHosted code is only removed by a CanonicalizationPhase
+        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new CanonicalizerPhase.Instance(runtime,
+                        new Assumptions(GraalOptions.OptAssumptions.getValue()), canonicalizeReads)));
+        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new MaxIntrinsicsPhase()));
+        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING,
+                        new MaxWordType.MakeWordFinalRewriterPhase()));
+        return result;
+    }
+
+    private com.oracle.graal.phases.Phase addPhase(PhasePlan phasePlan, PhasePosition pos, com.oracle.graal.phases.Phase phase) {
+        phasePlan.addPhase(pos, phase);
+        return phase;
     }
     /**
      * Graal's inlining limits are very aggressive, too high for the Maxine environment.
-     * So we dial them down here.
+     * So we dial them down here. This would benefit from some more detailed analysis.
      */
+    @HOSTED_ONLY
     private static void changeInlineLimits() {
         if (MaxGraalOptions.isPresent("MaximumInliningSize") == null) {
             GraalOptions.MaximumInliningSize.setValue(100);
@@ -366,8 +403,9 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
             state.bootCompile = true;
             state.methodActor = methodActor;
         } else {
+            // all SUBSTITUTEd methods should have been compiled into the boot image
             assert !substitutedMethod(methodActor);
-            compileSuites = suites;
+            compileSuites = defaultSuites;
         }
 
         StructuredGraph graph = (StructuredGraph) method.getCompilerStorage().get(Graph.class);
@@ -427,39 +465,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     protected void addCustomSnippets(MaxReplacementsImpl maxReplacementsImpl) {
     }
 
-    @HOSTED_ONLY
-    public List<com.oracle.graal.phases.Phase> addBootPhases(PhasePlan phasePlan) {
-        Kind wordKind = runtime.maxTargetDescription().wordKind;
-        ArrayList<com.oracle.graal.phases.Phase> result = new ArrayList<>();
-        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new MaxWordType.CheckWordObjectEqualsPhase(runtime, wordKind)));
-        // In Graal, @Fold is purely a snippet notion; we handle Maxine's more general use with similar code.
-        // We do this early to reduce the size of a graph that contains isHosted code.
-        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new MaxFoldPhase(runtime)));
-        // Any folded isHosted code is only removed by a CanonicalizationPhase
-        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new CanonicalizerPhase.Instance(runtime,
-                        new Assumptions(GraalOptions.OptAssumptions.getValue()), canonicalizeReads)));
-        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new MaxIntrinsicsPhase()));
-        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING,
-                        new MaxWordType.MakeWordFinalRewriterPhase(runtime, wordKind)));
-
-        // Important to remove bogus null checks on Word types
-        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new MaxWordType.MaxNullCheckRewriterPhase(runtime, wordKind)));
-        // intrinsics are (obviously) not inlined, so they are left in the graph and need to be rewritten now
-        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new MaxIntrinsicsPhase()));
-        // The replaces all Word based types with target.wordKind
-        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new MaxWordType.KindRewriterPhase(runtime, wordKind)));
-        // marker phase indicating that previous phase has happened in this compilation
-        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new WordKindRewritten()));
-        // Remove UnsafeCasts rendered irrelevant by previous phase
-        result.add(addPhase(phasePlan, PhasePosition.HIGH_LEVEL, new CanonicalizerPhase.Instance(runtime,
-                        new Assumptions(GraalOptions.OptAssumptions.getValue()), canonicalizeReads)));
-        return result;
-    }
-
-    private com.oracle.graal.phases.Phase addPhase(PhasePlan phasePlan, PhasePosition pos, com.oracle.graal.phases.Phase phase) {
-        phasePlan.addPhase(pos, phase);
-        return phase;
-    }
 
     @Override
     public Nature nature() {
