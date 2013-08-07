@@ -28,7 +28,7 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.extended.*;
-import com.oracle.graal.nodes.HeapAccess.WriteBarrierType;
+import com.oracle.graal.nodes.HeapAccess.BarrierType;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
@@ -56,7 +56,7 @@ public class MaxUnsafeAccessLowerings {
 
         void lower(StructuredGraph graph, FixedWithNextNode node, Stamp stamp, ValueNode object, ValueNode offset, int displacement, Kind accessKind) {
             IndexedLocationNode location = IndexedLocationNode.create(LocationIdentity.ANY_LOCATION, accessKind, displacement, offset, graph, 1);
-            ReadNode memoryRead = graph.add(new ReadNode(object, location, stamp, AbstractBeginNode.prevBegin(node), WriteBarrierType.NONE, false));
+            ReadNode memoryRead = graph.add(new ReadNode(object, location, stamp, AbstractBeginNode.prevBegin(node), BarrierType.NONE, false));
             graph.replaceFixedWithFixed(node, memoryRead);
 
         }
@@ -73,7 +73,7 @@ public class MaxUnsafeAccessLowerings {
         void lower(StructuredGraph graph, FixedWithNextNode node, Stamp stamp, ValueNode object, ValueNode offset, ValueNode value,
                         int displacement, Kind accessKind, FrameState stateAfter) {
             IndexedLocationNode location = IndexedLocationNode.create(LocationIdentity.ANY_LOCATION, accessKind, displacement, offset, graph, 1);
-            WriteNode write = graph.add(new WriteNode(object, value, location, WriteBarrierType.NONE, false));
+            WriteNode write = graph.add(new WriteNode(object, value, location, BarrierType.NONE, false));
             write.setStateAfter(stateAfter);
             graph.replaceFixedWithFixed(node, write);
         }

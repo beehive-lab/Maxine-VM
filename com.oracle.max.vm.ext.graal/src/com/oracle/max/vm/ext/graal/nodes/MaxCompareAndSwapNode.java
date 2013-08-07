@@ -31,8 +31,10 @@ import com.oracle.max.vm.ext.graal.amd64.MaxAMD64Backend.MaxAMD64LIRGenerator;
 /**
  * Maxine a different style of compare and swap to the default Graal node, which returns {@code boolean),,
  * and instead returns either the expected value or the old value, depending on the success of the operation.
+ *
+ * TODO Follow change to {@link CompareAndSwapNode} and add "Lowered" variant.
  */
-public class MaxCompareAndSwapNode extends CompareAndSwapNode {
+public class MaxCompareAndSwapNode extends CompareAndSwapNode implements LIRLowerable {
 
     public MaxCompareAndSwapNode(Stamp stamp, ValueNode object, int displacement, ValueNode offset, ValueNode expected, ValueNode newValue) {
         super(object, displacement, offset, expected, newValue);
@@ -45,6 +47,9 @@ public class MaxCompareAndSwapNode extends CompareAndSwapNode {
         maxGen.visitMaxCompareAndSwap(this);
     }
 
-
+    @Override
+    public void lower(LoweringTool tool, LoweringType loweringType) {
+        // Let it go, handle at LIR level
+    }
 
 }

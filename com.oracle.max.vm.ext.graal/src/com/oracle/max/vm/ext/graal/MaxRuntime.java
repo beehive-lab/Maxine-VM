@@ -33,6 +33,8 @@ import com.oracle.graal.api.code.CodeUtil.RefMapFormatter;
 import com.oracle.graal.api.code.CompilationResult.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.printer.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
@@ -264,6 +266,11 @@ public class MaxRuntime implements GraalCodeCacheProvider {
     @Override
     public boolean canDeoptimize(ForeignCallDescriptor descriptor) {
         return MaxForeignCallsMap.get(descriptor).canDeoptimize();
+    }
+
+    public ValueNode reconstructArrayIndex(LocationNode location) {
+        MaxGraal.unimplemented("MaxRuntime.reconstructArrayIndex");
+        return null;
     }
 
 }

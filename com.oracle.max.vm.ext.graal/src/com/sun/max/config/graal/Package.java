@@ -44,6 +44,7 @@ public class Package extends BootImagePackage {
               "com.oracle.graal.compiler.alloc.*",
               "com.oracle.graal.compiler.amd64.*",
               "com.oracle.graal.compiler.gen.*",
+              "com.oracle.graal.compiler.phases.*",
               "com.oracle.graal.compiler.target.*",
               "com.oracle.graal.debug.*",
               "com.oracle.graal.graph.**",
