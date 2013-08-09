@@ -24,6 +24,7 @@
 package com.oracle.max.vm.ext.graal;
 
 import java.lang.annotation.*;
+import java.lang.reflect.*;
 
 import static com.oracle.max.vm.ext.graal.MaxGraal.unimplemented;
 
@@ -70,6 +71,9 @@ public class MaxResolvedJavaField extends MaxJavaField implements ResolvedJavaFi
 
     @Override
     public Constant readConstantValue(Constant receiver) {
+        if (!Modifier.isStatic(riResolvedField().accessFlags()) && receiver.isNull()) {
+            return null;
+        }
         CiConstant ciConstant = riResolvedField().constantValue(ConstantMap.toCi(receiver));
         if (ciConstant != null && ciConstant.kind == CiKind.Object && ciConstant.asObject() instanceof WordUtil.WrappedWord) {
             if (MaxGraal.bootCompile() && !MaxGraal.archWordKind()) {

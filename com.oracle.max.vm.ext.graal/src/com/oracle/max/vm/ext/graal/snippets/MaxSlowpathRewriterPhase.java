@@ -37,6 +37,7 @@ import com.sun.max.vm.actor.member.*;
  * Ideally, this would not be necessary, but method calls within snippets are special in the sense that they
  * may not be deoptimization points (snippets as microcode).
  */
+@HOSTED_ONLY
 public class MaxSlowpathRewriterPhase extends Phase {
 
     private final MetaAccessProvider runtime;

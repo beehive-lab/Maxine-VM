@@ -30,6 +30,7 @@ import java.util.concurrent.*;
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 
@@ -187,10 +188,20 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         return result;
     }
 
-    @NEVER_INLINE
+    /**
+     * In a non-boot compilation, checks whether method {@code ma}, which {@link MethodActor#isVM()}, can be inlined.
+     * @param ma
+     * @return
+     */
     private boolean checkInline(MethodActor ma) {
-        // possible exceptions that would not provoke the use of unsafe features (and so boot require compiler phases)
-        return false;
+        if (MaxineVM.isHosted()) {
+            // ma.isVM() == true even for tests when hosted, so this allows test methods to inline
+            return !ma.holder().name().startsWith("com");
+        } else {
+            // Currently no VM methods can be inlined as they might require boot compiler phases.
+            // This may not be the case for all, so we could list exceptions here.
+            return false;
+        }
     }
 
     @Override

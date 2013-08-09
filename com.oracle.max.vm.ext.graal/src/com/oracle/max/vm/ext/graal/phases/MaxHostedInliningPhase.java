@@ -43,11 +43,7 @@ import com.sun.max.vm.actor.member.*;
 @HOSTED_ONLY
 public class MaxHostedInliningPhase extends InliningPhase {
 
-    private static class MaxGreedyInliningPolicy extends GreedyInliningPolicy {
-
-        public MaxGreedyInliningPolicy() {
-            super(null);
-        }
+    private static class Policy extends MaxInliningPhase.Policy {
 
         @Override
         public boolean isWorthInlining(Replacements replacements, InlineInfo info, int inliningDepth, double probability, double relevance, boolean fullyProcessed) {
@@ -73,7 +69,7 @@ public class MaxHostedInliningPhase extends InliningPhase {
     }
 
     public MaxHostedInliningPhase() {
-        super(new MaxGreedyInliningPolicy());
+        super(new Policy());
     }
 
 }

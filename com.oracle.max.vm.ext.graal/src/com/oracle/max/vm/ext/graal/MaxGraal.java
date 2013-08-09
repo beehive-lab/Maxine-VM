@@ -309,6 +309,10 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     private Suites createDefaultSuites() {
         Suites suites = Suites.createDefaultSuites();
         PhaseSuite<HighTierContext> highTier = suites.getHighTier();
+        // Replace the normal InliningPhase
+        ListIterator<BasePhase<? super HighTierContext>> highIter = highTier.findPhase(InliningPhase.class);
+        highIter.remove();
+        highIter.add(new MaxInliningPhase());
         // TailDuplicationcauses a problem with native methods because the NativeFunctionCallNode gets duplicated
         // from its initial state as the template method. Disabling it completely is overkill but simple.
         highTier.findPhase(TailDuplicationPhase.class).remove();
@@ -342,6 +346,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         highIter = highTier.findPhase(CleanTypeProfileProxyPhase.class);
         // Add the Maxine specific phases that used to run in the old HIGH_LEVEL PhasePosition
         highIter.add(new MaxWordType.MaxNullCheckRewriterPhase());
+        highIter.add(new MaxWordType.ReplaceAccessorPhase());
         highIter.add(new MaxIntrinsicsPhase());
         highIter.add(new MaxWordType.KindRewriterPhase());
         highIter.add(new WordKindRewritten());
@@ -500,7 +505,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
 
     /**
      * With Graal it is not currently possible to compile code at runtime that uses Maxine annotations,
-     * as the spedcial boot compilations are not enabled (they could be at additional compile time cost).
+     * as the special boot compilations are not enabled (they could be at additional compile time cost).
      * Not all the substituted methods in the JDK are compiled into the boot image because they
      * are not used by boot image code (e.g. several in sun.misc.Unsafe). So we force them in here.
      * (C1X's inlining is such that it "gets away" with not interpreting the Maxine annotations.)
