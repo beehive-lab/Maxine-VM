@@ -196,7 +196,8 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
     private boolean checkInline(MethodActor ma) {
         if (MaxineVM.isHosted()) {
             // ma.isVM() == true even for tests when hosted, so this allows test methods to inline
-            return !ma.holder().name().startsWith("com");
+            // return !ma.holder().name().startsWith("com");
+            return false;
         } else {
             // Currently no VM methods can be inlined as they might require boot compiler phases.
             // This may not be the case for all, so we could list exceptions here.
