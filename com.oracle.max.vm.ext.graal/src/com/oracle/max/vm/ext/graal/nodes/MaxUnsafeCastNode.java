@@ -33,14 +33,14 @@ import com.oracle.max.vm.ext.graal.phases.*;
 /**
  * Handles Maxine's {@link UNSAFE_CAST} annotation; slight difference to {@link UnsafeCastNode regarding {@link Word} types
  * and an important check to prevent the cast from {@link Reference} to {@link Object} from being removed during
- * canonicalization, which would cause havoc in Graal's type-based optimization phases.
+ * canonicalization, which would cause problems and errors in Graal's type-based optimization phases.
+ *
+ * N.B. Setting {@code exactType == true} for {@link Word} and {@link Reference} allows normal canonicalization of
+ * {@link MethodCallTargetNode method calls} to resolve methods in the {@link Accessor} interface.
  */
 public class MaxUnsafeCastNode extends UnsafeCastNode {
 
     public MaxUnsafeCastNode(ValueNode object, ResolvedJavaType toType) {
-        // The Reference type is most certainly exact; recording that is important to allow
-        // method calls through the Accessor interface to be converted (and inlined) correctly.
-        // This is really a hack and should be done differently in a special phase.
         super(object, toType, MaxWordType.isWordOrReference(toType), false);
     }
 
@@ -54,7 +54,7 @@ public class MaxUnsafeCastNode extends UnsafeCastNode {
         if (kind() == Kind.Object && objectStamp().type() == MaxResolvedJavaType.getJavaLangObject()) {
             ResolvedJavaType otherType = object().objectStamp().type();
             if (otherType == MaxResolvedJavaType.getReferenceType()) {
-                // the default canonicalization remove the cast; we don't want that!
+                // the default canonicalization removes the cast; we don't want that!
                 return this;
             }
         }

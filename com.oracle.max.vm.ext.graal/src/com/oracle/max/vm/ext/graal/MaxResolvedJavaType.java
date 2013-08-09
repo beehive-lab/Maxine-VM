@@ -48,6 +48,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     private static MaxResolvedJavaType wrappedWordType;
     private static MaxResolvedJavaType wordType;
     private static MaxResolvedJavaType pointerType;
+    private static MaxResolvedJavaType accessorType;
     private static MaxResolvedJavaType referenceType;
     private static MaxResolvedJavaType codePointerType;
     private static MaxResolvedJavaType hubType;
@@ -56,6 +57,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         objectClassActor = ClassActor.fromJava(Object.class);
         objectType = MaxResolvedJavaType.get(objectClassActor);
         pointerType = MaxResolvedJavaType.get(ClassActor.fromJava(Pointer.class));
+        accessorType = MaxResolvedJavaType.get(ClassActor.fromJava(Accessor.class));
         referenceType = MaxResolvedJavaType.get(ClassActor.fromJava(Reference.class));
         wordType = MaxResolvedJavaType.get(ClassActor.fromJava(Word.class));
         codePointerType = MaxResolvedJavaType.get(ClassActor.fromJava(CodePointer.class));
@@ -83,6 +85,11 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     public static MaxResolvedJavaType getPointerType() {
         assert pointerType != null;
         return pointerType;
+    }
+
+    public static MaxResolvedJavaType getAccessorType() {
+        assert accessorType != null;
+        return accessorType;
     }
 
     public static MaxResolvedJavaType getWordType() {
@@ -219,12 +226,12 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         final MaxResolvedJavaType thisType = this;
         return findLeastCommonAncestor(thisType, otherType);
         /*
-        return Debug.scope("MaxResolvedJavaType", new Callable<ResolvedJavaType>() {
+        return Debug.scope("MaxResolvedJavaType.FindLeastCommonAncestor", new Callable<ResolvedJavaType>() {
 
             public ResolvedJavaType call() throws Exception {
                 ResolvedJavaType result = findLeastCommonAncestor(thisType, otherType);
                 Debug.log("findLeastCommonAncestor %s, %s -> %s", thisType, otherType, result);
-                return result;
+                return result;                /*
             }
 
         });
@@ -311,14 +318,31 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     }
 
     @Override
-    public ResolvedJavaMethod resolveMethod(ResolvedJavaMethod method) {
+    public ResolvedJavaMethod resolveMethod(final ResolvedJavaMethod method) {
+        final MaxResolvedJavaType thisType = this;
+        return resolveMethod(thisType, method);
+        /*
+        return Debug.scope("MaxResolvedJavaType.ResolvedMethod", new Callable<ResolvedJavaMethod>() {
+
+            public ResolvedJavaMethod call() throws Exception {
+                ResolvedJavaMethod result = resolveMethod(thisType, method);
+                Debug.log("resolveMethod %s -> %s", method, result);
+                return result;
+            }
+
+        });
+        */
+
+    }
+
+    private static ResolvedJavaMethod resolveMethod(MaxResolvedJavaType type, ResolvedJavaMethod method) {
         // It is not clear whether it is required that method is actually a member of this type.
         // Certainly, ConditionalElimination.node can call it (as of 8/2/13) when that is not the
         // case. Currently ClassActor.resolveMethodImpl expects this invariant, so we must
         // check explicitly. Also if we are dealing with interfaces, the implementation may not be
         // known and, again, resolveMethodImpl doesn't expect that.
         MaxResolvedJavaMethod maxMethod = (MaxResolvedJavaMethod) method;
-        ClassActor classActor = (ClassActor) riType;
+        ClassActor classActor = (ClassActor) type.riType;
         MethodActor methodActor = (MethodActor) maxMethod.riMethod;
         VirtualMethodActor match = null;
         // name/descriptor are canonical, so identity comparison ok
@@ -331,7 +355,7 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
         if (match == null) {
             return null;
         }
-        return MaxResolvedJavaMethod.get(riResolvedType().resolveMethodImpl((RiResolvedMethod) maxMethod.riMethod));
+        return MaxResolvedJavaMethod.get(type.riResolvedType().resolveMethodImpl((RiResolvedMethod) maxMethod.riMethod));
     }
 
     @Override

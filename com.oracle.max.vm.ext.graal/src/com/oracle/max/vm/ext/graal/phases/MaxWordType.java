@@ -38,6 +38,7 @@ import com.oracle.graal.phases.util.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -51,6 +52,7 @@ public class MaxWordType {
      * If we rewrite the arguments, the node will then not verify. We could convert the node in {@link KindRewritePhase}, but
      * we'd prefer to force the code to be cleaned up.
      */
+    @HOSTED_ONLY
     public static class CheckWordObjectEqualsPhase extends com.oracle.graal.phases.Phase {
         @Override
         protected void run(StructuredGraph graph) {
@@ -72,6 +74,7 @@ public class MaxWordType {
      * {@link PhiNode} instances that self-refer but otherwise have Word values are a problem as {@link PhiNode#inferPhiStamp()}
      * includes itself in the computation, causing a {@link Kind} mismatch, so they have to be treated specially.
      */
+    @HOSTED_ONLY
     public static class KindRewriterPhase extends BasePhase<PhaseContext> {
 
         @Override
@@ -126,20 +129,19 @@ public class MaxWordType {
      * The null check is always removed as using {@link INLINE} is a
      * statement that no null check should be generated.
      */
+    @HOSTED_ONLY
     public static class MaxNullCheckRewriterPhase extends Phase {
 
         /**
          * When non-null, indicates that the check is being run after inlining a method,
-         * which typically introduces a null check as per the JVM spec.
+         * which typically introduces a null check as per the JVM spec. This is only
+         * set in {@link MaxReplacements}.
          */
         Node invokePredecessor;
 
-        public MaxNullCheckRewriterPhase() {
-
-        }
-
-        public MaxNullCheckRewriterPhase(Node invokePredecessor) {
+        public MaxNullCheckRewriterPhase setInvokePredecessor(Node invokePredecessor) {
             this.invokePredecessor = invokePredecessor;
+            return this;
         }
 
         @Override
@@ -267,6 +269,7 @@ public class MaxWordType {
      * after the {@link Word} type nodes are rewritten as {@code long}, the objectness is lost, which can
      * cause problems with GC refmaps in the LIR stage.
      */
+    @HOSTED_ONLY
     public static class MaxUnsafeAccessRewriterPhase extends Phase {
 
         @Override
@@ -310,6 +313,7 @@ public class MaxWordType {
      * Ensures that all non-final methods on {@link Word} subclasses are treated as final (aka {@link InvokeKind.Special}),
      * to ensure that they are inlined by {@link SnippetInstaller}.
      */
+    @HOSTED_ONLY
     public static class MakeWordFinalRewriterPhase extends com.oracle.graal.phases.Phase {
 
         @Override
@@ -317,7 +321,33 @@ public class MaxWordType {
             // make sure all Word method invokes are Special else SnippetInstaller won't inline them
             for (MethodCallTargetNode callTargetNode : graph.getNodes(MethodCallTargetNode.class)) {
                 if (callTargetNode.invokeKind() == InvokeKind.Virtual && callTargetNode.arguments().get(0) != null && isWord(callTargetNode.arguments().get(0))) {
+                    Debug.log("changing invoke kind for %s to Special", callTargetNode.targetMethod());
                     callTargetNode.setInvokeKind(InvokeKind.Special);
+                }
+            }
+        }
+    }
+
+    /**
+     * Replaces any invokes of {@link Accessor} methods with the appropriate resolved method.
+     * N.B. This can only happen when we actually know the concrete receiver type, so typically after
+     * the invoke has been inlined into a caller using either a {@link Pointer} or {@link Reference} type receiver.
+     */
+    @HOSTED_ONLY
+    public static class ReplaceAccessorPhase extends com.oracle.graal.phases.Phase {
+
+        @Override
+        protected void run(StructuredGraph graph) {
+            for (MethodCallTargetNode callTargetNode : graph.getNodes(MethodCallTargetNode.class)) {
+                if (callTargetNode.invokeKind() == InvokeKind.Interface && callTargetNode.isResolved() && callTargetNode.targetMethod().getDeclaringClass() == MaxResolvedJavaType.getAccessorType()) {
+                    ObjectStamp stamp = (ObjectStamp) callTargetNode.receiver().stamp();
+                    if (stamp.type() != MaxResolvedJavaType.getAccessorType()) {
+                        ResolvedJavaMethod resolvedMethod = stamp.type().resolveMethod(callTargetNode.targetMethod());
+                        assert resolvedMethod != null;
+                        callTargetNode.setTargetMethod(resolvedMethod);
+                        callTargetNode.setInvokeKind(InvokeKind.Special);
+                        Debug.log("resolved Accessor method %s to %s", callTargetNode.targetMethod(), resolvedMethod);
+                    }
                 }
             }
         }

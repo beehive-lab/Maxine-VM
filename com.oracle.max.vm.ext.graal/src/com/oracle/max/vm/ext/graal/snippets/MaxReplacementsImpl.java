@@ -132,7 +132,8 @@ public class MaxReplacementsImpl extends ReplacementsImpl {
 
         @Override
         public void afterInline(StructuredGraph caller, StructuredGraph callee, Object beforeInlineData) {
-            new MaxWordType.MaxNullCheckRewriterPhase((Node) beforeInlineData).apply(caller);
+            new MaxWordType.MaxNullCheckRewriterPhase().setInvokePredecessor((Node) beforeInlineData).apply(caller);
+            new MaxWordType.ReplaceAccessorPhase().apply(caller);
             new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(caller);
             new MaxIntrinsicsPhase().apply(caller);
         }
