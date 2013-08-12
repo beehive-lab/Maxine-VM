@@ -415,8 +415,11 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
 
     @Override
     public ResolvedJavaField findInstanceFieldWithOffset(long offset) {
-        ClassActor ca = (ClassActor) riType;
-        return MaxResolvedJavaField.get(ca.findInstanceFieldActor((int) offset));
+        FieldActor fieldActor = ((ClassActor) riType).findInstanceFieldActor((int) offset);
+        if (fieldActor == null) {
+            return null;
+        }
+        return MaxResolvedJavaField.get(fieldActor);
     }
 
     @Override
