@@ -61,6 +61,11 @@ public class MaxJavaType implements JavaType {
         return result;
     }
 
+    protected static void reenter(MaxResolvedJavaType type) {
+        getMap();
+        map.put(type.riType, type);
+    }
+
     public static RiType getRiType(JavaType javaType) {
         return ((MaxJavaType) javaType).riType;
     }

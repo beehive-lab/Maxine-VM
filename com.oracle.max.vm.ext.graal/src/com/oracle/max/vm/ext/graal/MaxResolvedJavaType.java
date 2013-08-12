@@ -30,11 +30,13 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
+
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -53,16 +55,29 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
     private static MaxResolvedJavaType codePointerType;
     private static MaxResolvedJavaType hubType;
 
-    public static void init() {
-        objectClassActor = ClassActor.fromJava(Object.class);
-        objectType = MaxResolvedJavaType.get(objectClassActor);
-        pointerType = MaxResolvedJavaType.get(ClassActor.fromJava(Pointer.class));
-        accessorType = MaxResolvedJavaType.get(ClassActor.fromJava(Accessor.class));
-        referenceType = MaxResolvedJavaType.get(ClassActor.fromJava(Reference.class));
-        wordType = MaxResolvedJavaType.get(ClassActor.fromJava(Word.class));
-        codePointerType = MaxResolvedJavaType.get(ClassActor.fromJava(CodePointer.class));
-        wrappedWordType = MaxResolvedJavaType.get(ClassActor.fromJava(WordUtil.WrappedWord.class));
-        hubType = MaxResolvedJavaType.get(ClassActor.fromJava(Hub.class));
+    public static void init(Phase phase) {
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.HOSTED_COMPILING) {
+            objectClassActor = ClassActor.fromJava(Object.class);
+            objectType = MaxResolvedJavaType.get(objectClassActor);
+            wrappedWordType = MaxResolvedJavaType.get(ClassActor.fromJava(WordUtil.WrappedWord.class));
+            wordType = MaxResolvedJavaType.get(ClassActor.fromJava(Word.class));
+            pointerType = MaxResolvedJavaType.get(ClassActor.fromJava(Pointer.class));
+            accessorType = MaxResolvedJavaType.get(ClassActor.fromJava(Accessor.class));
+            referenceType = MaxResolvedJavaType.get(ClassActor.fromJava(Reference.class));
+            codePointerType = MaxResolvedJavaType.get(ClassActor.fromJava(CodePointer.class));
+            hubType = MaxResolvedJavaType.get(ClassActor.fromJava(Hub.class));
+        } else if (phase == MaxineVM.Phase.RUNNING) {
+            // the boot image map is RESET, so we must re-enter the above else we risk multiple instances
+            reenter(objectType);
+            reenter(wrappedWordType);
+            reenter(wordType);
+            reenter(pointerType);
+            reenter(accessorType);
+            reenter(accessorType);
+            reenter(referenceType);
+            reenter(codePointerType);
+            reenter(hubType);
+        }
     }
 
     protected MaxResolvedJavaType(RiResolvedType riResolvedType) {

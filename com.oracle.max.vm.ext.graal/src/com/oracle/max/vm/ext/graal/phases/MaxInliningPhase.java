@@ -30,8 +30,8 @@ import com.sun.max.vm.hosted.*;
 
 /**
  * This is a Maxine customization for tuning the inlining policy.
- * Currently it fixes a possible bug in {@link GreedyInliningPolicy#isWorthInlining},
- * to factor in the probability with the relevance.
+ * Since Maxine currently does not support runtime generated probabilities,
+ * we use the {@code min(relevance, probability)} in {@link Policy#computeMaximumSize}.
  */
 public class MaxInliningPhase extends InliningPhase {
 
@@ -63,7 +63,7 @@ public class MaxInliningPhase extends InliningPhase {
 
         @Override
         protected double computeMaximumSize(double relevance, int configuredMaximum) {
-            return super.computeMaximumSize(relevance * probTL.get(), configuredMaximum);
+            return super.computeMaximumSize(Math.min(relevance, probTL.get()), configuredMaximum);
         }
 
         @Override

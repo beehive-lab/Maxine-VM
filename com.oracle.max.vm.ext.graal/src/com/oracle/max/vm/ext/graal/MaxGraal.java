@@ -228,14 +228,14 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
             forceJDKSubstitutedMethods();
             CompiledPrototype.registerNeedsCompilationCallback(new NoSnippetCompilation());
         } else if (phase == MaxineVM.Phase.SERIALIZING_IMAGE) {
+            MaxGraalOptions.initialize(phase);
             TraceNodeClasses.scan();
             FieldIntrospection.rescanAllFieldOffsets(new TraceDefaultAndSetMaxineFieldOffset());
             // The above call causes a crash when using toString/hashCode on Graal node instances,
             // due to the field offsets having been rewritten.
             BootImageGenerator.treeStringOption.setValue(false);
-            // reset the default
-            GraalOptions.OptPushThroughPi.setValue(true);
         } else if (phase == MaxineVM.Phase.RUNNING) {
+            MaxResolvedJavaType.init(phase);
             cache = new MaxGraphCache();
             // Compilations can occur after this, so set up the debug environment and check options.
             if (MaxGraalOptions.isPresent("Dump") != null && GraalForNative) {
@@ -296,7 +296,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         bootSuites = createBootSuites();
         // For snippet creation we need bootCompile==true for inlining of VM methods
         state.bootCompile = true;
-        MaxResolvedJavaType.init();
+        MaxResolvedJavaType.init(phase);
         replacements = MaxSnippets.initialize(runtime);
         addCustomSnippets(replacements);
         GraalBoot.forceValues();
