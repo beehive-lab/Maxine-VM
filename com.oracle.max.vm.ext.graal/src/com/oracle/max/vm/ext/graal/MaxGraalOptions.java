@@ -44,9 +44,17 @@ public class MaxGraalOptions {
 
     private static Map<VMOption, OptionValue> optionMap = new HashMap<>();
 
+    @HOSTED_ONLY
+    private static Map<OptionValue, Object> defaultValueMap = new HashMap<>();
+
     static void initialize(Phase phase) {
-        if (MaxineVM.isHosted() && phase == Phase.HOSTED_COMPILING) {
-            checkandSetOptions();
+        if (MaxineVM.isHosted()) {
+            if (phase == Phase.HOSTED_COMPILING) {
+                saveDefaultValues();
+                checkandSetOptions();
+            } else if (phase == Phase.SERIALIZING_IMAGE) {
+                resetOptions();
+            }
         } else if (phase == Phase.RUNNING) {
             checkandSetOptions();
         }
@@ -86,6 +94,25 @@ public class MaxGraalOptions {
                 } else {
                     MaxGraal.unimplemented(" handling of option class: " + optionClass.getName());
                 }
+            }
+        }
+    }
+
+    @HOSTED_ONLY
+    private static void saveDefaultValues() {
+        for (OptionValue optionValue : optionMap.values()) {
+            defaultValueMap.put(optionValue, optionValue.getValue());
+        }
+    }
+
+    @HOSTED_ONLY
+    private static void resetOptions() {
+        for (Map.Entry<VMOption, OptionValue> entry : optionMap.entrySet()) {
+            OptionValue optionValue = entry.getValue();
+            // TODO arrange to reset StableOptionValue guard using field reset
+            if (!(optionValue instanceof StableOptionValue)) {
+                System.out.printf("resetting option %s to %s%n", entry.getKey().name(),  defaultValueMap.get(optionValue));
+                optionValue.setValue(defaultValueMap.get(optionValue));
             }
         }
     }
