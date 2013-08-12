@@ -47,17 +47,19 @@ public class MaxGraalOptions {
     @HOSTED_ONLY
     private static Map<OptionValue, Object> defaultValueMap = new HashMap<>();
 
-    static void initialize(Phase phase) {
+    static boolean initialize(Phase phase) {
+        boolean result = false;
         if (MaxineVM.isHosted()) {
             if (phase == Phase.HOSTED_COMPILING) {
                 saveDefaultValues();
-                checkandSetOptions();
+                return checkandSetOptions();
             } else if (phase == Phase.SERIALIZING_IMAGE) {
                 resetOptions();
             }
         } else if (phase == Phase.RUNNING) {
-            checkandSetOptions();
+            return checkandSetOptions();
         }
+        return result;
     }
 
     /**
@@ -74,11 +76,14 @@ public class MaxGraalOptions {
 
     /**
      * Checks the Maxine proxy options and forwards those that were set to the associated Graal options.
+     * @return {@code true} iff any option was actually set.
      */
-    static void checkandSetOptions() {
+    static boolean checkandSetOptions() {
+        boolean result = false;
         for (Map.Entry<VMOption, OptionValue> entry : optionMap.entrySet()) {
             VMOption vmOption = entry.getKey();
             if (vmOption.isPresent()) {
+                result = true;
                 Class<? extends VMOption> optionClass = vmOption.getClass();
                 OptionValue entryValue = entry.getValue();
                 if (optionClass == VMStringOption.class) {
@@ -96,6 +101,7 @@ public class MaxGraalOptions {
                 }
             }
         }
+        return result;
     }
 
     @HOSTED_ONLY

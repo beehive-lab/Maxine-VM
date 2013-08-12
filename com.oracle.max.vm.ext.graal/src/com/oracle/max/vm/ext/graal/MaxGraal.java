@@ -126,12 +126,14 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
      * However, {@link Canonicalizer} still uses {@code canonicalizeReads}.
      */
     public static final boolean canonicalizeReads = true;
+
     /**
-     * Standard configuration used for non boot image compilation.
+     * Standard configuration used for non-boot image compilation.
+     * To honor runtime Graal options, which can affect which phases are run, these may have to be recreated at runtime.
      */
     private Suites defaultSuites;
     /**
-     * Customized suites for compiling the boot image.
+     * Customized suites for compiling the boot image with Graal.
      */
     @HOSTED_ONLY
     private Suites bootSuites;
@@ -242,7 +244,9 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                 dumpWorkAround();
             }
             // Now we can actually set the Graal options and initialize the Debug environment
-            MaxGraalOptions.initialize(phase);
+            if (MaxGraalOptions.initialize(phase)) {
+                defaultSuites = createDefaultSuites();
+            }
             DebugEnvironment.initialize(System.out);
         }
     }
@@ -288,10 +292,8 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         // We want exception handlers generated
         optimisticOpts = OptimisticOptimizations.ALL.remove(Optimization.UseExceptionProbability, Optimization.UseExceptionProbabilityForOperations);
         cache = new MaxGraphCache();
-        changeInlineLimits();
         // Prevent DeoptimizeNodes since we don't handle them yet
         FixedGuardNode.suppressDeoptimize();
-        // This suite creation honors the option setting customization made above
         defaultSuites = createDefaultSuites();
         bootSuites = createBootSuites();
         // For snippet creation we need bootCompile==true for inlining of VM methods
@@ -305,7 +307,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     /**
      * MaxGraal's default suites which, for now, have some small modifications.
      */
-    @HOSTED_ONLY
     private Suites createDefaultSuites() {
         Suites suites = Suites.createDefaultSuites();
         PhaseSuite<HighTierContext> highTier = suites.getHighTier();
@@ -318,15 +319,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         highTier.findPhase(TailDuplicationPhase.class).remove();
         // causes problems in Maxine DebugInfo (doesn't understand virtualized objects)
         highTier.findPhase(PartialEscapePhase.class).remove();
-        // This is only needed for the boot image but historically has been disabled everywhere TODO revisit
-        /*
-         * When compiling the boot image, this phase (in the MidTier) can replace a genuine object argument to an
-         * IsNullNode with a Word type, when the object is the result of an UNSAFE_CAST from a Word type, which then
-         * gets rewritten to long, and then the graph does not verify. If there was a PhasePosition.MID_LEVEL hook,
-         * we could perhaps fix this by running the KindRewriter before the mid-level suite.
-         */
-        PhaseSuite<MidTierContext> midTier = suites.getMidTier();
-        midTier.findPhase(PushThroughPiPhase.class).remove();
         return suites;
     }
 
@@ -377,17 +369,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         phasePlan.addPhase(pos, phase);
         return phase;
     }
-    /**
-     * Graal's inlining limits are very aggressive, too high for the Maxine environment.
-     * So we dial them down here. This would benefit from some more detailed analysis.
-     */
-    @HOSTED_ONLY
-    private static void changeInlineLimits() {
-        if (MaxGraalOptions.isPresent("MaximumInliningSize") == null) {
-            GraalOptions.MaximumInliningSize.setValue(100);
-        }
-    }
-
     @NEVER_INLINE
     public static void unimplemented(String methodName) {
         ProgramError.unexpected("unimplemented: " + methodName);
