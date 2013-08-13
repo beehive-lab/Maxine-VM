@@ -117,7 +117,6 @@ public class MaxGraalOptions {
             OptionValue optionValue = entry.getValue();
             // TODO arrange to reset StableOptionValue guard using field reset
             if (!(optionValue instanceof StableOptionValue)) {
-                System.out.printf("resetting option %s to %s%n", entry.getKey().name(),  defaultValueMap.get(optionValue));
                 optionValue.setValue(defaultValueMap.get(optionValue));
             }
         }
