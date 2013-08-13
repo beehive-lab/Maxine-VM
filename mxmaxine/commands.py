@@ -57,7 +57,7 @@ def configs(arg):
     mx.log()
     mx.log('    Configuration    Expansion')
     for k, v in sorted(c.iteritems()):
-        mx.log('    @{0:<16} {1}'.format(k, v.replace(',', ' ')))
+        mx.log('    @{0:<16} {1}'.format(k, v.replace('@', ' ')))
 
 def copycheck(args):
     """run copyright check on the Maxine sources (defined as being under hg control)"""
@@ -107,6 +107,7 @@ def gate(args):
         i += 1
 
     if check:
+        mx._opts.specific_suite = "maxine"
         if mx.checkstyle([]):
             mx.abort('Checkstyle warnings were found')
 
@@ -207,7 +208,7 @@ def image(args):
             if not name in configs:
                 mx.log()
                 mx.abort('Invalid image configuration: ' + name)
-            values = configs[name].split(',')
+            values = configs[name].split('@')
             del args[i]
             args[i:i] = values
             continue
