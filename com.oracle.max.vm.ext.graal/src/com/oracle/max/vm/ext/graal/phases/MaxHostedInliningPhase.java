@@ -36,8 +36,13 @@ import com.sun.max.vm.actor.member.*;
  * It otherwise follows the standard policy.
  *
  * Handling the no null-check semantics of {@link INLINE} is tricky as there is no hook in the actual inlining mechanism
- * where we can get control, unlike when processing snippets. So when we detect such a method we record the predecessor
- * of the {@link Invoke} in the graph and fix them all up at the end.
+ * where we can get control, unlike when processing snippets. So we have extended Graal record in the info that
+ * the null check should be suppressed.
+ *
+ * TODO The {@link NO_SAFEPOINT_POLLS} method annotation is also problematic for inlining, as there is no obvious place to record
+ * the fact that any inlined loop should have the safepoint instruction suppressed. Note that we can't just propagate the
+ * attribute to the inliner as there may be other inlined loops from methods without the annotation (although this is a bit strange).
+ * One method where this occurs is {@link Snippets#blockWhileFrozen}.
  *
  */
 @HOSTED_ONLY
@@ -52,6 +57,9 @@ public class MaxHostedInliningPhase extends InliningPhase {
                 MethodCallTargetNode methodCallTargetNode = (MethodCallTargetNode) callTargetNode;
                 if (methodCallTargetNode.isResolved()) {
                     MethodActor ma = (MethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(methodCallTargetNode.targetMethod());
+                    if (ma.noSafepointPolls()) {
+                        // TODO need a way to propagate this to inlined sub-graph in the inliner
+                    }
                     if (ma.isInline()) {
                         if (!ma.isStatic()) {
                             ((ExactInlineInfo) info).suppressNullCheck();
