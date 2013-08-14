@@ -105,7 +105,11 @@ public class MaxAMD64Backend extends Backend {
 
             } else {
                 // generic Graal safepoint
-                emitSafepoint(node, Op.SAFEPOINT_POLL);
+                ClassMethodActor method = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(this.graph.method());
+                if (!method.noSafepointPolls()) {
+                    // This is the easy case, where the method itself is being compiled. Inlining is more problematic,
+                    emitSafepoint(node, Op.SAFEPOINT_POLL);
+                }
             }
         }
 
@@ -115,7 +119,7 @@ public class MaxAMD64Backend extends Backend {
         }
 
         public void visitMaxCompareAndSwap(MaxCompareAndSwapNode node) {
-            // This code up to the setResuklt is identical to AMD64LIRGenerator.visitCompareAndSwap
+            // This code up to the setResult is identical to AMD64LIRGenerator.visitCompareAndSwap
             Kind kind = node.newValue().kind();
             assert kind == node.expected().kind();
 
