@@ -1235,6 +1235,13 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
+     * Determines if this method must be deoptimized on an implicit exception, as the handler was not compiled.
+     */
+    public boolean deoptOnImplicitException() {
+        return false;
+    }
+
+    /**
      * Gets the profile data gathered during execution of this method.
      *
      * @return {@code null} if this method has no profiling info
