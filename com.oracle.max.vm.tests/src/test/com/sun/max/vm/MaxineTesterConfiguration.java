@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -137,11 +137,26 @@ public class MaxineTesterConfiguration {
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.hotspot.Test6959129.class,     FAIL_ALL);
 
+        // Current list of Graal failures, all related to no deopt on implicit and runtime exceptions.
         jtt(jtt.except.BC_checkcast5.class, JTT_FAIL_GRAAL);
         jtt(jtt.except.BC_checkcast6.class, JTT_FAIL_GRAAL);
         jtt(jtt.except.StackTrace_CCE_00.class, JTT_FAIL_GRAAL);
         jtt(jtt.except.StackTrace_NPE_00.class, JTT_FAIL_GRAAL);
         jtt(jtt.except.StackTrace_NPE_01.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.BC_idiv2.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.BC_invokespecial01.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.BC_invokevirtual01.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.BC_invokevirtual02.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.BC_ldiv2.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.Catch_NASE_1.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.Catch_NASE_2.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.Catch_NPE_00.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.Catch_NPE_03.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.Catch_NPE_06.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.Catch_NPE_07.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.Catch_NPE_10.class, JTT_FAIL_GRAAL);
+        jtt(jtt.except.Except_Locals.class, JTT_FAIL_GRAAL);
+        jtt(jtt.jasm.Invokevirtual_private01.class, JTT_FAIL_GRAAL);
 
         dacapo2006("antlr");
         dacapo2006("bloat");
