@@ -331,8 +331,8 @@ public class MaxIntrinsics {
         registry.add(TEST_SNIPPET_1, new TestIntrinsic1()); // TODO remove when debugged
         registry.add(TEST_SNIPPET_2, new TestIntrinsic2()); // TODO remove when debugged
 
-        registry.add(LSB, new BitIntrinsic(false));
-        registry.add(MSB, new BitIntrinsic(true));
+        registry.add(LSB, new BitIntrinsic(true));
+        registry.add(MSB, new BitIntrinsic(false));
 
         registry.add(UNSAFE_CAST, new UnsafeCastIntrinsic());
         registry.add(READREG, new ReadRegisterIntrinsic());
