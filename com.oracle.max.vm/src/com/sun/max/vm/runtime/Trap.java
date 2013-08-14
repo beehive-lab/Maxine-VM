@@ -408,7 +408,7 @@ public abstract class Trap {
      * @param ip the instruction pointer which caused the trap
      */
     private static void raiseImplicitException(Pointer trapFrame, TargetMethod tm, Class<? extends Throwable> throwableClass, Pointer sp, Pointer fp, CodePointer ip) {
-        if (DeoptOnImplicitException && !tm.isBaseline()) {
+        if (DeoptOnImplicitException && !tm.isBaseline() && tm.deoptOnImplicitException()) {
             Stub stub = vm().stubs.deoptStubForSafepointPoll();
             CodePointer to = stub.codeStart();
             final TrapFrameAccess tfa = vm().trapFrameAccess;
