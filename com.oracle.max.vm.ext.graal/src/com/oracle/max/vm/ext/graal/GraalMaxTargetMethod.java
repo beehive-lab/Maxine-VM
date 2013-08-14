@@ -56,4 +56,10 @@ public class GraalMaxTargetMethod extends MaxTargetMethod {
     protected void prepareTrampolineRefMapHandleOverflowParam(StackFrameCursor current, ClassMethodActor calledMethod, int offset, FrameReferenceMapVisitor preparer) {
         preparer.visitReferenceMapBits(current, current.sp().plus(offset), 1, 1);
     }
+
+    @Override
+    public boolean deoptOnImplicitException() {
+        return true;
+    }
+
 }
