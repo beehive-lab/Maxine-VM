@@ -79,8 +79,8 @@ import com.sun.max.vm.type.*;
  * and, importantly, after all compilation is complete!
  *
  * The Graal debug environment similarly needs to be re-established when the VM runs. It is setup for debugging snippet
- * installation in the boot image generation, but the config is stored in a thread local so it does not survive in the
- * boot image. We establish it in the {@link MaxineVM.Phase#STARTING} phase, as compilations can happen after that.
+ * installation and hosted compilation with Graal, but the config is stored in a thread local so it does not survive in the
+ * boot image. We establish it in the {@link MaxineVM.Phase#RUNNING} phase, as compilations can happen after that.
  */
 public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCompiler {
 
@@ -101,6 +101,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     static {
         addFieldOption("-XX:", "GraalForBoot", MaxGraal.class, "use Graal for boot image");
         addFieldOption("-XX:", "GraalForNative", MaxGraal.class, "compile native code with Graal");
+        addFieldOption("-XX:", "AssumeStateless", MaxGraal.class, "assume AFTER_PARSING boot phases are stateless");
     }
 
     public static boolean GraalForBoot;
@@ -108,6 +109,12 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
      * Temporary option to enable/disable native method compilation by Graal.
      */
     public static boolean GraalForNative = true;
+
+    /**
+     * If this is {@code true} the {@link #afterParsingBootPhases} are assumed to be stateless.
+     * Strange compile errors imply that some phase is not stateless after all which currently, appears to the case.
+     */
+    private static boolean AssumeStateless = false;
 
 
     private static final String NAME = "Graal";
@@ -137,6 +144,9 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
      */
     @HOSTED_ONLY
     private Suites bootSuites;
+
+    @HOSTED_ONLY
+    private List<com.oracle.graal.phases.Phase> afterParsingBootPhases;
 
     /**
      * To propagate to multiple compiler threads in boot image generation.
@@ -296,6 +306,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         FixedGuardNode.suppressDeoptimize();
         defaultSuites = createDefaultSuites();
         bootSuites = createBootSuites();
+        afterParsingBootPhases = createBootPhases();
         // For snippet creation we need bootCompile==true for inlining of VM methods
         state.bootCompile = true;
         MaxResolvedJavaType.init(phase);
@@ -350,25 +361,31 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     }
 
     @HOSTED_ONLY
-    public List<com.oracle.graal.phases.Phase> addBootPhases(PhasePlan phasePlan) {
+    public List<com.oracle.graal.phases.Phase> createBootPhases() {
         ArrayList<com.oracle.graal.phases.Phase> result = new ArrayList<>();
-        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new MaxWordType.CheckWordObjectEqualsPhase()));
+        result.add(new MaxWordType.CheckWordObjectEqualsPhase());
         // In Graal, @Fold is purely a snippet notion; we handle Maxine's more general use with similar code.
         // We do this early to reduce the size of a graph that contains isHosted code.
-        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new MaxFoldPhase(runtime)));
+        result.add(new MaxFoldPhase(runtime));
         // Any folded isHosted code is only removed by a CanonicalizationPhase
-        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new CanonicalizerPhase.Instance(runtime,
-                        new Assumptions(GraalOptions.OptAssumptions.getValue()), canonicalizeReads)));
-        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING, new MaxIntrinsicsPhase()));
-        result.add(addPhase(phasePlan, PhasePosition.AFTER_PARSING,
-                        new MaxWordType.MakeWordFinalRewriterPhase()));
+        result.add(new CanonicalizerPhase.Instance(runtime,
+                        new Assumptions(GraalOptions.OptAssumptions.getValue()), canonicalizeReads));
+        result.add(new MaxIntrinsicsPhase());
+        result.add(new MaxWordType.MakeWordFinalRewriterPhase());
         return result;
     }
 
-    private com.oracle.graal.phases.Phase addPhase(PhasePlan phasePlan, PhasePosition pos, com.oracle.graal.phases.Phase phase) {
-        phasePlan.addPhase(pos, phase);
-        return phase;
+    @HOSTED_ONLY
+    private void addBootPhases(PhasePlan phasePlan) {
+        List<com.oracle.graal.phases.Phase> phases = afterParsingBootPhases;
+        if (!AssumeStateless) {
+            phases = createBootPhases();
+        }
+        for (com.oracle.graal.phases.Phase phase : phases) {
+            phasePlan.addPhase(PhasePlan.PhasePosition.AFTER_PARSING, phase);
+        }
     }
+
     @NEVER_INLINE
     public static void unimplemented(String methodName) {
         ProgramError.unexpected("unimplemented: " + methodName);
@@ -383,8 +400,8 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         state.archWordKind = false;
         state.bootCompile = false;
         Suites compileSuites;
-        if (MaxineVM.isHosted() && (GraalForBoot || methodActor.toString().startsWith("jtt.max"))) {
-            // The (temporary) check for GraalForBoot prevents test compilations being treated as boot image code.
+        if (MaxineVM.isHosted() && (GraalForBoot || testNeedsBootSuites(methodActor))) {
+            // The (temporary) check for GraalForBoot prevents (most) test compilations being treated as boot image code.
             compileSuites = bootSuites;
             state.bootCompile = true;
             state.methodActor = methodActor;
@@ -402,7 +419,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
             // Hosted (boot image) compilation is more complex owing to the need to handle the unsafe features of VM programming,
             // requiring more phases to be run, all very similar to what happens in MaxReplacementsImpl.
             if (MaxineVM.isHosted() && state.bootCompile) {
-                // TODO should be done by modifying bootSuites
                 addBootPhases(phasePlan);
                 // need to propagate the Debug configuration if this is a new compiler thread
                 DebugConfig threadDebugConfig = DebugScope.getConfig();
@@ -431,6 +447,12 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
             // Loop back and recompile.
             graph = new StructuredGraph(method);
         } while (true);
+    }
+
+    @HOSTED_ONLY
+    private static boolean testNeedsBootSuites(MethodActor methodActor) {
+        String methodName = methodActor.toString();
+        return methodName.startsWith("jtt.max") || methodName.startsWith("jtt.exbytecode");
     }
 
     private static boolean substitutedMethod(ClassMethodActor methodActor) {
