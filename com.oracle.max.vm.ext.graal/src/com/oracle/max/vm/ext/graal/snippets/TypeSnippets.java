@@ -32,6 +32,7 @@ import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.spi.Lowerable.LoweringType;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
@@ -91,16 +92,21 @@ public class TypeSnippets extends SnippetLowerings {
         public void lower(FixedGuardNode node, LoweringTool tool) {
             Arguments args = new Arguments(snippets[node.getReason().ordinal()]);
             if (node.usages().isNotEmpty()) {
-                // Happens because PushThroughPiPhase is suppressed, and the instantiate will fail
-                // unless the PiNode is removed.
+                // TODO Figure this out properly. This was originally put in because PushThroughPiPhase
+                // was suppressed, and the instantiate failed without the removal. The phase now runs
+                // however, it fails to remove the Pi on some ReadNodes. It appears to be harmless to
+                // remove the PiNode, but it shouldn't be necessary. Also FixedGuardNode fails if we
+                // default to deoptimization for NullChecks because other node types are in the usages.
                 checkForPiNode(node);
             }
             switch (node.getReason()) {
-                case NullCheckException: {
+                case NullCheckException:
                     break;
-                }
-
                 case ClassCastException:
+                    if (!MaxGraal.bootCompile() && tool.getLoweringType() == LoweringType.BEFORE_GUARDS) {
+                        // default to deoptimization, but not for the boot image
+                        return;
+                    }
                     break;
 
                 default:
@@ -109,7 +115,7 @@ public class TypeSnippets extends SnippetLowerings {
             ValueNode trueValue = ConstantNode.forBoolean(node.isNegated(), node.graph());
             ValueNode falseValue = ConstantNode.forBoolean(!node.isNegated(), node.graph());
             args.add("cond", node.graph().unique(new ConditionalNode(node.condition(), trueValue, falseValue)));
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
         public void checkForPiNode(FixedGuardNode fixedGuardNode) {
@@ -179,7 +185,7 @@ public class TypeSnippets extends SnippetLowerings {
             //boolean checkNull = !node.object().stamp().nonNull(); TODO use this
             args.add("classActor", classActor);
             args.add("object", node.object());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }
@@ -204,7 +210,7 @@ public class TypeSnippets extends SnippetLowerings {
         public void lower(UnresolvedCheckCastNode node, LoweringTool tool) {
             Arguments args = createGuard(node);
             args.add("object", node.object());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
     }
 
@@ -256,7 +262,7 @@ public class TypeSnippets extends SnippetLowerings {
         public void lower(UnresolvedInstanceOfNode node, LoweringTool tool) {
             Arguments args = createGuard(node);
             args.add("object", node.object());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
     }
 
@@ -279,7 +285,7 @@ public class TypeSnippets extends SnippetLowerings {
         @Override
         public void lower(UnresolvedLoadConstantNode node, LoweringTool tool) {
             Arguments args = createGuard(node);
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
     }
 
@@ -302,7 +308,7 @@ public class TypeSnippets extends SnippetLowerings {
         @Override
         public void lower(UnresolvedLoadClassActorNode node, LoweringTool tool) {
             Arguments args = createGuard(node);
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
     }
 

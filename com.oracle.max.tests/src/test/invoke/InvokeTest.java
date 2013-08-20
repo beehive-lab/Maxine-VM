@@ -54,6 +54,9 @@ public class InvokeTest {
             } else if (param == long.class) {
                 callArgs[i] = Long.parseLong(argI);
             } else if (param == String.class) {
+                if (argI.equals("null")) {
+                    argI = null;
+                }
                 callArgs[i] = argI;
             } else if (param == Object.class) {
                 callArgs[i] = argI;

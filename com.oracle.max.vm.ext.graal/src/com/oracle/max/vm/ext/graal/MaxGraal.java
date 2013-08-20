@@ -250,7 +250,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
             MaxResolvedJavaType.init(phase);
             cache = new MaxGraphCache();
             // Compilations can occur after this, so set up the debug environment and check options.
-            if (MaxGraalOptions.isPresent("Dump") != null && GraalForNative) {
+            if ((MaxGraalOptions.isPresent("Dump") != null || MaxGraalOptions.isPresent("DumpOnError") != null) && GraalForNative) {
                 dumpWorkAround();
             }
             // Now we can actually set the Graal options and initialize the Debug environment
@@ -302,8 +302,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         // We want exception handlers generated
         optimisticOpts = OptimisticOptimizations.ALL.remove(Optimization.UseExceptionProbability, Optimization.UseExceptionProbabilityForOperations);
         cache = new MaxGraphCache();
-        // Prevent DeoptimizeNodes since we don't handle them yet
-        FixedGuardNode.suppressDeoptimize();
         defaultSuites = createDefaultSuites();
         bootSuites = createBootSuites();
         afterParsingBootPhases = createBootPhases();
@@ -336,7 +334,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     /**
      * Create the custom suites for boot image compilation.
      * We could do this with a custom {@link CompilerConfiguration} but that involves jar files
-     * using the {@link ServiceLoader} which doesn't fit the Maxine build model well.
+     * using the {@link ServiceLoader} but it doesn't fit the Maxine build model well.
      */
     @HOSTED_ONLY
     private Suites createBootSuites() {

@@ -72,7 +72,7 @@ public class MonitorSnippets extends SnippetLowerings {
             super(snippets, snippetName);
         }
 
-        void lower(AccessMonitorNode node) {
+        void lower(AccessMonitorNode node, LoweringTool tool) {
             FrameState stateAfter = node.stateAfter();
             Arguments args = new Arguments(snippet);
             boolean checkNull = !node.object().stamp().nonNull();
@@ -80,7 +80,7 @@ public class MonitorSnippets extends SnippetLowerings {
             if (node instanceof MonitorEnterNode) {
                 args.addConst("checkNull", checkNull);
             }
-            Map<Node, Node> nodes = instantiate(node, args);
+            Map<Node, Node> nodes = instantiate(node, args, tool);
             for (Node n : nodes.values()) {
                 if (n instanceof LockScopeNode) {
                     LockScopeNode end = (LockScopeNode) n;
@@ -98,7 +98,7 @@ public class MonitorSnippets extends SnippetLowerings {
 
         @Override
         public void lower(MonitorEnterNode node, LoweringTool tool) {
-            super.lower(node);
+            super.lower(node, tool);
         }
 
     }
@@ -121,7 +121,7 @@ public class MonitorSnippets extends SnippetLowerings {
 
         @Override
         public void lower(MonitorExitNode node, LoweringTool tool) {
-            super.lower(node);
+            super.lower(node, tool);
         }
 
     }

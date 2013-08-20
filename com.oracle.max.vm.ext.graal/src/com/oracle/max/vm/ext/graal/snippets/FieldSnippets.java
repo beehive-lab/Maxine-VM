@@ -64,6 +64,8 @@ import com.sun.max.vm.runtime.Snippets;
  *
  * The resolved snippets are very simple and actually the same for instance fields and static fields,
  * as either the static tuple or the receiver is passed as the "object", so the signatures are identical.
+ * However, whereas static tuples are guaranteed non-null by the VM, normal object references are not,
+ * so need null checking. N.B. most null checks are eliminated and handled by hardware (implicit) exceptions.
  *
  * Unresolved snippets are more complex, as we can't access the static tuple until the resolution has occurred,
  * and the runtime calls in the (historic) {@link Snippets} class to do the resolution are different for static
@@ -76,8 +78,6 @@ import com.sun.max.vm.runtime.Snippets;
  * loads by name, instead by the receiver field being {@code null}. We follow the Graal naming for the classes
  * that effect the lowering, but use the bytecode style names for the actual snippets and runtime entry methods.
  * Further we consistently use {@code Get#MODE#Field} where, {@code #MODE} is either {@code Instance} or {@code Static}.
- * Any action qualifier, e.g. {@code resolve} prefixes a name. The {@link Kind} of the access is used as a suffix,
- * e.g., {@code resolveGetStaticBoolean}.
  *
  * The {@code Object} field load/store operations may, depending on the {@link HeapScheme} in use, involve read/write
  * barriers. These may themselves involve loading fields from objects controlled by the {@link HeapScheme}, that
@@ -120,7 +120,7 @@ public class FieldSnippets extends SnippetLowerings {
 
     protected abstract class ResolvedFieldLowering extends FieldLowering {
 
-        void lower(AccessFieldNode node) {
+        void lower(AccessFieldNode node, LoweringTool tool) {
             FieldActor fieldActor = (FieldActor) MaxResolvedJavaField.getRiResolvedField(node.field());
             /*
              * Check for access to fields that are CONSTANT_WHEN_NOT_ZERO with a constant receiver.
@@ -140,9 +140,10 @@ public class FieldSnippets extends SnippetLowerings {
             Arguments args = new Arguments(snippets[KindMap.toGraalKind(WordUtil.ciKind(fieldActor.kind, true)).ordinal()]);
             args.add("object", isStatic ? fieldActor.holder().staticTuple() : node.object());
             args.add("offset", fieldActor.offset());
+            args.addConst("isStatic", isStatic);
             args.addConst("isVolatile", fieldActor.isVolatile());
             storeFieldArg(node, args);
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
         protected void storeFieldArg(AccessFieldNode node, Arguments args) {
@@ -154,7 +155,7 @@ public class FieldSnippets extends SnippetLowerings {
 
         @Override
         public void lower(LoadFieldNode node, LoweringTool tool) {
-            lower(node);
+            super.lower(node, tool);
         }
 
     }
@@ -163,7 +164,7 @@ public class FieldSnippets extends SnippetLowerings {
 
         @Override
         public void lower(StoreFieldNode node, LoweringTool tool) {
-            lower(node);
+            super.lower(node, tool);
         }
 
         @Override
@@ -172,6 +173,9 @@ public class FieldSnippets extends SnippetLowerings {
         }
     }
 
+    /**
+     * The lowering necessary to resolve an unresolved field.
+     */
     protected class ResolveFieldLowering extends Lowering implements LoweringProvider<ResolveFieldNode> {
 
         private final SnippetInfo makeHolderInitializedSnippet;
@@ -212,21 +216,21 @@ public class FieldSnippets extends SnippetLowerings {
                 args = new Arguments(snippetInfo);
                 args.add("guard", guard);
             }
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }
 
     protected class UnresolvedFieldLowering extends FieldLowering {
 
-        void lower(UnresolvedAccessFieldNode node) {
+        void lower(UnresolvedAccessFieldNode node, LoweringTool tool) {
             ValueNode fieldActor = node.resolvedFieldActor();
             Arguments args = new Arguments(snippets[node.javaField().getKind().ordinal()]);
             args.add("object", node.object());
             args.addConst("isStatic", node.isStatic());
             args.add("fieldActor", fieldActor);
             storeFieldArg(node, args);
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
         protected void storeFieldArg(UnresolvedAccessFieldNode node, Arguments args) {
@@ -238,7 +242,7 @@ public class FieldSnippets extends SnippetLowerings {
 
         @Override
         public void lower(UnresolvedLoadFieldNode node, LoweringTool tool) {
-            lower(node);
+            super.lower(node, tool);
         }
 
     }
@@ -247,7 +251,7 @@ public class FieldSnippets extends SnippetLowerings {
 
         @Override
         public void lower(UnresolvedStoreFieldNode node, LoweringTool tool) {
-            lower(node);
+            super.lower(node, tool);
         }
 
         @Override
@@ -293,9 +297,12 @@ public class FieldSnippets extends SnippetLowerings {
 
 // START GENERATED CODE
     @INLINE
-    private static boolean getFieldBoolean(Object object, int offset, boolean isVolatile) {
+    private static boolean getFieldBoolean(Object object, boolean nullCheck, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         boolean result = TupleAccess.readBoolean(object, offset);
         if (isVolatile) {
@@ -305,9 +312,12 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @INLINE
-    private static void putFieldBoolean(Object object, int offset, boolean isVolatile, boolean value) {
+    private static void putFieldBoolean(Object object, boolean nullCheck, int offset, boolean isVolatile, boolean value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         TupleAccess.writeBoolean(object, offset, value);
         if (isVolatile) {
@@ -316,29 +326,32 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static boolean getFieldBooleanSnippet(Object object, int offset, @ConstantParameter boolean isVolatile) {
-        return getFieldBoolean(object, offset, isVolatile);
+    private static boolean getFieldBooleanSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile) {
+        return getFieldBoolean(object, !isStatic, offset, isVolatile);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldBooleanSnippet(Object object, int offset, @ConstantParameter boolean isVolatile, boolean value) {
-        putFieldBoolean(object, offset, isVolatile, value);
+    private static void putFieldBooleanSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile, boolean value) {
+        putFieldBoolean(object, !isStatic, offset, isVolatile, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static boolean getUnresolvedFieldBooleanSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor) {
-        return getFieldBoolean(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile());
+        return getFieldBoolean(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void putUnresolvedFieldBooleanSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor, boolean value) {
-        putFieldBoolean(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile(), value);
+        putFieldBoolean(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile(), value);
     }
 
     @INLINE
-    private static byte getFieldByte(Object object, int offset, boolean isVolatile) {
+    private static byte getFieldByte(Object object, boolean nullCheck, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         byte result = TupleAccess.readByte(object, offset);
         if (isVolatile) {
@@ -348,9 +361,12 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @INLINE
-    private static void putFieldByte(Object object, int offset, boolean isVolatile, byte value) {
+    private static void putFieldByte(Object object, boolean nullCheck, int offset, boolean isVolatile, byte value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         TupleAccess.writeByte(object, offset, value);
         if (isVolatile) {
@@ -359,29 +375,32 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static byte getFieldByteSnippet(Object object, int offset, @ConstantParameter boolean isVolatile) {
-        return getFieldByte(object, offset, isVolatile);
+    private static byte getFieldByteSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile) {
+        return getFieldByte(object, !isStatic, offset, isVolatile);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldByteSnippet(Object object, int offset, @ConstantParameter boolean isVolatile, byte value) {
-        putFieldByte(object, offset, isVolatile, value);
+    private static void putFieldByteSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile, byte value) {
+        putFieldByte(object, !isStatic, offset, isVolatile, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static byte getUnresolvedFieldByteSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor) {
-        return getFieldByte(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile());
+        return getFieldByte(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void putUnresolvedFieldByteSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor, byte value) {
-        putFieldByte(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile(), value);
+        putFieldByte(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile(), value);
     }
 
     @INLINE
-    private static short getFieldShort(Object object, int offset, boolean isVolatile) {
+    private static short getFieldShort(Object object, boolean nullCheck, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         short result = TupleAccess.readShort(object, offset);
         if (isVolatile) {
@@ -391,9 +410,12 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @INLINE
-    private static void putFieldShort(Object object, int offset, boolean isVolatile, short value) {
+    private static void putFieldShort(Object object, boolean nullCheck, int offset, boolean isVolatile, short value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         TupleAccess.writeShort(object, offset, value);
         if (isVolatile) {
@@ -402,29 +424,32 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static short getFieldShortSnippet(Object object, int offset, @ConstantParameter boolean isVolatile) {
-        return getFieldShort(object, offset, isVolatile);
+    private static short getFieldShortSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile) {
+        return getFieldShort(object, !isStatic, offset, isVolatile);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldShortSnippet(Object object, int offset, @ConstantParameter boolean isVolatile, short value) {
-        putFieldShort(object, offset, isVolatile, value);
+    private static void putFieldShortSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile, short value) {
+        putFieldShort(object, !isStatic, offset, isVolatile, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static short getUnresolvedFieldShortSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor) {
-        return getFieldShort(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile());
+        return getFieldShort(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void putUnresolvedFieldShortSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor, short value) {
-        putFieldShort(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile(), value);
+        putFieldShort(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile(), value);
     }
 
     @INLINE
-    private static char getFieldChar(Object object, int offset, boolean isVolatile) {
+    private static char getFieldChar(Object object, boolean nullCheck, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         char result = TupleAccess.readChar(object, offset);
         if (isVolatile) {
@@ -434,9 +459,12 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @INLINE
-    private static void putFieldChar(Object object, int offset, boolean isVolatile, char value) {
+    private static void putFieldChar(Object object, boolean nullCheck, int offset, boolean isVolatile, char value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         TupleAccess.writeChar(object, offset, value);
         if (isVolatile) {
@@ -445,29 +473,32 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static char getFieldCharSnippet(Object object, int offset, @ConstantParameter boolean isVolatile) {
-        return getFieldChar(object, offset, isVolatile);
+    private static char getFieldCharSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile) {
+        return getFieldChar(object, !isStatic, offset, isVolatile);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldCharSnippet(Object object, int offset, @ConstantParameter boolean isVolatile, char value) {
-        putFieldChar(object, offset, isVolatile, value);
+    private static void putFieldCharSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile, char value) {
+        putFieldChar(object, !isStatic, offset, isVolatile, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static char getUnresolvedFieldCharSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor) {
-        return getFieldChar(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile());
+        return getFieldChar(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void putUnresolvedFieldCharSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor, char value) {
-        putFieldChar(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile(), value);
+        putFieldChar(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile(), value);
     }
 
     @INLINE
-    private static int getFieldInt(Object object, int offset, boolean isVolatile) {
+    private static int getFieldInt(Object object, boolean nullCheck, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         int result = TupleAccess.readInt(object, offset);
         if (isVolatile) {
@@ -477,9 +508,12 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @INLINE
-    private static void putFieldInt(Object object, int offset, boolean isVolatile, int value) {
+    private static void putFieldInt(Object object, boolean nullCheck, int offset, boolean isVolatile, int value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         TupleAccess.writeInt(object, offset, value);
         if (isVolatile) {
@@ -488,29 +522,32 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static int getFieldIntSnippet(Object object, int offset, @ConstantParameter boolean isVolatile) {
-        return getFieldInt(object, offset, isVolatile);
+    private static int getFieldIntSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile) {
+        return getFieldInt(object, !isStatic, offset, isVolatile);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldIntSnippet(Object object, int offset, @ConstantParameter boolean isVolatile, int value) {
-        putFieldInt(object, offset, isVolatile, value);
+    private static void putFieldIntSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile, int value) {
+        putFieldInt(object, !isStatic, offset, isVolatile, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static int getUnresolvedFieldIntSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor) {
-        return getFieldInt(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile());
+        return getFieldInt(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void putUnresolvedFieldIntSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor, int value) {
-        putFieldInt(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile(), value);
+        putFieldInt(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile(), value);
     }
 
     @INLINE
-    private static float getFieldFloat(Object object, int offset, boolean isVolatile) {
+    private static float getFieldFloat(Object object, boolean nullCheck, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         float result = TupleAccess.readFloat(object, offset);
         if (isVolatile) {
@@ -520,9 +557,12 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @INLINE
-    private static void putFieldFloat(Object object, int offset, boolean isVolatile, float value) {
+    private static void putFieldFloat(Object object, boolean nullCheck, int offset, boolean isVolatile, float value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         TupleAccess.writeFloat(object, offset, value);
         if (isVolatile) {
@@ -531,29 +571,32 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static float getFieldFloatSnippet(Object object, int offset, @ConstantParameter boolean isVolatile) {
-        return getFieldFloat(object, offset, isVolatile);
+    private static float getFieldFloatSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile) {
+        return getFieldFloat(object, !isStatic, offset, isVolatile);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldFloatSnippet(Object object, int offset, @ConstantParameter boolean isVolatile, float value) {
-        putFieldFloat(object, offset, isVolatile, value);
+    private static void putFieldFloatSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile, float value) {
+        putFieldFloat(object, !isStatic, offset, isVolatile, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static float getUnresolvedFieldFloatSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor) {
-        return getFieldFloat(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile());
+        return getFieldFloat(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void putUnresolvedFieldFloatSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor, float value) {
-        putFieldFloat(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile(), value);
+        putFieldFloat(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile(), value);
     }
 
     @INLINE
-    private static long getFieldLong(Object object, int offset, boolean isVolatile) {
+    private static long getFieldLong(Object object, boolean nullCheck, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         long result = TupleAccess.readLong(object, offset);
         if (isVolatile) {
@@ -563,9 +606,12 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @INLINE
-    private static void putFieldLong(Object object, int offset, boolean isVolatile, long value) {
+    private static void putFieldLong(Object object, boolean nullCheck, int offset, boolean isVolatile, long value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         TupleAccess.writeLong(object, offset, value);
         if (isVolatile) {
@@ -574,29 +620,32 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static long getFieldLongSnippet(Object object, int offset, @ConstantParameter boolean isVolatile) {
-        return getFieldLong(object, offset, isVolatile);
+    private static long getFieldLongSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile) {
+        return getFieldLong(object, !isStatic, offset, isVolatile);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldLongSnippet(Object object, int offset, @ConstantParameter boolean isVolatile, long value) {
-        putFieldLong(object, offset, isVolatile, value);
+    private static void putFieldLongSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile, long value) {
+        putFieldLong(object, !isStatic, offset, isVolatile, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static long getUnresolvedFieldLongSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor) {
-        return getFieldLong(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile());
+        return getFieldLong(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void putUnresolvedFieldLongSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor, long value) {
-        putFieldLong(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile(), value);
+        putFieldLong(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile(), value);
     }
 
     @INLINE
-    private static double getFieldDouble(Object object, int offset, boolean isVolatile) {
+    private static double getFieldDouble(Object object, boolean nullCheck, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         double result = TupleAccess.readDouble(object, offset);
         if (isVolatile) {
@@ -606,9 +655,12 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @INLINE
-    private static void putFieldDouble(Object object, int offset, boolean isVolatile, double value) {
+    private static void putFieldDouble(Object object, boolean nullCheck, int offset, boolean isVolatile, double value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         TupleAccess.writeDouble(object, offset, value);
         if (isVolatile) {
@@ -617,29 +669,32 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static double getFieldDoubleSnippet(Object object, int offset, @ConstantParameter boolean isVolatile) {
-        return getFieldDouble(object, offset, isVolatile);
+    private static double getFieldDoubleSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile) {
+        return getFieldDouble(object, !isStatic, offset, isVolatile);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldDoubleSnippet(Object object, int offset, @ConstantParameter boolean isVolatile, double value) {
-        putFieldDouble(object, offset, isVolatile, value);
+    private static void putFieldDoubleSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile, double value) {
+        putFieldDouble(object, !isStatic, offset, isVolatile, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static double getUnresolvedFieldDoubleSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor) {
-        return getFieldDouble(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile());
+        return getFieldDouble(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void putUnresolvedFieldDoubleSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor, double value) {
-        putFieldDouble(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile(), value);
+        putFieldDouble(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile(), value);
     }
 
     @INLINE
-    private static Object getFieldObject(Object object, int offset, boolean isVolatile) {
+    private static Object getFieldObject(Object object, boolean nullCheck, int offset, boolean isVolatile) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_READ);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         Object result = TupleAccess.readObject(object, offset);
         if (isVolatile) {
@@ -649,9 +704,12 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @INLINE
-    private static void putFieldObject(Object object, int offset, boolean isVolatile, Object value) {
+    private static void putFieldObject(Object object, boolean nullCheck, int offset, boolean isVolatile, Object value) {
         if (isVolatile) {
             memoryBarrier(JMM_PRE_VOLATILE_WRITE);
+        }
+        if (nullCheck) {
+            MaxNullCheckNode.nullCheck(object);
         }
         TupleAccess.writeObject(object, offset, value);
         if (isVolatile) {
@@ -660,23 +718,23 @@ public class FieldSnippets extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static Object getFieldObjectSnippet(Object object, int offset, @ConstantParameter boolean isVolatile) {
-        return UnsafeCastNode.unsafeCast(getFieldObject(object, offset, isVolatile), StampFactory.forNodeIntrinsic());
+    private static Object getFieldObjectSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile) {
+        return UnsafeCastNode.unsafeCast(getFieldObject(object, !isStatic, offset, isVolatile), StampFactory.forNodeIntrinsic());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void putFieldObjectSnippet(Object object, int offset, @ConstantParameter boolean isVolatile, Object value) {
-        putFieldObject(object, offset, isVolatile, value);
+    private static void putFieldObjectSnippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile, Object value) {
+        putFieldObject(object, !isStatic, offset, isVolatile, value);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static Object getUnresolvedFieldObjectSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor) {
-        return UnsafeCastNode.unsafeCast(getFieldObject(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile()), StampFactory.forNodeIntrinsic());
+        return UnsafeCastNode.unsafeCast(getFieldObject(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile()), StampFactory.forNodeIntrinsic());
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static void putUnresolvedFieldObjectSnippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor, Object value) {
-        putFieldObject(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile(), value);
+        putFieldObject(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile(), value);
     }
 
     @HOSTED_ONLY

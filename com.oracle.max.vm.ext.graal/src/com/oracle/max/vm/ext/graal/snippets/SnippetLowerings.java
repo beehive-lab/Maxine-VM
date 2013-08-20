@@ -30,8 +30,10 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.spi.Lowerable.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.runtime.CriticalMethod;
 
@@ -82,8 +84,15 @@ public abstract class SnippetLowerings extends AbstractTemplates implements Snip
 
     }
 
-    public Map<Node, Node> instantiate(FixedNode node, Arguments args) {
-        return template(args).instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
+    public Map<Node, Node> instantiate(FixedNode node, Arguments args, LoweringTool tool) {
+        Map<Node, Node> result = template(args).instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
+        // We handle the immediate lowering of the MaxNullCheck nodes here
+        for (Node rNode : result.values()) {
+            if (rNode instanceof MaxNullCheckNode) {
+                ((MaxNullCheckNode) rNode).lower(tool, LoweringType.BEFORE_GUARDS);
+            }
+        }
+        return result;
     }
 
     public abstract void registerLowerings(

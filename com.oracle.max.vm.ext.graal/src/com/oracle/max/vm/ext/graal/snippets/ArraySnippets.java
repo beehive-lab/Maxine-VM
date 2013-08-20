@@ -71,13 +71,14 @@ public class ArraySnippets extends SnippetLowerings {
         public void lower(ArrayLengthNode node, LoweringTool tool) {
             Arguments args = new Arguments(snippet);
             args.add("array", node.array());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static int arrayLengthSnippet(Object array) {
+        MaxNullCheckNode.nullCheck(array);
         return ArrayAccess.readArrayLength(array);
     }
 
@@ -88,13 +89,14 @@ public class ArraySnippets extends SnippetLowerings {
             snippets[kind.ordinal()] = snippet;
         }
 
-        void lower(AccessIndexedNode node) {
+        void lower(AccessIndexedNode node, LoweringTool tool) {
             Kind elementKind = node.elementKind();
             if (node instanceof LoadIndexedNode && elementKind == Kind.Object && ((ObjectStamp) node.stamp()).type() == null) {
                 /* This is bad news as the instantiation will use this stamp in the UnsafeCastNode for the result
                  * which will get replaced by Reference because, currently, Array.getObject actually returns type Reference.
                  * The latter is a bug, but don't know how to fix it yet.
                  * So we (try) to take the stamp from the incoming array argument and update the node with the element type.
+                 * TODO check if this is still true with fix for Reference/Object casting
                  */
                 ResolvedJavaType type = ((ObjectStamp) node.array().stamp()).type();
                 if (type != null) {
@@ -109,7 +111,7 @@ public class ArraySnippets extends SnippetLowerings {
             args.add("array", node.array());
             args.add("index", node.index());
             storeIndexedArg(node, args);
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
         @NEVER_INLINE
@@ -125,14 +127,14 @@ public class ArraySnippets extends SnippetLowerings {
     protected class LoadIndexedLowering extends IndexedLowering implements LoweringProvider<LoadIndexedNode> {
         @Override
         public void lower(LoadIndexedNode node, LoweringTool tool) {
-            lower(node);
+            super.lower(node, tool);
         }
     }
 
     protected class StoreIndexedLowering extends IndexedLowering implements LoweringProvider<StoreIndexedNode> {
         @Override
         public void lower(StoreIndexedNode node, LoweringTool tool) {
-            lower(node);
+            super.lower(node, tool);
         }
 
         @Override
@@ -147,7 +149,7 @@ public class ArraySnippets extends SnippetLowerings {
      * which is important to avoid unnecessary checks.
      */
     private static void checkIndex(Object array, int index) {
-        // note that we must read the array length first (implicit null check has precedence over bounds check)
+        MaxNullCheckNode.nullCheck(array);
         if (UnsignedMath.aboveOrEqual(index, ArrayAccess.readArrayLength(array))) {
             Throw.throwArrayIndexOutOfBoundsException(array, index);
             throw UnreachableNode.unreachable();

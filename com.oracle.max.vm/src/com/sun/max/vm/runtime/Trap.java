@@ -383,7 +383,7 @@ public abstract class Trap {
         }
     }
 
-    public static boolean DeoptOnImplicitException;
+    public static boolean DeoptOnImplicitException = true;
     static {
         VMOptions.addFieldOption("-XX:", "DeoptOnImplicitException", Trap.class, "Deoptimize on implicit exception occuring in optimized code.");
     }
@@ -408,7 +408,7 @@ public abstract class Trap {
      * @param ip the instruction pointer which caused the trap
      */
     private static void raiseImplicitException(Pointer trapFrame, TargetMethod tm, Class<? extends Throwable> throwableClass, Pointer sp, Pointer fp, CodePointer ip) {
-        if (DeoptOnImplicitException && !tm.isBaseline() && tm.deoptOnImplicitException()) {
+        if (DeoptOnImplicitException && !tm.isBaseline() && tm.deoptOnImplicitException() && throwableClass != StackOverflowError.class) {
             Stub stub = vm().stubs.deoptStubForSafepointPoll();
             CodePointer to = stub.codeStart();
             final TrapFrameAccess tfa = vm().trapFrameAccess;
