@@ -31,9 +31,14 @@ import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.replacements.*;
+import com.oracle.graal.replacements.Snippet.ConstantParameter;
 import com.oracle.graal.replacements.SnippetTemplate.*;
+import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -51,28 +56,59 @@ public class MaxMiscLowerings extends SnippetLowerings {
     public void registerLowerings(MetaAccessProvider runtime, Replacements replacements, TargetDescription targetDescription, Map<Class< ? extends Node>, LoweringProvider> lowerings) {
         lowerings.put(LoadExceptionObjectNode.class, new LoadExceptionObjectLowering(this));
         lowerings.put(UnwindNode.class, new UnwindLowering(this));
-        lowerings.put(DeoptimizeNode.class, new DeoptimizeLowering());
+        lowerings.put(DeoptimizeNode.class, new DeoptimizeLowering(this));
     }
 
     protected class DeoptimizeLowering extends Lowering implements LoweringProvider<DeoptimizeNode> {
 
+        DeoptimizeLowering(MaxMiscLowerings miscSnippets) {
+            super(miscSnippets, "deoptimizeSnippet");
+        }
+
         @Override
         public void lower(DeoptimizeNode node, LoweringTool tool) {
-            // currently handled by LIR
+            DeoptimizationReason deoptimizationReason = node.getDeoptimizationReason();
+            if (deoptimizationReason == DeoptimizationReason.NullCheckException || deoptimizationReason == DeoptimizationReason.ClassCastException) {
+                ClassMethodActor methodActor = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(node.graph().method());
+                Arguments args = new Arguments(snippet);
+                args.addConst("methodActor", methodActor);
+                instantiate(node, args, tool);
+            } else {
+                // let LIR (handle it)
+                // TODO why?
+            }
         }
 
     }
 
+    /**
+     * Called to explicitly deoptimize the given method.
+     */
+    @SNIPPET_SLOWPATH
+    private static void deoptimize(ClassMethodActor methodActor) {
+        TargetMethod tm = methodActor.currentTargetMethod();
+        ArrayList<TargetMethod> tms = new ArrayList<>(1);
+        tms.add(tm);
+        new Deoptimization(tms).go();
+        // on return it will all happen!
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void deoptimizeSnippet(@ConstantParameter ClassMethodActor methodActor) {
+        deoptimize(methodActor);
+        throw UnreachableNode.unreachable();
+    }
+
     protected class LoadExceptionObjectLowering extends Lowering implements LoweringProvider<LoadExceptionObjectNode> {
 
-        LoadExceptionObjectLowering(MaxMiscLowerings invokeSnippets) {
-            super(invokeSnippets, "loadExceptionObjectSnippet");
+        LoadExceptionObjectLowering(MaxMiscLowerings miscSnippets) {
+            super(miscSnippets, "loadExceptionObjectSnippet");
         }
 
         @Override
         public void lower(LoadExceptionObjectNode node, LoweringTool tool) {
             Arguments args = new Arguments(snippet);
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }
@@ -90,15 +126,15 @@ public class MaxMiscLowerings extends SnippetLowerings {
 
     protected class UnwindLowering extends Lowering implements LoweringProvider<UnwindNode> {
 
-        UnwindLowering(MaxMiscLowerings invokeSnippets) {
-            super(invokeSnippets, "throwExceptionSnippet");
+        UnwindLowering(MaxMiscLowerings miscSnippets) {
+            super(miscSnippets, "throwExceptionSnippet");
         }
 
         @Override
         public void lower(UnwindNode node, LoweringTool tool) {
             Arguments args = new Arguments(snippet);
             args.add("throwable", node.exception());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }

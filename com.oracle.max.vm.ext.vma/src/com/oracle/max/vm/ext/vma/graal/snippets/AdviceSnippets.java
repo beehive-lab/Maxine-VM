@@ -95,7 +95,7 @@ public class AdviceSnippets extends SnippetLowerings {
             Node advisedNode = adviceMode == AdviceMode.AFTER ? node.predecessor() : node.successors().first();
             AdviceLowering adviceLowering = adviceLowerings.get(advisedNode.getNodeClass());
             Arguments args = adviceLowering.lower(node, advisedNode);
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }

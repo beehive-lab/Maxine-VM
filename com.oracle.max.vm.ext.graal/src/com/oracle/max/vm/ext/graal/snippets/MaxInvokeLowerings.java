@@ -83,11 +83,14 @@ public class MaxInvokeLowerings extends SnippetLowerings {
                 MethodCallTargetNode callTarget = (MethodCallTargetNode) invoke.callTarget();
                 NodeInputList<ValueNode> parameters = callTarget.arguments();
                 ValueNode receiver = parameters.size() <= 0 ? null : parameters.get(0);
-                // For Virtual/Interface calls an explicit null check is not needed as loading the
-                // address from the vtable/itable acts as an implicit null check.
                 JavaType[] signature = MetaUtil.signatureToTypes(callTarget.targetJavaMethod().getSignature(),
                                 callTarget.isStatic() ? null : callTarget.targetJavaMethod().getDeclaringClass());
                 CallingConvention.Type callType = CallingConvention.Type.JavaCall;
+
+                if (!callTarget.isStatic() && callTarget.invokeKind() == InvokeKind.Special && !receiver.objectStamp().nonNull()) {
+                    // This is the one case where the null check cannot be factored into the MethodAddress calculation
+                    tool.createNullCheckGuard(invoke, receiver);
+                }
 
                 CallTargetNode loweredCallTarget = null;
                 switch (callTarget.invokeKind()) {
@@ -147,7 +150,7 @@ public class MaxInvokeLowerings extends SnippetLowerings {
                 args.add("receiver", node.receiver());
             }
             args.add("methodActor", node.methodActor());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }
@@ -175,11 +178,13 @@ public class MaxInvokeLowerings extends SnippetLowerings {
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static com.sun.max.unsafe.Address addressForVirtualMethodSnippet(Object receiver, VirtualMethodActor methodActor) {
+        MaxNullCheckNode.nullCheck(receiver);
         return Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static com.sun.max.unsafe.Address addressForInterfaceMethodSnippet(Object receiver, InterfaceMethodActor methodActor) {
+        MaxNullCheckNode.nullCheck(receiver);
         return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress();
     }
 
@@ -200,7 +205,7 @@ public class MaxInvokeLowerings extends SnippetLowerings {
             ResolutionGuard.InPool guard = unresolvedMethod.constantPool.makeResolutionGuard(unresolvedMethod.cpi);
             Arguments args = new Arguments(snippets[node.invokeKind().ordinal()]);
             args.add("guard", guard);
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }

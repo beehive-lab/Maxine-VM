@@ -91,7 +91,7 @@ public class NewSnippets extends SnippetLowerings {
             }
             Arguments args = new Arguments(snippetToUse);
             args.add("hub", classActor.dynamicHub());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
     }
 
@@ -126,7 +126,7 @@ public class NewSnippets extends SnippetLowerings {
                 args = new Arguments(snippet);
                 args.add("guard", guard);
             }
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }
@@ -166,7 +166,7 @@ public class NewSnippets extends SnippetLowerings {
             Arguments args = new Arguments(snippet);
             args.add("hub", type.dynamicHub());
             args.add("length", node.length());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
     }
 
@@ -198,7 +198,7 @@ public class NewSnippets extends SnippetLowerings {
             Arguments args = new Arguments(snippet);
             args.add("javaComponentClass", node.getElementType());
             args.add("length", node.length());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
     }
 
@@ -221,7 +221,7 @@ public class NewSnippets extends SnippetLowerings {
             Arguments args = new Arguments(snippet);
             args.add("guard", guard);
             args.add("length", node.length());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
     }
 
@@ -248,7 +248,7 @@ public class NewSnippets extends SnippetLowerings {
             Arguments args = new Arguments(snippet);
             args.add("arrayClassActor", arrayClassActor);
             dimensions(args, node.dimensions());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }
@@ -298,7 +298,7 @@ public class NewSnippets extends SnippetLowerings {
             Arguments args = new Arguments(snippet);
             args.add("arrayClassActor", node.resolvedClassActor());
             dimensions(args, node.dimensions());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
     }
 

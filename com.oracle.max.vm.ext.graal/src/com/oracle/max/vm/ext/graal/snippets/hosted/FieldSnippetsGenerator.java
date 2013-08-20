@@ -41,9 +41,12 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
 
     private static final String PUT_FIELD_METHOD =
         "    @INLINE\n" +
-        "    private static void putField#UKIND#(Object object, int offset, boolean isVolatile, #KIND# value) {\n" +
+        "    private static void putField#UKIND#(Object object, boolean nullCheck, int offset, boolean isVolatile, #KIND# value) {\n" +
         "        if (isVolatile) {\n" +
         "            memoryBarrier(JMM_PRE_VOLATILE_WRITE);\n" +
+        "        }\n" +
+        "        if (nullCheck) {\n" +
+        "            MaxNullCheckNode.nullCheck(object);\n" +
         "        }\n" +
         "        TupleAccess.write#UKIND#(object, offset, value);\n" +
         "        if (isVolatile) {\n" +
@@ -53,9 +56,12 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
 
     private static final String GET_FIELD_METHOD =
         "    @INLINE\n" +
-        "    private static #KIND# getField#UKIND#(Object object, int offset, boolean isVolatile) {\n" +
+        "    private static #KIND# getField#UKIND#(Object object, boolean nullCheck, int offset, boolean isVolatile) {\n" +
         "        if (isVolatile) {\n" +
         "            memoryBarrier(JMM_PRE_VOLATILE_READ);\n" +
+        "        }\n" +
+        "        if (nullCheck) {\n" +
+        "            MaxNullCheckNode.nullCheck(object);\n" +
         "        }\n" +
         "        #KIND# result = TupleAccess.read#UKIND#(object, offset);\n" +
         "        if (isVolatile) {\n" +
@@ -66,26 +72,26 @@ public class FieldSnippetsGenerator extends SnippetsGenerator {
 
     private static final String PUT_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static void putField#UKIND#Snippet(Object object, int offset, @ConstantParameter boolean isVolatile, #KIND# value) {\n" +
-        "        putField#UKIND#(object, offset, isVolatile, value);\n" +
+        "    private static void putField#UKIND#Snippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile, #KIND# value) {\n" +
+        "        putField#UKIND#(object, !isStatic, offset, isVolatile, value);\n" +
         "    }\n\n";
 
     private static final String GET_FIELD_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
-        "    private static #KIND# getField#UKIND#Snippet(Object object, int offset, @ConstantParameter boolean isVolatile) {\n" +
-        "        return #UCB#getField#UKIND#(object, offset, isVolatile)#UCA#;\n" +
+        "    private static #KIND# getField#UKIND#Snippet(Object object, int offset, @ConstantParameter boolean isStatic, @ConstantParameter boolean isVolatile) {\n" +
+        "        return #UCB#getField#UKIND#(object, !isStatic, offset, isVolatile)#UCA#;\n" +
         "    }\n\n";
 
     private static final String PUT_UNRESOLVED_FIELD_SNIPPET =
                     "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
                     "    private static void putUnresolvedField#UKIND#Snippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor, #KIND# value) {\n" +
-                    "        putField#UKIND#(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile(), value);\n" +
+                    "        putField#UKIND#(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile(), value);\n" +
                     "    }\n\n";
 
     private static final String GET_UNRESOLVED_FIELD_SNIPPET =
                     "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
                     "    private static #KIND# getUnresolvedField#UKIND#Snippet(Object object, @ConstantParameter boolean isStatic, FieldActor fieldActor) {\n" +
-                    "        return #UCB#getField#UKIND#(isStatic ? fieldActor.holder().staticTuple() : object, fieldActor.offset(), fieldActor.isVolatile())#UCA#;\n" +
+                    "        return #UCB#getField#UKIND#(isStatic ? fieldActor.holder().staticTuple() : object, !isStatic, fieldActor.offset(), fieldActor.isVolatile())#UCA#;\n" +
                     "    }\n\n";
 
     private static final String ADD_SNIPPETS_DECL =

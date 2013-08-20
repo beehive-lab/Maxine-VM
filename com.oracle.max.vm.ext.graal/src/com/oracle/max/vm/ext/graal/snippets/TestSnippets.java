@@ -106,7 +106,7 @@ public class TestSnippets extends SnippetLowerings {
         public void lower(TestSnippetNode1 node, LoweringTool tool) {
             Arguments args = new Arguments(snippet);
             args.add("object", node.arg1);
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }
@@ -122,7 +122,7 @@ public class TestSnippets extends SnippetLowerings {
             Arguments args = new Arguments(snippet);
             args.add("actor", node.arg2);
             args.add("object", node.arg1);
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }

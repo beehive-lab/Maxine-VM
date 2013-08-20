@@ -291,7 +291,7 @@ public class NativeStubSnippets extends SnippetLowerings {
         public void lower(NativeFunctionHandlesNode node, LoweringTool tool) {
             Arguments args = new Arguments(snippet);
             handles(node.graph(), args, node.getNativeMethod(), node.arguments());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }
@@ -442,7 +442,7 @@ public class NativeStubSnippets extends SnippetLowerings {
             args.add("handleBase", node.handleBase());
             args.add("offset", node.offset());
             args.add("value", node.value());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }
@@ -462,7 +462,7 @@ public class NativeStubSnippets extends SnippetLowerings {
         public void lower(JniUnhandNode node, LoweringTool tool) {
             Arguments args = new Arguments(snippet);
             args.add("handle", node.handle());
-            instantiate(node, args);
+            instantiate(node, args, tool);
         }
 
     }
