@@ -63,11 +63,6 @@ public class MaxForeignCallsMap {
         Throw.raise(UnsafeCast.asThrowable(throwable));
     }
 
-    @SNIPPET_SLOWPATH
-    private static void deoptimize() {
-        FatalError.unexpected("Deoptimize not implemented");
-    }
-
     @HOSTED_ONLY
     public static void initialize(MaxRuntime runtime) {
         MaxForeignCallsMap.runtime = runtime;
@@ -83,9 +78,6 @@ public class MaxForeignCallsMap {
             Method unwindException = MaxForeignCallsMap.class.getDeclaredMethod("unwindException", Object.class);
             createRuntimeCall(unwindException.getName(), MethodActor.fromJava(unwindException), RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, false, ALL_LOCATIONS);
             new CriticalMethod(unwindException);
-            Method deoptimize = MaxForeignCallsMap.class.getDeclaredMethod("deoptimize");
-            createRuntimeCall(deoptimize.getName(), MethodActor.fromJava(deoptimize), RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, false, ALL_LOCATIONS);
-            new CriticalMethod(deoptimize);
             new CriticalMethod(VmThread.class.getDeclaredMethod("throwJniException"));
 
         } catch (Exception ex) {

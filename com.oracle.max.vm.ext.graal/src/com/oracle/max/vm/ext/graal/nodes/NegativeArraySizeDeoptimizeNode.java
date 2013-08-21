@@ -20,32 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.amd64;
+package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.asm.amd64.*;
-import com.oracle.graal.lir.*;
-import com.oracle.graal.lir.amd64.*;
-import com.oracle.graal.lir.asm.*;
+import com.oracle.graal.nodes.*;
 
-@Opcode("DEOPT")
-final class MaxAMD64DeoptimizeOp extends AMD64LIRInstruction {
+/**
+ * A subclass to carry the information about the erroneous array length when compiling the boot image.
+ */
+public class NegativeArraySizeDeoptimizeNode extends DeoptimizeNode {
 
-    public static final ForeignCallDescriptor DEOPTIMIZE = new ForeignCallDescriptor("deoptimize", void.class);
+    @Input private ValueNode length;
 
-    private DeoptimizationAction action;
-    private DeoptimizationReason reason;
-    @State private LIRFrameState info;
-
-    MaxAMD64DeoptimizeOp(DeoptimizationAction action, DeoptimizationReason reason, LIRFrameState info) {
-        this.action = action;
-        this.reason = reason;
-        this.info = info;
+    public NegativeArraySizeDeoptimizeNode(ValueNode length) {
+        super(DeoptimizationAction.None, DeoptimizationReason.RuntimeConstraint);
+        this.length = length;
     }
 
-    @Override
-    public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-        AMD64Call.directCall(tasm, masm, tasm.runtime.lookupForeignCall(DEOPTIMIZE), null, false, info);
+    public ValueNode length() {
+        return length;
     }
+
+    @NodeIntrinsic
+    public static native void deopt(int length);
+
 }
