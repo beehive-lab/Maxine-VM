@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.sun.cri.ci.*;
 import com.sun.max.unsafe.*;
-
 
 public class ValueMap {
 
@@ -61,6 +60,7 @@ public class ValueMap {
         } else if (value instanceof StackSlot) {
             StackSlot stackSlot = (StackSlot) value;
             int offset = stackSlot.getOffset(totalFrameSize);
+            assert offset % Word.size() == 0;
             return CiStackSlot.get(KindMap.toCiKind(stackSlot.getKind()), offset / Word.size(), stackSlot.isInCallerFrame());
         } else if (value.getKind() == Kind.Illegal) {
             return CiValue.IllegalValue;

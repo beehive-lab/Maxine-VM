@@ -154,6 +154,10 @@ public class NewSnippets extends SnippetLowerings {
         return initializeClassAndNew(classActor);
     }
 
+    /*
+     * All negative size exceptions on arrays are handled by deoptimization.
+     */
+
     protected class NewArrayLowering extends Lowering implements LoweringProvider<NewArrayNode> {
 
         protected NewArrayLowering(NewSnippets newSnippets) {
@@ -173,8 +177,7 @@ public class NewSnippets extends SnippetLowerings {
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object newArraySnippet(DynamicHub hub, int length) {
         if (length < 0) {
-            Throw.throwNegativeArraySizeException(length);
-            throw UnreachableNode.unreachable();
+            NegativeArraySizeDeoptimizeNode.deopt(length);
         }
         Object result = Heap.createArray(hub, length);
         BeginNode anchorNode = BeginNode.anchor(StampFactory.forNodeIntrinsic());
@@ -205,6 +208,12 @@ public class NewSnippets extends SnippetLowerings {
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object newDynamicArraySnippet(Class javaComponentClass, int length) {
         // The null check is baked into the DynamicArrayNode creation
+        if (javaComponentClass == Void.TYPE) {
+            IllegalArgumentDeoptimizeNode.deopt();
+        }
+        if (length < 0) {
+            NegativeArraySizeDeoptimizeNode.deopt(length);
+        }
         return JDK_java_lang_reflect_Array.nonNullNewArray(javaComponentClass, length);
     }
 
@@ -227,13 +236,16 @@ public class NewSnippets extends SnippetLowerings {
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static Object unresolvedNewArraySnippet(ResolutionGuard.InPool guard, int length) {
+        if (length < 0) {
+            NegativeArraySizeDeoptimizeNode.deopt(length);
+        }
         return UnsafeCastNode.unsafeCast(resolveClassForNewArrayAndCreate(guard, length), StampFactory.forNodeIntrinsic());
     }
 
     @SNIPPET_SLOWPATH
     private static Object resolveClassForNewArrayAndCreate(ResolutionGuard guard, int length) {
         ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(guard));
-        return Snippets.createArray(arrayClassActor, length);
+        return Heap.createArray(arrayClassActor.dynamicHub(), length);
     }
 
     protected class NewMultiArrayLowering extends Lowering implements LoweringProvider<NewMultiArrayNode> {
@@ -272,8 +284,7 @@ public class NewSnippets extends SnippetLowerings {
         for (int i = 0; i < rank; i++) {
             dims[i] = dimensions[i];
             if (dimensions[i] < 0) {
-                Throw.throwNegativeArraySizeException(dims[i]);
-                throw UnreachableNode.unreachable();
+                NegativeArraySizeDeoptimizeNode.deopt(dimensions[i]);
             }
         }
         Object result = safeCreateMultiReferenceArray(arrayClassActor, dims);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -201,7 +201,8 @@ public class MaxAMD64Backend extends Backend {
 
         @Override
         public void emitDeoptimize(DeoptimizationAction action, DeoptimizingNode deopting) {
-            append(new MaxAMD64DeoptimizeOp(action, deopting.getDeoptimizationReason(), state(deopting)));
+            // This should never occur as Deopt is lowered earlier
+            MaxGraal.unimplemented("emitDeopimize");
         }
 
         @Override
@@ -352,7 +353,7 @@ public class MaxAMD64Backend extends Backend {
 
     @Override
     public FrameMap newFrameMap() {
-        return new AMD64FrameMap(runtime(), target, runtime().lookupRegisterConfig());
+        return new MaxAMD64FrameMap(runtime(), target, runtime().lookupRegisterConfig());
     }
 
 }

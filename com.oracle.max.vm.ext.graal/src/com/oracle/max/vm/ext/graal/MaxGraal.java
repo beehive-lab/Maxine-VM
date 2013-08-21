@@ -40,6 +40,7 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.java.*;
 import com.oracle.graal.lir.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.phases.*;
 import com.oracle.graal.phases.OptimisticOptimizations.Optimization;
@@ -323,7 +324,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         ListIterator<BasePhase<? super HighTierContext>> highIter = highTier.findPhase(InliningPhase.class);
         highIter.remove();
         highIter.add(new MaxInliningPhase());
-        // TailDuplicationcauses a problem with native methods because the NativeFunctionCallNode gets duplicated
+        // TailDuplication causes a problem with native methods because the NativeFunctionCallNode gets duplicated
         // from its initial state as the template method. Disabling it completely is overkill but simple.
         highTier.findPhase(TailDuplicationPhase.class).remove();
         // causes problems in Maxine DebugInfo (doesn't understand virtualized objects)
@@ -355,7 +356,32 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
 
         PhaseSuite<MidTierContext> midTier = suites.getMidTier();
         midTier.appendPhase(new MaxWordType.KindRewriterPhase());
+        midTier.appendPhase(new DeoptCheck());
         return suites;
+    }
+
+    /**
+     * Checks whether any deoptimize calls have been generated in this method.
+     * This is generally bad for the boot image as deoptimization is not always possible,
+     * especially during boot strap.
+     */
+    @HOSTED_ONLY
+    private static class DeoptCheck extends com.oracle.graal.phases.Phase {
+
+        @Override
+        protected void run(StructuredGraph graph) {
+            // By this phase, deoptimize calls have been turned into ForeignCallNodes
+            for (Node node : graph.getNodes()) {
+                if (node instanceof ForeignCallNode) {
+                    ForeignCallNode foreignCallNode = (ForeignCallNode) node;
+                    if (foreignCallNode.getDescriptor().getName().equals("deoptimize")) {
+                        Trace.line(1, "WARNING: deoptimize generated in: " + graph.method());
+                    }
+                }
+            }
+
+        }
+
     }
 
     @HOSTED_ONLY
