@@ -64,6 +64,7 @@ public class MaxIntrinsics {
             StructuredGraph graph = invoke.graph();
             IndexedLocationNode location = IndexedLocationNode.create(LocationIdentity.ANY_LOCATION,
                             checkWord(method.getSignature().getReturnType(null)), 0, offset, graph, 1);
+            // ReadNode is guarded to prevent floating outside block (e.g. above an explicit null check)
             ReadNode memoryRead = graph.add(new ReadNode(pointer, location,
                             stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())),
                             AbstractBeginNode.prevBegin(invoke), BarrierType.NONE, false));
@@ -90,6 +91,7 @@ public class MaxIntrinsics {
             ValueNode scaledIndex = scaledIndex(graph, dataKind, index);
             LocationNode location = ExtendedIndexedLocationNode.create(LocationIdentity.ANY_LOCATION,
                             checkWord(method.getSignature().getReturnType(null)), displacement, graph, scaledIndex);
+            // ReadNode is guarded to prevent floating outside block (e.g. above an explicit null check)
             ReadNode memoryRead = graph.add(new ReadNode(pointer, location,
                             stampFor((ResolvedJavaType) method.getSignature().getReturnType(method.getDeclaringClass())),
                             AbstractBeginNode.prevBegin(invoke), BarrierType.NONE, false));
