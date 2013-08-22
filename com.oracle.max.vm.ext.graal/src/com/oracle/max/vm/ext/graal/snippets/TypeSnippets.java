@@ -97,14 +97,16 @@ public class TypeSnippets extends SnippetLowerings {
                 // however, it fails to remove the Pi on some ReadNodes. It appears to be harmless to
                 // remove the PiNode, but it shouldn't be necessary. Also FixedGuardNode fails if we
                 // default to deoptimization for NullChecks because other node types are in the usages.
-                checkForPiNode(node);
+                //checkForPiNode(node);
             }
             switch (node.getReason()) {
                 case NullCheckException:
+                    if (tool.getLoweringType() == LoweringType.BEFORE_GUARDS) {
+                        return;
+                    }
                     break;
                 case ClassCastException:
-                    if (!MaxGraal.bootCompile() && tool.getLoweringType() == LoweringType.BEFORE_GUARDS) {
-                        // default to deoptimization, but not for the boot image
+                    if (tool.getLoweringType() == LoweringType.BEFORE_GUARDS) {
                         return;
                     }
                     break;

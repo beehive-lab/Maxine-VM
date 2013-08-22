@@ -37,7 +37,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.vm.hosted.BootImageGenerator"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -opt=C1XGraal -run=test.com.sun.max.vm.jtrun.all -native-tests --XX:CompileCommand=jtt.:Graal"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -opt=C1XGraal -run=test.com.sun.max.vm.jtrun.all -native-tests --XX:CompileCommand=test.com.sun.max.vm.jtrun.all.JTRuns:T1X,jtt.:Graal"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.oracle.max.vm"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xss2m -Xms1G -Xmx2G -Dmax.trace.noconsoles -Dmax.ir.trace=xxx -Djava.ext.dirs=${workspace_loc}/graal/jdk1.7.0_25/product/jre/lib/ext"/>
 </launchConfiguration>
