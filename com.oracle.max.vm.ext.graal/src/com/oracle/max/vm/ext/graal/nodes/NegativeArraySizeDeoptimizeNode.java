@@ -22,19 +22,18 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.*;
 
 /**
  * A subclass to carry the information about the erroneous array length when compiling the boot image.
  */
-public class NegativeArraySizeDeoptimizeNode extends DeoptimizeNode {
+public class NegativeArraySizeDeoptimizeNode extends BootCheckDeoptimizeNode {
 
     @Input private ValueNode length;
 
     public NegativeArraySizeDeoptimizeNode(ValueNode length) {
-        super(DeoptimizationAction.None, DeoptimizationReason.RuntimeConstraint);
+        super(DeoptimizationReason.RuntimeConstraint);
         this.length = length;
     }
 

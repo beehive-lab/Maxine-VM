@@ -160,9 +160,15 @@ public class MaxIntrinsics {
             this.op = op;
         }
 
-        public ValueNode create(FixedNode invoke) {
-            StructuredGraph graph = invoke.graph();
-            return graph.add(new MaxSafepointNode(op));
+        public ValueNode create(FixedNode node) {
+            StructuredGraph graph = node.graph();
+            Invoke invoke = (Invoke) node;
+            MaxSafepointNode result = new MaxSafepointNode(op);
+            graph.add(result);
+            // Since these present as method invocations, we want the state after to be
+            // recorded with the safepoint.
+            result.setDeoptimizationState(invoke.stateAfter());
+            return result;
         }
     }
 

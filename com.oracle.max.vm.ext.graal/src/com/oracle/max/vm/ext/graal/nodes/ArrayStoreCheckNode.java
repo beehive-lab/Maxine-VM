@@ -22,18 +22,34 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.graal.api.meta.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 
 /**
- * A deopt that should throw {@link IllegalArgumentException} in boot image code.
+ * A node that exists to allow lowering of the type check on an object array store by a snippet.
  */
-public class IllegalArgumentDeoptimizeNode extends BootCheckDeoptimizeNode {
+public class ArrayStoreCheckNode extends FixedWithNextNode implements Lowerable {
 
-    public IllegalArgumentDeoptimizeNode() {
-        super(DeoptimizationReason.RuntimeConstraint);
+    @Input private ValueNode array;
+    @Input private ValueNode object;
+
+    public ArrayStoreCheckNode(ValueNode array, ValueNode object) {
+        super(StampFactory.forVoid());
+        this.array = array;
+        this.object = object;
     }
 
-    @NodeIntrinsic
-    public static native void deopt();
+    public ValueNode array() {
+        return array;
+    }
+
+    public ValueNode object() {
+        return object;
+    }
+
+    public void lower(LoweringTool tool, LoweringType loweringType) {
+        tool.getRuntime().lower(this, tool);
+    }
 
 }

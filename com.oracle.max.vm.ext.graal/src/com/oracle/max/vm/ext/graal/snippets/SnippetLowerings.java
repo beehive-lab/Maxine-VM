@@ -90,15 +90,15 @@ public abstract class SnippetLowerings extends AbstractTemplates implements Snip
         SnippetTemplate template = template(args);
         Map<Node, Node> result = template.instantiate(runtime, node, SnippetTemplate.DEFAULT_REPLACER, args);
         // We handle the immediate lowering of the MaxNullCheck nodes here
-        boolean hadNullCheck = false;
+        boolean hadCheck = false;
         for (Node rNode : result.values()) {
-            if (rNode instanceof MaxNullCheckNode) {
-                ((MaxNullCheckNode) rNode).lower(tool, LoweringType.BEFORE_GUARDS);
-                hadNullCheck = true;
+            if (rNode instanceof MaxCheckNode) {
+                ((MaxCheckNode) rNode).lower(tool, LoweringType.BEFORE_GUARDS);
+                hadCheck = true;
             }
         }
-        if (hadNullCheck) {
-            Debug.dump(graph, "After lowering MaxNullCheck");
+        if (hadCheck) {
+            Debug.dump(graph, "After lowering MaxCheck");
         }
         return result;
     }

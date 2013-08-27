@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.graal.snippets;
 
 import java.util.*;
 
+import static  com.oracle.max.vm.ext.graal.nodes.MaxIndexCheckNode.checkIndex;
 import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
@@ -33,12 +34,10 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
-import com.oracle.max.cri.intrinsics.UnsignedMath;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.runtime.*;
 
 
 public class ArraySnippets extends SnippetLowerings {
@@ -59,6 +58,7 @@ public class ArraySnippets extends SnippetLowerings {
 
         lowerings.put(LoadIndexedNode.class, loadIndexedLowering);
         lowerings.put(StoreIndexedNode.class, storeIndexedLowering);
+        lowerings.put(ArrayStoreCheckNode.class, new ArrayStoreCheckLowering(this));
     }
 
     protected class ArrayLengthLowering extends Lowering implements LoweringProvider<ArrayLengthNode> {
@@ -92,19 +92,12 @@ public class ArraySnippets extends SnippetLowerings {
         void lower(AccessIndexedNode node, LoweringTool tool) {
             Kind elementKind = node.elementKind();
             if (node instanceof LoadIndexedNode && elementKind == Kind.Object && ((ObjectStamp) node.stamp()).type() == null) {
-                /* This is bad news as the instantiation will use this stamp in the UnsafeCastNode for the result
-                 * which will get replaced by Reference because, currently, Array.getObject actually returns type Reference.
-                 * The latter is a bug, but don't know how to fix it yet.
-                 * So we (try) to take the stamp from the incoming array argument and update the node with the element type.
-                 * TODO check if this is still true with fix for Reference/Object casting
-                 */
+                // This used to be problem before Referenve was prevented from casting to Object in MaxUnsafeCast
+                // Now it's just sub-optimal, so if we know the element type from the array, we update it here.
                 ResolvedJavaType type = ((ObjectStamp) node.array().stamp()).type();
                 if (type != null) {
                     Stamp elementStamp = StampFactory.declared(type.getComponentType());
                     node.setStamp(elementStamp);
-                } else {
-                    // TODO hmm, happens with unresolved types, what to do?
-                    problem(node);
                 }
             }
             Arguments args = new Arguments(snippets[elementKind.ordinal()]);
@@ -112,11 +105,6 @@ public class ArraySnippets extends SnippetLowerings {
             args.add("index", node.index());
             storeIndexedArg(node, args);
             instantiate(node, args, tool);
-        }
-
-        @NEVER_INLINE
-        private void problem(Node node) {
-
         }
 
         protected void storeIndexedArg(AccessIndexedNode node, Arguments args) {
@@ -143,32 +131,37 @@ public class ArraySnippets extends SnippetLowerings {
         }
     }
 
-    /**
-     * Functionally equivalent to {@link ArrayAccess.checkIndex}.
-     * However, is Graal-specific by way of the {@code throw UnreachableNode.unreachable();},
-     * which is important to avoid unnecessary checks.
-     */
-    private static void checkIndex(Object array, int index) {
-        MaxNullCheckNode.nullCheck(array);
-        if (UnsignedMath.aboveOrEqual(index, ArrayAccess.readArrayLength(array))) {
-            Throw.throwArrayIndexOutOfBoundsException(array, index);
-            throw UnreachableNode.unreachable();
+    private class ArrayStoreCheckLowering extends Lowering implements LoweringProvider<ArrayStoreCheckNode> {
+        ArrayStoreCheckLowering(ArraySnippets newSnippets) {
+            super(newSnippets, "arrayStoreCheckSnippet");
         }
+
+        @Override
+        public void lower(ArrayStoreCheckNode node, LoweringTool tool) {
+            Arguments args = new Arguments(snippet);
+            args.add("array", node.array());
+            args.add("object", node.object());
+            instantiate(node, args, tool);
+        }
+
     }
 
-    /**
-     * {@see checkIndex}.
-     */
-    private static void checkSetObject(Object array, Object value) {
-        if (value != null) {
-            final ClassActor arrayClassActor = ObjectAccess.readClassActor(array);
-            if (!arrayClassActor.componentClassActor().isNonNullInstance(value)) {
-                Throw.throwArrayStoreException(array, value);
-                throw UnreachableNode.unreachable();
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    private static void arrayStoreCheckSnippet(Object array, Object object) {
+        if (object != null) {
+            if (!checkSetObject(array, object)) {
+                ArrayStoreDeoptimizeNode.deopt(array, object);
             }
         }
     }
 
+    @SNIPPET_SLOWPATH
+    private static boolean checkSetObject(Object array, Object value) {
+        final ClassActor arrayClassActor = ObjectAccess.readClassActor(array);
+        return arrayClassActor.componentClassActor().isNonNullInstance(value);
+    }
+
+// N.B. The null check happens as part of the index check
 
 // START GENERATED CODE
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
@@ -275,8 +268,7 @@ public class ArraySnippets extends SnippetLowerings {
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void aastoreSnippet(Object array, int index, Object value) {
-        checkIndex(array, index);
-        checkSetObject(array, value);
+        checkIndex(array, index, value);
         ArrayAccess.setObject(array, index, value);
     }
 

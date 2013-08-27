@@ -22,18 +22,18 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.graal.api.meta.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 
 /**
- * A deopt that should throw {@link IllegalArgumentException} in boot image code.
+ * Superclass of nodes that are used to create checks within snippets via method calls
+ * that are {@link NodeIntrinsic}, and are lowered using guards.
  */
-public class IllegalArgumentDeoptimizeNode extends BootCheckDeoptimizeNode {
+public abstract class MaxCheckNode extends FixedWithNextNode implements Lowerable {
 
-    public IllegalArgumentDeoptimizeNode() {
-        super(DeoptimizationReason.RuntimeConstraint);
+    protected MaxCheckNode() {
+        super(StampFactory.forVoid());
     }
-
-    @NodeIntrinsic
-    public static native void deopt();
 
 }

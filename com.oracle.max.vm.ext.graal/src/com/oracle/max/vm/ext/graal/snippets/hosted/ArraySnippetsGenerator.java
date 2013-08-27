@@ -43,8 +43,7 @@ public class ArraySnippetsGenerator extends SnippetsGenerator {
     private static final String STORE_SNIPPET =
         "    @Snippet(inlining = MaxSnippetInliningPolicy.class)\n" +
         "    public static void #K#astoreSnippet(Object array, int index, #KIND# value) {\n" +
-        "        checkIndex(array, index);\n" +
-        "#CHECK_SET#" +
+        "        checkIndex(array, index#CHECK_SET_OBJECT#);\n" +
         "        ArrayAccess.set#UKIND#(array, index, value);\n" +
         "    }\n\n";
 
@@ -65,7 +64,7 @@ public class ArraySnippetsGenerator extends SnippetsGenerator {
             if (notVoidOrIllegal(kind)) {
                 out.print(replace(replaceUCast(replaceKinds(LOAD_SNIPPET, kind), kind), "#K#", String.valueOf(kind.getTypeChar())));
                 String s = replace(replaceKinds(STORE_SNIPPET, kind), "#K#", String.valueOf(kind.getTypeChar()));
-                s = replace(s, "#CHECK_SET#", kind == Kind.Object ? "        checkSetObject(array, value);\n" : "");
+                s = replace(s, "#CHECK_SET_OBJECT#", kind == Kind.Object ? ", value" : "");
                 out.print(s);
                 addSnippets.add(replace(replaceKinds(ADD_LOAD_SNIPPET, kind), "#K#", String.valueOf(kind.getTypeChar())));
                 addSnippets.add(replace(replaceKinds(ADD_STORE_SNIPPET, kind), "#K#", String.valueOf(kind.getTypeChar())));
