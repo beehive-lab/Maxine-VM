@@ -28,6 +28,7 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.replacements.*;
@@ -60,6 +61,25 @@ public class MaxMiscLowerings extends SnippetLowerings {
         lowerings.put(DeoptimizeNode.class, new DeoptimizeLowering(this));
         lowerings.put(NegativeArraySizeDeoptimizeNode.class, new MaxNASDeoptimizeLowering(this));
         lowerings.put(IllegalArgumentDeoptimizeNode.class, new MaxIADeoptimizeLowering(this));
+        lowerings.put(ArrayStoreDeoptimizeNode.class, new MaxASDeoptimizeLowering(this));
+        lowerings.put(FixedGuardNode.class, new FixedGuardLowering());
+    }
+
+    public static class FixedGuardLowering implements LoweringProvider<FixedGuardNode> {
+
+        public void lower(FixedGuardNode node, LoweringTool tool) {
+            // Identical to HotSpot, probably should be the VM independent
+            GuardingNode guard = tool.createGuard(node.condition(), node.getReason(), node.getAction(), node.isNegated());
+            lower(node, guard);
+        }
+
+        public static ValueAnchorNode lower(FixedWithNextNode node, GuardingNode guard) {
+            ValueAnchorNode newAnchor = node.graph().add(new ValueAnchorNode(guard.asNode()));
+            node.replaceAtUsages(guard.asNode());
+            node.graph().replaceFixedWithFixed(node, newAnchor);
+            return newAnchor;
+        }
+
     }
 
     /**
@@ -69,7 +89,7 @@ public class MaxMiscLowerings extends SnippetLowerings {
      * not even create the handlers), but that can be checked for statically.
      *
      * In the boot image, where possible, we throw the same exception that would have been thrown without deopt.
-     * However, some relevant state is not available, e.g. for a {@link ClassCastException}.
+     * However, some relevant state is not always available, e.g. for a {@link ClassCastException}.
      */
     protected class AbstractDeoptimizeLowering extends Lowering {
 
@@ -96,6 +116,8 @@ public class MaxMiscLowerings extends SnippetLowerings {
                     case NullCheckException: snippetInfo = snippet(MaxMiscLowerings.class, "throwNullPointerExceptionSnippet"); break;
                     case ClassCastException: snippetInfo = snippet(MaxMiscLowerings.class, "throwClassCastExceptionSnippet"); break;
                     case ArithmeticException: snippetInfo = snippet(MaxMiscLowerings.class, "throwArithmeticExceptionSnippet"); break;
+                    case ArrayStoreException: snippetInfo = snippet(MaxMiscLowerings.class, "throwArrayStoreExceptionSnippet"); break;
+                    case BoundsCheckException: snippetInfo = snippet(MaxMiscLowerings.class, "throwArrayIndexOutOfBoundsExceptionSnippet"); break;
                     // Occurs a lot, probably should suppress whatever creates it in boot image code
                     case LoopLimitCheck: snippetInfo = snippet(MaxMiscLowerings.class, "throwLoopLimitCheckExceptionSnippet"); break;
                     default:
@@ -122,8 +144,12 @@ public class MaxMiscLowerings extends SnippetLowerings {
                         args = createAndAddConst(bootThrowUnexpectedDeoptReasonExceptionSnippet, "message", "unexpected deopt: " + deoptimizationReason.name());
                     }
                 } else {
-                    // one of the standard reasons (no state available currently)
+                    // one of the standard reasons (generally no state available unless node was created by us)
                     args = new Arguments(snippetInfo);
+                    if (node instanceof ArrayStoreDeoptimizeNode) {
+                        args.add("array", ((ArrayStoreDeoptimizeNode) node).array());
+                        args.add("object", ((ArrayStoreDeoptimizeNode) node).object());
+                    }
                 }
             } else {
                 // In the normal case, there is no state to pass other than (this) methodActor to be deoptimized.
@@ -183,6 +209,19 @@ public class MaxMiscLowerings extends SnippetLowerings {
     }
 
 
+    protected class MaxASDeoptimizeLowering extends AbstractDeoptimizeLowering implements LoweringProvider<ArrayStoreDeoptimizeNode> {
+
+        MaxASDeoptimizeLowering(MaxMiscLowerings miscSnippets) {
+            super(miscSnippets);
+        }
+
+        @Override
+        public void lower(ArrayStoreDeoptimizeNode node, LoweringTool tool) {
+            super.lower(node, tool);
+        }
+    }
+
+
     /**
      * Called to explicitly deoptimize the given method.
      */
@@ -214,6 +253,12 @@ public class MaxMiscLowerings extends SnippetLowerings {
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static ArrayStoreException throwArrayStoreExceptionSnippet(Object array, Object object) {
+        Throw.throwArrayStoreException(array, object);
+        throw UnreachableNode.unreachable();
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void throwArithmeticExceptionSnippet() {
         Throw.throwArithmeticException();
         throw UnreachableNode.unreachable();
@@ -222,6 +267,12 @@ public class MaxMiscLowerings extends SnippetLowerings {
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static void throwNegativeArraySizeExceptionSnippet(int length) {
         Throw.throwNegativeArraySizeException(length);
+        throw UnreachableNode.unreachable();
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static void throwArrayIndexOutOfBoundsExceptionSnippet() {
+        throwArrayIndexOutOfBoundsException();
         throw UnreachableNode.unreachable();
     }
 
@@ -265,6 +316,11 @@ public class MaxMiscLowerings extends SnippetLowerings {
     @SNIPPET_SLOWPATH(exactType = true, nonNull = true)
     private static void throwClassCastException() {
         throw new ClassCastException();
+    }
+
+    @SNIPPET_SLOWPATH(exactType = true, nonNull = true)
+    private static void throwArrayIndexOutOfBoundsException() {
+        throw new ArrayIndexOutOfBoundsException();
     }
 
     protected class LoadExceptionObjectLowering extends Lowering implements LoweringProvider<LoadExceptionObjectNode> {

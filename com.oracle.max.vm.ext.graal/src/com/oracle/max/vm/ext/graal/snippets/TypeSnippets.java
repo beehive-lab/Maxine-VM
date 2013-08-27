@@ -32,7 +32,6 @@ import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.nodes.spi.Lowerable.LoweringType;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
@@ -61,105 +60,6 @@ public class TypeSnippets extends SnippetLowerings {
         lowerings.put(UnresolvedInstanceOfNode.class, new UnresolvedInstanceOfLowering(this));
         lowerings.put(UnresolvedLoadConstantNode.class, new UnresolvedLoadConstantLowering(this));
         lowerings.put(UnresolvedLoadClassActorNode.class, new UnresolvedLoadClassActorLowering(this));
-        lowerings.put(FixedGuardNode.class, new FixedGuardLowering(this));
-        lowerings.put(FixedGuardNode.class, new FixedGuardLowering(this));
-    }
-
-    protected class FixedGuardLowering extends Lowering implements LoweringProvider<FixedGuardNode> {
-
-        SnippetInfo[] snippets = new SnippetInfo[DeoptimizationReason.values().length];
-
-        @HOSTED_ONLY
-        FixedGuardLowering(TypeSnippets typeSnippets) {
-            super();
-            for (DeoptimizationReason r : DeoptimizationReason.values()) {
-                SnippetInfo snippetInfo = null;
-                switch (r) {
-                    case NullCheckException:
-                        snippetInfo = snippet(TypeSnippets.class, "nullCheckSnippet");
-                        break;
-                    case ClassCastException:
-                        snippetInfo = snippet(TypeSnippets.class, "classCastCheckSnippet");
-                        break;
-                    default:
-
-                }
-                snippets[r.ordinal()] = snippetInfo;
-            }
-        }
-
-        @Override
-        public void lower(FixedGuardNode node, LoweringTool tool) {
-            Arguments args = new Arguments(snippets[node.getReason().ordinal()]);
-            if (node.usages().isNotEmpty()) {
-                // TODO Figure this out properly. This was originally put in because PushThroughPiPhase
-                // was suppressed, and the instantiate failed without the removal. The phase now runs
-                // however, it fails to remove the Pi on some ReadNodes. It appears to be harmless to
-                // remove the PiNode, but it shouldn't be necessary. Also FixedGuardNode fails if we
-                // default to deoptimization for NullChecks because other node types are in the usages.
-                //checkForPiNode(node);
-            }
-            switch (node.getReason()) {
-                case NullCheckException:
-                    if (tool.getLoweringType() == LoweringType.BEFORE_GUARDS) {
-                        return;
-                    }
-                    break;
-                case ClassCastException:
-                    if (tool.getLoweringType() == LoweringType.BEFORE_GUARDS) {
-                        return;
-                    }
-                    break;
-
-                default:
-                    FatalError.unexpected("FixedGuardLowering: Unexpected reason: " + node.getReason());
-            }
-            ValueNode trueValue = ConstantNode.forBoolean(node.isNegated(), node.graph());
-            ValueNode falseValue = ConstantNode.forBoolean(!node.isNegated(), node.graph());
-            args.add("cond", node.graph().unique(new ConditionalNode(node.condition(), trueValue, falseValue)));
-            instantiate(node, args, tool);
-        }
-
-        public void checkForPiNode(FixedGuardNode fixedGuardNode) {
-            Node usage = getSingleUsage(fixedGuardNode);
-            if (usage.getClass() ==  PiNode.class) {
-                PiNode pi = (PiNode) usage;
-                fixedGuardNode.graph().replaceFloating(pi, pi.object());
-            } else {
-                assert false;
-            }
-
-        }
-
-        private Node getSingleUsage(Node node) {
-            List<Node> usages = node.usages().snapshot();
-            assert usages.size() == 1;
-            return usages.get(0);
-        }
-
-
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void nullCheckSnippet(boolean cond) {
-        if (cond) {
-            Throw.throwNullPointerException();
-            throw UnreachableNode.unreachable();
-        }
-    }
-
-    @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void classCastCheckSnippet(boolean cond) {
-        if (cond) {
-            throwClassCastException();
-            //Throw.throwClassCastException(classActor, object);
-            throw UnreachableNode.unreachable();
-        }
-    }
-
-    @SNIPPET_SLOWPATH
-    private static void throwClassCastException() {
-        throw new ClassCastException();
     }
 
     protected abstract class UnresolvedTypeLowering extends Lowering {

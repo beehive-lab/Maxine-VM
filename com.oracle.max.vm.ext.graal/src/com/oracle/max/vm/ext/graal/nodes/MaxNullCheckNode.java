@@ -28,7 +28,7 @@ import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.nodes.type.*;
+import com.oracle.max.vm.ext.graal.snippets.*;
 
 /**
  * A vehicle for creating a null check within a snippet that lowers, say, a {@link ArrayLengthNode}, so it
@@ -37,12 +37,11 @@ import com.oracle.graal.nodes.type.*;
  * of the snippet to match the behavior had the guard been created explicitly.
  *
  */
-public class MaxNullCheckNode extends FixedWithNextNode implements Lowerable {
+public class MaxNullCheckNode extends MaxCheckNode {
 
     private @Input ValueNode object;
 
     public MaxNullCheckNode(ValueNode object) {
-        super(StampFactory.forVoid());
         this.object = object;
     }
 
@@ -53,18 +52,21 @@ public class MaxNullCheckNode extends FixedWithNextNode implements Lowerable {
     public void lower(LoweringTool tool, LoweringType loweringType) {
         // The big assumption here is that the snippet that contains this null check created
         // a graph where the next node is the one that should be guarded.
-        FixedNode next = this.next();
-        GuardedNode guardedNode = (GuardedNode) next;
+        GuardedNode guardedNode = (GuardedNode) this.next();
         if (guardedNode.getGuard() != null) {
-            // this can happen with an UnresolvedFieldNode, as the ReadNode
-            // is already guarded with a MergeNode from the isVolatile check, which
-            // uses a Pointer read intrinsic that sets the guard
+            // This can happen, say, with an UnresolvedFieldNode, as the ReadNode
+            // is already guarded with a MergeNode from the (runtime) isVolatile check.
             if (object.objectStamp().nonNull()) {
+                // Check not necessary anyway
                 graph().removeFixed(this);
             } else {
-                FixedGuardNode fixedGuardNode = graph().add(new FixedGuardNode(graph().unique(new IsNullNode(object)),
+                // Create a new GuardingNode with the same anchor as guardedNode
+                GuardingNode guard = graph().unique(new GuardNode(graph().unique(new IsNullNode(object)), guardedNode.getGuard(),
                                 DeoptimizationReason.NullCheckException, DeoptimizationAction.InvalidateReprofile, true));
-                graph().replaceFixedWithFixed(this, fixedGuardNode);
+                // Now create a ValueAnchorNode that is anchored to the original guard
+                MaxMiscLowerings.FixedGuardLowering.lower(this, guard);
+                // Discard the guard on guardNode as the ValueAnchorNode now does the job.
+                guardedNode.setGuard(null);
             }
         } else {
             tool.createNullCheckGuard(guardedNode, object);

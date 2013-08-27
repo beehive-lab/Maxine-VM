@@ -23,17 +23,31 @@
 package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.nodes.*;
 
 /**
- * A deopt that should throw {@link IllegalArgumentException} in boot image code.
+ * Carries state appropriate for throwing an exception when compiling boot image code.
+ *
  */
-public class IllegalArgumentDeoptimizeNode extends BootCheckDeoptimizeNode {
+public class ArrayStoreDeoptimizeNode extends BootCheckDeoptimizeNode {
+    @Input private ValueNode array;
+    @Input private ValueNode object;
 
-    public IllegalArgumentDeoptimizeNode() {
-        super(DeoptimizationReason.RuntimeConstraint);
+    public ArrayStoreDeoptimizeNode(ValueNode array, ValueNode object) {
+        super(DeoptimizationReason.ArrayStoreException);
+        this.array = array;
+        this.object = object;
+    }
+
+    public ValueNode array() {
+        return array;
+    }
+
+    public ValueNode object() {
+        return object;
     }
 
     @NodeIntrinsic
-    public static native void deopt();
+    public static native void deopt(Object array, Object object);
 
 }

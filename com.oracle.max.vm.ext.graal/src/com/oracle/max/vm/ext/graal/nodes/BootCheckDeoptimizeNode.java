@@ -22,18 +22,19 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
+import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.nodes.*;
 
 /**
- * A deopt that should throw {@link IllegalArgumentException} in boot image code.
+ * Tagging superclass that indicates a node which will deoptimize when compiling application code
+ * but throw an exception when compiling the boot image (where deoptimization isn't practical).
+ * Subclasses will typically carry the additional state appropriate for the exception to be thrown.
  */
-public class IllegalArgumentDeoptimizeNode extends BootCheckDeoptimizeNode {
+public abstract class BootCheckDeoptimizeNode extends DeoptimizeNode {
 
-    public IllegalArgumentDeoptimizeNode() {
-        super(DeoptimizationReason.RuntimeConstraint);
+    public BootCheckDeoptimizeNode(DeoptimizationReason reason) {
+        super(DeoptimizationAction.None, reason);
     }
-
-    @NodeIntrinsic
-    public static native void deopt();
 
 }
