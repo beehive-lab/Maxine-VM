@@ -26,17 +26,15 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.nodes.type.*;
-import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.phases.*;
 
 /**
- * Handles Maxine's {@link UNSAFE_CAST} annotation; slight difference to {@link UnsafeCastNode regarding {@link Word} types
- * and an important check to prevent the cast from {@link Reference} to {@link Object} from being removed during
- * canonicalization, which would cause problems and errors in Graal's type-based optimization phases.
+ * Handles Maxine's {@link UNSAFE_CAST} annotation. There is no value, and lots of issues, in trying to
+ * canonicalize/infer the stamp given that almost all uses are on {@link Word} types, which have special semantics.
  *
  * N.B. Setting {@code exactType == true} for {@link Word} and {@link Reference} allows normal canonicalization of
  * {@link MethodCallTargetNode method calls} to resolve methods in the {@link Accessor} interface.
+ *
  */
 public class MaxUnsafeCastNode extends UnsafeCastNode {
 
@@ -46,33 +44,11 @@ public class MaxUnsafeCastNode extends UnsafeCastNode {
 
     @Override
     public ValueNode canonical(CanonicalizerTool tool) {
-        if (kind() != object().kind()) {
-            return this;
-        }
-
-        // Both same Kind
-        if (kind() == Kind.Object && objectStamp().type() == MaxResolvedJavaType.getJavaLangObject()) {
-            ResolvedJavaType otherType = object().objectStamp().type();
-            if (otherType == MaxResolvedJavaType.getReferenceType()) {
-                // the default canonicalization removes the cast; we don't want that!
-                return this;
-            }
-        }
-        return super.canonical(tool);
+        return this;
     }
 
     @Override
     public boolean inferStamp() {
-        if (kind() != Kind.Object || object().kind() != Kind.Object) {
-            return false;
-        }
-        if (stamp() == StampFactory.forNodeIntrinsic()) {
-            return false;
-        }
-        if (objectStamp().type() == MaxResolvedJavaType.getJavaLangObject() &&
-                        object().objectStamp().type() ==  MaxResolvedJavaType.getReferenceType()) {
-            return false;
-        }
-        return super.inferStamp();
+        return false;
     }
 }

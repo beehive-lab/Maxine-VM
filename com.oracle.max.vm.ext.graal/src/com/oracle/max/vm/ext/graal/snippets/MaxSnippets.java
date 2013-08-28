@@ -45,7 +45,7 @@ public class MaxSnippets {
         MaxReplacementsImpl maxReplacementsImpl = new MaxReplacementsImpl(runtime, assumptions, runtime.maxTargetDescription(),
                         maxSnippetGraphBuilderConfiguration);
         MaxIntrinsics.initialize(runtime, maxReplacementsImpl, runtime.maxTargetDescription());
-        //maxReplacementsImpl.installAndRegisterSnippets(TestSnippets.class);
+        maxReplacementsImpl.installAndRegisterSnippets(TestSnippets.class);
         maxReplacementsImpl.installAndRegisterSnippets(NewSnippets.class);
         maxReplacementsImpl.installAndRegisterSnippets(FieldSnippets.class);
         maxReplacementsImpl.installAndRegisterSnippets(ArraySnippets.class);

@@ -180,8 +180,7 @@ public class NewSnippets extends SnippetLowerings {
             NegativeArraySizeDeoptimizeNode.deopt(length);
         }
         Object result = Heap.createArray(hub, length);
-        BeginNode anchorNode = BeginNode.anchor(StampFactory.forNodeIntrinsic());
-        return UnsafeArrayCastNode.unsafeArrayCast(result, length, StampFactory.forNodeIntrinsic(), anchorNode);
+        return UnsafeArrayCastNode.unsafeArrayCast(result, length, StampFactory.forNodeIntrinsic(), BeginNode.anchor());
     }
 
     /**
@@ -288,8 +287,7 @@ public class NewSnippets extends SnippetLowerings {
             }
         }
         Object result = safeCreateMultiReferenceArray(arrayClassActor, dims);
-        BeginNode anchorNode = BeginNode.anchor(StampFactory.forNodeIntrinsic());
-        return UnsafeArrayCastNode.unsafeArrayCast(result, dims[0], StampFactory.forNodeIntrinsic(), anchorNode);
+        return UnsafeArrayCastNode.unsafeArrayCast(result, dims[0], StampFactory.forNodeIntrinsic(), BeginNode.anchor());
     }
 
     @SNIPPET_SLOWPATH

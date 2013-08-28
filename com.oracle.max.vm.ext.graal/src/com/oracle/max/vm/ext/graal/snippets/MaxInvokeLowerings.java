@@ -31,6 +31,7 @@ import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
@@ -87,7 +88,7 @@ public class MaxInvokeLowerings extends SnippetLowerings {
                                 callTarget.isStatic() ? null : callTarget.targetJavaMethod().getDeclaringClass());
                 CallingConvention.Type callType = CallingConvention.Type.JavaCall;
 
-                if (!callTarget.isStatic() && callTarget.invokeKind() == InvokeKind.Special && !receiver.objectStamp().nonNull()) {
+                if (!callTarget.isStatic() && callTarget.invokeKind() == InvokeKind.Special && !ObjectStamp.isObjectNonNull(receiver)) {
                     // This is the one case where the null check cannot be factored into the MethodAddress calculation
                     tool.createNullCheckGuard(invoke, receiver);
                 }

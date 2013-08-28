@@ -30,6 +30,7 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.Snippet.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
@@ -75,7 +76,7 @@ public class MonitorSnippets extends SnippetLowerings {
         void lower(AccessMonitorNode node, LoweringTool tool) {
             FrameState stateAfter = node.stateAfter();
             Arguments args = new Arguments(snippet);
-            boolean checkNull = !node.object().stamp().nonNull();
+            boolean checkNull = !ObjectStamp.isObjectNonNull(node.object());
             args.add("receiver", node.object());
             if (node instanceof MonitorEnterNode) {
                 args.addConst("checkNull", checkNull);

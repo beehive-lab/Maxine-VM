@@ -33,6 +33,7 @@ import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
+import com.oracle.graal.replacements.*;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.sun.max.annotate.*;
@@ -220,6 +221,11 @@ public class TestSnippets extends SnippetLowerings {
 
     //@Snippet(inlining = MaxSnippetInliningPolicy.class)
     public static com.sun.max.unsafe.Address testAddressPlus(com.sun.max.unsafe.Address address, int value) {
+        return address.plus(value);
+    }
+
+    @Snippet(inlining = MaxSnippetInliningPolicy.class)
+    public static com.sun.max.unsafe.Address testAddressPlusOffset(com.sun.max.unsafe.Address address, Offset value) {
         return address.plus(value);
     }
 

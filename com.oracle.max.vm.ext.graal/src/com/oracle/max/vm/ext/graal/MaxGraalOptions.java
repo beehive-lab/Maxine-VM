@@ -182,21 +182,19 @@ public class MaxGraalOptions {
     static {
         // Options from com.oracle.graal.compiler.GraalDebugConfig
         register(new VMBooleanOption("-G:+", "Debug", "Enable scope-based debugging"), com.oracle.graal.compiler.GraalDebugConfig.class, "DebugEnabled");
+        register(new VMStringOption("-G:DebugValueSummary=", false, "Complete", "How to print metric and timing values:%nName - aggregate by unqualified name%nPartial - aggregate by partially qualified name (e.g., A.B.C.D.Counter and X.Y.Z.D.Counter will be merged to D.Counter)%nComplete - aggregate by qualified name%nThread - aggregate by qualified name and thread"), com.oracle.graal.compiler.GraalDebugConfig.class, "DebugValueSummary");
         register(new VMBooleanOption("-G:+", "DetailedAsserts", "Enable expensive assertions"), com.oracle.graal.compiler.GraalDebugConfig.class, "DetailedAsserts");
         register(new VMStringOption("-G:Dump=", false, null, "Scopes to be dumped"), com.oracle.graal.compiler.GraalDebugConfig.class, "Dump");
         register(new VMBooleanOption("-G:-", "DumpOnError", "Send Graal IR to dump handlers on error"), com.oracle.graal.compiler.GraalDebugConfig.class, "DumpOnError");
         register(new VMStringOption("-G:Log=", false, null, "Scopes to be logged"), com.oracle.graal.compiler.GraalDebugConfig.class, "Log");
         register(new VMStringOption("-G:Meter=", false, null, "Scopes to be metered"), com.oracle.graal.compiler.GraalDebugConfig.class, "Meter");
         register(new VMStringOption("-G:MethodFilter=", false, null, "Filters debug scope output by method name/pattern"), com.oracle.graal.compiler.GraalDebugConfig.class, "MethodFilter");
-        register(new VMBooleanOption("-G:-", "PerThreadDebugValues", ""), com.oracle.graal.compiler.GraalDebugConfig.class, "PerThreadDebugValues");
-        register(new VMBooleanOption("-G:-", "SummarizeDebugValues", ""), com.oracle.graal.compiler.GraalDebugConfig.class, "SummarizeDebugValues");
-        register(new VMBooleanOption("-G:-", "SummarizePerPhase", ""), com.oracle.graal.compiler.GraalDebugConfig.class, "SummarizePerPhase");
         register(new VMStringOption("-G:Time=", false, null, "Scopes to be timed"), com.oracle.graal.compiler.GraalDebugConfig.class, "Time");
         // Options from com.oracle.graal.compiler.phases.HighTier
         register(new VMBooleanOption("-G:+", "Inline", "Enable inlining"), com.oracle.graal.compiler.phases.HighTier.class, "Inline");
         register(new VMBooleanOption("-G:+", "VerifyUsageWithEquals", ""), com.oracle.graal.compiler.phases.HighTier.class, "VerifyUsageWithEquals");
         // Options from com.oracle.graal.phases.GraalOptions
-        register(new VMBooleanOption("-G:-", "AOTCompilation", "configure compiler to emit code compatible with AOT requirements for HotSpot"), com.oracle.graal.phases.GraalOptions.class, "AOTCompilation");
+        register(new VMBooleanOption("-G:-", "AOTCompilation", "Configure compiler to emit code  compatible with AOT requirements for HotSpot"), com.oracle.graal.phases.GraalOptions.class, "AOTCompilation");
         register(new VMBooleanOption("-G:+", "AlignCallsForPatching", ""), com.oracle.graal.phases.GraalOptions.class, "AlignCallsForPatching");
         register(new VMBooleanOption("-G:-", "AlwaysInlineVTableStubs", ""), com.oracle.graal.phases.GraalOptions.class, "AlwaysInlineVTableStubs");
         register(new VMFloatOption("-G:BoostInliningForEscapeAnalysis=", 2.0f, ""), com.oracle.graal.phases.GraalOptions.class, "BoostInliningForEscapeAnalysis");
@@ -238,6 +236,7 @@ public class MaxGraalOptions {
         register(new VMBooleanOption("-G:+", "Intrinsify", "Enable use of compiler intrinsics"), com.oracle.graal.phases.GraalOptions.class, "Intrinsify");
         register(new VMBooleanOption("-G:+", "IntrinsifyAESMethods", ""), com.oracle.graal.phases.GraalOptions.class, "IntrinsifyAESMethods");
         register(new VMBooleanOption("-G:+", "IntrinsifyArrayCopy", ""), com.oracle.graal.phases.GraalOptions.class, "IntrinsifyArrayCopy");
+        register(new VMBooleanOption("-G:+", "IntrinsifyCRC32Methods", ""), com.oracle.graal.phases.GraalOptions.class, "IntrinsifyCRC32Methods");
         register(new VMBooleanOption("-G:+", "IntrinsifyCallSiteTarget", ""), com.oracle.graal.phases.GraalOptions.class, "IntrinsifyCallSiteTarget");
         register(new VMBooleanOption("-G:+", "IntrinsifyClassMethods", ""), com.oracle.graal.phases.GraalOptions.class, "IntrinsifyClassMethods");
         register(new VMBooleanOption("-G:+", "IntrinsifyInstalledCodeMethods", ""), com.oracle.graal.phases.GraalOptions.class, "IntrinsifyInstalledCodeMethods");
@@ -284,15 +283,16 @@ public class MaxGraalOptions {
         register(new VMBooleanOption("-G:+", "OptTailDuplication", ""), com.oracle.graal.phases.GraalOptions.class, "OptTailDuplication");
         register(new VMBooleanOption("-G:-", "PEAInliningHints", ""), com.oracle.graal.phases.GraalOptions.class, "PEAInliningHints");
         register(new VMBooleanOption("-G:+", "PartialEscapeAnalysis", ""), com.oracle.graal.phases.GraalOptions.class, "PartialEscapeAnalysis");
+        register(new VMBooleanOption("-G:+", "PrintBackendCFG", "Enables dumping LIR, register allocation and code generation info to the C1Visualizer."), com.oracle.graal.phases.GraalOptions.class, "PrintBackendCFG");
         register(new VMBooleanOption("-G:-", "PrintBailout", ""), com.oracle.graal.phases.GraalOptions.class, "PrintBailout");
         register(new VMIntOption("-G:PrintBinaryGraphPort=", 4445, ""), com.oracle.graal.phases.GraalOptions.class, "PrintBinaryGraphPort");
-        register(new VMBooleanOption("-G:+", "PrintBinaryGraphs", ""), com.oracle.graal.phases.GraalOptions.class, "PrintBinaryGraphs");
-        register(new VMBooleanOption("-G:-", "PrintCFG", ""), com.oracle.graal.phases.GraalOptions.class, "PrintCFG");
+        register(new VMBooleanOption("-G:+", "PrintBinaryGraphs", "Dump IdealGraphVisualizer output in binary format"), com.oracle.graal.phases.GraalOptions.class, "PrintBinaryGraphs");
+        register(new VMBooleanOption("-G:-", "PrintCFG", "Enables dumping to the C1Visualizer. Enabling this option implies PrintBackendCFG."), com.oracle.graal.phases.GraalOptions.class, "PrintCFG");
         register(new VMBooleanOption("-G:-", "PrintCodeBytes", ""), com.oracle.graal.phases.GraalOptions.class, "PrintCodeBytes");
         register(new VMBooleanOption("-G:-", "PrintCompilation", ""), com.oracle.graal.phases.GraalOptions.class, "PrintCompilation");
         register(new VMStringOption("-G:PrintFilter=", false, null, ""), com.oracle.graal.phases.GraalOptions.class, "PrintFilter");
         register(new VMBooleanOption("-G:-", "PrintGraphCache", ""), com.oracle.graal.phases.GraalOptions.class, "PrintGraphCache");
-        register(new VMBooleanOption("-G:-", "PrintGraphProbabilities", "outputs probabilities for fixed nodes during binary graph dumping"), com.oracle.graal.phases.GraalOptions.class, "PrintGraphProbabilities");
+        register(new VMBooleanOption("-G:-", "PrintGraphProbabilities", "Output probabilities for fixed nodes during binary graph dumping"), com.oracle.graal.phases.GraalOptions.class, "PrintGraphProbabilities");
         register(new VMBooleanOption("-G:-", "PrintIRWithLIR", ""), com.oracle.graal.phases.GraalOptions.class, "PrintIRWithLIR");
         register(new VMStringOption("-G:PrintIdealGraphAddress=", false, "127.0.0.1", ""), com.oracle.graal.phases.GraalOptions.class, "PrintIdealGraphAddress");
         register(new VMBooleanOption("-G:-", "PrintIdealGraphFile", ""), com.oracle.graal.phases.GraalOptions.class, "PrintIdealGraphFile");
