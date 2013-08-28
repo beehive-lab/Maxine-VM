@@ -28,6 +28,7 @@ import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
 
 /**
@@ -56,7 +57,7 @@ public class MaxNullCheckNode extends MaxCheckNode {
         if (guardedNode.getGuard() != null) {
             // This can happen, say, with an UnresolvedFieldNode, as the ReadNode
             // is already guarded with a MergeNode from the (runtime) isVolatile check.
-            if (object.objectStamp().nonNull()) {
+            if (ObjectStamp.isObjectNonNull(object)) {
                 // Check not necessary anyway
                 graph().removeFixed(this);
             } else {

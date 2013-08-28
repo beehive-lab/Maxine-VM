@@ -183,7 +183,7 @@ public class MaxWordType {
             } else {
                 removed = false;
             }
-            ResolvedJavaType objectType = object.objectStamp().type();
+            ResolvedJavaType objectType = ObjectStamp.typeOrNull(object);
             Debug.log("%s: nullCheck %s removed on %s (%s)", graph.method(), removed ? "" : "not", objectType == null ? object : objectType.getName(),
                             removed ? (removeByInline ? "INLINE" : "TYPE") : "");
         }
@@ -204,13 +204,13 @@ public class MaxWordType {
          * @return
          */
         private boolean canRemove(ValueNode object) {
-            ResolvedJavaType objectType = object.objectStamp().type();
+            ResolvedJavaType objectType = ObjectStamp.typeOrNull(object);
             // Check for a Word object, a Reference object, or a Hub or a nonNull object (can arise from runtime call rewrites)
-            if (object.objectStamp().nonNull() || (objectType != null && (isWordOrReference(objectType) || MaxResolvedJavaType.getHubType().isAssignableFrom(objectType)))) {
+            if (ObjectStamp.isObjectNonNull(object) || (objectType != null && (isWordOrReference(objectType) || MaxResolvedJavaType.getHubType().isAssignableFrom(objectType)))) {
                 return true;
             } else if (object instanceof LoadFieldNode && ((LoadFieldNode) object).object() != null) {
                 // field loads from Hub objects are guaranteed non-null
-                ResolvedJavaType fieldObjectType = ((LoadFieldNode) object).object().objectStamp().type();
+                ResolvedJavaType fieldObjectType = ObjectStamp.typeOrNull(((LoadFieldNode) object).object());
                 return fieldObjectType ==  null ? false : MaxResolvedJavaType.getHubType().isAssignableFrom(fieldObjectType);
             } else if (isWordPhiReally(object)) {
                 return true;
@@ -279,10 +279,9 @@ public class MaxWordType {
                     ValueNode object = ((AccessNode) n).object();
                     if (object instanceof MaxUnsafeCastNode && object.kind() == Kind.Object) {
                         MaxUnsafeCastNode mn = (MaxUnsafeCastNode) object;
-                        ObjectStamp stamp = mn.objectStamp();
-                        if (MaxResolvedJavaType.getWordType().isAssignableFrom(stamp.type())) {
+                        if (MaxResolvedJavaType.getWordType().isAssignableFrom(ObjectStamp.typeOrNull(mn))) {
                             ValueNode endChain = findEndChainOfMaxUnsafeCastNode(mn);
-                            if (endChain.kind() == Kind.Object && endChain.objectStamp().type() == MaxResolvedJavaType.getJavaLangObject()) {
+                            if (endChain.kind() == Kind.Object && ObjectStamp.typeOrNull(endChain) == MaxResolvedJavaType.getJavaLangObject()) {
                                 deleteChain(graph, mn, endChain);
                             }
                         }
@@ -357,8 +356,8 @@ public class MaxWordType {
         if (node.stamp() == StampFactory.forWord()) {
             return true;
         }
-        if (node.kind() == Kind.Object && node.objectStamp().type() != null) {
-            ResolvedJavaType type = node.objectStamp().type();
+        if (node.kind() == Kind.Object && ObjectStamp.typeOrNull(node) != null) {
+            ResolvedJavaType type = ObjectStamp.typeOrNull(node);
             if (node instanceof ConstantNode && type == MaxResolvedJavaType.getWrappedWordType()) {
                 return true;
             } else {

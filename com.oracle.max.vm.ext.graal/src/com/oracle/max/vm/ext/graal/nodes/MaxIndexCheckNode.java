@@ -32,6 +32,7 @@ import com.oracle.graal.nodes.calc.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.java.*;
 import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.*;
 
 
@@ -69,9 +70,9 @@ public class MaxIndexCheckNode extends MaxCheckNode {
         guardedNode.setGuard(guard);
         // Now deal with the special case of storing to an object array
         if (object != null) {
-            if (!object.objectStamp().alwaysNull()) {
-                ResolvedJavaType arrayType = array.objectStamp().type();
-                if (arrayType != null && array.objectStamp().isExactType()) {
+            if (!ObjectStamp.isObjectAlwaysNull(object)) {
+                ResolvedJavaType arrayType = ObjectStamp.typeOrNull(array);
+                if (arrayType != null && ObjectStamp.isExactType(array)) {
                     ResolvedJavaType elementType = arrayType.getComponentType();
                     if (elementType != MaxResolvedJavaType.getJavaLangObject()) {
                         CheckCastNode checkcast = graph().add(new CheckCastNode(elementType, object, null, true));

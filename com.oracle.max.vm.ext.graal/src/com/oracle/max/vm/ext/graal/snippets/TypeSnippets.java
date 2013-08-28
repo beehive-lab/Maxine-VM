@@ -99,8 +99,7 @@ public class TypeSnippets extends SnippetLowerings {
             Throw.throwClassCastException(classActor, object);
             throw UnreachableNode.unreachable();
         }
-        BeginNode anchorNode = BeginNode.anchor(StampFactory.forNodeIntrinsic());
-        return UnsafeCastNode.unsafeCast(object, StampFactory.forNodeIntrinsic(), anchorNode);
+        return UnsafeCastNode.unsafeCast(object, StampFactory.forNodeIntrinsic(), BeginNode.anchor());
     }
 
     protected class UnresolvedCheckCastLowering extends UnresolvedTypeLowering implements LoweringProvider<UnresolvedCheckCastNode> {
