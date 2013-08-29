@@ -273,4 +273,9 @@ public class MaxRuntime implements GraalCodeCacheProvider {
         return null;
     }
 
+    public Register heapBaseRegister() {
+        // Only used for compressed pointers, which Maxine does not support
+        return null;
+    }
+
 }
