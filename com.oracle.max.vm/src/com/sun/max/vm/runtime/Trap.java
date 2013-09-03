@@ -152,7 +152,7 @@ public abstract class Trap {
     /**
      * A VM option to enable tracing of traps, both in the C and Java parts of trap handling.
      */
-    private static VMBooleanXXOption TraceTrapsOption = register(new VMBooleanXXOption("-XX:-TraceTraps", "Trace traps.") {
+    private static VMBooleanOption TraceTrapsOption = register(new VMBooleanOption("-XX:-TraceTraps", "Trace traps.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             TraceTraps = TraceTrapsOption.getValue();
@@ -383,9 +383,9 @@ public abstract class Trap {
         }
     }
 
-    public static boolean DeoptOnImplicitException;
+    public static boolean DeoptOnImplicitException = true;
     static {
-        VMOptions.addFieldOption("-XX:", "DeoptOnImplicitException", "Deoptimize on implicit exception occuring in optimized code.");
+        VMOptions.addFieldOption("-XX:", "DeoptOnImplicitException", Trap.class, "Deoptimize on implicit exception occuring in optimized code.");
     }
 
     /**
@@ -408,7 +408,7 @@ public abstract class Trap {
      * @param ip the instruction pointer which caused the trap
      */
     private static void raiseImplicitException(Pointer trapFrame, TargetMethod tm, Class<? extends Throwable> throwableClass, Pointer sp, Pointer fp, CodePointer ip) {
-        if (DeoptOnImplicitException && !tm.isBaseline()) {
+        if (DeoptOnImplicitException && !tm.isBaseline() && tm.deoptOnImplicitException() && throwableClass != StackOverflowError.class) {
             Stub stub = vm().stubs.deoptStubForSafepointPoll();
             CodePointer to = stub.codeStart();
             final TrapFrameAccess tfa = vm().trapFrameAccess;

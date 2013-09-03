@@ -52,7 +52,8 @@ public class JDK {
     public static final ClassRef java_lang_Throwable                 = new ClassRef(Throwable.class);
     public static final ClassRef java_lang_Terminator                = new ClassRef("java.lang.Terminator");
 
-    public static final ClassRef java_lang_invoke_MethodType = new LazyClassRef("java.lang.invoke.MethodType");
+    public static final ClassRef java_lang_invoke_MethodType         = new LazyClassRef("java.lang.invoke.MethodType");
+//    public static final ClassRef java_lang_invoke_CallSite           = new LazyClassRef("java.lang.invoke.CallSite");
 
     public static final ClassRef java_lang_ref_Finalizer                   = new ClassRef("java.lang.ref.Finalizer");
     public static final ClassRef java_lang_ref_Finalizer$FinalizerThread   = new ClassRef("java.lang.ref.Finalizer$FinalizerThread");
@@ -64,6 +65,7 @@ public class JDK {
     public static final ClassRef java_io_Serializable                = new ClassRef(java.io.Serializable.class);
     public static final ClassRef java_io_UnixFileSystem              = new ClassRef("java.io.UnixFileSystem", true);
     public static final ClassRef java_io_ExpiringCache               = new ClassRef("java.io.ExpiringCache");
+    public static final ClassRef java_net_InetSocketAddress          = new LazyClassRef("java.net.InetSocketAddress");
 
     public static final ClassRef java_nio_DirectByteBuffer           = new LazyClassRef("java.nio.DirectByteBuffer");
     public static final ClassRef java_nio_DirectCharBufferS          = new LazyClassRef("java.nio.DirectCharBufferS");
@@ -96,6 +98,7 @@ public class JDK {
 
     public static final ClassRef java_util_concurrent_ConcurrentSkipListSet = new LazyClassRef(java.util.concurrent.ConcurrentSkipListSet.class);
     public static final ClassRef java_util_concurrent_ConcurrentLinkedQueue= new LazyClassRef(java.util.concurrent.ConcurrentLinkedQueue.class);
+    public static final ClassRef java_util_concurrent_ConcurrentLinkedQueue$Node= new LazyClassRef(java.util.concurrent.ConcurrentLinkedQueue.class, "Node");
     public static final ClassRef java_util_concurrent_CopyOnWriteArrayList = new LazyClassRef(java.util.concurrent.CopyOnWriteArrayList.class);
     public static final ClassRef java_util_concurrent_ConcurrentHashMap = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class);
     public static final ClassRef java_util_concurrent_ConcurrentHashMap$HashEntry = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class, "HashEntry");

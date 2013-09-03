@@ -34,11 +34,13 @@ import java.util.concurrent.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.criutils.*;
+/*
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
+*/
 import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
@@ -56,9 +58,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationBroker.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
@@ -69,7 +69,7 @@ import com.sun.max.vm.value.*;
  * This includes access to runtime features such as class and method representations,
  * constant pools, as well as some compiler tuning.
  */
-public class MaxRuntime implements GraalRuntime {
+public class MaxRuntime implements RiRuntime {
 
     private static MaxRuntime instance = new MaxRuntime();
 
@@ -81,20 +81,6 @@ public class MaxRuntime implements GraalRuntime {
     public static MaxRuntime runtime() {
         return instance;
     }
-
-    /**
-     * Factory method for getting a Graal runtime instance. This method is called via reflection.
-     */
-    public static GraalRuntime getGraalRuntime() {
-        if (MaxineVM.isHosted() && vm() == null) {
-            RuntimeCompiler.optimizingCompilerOption.setValue(NullOptCompiler.class.getName());
-            RuntimeCompiler.baselineCompilerOption.setValue(NullBaselineCompiler.class.getName());
-            VMConfigurator.installStandard(BuildLevel.PRODUCT);
-            JavaPrototype.initialize(false);
-        }
-        return runtime();
-    }
-
 
     private MaxRuntime() {
     }
@@ -465,6 +451,7 @@ public class MaxRuntime implements GraalRuntime {
         return Array.getLength(array.asObject());
     }
 
+    /*
     public void lower(Node n, CiLoweringTool tool) {
         if (n instanceof UnsafeLoadNode) {
             UnsafeLoadNode load = (UnsafeLoadNode) n;
@@ -505,7 +492,7 @@ public class MaxRuntime implements GraalRuntime {
     public StructuredGraph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
         return null;
     }
-
+*/
     public long getMaxCallTargetOffset(CiRuntimeCall rtcall) {
         // TODO(tw): Implement for Maxine.
         return 0;
@@ -532,4 +519,5 @@ public class MaxRuntime implements GraalRuntime {
     public RiCompiledMethod addMethod(RiResolvedMethod method, CiTargetMethod code) {
         throw new UnsupportedOperationException();
     }
+
 }

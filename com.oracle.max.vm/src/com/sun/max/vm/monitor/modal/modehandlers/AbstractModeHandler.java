@@ -68,7 +68,7 @@ public abstract class AbstractModeHandler implements ModeHandler {
     @INLINE
     protected final void nullCheck(Object object) {
         if (EXPLICIT_NULL_CHECKS && object == null) {
-            Throw.nullPointerException();
+            Throw.throwNullPointerException();
         }
     }
 

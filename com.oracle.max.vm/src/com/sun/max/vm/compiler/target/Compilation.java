@@ -54,7 +54,7 @@ public class Compilation {
         VMOptions.addFieldOption("-XX:", "GCOnCompilationOf", Compilation.class, "Perform a GC before every compilation of a method whose fully qualified name contains <value>.");
     }
 
-    public static final VMBooleanXXOption TIME_COMPILATION = register(new VMBooleanXXOption("-XX:-TimeCompilation",
+    public static final VMBooleanOption TIME_COMPILATION = register(new VMBooleanOption("-XX:-TimeCompilation",
         "Report time spent in compilation.") {
         @Override
         protected void beforeExit() {
@@ -293,7 +293,7 @@ public class Compilation {
             boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": ");
-            Log.print(compiler.getClass().getSimpleName());
+            Log.print(compiler.name(classMethodActor));
             Log.print(": Failed ");
             Log.println(methodString);
             Log.unlock(lockDisabledSafepoints);
@@ -311,7 +311,7 @@ public class Compilation {
             boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": ");
-            Log.print(compiler.getClass().getSimpleName());
+            Log.print(compiler.name(classMethodActor));
             Log.print(prevCompilations == Compilations.EMPTY ? ": Compiling " : ": Recompiling ");
             Log.println(methodString);
             Log.unlock(lockDisabledSafepoints);
@@ -324,7 +324,7 @@ public class Compilation {
             boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": ");
-            Log.print(compiler.getClass().getSimpleName());
+            Log.print(compiler.name(classMethodActor));
             Log.print(prevCompilations == Compilations.EMPTY ? ": Compiled " : ": Recompiled ");
             Log.print(methodString);
             Log.print(" @ ");

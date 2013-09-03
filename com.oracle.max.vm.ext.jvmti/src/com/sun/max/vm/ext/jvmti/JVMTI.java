@@ -309,7 +309,7 @@ public class JVMTI {
                 jvmtiEnv.bootClassPathAdd[j] = 0;
             }
         }
-        VMOptions.addFieldOption("-XX:", "JVMTI_VM", "Include VM classes in JVMTI results.");
+        VMOptions.addFieldOption("-XX:", "JVMTI_VM", JVMTI.class, "Include VM classes in JVMTI results.");
     }
 
     /**
@@ -357,7 +357,7 @@ public class JVMTI {
     static Env getEnv(Pointer env) {
         for (int i = 0; i < MAX_NATIVE_ENVS; i++) {
             NativeEnv nativeEnv = (NativeEnv) jvmtiEnvs[i];
-            if (nativeEnv.cstruct == env) {
+            if (nativeEnv.cstruct.equals(env)) {
                 return jvmtiEnvs[i];
             }
         }
@@ -367,7 +367,7 @@ public class JVMTI {
     static synchronized int disposeEnv(Pointer env) {
         for (int i = 0; i < MAX_NATIVE_ENVS; i++) {
             NativeEnv nativeEnv = (NativeEnv) jvmtiEnvs[i];
-            if (nativeEnv.cstruct == env) {
+            if (nativeEnv.cstruct.equals(env)) {
                 // TODO cleanup
                 nativeEnv.cstruct = Pointer.zero();
                 activeEnvCount--;

@@ -103,7 +103,6 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
     }
 
     public int makeHashCode(Object object) {
-        nullCheck(object);
         if (MaxineVM.isHosted()) {
             return monitorScheme().createHashCode(object);
         }
@@ -112,7 +111,6 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
     }
 
     public void monitorEnter(Object object) {
-        nullCheck(object);
         if (MaxineVM.isHosted()) {
             HostMonitor.enter(object);
             return;
@@ -122,7 +120,6 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
     }
 
     public void monitorExit(Object object) {
-        nullCheck(object);
         if (MaxineVM.isHosted()) {
             HostMonitor.exit(object);
             return;
@@ -156,7 +153,6 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
     }
 
     public boolean threadHoldsMonitor(Object object, VmThread thread) {
-        nullCheck(object);
         final ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
         final DelegatedThreadHoldsMonitorResult result = delegate().delegateThreadHoldsMonitor(object, lockword, thread, encodeCurrentThreadIDForLockword());
         return result == DelegatedThreadHoldsMonitorResult.TRUE;

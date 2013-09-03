@@ -21,6 +21,7 @@
  * questions.
  */
 package com.sun.max.atomic;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;

@@ -990,7 +990,7 @@ public class T1XTemplateGenerator {
         generateTemplateTag("ARRAYLENGTH");
         out.printf("    public static int arraylength(@Slot(0) Object array%s) {%n", suffixParams(true));
         out.printf("        int length = ArrayAccess.readArrayLength(array);%n");
-        generateBeforeAdvice(NULL_ARGS);
+        generateAfterAdvice(NULL_ARGS);
         out.printf("        return length;%n");
         out.printf("    }%n");
         newLine();

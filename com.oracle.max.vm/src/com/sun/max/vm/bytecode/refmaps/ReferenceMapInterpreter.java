@@ -51,7 +51,7 @@ public abstract class ReferenceMapInterpreter {
 
     private static String TraceRefMapInterpretationOf;
     static {
-        VMOptions.addFieldOption("-XX:", "TraceRefMapInterpretationOf",
+        VMOptions.addFieldOption("-XX:", "TraceRefMapInterpretationOf", ReferenceMapInterpreter.class,
             "Trace ref map interpretation of methods whose name or declaring class contains <value>.");
     }
 

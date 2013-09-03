@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,64 +22,75 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.extended.*;
-import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.Scale;
+import com.oracle.graal.api.meta.*;
+import com.oracle.graal.graph.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.calc.ConvertNode.Op;
+import com.oracle.graal.nodes.extended.*;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
 
-public final class ExtendedIndexedLocationNode extends LocationNode implements LIRLowerable, Canonicalizable {
 
-    @Input private ValueNode index;
+/**
+ * As {@link IndexedLocationNode} but allows a non-constant displacement.
+ */
+public class ExtendedIndexedLocationNode extends LocationNode implements Canonicalizable {
+
+    private final Kind valueKind;
+    private final LocationIdentity locationIdentity;
     @Input private ValueNode displacement;
+    @Input private ValueNode scaledIndex;
 
-    public ValueNode index() {
-        return index;
-    }
-
-    public static Object getArrayLocation(CiKind elementKind) {
-        return elementKind;
-    }
-
-    public static ExtendedIndexedLocationNode create(Object identity, CiKind kind, ValueNode displacement, ValueNode index, Graph graph) {
-        return graph.unique(new ExtendedIndexedLocationNode(identity, kind, index, displacement));
-    }
-
-    private ExtendedIndexedLocationNode(Object identity, CiKind kind, ValueNode index, ValueNode displacement) {
-        super(identity, kind, 0);
-        this.index = index;
+    private ExtendedIndexedLocationNode(LocationIdentity identity, Kind kind, ValueNode displacement, ValueNode scaledIndex) {
+        super(StampFactory.extension());
+        assert kind != Kind.Illegal && kind != Kind.Void;
+        this.valueKind = kind;
+        this.locationIdentity = identity;
         this.displacement = displacement;
+        this.scaledIndex = scaledIndex;
+    }
+
+    public static LocationNode create(LocationIdentity identity, Kind kind, ValueNode displacement, Graph graph, ValueNode scaledIndex) {
+        if (displacement.isConstant()) {
+            return IndexedLocationNode.create(identity, kind, displacement.asConstant().asInt(), scaledIndex, graph, 1);
+        } else {
+            return graph.unique(new ExtendedIndexedLocationNode(identity, kind, displacement, scaledIndex));
+        }
+    }
+
+    public ValueNode displacement() {
+        return displacement;
     }
 
     @Override
-    public CiAddress createAddress(LIRGeneratorTool gen, ValueNode object) {
-        CiValue base = gen.operand(object);
-        if (base.isConstant() && ((CiConstant) base).isNull()) {
-            base = CiValue.IllegalValue;
+    public ValueNode canonical(CanonicalizerTool tool) {
+        if (displacement.isConstant()) {
+            int intDisplacement = displacement.asConstant().asInt();
+            return IndexedLocationNode.create(locationIdentity, valueKind, intDisplacement, scaledIndex, graph(), 1);
         }
-
-        CiValue indexValue = gen.operand(index());
-        CiValue offset = gen.newVariable(CiKind.Long);
-        gen.emitMove(indexValue, offset);
-        Scale indexScale = Scale.fromInt(gen.target().sizeInBytes(getValueKind()));
-        if (indexScale != Scale.Times1) {
-            gen.emitShl(offset, CiConstant.forInt(indexScale.log2));
-        }
-        CiValue displacementTemp = gen.newVariable(CiKind.Long);
-        gen.emitMove(gen.operand(displacement), displacementTemp);
-
-        gen.emitAdd(offset, displacementTemp);
-
-        return new CiAddress(getValueKind(), base, indexValue, Scale.Times1, 0);
-    }
-
-    @Override
-    public Node canonical(CanonicalizerTool tool) {
-        CiConstant constantDisplacement = displacement.asConstant();
-        if (constantDisplacement != null && constantDisplacement.kind.stackKind().isInt()) {
-            return IndexedLocationNode.create(locationIdentity(), getValueKind(), constantDisplacement.asInt(), index(), graph());
+        if (scaledIndex.isConstant()) {
+            // switch scaledIndex and displacement
+            int intScaledIndex = scaledIndex.asConstant().asInt();
+            return IndexedLocationNode.create(locationIdentity, valueKind, intScaledIndex, displacement, graph(), 1);
         }
         return this;
     }
+
+    @Override
+    public Kind getValueKind() {
+        return valueKind;
+    }
+
+    @Override
+    public LocationIdentity getLocationIdentity() {
+        return locationIdentity;
+    }
+
+    @Override
+    public Value generateAddress(LIRGeneratorTool gen, Value base) {
+        Value displacementRegister = gen.emitConvert(Op.I2L, gen.operand(displacement));
+        Value v = gen.emitAdd(base, displacementRegister);
+        return gen.emitAddress(v, 0, gen.operand(scaledIndex), 1);
+    }
+
 }

@@ -43,7 +43,7 @@ public final class JavaProject {
      * Determines if a given directory contains a Maxine workspace.
      */
     public static boolean isWorkspace(File dir) {
-        return new File(new File(dir, "mx"), "projects").isFile();
+        return new File(new File(dir, "mxmaxine"), "projects").isFile();
     }
 
     private JavaProject() {

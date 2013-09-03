@@ -126,6 +126,35 @@ public class VMOptions {
     }
 
     /**
+     * A VM option of the form {@code "-XX:name=value"} that updates a {@code float} field when
+     * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
+     */
+    public static final class DoubleFieldOption extends VMDoubleOption {
+
+        public final Field field;
+
+        DoubleFieldOption(String prefix, Double defaultValue, String help, Field field) {
+            super(prefix, defaultValue, help);
+            this.field = field;
+        }
+
+        @Override
+        public boolean parseValue(Pointer optionValue) {
+            boolean result = super.parseValue(optionValue);
+            if (result) {
+                if (MaxineVM.isHosted()) {
+                    setFieldValue(field, getValue());
+                } else {
+                    FieldActor fieldActor = FieldActor.fromJava(field);
+                    Reference.fromJava(fieldActor.holder().staticTuple()).writeDouble(fieldActor.offset(), getValue());
+                }
+                return true;
+            }
+            return result;
+        }
+    }
+
+    /**
      * A VM option of the form {@code "-XX:name=value"} that updates an {@code int} field when
      * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
      */
@@ -198,7 +227,7 @@ public class VMOptions {
      * A VM option of the form {@code "-XX:[+|-]name=value"} that updates a {@code boolean} field when
      * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
      */
-    public static final class BooleanFieldOption extends VMBooleanXXOption {
+    public static final class BooleanFieldOption extends VMBooleanOption {
 
         public final Field field;
 
@@ -350,7 +379,7 @@ public class VMOptions {
             }
         }, MaxineVM.Phase.PRISTINE);
 
-        register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exit") {
+        register(new VMBooleanOption("-XX:-PrintConfiguration", "Show VM configuration details and exit") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 Log.println("  Platform: " + platform());
@@ -363,7 +392,7 @@ public class VMOptions {
             }
         }, MaxineVM.Phase.STARTING);
 
-        register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continue") {
+        register(new VMBooleanOption("-XX:-ShowConfiguration", "Show VM configuration details and continue") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 Log.println("  Platform: " + platform());
@@ -395,7 +424,7 @@ public class VMOptions {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
             int colon = option.prefix.indexOf(':');
             assert colon != -1;
-            final int prefixLength = option instanceof VMBooleanXXOption ? colon + 2 : colon + 1;
+            final int prefixLength = option instanceof VMBooleanOption ? colon + 2 : colon + 1;
             final String name = option.prefix.substring(prefixLength);
             ProgramError.check(Character.isUpperCase(name.charAt(0)), "Option with \"-XX:\" prefix must start with an upper-case letter: " + option);
         }
@@ -489,19 +518,6 @@ public class VMOptions {
      *
      * @param prefix the prefix to use for the option (e.g. {@code "-XX:"} or {@code "-C1X:"})
      * @param name the name of the option
-     * @param help the help text for the option
-     */
-    @HOSTED_ONLY
-    public static VMOption addFieldOption(String prefix, String name, String help) {
-        Class declaringClass = Reflection.getCallerClass(2);
-        return addFieldOption(prefix, name, Classes.getDeclaredField(declaringClass, name), help, MaxineVM.Phase.STARTING);
-    }
-
-    /**
-     * Creates and registers a VM option whose value is stored in a given non-final {@code static} field.
-     *
-     * @param prefix the prefix to use for the option (e.g. {@code "-XX:"} or {@code "-C1X:"})
-     * @param name the name of the option
      * @param declaringClass the class in which a field named {@code name} backing the option
      * @param help the help text for the option
      */
@@ -562,8 +578,8 @@ public class VMOptions {
                 int defaultValue = field.getInt(null);
                 option = new IntFieldOption(prefix + name + "=", defaultValue, help, field);
                 register(option, phase);
-            } else if (fieldType == float.class) {
-                float defaultValue = field.getFloat(null);
+            } else if (fieldType == float.class || fieldType == double.class) {
+                float defaultValue = fieldType == double.class ? new Double(field.getDouble(null)).floatValue() : field.getFloat(null);
                 option = new FloatFieldOption(prefix + name + "=", defaultValue, help, field);
                 register(option, phase);
             } else if (fieldType == Size.class) {

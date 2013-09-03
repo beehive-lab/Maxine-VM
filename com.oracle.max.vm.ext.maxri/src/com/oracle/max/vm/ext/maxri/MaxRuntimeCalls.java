@@ -49,7 +49,7 @@ public class MaxRuntimeCalls {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface MAX_RUNTIME_ENTRYPOINT {
-        CiRuntimeCall runtimeCall();
+        CiRuntimeCall runtimeCall() default CiRuntimeCall.GenericCallback;
     }
 
     public static ClassMethodActor getClassMethodActor(CiRuntimeCall call) {

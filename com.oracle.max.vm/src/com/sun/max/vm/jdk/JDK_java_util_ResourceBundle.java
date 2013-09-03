@@ -30,7 +30,7 @@ import com.sun.max.vm.jni.*;
 @METHOD_SUBSTITUTIONS(ResourceBundle.class)
 final class JDK_java_util_ResourceBundle {
 
-    @SUBSTITUTE
+    @SUBSTITUTE(optional = true)
     public static Class[] getClassContext() {
         return VMFunctions.getClassContext();
     }

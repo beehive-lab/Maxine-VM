@@ -68,7 +68,7 @@ import com.sun.max.vm.verifier.*;
 /**
  * The template JIT compiler based on C1X.
  */
-public class T1X implements RuntimeCompiler {
+public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCompiler {
 
     static {
         ClassfileReader.bytecodeTemplateClasses.add(T1X_TEMPLATE.class);

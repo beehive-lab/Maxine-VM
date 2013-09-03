@@ -95,7 +95,7 @@ public class GraphStats {
         Collection<ClassInfo> cstats = graphPrototype.classInfos.values();
         final ClassInfo[] classInfos = cstats.toArray(new ClassInfo[cstats.size()]);
         Arrays.sort(classInfos, BY_OBJECT_SIZE);
-        printStream.println("Object Histogram End");
+        printStream.println("Object Histogram Start");
         printStream.println("Cumul     Size                      Objects      Avg        Class");
         printStream.println("==============================================================================");
         long cumul = 0;
@@ -113,7 +113,7 @@ public class GraphStats {
     private int computeObjectStats() {
         int total = 0;
         for (Object o : graphPrototype.objects) {
-            final ClassInfo classInfo = graphPrototype.classInfoFor(o.getClass());
+            final ClassInfo classInfo = graphPrototype.classInfoFor(o);
             final ClassStats classStats = getClassStats(classInfo);
             classStats.objectCount++;
             final int size = sizeOf(o);

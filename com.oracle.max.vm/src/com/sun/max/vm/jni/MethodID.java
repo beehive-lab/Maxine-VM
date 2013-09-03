@@ -34,7 +34,7 @@ import com.sun.max.vm.actor.member.*;
 public final class MethodID extends MemberID {
 
     @HOSTED_ONLY
-    protected MethodID(long value) {
+    public MethodID(long value) {
         super(value);
     }
 

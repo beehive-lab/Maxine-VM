@@ -434,7 +434,7 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     @INLINE
     public final CodePointer codeAt(int pos) {
-        assert pos >= 0 && pos < codeLength();
+        FatalError.asert(pos >= 0 && pos < codeLength());
         return CodePointer.from(codeStart.plus(pos));
     }
 
@@ -777,20 +777,17 @@ public abstract class TargetMethod extends MemoryRegion {
                         encodedSafepoint = Safepoints.make(safepointPos, causePos, DIRECT_CALL);
                     }
                 } else {
+                    int attrMask = INDIRECT_CALL.mask;
                     if (CallTarget.isTemplateCall(call.target)) {
-                        encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
-                    } else if (CallTarget.isSymbol(call.target)) {
-                        encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL, NATIVE_CALL);
-                        // ClassMethodActor caller = (ClassMethodActor) call.debugInfo.codePos.method;
-                        // (ds) cannot rely on debug info at call since Graal uses templates to produce
-                        // native method stubs and the debug info will be in the context of the template
-                        // source code, not the native method.
-                        ClassMethodActor caller = classMethodActor;
-                        assert caller.isNative();
-                        caller.nativeFunction.setCallSite(this, safepointPos);
-                    } else {
-                        encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL);
+                        attrMask |= TEMPLATE_CALL.mask;
+                    } else if (CallTarget.isSymbol(call.target) || (classMethodActor.isNative() && classMethodActor == call.target)) {
+                        // The first term is for C1X, the second for Graal, which reuses the MethodActor for the
+                        // native method itself to identify the real native function, because Graal's IndirectCall
+                        // requires a ResolvedJavaMethod (as opposed to a String symbol) and there isn't one for the native function (obviously).
+                        attrMask |= NATIVE_CALL.mask;
+                        classMethodActor.nativeFunction.setCallSite(this, safepointPos);
                     }
+                    encodedSafepoint = Safepoints.make(safepointPos, causePos, attrMask);
                 }
             } else {
                 int safepointPos = safepoint.pcOffset;
@@ -954,6 +951,7 @@ public abstract class TargetMethod extends MemoryRegion {
                         fixupCallSite(callPos, callee.codeAt(offset));
                     }
                 } else {
+                    FatalError.breakpoint();
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
                         linkedAll = false;
@@ -983,7 +981,12 @@ public abstract class TargetMethod extends MemoryRegion {
     public final TargetMethod getTargetMethod(Object o) {
         TargetMethod result = null;
         if (o instanceof ClassMethodActor) {
-            result = ((ClassMethodActor) o).currentTargetMethod();
+            ClassMethodActor cma = (ClassMethodActor) o;
+            if (cma == classMethodActor) {
+                // recursive call
+                return this;
+            }
+            result = cma.currentTargetMethod();
         } else if (o instanceof TargetMethod) {
             result = (TargetMethod) o;
         }
@@ -1232,6 +1235,13 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
+     * Determines if this method must be deoptimized on an implicit exception, as the handler was not compiled.
+     */
+    public boolean deoptOnImplicitException() {
+        return false;
+    }
+
+    /**
      * Gets the profile data gathered during execution of this method.
      *
      * @return {@code null} if this method has no profiling info
@@ -1322,7 +1332,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * Determines if this method was marked to survive {@linkplain CodeEviction code eviction}.
      */
     public final boolean isMarked() {
-        return oldStart == Address.allOnes().asAddress();
+        return oldStart.equals(Address.allOnes().asAddress());
     }
 
     /**

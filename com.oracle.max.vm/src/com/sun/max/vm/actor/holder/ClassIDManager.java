@@ -132,7 +132,7 @@ public final class ClassIDManager {
 
     private static boolean TraceClassIDs;
     static {
-        VMOptions.addFieldOption("-XX:", "TraceClassIDs", "Trace management of class identifiers.");
+        VMOptions.addFieldOption("-XX:", "TraceClassIDs", ClassIDManager.class, "Trace management of class identifiers.");
     }
 
     public static synchronized int largestClassId() {

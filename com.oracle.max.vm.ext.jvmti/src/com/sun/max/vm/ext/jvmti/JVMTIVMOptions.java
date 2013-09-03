@@ -28,7 +28,7 @@ public class JVMTIVMOptions {
     /*
      * Possibly temporary hack to add jdwp logging options when run by debugger, e.g.  Eclipse.
      */
-    static VMBooleanXXOption jdwpLogOption = new VMBooleanXXOption("-XX:-JDWPLog", "force JDWP logging");
+    static VMBooleanOption jdwpLogOption = new VMBooleanOption("-XX:-JDWPLog", "force JDWP logging");
 
     static {
         VMOptions.register(new PathAgentVMOption(), MaxineVM.Phase.PRISTINE);

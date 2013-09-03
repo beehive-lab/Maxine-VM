@@ -345,8 +345,8 @@ public class VMAVMLoggerTextStoreAdapter extends VMAVMLoggerStoreAdapter {
     }
 
     @Override
-    public void adviseBeforeArrayLength(long arg1, int arg2, ObjectID arg3, int arg4) {
-        txtStore.adviseBeforeArrayLength(arg1, null, arg2, arg3.toLong(), arg4);
+    public void adviseAfterArrayLength(long arg1, int arg2, ObjectID arg3, int arg4) {
+        txtStore.adviseAfterArrayLength(arg1, null, arg2, arg3.toLong(), arg4);
     }
 
     @Override

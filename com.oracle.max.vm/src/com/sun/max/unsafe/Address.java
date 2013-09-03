@@ -202,7 +202,7 @@ public class Address extends Word {
         if (isHosted()) {
             return toLong() == other;
         }
-        return fromInt(other) == this;
+        return other == toLong();
     }
 
     @INLINE

@@ -87,7 +87,7 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
     private static AtomicInteger SRSCount = new AtomicInteger();
 
     static {
-        VMOptions.addFieldOption("-XX:", "LogSRSSuppressionCount", "Disable logging of the first n stack root scans.");
+        VMOptions.addFieldOption("-XX:", "LogSRSSuppressionCount", StackReferenceMapPreparer.class, "Disable logging of the first n stack root scans.");
     }
 
     /**

@@ -79,7 +79,7 @@ public class APITest extends NullJJVMTICallbacks {
     static {
         apiTest = (APITest) JJVMTIAgentAdapter.register(new APITest());
         if (MaxineVM.isHosted()) {
-            VMOptions.addFieldOption("-XX:", "APITestArgs", "arguments for API test JJVMTI agent");
+            VMOptions.addFieldOption("-XX:", "APITestArgs", APITest.class, "arguments for API test JJVMTI agent");
         }
     }
 

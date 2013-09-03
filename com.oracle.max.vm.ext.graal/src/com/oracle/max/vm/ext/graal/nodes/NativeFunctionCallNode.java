@@ -22,50 +22,130 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.max.graal.cri.*;
-import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.extended.*;
-import com.oracle.max.graal.nodes.spi.*;
-import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.ri.*;
+import java.util.*;
+
+import com.oracle.graal.amd64.*;
+import com.oracle.graal.api.code.*;
+import com.oracle.graal.api.meta.*;
+import com.oracle.graal.compiler.gen.*;
+import com.oracle.graal.lir.*;
+import com.oracle.graal.lir.amd64.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.spi.*;
+import com.oracle.graal.nodes.type.*;
+import com.oracle.graal.phases.common.*;
+import com.oracle.max.vm.ext.graal.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 
 /**
  * Represents a call to a native function from within a native method stub.
+ * Start off life as abstract node in the template created by the {@link NodeIntrinsic},
+ * then becomes specific to the actual native method during lowering, via {@link #updateCall}.
+ *
+ * {@link TailDuplicationPhase TailDuplication} is suppressed for native methods because
+ * the node cloning does not work correctly in the face of the argument specialization in {@link #updateCall}.
  */
-public final class NativeFunctionCallNode extends AbstractCallNode implements LIRLowerable, Lowerable {
+public final class NativeFunctionCallNode extends NativeFunctionAdapterNode implements DeoptimizingNode, LIRLowerable {
 
     /**
      * The instruction that produces the native function address for this native call.
      */
     @Input private ValueNode address;
+    @Input private FrameState deoptState;
 
-    /**
-     * The native method for this native call.
-     */
-    public final RiResolvedMethod nativeMethod;
+    private boolean specialized;
 
-    public NativeFunctionCallNode(ValueNode address, ClassMethodActor nativeMethod) {
-        super(StampFactory.forKind(WordUtil.ciKind(nativeMethod.descriptor().resultKind(), true)), new ValueNode[0]);
+    public NativeFunctionCallNode(ValueNode address, ValueNode[] arguments, Kind returnKind, MethodActor nativeMethodActor) {
+        super(StampFactory.forKind(returnKind.getStackKind()), arguments);
+        this.nativeMethodActor = nativeMethodActor;
         this.address = address;
-        this.nativeMethod = nativeMethod;
     }
 
-    @Override
-    public void generate(LIRGeneratorTool generator) {
-        // (ds) not sure what to put here...
+    /**
+     * Used by the {@link NodeIntrinsic} to create the dummy call in the template.
+     */
+    public NativeFunctionCallNode(ValueNode address, ValueNode handleBase, ValueNode jniEnv) {
+        super(StampFactory.forKind(Kind.Object), new ValueNode[] {address, handleBase, jniEnv});
     }
 
     @NodeIntrinsic
-    public static Object call(@ConstantNodeParameter Address address, @ConstantNodeParameter ClassMethodActor nativeMethod) {
-        throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
+    public static native Object nativeFunctionCall(Address function, Pointer handles, Pointer jniEnv);
+
+    public void updateCall(ValueNode address, List<ValueNode> nativeArguments, Kind returnKind) {
+        setStamp(StampFactory.forKind(returnKind.getStackKind()));
+        this.address = address;
+        arguments().clear();
+        updateUsages(null, address);
+        for (ValueNode arg : nativeArguments) {
+            arguments().add(arg);
+        }
+        specialized = true;
+    }
+
+    public boolean specialized() {
+        return specialized;
+    }
+
+    public ValueNode address() {
+        return address;
     }
 
     @Override
-    public void lower(CiLoweringTool tool) {
-        // TODO Auto-generated method stub
+    public void generate(LIRGeneratorTool gen) {
+        LIRGenerator lir = (LIRGenerator) gen;
+        LIRFrameState state = !canDeoptimize() ? null : lir.stateFor(getDeoptimizationState(), getDeoptimizationReason());
+        Value resultOperand = lir.resultOperandFor(this.kind());
+        Value callAddress = lir.operand(this.address());
+        Kind[] paramKinds = new Kind[arguments().size()];
+        for (int i = 0; i < arguments().size(); i++) {
+            paramKinds[i] = arguments().get(i).kind();
+        }
+        CallingConvention cc = ((MaxRegisterConfig) MaxGraal.runtime().lookupRegisterConfig()).nativeCallingConvention(kind(), paramKinds);
+        lir.frameMap.callsMethod(cc);
 
+
+        Value[] argList = lir.visitInvokeArguments(cc, arguments());
+
+        AllocatableValue targetAddress = AMD64.rax.asValue();
+        lir.emitMove(targetAddress, callAddress);
+
+        lir.append(new AMD64Call.IndirectCallOp(MaxResolvedJavaMethod.get(nativeMethodActor), resultOperand, argList, new Value[0], targetAddress, state));
+
+        if (ValueUtil.isLegal(resultOperand)) {
+            lir.setResult(this, lir.emitMove(resultOperand));
+        }
+    }
+
+    @Override
+    public boolean canDeoptimize() {
+        return !nativeMethodActor.isCFunction();
+    }
+
+    @Override
+    public FrameState getDeoptimizationState() {
+        if (deoptState != null) {
+            return deoptState;
+        } else if (stateAfter() != null && canDeoptimize()) {
+            FrameState stateDuring = stateAfter();
+            if ((stateDuring.stackSize() > 0 && stateDuring.stackAt(stateDuring.stackSize() - 1) == this) || (stateDuring.stackSize() > 1 && stateDuring.stackAt(stateDuring.stackSize() - 2) == this)) {
+                stateDuring = stateDuring.duplicateModified(stateDuring.bci, stateDuring.rethrowException(), this.kind());
+            }
+            setDeoptimizationState(stateDuring);
+            return stateDuring;
+        }
+        return null;
+    }
+
+    @Override
+    public void setDeoptimizationState(FrameState state) {
+        updateUsages(deoptState, state);
+        assert deoptState == null && canDeoptimize() : "shouldn't assign deoptState to " + this;
+        deoptState = state;
+    }
+
+    @Override
+    public DeoptimizationReason getDeoptimizationReason() {
+        return null;
     }
 }

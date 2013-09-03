@@ -88,7 +88,7 @@ public final class DarkMatter {
             return ClassActor.fromJava(SmallestDarkMatter.class).dynamicHub();
         }
 
-        @FOLD
+        //@FOLD not possible
         static Word hubOrigin() {
             return Reference.fromJava(hub()).toOrigin();
         }
@@ -199,7 +199,7 @@ public final class DarkMatter {
         return Layout.longArrayLayout().getArraySize(Kind.LONG, 0);
     }
 
-    @FOLD
+    //@FOLD not possible
     private static Word hubOrigin() {
         return Reference.fromJava(hub()).toOrigin();
     }

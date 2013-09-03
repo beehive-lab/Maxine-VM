@@ -33,8 +33,10 @@ import com.sun.max.util.*;
  */
 public class VMStringOption extends VMOption {
     protected String value;
-    protected Pointer cstring = Pointer.zero();
     protected final boolean space;
+    @RESET
+    protected Pointer cstring = Pointer.zero();
+    @RESET
     protected boolean allocated;
 
     /**

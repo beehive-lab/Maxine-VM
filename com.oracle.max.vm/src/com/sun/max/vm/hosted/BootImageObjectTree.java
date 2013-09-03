@@ -262,8 +262,9 @@ public final class BootImageObjectTree {
      *                where to save the tree
      * @param links
      *                the traversed links of the graph that describe the tree to be saved
+     * @param doToString TODO
      */
-    public static void saveTree(DataOutputStream dataOutputStream, Set<Map.Entry<Object, Link>> links, Map<Object, Address> allocationMap) throws IOException {
+    public static void saveTree(DataOutputStream dataOutputStream, Set<Map.Entry<Object, Link>> links, Map<Object, Address> allocationMap, boolean doToString) throws IOException {
         final Map<Class, Integer> classPool = new HashMap<Class, Integer>();
         final Map<Object, Integer> objectPool = new IdentityHashMap<Object, Integer>();
         final Class[] classPoolIndices = new Class[links.size()];
@@ -303,11 +304,13 @@ public final class BootImageObjectTree {
             final Object object = objectPoolIndices[i];
             final int address = allocationMap.get(object).toInt();
             final long size = ObjectAccess.size(object).toLong();
-            String toString;
-            try {
-                toString = object.toString();
-            } catch (Exception e) {
-                toString = "<error calling toString()>: " + e.toString();
+            String toString = null;
+            if (doToString) {
+                try {
+                    toString = object.toString();
+                } catch (Exception e) {
+                    toString = "<error calling toString()>: " + e.toString();
+                }
             }
 
             dataOutputStream.writeInt(classPool.get(object.getClass()));
@@ -324,6 +327,7 @@ public final class BootImageObjectTree {
                     dataOutputStream.writeUTF(Strings.truncate(toString, MAX_OBJECT_TOSTRING_LENGTH));
                 }
             }
+
         }
 
         int counter = 0;
@@ -349,7 +353,7 @@ public final class BootImageObjectTree {
     }
 
     /**
-     * Loads a tree that was saved by {@linkplain #saveTree(DataOutputStream, Set, Map) this method}.
+     * Loads a tree that was saved by {@linkplain #saveTree(DataOutputStream, Set, Map, boolean) this method}.
      *
      * @param dataInputStream
      *                a stream containing a saved tree

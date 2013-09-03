@@ -29,6 +29,7 @@ import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
@@ -38,23 +39,23 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * Integration of the C1X + Graal compiler into Maxine's compilation framework.
+ * This umbrella compiler chooses C1X or Graal depending on context.
  */
 public class C1XGraal implements RuntimeCompiler {
 
     static boolean FailOverToC1X = true;
-    static boolean DisableGraal;
     static {
-        addFieldOption("-XX:", "FailOverToC1X", "Retry failed Graal compilations with C1X.");
-        addFieldOption("-XX:", "DisableGraal", "Disable the Graal compiler (only C1X will be used).");
+        addFieldOption("-XX:", "FailOverToC1X", C1XGraal.class, "Retry failed Graal compilations with C1X.");
     }
 
-    private Graal graal;
+    private MaxGraal graal;
     private C1X c1x;
 
     @HOSTED_ONLY
     public C1XGraal() {
         this.c1x = new C1X();
-        this.graal = new Graal();
+        this.graal = MaxGraalFactory.create();
+        FailOverToC1X = MaxineVM.isHosted(); // i.e., only when building boot image
     }
 
     @Override
@@ -67,47 +68,69 @@ public class C1XGraal implements RuntimeCompiler {
         }
     }
 
-    public final TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
+    private static final String C1XGraal_C1X = "C1XGraal_C1X";
+    private static final String C1XGraal_Graal = "C1XGraal_Graal";
+
+    @Override
+    public String name(ClassMethodActor classMethodActor) {
+        RuntimeCompiler compiler = chooseCompiler(classMethodActor);
+        return compiler == c1x ? C1XGraal_C1X : C1XGraal_Graal;
+    }
+
+    private RuntimeCompiler chooseCompiler(final ClassMethodActor method) {
         String name = vm().compilationBroker.compilerFor(method);
-        if (forceC1X(method) || (name != null && name.equals("C1X"))) {
-            return c1x.compile(method, false, install, stats);
-        } else {
-            if (FailOverToC1X) {
-                try {
-                    return graal.compile(method, false, install, stats);
-                } catch (Throwable t) {
-                    String errorMessage = "Compilation of " + method + " by Graal failed";
-                    if (VMOptions.verboseOption.verboseCompilation) {
-                        boolean lockDisabledSafepoints = Log.lock();
-                        Log.printCurrentThread(false);
-                        Log.print(": ");
-                        Log.println(errorMessage);
-                        t.printStackTrace(Log.out);
-                        Log.unlock(lockDisabledSafepoints);
-                    }
-                    if (VMOptions.verboseOption.verboseCompilation) {
-                        boolean lockDisabledSafepoints = Log.lock();
-                        Log.printCurrentThread(false);
-                        Log.println(": Retrying with C1X...");
-                        Log.unlock(lockDisabledSafepoints);
-                    }
-                    return c1x.compile(method, false, install, stats);
-                }
+        if (method.isNative() && !MaxGraal.GraalForNative) {
+            return c1x;
+        }
+        if (method.isTemplate()) {
+            // TODO fix this limitation
+            return c1x;
+        }
+        if (name != null) {
+            if (name.equals("Graal")) {
+                return graal;
+            } else if (name.equals("C1X")) {
+                return c1x;
             } else {
-                return graal.compile(method, false, install, stats);
+                throw ProgramError.unexpected("C1XGraal unknown compiler: " + name);
+            }
+        } else {
+            // unspecified
+            if (MaxineVM.isHosted() && !MaxGraal.GraalForBoot) {
+                // not for boot image yet
+                return c1x;
+            } else {
+                return graal;
             }
         }
     }
 
-    /**
-     * Until Graal can compile everything, this is a mechanism to specify
-     * what it cannot yet handle.
-     */
-    boolean forceC1X(final ClassMethodActor method) {
-        if (isHosted()) {
-            return !method.isNative();
+    public final TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
+        TargetMethod result = null;
+        RuntimeCompiler compiler = chooseCompiler(method);
+        if (compiler == c1x) {
+            result = c1x.compile(method, false, install, stats);
+        } else {
+            if (FailOverToC1X) {
+                try {
+                    result = graal.compile(method, false, install, stats);
+                } catch (Throwable t) {
+                    String errorMessage = "Compilation of " + method + " by Graal failed";
+                    boolean lockDisabledSafepoints = Log.lock();
+                    Log.printCurrentThread(false);
+                    Log.print(": ");
+                    Log.println(errorMessage);
+                    t.printStackTrace(Log.out);
+                    Log.printCurrentThread(false);
+                    Log.println(": Retrying with C1X...");
+                    Log.unlock(lockDisabledSafepoints);
+                    result = c1x.compile(method, false, install, stats);
+                }
+            } else {
+                result = graal.compile(method, false, install, stats);
+            }
         }
-        return DisableGraal;
+        return result;
     }
 
     public Nature nature() {
@@ -122,4 +145,5 @@ public class C1XGraal implements RuntimeCompiler {
     public boolean matches(String compilerName) {
         return compilerName.equals("C1X") || compilerName.equals("Graal");
     }
+
 }

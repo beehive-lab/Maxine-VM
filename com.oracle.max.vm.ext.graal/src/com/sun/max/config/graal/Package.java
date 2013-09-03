@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,36 +20,65 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package com.sun.max.config.graal;
 
-import java.util.*;
-
-import com.oracle.max.criutils.*;
-import com.oracle.max.graal.compiler.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jdk.*;
+
 
 public class Package extends BootImagePackage {
 
     public Package() {
         super("com.oracle.max.vm.ext.graal.**",
-              "com.oracle.max.graal.compiler.**",
-              "com.oracle.max.graal.graph.**",
-              //"com.oracle.max.graal.graphviz.**",
-              "com.oracle.max.graal.nodes.**",
-              "com.oracle.max.graal.snippets.**");
-        JavaPrototype.addObjectIdentityMapContributor(new GraalObjectMapContributor());
+              "com.oracle.graal.alloc.*",
+              "com.oracle.graal.amd64.*",
+              "com.oracle.graal.api.*",
+              "com.oracle.graal.api.code.*",
+              "com.oracle.graal.api.meta.*",
+              "com.oracle.graal.bytecode.*",
+              "com.oracle.graal.compiler.*",
+              "com.oracle.graal.compiler.alloc.*",
+              "com.oracle.graal.compiler.amd64.*",
+              "com.oracle.graal.compiler.gen.*",
+              "com.oracle.graal.compiler.phases.*",
+              "com.oracle.graal.compiler.target.*",
+              "com.oracle.graal.debug.*",
+              "com.oracle.graal.graph.**",
+              "com.oracle.graal.java.*",
+              "com.oracle.graal.java.decompiler.*",
+              "com.oracle.graal.lir.*",
+              "com.oracle.graal.lir.amd64.*",
+              "com.oracle.graal.loop.*",
+              "com.oracle.graal.nodes.**",
+              "com.oracle.graal.phases.**",
+              "com.oracle.graal.printer.*",
+              "com.oracle.graal.replacements.*",
+              "com.oracle.graal.replacements.nodes.*",
+              "com.oracle.graal.replacements.amd64.*",
+              "com.oracle.graal.virtual.*",
+              "com.oracle.graal.virtual.phases.ea.*"
+              );
+
     }
 
-    public static class GraalObjectMapContributor implements JavaPrototype.ObjectIdentityMapContributor {
-        @Override
-        public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
-            objectMap.put(TTY.out(), new LogStream(Log.os));
-            if (GraalOptions.PrintCFGToFile) {
-                objectMap.put(CompilationPrinter.globalOut(), JavaPrototype.NULL);
-            }
+    private static final String MEMBARNODE_CLASSNAME = "com.oracle.graal.nodes.extended.MembarNode";
+
+    @Override
+    public void loading() {
+        if (name().equals("com.oracle.graal.replacements")) {
+            UnsafeUsageChecker.addWhiteList("com.oracle.graal.replacements.SnippetCounter");
+        } else if (name().equals("com.oracle.graal.nodes.extended")) {
+            JDKInterceptor.addInterceptedField(MEMBARNODE_CLASSNAME,
+                            new JDKInterceptor.FieldOffsetRecomputation("dummyOffset", new JDK.ClassRef(MEMBARNODE_CLASSNAME), "dummy"));
+        } else if (name().equals("com.oracle.graal.api.code")) {
+            // java.lang.invoke.CallSite causes unresolved problems in the boot image
+            HostedBootClassLoader.omitClass("java.lang.invoke.CallSite");
+        } else if (name().equals("com.oracle.graal.debug")) {
+            JDKInterceptor.resetField("com.oracle.graal.debug.Debug", "ENABLED");
         }
     }
 
@@ -58,11 +87,5 @@ public class Package extends BootImagePackage {
         return CompilationBroker.optName().contains("Graal");
     }
 
-    @Override
-    protected boolean includesClass(String className) {
-        if (className.startsWith("com.oracle.max.graal.compiler.tests.")) {
-            return false;
-        }
-        return super.includesClass(className);
-    }
+
 }

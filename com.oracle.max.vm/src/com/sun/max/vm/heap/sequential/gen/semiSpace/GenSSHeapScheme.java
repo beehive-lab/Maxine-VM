@@ -907,8 +907,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final int pageSize = Platform.platform().pageSize;
         final int log2Alignment = Integer.numberOfTrailingZeros(pageSize);
         // Verify that the constraint of the heap scheme are met:
-        FatalError.check(Heap.bootHeapRegion.start() ==
-            Heap.startOfReservedVirtualSpace(),
+        FatalError.check(Heap.bootHeapRegion.start().equals(Heap.startOfReservedVirtualSpace()),
             "Boot heap region must be mapped at start of reserved virtual space");
 
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeOptCodeRegion().end();

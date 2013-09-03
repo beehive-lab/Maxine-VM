@@ -25,16 +25,37 @@ package com.sun.max.vm.monitor;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
+ * Common operations for all {@link MonitorScheme} implementations.
  */
-public abstract class AbstractMonitorScheme extends AbstractVMScheme  implements MonitorScheme {
+public abstract class AbstractMonitorScheme extends AbstractVMScheme implements MonitorScheme {
+
+    private boolean explicitNullChecks = true;
 
     @HOSTED_ONLY
     protected AbstractMonitorScheme() {
     }
 
     private int counter;
+
+    public boolean setExplicitNullChecks(boolean value) {
+        boolean oldValue = explicitNullChecks;
+        explicitNullChecks = value;
+        return oldValue;
+    }
+
+    @FOLD
+    private boolean explicitNullChecks() {
+        return explicitNullChecks;
+    }
+
+    public void nullCheck(Object object) {
+        if (explicitNullChecks() && object == null) {
+            throw Throw.throwNullPointerException();
+        }
+    }
 
     @INLINE
     public final int createHashCode(Object object) {

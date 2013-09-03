@@ -76,6 +76,7 @@ public class Log2RegionToByteMapTable {
     /**
      * Address of the first element of the table biased by the covered area start.
      */
+    @CONSTANT_WHEN_NOT_ZERO
     Pointer biasedTableAddress = Pointer.zero();
 
     Log2RegionToByteMapTable(int log2RangeSize) {

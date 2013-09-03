@@ -270,7 +270,7 @@ public class VMFunctions {
             throw new CloneNotSupportedException();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -292,7 +292,7 @@ public class VMFunctions {
             return createLocalHandle(s.unhand(String.class).intern());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -486,7 +486,7 @@ public class VMFunctions {
             return createLocalHandle(JDK_java_lang_Throwable.asJLT(throwable.unhand(Throwable.class)).getStackTraceElement(index));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -680,7 +680,7 @@ public class VMFunctions {
             return createLocalHandle(Thread.currentThread());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -790,7 +790,7 @@ public class VMFunctions {
             return createLocalHandle(getClassContext());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -813,7 +813,7 @@ public class VMFunctions {
             return createLocalHandle(Reflection.getCallerClass(depth + 2));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -835,7 +835,7 @@ public class VMFunctions {
             return createLocalHandle(BootClassLoader.BOOT_CLASS_LOADER.packageSource(name.unhand(String.class)));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -857,7 +857,7 @@ public class VMFunctions {
             return createLocalHandle(BootClassLoader.BOOT_CLASS_LOADER.packageNames());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -884,7 +884,7 @@ public class VMFunctions {
             return createLocalHandle(visitor.result);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -906,7 +906,7 @@ public class VMFunctions {
             return createLocalHandle(c.unhand(Class.class).getName());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -928,7 +928,7 @@ public class VMFunctions {
             return createLocalHandle(c.unhand(Class.class).getClassLoader());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -1016,7 +1016,7 @@ public class VMFunctions {
             return createLocalHandle(c.unhand(Class.class).getSigners());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -1060,7 +1060,7 @@ public class VMFunctions {
             return createLocalHandle(c.unhand(Class.class).getProtectionDomain());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -1124,7 +1124,7 @@ public class VMFunctions {
             return createLocalHandle(VmThreadMap.getThreads(false));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -1149,7 +1149,7 @@ public class VMFunctions {
             return createLocalHandle(result);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -1176,7 +1176,7 @@ public class VMFunctions {
             return createLocalHandle(result);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -1203,7 +1203,7 @@ public class VMFunctions {
             return props;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asJniHandle(0L);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {

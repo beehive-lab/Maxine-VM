@@ -36,16 +36,21 @@ public final class ImmortalHeap_switching {
     private ImmortalHeap_switching() {
     }
 
+    // Ensure the allocations aren't optimized away!
+    public static Object obj1;
+    public static Object obj2;
+    public static Object obj3;
+
     public static boolean test(int size) {
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
         Pointer oldMark = immortalMemoryRegion.mark();
-        new Object();
+        obj1 = new Object();
         if (!immortalMemoryRegion.mark().equals(oldMark)) {
             return false;
         }
         try {
             Heap.enableImmortalMemoryAllocation();
-            new Object();
+            obj2 = new Object();
         } finally {
             Heap.disableImmortalMemoryAllocation();
         }
@@ -53,7 +58,7 @@ public final class ImmortalHeap_switching {
             return false;
         }
         oldMark = immortalMemoryRegion.mark();
-        new Object();
+        obj3 = new Object();
         return immortalMemoryRegion.mark().equals(oldMark);
     }
 }

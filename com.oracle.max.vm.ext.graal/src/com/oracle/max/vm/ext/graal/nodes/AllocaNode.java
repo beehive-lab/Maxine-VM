@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,33 +22,34 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
-import com.oracle.max.graal.compiler.target.amd64.*;
-import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import com.oracle.graal.api.code.*;
+import com.oracle.graal.api.meta.*;
+import com.oracle.graal.compiler.gen.*;
+import com.oracle.graal.compiler.target.*;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.type.*;
 
-/**
- * Instruction implementing the semantics of {@link Bytecodes#ALLOCA}.
- */
-public final class AllocaNode extends FixedWithNextNode implements AMD64LIRLowerable {
 
-    @Data public final int size;
-    @Data public final boolean refs;
+public class AllocaNode extends FixedWithNextNode implements LIRGenLowerable {
 
-    public AllocaNode(int size, boolean refs, RiResolvedType declaredType) {
-        super(StampFactory.declared(declaredType));
+    @Input private ValueNode size;
+    private final boolean refs;
+
+    public AllocaNode(ValueNode size, boolean refs, Stamp stamp) {
+        super(stamp);
         this.size = size;
         this.refs = refs;
     }
 
     @Override
-    public void generateAmd64(AMD64LIRGenerator gen) {
-        CiVariable result = gen.newVariable(kind());
-        StackBlock stackBlock = gen.compilation.frameMap().reserveStackBlock(size, refs);
-        gen.append(AMD64StandardOpcode.LEA_STACK_BLOCK.create(result, stackBlock));
+    public void generate(LIRGenerator gen) {
+        assert size instanceof ConstantNode;
+        StackSlot array = gen.frameMap().allocateStackBlock(((ConstantNode) size).asConstant().asInt(), refs);
+        Value result = gen.emitAddress(array);
         gen.setResult(this, result);
     }
+
+//    @NodeIntrinsic
+//    public static native Pointer allocaDimsArray(@ConstantNodeParameter int rank);
+
 }
