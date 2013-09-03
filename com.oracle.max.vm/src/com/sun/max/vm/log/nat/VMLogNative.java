@@ -204,7 +204,7 @@ public abstract class VMLogNative extends VMLog {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             byteDataOffset = VMConfiguration.vmConfig().layoutScheme().byteArrayLayout.getElementOffsetFromOrigin(0);
             nativeRecordArgsOffset = getArgsOffset();
             primordialNativeRecord = new NativeRecord(nativeRecordArgsOffset);

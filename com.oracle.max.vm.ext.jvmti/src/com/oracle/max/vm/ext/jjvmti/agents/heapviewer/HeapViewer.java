@@ -46,7 +46,7 @@ public class HeapViewer extends NullJJVMTICallbacks implements JJVMTI.HeapCallba
     static {
         heapViewer = (HeapViewer) JJVMTIAgentAdapter.register(new HeapViewer());
         if (MaxineVM.isHosted()) {
-            VMOptions.addFieldOption("-XX:", "HeapViewerArgs", "arguments for heapviewer JJVMTI agent");
+            VMOptions.addFieldOption("-XX:", "HeapViewerArgs", HeapViewer.class, "arguments for heapviewer JJVMTI agent");
         }
     }
 

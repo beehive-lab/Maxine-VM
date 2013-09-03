@@ -734,7 +734,7 @@ public class VmOperation {
 
     static int SafepointSpinBeforeYield = 2000;
     static {
-        VMOptions.addFieldOption("-XX:", "SafepointSpinBeforeYield",
+        VMOptions.addFieldOption("-XX:", "SafepointSpinBeforeYield", VmOperation.class,
             "Number of iterations in VM operation thread while waiting for a thread to freeze before falling back to yield or sleep");
     }
 

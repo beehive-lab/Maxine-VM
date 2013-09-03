@@ -60,7 +60,7 @@ public final class Safepoints {
         public final String name;
 
         // Bit field info.
-        private final int mask;
+        public final int mask;
 
         @HOSTED_ONLY
         Attr(String name, int bit) {

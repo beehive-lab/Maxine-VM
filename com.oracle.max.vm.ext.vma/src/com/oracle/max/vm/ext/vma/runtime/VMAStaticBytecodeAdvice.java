@@ -568,10 +568,10 @@ public class VMAStaticBytecodeAdvice {
     }
 
     @NEVER_INLINE
-    public static void adviseBeforeArrayLength(int arg1, Object arg2, int arg3) {
+    public static void adviseAfterArrayLength(int arg1, Object arg2, int arg3) {
         disableAdvising();
         try {
-            adviceHandler().adviseBeforeArrayLength(arg1, arg2, arg3);
+            adviceHandler().adviseAfterArrayLength(arg1, arg2, arg3);
         } catch (Throwable t) {
             debug(t);
         } finally {

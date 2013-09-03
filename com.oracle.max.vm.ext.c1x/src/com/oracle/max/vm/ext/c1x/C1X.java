@@ -58,7 +58,7 @@ import com.sun.max.vm.thread.*;
 /**
  * Integration of the C1X compiler into Maxine's compilation framework.
  */
-public class C1X implements RuntimeCompiler {
+public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCompiler {
 
     /**
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by C1X.

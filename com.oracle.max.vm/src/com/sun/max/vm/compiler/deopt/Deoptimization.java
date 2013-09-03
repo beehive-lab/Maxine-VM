@@ -102,7 +102,7 @@ public class Deoptimization extends VmOperation {
      */
     public static int DeoptimizeALot;
     static {
-        VMOptions.addFieldOption("-XX:", "UseDeopt", "Enable deoptimization.");
+        VMOptions.addFieldOption("-XX:", "UseDeopt", Deoptimization.class, "Enable deoptimization.");
         VMOptions.addFieldOption("-XX:", "DeoptimizeALot", Deoptimization.class,
             "Invalidate and deoptimize a selection of executing optimized methods every <n> milliseconds. " +
             "A value of 0 disables this mechanism.");
@@ -571,9 +571,9 @@ public class Deoptimization extends VmOperation {
             if (current.isTopFrame()) {
                 // Ensure that the top frame of the walk is the method being deoptimized
                 assert tm == current.targetMethod();
-                assert ip.asPointer() == current.ipAsPointer();
-                assert sp == current.sp();
-                assert fp == current.fp();
+                assert ip.asPointer().equals(current.ipAsPointer());
+                assert sp.equals(current.sp());
+                assert fp.equals(current.fp());
                 return true;
             }
 

@@ -82,23 +82,31 @@ public class CompilationBroker {
      */
     public final RuntimeCompiler optimizingCompiler;
 
+    /**
+     * Other compilers registered with {@link #addCompiler}.
+     */
+    private HashMap<String, RuntimeCompiler> altCompilers = new HashMap<String, RuntimeCompiler>();
+
     private static boolean opt;
     private static boolean GCOnRecompilation;
     private static boolean FailOverCompilation = true;
+    private static boolean VMExtOpt;
     static int PrintCodeCacheMetrics;
 
     static {
-        addFieldOption("-X", "opt", "Select optimizing compiler whenever possible.");
-        addFieldOption("-XX:", "RCT", "Set the recompilation threshold for methods. Use 0 to disable recompilation. (default: " + RCT + ").");
-        addFieldOption("-XX:", "GCOnRecompilation", "Force GC before every re-compilation.");
-        addFieldOption("-XX:", "FailOverCompilation", "Retry failed compilations with another compiler (if available).");
-        addFieldOption("-XX:", "PrintCodeCacheMetrics", "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
+        addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
+        addFieldOption("-XX:", "RCT", CompilationBroker.class, "Set the recompilation threshold for methods. Use 0 to disable recompilation. (default: " + RCT + ").");
+        addFieldOption("-XX:", "GCOnRecompilation", CompilationBroker.class, "Force GC before every re-compilation.");
+        addFieldOption("-XX:", "FailOverCompilation", CompilationBroker.class, "Retry failed compilations with another compiler (if available).");
+        addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
+        addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
+        addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
     }
 
     @RESET
     static String CompileCommand;
     static {
-        VMOptions.addFieldOption("-XX:", "CompileCommand",
+        VMOptions.addFieldOption("-XX:", "CompileCommand", CompilationBroker.class,
             "Specify which compiler to use for methods matching given patterns. For example, " +
             "'-XX:CompileCommand=test.output:T1X,com.acme.util.Strings:Graal' specifies that " +
             "any method whose fully qualified name contains the substring 'test.output' " +
@@ -160,6 +168,8 @@ public class CompilationBroker {
         return baselineCompiler != null;
     }
 
+    private static String AddCompiler;
+
     private static final String OPTIMIZING_COMPILER_PROPERTY = CompilationBroker.class.getSimpleName() + "." + optimizingCompilerOption.getName();
     private static final String BASELINE_COMPILER_PROPERTY = CompilationBroker.class.getSimpleName() + "." + baselineCompilerOption.getName();
 
@@ -185,6 +195,8 @@ public class CompilationBroker {
      */
     public static final String COMPILATION_BROKER_CLASS_PROPERTY_NAME = "max.CompilationBroker.class";
 
+    public static CompilationBroker singleton;
+
     /**
      * Creates the single {@link CompilationBroker} instance to be used by the VM.
      * This factory-style instantiation allows a subclass of {@link CompilationBroker} to
@@ -196,14 +208,15 @@ public class CompilationBroker {
     public static CompilationBroker create() {
         final String className = System.getProperty(COMPILATION_BROKER_CLASS_PROPERTY_NAME);
         if (className == null) {
-            return new CompilationBroker();
+            singleton = new CompilationBroker();
         } else {
             try {
-                return (CompilationBroker) Class.forName(className).newInstance();
+                singleton =  (CompilationBroker) Class.forName(className).newInstance();
             } catch (Exception exception) {
                 throw FatalError.unexpected("Error instantiating " + className, exception);
             }
         }
+        return singleton;
     }
 
     /**
@@ -227,13 +240,18 @@ public class CompilationBroker {
         }
     }
 
-    @HOSTED_ONLY
     public static RuntimeCompiler instantiateCompiler(String name) {
         try {
             return (RuntimeCompiler) Class.forName(name).newInstance();
         } catch (Exception e) {
             throw FatalError.unexpected("Error instantiating compiler " + name, e);
         }
+    }
+
+    public static RuntimeCompiler addCompiler(String name, String className) {
+        RuntimeCompiler compiler = instantiateCompiler(className);
+        singleton.altCompilers.put(name, compiler);
+        return compiler;
     }
 
     /**
@@ -273,6 +291,19 @@ public class CompilationBroker {
         optimizingCompiler.initialize(phase);
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);
+        }
+
+        if (phase == MaxineVM.Phase.HOSTED_COMPILING || phase == MaxineVM.Phase.STARTING) {
+            if (AddCompiler != null) {
+                String[] nameAndClass = AddCompiler.split(":");
+                addCompiler(nameAndClass[0], nameAndClass[1]);
+                AddCompiler = null;
+            }
+            if (altCompilers != null) {
+                for (RuntimeCompiler altCompiler : altCompilers.values()) {
+                    altCompiler.initialize(phase);
+                }
+            }
         }
 
         if (isHosted()) {
@@ -337,8 +368,7 @@ public class CompilationBroker {
         try {
             return compile(cma, nature, isDeopt, false);
         } catch (Throwable t) {
-            // cannot happen
-            return null;
+            throw new RuntimeException("unexpected compilation failure: ", t);
         }
     }
 
@@ -458,6 +488,11 @@ public class CompilationBroker {
                     } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
                         compiler = baselineCompiler;
                         reason = "CompileCommand";
+                    } else if (altCompilers != null) {
+                        compiler = altCompilers.get(compilerName);
+                        if (compiler != null) {
+                            reason = "CompileCommand";
+                        }
                     }
                 }
                 if (reason == null) {
@@ -468,7 +503,7 @@ public class CompilationBroker {
                         if (VMTI.handler().hasBreakpoints(cma)) {
                             reason = "vmti";
                             compiler = baselineCompiler;
-                        } else if (!isDeopt && cma.isVM()) {
+                        } else if (!isDeopt && cma.isVM() && VMExtOpt) {
                             // compile VM extensions with the opt compiler (cf isHosted)
                             reason = "vm";
                             compiler = optimizingCompiler;
@@ -830,7 +865,7 @@ public class CompilationBroker {
      * when a specified compiler can't be found on the class path.
      */
     @HOSTED_ONLY
-    public static class NullCompiler implements RuntimeCompiler {
+    public static class NullCompiler extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCompiler {
 
         public final Nature nature;
 

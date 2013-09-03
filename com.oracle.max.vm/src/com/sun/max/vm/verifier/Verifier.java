@@ -49,7 +49,7 @@ public class Verifier implements VerificationRegistry {
      */
     public static int TraceVerifierLevel;
     static {
-        VMOptions.addFieldOption("-XX:", "TraceVerifierLevel", "Trace bytecode verification level: 0 = none, 1 = class, 2 = methods.");
+        VMOptions.addFieldOption("-XX:", "TraceVerifierLevel", Verifier.class, "Trace bytecode verification level: 0 = none, 1 = class, 2 = methods.");
     }
 
     /**
@@ -58,7 +58,7 @@ public class Verifier implements VerificationRegistry {
      */
     public static String TraceVerification;
     static {
-        VMOptions.addFieldOption("-XX:", "TraceVerification",
+        VMOptions.addFieldOption("-XX:", "TraceVerification", Verifier.class,
             "Trace bytecode verification in detail of method(s) whose qualified name contains <value>.");
     }
 
@@ -68,7 +68,7 @@ public class Verifier implements VerificationRegistry {
     @RESET
     private static boolean BytecodeVerificationLocal;
     static {
-        VMOptions.addFieldOption("-XX:", "BytecodeVerificationLocal", "Enable verification of local classes.");
+        VMOptions.addFieldOption("-XX:", "BytecodeVerificationLocal", Verifier.class,  "Enable verification of local classes.");
     }
 
     /**
@@ -76,7 +76,7 @@ public class Verifier implements VerificationRegistry {
      */
     private static boolean BytecodeVerificationRemote = true;
     static {
-        VMOptions.addFieldOption("-XX:", "BytecodeVerificationRemote", "Enable verification of remote classes.");
+        VMOptions.addFieldOption("-XX:", "BytecodeVerificationRemote", Verifier.class,  "Enable verification of remote classes.");
     }
 
     static {

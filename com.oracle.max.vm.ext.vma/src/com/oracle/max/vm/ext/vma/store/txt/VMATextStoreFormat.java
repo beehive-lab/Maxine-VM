@@ -124,7 +124,7 @@ public abstract class VMATextStoreFormat {
     public static final int ARRAY_INDEX_INDEX = 5;
     public static final int NEW_ARRAY_LENGTH_INDEX = 5;
     public static final int CONST_LOAD_VALUE_INDEX = 4;
-    public static final int ARRAY_LENGTH_INDEX = 4;
+    public static final int ARRAY_LENGTH_INDEX = 5;
     public static final int LOADSTORE_DISP_INDEX = 4;
     public static final int IF_OPCODE_INDEX = 4;
     public static final int OP_OPCODE_INDEX = 4;

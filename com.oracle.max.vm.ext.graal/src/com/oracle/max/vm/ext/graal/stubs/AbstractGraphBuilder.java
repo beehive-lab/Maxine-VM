@@ -22,17 +22,18 @@
  */
 package com.oracle.max.vm.ext.graal.stubs;
 
-import static com.oracle.max.graal.nodes.FrameState.*;
-import static com.oracle.max.vm.ext.maxri.MaxRuntime.*;
+import static com.oracle.graal.nodes.FrameState.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.util.*;
 
-import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.java.*;
-import com.oracle.max.graal.nodes.java.MethodCallTargetNode.InvokeKind;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import com.oracle.graal.api.meta.*;
+import com.oracle.graal.api.meta.Kind;
+import com.oracle.graal.nodes.*;
+import com.oracle.graal.nodes.java.*;
+import com.oracle.graal.nodes.java.MethodCallTargetNode.InvokeKind;
+import com.oracle.graal.nodes.type.*;
+import com.oracle.max.vm.ext.graal.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -47,11 +48,13 @@ import com.sun.max.vm.type.*;
 public abstract class AbstractGraphBuilder {
 
     private FixedWithNextNode lastFixedNode;
-    protected final ClassMethodActor nativeMethod;
+    protected final ClassMethodActor nativeMethodActor;
+    protected final ResolvedJavaMethod nativeMethod;
     protected StructuredGraph graph;
 
-    public AbstractGraphBuilder(ClassMethodActor nativeMethod) {
-        this.nativeMethod = nativeMethod;
+    public AbstractGraphBuilder(ClassMethodActor nativeMethodActor) {
+        this.nativeMethodActor = nativeMethodActor;
+        this.nativeMethod = MaxResolvedJavaMethod.get(nativeMethodActor);
     }
 
     protected void setGraph(StructuredGraph graph) {
@@ -77,19 +80,26 @@ public abstract class AbstractGraphBuilder {
      * Creates a constant node for an object constant.
      */
     public ConstantNode oconst(Object value) {
-        return ConstantNode.forObject(value, runtime(), graph);
+        return ConstantNode.forObject(value, MaxGraal.runtime(), graph);
     }
 
     public List<LocalNode> createLocals(int nextIndex, SignatureDescriptor sig, boolean isStatic) {
+        // TODO fix type handling here
         int index = nextIndex;
         List<LocalNode> args = new ArrayList<LocalNode>(sig.argumentCount(!isStatic));
         if (!isStatic) {
-            args.add(graph.unique(new LocalNode(CiKind.Object, index++)));
+            args.add(graph.unique(new LocalNode(index++, StampFactory.forKind(Kind.Object))));
         }
         for (int i = 0; i < sig.numberOfParameters(); i++) {
             final TypeDescriptor parameterDescriptor = sig.parameterDescriptorAt(i);
-            CiKind kind = WordUtil.ciKind(parameterDescriptor.toKind(), true).stackKind();
-            args.add(graph.unique(new LocalNode(kind, index)));
+            Kind kind = KindMap.toGraalKind(WordUtil.ciKind(parameterDescriptor.toKind(), true));
+            Stamp stamp;
+            if (kind == Kind.Object) {
+                stamp = StampFactory.forKind(Kind.Object);
+            } else {
+                stamp = StampFactory.forKind(kind);
+            }
+            args.add(graph.unique(new LocalNode(index, stamp)));
             index++;
         }
         return args;
@@ -116,31 +126,30 @@ public abstract class AbstractGraphBuilder {
             }
         }
 
-        RiType returnType = target.descriptor().returnType(nativeMethod.holder());
-        MethodCallTargetNode targetNode = graph.add(new MethodCallTargetNode(invokeKind, target, args, returnType));
-        InvokeNode invokeNode = graph.add(new InvokeNode(targetNode, UNKNOWN_BCI));
-        FrameState stateAfter = stateAfterCall(invokeNode, target.descriptor().resultKind());
+        JavaType returnType = MaxJavaType.get(target.descriptor().returnType(nativeMethodActor.holder()));
+        MaxResolvedJavaMethod rm = MaxResolvedJavaMethod.get(target);
+        MethodCallTargetNode targetNode = graph.add(new MethodCallTargetNode(invokeKind, rm, args, returnType));
+        InvokeNode invokeNode = graph.add(new InvokeNode(targetNode, INVALID_FRAMESTATE_BCI));
+        FrameState stateAfter = stateAfterCall(invokeNode, KindMap.toGraalKind(target.descriptor().resultKind()));
         invokeNode.setStateAfter(stateAfter);
         return invokeNode;
     }
 
     public FrameState stateAfterCall(ValueNode callNode, Kind resultKind) {
         ValueNode[] locals = {};
-        ValueNode[] stack;
-        int stackSize;
-        if (resultKind == Kind.VOID) {
-            stack = new ValueNode[0];
-            stackSize = 0;
-        } else if (resultKind.isCategory1) {
-            stack = new ValueNode[] {callNode};
-            stackSize = 1;
+        ArrayList<ValueNode> stack;
+        if (resultKind == Kind.Void) {
+            stack = new ArrayList<ValueNode>(0);
+        } else if (resultKind == Kind.Long || resultKind == Kind.Double) {
+            stack = new ArrayList<ValueNode>(2);
+            stack.set(0, callNode);
+            stack.set(1, null);
         } else {
-            stack = new ValueNode[] {callNode, null};
-            stackSize = 2;
+            stack = new ArrayList<ValueNode>(1);
+            stack.add(callNode);
         }
 
-        List<MonitorObject> locks = Collections.emptyList();
-        return graph.add(new FrameState(nativeMethod, UNKNOWN_BCI, locals, stack, stackSize, locks, false));
+        return graph.add(new FrameState(null, INVALID_FRAMESTATE_BCI, locals, stack, new ValueNode[0], false, false));
     }
 
     /**

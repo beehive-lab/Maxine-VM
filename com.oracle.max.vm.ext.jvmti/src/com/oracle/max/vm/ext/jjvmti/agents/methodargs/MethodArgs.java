@@ -45,7 +45,7 @@ public class MethodArgs extends NullJJVMTICallbacks implements JJVMTI.EventCallb
     static {
         methodArgs = (MethodArgs) JJVMTIAgentAdapter.register(new MethodArgs());
         if (MaxineVM.isHosted()) {
-            VMOptions.addFieldOption("-XX:", "MethodArgsArgs", "arguments for methodargs JJVMTI agent");
+            VMOptions.addFieldOption("-XX:", "MethodArgsArgs", MethodArgs.class, "arguments for methodargs JJVMTI agent");
         }
     }
 

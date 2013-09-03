@@ -111,7 +111,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     private static boolean JVMTI_CDE;
 
     static {
-        VMOptions.addFieldOption("-XX:", "JVMTI_CDE", "Compile for all debugging events");
+        VMOptions.addFieldOption("-XX:", "JVMTI_CDE", JVMTI_AMD64T1XCompilation.class, "Compile for all debugging events");
     }
 
     private final T1X defaultT1X;

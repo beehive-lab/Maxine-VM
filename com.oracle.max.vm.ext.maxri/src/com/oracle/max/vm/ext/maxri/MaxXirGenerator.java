@@ -178,17 +178,17 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @FOLD
     int offsetOfMTableStartIndex() {
-        return FieldActor.findInstance(Hub.class, "mTableStartIndex").offset();
+        return FieldActor.findInstance(ClassActor.fromJava(Hub.class), "mTableStartIndex").offset();
     }
 
     @FOLD
     int offsetOfMTableLength() {
-        return FieldActor.findInstance(Hub.class, "mTableLength").offset();
+        return FieldActor.findInstance(ClassActor.fromJava(Hub.class), "mTableLength").offset();
     }
 
     @FOLD
     int offsetOfTupleSize() {
-        return FieldActor.findInstance(Hub.class, "tupleSize").offset();
+        return FieldActor.findInstance(ClassActor.fromJava(Hub.class), "tupleSize").offset();
     }
 
     @FOLD
@@ -750,7 +750,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.jeq(store, value, asm.o(null)); // first check if value is null
             valueHub = asm.createTemp("valueHub", CiKind.Object);
             compHub = asm.createTemp("compHub", CiKind.Object);
-            int compHubOffset = FieldActor.findInstance(Hub.class, "componentHub").offset();
+            int compHubOffset = FieldActor.findInstance(ClassActor.fromJava(Hub.class), "componentHub").offset();
             asm.pload(CiKind.Object, compHub, array, asm.i(hubOffset()), !genBoundsCheck);
             asm.pload(CiKind.Object, compHub, compHub, asm.i(compHubOffset), false);
             asm.pload(CiKind.Object, valueHub, value, asm.i(hubOffset()), false);
@@ -1952,7 +1952,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
-            return ((HeapSchemeWithTLAB) vmConfig().heapScheme()).slowPathAllocate(Size.fromInt(size), etla);
+            return ((HeapSchemeWithTLAB) vmConfig().heapScheme()).c1xSlowPathAllocate(Size.fromInt(size), etla);
         }
 
         public static Pointer flushLog(Pointer logTail) {
@@ -2002,7 +2002,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static Object allocateMultiArrayN(ResolutionGuard guard, int[] lengths) {
             for (int length : lengths) {
                 if (length < 0) {
-                    Throw.negativeArraySizeException(length);
+                    Throw.throwNegativeArraySizeException(length);
                 }
             }
             ClassActor actor = Snippets.resolveClass(guard);
@@ -2053,7 +2053,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static void unresolvedCheckcast(Object object, ResolutionGuard guard) {
             final ClassActor classActor = Snippets.resolveClass(guard);
             if (!ObjectAccess.readHub(object).isSubClassHub(classActor)) {
-                Throw.classCastException(classActor, object);
+                Throw.throwClassCastException(classActor, object);
             }
         }
 
@@ -2069,15 +2069,15 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static void throwClassCastException(DynamicHub hub, Object object) {
-            Throw.classCastException(hub.classActor, object);
+            Throw.throwClassCastException(hub.classActor, object);
         }
 
         public static void throwArrayIndexOutOfBoundsException(Object array, int index) {
-            Throw.arrayIndexOutOfBoundsException(array, index);
+            Throw.throwArrayIndexOutOfBoundsException(array, index);
         }
 
         public static void throwNegativeArraySizeException(int length) {
-            Throw.negativeArraySizeException(length);
+            Throw.throwNegativeArraySizeException(length);
         }
 
         public static void monitorEnter(Object o) {

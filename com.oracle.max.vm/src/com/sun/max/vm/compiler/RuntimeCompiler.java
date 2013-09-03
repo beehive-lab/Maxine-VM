@@ -43,7 +43,7 @@ public interface RuntimeCompiler {
     @HOSTED_ONLY
     Map<String, String> aliases = Utils.addEntries(new HashMap<String, String>(),
                     "T1X", "com.oracle.max.vm.ext.t1x.T1X",
-                    "Graal", "com.oracle.max.vm.ext.graal.Graal",
+                    "Graal", "com.oracle.max.vm.ext.graal.MaxGraal",
                     "C1X", "com.oracle.max.vm.ext.c1x.C1X",
                     "C1XGraal", "com.oracle.max.vm.ext.c1xgraal.C1XGraal");
 
@@ -114,4 +114,15 @@ public interface RuntimeCompiler {
      * VM option.
      */
     boolean matches(String compilerName);
+
+    /**
+     * Return a name for the compiler for, e.g., logging, when compiling {@code classMethodActor}.
+     */
+    String name(ClassMethodActor classMethodActor);
+
+    public static abstract class DefaultNameAdapter implements RuntimeCompiler {
+        public String name(ClassMethodActor classMethodActor) {
+            return getClass().getSimpleName();
+        }
+    }
 }

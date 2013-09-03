@@ -175,7 +175,7 @@ public interface VMATextStore extends VMAStore {
 
     void adviseBeforeInvokeInterface(long time, String threadName, int bci, long objId, String shortMethodName);
 
-    void adviseBeforeArrayLength(long time, String threadName, int bci, long objId, int length);
+    void adviseAfterArrayLength(long time, String threadName, int bci, long objId, int length);
 
     void adviseBeforeThrow(long time, String threadName, int bci, long objId);
 

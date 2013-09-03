@@ -33,7 +33,7 @@ import com.sun.max.vm.layout.*;
  * can be stored in fields and array elements of other objects, and
  * which is used by the mutator to refer to objects and parts thereof.
  */
-public abstract class Reference implements Accessor {
+public class Reference implements Accessor {
 
     protected Reference() {
     }

@@ -22,24 +22,14 @@
  */
 package com.sun.max.config.c1xgraal;
 
-import java.util.*;
-
-import com.oracle.max.criutils.*;
-import com.oracle.max.graal.compiler.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.hosted.*;
 
 public class Package extends BootImagePackage {
 
     public Package() {
-        super("com.oracle.max.vm.ext.c1xgraal.**",
-              "com.oracle.max.graal.compiler.**",
-              "com.oracle.max.graal.graph.**",
-              //"com.oracle.max.graal.graphviz.**",
-              "com.oracle.max.graal.nodes.**",
-              "com.oracle.max.graal.snippets.**");
+        super("com.oracle.max.vm.ext.c1xgraal.**");
     }
 
     @Override
@@ -47,21 +37,4 @@ public class Package extends BootImagePackage {
         return CompilationBroker.optName().contains("C1XGraal");
     }
 
-    public static class GraalObjectMapContributor implements JavaPrototype.ObjectIdentityMapContributor {
-        @Override
-        public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
-            objectMap.put(TTY.out(), new LogStream(Log.os));
-            if (GraalOptions.PrintCFGToFile) {
-                objectMap.put(CompilationPrinter.globalOut(), JavaPrototype.NULL);
-            }
-        }
-    }
-
-    @Override
-    protected boolean includesClass(String className) {
-        if (className.startsWith("com.oracle.max.graal.compiler.tests.")) {
-            return false;
-        }
-        return super.includesClass(className);
-    }
 }

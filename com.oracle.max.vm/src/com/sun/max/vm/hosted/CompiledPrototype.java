@@ -335,13 +335,13 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    private void checkInliningCorrect(Set<MethodActor> methods, MethodActor ignore, boolean inlined, boolean called) {
+    public static void checkInliningCorrect(Set<MethodActor> methods, MethodActor ignore, boolean inlined, boolean called) {
         for (MethodActor ma : methods) {
             if (ma == ignore) {
                 continue;
             }
 
-            boolean mustInline = ma.isInline() || (ma.holder().kind == Kind.WORD && !ma.isStatic());
+            boolean mustInline = mustInline(ma) || (ma.holder().kind == Kind.WORD && !ma.isStatic());
             boolean mustCall = ma.isNeverInline();
             assert !mustInline || !mustCall;
 
@@ -352,6 +352,14 @@ public class CompiledPrototype extends Prototype {
                 throw FatalError.unexpected("Method must be called: " + ma);
             }
         }
+    }
+
+    private static boolean mustInline(MethodActor ma) {
+        if (ma.isInline()) {
+            INLINE inline = ma.getAnnotation(INLINE.class);
+            return inline.must();
+        }
+        return false;
     }
 
     private void traceNewTargetMethod(TargetMethod targetMethod) {
@@ -565,12 +573,18 @@ public class CompiledPrototype extends Prototype {
                 processInvalidatedTargetMethods();
                 final MethodActor methodActor = worklist.poll();
                 if (needsCompilation(methodActor)) {
-                    TargetMethod targetMethod;
+                    TargetMethod targetMethod = null;
                     try {
                         targetMethod = cb.compile((ClassMethodActor) methodActor, null);
                     } catch (Throwable error) {
-                        throw reportCompilationError(methodActor, error);
+//                        throw reportCompilationError(methodActor, error);
+                        try {
+                            reportCompilationError(methodActor, error);
+                        } catch (ProgramError | FatalError ex) {
+                            continue;
+                        }
                     }
+                    assert targetMethod != null;
                     processNewTargetMethod(targetMethod);
                     ++totalCompilations;
                     if (totalCompilations % 200 == 0) {
@@ -758,10 +772,23 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
+    public static class NeedsCompilationCallback {
+        public boolean needsCompilation(MethodActor methodActor) {
+            return true;
+        }
+    }
+
+    public static void registerNeedsCompilationCallback(NeedsCompilationCallback cb) {
+        needsCompilationCallback = cb;
+    }
+
+    private static NeedsCompilationCallback needsCompilationCallback = new NeedsCompilationCallback();
+
     private boolean needsCompilation(MethodActor methodActor) {
         if (methodActor instanceof ClassMethodActor &&
             !methodActor.isAbstract() &&
-            !methodActor.isIntrinsic()) {
+            !methodActor.isIntrinsic() &&
+            needsCompilationCallback.needsCompilation(methodActor)) {
 
             String holderName = methodActor.holder().typeDescriptor.toJavaString();
             if (matches(holderName, compilationBlacklist) && !matches(holderName, compilationWhitelist)) {

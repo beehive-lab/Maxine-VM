@@ -94,7 +94,11 @@ public class AdviceGeneratorHelper {
     }
 
     public static int updateSource(Class target, String updatedContent, String startString, String endString, boolean checkOnly) throws IOException {
-        return updateSource("com.oracle.max.vm.ext.vma", target, updatedContent, startString, endString, checkOnly);
+        return updateSourceInProject("com.oracle.max.vm.ext.vma", target, updatedContent, startString, endString, checkOnly);
+    }
+
+    public static int updateSourceInProject(String project, Class target, String updatedContent, String startString, String endString, boolean checkOnly) throws IOException {
+        return updateSource(project, target, updatedContent, startString, endString, checkOnly);
     }
 
     private static int updateSource(String project, Class target, String updatedContent, String startString, String endString, boolean checkOnly) throws IOException {

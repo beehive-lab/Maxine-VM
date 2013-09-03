@@ -127,11 +127,30 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
                 return null;
             }
             return ClassIDManager.toClassActor(uct);
+        } else {
+            // Should we care about being less conservative for class array?
+            // i.e., we should return the array class id if the element type is a leaf
+            // (i.e., has no sub-classes, or has no implementation if an interface).
+
+            // Only arrays of primitive types or final classes have their uniqueConcreteType
+            // field set in recordUniqueConcreteSubtype, so uniqueConcreteType may be NO_MARK (NULL_CLASS_ID)
+            assert classActor.uniqueConcreteType != HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK;
+
+            if (classActor.uniqueConcreteType == NO_CONCRETE_SUBTYPE_MARK) {
+                ClassActor elementClassActor = classActor.elementClassActor();
+                if (elementClassActor.uniqueConcreteType <= HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK) {
+                    return null;
+                } else {
+                    // otherwise the array is the unique concrete subtype
+                    // TODO Currently the code to invalidate arrays in the face of a change in the
+                    // type hierarchy is not implemented, so we conservatively return null
+                    return null;
+                }
+            } else {
+                // element was final class or primitive
+                return classActor;
+            }
         }
-        // Should we care about being less conservative for class array?
-        // i.e., we should return the array class id if the element type is a leaf
-        // (i.e., has no sub-classes, or has no implementation if an interface).
-        return ClassIDManager.toClassActor(classActor.uniqueConcreteType);
     }
 
     /**
@@ -175,7 +194,8 @@ public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
                 classActor.uniqueConcreteType = classActor.id;
             }
             // We leave the unique concrete type to the NULL_CLASS_ID for all other cases as it
-            // can be inferred from the element type.
+            // can be inferred when needed from the element type. And, AFAIK (mjj) we have no way
+            // to invalidate an array type if the component type ceases to be unique.
         }
         // everything else is abstract and therefore (i) doesn't have any concrete sub-type yet,
         // and (ii), cannot change the unique concrete sub-type of their super-types.

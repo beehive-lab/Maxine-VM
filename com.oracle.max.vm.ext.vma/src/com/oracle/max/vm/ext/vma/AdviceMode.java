@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.vma;
 
+import java.util.*;
+
 /**
  * In general, VM operations can be advised either before or after their execution.
  *
@@ -33,5 +35,10 @@ package com.oracle.max.vm.ext.vma;
 
 public enum AdviceMode {
     BEFORE,
-    AFTER
+    AFTER;
+
+    public static final EnumSet<AdviceMode> BEFORE_SET = EnumSet.of(AdviceMode.BEFORE);
+    public static final EnumSet<AdviceMode> AFTER_SET = EnumSet.of(AdviceMode.AFTER);
+    public static final EnumSet<AdviceMode> BEFORE_AFTER_SET = EnumSet.of(AdviceMode.BEFORE, AdviceMode.AFTER);
+
 }

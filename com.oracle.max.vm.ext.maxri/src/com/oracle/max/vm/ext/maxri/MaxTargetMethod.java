@@ -42,6 +42,7 @@ import com.sun.cri.ci.CiTargetMethod.Safepoint;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -64,7 +65,7 @@ import com.sun.max.vm.type.*;
  * the Maxine VM compiled by a compiler written against the
  * CRI project.
  */
-public final class MaxTargetMethod extends TargetMethod implements Cloneable {
+public class MaxTargetMethod extends TargetMethod implements Cloneable {
 
     /**
      * An array of pairs denoting the code positions protected by an exception handler.
@@ -95,6 +96,8 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
 
+    private CiTargetMethod debugCiTargetMethod;
+
     public MaxTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         assert classMethodActor != null;
@@ -108,6 +111,8 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
         if (isHosted()) {
             // Save the target method for later gathering of calls and duplication
             this.bootstrappingCiTargetMethod = ciTargetMethod;
+        } else {
+            debugCiTargetMethod = ciTargetMethod;
         }
 
         for (Mark mark : ciTargetMethod.marks) {
@@ -180,7 +185,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     /**
-     * @return the number of bytes in {@link #refMaps} corresponding to one safepoint.
+     * @return the size (in bytes) of the frame reference map plus the register reference map.
      */
     public int totalRefMapSize() {
         return regRefMapSize() + frameRefMapSize();
@@ -467,12 +472,12 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
         RiRegisterConfig registerConfig = vm().registerConfigs.trampoline;
         TargetMethod trampoline = callee.targetMethod();
         ClassMethodActor calledMethod = null;
-        TargetMethod targetMethod = current.targetMethod();
+        MaxTargetMethod targetMethod = (MaxTargetMethod) current.targetMethod();
 
         CiCalleeSaveLayout csl = callee.csl();
         Pointer csa = callee.csa();
         FatalError.check(csl != null && !csa.isZero(), "trampoline must have callee save area");
-        CiRegister[] regs = registerConfig.getCallingConventionRegisters(Type.JavaCall, RegisterFlag.CPU);
+        CiRegister[] cpuRegs = registerConfig.getCallingConventionRegisters(Type.JavaCall, RegisterFlag.CPU);
 
         // figure out what method the caller is trying to call
         if (trampoline.is(StaticTrampoline)) {
@@ -493,7 +498,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
         } else {
             // this is a virtual or interface call; figure out the receiver method based on the
             // virtual or interface index
-            Object receiver = csa.plus(csl.offsetOf(regs[0])).getReference().toJava();
+            Object receiver = csa.plus(csl.offsetOf(cpuRegs[0])).getReference().toJava();
             ClassActor classActor = ObjectAccess.readClassActor(receiver);
             // The virtual dispatch trampoline stubs put the virtual dispatch index into the
             // scratch register and then saves it to the stack.
@@ -507,16 +512,18 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
         }
 
         int regIndex = 0;
-        if (!calledMethod.isStatic()) {
+        boolean isStatic = calledMethod.isStatic();
+        if (!isStatic) {
             // set a bit for the receiver object
-            int offset = csl.offsetOf(regs[regIndex++]);
+            int offset = csl.offsetOf(cpuRegs[regIndex++]);
             preparer.visitReferenceMapBits(current, csa.plus(offset), 1, 1);
         }
 
         SignatureDescriptor sig = calledMethod.descriptor();
-        for (int i = 0; i < sig.numberOfParameters() && regIndex < regs.length; ++i) {
+        int numParameters = sig.numberOfParameters();
+        for (int i = 0; i < numParameters && regIndex < cpuRegs.length; ++i) {
             TypeDescriptor arg = sig.parameterDescriptorAt(i);
-            CiRegister reg = regs[regIndex];
+            CiRegister reg = cpuRegs[regIndex];
             Kind kind = arg.toKind();
             if (kind.isReference) {
                 // set a bit for this parameter
@@ -528,6 +535,79 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
                 regIndex++;
             }
         }
+
+        // Now handle any overflow arguments that might be destroyed by a GC during the trampoline.
+        // The need for this is compiler dependent.
+        if (!targetMethod.needsTrampolineRefMapOverflowArgHandling()) {
+            return;
+        }
+
+        d1(regIndex, numParameters);
+        if (numParameters + (isStatic ? 0 : 1) < regIndex) {
+            // Can't be any overflow reference parameters
+            return;
+        }
+        // This is tricky since we can't allocate, so can't just use the normal method in CiRegisterConfig
+        // that assigns registers and computes stack slot offsets. Also, since the latter is VM independent,
+        // we can't create a variant that uses a SignatureDescriptor, so we inline similar logic here.
+
+        CiRegister[] fpuRegs = registerConfig.getCallingConventionRegisters(Type.JavaCall, RegisterFlag.FPU);
+        CiRegisterConfig javaCallConfig = vm().registerConfigs.standard;
+        int currentGeneral = isStatic ? 0 : 1;
+        int currentXMM = 0;
+        int firstStackIndex = (javaCallConfig.stackArg0Offsets[Type.JavaCall.ordinal()]) / Platform.platform().target.spillSlotSize;
+        int currentStackIndex = firstStackIndex;
+
+        for (int i = 0; i < numParameters; i++) {
+            final CiKind kind = sig.argumentKindAt(i, true);
+            boolean inReg = false;
+
+            if (kind == CiKind.Byte || kind == CiKind.Boolean || kind == CiKind.Short || kind == CiKind.Char || kind == CiKind.Int ||
+                            kind == CiKind.Long || kind == CiKind.Object) {
+                if (currentGeneral < cpuRegs.length) {
+                    inReg = true;
+                    currentGeneral++;
+                }
+            } else if (kind == CiKind.Float || kind == CiKind.Double) {
+                if (currentXMM < fpuRegs.length) {
+                    currentXMM++;
+                    inReg = true;
+                }
+            }
+            d2(kind, inReg);
+
+            if (!inReg) {
+                if (kind == CiKind.Object) {
+                    targetMethod.prepareTrampolineRefMapHandleOverflowParam(current, calledMethod, currentStackIndex * Platform.platform().target.spillSlotSize, preparer);
+                }
+                currentStackIndex += Platform.platform().target.spillSlots(kind);
+            }
+        }
+    }
+
+    @NEVER_INLINE
+    private static void d1(int regIndex, int numParameters) {
+
+    }
+
+    @NEVER_INLINE
+    private static void d2(CiKind kind, boolean inReg) {
+
+    }
+
+    protected boolean needsTrampolineRefMapOverflowArgHandling() {
+        return false;
+    }
+
+    /**
+     * Provides a hook for handling an overflow (stack stored) reference parameter in the reference map.
+     * The default implementation does nothing as C1X handles this in an ad hoc way.
+     * @param current
+     * @param calledMethod
+     * @param offset
+     * @param preparer
+     */
+    protected void prepareTrampolineRefMapHandleOverflowParam(StackFrameCursor current, ClassMethodActor calledMethod, int offset, FrameReferenceMapVisitor preparer) {
     }
 
     /**
@@ -552,7 +632,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
 
             int catchPos = posFor(catchAddress);
             if (invalidated() != null) {
-                assert current.sp().readWord(DEOPT_RETURN_ADDRESS_OFFSET) == current.ipAsPointer() : "real caller IP should have been saved in rescue slot";
+                assert current.sp().readWord(DEOPT_RETURN_ADDRESS_OFFSET).equals(current.ipAsPointer()) : "real caller IP should have been saved in rescue slot";
                 Pointer returnAddress = callee.targetMethod().returnAddressPointer(callee).readWord(0).asPointer();
                 assert Stub.isDeoptStubEntry(returnAddress, Code.codePointerToTargetMethod(returnAddress)) :
                     "the return address of a method that was on the stack when marked for deoptimization should have been patched with a deopt stub";

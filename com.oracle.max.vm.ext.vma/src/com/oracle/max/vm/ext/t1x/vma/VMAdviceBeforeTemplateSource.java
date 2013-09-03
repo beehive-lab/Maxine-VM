@@ -2614,7 +2614,7 @@ public class VMAdviceBeforeTemplateSource {
     public static int arraylength(@Slot(0) Object array, int bci) {
         int length = ArrayAccess.readArrayLength(array);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeArrayLength(bci, array, length);
+            VMAStaticBytecodeAdvice.adviseAfterArrayLength(bci, array, length);
         }
         return length;
     }

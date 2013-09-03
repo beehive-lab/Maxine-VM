@@ -382,9 +382,9 @@ public class SyncStoreVMAdviceHandler extends ObjectStateAdapter {
     }
 
     @Override
-    public synchronized void adviseBeforeArrayLength(int arg1, Object arg2, int arg3) {
-        super.adviseBeforeArrayLength(arg1, arg2, arg3);
-        storeAdaptor.adviseBeforeArrayLength(getTime(), arg1, arg2, arg3);
+    public synchronized void adviseAfterArrayLength(int arg1, Object arg2, int arg3) {
+        super.adviseAfterArrayLength(arg1, arg2, arg3);
+        storeAdaptor.adviseAfterArrayLength(getTime(), arg1, arg2, arg3);
     }
 
     @Override

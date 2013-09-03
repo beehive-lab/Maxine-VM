@@ -490,3 +490,17 @@ float native_parseFloat(const char* cstring, float nan) {
     return result;
 #endif
 }
+
+double native_parseDouble(const char* cstring, double nan) {
+#if os_MAXVE
+    // TODO
+    return nan;
+#else
+    char *endptr;
+    double result = strtod(cstring, (char**) &endptr);
+    if (endptr != cstring + strlen(cstring)) {
+        result = nan;
+    }
+    return result;
+#endif
+}

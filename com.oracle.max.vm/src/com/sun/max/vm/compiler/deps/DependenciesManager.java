@@ -256,7 +256,7 @@ public final class DependenciesManager {
         private static void traceAddRemove(int id, ClassActor type, String kind) {
             printPrefix();
             Dependencies deps = Dependencies.fromId(id);
-            Log.println(kind + " dependency from " + deps + " to " + type);
+            Log.println(kind + " dependency from " + deps.toString(false) + " to " + type);
         }
 
         private static StringBuilder invalidateSB(TargetMethod targetMethod, String iKind) {

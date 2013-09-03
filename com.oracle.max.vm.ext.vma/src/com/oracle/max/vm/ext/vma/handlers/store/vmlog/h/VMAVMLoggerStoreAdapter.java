@@ -134,7 +134,7 @@ public abstract class VMAVMLoggerStoreAdapter extends VMAStoreAdapter {
     public abstract void adviseBeforeInvokeSpecial(long arg1, int arg2, ObjectID arg3, MethodID arg4);
     public abstract void adviseBeforeInvokeStatic(long arg1, int arg2, ObjectID arg3, MethodID arg4);
     public abstract void adviseBeforeInvokeInterface(long arg1, int arg2, ObjectID arg3, MethodID arg4);
-    public abstract void adviseBeforeArrayLength(long arg1, int arg2, ObjectID arg3, int arg4);
+    public abstract void adviseAfterArrayLength(long arg1, int arg2, ObjectID arg3, int arg4);
     public abstract void adviseBeforeThrow(long arg1, int arg2, ObjectID arg3);
     public abstract void adviseBeforeCheckCast(long arg1, int arg2, ObjectID arg3, ClassID arg4);
     public abstract void adviseBeforeInstanceOf(long arg1, int arg2, ObjectID arg3, ClassID arg4);

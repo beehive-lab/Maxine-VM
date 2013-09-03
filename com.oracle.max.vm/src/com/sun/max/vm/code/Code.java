@@ -45,7 +45,7 @@ public final class Code {
 
     static boolean TraceCodeAllocation;
     static {
-        VMOptions.addFieldOption("-XX:", "TraceCodeAllocation", "Trace allocation from the code cache.");
+        VMOptions.addFieldOption("-XX:", "TraceCodeAllocation", Code.class, "Trace allocation from the code cache.");
     }
 
     /**

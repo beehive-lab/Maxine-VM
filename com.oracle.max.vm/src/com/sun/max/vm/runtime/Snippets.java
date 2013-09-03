@@ -79,12 +79,13 @@ public class Snippets {
     @INLINE
     public static Object createArray(ClassActor arrayClassActor, int length) {
         if (length < 0) {
-            throw Throw.negativeArraySizeException(length);
+            throw Throw.throwNegativeArraySizeException(length);
+        } else {
+            if (MaxineVM.isHosted()) {
+                return Array.newInstance(arrayClassActor.componentClassActor().toJava(), length);
+            }
+            return Heap.createArray(arrayClassActor.dynamicHub(), length);
         }
-        if (MaxineVM.isHosted()) {
-            return Array.newInstance(arrayClassActor.componentClassActor().toJava(), length);
-        }
-        return Heap.createArray(arrayClassActor.dynamicHub(), length);
     }
 
     public static Object createMultiReferenceArray(ClassActor classActor, int[] lengths) {
@@ -94,7 +95,11 @@ public class Snippets {
         return createMultiReferenceArrayAtIndex(0, classActor, lengths);
     }
 
-    private static Object createMultiReferenceArrayAtIndex(int index, ClassActor arrayClassActor, int[] lengths) {
+    /**
+     * Recursively create a multi-dimensional array.
+     * Assert: {@code lengths} have already been checked for non-negative.
+     */
+    public static Object createMultiReferenceArrayAtIndex(int index, ClassActor arrayClassActor, int[] lengths) {
         final int length = lengths[index];
         final Object result = createNonNegativeSizeArray(arrayClassActor, length);
         if (length > 0) {
@@ -146,6 +151,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @SNIPPET_SLOWPATH
     private static void resolveStaticFieldForReading0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -170,6 +176,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @SNIPPET_SLOWPATH
     private static void resolveStaticFieldForWriting0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -286,6 +293,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @SNIPPET_SLOWPATH
     private static void resolveInstanceFieldForReading0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -310,6 +318,7 @@ public class Snippets {
     }
 
     @NEVER_INLINE
+    @SNIPPET_SLOWPATH
     private static void resolveInstanceFieldForWriting0(ResolutionGuard.InPool guard) {
         final ConstantPool constantPool = guard.pool;
         final int index = guard.cpi;
@@ -504,7 +513,7 @@ public class Snippets {
     @INLINE
     public static void nativeCallPrologue0(Pointer etla, Word anchor) {
         if (!NATIVE_CALLS_DISABLED.load(currentTLA()).isZero()) {
-            throw FatalError.unexpected("Calling native code while native calls are disabled");
+            FatalError.unexpected("Calling native code while native calls are disabled");
         }
 
         // Update the last Java frame anchor for the current thread:
@@ -595,7 +604,7 @@ public class Snippets {
                     break;
                 }
                 if (oldMutatorState.equals(THREAD_IN_JAVA)) {
-                    throw FatalError.unexpected("Thread transitioned itself from THREAD_IS_FROZEN to THREAD_IN_JAVA -- only the VM operation thread should do that");
+                    FatalError.unexpected("Thread transitioned itself from THREAD_IS_FROZEN to THREAD_IN_JAVA -- only the VM operation thread should do that");
                 }
                 nativeBlockOnThreadLock();
             }
@@ -657,10 +666,10 @@ public class Snippets {
     public static void checkCast(ClassActor classActor, Object object) {
         if (MaxineVM.isHosted()) {
             if (object != null && !classActor.toJava().isAssignableFrom(object.getClass())) {
-                throw Throw.classCastException(classActor, object);
+                throw Throw.throwClassCastException(classActor, object);
             }
         } else if (!classActor.isNullOrInstance(object)) {
-            throw Throw.classCastException(classActor, object);
+            throw Throw.throwClassCastException(classActor, object);
         }
     }
 

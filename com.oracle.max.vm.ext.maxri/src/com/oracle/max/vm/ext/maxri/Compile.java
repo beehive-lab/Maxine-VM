@@ -39,6 +39,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.TargetMethod;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reflection.*;
@@ -56,7 +57,7 @@ public class Compile {
     private static final String compilerAliasNames = compilerAliases.keySet().toString().replaceAll("[\\[\\]]", "");
 
     private static final Option<String> compilerOption = options.newStringOption("c", null,
-        "The alias of the compiler to use " + compilerAliases.keySet() + " chosen from the following list: " + compilerAliasNames);
+        "The compiler to use " + compilerAliases.keySet() + " chosen from the following list: " + compilerAliasNames + ", or fully qualified class name");
     private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0,
         "Set the tracing level of the Maxine VM and runtime.");
     private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 1,
@@ -69,9 +70,11 @@ public class Compile {
         "Show help message and exit.");
     private static final Option<Boolean> profOption = options.newBooleanOption("prof", true,
         "Emit method profiling in baseline compiled methods.");
+    private static final Option<Boolean> validateInline = options.newBooleanOption("validate-inline", true,
+            "Validate INLINE semantics for boot image methods");
 
     static void addFieldOptions(String prefix, String optionsClassName) {
-        Class optionsClass = Classes.forName(optionsClassName);
+        Class<?> optionsClass = Classes.forName(optionsClassName);
         try {
             Map<String, String> m = null;
             try {
@@ -85,8 +88,7 @@ public class Compile {
     }
 
     static {
-        // add all the compiler options
-        addFieldOptions("G", "com.oracle.max.graal.compiler.GraalOptions");
+        // add all the compiler options (Graal takes care of this as it doesn't use field options)
         addFieldOptions("C1X", "com.sun.c1x.C1XOptions");
         addFieldOptions("T1X", "com.oracle.max.vm.ext.t1x.T1XOptions");
 
@@ -173,8 +175,11 @@ public class Compile {
         }
 
         final Classpath classpath = Classpath.fromSystem();
-//        final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, HostedVMClassLoader.HOSTED_VM_CLASS_LOADER, null);
         final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, Compile.class.getClassLoader(), null);
+        if (methods.size() == 0) {
+            out.println("no methods matched");
+            return;
+        }
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
         if (reflectionStubsOption.getValue()) {
@@ -238,7 +243,10 @@ public class Compile {
         Throwable thrown = null;
         CiStatistics stats = new CiStatistics();
         try {
-            compiler.compile(classMethodActor, false, true, stats);
+            TargetMethod tm = compiler.compile(classMethodActor, false, true, stats);
+            if (validateInline.getValue()) {
+                validateInlining(tm);
+            }
         } catch (Throwable t) {
             thrown = t;
         }
@@ -249,6 +257,20 @@ public class Compile {
         }
 
         return thrown;
+    }
+
+    private static void validateInlining(TargetMethod tm) {
+        final Set<MethodActor> directCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> virtualCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> interfaceCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> inlinedMethods = new HashSet<MethodActor>();
+        // gather all direct, virtual, and interface calls and add them
+        tm.gatherCalls(directCalls, virtualCalls, interfaceCalls, inlinedMethods);
+
+        CompiledPrototype.checkInliningCorrect(directCalls, null, false, true);
+        CompiledPrototype.checkInliningCorrect(virtualCalls, null, false, true);
+        CompiledPrototype.checkInliningCorrect(interfaceCalls, null, false, true);
+        CompiledPrototype.checkInliningCorrect(inlinedMethods, tm.classMethodActor(), true, false);
     }
 
     static class MyMethodFinder extends MethodFinder {

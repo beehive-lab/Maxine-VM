@@ -46,6 +46,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 
@@ -98,14 +99,14 @@ public class MaxineTester {
     private static final Option<String> listTestsOption = options.newStringOption("ls", null,
                     "List the tests in the categories whose name contain the given value. The categories are: " +
                     "c1x, junit, output, javatester, dacapo2006, dacapobach, specjvm98, specjvm2008");
-    private static final Option<List<String>> testsOption = options.newStringListOption("tests", "c1x,junit,output,javatester",
-                    "The list of test harnesses to run, which may include C1X tests (c1x), JUnit tests (junit), output tests (output), " +
+    private static final Option<List<String>> testsOption = options.newStringListOption("tests", "c1x,graal,junit,output,javatester",
+                    "The list of test harnesses to run, which may include Compiler tests (c1x,tx1,graal), JUnit tests (junit), output tests (output), " +
                     "the JavaTester (javatester), DaCapo-2006 (dacapo2006), DaCapo-bach (dacapobach), SpecJVM98 (specjvm98) " +
                     "and SPECjvm2008 (specjvm2008).\n\nA subset of the C1X/JUnit/Output/Dacapo/SpecJVM98/Shootout tests " +
                     "can be specified by appending a ':' followed by a '+' separated list of test name substrings. For example:\n\n" +
                     "-tests=specjvm98:jess+db,dacapobach:pmd+fop\n\nwill " +
                     "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo-bach benchmarks.\n\n" +
-                    "C1X tests: " + MaxineTesterConfiguration.zeeC1XTests.keySet().toString() + "\n\n" +
+                    "Compiler tests: " + MaxineTesterConfiguration.zeeC1XTests.keySet().toString() + "\n\n" +
                     "Output tests: " + MaxineTesterConfiguration.zeeOutputTests.toString().replace("class ", "") + "\n\n" +
                     "Dacapo-2006 tests: " + MaxineTesterConfiguration.zeeDacapo2006Tests + "\n\n" +
                     "Dacapo-bach tests: " + MaxineTesterConfiguration.zeeDacapoBachTests + "\n\n" +
@@ -142,6 +143,7 @@ public class MaxineTester {
                     "Report the time taken for each executed subprocess.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
                     "Show help message and exit.");
+    private static final Option<String> graalExtDirsOption = options.newStringOption("graal-ext-dirs", null, "location of extensions directory containing graal.jar");
 
     private static String[] imageConfigs = null;
     private static Date startDate;
@@ -197,10 +199,22 @@ public class MaxineTester {
                     new JUnitHarness(test.substring("junit:".length()).split("\\+")).run();
                 } else if ("c1x".equals(test)) {
                     // run the C1X tests
-                    new C1XHarness(null).run();
+                    new C1XHarness("c1x", null).run();
                 } else if (test.startsWith("c1x:")) {
+                    // run the C1X tests (selected)
+                    new C1XHarness("c1x", test.substring("c1x:".length())).run();
+                } else if ("c1xgraal".equals(test)) {
+                    // run the C1XGraal tests (selected)
+                    new C1XGraalHarness("c1xgraal", null).run();
+                } else if (test.startsWith("c1xgraal:")) {
+                    // run the C1XGraal tests
+                    new C1XGraalHarness("c1xgraal", test.substring("c1xgraal:".length())).run();
+                } else if ("graal".equals(test)) {
                     // run the C1X tests
-                    new C1XHarness(test.substring("c1x:".length())).run();
+                    new GraalHarness("graal", null).run();
+                } else if (test.startsWith("graal:")) {
+                    // run the C1X tests (selected)
+                    new GraalHarness("graal", test.substring("graal:".length())).run();
                 } else if ("output".equals(test)) {
                     // run the Output tests
                     new OutputHarness(MaxineTesterConfiguration.zeeOutputTests).run();
@@ -418,7 +432,11 @@ public class MaxineTester {
     }
 
     private static boolean addTestResult(String testName, String failure) {
-        return addTestResult(testName, failure, MaxineTesterConfiguration.expectedResult(testName, null));
+        return addTestResult(testName, failure, (String) null);
+    }
+
+    private static boolean addTestResult(String testName, String failure, String config) {
+        return addTestResult(testName, failure, MaxineTesterConfiguration.expectedResult(testName, config));
     }
 
     /**
@@ -673,7 +691,12 @@ public class MaxineTester {
         javaCommand.addArgument("-vmdir=" + imageDir);
         javaCommand.addArgument("-trace=1");
         javaCommand.addVMOptions(defaultJVMOptions());
+        if (imageConfig.contains("graal")) {
+            // One of the Graal options depends on -ea, which we assume to be on
+            javaCommand.addVMOptions(new String[] {"-ea"});
+        }
         javaCommand.addClasspath(System.getProperty("java.class.path"));
+        javaCommand.addSystemProperty("java.ext.dirs", graalExtDirsOption.getValue());
         final String[] javaArgs = javaCommand.getExecArgs(javaExecutableOption.getValue());
         Trace.line(2, "Generating image for " + imageConfig + " configuration...");
         final Logs logs = new Logs(imageDir, "IMAGEGEN", imageConfig);
@@ -1343,6 +1366,10 @@ public class MaxineTester {
             Logs logs = new Logs(imageDir, harnessNameUC + (executions == 0 ? "" : "-" + executions), config);
             JavaCommand command = new JavaCommand((Class) null);
             command.addArgument(nextTestOption);
+            List<String> maxVMOptions = quoteCheck(maxVMArgsOption.getValue());
+            if (maxVMOptions.size() > 0) {
+                command.addVMOptions(maxVMOptions.toArray(new String[maxVMOptions.size()]));
+            }
             int exitValue = runMaxineVM(command, imageDir, null, null, logs, logs.base.getName(), javaTesterTimeOutOption.getValue());
             ImageTestResult result = parseTestOutput(config, logs.get(STDOUT));
             String summary = result.summary;
@@ -1396,7 +1423,7 @@ public class MaxineTester {
                         Matcher matcher = JTImageHarness.TEST_BEGIN_LINE.matcher(line);
                         if (matcher.matches()) {
                             if (lastTest != null) {
-                                addTestResult(lastTest, null);
+                                addTestResult(lastTest, null, config);
                             }
                             lastTestNumber = matcher.group(1);
                             lastTest = matcher.group(2);
@@ -1405,7 +1432,7 @@ public class MaxineTester {
 
                         } else if (line.startsWith("Done: ")) {
                             if (lastTest != null) {
-                                addTestResult(lastTest, null);
+                                addTestResult(lastTest, null, config);
                             }
                             lastTest = null;
                             lastTestNumber = null;
@@ -1418,7 +1445,7 @@ public class MaxineTester {
                         } else if (line.contains("failed")) {
                             // found a line with "failed"--probably a failed test
                             if (lastTest != null) {
-                                if (!addTestResult(lastTest, line)) {
+                                if (!addTestResult(lastTest, line, config)) {
                                     // add the line if it was not an expected failure
                                     failedLines.add(line);
                                 }
@@ -1428,7 +1455,7 @@ public class MaxineTester {
                         }
                     }
                     if (lastTest != null) {
-                        addTestResult(lastTest, "never returned a result");
+                        addTestResult(lastTest, "never returned a result", config);
                         failedLines.add("\t" + lastTestNumber + ", " + lastTest + ": crashed or hung the VM");
                     }
                     if (failedLines.isEmpty()) {
@@ -1514,24 +1541,34 @@ public class MaxineTester {
     }
 
     /**
-     * This class implements a harness that is capable of running C1XTest.
+     * This class implements a harness that is capable of running {@link com.oracle.max.vm.ext.maxri.Compile},
+     * using one of the ln own compilers from {@link RuntimeCompiler#aliases}.
      *
      */
-    public static class C1XHarness implements Harness {
+    public abstract static class CompileHarness implements Harness {
         String filter;
-        public C1XHarness(String filter) {
+        String compilerName;
+        String ucCompilerName;
+        Map<String, String[]> zeeTests;
+
+
+        protected CompileHarness(String shortName, String ucCompilerName, String filter, Map<String, String[]> zeeTests) {
+            this.compilerName = shortName;
+            this.ucCompilerName = ucCompilerName;
             this.filter = filter;
+            this.zeeTests = zeeTests;
         }
+
         public void run() {
-            final File outputDir = new File(outputDirOption.getValue(), "c1x");
-            for (Map.Entry<String, String[]> entry : MaxineTesterConfiguration.zeeC1XTests.entrySet()) {
+            final File outputDir = new File(outputDirOption.getValue(), compilerName);
+            for (Map.Entry<String, String[]> entry : zeeTests.entrySet()) {
                 String name = entry.getKey();
                 if (!stopTesting() && (filter == null || name.contains(filter))) {
                     PrintStream out = out();
                     String[] paramList = entry.getValue();
                     final JavaCommand javaCommand = new JavaCommand(Classes.forName("com.oracle.max.vm.ext.maxri.Compile"));
                     javaCommand.addVMOptions(defaultJVMOptions());
-                    javaCommand.addArgument("-c=C1X");
+                    javaCommand.addArgument("-c=" + ucCompilerName);
                     for (String param : paramList) {
                         if (param.startsWith("-J")) {
                             String vmOption = param.substring(2);
@@ -1541,20 +1578,21 @@ public class MaxineTester {
                         }
                     }
                     javaCommand.addClasspath(System.getProperty("java.class.path"));
+                    addCustomArgs(javaCommand);
                     final String[] javaArgs = javaCommand.getExecArgs(javaExecutableOption.getValue());
-                    out.println("Started C1X " + name + ": " + Utils.toString(paramList, " "));
+                    out.println("Started " + ucCompilerName + " " + name + ": " + Utils.toString(paramList, " "));
                     out.flush();
-                    final Logs logs = new Logs(outputDir, "c1x", name);
+                    final Logs logs = new Logs(outputDir, compilerName, name);
                     final long start = System.currentTimeMillis();
-                    final int exitValue = exec(null, javaArgs, null, null, logs, "C1XTest", 60);
-                    out.print("Stopped C1X " + name + ":");
+                    final int exitValue = exec(null, javaArgs, null, null, logs, compilerName + "Test", 60);
+                    out.print("Stopped " + ucCompilerName + " " + name + ":");
                     if (exitValue != 0) {
                         if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
                             out.print(" (timed out)");
                         } else {
                             out.print(" (exit value == " + exitValue + ")");
                         }
-                        addTestResult("c1x-" + name, exitValue + " compilation failures");
+                        addTestResult(compilerName + "-" + name, exitValue + " compilation failures");
                     }
                     final long runTime = System.currentTimeMillis() - start;
                     out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + " seconds]");
@@ -1564,6 +1602,60 @@ public class MaxineTester {
                     }
                 }
             }
+        }
+
+        protected void addCustomArgs(JavaCommand javaCommand) {
+
+        }
+
+    }
+
+    /**
+     * This class implements a harness that is capable of running {@link C1X}.
+     *
+     */
+    public static class C1XHarness extends CompileHarness {
+
+        protected C1XHarness(String compilerName, String filter) {
+            super("c1x", "C1X", filter, MaxineTesterConfiguration.zeeC1XTests);
+        }
+    }
+
+    private static abstract class AbsGraalCompileHarness extends CompileHarness {
+
+        protected AbsGraalCompileHarness(String shortName, String ucCompilerName, String filter) {
+            super(shortName, ucCompilerName, filter, MaxineTesterConfiguration.zeeGraalTests);
+            // TODO Auto-generated constructor stub
+        }
+
+        @Override
+        protected void addCustomArgs(JavaCommand javaCommand) {
+            javaCommand.addSystemProperty("java.ext.dirs", graalExtDirsOption.getValue());
+            javaCommand.addArgument("--XX:+GraalForBoot");
+            javaCommand.addArgument("--verbose:comp");
+        }
+
+    }
+
+    /**
+     * This class implements a harness that is capable of running {@link C1X}.
+     *
+     */
+    public static class C1XGraalHarness extends AbsGraalCompileHarness {
+
+        protected C1XGraalHarness(String compilerName, String filter) {
+            super("c1xgraal", "C1XGraal", filter);
+        }
+    }
+
+    /**
+     * This class implements a harness that is capable of running {@link C1X}.
+     *
+     */
+    public static class GraalHarness extends AbsGraalCompileHarness {
+
+        protected GraalHarness(String compilerName, String filter) {
+            super("graal", "Graal", filter);
         }
     }
 

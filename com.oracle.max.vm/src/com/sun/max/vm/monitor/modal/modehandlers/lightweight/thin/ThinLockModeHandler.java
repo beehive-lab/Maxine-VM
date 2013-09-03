@@ -85,6 +85,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         return inflatedLockword;
     }
 
+    @SNIPPET_SLOWPATH
     protected void slowPathMonitorEnter(Object object, ModalLockword64 lockword, int lockwordThreadID) {
         ModalLockword64 newLockword = lockword;
         int retries = THIN_LOCK_RETRIES;
@@ -133,6 +134,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         }
     }
 
+    @SNIPPET_SLOWPATH
     protected void slowPathMonitorExit(Object object, ModalLockword64 lockword, int lockwordThreadID) {
         if (ThinLockword64.isThinLockword(lockword)) {
             ThinLockword64 thinLockword = ThinLockword64.from(lockword);
@@ -342,7 +344,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
         @INLINE
         public void monitorEnter(Object object) {
-            nullCheck(object);
             if (MaxineVM.isHosted()) {
                 HostMonitor.enter(object);
                 return;
@@ -361,7 +362,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
         @INLINE
         public void monitorExit(Object object) {
-            nullCheck(object);
             if (MaxineVM.isHosted()) {
                 HostMonitor.exit(object);
                 return;
@@ -385,7 +385,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
         @INLINE
         public int makeHashCode(Object object) {
-            nullCheck(object);
             if (MaxineVM.isHosted()) {
                 return monitorScheme().createHashCode(object);
             }
@@ -394,7 +393,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         }
 
         public boolean threadHoldsMonitor(Object object, VmThread thread) {
-            nullCheck(object);
             final ThinLockword64 lockword = ThinLockword64.from(ObjectAccess.readMisc(object));
             return super.threadHoldsMonitor(object, lockword, thread, encodeCurrentThreadIDForLockword());
         }

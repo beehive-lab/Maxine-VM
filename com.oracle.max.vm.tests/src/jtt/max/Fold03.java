@@ -24,6 +24,7 @@ package jtt.max;
 
 import com.sun.max.annotate.*;
 
+
 /*
  * @Harness: java
  * @Runs: 0=true

@@ -66,6 +66,7 @@ public final class NativeFunction {
     /**
      * Gets the address of the safepoint position associated with the call to this native function from within its native stub.
      */
+    @INLINE
     public CodePointer nativeCallSafepointAddress() {
         return stub.codeAt(nativeCallSafepointPos);
     }

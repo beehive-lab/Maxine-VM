@@ -1436,7 +1436,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     private Class noninlineCreateJavaClass() {
         // Non-blocking synchronization is used here to swap in the mirror reference.
         // This could lead to some extra Class objects being created that become garbage, but should be harmless.
-        final Class newJavaClass = (Class) Heap.createTuple(ClassRegistry.CLASS.dynamicHub());
+        final Class newJavaClass = UnsafeCast.asClass(Heap.createTuple(ClassRegistry.CLASS.dynamicHub()));
         Class_classActor.setObject(newJavaClass, this);
         final Reference oldValue = Reference.fromJava(this).compareAndSwapReference(ClassActor_javaClass.offset(), null,  Reference.fromJava(newJavaClass));
         if (oldValue == null) {
@@ -1650,6 +1650,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     /**
      * See #2.17.5.
      */
+    @SNIPPET_SLOWPATH
     public void makeInitialized() {
         if (tryInitialization()) {
             if (superClassActor != null) {

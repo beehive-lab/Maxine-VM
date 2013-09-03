@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,6 +55,8 @@ public class MaxineTesterConfiguration {
     static final Expectation PASS_SOLARIS_AMD64 = new Expectation(OS.SOLARIS, CPU.AMD64, ExpectedResult.PASS);
     static final Expectation PASS_DARWIN_AMD64 = new Expectation(OS.DARWIN, CPU.AMD64, ExpectedResult.PASS);
 
+    static final Expectation JTT_FAIL_GRAAL = new Expectation(null, null, "jtt-c1xgraal", ExpectedResult.FAIL);
+
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
     static final List<Class> zeeVMOutputTests = new LinkedList<Class>();
     static final List<String> zeeDacapo2006Tests = new LinkedList<String>();
@@ -63,6 +65,7 @@ public class MaxineTesterConfiguration {
     static final List<String> zeeSpecjvm2008Tests = new LinkedList<String>();
     static final List<String> zeeShootoutTests = new LinkedList<String>();
     static final Map<String, String[]> zeeC1XTests = new TreeMap<String, String[]>();
+    static final Map<String, String[]> zeeGraalTests = new TreeMap<String, String[]>();
     static final List<String> zeeMaxvmConfigs = new LinkedList<String>();
 
     static final Map<String, Expectation[]> configResultMap = new HashMap<String, Expectation[]>();
@@ -109,8 +112,6 @@ public class MaxineTesterConfiguration {
         // Refine expectation for certain output tests
         output(Classes.forName("test.output.AWTFont"),                  FAIL_DARWIN);
         output(Classes.forName("test.output.GCTest7"),                  RAND_DARWIN);
-//        output(test.output.MegaThreads.class,              RAND_ALL);
-//        output(test.output.SafepointWhileInJava.class,     RAND_LINUX);
         output(Classes.forName("test.output.WeakReferenceTest01"),                  RAND_ALL);
         output(Classes.forName("test.output.WeakReferenceTest02"),                  RAND_ALL);
         output(Classes.forName("test.output.WeakReferenceTest03"),                  RAND_ALL);
@@ -118,7 +119,6 @@ public class MaxineTesterConfiguration {
         output(Classes.forName("test.output.WeakReferenceTest04"),                  RAND_ALL);
         output(Classes.forName("test.output.GCTest8"),                                       RAND_ALL);
         output(Classes.forName("test.output.CatchOutOfMemory"),                     RAND_ALL);
-        output(Classes.forName("test.output.ManyOpenedFilesTest"),                  FAIL_DARWIN);
 
         vmoutput(findOutputTests("test.vm.output."));
 
@@ -134,15 +134,8 @@ public class MaxineTesterConfiguration {
 
         vmoutput(findOutputTests("test.vm.output."));
 
-//        jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
-//        jtt(jtt.except.BC_invokespecial01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
-//        jtt(jtt.except.BC_invokevirtual02.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
-//        jtt(jtt.optimize.NCE_FlowSensitive02.class, RAND_ALL); // Fails on all but C1X due to missing explicit null pointer checks
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.hotspot.Test6959129.class,     FAIL_ALL);
-//        jtt(jtt.threads.Thread_isInterrupted05.class,     RAND_LINUX);
-//        jtt(jtt.jdk.EnumMap01.class,                      RAND_ALL);
-//        jtt(jtt.jdk.EnumMap02.class,                      RAND_ALL);
 
         dacapo2006("antlr");
         dacapo2006("bloat");
@@ -275,21 +268,22 @@ public class MaxineTesterConfiguration {
         String testCalleeGraal = "--XX:CompileCommand=jtt.:Graal";
 
         imageConfig("java", "-run=java");
-        imageConfig("graal", opt_c1xgraal);
+        imageConfig("c1xgraal", opt_c1xgraal);
+        imageConfig("c1xgraal-boot", opt_c1xgraal, "--XX:+GraalForBoot");
         imageConfig("jtt-t1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCallerT1X);
         imageConfig("jtt-c1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeT1X, "--XX:+FailOverCompilation");
-        imageConfig("jtt-t1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCallerT1X, testCalleeT1X, "--XX:+FailOverCompilation");
+        imageConfig("jtt-t1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", joinCompileCommands(testCallerT1X, testCalleeT1X), "--XX:+FailOverCompilation");
         imageConfig("jtt-c1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
-        imageConfig("jtt-c1xgraal", opt_c1xgraal, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeGraal);
+        imageConfig("jtt-c1xgraal", opt_c1xgraal, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", joinCompileCommands(testCallerT1X, testCalleeGraal));
 
         imageConfig("jtt-msc1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCalleeT1X);
         imageConfig("jtt-mst1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCallerT1X);
-        imageConfig("jtt-mst1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCallerT1X, testCalleeT1X);
+        imageConfig("jtt-mst1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", joinCompileCommands(testCallerT1X, testCalleeT1X));
         imageConfig("jtt-msc1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
 
         imageConfig("jtt-msec1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", testCalleeT1X);
         imageConfig("jtt-mset1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", testCallerT1X);
-        imageConfig("jtt-mset1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", testCallerT1X, testCalleeT1X);
+        imageConfig("jtt-mset1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", joinCompileCommands(testCallerT1X, testCalleeT1X));
         imageConfig("jtt-msec1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests");
 
         imageConfig("vm-output", "-run=test.com.sun.max.vm.output");
@@ -349,6 +343,17 @@ public class MaxineTesterConfiguration {
         c1xTest("opt1", "-J-Dmax.c1x.optlevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt2", "-J-Dmax.c1x.optlevel=2", "^jtt", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt3", "-J-Dmax.c1x.optlevel=3", "^jtt", "^com.sun.c1x", "^com.sun.cri");
+
+        graalTest("default", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.exbytecode.", "!jtt.jni.", "^com.oracle.vm.ext.graal");
+    }
+
+    /**
+     * {@code CompileCommand} must be a single string-valued option.
+     */
+    private static String joinCompileCommands(String c1, String c2) {
+        int ix2 = c2.indexOf('=');
+        String result = c1 + "," + c2.substring(ix2 + 1);
+        return result;
     }
 
     private static void output(Class javaClass, Expectation... results) {
@@ -422,6 +427,10 @@ public class MaxineTesterConfiguration {
         zeeC1XTests.put(name, params);
     }
 
+    private static void graalTest(String name, String... params) {
+        zeeGraalTests.put(name, params);
+    }
+
     private static void maxvmConfig(String name, String... params) {
         zeeMaxvmConfigs.add(name);
         maxvmParams.put(name, params);
@@ -442,7 +451,7 @@ public class MaxineTesterConfiguration {
         if (platform.cpu == CPU.SPARCV9) {
             return "jtt-c1xc1x,jtt-c1xt1x,jtt-t1xc1x,jtt-t1xt1x";
         }
-        return "jtt-c1xc1x,jtt-t1xc1x,jtt-c1xt1x,jtt-t1xt1x";
+        return "jtt-c1xc1x,jtt-t1xc1x,jtt-c1xt1x,jtt-t1xt1x,jtt-c1xgraal";
     }
 
     public static List<String> defaultVMOutputImageConfigs() {
@@ -519,7 +528,7 @@ public class MaxineTesterConfiguration {
         if (expect != null) {
             final Platform platform = Platform.platform();
             for (Expectation e : expect) {
-                if (e.matches(platform)) {
+                if (e.matches(platform, config)) {
                     return e.expectedResult;
                 }
             }
@@ -537,18 +546,30 @@ public class MaxineTesterConfiguration {
     private static class Expectation {
         private final OS os; // null indicates all OSs
         private final CPU processor; // null indicates all processors
+        private final String config; // null indicates all configs
         private final ExpectedResult expectedResult;
 
         Expectation(OS os, CPU pm, ExpectedResult e) {
+            this(os, pm, null, e);
+        }
+
+        Expectation(OS os, CPU pm, String config, ExpectedResult e) {
             this.os = os;
             this.processor = pm;
+            this.config = config;
             expectedResult = e;
         }
 
         public boolean matches(Platform platform) {
+            return matches(platform, this.config);
+        }
+
+        public boolean matches(Platform platform, String config) {
             if (os == null || os == platform.os) {
                 if (processor == null || processor == platform.cpu) {
-                    return true;
+                    if (this.config == null || this.config.equals(config)) {
+                        return true;
+                    }
                 }
             }
             return false;
@@ -560,6 +581,8 @@ public class MaxineTesterConfiguration {
             buffer.append(os == null ? "ANY" : os.toString());
             buffer.append("/");
             buffer.append(processor == null ? "ANY" : processor.toString());
+            buffer.append("/");
+            buffer.append(config == null ? "ANY" : config);
             buffer.append(" = ");
             buffer.append(expectedResult);
             return buffer.toString();
@@ -578,7 +601,7 @@ public class MaxineTesterConfiguration {
             String [] params = imageParams.get(name);
             out.print(name + "#" + params[0]);
             for (int i = 1; i < params.length; i++) {
-                out.print("," + params[i]);
+                out.print("@" + params[i]);
             }
             out.println();
         }

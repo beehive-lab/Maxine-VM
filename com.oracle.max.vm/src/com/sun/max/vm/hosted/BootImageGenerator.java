@@ -73,6 +73,9 @@ public final class BootImageGenerator {
     private static final Option<Boolean> treeOption = options.newBooleanOption("tree", false,
             "Create a file showing the connectivity of objects in the image.");
 
+    public static final Option<Boolean> treeStringOption = options.newBooleanOption("tree-string", true,
+                    "Include toString value in connectivity tree.");
+
     private static final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
             "Create a file detailing the number and size of each type of object in the image.");
 
@@ -437,7 +440,7 @@ public final class BootImageGenerator {
         Trace.begin(1, "writing boot image object tree file: " + file);
         final FileOutputStream fileOutputStream = new FileOutputStream(file);
         final DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(fileOutputStream, 1000000));
-        BootImageObjectTree.saveTree(dataOutputStream, graphPrototype.links(), dataPrototype.allocationMap());
+        BootImageObjectTree.saveTree(dataOutputStream, graphPrototype.links(), dataPrototype.allocationMap(), treeStringOption.getValue());
         dataOutputStream.flush();
         fileOutputStream.close();
         Trace.end(1, "writing boot image object tree file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");

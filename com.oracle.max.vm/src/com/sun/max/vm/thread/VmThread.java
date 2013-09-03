@@ -377,13 +377,12 @@ public class VmThread {
      * This method also:
      * <ol>
      * <li>Re-enables safepoints (they were disabled in {@link Throw#raise(Throwable, Pointer, Pointer, CodePointer)}).</li>
-     * <li>Executes a safepoint.</li>
      * <li>Reprotects the yellow zone if the raising process unprotected it.</li>
      * </ol>
      */
+    @SNIPPET_SLOWPATH
     public final Throwable loadExceptionForHandler() {
         SafepointPoll.enable();
-        SafepointPoll.safepointPoll();
         Throwable e = exception;
         exception = null;
         FatalError.check(e != null, "Exception object lost during unwinding");
@@ -1298,6 +1297,7 @@ public class VmThread {
      * Raises the pending JNI exception on this thread (if any) and clears it.
      * Called from a {@linkplain NativeStubGenerator JNI stub} after a native function returns.
      */
+    @SNIPPET_SLOWPATH
     public final void throwJniException() throws Throwable {
         final Throwable pendingException = this.jniException;
         if (pendingException != null) {

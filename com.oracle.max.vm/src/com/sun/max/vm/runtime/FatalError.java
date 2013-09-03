@@ -271,6 +271,15 @@ public final class FatalError extends Error {
     }
 
     /**
+     * Out of line assertion.
+     * @param condition
+     */
+    @NEVER_INLINE
+    public static void asert(boolean condition) {
+        assert condition;
+    }
+
+    /**
      * Reports that an unimplemented piece of VM functionality was encountered.
      *
      * This method never returns normally.
@@ -296,7 +305,7 @@ public final class FatalError extends Error {
         Log.print("------ Stack dump for thread ");
         Log.printThread(vmThread, false);
         Log.println(" ------");
-        if (!trappedInNative && tla == currentTLA()) {
+        if (!trappedInNative && tla.equals(currentTLA())) {
             Throw.stackDump(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
         } else {
             Throw.stackDump(null, tla);
@@ -310,7 +319,7 @@ public final class FatalError extends Error {
 
     static final class DumpStackOfNonCurrentThread implements Pointer.Procedure {
         public void run(Pointer tla) {
-            if (ETLA.load(tla) != ETLA.load(currentTLA())) {
+            if (!ETLA.load(tla).equals(ETLA.load(currentTLA()))) {
                 try {
                     dumpStackAndThreadLocals(tla, false);
                 } catch (FatalError e) {

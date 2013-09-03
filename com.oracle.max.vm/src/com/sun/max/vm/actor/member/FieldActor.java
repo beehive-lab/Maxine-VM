@@ -600,6 +600,7 @@ public class FieldActor extends MemberActor implements RiResolvedField {
         kind.writeErasedValue(reference, offset, value);
     }
 
+    @NEVER_INLINE
     public static FieldActor fromJava(Field javaField) {
         if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toFieldActor(javaField);
@@ -731,8 +732,8 @@ public class FieldActor extends MemberActor implements RiResolvedField {
     }
 
     @FOLD
-    public static FieldActor findInstance(Class javaClass, String name) {
-        return ClassActor.fromJava(javaClass).findLocalInstanceFieldActor(name);
+    public static FieldActor findInstance(ClassActor classActor, String name) {
+        return classActor.findLocalInstanceFieldActor(name);
     }
 
     public final int accessFlags() {

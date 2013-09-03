@@ -151,7 +151,6 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         }
 
         public int makeHashCode(Object object) {
-            nullCheck(object);
             if (MaxineVM.isHosted()) {
                 return monitorScheme().createHashCode(object);
             }
@@ -172,7 +171,6 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         }
 
         public void monitorEnter(Object object) {
-            nullCheck(object);
             if (MaxineVM.isHosted()) {
                 HostMonitor.enter(object);
                 return;
@@ -205,7 +203,6 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         }
 
         public void monitorExit(Object object) {
-            nullCheck(object);
             if (MaxineVM.isHosted()) {
                 HostMonitor.exit(object);
                 return;
@@ -235,7 +232,6 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         }
 
         public boolean threadHoldsMonitor(Object object, VmThread thread) {
-            nullCheck(object);
             final InflatedMonitorLockword64 lockword = readMiscAndProtectBinding(object);
             return super.threadHoldsMonitor(lockword, thread);
         }

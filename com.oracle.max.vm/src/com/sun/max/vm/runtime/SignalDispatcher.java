@@ -91,7 +91,7 @@ public final class SignalDispatcher extends Thread {
         }
     }
 
-    private static VMBooleanXXOption TraceSignalsOption = register(new VMBooleanXXOption("-XX:-TraceSignals", "Trace traps.") {
+    private static VMBooleanOption TraceSignalsOption = register(new VMBooleanOption("-XX:-TraceSignals", "Trace traps.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             TraceSignals = TraceSignalsOption.getValue();
@@ -174,7 +174,7 @@ public final class SignalDispatcher extends Thread {
      */
     static boolean SerializeSignals = true;
     static {
-        VMOptions.addFieldOption("-XX:", "SerializeSignals",
+        VMOptions.addFieldOption("-XX:", "SerializeSignals", SignalDispatcher.class,
             "Run Java signal handlers on a single thread.");
     }
 

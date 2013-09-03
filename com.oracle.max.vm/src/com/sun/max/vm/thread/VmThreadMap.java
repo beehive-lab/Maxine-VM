@@ -317,7 +317,7 @@ public final class VmThreadMap {
      */
     public void removeThreadLocals(VmThread thread) {
         Pointer tla = thread.tla();
-        if (tlaListHead == tla) {
+        if (tlaListHead.equals(tla)) {
             // this vm thread locals is at the head of list
             tlaListHead = getNext(tlaListHead);
         } else {

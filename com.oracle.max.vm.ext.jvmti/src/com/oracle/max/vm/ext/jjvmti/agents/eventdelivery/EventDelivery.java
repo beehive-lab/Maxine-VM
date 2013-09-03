@@ -54,7 +54,7 @@ public class EventDelivery extends JJVMTIAgentAdapter implements JJVMTI.EventCal
     static {
         eventDelivery = (EventDelivery) JJVMTIAgentAdapter.register(new EventDelivery());
         if (MaxineVM.isHosted()) {
-            VMOptions.addFieldOption("-XX:", "EventDeliveryArgs", "arguments for eventdelivery JJVMTI agent");
+            VMOptions.addFieldOption("-XX:", "EventDeliveryArgs", EventDelivery.class, "arguments for eventdelivery JJVMTI agent");
         }
     }
 

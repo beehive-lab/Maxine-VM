@@ -45,7 +45,7 @@ public final class JDK_java_lang_Throwable {
 
     public static boolean StackTraceInThrowable = true;
     static {
-        VMOptions.addFieldOption("-XX:", "StackTraceInThrowable", "Collect backtrace in throwable when exception happens.");
+        VMOptions.addFieldOption("-XX:", "StackTraceInThrowable", JDK_java_lang_Throwable.class, "Collect backtrace in throwable when exception happens.");
     }
 
     private static final ObjectThreadLocal<Throwable> TRACE_UNDER_CONSTRUCTION = new ObjectThreadLocal<Throwable>("TRACE_UNDER_CONSTRUCTION",
@@ -79,6 +79,7 @@ public final class JDK_java_lang_Throwable {
      * @see java.lang.Throwable#fillInStackTrace()
      * @return the throwable with a filled-in stack trace (typically this object)
      */
+    @NEVER_INLINE
     @SUBSTITUTE
     public synchronized Throwable fillInStackTrace() {
         final Throwable throwable = thisThrowable();

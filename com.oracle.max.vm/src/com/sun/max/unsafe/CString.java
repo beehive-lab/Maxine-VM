@@ -555,7 +555,7 @@ public final class CString {
             parseError = true;
             return -1;
         } else {
-            return ptr == pointer ? result : -result;
+            return ptr.equals(pointer) ? result : -result;
         }
 
     }
@@ -594,7 +594,7 @@ public final class CString {
     }
 
     /**
-     * Parses a given C string as a floating value.
+     * Parses a given C string as a float value.
      *
      * @param cstring the C string to parse
      * @return the value of {@code cstring} as a float or {@link Float#NaN} if {@code cstring} does not contain a valid
@@ -611,5 +611,25 @@ public final class CString {
         // Defer to native code so that all the FloatingDecimal logic does not
         // have to be in the VM boot image.
         return MaxineVM.native_parseFloat(cstring, Float.NaN);
+    }
+
+    /**
+     * Parses a given C string as a double value.
+     *
+     * @param cstring the C string to parse
+     * @return the value of {@code cstring} as a float or {@link Float#NaN} if {@code cstring} does not contain a valid
+     *         double value
+     */
+    public static double parseDouble(Pointer cstring) {
+        if (MaxineVM.isHosted()) {
+            try {
+                return Double.parseDouble(utf8ToJava(cstring));
+            } catch (Exception e) {
+                return Float.NaN;
+            }
+        }
+        // Defer to native code so that all the FloatingDecimal logic does not
+        // have to be in the VM boot image.
+        return MaxineVM.native_parseDouble(cstring, Float.NaN);
     }
 }
