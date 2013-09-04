@@ -572,9 +572,8 @@ def test(args):
     with open(console, 'w', 0) as f:
         tee = Tee(f)
         java = mx.java()
-        graalExtDir = dirname(mx.distribution('GRAAL').path)
         mx.run_java(['-cp', sanitized_classpath(), 'test.com.sun.max.vm.MaxineTester', '-output-dir=maxine-tester',
-                      '-graal-ext-dirs=' + graalExtDir,
+                      '-graal-jar=' + mx.distribution('GRAAL').path,
                       '-refvm=' + java.java, '-refvm-args=' + ' '.join(java.java_args)] + args, out=tee.eat, err=subprocess.STDOUT)
 
 def verify(args):

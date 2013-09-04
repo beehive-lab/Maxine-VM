@@ -143,7 +143,7 @@ public class MaxineTester {
                     "Report the time taken for each executed subprocess.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
                     "Show help message and exit.");
-    private static final Option<String> graalExtDirsOption = options.newStringOption("graal-ext-dirs", null, "location of extensions directory containing graal.jar");
+    private static final Option<String> graalJarOption = options.newStringOption("graal-jar", null, "location of graal.jar");
 
     private static String[] imageConfigs = null;
     private static Date startDate;
@@ -696,7 +696,7 @@ public class MaxineTester {
             javaCommand.addVMOptions(new String[] {"-ea"});
         }
         javaCommand.addClasspath(System.getProperty("java.class.path"));
-        javaCommand.addSystemProperty("java.ext.dirs", graalExtDirsOption.getValue());
+        javaCommand.addVMOption("-Xbootclasspath/a:" + graalJarOption.getValue());
         final String[] javaArgs = javaCommand.getExecArgs(javaExecutableOption.getValue());
         Trace.line(2, "Generating image for " + imageConfig + " configuration...");
         final Logs logs = new Logs(imageDir, "IMAGEGEN", imageConfig);
@@ -1630,7 +1630,7 @@ public class MaxineTester {
 
         @Override
         protected void addCustomArgs(JavaCommand javaCommand) {
-            javaCommand.addSystemProperty("java.ext.dirs", graalExtDirsOption.getValue());
+            javaCommand.addVMOption("-Xbootclasspath/a:" + graalJarOption.getValue());
             javaCommand.addArgument("--XX:+GraalForBoot");
             javaCommand.addArgument("--verbose:comp");
         }
