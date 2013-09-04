@@ -7,7 +7,7 @@
 	<buildSpec>
 		<buildCommand>
 			<name>org.eclipse.cdt.managedbuilder.core.genmakebuilder</name>
-			<triggers>auto,clean,</triggers>
+			<triggers></triggers>
 			<arguments>
 				<dictionary>
 					<key>?children?</key>
