@@ -197,7 +197,6 @@ def image(args):
     Use "mx image -help" to see what other options this command accepts."""
 
     systemProps = []
-    systemProps += ['-Djava.ext.dirs=' + graal_extdirs()]
     imageArgs = []
     i = 0
     while i < len(args):
@@ -227,13 +226,7 @@ def image(args):
             imageArgs += [arg]
         i += 1
 
-    mx.run_java(systemProps + ['-cp', sanitized_classpath(), 'com.sun.max.vm.hosted.BootImageGenerator', '-trace=1', '-run=java'] + imageArgs)
-
-def graal_extdirs():
-    """Return the path to the extension classes directory in the graal tree"""
-    jdkhome = mx.suite("graal").commands.jdkhome()
-    result = os.path.abspath(join(jdkhome, "jre/lib/ext"))
-    return result
+    mx.run_java(['-Xbootclasspath/a:' + mx.distribution('GRAAL').path] + systemProps + ['-cp', sanitized_classpath(), 'com.sun.max.vm.hosted.BootImageGenerator', '-trace=1', '-run=java'] + imageArgs)
 
 def check_cwd_change(args):
     """Return the current working directory having checked if it is overriden in args"""
@@ -292,7 +285,7 @@ def inspect(args):
     if not isdir(saveClassDir):
         os.makedirs(saveClassDir)
     sysProps = []
-    sysProps += ['-Djava.ext.dirs=' + graal_extdirs()]
+    sysProps += ['-Xbootclasspath/a:' + mx.distribution('GRAAL').path]
     insCP = []
 
     cwdArgs = check_cwd_change(args)
@@ -579,8 +572,9 @@ def test(args):
     with open(console, 'w', 0) as f:
         tee = Tee(f)
         java = mx.java()
+        graalExtDir = dirname(mx.distribution('GRAAL').path)
         mx.run_java(['-cp', sanitized_classpath(), 'test.com.sun.max.vm.MaxineTester', '-output-dir=maxine-tester',
-                      '-graal-ext-dirs=' + graal_extdirs(),
+                      '-graal-ext-dirs=' + graalExtDir,
                       '-refvm=' + java.java, '-refvm-args=' + ' '.join(java.java_args)] + args, out=tee.eat, err=subprocess.STDOUT)
 
 def verify(args):
