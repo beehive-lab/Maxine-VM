@@ -196,7 +196,7 @@ def image(args):
 
     Use "mx image -help" to see what other options this command accepts."""
 
-    systemProps = []
+    systemProps = ['-esa']
     imageArgs = []
     i = 0
     while i < len(args):
