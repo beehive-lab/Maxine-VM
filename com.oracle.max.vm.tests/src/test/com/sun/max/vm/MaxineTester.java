@@ -692,8 +692,9 @@ public class MaxineTester {
         javaCommand.addArgument("-trace=1");
         javaCommand.addVMOptions(defaultJVMOptions());
         if (imageConfig.contains("graal")) {
-            // One of the Graal options depends on -ea, which we assume to be on
+            // One of the Graal options depends on -ea, which we choose to be "on"
             javaCommand.addVMOptions(new String[] {"-ea"});
+            javaCommand.addVMOptions(new String[] {"-esa"});
         }
         javaCommand.addClasspath(System.getProperty("java.class.path"));
         javaCommand.addVMOption("-Xbootclasspath/a:" + graalJarOption.getValue());
@@ -1632,7 +1633,6 @@ public class MaxineTester {
         protected void addCustomArgs(JavaCommand javaCommand) {
             javaCommand.addVMOption("-Xbootclasspath/a:" + graalJarOption.getValue());
             javaCommand.addArgument("--XX:+GraalForBoot");
-            javaCommand.addArgument("--verbose:comp");
         }
 
     }
