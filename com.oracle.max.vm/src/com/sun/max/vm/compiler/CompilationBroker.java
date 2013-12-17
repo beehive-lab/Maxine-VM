@@ -46,6 +46,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
@@ -140,6 +141,7 @@ public class CompilationBroker {
                     String key = part.substring(0, colon);
                     String value = part.substring(colon + 1);
                     map.put(key, value);
+		    Log.println("CompileCommand key value " + key +" " + value);
                 }
             }
             compileCommandMap = map;
@@ -147,6 +149,7 @@ public class CompilationBroker {
         String methodString = cma.toString();
         for (Map.Entry<String, String> e : compileCommandMap.entrySet()) {
             if (methodString.contains(e.getKey()) || "*".equals(e.getKey())) {
+		Log.println("CompileCommand: matched " + e.getKey());
                 return e.getValue();
             }
         }
@@ -226,7 +229,8 @@ public class CompilationBroker {
     protected CompilationBroker() {
         assert optimizingCompilerOption.getValue() != null;
         String optName = optName();
-        String baselineName = baselineName();
+        String baselineName = baselineName(); // these are of the form com.oracle.max.vm.ext.t1x.T1X/C1X 
+					      // trying to use this to add another compiler
         optimizingCompiler = instantiateCompiler(optName);
         assert optimizingCompiler.nature() == Nature.OPT : optimizingCompiler + " is not an optimizing compiler";
         if (baselineName != null) {
@@ -242,13 +246,17 @@ public class CompilationBroker {
 
     public static RuntimeCompiler instantiateCompiler(String name) {
         try {
+		System.out.println("instantiatng compiler instance "+ name);
+
             return (RuntimeCompiler) Class.forName(name).newInstance();
         } catch (Exception e) {
+		System.err.println("ERROR thrown in RuntimeCompiler instantiateCompiler(String name)");
             throw FatalError.unexpected("Error instantiating compiler " + name, e);
         }
     }
 
     public static RuntimeCompiler addCompiler(String name, String className) {
+	System.out.println("addCompiler about to instantiate "+ name + " " + className);
         RuntimeCompiler compiler = instantiateCompiler(className);
         singleton.altCompilers.put(name, compiler);
         return compiler;
@@ -481,6 +489,8 @@ public class CompilationBroker {
                 String compilerName = compilerFor(cma);
                 reason = null;
                 compiler = null;
+		if (VMOptions.verboseOption.verboseCompilation)
+ 			Log.println("attempting to set compiler as " + compilerName );
                 if (compilerName != null) {
                     if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
                         compiler = optimizingCompiler;
@@ -820,6 +830,41 @@ public class CompilationBroker {
 
         @Override
         public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
+	    if(platform().isa== ISA.ARM) 	{
+		if(current.isTopFrame()) return true;
+		Pointer ip = current.ipAsPointer();
+                CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
+                Pointer callSitePointer = callSite.toPointer();
+                if ((callSitePointer.readByte(0) & 0xFF) == ARMTargetMethodUtil.RIP_CALL) {
+                    CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
+                    if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
+                        final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
+                        final TargetMethod tm = current.targetMethod();
+                        final int dcIndex = directCalleePosition(tm, callSite);
+                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                        logStaticCallPatch(current, callSite, dcIndex, to);
+                        ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
+                        // Stop traversing the stack after a direct call site has been patched
+                        return false;
+                    }
+                    if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
+                        final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
+                        final TargetMethod tm = current.targetMethod();
+                        final int dcIndex = directCalleePosition(tm, callSite);
+                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                        logStaticCallPatch(current, callSite, dcIndex, to);
+                        ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
+                        // Stop traversing the stack after a direct call site has been patched
+                        return false;
+                    }
+                }
+                if (++frameCount > FRAME_SEARCH_LIMIT) {
+                    logNoFurtherStaticCallPatching();
+                    return false;
+                }
+                return true;
+
+	    }
             if (platform().isa == ISA.AMD64) {
                 if (current.isTopFrame()) {
                     return true;

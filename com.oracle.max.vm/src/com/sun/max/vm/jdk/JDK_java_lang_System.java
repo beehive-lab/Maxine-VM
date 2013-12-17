@@ -508,8 +508,7 @@ public final class JDK_java_lang_System {
     private static String getISA() {
         switch (Platform.platform().isa) {
             case ARM:
-                FatalError.unimplemented();
-                break;
+		return "armv7";
             case AMD64:
                 return "amd64";
             case IA32:
@@ -530,8 +529,7 @@ public final class JDK_java_lang_System {
     private static String getISAList() {
         switch (Platform.platform().isa) {
             case ARM:
-                FatalError.unimplemented();
-                break;
+		return "armv7";
             case AMD64:
                 return "amd64";
             case IA32:

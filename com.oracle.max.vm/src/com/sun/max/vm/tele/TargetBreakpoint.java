@@ -38,6 +38,7 @@ public final class TargetBreakpoint {
     public static byte[] createBreakpointCode(ISA isa) {
         switch (isa) {
             case AMD64:
+	    case ARM:
             case IA32: {
                 return new byte[] {(byte) 0xCC};
             }

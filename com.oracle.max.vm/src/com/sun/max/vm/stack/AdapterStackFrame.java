@@ -36,6 +36,7 @@ public class AdapterStackFrame extends VMStackFrame {
 
     public AdapterStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, targetMethod, instructionPointer, framePointer, stackPointer);
+	System.err.println("AdapterStackFrame");
     }
 
     /**

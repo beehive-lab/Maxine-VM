@@ -95,7 +95,7 @@ public final class C1XCompilation {
         this.stats = stats == null ? new CiStatistics() : stats;
         this.registerConfig = method == null ? compiler.compilerStubRegisterConfig : runtime.getRegisterConfig(method);
         this.placeholderState = debugInfoLevel == DebugInfoLevel.REF_MAPS ? new MutableFrameState(new IRScope(null, null, method, -1), 0, 0, 0) : null;
-
+	System.err.println("com.oracle.max.c1x/src/com/sun/c1x C1X created");
         if (compiler.isObserved()) {
             compiler.fireCompilationStarted(new CompilationEvent(this));
         }

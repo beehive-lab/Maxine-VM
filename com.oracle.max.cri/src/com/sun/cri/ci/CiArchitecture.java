@@ -200,6 +200,9 @@ public abstract class CiArchitecture {
     public boolean isX86() {
         return false;
     }
+    public boolean isARM() {
+	return true;
+    }
 
     /**
      * Checks whether the architecture is SPARC.

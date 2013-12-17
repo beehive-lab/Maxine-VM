@@ -74,6 +74,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
         this.xir = xirGen;
         this.compilerStubRegisterConfig = compilerStubRegisterConfig;
         this.backend = Backend.create(target.arch, this);
+	System.err.println("C1XCompiler created");
         init();
     }
 

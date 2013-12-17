@@ -332,7 +332,6 @@ public final class JavaPrototype extends Prototype {
         ClassActor.DEFERRABLE_QUEUE_1.runAll();
 
         loadMethodSubstitutions(config);
-
         for (BootImagePackage maxPackage : config.bootImagePackages) {
             loadBootImagePackage(maxPackage);
         }

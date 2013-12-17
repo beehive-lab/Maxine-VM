@@ -168,6 +168,7 @@ public class Compile {
         }
 
         CompilationBroker cb = MaxineVM.vm().compilationBroker;
+	System.out.println("Compile.java CompilationBroker created" + " NAME " + compilerName);
         final RuntimeCompiler compiler = compilerName.contains("T1X") ? cb.baselineCompiler : cb.optimizingCompiler;
         cb.optimizingCompiler.initialize(Phase.HOSTED_COMPILING);
         if (cb.optimizingCompiler != cb.baselineCompiler && compiler == cb.baselineCompiler) {

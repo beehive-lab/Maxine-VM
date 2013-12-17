@@ -145,7 +145,8 @@ public class LIRItem {
     }
 
     public void loadByteItem() {
-        if (gen.compilation.target.arch.isX86()) {
+        if (gen.compilation.target.arch.isX86()||gen.compilation.target.arch.isARM()) {
+	if(gen.compilation.target.arch.isARM())	System.err.println("please remove the || isARM and fill in LIRItem:loadBYteItem");
             loadItem();
             CiValue res = result();
 
@@ -158,13 +159,15 @@ public class LIRItem {
             }
         } else if (gen.compilation.target.arch.isSPARC()) {
             loadItem();
-        } else {
+        } else if(gen.compilation.target.arch.isARM()){
+	}else {
             Util.shouldNotReachHere();
         }
     }
 
     public void loadNonconstant() {
-        if (gen.compilation.target.arch.isX86()) {
+        if (gen.compilation.target.arch.isX86()||gen.compilation.target.arch.isARM()) {
+	if(gen.compilation.target.arch.isARM())	System.err.println("please remove the || isARM and fill in LIRItem:loadNonconstant");
             CiValue r = instruction.operand();
             if (r.isConstant()) {
                 resultOperand = r;
@@ -181,7 +184,9 @@ public class LIRItem {
             } else {
                 loadItem();
             }
-        } else {
+        } else if (gen.compilation.target.arch.isARM()) {
+	}else {
+		
             Util.shouldNotReachHere();
         }
     }

@@ -332,7 +332,7 @@ public class VmThread {
      * handler will reset the guard pages when it calls {@link #loadExceptionForHandler()}.
      */
     public void checkYellowZoneForRaisingException() {
-        if (platform().isa == ISA.AMD64) {
+        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM) {
             if (!yellowZoneUnprotected) {
                 Pointer sp = VMRegister.getCpuStackPointer();
                 int safetyMargin = (1 + STACK_SHADOW_PAGES) * platform().pageSize;

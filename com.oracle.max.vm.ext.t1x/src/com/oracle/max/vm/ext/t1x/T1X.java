@@ -207,13 +207,16 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     private static final int MIN_OPCODE_LINE_LENGTH = 100;
 
     void printMachineCode(T1XCompilation c, T1XTargetMethod t1xMethod, boolean reentrant) {
-        if (!PrintCFGToFile || reentrant || c.method == null || TTY.isSuppressed()) {
+        /* APN if (!PrintCFGToFile || reentrant || c.method == null || TTY.isSuppressed()) {
             return;
         }
         if (!isHosted() && !isRunning()) {
             // Cannot write to file system at runtime until the VM is in the RUNNING phase
             return;
         }
+	APN */
+	System.err.println("T1X:printMachineCode is forced on");
+
 
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         CompilationPrinter cprinter = new CompilationPrinter(buf);
@@ -630,8 +633,15 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
      */
     @FOLD
     public static boolean isAMD64() {
-        return platform().isa == ISA.AMD64;
+	//assert( Platform.platform().isa == ISA.AMD64);
+	return Platform.platform().isa == ISA.AMD64;
+        //return platform().isa == ISA.AMD64;
     }
+	
+	
+    public static boolean isARM()	{
+	return platform().isa == ISA.ARM;
+	}
 
     /**
      * Called to denote some functionality is not yet implemented for the target ISA.

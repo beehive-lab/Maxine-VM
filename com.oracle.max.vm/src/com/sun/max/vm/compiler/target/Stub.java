@@ -39,6 +39,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.code.CodeManager.Lifespan;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
@@ -207,7 +208,9 @@ public final class Stub extends TargetMethod {
     public Pointer returnAddressPointer(StackFrameCursor frame) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.returnAddressPointer(frame);
-        } else {
+        } else if (platform().isa == ISA.ARM) {
+	    return ARMTargetMethodUtil.returnAddressPointer(frame);
+	}else {
             throw FatalError.unimplemented();
         }
     }
@@ -222,7 +225,15 @@ public final class Stub extends TargetMethod {
                 csa = current.sp().plus(csl.frameOffsetToCSA);
             }
             AMD64TargetMethodUtil.advance(current, csl, csa);
-        } else {
+        } else if  (platform().isa == ISA.ARM) {
+		CiCalleeSaveLayout csl = calleeSaveLayout();
+		Pointer csa = Pointer.zero();
+		if (csl != null) {
+			 assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
+			csa = current.sp().plus(csl.frameOffsetToCSA);
+		}
+		ARMTargetMethodUtil.advance(current,csl,csa);
+	}else  {
             throw FatalError.unimplemented();
         }
     }
@@ -232,7 +243,10 @@ public final class Stub extends TargetMethod {
     public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.acceptStackFrameVisitor(current, visitor);
-        } else {
+        } else if (platform().isa == ISA.ARM) {
+	    return ARMTargetMethodUtil.acceptStackFrameVisitor(current, visitor);
+
+	}else {
             throw FatalError.unimplemented();
         }
     }
@@ -241,7 +255,9 @@ public final class Stub extends TargetMethod {
     public VMFrameLayout frameLayout() {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.frameLayout(this);
-        } else {
+        } else if(platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.frameLayout(this);
+	}else {
             throw FatalError.unimplemented();
         }
     }
@@ -263,7 +279,13 @@ public final class Stub extends TargetMethod {
 
     @Override
     public CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint) {
+	if(platform().isa == ISA.AMD64)
         return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+	else if (platform().isa == ISA.ARM)
+	return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+	else throw FatalError.unimplemented();
+
+
     }
 
     @Override

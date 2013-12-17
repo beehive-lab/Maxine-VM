@@ -30,6 +30,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
@@ -718,7 +719,9 @@ public abstract class TargetMethod extends MemoryRegion {
     private void patchRelativeInstruction(int codePos, int displacement) {
         if (platform().isa == ISA.AMD64) {
             X86InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
-        } else {
+        } else if (platform().isa == ISA.ARM) {
+	 	ARMISAInstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
+	} else  {
             throw FatalError.unimplemented();
         }
     }

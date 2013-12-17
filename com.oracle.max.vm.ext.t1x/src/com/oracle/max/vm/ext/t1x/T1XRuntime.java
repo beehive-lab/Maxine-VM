@@ -124,7 +124,10 @@ public class T1XRuntime {
             if (T1X.isAMD64()) {
                 int offset = (n - i - 1) * JVMS_SLOT_SIZE;
                 len = sp.readInt(offset);
-            } else {
+            } else if (T1X.isARM()) {
+		int offset = (n - i - 1) * JVMS_SLOT_SIZE;
+                len = sp.readInt(offset);
+	    }else {
                 throw T1X.unimplISA();
             }
             Snippets.checkArrayDimension(len);

@@ -61,9 +61,11 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
     public AMD64T1XCompilation(T1X compiler) {
         super(compiler);
+	System.err.println("AMDT1XCompilation in constructor");
         asm = new AMD64MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoAMD64();
+	System.out.println("Still creating an AMD unfortunately\n");
     }
 
     @Override

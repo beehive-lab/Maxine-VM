@@ -22,7 +22,8 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.oracle.max.asm.target.amd64.AMD64.*;
+//import static com.oracle.max.asm.target.amd64.AMD64.*;
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
@@ -39,6 +40,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.runtime.arm.*;
 
 /**
  * The set of register configurations applicable to compiled code in the VM.
@@ -120,10 +122,9 @@ public class RegisterConfigs {
 
     @HOSTED_ONLY
     public static RegisterConfigs create() {
-        if (platform().isa == ISA.AMD64) {
+        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM) {
             OS os = platform().os;
             if (os == OS.LINUX || os == OS.SOLARIS || os == OS.DARWIN || os == OS.MAXVE) {
-
                 /**
                  * The set of allocatable registers shared by most register configurations.
                  */
@@ -145,6 +146,7 @@ public class RegisterConfigs {
                     xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,
                     xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
                 };
+
 
 
                 HashMap<Integer, CiRegister> roleMap = new HashMap<Integer, CiRegister>();
@@ -184,7 +186,10 @@ public class RegisterConfigs {
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
                 CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, cpuxmmRegisters));
-                CiRegisterConfig trapStub = new CiRegisterConfig(standard, AMD64TrapFrameAccess.CSL);
+                CiRegisterConfig trapStub = null;
+		if(platform().isa == ISA.AMD64) trapStub = new CiRegisterConfig(standard, AMD64TrapFrameAccess.CSL);
+		if(platform().isa == ISA.ARM) trapStub = new CiRegisterConfig(standard, ARMTrapFrameAccess.CSL);
+ 
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
                     rdi, rsi, rdx, rcx, r8, r9,                       // parameters
                     rbp,                                              // must be preserved for baseline compiler
@@ -211,7 +216,8 @@ public class RegisterConfigs {
 
                 return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
-        }
+	}else
         throw FatalError.unimplemented();
-    }
+	return null;
+	}
 }

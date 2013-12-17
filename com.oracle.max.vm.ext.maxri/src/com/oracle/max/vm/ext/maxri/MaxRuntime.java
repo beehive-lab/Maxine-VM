@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.criutils.*;
 /*
@@ -235,7 +236,10 @@ public class MaxRuntime implements RiRuntime {
         if (platform.isa == ISA.AMD64) {
             fp = AMD64.rsp;
             refMapToFPOffset = 0;
-        } else {
+        } else if(platform.isa == ISA.ARM)	{
+		fp = ARMV7.rsp;
+		refMapToFPOffset = 0;
+	}else {
             throw FatalError.unimplemented();
         }
         RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);

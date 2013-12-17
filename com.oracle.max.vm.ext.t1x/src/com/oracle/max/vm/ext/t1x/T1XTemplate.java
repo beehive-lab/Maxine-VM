@@ -32,6 +32,7 @@ import java.util.*;
 
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.amd64.*;
+import com.oracle.max.vm.ext.t1x.armv7.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.max.annotate.*;
@@ -569,7 +570,9 @@ public class T1XTemplate {
     static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
         if (T1X.isAMD64()) {
             return AMD64T1XCompilation.findDataPatchPosns(source, dispFromCodeStart);
-        } else {
+        } else if (T1X.isARM()) {
+	  return ARMV7T1XCompilation.findDataPatchPosns(source,dispFromCodeStart);
+	}else{
             throw T1X.unimplISA();
         }
     }

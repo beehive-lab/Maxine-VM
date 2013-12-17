@@ -1,0 +1,72 @@
+ARM created ISA.ARM arch
+OVERRIDDEN getProperty for isa and cpu for ARM Platform.java
+ARM created ISA.ARM arch
+ARMSafepointPoll
+instantiate com.oracle.max.vm.ext.c1x.C1X
+I EXPECT TO BE HERE
+
+
+TEST!!TEST
+C1X-two
+C1X-one
+instantiate com.oracle.max.vm.ext.t1x.T1X
+I EXPECT TO BE HERE
+
+
+TEST!!TEST
+vmCREATED
+
+Initializing Java prototype... loadVM
+initadapter
+Hub.java 200 25
+DONE
+Hub.java 192 24
+DONE
+Hub.java 120 15
+DONE
+Hub.java 192 24
+DONE
+Hub.java 128 16
+DONE
+Hub.java 192 24
+DONE
+Hub.java 120 15
+DONE
+Hub.java 192 24
+DONE
+Hub.java 128 16
+DONE
+Hub.java 192 24
+DONE
+INDEX 18 INSTANCE FIELD ACTOR OFFSET 144 Word 8
+INDEX 17 INSTANCE FIELD ACTOR OFFSET 136 Word 8
+INDEX 16 INSTANCE FIELD ACTOR OFFSET 128 Word 8
+INDEX 15 INSTANCE FIELD ACTOR OFFSET 120 Word 8
+INDEX 14 INSTANCE FIELD ACTOR OFFSET 112 Word 8
+INDEX 13 INSTANCE FIELD ACTOR OFFSET 104 Word 8
+INDEX 12 INSTANCE FIELD ACTOR OFFSET 96 Word 8
+INDEX 11 INSTANCE FIELD ACTOR OFFSET 88 Word 8
+INDEX 10 INSTANCE FIELD ACTOR OFFSET 80 Word 8
+INDEX 9 INSTANCE FIELD ACTOR OFFSET 72 Word 8
+INDEX 8 INSTANCE FIELD ACTOR OFFSET 64 Word 8
+INDEX 7 INSTANCE FIELD ACTOR OFFSET 56 Word 8
+INDEX 6 INSTANCE FIELD ACTOR OFFSET 48 Word 8
+INDEX 5 INSTANCE FIELD ACTOR OFFSET 40 Word 8
+INDEX 4 INSTANCE FIELD ACTOR OFFSET 32 Word 8
+INDEX 3 INSTANCE FIELD ACTOR OFFSET 24 Word 8
+INDEX 2 INSTANCE FIELD ACTOR OFFSET 16 Word 8
+INDEX 1 INSTANCE FIELD ACTOR OFFSET 8 Word 8
+INDEX 0 INSTANCE FIELD ACTOR OFFSET 0 Word 8
+Hub.java 872 109
+REfindex 0 lastRef 0
+Exception in thread "main" com.sun.max.vm.runtime.FatalError: Reference index in tuple reference maps must be ordered
+	at com.sun.max.vm.runtime.FatalError.unexpected(FatalError.java:154)
+	at com.sun.max.vm.runtime.FatalError.check(FatalError.java:269)
+	at com.sun.max.vm.heap.TupleReferenceMap.copyIntoHub(TupleReferenceMap.java:112)
+	at com.sun.max.vm.actor.holder.DynamicHub.expand(DynamicHub.java:114)
+	at com.sun.max.vm.actor.holder.ClassActor$2.run(ClassActor.java:371)
+	at com.sun.max.util.Deferrable$Queue.runAll(Deferrable.java:68)
+	at com.sun.max.vm.hosted.JavaPrototype.<init>(JavaPrototype.java:334)
+	at com.sun.max.vm.hosted.JavaPrototype.initialize(JavaPrototype.java:306)
+	at com.sun.max.vm.hosted.JavaPrototype.initialize(JavaPrototype.java:291)
+	at com.oracle.max.vm.ext.maxri.Compile.main(Compile.java:166)

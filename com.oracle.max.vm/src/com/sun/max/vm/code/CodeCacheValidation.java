@@ -31,6 +31,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -217,12 +218,20 @@ public final class CodeCacheValidation extends VmOperation {
         final Safepoints safepoints = targetMethod.safepoints();
         for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
             final int callPos = safepoints.causePosAt(spi);
+	    final CodePointer callTarget;
+	    final TargetMethod actualCallee;
             if (platform().isa == ISA.AMD64) {
-                final CodePointer callTarget = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
-                final TargetMethod actualCallee = callTarget.toTargetMethod();
+                /*final CodePointer*/ callTarget = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                /*final TargetMethod*/ actualCallee = callTarget.toTargetMethod();
                 assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
                 assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
-            } else {
+            } else if(platform().isa == ISA.ARM) {
+	       	callTarget = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
+		actualCallee = callTarget.toTargetMethod();
+		assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
+                assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
+	
+	    }else {
                 throw FatalError.unimplemented();
             }
         }

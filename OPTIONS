@@ -1,0 +1,331 @@
+Maxine options:
+    -XX:AddCompiler=<value>               Add a compiler, Name:Class
+    -XX:-AlwaysFullGC                     Always do full GC when true
+    -XX:+AvoidsAnonOperations             Avoids using Anonymous Memory operations as much as possible.
+    -XX:BreakAfterGCCount=<n>             Break at every GC after GC count (default: 0)
+    -XX:BreakAtClassResolution=<value>    Break when resolving an unregistered class with the specified name (default: )
+    -XX:-BytecodeVerificationLocal        Enable verification of local classes.
+    -XX:+BytecodeVerificationRemote       Enable verification of remote classes.
+    -XX:CodeCacheContentionFrequency=<n>  Enforce baseline code cache contention every N method allocations. (default: 0)
+    -XX:CodeEvictionProtectCalleeDepth=<n> 
+                                          During code eviction, protect callees of on-stack methods up until the given depth
+                                          (default: 1). (default: 1)
+    -XX:CompileCommand=<value>            Specify which compiler to use for methods matching given patterns. For example, '-XX:CompileCommand=test.output:T1X,com.acme.util.Strings:Graal'
+                                          specifies that any method whose fully qualified name contains the substring 'test.output'
+                                          should be compiled with the compiler named 'T1X' and any method whose fully qualified
+                                          name contains 'com.acme.util.String' should be compiled with the 'Graal' compiler.
+                                          No checking is done to ensure that a named compiler exists.
+    -XX:-CoreOnError                      Generate core dump on fatal error.
+    -XX:+DeoptOnImplicitException         Deoptimize on implicit exception occuring in optimized code.
+    -XX:DeoptimizeALot=<n>                Invalidate and deoptimize a selection of executing optimized methods every <n> milliseconds.
+                                          A value of 0 disables this mechanism. (default: 0)
+    -XX:-DisableExplicitGC                Tells whether System.gc() forces a full GC
+    -XX:-DisableGC                        Disable garbage collection.
+    -XX:-DisableHeapShrink                Disable shrinking the heap when true
+    -XX:-DumpStackOnTrap                  Reports a stack trace for every trap, regardless of the cause.
+    -XX:ExcessiveGCFrequency=<n>          Run a garbage collection every <n> milliseconds. A value of 0 disables this mechanism.
+                                          (default: 0)
+    -XX:+FailOverCompilation              Retry failed compilations with another compiler (if available).
+    -XX:+FailOverToOldVerifier            Fail over to old verifier when the new type checker fails.
+    -XX:-FatalOutOfMemory                 Quick exit of the VM on first OutOfMemoryError.
+    -XX:+FatalVMAssertions                Convert assertions thrown in the VM code to fatal errors.
+    -XX:-ForceCleanCardsAfterMinorGC      Force cleaning of old space dirty card after GC
+    -XX:-GCOnCompilation                  Perform a GC before every compilation.
+    -XX:GCOnCompilationOf=<value>         Perform a GC before every compilation of a method whose fully qualified name contains
+                                          <value>.
+    -XX:-GCOnRecompilation                Force GC before every re-compilation.
+    -XX:+InlineTLAB                       XIR generate inlined TLAB allocations.
+    -XX:-JDWPLog                          force JDWP logging
+    -XX:-JVMTI_CDE                        Compile for all debugging events
+    -XX:-JVMTI_VM                         Include VM classes in JVMTI results.
+    -XX:LargeObjectSizeThreshold=<size>   Threshold for being treated as a large object (default: 512K)
+    -XX:-LogClassLoading                  Log Class loading & definition
+    -XX:LogClassLoadingExclude=<value>    list of ClassLoading operations to exclude
+    -XX:LogClassLoadingInclude=<value>    list of ClassLoading operations to include
+    -XX:-LogCodeEviction                  Log Log code eviction after baseline code cache contention. Operation prefixes control
+                                          logging:, Run = log each code eviction run (enabled when any other ops are enabled)Stat_.*
+                                          = statistics (count evicted/surviving bytes and methods), Details_.* = give detailed
+                                          information about what methods and dispatch entries are treated, Move_.* = print details
+                                          about threads and code motion, Dump = give full dumps of all code addresses before
+                                          and after eviction
+    -XX:LogCodeEvictionExclude=<value>    list of CodeEviction operations to exclude
+    -XX:LogCodeEvictionInclude=<value>    list of CodeEviction operations to include
+    -XX:-LogDarkMatter                    Log Dark Matter Formation
+    -XX:LogDarkMatterExclude=<value>      list of DarkMatter operations to exclude
+    -XX:LogDarkMatterInclude=<value>      list of DarkMatter operations to include
+    -XX:-LogDeopt                         Log deoptimzation
+    -XX:LogDeoptExclude=<value>           list of Deopt operations to exclude
+    -XX:LogDeoptInclude=<value>           list of Deopt operations to include
+    -XX:-LogDeps                          Log compilation dependencies.
+    -XX:LogDepsExclude=<value>            list of Deps operations to exclude
+    -XX:LogDepsInclude=<value>            list of Deps operations to include
+    -XX:LogFile=<value>                   Redirect VM log output to the specified file. By default, VM log output goes to the
+                                          standard output stream.
+    -XX:-LogGC                            Log all garbage collection activity. Enabling this option also enables the -XX:-LogRootScanning,
+                                          -XX:-TraceGCPhases and -XX:-TraceGCTime options.
+    -XX:-LogGCDetail                      Log detailed operation.
+    -XX:LogGCDetailExclude=<value>        list of GCDetail operations to exclude
+    -XX:LogGCDetailInclude=<value>        list of GCDetail operations to include
+    -XX:LogGCExclude=<value>              list of GC operations to exclude
+    -XX:LogGCInclude=<value>              list of GC operations to include
+    -XX:-LogGCPhases                      Log garbage collection phases.
+    -XX:LogGCPhasesExclude=<value>        list of GCPhases operations to exclude
+    -XX:LogGCPhasesInclude=<value>        list of GCPhases operations to include
+    -XX:LogGCSuppressionCount=<n>         Disable -XX:-LogGC, -XX:-LogRootScanning and -XX:-LogGCPhases until the n'th GC (default:
+                                          0)
+    -XX:-LogGCTime                        Log time of garbage collection phases.
+    -XX:LogGCTimeExclude=<value>          list of GCTime operations to exclude
+    -XX:LogGCTimeInclude=<value>          list of GCTime operations to include
+    -XX:-LogGetInliners                   Log 
+    -XX:LogGetInlinersExclude=<value>     list of GetInliners operations to exclude
+    -XX:LogGetInlinersInclude=<value>     list of GetInliners operations to include
+    -XX:-LogHeapSizingPolicy              Log Heap Resizing after full GC
+    -XX:LogHeapSizingPolicyExclude=<value> 
+                                          list of HeapSizingPolicy operations to exclude
+    -XX:LogHeapSizingPolicyInclude=<value> 
+                                          list of HeapSizingPolicy operations to include
+    -XX:-LogImmortal                      Log allocation from the immortal heap.
+    -XX:LogImmortalExclude=<value>        list of Immortal operations to exclude
+    -XX:LogImmortalInclude=<value>        list of Immortal operations to include
+    -XX:-LogJMM                           Log log JNI/JMM upcalls
+    -XX:LogJMMExclude=<value>             list of JMM operations to exclude
+    -XX:LogJMMInclude=<value>             list of JMM operations to include
+    -XX:-LogJNI                           Log log JNI/JMM upcalls
+    -XX:LogJNIExclude=<value>             list of JNI operations to exclude
+    -XX:LogJNIInclude=<value>             list of JNI operations to include
+    -XX:-LogJVMTICalls                    Log log JVMTI upcalls
+    -XX:LogJVMTICallsExclude=<value>      list of JVMTICalls operations to exclude
+    -XX:LogJVMTICallsInclude=<value>      list of JVMTICalls operations to include
+    -XX:-LogJVMTICode                     Log log JVMTI compiled code operations
+    -XX:LogJVMTICodeExclude=<value>       list of JVMTICode operations to exclude
+    -XX:LogJVMTICodeInclude=<value>       list of JVMTICode operations to include
+    -XX:-LogJVMTIEvents                   Log log JVMTI events
+    -XX:LogJVMTIEventsExclude=<value>     list of JVMTIEvents operations to exclude
+    -XX:LogJVMTIEventsInclude=<value>     list of JVMTIEvents operations to include
+    -XX:-LogOldEvacuation                 Log Log evacuation scanning ranges in to-space
+    -XX:LogOldEvacuationExclude=<value>   list of OldEvacuation operations to exclude
+    -XX:LogOldEvacuationInclude=<value>   list of OldEvacuation operations to include
+    -XX:-LogReferenceGC                   Log handling of soft/weak/final/phantom references.
+    -XX:LogReferenceGCExclude=<value>     list of ReferenceGC operations to exclude
+    -XX:LogReferenceGCInclude=<value>     list of ReferenceGC operations to include
+    -XX:-LogRootScanning                  Log garbage collection root scanning.
+    -XX:LogRootScanningExclude=<value>    list of RootScanning operations to exclude
+    -XX:LogRootScanningInclude=<value>    list of RootScanning operations to include
+    -XX:-LogSRS                           Log stack root scanning.
+    -XX:LogSRSExclude=<value>             list of SRS operations to exclude
+    -XX:LogSRSInclude=<value>             list of SRS operations to include
+    -XX:LogSRSSuppressionCount=<n>        Disable logging of the first n stack root scans. (default: 0)
+    -XX:LogStartEviction=<n>              Start logging upon the n-th code eviction cycle; all cycles before that are silent.
+                                          (default: 0)
+    -XX:-LogYoungEvacuation               Log Log evacuation scanning ranges in to-space
+    -XX:LogYoungEvacuationExclude=<value> 
+                                          list of YoungEvacuation operations to exclude
+    -XX:LogYoungEvacuationInclude=<value> 
+                                          list of YoungEvacuation operations to include
+    -ASM:+UseAddressNop
+    -ASM:+UseNormalNop
+    -ASM:+UseXmmLoadAndClearUpper
+    -ASM:-UseIncDec
+    -ASM:-UseXmmRegToRegMoveAll
+    -ASM:Atomics=<n>                      (default: 0)
+    -ASM:InitialCodeBufferSize=<n>        (default: 232)
+    -XX:-MakeInspectable                  Make it possible for Inspector to attach to running VM
+    -XX:MaxPermSize=<size>                Size of immortal heap. (default: 1M)
+    -XX:-OldSpaceDirtyCardsStats          Print stats on old space dirty cards
+    -XX:+OptimizeJNICritical              Use GC disabling to optimize JNI 'critical' functions when heap scheme doesn't support
+                                          object pinning.
+    -XX:PermSize=<size>                   Size of immortal heap. (default: 1M)
+    -XX:-PinNativeRecord                  Allocate VMLog's NativeRecord in heap area not subjected to relocation by the GC
+    -XX:PrintCodeCacheMetrics=<n>         Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose). (default: 0)
+    -XX:-PrintConfiguration               Show VM configuration details and exit
+    -XX:-PrintTLABStats                   Print TLAB statistics at end of program.
+    -XX:RCT=<n>                           Set the recompilation threshold for methods. Use 0 to disable recompilation. (default:
+                                          5000). (default: 5000)
+    -XX:ReservedBaselineCodeCacheSize=<size> 
+                                          Memory allocated for runtime code region cache. (default: 128M)
+    -XX:ReservedOptCodeCacheSize=<size>   Memory allocated for runtime code region cache. (default: 16M)
+    -XX:SafepointSpinBeforeYield=<n>      Number of iterations in VM operation thread while waiting for a thread to freeze before
+                                          falling back to yield or sleep (default: 2000)
+    -XX:SaveClassDir=<value>              Directory to which the classfiles of loaded classes should be written.
+    -XX:-ScanStackOnFatalError            Perform a raw stack scan when a fatal VM occurs.
+    -XX:+SerializeSignals                 Run Java signal handlers on a single thread.
+    -XX:-ShowConfiguration                Show VM configuration details and continue
+    -XX:+StackTraceInThrowable            Collect backtrace in throwable when exception happens.
+    -XX:TLABSize=<size>                   The size of thread-local allocation buffers. (default: 64K)
+    -XX:-TimeCompilation                  Report time spent in compilation.
+    -XX:-TraceAnonOperations              TraceAnonOperations
+    -XX:-TraceClassIDs                    Trace management of class identifiers.
+    -XX:-TraceClassLoading                Trace Class loading & definition
+    -XX:-TraceCodeAllocation              Trace allocation from the code cache.
+    -XX:-TraceCodeEviction                Trace Log code eviction after baseline code cache contention. Operation prefixes control
+                                          logging:, Run = log each code eviction run (enabled when any other ops are enabled)Stat_.*
+                                          = statistics (count evicted/surviving bytes and methods), Details_.* = give detailed
+                                          information about what methods and dispatch entries are treated, Move_.* = print details
+                                          about threads and code motion, Dump = give full dumps of all code addresses before
+                                          and after eviction
+    -XX:-TraceDL                          Trace Dynamic Linker calls.
+    -XX:-TraceDarkMatter                  Trace Dark Matter Formation
+    -XX:-TraceDeopt                       Trace deoptimzation
+    -XX:-TraceDeps                        Trace compilation dependencies.
+    -XX:-TraceDirtyCardWalk               Trace Dirty Card Walk
+    -XX:-TraceEvacVisitedCell             Trace cells visited by the evacuator (Debug mode only)
+    -XX:TraceExceptions=<n>               Trace exception throwing: 0 = none, 1 = toString(), 2 = printStackTrace(). (default:
+                                          0)
+    -XX:TraceExceptionsMaxFrames=<n>      The max frames to dump for -XX:TraceExceptions=2. (default: 200)
+    -XX:-TraceExceptionsRaw               Report a stack frame dump for every exception thrown.
+    -XX:TraceExceptionsRawMaxFrames=<n>   The max frames to dump for -XX:+TraceExceptionsRaw. (default: 200)
+    -XX:-TraceFOT                         Trace CardFirstObjectTable updates
+    -XX:-TraceFinalization                Trace calls to Object.finalize() by the finalization subsystem.
+    -XX:TraceFromGCInvocation=<n>         Tells from which GC invocation tracing starts from (default: 0)
+    -XX:-TraceGC                          Trace all garbage collection activity. Enabling this option also enables the -XX:-LogRootScanning,
+                                          -XX:-TraceGCPhases and -XX:-TraceGCTime options.
+    -XX:-TraceGCDetail                    Trace detailed operation.
+    -XX:-TraceGCPhases                    Trace garbage collection phases.
+    -XX:-TraceGCTime                      Trace time of garbage collection phases.
+    -XX:-TraceGetInliners                 Trace 
+    -XX:-TraceHeapSizingPolicy            Trace Heap Resizing after full GC
+    -XX:-TraceImmortal                    Trace allocation from the immortal heap.
+    -XX:-TraceJMM                         Trace log JNI/JMM upcalls
+    -XX:-TraceJNI                         Trace log JNI/JMM upcalls
+    -XX:-TraceJVMTICalls                  Trace log JVMTI upcalls
+    -XX:-TraceJVMTICode                   Trace log JVMTI compiled code operations
+    -XX:-TraceJVMTIEvents                 Trace log JVMTI events
+    -XX:TraceLevel=<n>                    Enable tracing output at the specified level. (default: 0)
+    -XX:-TraceMonitors                    Trace (slow-path) monitor operations.
+    -XX:-TraceOldEvacuation               Trace Log evacuation scanning ranges in to-space
+    -XX:TraceRefMapInterpretationOf=<value> 
+                                          Trace ref map interpretation of methods whose name or declaring class contains <value>.
+    -XX:-TraceReferenceGC                 Trace handling of soft/weak/final/phantom references.
+    -XX:-TraceRequestLock                 Trace VM_OPERATION_REQUEST_LOCK.
+    -XX:-TraceRootScanning                Trace garbage collection root scanning.
+    -XX:-TraceSRS                         Trace stack root scanning.
+    -XX:-TraceSignals                     Trace traps.
+    -XX:-TraceStackWalk                   Trace every stack walk
+    -XX:-TraceTLABAllocation              Trace every allocation from TLABs when in DEBUG mode
+    -XX:-TraceThreads                     Trace thread start-up and shutdown.
+    -XX:-TraceTraps                       Trace traps.
+    -XX:TraceVerification=<value>         Trace bytecode verification in detail of method(s) whose qualified name contains <value>.
+    -XX:TraceVerifierLevel=<n>            Trace bytecode verification level: 0 = none, 1 = class, 2 = methods. (default: 0)
+    -XX:-TraceVmOperations                Trace VM operations.
+    -XX:-TraceYoungEvacuation             Trace Log evacuation scanning ranges in to-space
+    -XX:-TrapOnError                      Issue breakpoint trap on fatal error.
+    -XX:+UseDeopt                         Enable deoptimization.
+    -XX:+UseTLAB                          Use thread-local object allocation
+    -XX:-VMExtOpt                         Compile VM extensions with optimizing compiler (default: false
+    -XX:VMLogFlush=<value>                flush VMLog: mode,output. mode=crash|exit|full, output=raw|trace
+    -XX:-VerifyAfterGC                    Verify heap after GC
+    -XX:-VerifyRefMaps                    Verify reference maps by performing a stack walk and checking plausibility of reference
+                                          roots in the stack--as often as possible.
+    -C1X:+AlignDirectCallsForPatching
+    -C1X:+CanonicalizeArrayStoreChecks
+    -C1X:+CanonicalizeConstantFields
+    -C1X:+CanonicalizeFloatingPoint
+    -C1X:+CanonicalizeFoldableMethods
+    -C1X:+CanonicalizeIntrinsics
+    -C1X:+CanonicalizeMultipliesToShifts
+    -C1X:+CanonicalizeNarrowingInStores
+    -C1X:+CanonicalizeObjectCheckCast
+    -C1X:+CanonicalizeObjectInstanceOf
+    -C1X:+CanonicalizeUnsafes
+    -C1X:+CopyPointerStackArguments
+    -C1X:+DetailedAsserts                 Turn on detailed error checking that has a noticeable performance impact.
+    -C1X:+EmitNopAfterCall
+    -C1X:+GenCode
+    -C1X:+GenLIR
+    -C1X:+OptBlockMerging
+    -C1X:+OptBlockSkipping
+    -C1X:+OptCEElimination
+    -C1X:+OptCanonicalize
+    -C1X:+OptControlFlow
+    -C1X:+OptDeadCodeElimination1
+    -C1X:+OptDeadCodeElimination2
+    -C1X:+OptDiamondElimination
+    -C1X:+OptFlowSensitiveNCE
+    -C1X:+OptGlobalValueNumbering
+    -C1X:+OptInline
+    -C1X:+OptInlineExcept
+    -C1X:+OptInlineSynchronized
+    -C1X:+OptIntrinsify
+    -C1X:+OptIterativeNCE
+    -C1X:+OptLocalLoadElimination
+    -C1X:+OptLocalValueNumbering
+    -C1X:+OptMoveElimination
+    -C1X:+OptNullCheckElimination
+    -C1X:+PhiLoopStores
+    -C1X:+PhiSimplify
+    -C1X:+ResolveClassBeforeStaticInvoke
+    -C1X:+SupportObjectConstants
+    -C1X:+UseAssumptions
+    -C1X:+UseStackMapTableLiveness        Use liveness information derived from StackMapTable class file attribute.
+    -C1X:-AssumeVerifiedBytecode
+    -C1X:-CommentedAssembly
+    -C1X:-FatalUnimplemented
+    -C1X:-GenAssertionCode
+    -C1X:-GenSpecialDivChecks             Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) instead
+                                          of detecting these cases via instruction decoding in a trap handler.
+    -C1X:-InterpretInvokedMethods
+    -C1X:-InvokeSnippetAfterArguments
+    -C1X:-NullCheckUniquePc
+    -C1X:-PinAllInstructions
+    -C1X:-PrintAssembly
+    -C1X:-PrintAssumptions
+    -C1X:-PrintCFGToFile
+    -C1X:-PrintCodeBytes
+    -C1X:-PrintCompilation
+    -C1X:-PrintHIR
+    -C1X:-PrintIRWithLIR
+    -C1X:-PrintInlinedIntrinsics
+    -C1X:-PrintInliningFailures
+    -C1X:-PrintLIR
+    -C1X:-PrintLIRWithAssembly
+    -C1X:-PrintMetrics
+    -C1X:-PrintStateInInterpreter
+    -C1X:-PrintTimers
+    -C1X:-PrintXirTemplates
+    -C1X:-StressLinearScan
+    -C1X:-TestPatching
+    -C1X:-TraceAssembler
+    -C1X:-TraceLIRVisit
+    -C1X:-TraceRelocation
+    -C1X:-VerifyPointerMaps
+    -C1X:-ZapStackOnMethodEntry
+    -C1X:MaximumDesiredSize=<n>           (default: 8000)
+    -C1X:MaximumInlineLevel=<n>           (default: 9)
+    -C1X:MaximumInlineRatio=<n>           (default: 0.9)
+    -C1X:MaximumInlineSize=<n>            (default: 35)
+    -C1X:MaximumInstructionCount=<n>      (default: 37000)
+    -C1X:MaximumRecursiveInlineLevel=<n>  (default: 1)
+    -C1X:MaximumShortLoopSize=<n>         (default: 5)
+    -C1X:MaximumTrivialSize=<n>           (default: 6)
+    -C1X:MethodEndBreakpointGuards=<n>    (default: 0)
+    -C1X:OptLevel=<n>                     Set the optimization level of C1X. (default: 3)
+    -C1X:PrintAssemblyBytesPerLine=<n>    (default: 16)
+    -C1X:PrintFilter=<value>              Filter compiler tracing to methods whose fully qualified name matches <arg>. If <arg>
+                                          starts with "~", then <arg> (without the "~") is interpreted as a regular expression.
+                                          Otherwise, <arg> is interpreted as a simple substring.
+    -C1X:RangeTestsSwitchDensity=<n>      (default: 5)
+    -C1X:ReadPrefetchInstr=<n>            (default: 0)
+    -C1X:SequentialSwitchLimit=<n>        (default: 4)
+    -C1X:StackShadowPages=<n>             (default: 2)
+    -C1X:TraceBytecodeParserLevel=<n>     Trace frontend bytecode parser at level <n> where 0 means no tracing, 1 means instruction
+                                          tracing and 2 means instruction plus frame state tracing. (default: 0)
+    -C1X:TraceLinearScanLevel=<n>         (default: 0)
+    -T1X:-EagerRefMaps                    Generate ref maps for methods compiled by T1X at compile time instead of lazily during
+                                          a GC.
+    -T1X:-PrintBailouts
+    -T1X:-PrintCFGToFile
+    -T1X:-PrintCompilation                Print message for each T1X compilation.
+    -T1X:-PrintJsrRetRewrites             Print a message when T1X rewrites a method to inline jsr/ret subroutines.
+    -T1X:-PrintMetrics                    Print T1X compilation metrics upon VM exit.
+    -T1X:-PrintTimers                     Print T1X compilation times upon VM exit.
+    -T1X:-TraceMethods                    Trace calls to T1X compiled methods.
+    -T1X:PrintFilter=<value>              Filter compiler tracing to methods whose fully qualified name matches <arg>. If <arg>
+                                          starts with "~", then <arg> (without the "~") is interpreted as a regular expression.
+                                          Otherwise, <arg> is interpreted as a simple substring.
+    -XX:YoungGenHeapPercent=<n>           Percentage of heap size that must be used by young gen (default: 40)
+@metric allocateHeapAndGCStorage total     --                                0.008 seconds
+@metric allocateHeapAndGCStorage average   --                                0.008 seconds (1 intervals)
+@metric VirtualMemory.deallocate total     --                                  0.0 seconds
+@metric VirtualMemory.deallocate average   --                                  0.0 seconds (2 intervals)
+@metric VirtualMemory.allocate total     --                                  0.0 seconds
+@metric VirtualMemory.allocate average   --                                  0.0 seconds (1 intervals)

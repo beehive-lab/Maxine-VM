@@ -25,6 +25,8 @@ package com.sun.max.vm.code;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import static com.sun.max.platform.Platform.*;
+
 
 import java.util.*;
 
@@ -38,6 +40,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.profile.*;
@@ -90,7 +93,10 @@ public final class CodeEviction extends VmOperation {
             }
             final Safepoints sps = tm.safepoints();
             for (int i = sps.nextDirectCall(0); i >= 0; i = sps.nextDirectCall(i + 1)) {
-                TargetMethod directCallee = AMD64TargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
+                TargetMethod directCallee;
+		if(platform().isa == ISA.AMD64) directCallee = AMD64TargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
+		else if (platform().isa == ISA.ARM) directCallee = ARMTargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
+		else directCallee = null;
                 if (directCallee != null && CodeManager.isShortlived(directCallee) && !directCallee.isMarked()) {
                     logMarkLevel("DIRECT CALLEE", directCallee, depthRemaining);
                     directCallee.mark();
@@ -285,7 +291,9 @@ public final class CodeEviction extends VmOperation {
         if (Platform.platform().isa == ISA.AMD64) {
             byte int3 = (byte) 0xcc;
             Arrays.fill(code, int3);
-        } else {
+        } if(Platform.platform().isa == ISA.ARM)  {
+	    byte int3 = (byte) 0xcc;
+	} else {
             throw FatalError.unimplemented();
         }
         return true;
@@ -372,7 +380,11 @@ public final class CodeEviction extends VmOperation {
             final Safepoints safepoints = targetMethod.safepoints();
             for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
                 final int callPos = safepoints.causePosAt(spi);
-                final CodePointer target = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                final CodePointer target;
+		if(platform().isa == ISA.AMD64) target = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+		else if (platform().isa == ISA.ARM) target = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
+		else target = null;
+
                 final CodePointer itarget = target.minus(delta);
                 logDirectCallInfo(spi, callPos, target, itarget);
                 if (CodeManager.runtimeBaselineCodeRegion.isInFromSpace(itarget.toAddress())) {
@@ -419,7 +431,11 @@ public final class CodeEviction extends VmOperation {
             final Safepoints safepoints = targetMethod.safepoints();
             for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
                 final int callPos = safepoints.causePosAt(spi);
-                final CodePointer target = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                final CodePointer target;
+		if(platform().isa == ISA.AMD64) target  = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+		else if (platform().isa == ISA.ARM) target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
+		else target = null;
+
                 if (CodeManager.runtimeBaselineCodeRegion.isInFromSpace(target.toAddress())) {
                     if (!haveLoggedMethod) {
                         logOptMethod(targetMethod);
@@ -820,7 +836,10 @@ public final class CodeEviction extends VmOperation {
         final Safepoints safepoints = tm.safepoints();
         for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
             final int callPos = safepoints.causePosAt(spi);
-            final CodePointer target = AMD64TargetMethodUtil.readCall32Target(tm, callPos);
+            final CodePointer target;
+            if(platform().isa == ISA.AMD64) target = AMD64TargetMethodUtil.readCall32Target(tm, callPos);
+	    else if (platform().isa == ISA.ARM) target = ARMTargetMethodUtil.readCall32Target(tm, callPos);
+	    else target = null;
             final TargetMethod callee = target.toTargetMethod();
             assert callee != null : "callee should not be null in " + tm + "@" + callPos + " " + target.to0xHexString();
             final int dcIndex = directCalleePosition(tm, callPos);
@@ -1008,7 +1027,11 @@ public final class CodeEviction extends VmOperation {
             final Safepoints safepoints = targetMethod.safepoints();
             for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
                 final int callPos = safepoints.causePosAt(spi);
-                final CodePointer target = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                final CodePointer target;
+		if(platform().isa == ISA.AMD64) target  = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+		else if (platform().isa == ISA.ARM) target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
+		else target = null;
+
                 final TargetMethod callee = target.toTargetMethod();
                 assert callee != null : "callee should not be null in " + targetMethod + "@" + callPos + "->" + target.to0xHexString();
                 idx = callPos;

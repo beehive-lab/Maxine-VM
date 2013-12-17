@@ -43,6 +43,7 @@ public class AMD64Backend extends Backend {
 
     public AMD64Backend(C1XCompiler compiler) {
         super(compiler);
+	System.err.println("C1X AMD64Backend created");
     }
     /**
      * Creates a new LIRGenerator for x86.

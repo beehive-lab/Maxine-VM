@@ -147,16 +147,19 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     @HOSTED_ONLY
     public C1X() {
         this(new MaxXirGenerator(C1XOptions.PrintXirTemplates), platform().target);
+	System.err.println("C1X-one");
     }
 
     @HOSTED_ONLY
     public C1X(RiXirGenerator xirGenerator, CiTarget target) {
         this.xirGenerator = xirGenerator;
         this.target = target;
+	System.err.println("C1X-two");
     }
 
     @Override
     public void initialize(Phase phase) {
+	System.err.println("C1X-initialize");
         if (isHosted() && !optionsRegistered) {
             runtime.initialize();
 

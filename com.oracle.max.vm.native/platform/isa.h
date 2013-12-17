@@ -31,6 +31,7 @@
 #define isa_IA32               0
 #define isa_AMD64              0
 #define isa_POWER              0
+#define isa_ARM			0
 
 #if defined(__sparc) || defined(sparc)
 #   undef  isa_SPARC
@@ -99,6 +100,23 @@
     typedef power_OsTeleIntegerRegisters isa_OsTeleIntegerRegisters;
     typedef struct power_CanonicalIntegerRegisters isa_CanonicalIntegerRegistersStruct;
     typedef power_CanonicalIntegerRegisters isa_CanonicalIntegerRegisters;
+
+#elif defined (__arm__) || defined (ARM) || defined(arm)
+#undef isa_ARM
+#define isa_ARM	1
+#define isa_IDENTIFIER	ARM
+#include "arm.h"
+    typedef arm_OsTeleIntegerRegisters isa_OsTeleIntegerRegisters;
+    typedef struct arm_CanonicalIntegerRegisters isa_CanonicalIntegerRegistersStruct;
+    typedef arm_CanonicalIntegerRegisters isa_CanonicalIntegerRegisters;
+
+    typedef arm_OsTeleFloatingRegisters isa_OsTeleFloatingPointRegisters;
+    typedef struct arm_CanonicalFloatingRegisters isa_CanonicalFloatingPointRegistersStruct;
+    typedef arm_CanonicalFloatingRegisters isa_CanonicalFloatingPointRegisters;
+
+    typedef arm_OsTeleStateRegisters isa_OsTeleStateRegisters;
+    typedef struct arm_CanonicalStateRegisters isa_CanonicalStateRegistersStruct;
+    typedef arm_CanonicalStateRegisters isa_CanonicalStateRegisters;
 
 #else
 #   error
