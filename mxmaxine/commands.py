@@ -718,7 +718,8 @@ def mx_init(suite):
         'verify': [verify, '[options] patterns...', _patternHelp],
         'view': [view, '[options]'],
         'vm': [vm, '[options] [class | -jar jarfile]  [args...]'],
-        'wikidoc': [wikidoc, '[options]']
+        'wikidoc': [wikidoc, '[options]'],
+	'armasmtest': [armasmtests, '']
     }
     mx.update_commands(suite, commands)
 
@@ -728,3 +729,6 @@ def mx_post_parse_cmd_line(opts):
         _vmdir = join(_maxine_home, 'com.oracle.max.vm.native', 'generated',  mx.get_os())
     else:
         _vmdir = opts.vmdir
+
+def armasmtests(opts):
+	print "Done!"

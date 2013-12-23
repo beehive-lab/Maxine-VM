@@ -99,7 +99,7 @@ public class MaxineTester {
     private static final Option<String> listTestsOption = options.newStringOption("ls", null,
                     "List the tests in the categories whose name contain the given value. The categories are: " +
                     "c1x, junit, output, javatester, dacapo2006, dacapobach, specjvm98, specjvm2008");
-    private static final Option<List<String>> testsOption = options.newStringListOption("tests", "c1x,graal,junit,output,javatester",
+    private static final Option<List<String>> testsOption = options.newStringListOption("tests", "c1x,graal,junit,output,javatester, armport",
                     "The list of test harnesses to run, which may include Compiler tests (c1x,tx1,graal), JUnit tests (junit), output tests (output), " +
                     "the JavaTester (javatester), DaCapo-2006 (dacapo2006), DaCapo-bach (dacapobach), SpecJVM98 (specjvm98) " +
                     "and SPECjvm2008 (specjvm2008).\n\nA subset of the C1X/JUnit/Output/Dacapo/SpecJVM98/Shootout tests " +
@@ -144,6 +144,7 @@ public class MaxineTester {
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
                     "Show help message and exit.");
     private static final Option<String> graalJarOption = options.newStringOption("graal-jar", null, "location of graal.jar");
+    private static final Option<String> armport = options.newStringOption("armport", null, "test the armport specific components");
 
     private static String[] imageConfigs = null;
     private static Date startDate;
@@ -257,7 +258,9 @@ public class MaxineTester {
                 } else if (test.startsWith("shootout:")) {
                     // run the shootout tests
                     new ShootoutHarness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeShootoutTests, test.substring("shootout:".length()).split("\\+"))).run();
-                } else {
+                } else if (test.startsWith("armport")) {
+                     System.out.println("armport");
+                }else {
                     out().println("Unrecognized test harness: " + test);
                     System.exit(-1);
                 }
