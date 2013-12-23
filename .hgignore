@@ -1,6 +1,6 @@
 # use glob syntax
 syntax: glob
-
+.idea/
 TEST-*
 *.class
 *.pyc

@@ -155,3 +155,8 @@ project@com.oracle.max.tests.jsr292@dependencies=com.oracle.max.vm
 project@com.oracle.max.tests.jsr292@checkstyle=com.oracle.max.base
 project@com.oracle.max.tests.jsr292@javaCompliance=1.7
 
+project@com.oracle.max.armport@sourceDirs=tests
+project@com.oracle.max.armport@dependencies=com.oracle.max.asm
+project@com.oracle.max.armport@javaCompliance=1.7
+
+

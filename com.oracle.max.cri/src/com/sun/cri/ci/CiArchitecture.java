@@ -209,4 +209,8 @@ public abstract class CiArchitecture {
         return false;
     }
 
+    public boolean isARMV7() {
+        return false;
+    }
+
 }
