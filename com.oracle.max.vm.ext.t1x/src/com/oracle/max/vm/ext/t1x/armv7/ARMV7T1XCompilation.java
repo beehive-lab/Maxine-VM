@@ -30,7 +30,7 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import java.util.*;
-
+// Test update APN to check operation of mercurial
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
 import com.oracle.max.cri.intrinsics.*;
