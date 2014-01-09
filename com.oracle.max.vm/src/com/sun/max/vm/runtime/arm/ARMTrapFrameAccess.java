@@ -31,6 +31,12 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
+/* APN this will need to be rewritten
+ ARM architecture traps are going to be different to X86 ...
+The description below is for X86 and ARMV7 appears because of the use of a global find and replace when instantiating the ARM architecture. 
+
+
+*/
 /**
  * The trap frame on ARMV7 contains the {@linkplain com.sun.max.vm.runtime.Trap.Number trap number} and the values of the
  * processor's registers when a trap occurs. The trap frame is as follows:
