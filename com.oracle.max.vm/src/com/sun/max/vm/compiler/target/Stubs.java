@@ -450,7 +450,7 @@ public class Stubs {
             }
 
             // now allocate the frame for this method
-            asm.subq(ARMV7.rsp, frameSize);
+            asm.subq(ARMV7.r13, frameSize);
 
             // save the index in the scratch register. This register is then callee-saved
             // so that the stack walker can find it.

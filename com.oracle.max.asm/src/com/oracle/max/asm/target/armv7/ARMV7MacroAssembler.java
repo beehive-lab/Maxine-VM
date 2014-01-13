@@ -27,7 +27,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
- * This class implements commonly used X86 code patterns.
+ * This class implements commonly used ARM!!!!! code patterns.
  */
 public class ARMV7MacroAssembler extends ARMV7Assembler {
 
@@ -39,6 +39,15 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         pushq(src);
     }
 
+    private void pushq(CiAddress src) {
+            /// TODO APN added check what a CiAddress is
+            //  presumably it is NOT a register and we
+            //  must do the appropriate action ...
+    }
+    private void popq(CiAddress src) {
+            // TODO APN added check functionality of pushq popq in X86
+            // where do we popit to??? what register???
+    }
     public void popptr(CiAddress src) {
         popq(src);
     }

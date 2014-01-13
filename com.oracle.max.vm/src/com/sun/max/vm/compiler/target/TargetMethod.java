@@ -720,6 +720,10 @@ public abstract class TargetMethod extends MemoryRegion {
         if (platform().isa == ISA.AMD64) {
             X86InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
         } else if (platform().isa == ISA.ARM) {
+            // APN not really sure if this is required it appears to reorder code in the code
+            // buffer so I will keep it in and produce a stripped down ARMISAInstructionDecoder that gets rid of all
+            // the unnecessary X86 functionality                       com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMISAInstructionDecoder.java
+            //
 	 	ARMISAInstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
 	} else  {
             throw FatalError.unimplemented();

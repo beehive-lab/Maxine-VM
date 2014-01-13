@@ -680,7 +680,30 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (immed_24 & 0xffffff);
         emitInt(instruction);
     }
+    // APN not including Thumb mode for now
+    private int ldmstmHelper(final int isStore,final ConditionFlag flag,final int upWard,
+            final int preIndexing, final int wBit, final int sBit,final CiRegister baseRegister,final int registerList) {
+        int instruction;
+        instruction = ((flag.value() &0xf)<< 28);
+        instruction |= (((0x8|preIndexing)&0x9) <<24);
+        instruction |= (((upWard&0x1)<<3)|((sBit&0x1) << 2)|((wBit&0x1)<<1)|(0x1&isStore)) <<20;
+        instruction |= (baseRegister.encoding << 16);
+        instruction |= (registerList & 0xFFFF);
+        return instruction;
 
+    }
+    public void ldm(final ConditionFlag flag,final int upWard,final int preIndexing,
+                    final int wBit, final int sBit,final CiRegister baseRegister,final int registerList ) {
+        int instruction = ldmstmHelper(1, flag,upWard,preIndexing,wBit,sBit,baseRegister,registerList);
+        emitInt(instruction);
+    }
+    // APN not including Thumb mode for now
+
+    public void stm(final ConditionFlag flag,final int upWard,final int preIndexing,
+                    final int wBit, final int sBit,final CiRegister baseRegister,final int registerList)  {
+        int instruction = ldmstmHelper(0,flag,upWard,preIndexing,wBit,sBit,baseRegister,registerList);
+        emitInt(instruction);
+    }
 // END GENERATED RAW ASSEMBLER METHODS
 
 // START GENERATED LABEL ASSEMBLER METHODS
