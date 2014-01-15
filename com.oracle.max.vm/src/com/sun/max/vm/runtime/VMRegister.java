@@ -41,12 +41,14 @@ public final class VMRegister {
      * The register that is customarily used as "the stack pointer" on the target CPU.
      * Typically this register is not flexibly allocatable for other uses.
      * AMD64: RSP
+	ARM r13
      */
     public static final int CPU_SP = 0;
 
     /**
      * The register that is customarily used as "frame pointer" on the target CPU.
      * AMD64: RBP
+	ARM r11
      */
     public static final int CPU_FP = 1;
 

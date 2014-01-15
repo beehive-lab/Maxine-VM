@@ -40,7 +40,7 @@ public final class ARMSafepointPoll extends SafepointPoll {
     /**
      * ATTENTION: must be callee-saved by all C ABIs in use.
      */
-    public static final CiRegister LATCH_REGISTER = ARMV7.r11; // please also see  com.sun.max.vm.compiler.target.RegisterConfigs.java ... LATCH_REGISTER is also defined there and needs to be consistent
+    public static final CiRegister LATCH_REGISTER = ARMV7.r10; // please also see  com.sun.max.vm.compiler.target.RegisterConfigs.java ... LATCH_REGISTER is also defined there and needs to be consistent
 
     @HOSTED_ONLY
     public ARMSafepointPoll() {

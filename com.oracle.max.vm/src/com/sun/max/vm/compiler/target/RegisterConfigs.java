@@ -143,24 +143,25 @@ public class RegisterConfigs {
                            be used uniformly by THUMB.
                            subroutine must preserve r4.r8, r10 and r11 and SP (r9 as well sometimes).
 
-                           LATCH chosen to be r11
+                           LATCH chosen to be r10
+			   FP chosen to be r11
                          */
                         allocatable = new CiRegister[] {r0,r1,r2,r3,r4,r5,r6,r7,com.oracle.max.asm.target.armv7.ARMV7.r8,com.oracle.max.asm.target.armv7.ARMV7.r9,
                                 com.oracle.max.asm.target.armv7.ARMV7.r10,com.oracle.max.asm.target.armv7.ARMV7.r12};
                         parameters = new CiRegister[] {r0,r1,r2,r3};
                         allRegistersExceptLatch = new CiRegister[] {r0,r1,r2,r3,r4,r5,r6,r7,com.oracle.max.asm.target.armv7.ARMV7.r8,
                                 com.oracle.max.asm.target.armv7.ARMV7.r9,
-                                com.oracle.max.asm.target.armv7.ARMV7.r10,
+                                com.oracle.max.asm.target.armv7.ARMV7.r11,
                                 com.oracle.max.asm.target.armv7.ARMV7.r12,
                                 com.oracle.max.asm.target.armv7.ARMV7.r13,
                                 com.oracle.max.asm.target.armv7.ARMV7.r14,
                                 com.oracle.max.asm.target.armv7.ARMV7.r15,
                         vfp0,vfp1,vfp2,vfp3,vfp4,vfp5,vfp6,vfp7,vfp8,vfp9,vfp10,vfp11,vfp12,vfp13,vfp14,vfp15};
                         roleMap.put(CPU_SP,com.oracle.max.asm.target.armv7.ARMV7.r13);
-                        roleMap.put(CPU_FP,vfp0);           // TODO CHECK
+                        roleMap.put(CPU_FP,com.oracle.max.asm.target.armv7.ARMV7.r11);           // TODO CHECK
                         roleMap.put(ABI_SP,com.oracle.max.asm.target.armv7.ARMV7.r13);
-                        roleMap.put(ABI_FP,vfp0);    // TODO CHECK
-                        roleMap.put(LATCH,com.oracle.max.asm.target.armv7.ARMV7.r11);
+                        roleMap.put(ABI_FP,com.oracle.max.asm.target.armv7.ARMV7.r11);    // TODO CHECK
+                        roleMap.put(LATCH,com.oracle.max.asm.target.armv7.ARMV7.r10);
                         /* the  LATCH register is a callee saved register   associated with
                         com.sun.max.vm.runtime.armv7.ARMV7Safepoint APN -thinks!!!!
 
@@ -237,9 +238,9 @@ public class RegisterConfigs {
                                 com.oracle.max.asm.target.armv7.ARMV7.r13));
                         n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
-                        roleMap.put(ABI_FP, vfp0);
+                        roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r11);
                         CiRegisterConfig template = new CiRegisterConfig(
-                                com.oracle.max.asm.target.armv7.ARMV7.r13,                 // frame
+                                com.oracle.max.asm.target.armv7.ARMV7.r11,                 // frame
                                 r0,                 // integral return value
                                 vfp0,                // floating point return value
                                 com.oracle.max.asm.target.armv7.ARMV7.r12,                 // scratch

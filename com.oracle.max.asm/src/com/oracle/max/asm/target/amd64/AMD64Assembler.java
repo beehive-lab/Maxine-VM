@@ -77,6 +77,13 @@ public class AMD64Assembler extends AbstractAssembler {
 
     /**
      * Constants for X86 prefix bytes.
+     * APN the prefix byte is used to control the decoding of instructions ..
+     * MSByte is set to 0x40.
+     * WRXB bits in the LSByte HEX numbers are used.
+     * W bit set 0x48 a 64bit operand size is used.
+     * R bit set 0x44 an extension to the MODRM.reg field?
+     * X bit set 0x42 an extension to SIB.index field?
+     * B bit set 0x41 an extension to MODRM.rm field or SIB.base field
      */
     private class Prefix {
         private static final int REX = 0x40;

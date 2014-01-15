@@ -36,18 +36,36 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void pushptr(CiAddress src) {
+        //stm(0xE,0,0,1,1,r13,src)
+        // APN obvously we need to figure out how to resolve the CiAddress issue which is explained below.
+        // in the next method.
         pushq(src);
+
+
+        /** APN
+         * A CiAddress Represents an address in target machine memory, specified via some combination of a base register, an index register,
+         * a displacement and a scale. Note that the base and index registers may be {@link CiVariable variable}, that is as yet
+         * unassigned to target machine registers.
+         *
+         * APN ok so this is problematic, Im not sure when the CiAddress might be lowered to an
+         * address that lies in memory, or in a target machine register that we can
+         * push onto the stack. We certainly don't have indexed registers that x86 does have
+         * we might need to think carefully about how to resolve this problem --- ie does MAxine expect the target architecture to
+         * have index registers and where we can isolate/bypass this assumptiono
+         *
+         * prefixq(src)
+         * emitByte(0xFF)
+         * emitOperandHelper(rsi,src);
+         *
+         * A CiAddress can represent addresses of the form base + index*scale + displacement.
+         * Base would be a register.
+         *
+         */
+        pushq(src);
+
+
     }
 
-    private void pushq(CiAddress src) {
-            /// TODO APN added check what a CiAddress is
-            //  presumably it is NOT a register and we
-            //  must do the appropriate action ...
-    }
-    private void popq(CiAddress src) {
-            // TODO APN added check functionality of pushq popq in X86
-            // where do we popit to??? what register???
-    }
     public void popptr(CiAddress src) {
         popq(src);
     }

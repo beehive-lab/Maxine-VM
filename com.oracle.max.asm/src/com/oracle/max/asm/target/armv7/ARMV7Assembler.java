@@ -2,9 +2,12 @@ package com.oracle.max.asm.target.armv7;
 
 
 import com.oracle.max.asm.AbstractAssembler;
+import com.sun.cri.ci.CiAddress;
 import com.sun.cri.ci.CiRegister;
 import com.sun.cri.ci.CiTarget;
 import com.sun.cri.ri.RiRegisterConfig;
+
+import static com.oracle.max.asm.NumUtil.isByte;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,9 +19,28 @@ import com.sun.cri.ri.RiRegisterConfig;
 
 
 public class ARMV7Assembler extends AbstractAssembler {
+    /**
+     * The register to which {@link CiRegister#Frame} and {@link CiRegister#CallerFrame} are bound.
+     */
+    public final CiRegister frameRegister;
+
+    /* APN not sure if needed
+    * */
+    public final CiRegister scratchRegister;
+
+
+    /**
+     * Constructs an assembler for the ARMV7 architecture.
+     *
+     * @param registerConfig the register configuration used to bind {@link CiRegister#Frame} and
+     *            {@link CiRegister#CallerFrame} to physical registers. This value can be null if this assembler
+     *            instance will not be used to assemble instructions using these logical registers.
+     */
 
     public ARMV7Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
+        this.scratchRegister = registerConfig.getScratchRegister();
+        this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
     }
 
     public enum ConditionFlag {
@@ -105,6 +127,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     /**
+     * REMEMBER in ARM an 12bit immediate is represented as an 8 bit number with 4 bit rotation
      * Pseudo-external assembler syntax: {@code add[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>immed_8</i>, <i>rotate_amount</i>
      * Example disassembly syntax: {@code addeq         r0, r0, #0x0, 0x0}
      * <p>
@@ -255,6 +278,28 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((shift_imm & 0x1f) << 7);
         emitInt(instruction);
+    }
+
+    public void movt(final ConditionFlag cond,final CiRegister Rd, final int imm16) {
+        int instruction = 0x03400000;
+        checkConstraint(0<= imm16 && imm16 <= 65535,"0<= imm16 && imm16 <= 65535 " );
+        instruction |= ((cond.value()&0xf) << 28);
+        instruction |= ((imm16>> 12)<<16);
+        instruction |= ((Rd.encoding &0xf) << 12);
+        instruction |= (imm16&0xfff);
+        emitInt(instruction);
+
+    }
+
+    public void mov(final ConditionFlag cond,final CiRegister Rd, final int imm16) {
+        int instruction = 0x03000000;
+        checkConstraint(0<= imm16 && imm16 <= 65535,"0<= imm16 && imm16 <= 65535 " );
+        instruction |= ((cond.value()&0xf) << 28);
+        instruction |= ((imm16>> 12)<<16);
+        instruction |= ((Rd.encoding &0xf) << 12);
+        instruction |= (imm16&0xfff);
+        emitInt(instruction);
+
     }
 
     /**
@@ -694,7 +739,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public void ldm(final ConditionFlag flag,final int upWard,final int preIndexing,
                     final int wBit, final int sBit,final CiRegister baseRegister,final int registerList ) {
-        int instruction = ldmstmHelper(1, flag,upWard,preIndexing,wBit,sBit,baseRegister,registerList);
+        int instruction = ldmstmHelper(1, flag, upWard, preIndexing, wBit, sBit, baseRegister, registerList);
         emitInt(instruction);
     }
     // APN not including Thumb mode for now
@@ -715,5 +760,121 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
     }
 
+    private static int encode(CiRegister r) {
+        assert r.encoding < 16 && r.encoding >= 0 : "encoding out of range: " + r.encoding;
+        return r.encoding;
+    }
+
+    /* APN
+        The methods below here are largely to interface the ARMV7Assembler to the ARMV7MAcroAssembler which is based on the X86
+        version in the longer term we probably want a more natural encoding/fit to ARM elsewhere in Maxine and then to refactor
+        but right now the priority is to get the port working.
+     */
+    public void popq(CiAddress addr) {
+        // APN presume we are popping off the stack?
+        // addr could be a register, base index scale displacement --- handled
+        // or a memory address constant  not handled right now -- not sure how it would be represented
+        // as a CiAddress.
+        // Placeholders not handled at the moment. .
+
+        CiRegister base = addr.base();
+        CiRegister index = addr.index();
+        CiAddress.Scale scale = addr.scale;
+        int disp = addr.displacement;
+
+        assert (addr != CiAddress.Placeholder); // APN Placeholders not handled yet
+        assert(base.isValid()); // APN can we have a memory address --- not handled yet?
+        // APN simple case where we just have a register destination
+        if (base.isValid()) {
+            if(disp != 0) {
+                mov(ConditionFlag.Always,scratchRegister,disp&0xffff);   // APN crude way to load a constant into a register.
+                movt(ConditionFlag.Always,scratchRegister,(disp&0xffff0000 >> 16)) ;
+                add(ConditionFlag.Always,false,scratchRegister,base,0,0);
+            }
+            if(index.isValid()){
+                adclsl(ConditionFlag.Always,false,scratchRegister,scratchRegister,index,scale.log2); // APN even if scale is zero this is ok.
+            }
+            ldm(ConditionFlag.Always,0,0,1,0,com.oracle.max.asm.target.armv7.ARMV7.r13,encode(scratchRegister));// r13 is the stack pointer
+
+        }
+    }
+    public void pushq(CiAddress addr) {
+    /*
+        APN push a value specified by an CiAddress onto the stack r13.
+        // Im assuming base cannot be destructively updated perhaps this is stupid and maybe DO NOT NEED
+        to use the scratch register as defined in RegisterConfigs.java for the target as AMD64Assembler does not
+        seem to use it ...
+         */
+
+        CiRegister base = addr.base();
+        CiRegister index = addr.index();
+        CiAddress.Scale scale = addr.scale;
+
+        int disp = addr.displacement;
+
+        /* APN not checking addressing modes right now
+        TODO ... check them
+        The effective address to be pushed is some combination of
+        base+index*scale*displacement
+         switch (format()) {
+            case BASE            : return "[" + s(base) + "]";
+            case BASE_DISP       : return "[" + s(base) + signed(displacement) + "]";
+            case BASE_INDEX      : return "[" + s(base) + "+" + s(index) + "]";
+            case BASE_INDEX_DISP : return "[" + s(base) + "+(" + s(index) + "*" + scale.value + ")" + signed(displacement) + "]";
+            case PLACEHOLDER     : return "[<placeholder>]";
+            default              : throw new IllegalArgumentException("unknown format: " + format());
+        }
+
+        Scale has a value of 1,2,4,8 ... Shift of Zero,1,2,3
+        */
+        assert(base.isValid()); // APN thinks it has to be valid or its an ERROR?
+        // might not be the case if the addr is a PlaceHolder!
+
+        assert (addr != CiAddress.Placeholder);
+        /* TODO APN we will need to add code for this ... Placeholders are sentinel values that will
+        be patched at a later point, once we see how/where they are patched then we will be able to
+        make sensible decisions
+         */
+
+        // APN case that its just a valid register no index scale or displacement
+        if(base.isValid() && (!index.isValid()) && scale.value == 1 && disp == 0) {
+            // Base register is valid and stores an address
+
+            stm(ConditionFlag.Always,0,0,1,0,com.oracle.max.asm.target.armv7.ARMV7.r13,encode(base));// r13 is the stack pointer
+
+        } else if (base.isValid()) {  // APN superfluous check, but base might be invalid once we sort out Placeholders
+                if(disp != 0) {
+                    // TODO EMIT AN INSTRUCTION TO DO BASE + DISPLACEMENT
+                    // can we destructively update base to store the result?
+                    // do we know the range of immediate values that might be produced?
+                    // TODO try to do some tracing of Maxine and see what values come out of here.
+                    // in the meantime we do it inefficiently but correctly for 32 bit displacements
+                    mov(ConditionFlag.Always,scratchRegister,disp&0xffff);
+                    movt(ConditionFlag.Always,scratchRegister,(disp&0xffff0000 >> 16)) ;
+                    add(ConditionFlag.Always,false,scratchRegister,base,0,0); //APN A8.8.5 ADD(immediate,ARM)
+
+                }
+                if(index.isValid()) {
+
+                    adclsl(ConditionFlag.Always,false,scratchRegister,scratchRegister,index,scale.log2); // APN even if scale is zero this is ok.
+                    // as a shift of zero will not affect the value.
+                /*if(scale.value != 1)  {
+                        // TODO emit an instruction to do
+                        // instruction= base + indexRegister* scale
+                        // NOTE scale can be 1,2,4 or 8 so we should be able to do
+                        // this with a simple shift of 1,2 or 3 bits
+                    }else {
+                        // TODO emit an instruction to do
+                        // instruction = base + indexRegister
+
+                } */
+
+                }
+
+                    stm(ConditionFlag.Always,0,0,1,0,com.oracle.max.asm.target.armv7.ARMV7.r13,encode(scratchRegister)); // r13 is the stack pointer
+
+        }
+
+    }
 }
 
