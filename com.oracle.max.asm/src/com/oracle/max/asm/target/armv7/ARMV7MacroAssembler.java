@@ -49,16 +49,14 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
          *
          * APN ok so this is problematic, Im not sure when the CiAddress might be lowered to an
          * address that lies in memory, or in a target machine register that we can
-         * push onto the stack. We certainly don't have indexed registers that x86 does have
-         * we might need to think carefully about how to resolve this problem --- ie does MAxine expect the target architecture to
-         * have index registers and where we can isolate/bypass this assumptiono
+         * push onto the stack.
          *
          * prefixq(src)
          * emitByte(0xFF)
          * emitOperandHelper(rsi,src);
          *
          * A CiAddress can represent addresses of the form base + index*scale + displacement.
-         * Base would be a register.
+         * Base & index would be registers.
          *
          */
         pushq(src);
@@ -75,6 +73,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void xorptr(CiRegister dst, CiAddress src) {
+        // APN I have assumed we do not need to load the CiAddress?
+        // is this incorrect?
         xorq(dst, src);
     }
 
@@ -135,8 +135,26 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpsd2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu() && opr2.isFpu();
         ucomisd(opr1, opr2);
+        assert(!opr1.isFpu()); //force crash as not implemented yet.
+        // get condition codes. don't set
+        // FPSCR register  flags
+        // [31] N	Set to 1 if a comparison operation produces a less than result.
+        // 30]	Z	Set to 1 if a comparison operation produces an equal result.
+        //[29]	C	Set to 1 if a comparison operation produces an equal, greater than, or unordered result.
+        //[28]	V	Set to 1 if a comparison operation produces an unordered result. SAME as parity flag?
+        // insert the statement to do this
+        // do appropriate conditional moves in ARM ...
 
-        Label l = new Label();
+
+        // dont need it in ARM?
+        // Label l = new Label();
+        /*
+        APN please bear in mind I am a novice x86er
+        My reading is that this code jumps to the label if the conditions are true
+        dst is given the value -1 iff opr1 <- opr2
+        0 -ff opr1 == opr2
+        1 iff opr1 > opr2
+
         if (unorderedIsLess) {
             movl(dst, -1);
             jcc(ARMV7Assembler.ConditionFlag.parity, l);
@@ -152,13 +170,16 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             jcc(ARMV7Assembler.ConditionFlag.equal, l);
             decrementl(dst, 1);
         }
-        bind(l);
+        */
+        // don't need it in ARM
+        // bind(l);
     }
 
     public void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu();
         assert opr2.isFpu();
-        ucomiss(opr1, opr2);
+        assert(!opr1.isFpu());// force crash as not yet implemented
+        /*ucomiss(opr1, opr2);
 
         Label l = new Label();
         if (unorderedIsLess) {
@@ -177,6 +198,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             decrementl(dst, 1);
         }
         bind(l);
+        */
     }
 
     public void cmpptr(CiRegister src1, CiRegister src2) {

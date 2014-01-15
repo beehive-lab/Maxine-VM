@@ -259,6 +259,23 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Rs.encoding & 0xf) << 8);
         emitInt(instruction);
     }
+    public void eor(final ConditionFlag cond,final boolean s, final CiRegister Rd,final CiRegister Rn,final CiRegister Rm,final int imm5,final int  imm2) {
+        int instruction = 0x00200000;
+        // type ie imm2 refers to 00 LSL
+        //                 01 LSR
+        //                 10 ASR
+        //                 11   if imm5 == 00000 RRX, shift_n = 1
+        //                      else ROR, shift_n = imm5; as a uint.
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((s?1:0) << 20);
+        instruction |= ((Rn.encoding & 0xf) << 16);
+        instruction |= ((Rd.encoding & 0xf) << 12);
+        instruction |= ((imm5&0x1f) << 7);
+        instruction |= ((imm2&0x3) << 5);
+        instruction |= ((Rm.encoding&0xf));
+        emitInt(instruction);
+
+    }
 
     /**
      * Pseudo-external assembler syntax: {@code mov[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rm</i>, <i>shift_imm</i>
@@ -461,6 +478,20 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Rn.encoding & 0xf) << 16);
         instruction |= (immed_8 & 0xff);
         instruction |= ((rotate_amount / 2 & 0xf) << 8);
+        emitInt(instruction);
+    }
+    public void sub(final ConditionFlag cond, final boolean s, final CiRegister Rd,
+                    final CiRegister Rn, final CiRegister Rm,final int imm5, final int imm2Type)     {
+        int instruction = 0x00400000;
+        checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
+        checkConstraint(0<= imm2Type && imm2Type <= 3, "0<= imm2Type && imm2Type <= 3");
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((s?1:0) << 20);
+        instruction |= ((Rd.encoding & 0xf) << 12);
+        instruction |= ((Rn.encoding & 0xf) << 16);
+        instruction |= ((Rm.encoding & 0xf));
+        instruction |= ((imm2Type & 0x3) <<5);
+        instruction |= ((imm5 & 0x31) <<5);
         emitInt(instruction);
     }
 
@@ -749,6 +780,17 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = ldmstmHelper(0,flag,upWard,preIndexing,wBit,sBit,baseRegister,registerList);
         emitInt(instruction);
     }
+    public void cmp(final ConditionFlag flag, final CiRegister Rn, final CiRegister Rm, int imm5, int imm2Type) {
+        int instruction = 0x01500000;
+        checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
+        checkConstraint(0 <= imm2Type && imm2Type <= 3, "0 <= imm2Type && imm2Type <= 3");
+        instruction |=  ((flag.value() & 0xf) << 28);
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= ((imm5) << 7);
+        instruction |= ((imm2Type) << 5);
+        emitInt(instruction);
+
+    }
 // END GENERATED RAW ASSEMBLER METHODS
 
 // START GENERATED LABEL ASSEMBLER METHODS
@@ -770,13 +812,110 @@ public class ARMV7Assembler extends AbstractAssembler {
         version in the longer term we probably want a more natural encoding/fit to ARM elsewhere in Maxine and then to refactor
         but right now the priority is to get the port working.
      */
+    private void setUpScratch(CiAddress addr) {
+        // might be in memory
+        // might be in a register
+
+        CiRegister base = addr.base();
+        CiRegister index = addr.index();
+        CiAddress.Scale scale = addr.scale;
+        int disp = addr.displacement;
+
+        assert (addr != CiAddress.Placeholder); // APN Placeholders not handled yet
+        assert(base.isValid()); // APN can we have a memory address --- not handled yet?
+        // APN simple case where we just have a register destination
+        if (base.isValid()) {
+            if(disp != 0) {
+                mov(ConditionFlag.Always,scratchRegister,disp&0xffff);   // APN crude way to load a constant into a register.
+                movt(ConditionFlag.Always,scratchRegister,(disp&0xffff0000 >> 16)) ;
+                add(ConditionFlag.Always,false,scratchRegister,base,0,0);
+            }
+            if(index.isValid()){
+                adclsl(ConditionFlag.Always,false,scratchRegister,scratchRegister,index,scale.log2); // APN even if scale is zero this is ok.
+            }
+        }
+    }
+
+    public final void decq(CiRegister dst) {
+        assert(dst.isValid());
+        sub(ConditionFlag.Always,false,dst,dst,1,0);
+    }
+    public final void subq(CiRegister dst, int imm32) {
+        assert(dst.isValid());
+        mov(ConditionFlag.Always,scratchRegister,imm32&0xffff);
+        movt(ConditionFlag.Always,scratchRegister,(imm32&0xffff0000 >> 16)) ;
+        // dst = dst - imm32;
+        sub(ConditionFlag.Always,false,dst,dst,scratchRegister,0,0);
+
+    }
+    public final void movslq(CiAddress dst,int imm32)  {
+        // APN ok Im assuming this is just as simple mov rather than an actual sign extend?
+        // it might be used in 64 bit mode, but ARMV7 is only 32 bit anyway.
+        // if it transpires that this is necessary for 64bit values in a 32bit processor
+        // -- we should be able to see this in the lowering phases AND/OR testing of bytecodes involving longs
+        // then we will need to modify the function
+        // to account for this ....
+        // NOt sure how to work this, if dst is an address do we need to load the value of the
+        // immediate into a 32bit address memory location??
+
+        // not going to dwell on this for now but Im not confident that the code
+        // below will be sensible
+        // probable errors ... neds to use 2x32bit registers and do a sign extend
+        // possibly needs to store result of sign extension in memory.
+        mov(ConditionFlag.Always,dst.base(),imm32&0xffff);
+        movt(ConditionFlag.Always,dst.base(),(imm32&0xffff0000 >> 16)) ;
+    }
+    public final void cmpl(CiRegister src,int imm32) {
+        /*
+        APN ... condition flags need to be set presumably and used at a later point
+         */
+        assert(src.isValid());
+        mov(ConditionFlag.Always,scratchRegister,imm32&0xffff);
+        movt(ConditionFlag.Always,scratchRegister,(imm32&0xffff0000 >> 16)) ;
+        cmp(ConditionFlag.Always,src,scratchRegister,0,0);
+
+    }
+    public final void cmpl(CiRegister src1, CiAddress src2) {
+        /*
+        APN condition flags need to be set and used at a later point
+         */
+        setUpScratch(src2); // APN not sure if this requires a load!
+        assert(src1.isValid());
+        cmp(ConditionFlag.Always,src1,scratchRegister,0,0);
+    }
+
+    public final void incq(CiRegister dst) {
+        assert(dst.isValid());
+        add(ConditionFlag.Always,false,dst,dst,1,0);
+    }
+    public final void addq(CiRegister dst,int imm32)    {
+        assert(dst.isValid());
+        mov(ConditionFlag.Always,scratchRegister,imm32&0xffff);
+        movt(ConditionFlag.Always,scratchRegister,(imm32&0xffff0000 >> 16)) ;
+        // dst = dst + imm32;
+        add(ConditionFlag.Always,false,dst,scratchRegister,0,0);
+
+    }
+    public void xorq(CiRegister dest,CiAddress src) {
+
+        assert(dest.isValid() );
+        setUpScratch(src); // scratchRegister now contains the value of the address
+        // APN I'm not sure if I need to load the memory[valueofAddress] into scratch
+        eor(ConditionFlag.Always,false,dest,dest,scratchRegister,0,0);
+
+    }
+    public void xorq(CiRegister dest, CiRegister src) {
+        assert(dest.isValid());
+        assert(src.isValid());
+        eor(ConditionFlag.Always,false,dest,dest,src,0,0);
+    }
     public void popq(CiAddress addr) {
         // APN presume we are popping off the stack?
         // addr could be a register, base index scale displacement --- handled
         // or a memory address constant  not handled right now -- not sure how it would be represented
         // as a CiAddress.
         // Placeholders not handled at the moment. .
-
+        // REFACTOR to use the code  setUpScratch
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
@@ -876,5 +1015,17 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
 
     }
+    public final void ucomisd(CiRegister dst, CiRegister src) {
+        assert dst.isFpu(); // will this work
+        assert src.isFpu();
+        // Assuming this is a single precision load
+        //vcmp(ConditionFlag.Always,dst,fpScratch);
+        // set FPSCR flags these need to be accessed using a VMRS to transfer them to arm flags
+        assert(!dst.isFpu());// force a crash one way or another as this is notimplemented yet
+
+
+
+    }
+
 }
 

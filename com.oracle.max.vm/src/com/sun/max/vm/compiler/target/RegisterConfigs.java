@@ -138,7 +138,7 @@ public class RegisterConfigs {
                            APN ...
                            ARM Assembly Language:Fundamentals & Techiques states
                            r0..r3 used for argument value passing and to return a result value from a function
-                           r12 might be used by a linker as a scratch register between a routine and any subroutine it calls.
+                           r12 might be used by a linker as a register between a routine and any subroutine it calls.
                            r4..r8, r10 and r11 are used to hold the values of a routine's local variables ONLY r4..r7 can
                            be used uniformly by THUMB.
                            subroutine must preserve r4.r8, r10 and r11 and SP (r9 as well sometimes).
