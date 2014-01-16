@@ -178,7 +178,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu();
         assert opr2.isFpu();
-        assert(!opr1.isFpu());// force crash as not yet implemented
+        assert(!opr1.isFpu());// APN force crash as not yet implemented
         /*ucomiss(opr1, opr2);
 
         Label l = new Label();
@@ -202,23 +202,23 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void cmpptr(CiRegister src1, CiRegister src2) {
-        cmpq(src1, src2);
+        //cmpq(src1, src2);
     }
 
     public void cmpptr(CiRegister src1, CiAddress src2) {
-        cmpq(src1, src2);
+        //cmpq(src1, src2);
     }
 
     public void cmpptr(CiRegister src1, int src2) {
-        cmpq(src1, src2);
+        //cmpq(src1, src2);
     }
 
     public void cmpptr(CiAddress src1, int src2) {
-        cmpq(src1, src2);
+        //cmpq(src1, src2);
     }
 
     public void decrementl(CiRegister reg, int value) {
-        if (value == Integer.MIN_VALUE) {
+        /*if (value == Integer.MIN_VALUE) {
             subl(reg, value);
             return;
         }
@@ -233,11 +233,11 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             decl(reg);
         } else {
             subl(reg, value);
-        }
+        } */
     }
 
     public void decrementl(CiAddress dst, int value) {
-        if (value == Integer.MIN_VALUE) {
+        /*if (value == Integer.MIN_VALUE) {
             subl(dst, value);
             return;
         }
@@ -252,11 +252,11 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             decl(dst);
         } else {
             subl(dst, value);
-        }
+        } */
     }
 
     public void incrementl(CiRegister reg, int value) {
-        if (value == Integer.MIN_VALUE) {
+        /*if (value == Integer.MIN_VALUE) {
             addl(reg, value);
             return;
         }
@@ -271,11 +271,11 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             incl(reg);
         } else {
             addl(reg, value);
-        }
+        } */
     }
 
     public void incrementl(CiAddress dst, int value) {
-        if (value == Integer.MIN_VALUE) {
+        /*if (value == Integer.MIN_VALUE) {
             addl(dst, value);
             return;
         }
@@ -290,63 +290,67 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             incl(dst);
         } else {
             addl(dst, value);
-        }
+        } */
     }
 
     public void signExtendByte(CiRegister reg) {
-        if (reg.isByte()) {
+        /*if (reg.isByte()) {
             movsxb(reg, reg); // movsxb
         } else {
             shll(reg, 24);
             sarl(reg, 24);
-        }
+        } */
     }
 
     public void signExtendShort(CiRegister reg) {
-        movsxw(reg, reg); // movsxw
+       // movsxw(reg, reg); // movsxw
     }
 
     // Support optimal SSE move instructions.
     public void movflt(CiRegister dst, CiRegister src) {
-        assert dst.isFpu() && src.isFpu();
+       /* assert dst.isFpu() && src.isFpu();
         if (AsmOptions.UseXmmRegToRegMoveAll) {
             movaps(dst, src);
         } else {
             movss(dst, src);
         }
+        */
     }
 
     public void movflt(CiRegister dst, CiAddress src) {
-        assert dst.isFpu();
+        /*assert dst.isFpu();
         movss(dst, src);
+        */
     }
 
     public void movflt(CiAddress dst, CiRegister src) {
-        assert src.isFpu();
+        /*assert src.isFpu();
         movss(dst, src);
+        */
     }
 
     public void movdbl(CiRegister dst, CiRegister src) {
-        assert dst.isFpu() && src.isFpu();
+        /*assert dst.isFpu() && src.isFpu();
         if (AsmOptions.UseXmmRegToRegMoveAll) {
             movapd(dst, src);
         } else {
             movsd(dst, src);
         }
+        */
     }
 
     public void movdbl(CiRegister dst, CiAddress src) {
-        assert dst.isFpu();
+        /*assert dst.isFpu();
         if (AsmOptions.UseXmmLoadAndClearUpper) {
             movsd(dst, src);
         } else {
             movlpd(dst, src);
-        }
+        } */
     }
 
     public void movdbl(CiAddress dst, CiRegister src) {
-        assert src.isFpu();
-        movsd(dst, src);
+        /*assert src.isFpu();
+        movsd(dst, src);*/
     }
 
     /**
@@ -354,17 +358,17 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
      * if the address might be a volatile field!
      */
     public void movlong(CiAddress dst, long src) {
-        CiAddress high = new CiAddress(dst.kind, dst.base, dst.index, dst.scale, dst.displacement + 4);
+        /*CiAddress high = new CiAddress(dst.kind, dst.base, dst.index, dst.scale, dst.displacement + 4);
         movl(dst, (int) (src & 0xFFFFFFFF));
-        movl(high, (int) (src >> 32));
+        movl(high, (int) (src >> 32));*/
     }
 
     public void xchgptr(CiRegister src1, CiRegister src2) {
-        xchgq(src1, src2);
+        //xchgq(src1, src2);
     }
 
     public void flog(CiRegister dest, CiRegister value, boolean base10) {
-        assert value.spillSlotSize == dest.spillSlotSize;
+        /*assert value.spillSlotSize == dest.spillSlotSize;
 
         CiAddress tmp = new CiAddress(CiKind.Double, ARMV7.RSP);
         if (base10) {
@@ -379,22 +383,23 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         fstp(tmp);
         movsd(dest, tmp);
         addq(ARMV7.rsp, dest.spillSlotSize);
+        */
     }
 
     public void fsin(CiRegister dest, CiRegister value) {
-        ftrig(dest, value, 's');
+        //ftrig(dest, value, 's');
     }
 
     public void fcos(CiRegister dest, CiRegister value) {
-        ftrig(dest, value, 'c');
+       // ftrig(dest, value, 'c');
     }
 
     public void ftan(CiRegister dest, CiRegister value) {
-        ftrig(dest, value, 't');
+        //ftrig(dest, value, 't');
     }
 
     private void ftrig(CiRegister dest, CiRegister value, char op) {
-        assert value.spillSlotSize == dest.spillSlotSize;
+        /*assert value.spillSlotSize == dest.spillSlotSize;
 
         CiAddress tmp = new CiAddress(CiKind.Double, ARMV7.RSP);
         subq(ARMV7.rsp, value.spillSlotSize);
@@ -413,6 +418,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         fstp(tmp);
         movsd(dest, tmp);
         addq(ARMV7.rsp, dest.spillSlotSize);
+        */
     }
 
     /**
@@ -423,17 +429,40 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
      */
     public void save(CiCalleeSaveLayout csl, int frameToCSA) {
         CiRegisterValue frame = frameRegister.asValue();
+        // APN if we assume that the first register is offset ZERO then we can save/restore them using a
+        // single stm/ldm instruction for BASE REGISTERS but what about floating point!!!!!
+        // this will need to be expanded to use VSTM/VLDM as necessary
+        boolean      first = true;
+        int oldOffset = -1;
+        int registerList = 0;
         for (CiRegister r : csl.registers) {
             int offset = csl.offsetOf(r);
-            movq(new CiAddress(target.wordKind, frame, frameToCSA + offset), r);
+            registerList |= (1<<(r.encoding & 0xf));
+
+            if (first) {
+                assert(offset == 0);
+                // if it fails then we need to add a value to the frame pointer
+                first = false;
+            }else {
+                assert(oldOffset == (offset+1));
+                // if it fails then we cannot to stm
+            }
+
+            oldOffset = offset;
+            //movq(new CiAddress(target.wordKind, frame, frameToCSA + offset), r);
         }
+        stm(ConditionFlag.Always,0,0,1,0,frameRegister,registerList);// r13 is the stack pointer
+
     }
 
     public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
         CiRegisterValue frame = frameRegister.asValue();
+        int registerList = 0;
         for (CiRegister r : csl.registers) {
             int offset = csl.offsetOf(r);
-            movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
+            registerList |= (1<<(r.encoding & 0xf));
+            //movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
         }
+        ldm(ConditionFlag.Always,0,0,1,0,frameRegister,registerList);
     }
 }

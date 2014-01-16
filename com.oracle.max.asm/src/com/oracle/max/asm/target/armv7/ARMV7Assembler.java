@@ -1026,6 +1026,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 
 
     }
+    public final void nop() {
+        movror(ConditionFlag.Always,false,ARMV7.r0,ARMV7.r0,0);
+    }
 
 }
 
