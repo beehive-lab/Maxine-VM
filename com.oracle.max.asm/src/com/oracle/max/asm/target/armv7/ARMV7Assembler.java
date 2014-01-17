@@ -308,7 +308,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     }
 
-    public void mov(final ConditionFlag cond,final CiRegister Rd, final int imm16) {
+    public void movw(final ConditionFlag cond,final CiRegister Rd, final int imm16) {
         int instruction = 0x03000000;
         checkConstraint(0<= imm16 && imm16 <= 65535,"0<= imm16 && imm16 <= 65535 " );
         instruction |= ((cond.value()&0xf) << 28);
@@ -740,6 +740,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+
+
+
     /**
      * Pseudo-external assembler syntax: {@code swi[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>immed_24</i>
      * Example disassembly syntax: {@code swieq         0x0}
@@ -812,7 +815,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         version in the longer term we probably want a more natural encoding/fit to ARM elsewhere in Maxine and then to refactor
         but right now the priority is to get the port working.
      */
-    private void setUpScratch(CiAddress addr) {
+    public void setUpScratch(CiAddress addr) {
         // might be in memory
         // might be in a register
 
@@ -826,8 +829,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // APN simple case where we just have a register destination
         if (base.isValid()) {
             if(disp != 0) {
-                mov(ConditionFlag.Always,scratchRegister,disp&0xffff);   // APN crude way to load a constant into a register.
-                movt(ConditionFlag.Always,scratchRegister,(disp&0xffff0000 >> 16)) ;
+                movl(scratchRegister,disp);
                 add(ConditionFlag.Always,false,scratchRegister,base,0,0);
             }
             if(index.isValid()){
@@ -842,10 +844,32 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void subq(CiRegister dst, int imm32) {
         assert(dst.isValid());
-        mov(ConditionFlag.Always,scratchRegister,imm32&0xffff);
-        movt(ConditionFlag.Always,scratchRegister,(imm32&0xffff0000 >> 16)) ;
+        movl(scratchRegister,imm32);
         // dst = dst - imm32;
         sub(ConditionFlag.Always,false,dst,dst,scratchRegister,0,0);
+
+    }
+    public final void movl(CiRegister dst, int imm32)   {    // crude way to load a 32 bit immediate
+        assert(dst.isFpu());
+        movw   (ConditionFlag.Always,dst,imm32&0xffff);
+        movt    (ConditionFlag.Always,dst,((imm32&0xffff0000) >> 16)) ;
+
+    }
+    public final void alignForPatchableDirectCall() { // APN copy of X86
+        int dispStart = codeBuffer.position() + 1;
+        int mask = target.wordSize - 1;
+        if ((dispStart & ~mask) != ((dispStart + 3) & ~mask)) {
+            for(int i = 0; i < (target.wordSize - (dispStart & mask));i++)
+            //nop(target.wordSize - (dispStart & mask));
+                    nop();
+            assert ((codeBuffer.position() + 1) & mask) == 0;
+        }
+    }
+    public final void call()
+    {
+        emitInt(0); // movw(scratch,const)
+        emitInt(0); //movt(scratch,const)
+        emitInt(0); // mov PC,scratch
 
     }
     public final void movslq(CiAddress dst,int imm32)  {
@@ -862,16 +886,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         // below will be sensible
         // probable errors ... neds to use 2x32bit registers and do a sign extend
         // possibly needs to store result of sign extension in memory.
-        mov(ConditionFlag.Always,dst.base(),imm32&0xffff);
-        movt(ConditionFlag.Always,dst.base(),(imm32&0xffff0000 >> 16)) ;
+        movl(dst.base(),imm32);
     }
     public final void cmpl(CiRegister src,int imm32) {
         /*
         APN ... condition flags need to be set presumably and used at a later point
          */
         assert(src.isValid());
-        mov(ConditionFlag.Always,scratchRegister,imm32&0xffff);
-        movt(ConditionFlag.Always,scratchRegister,(imm32&0xffff0000 >> 16)) ;
+        movl(scratchRegister,imm32);
         cmp(ConditionFlag.Always,src,scratchRegister,0,0);
 
     }
@@ -890,8 +912,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void addq(CiRegister dst,int imm32)    {
         assert(dst.isValid());
-        mov(ConditionFlag.Always,scratchRegister,imm32&0xffff);
-        movt(ConditionFlag.Always,scratchRegister,(imm32&0xffff0000 >> 16)) ;
+        movl(scratchRegister,imm32) ;
         // dst = dst + imm32;
         add(ConditionFlag.Always,false,dst,scratchRegister,0,0);
 
@@ -926,8 +947,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // APN simple case where we just have a register destination
         if (base.isValid()) {
             if(disp != 0) {
-                mov(ConditionFlag.Always,scratchRegister,disp&0xffff);   // APN crude way to load a constant into a register.
-                movt(ConditionFlag.Always,scratchRegister,(disp&0xffff0000 >> 16)) ;
+                movl(scratchRegister,disp);
                 add(ConditionFlag.Always,false,scratchRegister,base,0,0);
             }
             if(index.isValid()){
@@ -988,8 +1008,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                     // do we know the range of immediate values that might be produced?
                     // TODO try to do some tracing of Maxine and see what values come out of here.
                     // in the meantime we do it inefficiently but correctly for 32 bit displacements
-                    mov(ConditionFlag.Always,scratchRegister,disp&0xffff);
-                    movt(ConditionFlag.Always,scratchRegister,(disp&0xffff0000 >> 16)) ;
+                    movl(scratchRegister,disp);
                     add(ConditionFlag.Always,false,scratchRegister,base,0,0); //APN A8.8.5 ADD(immediate,ARM)
 
                 }

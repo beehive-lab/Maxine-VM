@@ -80,7 +80,6 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     // 64 bit versions
 
-
     public void decrementq(CiRegister reg, int value) {
         if (value == Integer.MIN_VALUE) {
             subq(reg, value);
