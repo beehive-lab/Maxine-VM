@@ -271,7 +271,7 @@ public final class ARMTargetMethodUtil {
     }
 
     public static VMFrameLayout frameLayout(TargetMethod tm) {
-        return new OptoStackFrameLayout(tm.frameSize(), true, ARMV7.rsp);
+        return new OptoStackFrameLayout(tm.frameSize(), true, ARMV7.r13);
     }
 
     /**
