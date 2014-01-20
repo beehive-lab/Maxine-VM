@@ -271,7 +271,10 @@ public final class ARMTargetMethodUtil {
     }
 
     public static VMFrameLayout frameLayout(TargetMethod tm) {
-        return new OptoStackFrameLayout(tm.frameSize(), true, ARMV7.r13);
+        // APN confusion here is, we plan to use a frame pointer fp, which is to store the top of
+        // the stack (activation record) for a procedure
+        // whereas the stack pointer sp is the tail of the stack itself where we add onto
+        return new OptoStackFrameLayout(tm.frameSize(), false, ARMV7.r13);
     }
 
     /**
@@ -302,9 +305,9 @@ public final class ARMTargetMethodUtil {
         Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
         Pointer callerSP = ripPointer.plus(Word.size()); // Skip return instruction pointer on stack
         Pointer callerFP;
-        if (!csa.isZero() && csl.contains(ARMV7.rbp.number)) {
+        if (!csa.isZero() && csl.contains(ARMV7.r11.encoding)) {
             // Read RBP from the callee save area
-            callerFP = sfw.readWord(csa, csl.offsetOf(ARMV7.rbp)).asPointer();
+            callerFP = sfw.readWord(csa, csl.offsetOf(ARMV7.r11.encoding)).asPointer();
         } else {
             // Propagate RBP unchanged
             callerFP = current.fp();

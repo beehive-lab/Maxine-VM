@@ -642,7 +642,82 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (offset_12 & 0xfff);
         emitInt(instruction);
     }
+    public void ldrshw(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm)
+    {
 
+        int instruction =       0x001000f0;
+        P = P & 1;
+        U = U & 1;
+        W = W & 1;
+        instruction |= (P<<24) |   (U<<23) | (W << 21);
+        instruction |=    ((cond.value() & 0xf) << 28);
+        instruction |=     ( (Rn.encoding &0xf) << 16);
+        instruction |=     ( (Rt.encoding &0xf) << 12);
+        instruction |=      (Rm.encoding &0xf);
+        emitInt(instruction);
+    }
+    public void ldrb(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm,
+    int imm2Type, int imm5)
+    {
+
+        int instruction =       0x06100000;
+        P = P & 1;
+        U = U & 1;
+        W = W & 1;
+        instruction |= (P<<24) |   (U<<23) | (W << 21);
+        instruction |=    ((cond.value() & 0xf) << 28);
+        instruction |=     ( (Rn.encoding &0xf) << 16);
+        instruction |=     ( (Rt.encoding &0xf) << 12);
+        instruction |=      (Rm.encoding &0xf);
+        instruction |=  ((imm2Type & 0x3) <<5);
+        instruction |=  ((imm5&0x1f) << 7);
+        emitInt(instruction);
+    }
+    public void ldr(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm,
+                     int imm2Type, int imm5)
+    {
+
+        int instruction =       0x06100000;
+        P = P & 1;
+        U = U & 1;
+        W = W & 1;
+        instruction |= (P<<24) |   (U<<23) | (W << 21);
+        instruction |=    ((cond.value() & 0xf) << 28);
+        instruction |=     ( (Rn.encoding &0xf) << 16);
+        instruction |=     ( (Rt.encoding &0xf) << 12);
+        instruction |=      (Rm.encoding &0xf);
+        instruction |=  ((imm2Type & 0x3) <<5);
+        instruction |=  ((imm5&0x1f) << 7);
+        emitInt(instruction);
+    }
+    public void movss(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm,
+        int imm2Type, int imm5)
+    {                // move a float ...
+                    // APN might want/need to make it use special registers?
+                    // so some logic might need to be placed here to choose the correct instruction
+        ldr(cond,P,U,W,Rn,Rt,Rm,imm2Type,imm5);
+
+    }
+    public void movsd(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm)
+    {
+        // APN same issue as above ...
+        ldrd(cond,P,U,W,Rn,Rt,Rm);
+
+    }
+    public void ldrd(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm)
+    {
+
+        int instruction =       0x000000d0;
+        P = P & 1;
+        U = U & 1;
+        W = W & 1;
+        instruction |= (P<<24) |   (U<<23) | (W << 21);
+        instruction |=    ((cond.value() & 0xf) << 28);
+        instruction |=     ( (Rn.encoding &0xf) << 16);
+        instruction |=     ( (Rt.encoding &0xf) << 12);
+        instruction |=      (Rm.encoding &0xf);
+        emitInt(instruction);
+    }
     /**
      * Pseudo-external assembler syntax: {@code ldr[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code ldreq         r0, [r0], +r0, ror #0x0}
@@ -872,6 +947,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(0); // mov PC,scratch
 
     }
+    public final void leave()
+    {
+        movror(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12,0); // might be wrong!
+
+    }
     public final void movslq(CiAddress dst,int imm32)  {
         // APN ok Im assuming this is just as simple mov rather than an actual sign extend?
         // it might be used in 64 bit mode, but ARMV7 is only 32 bit anyway.
@@ -1045,9 +1125,35 @@ public class ARMV7Assembler extends AbstractAssembler {
 
 
     }
+    public void align(int modulus) {
+        if (codeBuffer.position() % modulus != 0) {
+            nop(modulus - (codeBuffer.position() % modulus));
+        }
+    }
+
+    public final void nop(int times) {
+        assert(times > 0);
+        for(int i = 0; i < times; i++)
+            nop();
+    }
     public final void nop() {
         movror(ConditionFlag.Always,false,ARMV7.r0,ARMV7.r0,0);
     }
 
+    public final void ret()
+
+    {
+
+        movror(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14,0);
+    }
+    public void enter(short imm16, byte imm8) {
+        emitByte(0xC8);
+        // appended:
+        emitByte(imm16 & 0xff);
+        imm16 >>= 8;
+        emitByte(imm16 & 0xff);
+        emitByte(imm8);
+    }
 }
+
 

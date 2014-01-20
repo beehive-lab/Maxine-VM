@@ -33,6 +33,7 @@ import static com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.*;
 import java.io.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.AMD64Assembler;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
@@ -305,7 +306,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             @Override
             public CiRegister framePointerReg() {
-                return ARMV7.rsp;
+                return ARMV7.r11;
             }
 
             @Override
@@ -390,7 +391,11 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // address in the baseline caller.
 
             // Save the address of the OPT callee's main body in RAX
-            asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
+            // APN TODO this is broken for now we need just to get it to compile then fix all stack stuff!
+            //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
+            // APN so is RAX storing the return address?
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
+            asm.movror(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r14, ARMV7.r12, 0);
 
             // Compute the number of stack args needed for the call (i.e. the args that won't
             // be put into registers)
@@ -422,7 +427,11 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             // Allocate the frame and save RBP to the stack with an ENTER instruction
             assert explicitlyAllocatedFrameSize >= 0 && explicitlyAllocatedFrameSize <= Short.MAX_VALUE;
-            asm.enter(explicitlyAllocatedFrameSize, 0);
+
+            //asm.enter(explicitlyAllocatedFrameSize, 0);
+            // APN more to be done here ...
+            asm.stm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,ARMV7.r13,1<<ARMV7.r14.encoding);
+            // APN what is menat by a RIP slot?
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
             // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize + OPT_SLOT_SIZE.
@@ -451,7 +460,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             // Args are now copied to the OPT locations; call the OPT main body
             int callPos = asm.codeBuffer.position();
-            asm.call(rax);
+            //asm.call(rax);
+            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12,0);
             int callSize = asm.codeBuffer.position() - callPos;
 
             // Restore RSP and RBP. Given that RBP is never modified by OPT methods and baseline methods always
@@ -461,11 +471,11 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             String description = Type.BASELINE2OPT + "-Adapter" + sig;
             // RSP has been restored to the location holding the address of the OPT main body.
             // The adapter must return to the baseline caller whose RIP is one slot higher up.
-            asm.addq(rsp, 8);
+            asm.addq(ARMV7.r13, 8);
 
             assert WordWidth.signedEffective(baselineArgsSize).lessEqual(WordWidth.BITS_16);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
-            asm.ret((short) baselineArgsSize);
+            asm.ret(/* to make it compile APN removed (short) baselineArgsSize*/);
 
             final byte[] code = asm.codeBuffer.close(true);
             if (refMap != null) {
@@ -482,16 +492,54 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         @Override
         protected void adapt(ARMV7Assembler asm, Kind kind, CiRegister reg, int offset32) {
             switch (kind.asEnum) {
-                case BYTE:      asm.movsxb(reg, new CiAddress(CiKind.Byte, rsp.asValue(), offset32));    break;
-                case BOOLEAN:   asm.movzxb(reg, new CiAddress(CiKind.Boolean, rsp.asValue(), offset32)); break;
-                case SHORT:     asm.movsxw(reg, new CiAddress(CiKind.Short, rsp.asValue(), offset32));   break;
-                case CHAR:      asm.movzxl(reg, new CiAddress(CiKind.Char, rsp.asValue(), offset32));    break;
-                case INT:       asm.movslq(reg, new CiAddress(CiKind.Int, rsp.asValue(), offset32));     break;
-                case LONG:
+                case BYTE:      //asm.movsxb(reg, new CiAddress(CiKind.Byte, rsp.asValue(), offset32));
+                    asm.setUpScratch(new CiAddress(CiKind.Byte, ARMV7.r13.asValue(), offset32));
+                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,0,0,0,reg,ARMV7.r12,ARMV7.r12,0,0);
+
+                break;
+
+                case BOOLEAN:   //asm.movzxb(reg, new CiAddress(CiKind.Boolean, rsp.asValue(), offset32));
+                    asm.setUpScratch(new CiAddress(CiKind.Boolean, ARMV7.r13.asValue(), offset32));
+                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,0,0,0, reg, ARMV7.r12,ARMV7.r12,0, 0);
+                break;
+
+                case SHORT:
+                    //asm.movsxw(reg, new CiAddress(CiKind.Short, rsp.asValue(), offset32));
+                    asm.setUpScratch( new CiAddress(CiKind.Short, ARMV7.r13.asValue(), offset32));
+                    asm.ldrshw(ARMV7Assembler.ConditionFlag.Always,0,0,0, reg, ARMV7.r12,ARMV7.r12);
+                break;
+
+                case CHAR:
+                    asm.setUpScratch(    new CiAddress(CiKind.Char, ARMV7.r13.asValue(), offset32));
+                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,0,0,0,reg,ARMV7.r12,ARMV7.r12,0,0);
+                            //asm.movzxl(reg, new CiAddress(CiKind.Char, rsp.asValue(), offset32));
+                break;
+
+                case INT:
                 case WORD:
-                case REFERENCE: asm.movq(reg, new CiAddress(CiKind.Long, rsp.asValue(), offset32));      break;
-                case FLOAT:     asm.movss(reg, new CiAddress(CiKind.Float, rsp.asValue(), offset32));    break;
-                case DOUBLE:    asm.movsd(reg, new CiAddress(CiKind.Double, rsp.asValue(), offset32));   break;
+                case REFERENCE: // ARMV7 is 32 bit!!!!! so we only need 32bits
+                    asm.setUpScratch(   new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32));
+                    asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,reg,ARMV7.r12,ARMV7.r12,0,0);
+                    //asm.movslq(reg, new CiAddress(CiKind.Int, rsp.asValue(), offset32));
+                break;
+
+                case LONG: // what about long long? we dont have an enum CiKind for that? APN
+                    asm.setUpScratch(    new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32));
+                    asm.ldrd(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, reg, ARMV7.r12, ARMV7.r12);
+                      //  asm.movq(reg, new CiAddress(CiKind.Long, rsp.asValue(), offset32));
+                break;
+
+                case FLOAT:
+                    asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32));
+                    asm.movss(ARMV7Assembler.ConditionFlag.Always,0,0,0,reg,ARMV7.r12,ARMV7.r12,0,0);
+                    //asm.movss(reg, new CiAddress(CiKind.Float, rsp.asValue(), offset32));
+                break;
+
+                case DOUBLE:
+                    asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32));
+                    asm.movsd(ARMV7Assembler.ConditionFlag.Always,0,0,0,reg,ARMV7.r12,ARMV7.r12);
+                    //asm.movsd(reg, new CiAddress(CiKind.Double, rsp.asValue(), offset32));
+                break;
                 default:        throw ProgramError.unexpected();
             }
         }
@@ -634,7 +682,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             @Override
             public CiRegister framePointerReg() {
-                return ARMV7.rsp;
+                return ARMV7.r11;
             }
 
             @Override
@@ -696,6 +744,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             // A baseline caller jumps over the call to the OPT2BASELINE adapter
             Label end = new Label();
+            // shall we branch to this?
             asm.jmp(end);
 
             // Pad with nops up to the OPT entry point
@@ -726,8 +775,9 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // address in the OPT caller.
 
             // Save the address of the baseline callee's main body in RAX
-            asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
-
+            //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
+            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r14,ARMV7.r12,0 );
             // Initial args are in registers, remaining args are on the stack.
             int baselineArgsSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
             assert baselineArgsSize % target().stackAlignment == 0 : "BASELINE_SLOT_SIZE should guarantee parametersSize satifies ABI alignment requirements";
@@ -758,7 +808,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // The baseline method will have popped the args off the stack so now
             // RSP is pointing to the slot holding the address of the baseline main body.
             // The adapter must return to the OPT caller whose RIP is one slot higher up.
-            asm.addq(rsp, OPT_SLOT_SIZE);
+            asm.addq(ARMV7.r13, OPT_SLOT_SIZE);
 
             // Return to the OPT caller
             asm.ret(0);
@@ -777,12 +827,12 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 case BOOLEAN:
                 case SHORT:
                 case CHAR:
-                case INT:       asm.movl(new CiAddress(CiKind.Int, rsp.asValue(), offset32), reg);  break;
+                case INT:       asm.movl(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32), reg);  break;
                 case LONG:
                 case WORD:
-                case REFERENCE: asm.movq(new CiAddress(CiKind.Long, rsp.asValue(), offset32), reg);  break;
-                case FLOAT:     asm.movss(new CiAddress(CiKind.Float, rsp.asValue(), offset32), reg);  break;
-                case DOUBLE:    asm.movsd(new CiAddress(CiKind.Double, rsp.asValue(), offset32), reg);  break;
+                case REFERENCE: asm.movq(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32), reg);  break;
+                case FLOAT:     asm.movss(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32), reg);  break;
+                case DOUBLE:    asm.movsd(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32), reg);  break;
                 default:        throw ProgramError.unexpected();
             }
         }
@@ -826,11 +876,11 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
     protected void stackCopy(ARMV7Assembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
         // First, load into a scratch register of appropriate size for the kind, then write to memory location
         if (kind.width == WordWidth.BITS_64) {
-            asm.movq(scratch, new CiAddress(WordUtil.archKind(), rsp.asValue(), sourceStackOffset));
-            asm.movq(new CiAddress(WordUtil.archKind(), rsp.asValue(), destStackOffset), scratch);
+            asm.movq(scratch, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
+            asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset), scratch);
         } else {
-            asm.movzxd(scratch, new CiAddress(WordUtil.archKind(), rsp.asValue(), sourceStackOffset));
-            asm.movl(new CiAddress(WordUtil.archKind(), rsp.asValue(), destStackOffset), scratch);
+            asm.movzxd(scratch, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
+            asm.movl(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset), scratch);
         }
     }
 
