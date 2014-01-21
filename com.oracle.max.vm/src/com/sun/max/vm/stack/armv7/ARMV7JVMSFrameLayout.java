@@ -109,7 +109,7 @@ public class ARMV7JVMSFrameLayout extends JVMSFrameLayout {
 
     @Override
     public CiRegister framePointerReg() {
-        return ARMV7.rbp;
+        return ARMV7.r11; // APN rbp on X86 isto be  r11 on ARMV7!!!!!
     }
 
     @Override

@@ -75,7 +75,14 @@ The description below is for X86 and ARMV7 appears because of the use of a globa
  * </pre>
  *
  * The fault address (i.e. trapped PC) is stored in the return address slot, making the
- * trap frame appear as if the trapped method called the trap stub directly.
+ * trap frame appear as if the trapped method called the trap stub directly
+ *
+ * ARMV7
+ * r14_xxx contains the return address.
+ * r15_xxx contians the exception vector address
+ * SPSR_xxx contains copy of the CPSR at exception.
+ * NOTHING PUSHED ONTO STACK BY HARDWARE?
+ *
  */
 public final class ARMTrapFrameAccess extends TrapFrameAccess {
 
@@ -85,21 +92,21 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
     public static final CiCalleeSaveLayout CSL;
     static {
         CiRegister[] csaRegs = {
-            rax,  rcx,  rdx,   rbx,   rsp,   rbp,   rsi,   rdi,
-            r8,   r9,   r10,   r11,   r12,   r13,   r14,   r15,
-            xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,
-            xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
+
+
         };
 
-        int size = (16 * 8) + (16 * 16);
+        int size = 0;
         TRAP_NUMBER_OFFSET = size;
-        size += 8;
+        size += 4;
         FLAGS_OFFSET = size;
-        size += 8;
-
+        size += 4;
         CSL = new CiCalleeSaveLayout(0, size, 8, csaRegs);
     }
 
+    /* APN
+        I guess we need to provide registers here rather than pointers.
+     */
     @Override
     public Pointer getPCPointer(Pointer trapFrame) {
 	System.err.println("ARMTrapFrameAccess");
@@ -129,7 +136,7 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
     @Override
     public void setSafepointLatch(Pointer trapFrame, Pointer value) {
 	System.err.println("ARMTrapFrameAccess");
-        Pointer csa = getCalleeSaveArea(trapFrame);
+        Pointer csa = getCalleeSaveArea(getFPtrapFrame);
         int offset = CSL.offsetOf(LATCH_REGISTER);
         csa.writeWord(offset, value);
     }
