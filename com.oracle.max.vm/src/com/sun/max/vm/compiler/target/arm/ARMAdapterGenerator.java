@@ -745,7 +745,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // A baseline caller jumps over the call to the OPT2BASELINE adapter
             Label end = new Label();
             // shall we branch to this?
-            asm.jmp(end);
+            asm.branch(end);
 
             // Pad with nops up to the OPT entry point
             asm.align(OPTIMIZED_ENTRY_POINT.offset());
@@ -786,7 +786,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             int adapterFrameSize = baselineArgsSize + optCallerRIPSlotSize;
 
             // Adjust RSP to create space for the baseline args
-            asm.subq(rsp, baselineArgsSize);
+            asm.subq(ARMV7.r13, baselineArgsSize);
+            // APN -- do we need to copy the args or does that happen elsewhere?
 
             // Copy OPT args into baseline args
             int baselineStackOffset = 0;
@@ -802,7 +803,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             // Args are now copied to the baseline locations; call the baseline main body
             int callPos = asm.codeBuffer.position();
-            asm.call(rax);
+            //asm.call(); // TODO APN was call RAX  this is all wrong!! NEEDS to be fixed
+            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14,0);
             int callSize = asm.codeBuffer.position() - callPos;
 
             // The baseline method will have popped the args off the stack so now
@@ -823,16 +825,37 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         @Override
         protected void adapt(ARMV7Assembler asm, Kind kind, CiRegister reg, int offset32) {
             switch (kind.asEnum) {
+                // APN in X86 if we mov ADDRESS <-- reg, are we storing?
+                // APN can the address include base, scale and index ....
+                // we need to clarify this.
+
                 case BYTE:
                 case BOOLEAN:
                 case SHORT:
                 case CHAR:
-                case INT:       asm.movl(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32), reg);  break;
+                case INT:
+                case WORD:     // APN changed cases matching this as in ARM most things fit in 32bits.
+                case REFERENCE:
+                                asm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32));
+                                asm.stm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,ARMV7.r12,1<< reg.encoding );     break;
+                                //asm.movl(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32), reg);  break;
                 case LONG:
-                case WORD:
-                case REFERENCE: asm.movq(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32), reg);  break;
-                case FLOAT:     asm.movss(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32), reg);  break;
-                case DOUBLE:    asm.movsd(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32), reg);  break;
+                                asm.setUpScratch(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32));     // longs occupy two regists in ARM
+                                asm.stm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,ARMV7.r12,(1 << reg.encoding | (1<< (reg.encoding+1))));
+                                //asm.movl(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32), reg);  break;
+                case FLOAT:
+                                asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(),offset32));
+                                asm.stm (ARMV7Assembler.ConditionFlag.Always,0,0,0,0,ARMV7.r12,1 << reg.encoding);// 32 bit store ...
+                                    // APN what if the values are in float/coprocessor regs, you need a different instruction
+                                //asm.movss(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32), reg);
+                                break;
+                case DOUBLE:
+                                asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.r13.asValue(),offset32)) ;
+                                asm.stm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,ARMV7.r12,(1 << reg.encoding | (1<< (reg.encoding+1))));
+                                // APN again what if using FP regs!!!
+                                // double is 64 bits so 2 regs?
+                                //asm.movsd(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32), reg);
+                                break;
                 default:        throw ProgramError.unexpected();
             }
         }
@@ -875,12 +898,19 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
     protected void stackCopy(ARMV7Assembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
         // First, load into a scratch register of appropriate size for the kind, then write to memory location
+        // APN Im guessing that this copies values from one stack to another
+        // If we have a 64 bit stack copy we can do it as 2 copies.
+        // endianness?
+
         if (kind.width == WordWidth.BITS_64) {
-            asm.movq(scratch, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
-            asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset), scratch);
+            // APN NOT sure how to do this ...
+            // I can certainly do it with 2 temporary registers ...
+            // or I can do it as an offset in an instruction.
+            //asm.movq(scratch, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
+            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset), scratch);
         } else {
-            asm.movzxd(scratch, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
-            asm.movl(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset), scratch);
+            //asm.movzxd(scratch, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
+            //asm.movl(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset), scratch);
         }
     }
 

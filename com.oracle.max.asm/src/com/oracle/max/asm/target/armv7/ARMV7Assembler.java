@@ -1,5 +1,6 @@
 package com.oracle.max.asm.target.armv7;
 
+import com.oracle.max.asm.*;
 
 import com.oracle.max.asm.AbstractAssembler;
 import com.sun.cri.ci.CiAddress;
@@ -73,7 +74,22 @@ public class ARMV7Assembler extends AbstractAssembler {
 
 
     }
+    public void branch(Label l) {
+    if (l.isBound()) {
+        // APn I need to compute a relative address if it is less than 24bits;
+        // then branch
+        // or I need to compute an absolute address and do a MOV PC,absolute.
+        //branch(l.position(), false);
+    } else {
+        // By default, forward jumps are always 24-bit displacements, since
+        // we can't yet know where the label will be bound. If you're sure that
+        // the forward jump will not run beyond 24-bits bytes, then its ok
 
+        l.addPatchAt(codeBuffer.position());
+        emitByte(0xE9);
+        emitInt(0);
+    }
+    }
     @Override
     protected void patchJumpTarget(int branch, int target) {
         // b, bl & bx goes here
@@ -1145,6 +1161,10 @@ public class ARMV7Assembler extends AbstractAssembler {
     {
 
         movror(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14,0);
+    }
+    public final void ret(int imm16) {
+        movw(ConditionFlag.Always,ARMV7.r0,imm16);
+        ret();
     }
     public void enter(short imm16, byte imm8) {
         emitByte(0xC8);
