@@ -24,6 +24,7 @@ package com.oracle.max.asm.target.armv7;
 
 import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
+import static com.sun.cri.ci.CiKind.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
@@ -113,6 +114,7 @@ public class ARMV7 extends CiArchitecture {
                 r15.encoding + 1,
                 4);
     }
+    public static final CiRegisterValue RSP = r12.asValue(Int); // APN might need to be an int?
 
     @Override
     public boolean isARMV7() {

@@ -237,7 +237,7 @@ public class MaxRuntime implements RiRuntime {
             fp = AMD64.rsp;
             refMapToFPOffset = 0;
         } else if(platform.isa == ISA.ARM)	{
-		fp = ARMV7.rsp;
+		fp = ARMV7.r13;
 		refMapToFPOffset = 0;
 	}else {
             throw FatalError.unimplemented();

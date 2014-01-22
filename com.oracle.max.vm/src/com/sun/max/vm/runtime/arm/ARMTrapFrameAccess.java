@@ -91,7 +91,7 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
 
     public static final CiCalleeSaveLayout CSL;
     static {
-        CiRegister[] csaRegs = {
+        CiRegister[] csaRegs = {       r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r13,r14,r15
 
 
         };
@@ -111,6 +111,7 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
     public Pointer getPCPointer(Pointer trapFrame) {
 	System.err.println("ARMTrapFrameAccess");
         return trapFrame.plus(vm().stubs.trapStub().frameSize());
+
     }
 
     @Override
@@ -122,7 +123,7 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
     @Override
     public Pointer getFP(Pointer trapFrame) {
 	System.err.println("ARMTrapFrameAccess");
-        return trapFrame.readWord(CSL.offsetOf(rbp)).asPointer();
+        return trapFrame.readWord(CSL.offsetOf(r11)).asPointer();
     }
 
     @Override
@@ -136,7 +137,7 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
     @Override
     public void setSafepointLatch(Pointer trapFrame, Pointer value) {
 	System.err.println("ARMTrapFrameAccess");
-        Pointer csa = getCalleeSaveArea(getFPtrapFrame);
+        Pointer csa = getCalleeSaveArea(trapFrame);
         int offset = CSL.offsetOf(LATCH_REGISTER);
         csa.writeWord(offset, value);
     }

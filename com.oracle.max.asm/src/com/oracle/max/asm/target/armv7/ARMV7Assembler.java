@@ -635,7 +635,33 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         emitInt(instruction);
     }
+    public void strd(final ConditionFlag cond,int P, int U, int W,
+                    final CiRegister Rt, final CiRegister Rn, final CiRegister Rm) {
+        int instruction = 0x000000f0;
+        instruction |= ((P&0x1) << 24);
+        instruction |= ((U&0x1) << 23);
+        instruction |= ((W&0x1) << 21);
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rn.encoding & 0xf) << 16);
+        instruction |= ((Rt.encoding & 0xf) << 12);
+        instruction |= (Rm.encoding & 0xf);
 
+        emitInt(instruction);
+    }
+    public void str(final ConditionFlag cond,int P, int U, int W,
+                    final CiRegister Rt, final CiRegister Rn, final CiRegister Rm,int imm5, int imm2Type) {
+        int instruction = 0x06000000;
+        instruction |= ((P&0x1) << 24);
+        instruction |= ((U&0x1) << 23);
+        instruction |= ((W&0x1) << 21);
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rn.encoding & 0xf) << 16);
+        instruction |= ((Rt.encoding & 0xf) << 12);
+        instruction |= (Rm.encoding & 0xf);
+        instruction |= ((imm5& 0x1f) <<7);
+        instruction |= ((imm2Type & 0x3) << 5);
+        emitInt(instruction);
+    }
     /**
      * Pseudo-external assembler syntax: {@code ldr[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>offset_12</i>
      * Example disassembly syntax: {@code ldreq         r0, [r0, #-0x0]!}
@@ -941,7 +967,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     }
     public final void movl(CiRegister dst, int imm32)   {    // crude way to load a 32 bit immediate
-        assert(dst.isFpu());
+        //assert(dst.isFpu());
         movw   (ConditionFlag.Always,dst,imm32&0xffff);
         movt    (ConditionFlag.Always,dst,((imm32&0xffff0000) >> 16)) ;
 
@@ -961,6 +987,19 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(0); // movw(scratch,const)
         emitInt(0); //movt(scratch,const)
         emitInt(0); // mov PC,scratch
+        // APN need to update LR14 and do an absolute MOV to a new PC held in scratch
+        // or need to do a BL
+        // WHO/what/where is responsible for stack save/restore and procedure call standard
+
+    }
+    public final void call(CiRegister target)
+    {
+        emitInt(0); // movw(scratch,const)
+        emitInt(0); //movt(scratch,const)
+        emitInt(0); // mov PC,scratch
+        // APN need to update LR14 and do an absolute MOV to a new PC held in scratch
+        // or need to do a BL
+        // WHO/what/where is responsible for stack save/restore and procedure call standard
 
     }
     public final void leave()
@@ -1095,7 +1134,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         if(base.isValid() && (!index.isValid()) && scale.value == 1 && disp == 0) {
             // Base register is valid and stores an address
 
-            stm(ConditionFlag.Always,0,0,1,0,com.oracle.max.asm.target.armv7.ARMV7.r13,encode(base));// r13 is the stack pointer
+            stm(ConditionFlag.Always,0,0,1,0,com.oracle.max.asm.target.armv7.ARMV7.r13,1<<encode(base));// r13 is the stack pointer
 
         } else if (base.isValid()) {  // APN superfluous check, but base might be invalid once we sort out Placeholders
                 if(disp != 0) {
@@ -1174,6 +1213,38 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitByte(imm16 & 0xff);
         emitByte(imm8);
     }
+    public void nullCheck(CiRegister r) {
+        emitInt((0xe<<28)|(0x3<< 24)|(0x5<< 20)|(r.encoding << 16)|0); // sets condition flags
+        //to see if equal to zero
+
+    }
+    public void enter(short imm16) {
+
+        // stacksize = imm16
+        // push frame pointer
+        //framepointer = stackpointer
+        // stackptr = framepointer -stacksize
+
+
+        /*
+        case 0xC8: //C8 ENTER (80186+)
+    stacksize = getmem16(segregs[regcs], ip); StepIP(2);
+    nestlev = getmem8(segregs[regcs], ip); StepIP(1);
+    push(getreg16(regbp));
+    frametemp = getreg16(regsp);
+    //if (nestlev) {
+      //  for (temp16=1; temp16<nestlev; temp16++) {
+        //    putreg16(regbp, getreg16(regbp) - 2);
+          //  push(getreg16(regbp));
+       // }
+       // push(getreg16(regsp));
+   // }
+    putreg16(regbp, frametemp);
+    putreg16(regsp, getreg16(regbp) - stacksize);
+    break;
+        */
+    }
+
 }
 
 

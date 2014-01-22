@@ -48,12 +48,13 @@ import com.sun.cri.xir.*;
  */
 public class ARMV7CompilerStubEmitter {
 
+    //APN BROKEN!!!!
     private static final long FloatSignFlip = 0x8000000080000000L;
     private static final long DoubleSignFlip = 0x8000000000000000L;
-    private static final CiRegister convertArgument = ARMV7.xmm0;
-    private static final CiRegister convertResult = ARMV7.rax;
-    private static final CiRegister negateArgument = ARMV7.xmm0;
-    private static final CiRegister negateTemp = ARMV7.xmm1;
+    private static final CiRegister convertArgument = ARMV7.r0;
+    private static final CiRegister convertResult = ARMV7.r0;
+    private static final CiRegister negateArgument = ARMV7.r0;
+    private static final CiRegister negateTemp = ARMV7.r0;
 
     /**
      * The slots in which the stub finds its incoming arguments.
@@ -238,35 +239,35 @@ public class ARMV7CompilerStubEmitter {
 
     private void negatePrologue() {
         prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, negateArgument, negateTemp));
-        asm.movq(negateArgument, comp.frameMap().toStackAddress(inArgs[0]));
+       //' asm.movq(negateArgument, comp.frameMap().toStackAddress(inArgs[0]));
     }
 
     private void negateEpilogue() {
-        asm.movq(comp.frameMap().toStackAddress(outResult), negateArgument);
+       // asm.movq(comp.frameMap().toStackAddress(outResult), negateArgument);
         epilogue();
     }
 
     private void emitDNEG() {
         negatePrologue();
-        asm.movsd(negateTemp, tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));
-        asm.xorpd(negateArgument, negateTemp);
+      //  asm.movsd(negateTemp, tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));
+       // asm.xorpd(negateArgument, negateTemp);
         negateEpilogue();
     }
 
     private void emitFNEG() {
         negatePrologue();
-        asm.movsd(negateTemp, tasm.recordDataReferenceInCode(CiConstant.forLong(FloatSignFlip)));
-        asm.xorps(negateArgument, negateTemp);
+       // asm.movsd(negateTemp, tasm.recordDataReferenceInCode(CiConstant.forLong(FloatSignFlip)));
+       // asm.xorps(negateArgument, negateTemp);
         negateEpilogue();
     }
 
     private void convertPrologue() {
         prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, convertArgument, convertResult));
-        asm.movq(convertArgument, comp.frameMap().toStackAddress(inArgs[0]));
+       // asm.movq(convertArgument, comp.frameMap().toStackAddress(inArgs[0]));
     }
 
     private void convertEpilogue() {
-        asm.movq(comp.frameMap().toStackAddress(outResult), convertResult);
+        //asm.movq(comp.frameMap().toStackAddress(outResult), convertResult);
         epilogue();
     }
 
@@ -289,25 +290,25 @@ public class ARMV7CompilerStubEmitter {
     private void emitCOMISSD(boolean isDouble, boolean isInt) {
         convertPrologue();
         if (isDouble) {
-            asm.ucomisd(convertArgument, tasm.recordDataReferenceInCode(CiConstant.DOUBLE_0));
+            //asm.ucomisd(convertArgument, tasm.recordDataReferenceInCode(CiConstant.DOUBLE_0));
         } else {
-            asm.ucomiss(convertArgument, tasm.recordDataReferenceInCode(CiConstant.FLOAT_0));
+            //asm.ucomiss(convertArgument, tasm.recordDataReferenceInCode(CiConstant.FLOAT_0));
         }
         Label nan = new Label();
         Label ret = new Label();
-        asm.jccb(ConditionFlag.parity, nan);
-        asm.jccb(ConditionFlag.below, ret);
+        //asm.jccb(ConditionFlag.parity, nan);
+        //asm.jccb(ConditionFlag.below, ret);
 
         if (isInt) {
             // input is > 0 -> return maxInt
             // result register already contains 0x80000000, so subtracting 1 gives 0x7fffffff
             asm.decrementl(convertResult, 1);
-            asm.jmpb(ret);
+           // asm.jmpb(ret);
         } else {
             // input is > 0 -> return maxLong
             // result register already contains 0x8000000000000000, so subtracting 1 gives 0x7fffffffffffffff
             asm.decrementq(convertResult, 1);
-            asm.jmpb(ret);
+          //  asm.jmpb(ret);
         }
 
         // input is NaN -> return 0
@@ -342,7 +343,7 @@ public class ARMV7CompilerStubEmitter {
             asm.nop(entryCodeOffset);
         }
         final int frameSize = frameSize();
-        asm.subq(ARMV7.rsp, frameSize);
+       // asm.subq(ARMV7.rsp, frameSize);
         tasm.setFrameSize(frameSize);
         comp.frameMap().setFrameSize(frameSize);
         asm.save(csl, csl.frameOffsetToCSA);
@@ -357,7 +358,7 @@ public class ARMV7CompilerStubEmitter {
         asm.restore(csl, frameToCSA);
 
         // Restore rsp
-        asm.addq(ARMV7.rsp, frameSize());
+        //asm.addq(ARMV7.rsp, frameSize());
         asm.ret(0);
     }
 
@@ -370,7 +371,7 @@ public class ARMV7CompilerStubEmitter {
         CiCallingConvention cc = comp.registerConfig.getCallingConvention(RuntimeCall, call.arguments, comp.target, false);
         for (int i = 0; i < cc.locations.length; ++i) {
             CiValue location = cc.locations[i];
-            asm.movq(location.asRegister(), comp.frameMap().toStackAddress(inArgs[i]));
+            //asm.movq(location.asRegister(), comp.frameMap().toStackAddress(inArgs[i]));
         }
 
         if (C1XOptions.AlignDirectCallsForPatching) {
@@ -387,7 +388,7 @@ public class ARMV7CompilerStubEmitter {
 
         if (call.resultKind != CiKind.Void) {
             CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
-            asm.movq(comp.frameMap().toStackAddress(outResult), returnRegister);
+           // asm.movq(comp.frameMap().toStackAddress(outResult), returnRegister);
         }
     }
 }

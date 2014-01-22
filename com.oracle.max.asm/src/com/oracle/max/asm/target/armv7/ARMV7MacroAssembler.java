@@ -255,6 +255,9 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void incrementl(CiRegister reg, int value) {
+        movw(ConditionFlag.Always,ARMV7.r12,value&0xffff);
+        movt(ConditionFlag.Always,ARMV7.r12,value&0xffff0000);
+        add(ConditionFlag.Always,false,reg,ARMV7.r12,0,0);
         /*if (value == Integer.MIN_VALUE) {
             addl(reg, value);
             return;
@@ -357,7 +360,23 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
      * if the address might be a volatile field!
      */
     public void movlong(CiAddress dst, long src) {
-        /*CiAddress high = new CiAddress(dst.kind, dst.base, dst.index, dst.scale, dst.displacement + 4);
+        // APN ARM layout and endianness?
+        // might be the wrong layout of values in addresses
+        // this all seems a  bit tricky with ARM
+        // AS a hack suggestion is to push a couple of registers onto the stack
+        // load them with the constanv values
+
+        stm(ConditionFlag.Always,0,0,1,0,com.oracle.max.asm.target.armv7.ARMV7.r13,(1<<12)|1|2);// r13 is the stack pointer
+        setUpScratch(dst);
+        movl(ARMV7.r0,(int)(0xffffffff&src));
+        movl(ARMV7.r1,(int) ((src>>32)&0xffffffff));
+        str(ConditionFlag.Always,0,0,0,ARMV7.r0,ARMV7.r12,ARMV7.r0,0,0);
+        add(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,4,0); // add 4 to the address
+        str(ConditionFlag.Always,0,0,0,ARMV7.r1,ARMV7.r12,ARMV7.r1,0,0);
+        ldm(ConditionFlag.Always,0,0,1,0,ARMV7.r13,(1<<12)|1|2); //restore all
+        //CiAddress high = new CiAddress(dst.kind, dst.base, dst.index, dst.scale, dst.displacement + 4);
+
+        /*
         movl(dst, (int) (src & 0xFFFFFFFF));
         movl(high, (int) (src >> 32));*/
     }

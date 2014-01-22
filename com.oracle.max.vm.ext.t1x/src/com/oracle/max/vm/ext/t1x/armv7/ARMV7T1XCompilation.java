@@ -31,6 +31,7 @@ import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import java.util.*;
 // Test update APN to check operation of mercurial
+import com.oracle.max.asm.target.amd64.AMD64;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
 import com.oracle.max.cri.intrinsics.*;
@@ -54,6 +55,15 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 
+
+/*
+APN this is the first attempt to port ARMV7T1X, need to check the behaviour of the ldr instruction as I
+believe the offset register can be ignored ... if it cannot then we need to change the instruciton sequence to
+something else
+the pokes are wrong and need to be changed to stores!!!!
+
+
+ */
 public class ARMV7T1XCompilation extends T1XCompilation {
 
     protected final ARMV7MacroAssembler asm;
@@ -99,77 +109,124 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     public void peekObject(CiRegister dst, int index) {
-        asm.movq(dst, spWord(index));
+        // APN assume that we read a value from the stack into a register
+        // spWord returns a CiAddress.
+        // asm.movq(dst, spWord(index));
+        asm.setUpScratch(spWord(index));
+        asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
+        // APN need to check these code sequences.
     }
 
     @Override
     public void pokeObject(CiRegister src, int index) {
-        asm.movq(spWord(index), src);
+        // APN copy value in register to stack
+        asm.setUpScratch(spWord(index));
+        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,ARMV7.r0,0,0);
+        //asm.movq(spWord(index), src);
     }
 
     @Override
     public void peekWord(CiRegister dst, int index) {
-        asm.movq(dst, spWord(index));
+        //asm.movq(dst, spWord(index));
+        // APN same as peekObject as everything is 32bits.
+        asm.setUpScratch(spWord(index));
+        asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
+
     }
 
     @Override
     public void pokeWord(CiRegister src, int index) {
-        asm.movq(spWord(index), src);
+        // APN same as pokeObject
+        //asm.movq(spWord(index), src);
+        asm.setUpScratch(spWord(index));
+        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,ARMV7.r0,0,0);
     }
 
     @Override
     public void peekInt(CiRegister dst, int index) {
-        asm.movl(dst, spInt(index));
+
+        //asm.movl(dst, spInt(index));
+        asm.setUpScratch(spInt(index));
+        asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
     }
 
     @Override
     public void pokeInt(CiRegister src, int index) {
-        asm.movl(spInt(index), src);
+        //asm.movl(spInt(index), src);
+        asm.setUpScratch(spInt(index));
+        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,ARMV7.r0,0,0);
     }
 
     @Override
     public void peekLong(CiRegister dst, int index) {
-        asm.movq(dst, spLong(index));
+        //asm.movq(dst, spLong(index));
+        asm.setUpScratch(spLong(index));
+        asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0); //dst needs to be big enough to hold a long!
     }
 
     @Override
     public void pokeLong(CiRegister src, int index) {
-        asm.movq(spLong(index), src);
+        //asm.movq(spLong(index), src);
+        asm.setUpScratch(spLong(index));
+        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,ARMV7.r0,0,0);
     }
 
     @Override
     public void peekDouble(CiRegister dst, int index) {
-        asm.movdbl(dst, spLong(index));
+        //asm.movdbl(dst, spLong(index));
+        // APN if we use coporocessor REGS then we need to use Coprocesor asm
+        asm.setUpScratch(spLong(index));
+        asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
+
+
     }
 
     @Override
     public void pokeDouble(CiRegister src, int index) {
-        asm.movdbl(spLong(index), src);
+        //asm.movdbl(spLong(index), src);
+        asm.setUpScratch(spLong(index));
+        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,ARMV7.r0,0,0);
     }
 
     @Override
     public void peekFloat(CiRegister dst, int index) {
-        asm.movflt(dst, spInt(index));
+        asm.setUpScratch(spInt(index));
+        asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
+        //asm.movflt(dst, spInt(index));
     }
 
     @Override
     public void pokeFloat(CiRegister src, int index) {
-        asm.movflt(spInt(index), src);
+        //asm.movflt(spInt(index), src);
+        asm.setUpScratch(spInt(index));
+        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,ARMV7.r0,0,0);
     }
 
     @Override
     protected void assignObjectReg(CiRegister dst, CiRegister src) {
-        asm.movq(dst, src);
+        /**
+         * Emits code to assign the value in {@code src} to {@code dst}.
+         */
+        asm.movror(ConditionFlag.Always,false,dst, src,0);
     }
 
     @Override
     protected void assignWordReg(CiRegister dst, CiRegister src) {
-        asm.movq(dst, src);
+        //asm.movq(dst, src);
+        asm.movror(ConditionFlag.Always,false,dst, src,0);
     }
 
     @Override
     protected void assignLong(CiRegister dst, long value) {
-        asm.movq(dst, value);
+        //asm.movq(dst, value);
+        // how are the registers constrianed to correctly use the registers for long?
+        //asm.movlong(dst,value);
+        asm.movw(ConditionFlag.Always,dst,(int)(value&0xffff));
+        asm.movt(ConditionFlag.Always,dst,(int)((value&0xffff0000)>>16));
+        asm.movw(ConditionFlag.Always,ARMV7.cpuRegisters[dst.encoding +1],(int)(((value>>32)&0xffff)));
+        asm.movt(ConditionFlag.Always,ARMV7.cpuRegisters[dst.encoding +1],(int)(((value>>48)&0xffff)));
+
+
     }
 
     @Override
@@ -182,49 +239,74 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         int index = objectLiterals.size();
         objectLiterals.add(value);
 
-        asm.movq(dst, CiAddress.Placeholder);
-        int dispPos = buf.position() - 4;
+        //asm.movq(dst, CiAddress.Placeholder);
+        asm.movl(ARMV7.r12, 0); // APN so the idea is
+        /*  APN
+            load the immediate 32bit constant address into r12 (scratch)
+            then load the contents of this address into
+
+         */
+        asm.ldr(ConditionFlag.Always,0,0,0,dst,ARMV7.r12,ARMV7.r12,0,0);
+        int dispPos = buf.position() - 12;// three instructions
         patchInfo.addObjectLiteral(dispPos, index);
     }
 
     @Override
     protected void loadInt(CiRegister dst, int index) {
-        asm.movl(dst, localSlot(localSlotOffset(index, Kind.INT)));
+        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
+        asm.ldr(ConditionFlag.Always,0,0,0,dst,ARMV7.r12,ARMV7.r12,0,0);
+        //asm.movl(dst, localSlot(localSlotOffset(index, Kind.INT)));
     }
 
     @Override
     protected void loadLong(CiRegister dst, int index) {
-        asm.movq(dst, localSlot(localSlotOffset(index, Kind.LONG)));
+        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
+        asm.ldrd(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,asm.scratchRegister);
+        //asm.movq(dst, localSlot(localSlotOffset(index, Kind.LONG)));
     }
 
     @Override
     protected void loadWord(CiRegister dst, int index) {
-        asm.movq(dst, localSlot(localSlotOffset(index, Kind.WORD)));
+        asm.setUpScratch( localSlot(localSlotOffset(index, Kind.WORD)));
+        asm.ldr(ConditionFlag.Always,0,0,0,dst,ARMV7.r12,ARMV7.r12,0,0);
+        //asm.movq(dst, localSlot(localSlotOffset(index, Kind.WORD)));
     }
 
     @Override
     protected void loadObject(CiRegister dst, int index) {
-        asm.movq(dst, localSlot(localSlotOffset(index, Kind.REFERENCE)));
+        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
+        asm.ldr(ConditionFlag.Always,0,0,0,dst,ARMV7.r12,ARMV7.r12,0,0);
+        //asm.movq(dst, localSlot(localSlotOffset(index, Kind.REFERENCE)));
     }
 
     @Override
     protected void storeInt(CiRegister src, int index) {
-        asm.movl(localSlot(localSlotOffset(index, Kind.INT)), src);
+        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
+        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister,0,0) ;
+        //asm.movl(localSlot(localSlotOffset(index, Kind.INT)), src);
     }
 
     @Override
     protected void storeLong(CiRegister src, int index) {
-        asm.movq(localSlot(localSlotOffset(index, Kind.LONG)), src);
+        // APN how do we constrain regs to be correct for ARM?
+        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
+        asm.strd(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister);
+        //asm.movq(localSlot(localSlotOffset(index, Kind.LONG)), src);
     }
 
     @Override
     protected void storeWord(CiRegister src, int index) {
-        asm.movq(localSlot(localSlotOffset(index, Kind.WORD)), src);
+        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
+        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister,0,0);
+        //asm.movq(localSlot(localSlotOffset(index, Kind.WORD)), src);
     }
 
     @Override
     protected void storeObject(CiRegister src, int index) {
-        asm.movq(localSlot(localSlotOffset(index, Kind.REFERENCE)), src);
+        //
+        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
+        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister,0,0);
+        //asm.movq(localSlot(localSlotOffset(index, Kind.REFERENCE)), src);
     }
 
     @Override
@@ -234,38 +316,64 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
-        if (value == 0.0f) {
+       /* if (value == 0.0f) {
             asm.xorps(dst, dst);
         } else {
             asm.movl(scratch, Float.floatToRawIntBits(value));
             asm.movdl(dst, scratch);
         }
+        * APN not implemented
+        */
     }
 
     @Override
     protected void assignDouble(CiRegister dst, double value) {
+        /*
+        APN not implemented
         if (value == 0.0d) {
+
             asm.xorpd(dst, dst);
         } else {
             asm.movq(scratch, Double.doubleToRawLongBits(value));
             asm.movdq(dst, scratch);
         }
+        */
     }
+
+
+    /**
+            * Emits a direct call instruction whose immediate operand (denoting the absolute or relative offset to the target) will be patched later.
+            *
+            * @return the {@linkplain Safepoints safepoint} for the call
+    */
 
     @Override
     protected int callDirect() {
         alignDirectCall(buf.position());
         int causePos = buf.position();
-        asm.call();
+        asm.call();  // APN does nothing for now ... we can emit a BL if it is not too far away or we
+        // can update r14 and scratch  appropriately and mov PC, scratchRegister?
         int safepointPos = buf.position();
         asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
         return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
     }
-
+    /**
+     * Emits an indirect call instruction.
+     *
+     * @param target the register holding the address of the call target
+     * @param receiverStackIndex the index of the receiver which must be copied from the stack to the receiver register
+     *            used by the optimizing compiler. This is required so that dynamic trampolines can find the receiver in
+     *            the expected register. If {@code receiverStackIndex == -1}, then the copy is not emitted as
+     *            {@code target} is guaranteed to not be the address of a trampoline.
+     * @return the {@linkplain Safepoints safepoint} for the call
+     */
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
+        /* APN
+        What is meant by received in this context, do we mean return address?
+         */
         if (receiverStackIndex >= 0) {
-            peekObject(rdi, receiverStackIndex);
+            peekObject(r0, receiverStackIndex); // was rdi?
         }
         int causePos = buf.position();
         asm.call(target);
@@ -274,8 +382,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         return Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
     }
 
+
     @Override
     protected void nullCheck(CiRegister src) {
+        // nullCheck on AMD64 testl(AMD64.rax, new CiAddress(Word, r.asValue(Word), 0));
+
         asm.nullCheck(src);
     }
 
@@ -283,7 +394,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // Align bytecode call site for MT safe patching
         final int alignment = 7;
         final int roundDownMask = ~alignment;
-        final int directCallInstructionLength = 5; // [0xE8] disp32
+        //final int directCallInstructionLength = 5; // [0xE8] disp32
+        final int directCallInstructionLength = 4; // BL on ARM
         final int endOfCallSite = callPos + (directCallInstructionLength - 1);
         if ((callPos & roundDownMask) != (endOfCallSite & roundDownMask)) {
             // Emit nops to align up to next 8-byte boundary
@@ -298,14 +410,23 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected Adapter emitPrologue() {
+        // APN need to understand the semantics of emitPrologue ...
         Adapter adapter = null;
         if (adapterGenerator != null) {
             adapter = adapterGenerator.adapt(method, asm);
         }
-
+        // stacksize = imm16
+        // push frame pointer
+        // framepointer = stackpointer
+        // stackptr = framepointer -stacksize
         int frameSize = frame.frameSize();
-        asm.enter(frameSize - Word.size(), 0);
-        asm.subq(rbp, framePointerAdjustment());
+        //asm.enter(frameSize - Word.size(), 0);
+        //asm.enter(frameSize-Word.size());
+        asm.stm(ConditionFlag.Always,0,0,0,0,ARMV7.r13, 11<<1 ); // push frame pointer
+        asm.movror(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,0);  // framepoiter = stack ptr
+        asm.movl(ARMV7.r12,frameSize = Word.size());
+        asm.sub(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11,ARMV7.r12,0,0);
+        asm.subq(r11, framePointerAdjustment());
         if (Trap.STACK_BANGING) {
             int pageSize = platform().pageSize;
             int framePages = frameSize / pageSize;
@@ -314,7 +435,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
                 // Deduct 'frameSize' to handle frames larger than (VmThread.STACK_SHADOW_PAGES * pageSize)
                 offset = offset - frameSize;
-                asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
+                asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP, -offset));
+                asm.str(ConditionFlag.Always,0,0,0,ARMV7.r14,asm.scratchRegister,asm.scratchRegister,0,0);
+                // APN guessing rax is return address.
+                //asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
             }
         }
         return adapter;
@@ -326,19 +450,32 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         objectLiterals.add(T1XTargetMethod.PROTECTED);
 
         asm.xorq(scratch, scratch);
-        asm.movq(CiAddress.Placeholder, scratch);
-
-        int dispPos = buf.position() - 4;
+        //asm.movq(CiAddress.Placeholder, scratch);
+        asm.emitInt(0);
+        asm.emitInt(0);
+        int dispPos = buf.position() - 8;
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
     }
 
     @Override
     protected void emitEpilogue() {
-        asm.addq(rbp, framePointerAdjustment());
+        asm.addq(ARMV7.r11, framePointerAdjustment());
         asm.leave();
+        // stackptr = r11
+        // r11 popped off stack
+        asm.movror(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11,0);
+        asm.ldm(ConditionFlag.Always,0,0,0,0,ARMV7.r13, 11<<1 ); // pop stack
+        // push frame pointer
+        // framepointer = stackpointer
+        // stackptr = framepointer -stacksize
+
         // when returning, retract from the caller stack by the space used for the arguments.
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
-        asm.ret(stackAmountInBytes);
+        //asm.ret(stackAmountInBytes);                  // APN dont know what to do here.
+        // ret needs removing or turning into a nop?
+        asm.addq(ARMV7.r13,stackAmountInBytes)
+        // NOt really sure how much of X86 we need to keep
+        // and how much we can get rid off?
     }
 
     @Override

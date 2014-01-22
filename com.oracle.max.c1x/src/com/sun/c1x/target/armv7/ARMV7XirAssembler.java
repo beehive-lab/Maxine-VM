@@ -81,11 +81,11 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                     XirOperand xOp = i.x();
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
                         if (fixedRDX == null) {
-                            fixedRDX = createRegisterTemp("divModTemp", CiKind.Int, ARMV7.rdx);
+                    //        fixedRDX = createRegisterTemp("divModTemp", CiKind.Int, ARMV7.rdx);
                         }
                         // Special treatment to make sure that the left input of % and / is in RAX
                         if (fixedRAX == null) {
-                            fixedRAX = createRegisterTemp("divModLeftInput", CiKind.Int, ARMV7.rax);
+                       //     fixedRAX = createRegisterTemp("divModLeftInput", CiKind.Int, ARMV7.rax);
                         }
                         currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, fixedRAX, i.x()));
                         xOp = fixedRAX;
@@ -100,7 +100,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                     if ((i.op == XirOp.Shl || i.op == XirOp.Shr) && (!(i.y() instanceof XirConstantOperand))) {
                         // Special treatment to make sure that the shift count is always in RCX
                         if (fixedRCX == null) {
-                            fixedRCX = createRegisterTemp("fixedShiftCount", i.y().kind, ARMV7.rcx);
+                         //   fixedRCX = createRegisterTemp("fixedShiftCount", i.y().kind, ARMV7.rcx);
                         }
                         currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, fixedRCX, i.y()));
                         yOp = fixedRCX;
@@ -121,13 +121,13 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                 case RepeatMoveWords:
                 case RepeatMoveBytes:
                     if (fixedRSI == null) {
-                        fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, ARMV7.rsi);
+                       // fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, ARMV7.rsi);
                     }
                     if (fixedRDI == null) {
-                        fixedRDI = createRegisterTemp("fixedRDI", target.wordKind, ARMV7.rdi);
+                    //    fixedRDI = createRegisterTemp("fixedRDI", target.wordKind, ARMV7.rdi);
                     }
                     if (fixedRCX == null) {
-                        fixedRCX = createRegisterTemp("fixedRCX", target.wordKind, ARMV7.rcx);
+                     //   fixedRCX = createRegisterTemp("fixedRCX", target.wordKind, ARMV7.rcx);
                     }
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRSI, i.x()));
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRDI, i.y()));
@@ -145,7 +145,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                     break;
                 case PointerCAS:
                     if (fixedRAX == null) {
-                        fixedRAX = createRegisterTemp("fixedRAX", target.wordKind, ARMV7.rax);
+                    //    fixedRAX = createRegisterTemp("fixedRAX", target.wordKind, ARMV7.rax);
                     }
                     // x = source of cmpxch
                     // y = new value
