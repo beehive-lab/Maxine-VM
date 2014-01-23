@@ -33,7 +33,7 @@ import com.sun.cri.ci.CiRegister.RegisterFlag;
  * Represents the ARMv7 architecture.
  */
 public class ARMV7 extends CiArchitecture {
-
+    public static String name = new String("ARMV7");
     // General purpose CPU registers
     public static final CiRegister r0 = new CiRegister(0, 0, 4, "r0", CPU, RegisterFlag.Byte);
     public static final CiRegister r1 = new CiRegister(1, 1, 4, "r1", CPU, RegisterFlag.Byte);

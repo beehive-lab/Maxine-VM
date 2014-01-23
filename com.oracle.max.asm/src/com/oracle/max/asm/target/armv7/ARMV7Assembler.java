@@ -40,7 +40,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public ARMV7Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
-        this.scratchRegister = registerConfig.getScratchRegister();
+        // APN bit of a hack to set the scratch as sometimes initialised with null
+        // reigsterconfigs from ARMAdapterGenerator calls to create assembler ...
+        this.scratchRegister = registerConfig == null ? ARMV7.r12 : registerConfig.getScratchRegister();
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
     }
 

@@ -166,7 +166,8 @@ public final class Platform {
 	} else {
             return null;
         }
-
+        System.err.println("arch " + arch.name+ " wordsize " + arch.wordSize);
+        System.err.println("datamodel " +dataModel.wordWidth.numberOfBytes ) ;
         assert arch.wordSize == dataModel.wordWidth.numberOfBytes;
         boolean isMP = true;
         int spillSlotSize = arch.wordSize;
@@ -492,6 +493,7 @@ public final class Platform {
             assert cpu.isa == isa;
         }
         final int cacheAlignment = cpu.defaultDataModel.cacheAlignment;
+        word = WordWidth.BITS_32; //APN ARM hack
         final DataModel dataModel = new DataModel(word, endianness, cacheAlignment);
 
         String osName = getProperty(OS_PROPERTY) == null ? getOS() : getProperty(OS_PROPERTY);

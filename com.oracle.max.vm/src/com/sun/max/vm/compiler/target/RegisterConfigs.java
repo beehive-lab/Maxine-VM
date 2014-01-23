@@ -147,7 +147,7 @@ public class RegisterConfigs {
 			   FP chosen to be r11
                          */
                         allocatable = new CiRegister[] {r0,r1,r2,r3,r4,r5,r6,r7,com.oracle.max.asm.target.armv7.ARMV7.r8,com.oracle.max.asm.target.armv7.ARMV7.r9,
-                                com.oracle.max.asm.target.armv7.ARMV7.r10,com.oracle.max.asm.target.armv7.ARMV7.r12};
+                                com.oracle.max.asm.target.armv7.ARMV7.r10}; // no scratch in allocatable
                         parameters = new CiRegister[] {r0,r1,r2,r3};
                         allRegistersExceptLatch = new CiRegister[] {r0,r1,r2,r3,r4,r5,r6,r7,com.oracle.max.asm.target.armv7.ARMV7.r8,
                                 com.oracle.max.asm.target.armv7.ARMV7.r9,
@@ -206,8 +206,8 @@ public class RegisterConfigs {
                             APN I don't get why we need in the x86 version cpuxmmRegisters and all registers perhaps this will become
                             clearer when we delve into the stubs below, I substituted allRegisters for cpuxmmRegisters for uncommonTrapStub
                          */
-                        CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
-                        CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, com.oracle.max.asm.target.armv7.ARMV7.allRegisters));
+                        CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, allRegistersExceptLatch));
+                        CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, com.oracle.max.asm.target.armv7.ARMV7.allRegisters));
                         CiRegisterConfig trapStub = null;
                         if(platform().isa == ISA.ARM) trapStub = new CiRegisterConfig(standard, ARMTrapFrameAccess.CSL);
                         // CSL stands for CALLEE SAVE LAYOUT ... needs to be rewritten in com.sun.man.vm.runtime.arm.ARMTrapFrameAccess or similar
@@ -218,7 +218,7 @@ public class RegisterConfigs {
                             should based on the APC ARM Procedure Call Standard. Once we know what is actually required for trampoline then we can be
                             more aggressive/specific about the registers to be saved?
                          */
-                        CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
+                        CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4,
                                 r0,r1,r2,r3,                       // parameters
                                 r4,r5,r6,r7,com.oracle.max.asm.target.armv7.ARMV7.r8,
                                 com.oracle.max.asm.target.armv7.ARMV7.r9,
@@ -229,7 +229,7 @@ public class RegisterConfigs {
                         ));
                                                                                                 // the registers below are a guess in n2j ....
                                                                                                 // ....
-                        CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, r0,r1,r2,r3,r4,r5,r6,r7,
+                        CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 4, r0,r1,r2,r3,r4,r5,r6,r7,
                                 com.oracle.max.asm.target.armv7.ARMV7.r8,
                                 com.oracle.max.asm.target.armv7.ARMV7.r9,
                                 com.oracle.max.asm.target.armv7.ARMV7.r10,

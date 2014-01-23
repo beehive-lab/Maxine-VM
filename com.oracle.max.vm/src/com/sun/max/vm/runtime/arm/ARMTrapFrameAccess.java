@@ -96,12 +96,12 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
 
         };
 
-        int size = 0;
+        int size = 4*15;
         TRAP_NUMBER_OFFSET = size;
         size += 4;
         FLAGS_OFFSET = size;
         size += 4;
-        CSL = new CiCalleeSaveLayout(0, size, 8, csaRegs);
+        CSL = new CiCalleeSaveLayout(0, size, 4, csaRegs);
     }
 
     /* APN

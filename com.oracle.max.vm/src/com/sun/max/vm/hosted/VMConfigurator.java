@@ -121,8 +121,7 @@ public final class VMConfigurator {
             // and converting between them requires reading memory.
             return new com.sun.max.vm.layout.hom.Package();
         }
-        if(platform().isa == com.sun.max.lang.ISA.ARM) System.err.println("PLEASE REMOVE VMConfigurator::defaultLayoutScheme HACK for ARM, initial port step for ARM was to copy X86 dependencies into ARM ISA ARMv7 source tree") ;
-        return new com.sun.max.vm.layout.ohm.Package();
+	return new com.sun.max.vm.layout.ohm.Package();
     }
 
     /**
