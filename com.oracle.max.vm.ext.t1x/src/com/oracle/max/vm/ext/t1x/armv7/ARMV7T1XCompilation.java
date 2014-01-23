@@ -411,6 +411,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected Adapter emitPrologue() {
         // APN need to understand the semantics of emitPrologue ...
+        // all seems far more complicated than it needs to be for ARM ...
+        // discuss with Christos on how we plan to do this to be
+        // consistent across Graal T1X ...
         Adapter adapter = null;
         if (adapterGenerator != null) {
             adapter = adapterGenerator.adapt(method, asm);
@@ -451,8 +454,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         asm.xorq(scratch, scratch);
         //asm.movq(CiAddress.Placeholder, scratch);
-        asm.emitInt(0);
-        asm.emitInt(0);
+        buf.emitInt(0);
+        buf.emitInt(0);
         int dispPos = buf.position() - 8;
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
     }
@@ -473,7 +476,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
         //asm.ret(stackAmountInBytes);                  // APN dont know what to do here.
         // ret needs removing or turning into a nop?
-        asm.addq(ARMV7.r13,stackAmountInBytes)
+        asm.addq(ARMV7.r13,stackAmountInBytes)  ;
         // NOt really sure how much of X86 we need to keep
         // and how much we can get rid off?
     }
@@ -482,7 +485,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected void do_preVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
         if (fieldActor.isVolatile()) {
             boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
-            asm.membar(isWrite ? MemoryBarriers.JMM_PRE_VOLATILE_WRITE : MemoryBarriers.JMM_PRE_VOLATILE_READ);
+            asm.membar(); // APN we will use the standard DMB instruction thisd might be overkill
+                        // and we might need to consider other uses/ways of doing this ....
+                        // in order to relax memory access further to account for the R-W W-R W-W semantics
+            //asm.membar(isWrite ? MemoryBarriers.JMM_PRE_VOLATILE_WRITE : MemoryBarriers.JMM_PRE_VOLATILE_READ);
         }
     }
 
@@ -490,12 +496,15 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected void do_postVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
         if (fieldActor.isVolatile()) {
             boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
-            asm.membar(isWrite ? MemoryBarriers.JMM_POST_VOLATILE_WRITE : MemoryBarriers.JMM_POST_VOLATILE_READ);
+            asm.membar(); // output a DMB instruction
+            //asm.membar(isWrite ? MemoryBarriers.JMM_POST_VOLATILE_WRITE : MemoryBarriers.JMM_POST_VOLATILE_READ);
         }
     }
 
     @Override
     protected void do_tableswitch() {
+        // APN this is one way to do an implementation of a switch statement
+        // APN TODO lets leave this for now
         int bci = stream.currentBCI();
         BytecodeTableSwitch ts = new BytecodeTableSwitch(stream, bci);
         int lowMatch = ts.lowKey();
@@ -504,34 +513,40 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             throw verifyError("Low must be less than or equal to high in TABLESWITCH");
         }
 
+        // pushing and popping should be done using ldm stm?
+        // need to look for the usage of such instruction streams in ARM and
+        // fix it to be better ....
+
         // Pop index from stack into rax
-        asm.movl(rax, new CiAddress(CiKind.Int, rsp.asValue()));
-        asm.addq(rsp, JVMSFrameLayout.JVMS_SLOT_SIZE);
+        asm.setUpScratch(new CiAddress(CiKind.Int, r13.asValue()));
+        asm.ldr(ConditionFlag.Always,0,0,0,r14,asm.scratchRegister,asm.scratchRegister,0,0);
+        //asm.movl(r14, new CiAddress(CiKind.Int, r13.asValue()));
+        asm.addq(r12, JVMSFrameLayout.JVMS_SLOT_SIZE);
 
         // Compare index against jump table bounds
         if (lowMatch != 0) {
             // subtract the low value from the switch index
-            asm.subl(rax, lowMatch);
-            asm.cmpl(rax, highMatch - lowMatch);
+            // APN TODO asm.sub(r14, lowMatch);
+            asm.cmpl(r14, highMatch - lowMatch);
         } else {
-            asm.cmpl(rax, highMatch);
+            asm.cmpl(r14, highMatch);
         }
 
         // Jump to default target if index is not within the jump table
         startBlock(ts.defaultTarget());
         int pos = buf.position();
-        patchInfo.addJCC(ConditionFlag.above, pos, ts.defaultTarget());
-        asm.jcc(ConditionFlag.above, 0, true);
+        // APN TODO just to let it compile patchInfo.addJCC(ConditionFlag.above, pos, ts.defaultTarget());
+        // APN TODO asm.jcc(ConditionFlag.above, 0, true);
 
         // Set r15 to address of jump table
         int leaPos = buf.position();
-        asm.leaq(r15, CiAddress.Placeholder);
+        // APN TODO asm.leaq(r15, CiAddress.Placeholder);
         int afterLea = buf.position();
 
         // Load jump table entry into r15 and jump to it
-        asm.movslq(rax, new CiAddress(CiKind.Int, r15.asValue(), rax.asValue(), Scale.Times4, 0));
-        asm.addq(r15, rax);
-        asm.jmp(r15);
+        // APN TODO asm.movslq(r14, new CiAddress(CiKind.Int, r15.asValue(), r14.asValue(), Scale.Times4, 0));
+        // APN TODO asm.add(r15, r14);
+        // APN TODO asm.jmp(r15);
 
         // Inserting padding so that jump table address is 4-byte aligned
         if ((buf.position() & 0x3) != 0) {
@@ -541,7 +556,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos);
-        asm.leaq(r15, new CiAddress(WordUtil.archKind(), rip.asValue(), jumpTablePos - afterLea));
+        //APN TODO asm.leaq(r15, new CiAddress(WordUtil.archKind(), rip.asValue(), jumpTablePos - afterLea));
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
@@ -561,6 +576,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void do_lookupswitch() {
+        //APN TODO do this later, another way of doing a switch
         int bci = stream.currentBCI();
         BytecodeLookupSwitch ls = new BytecodeLookupSwitch(stream, bci);
         if (ls.numberOfCases() == 0) {
@@ -574,54 +590,54 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             } else if (targetBCI <= bci) {
                 int target = bciToPos[targetBCI];
                 assert target != 0;
-                asm.jmp(target, false);
+         // APN TODO       asm.jmp(target, false);
             } else {
                 patchInfo.addJMP(buf.position(), targetBCI);
-                asm.jmp(0, true);
+         // APN TODO       asm.jmp(0, true);
             }
         } else {
             // Pop key from stack into rax
-            asm.movl(rax, new CiAddress(CiKind.Int, rsp.asValue()));
-            asm.addq(rsp, JVMSFrameLayout.JVMS_SLOT_SIZE);
+            // APN TODO        asm.movl(rax, new CiAddress(CiKind.Int, rsp.asValue()));
+            // APN TODO    asm.addq(rsp, JVMSFrameLayout.JVMS_SLOT_SIZE);
 
             // Set rbx to address of lookup table
             int leaPos = buf.position();
-            asm.leaq(rbx, CiAddress.Placeholder);
+            // APN TODO    asm.leaq(rbx, CiAddress.Placeholder);
             int afterLea = buf.position();
 
             // Initialize rcx to index of last entry
-            asm.movl(rcx, (ls.numberOfCases() - 1) * 2);
+            // APN TODO    asm.movl(rcx, (ls.numberOfCases() - 1) * 2);
 
             int loopPos = buf.position();
 
             // Compare the value against the key
-            asm.cmpl(rax, new CiAddress(CiKind.Int, rbx.asValue(), rcx.asValue(), Scale.Times4, 0));
+            // APN TODO    asm.cmpl(rax, new CiAddress(CiKind.Int, rbx.asValue(), rcx.asValue(), Scale.Times4, 0));
 
             // If equal, exit loop
             int matchTestPos = buf.position();
             final int placeholderForShortJumpDisp = matchTestPos + 2;
-            asm.jcc(ConditionFlag.equal, placeholderForShortJumpDisp, false);
+            // APN TODO    asm.jcc(ConditionFlag.equal, placeholderForShortJumpDisp, false);
             assert buf.position() - matchTestPos == 2;
 
             // Decrement loop var (r15) and jump to top of loop if it did not go below zero (i.e. carry flag was not set)
-            asm.subl(rcx, 2);
-            asm.jcc(ConditionFlag.carryClear, loopPos, false);
+            // APN TODO    asm.subl(rcx, 2);
+            // APN TODO    asm.jcc(ConditionFlag.carryClear, loopPos, false);
 
             // Jump to default target
             startBlock(ls.defaultTarget());
             patchInfo.addJMP(buf.position(), ls.defaultTarget());
-            asm.jmp(0, true);
+            // APN TODO    asm.jmp(0, true);
 
             // Patch the first conditional branch instruction above now that we know where's it's going
             int matchPos = buf.position();
             buf.setPosition(matchTestPos);
-            asm.jcc(ConditionFlag.equal, matchPos, false);
+            // APN TODO    asm.jcc(ConditionFlag.equal, matchPos, false);
             buf.setPosition(matchPos);
 
             // Load jump table entry into r15 and jump to it
-            asm.movslq(rcx, new CiAddress(CiKind.Int, rbx.asValue(), rcx.asValue(), Scale.Times4, 4));
-            asm.addq(rbx, rcx);
-            asm.jmp(rbx);
+            // APN TODO    asm.movslq(rcx, new CiAddress(CiKind.Int, rbx.asValue(), rcx.asValue(), Scale.Times4, 4));
+            // APN TODO    asm.addq(rbx, rcx);
+            // APN TODO    asm.jmp(rbx);
 
             // Inserting padding so that lookup table address is 4-byte aligned
             while ((buf.position() & 0x3) != 0) {
@@ -631,7 +647,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             // Patch the LEA instruction above now that we know the position of the lookup table
             int lookupTablePos = buf.position();
             buf.setPosition(leaPos);
-            asm.leaq(rbx, new CiAddress(WordUtil.archKind(), rip.asValue(), lookupTablePos - afterLea));
+            // APN TODO    asm.leaq(rbx, new CiAddress(WordUtil.archKind(), rip.asValue(), lookupTablePos - afterLea));
             buf.setPosition(lookupTablePos);
 
             // Emit lookup table entries
@@ -667,112 +683,123 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 assignInt(scratch2, 0);
                 decStack(1);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.equal;
-                break;
+                //cc = ConditionFlag.equal;
+                cc = ConditionFlag.Equal;
             case Bytecodes.IFNE:
                 peekInt(scratch, 0);
                 assignInt(scratch2, 0);
                 decStack(1);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.notEqual;
+                //cc = ConditionFlag.notEqual;
+                cc =  ConditionFlag.NotEqual;
                 break;
             case Bytecodes.IFLE:
                 peekInt(scratch, 0);
                 assignInt(scratch2, 0);
                 decStack(1);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.lessEqual;
-                break;
+                //cc = ConditionFlag.lessEqual;
+                cc = ConditionFlag.SignedLowerOrEqual;
             case Bytecodes.IFLT:
                 peekInt(scratch, 0);
                 assignInt(scratch2, 0);
                 decStack(1);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.less;
+                //cc = ConditionFlag.less;
+                cc = ConditionFlag.SignedLesser;
                 break;
             case Bytecodes.IFGE:
                 peekInt(scratch, 0);
                 assignInt(scratch2, 0);
                 decStack(1);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.greaterEqual;
-                break;
+                //cc = ConditionFlag.greaterEqual;
+                cc = ConditionFlag.SignedGreaterOrEqual;
             case Bytecodes.IFGT:
                 peekInt(scratch, 0);
                 assignInt(scratch2, 0);
                 decStack(1);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.greater;
-                break;
+                //cc = ConditionFlag.greater;
+                cc = ConditionFlag.SignedGreater;
             case Bytecodes.IF_ICMPEQ:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.equal;
+                //cc = ConditionFlag.equal;
+                cc = ConditionFlag.Equal;
                 break;
             case Bytecodes.IF_ICMPNE:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.notEqual;
+                cc = ConditionFlag.NotEqual;
+                //cc = ConditionFlag.notEqual;
                 break;
             case Bytecodes.IF_ICMPGE:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.greaterEqual;
+                cc = ConditionFlag.SignedGreaterOrEqual ;
+                //cc = ConditionFlag.greaterEqual;
                 break;
             case Bytecodes.IF_ICMPGT:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.greater;
-                break;
+                //cc = ConditionFlag.greater;
+                cc = ConditionFlag.SignedGreater;
             case Bytecodes.IF_ICMPLE:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.lessEqual;
+                cc = ConditionFlag.SignedLowerOrEqual;
+                //cc = ConditionFlag.lessEqual;
                 break;
             case Bytecodes.IF_ICMPLT:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
                 asm.cmpl(scratch, scratch2);
-                cc = ConditionFlag.less;
+                //cc = ConditionFlag.less;
+                cc = ConditionFlag.SignedLesser;
                 break;
             case Bytecodes.IF_ACMPEQ:
                 peekObject(scratch, 1);
                 peekObject(scratch2, 0);
                 decStack(2);
-                asm.cmpq(scratch, scratch2);
-                cc = ConditionFlag.equal;
+                asm.cmpl(scratch, scratch2);
+                cc =ConditionFlag.Equal;
+                //cc = ConditionFlag.equal;
                 break;
             case Bytecodes.IF_ACMPNE:
                 peekObject(scratch, 1);
                 peekObject(scratch2, 0);
                 decStack(2);
-                asm.cmpq(scratch, scratch2);
-                cc = ConditionFlag.notEqual;
+                asm.cmpl(scratch, scratch2);
+                cc = ConditionFlag.NotEqual;
+                //cc= ConditionFlag.notEqual;
                 break;
             case Bytecodes.IFNULL:
                 peekObject(scratch, 0);
                 assignObject(scratch2, null);
                 decStack(1);
-                asm.cmpq(scratch, scratch2);
-                cc = ConditionFlag.equal;
+                asm.cmpl(scratch, scratch2);
+                cc = ConditionFlag.Equal;
+                //cc = ConditionFlag.equal;
                 break;
             case Bytecodes.IFNONNULL:
                 peekObject(scratch, 0);
                 assignObject(scratch2, null);
                 decStack(1);
-                asm.cmpq(scratch, scratch2);
-                cc = ConditionFlag.notEqual;
+                asm.cmpl(scratch, scratch2);
+                cc = ConditionFlag.NotEqual;
+                //cc = ConditionFlag.notEqual;
                 break;
             case Bytecodes.GOTO:
             case Bytecodes.GOTO_W:
@@ -886,19 +913,28 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @HOSTED_ONLY
     public static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
         int[] result = {};
+        /* APN
+        I don;t know if Im being an idiot but why is it only iterating over the FPregs at each code position then doing the
+        move of them?
 
+        We can ignore for now as we are not doing FP?? at least initially
+         */
+
+                                                                                                                /*
         for (int pos = 0; pos < source.codeLength(); pos++) {
             for (CiRegister reg : ARMV7.cpuxmmRegisters) {
                 // Compute displacement operand position for a movq at 'pos'
                 ARMV7Assembler asm = new ARMV7Assembler(target(), null);
-                asm.movq(reg, CiAddress.Placeholder);
+                asm.setUpScratch(CiAddress.Placeholder);
+                asm.movror(ConditionFlag.Always,false,reg,ARMV7.r12,0);
                 int dispPos = pos + asm.codeBuffer.position() - 4;
                 int disp = movqDisp(dispPos, dispFromCodeStart);
-                asm.codeBuffer.reset();
+                asm.codeBuffer.reset(); // APN que? Dont understand why are we continually resetting the buffer?
 
                 // Assemble the movq instruction at 'pos' and compare it to the actual bytes at 'pos'
-                CiAddress src = new CiAddress(WordUtil.archKind(), rip.asValue(), disp);
-                asm.movq(reg, src);
+                CiAddress src = new CiAddress(WordUtil.archKind(), ARMV7.r15.asValue(), disp); // assuming rip in X86 is r15
+                asm.setUpScratch(src);
+                asm.movror(ConditionFlag.Always,false,reg, ARMV7.r12,0);
                 byte[] pattern = asm.codeBuffer.close(true);
                 byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
                 if (Arrays.equals(pattern, instr)) {
@@ -907,7 +943,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 }
             }
 
-        }
+        }                                                                                                         */
+
         return result;
     }
 

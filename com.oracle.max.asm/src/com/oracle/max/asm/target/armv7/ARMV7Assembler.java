@@ -60,6 +60,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         SignedGreater(0xC, ".>."),
         SignedLowerOrEqual(0xD, ".<=."),
         Always(0xE, "al");
+        public static final ConditionFlag[] values = values();
 
         private final int value;
         private final String operator;
@@ -1041,6 +1042,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         cmp(ConditionFlag.Always,src1,scratchRegister,0,0);
     }
 
+    public final void cmpl(CiRegister src1, CiRegister src2) {
+
+        cmp(ConditionFlag.Always,src1,src2,0,0);
+    }
+
     public final void incq(CiRegister dst) {
         assert(dst.isValid());
         add(ConditionFlag.Always,false,dst,dst,1,0);
@@ -1218,6 +1224,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         //to see if equal to zero
 
     }
+    public void membar()
+    {
+        emitInt((0xf<<28)|(0x5<< 24)|(0x7<<20)|(0xff05<<4)|(0xf));
+    }
     public void enter(short imm16) {
 
         // stacksize = imm16
@@ -1243,6 +1253,42 @@ public class ARMV7Assembler extends AbstractAssembler {
     putreg16(regsp, getreg16(regbp) - stacksize);
     break;
         */
+    }
+    public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
+        // forceDisp32 seems to be true if its a forward branch
+        // and false if its negative ... a backwards branch
+        //int shortSize = 2;
+        //int longSize = 6;
+        /*
+        APN ok we now need to decide if we can do a PC relative branch,
+        with a signed immediate of 24 bits.
+        0..   16777215
+        down to -16777216
+        Some worries about alignment ... but not going to worry right now
+         */
+        int disp = target - codeBuffer.position();
+        if(disp <=16777215 && disp >= 16777216 && forceDisp32) {
+            // we can do this in a single conditional branch
+            emitInt((cc.value&0xf) << 28| (0xa << 24)| (disp&0xffffff));
+        }else {
+            // we need or have been instructed to do this as a 32 bit branch
+            movl(scratchRegister,target);
+            movror(ConditionFlag.Always,false,ARMV7.r15,scratchRegister,0); // UPDATE the PC to the target
+        }
+
+    }
+    public final void jmp(int target, boolean forceDisp32) {
+
+        int disp = target - codeBuffer.position();
+        if(disp <=16777215 && disp >= 16777216 && forceDisp32) {
+            // we can do this in a single conditional branch
+            emitInt(((0xe) << 28)| (0xa << 24)| (disp&0xffffff));
+        }else {
+            movl(scratchRegister,target);
+            movror(ConditionFlag.Always,false,ARMV7.r15,scratchRegister,0); // UPDATE the PC to the target
+        }
+
+
     }
 
 }
