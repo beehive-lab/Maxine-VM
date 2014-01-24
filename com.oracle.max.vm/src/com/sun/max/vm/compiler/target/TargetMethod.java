@@ -945,7 +945,8 @@ public abstract class TargetMethod extends MemoryRegion {
                     assert classMethodActor.isTemplate();
                 } else if (MaxineVM.isHosted()) {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
-                    if (callee == null) {
+                    if (callee == null) {    // APN this means the code is not yet available
+                                            // ie it has not been compiled or it has been evicted from the code cache.
                         if (classMethodActor.isTemplate()) {
                             assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
                             // leave call site unpatched

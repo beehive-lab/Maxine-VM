@@ -166,8 +166,6 @@ public final class Platform {
 	} else {
             return null;
         }
-        System.err.println("arch " + arch.name+ " wordsize " + arch.wordSize);
-        System.err.println("datamodel " +dataModel.wordWidth.numberOfBytes ) ;
         assert arch.wordSize == dataModel.wordWidth.numberOfBytes;
         boolean isMP = true;
         int spillSlotSize = arch.wordSize;

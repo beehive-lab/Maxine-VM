@@ -976,14 +976,22 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     }
     public final void alignForPatchableDirectCall() { // APN copy of X86
-        int dispStart = codeBuffer.position() + 1;
+        /*
+            APN as far as I am aware there are not alignment restrictions.
+            seems to be an interaction with Safepoints
+
+        */
+        /*int dispStart = codeBuffer.position() + 1;
+
         int mask = target.wordSize - 1;
+        System.err.println((codeBuffer.position()+1));
         if ((dispStart & ~mask) != ((dispStart + 3) & ~mask)) {
             for(int i = 0; i < (target.wordSize - (dispStart & mask));i++)
             //nop(target.wordSize - (dispStart & mask));
                     nop();
-            assert ((codeBuffer.position() + 1) & mask) == 0;
-        }
+            System.err.println("total nops " + (target.wordSize - (dispStart & mask))+ " disp " + dispStart + " codebuff " + codeBuffer.position() + " mask "+ mask);
+            // APN not relevant? assert ((codeBuffer.position() + 1) & mask) == 0;
+        }*/
     }
     public final void call()
     {

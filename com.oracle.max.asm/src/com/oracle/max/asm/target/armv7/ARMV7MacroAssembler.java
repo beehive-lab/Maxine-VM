@@ -446,7 +446,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
      * @param frameToCSA offset from the frame pointer to the CSA
      */
     public void save(CiCalleeSaveLayout csl, int frameToCSA) {
-        CiRegisterValue frame = frameRegister.asValue();
+        //CiRegisterValue frame = frameRegister.asValue();
         // APN if we assume that the first register is offset ZERO then we can save/restore them using a
         // single stm/ldm instruction for BASE REGISTERS but what about floating point!!!!!
         // this will need to be expanded to use VSTM/VLDM as necessary
@@ -462,14 +462,14 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
                 // if it fails then we need to add a value to the frame pointer
                 first = false;
             }else {
-                assert(oldOffset == (offset+1));
+                assert(oldOffset == (offset-4));
                 // if it fails then we cannot to stm
             }
 
             oldOffset = offset;
             //movq(new CiAddress(target.wordKind, frame, frameToCSA + offset), r);
         }
-        stm(ConditionFlag.Always,0,0,1,0,frameRegister,registerList);// r13 is the stack pointer
+        stm(ConditionFlag.Always,0,0,1,0,ARMV7.r13,registerList);// r13 is the stack pointer
 
     }
 

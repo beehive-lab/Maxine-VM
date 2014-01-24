@@ -37,36 +37,76 @@ import com.sun.max.vm.stack.armv7.*;
 
 /**
  * A utility class factoring out code common to all ARMV7 target method.
+ * IT DOES NOT !!!!!!!!!!!!!!!!!!!!!!!
+ * HANDLE THUMB MODE
+ *
+ * APN for ARM we plan to initially do a simple fixup
+ * calculate either a relative or an absolute address
+ * put it in scratch (r12) via
+ * movw movt
+ * for relative call/jmp ADD PC,r12
+ * for absolute call/jmp MOV PC,r12
+ *
+ * inefficient: for 24bit RELATIVE offsets can be done in a branch single instruction
+ * and we are taking 3.
+ *
+ * for absolute it takes 3, but could be done in 2 -- calculate address using constants that can be shifted
+ * then do the MOV PC <--
+
  */
 public final class ARMTargetMethodUtil {
 
     /**
-     * Opcode of a RIP-relative call instruction.
+     * X86 Opcode of a RIP-relative call instruction.
+     *
+     * ARM this is a STMFD (save my registers) and a
+     * PC relative branch instruction
+     *
+     *
      */
-    public static final int RIP_CALL = 0xe8;
+    // RIP_CALL using an ADD to PC, hope it;s the right way round for the regs.
+    public static final int RIP_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf)<<28)
+            |(0x8<<20)|(ARMV7.r15.encoding<<12)|  (ARMV7.r12.encoding << 16) ;
+            ;
 
     /**
-     * Opcode of a register-based call instruction.
+     * X86 Opcode of a register-based call instruction.
+     *
+     * ARM this is a  STMFD (save my registers) and a
+     * move of a register into the PC
      */
-    public static final int REG_CALL = 0xff;
+    // REG_CALL using a MOV to the PC
+    public static final int REG_CALL =((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) <<28)
+            |(0xd<<21)|(ARMV7.r15.encoding<<12)|  (ARMV7.r12.encoding );
 
     /**
-     * Opcode of a RIP-relative jump instruction.
+     * X86 Opcode of a RIP-relative jump instruction.
+     * ARM again this is a PC relative branch instruction!
+     * as its a JMP we do not save the stack
+     * We do this as an add to the PC ...
      */
-    public static final int RIP_JMP = 0xe9;
+    public static final int RIP_JMP =((ARMV7Assembler.ConditionFlag.Always.value() & 0xf)<<28)
+            |(0x8<<20)|(ARMV7.r15.encoding<<12)|  (ARMV7.r12.encoding << 16) ;
 
     /**
-     * Opcode of a (near) return instruction.
+     * X86 Opcode of a (near) return instruction.
+     * ARM here we must do a LDMFD and we move the return address to the PC
+     *
      */
-    public static final int RET = 0xc3;
+    public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) <<28)
+            |(0xd<<21)|(ARMV7.r15.encoding<<12)|  (ARMV7.r14.encoding );;
 
     /**
-     * Size (in bytes) of a RIP-relative call instruction.
+     * X86 Size (in bytes) of a RIP-relative call instruction.
+     * ARM this is 4 bytes, or we might need to calculate it
+     * according to the way we calculate the relative address?
+     * do we need to include the register save STMFD
      */
-    public static final int RIP_CALL_INSTRUCTION_SIZE = 5;
+    public static final int RIP_CALL_INSTRUCTION_SIZE = 4;
 
     /**
      * Lock to avoid race on concurrent icache invalidation when patching target methods.
+     * ARM I think we need to insert an isb instruction.
      */
     private static final Object PatchingLock = new Object(); // JavaMonitorManager.newVmLock("PATCHING_LOCK");
 
@@ -75,14 +115,23 @@ public final class ARMTargetMethodUtil {
     }
 
     public static boolean isPatchableCallSite(CodePointer callSite) {
-        // We only update the disp of the call instruction.
+        // X86 We only update the disp of the call instruction.
         // The compiler(s) ensure that disp of the call be aligned to a word boundary.
         // This may cause up to 7 nops to be inserted before a call.
+
+        // For ARM we do not have such difficulty relative PC (instruction pointer)
+        // calls are merely a STMFD branch/mov PC, address
+        //All instructions are 32bits so we do not
+        // need to do insertion of nops etc
+        // presumably we need to update the 24bit immediate displacement of the branch
+        // and/or patch a movw movt sequence with an absolute address.
+        // currently this will be a patch of the movw movt
         final Address callSiteAddress = callSite.toAddress();
         final Address endOfCallSite = callSiteAddress.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
-        return callSiteAddress.plus(1).isWordAligned() ? true :
+        return callSiteAddress.isWordAligned();
+        //return callSiteAddress.plus(1).isWordAligned() ? true :
         // last byte of call site:
-        callSiteAddress.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
+        //callSiteAddress.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
     }
 
     /**
@@ -144,6 +193,7 @@ public final class ARMTargetMethodUtil {
                 (code[callOffset + 2] & 0xff) << 8 |
                 (code[callOffset + 1] & 0xff) << 0;
             if (oldDisp32 != disp32) {
+                // needs to be rewritten
                 code[callOffset] = (byte) RIP_CALL;
                 code[callOffset + 1] = (byte) disp32;
                 code[callOffset + 2] = (byte) (disp32 >> 8);
@@ -168,9 +218,10 @@ public final class ARMTargetMethodUtil {
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
     }
 
-    private static final int RIP_CALL_INSTRUCTION_LENGTH = 5;
+    private static final int RIP_CALL_INSTRUCTION_LENGTH = 8; // ARM it's two instructions
+                                                               // STMFD and the B branch
 
-    private static final int RIP_JMP_INSTRUCTION_LENGTH = 5;
+    private static final int RIP_JMP_INSTRUCTION_LENGTH = 4;  // ARM it's one instruction the B branch
 
     /**
      * Thread safe patching of the displacement field in a direct call.

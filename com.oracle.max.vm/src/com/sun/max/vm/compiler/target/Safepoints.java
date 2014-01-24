@@ -49,7 +49,9 @@ import com.sun.max.vm.runtime.*;
  *                                                    +------------------ cause position offset
  * </pre>
  *
- * The width of the 'position' field supports a code array of up to 32Mb.
+ * The width of the 'position' field supports a code array of up to 32Mb
+ *
+ * OK so we have to change this for ARM we now ....
  */
 public final class Safepoints {
 
@@ -402,6 +404,7 @@ public final class Safepoints {
      * @param attrs mask of the safepoint's attributes
      */
     public static int make(int safepointPos, int causePos, int attrs) {
+        System.err.println("safepointpos " +safepointPos +"  posbits "+ pos(safepointPos) + " cause " + causePos + " attrs "+ attrs);
         assert pos(safepointPos) == safepointPos : "safepoint position out of range";
         assert (attrs & ATTRS_MASK) == attrs;
         int causeOffset = safepointPos - causePos;
