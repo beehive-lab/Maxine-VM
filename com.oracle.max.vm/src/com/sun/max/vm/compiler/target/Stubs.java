@@ -648,7 +648,7 @@ public class Stubs {
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = patchStaticTrampoline.classMethodActor;
-            asm.call();
+            asm.call(); // 3 instructions = 12 bytes on ARMV7
             int callSize = asm.codeBuffer.position() - callPos;
 
             // restore all parameter registers before returning
@@ -1278,49 +1278,73 @@ public class Stubs {
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (!kind.isVoid()) {
                 // Copy return value into arg 4
-                CiRegister arg4 = args[4].asRegister();
-                CiRegister returnRegister = registerConfig.getReturnRegister(kind);
-                if (arg4 != returnRegister) {
-                    if (kind.isFloat()) {
-                        asm.movflt(arg4, returnRegister);
-                    } else if (kind.isDouble()) {
-                        asm.movdbl(arg4, returnRegister);
-                    } else {
-                        // APN
+                // this must be on the stack for ARM?
 
+
+                CiAddress arg4 = new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                asm.setUpScratch(arg4);
+                CiRegister returnRegister = registerConfig.getReturnRegister(kind);
+                // APN TODO wrong wrong wrong!!!
+                    if (kind.isFloat()) {
+                        //asm.movflt(arg4, returnRegister);
+                        asm.movror(ARMV7Assembler.ConditionFlag.Always,false,returnRegister,ARMV7.r12,0);
+                    } else if (kind.isDouble()) {
+                        asm.movror(ARMV7Assembler.ConditionFlag.Always,false,returnRegister,ARMV7.r12,0);
+
+
+                        //asm.movdbl(arg4, returnRegister);
+                       // throw(new InternalError("double not supported yet"));
+                    } else {
+
+                        asm.movror(ARMV7Assembler.ConditionFlag.Always,false,returnRegister,ARMV7.r12,0);
                         //asm.movq(arg4, returnRegister);
                     }
-                }
             }
+            // APN honestly believe this is wrong ....
+            // we need arg0 to be returnvalue ...
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
             //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
-
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,arg0,ARMV7.r12,0);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
             //asm.movq(arg1, ARMV7.rsp);
+            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,arg1,ARMV7.r13,0);
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
-            //asm.movq(arg2, ARMV7.rbp);
+            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,arg2, ARMV7.r11,0);
 
             // Zero arg 3 (i.e. 'csa')
             CiRegister arg3 = args[3].asRegister();
             asm.xorq(arg3, arg3);
 
-            // Allocate 2 extra stack slots
-            //asm.subq(ARMV7.rsp, 16);
-
             // Put original return address into high slot
-            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP, 8), arg0);
+            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.r13, 4), arg0);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, 4));
+            asm.str(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r13,ARMV7.r13,0,0); // might be the wrong way round
+            // Allocate 2 extra stack slots ? one in ARM?
+            asm.subq(ARMV7.r13, 4);
+
 
             // Put deopt method entry point into low slot
             CiRegister scratch = registerConfig.getScratchRegister();
             //asm.movq(scratch, 0xFFFFFFFFFFFFFFFFL);
-            final int patchPos = asm.codeBuffer.position() - 8;
-            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP), scratch);
+            asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,0xffff); // is r8 free ?
+            asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,0xffff);
+            // APN ok not sure if we have spare registers
+            // if we return? who does the restore?
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP));
 
+
+            asm.str(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r8,ARMV7.r8,0,0);
+            final int patchPos = asm.codeBuffer.position() - 8; // as we have two by 4 byte instructions to patch
+            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP), scratch);
+            asm.subq(ARMV7.r13,4); // 2nd stack slot.
+
+            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14,0);
             // "return" to deopt routine
             //asm.ret(0);
 
@@ -1482,7 +1506,7 @@ public class Stubs {
             }
 
             // now allocate the frame for this method (including return address slot)
-            //asm.subq(ARMV7.rsp, frameSize + 8);
+            asm.subq(ARMV7.r13, frameSize + 8);
             // save all the callee save registers
             asm.save(csl, csl.frameOffsetToCSA);
 
@@ -1490,15 +1514,24 @@ public class Stubs {
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (kind != null && !kind.isVoid()) {
                 // Copy return value into arg 4
-                CiRegister arg4 = args[4].asRegister();
+                CiAddress arg4 = new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                asm.setUpScratch(arg4);
+                //CiRegister arg4 = args[4].asRegister();
                 CiStackSlot ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] {kind}, target(), true).locations[0];
                 assert ss.index() == 1 : "compiler stub return value slot index has changed?";
-                //CiAddress src = new CiAddress(kind, ARMV7.RSP, cfo + (ss.index() * 8));
+                CiAddress src = new CiAddress(kind, ARMV7.RSP, cfo + (ss.index() * 4));
                 if (kind.isFloat()) {
                     //asm.movflt(arg4, src);
+                    // TODO throw (new InternalError("floats not implemented"));
                 } else if (kind.isDouble()) {
                    // asm.movdbl(arg4, src);
+                   // TODO  throw (new InternalError("floats not implemented"));
+
                 } else {
+                    asm.setUpScratch(src);
+                    asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, ARMV7.r12, 0, 0);
+                    asm.setUpScratch(arg4);
+                    asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, ARMV7.r12, 0, 0);
                   //  asm.movq(arg4, src);
                 }
             }
@@ -1507,22 +1540,29 @@ public class Stubs {
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
             //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
-
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,arg0,ARMV7.r12,0);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
             //asm.leaq(arg1, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo));
+            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,arg1,ARMV7.r12,0);
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
             //asm.movq(arg2, ARMV7.rbp);
+            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,arg2,ARMV7.r11,0);
 
             // Copy callee save area into arg3 (i.e. 'csa')
             CiRegister arg3 = args[3].asRegister();
+            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,arg3,ARMV7.r13,0);
             //asm.movq(arg3, ARMV7.rsp);
 
             // Patch return address of deopt stub frame to look
             // like it was called by frame being deopt'ed.
 
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
+            asm.str(ARMV7Assembler.ConditionFlag.Always,0,0,0,arg0,ARMV7.r12,ARMV7.r12,0,0);
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize), arg0);
 
 

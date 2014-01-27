@@ -195,6 +195,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
                 C1XTimers.print();
             }
         }
+	System.err.println("C!X-init finished");
     }
 
     private static class WordTypeRewriterObserver implements CompilationObserver {

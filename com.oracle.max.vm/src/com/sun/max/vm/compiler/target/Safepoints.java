@@ -138,8 +138,8 @@ public final class Safepoints {
 
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
     private static final int CAUSE_OFFSET_SHIFT = 25;
-    private static final int MAX_CAUSE_OFFSET = 7;
-
+    //private static final int MAX_CAUSE_OFFSET = 7;
+    private static final int MAX_CAUSE_OFFSET = 12;; // ARM
     /**
      * Mask for extracting attributes.
      */
@@ -404,7 +404,6 @@ public final class Safepoints {
      * @param attrs mask of the safepoint's attributes
      */
     public static int make(int safepointPos, int causePos, int attrs) {
-        System.err.println("safepointpos " +safepointPos +"  posbits "+ pos(safepointPos) + " cause " + causePos + " attrs "+ attrs);
         assert pos(safepointPos) == safepointPos : "safepoint position out of range";
         assert (attrs & ATTRS_MASK) == attrs;
         int causeOffset = safepointPos - causePos;

@@ -995,9 +995,15 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void call()
     {
-        emitInt(0); // movw(scratch,const)
-        emitInt(0); //movt(scratch,const)
-        emitInt(0); // mov PC,scratch
+        // ok we do not have the same semantics as intel
+        // this is used for a call where we don't know the actual target when we insert it
+        // ie for a trampoline.
+        // APN proposes we use the scratch register to calculate an address then we do the mov pc
+        // looking at Stubs.java we can see that all registers have been saved
+        // so we can use whatever registers we want!
+        emitInt(0); // movw(scratch,const)                                        fixup later
+        emitInt(0); //movt(scratch,const)                                         fixup later
+        movror(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12,0); // mov PC,scratch
         // APN need to update LR14 and do an absolute MOV to a new PC held in scratch
         // or need to do a BL
         // WHO/what/where is responsible for stack save/restore and procedure call standard

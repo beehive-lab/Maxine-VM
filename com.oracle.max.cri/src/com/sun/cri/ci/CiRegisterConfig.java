@@ -196,7 +196,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
         int firstStackIndex = (stackArg0Offsets[type.ordinal()]) / target.spillSlotSize;
         int currentStackIndex = firstStackIndex;
 
+        System.err.println(parameters.length + " cpu " + cpuParameters.length);
         for (int i = 0; i < parameters.length; i++) {
+            locations[i] = null; // APN necessary?
             final CiKind kind = parameters[i];
 
             switch (kind) {
@@ -205,19 +207,42 @@ public class CiRegisterConfig implements RiRegisterConfig {
                 case Short:
                 case Char:
                 case Int:
-                case Long:
                 case Object:
                     if (!stackOnly && currentGeneral < cpuParameters.length) {
                         CiRegister register = cpuParameters[currentGeneral++];
                         locations[i] = register.asValue(kind);
                     }
                     break;
+                case Long:
+                    if (!stackOnly) {
+                        if(currentGeneral < (cpuParameters.length)) {
+                            CiRegister register = cpuParameters[currentGeneral++];
+                            locations[i] = register.asValue(kind);
+                            //currentGeneral++;
+                            System.err.println("LONG needs 2 register  getCallingConvention");
+
+                        }
+                   // else throw new InternalError("long requires two registers");
+                    }
+                    break;
 
                 case Float:
                 case Double:
-                    if (!stackOnly && currentXMM < fpuParameters.length) {
-                        CiRegister register = fpuParameters[currentXMM++];
-                        locations[i] = register.asValue(kind);
+                    // TODO  fix for float and double
+                    //throw new InternalError("floats and doubles are not supported yet for ARM");
+                   // if (!stackOnly && currentXMM < fpuParameters.length) {
+                     //   CiRegister register = fpuParameters[currentXMM++];
+                       // locations[i] = register.asValue(kind);
+                    //}
+                    System.err.println("FIX REQUIRED for DOUBLE  getCallingConvention")  ;
+                    if (!stackOnly) {
+                        if(currentGeneral < (cpuParameters.length)) {
+                            CiRegister register = cpuParameters[currentGeneral++];
+                            locations[i] = register.asValue(kind);
+                            //currentGeneral++;
+                            System.err.println("DOUBLE needs 2 register  getCallingConvention");
+
+                        }
                     }
                     break;
 

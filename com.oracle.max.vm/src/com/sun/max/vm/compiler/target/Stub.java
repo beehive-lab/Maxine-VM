@@ -160,6 +160,7 @@ public final class Stub extends TargetMethod {
         if (callPos != -1) {
             int safepointPos = Safepoints.safepointPosForCall(callPos, callSize);
             assert callee != null;
+            //System.err.println("safepos " + safepointPos + " callPos " + callPos + " callSize "+callSize);
             setSafepoints(new Safepoints(Safepoints.make(safepointPos, callPos, DIRECT_CALL)), new Object[] {callee});
         }
         if (!isHosted()) {

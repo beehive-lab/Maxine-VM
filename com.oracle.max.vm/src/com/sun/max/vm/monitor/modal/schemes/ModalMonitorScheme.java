@@ -62,7 +62,7 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {
-            ProgramError.check(Word.width() == 64, "ModalMonitorScheme requires a 64-bit word.");
+            ProgramError.check(Word.width() == 64|| Word.width()==32, "ModalMonitorScheme requires a 32 or a 64-bit word.");
         }
         ModeHandler handler = entryHandler;
         while (handler != null) {
