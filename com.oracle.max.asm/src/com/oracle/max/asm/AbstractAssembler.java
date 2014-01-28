@@ -28,7 +28,7 @@ import com.sun.cri.ci.CiArchitecture.*;
 /**
  * The platform-independent base class for the assembler.
  */
-public abstract class   AbstractAssembler {
+public abstract class AbstractAssembler {
     public final CiTarget target;
     public final Buffer codeBuffer;
 
@@ -59,6 +59,7 @@ public abstract class   AbstractAssembler {
     }
 
     protected final void emitInt(int x) {
+        // yaman: the simulator might be signalled
         codeBuffer.emitInt(x);
     }
 

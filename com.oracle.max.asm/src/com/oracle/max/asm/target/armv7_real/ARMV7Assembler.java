@@ -92,7 +92,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.2"
      */
     // Template#: 2, Serial#: 4
-    public void adclsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    public void adclsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn,
+                       final CiRegister Rm, final int shift_imm) {
         int instruction = 0x00A00000;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         instruction |= ((cond.value() & 0xf) << 28);
@@ -138,7 +139,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.3"
      */
     // Template#: 4, Serial#: 19
-    public void addror(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    public void addror(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn,
+                       final CiRegister Rm, final int shift_imm) {
         int instruction = 0x00800060;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         instruction |= ((cond.value() & 0xf) << 28);
@@ -157,7 +159,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.6"
      */
     // Template#: 5, Serial#: 45
-    public void biclsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
+    public void biclsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn,
+                       final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x01C00030;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
@@ -226,7 +229,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.15"
      */
     // Template#: 9, Serial#: 81
-    public void eorlsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
+    public void eorlsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn,
+                       final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x00200030;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
@@ -283,7 +287,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.35"
      */
     // Template#: 12, Serial#: 112
-    public void orrlsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    public void orrlsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn,
+                       final CiRegister Rm, final int shift_imm) {
         int instruction = 0x01800000;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         instruction |= ((cond.value() & 0xf) << 28);
@@ -306,7 +311,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.36"
      */
     // Template#: 13, Serial#: 122
-    public void rsb(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
+    public void rsb(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn,
+                    final int immed_8, final int rotate_amount) {
         int instruction = 0x02600000;
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
         checkConstraint((rotate_amount % 2) == 0, "(rotate_amount % 2) == 0");
@@ -329,7 +335,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.36"
      */
     // Template#: 14, Serial#: 124
-    public void rsblsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    public void rsblsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn,
+                       final CiRegister Rm, final int shift_imm) {
         int instruction = 0x00600000;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         instruction |= ((cond.value() & 0xf) << 28);
@@ -365,7 +372,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.37"
      */
     // Template#: 16, Serial#: 141
-    public void rsclsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
+    public void rsclsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn,
+                       final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x00E00030;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
@@ -383,7 +391,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.38"
      */
     // Template#: 17, Serial#: 155
-    public void sbcror(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
+    public void sbcror(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn,
+                       final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x00C00070;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
@@ -405,7 +414,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.49"
      */
     // Template#: 18, Serial#: 158
-    public void sub(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
+    public void sub(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn,
+                    final int immed_8, final int rotate_amount) {
         int instruction = 0x02400000;
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
         checkConstraint((rotate_amount % 2) == 0, "(rotate_amount % 2) == 0");
@@ -474,7 +484,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.39"
      */
     // Template#: 21, Serial#: 195
-    public void smlal(final ConditionFlag cond, final boolean s, final CiRegister RdLo, final CiRegister RdHi, final CiRegister Rm, final CiRegister Rs) {
+    public void smlal(final ConditionFlag cond, final boolean s, final CiRegister RdLo, final CiRegister RdHi,
+                      final CiRegister Rm, final CiRegister Rn) {
         int instruction = 0x00E00090;
         checkConstraint(RdLo.encoding != RdHi.encoding, "RdLo.encoding != RdHi.encoding");
         checkConstraint(RdLo.encoding != Rm.encoding, "RdLo.encoding != Rm.encoding");
@@ -482,13 +493,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         checkConstraint(RdHi.encoding != 15, "RdHi.encoding != 15");
         checkConstraint(RdLo.encoding != 15, "RdLo.encoding != 15");
         checkConstraint(Rm.encoding != 15, "Rm.encoding != 15");
-        checkConstraint(Rs.encoding != 15, "Rs.encoding != 15");
+        checkConstraint(Rn.encoding != 15, "Rs.encoding != 15");
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
         instruction |= ((RdLo.encoding & 0xf) << 12);
         instruction |= ((RdHi.encoding & 0xf) << 16);
-        instruction |= (Rm.encoding & 0xf);
-        instruction |= ((Rs.encoding & 0xf) << 8);
+        instruction |= (Rn.encoding & 0xf);
+        instruction |= ((Rm.encoding & 0xf) << 8);
         emitInt(instruction);
     }
 
@@ -507,7 +518,8 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.56"
      */
     // Template#: 22, Serial#: 198
-    public void umull(final ConditionFlag cond, final boolean s, final CiRegister RdLo, final CiRegister RdHi, final CiRegister Rm, final CiRegister Rs) {
+    public void umull(final ConditionFlag cond, final boolean s, final CiRegister RdLo, final CiRegister RdHi,
+                      final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x00800090;
         checkConstraint(RdLo.encoding != RdHi.encoding, "RdLo.encoding != RdHi.encoding");
         checkConstraint(RdLo.encoding != Rm.encoding, "RdLo.encoding != Rm.encoding");

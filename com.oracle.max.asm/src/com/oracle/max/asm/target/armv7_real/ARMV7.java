@@ -42,7 +42,6 @@ public class ARMV7 extends CiArchitecture {
     public static final CiRegister r5 = new CiRegister(5, 5, 4, "r5", CPU, RegisterFlag.Byte);
     public static final CiRegister r6 = new CiRegister(6, 6, 4, "r6", CPU, RegisterFlag.Byte);
     public static final CiRegister r7 = new CiRegister(7, 7, 4, "r7", CPU, RegisterFlag.Byte);
-
     public static final CiRegister r8  = new CiRegister(8,  8,  4, "r8", CPU, RegisterFlag.Byte);
     public static final CiRegister r9  = new CiRegister(9,  9,  4, "r9", CPU, RegisterFlag.Byte);
     public static final CiRegister r10 = new CiRegister(10, 10, 4, "r10", CPU, RegisterFlag.Byte);
