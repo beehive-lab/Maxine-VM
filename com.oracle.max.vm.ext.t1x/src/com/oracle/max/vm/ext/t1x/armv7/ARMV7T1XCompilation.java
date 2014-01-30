@@ -351,8 +351,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected int callDirect() {
         alignDirectCall(buf.position());
         int causePos = buf.position();
-        asm.call();  // APN does nothing for now ... we can emit a BL if it is not too far away or we
-        // can update r14 and scratch  appropriately and mov PC, scratchRegister?
+        asm.call();
         int safepointPos = buf.position();
         asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
         return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);

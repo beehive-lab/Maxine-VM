@@ -197,6 +197,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
         int currentStackIndex = firstStackIndex;
 
         System.err.println(parameters.length + " cpu " + cpuParameters.length);
+        System.err.println(" fpu length "+ fpuParameters.length ) ;
         for (int i = 0; i < parameters.length; i++) {
             locations[i] = null; // APN necessary?
             final CiKind kind = parameters[i];
@@ -230,11 +231,13 @@ public class CiRegisterConfig implements RiRegisterConfig {
                 case Double:
                     // TODO  fix for float and double
                     //throw new InternalError("floats and doubles are not supported yet for ARM");
-                   // if (!stackOnly && currentXMM < fpuParameters.length) {
-                     //   CiRegister register = fpuParameters[currentXMM++];
-                       // locations[i] = register.asValue(kind);
-                    //}
+                    if (!stackOnly && currentXMM < fpuParameters.length) {
+                        CiRegister register = fpuParameters[currentXMM++];
+                        locations[i] = register.asValue(kind);
+                    }
                     System.err.println("FIX REQUIRED for DOUBLE  getCallingConvention")  ;
+                    // ARM
+                    /*
                     if (!stackOnly) {
                         if(currentGeneral < (cpuParameters.length)) {
                             CiRegister register = cpuParameters[currentGeneral++];
@@ -243,7 +246,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                             System.err.println("DOUBLE needs 2 register  getCallingConvention");
 
                         }
-                    }
+                    } */
                     break;
 
                 default:
@@ -251,6 +254,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
             }
 
             if (locations[i] == null) {
+                System.err.println("REALLY placed on the stack " + i)  ;
                 locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
                 currentStackIndex += target.spillSlots(kind);
             }

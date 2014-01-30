@@ -455,21 +455,23 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         int registerList = 0;
         for (CiRegister r : csl.registers) {
             int offset = csl.offsetOf(r);
-            registerList |= (1<<(r.encoding & 0xf));
-
-            if (first) {
-                assert(offset == 0);
+            registerList = (1<<(r.encoding & 0xf)); // only storing one register at a time.
+            stm(ConditionFlag.Always,0,0,1,0,ARMV7.r13,registerList);// r13 is the stack po
+            /*if (first) {
+                //if(offset != 0) System.err.println("off set is " + offset);
+               // assert(offset == 0);
                 // if it fails then we need to add a value to the frame pointer
                 first = false;
             }else {
-                assert(oldOffset == (offset-4));
+                //System.err.println("New offset is " + offset);
+                //assert(oldOffset == (offset-4));
                 // if it fails then we cannot to stm
-            }
+            } */
 
             oldOffset = offset;
             //movq(new CiAddress(target.wordKind, frame, frameToCSA + offset), r);
         }
-        stm(ConditionFlag.Always,0,0,1,0,ARMV7.r13,registerList);// r13 is the stack pointer
+        //stm(ConditionFlag.Always,0,0,1,0,ARMV7.r13,registerList);// r13 is the stack pointer
 
     }
 
@@ -478,9 +480,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         int registerList = 0;
         for (CiRegister r : csl.registers) {
             int offset = csl.offsetOf(r);
-            registerList |= (1<<(r.encoding & 0xf));
+            registerList = (1<<(r.encoding & 0xf));
             //movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
+            ldm(ConditionFlag.Always,0,0,1,0,frameRegister,registerList);
+
         }
-        ldm(ConditionFlag.Always,0,0,1,0,frameRegister,registerList);
     }
 }

@@ -1,7 +1,7 @@
 package test.arm;
 
-import com.oracle.max.asm.target.armv7_real.ARMV7;
-import com.oracle.max.asm.target.armv7_real.ARMV7Assembler;
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.MaxTestCase;
 

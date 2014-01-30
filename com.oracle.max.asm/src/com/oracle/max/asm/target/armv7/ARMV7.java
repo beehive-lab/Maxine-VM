@@ -58,22 +58,22 @@ public class ARMV7 extends CiArchitecture {
 
     //TODO: CiArchitecture doesn't allow mixed-size registers (pretending we have 4 byte FP regs)
     //TODO: Might be something to do with the spillSlotSize the size of the stack slot used to spill the value of the register
-    public static final CiRegister vfp0 = new CiRegister(16, 0, 4, "vfp0", FPU);
-    public static final CiRegister vfp1 = new CiRegister(17, 1, 4, "vfp1", FPU);
-    public static final CiRegister vfp2 = new CiRegister(18, 2, 4, "vfp2", FPU);
-    public static final CiRegister vfp3 = new CiRegister(19, 3, 4, "vfp3", FPU);
-    public static final CiRegister vfp4 = new CiRegister(20, 4, 4, "vfp4", FPU);
-    public static final CiRegister vfp5 = new CiRegister(21, 5, 4, "vfp5", FPU);
-    public static final CiRegister vfp6 = new CiRegister(22, 6, 4, "vfp6", FPU);
-    public static final CiRegister vfp7 = new CiRegister(23, 7, 4, "vfp7", FPU);
-    public static final CiRegister vfp8 = new CiRegister(24, 8, 4, "vfp8", FPU);
-    public static final CiRegister vfp9 = new CiRegister(25, 9, 4, "vfp9", FPU);
-    public static final CiRegister vfp10 = new CiRegister(26, 10, 4, "vfp10", FPU);
-    public static final CiRegister vfp11 = new CiRegister(27, 11, 4, "vfp11", FPU);
-    public static final CiRegister vfp12 = new CiRegister(28, 12, 4, "vfp12", FPU);
-    public static final CiRegister vfp13 = new CiRegister(29, 13, 4, "vfp13", FPU);
-    public static final CiRegister vfp14 = new CiRegister(30, 14, 4, "vfp14", FPU);
-    public static final CiRegister vfp15 = new CiRegister(31, 15, 4, "vfp15", FPU);
+    public static final CiRegister vfp0 = new CiRegister(16, 0, 4, "vfp0", RegisterFlag.FPU);
+    public static final CiRegister vfp1 = new CiRegister(17, 1, 4, "vfp1", RegisterFlag.FPU);
+    public static final CiRegister vfp2 = new CiRegister(18, 2, 4, "vfp2", RegisterFlag.FPU);
+    public static final CiRegister vfp3 = new CiRegister(19, 3, 4, "vfp3", RegisterFlag.FPU);
+    public static final CiRegister vfp4 = new CiRegister(20, 4, 4, "vfp4", RegisterFlag.FPU);
+    public static final CiRegister vfp5 = new CiRegister(21, 5, 4, "vfp5", RegisterFlag.FPU);
+    public static final CiRegister vfp6 = new CiRegister(22, 6, 4, "vfp6", RegisterFlag.FPU);
+    public static final CiRegister vfp7 = new CiRegister(23, 7, 4, "vfp7", RegisterFlag.FPU);
+    public static final CiRegister vfp8 = new CiRegister(24, 8, 4, "vfp8", RegisterFlag.FPU);
+    public static final CiRegister vfp9 = new CiRegister(25, 9, 4, "vfp9", RegisterFlag.FPU);
+    public static final CiRegister vfp10 = new CiRegister(26, 10, 4, "vfp10", RegisterFlag.FPU);
+    public static final CiRegister vfp11 = new CiRegister(27, 11, 4, "vfp11", RegisterFlag.FPU);
+    public static final CiRegister vfp12 = new CiRegister(28, 12, 4, "vfp12", RegisterFlag.FPU);
+    public static final CiRegister vfp13 = new CiRegister(29, 13, 4, "vfp13", RegisterFlag.FPU);
+    public static final CiRegister vfp14 = new CiRegister(30, 14, 4, "vfp14", RegisterFlag.FPU);
+    public static final CiRegister vfp15 = new CiRegister(31, 15, 4, "vfp15", RegisterFlag.FPU);
 
     public static final CiRegister[] cpuRegisters = {
             r0, r1, r2, r3, r4, r5, r6, r7,

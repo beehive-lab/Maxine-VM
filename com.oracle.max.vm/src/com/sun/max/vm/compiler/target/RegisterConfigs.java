@@ -30,6 +30,7 @@ import static com.sun.max.vm.runtime.VMRegister.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.target.armv7.ARMV7;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -147,8 +148,9 @@ public class RegisterConfigs {
 			   FP chosen to be r11
                          */
                         allocatable = new CiRegister[] {r0,r1,r2,r3,r4,r5,r6,r7,com.oracle.max.asm.target.armv7.ARMV7.r8,com.oracle.max.asm.target.armv7.ARMV7.r9,
-                                com.oracle.max.asm.target.armv7.ARMV7.r10}; // no scratch in allocatable
-                        parameters = new CiRegister[] {r0,r1,r2,r3};
+                                com.oracle.max.asm.target.armv7.ARMV7.r10,
+                        vfp0,vfp1,vfp2,vfp3,vfp4,vfp5}; // no scratch in allocatable
+                        parameters = new CiRegister[] {r0,r1,r2,r3,vfp0,vfp1,vfp2,vfp3};
                         allRegistersExceptLatch = new CiRegister[] {r0,r1,r2,r3,r4,r5,r6,r7,com.oracle.max.asm.target.armv7.ARMV7.r8,
                                 com.oracle.max.asm.target.armv7.ARMV7.r9,
                                 com.oracle.max.asm.target.armv7.ARMV7.r11,
@@ -175,6 +177,7 @@ public class RegisterConfigs {
                         standard = new CiRegisterConfig(
                                 com.oracle.max.asm.target.armv7.ARMV7.r13,                 // frame
                                 r0,                 // integral return value
+
                                 vfp0,                // floating point return value
                                 com.oracle.max.asm.target.armv7.ARMV7.r12,                 // scratch
                                 allocatable,         // allocatable
@@ -219,13 +222,13 @@ public class RegisterConfigs {
                             more aggressive/specific about the registers to be saved?
                          */
                         CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4,
-                                r0,r1,r2,r3,                       // parameters
+                                ARMV7.r0,ARMV7.r1,ARMV7.r2,ARMV7.r3,                       // parameters
                                 r4,r5,r6,r7,com.oracle.max.asm.target.armv7.ARMV7.r8,
                                 com.oracle.max.asm.target.armv7.ARMV7.r9,
                                 com.oracle.max.asm.target.armv7.ARMV7.r10,
                                 com.oracle.max.asm.target.armv7.ARMV7.r11,                                            //r4..r11? must be preserved for baseline compiler
-                                standard.getScratchRegister(),                    // dynamic dispatch index is saved here for stack frame walker
-                                vfp0   // parameters  APN lets not worry about floating point .... lets crack out the StollyBolly once we get HelloWorld working
+                                standard.getScratchRegister()                    // dynamic dispatch index is saved here for stack frame walker
+                                // parameters  APN lets not worry about floating point .... lets crack out the StollyBolly once we get HelloWorld working
                         ));
                                                                                                 // the registers below are a guess in n2j ....
                                                                                                 // ....
